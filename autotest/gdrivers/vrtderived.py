@@ -1391,6 +1391,8 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
         ("3= ", "expected number or NO_DATA"),
         ("1=NO_DATA", "NoData value is not set"),
         ("NO_DATA=15", "NoData value is not set"),
+        ("[1,3]=7;[3, 5]=8", "Interval .* overlaps"),
+        ("[1,3]=7;[2, 4]=8", "Interval .* overlaps"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):

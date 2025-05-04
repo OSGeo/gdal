@@ -45,15 +45,16 @@ def test_gdalalg_raster_reclassify_basic_1(
     if mapping_format == "text":
         reclassify[
             "mapping"
-        ] = "165 = 120; (-inf, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
+        ] = "165 = 120; (-inf, 0) = 140; (0, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
     else:
         gdal.FileFromMemBuffer(
             tmp_vsimem / "mapping.txt",
             """
            # A sample reclassification
            165         = 120
-           (-inf, 100] = 140 # Match everything <= 100
-           (100,  130] = PASS_THROUGH
+           (-inf, 0)   = 140 # Match everything <= 100
+           (0, 100]    = 140 # manually exclude NoData value of 0
+           (100, 130]  = PASS_THROUGH
            DEFAULT     = 160
            NO_DATA     = NO_DATA
 
@@ -109,7 +110,7 @@ def test_gdalalg_raster_reclassify_output_type(reclassify, tmp_vsimem):
 
     reclassify["input"] = infile
     reclassify["output"] = outfile
-    reclassify["mapping"] = "(-inf, 132)=0; (128, inf)=1"
+    reclassify["mapping"] = "(-inf, 132)=0; [132, inf)=1"
     reclassify["output-data-type"] = "Int16"
 
     assert reclassify.Run()
@@ -144,6 +145,53 @@ def test_gdalalg_raster_reclassify_source_transfer_type(reclassify, tmp_vsimem):
     assert np.all(reclassify["output"].GetDataset().ReadAsArray() == 7)
 
     assert reclassify.Finalize()
+
+
+def test_gdalalg_raster_reclassify_many_ranges(reclassify, tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    nx = 100
+    ny = 100
+    nbins = 1000
+
+    np.random.seed(802)
+    data = np.random.rand(ny, nx) * 1000
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", nx, ny, 1, eType=gdal.GDT_Float64)
+    src_ds.WriteArray(data)
+    rast_min, rast_max = src_ds.GetRasterBand(1).ComputeRasterMinMax(False)
+
+    breaks = list(np.linspace(rast_min, rast_max, nbins - 1))
+
+    bins = {}
+    i = 0
+    for a, b in zip(breaks, breaks[1:] + [float("inf")]):
+        bins[i] = (a, b)
+        i += 1
+
+    with gdal.VSIFile(tmp_vsimem / "bins.txt", "w") as out:
+        for i, minmax in bins.items():
+            a, b = minmax
+            out.write(f"[{a}, {b}) = {i}\n")
+
+    reclassify["input"] = src_ds
+    reclassify["output"] = ""
+    reclassify["mapping"] = f"@{tmp_vsimem}/bins.txt"
+    reclassify["output-format"] = "MEM"
+
+    assert reclassify.Run()
+
+    results = reclassify["output"].GetDataset().ReadAsArray()
+
+    assert reclassify.Finalize()
+
+    # check that all values reclassified correctly
+    for i in range(ny):
+        for j in range(nx):
+            a, b = bins[results[i, j]]
+            assert data[i, j] >= a and data[i, j] < b
 
 
 def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
