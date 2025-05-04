@@ -30,6 +30,7 @@
 
 struct GDALCalcOptions
 {
+    GDALDataType dstType{GDT_Float64};
     bool checkSRS{true};
     bool checkExtent{true};
 };
@@ -237,7 +238,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
  */
 static bool
 CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
-                     const std::string &expression,
+                     GDALDataType bandType, const std::string &expression,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps)
 {
@@ -254,8 +255,13 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
         CPLXMLNode *band = CPLCreateXMLNode(root, CXT_Element, "VRTRasterBand");
         CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        // TODO: Allow user specification of output data type?
-        CPLAddXMLAttributeAndValue(band, "dataType", "Float64");
+        CPLAddXMLAttributeAndValue(band, "dataType",
+                                   GDALGetDataTypeName(bandType));
+
+        CPLXMLNode *sourceTransferType =
+            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
+        CPLCreateXMLNode(sourceTransferType, CXT_Text,
+                         GDALGetDataTypeName(GDT_Float64));
 
         CPLXMLNode *pixelFunctionType =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
@@ -507,8 +513,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 
     for (const auto &origExpression : expressions)
     {
-        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, origExpression,
-                                  sources, sourceProps))
+        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, options.dstType,
+                                  origExpression, sources, sourceProps))
         {
             return nullptr;
         }
@@ -549,6 +555,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
+    AddOutputDataTypeArg(&m_type);
 
     AddArg("no-check-srs", 0,
            _("Do not check consistency of input spatial reference systems"),
@@ -590,6 +597,10 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     GDALCalcOptions options;
     options.checkExtent = !m_NoCheckExtent;
     options.checkSRS = !m_NoCheckSRS;
+    if (!m_type.empty())
+    {
+        options.dstType = GDALGetDataTypeByName(m_type.c_str());
+    }
 
     if (!ReadFileLists(m_inputs))
     {

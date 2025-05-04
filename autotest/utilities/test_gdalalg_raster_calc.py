@@ -114,6 +114,32 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
         assert dst.GetDriver().GetName() == "GTiff"
 
 
+def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 5, 5, eType=gdal.GDT_Int32
+    ) as src_ds:
+        src_ds.GetRasterBand(1).Fill(500)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output"] = ""
+    calc["output-format"] = "MEM"
+    calc["calc"] = "X > 256 ? 100 : 50"
+    calc["output-data-type"] = "Byte"
+
+    assert calc.Run()
+
+    dst_ds = calc["output"].GetDataset()
+
+    assert dst_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert np.all(dst_ds.ReadAsArray() == 100)
+
+    assert calc.Finalize()
+
+
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"

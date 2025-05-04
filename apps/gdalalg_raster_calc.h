@@ -38,6 +38,7 @@ class GDALRasterCalcAlgorithm : public GDALAlgorithm
     std::vector<std::string> m_expr{};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
+    std::string m_type{};
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite{false};
     bool m_NoCheckSRS{false};
