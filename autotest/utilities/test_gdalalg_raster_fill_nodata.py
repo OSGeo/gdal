@@ -53,7 +53,8 @@ def run_alg(alg, tmp_path, tmp_vsimem):
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 0
     del ds
 
-    alg.Run()
+    assert alg.Run()
+    assert alg.Finalize()
 
     # Check the value of pixel 1 - 1 is not nodata
     ds = gdal.Open(result_tif)
@@ -169,3 +170,13 @@ def test_gdalalg_raster_fill_nodata_mask(tmp_path, tmp_vsimem):
     ds = run_alg(alg, tmp_path, tmp_vsimem)
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 125
     del ds
+
+
+def test_gdalalg_raster_fill_nodata_mask_does_not_exist(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["mask"] = "/i/do_not/exist"
+    with pytest.raises(Exception):
+        alg.Run()

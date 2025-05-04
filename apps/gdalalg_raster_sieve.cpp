@@ -54,20 +54,9 @@ GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm()
                _("Use the first band of the specified file as a "
                  "validity mask (all pixels with a value other than zero "
                  "will be considered suitable for inclusion in polygons)"),
-               &m_maskDataset)};
+               &m_maskDataset, GDAL_OF_RASTER)};
 
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
-
-    mask.AddValidationAction(
-        [&mask]()
-        {
-            // Check if the mask dataset is a valid raster dataset descriptor
-            // Try to open the dataset as a raster
-            std::unique_ptr<GDALDataset> poDS(
-                GDALDataset::Open(mask.Get<std::string>().c_str(),
-                                  GDAL_OF_RASTER, nullptr, nullptr, nullptr));
-            return static_cast<bool>(poDS);
-        });
 
     AddBandArg(&m_band);
     AddArg("size-threshold", 's', _("Minimum size of polygons to keep"),

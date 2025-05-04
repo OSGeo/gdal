@@ -71,17 +71,6 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
 
-    mask.AddValidationAction(
-        [&mask]()
-        {
-            // Check if the mask dataset is a valid raster dataset descriptor
-            // Try to open the dataset as a raster
-            std::unique_ptr<GDALDataset> poDS(
-                GDALDataset::Open(mask.Get<std::string>().c_str(),
-                                  GDAL_OF_RASTER, nullptr, nullptr, nullptr));
-            return static_cast<bool>(poDS);
-        });
-
     AddArg("strategy", 0,
            _("By default, pixels are interpolated using an inverse distance "
              "weighting (invdist). It is also possible to choose a nearest "

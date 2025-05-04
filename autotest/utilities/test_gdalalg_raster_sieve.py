@@ -54,7 +54,8 @@ def test_gdalalg_raster_sieve(
     alg["size-threshold"] = 2
     alg["connect-diagonal-pixels"] = connect_diagonal_pixels
     alg["creation-option"] = creation_options
-    alg.Run()
+    assert alg.Run()
+    assert alg.Finalize()
 
     ds = gdal.Open(result_tif)
     assert ds is not None
@@ -103,7 +104,8 @@ NODATA_value 0
     alg["output"] = result_tif
     alg["size-threshold"] = 2
     alg["mask"] = tmp_filename
-    alg.Run()
+    assert alg.Run()
+    assert alg.Finalize()
 
     ds = gdal.Open(result_tif)
     assert ds is not None
@@ -112,6 +114,15 @@ NODATA_value 0
     dst_band = ds.GetRasterBand(1)
 
     assert dst_band.Checksum() == 42
+
+    # Non existing mask
+    alg = get_alg()
+    alg["input"] = tmp_filename
+    alg["output"] = result_tif
+    alg["size-threshold"] = 2
+    alg["mask"] = "/i/do_not/exist"
+    with pytest.raises(Exception):
+        alg.Run()
 
 
 @pytest.mark.require_driver("AAIGRID")
@@ -133,4 +144,5 @@ def test_gdalalg_raster_sieve_overwrite(tmp_path, tmp_vsimem):
         alg.Run()
 
     alg["overwrite"] = True
-    alg.Run()
+    assert alg.Run()
+    assert alg.Finalize()
