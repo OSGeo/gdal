@@ -193,7 +193,6 @@ def test_gdalalg_raster_reclassify_many_ranges(reclassify, tmp_vsimem):
             a, b = bins[results[i, j]]
             assert data[i, j] >= a and data[i, j] < b
 
->>>>>>> aab07ef5bb (Reclassifier: Validate input ranges, use binary search for lookup)
 
 def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
 
