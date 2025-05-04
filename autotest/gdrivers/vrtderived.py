@@ -1450,7 +1450,6 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
     </VRTDataset>"""
 
     dst = gdal.Open(xml).ReadAsArray()
-    print(dst)
     np.testing.assert_array_equal(
         dst,
         np.array([[1, 2]]),
