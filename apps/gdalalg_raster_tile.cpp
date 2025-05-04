@@ -1588,6 +1588,7 @@ template <class Resource> class ResourceManager /* non final */
 
     const std::string &GetErrorMsg() const
     {
+        std::lock_guard oLock(m_oMutex);
         return m_errorMsg;
     }
 
@@ -1595,7 +1596,7 @@ template <class Resource> class ResourceManager /* non final */
     virtual std::unique_ptr<Resource> CreateResources() = 0;
 
   private:
-    std::mutex m_oMutex{};
+    mutable std::mutex m_oMutex{};
     std::vector<std::unique_ptr<Resource>> m_oResources{};
     std::string m_errorMsg{};
 };
@@ -1929,9 +1930,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_tileSize = 256;
         if (m_maxZoomLevel < 0)
         {
-            m_maxZoomLevel = static_cast<int>(std::ceil(std::log2(std::max(
-                1.0, static_cast<double>(std::max(nSrcWidth, nSrcHeight) /
-                                         m_tileSize)))));
+            m_maxZoomLevel = static_cast<int>(std::ceil(std::log2(
+                std::max(1, std::max(nSrcWidth, nSrcHeight) / m_tileSize))));
         }
         if (bHasNorthUpSrcGT)
         {
