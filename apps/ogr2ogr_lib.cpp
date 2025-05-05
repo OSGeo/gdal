@@ -2750,21 +2750,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
         if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
         {
-            VSIStatBufL sStat;
-            if (VSIStatL(pszDest, &sStat) == 0)
+            const char *pszType = "";
+            if (GDALDoesFileOrDatasetExist(pszDest, &pszType))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "File '%s' already exists. Specify the --overwrite "
+                         "%s '%s' already exists. Specify the --overwrite "
                          "option to overwrite it.",
-                         pszDest);
-                return nullptr;
-            }
-            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Dataset '%s' already exists. Specify the --overwrite "
-                         "option to overwrite it.",
-                         pszDest);
+                         pszType, pszDest);
                 return nullptr;
             }
         }

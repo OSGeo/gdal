@@ -42,7 +42,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/rgbsmall.tif"
-    outfile = tmp_vsimem / "out.tif"
+    outfile = tmp_vsimem / "out.{output_format}"
 
     calc["input"] = [infile]
     calc["output"] = outfile
@@ -112,6 +112,32 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
 
     with gdal.Open(outfile) as dst:
         assert dst.GetDriver().GetName() == "GTiff"
+
+
+def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 5, 5, eType=gdal.GDT_Int32
+    ) as src_ds:
+        src_ds.GetRasterBand(1).Fill(500)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output"] = ""
+    calc["output-format"] = "MEM"
+    calc["calc"] = "X > 256 ? 100 : 50"
+    calc["output-data-type"] = "Byte"
+
+    assert calc.Run()
+
+    dst_ds = calc["output"].GetDataset()
+
+    assert dst_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert np.all(dst_ds.ReadAsArray() == 100)
+
+    assert calc.Finalize()
 
 
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
@@ -471,3 +497,18 @@ def test_gdalalg_raster_calc_expression_rewriting(
         node.attrib["expression"] for node in root.findall(".//PixelFunctionArguments")
     ]
     assert expr == expected
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_raster_calc_gdalg_json(calc, tmp_vsimem):
+
+    outfile = tmp_vsimem / "out.gdalg.json"
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["output"] = outfile
+    calc["calc"] = "X"
+    assert calc.Run()
+    assert calc.Finalize()
+
+    with gdal.Open(outfile) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672

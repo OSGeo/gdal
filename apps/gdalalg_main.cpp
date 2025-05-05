@@ -12,7 +12,13 @@
 
 #include "gdalalg_main.h"
 
+#include "gdal_priv.h"
+
 //! @cond Doxygen_Suppress
+
+#ifndef _
+#define _(x) (x)
+#endif
 
 /************************************************************************/
 /*                  GDALMainAlgorithm::GDALMainAlgorithm()              */
@@ -31,6 +37,12 @@ GDALMainAlgorithm::GDALMainAlgorithm()
     }
 
     SetCallPath({NAME});
+
+    AddArg("version", 0, _("Display GDAL version and exit"), &m_version)
+        .SetOnlyForCLI();
+    AddArg("drivers", 0, _("Display driver list as JSON document"), &m_drivers);
+
+    AddOutputStringArg(&m_output);
 
     m_longDescription = "'gdal <FILENAME>' can also be used as a shortcut for "
                         "'gdal info <FILENAME>'.\n"
@@ -74,6 +86,12 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
 
         return GDALAlgorithm::ParseCommandLineArguments(args);
     }
+    else if (args.size() == 1 && args[0].size() >= 2 && args[0][0] == '-' &&
+             args[0][1] == '-')
+    {
+        return GDALAlgorithm::ParseCommandLineArguments(args);
+    }
+
     // Generic case: "gdal {subcommand} arguments"
     // where subcommand is a known subcommand
     else if (args.size() >= 1)
@@ -139,6 +157,19 @@ GDALMainAlgorithm::GetUsageForCLI(bool shortUsage,
     if (m_showUsage)
         return GDALAlgorithm::GetUsageForCLI(shortUsage, usageOptions);
     return std::string();
+}
+
+/************************************************************************/
+/*                    GDALMainAlgorithm::RunImpl()                      */
+/************************************************************************/
+
+bool GDALMainAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    if (m_drivers)
+    {
+        m_output = GDALPrintDriverList(GDAL_OF_KIND_MASK, true);
+    }
+    return true;
 }
 
 //! @endcond

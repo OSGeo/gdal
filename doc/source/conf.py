@@ -189,6 +189,7 @@ html_favicon = "../images/favicon.png"
 author_frankw = "Frank Warmerdam <warmerdam@pobox.com>"
 author_silker = "Silke Reimer <silke@intevation.de>"
 author_mikhailg = "Mikhail Gusev <gusevmihs@gmail.com>"
+author_dbaston = "Dan Baston <dbaston@gmail.com>"
 author_dmitryb = "Dmitry Baryshnikov <polimax@mail.ru>"
 author_evenr = "Even Rouault <even.rouault@spatialys.com>"
 author_elpaso = "Alessandro Pasotti <elpaso@itopen.it>"
@@ -253,10 +254,17 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_raster_astype",
-        "gdal-raster-astype",
+        "programs/gdal_raster_set_type",
+        "gdal-raster-set-type",
         "Modify the data type of bands of a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_calc",
+        "gdal-raster-calc",
+        "Perform pixel-wise calculations on a raster",
+        [author_dbaston],
         1,
     ),
     (
@@ -316,8 +324,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_raster_fillnodata",
-        "gdal-raster-fillnodata",
+        "programs/gdal_raster_fill_nodata",
+        "gdal-raster-fill-nodata",
         "Fill nodata values in a raster dataset",
         [author_elpaso],
         1,
@@ -372,6 +380,20 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_pixel_info",
+        "gdal-raster-pixel-info",
+        "Return information on a pixel of a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_reclassify",
+        "gdal-raster-reclassify",
+        "Reclassify a raster dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
         "Reproject a raster dataset",
@@ -400,6 +422,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_sieve",
+        "gdal-raster-sieve",
+        "Remove small raster polygons",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_raster_select",
         "gdal-raster-select",
         "Select a subset of bands from a raster dataset",
@@ -417,6 +446,13 @@ man_pages = [
         "programs/gdal_raster_stack",
         "gdal-raster-stack",
         "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_tile",
+        "gdal-raster-tile",
+        "Generate tiles in separate files from a raster dataset",
         [author_evenr],
         1,
     ),
@@ -613,6 +649,20 @@ man_pages = [
         "programs/gdal_vsi_list",
         "gdal-vsi-list",
         "List files of one of the GDAL Virtual System Interface (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vsi_move",
+        "gdal-vsi-move",
+        "Move/rename a file/directory located on GDAL Virtual System Interface (VSI)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vsi_sync",
+        "gdal-vsi-sync",
+        "Synchronize source and target file/directory located on GDAL Virtual System Interface (VSI)",
         [author_evenr],
         1,
     ),

@@ -269,9 +269,6 @@ static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
                                       CSLConstList papszMetadata,
                                       const char *pszValueConflict);
 
-static bool GetResampleAlg(const char *pszResampling,
-                           GDALResampleAlg &eResampleAlg, bool bThrow = false);
-
 static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 {
     if (!poGeom)
@@ -1185,7 +1182,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
         }
         if (!psOptions->bResampleAlgSpecifiedByUser && nSrcCount > 0)
         {
-            GetResampleAlg(
+            GDALGetWarpResampleAlg(
                 COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
                                  aosCreateOptions.List())
                     .c_str(),
@@ -1229,7 +1226,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                      dfMinY, dfMaxX, dfMaxY))
     {
         if (!psOptions->bResampleAlgSpecifiedByUser)
-            GetResampleAlg(osResampling, psOptions->eResampleAlg);
+            GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
         if (!SetDstSRS(osTargetSRS))
             bRet = false;
         psOptions->dfMinX = dfMinX;
@@ -3629,6 +3626,18 @@ static GDALDatasetH GDALWarpCreateOutput(
          GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) ==
              nullptr))
     {
+        auto poMissingDriver =
+            GetGDALDriverManager()->GetHiddenDriverByName(pszFormat);
+        if (poMissingDriver)
+        {
+            const std::string msg =
+                GDALGetMessageAboutMissingPluginDriver(poMissingDriver);
+            printf("Output driver `%s' not found but is known. However plugin "
+                   "%s\n",
+                   pszFormat, msg.c_str());
+            return nullptr;
+        }
+
         printf("Output driver `%s' not recognised or does not support\n",
                pszFormat);
         printf("direct output file creation or CreateCopy. "
@@ -5759,8 +5768,8 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                GetResampleAlg(s.c_str(), psOptions->eResampleAlg,
-                               /*bThrow=*/true);
+                GDALGetWarpResampleAlg(s.c_str(), psOptions->eResampleAlg,
+                                       /*bThrow=*/true);
                 psOptions->bResampleAlgSpecifiedByUser = true;
             })
         .help(_("Resampling method to use."));
@@ -6397,57 +6406,6 @@ GDALWarpAppOptionsNew(char **papszArgv,
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-}
-
-/************************************************************************/
-/*                            GetResampleAlg()                          */
-/************************************************************************/
-
-static bool GetResampleAlg(const char *pszResampling,
-                           GDALResampleAlg &eResampleAlg, bool bThrow)
-{
-    if (STARTS_WITH_CI(pszResampling, "near"))
-        eResampleAlg = GRA_NearestNeighbour;
-    else if (EQUAL(pszResampling, "bilinear"))
-        eResampleAlg = GRA_Bilinear;
-    else if (EQUAL(pszResampling, "cubic"))
-        eResampleAlg = GRA_Cubic;
-    else if (EQUAL(pszResampling, "cubicspline"))
-        eResampleAlg = GRA_CubicSpline;
-    else if (EQUAL(pszResampling, "lanczos"))
-        eResampleAlg = GRA_Lanczos;
-    else if (EQUAL(pszResampling, "average"))
-        eResampleAlg = GRA_Average;
-    else if (EQUAL(pszResampling, "rms"))
-        eResampleAlg = GRA_RMS;
-    else if (EQUAL(pszResampling, "mode"))
-        eResampleAlg = GRA_Mode;
-    else if (EQUAL(pszResampling, "max"))
-        eResampleAlg = GRA_Max;
-    else if (EQUAL(pszResampling, "min"))
-        eResampleAlg = GRA_Min;
-    else if (EQUAL(pszResampling, "med"))
-        eResampleAlg = GRA_Med;
-    else if (EQUAL(pszResampling, "q1"))
-        eResampleAlg = GRA_Q1;
-    else if (EQUAL(pszResampling, "q3"))
-        eResampleAlg = GRA_Q3;
-    else if (EQUAL(pszResampling, "sum"))
-        eResampleAlg = GRA_Sum;
-    else
-    {
-        if (bThrow)
-        {
-            throw std::invalid_argument("Unknown resampling method");
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Unknown resampling method: %s.", pszResampling);
-            return false;
-        }
-    }
-    return true;
 }
 
 /************************************************************************/

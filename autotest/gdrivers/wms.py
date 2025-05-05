@@ -882,9 +882,9 @@ def test_wms_data_via_mrf():
     # The returned no data value can also be set on read, which affects the checksum
     testlist = [
         # Second checksum is on graviton2
-        ("Byte", 0, (29585, 9838)),  # Same as the default type, NDV not defined
-        ("Float32", 0, (56047,)),  # float, default NDV
-        ("Float32", 32768.32, (33595,)),  # float, Forced NDV
+        ("Byte", 0, (29551,)),  # Same as the default type, NDV not defined
+        ("Float32", 0, (56058,)),  # float, default NDV
+        ("Float32", 32768.32, (33927,)),  # float, Forced NDV
     ]
 
     for dt, ndv, expected_cs in testlist:

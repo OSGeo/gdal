@@ -87,6 +87,8 @@ void OGRESRIJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS,
 {
     CPLAssert(nullptr == poLayer_);
 
+    poDS->SetSupportsMGeometries(true);
+
     if (nullptr == poGJObject_)
     {
         CPLDebug("ESRIJSON",
@@ -143,6 +145,7 @@ void OGRESRIJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS,
 
     poLayer_ =
         new OGRGeoJSONLayer(osName.c_str(), poSRS, eGeomType, poDS, nullptr);
+    poLayer_->SetSupportsMGeometries(true);
     if (poSRS != nullptr)
         poSRS->Release();
 

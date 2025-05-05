@@ -94,14 +94,3 @@ def test_gdalalg_raster_convert_failed_append(tmp_vsimem):
         match="Subdataset creation not supported for driver HFA",
     ):
         convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename, "--append"])
-
-
-def test_gdalalg_raster_convert_error_output_already_set():
-    convert = get_convert_alg()
-    convert["output"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    assert convert.ParseCommandLineArguments(["data/utmsmall.tif"])
-    with pytest.raises(
-        Exception,
-        match="gdal raster convert does not support outputting to an already opened output dataset",
-    ):
-        convert.Run()

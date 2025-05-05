@@ -75,9 +75,10 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
                            _("Option passed to GDALGroup::GetMDArrayNames() to "
                              "filter arrays."),
                            &m_arrayOptions)
-                        .SetMetaVar("<KEY>=<VALUE>");
+                        .SetMetaVar("<KEY>=<VALUE>")
+                        .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
 
         arg.SetAutoCompleteFunction(
             [this](const std::string &currentValue)
@@ -126,13 +127,7 @@ bool GDALMdimConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal mdim convert does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (!m_outputFormat.empty())

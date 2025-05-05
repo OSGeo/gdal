@@ -504,8 +504,10 @@ int OGRGeoJSONLayer::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, OLCCurveGeometries))
         return FALSE;
+    else if (EQUAL(pszCap, OLCMeasuredGeometries))
+        return m_bSupportsMGeometries;
     else if (EQUAL(pszCap, OLCZGeometries))
-        return TRUE;
+        return m_bSupportsZGeometries;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
     else if (EQUAL(pszCap, OLCFastGetExtent) ||

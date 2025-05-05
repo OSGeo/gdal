@@ -113,7 +113,7 @@ def test_gdalalg_raster_polygonize_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it, or --update to update it",
+        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it",
     ):
         alg.Run()
     with ogr.Open(out_filename) as ds:
@@ -126,7 +126,7 @@ def test_gdalalg_raster_polygonize_overwrite(tmp_vsimem):
     alg["update"] = True
     with pytest.raises(
         Exception,
-        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append it",
+        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it",
     ):
         alg.Run()
     with ogr.Open(out_filename) as ds:
@@ -224,13 +224,13 @@ def test_gdalalg_raster_polygonize_int64():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger64
 
 
-def test_gdalalg_raster_polygonize_connectedness():
+def test_gdalalg_raster_polygonize_connect_diagonal_pixels():
 
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["connectedness"] = 8
+    alg["connect-diagonal-pixels"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("polygonize")

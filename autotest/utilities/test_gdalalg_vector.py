@@ -25,3 +25,11 @@ def test_gdalalg_vector_run_error():
     info = get_vector_alg()
     with pytest.raises(Exception, match="method should not be called directly"):
         info.Run()
+
+
+def test_gdalalg_vector_drivers():
+
+    with gdal.Run(["vector"], drivers=True) as alg:
+        j = alg.Output()
+        assert "GTiff" not in [x["short_name"] for x in j]
+        assert "ESRI Shapefile" in [x["short_name"] for x in j]

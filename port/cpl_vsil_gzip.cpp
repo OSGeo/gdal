@@ -359,10 +359,6 @@ class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
                                     const char *pszAccess);
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
-    int Unlink(const char *pszFilename) override;
-    int Rename(const char *oldpath, const char *newpath) override;
-    int Mkdir(const char *pszDirname, long nMode) override;
-    int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
     const char *GetOptions() override;
@@ -3260,44 +3256,6 @@ int VSIGZipFilesystemHandler::Stat(const char *pszFilename,
     }
 
     return ret;
-}
-
-/************************************************************************/
-/*                               Unlink()                               */
-/************************************************************************/
-
-int VSIGZipFilesystemHandler::Unlink(const char * /* pszFilename */)
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                               Rename()                               */
-/************************************************************************/
-
-int VSIGZipFilesystemHandler::Rename(const char * /* oldpath */,
-                                     const char * /* newpath */)
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                               Mkdir()                                */
-/************************************************************************/
-
-int VSIGZipFilesystemHandler::Mkdir(const char * /* pszDirname */,
-                                    long /* nMode */)
-{
-    return -1;
-}
-
-/************************************************************************/
-/*                               Rmdir()                                */
-/************************************************************************/
-
-int VSIGZipFilesystemHandler::Rmdir(const char * /* pszDirname */)
-{
-    return -1;
 }
 
 /************************************************************************/

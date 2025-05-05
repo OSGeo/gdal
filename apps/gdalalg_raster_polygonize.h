@@ -51,7 +51,7 @@ class GDALRasterPolygonizeAlgorithm final : public GDALAlgorithm
     int m_band = 1;
     std::string m_outputLayerName = "polygonize";
     std::string m_attributeName = "DN";
-    int m_connectedness = 4;
+    bool m_connectDiagonalPixels = false;
 };
 
 //! @endcond

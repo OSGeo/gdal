@@ -417,6 +417,12 @@ The following configuration options are available:
                    mode as used by the OGR PostgreSQL driver. Thus you should
                    force PG_USE_COPY=NO when using PgPoolII.
 
+      .. warning:: It is not always possible to use COPY. In particular if
+                   the input layer has columns with a DEFAULT value specified
+                   and that the feature has no value set for that given field,
+                   the driver will default to INSERT even if instructed to use
+                   COPY via this option.
+
 -  .. config:: PGSQL_OGR_FID
 
       Set name of primary key instead of 'ogc_fid'. Only

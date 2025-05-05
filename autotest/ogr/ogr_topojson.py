@@ -135,11 +135,13 @@ def test_ogr_topojson_no_transform():
     ds = ogr.Open("data/topojson/topojson3.topojson")
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "a_layer"
+    assert lyr.GetSpatialRef() is None
     feat = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)")
 
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == "TopoJSON"
+    assert lyr.GetSpatialRef() is None
     feat = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)")
     ds = None
@@ -174,3 +176,17 @@ def test_ogr_topojson_force_opening_url():
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["TopoJSON"])
     assert drv.GetDescription() == "TopoJSON"
+
+
+###############################################################################
+# Test CRS support
+
+
+def test_ogr_topojson_crs():
+
+    ds = ogr.Open("data/topojson/topojson_with_crs.topojson")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"

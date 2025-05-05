@@ -2899,7 +2899,9 @@ int IVSIS3LikeFSHandler::Unlink(const char *pszFilename)
 /*                               Rename()                               */
 /************************************************************************/
 
-int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath)
+int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressData)
 {
     if (!STARTS_WITH_CI(oldpath, GetFSPrefix().c_str()))
         return -1;
@@ -2925,21 +2927,28 @@ int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath)
 
     if (VSI_ISDIR(sStat.st_mode))
     {
-        CPLStringList aosList(VSIReadDir(oldpath));
+        int ret = 0;
+        const CPLStringList aosList(VSIReadDir(oldpath));
         Mkdir(newpath, 0755);
-        for (int i = 0; i < aosList.size(); i++)
+        const int nListSize = aosList.size();
+        for (int i = 0; ret == 0 && i < nListSize; i++)
         {
             const std::string osSrc =
                 CPLFormFilenameSafe(oldpath, aosList[i], nullptr);
             const std::string osTarget =
                 CPLFormFilenameSafe(newpath, aosList[i], nullptr);
-            if (Rename(osSrc.c_str(), osTarget.c_str()) != 0)
-            {
-                return -1;
-            }
+            void *pScaledProgress =
+                GDALCreateScaledProgress(static_cast<double>(i) / nListSize,
+                                         static_cast<double>(i + 1) / nListSize,
+                                         pfnProgress, pProgressData);
+            ret = Rename(osSrc.c_str(), osTarget.c_str(),
+                         pScaledProgress ? GDALScaledProgress : nullptr,
+                         pScaledProgress);
+            GDALDestroyScaledProgress(pScaledProgress);
         }
-        Rmdir(oldpath);
-        return 0;
+        if (ret == 0)
+            Rmdir(oldpath);
+        return ret;
     }
     else
     {

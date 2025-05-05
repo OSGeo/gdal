@@ -17,6 +17,7 @@
 #ifndef CPL_VSI_VIRTUAL_H_INCLUDED
 #define CPL_VSI_VIRTUAL_H_INCLUDED
 
+#include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
 #include "cpl_string.h"
@@ -223,10 +224,13 @@ class CPL_DLL VSIFilesystemHandler
         return nullptr;
     }
 
-    virtual int Rename(const char *oldpath, const char *newpath)
+    virtual int Rename(const char *oldpath, const char *newpath,
+                       GDALProgressFunc pProgressFunc, void *pProgressData)
     {
         (void)oldpath;
         (void)newpath;
+        (void)pProgressFunc;
+        (void)pProgressData;
         errno = ENOENT;
         return -1;
     }
@@ -493,10 +497,6 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
-    int Unlink(const char *pszFilename) override;
-    int Rename(const char *oldpath, const char *newpath) override;
-    int Mkdir(const char *pszDirname, long nMode) override;
-    int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
     virtual const VSIArchiveContent *

@@ -127,6 +127,16 @@ class OGRGeoJSONLayer final : public OGRMemLayer
         oWriteOptions_ = options;
     }
 
+    void SetSupportsMGeometries(bool bSupportsMGeometries)
+    {
+        m_bSupportsMGeometries = bSupportsMGeometries;
+    }
+
+    void SetSupportsZGeometries(bool bSupportsZGeometries)
+    {
+        m_bSupportsZGeometries = bSupportsZGeometries;
+    }
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRGeoJSONReader *poReader_;
@@ -135,6 +145,8 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
+    bool m_bSupportsMGeometries = false;
+    bool m_bSupportsZGeometries = true;
 
     //! Write options used by ICreateFeature() in append scenarios
     OGRGeoJSONWriteOptions oWriteOptions_;
@@ -292,6 +304,16 @@ class OGRGeoJSONDataSource final : public GDALDataset
         return osJSonFlavor_;
     }
 
+    void SetSupportsMGeometries(bool bSupportsMGeometries)
+    {
+        m_bSupportsMGeometries = bSupportsMGeometries;
+    }
+
+    void SetSupportsZGeometries(bool bSupportsZGeometries)
+    {
+        m_bSupportsZGeometries = bSupportsZGeometries;
+    }
+
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr Close() override;
@@ -326,6 +348,9 @@ class OGRGeoJSONDataSource final : public GDALDataset
     bool bUpdatable_;
 
     CPLString osJSonFlavor_;
+
+    bool m_bSupportsMGeometries = false;
+    bool m_bSupportsZGeometries = true;
 
     //
     // Private utility functions

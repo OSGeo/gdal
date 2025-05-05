@@ -752,9 +752,10 @@ int OGRGeoJSONDataSource::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr && nLayers_ == 0;
-    else if (EQUAL(pszCap, ODsCZGeometries) ||
-             EQUAL(pszCap, ODsCMeasuredGeometries))
-        return TRUE;
+    else if (EQUAL(pszCap, ODsCMeasuredGeometries))
+        return m_bSupportsMGeometries;
+    else if (EQUAL(pszCap, ODsCZGeometries))
+        return m_bSupportsZGeometries;
 
     return FALSE;
 }

@@ -31,7 +31,7 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
           apt update
-          apt install -y g++ cmake doxygen enchant-2 python3 python3-dev python3-pip python3-venv libproj-dev swig
+          apt install -y g++ cmake doxygen enchant-2 python3 python3-dev python3-pip python3-venv libproj-dev swig libsqlite3-dev
           python3 -m venv create doc_env
           . doc_env/bin/activate
           python3 -m pip install -r doc/requirements.txt
@@ -50,7 +50,8 @@ jobs:
             -DDOXYGEN_FAIL_ON_WARNINGS=ON \
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
-            -DGDAL_ENABLE_DRIVER_GTI=ON
+            -DGDAL_ENABLE_DRIVER_GTI=ON \
+            -DOGR_ENABLE_DRIVER_GPKG=ON
           cmake --build . -j$(nproc)
 
     - name: Print versions

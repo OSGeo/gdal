@@ -63,7 +63,7 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
     AddArg("allow-bbox-outside-source", 0,
            _("Allow clipping box to include pixels outside input dataset"),
            &m_allowExtentOutsideSource);
-    AddArg("addalpha", 0,
+    AddArg("add-alpha", 0,
            _("Adds an alpha mask band to the destination when the source "
              "raster have none."),
            &m_addAlpha);

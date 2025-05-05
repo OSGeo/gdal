@@ -17,7 +17,6 @@ add_library(
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
   gdalalg_raster_aspect.cpp
-  gdalalg_raster_astype.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clean_collar.cpp
   gdalalg_raster_clip.cpp
@@ -27,22 +26,27 @@ add_library(
   gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
   gdalalg_raster_footprint.cpp
-  gdalalg_raster_fillnodata.cpp
+  gdalalg_raster_fill_nodata.cpp
   gdalalg_raster_hillshade.cpp
   gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
   gdalalg_raster_pipeline.cpp
+  gdalalg_raster_pixel_info.cpp
   gdalalg_raster_polygonize.cpp
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
   gdalalg_raster_read.cpp
+  gdalalg_raster_reclassify.cpp
   gdalalg_raster_reproject.cpp
   gdalalg_raster_resize.cpp
   gdalalg_raster_roughness.cpp
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
+  gdalalg_raster_set_type.cpp
+  gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
+  gdalalg_raster_tile.cpp
   gdalalg_raster_tpi.cpp
   gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
@@ -82,7 +86,9 @@ add_library(
   gdalalg_vsi_copy.cpp
   gdalalg_vsi_delete.cpp
   gdalalg_vsi_list.cpp
+  gdalalg_vsi_move.cpp
   gdalalg_vsi_sozip.cpp
+  gdalalg_vsi_sync.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp
@@ -306,6 +312,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/leaflet_template.html
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

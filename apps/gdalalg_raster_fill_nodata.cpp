@@ -10,11 +10,12 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_raster_fillnodata.h"
+#include "gdalalg_raster_fill_nodata.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdal_alg.h"
+#include "commonutils.h"
 
 #include <algorithm>
 
@@ -70,17 +71,6 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
 
-    mask.AddValidationAction(
-        [&mask]()
-        {
-            // Check if the mask dataset is a valid raster dataset descriptor
-            // Try to open the dataset as a raster
-            std::unique_ptr<GDALDataset> poDS(
-                GDALDataset::Open(mask.Get<std::string>().c_str(),
-                                  GDAL_OF_RASTER, nullptr, nullptr, nullptr));
-            return static_cast<bool>(poDS);
-        });
-
     AddArg("strategy", 0,
            _("By default, pixels are interpolated using an inverse distance "
              "weighting (invdist). It is also possible to choose a nearest "
@@ -97,43 +87,66 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             void *pProgressData)
 {
+    const CPLStringList creationOptions{m_creationOptions};
+    const std::string destinationFormat{
+        m_format.empty()
+            ? GetOutputDriverForRaster(m_outputDataset.GetName().c_str())
+            : m_format};
+    const bool isGtiff{EQUAL(destinationFormat.c_str(), "GTiff")};
+    const bool isMem{EQUAL(destinationFormat.c_str(), "MEM")};
+    const bool isCompressed{
+        CSLFetchNameValue(creationOptions, "COMPRESS") != nullptr &&
+        !EQUAL(CSLFetchNameValue(creationOptions, "COMPRESS"), "NONE")};
+    const bool isTiled{
+        isGtiff && CSLFetchNameValue(creationOptions, "TILED") != nullptr &&
+        CPLTestBool(CSLFetchNameValue(creationOptions, "TILED"))};
+    const bool useTemporaryFile{
+        !(isMem || (isGtiff && isTiled && !isCompressed))};
 
-    VSIStatBufL sStat;
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        (VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0 ||
-         std::unique_ptr<GDALDataset>(
-             GDALDataset::Open(m_outputDataset.GetName().c_str()))))
+    std::string workingFileName{useTemporaryFile
+                                    ? CPLGenerateTempFilenameSafe(nullptr)
+                                    : m_outputDataset.GetName()};
+    std::unique_ptr<GDALDataset> workingDSHandler;
+
+    CPLStringList options;
+    options.AddString("-b");
+    options.AddString(CPLSPrintf("%d", m_band));
+
+    if (useTemporaryFile)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "File '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    m_outputDataset.GetName().c_str());
-        return false;
+        // Translate the single required band to uncompressed TILED GTiff
+        options.AddString("-of");
+        options.AddString("GTiff");
+        options.AddString("-co");
+        options.AddString("TILED=YES");
+    }
+    else
+    {
+        // Translate the single required band to the destination format
+        if (!m_format.empty())
+        {
+            options.AddString("-of");
+            options.AddString(m_format.c_str());
+        }
+        for (const auto &co : m_creationOptions)
+        {
+            options.AddString("-co");
+            options.AddString(co.c_str());
+        }
     }
 
-    CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString(m_format.c_str());
-    aosOptions.AddString("-b");
-    aosOptions.AddString(CPLSPrintf("%d", m_band));
-
-    for (const auto &co : m_creationOptions)
-    {
-        aosOptions.AddString("-co");
-        aosOptions.AddString(co.c_str());
-    }
-
-    GDALTranslateOptions *psOptions =
-        GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+    GDALTranslateOptions *translateOptions =
+        GDALTranslateOptionsNew(options.List(), nullptr);
 
     GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALTranslate(
-            m_outputDataset.GetName().c_str(), hSrcDS, psOptions, nullptr)));
-    GDALTranslateOptionsFree(psOptions);
+    workingDSHandler.reset(GDALDataset::FromHandle(GDALTranslate(
+        workingFileName.c_str(), hSrcDS, translateOptions, nullptr)));
+    GDALTranslateOptionsFree(translateOptions);
 
-    if (!poRetDS)
+    if (!workingDSHandler)
     {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Failed to create temporary dataset");
         return false;
     }
 
@@ -148,7 +161,16 @@ bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    GDALRasterBand *dstBand{poRetDS->GetRasterBand(1)};
+    // Get the output band
+    GDALRasterBand *dstBand{workingDSHandler->GetRasterBand(1)};
+
+    if (!dstBand)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Failed to get band %d from output dataset", m_band);
+        return false;
+    }
+
     // Prepare options to pass to GDALFillNodata
     CPLStringList aosFillOptions;
 
@@ -162,15 +184,42 @@ bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         dstBand, maskBand, m_maxDistance, 0, m_smoothingIterations,
         aosFillOptions.List(), m_progressBarRequested ? pfnProgress : nullptr,
         m_progressBarRequested ? pProgressData : nullptr)};
+
     if (retVal != CE_None)
     {
         ReportError(CE_Failure, CPLE_AppDefined, "Cannot run fillNodata.");
         return false;
     }
 
-    poRetDS->FlushCache();
+    workingDSHandler->FlushCache();
 
-    m_outputDataset.Set(std::move(poRetDS));
+    // If we were using a temporary file we need to translate to the final desired format
+    if (useTemporaryFile)
+    {
+        // Translate the temporary dataset to the final format
+        options.Clear();
+        options.AddString("-b");
+        options.AddString(CPLSPrintf("%d", m_band));
+        if (!m_format.empty())
+        {
+            options.AddString("-of");
+            options.AddString(m_format.c_str());
+        }
+        for (const auto &co : m_creationOptions)
+        {
+            options.AddString("-co");
+            options.AddString(co.c_str());
+        }
+        GDALTranslateOptions *finalTranslateOptions =
+            GDALTranslateOptionsNew(options.List(), nullptr);
+        workingDSHandler.reset(GDALDataset::FromHandle(
+            GDALTranslate(m_outputDataset.GetName().c_str(),
+                          GDALDataset::ToHandle(workingDSHandler.get()),
+                          finalTranslateOptions, nullptr)));
+        GDALTranslateOptionsFree(finalTranslateOptions);
+    }
+
+    m_outputDataset.Set(std::move(workingDSHandler));
 
     return true;
 }

@@ -14,6 +14,7 @@
 
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
@@ -649,13 +650,89 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         decl.SetDatasetInputFlags(GADV_NAME);
         decl.SetDatasetOutputFlags(GADV_OBJECT);
         auto arg = GDALAlgorithmArg(decl, &val);
+
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             CPLErrorReset();
             arg.Set(static_cast<GDALDataset *>(nullptr));
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.Set(std::unique_ptr<GDALDataset>(nullptr));
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+
+        {
+            GDALArgDatasetValue val2;
+            val2.Set(std::unique_ptr<GDALDataset>(
+                GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+                    "", 1, 1, 1, GDT_Byte, nullptr)));
+
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.SetFrom(val2);
+            EXPECT_TRUE(strstr(
+                CPLGetLastErrorMsg(),
+                "is created by algorithm and cannot be set as an input"));
             EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         }
     }
+
+    {
+        GDALArgDatasetValue val;
+        auto decl = GDALAlgorithmArgDecl("", 0, "", GAAT_DATASET);
+        decl.SetDatasetInputFlags(0);
+        decl.SetDatasetOutputFlags(0);
+        auto arg = GDALAlgorithmArg(decl, &val);
+
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            CPLErrorReset();
+            arg.Set(static_cast<GDALDataset *>(nullptr));
+            EXPECT_TRUE(
+                strstr(CPLGetLastErrorMsg(),
+                       "A dataset cannot be set as an input argument of"));
+            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        }
+    }
+
+    {
+        class MyAlgorithm : public MyAlgorithmWithDummyRun
+        {
+          public:
+            MyAlgorithm()
+            {
+                GDALArgDatasetValue val;
+                AddArg("", 0, "", &val).SetDatasetInputFlags(0);
+
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                CPLErrorReset();
+
+                val.Set(std::unique_ptr<GDALDataset>(
+                    GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+                        "", 1, 1, 1, GDT_Byte, nullptr)));
+
+                Run();
+
+                EXPECT_TRUE(
+                    strstr(CPLGetLastErrorMsg(),
+                           "A dataset cannot be set as an input argument of"));
+                EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+            }
+        };
+
+        MyAlgorithm alg;
+    }
+
     {
         std::vector<std::string> val;
         auto arg = GDALAlgorithmArg(
@@ -1207,10 +1284,12 @@ TEST_F(test_gdal_algorithm, bool_flag)
     {
       public:
         bool m_flag = false;
+        std::string m_dummy{};
 
         MyAlgorithm()
         {
             AddArg("flag", 'f', "boolean flag", &m_flag);
+            AddArg("of", 0, "", &m_dummy);
         }
     };
 
@@ -1264,6 +1343,40 @@ TEST_F(test_gdal_algorithm, bool_flag)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_STREQ(CPLGetLastErrorMsg(), "test: Option '--flig' is "
                                            "unknown. Do you mean '--flag'?");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-x", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "test: Short name option 'x' is "
+                                           "unknown.");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-of", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: Short name option 'o' is "
+            "unknown. Do you mean '--of' (with leading double dash) ?");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-ofx", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: Short name option 'o' is "
+            "unknown. Do you mean '--of' (with leading double dash) ?");
     }
 
     {
@@ -1924,8 +2037,16 @@ TEST_F(test_gdal_algorithm, output_dataset_created_by_alg)
         }
     };
 
-    MyAlgorithm alg;
-    alg.GetUsageForCLI(false);
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--output=-"}));
+        EXPECT_STREQ(alg.m_output.GetName().c_str(), "/vsistdout/");
+    }
 }
 
 TEST_F(test_gdal_algorithm, string_choices)
@@ -1948,6 +2069,14 @@ TEST_F(test_gdal_algorithm, string_choices)
         alg.GetUsageForCLI(false);
 
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=foo"}));
+        EXPECT_STREQ(alg.m_val.c_str(), "foo");
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=FOO"}));
         EXPECT_STREQ(alg.m_val.c_str(), "foo");
     }
 
@@ -2180,6 +2309,13 @@ TEST_F(test_gdal_algorithm, vector_string_choices)
     {
         MyAlgorithm alg;
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=foo,bar"}));
+        auto expected = std::vector<std::string>{"foo", "bar"};
+        EXPECT_EQ(alg.m_val, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--val=FOO,BAR"}));
         auto expected = std::vector<std::string>{"foo", "bar"};
         EXPECT_EQ(alg.m_val, expected);
     }
@@ -3326,7 +3462,54 @@ TEST_F(test_gdal_algorithm, arg_co)
 
         EXPECT_TRUE(alg.ParseCommandLineArguments(
             {"--co", "foo=bar", "--co", "bar=baz"}));
-        EXPECT_EQ(alg.m_co.size(), 2U);
+        const std::vector<std::string> expected{"foo=bar", "bar=baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,bar=baz"}));
+        const std::vector<std::string> expected{"foo=bar", "bar=baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,baz"}));
+        const std::vector<std::string> expected{"foo=bar,baz"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar=,a"}));
+        const std::vector<std::string> expected{"foo=bar=,a"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--co", "foo=bar,,"}));
+        const std::vector<std::string> expected{"foo=bar,,"};
+        EXPECT_EQ(alg.m_co, expected);
+    }
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+
+        EXPECT_TRUE(
+            alg.ParseCommandLineArguments({"--co", "foo=bar,\"foo=baz\""}));
+        const std::vector<std::string> expected{"foo=bar,\"foo=baz\""};
+        EXPECT_EQ(alg.m_co, expected);
     }
 
     {
@@ -3439,6 +3622,49 @@ TEST_F(test_gdal_algorithm, arg_band_with_input_dataset)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         EXPECT_FALSE(alg.ParseCommandLineArguments(
             {"--input=i_do_not_exist", "--band=1"}));
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddInputDatasetArg_single)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        GDALArgDatasetValue m_input{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false)
+                .SetAutoOpenDataset(false);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--input=-"}));
+        EXPECT_STREQ(alg.m_input.GetName().c_str(), "/vsistdin/");
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddInputDatasetArg_several)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::vector<GDALArgDatasetValue> m_input{};
+
+        MyAlgorithm()
+        {
+            AddInputDatasetArg(&m_input, GDAL_OF_RASTER, false)
+                .SetAutoOpenDataset(false);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--input=-"}));
+        ASSERT_EQ(alg.m_input.size(), 1);
+        EXPECT_STREQ(alg.m_input[0].GetName().c_str(), "/vsistdin/");
     }
 }
 
@@ -3899,7 +4125,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
 
     char **argNames = GDALAlgorithmGetArgNames(hAlg.get());
     ASSERT_NE(argNames, nullptr);
-    EXPECT_EQ(CSLCount(argNames), 14);
+    EXPECT_EQ(CSLCount(argNames), 12);
     CSLDestroy(argNames);
 
     EXPECT_EQ(GDALAlgorithmGetArg(hAlg.get(), "non_existing"), nullptr);
@@ -4362,6 +4588,77 @@ TEST_F(test_gdal_algorithm, register_plugin_algorithms)
     singleton.DeclareAlgorithm({"foo", "bar"},
                                []() -> std::unique_ptr<GDALAlgorithm>
                                { return nullptr; });
+}
+
+TEST_F(test_gdal_algorithm, AddNumThreadsArg)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        int m_numThreads = 0;
+        std::string m_numThreadsStr{"ALL_CPUS"};
+
+        MyAlgorithm()
+        {
+            AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        CPLConfigOptionSetter oSetter("GDAL_NUM_THREADS", "1", false);
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+        EXPECT_EQ(alg.m_numThreads, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--num-threads=1"}));
+        EXPECT_EQ(alg.m_numThreads, 1);
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(
+            alg.ParseCommandLineArguments({"--num-threads=2147483647"}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--num-threads=ALL_CPUS"}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=invalid"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=-1"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=2147483648"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
 }
 
 }  // namespace test_gdal_algorithm

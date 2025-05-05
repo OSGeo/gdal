@@ -24,15 +24,20 @@ Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`utm.tif` (with JSON output)
+   :title: Getting information on the file :file:`utmsmall.tif` (with JSON output)
 
-   .. code-block:: console
-
-       $ gdal info utm.tif
+   .. command-output:: gdal info utmsmall.tif
+      :cwd: ../../data
 
 .. example::
    :title: Getting information on the file :file:`poly.gpkg` (with text output), listing all features
 
+   .. command-output:: gdal vector info --format=text --features poly.gpkg
+      :cwd: ../../data
+
+.. example::
+   :title: Getting the list of all drivers (with JSON output)
+
    .. code-block:: console
 
-       $ gdal info --format=text --features poly.gpkg
+       $ gdal --drivers

@@ -47,7 +47,9 @@
 #include "cpl_error.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
+#include <limits>
 #include <numeric>
 #include <optional>
 
@@ -338,9 +340,9 @@ template <typename T> struct Fraction
 std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
 {
     using inttype = std::uint64_t;
-    int nMaxIter = 1000;
+    constexpr int MAX_ITER = 1000;
 
-    double sign = std::signbit(x) ? -1 : 1;
+    const double sign = std::signbit(x) ? -1 : 1;
 
     double g(std::abs(x));
     inttype a(0);
@@ -350,9 +352,14 @@ std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
 
     Fraction<std::uint64_t> ret;
 
-    for (int i = 0; i < nMaxIter; i++)
+    for (int i = 0; i < MAX_ITER; i++)
     {
-        inttype s = static_cast<inttype>(std::floor(g));
+        if (!(g >= 0 &&
+              g <= static_cast<double>(std::numeric_limits<inttype>::max())))
+        {
+            break;
+        }
+        const inttype s = static_cast<inttype>(std::floor(g));
         ret.num = a + s * c;
         ret.denom = b + s * d;
 
@@ -362,8 +369,8 @@ std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
         d = ret.denom;
         g = 1.0 / (g - static_cast<double>(s));
 
-        double approx = sign * static_cast<double>(ret.num) /
-                        static_cast<double>(ret.denom);
+        const double approx = sign * static_cast<double>(ret.num) /
+                              static_cast<double>(ret.denom);
 
         if (std::abs(approx - x) < err)
         {
@@ -374,7 +381,7 @@ std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
     CPLError(CE_Warning, CPLE_AppDefined,
              "Failed to approximate %g as a fraction with error < %g in %d "
              "iterations",
-             x, err, nMaxIter);
+             x, err, MAX_ITER);
     return std::nullopt;
 }
 }  // namespace
@@ -385,6 +392,13 @@ std::optional<Fraction<std::uint64_t>> FloatToFraction(double x, double err)
  */
 double CPLGreatestCommonDivisor(double a, double b)
 {
+    if (a == 0 || !std::isfinite(a) || b == 0 || !std::isfinite(b))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Input values must be finite non-null values");
+        return 0;
+    }
+
     if (a == b)
     {
         return a;
@@ -401,7 +415,7 @@ double CPLGreatestCommonDivisor(double a, double b)
         return a;
     }
 
-    auto approx_a = FloatToFraction(a, 1e-10);
+    const auto approx_a = FloatToFraction(a, 1e-10);
     if (!approx_a.has_value())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -409,7 +423,7 @@ double CPLGreatestCommonDivisor(double a, double b)
         return 0;
     }
 
-    auto approx_b = FloatToFraction(b, 1e-10);
+    const auto approx_b = FloatToFraction(b, 1e-10);
     if (!approx_b.has_value())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -417,24 +431,25 @@ double CPLGreatestCommonDivisor(double a, double b)
         return 0;
     }
 
-    double sign = std::signbit(a) ? -1 : 1;
+    const double sign = std::signbit(a) ? -1 : 1;
 
-    auto &frac_a = approx_a.value();
-    auto &frac_b = approx_b.value();
+    const auto &frac_a = approx_a.value();
+    const auto &frac_b = approx_b.value();
 
-    auto common_denom = std::lcm(frac_a.denom, frac_b.denom);
+    const auto common_denom = std::lcm(frac_a.denom, frac_b.denom);
 
-    auto num_a = static_cast<std::uint64_t>(
+    const auto num_a = static_cast<std::uint64_t>(
         frac_a.num * std::round(common_denom / frac_a.denom));
-    auto num_b = static_cast<std::uint64_t>(
+    const auto num_b = static_cast<std::uint64_t>(
         frac_b.num * std::round(common_denom / frac_b.denom));
 
-    auto common_num = std::gcd(num_a, num_b);
+    const auto common_num = std::gcd(num_a, num_b);
 
-    auto common = sign * static_cast<double>(common_num) /
-                  static_cast<double>(common_denom);
+    // coverity[divide_by_zero]
+    const auto common = sign * static_cast<double>(common_num) /
+                        static_cast<double>(common_denom);
 
-    auto disaggregation_factor = std::max(a / common, b / common);
+    const auto disaggregation_factor = std::max(a / common, b / common);
     if (disaggregation_factor > 10000)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

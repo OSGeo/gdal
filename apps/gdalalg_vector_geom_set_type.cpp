@@ -75,14 +75,9 @@ GDALVectorGeomSetTypeAlgorithm::GDALVectorGeomSetTypeAlgorithm(
            &m_opts.m_curve)
         .SetMutualExclusionGroup("linear-curve");
 
-    AddArg("xy", 0, _("Force geometries to XY dimension"), &m_opts.m_xy)
-        .SetMutualExclusionGroup("xy");
-    AddArg("xyz", 0, _("Force geometries to XYZ dimension"), &m_opts.m_xyz)
-        .SetMutualExclusionGroup("xy");
-    AddArg("xym", 0, _("Force geometries to XYM dimension"), &m_opts.m_xym)
-        .SetMutualExclusionGroup("xy");
-    AddArg("xyzm", 0, _("Force geometries to XYZM dimension"), &m_opts.m_xyzm)
-        .SetMutualExclusionGroup("xy");
+    AddArg("dim", 0, _("Force geometries to the specified dimension"),
+           &m_opts.m_dim)
+        .SetChoices("XY", "XYZ", "XYM", "XYZM");
 
     AddArg("skip", 0,
            _("Skip feature when change of feature geometry type failed"),
@@ -214,19 +209,19 @@ GDALVectorGeomSetTypeAlgorithmLayer::ConvertType(OGRwkbGeometryType eType) const
         eRetType = OGR_GT_GetCurve(eRetType);
     }
 
-    if (m_opts.m_xy)
+    if (EQUAL(m_opts.m_dim.c_str(), "XY"))
     {
         eRetType = OGR_GT_Flatten(eRetType);
     }
-    else if (m_opts.m_xyz)
+    else if (EQUAL(m_opts.m_dim.c_str(), "XYZ"))
     {
         eRetType = OGR_GT_SetZ(OGR_GT_Flatten(eRetType));
     }
-    else if (m_opts.m_xym)
+    else if (EQUAL(m_opts.m_dim.c_str(), "XYM"))
     {
         eRetType = OGR_GT_SetM(OGR_GT_Flatten(eRetType));
     }
-    else if (m_opts.m_xyzm)
+    else if (EQUAL(m_opts.m_dim.c_str(), "XYZM"))
     {
         eRetType = OGR_GT_SetZ(OGR_GT_SetM(OGR_GT_Flatten(eRetType)));
     }
@@ -298,12 +293,11 @@ bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
     if (!m_opts.m_type.empty())
     {
         if (m_opts.m_multi || m_opts.m_single || m_opts.m_linear ||
-            m_opts.m_curve || m_opts.m_xy || m_opts.m_xyz || m_opts.m_xym ||
-            m_opts.m_xyzm)
+            m_opts.m_curve || !m_opts.m_dim.empty())
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "--geometry-type cannot be used with any of "
-                        "--multi/single/linear/multi/xy/xyz/xym/xyzm");
+                        "--multi/single/linear/multi/dim");
             return false;
         }
 

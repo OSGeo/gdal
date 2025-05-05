@@ -25,3 +25,11 @@ def test_gdalalg_raster_run_error():
     info = get_raster_alg()
     with pytest.raises(Exception, match="method should not be called directly"):
         info.Run()
+
+
+def test_gdalalg_raster_drivers():
+
+    with gdal.Run(["raster"], drivers=True) as alg:
+        j = alg.Output()
+        assert "GTiff" in [x["short_name"] for x in j]
+        assert "ESRI Shapefile" not in [x["short_name"] for x in j]

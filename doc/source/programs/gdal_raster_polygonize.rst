@@ -72,12 +72,13 @@ Standard options
 
     The name of the field to create (defaults to "DN").
 
-.. option:: --connectedness 4|8
+.. option:: -c, --connect-diagonal-pixels
 
-    Whether to use 4-connectedness or 8-connectedness. With 4-connectedness,
-    pixels will be included in the same output feature if they share a side.
-    With 8-connectedness, pixels will also be included in the same output
-    feature if they share a corner. Default is 4.
+    Consider diagonal pixels (pixels at the corners) as connected.
+    The default behavior is to only consider pixels that are touching the edges
+    as connected, which is the same as 4-connectivity. When this option is
+    selected, the algorithm will also consider pixels at the corners as connected,
+    which is the same as 8-connectivity.
 
 
 Advanced options

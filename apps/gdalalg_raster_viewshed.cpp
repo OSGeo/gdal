@@ -21,6 +21,8 @@
 #include "viewshed/cumulative.h"
 #include "viewshed/viewshed.h"
 
+#include <algorithm>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -95,7 +97,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
         .SetDefault(m_outOfRangeVal)
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
-    AddArg("dstnodata", 0,
+    AddArg("dst-nodata", 0,
            _("The value to be set for the cells in the output raster that have "
              "no data."),
            &m_dstNoData)
@@ -105,11 +107,9 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
            &m_observerSpacing)
         .SetDefault(m_observerSpacing)
         .SetMinValueIncluded(1);
-    AddArg("num-threads", 'j', _("Number of computation threads to use"),
-           &m_numThreads)
-        .SetDefault(m_numThreads)
-        .SetMinValueIncluded(1)
-        .SetMaxValueIncluded(255);
+
+    m_numThreadsStr = std::to_string(m_numThreads);
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 
 /************************************************************************/
@@ -119,26 +119,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
 bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "gdal raster viewshed does not support outputting to an "
-                    "already opened output dataset");
-        return false;
-    }
-
-    VSIStatBufL sStat;
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        (VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0 ||
-         std::unique_ptr<GDALDataset>(
-             GDALDataset::Open(m_outputDataset.GetName().c_str()))))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "File '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    m_outputDataset.GetName().c_str());
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     gdal::viewshed::Options opts;
 
@@ -176,7 +157,7 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         opts.outputMode = gdal::viewshed::OutputMode::Cumulative;
 
     opts.observerSpacing = m_observerSpacing;
-    opts.numJobs = static_cast<uint8_t>(m_numThreads);
+    opts.numJobs = static_cast<uint8_t>(std::clamp(m_numThreads, 0, 255));
 
     opts.outputFilename = m_outputDataset.GetName();
     opts.outputFormat = m_format;

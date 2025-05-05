@@ -520,8 +520,8 @@ def test_gdalalg_vector_rasterize_add_option(tmp_vsimem):
         )
         assert last_pct[0] == 1.0
 
-        target_ds = gdal.Open(output_tif)
-        checksum = target_ds.GetRasterBand(2).Checksum()
+        with gdal.Open(output_tif) as target_ds:
+            checksum = target_ds.GetRasterBand(2).Checksum()
 
         assert checksum == 121
 

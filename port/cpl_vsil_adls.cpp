@@ -186,7 +186,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return "ADLS";
     }
 
-    int Rename(const char *oldpath, const char *newpath) override;
+    int Rename(const char *oldpath, const char *newpath, GDALProgressFunc,
+               void *) override;
     int Unlink(const char *pszFilename) override;
     int Mkdir(const char *, long) override;
     int Rmdir(const char *) override;
@@ -1282,7 +1283,8 @@ IVSIS3LikeHandleHelper *VSIADLSFSHandler::CreateHandleHelper(const char *pszURI,
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
+int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath,
+                             GDALProgressFunc, void *)
 {
     if (!STARTS_WITH_CI(oldpath, GetFSPrefix().c_str()))
         return -1;

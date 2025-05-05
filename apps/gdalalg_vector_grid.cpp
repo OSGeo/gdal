@@ -150,13 +150,7 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal vector grid does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
 
@@ -306,43 +300,6 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     GDALGridOptionsSetProgress(psOptions.get(), pfnProgress, pProgressData);
-
-    VSIStatBufL sStat;
-    std::unique_ptr<GDALDataset> poDstDS;
-    const bool fileExists =
-        VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0;
-
-    {
-        CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-        poDstDS.reset(GDALDataset::Open(m_outputDataset.GetName().c_str(),
-                                        GDAL_OF_RASTER | GDAL_OF_UPDATE,
-                                        nullptr, nullptr, nullptr));
-    }
-
-    if (poDstDS)
-    {
-        if (!m_overwrite)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Dataset '%s' already exists. Specify the --overwrite "
-                     "option to overwrite it",
-                     m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else if (fileExists)
-        {
-            poDstDS.reset();
-
-            // Delete the existing file
-            if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to delete existing dataset '%s'.",
-                         m_outputDataset.GetName().c_str());
-                return false;
-            }
-        }
-    }
 
     auto poRetDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALGrid(m_outputDataset.GetName().c_str(),

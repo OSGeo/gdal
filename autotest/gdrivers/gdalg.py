@@ -237,6 +237,22 @@ def test_gdalg_vector_filter_standalone_write_to_file_not_allowed():
         )
 
 
+def test_gdalg_lower_version(tmp_vsimem):
+    with pytest.raises(
+        Exception,
+        match="The failure might be due to the .gdalg.json file having been created with GDAL VERSION_NUM=99999999 which is newer than current",
+    ):
+        gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal this is an error",
+                    "gdal_version": "99999999",
+                }
+            )
+        )
+
+
 def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
@@ -264,7 +280,10 @@ def test_gdalg_generate_from_raster_mosaic(tmp_vsimem):
     mosaic = gdal.GetGlobalAlgorithmRegistry()["raster"]["mosaic"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
     assert mosaic.ParseRunAndFinalize(["data/byte.tif", out_filename])
-    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+    j = json.loads(gdal.VSIFile(out_filename, "rb").read())
+    assert "gdal_version" in j
+    del j["gdal_version"]
+    assert j == {
         "command_line": "gdal raster mosaic --input data/byte.tif --output-format stream --output streamed_dataset",
         "type": "gdal_streamed_alg",
     }
@@ -276,7 +295,10 @@ def test_gdalg_generate_from_raster_reproject(tmp_vsimem):
     assert reproject.ParseRunAndFinalize(
         ["data/byte.tif", out_filename, "--dst-crs=EPSG:4326", "--overwrite"]
     )
-    assert json.loads(gdal.VSIFile(out_filename, "rb").read()) == {
+    j = json.loads(gdal.VSIFile(out_filename, "rb").read())
+    assert "gdal_version" in j
+    del j["gdal_version"]
+    assert j == {
         "command_line": "gdal raster reproject --input data/byte.tif --dst-crs EPSG:4326 --output-format stream --output streamed_dataset",
         "type": "gdal_streamed_alg",
     }

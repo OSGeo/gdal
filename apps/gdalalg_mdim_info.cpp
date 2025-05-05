@@ -75,9 +75,10 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
                            _("Option passed to GDALGroup::GetMDArrayNames() to "
                              "filter reported arrays."),
                            &m_arrayOptions)
-                        .SetMetaVar("<KEY>=<VALUE>");
+                        .SetMetaVar("<KEY>=<VALUE>")
+                        .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
 
         arg.SetAutoCompleteFunction(
             [this](const std::string &currentValue)

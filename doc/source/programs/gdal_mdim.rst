@@ -39,3 +39,10 @@ Examples
    .. code-block:: console
 
        $ gdal mdim convert temperatures.nc temperatures.zarr
+
+.. example::
+   :title: Getting the list of multidimensional drivers (with JSON output)
+
+   .. code-block:: console
+
+       $ gdal mdim --drivers

@@ -311,6 +311,9 @@ constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
 /** Name of the argument for overwrite. */
 constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 
+/** Name of the argument for append. */
+constexpr const char *GDAL_ARG_NAME_APPEND = "append";
+
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
 
@@ -373,6 +376,15 @@ class CPL_DLL GDALArgDatasetValue final
      * guaranteed to exceed the one of this instance.
      */
     GDALDataset *GetDatasetRef()
+    {
+        return m_poDS;
+    }
+
+    /** Get a GDALDataset* instance (may be null). This does not modify the
+     * reference counter, hence the lifetime of the returned object is not
+     * guaranteed to exceed the one of this instance.
+     */
+    const GDALDataset *GetDatasetRef() const
     {
         return m_poDS;
     }
@@ -692,11 +704,23 @@ class CPL_DLL GDALAlgorithmArgDecl final
     /** Declares the allowed values (as strings) for the argument.
      * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
      */
-    template <typename T, typename... U>
+    template <
+        typename T, typename... U,
+        typename std::enable_if<!std::is_same_v<T, std::vector<std::string> &>,
+                                bool>::type = true>
     GDALAlgorithmArgDecl &SetChoices(T &&first, U &&...rest)
     {
         m_choices.push_back(std::forward<T>(first));
         SetChoices(std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Declares the allowed values (as strings) for the argument.
+     * Only honored for GAAT_STRING and GAAT_STRING_LIST types.
+     */
+    GDALAlgorithmArgDecl &SetChoices(const std::vector<std::string> &choices)
+    {
+        m_choices = choices;
         return *this;
     }
 
@@ -1831,7 +1855,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     bool RunAllActions();
     void RunActions();
     bool RunValidationActions();
-    bool ValidateChoice(const std::string &value) const;
+    std::string ValidateChoice(const std::string &value) const;
     bool ValidateIntRange(int val) const;
     bool ValidateRealRange(double val) const;
 };
@@ -1995,10 +2019,21 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     }
 
     /** Alias for GDALAlgorithmArgDecl::SetChoices() */
-    template <typename T, typename... U>
+    template <
+        typename T, typename... U,
+        typename std::enable_if<!std::is_same_v<T, std::vector<std::string> &>,
+                                bool>::type = true>
     GDALInConstructionAlgorithmArg &SetChoices(T &&first, U &&...rest)
     {
         m_decl.SetChoices(std::forward<T>(first), std::forward<U>(rest)...);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetChoices() */
+    GDALInConstructionAlgorithmArg &
+    SetChoices(const std::vector<std::string> &choices)
+    {
+        m_decl.SetChoices(choices);
         return *this;
     }
 
@@ -2176,8 +2211,12 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
      * CRS definition.
      * @param noneAllowed Set to true to mean that "null" or "none" are allowed
      * to mean to unset CRS.
+     * @param specialValues List of other allowed special values.
      */
-    GDALInConstructionAlgorithmArg &SetIsCRSArg(bool noneAllowed = false);
+    GDALInConstructionAlgorithmArg &
+    SetIsCRSArg(bool noneAllowed = false,
+                const std::vector<std::string> &specialValues =
+                    std::vector<std::string>());
 
   private:
     GDALAlgorithm *const m_owner;
@@ -2797,6 +2836,14 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddActiveLayerArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** A number of thread argument. The final value is stored in *pValue.
+     * pStrValue must be provided as temporary storage, and its initial value
+     * (if not empty) is used as the SetDefault() value.
+     */
+    GDALInConstructionAlgorithmArg &
+    AddNumThreadsArg(int *pValue, std::string *pStrValue,
+                     const char *helpMessage = nullptr);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
@@ -2817,7 +2864,7 @@ class CPL_DLL GDALAlgorithmRegistry
                                       std::vector<std::string> &oRet);
 
     /** Validation function to use for key=value type of arguments. */
-    bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
+    bool ParseAndValidateKeyValue(GDALAlgorithmArg &arg);
 
     /** Return whether output-format or output arguments express GDALG output */
     bool IsGDALGOutput() const;
@@ -2886,7 +2933,6 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_helpDocRequested = false;
 
     bool m_JSONUsageRequested = false;
-    bool m_dummyBoolean = false;  // Used for --version
     bool m_parseForAutoCompletion = false;
     std::string m_referencePath{};
     std::vector<std::string> m_dummyConfigOptions{};

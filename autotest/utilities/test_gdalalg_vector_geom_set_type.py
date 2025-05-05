@@ -67,9 +67,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_invalid():
         alg.Run()
 
 
-@pytest.mark.parametrize(
-    "other_option", ["multi", "single", "linear", "curve", "xy", "xyz", "xym", "xyzm"]
-)
+@pytest.mark.parametrize("other_option", ["multi", "single", "linear", "curve", "dim"])
 def test_gdalalg_vector_geom_set_type_geometry_type_exclusive_with_other_option(
     other_option,
 ):
@@ -81,7 +79,7 @@ def test_gdalalg_vector_geom_set_type_geometry_type_exclusive_with_other_option(
     alg["output"] = ""
     alg["output-format"] = "stream"
     alg["geometry-type"] = "POINT"
-    alg[other_option] = True
+    alg[other_option] = "XY" if other_option == "dim" else True
 
     with pytest.raises(Exception, match="cannot be used with any of"):
         alg.Run()
@@ -203,11 +201,11 @@ def test_gdalalg_vector_geom_set_type_geometry_type_feature_only():
 @pytest.mark.parametrize(
     "modifier,in_wkt,out_wkt",
     [
-        ("xy", "POINT Z (1 2 3)", "POINT (1 2)"),
-        ("xyz", "POINT (1 2)", "POINT Z (1 2 0)"),
-        ("xym", "POINT (1 2 3 4)", "POINT M (1 2 4)"),
-        ("xyzm", "POINT (1 2)", "POINT ZM (1 2 0 0)"),
-        ("xyzm", "POINT ZM (1 2 3 4)", "POINT ZM (1 2 3 4)"),
+        (("dim", "xy"), "POINT Z (1 2 3)", "POINT (1 2)"),
+        (("dim", "xyz"), "POINT (1 2)", "POINT Z (1 2 0)"),
+        (("dim", "xym"), "POINT (1 2 3 4)", "POINT M (1 2 4)"),
+        (("dim", "xyzm"), "POINT (1 2)", "POINT ZM (1 2 0 0)"),
+        (("dim", "xyzm"), "POINT ZM (1 2 3 4)", "POINT ZM (1 2 3 4)"),
         ("multi", "POINT Z (1 2 3)", "MULTIPOINT Z ((1 2 3))"),
         ("single", "MULTIPOINT Z ((1 2 3))", "POINT Z (1 2 3)"),
         ("single", "MULTILINESTRING ((1 2,3 4))", "LINESTRING (1 2,3 4)"),
@@ -239,7 +237,11 @@ def test_gdalalg_vector_geom_set_type_other_modifiers(modifier, in_wkt, out_wkt)
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "stream"
-    alg[modifier] = True
+
+    if type(modifier) is str:
+        alg[modifier] = True
+    else:
+        alg[modifier[0]] = modifier[1]
 
     assert alg.Run()
 

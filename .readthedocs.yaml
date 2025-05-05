@@ -22,6 +22,7 @@ build:
     - doxygen
     - g++
     - libproj-dev
+    - libsqlite3-dev
     - make
     - openjdk-11-jdk-headless
     - patchelf

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "gdal raster fillnodata" standalone command
+ * Purpose:  "gdal raster fill-nodata" standalone command
  * Author:   Alessandro Pasotti <elpaso at itopen dot it>
  *
  ******************************************************************************
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_FILLNODATA_INCLUDED
-#define GDALALG_RASTER_FILLNODATA_INCLUDED
+#ifndef GDALALG_RASTER_FILL_NODATA_INCLUDED
+#define GDALALG_RASTER_FILL_NODATA_INCLUDED
 
 #include "gdalalg_raster_pipeline.h"
 
@@ -25,11 +25,11 @@ class GDALRasterFillNodataAlgorithm /* non final */
     : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "fillnodata";
+    static constexpr const char *NAME = "fill-nodata";
     static constexpr const char *DESCRIPTION =
         "Fill nodata raster regions by interpolation from edges.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_raster_fillnodata.html";
+        "/programs/gdal_raster_fill_nodata.html";
 
     explicit GDALRasterFillNodataAlgorithm() noexcept;
 

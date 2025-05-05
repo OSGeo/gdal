@@ -167,7 +167,7 @@ Standard options
 Advanced options
 ++++++++++++++++
 
-.. option:: --srcnodata <SRCNODATA>
+.. option:: --src-nodata <SRCNODATA>
 
     Set nodata masking values for input bands (different values can be supplied
     for each band). If more than one value is supplied all values should be quoted
@@ -180,11 +180,11 @@ Advanced options
     warping option (see :cpp:member:`GDALWarpOptions::papszWarpOptions`) to be
     set to ``YES``, if it is not explicitly set.
 
-    If ``--srcnodata`` is not explicitly set, but the source dataset has nodata values,
+    If ``--src-nodata`` is not explicitly set, but the source dataset has nodata values,
     they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
     by default.
 
-.. option:: --dstnodata <DSTNODATA>
+.. option:: --dst-nodata <DSTNODATA>
 
     Set nodata values for output bands (different values can be supplied for each band).
     If more than one value is supplied all values should be quoted to keep them together
@@ -228,7 +228,7 @@ Nodata / source validity mask handling
 Invalid values in source pixels, either identified through a nodata value
 metadata set on the source band, a mask band, an alpha band (for an alpha band,
 a value of 0 means invalid. Other values are used for blending values) or the use of
-:option:`--srcnodata` will not be used in interpolation.
+:option:`--src-nodata` will not be used in interpolation.
 The details of how it is taken into account depends on the resampling kernel:
 
 - for nearest resampling, for each target pixel, the coordinate of its center

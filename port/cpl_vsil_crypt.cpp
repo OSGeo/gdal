@@ -1471,7 +1471,8 @@ class VSICryptFilesystemHandler final : public VSIFilesystemHandler
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
-    int Rename(const char *oldpath, const char *newpath) override;
+    int Rename(const char *oldpath, const char *newpath, GDALProgressFunc,
+               void *) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 };
 
@@ -1847,7 +1848,8 @@ int VSICryptFilesystemHandler::Unlink(const char *pszFilename)
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSICryptFilesystemHandler::Rename(const char *oldpath, const char *newpath)
+int VSICryptFilesystemHandler::Rename(const char *oldpath, const char *newpath,
+                                      GDALProgressFunc, void *)
 {
     CPLString osNewPath;
     if (strncmp(newpath, VSICRYPT_PREFIX, strlen(VSICRYPT_PREFIX)) == 0)

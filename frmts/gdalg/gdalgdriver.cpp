@@ -194,6 +194,20 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         return nullptr;
     }
 
+    const auto CheckVersion = [&oDoc]()
+    {
+        const std::string osVersion = oDoc.GetRoot().GetString("gdal_version");
+        if (!osVersion.empty() &&
+            atoi(GDALVersionInfo("VERSION_NUM")) < atoi(osVersion.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The failure might be due to the .gdalg.json file having "
+                     "been created with GDAL VERSION_NUM=%s which is newer "
+                     "than current GDAL VERSION_NUM=%s",
+                     osVersion.c_str(), GDALVersionInfo("VERSION_NUM"));
+        }
+    };
+
     const CPLStringList aosArgs(CSLTokenizeString(osCommandLine.c_str()));
 
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
@@ -214,6 +228,7 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         args.push_back(aosArgs[i]);
     if (!alg->ParseCommandLineArguments(args))
     {
+        CheckVersion();
         return nullptr;
     }
     if (!alg->GetActualAlgorithm().SupportsStreamedOutput())
@@ -226,6 +241,7 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
 
     if (!alg->Run(nullptr, nullptr))
     {
+        CheckVersion();
         return nullptr;
     }
 

@@ -5811,6 +5811,35 @@ TEST_F(test_cpl, CPLGreatestCommonDivisor)
     // hardcoded epsilons and it may be appropriate to change
     // the expected results.
 
+    EXPECT_EQ(CPLGreatestCommonDivisor(0.0, 1.0), 0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(std::numeric_limits<double>::quiet_NaN(), 1.0),
+        0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(std::numeric_limits<double>::infinity(), 1.0),
+        0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(-std::numeric_limits<double>::infinity(), 1.0),
+        0.0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(1.0, 0.0), 0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(1.0, std::numeric_limits<double>::quiet_NaN()),
+        0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(1.0, std::numeric_limits<double>::infinity()),
+        0.0);
+    EXPECT_EQ(
+        CPLGreatestCommonDivisor(1.0, -std::numeric_limits<double>::infinity()),
+        0.0);
+
+    EXPECT_EQ(CPLGreatestCommonDivisor(std::numeric_limits<double>::min(),
+                                       std::numeric_limits<double>::max()),
+              0.0);
+
+    EXPECT_EQ(CPLGreatestCommonDivisor(-2.0, 4.0), -2.0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(-2.0, -4.0), -2.0);
+    EXPECT_EQ(CPLGreatestCommonDivisor(2.0, -4.0), 2.0);
+
     EXPECT_EQ(CPLGreatestCommonDivisor(3.0, 5.0), 1.0);
     EXPECT_EQ(CPLGreatestCommonDivisor(3.0 / 3600, 5.0 / 3600), 1.0 / 3600);
     EXPECT_EQ(CPLGreatestCommonDivisor(5.0 / 3600, 2.5 / 3600), 2.5 / 3600);

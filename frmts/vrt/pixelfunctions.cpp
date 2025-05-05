@@ -15,6 +15,7 @@
 #include "gdal.h"
 #include "vrtdataset.h"
 #include "vrtexpression.h"
+#include "vrtreclassifier.h"
 
 #include <limits>
 
@@ -1731,6 +1732,88 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ExprPixelFunc
 
+static const char pszReclassifyPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='mapping' "
+    "             description='Lookup table for mapping, in format "
+    "from=to,from=to' "
+    "             type='string'></Argument>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
+                                  int nXSize, int nYSize, GDALDataType eSrcType,
+                                  GDALDataType eBufType, int nPixelSpace,
+                                  int nLineSpace, CSLConstList papszArgs)
+{
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "reclassify cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    if (nSources != 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "reclassify only be applied to a single source at a time");
+        return CE_Failure;
+    }
+    std::optional<double> noDataValue{};
+
+    const char *pszNoData = CSLFetchNameValue(papszArgs, "NoData");
+    if (pszNoData != nullptr)
+    {
+        noDataValue = CPLAtof(pszNoData);
+    }
+
+    const char *pszMappings = CSLFetchNameValue(papszArgs, "mapping");
+    if (pszMappings == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "reclassify must be called with 'mapping' argument");
+        return CE_Failure;
+    }
+
+    gdal::Reclassifier oReclassifier;
+    if (auto eErr = oReclassifier.Init(pszMappings, noDataValue, eBufType);
+        eErr != CE_None)
+    {
+        return eErr;
+    }
+
+    std::unique_ptr<double, VSIFreeReleaser> padfResults(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double))));
+    if (!padfResults)
+        return CE_Failure;
+
+    size_t ii = 0;
+    bool bSuccess = false;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            double srcVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            padfResults.get()[iCol] =
+                oReclassifier.Reclassify(srcVal, bSuccess);
+            if (!bSuccess)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Encountered value %g with no specified mapping",
+                         srcVal);
+                return CE_Failure;
+            }
+        }
+
+        GDALCopyWords(padfResults.get(), GDT_Float64, sizeof(double),
+                      static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine,
+                      eBufType, nPixelSpace, nXSize);
+    }
+
+    return CE_None;
+}  // ReclassifyPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1798,6 +1881,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
  * - "interpolate_exp": interpolate values between two raster bands using
  *                      exponential interpolation
  * - "scale": Apply the RasterBand metadata values of "offset" and "scale"
+ * - "reclassify": Reclassify values matching ranges in a table
  * - "nan": Convert incoming NoData values to IEEE 754 nan
  *
  * @see GDALAddDerivedBandPixelFunc
@@ -1854,5 +1938,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("expression", ExprPixelFunc,
                                         pszExprPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
+                                        pszReclassifyPixelFuncMetadata);
     return CE_None;
 }

@@ -42,8 +42,8 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     const char *exclusionGroup = "overwrite-append";
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup(exclusionGroup);
-    AddArg("append", 0, _("Append as a subdataset to existing output"),
-           &m_append)
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_append)
         .SetDefault(false)
         .SetMutualExclusionGroup(exclusionGroup);
     AddArg("size", 0, _("Output size in pixels"), &m_size)
@@ -68,9 +68,10 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
 
     {
         auto &arg = AddArg("metadata", 0, _("Add metadata item"), &m_metadata)
-                        .SetMetaVar("<KEY>=<VALUE>");
+                        .SetMetaVar("<KEY>=<VALUE>")
+                        .SetPackedValuesAllowed(false);
         arg.AddValidationAction([this, &arg]()
-                                { return ValidateKeyValue(arg); });
+                                { return ParseAndValidateKeyValue(arg); });
         arg.AddHiddenAlias("mo");
     }
     AddArg("copy-metadata", 0, _("Copy metadata from input dataset"),
@@ -86,33 +87,7 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
 bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
                                         void * /*pProgressData */)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster create does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
-
-    VSIStatBufL sStat;
-    if (!m_append && !m_outputDataset.GetName().empty() &&
-        (VSIStatL(m_outputDataset.GetName().c_str(), &sStat) == 0 ||
-         std::unique_ptr<GDALDataset>(
-             GDALDataset::Open(m_outputDataset.GetName().c_str()))))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "File '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it, or --append to append to it.",
-                        m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (m_outputFormat.empty())
     {

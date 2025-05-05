@@ -170,22 +170,22 @@ template <typename T, std::size_t N> class VectorX
 
     self_type operator+(T arg) const
     {
-        return operatorImpl(arg, std::plus());
+        return operatorImpl<std::plus<T>>(arg);
     }
 
     self_type &operator+=(T arg)
     {
-        return operatorEqImpl(arg, std::plus());
+        return operatorEqImpl<std::plus<T>>(arg);
     }
 
     self_type operator-(T arg) const
     {
-        return operatorImpl(arg, std::minus());
+        return operatorImpl<std::minus<T>>(arg);
     }
 
     self_type &operator-=(T arg)
     {
-        return operatorEqImpl(arg, std::minus());
+        return operatorEqImpl<std::minus<T>>(arg);
     }
 
     self_type operator-() const
@@ -203,7 +203,7 @@ template <typename T, std::size_t N> class VectorX
 
     self_type operator*(T arg) const
     {
-        return operatorImpl(arg, std::multiplies());
+        return operatorImpl<std::multiplies<T>>(arg);
     }
 
     template <typename U> self_type operator/(U arg) const
@@ -216,17 +216,17 @@ template <typename T, std::size_t N> class VectorX
 
     self_type operator/(T arg) const
     {
-        return operatorImpl(arg, std::divides());
+        return operatorImpl<std::divides<T>>(arg);
     }
 
     self_type operator+(const self_type &arg) const
     {
-        return operatorImpl(arg, std::plus());
+        return operatorImpl<std::plus<T>>(arg);
     }
 
     self_type operator-(const self_type &arg) const
     {
-        return operatorImpl(arg, std::minus());
+        return operatorImpl<std::minus<T>>(arg);
     }
 
     friend VectorX<T, N> operator+(T t, const VectorX<T, N> &arg)
@@ -248,32 +248,35 @@ template <typename T, std::size_t N> class VectorX
   private:
     std::array<T, N> _values{};
 
-    template <class Op> self_type operatorImpl(T arg, Op op) const
+    template <class Op> self_type operatorImpl(T arg) const
     {
         self_type res;
+        auto op = Op();
         for (size_t i = 0; i < N; i++)
             res[i] = op(_values[i], arg);
         return res;
     }
 
-    template <class Op> self_type &operatorEqImpl(T arg, Op op)
+    template <class Op> self_type &operatorEqImpl(T arg)
     {
+        auto op = Op();
         for (size_t i = 0; i < N; i++)
             _values[i] = op(_values[i], arg);
         return *this;
     }
 
-    template <class Op>
-    self_type operatorImpl(const self_type &arg, Op op) const
+    template <class Op> self_type operatorImpl(const self_type &arg) const
     {
         self_type res;
+        auto op = Op();
         for (size_t i = 0; i < N; i++)
             res[i] = op(_values[i], arg[i]);
         return res;
     }
 
-    template <class Op> self_type &operatorEqImpl(const self_type &arg, Op op)
+    template <class Op> self_type &operatorEqImpl(const self_type &arg)
     {
+        auto op = Op();
         for (size_t i = 0; i < N; i++)
             _values[i] = op(_values[i], arg[i]);
         return *this;

@@ -35,7 +35,7 @@ class GDALRasterResizeAlgorithm /* non final */
   private:
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::vector<int> m_size{};
+    std::vector<std::string> m_size{};
     std::string m_resampling{};
 };
 
