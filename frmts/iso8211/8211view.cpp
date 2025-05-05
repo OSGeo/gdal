@@ -15,9 +15,9 @@
 
 #include <algorithm>
 
-static void ViewRecordField(DDFField *poField);
-static int ViewSubfield(DDFSubfieldDefn *poSFDefn, const char *pachFieldData,
-                        int nBytesRemaining);
+static void ViewRecordField(const DDFField *poField);
+static int ViewSubfield(const DDFSubfieldDefn *poSFDefn,
+                        const char *pachFieldData, int nBytesRemaining);
 
 /* **********************************************************************/
 /*                                main()                                */
@@ -79,7 +79,7 @@ int main(int nArgc, char **papszArgv)
         /* ------------------------------------------------------------ */
         for (int iField = 0; iField < poRecord->GetFieldCount(); iField++)
         {
-            DDFField *poField = poRecord->GetField(iField);
+            const DDFField *poField = poRecord->GetField(iField);
 
             ViewRecordField(poField);
         }
@@ -92,10 +92,10 @@ int main(int nArgc, char **papszArgv)
 /*      Dump the contents of a field instance in a record.              */
 /* **********************************************************************/
 
-static void ViewRecordField(DDFField *poField)
+static void ViewRecordField(const DDFField *poField)
 
 {
-    DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
+    const DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
 
     // Report general information about the field.
     printf("    Field %s: %s\n", poFieldDefn->GetName(),
@@ -121,7 +121,7 @@ static void ViewRecordField(DDFField *poField)
         /* -------------------------------------------------------- */
         for (int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++)
         {
-            DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield(iSF);
+            const DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield(iSF);
             int nBytesConsumed =
                 ViewSubfield(poSFDefn, pachFieldData, nBytesRemaining);
 
@@ -135,8 +135,8 @@ static void ViewRecordField(DDFField *poField)
 /*                            ViewSubfield()                            */
 /* **********************************************************************/
 
-static int ViewSubfield(DDFSubfieldDefn *poSFDefn, const char *pachFieldData,
-                        int nBytesRemaining)
+static int ViewSubfield(const DDFSubfieldDefn *poSFDefn,
+                        const char *pachFieldData, int nBytesRemaining)
 
 {
     int nBytesConsumed = 0;
