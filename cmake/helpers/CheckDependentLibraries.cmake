@@ -440,7 +440,7 @@ gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 include(CheckDependentLibrariesTileDB)
 
-gdal_check_package(ExprTk "Enable C++ Mathematical Expression Tooklit Library (ExprTk) for VRT expressions" DISABLED_BY_DEFAULT)
+gdal_check_package(ExprTk "Enable C++ Mathematical Expression Tooklit Library (ExprTk) for VRT expressions" CAN_DISABLE)
 gdal_check_package(muparser "Enable muparser library for VRT expressions" RECOMMENDED CAN_DISABLE)
 
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
