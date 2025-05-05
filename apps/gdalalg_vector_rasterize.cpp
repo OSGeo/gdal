@@ -54,7 +54,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            _("Indicates that a burn value should be extracted from the Z"
              " values of the feature"),
            &m_3d);
-    AddArg("add", 0, _("Add to existing raster"), &m_add).SetDefault(false);
+    auto &addArg =
+        AddArg("add", 0, _("Add to existing raster"), &m_add).SetDefault(false);
     AddArg("layer-name", 'l', _("Layer name"), &m_layerName)
         .AddAlias("layer")
         .SetMutualExclusionGroup("layer-name-or-sql");
@@ -104,8 +105,14 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            &m_optimization)
         .SetChoices("AUTO", "RASTER", "VECTOR")
         .SetDefault("AUTO");
-    AddUpdateArg(&m_update);
+    auto &updateArg = AddUpdateArg(&m_update);
     AddOverwriteArg(&m_overwrite);
+    addArg.AddValidationAction(
+        [&updateArg]()
+        {
+            updateArg.Set(true);
+            return true;
+        });
 }
 
 /************************************************************************/
@@ -275,89 +282,32 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_optimization.c_str());
     }
 
+    bool bOK = false;
     std::unique_ptr<GDALRasterizeOptions, decltype(&GDALRasterizeOptionsFree)>
         psOptions{GDALRasterizeOptionsNew(aosOptions.List(), nullptr),
                   GDALRasterizeOptionsFree};
-
-    if (!psOptions)
+    if (psOptions)
     {
-        return false;
-    }
+        GDALRasterizeOptionsSetProgress(psOptions.get(), pfnProgress,
+                                        pProgressData);
 
-    GDALRasterizeOptionsSetProgress(psOptions.get(), pfnProgress,
-                                    pProgressData);
+        GDALDatasetH hDstDS =
+            GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
 
-    GDALDatasetH hDstDS =
-        GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
+        GDALDatasetH hSrcDS =
+            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALRasterize(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
+                          psOptions.get(), nullptr));
+        bOK = poRetDS != nullptr;
 
-    const bool dstDSWasNull{!hDstDS};
-
-    if (!hDstDS && !m_outputDataset.GetName().empty())
-    {
-        VSIStatBufL sStat;
-        bool fileExists{VSIStatL(m_outputDataset.GetName().c_str(), &sStat) ==
-                        0};
-
+        if (!hDstDS)
         {
-            CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-            hDstDS = GDALOpenEx(m_outputDataset.GetName().c_str(),
-                                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR |
-                                    GDAL_OF_UPDATE,
-                                nullptr, nullptr, nullptr);
-            CPLErrorReset();
-        }
-
-        if (hDstDS)
-        {
-            if (!m_overwrite && !m_update)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Dataset '%s' already exists. Specify the --overwrite "
-                         "option to overwrite it or the --update option to "
-                         "update it.",
-                         m_outputDataset.GetName().c_str());
-                GDALClose(hDstDS);
-                return false;
-            }
-            else if (fileExists && m_overwrite)
-            {
-                // Delete the existing file
-                GDALClose(hDstDS);
-                hDstDS = nullptr;
-                if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Failed to delete existing dataset '%s'.",
-                             m_outputDataset.GetName().c_str());
-                    return false;
-                }
-            }
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
         }
     }
 
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALRasterize(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
-                      psOptions.get(), nullptr));
-
-    if (!poRetDS)
-        return false;
-
-    if (!hDstDS)
-    {
-        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-    }
-    else if (dstDSWasNull)
-    {
-        if (GDALClose(hDstDS) != CE_None)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to close output dataset");
-            return false;
-        }
-    }
-
-    return true;
+    return bOK;
 }
 
 //! @endcond

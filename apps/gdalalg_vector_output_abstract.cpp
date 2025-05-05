@@ -73,24 +73,6 @@ GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()
 {
     SetupOutputDatasetRet ret;
 
-    const char *pszType = "";
-    if (!m_update && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it, or --update to update it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return ret;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
-
     GDALDataset *poDstDS = m_outputDataset.GetDatasetRef();
     std::unique_ptr<GDALDataset> poRetDS;
     if (!poDstDS)
@@ -171,7 +153,7 @@ GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' already exists. Specify the "
                         "--overwrite-layer option to overwrite it, or --append "
-                        "to append it.",
+                        "to append to it.",
                         m_outputLayerName.c_str());
             return ret;
         }

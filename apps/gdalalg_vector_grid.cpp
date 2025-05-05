@@ -301,24 +301,6 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     GDALGridOptionsSetProgress(psOptions.get(), pfnProgress, pProgressData);
 
-    const char *pszType = "";
-    if (!m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it, or --update to update it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
-
     auto poRetDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALGrid(m_outputDataset.GetName().c_str(),
                  GDALDataset::ToHandle(poSrcDS), psOptions.get(), nullptr)));

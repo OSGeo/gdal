@@ -42,8 +42,8 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     const char *exclusionGroup = "overwrite-append";
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup(exclusionGroup);
-    AddArg("append", 0, _("Append as a subdataset to existing output"),
-           &m_append)
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_append)
         .SetDefault(false)
         .SetMutualExclusionGroup(exclusionGroup);
     AddArg("size", 0, _("Output size in pixels"), &m_size)
@@ -88,24 +88,6 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
                                         void * /*pProgressData */)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    const char *pszType = "";
-    if (!m_append && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it, or --append to append to it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
 
     if (m_outputFormat.empty())
     {

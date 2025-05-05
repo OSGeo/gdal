@@ -44,8 +44,8 @@ GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
     AddCreationOptionsArg(&m_creationOptions);
     const char *exclusionGroup = "overwrite-append";
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup(exclusionGroup);
-    AddArg("append", 0, _("Append as a subdataset to existing output"),
-           &m_append)
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_append)
         .SetDefault(false)
         .SetMutualExclusionGroup(exclusionGroup);
 }

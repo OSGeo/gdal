@@ -171,24 +171,6 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_outputLayerName);
     }
 
-    const char *pszType = "";
-    if (!m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
-
     // Check that one of --interval, --levels, --exp-base is specified
     if (m_levels.size() == 0 && std::isnan(m_interval) && m_expBase == 0)
     {
