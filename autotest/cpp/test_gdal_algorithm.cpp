@@ -1284,10 +1284,12 @@ TEST_F(test_gdal_algorithm, bool_flag)
     {
       public:
         bool m_flag = false;
+        std::string m_dummy{};
 
         MyAlgorithm()
         {
             AddArg("flag", 'f', "boolean flag", &m_flag);
+            AddArg("of", 0, "", &m_dummy);
         }
     };
 
@@ -1341,6 +1343,40 @@ TEST_F(test_gdal_algorithm, bool_flag)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_STREQ(CPLGetLastErrorMsg(), "test: Option '--flig' is "
                                            "unknown. Do you mean '--flag'?");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-x", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "test: Short name option 'x' is "
+                                           "unknown.");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-of", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: Short name option 'o' is "
+            "unknown. Do you mean '--of' (with leading double dash) ?");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"-ofx", "foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: Short name option 'o' is "
+            "unknown. Do you mean '--of' (with leading double dash) ?");
     }
 
     {

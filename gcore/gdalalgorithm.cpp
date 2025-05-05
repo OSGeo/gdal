@@ -1785,12 +1785,37 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             {
                 name.clear();
                 name += strArg[j];
-                auto iterArg = m_mapShortNameToArg.find(name);
+                const auto iterArg = m_mapShortNameToArg.find(name);
                 if (iterArg == m_mapShortNameToArg.end())
                 {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Short name option '%s' is unknown.",
-                                name.c_str());
+                    const std::string nameWithoutDash = strArg.substr(1);
+                    if (m_mapLongNameToArg.find(nameWithoutDash) !=
+                        m_mapLongNameToArg.end())
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Short name option '%s' is unknown. Do you "
+                                    "mean '--%s' (with leading double dash) ?",
+                                    name.c_str(), nameWithoutDash.c_str());
+                    }
+                    else
+                    {
+                        const std::string bestCandidate =
+                            GetSuggestionForArgumentName(nameWithoutDash);
+                        if (!bestCandidate.empty())
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "Short name option '%s' is unknown. Do you "
+                                "mean '--%s' (with leading double dash) ?",
+                                name.c_str(), bestCandidate.c_str());
+                        }
+                        else
+                        {
+                            ReportError(CE_Failure, CPLE_IllegalArg,
+                                        "Short name option '%s' is unknown.",
+                                        name.c_str());
+                        }
+                    }
                     return false;
                 }
                 arg = iterArg->second;
@@ -2494,26 +2519,30 @@ GDALAlgorithm::InstantiateSubAlgorithm(const std::string &name,
 std::string
 GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
 {
-    std::string bestCandidate;
-    size_t bestDistance = std::numeric_limits<size_t>::max();
-    for (const auto &[key, value] : m_mapLongNameToArg)
+    if (osName.size() >= 3)
     {
-        CPL_IGNORE_RET_VAL(value);
-        const size_t distance = CPLLevenshteinDistance(
-            osName.c_str(), key.c_str(), /* transpositionAllowed = */ true);
-        if (distance < bestDistance)
+        std::string bestCandidate;
+        size_t bestDistance = std::numeric_limits<size_t>::max();
+        for (const auto &[key, value] : m_mapLongNameToArg)
         {
-            bestCandidate = key;
-            bestDistance = distance;
+            CPL_IGNORE_RET_VAL(value);
+            const size_t distance = CPLLevenshteinDistance(
+                osName.c_str(), key.c_str(), /* transpositionAllowed = */ true);
+            if (distance < bestDistance)
+            {
+                bestCandidate = key;
+                bestDistance = distance;
+            }
+            else if (distance == bestDistance)
+            {
+                bestCandidate.clear();
+            }
         }
-        else if (distance == bestDistance)
+        if (!bestCandidate.empty() &&
+            bestDistance <= (bestCandidate.size() >= 4 ? 2 : 1))
         {
-            bestCandidate.clear();
+            return bestCandidate;
         }
-    }
-    if (!bestCandidate.empty() && bestDistance <= 2)
-    {
-        return bestCandidate;
     }
     return std::string();
 }
