@@ -2089,7 +2089,8 @@ void S57Reader::AssembleLineGeometry(DDFRecord *poFRecord,
 
         DDFField *poFSPT = poFRecord->GetField(iField);
 
-        if (!EQUAL(poFSPT->GetFieldDefn()->GetName(), "FSPT"))
+        const auto poFieldDefn = poFSPT->GetFieldDefn();
+        if (!poFieldDefn || !EQUAL(poFieldDefn->GetName(), "FSPT"))
             continue;
 
         /* --------------------------------------------------------------------
@@ -2362,7 +2363,8 @@ void S57Reader::AssembleAreaGeometry(DDFRecord *poFRecord,
     {
         DDFField *poFSPT = poFRecord->GetField(iFSPT);
 
-        if (!EQUAL(poFSPT->GetFieldDefn()->GetName(), "FSPT"))
+        const auto poFieldDefn = poFSPT->GetFieldDefn();
+        if (!poFieldDefn || !EQUAL(poFieldDefn->GetName(), "FSPT"))
             continue;
 
         const int nEdgeCount = poFSPT->GetRepeatCount();
