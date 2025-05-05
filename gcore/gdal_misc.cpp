@@ -5812,33 +5812,27 @@ std::string GDALGetCacheDirectory()
 
 /** Return whether a file already exists.
  */
-bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType)
+bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType,
+                                GDALDriver **ppDriver)
 {
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        GDALDriverH hDriver = GDALIdentifyDriver(pszName, nullptr);
+        if (hDriver)
+        {
+            if (ppszType)
+                *ppszType = "Dataset";
+            if (ppDriver)
+                *ppDriver = GDALDriver::FromHandle(hDriver);
+            return true;
+        }
+    }
+
     VSIStatBufL sStat;
     if (VSIStatL(pszName, &sStat) == 0)
     {
         if (ppszType)
-            *ppszType = "File";
-        return true;
-    }
-
-    bool bExists;
-    {
-        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-        if (GDALIdentifyDriver(pszName, nullptr))
-        {
-            if (ppszType)
-                *ppszType = "Dataset";
-            return true;
-        }
-
-        bExists =
-            std::unique_ptr<GDALDataset>(GDALDataset::Open(pszName)) != nullptr;
-    }
-    if (bExists)
-    {
-        if (ppszType)
-            *ppszType = "Dataset";
+            *ppszType = VSI_ISDIR(sStat.st_mode) ? "Directory" : "File";
         return true;
     }
 

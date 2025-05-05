@@ -2118,11 +2118,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     const auto updateArg = algForOutput->GetArg(GDAL_ARG_NAME_UPDATE);
     const auto appendUpdateArg =
         algForOutput->GetArg(GDAL_ARG_NAME_APPEND_UPDATE);
+    const bool hasUpdateArg = updateArg && updateArg->GetType() == GAAT_BOOLEAN;
+    const bool hasAppendUpdateArg =
+        appendUpdateArg && appendUpdateArg->GetType() == GAAT_BOOLEAN;
+    const bool appendUpdate =
+        hasAppendUpdateArg && appendUpdateArg->Get<bool>();
     const bool update =
-        (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
-         updateArg->Get<bool>()) ||
-        (appendUpdateArg && appendUpdateArg->GetType() == GAAT_BOOLEAN &&
-         appendUpdateArg->Get<bool>());
+        (hasUpdateArg && updateArg->Get<bool>()) || appendUpdate;
     const auto overwriteArg = algForOutput->GetArg(GDAL_ARG_NAME_OVERWRITE);
     const bool overwrite =
         (arg->IsOutput() && overwriteArg &&
@@ -2252,6 +2254,71 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     {
         outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
     }
+
+    // Deal with overwriting the output dataset
+    if (ret && arg == outputArg && val.GetDatasetRef() == nullptr)
+    {
+        const auto appendArg = algForOutput->GetArg(GDAL_ARG_NAME_APPEND);
+        const bool hasAppendArg =
+            appendArg && appendArg->GetType() == GAAT_BOOLEAN;
+        const bool append = (hasAppendArg && appendArg->Get<bool>());
+        if (!append && !appendUpdate)
+        {
+            // If outputting to MEM, do not try to erase a real file of the same name!
+            const auto outputFormatArg =
+                algForOutput->GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
+            if (!(outputFormatArg &&
+                  outputFormatArg->GetType() == GAAT_STRING &&
+                  (EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") ||
+                   EQUAL(outputFormatArg->Get<std::string>().c_str(),
+                         "Memory"))))
+            {
+                const char *pszType = "";
+                GDALDriver *poDriver = nullptr;
+                if (!val.GetName().empty() &&
+                    GDALDoesFileOrDatasetExist(val.GetName().c_str(), &pszType,
+                                               &poDriver))
+                {
+                    if (!overwrite)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "%s '%s' already exists. Specify the --overwrite "
+                            "option to overwrite it%s.",
+                            pszType, val.GetName().c_str(),
+                            hasAppendArg || hasAppendUpdateArg
+                                ? " or the --append option to append to it"
+                            : hasUpdateArg
+                                ? " or the --update option to update it"
+                                : "");
+                        return false;
+                    }
+                    else if (EQUAL(pszType, "File"))
+                    {
+                        VSIUnlink(val.GetName().c_str());
+                    }
+                    else if (EQUAL(pszType, "Directory"))
+                    {
+                        // We don't want the user to accidentally erase a non-GDAL dataset
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Directory '%s' already exists, but is not "
+                                    "recognized as a valid GDAL dataset. "
+                                    "Please manually delete it before retrying",
+                                    val.GetName().c_str());
+                        return false;
+                    }
+                    else if (poDriver)
+                    {
+                        CPLStringList aosDrivers;
+                        aosDrivers.AddString(poDriver->GetDescription());
+                        GDALDriver::QuietDelete(val.GetName().c_str(),
+                                                aosDrivers.List());
+                    }
+                }
+            }
+        }
+    }
+
     return ret;
 }
 
@@ -2539,7 +2606,7 @@ GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
             }
         }
         if (!bestCandidate.empty() &&
-            bestDistance <= (bestCandidate.size() >= 4 ? 2 : 1))
+            bestDistance <= (bestCandidate.size() >= 4U ? 2U : 1U))
         {
             return bestCandidate;
         }

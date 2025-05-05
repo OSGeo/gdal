@@ -311,6 +311,9 @@ constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
 /** Name of the argument for overwrite. */
 constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
 
+/** Name of the argument for append. */
+constexpr const char *GDAL_ARG_NAME_APPEND = "append";
+
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
 

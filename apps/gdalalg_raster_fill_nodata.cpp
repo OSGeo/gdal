@@ -87,25 +87,6 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             void *pProgressData)
 {
-
-    const char *pszType = "";
-    if (!m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
-
     const CPLStringList creationOptions{m_creationOptions};
     const std::string destinationFormat{
         m_format.empty()
