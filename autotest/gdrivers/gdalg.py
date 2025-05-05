@@ -25,6 +25,7 @@ def test_gdalg_raster_from_file():
     ds = gdal.Open("data/gdalg/read_byte.gdalg.json")
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetDriver().GetDescription() == "GDALG"
+    assert ds.GetFileList() == ["data/gdalg/read_byte.gdalg.json"]
 
 
 def test_gdalg_raster_opened_as_vector():
@@ -43,6 +44,7 @@ def test_gdalg_raster_pipeline_standard():
         )
     )
     assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetFileList() is None
 
 
 def test_gdalg_raster_pipeline_explicit_write_step():
