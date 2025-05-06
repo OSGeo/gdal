@@ -62,30 +62,27 @@ def test_ogr_kml_attributes_1():
 
     assert feat.GetField("Name") == "Simple placemark", "Wrong name field value"
 
-    if feat.GetField("description")[:23] != "Attached to the ground.":
-        print("got: ", feat.GetField("description")[:23])
-        pytest.fail("Wrong description field value")
+    assert (
+        feat.GetField("description")
+        == "Attached to the ground. Intelligently places itself at the\nheight of the underlying terrain."
+    )
 
     feat = lyr.GetNextFeature()
     assert feat is not None, "expected feature not found."
 
     assert feat.GetField("Name") == "Floating placemark", "Wrong name field value"
 
-    if feat.GetField("description")[:25] != "Floats a defined distance":
-        print("got: ", feat.GetField("description")[:25])
-        pytest.fail("Wrong description field value")
+    assert feat.GetField("description") == "Floats a defined distance above the ground."
 
     feat = lyr.GetNextFeature()
     assert feat is not None, "expected feature not found."
 
     assert feat.GetField("Name") == "Extruded placemark", "Wrong name field value"
 
-    if (
+    assert (
         feat.GetField("description")
-        != 'Tethered to the ground by a customizable "tail"'
-    ):
-        print("got: ", feat.GetField("description"))
-        pytest.fail("Wrong description field value")
+        == 'Tethered to the ground by a customizable\n"tail"'
+    )
 
 
 ###############################################################################
