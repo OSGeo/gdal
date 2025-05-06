@@ -367,7 +367,8 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     //  -------------------------------------------------------------------
     //  Query all the basic information at once to reduce round trips
     //  -------------------------------------------------------------------
-
+    
+    //Note, the maximum length of table, column and owner name is 128 bytes
     char szOwner[OWNAME];
     char szTable[OWNAME];
     char szColumn[OWNAME];
