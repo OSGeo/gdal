@@ -1049,3 +1049,15 @@ bool SQLCheckLineIsSafe(const char *pszLine)
 }
 
 #endif
+
+int SQLPrepareWithError(sqlite3 *db, const char *sql, int nByte,
+                        sqlite3_stmt **ppStmt, const char **pzTail)
+{
+    int ret = sqlite3_prepare_v2(db, sql, nByte, ppStmt, pzTail);
+    if (ret != SQLITE_OK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to prepare SQL %s: %s",
+                 sql, sqlite3_errmsg(db));
+    }
+    return ret;
+}
