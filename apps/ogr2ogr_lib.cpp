@@ -8095,10 +8095,13 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .store_into(psOptions->dfDateLineOffset)
         .help(_("Offset from dateline in degrees."));
 
-    argParser->add_argument("-clipsrc")
-        .nargs(nCountClipSrc)
-        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
-        .help(_("Clip geometries (in source SRS)."));
+    auto &clipsrcArg =
+        argParser->add_argument("-clipsrc")
+            .metavar(
+                "[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
+            .help(_("Clip geometries (in source SRS)."));
+    if (nCountClipSrc > 1)
+        clipsrcArg.nargs(nCountClipSrc);
 
     argParser->add_argument("-clipsrcsql")
         .metavar("<sql_statement>")
@@ -8117,10 +8120,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .help(_("Restrict desired geometries from the source clip layer based "
                 "on an attribute query."));
 
-    argParser->add_argument("-clipdst")
-        .nargs(nCountClipDst)
-        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>")
-        .help(_("Clip geometries (in target SRS)."));
+    auto &clipdstArg =
+        argParser->add_argument("-clipdst")
+            .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>")
+            .help(_("Clip geometries (in target SRS)."));
+    if (nCountClipDst > 1)
+        clipdstArg.nargs(nCountClipDst);
 
     argParser->add_argument("-clipdstsql")
         .metavar("<sql_statement>")
