@@ -861,9 +861,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(
             CPLSPrintf("DECLARE\n"
-                       "  TAB VARCHAR2(128)  := UPPER('%s');\n"
-                       "  COL VARCHAR2(128)  := UPPER('%s');\n"
-                       "  OWN VARCHAR2(128)  := UPPER('%s');\n"
+                       "  TAB VARCHAR2(128) := UPPER('%s');\n"
+                       "  COL VARCHAR2(128) := UPPER('%s');\n"
+                       "  OWN VARCHAR2(128) := UPPER('%s');\n"
                        "  CNT NUMBER        := 0;\n"
                        "BEGIN\n"
                        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
@@ -952,9 +952,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(CPLSPrintf(
             "DECLARE\n"
-            "  TAB  VARCHAR2(128)    := UPPER('%s');\n"
-            "  COL  VARCHAR2(128)    := UPPER('%s');\n"
-            "  OWN  VARCHAR2(128)    := UPPER('%s');\n"
+            "  TAB  VARCHAR2(128)   := UPPER('%s');\n"
+            "  COL  VARCHAR2(128)   := UPPER('%s');\n"
+            "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
@@ -1058,7 +1058,7 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
         "  BB   NUMBER          := :3;\n"
         "  RB   NUMBER          := :4;\n"
         "  CB   NUMBER          := :5;\n"
-        "  OWN  VARCHAR2(128)    := UPPER('%s');\n"
+        "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
         "  X    NUMBER          := 0;\n"
         "  Y    NUMBER          := 0;\n"
         "  CNT  NUMBER          := 0;\n"
