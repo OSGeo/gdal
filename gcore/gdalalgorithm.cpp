@@ -4052,16 +4052,27 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
 
         osCommandLine += " --output-format stream --output streamed_dataset";
 
-        CPLJSONDocument oDoc;
-        oDoc.GetRoot().Add("type", "gdal_streamed_alg");
-        oDoc.GetRoot().Add("command_line", osCommandLine);
-        oDoc.GetRoot().Add("gdal_version", GDALVersionInfo("VERSION_NUM"));
-
-        return oDoc.Save(filename) ? ProcessGDALGOutputRet::GDALG_OK
-                                   : ProcessGDALGOutputRet::GDALG_ERROR;
+        return SaveGDALG(filename, osCommandLine)
+                   ? ProcessGDALGOutputRet::GDALG_OK
+                   : ProcessGDALGOutputRet::GDALG_ERROR;
     }
 
     return ProcessGDALGOutputRet::NOT_GDALG;
+}
+
+/************************************************************************/
+/*                      GDALAlgorithm::SaveGDALG()                      */
+/************************************************************************/
+
+/* static */ bool GDALAlgorithm::SaveGDALG(const std::string &filename,
+                                           const std::string &commandLine)
+{
+    CPLJSONDocument oDoc;
+    oDoc.GetRoot().Add("type", "gdal_streamed_alg");
+    oDoc.GetRoot().Add("command_line", commandLine);
+    oDoc.GetRoot().Add("gdal_version", GDALVersionInfo("VERSION_NUM"));
+
+    return oDoc.Save(filename);
 }
 
 /************************************************************************/
