@@ -175,6 +175,11 @@ Standard options
 
     Generate .aux.xml sidecar files when needed
 
+.. option:: --kml
+
+    Generate Google Earth SuperOverlay metadata.
+    Not compatible with tiling schemes with non-power-of-two zoom levels.
+
 .. option:: --resume
 
     Generate only missing files. Can be used when interrupting a previous run
