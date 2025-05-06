@@ -2859,7 +2859,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             *(poTMS.get()), bInvertAxisTMS, oSRS_TMS, m_convention == "xyz");
     }
 
-    if (bRet && IsWebViewerEnabled("mapml") && m_convention == "xyz")
+    if (bRet && IsWebViewerEnabled("mapml") &&
+        poTMS->identifier() != "raster" && m_convention == "xyz")
     {
         GenerateMapML(m_outputDirectory, m_mapmlTemplate, m_title, nMinTileX,
                       nMinTileY, nMaxTileX, nMaxTileY, m_minZoomLevel,
