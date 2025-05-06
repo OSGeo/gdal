@@ -20,6 +20,7 @@ include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
 # include (CompilerFlags)
 include(CheckCXXSymbolExists)
+include(CMakePushCheckState)
 
 set(GDAL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
@@ -396,6 +397,40 @@ else ()
     "
     HAVE_SHARED_MUTEX
   )
+
+  # std::atomic<int64_t> requires linking against -latomic on 32-bit architectures
+  # that need native support for 64-bit atomic operations.
+  # cf https://lists.osgeo.org/pipermail/gdal-dev/2025-May/060508.html
+  check_cxx_source_compiles(
+    "
+    #include <atomic>
+    #include <cstdint>
+    int main(int argc, const char * argv[]) {
+        std::atomic<uint64_t> x;
+        return x;
+    }
+    "
+    HAVE_ATOMIC_UINT64_T
+  )
+  if (NOT HAVE_ATOMIC_UINT64_T)
+    cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_LIBRARIES "atomic")
+    check_cxx_source_compiles(
+      "
+      #include <atomic>
+      #include <cstdint>
+      int main(int argc, const char * argv[]) {
+          std::atomic<uint64_t> x;
+          return x;
+      }
+      "
+      HAVE_ATOMIC_UINT64_T_WITH_ATOMIC
+    )
+    cmake_pop_check_state()
+    if (NOT HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
+      message(FATAL_ERROR "Cannot find libatomic needed to have support for std::atomic<uint64_t>")
+    endif()
+  endif()
 
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
 endif ()
