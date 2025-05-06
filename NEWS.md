@@ -489,6 +489,11 @@ GPKG driver:
  * fix querying relationships immediately after creating tables
  * GPKG and SQLite: Fix out of sync (not restored) fields after a ROLLBACK
   (#11609)
+ * call sqlite3_errmsg() in error messages (#12247)
+
+KML driver:
+ * when reassembling multi-line text content, use newline character instead of
+   space (#12278)
 
 LIBKML driver:
  * fix error when creating a Id field of type integer (#11773)
@@ -530,6 +535,10 @@ PG driver:
 
 PGDump driver:
  * detect out-of-memory on large geometries
+
+S57 driver:
+ * fix nullptr deref on invalid file when S57 data resource files are missing
+   (ossfuzz#415669422)
 
 Shapefile driver:
  * ogr2ogr to Shapefile: write DateTime as ISO8601 string, both in Arrow and
