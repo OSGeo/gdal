@@ -52,6 +52,14 @@ double horizontalIntersect(double angle, int nX, int nY, int y)
     return x;
 }
 
+int hIntersect(double angle, int nX, int nY, int y)
+{
+    double x = horizontalIntersect(angle, nX, nY, y);
+    if (std::isnan(x))
+        return (std::numeric_limits<int>::max)();
+    return static_cast<int>(std::round(x));
+}
+
 /// Compute the Y intersect position on the line X = x with a ray extending
 /// from (nX, nY) along `angle`.
 ///ABELL doc args
@@ -76,6 +84,14 @@ double verticalIntersect(double angle, int nX, int nY, int x)
             y = nY - (x - nX) * std::tan(angle);
     }
     return y;
+}
+
+int vIntersect(double angle, int nX, int nY, int x)
+{
+    double y = verticalIntersect(angle, nX, nY, x);
+    if (std::isnan(y))
+        return (std::numeric_limits<int>::max)();
+    return static_cast<int>(std::round(y));
 }
 
 // Determine if ray is in the slice between two rays starting at `start` and

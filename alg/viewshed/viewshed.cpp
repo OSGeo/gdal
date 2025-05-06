@@ -229,64 +229,61 @@ void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
 
     // Set the X boundaries for the angles
     //ABELL - Verify for out-of-raster.
-    double xStart = horizontalIntersect(startAngle, nX, nY, win.yStart);
-    if (isnan(xStart))
-        xStart = horizontalIntersect(startAngle, nX, nY, win.yStop);
+    int xStart = hIntersect(startAngle, nX, nY, win.yStart);
+    if (xStart == std::numeric_limits<int>::max())
+        xStart = hIntersect(startAngle, nX, nY, win.yStop);
 
-    double xStop = horizontalIntersect(endAngle, nX, nY, win.yStart);
-    if (isnan(xStop))
-        xStop = horizontalIntersect(endAngle, nX, nY, win.yStop);
+    int xStop = hIntersect(endAngle, nX, nY, win.yStart);
+    if (xStop == std::numeric_limits<int>::max())
+        xStop = hIntersect(endAngle, nX, nY, win.yStop);
 
-    double xmax = nX;
+    int xmax = nX;
     if (!rayBetween(startAngle, endAngle, 0))
     {
-        if (!isnan(xStart))
-            xmax = std::max(xmax, static_cast<double>(xStart));
-        if (!isnan(xStop))
-            xmax = std::max(xmax, static_cast<double>(xStop));
-        oOutExtent.xStop =
-            std::min(oOutExtent.xStop, static_cast<int>(std::round(xmax)));
+        if (xStart != (std::numeric_limits<int>::max)())
+            xmax = std::max(xmax, xStart);
+        if (xStop != (std::numeric_limits<int>::max)())
+            xmax = std::max(xmax, xStop);
+        oOutExtent.xStop = std::min(oOutExtent.xStop, xmax);
     }
-    double xmin = nX;
+
+    int xmin = nX;
     if (!rayBetween(startAngle, endAngle, M_PI))
     {
         if (!isnan(xStart))
             xmin = std::min(xmin, xStart);
         if (!isnan(xStop))
             xmin = std::min(xmin, xStop);
-        oOutExtent.xStart =
-            std::max(oOutExtent.xStart, static_cast<int>(std::round(xmin)));
+        oOutExtent.xStart = std::max(oOutExtent.xStart, xmin);
     }
 
     // Set the Y boundaries for the angles
     //ABELL - Verify for out-of-raster.
-    double yStart = verticalIntersect(startAngle, nX, nY, win.xStart);
-    if (isnan(yStart))
-        yStart = verticalIntersect(startAngle, nX, nY, win.xStop);
+    int yStart = vIntersect(startAngle, nX, nY, win.xStart);
+    if (yStart == std::numeric_limits<int>::max())
+        yStart = vIntersect(startAngle, nX, nY, win.xStop);
 
-    double yStop = verticalIntersect(endAngle, nX, nY, win.xStart);
-    if (isnan(yStop))
-        yStop = verticalIntersect(endAngle, nX, nY, win.xStop);
+    int yStop = vIntersect(endAngle, nX, nY, win.xStart);
+    if (yStop == std::numeric_limits<int>::max())
+        yStop = vIntersect(endAngle, nX, nY, win.xStop);
 
-    double ymin = nY;
+    int ymin = nY;
     if (!rayBetween(startAngle, endAngle, M_PI / 2))
     {
-        if (!isnan(yStart))
-            ymin = std::min(ymin, static_cast<double>(yStart));
-        if (!isnan(yStop))
-            ymin = std::min(ymin, static_cast<double>(yStop));
-        oOutExtent.yStart =
-            std::max(oOutExtent.yStart, static_cast<int>(std::round(ymin)));
+        if (yStart != std::numeric_limits<int>::max())
+            ymin = std::min(ymin, yStart);
+        if (yStop != std::numeric_limits<int>::max())
+            ymin = std::min(ymin, yStop);
+        oOutExtent.yStart = std::max(oOutExtent.yStart, ymin);
     }
-    double ymax = nY;
+    int ymax = nY;
     if (!rayBetween(startAngle, endAngle, 3 * M_PI / 2))
     {
-        if (!isnan(yStart))
-            ymax = std::max(ymax, static_cast<double>(yStart));
-        if (!isnan(yStop))
-            ymax = std::max(ymax, static_cast<double>(yStop));
-        oOutExtent.yStop =
-            std::min(oOutExtent.yStop, static_cast<int>(std::round(ymax)));
+        if (yStart != std::numeric_limits<int>::max())
+            ymax = std::max(ymax, yStart);
+        if (yStop != std::numeric_limits<int>::max())
+            ymax = std::max(ymax, yStop);
+        oOutExtent.yStop = std::min(oOutExtent.yStop, ymax);
     }
 }
 
