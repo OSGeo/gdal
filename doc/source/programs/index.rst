@@ -29,17 +29,19 @@ General
    :maxdepth: 1
    :hidden:
 
+   gdal
    migration_guide_to_gdal_cli
+   gdal_bash_completion
    gdal_cli_from_python
    gdal_cli_gdalg
-   gdal
 
 .. only:: html
 
-    - :ref:`migration_guide_to_gdal_cli`: Migration guide to "gdal" command line interface
-    - :ref:`gdal_cli_from_python`: How to use "gdal" CLI algorithms from Python
-    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized "gdal" commands
-    - :ref:`gdal_program`: Main "gdal" entry point
+    - :ref:`gdal_program`: Main ``gdal`` entry point
+    - :ref:`migration_guide_to_gdal_cli`: Migration guide to ``gdal`` command line interface
+    - :ref:`gdal_bash_completion`: Bash completion for ``gdal``
+    - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
+    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized ``gdal`` commands
 
 Commands working with raster of vector inputs
 +++++++++++++++++++++++++++++++++++++++++++++
