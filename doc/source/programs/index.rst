@@ -7,6 +7,8 @@ Programs
 "gdal" application
 ------------------
 
+.. versionadded:: 3.11
+
 Starting with GDAL 3.11, parts of the GDAL utilities are available from a new
 single :program:`gdal` program that accepts commands and subcommands.
 
@@ -20,21 +22,51 @@ single :program:`gdal` program that accepts commands and subcommands.
     explore enhancements without carrying the burden of full backward compatibility.
     Your usage of it should have no expectation of compatibility until that time.
 
+General
++++++++
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
+   gdal
+   gdal_syntax
    migration_guide_to_gdal_cli
+   gdal_bash_completion
    gdal_cli_from_python
    gdal_cli_gdalg
-   gdal
+
+.. only:: html
+
+    - :ref:`gdal_program`: Main ``gdal`` entry point
+    - :ref:`gdal_syntax`: Syntax for commands of ``gdal`` program
+    - :ref:`migration_guide_to_gdal_cli`: Migration guide to ``gdal`` command line interface
+    - :ref:`gdal_bash_completion`: Bash completion for ``gdal``
+    - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
+    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized ``gdal`` commands
+
+Commands working with raster of vector inputs
++++++++++++++++++++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
    gdal_info
    gdal_convert
-   gdal_driver_gti_create
-   gdal_mdim
-   gdal_mdim_info
-   gdal_mdim_convert
+
+.. only:: html
+
+    - :ref:`gdal_info`: Get information on a dataset
+    - :ref:`gdal_convert`: Convert a dataset
+
+Raster commands
++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
    gdal_raster
    gdal_raster_info
    gdal_raster_aspect
@@ -72,47 +104,9 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster_tri
    gdal_raster_unscale
    gdal_raster_viewshed
-   gdal_vector
-   gdal_vector_info
-   gdal_vector_clip
-   gdal_vector_concat
-   gdal_vector_convert
-   gdal_vector_edit
-   gdal_vector_filter
-   gdal_vector_geom
-   gdal_vector_geom_set_type
-   gdal_vector_geom_explode_collections
-   gdal_vector_geom_make_valid
-   gdal_vector_geom_segmentize
-   gdal_vector_geom_simplify
-   gdal_vector_geom_buffer
-   gdal_vector_geom_swap_xy
-   gdal_vector_grid
-   gdal_vector_pipeline
-   gdal_vector_rasterize
-   gdal_vector_reproject
-   gdal_vector_select
-   gdal_vector_sql
-   gdal_vsi
-   gdal_vsi_copy
-   gdal_vsi_delete
-   gdal_vsi_list
-   gdal_vsi_move
-   gdal_vsi_sync
-   gdal_vsi_sozip
 
 .. only:: html
 
-    - :ref:`migration_guide_to_gdal_cli`: Migration guide to "gdal" command line interface
-    - :ref:`gdal_cli_from_python`: How to use "gdal" CLI algorithms from Python
-    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized "gdal" commands
-    - :ref:`gdal_program`: Main "gdal" entry point
-    - :ref:`gdal_info`: Get information on a dataset
-    - :ref:`gdal_convert`: Convert a dataset
-    - :ref:`gdal_driver_gti_create`: Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver
-    - :ref:`gdal_mdim`: Entry point for multidimensional commands
-    - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
-    - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
@@ -150,6 +144,38 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_tri`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
     - :ref:`gdal_raster_viewshed`: Compute the viewshed of a raster dataset.
+
+Vector commands
++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_vector
+   gdal_vector_info
+   gdal_vector_clip
+   gdal_vector_concat
+   gdal_vector_convert
+   gdal_vector_edit
+   gdal_vector_filter
+   gdal_vector_geom
+   gdal_vector_geom_set_type
+   gdal_vector_geom_explode_collections
+   gdal_vector_geom_make_valid
+   gdal_vector_geom_segmentize
+   gdal_vector_geom_simplify
+   gdal_vector_geom_buffer
+   gdal_vector_geom_swap_xy
+   gdal_vector_grid
+   gdal_vector_pipeline
+   gdal_vector_rasterize
+   gdal_vector_reproject
+   gdal_vector_select
+   gdal_vector_sql
+
+.. only:: html
+
     - :ref:`gdal_vector`: Entry point for vector commands
     - :ref:`gdal_vector_info`: Get information on a vector dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
@@ -172,6 +198,41 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
     - :ref:`gdal_vector_sql`: Apply SQL statement(s) to a dataset
+
+Multidimensional raster commands
+++++++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_mdim
+   gdal_mdim_info
+   gdal_mdim_convert
+
+.. only:: html
+
+    - :ref:`gdal_mdim`: Entry point for multidimensional commands
+    - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
+    - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
+
+Virtual System Interface (VSI) commands
++++++++++++++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_vsi
+   gdal_vsi_copy
+   gdal_vsi_delete
+   gdal_vsi_list
+   gdal_vsi_move
+   gdal_vsi_sync
+   gdal_vsi_sozip
+
+.. only:: html
+
     - :ref:`gdal_vsi`: Entry point for GDAL Virtual System Interface (VSI) commands
     - :ref:`gdal_vsi_copy`: Copy files located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_delete`: Delete files located on GDAL Virtual System Interface (VSI)
@@ -179,6 +240,25 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_vsi_move`: Move/rename a file/directory located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_sync`: Synchronize source and target file/directory located on GDAL Virtual System Interface (VSI)
     - :ref:`gdal_vsi_sozip`: SOZIP (Seek-Optimized ZIP) related commands
+
+Driver specific commands
+++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_driver_gpkg_repack
+   gdal_driver_gti_create
+   gdal_driver_openfilegdb_repack
+   gdal_driver_pdf_list_layers
+
+.. only:: html
+
+    - :ref:`gdal_driver_gpkg_repack`: Repack/vacuum in-place a GeoPackage dataset
+    - :ref:`gdal_driver_gti_create`: Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver
+    - :ref:`gdal_driver_openfilegdb_repack`: Repack in-place a FileGeodabase dataset
+    - :ref:`gdal_driver_pdf_list_layers`: Return the list of layers of a PDF file.
 
 
 "Traditional" applications
