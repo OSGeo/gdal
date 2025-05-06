@@ -74,16 +74,16 @@ class ViewshedExecutor
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, std::vector<double> &vLastLineVal);
     bool processFirstLine(std::vector<double> &vLastLineVal);
-    void processFirstLineLeft(int iStart, int iEnd,
+    void processFirstLineLeft(const LineLimits &ll,
                               std::vector<double> &vResult,
                               std::vector<double> &vThisLineVal);
-    void processFirstLineRight(int iStart, int iEnd,
+    void processFirstLineRight(const LineLimits &ll,
                                std::vector<double> &vResult,
                                std::vector<double> &vThisLineVal);
     void processFirstLineTopOrBottom(const LineLimits &ll,
                                      std::vector<double> &vResult,
                                      std::vector<double> &vThisLineVal);
-    void processLineLeft(int nYOffset, int iStart, int iEnd,
+    void processLineLeft(int nYOffset, LineLimits &ll,
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,
                          std::vector<double> &vLastLineVal);
@@ -92,6 +92,8 @@ class ViewshedExecutor
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
     LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal);
+    void maskLineLeft(std::vector<double> &vResult, const LineLimits &ll);
+    void maskLineRight(std::vector<double> &vResult, const LineLimits &ll);
 };
 
 }  // namespace viewshed

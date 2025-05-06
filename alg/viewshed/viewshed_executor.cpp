@@ -16,6 +16,8 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+//ABELL
+#include <iostream>
 
 #include "viewshed_executor.h"
 #include "progress.h"
@@ -263,11 +265,11 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
             double dfR2 = dfX * dfX + dfY * dfY;
             if (dfR2 > m_dfMaxDistance2)
             {
+                if (dfR2 < m_dfMinDistance2)
+                    ll.leftMin++;
                 ll.left = nXOffset + m_nX + 1;
                 break;
             }
-            if (dfR2 < m_dfMinDistance2)
-                ll.leftMin++;
 
             CheckNoData(*pdfHeight);
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
@@ -283,11 +285,11 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
             double dfR2 = dfX * dfX + dfY * dfY;
             if (dfR2 > m_dfMaxDistance2)
             {
+                if (dfR2 < m_dfMinDistance2)
+                    ll.rightMin++;
                 ll.right = nXOffset + m_nX;
                 break;
             }
-            if (dfR2 < m_dfMinDistance2)
-                ll.rightMin++;
 
             CheckNoData(*pdfHeight);
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
@@ -338,7 +340,6 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
-    // iLeft and iRight are the processing limits for the line.
     LineLimits ll = adjustHeight(nYOffset, vThisLineVal);
 
     if (!oCurExtent.containsY(m_nY))
@@ -346,14 +347,11 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     else
     {
         CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
-        pQueue->SubmitJob(
-            [&, left = ll.left]() {
-                processFirstLineLeft(m_nX - 1, left - 1, vResult, vThisLineVal);
-            });
+        pQueue->SubmitJob([&]()
+                          { processFirstLineLeft(ll, vResult, vThisLineVal); });
 
         pQueue->SubmitJob(
-            [&, right = ll.right]()
-            { processFirstLineRight(m_nX + 1, right, vResult, vThisLineVal); });
+            [&]() { processFirstLineRight(ll, vResult, vThisLineVal); });
         pQueue->WaitCompletion();
     }
 
@@ -392,14 +390,16 @@ void ViewshedExecutor::processFirstLineTopOrBottom(
 
 /// Process the part of the first line to the left of the observer.
 ///
-/// @param iStart  X coordinate of the first cell to the left of the observer to be procssed.
-/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param ll  Line limits for masking.
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
-void ViewshedExecutor::processFirstLineLeft(int iStart, int iEnd,
+void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll,
                                             std::vector<double> &vResult,
                                             std::vector<double> &vThisLineVal)
 {
+    int iEnd = ll.left - 1;
+    int iStart = m_nX - 1;  // One left of the observer.
+
     // If end is to the right of start, everything is taken care of by right processing.
     if (iEnd >= iStart)
         return;
@@ -426,20 +426,32 @@ void ViewshedExecutor::processFirstLineLeft(int iStart, int iEnd,
         double dfZ = CalcHeightLine(nXOffset, *(pThis + 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
-    // For cells outside of the [start, end) range, set the outOfRange value.
-    std::fill(vResult.begin(), vResult.begin() + iEnd + 1, oOpts.outOfRangeVal);
+
+    maskLineLeft(vResult, ll);
+}
+
+void ViewshedExecutor::maskLineLeft(std::vector<double> &vResult,
+                                    const LineLimits &ll)
+{
+    // Mask cells from the left edge to the left limit.
+    std::fill(vResult.begin(), vResult.begin() + ll.left, oOpts.outOfRangeVal);
+    // Mask cells from the left min to the observer.
+    std::fill(vResult.begin() + ll.leftMin - 1, vResult.begin() + m_nX,
+              oOpts.outOfRangeVal);
 }
 
 /// Process the part of the first line to the right of the observer.
 ///
-/// @param iStart  X coordinate of the first cell to the right of the observer to be processed.
-/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param ll  Line limits
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
-void ViewshedExecutor::processFirstLineRight(int iStart, int iEnd,
+void ViewshedExecutor::processFirstLineRight(const LineLimits &ll,
                                              std::vector<double> &vResult,
                                              std::vector<double> &vThisLineVal)
 {
+    int iStart = m_nX + 1;
+    int iEnd = ll.right;
+
     // If start is to the right of end, everything is taken care of by left processing.
     if (iStart >= iEnd)
         return;
@@ -466,23 +478,38 @@ void ViewshedExecutor::processFirstLineRight(int iStart, int iEnd,
         double dfZ = CalcHeightLine(nXOffset, *(pThis - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
+
+    maskLineRight(vResult, ll);
+
     // For cells outside of the [start, end) range, set the outOfRange value.
-    std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
+    //std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
+}
+
+void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
+                                     const LineLimits &ll)
+{
+    // Mask cells from the right limit to the right edge.
+    std::fill(vResult.begin() + ll.right, vResult.end(), oOpts.outOfRangeVal);
+    // Mask cells from the observer to right min.
+    std::fill(vResult.begin() + m_nX + 1, vResult.begin() + ll.rightMin,
+              oOpts.outOfRangeVal);
 }
 
 /// Process a line to the left of the observer.
 ///
 /// @param nYOffset  Offset of the line being processed from the observer
-/// @param iStart  X coordinate of the first cell to the left of the observer to be processed.
-/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param ll  Line limits
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
 /// @param vLastLineVal  Observable height of each cell in the previous line processed.
-void ViewshedExecutor::processLineLeft(int nYOffset, int iStart, int iEnd,
+void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
                                        std::vector<double> &vResult,
                                        std::vector<double> &vThisLineVal,
                                        std::vector<double> &vLastLineVal)
 {
+    int iStart = m_nX - 1;
+    int iEnd = ll.left - 1;
+
     // If start to the left of end, everything is taken care of by processing right.
     if (iStart <= iEnd)
         return;
@@ -524,8 +551,7 @@ void ViewshedExecutor::processLineLeft(int nYOffset, int iStart, int iEnd,
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
 
-    // For cells outside of the [start, end) range, set the outOfRange value.
-    std::fill(vResult.begin(), vResult.begin() + iEnd + 1, oOpts.outOfRangeVal);
+    maskLineLeft(vResult, ll);
 }
 
 /// Process a line to the right of the observer.
@@ -628,10 +654,8 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
     // process left half then right half of line
     CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
     pQueue->SubmitJob(
-        [&, left = ll.left]()
-        {
-            processLineLeft(nYOffset, m_nX - 1, left - 1, vResult, vThisLineVal,
-                            vLastLineVal);
+        [&]() {
+            processLineLeft(nYOffset, ll, vResult, vThisLineVal, vLastLineVal);
         });
     pQueue->SubmitJob(
         [&, right = ll.right]()
@@ -649,29 +673,6 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
 
     return oProgress.lineComplete();
 }
-
-/**
-void ViewshedExecutor::maskLine(int nLine, std::vector<double> vLine)
-{
-    // If there is no min distance or angle masking or the angle is in the lower half and
-    // we are processing a line in the upper half (or vice versa), return.
-    if (minDistance == 0)
-    {
-        if (startAngle == endAngle)
-            return;
-        if (m_nX - nLine >= 0)  // Upper
-            if (!rayBetween(0, M_PI, oOpts.startAngle) &&
-                !rayBetween(0, M_PI, oOpts.endAngle))
-                return;
-        else // Lower
-            if (!rayBetween(M_PI, 2 * M_PI, oOpts.startAngle) &&
-                !rayBetween(M_PI, 2 * M_PI, oOpts.endAngle))
-                return;
-    }
-
-    for (x
-}
-**/
 
 /// Run the viewshed computation
 /// @return  Success as true or false.
