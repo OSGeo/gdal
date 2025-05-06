@@ -445,7 +445,7 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
                             std::string sTmp(pszData + nLineStartPos,
                                              nPos - nLineStartPos);
                             if (!sDataWithoutNL.empty())
-                                sDataWithoutNL += " ";
+                                sDataWithoutNL += '\n';
                             sDataWithoutNL += sTmp;
                             bLineStart = true;
                         }
@@ -465,7 +465,7 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
                         std::string sTmp(pszData + nLineStartPos,
                                          nPos - nLineStartPos);
                         if (!sDataWithoutNL.empty())
-                            sDataWithoutNL += " ";
+                            sDataWithoutNL += '\n';
                         sDataWithoutNL += sTmp;
                     }
 
