@@ -2622,6 +2622,10 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_calledFromCommandLine;
     }
 
+    /** Save command line in a .gdalg.json file. */
+    static bool SaveGDALG(const std::string &filename,
+                          const std::string &commandLine);
+
   protected:
     friend class GDALInConstructionAlgorithmArg;
 
