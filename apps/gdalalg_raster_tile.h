@@ -63,6 +63,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     bool m_auxXML = false;
     bool m_resume = false;
     int m_numThreads = 0;
+    bool m_kml = false;
 
     std::vector<std::string> m_webviewers{};
     std::string m_url{};
