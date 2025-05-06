@@ -30,6 +30,7 @@ General
    :hidden:
 
    gdal
+   gdal_syntax
    migration_guide_to_gdal_cli
    gdal_bash_completion
    gdal_cli_from_python
@@ -38,6 +39,7 @@ General
 .. only:: html
 
     - :ref:`gdal_program`: Main ``gdal`` entry point
+    - :ref:`gdal_syntax`: Syntax for commands of ``gdal`` program
     - :ref:`migration_guide_to_gdal_cli`: Migration guide to ``gdal`` command line interface
     - :ref:`gdal_bash_completion`: Bash completion for ``gdal``
     - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
