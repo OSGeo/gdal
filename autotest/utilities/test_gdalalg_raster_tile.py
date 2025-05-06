@@ -1319,7 +1319,6 @@ def test_gdalalg_raster_tile_raster(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1370,7 +1369,6 @@ def test_gdalalg_raster_tile_raster_ungeoreferenced(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1412,7 +1410,6 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
         "2/0/0.png",
         "2/1/",
         "2/1/0.png",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
