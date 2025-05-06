@@ -149,6 +149,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
 
     AddArg("aux-xml", 0, _("Generate .aux.xml sidecar files when needed"),
            &m_auxXML);
+    AddArg("kml", 0, _("Generate KML files"), &m_kml);
     AddArg("resume", 0, _("Generate only missing files"), &m_resume);
 
     AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
@@ -1547,6 +1548,269 @@ static void GenerateOpenLayers(
     }
 }
 
+/************************************************************************/
+/*                           GetTileBoundingBox()                       */
+/************************************************************************/
+
+static void GetTileBoundingBox(int nTileX, int nTileY, int nTileZ,
+                               const gdal::TileMatrixSet *poTMS,
+                               bool bInvertAxisTMS,
+                               OGRCoordinateTransformation *poCTToWGS84,
+                               double &dfTLX, double &dfTLY, double &dfTRX,
+                               double &dfTRY, double &dfLLX, double &dfLLY,
+                               double &dfLRX, double &dfLRY)
+{
+    gdal::TileMatrixSet::TileMatrix tileMatrix =
+        poTMS->tileMatrixList()[nTileZ];
+    if (bInvertAxisTMS)
+        std::swap(tileMatrix.mTopLeftX, tileMatrix.mTopLeftY);
+
+    dfTLX = tileMatrix.mTopLeftX +
+            nTileX * tileMatrix.mResX * tileMatrix.mTileWidth;
+    dfTLY = tileMatrix.mTopLeftY -
+            nTileY * tileMatrix.mResY * tileMatrix.mTileHeight;
+    poCTToWGS84->Transform(1, &dfTLX, &dfTLY);
+
+    dfTRX = tileMatrix.mTopLeftX +
+            (nTileX + 1) * tileMatrix.mResX * tileMatrix.mTileWidth;
+    dfTRY = tileMatrix.mTopLeftY -
+            nTileY * tileMatrix.mResY * tileMatrix.mTileHeight;
+    poCTToWGS84->Transform(1, &dfTRX, &dfTRY);
+
+    dfLLX = tileMatrix.mTopLeftX +
+            nTileX * tileMatrix.mResX * tileMatrix.mTileWidth;
+    dfLLY = tileMatrix.mTopLeftY -
+            (nTileY + 1) * tileMatrix.mResY * tileMatrix.mTileHeight;
+    poCTToWGS84->Transform(1, &dfLLX, &dfLLY);
+
+    dfLRX = tileMatrix.mTopLeftX +
+            (nTileX + 1) * tileMatrix.mResX * tileMatrix.mTileWidth;
+    dfLRY = tileMatrix.mTopLeftY -
+            (nTileY + 1) * tileMatrix.mResY * tileMatrix.mTileHeight;
+    poCTToWGS84->Transform(1, &dfLRX, &dfLRY);
+}
+
+/************************************************************************/
+/*                           GenerateKML()                              */
+/************************************************************************/
+
+namespace
+{
+struct TileCoordinates
+{
+    int nTileX = 0;
+    int nTileY = 0;
+    int nTileZ = 0;
+};
+}  // namespace
+
+static void GenerateKML(const std::string &osDirectory,
+                        const std::string &osTitle, int nTileX, int nTileY,
+                        int nTileZ, int nTileSize,
+                        const std::string &osExtension,
+                        const std::string &osURL,
+                        const gdal::TileMatrixSet *poTMS, bool bInvertAxisTMS,
+                        const std::string &convention,
+                        OGRCoordinateTransformation *poCTToWGS84,
+                        const std::vector<TileCoordinates> &children)
+{
+    std::map<std::string, std::string> substs;
+
+    const bool bIsTileKML = nTileX >= 0;
+
+    // For tests
+    const char *pszFmt =
+        atoi(CPLGetConfigOption("GDAL_RASTER_TILE_KML_PREC", "14")) == 10
+            ? "%.10f"
+            : "%.14f";
+
+    substs["tx"] = CPLSPrintf("%d", nTileX);
+    substs["tz"] = CPLSPrintf("%d", nTileZ);
+    substs["tileformat"] = osExtension;
+    substs["minlodpixels"] = CPLSPrintf("%d", nTileSize / 2);
+    substs["maxlodpixels"] =
+        children.empty() ? "-1" : CPLSPrintf("%d", nTileSize * 8);
+
+    double dfTLX = 0;
+    double dfTLY = 0;
+    double dfTRX = 0;
+    double dfTRY = 0;
+    double dfLLX = 0;
+    double dfLLY = 0;
+    double dfLRX = 0;
+    double dfLRY = 0;
+
+    int nFileY = -1;
+    if (!bIsTileKML)
+    {
+        char *pszStr = CPLEscapeString(osTitle.c_str(), -1, CPLES_XML);
+        substs["xml_escaped_title"] = pszStr;
+        CPLFree(pszStr);
+    }
+    else
+    {
+        nFileY = GetFileY(nTileY, poTMS->tileMatrixList()[nTileZ], convention);
+        substs["realtiley"] = CPLSPrintf("%d", nFileY);
+        substs["xml_escaped_title"] =
+            CPLSPrintf("%d/%d/%d.kml", nTileZ, nTileX, nFileY);
+
+        GetTileBoundingBox(nTileX, nTileY, nTileZ, poTMS, bInvertAxisTMS,
+                           poCTToWGS84, dfTLX, dfTLY, dfTRX, dfTRY, dfLLX,
+                           dfLLY, dfLRX, dfLRY);
+    }
+
+    substs["drawOrder"] = CPLSPrintf("%d", nTileX == 0  ? 2 * nTileZ + 1
+                                           : nTileX > 0 ? 2 * nTileZ
+                                                        : 0);
+
+    substs["url"] = osURL.empty() && bIsTileKML ? "../../" : "";
+
+    const bool bIsRectangle =
+        (dfTLX == dfLLX && dfTRX == dfLRX && dfTLY == dfTRY && dfLLY == dfLRY);
+    const bool bUseGXNamespace = bIsTileKML && !bIsRectangle;
+
+    substs["xmlns_gx"] = bUseGXNamespace
+                             ? " xmlns:gx=\"http://www.google.com/kml/ext/2.2\""
+                             : "";
+
+    CPLString s(R"raw(<?xml version="1.0" encoding="utf-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"%(xmlns_gx)s>
+  <Document>
+    <name>%(xml_escaped_title)s</name>
+    <description></description>
+    <Style>
+      <ListStyle id="hideChildren">
+        <listItemType>checkHideChildren</listItemType>
+      </ListStyle>
+    </Style>
+)raw");
+    ApplySubstitutions(s, substs);
+
+    if (bIsTileKML)
+    {
+        CPLString s2(R"raw(    <Region>
+      <LatLonAltBox>
+        <north>%(north)f</north>
+        <south>%(south)f</south>
+        <east>%(east)f</east>
+        <west>%(west)f</west>
+      </LatLonAltBox>
+      <Lod>
+        <minLodPixels>%(minlodpixels)d</minLodPixels>
+        <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
+      </Lod>
+    </Region>
+    <GroundOverlay>
+      <drawOrder>%(drawOrder)d</drawOrder>
+      <Icon>
+        <href>%(realtiley)d.%(tileformat)s</href>
+      </Icon>
+      <LatLonBox>
+        <north>%(north)f</north>
+        <south>%(south)f</south>
+        <east>%(east)f</east>
+        <west>%(west)f</west>
+      </LatLonBox>
+)raw");
+
+        if (!bIsRectangle)
+        {
+            s2 +=
+                R"raw(      <gx:LatLonQuad><coordinates>%(LLX)f,%(LLY)f %(LRX)f,%(LRY)f %(TRX)f,%(TRY)f %(TLX)f,%(TLY)f</coordinates></gx:LatLonQuad>
+)raw";
+        }
+
+        s2 += R"raw(    </GroundOverlay>
+)raw";
+        substs["north"] = CPLSPrintf(pszFmt, std::max(dfTLY, dfTRY));
+        substs["south"] = CPLSPrintf(pszFmt, std::min(dfLLY, dfLRY));
+        substs["east"] = CPLSPrintf(pszFmt, std::max(dfTRX, dfLRX));
+        substs["west"] = CPLSPrintf(pszFmt, std::min(dfLLX, dfTLX));
+
+        if (!bIsRectangle)
+        {
+            substs["TLX"] = CPLSPrintf(pszFmt, dfTLX);
+            substs["TLY"] = CPLSPrintf(pszFmt, dfTLY);
+            substs["TRX"] = CPLSPrintf(pszFmt, dfTRX);
+            substs["TRY"] = CPLSPrintf(pszFmt, dfTRY);
+            substs["LRX"] = CPLSPrintf(pszFmt, dfLRX);
+            substs["LRY"] = CPLSPrintf(pszFmt, dfLRY);
+            substs["LLX"] = CPLSPrintf(pszFmt, dfLLX);
+            substs["LLY"] = CPLSPrintf(pszFmt, dfLLY);
+        }
+
+        ApplySubstitutions(s2, substs);
+        s += s2;
+    }
+
+    for (const auto &child : children)
+    {
+        substs["tx"] = CPLSPrintf("%d", child.nTileX);
+        substs["tz"] = CPLSPrintf("%d", child.nTileZ);
+        substs["realtiley"] = CPLSPrintf(
+            "%d", GetFileY(child.nTileY, poTMS->tileMatrixList()[child.nTileZ],
+                           convention));
+
+        GetTileBoundingBox(child.nTileX, child.nTileY, child.nTileZ, poTMS,
+                           bInvertAxisTMS, poCTToWGS84, dfTLX, dfTLY, dfTRX,
+                           dfTRY, dfLLX, dfLLY, dfLRX, dfLRY);
+
+        CPLString s2(R"raw(    <NetworkLink>
+      <name>%(tz)d/%(tx)d/%(realtiley)d.%(tileformat)s</name>
+      <Region>
+        <LatLonAltBox>
+          <north>%(north)f</north>
+          <south>%(south)f</south>
+          <east>%(east)f</east>
+          <west>%(west)f</west>
+        </LatLonAltBox>
+        <Lod>
+          <minLodPixels>%(minlodpixels)d</minLodPixels>
+          <maxLodPixels>-1</maxLodPixels>
+        </Lod>
+      </Region>
+      <Link>
+        <href>%(url)s%(tz)d/%(tx)d/%(realtiley)d.kml</href>
+        <viewRefreshMode>onRegion</viewRefreshMode>
+        <viewFormat/>
+      </Link>
+    </NetworkLink>
+)raw");
+        substs["north"] = CPLSPrintf(pszFmt, std::max(dfTLY, dfTRY));
+        substs["south"] = CPLSPrintf(pszFmt, std::min(dfLLY, dfLRY));
+        substs["east"] = CPLSPrintf(pszFmt, std::max(dfTRX, dfLRX));
+        substs["west"] = CPLSPrintf(pszFmt, std::min(dfLLX, dfTLX));
+        ApplySubstitutions(s2, substs);
+        s += s2;
+    }
+
+    s += R"raw(</Document>
+</kml>)raw";
+
+    std::string osFilename(osDirectory);
+    if (!bIsTileKML)
+    {
+        osFilename =
+            CPLFormFilenameSafe(osFilename.c_str(), "doc.kml", nullptr);
+    }
+    else
+    {
+        osFilename = CPLFormFilenameSafe(osFilename.c_str(),
+                                         CPLSPrintf("%d", nTileZ), nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename.c_str(),
+                                         CPLSPrintf("%d", nTileX), nullptr);
+        osFilename = CPLFormFilenameSafe(osFilename.c_str(),
+                                         CPLSPrintf("%d.kml", nFileY), nullptr);
+    }
+
+    VSILFILE *f = VSIFOpenL(osFilename.c_str(), "wb");
+    if (f)
+    {
+        VSIFWriteL(s.data(), 1, s.size(), f);
+        VSIFCloseL(f);
+    }
+}
+
 namespace
 {
 
@@ -2516,6 +2780,54 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
+    OGRSpatialReference oWGS84;
+    oWGS84.importFromEPSG(4326);
+    oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    std::unique_ptr<OGRCoordinateTransformation> poCTToWGS84;
+    if (!oSRS_TMS.IsEmpty())
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        poCTToWGS84.reset(
+            OGRCreateCoordinateTransformation(&oSRS_TMS, &oWGS84));
+    }
+
+    const bool kmlCompatible = m_kml &&
+                               [this, &poTMS, &poCTToWGS84, bInvertAxisTMS]()
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        double dfX = poTMS->tileMatrixList()[0].mTopLeftX;
+        double dfY = poTMS->tileMatrixList()[0].mTopLeftY;
+        if (bInvertAxisTMS)
+            std::swap(dfX, dfY);
+        return (m_minZoomLevel == m_maxZoomLevel ||
+                (poTMS->haveAllLevelsSameTopLeft() &&
+                 poTMS->haveAllLevelsSameTileSize() &&
+                 poTMS->hasOnlyPowerOfTwoVaryingScales())) &&
+               poCTToWGS84 && poCTToWGS84->Transform(1, &dfX, &dfY);
+    }();
+    const int kmlTileSize =
+        m_tileSize > 0 ? m_tileSize : poTMS->tileMatrixList()[0].mTileWidth;
+    if (m_kml && !kmlCompatible)
+    {
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Tiling scheme not compatible with KML output");
+        return false;
+    }
+
+    if (m_title.empty())
+        m_title = CPLGetFilename(m_dataset.GetName().c_str());
+
+    if (!m_url.empty())
+    {
+        if (m_url.back() != '/')
+            m_url += '/';
+        std::string out_path = m_outputDirectory;
+        if (m_outputDirectory.back() == '/')
+            out_path.pop_back();
+        m_url += CPLGetFilename(out_path.c_str());
+    }
+
     CPLWorkerThreadPool oThreadPool;
 
     {
@@ -2647,6 +2959,34 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 // Re-emit error message from worker thread to main thread
                 ReportError(CE_Failure, CPLE_AppDefined, "%s",
                             oResourceManager.GetErrorMsg().c_str());
+            }
+        }
+
+        if (m_kml && bRet)
+        {
+            for (int iY = nMinTileY; iY <= nMaxTileY; ++iY)
+            {
+                for (int iX = nMinTileX; iX <= nMaxTileX; ++iX)
+                {
+                    const int nFileY =
+                        GetFileY(iY, poTMS->tileMatrixList()[m_maxZoomLevel],
+                                 m_convention);
+                    std::string osFilename = CPLFormFilenameSafe(
+                        m_outputDirectory.c_str(),
+                        CPLSPrintf("%d", m_maxZoomLevel), nullptr);
+                    osFilename = CPLFormFilenameSafe(
+                        osFilename.c_str(), CPLSPrintf("%d", iX), nullptr);
+                    osFilename = CPLFormFilenameSafe(
+                        osFilename.c_str(),
+                        CPLSPrintf("%d.%s", nFileY, pszExtension), nullptr);
+                    if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+                    {
+                        GenerateKML(m_outputDirectory, m_title, iX, iY,
+                                    m_maxZoomLevel, kmlTileSize, pszExtension,
+                                    m_url, poTMS.get(), bInvertAxisTMS,
+                                    m_convention, poCTToWGS84.get(), {});
+                    }
+                }
             }
         }
     }
@@ -2800,19 +3140,65 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             oResourceManager.GetErrorMsg().c_str());
             }
         }
-    }
 
-    if (m_title.empty())
-        m_title = CPLGetFilename(m_dataset.GetName().c_str());
+        if (m_kml && bRet)
+        {
+            for (int iY = nOvrMinTileY; bRet && iY <= nOvrMaxTileY; ++iY)
+            {
+                for (int iX = nOvrMinTileX; bRet && iX <= nOvrMaxTileX; ++iX)
+                {
+                    int nFileY =
+                        GetFileY(iY, poTMS->tileMatrixList()[iZ], m_convention);
+                    std::string osFilename =
+                        CPLFormFilenameSafe(m_outputDirectory.c_str(),
+                                            CPLSPrintf("%d", iZ), nullptr);
+                    osFilename = CPLFormFilenameSafe(
+                        osFilename.c_str(), CPLSPrintf("%d", iX), nullptr);
+                    osFilename = CPLFormFilenameSafe(
+                        osFilename.c_str(),
+                        CPLSPrintf("%d.%s", nFileY, pszExtension), nullptr);
+                    if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+                    {
+                        std::vector<TileCoordinates> children;
 
-    if (!m_url.empty())
-    {
-        if (m_url.back() != '/')
-            m_url += '/';
-        std::string out_path = m_outputDirectory;
-        if (m_outputDirectory.back() == '/')
-            out_path.pop_back();
-        m_url += CPLGetFilename(out_path.c_str());
+                        for (int iChildY = 0; iChildY <= 1; ++iChildY)
+                        {
+                            for (int iChildX = 0; iChildX <= 1; ++iChildX)
+                            {
+                                nFileY =
+                                    GetFileY(iY * 2 + iChildY,
+                                             poTMS->tileMatrixList()[iZ + 1],
+                                             m_convention);
+                                osFilename = CPLFormFilenameSafe(
+                                    m_outputDirectory.c_str(),
+                                    CPLSPrintf("%d", iZ + 1), nullptr);
+                                osFilename = CPLFormFilenameSafe(
+                                    osFilename.c_str(),
+                                    CPLSPrintf("%d", iX * 2 + iChildX),
+                                    nullptr);
+                                osFilename = CPLFormFilenameSafe(
+                                    osFilename.c_str(),
+                                    CPLSPrintf("%d.%s", nFileY, pszExtension),
+                                    nullptr);
+                                if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+                                {
+                                    TileCoordinates tc;
+                                    tc.nTileX = iX * 2 + iChildX;
+                                    tc.nTileY = iY * 2 + iChildY;
+                                    tc.nTileZ = iZ + 1;
+                                    children.push_back(std::move(tc));
+                                }
+                            }
+                        }
+
+                        GenerateKML(m_outputDirectory, m_title, iX, iY, iZ,
+                                    kmlTileSize, pszExtension, m_url,
+                                    poTMS.get(), bInvertAxisTMS, m_convention,
+                                    poCTToWGS84.get(), children);
+                    }
+                }
+            }
+        }
     }
 
     const auto IsWebViewerEnabled = [this](const char *name)
@@ -2831,12 +3217,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         double dfNorthLat = 90;
         double dfEastLon = 180;
 
-        OGRSpatialReference oWGS84;
-        oWGS84.importFromEPSG(4326);
-        oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-        auto poCTToWGS84 = std::unique_ptr<OGRCoordinateTransformation>(
-            OGRCreateCoordinateTransformation(&oSRS_TMS, &oWGS84));
         if (poCTToWGS84)
         {
             poCTToWGS84->TransformBounds(
@@ -2859,12 +3239,56 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             *(poTMS.get()), bInvertAxisTMS, oSRS_TMS, m_convention == "xyz");
     }
 
-    if (bRet && IsWebViewerEnabled("mapml") && m_convention == "xyz")
+    if (bRet && IsWebViewerEnabled("mapml") &&
+        poTMS->identifier() != "raster" && m_convention == "xyz")
     {
         GenerateMapML(m_outputDirectory, m_mapmlTemplate, m_title, nMinTileX,
                       nMinTileY, nMaxTileX, nMaxTileY, m_minZoomLevel,
                       m_maxZoomLevel, pszExtension, m_url, m_copyright,
                       *(poTMS.get()));
+    }
+
+    if (bRet && m_kml)
+    {
+        std::vector<TileCoordinates> children;
+
+        auto ovrTileMatrix = tileMatrixList[m_minZoomLevel];
+        int nOvrMinTileX = 0;
+        int nOvrMinTileY = 0;
+        int nOvrMaxTileX = 0;
+        int nOvrMaxTileY = 0;
+        CPL_IGNORE_RET_VAL(
+            GetTileIndices(ovrTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
+                           nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX,
+                           nOvrMaxTileY, m_noIntersectionIsOK, bIntersects));
+
+        for (int iY = nOvrMinTileY; bRet && iY <= nOvrMaxTileY; ++iY)
+        {
+            for (int iX = nOvrMinTileX; bRet && iX <= nOvrMaxTileX; ++iX)
+            {
+                int nFileY = GetFileY(
+                    iY, poTMS->tileMatrixList()[m_minZoomLevel], m_convention);
+                std::string osFilename = CPLFormFilenameSafe(
+                    m_outputDirectory.c_str(), CPLSPrintf("%d", m_minZoomLevel),
+                    nullptr);
+                osFilename = CPLFormFilenameSafe(osFilename.c_str(),
+                                                 CPLSPrintf("%d", iX), nullptr);
+                osFilename = CPLFormFilenameSafe(
+                    osFilename.c_str(),
+                    CPLSPrintf("%d.%s", nFileY, pszExtension), nullptr);
+                if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+                {
+                    TileCoordinates tc;
+                    tc.nTileX = iX;
+                    tc.nTileY = iY;
+                    tc.nTileZ = m_minZoomLevel;
+                    children.push_back(std::move(tc));
+                }
+            }
+        }
+        GenerateKML(m_outputDirectory, m_title, -1, -1, -1, kmlTileSize,
+                    pszExtension, m_url, poTMS.get(), bInvertAxisTMS,
+                    m_convention, poCTToWGS84.get(), children);
     }
 
     return bRet;

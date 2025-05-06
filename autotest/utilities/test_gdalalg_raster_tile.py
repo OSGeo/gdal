@@ -1319,7 +1319,6 @@ def test_gdalalg_raster_tile_raster(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1370,7 +1369,6 @@ def test_gdalalg_raster_tile_raster_ungeoreferenced(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1412,7 +1410,6 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
         "2/0/0.png",
         "2/1/",
         "2/1/0.png",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1447,4 +1444,110 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
     with gdal.Open(tmp_vsimem / "1/0/0.png") as ds:
         assert ds.ReadRaster(0, 0, 200, 100, band_list=[1, 2, 3]) == src_ds.ReadRaster(
             buf_xsize=200, buf_ysize=100
+        )
+
+
+def test_gdalalg_raster_tile_raster_kml(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate(
+        "", "../gcore/data/byte.tif", format="MEM", outputSRS="EPSG:32611"
+    )
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 10
+    alg["max-zoom"] = 11
+    alg["resampling"] = "nearest"
+    alg["kml"] = True
+    with gdal.config_option("GDAL_RASTER_TILE_KML_PREC", "10"):
+        assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "10/",
+        "10/177/",
+        "10/177/409.kml",
+        "10/177/409.png",
+        "11/",
+        "11/354/",
+        "11/354/818.kml",
+        "11/354/818.png",
+        "doc.kml",
+        "leaflet.html",
+        "mapml.mapml",
+        "openlayers.html",
+    ]
+
+    with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_doc.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_10_11_doc.kml", "rb").read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "10" / "177" / "409.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_10_177_409.kml", "wb").write(got)
+        assert (
+            got
+            == open(
+                "data/gdal_raster_tile_expected_byte_10_11_10_177_409.kml", "rb"
+            ).read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "11" / "354" / "818.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_11_354_818.kml", "wb").write(got)
+        assert (
+            got
+            == open(
+                "data/gdal_raster_tile_expected_byte_10_11_11_354_818.kml", "rb"
+            ).read()
+        )
+
+    if gdal.GetDriverByName("KMLSuperOverlay"):
+        ds = gdal.Open(tmp_vsimem / "doc.kml")
+        assert ds.GetRasterBand(1).Checksum() == 4215
+
+
+def test_gdalalg_raster_tile_raster_kml_with_gx_latlonquad(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate(
+        "", "../gcore/data/byte.tif", format="MEM", outputSRS="EPSG:32611"
+    )
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "raster"
+    alg["resampling"] = "nearest"
+    alg["kml"] = True
+    with gdal.config_option("GDAL_RASTER_TILE_KML_PREC", "10"):
+        assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "0/",
+        "0/0/",
+        "0/0/0.kml",
+        "0/0/0.png",
+        "doc.kml",
+        "openlayers.html",
+    ]
+
+    with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_raster_doc.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_raster_doc.kml", "rb").read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "0" / "0" / "0.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_raster_0_0_0.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_raster_0_0_0.kml", "rb").read()
         )
