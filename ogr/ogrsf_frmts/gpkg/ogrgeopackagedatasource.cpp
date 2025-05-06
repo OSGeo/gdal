@@ -10146,8 +10146,8 @@ bool GDALGeoPackageDataset::AddFieldDomain(
             if (sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to execute insertion '%s': %s",
-                         sqlite3_errmsg(hDB), sqlite3_errmsg(hDB));
+                         "failed to execute insertion '%s': %s", pszSQL,
+                         sqlite3_errmsg(hDB));
                 return false;
             }
 
