@@ -1877,6 +1877,13 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
     return ret
 %}
 
+%pythoncode %{
+  def GetDataTypes(self):
+      """Return data types associated with that group (typically enumerations)
+      """
+      return [self.GetDataType(i) for i in range(self.GetDataTypeCount())]
+%}
+
 }
 
 %extend GDALMDArrayHS {

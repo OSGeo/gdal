@@ -14,10 +14,16 @@
 #include <limits>
 #include <map>
 
+#include "gdal_rat.h"
+
 #include "netcdfdataset.h"
 #include "netcdfdrivercore.h"
 
 #include "netcdf_mem.h"
+
+static bool BuildDataType(int gid, int varid, int nVarType,
+                          std::unique_ptr<GDALExtendedDataType> &dt,
+                          bool &bPerfectDataTypeMatch);
 
 /************************************************************************/
 /*                         netCDFSharedResources                        */
@@ -747,6 +753,8 @@ netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
     : GDALGroup(NCDFGetParentGroupName(gid), retrieveName(gid)),
       m_poShared(poShared), m_gid(gid)
 {
+    CPLMutexHolderD(&hNCMutex);
+
     if (m_gid == m_poShared->GetCDFId())
     {
         int nFormat = 0;
@@ -774,6 +782,31 @@ netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
         else if (nFormat == NC_FORMAT_NETCDF4_CLASSIC)
         {
             m_aosStructuralInfo.SetNameValue("NC_FORMAT", "NETCDF4_CLASSIC");
+        }
+    }
+
+    // Get enuerations associated with the group
+    int nCustomTypeCount = 0;
+    NCDF_ERR(nc_inq_typeids(m_gid, &nCustomTypeCount, nullptr));
+    if (nCustomTypeCount > 0)
+    {
+        std::vector<int> anCustomTypeIDs(nCustomTypeCount);
+        NCDF_ERR(
+            nc_inq_typeids(m_gid, &nCustomTypeCount, anCustomTypeIDs.data()));
+
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+        for (int i = 0; i < nCustomTypeCount; ++i)
+        {
+            std::unique_ptr<GDALExtendedDataType> dt;
+            bool bPerfectDataTypeMatch = false;
+            if (BuildDataType(m_gid, /* varId = */ -1, anCustomTypeIDs[i], dt,
+                              bPerfectDataTypeMatch) &&
+                dt && dt->GetRAT())
+            {
+                m_apoTypes.push_back(
+                    std::shared_ptr<GDALExtendedDataType>(dt.release()));
+            }
         }
     }
 }
@@ -2327,10 +2360,6 @@ static GDALDataType GetComplexDataType(int gid, int nVarType)
 /*                       GetCompoundDataType()                          */
 /************************************************************************/
 
-static bool BuildDataType(int gid, int varid, int nVarType,
-                          std::unique_ptr<GDALExtendedDataType> &dt,
-                          bool &bPerfectDataTypeMatch);
-
 static bool GetCompoundDataType(int gid, int nVarType,
                                 std::unique_ptr<GDALExtendedDataType> &dt,
                                 bool &bPerfectDataTypeMatch)
@@ -2390,16 +2419,17 @@ static bool GetCompoundDataType(int gid, int nVarType,
 /*                            BuildDataType()                           */
 /************************************************************************/
 
-static bool BuildDataType(int gid, int varid, int nVarType,
+static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
                           std::unique_ptr<GDALExtendedDataType> &dt,
                           bool &bPerfectDataTypeMatch)
 {
+    int nVarType = nVarTypeIn;
     GDALDataType eDataType = GDT_Unknown;
     bPerfectDataTypeMatch = false;
+    int eClass = 0;
     if (NCDFIsUserDefinedType(gid, nVarType))
     {
         nc_type nBaseType = NC_NAT;
-        int eClass = 0;
         nc_inq_user_type(gid, nVarType, nullptr, nullptr, &nBaseType, nullptr,
                          &eClass);
         if (eClass == NC_COMPOUND)
@@ -2557,7 +2587,39 @@ static bool BuildDataType(int gid, int varid, int nVarType,
             return false;
         }
     }
-    dt.reset(new GDALExtendedDataType(GDALExtendedDataType::Create(eDataType)));
+
+    if (eClass == NC_ENUM && GDALDataTypeIsInteger(eDataType) &&
+        !GDALDataTypeIsComplex(eDataType))
+    {
+        char szEnumName[NC_MAX_NAME + 1] = {};
+        size_t nMemberCount = 0;
+        NCDF_ERR(nc_inq_enum(gid, nVarTypeIn, szEnumName, nullptr, nullptr,
+                             &nMemberCount));
+        auto poRAT = std::make_unique<GDALDefaultRasterAttributeTable>();
+        poRAT->CreateColumn("value", GFT_Integer, GFU_MinMax);
+        poRAT->CreateColumn("name", GFT_String, GFU_Name);
+        std::vector<GByte> abyValue(GDALGetDataTypeSizeBytes(eDataType));
+        char szName[NC_MAX_NAME + 1] = {};
+        for (int i = 0;
+             i < static_cast<int>(std::min<size_t>(nMemberCount, INT_MAX)); ++i)
+        {
+            szName[0] = 0;
+            NCDF_ERR(nc_inq_enum_member(gid, nVarTypeIn, i, szName,
+                                        abyValue.data()));
+            int nValue = 0;
+            GDALCopyWords(abyValue.data(), eDataType, 0, &nValue, GDT_Int32, 0,
+                          1);
+            poRAT->SetValue(i, 0, nValue);
+            poRAT->SetValue(i, 1, szName);
+        }
+        dt.reset(new GDALExtendedDataType(GDALExtendedDataType::Create(
+            szEnumName, eDataType, std::move(poRAT))));
+    }
+    else
+    {
+        dt.reset(
+            new GDALExtendedDataType(GDALExtendedDataType::Create(eDataType)));
+    }
     return true;
 }
 
