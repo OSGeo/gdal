@@ -8114,6 +8114,8 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
         // Set export options with NDR byte order
         OGRwkbExportOptions oOptions;
         oOptions.eByteOrder = wkbNDR;
+        // and ISO to avoid wkb25DBit for Z geometries
+        oOptions.eWkbVariant = wkbVariantIso;
 
         // Export to WKB
         sfcgal_geometry_t *sfcgalGeom = nullptr;
