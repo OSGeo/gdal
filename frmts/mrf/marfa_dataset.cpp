@@ -151,14 +151,6 @@ int MRFDataset::CloseDependentDatasets()
 
 MRFDataset::~MRFDataset()
 {  // Make sure everything gets written
-    if (0 != write_timer.count())
-        CPLDebug("MRF_Timing", "Compression took %fms",
-                 1e-6 * write_timer.count());
-
-    if (0 != read_timer.count())
-        CPLDebug("MRF_Timing", "Decompression took %fms",
-                 1e-6 * read_timer.count());
-
     if (eAccess != GA_ReadOnly && !bCrystalized)
         if (!MRFDataset::Crystalize())
         {
@@ -166,7 +158,23 @@ MRFDataset::~MRFDataset()
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
 
-    MRFDataset::FlushCache(true);
+    if (eAccess != GA_ReadOnly)
+    {
+        MRFDataset::FlushCache(true);
+        // There could be data in the overviews that needs to be flushed
+        for (int i = 0; i < nBands; i++)
+        {
+            MRFRasterBand *band =
+                reinterpret_cast<MRFRasterBand *>(GetRasterBand(i + 1));
+            for (int j = 0; j < band->GetOverviewCount(); j++)
+            {
+                MRFRasterBand *ovrband =
+                    reinterpret_cast<MRFRasterBand *>(band->GetOverview(j));
+                if (ovrband)
+                    ovrband->FlushCache(true);
+            }
+        }
+    }
     MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
@@ -183,6 +191,13 @@ MRFDataset::~MRFDataset()
     ZSTD_freeCCtx(static_cast<ZSTD_CCtx *>(pzscctx));
     ZSTD_freeDCtx(static_cast<ZSTD_DCtx *>(pzsdctx));
 #endif
+    if (0 != write_timer.count())
+        CPLDebug("MRF_Timing", "Compression took %fms",
+                 1e-6 * write_timer.count());
+
+    if (0 != read_timer.count())
+        CPLDebug("MRF_Timing", "Decompression took %fms",
+                 1e-6 * read_timer.count());
 }
 
 /*
