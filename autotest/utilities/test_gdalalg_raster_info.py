@@ -154,3 +154,11 @@ def test_gdalalg_raster_info_list_subdataset_error_cannot_open_subdataset():
         match="i_do_not_exist",
     ):
         info.ParseRunAndFinalize(["--subdataset=1"])
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_raster_info_read_gdalg_with_input_format():
+    info = get_info_alg()
+    info["input"] = "../gdrivers/data/gdalg/read_byte.gdalg.json"
+    info["input-format"] = "GDALG"
+    assert info.Run()
