@@ -239,7 +239,7 @@ def test_ogr_geom_polyhedral_surface():
     #        print(wkt_geom)
     #        return 'fail'
 
-    if ogrtest.have_geos() or ogrtest.have_sfcgal():
+    if ogrtest.have_geos():
         geom = ogr.CreateGeometryFromWkb(wkb_string)
         assert ps.Contains(geom), "Failure in Contains() of PolyhedralSurface"
 
@@ -349,7 +349,7 @@ def test_ogr_geom_tin():
         tin.GetGeometryCount() == geom_count
     ), "Added wrong geometry in TIN, error has code " + str(x)
 
-    if ogrtest.have_geos() or ogrtest.have_sfcgal():
+    if ogrtest.have_geos():
         point = tin.PointOnSurface()
         point_wkt = point.ExportToWkt()
         point_correct_wkt = "POINT EMPTY"
