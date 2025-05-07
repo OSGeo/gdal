@@ -368,10 +368,12 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     //  Query all the basic information at once to reduce round trips
     //  -------------------------------------------------------------------
 
-    char szOwner[OWCODE];
-    char szTable[OWCODE];
-    char szColumn[OWTEXT];
-    char szDataTable[OWCODE];
+    // Note, the table, column or owner name length supported by Oracle is
+    // up to 128 bytes, not 128 characters.
+    char szOwner[OWNAME];
+    char szTable[OWNAME];
+    char szColumn[OWNAME];
+    char szDataTable[OWNAME];
     char szWhere[OWTEXT];
     long long nRasterId = -1;
     OCILobLocator *phLocator = nullptr;
@@ -861,9 +863,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(
             CPLSPrintf("DECLARE\n"
-                       "  TAB VARCHAR2(68)  := UPPER('%s');\n"
-                       "  COL VARCHAR2(68)  := UPPER('%s');\n"
-                       "  OWN VARCHAR2(68)  := UPPER('%s');\n"
+                       "  TAB VARCHAR2(128) := UPPER('%s');\n"
+                       "  COL VARCHAR2(128) := UPPER('%s');\n"
+                       "  OWN VARCHAR2(128) := UPPER('%s');\n"
                        "  CNT NUMBER        := 0;\n"
                        "BEGIN\n"
                        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
@@ -952,9 +954,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(CPLSPrintf(
             "DECLARE\n"
-            "  TAB  VARCHAR2(68)    := UPPER('%s');\n"
-            "  COL  VARCHAR2(68)    := UPPER('%s');\n"
-            "  OWN  VARCHAR2(68)    := UPPER('%s');\n"
+            "  TAB  VARCHAR2(128)   := UPPER('%s');\n"
+            "  COL  VARCHAR2(128)   := UPPER('%s');\n"
+            "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
@@ -1058,7 +1060,7 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
         "  BB   NUMBER          := :3;\n"
         "  RB   NUMBER          := :4;\n"
         "  CB   NUMBER          := :5;\n"
-        "  OWN  VARCHAR2(68)    := UPPER('%s');\n"
+        "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
         "  X    NUMBER          := 0;\n"
         "  Y    NUMBER          := 0;\n"
         "  CNT  NUMBER          := 0;\n"
@@ -3209,7 +3211,7 @@ bool GeoRasterWrapper::SetNoData(int nLayer, const char *pszValue)
     //  Add NoData for all bands (layer=0) or for a specific band
     // ------------------------------------------------------------
 
-    char szRDT[OWCODE];
+    char szRDT[OWNAME];
     char szNoData[OWTEXT];
 
     snprintf(szRDT, sizeof(szRDT), "%s", sDataTable.c_str());

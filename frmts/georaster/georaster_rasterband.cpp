@@ -579,7 +579,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
 
     OWStatement *poStmt = poGeoRaster->poConnection->CreateStatement(
         CPLSPrintf("DECLARE\n"
-                   "  TAB VARCHAR2(68)  := UPPER(:1);\n"
+                   "  TAB VARCHAR2(128) := UPPER(:1);\n"
                    "  CNT NUMBER        := 0;\n"
                    "BEGIN\n"
                    "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM USER_TABLES\n"
