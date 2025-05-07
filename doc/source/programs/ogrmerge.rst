@@ -62,7 +62,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
 .. note::
 
-    Starting with GDAL 3.11 there is a newer :program:`gdal vector concat` program available.
+    Starting with GDAL 3.11, a newer :ref:`gdal_vector_concat` program is available.
 
 .. program:: ogrmerge
 
