@@ -367,8 +367,8 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     //  -------------------------------------------------------------------
     //  Query all the basic information at once to reduce round trips
     //  -------------------------------------------------------------------
-    
-    // Note, the table, column or owner name length supported by Oracle is 
+
+    // Note, the table, column or owner name length supported by Oracle is
     // up to 128 bytes, not 128 characters.
     char szOwner[OWNAME];
     char szTable[OWNAME];
