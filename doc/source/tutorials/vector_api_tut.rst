@@ -555,7 +555,7 @@ All together our program looks like this.
           GDALClose( hDS );
       }
 
-   .. tab:: Python
+   .. group-tab:: Python
 
       .. literalinclude :: code/vector_api_tut.py
          :language: python
@@ -1324,7 +1324,7 @@ The same program all in one block looks like this:
           GDALClose( hDS );
       }
 
-   .. tab:: Python
+   .. group-tab:: Python
 
       .. literalinclude :: code/vector_api_tut2.py
          :language: python
