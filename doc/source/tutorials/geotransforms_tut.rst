@@ -6,7 +6,7 @@ Geotransform Tutorial
 
 Introduction to Geotransforms:
 -------------------------------
-A geotransform is an affine transformation from the image coordinate space (row, column),
+A geotransform is an :term:`affine transformation` from the image coordinate space (row, column),
 also known as (pixel, line)
 to the georeferenced coordinate space (projected or geographic coordinates).
 
