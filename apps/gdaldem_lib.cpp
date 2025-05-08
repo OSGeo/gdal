@@ -1411,27 +1411,17 @@ static VSIVoidUniquePtr GDALCreateAspectData(bool bAngleAsAzimuth)
 /*                      GDALColorRelief()                               */
 /************************************************************************/
 
-typedef struct
-{
-    double dfVal;
-    int nR;
-    int nG;
-    int nB;
-    int nA;
-} ColorAssociation;
-
-static int GDALColorReliefSortColors(const ColorAssociation &pA,
-                                     const ColorAssociation &pB)
+static int GDALColorReliefSortColors(const GDALColorAssociation &pA,
+                                     const GDALColorAssociation &pB)
 {
     /* Sort NaN in first position */
     return (std::isnan(pA.dfVal) && !std::isnan(pB.dfVal)) ||
            pA.dfVal < pB.dfVal;
 }
 
-static void
-GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
-                             int bSrcHasNoData, double dfSrcNoDataValue,
-                             ColorSelectionMode eColorSelectionMode)
+static void GDALColorReliefProcessColors(
+    std::vector<GDALColorAssociation> &asColorAssociation, int bSrcHasNoData,
+    double dfSrcNoDataValue, ColorSelectionMode eColorSelectionMode)
 {
     std::stable_sort(asColorAssociation.begin(), asColorAssociation.end(),
                      GDALColorReliefSortColors);
@@ -1440,8 +1430,8 @@ GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
     const size_t nInitialSize = asColorAssociation.size();
     for (size_t i = 1; i < nInitialSize; ++i)
     {
-        const ColorAssociation *pPrevious = &asColorAssociation[i - 1];
-        const ColorAssociation *pCurrent = &asColorAssociation[i];
+        const GDALColorAssociation *pPrevious = &asColorAssociation[i - 1];
+        const GDALColorAssociation *pCurrent = &asColorAssociation[i];
 
         // NaN comparison is always false, so it handles itself
         if (eColorSelectionMode != COLOR_SELECTION_EXACT_ENTRY &&
@@ -1454,7 +1444,7 @@ GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
             if (dfNewValue > pPrevious->dfVal)
             {
                 // add one just below the nodata value
-                ColorAssociation sNew = *pPrevious;
+                GDALColorAssociation sNew = *pPrevious;
                 sNew.dfVal = dfNewValue;
                 asColorAssociation.push_back(std::move(sNew));
             }
@@ -1469,7 +1459,7 @@ GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
             if (dfNewValue < pCurrent->dfVal)
             {
                 // add one just above the nodata value
-                ColorAssociation sNew = *pCurrent;
+                GDALColorAssociation sNew = *pCurrent;
                 sNew.dfVal = dfNewValue;
                 asColorAssociation.push_back(std::move(sNew));
             }
@@ -1489,7 +1479,7 @@ GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
             double dfLeftDist = 0.0;
             if (nRepeatedEntryIndex >= 2)
             {
-                const ColorAssociation *pLower =
+                const GDALColorAssociation *pLower =
                     &asColorAssociation[nRepeatedEntryIndex - 2];
                 dfTotalDist = pCurrent->dfVal - pLower->dfVal;
                 dfLeftDist = pPrevious->dfVal - pLower->dfVal;
@@ -1532,10 +1522,10 @@ GDALColorReliefProcessColors(std::vector<ColorAssociation> &asColorAssociation,
     }
 }
 
-static bool
-GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
-                       double dfVal, ColorSelectionMode eColorSelectionMode,
-                       int *pnR, int *pnG, int *pnB, int *pnA)
+static bool GDALColorReliefGetRGBA(
+    const std::vector<GDALColorAssociation> &asColorAssociation, double dfVal,
+    ColorSelectionMode eColorSelectionMode, int *pnR, int *pnG, int *pnB,
+    int *pnA)
 {
     CPLAssert(!asColorAssociation.empty());
 
@@ -1700,202 +1690,21 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
     }
 }
 
-/* dfPct : percentage between 0 and 1 */
-static double GDALColorReliefGetAbsoluteValFromPct(GDALRasterBandH hSrcBand,
-                                                   double dfPct)
-{
-    int bSuccessMin = FALSE;
-    int bSuccessMax = FALSE;
-    double dfMin = GDALGetRasterMinimum(hSrcBand, &bSuccessMin);
-    double dfMax = GDALGetRasterMaximum(hSrcBand, &bSuccessMax);
-    if (!bSuccessMin || !bSuccessMax)
-    {
-        double dfMean = 0.0;
-        double dfStdDev = 0.0;
-        fprintf(stderr, "Computing source raster statistics...\n");
-        GDALComputeRasterStatistics(hSrcBand, FALSE, &dfMin, &dfMax, &dfMean,
-                                    &dfStdDev, nullptr, nullptr);
-    }
-    return dfMin + dfPct * (dfMax - dfMin);
-}
-
-typedef struct
-{
-    const char *name;
-    float r, g, b;
-} NamedColor;
-
-static const NamedColor namedColors[] = {
-    {"white", 1.00, 1.00, 1.00},   {"black", 0.00, 0.00, 0.00},
-    {"red", 1.00, 0.00, 0.00},     {"green", 0.00, 1.00, 0.00},
-    {"blue", 0.00, 0.00, 1.00},    {"yellow", 1.00, 1.00, 0.00},
-    {"magenta", 1.00, 0.00, 1.00}, {"cyan", 0.00, 1.00, 1.00},
-    {"aqua", 0.00, 0.75, 0.75},    {"grey", 0.75, 0.75, 0.75},
-    {"gray", 0.75, 0.75, 0.75},    {"orange", 1.00, 0.50, 0.00},
-    {"brown", 0.75, 0.50, 0.25},   {"purple", 0.50, 0.00, 1.00},
-    {"violet", 0.50, 0.00, 1.00},  {"indigo", 0.00, 0.50, 1.00},
-};
-
-static bool GDALColorReliefFindNamedColor(const char *pszColorName, int *pnR,
-                                          int *pnG, int *pnB)
-{
-    *pnR = 0;
-    *pnG = 0;
-    *pnB = 0;
-    for (const auto &namedColor : namedColors)
-    {
-        if (EQUAL(pszColorName, namedColor.name))
-        {
-            *pnR = static_cast<int>(255.0 * namedColor.r);
-            *pnG = static_cast<int>(255.0 * namedColor.g);
-            *pnB = static_cast<int>(255.0 * namedColor.b);
-            return true;
-        }
-    }
-    return false;
-}
-
-static std::vector<ColorAssociation>
+static std::vector<GDALColorAssociation>
 GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
                               const char *pszColorFilename,
                               ColorSelectionMode eColorSelectionMode)
 {
-    auto fpColorFile =
-        VSIVirtualHandleUniquePtr(VSIFOpenL(pszColorFilename, "rt"));
-    if (fpColorFile == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
-                 pszColorFilename);
-        return {};
-    }
-
-    std::vector<ColorAssociation> asColorAssociation;
-
-    int bSrcHasNoData = FALSE;
-    double dfSrcNoDataValue =
-        GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
-
-    const char *pszLine = nullptr;
-    bool bIsGMT_CPT = false;
-    ColorAssociation sColor;
-    while ((pszLine = CPLReadLineL(fpColorFile.get())) != nullptr)
-    {
-        if (pszLine[0] == '#' && strstr(pszLine, "COLOR_MODEL"))
-        {
-            if (strstr(pszLine, "COLOR_MODEL = RGB") == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Only COLOR_MODEL = RGB is supported");
-                return {};
-            }
-            bIsGMT_CPT = true;
-        }
-
-        const CPLStringList aosFields(
-            CSLTokenizeStringComplex(pszLine, " ,\t:", FALSE, FALSE));
-        /* Skip comment lines */
-        const int nTokens = aosFields.size();
-        if (nTokens >= 1 && (aosFields[0][0] == '#' || aosFields[0][0] == '/'))
-        {
-            continue;
-        }
-
-        if (bIsGMT_CPT && nTokens == 8)
-        {
-            sColor.dfVal = CPLAtof(aosFields[0]);
-            sColor.nR = atoi(aosFields[1]);
-            sColor.nG = atoi(aosFields[2]);
-            sColor.nB = atoi(aosFields[3]);
-            sColor.nA = 255;
-            asColorAssociation.push_back(sColor);
-
-            sColor.dfVal = CPLAtof(aosFields[4]);
-            sColor.nR = atoi(aosFields[5]);
-            sColor.nG = atoi(aosFields[6]);
-            sColor.nB = atoi(aosFields[7]);
-            sColor.nA = 255;
-            asColorAssociation.push_back(sColor);
-        }
-        else if (bIsGMT_CPT && nTokens == 4)
-        {
-            // The first token might be B (background), F (foreground) or N
-            // (nodata) Just interested in N.
-            if (EQUAL(aosFields[0], "N") && bSrcHasNoData)
-            {
-                sColor.dfVal = dfSrcNoDataValue;
-                sColor.nR = atoi(aosFields[1]);
-                sColor.nG = atoi(aosFields[2]);
-                sColor.nB = atoi(aosFields[3]);
-                sColor.nA = 255;
-                asColorAssociation.push_back(sColor);
-            }
-        }
-        else if (!bIsGMT_CPT && nTokens >= 2)
-        {
-            if (EQUAL(aosFields[0], "nv"))
-            {
-                if (!bSrcHasNoData)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Input dataset has no nodata value. "
-                             "Ignoring 'nv' entry in color palette");
-                    continue;
-                }
-                sColor.dfVal = dfSrcNoDataValue;
-            }
-            else if (strlen(aosFields[0]) > 1 &&
-                     aosFields[0][strlen(aosFields[0]) - 1] == '%')
-            {
-                const double dfPct = CPLAtof(aosFields[0]) / 100.0;
-                if (dfPct < 0.0 || dfPct > 1.0)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Wrong value for a percentage : %s", aosFields[0]);
-                    return {};
-                }
-                sColor.dfVal =
-                    GDALColorReliefGetAbsoluteValFromPct(hSrcBand, dfPct);
-            }
-            else
-            {
-                sColor.dfVal = CPLAtof(aosFields[0]);
-            }
-
-            if (nTokens >= 4)
-            {
-                sColor.nR = atoi(aosFields[1]);
-                sColor.nG = atoi(aosFields[2]);
-                sColor.nB = atoi(aosFields[3]);
-                sColor.nA =
-                    (CSLCount(aosFields) >= 5) ? atoi(aosFields[4]) : 255;
-            }
-            else
-            {
-                int nR = 0;
-                int nG = 0;
-                int nB = 0;
-                if (!GDALColorReliefFindNamedColor(aosFields[1], &nR, &nG, &nB))
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Unknown color : %s",
-                             aosFields[1]);
-                    return {};
-                }
-                sColor.nR = nR;
-                sColor.nG = nG;
-                sColor.nB = nB;
-                sColor.nA =
-                    (CSLCount(aosFields) >= 3) ? atoi(aosFields[2]) : 255;
-            }
-            asColorAssociation.push_back(sColor);
-        }
-    }
-
+    std::vector<GDALColorAssociation> asColorAssociation = GDALLoadTextColorMap(
+        pszColorFilename, GDALRasterBand::FromHandle(hSrcBand));
     if (asColorAssociation.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "No color association found in %s", pszColorFilename);
         return {};
     }
+
+    int bSrcHasNoData = FALSE;
+    const double dfSrcNoDataValue =
+        GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
 
     GDALColorReliefProcessColors(asColorAssociation, bSrcHasNoData,
                                  dfSrcNoDataValue, eColorSelectionMode);
@@ -1905,7 +1714,7 @@ GDALColorReliefParseColorFile(GDALRasterBandH hSrcBand,
 
 static GByte *GDALColorReliefPrecompute(
     GDALRasterBandH hSrcBand,
-    const std::vector<ColorAssociation> &asColorAssociation,
+    const std::vector<GDALColorAssociation> &asColorAssociation,
     ColorSelectionMode eColorSelectionMode, int *pnIndexOffset)
 {
     const GDALDataType eDT = GDALGetRasterDataType(hSrcBand);
@@ -1953,7 +1762,7 @@ class GDALColorReliefDataset : public GDALDataset
 
     GDALDatasetH hSrcDS;
     GDALRasterBandH hSrcBand;
-    std::vector<ColorAssociation> asColorAssociation{};
+    std::vector<GDALColorAssociation> asColorAssociation{};
     ColorSelectionMode eColorSelectionMode;
     GByte *pabyPrecomputed;
     int nIndexOffset;

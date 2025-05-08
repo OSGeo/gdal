@@ -1410,6 +1410,9 @@ class CPL_DLL GDALColorTable
                         int nEndIndex, const GDALColorEntry *psEndColor);
     bool IsIdentity() const;
 
+    static std::unique_ptr<GDALColorTable>
+    LoadFromFile(const char *pszFilename);
+
     /** Convert a GDALColorTable* to a GDALRasterBandH.
      * @since GDAL 2.3
      */
@@ -4718,6 +4721,18 @@ std::string CPL_DLL
 GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver);
 
 std::string GDALPrintDriverList(int nOptions, bool bJSON);
+
+struct GDALColorAssociation
+{
+    double dfVal;
+    int nR;
+    int nG;
+    int nB;
+    int nA;
+};
+
+std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
+                                                       GDALRasterBand *poBand);
 
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
