@@ -64,10 +64,11 @@ def test_gdalalg_vector_geom_simplify():
     assert out_lyr.GetFeature(-1) is None
 
 
-def test_gdalalg_vector_geom_simplify_error():
+@pytest.mark.parametrize("tol", (-1, float("nan")))
+def test_gdalalg_vector_geom_simplify_error(tol):
 
     alg = get_alg()
     with pytest.raises(
-        Exception, match="Value of argument 'tolerance' is -1, but should be >= 0"
+        Exception, match="Value of argument 'tolerance' is .*, but should be >= 0"
     ):
-        alg["tolerance"] = -1
+        alg["tolerance"] = tol
