@@ -9,12 +9,13 @@
 import csv
 import os
 import re
+import shutil
 
 import requests
 
 # URL of the WMO GRIB2 tables repository
 wmo_github_repo = "wmo-im/GRIB2"
-wmo_github_tag = "v30"
+wmo_github_tag = "v34"
 wmo_base_url = f"https://raw.githubusercontent.com/{wmo_github_repo}/{wmo_github_tag}"
 
 script_dir_name = os.path.dirname(os.path.realpath(__file__))
@@ -23,10 +24,8 @@ script_dir_name = os.path.dirname(os.path.realpath(__file__))
 degrib_table_input_dir = os.path.join(script_dir_name, "data")
 assert os.path.exists(degrib_table_input_dir)
 
-# Output directory of merged tables (${repository_root}/data)
-output_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(script_dir_name))), "data"
-)
+# Output directory of merged tables (frmts/grib/data)
+output_dir = os.path.join(os.path.dirname(script_dir_name), "data")
 assert os.path.exists(output_dir)
 
 with open(os.path.join(output_dir, "grib2_table_versions.csv"), "wt") as f:
@@ -178,12 +177,24 @@ def get_auxiliary_table(num):
 
 def process_table_4_2():
 
-    # Fetch the WMO table, which contains the full table for all product
-    # disciplines and parameter category
-    url = wmo_base_url + "/GRIB2_CodeFlag_4_2_CodeTable_en.csv"
-    print(f"Fetching {url}...")
-    r = requests.get(url)
-    lines = r.content.decode("utf-8").split("\n")
+    if os.path.exists("tmp_GRIB2"):
+        shutil.rmtree("tmp_GRIB2")
+    os.system(
+        f"git clone --branch {wmo_github_tag} https://github.com/{wmo_github_repo} tmp_GRIB2"
+    )
+    lines = []
+    # Merge together GRIB2_CodeFlag_4_2_xxxx.csv files
+    for filename in os.listdir("tmp_GRIB2"):
+        if filename.startswith("GRIB2_CodeFlag_4_2_"):
+            new_lines = (
+                open("tmp_GRIB2/" + filename, "rb").read().decode("utf-8").split("\n")
+            )
+            if len(lines) == 0:
+                lines = new_lines
+            else:
+                lines += new_lines[1:]
+    shutil.rmtree("tmp_GRIB2")
+
     wmo_csv_reader = csv.DictReader(lines)
     assert wmo_csv_reader.fieldnames == [
         "Title_en",
