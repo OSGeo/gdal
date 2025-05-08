@@ -1102,8 +1102,15 @@ shutil.copy(
 )
 
 
+def builder_inited(app):
+
+    if app.builder.name == "html":
+        check_python_bindings()
+
+    # exclude the PDF toctree from HTML builds
+    if app.builder.name != "latex":
+        app.config.exclude_patterns.append("index_pdf.rst")
+
+
 def setup(app):
-    app.connect(
-        "builder-inited",
-        lambda app: check_python_bindings() if app.builder.name == "html" else None,
-    )
+    app.connect("builder-inited", builder_inited)
