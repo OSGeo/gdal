@@ -889,14 +889,14 @@ bool GDALAlgorithmArg::ValidateRealRange(double val) const
     const auto [minVal, minValIsIncluded] = GetMinValue();
     if (!std::isnan(minVal))
     {
-        if (minValIsIncluded && val < minVal)
+        if (minValIsIncluded && !(val >= minVal))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Value of argument '%s' is %g, but should be >= %g",
                      GetName().c_str(), val, minVal);
             ret = false;
         }
-        else if (!minValIsIncluded && val <= minVal)
+        else if (!minValIsIncluded && !(val > minVal))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Value of argument '%s' is %g, but should be > %g",
@@ -909,14 +909,14 @@ bool GDALAlgorithmArg::ValidateRealRange(double val) const
     if (!std::isnan(maxVal))
     {
 
-        if (maxValIsIncluded && val > maxVal)
+        if (maxValIsIncluded && !(val <= maxVal))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Value of argument '%s' is %g, but should be <= %g",
                      GetName().c_str(), val, maxVal);
             ret = false;
         }
-        else if (!maxValIsIncluded && val >= maxVal)
+        else if (!maxValIsIncluded && !(val < maxVal))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Value of argument '%s' is %g, but should be < %g",
