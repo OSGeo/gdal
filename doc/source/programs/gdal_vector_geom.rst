@@ -25,5 +25,6 @@ Available sub-commands
 - :ref:`gdal_vector_geom_make_valid`
 - :ref:`gdal_vector_geom_segmentize`
 - :ref:`gdal_vector_geom_simplify`
+- :ref:`gdal_vector_geom_simplify_coverage`
 - :ref:`gdal_vector_geom_buffer`
 - :ref:`gdal_vector_geom_swap_xy`
