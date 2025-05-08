@@ -45,6 +45,7 @@ class GDALRasterRGBToPaletteAlgorithm final : public GDALAlgorithm
     bool m_overwrite = false;
 
     int m_colorCount = 256;
+    std::string m_colorMap{};
 };
 
 //! @endcond

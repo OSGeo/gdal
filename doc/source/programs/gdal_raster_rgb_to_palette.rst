@@ -21,7 +21,8 @@ Description
 -----------
 
 :program:`gdal raster rgb-to-palette` computes an optimal pseudo-color table
-for a given RGB image using a median cut algorithm on a downsampled RGB histogram.
+for a given RGB image using a median cut algorithm on a downsampled RGB histogram,
+unless a color table is provided with the :option:`--color-map` option.
 Then it converts the image into a pseudo-colored image using the color table.
 This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
@@ -39,6 +40,13 @@ Standard options
 
     Select the number of colors in the generated color table. Defaults to 256.
     Must be between 2 and 256.
+
+.. option:: --color-map <FILENAME>
+
+    Extract the color table from <FILENAME> instead of computing it.
+    Can be used to have a consistent color table for multiple files.
+    The <FILENAME> must be either a raster file in a GDAL supported format with a palette
+    or a color file in a supported format (.txt, QGIS .qml, QGIS .qlr).
 
 Examples
 --------
