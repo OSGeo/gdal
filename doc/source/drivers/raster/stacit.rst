@@ -127,11 +127,12 @@ on a given collection, bbox and starting from a datetime:
     # from GDAL 3.11+
     gdal raster info 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\"'
 
-   .. tab:: Python
+   .. group-tab:: Python
 
-      .. literalinclude :: examples/stacit.py
+      .. literalinclude :: examples/drivers/raster/stacit.py
          :language: python
-         :end-before: # subdatasets
+         :start-after: # Example 1
+         :end-before: # Example 2
 
 Open a subdataset returned by the above request:
 
@@ -148,11 +149,12 @@ Open a subdataset returned by the above request:
     # from GDAL 3.11+
     gdal raster info 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image'
 
-   .. tab:: Python
+   .. group-tab:: Python
 
-      .. literalinclude :: examples/stacit.py
+      .. literalinclude :: examples/drivers/raster/stacit.py
          :language: python
-         :start-after: # subdatasets
+         :start-after: # Example 2
+
 
 See Also
 --------

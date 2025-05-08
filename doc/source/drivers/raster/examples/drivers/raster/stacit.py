@@ -1,3 +1,4 @@
+# Example 1
 from osgeo import gdal
 
 gdal.UseExceptions()
@@ -14,7 +15,7 @@ ds = gdal.OpenEx(
 
 print(gdal.Info(ds, format="json"))
 
-# subdatasets
+# Example 2
 
 subdatasets = ds.GetSubDatasets()
 # get the first subdataset properties
