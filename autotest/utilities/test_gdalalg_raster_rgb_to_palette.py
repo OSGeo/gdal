@@ -152,12 +152,12 @@ def test_gdalalg_raster_rgb_to_palette_no_color_interp(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 14890
 
 
-def test_gdalalg_raster_rgb_to_palette_bgr_ordered(tmp_vsimem):
+def test_gdalalg_raster_rgb_to_palette_bgr_ordered():
 
     src_ds = gdal.Translate(
         "", "../gdrivers/data/small_world.tif", format="MEM", bandList=[3, 2, 1]
     )
-    with gdal.Run(get_alg(), input=src_ds, output=tmp_vsimem / "out.tif") as alg:
+    with gdal.Run(get_alg(), input=src_ds, output_format="MEM") as alg:
         ds = alg.Output()
         assert ds.RasterCount == 1
         ct = ds.GetRasterBand(1).GetColorTable()
@@ -166,16 +166,16 @@ def test_gdalalg_raster_rgb_to_palette_bgr_ordered(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 14890
 
 
-def test_gdalalg_raster_rgb_to_palette_rrr(tmp_vsimem):
+def test_gdalalg_raster_rgb_to_palette_rrr():
 
     src_ds = gdal.Translate(
         "", "../gdrivers/data/small_world.tif", format="MEM", bandList=[1, 1, 1]
     )
     with pytest.raises(Exception, match="Several Red bands found"):
-        gdal.Run(get_alg(), input=src_ds, output=tmp_vsimem / "out.tif")
+        gdal.Run(get_alg(), input=src_ds, output_format="MEM")
 
 
-def test_gdalalg_raster_rgb_to_palette_r_g_undefined(tmp_vsimem):
+def test_gdalalg_raster_rgb_to_palette_r_g_undefined():
 
     src_ds = gdal.Translate(
         "",
@@ -184,7 +184,7 @@ def test_gdalalg_raster_rgb_to_palette_r_g_undefined(tmp_vsimem):
         colorInterpretation=["red", "green", "undefined"],
     )
     with gdaltest.error_raised(gdal.CE_Warning):
-        with gdal.Run(get_alg(), input=src_ds, output=tmp_vsimem / "out.tif") as alg:
+        with gdal.Run(get_alg(), input=src_ds, output_format="MEM") as alg:
             ds = alg.Output()
             assert ds.RasterCount == 1
             ct = ds.GetRasterBand(1).GetColorTable()
@@ -223,4 +223,58 @@ def test_gdalalg_raster_rgb_to_palette_cannot_create_output_dataset():
             get_alg(),
             input="../gdrivers/data/small_world.tif",
             output="/i_do/not/exist.tif",
+        )
+
+
+def test_gdalalg_raster_rgb_to_palette_colortable_from_other_dataset():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with gdal.Run(
+        get_alg(),
+        input=src_ds,
+        output_format="MEM",
+        color_map="data/color_paletted_red_green_0-255.txt",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 1
+        ct = ds.GetRasterBand(1).GetColorTable()
+        assert ct.GetColorEntry(0) == (255, 255, 255, 0)
+        assert ct.GetColorEntry(1) == (128, 128, 128, 255)
+
+
+def test_gdalalg_raster_rgb_to_palette_colortable_from_other_dataset_no_ct():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with pytest.raises(Exception, match="does not contain a color table"):
+        gdal.Run(
+            get_alg(),
+            input=src_ds,
+            output_format="MEM",
+            color_map="../gcore/data/byte.tif",
+        )
+
+
+@pytest.mark.require_driver("PNG")
+def test_gdalalg_raster_rgb_to_palette_colortable_from_text_file():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with gdal.Run(
+        get_alg(),
+        input=src_ds,
+        output_format="MEM",
+        color_map="../gcore/data/stefan_full_rgba_pct32.png",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 1
+        ct = ds.GetRasterBand(1).GetColorTable()
+        assert ct.GetColorEntry(0) == (0, 0, 0, 0)
+        assert ct.GetColorEntry(1) == (0, 0, 0, 1)
+
+
+def test_gdalalg_raster_rgb_to_palette_colortable_from_non_existing_file():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with pytest.raises(Exception, match="Cannot find"):
+        gdal.Run(
+            get_alg(), input=src_ds, output_format="MEM", color_map="/i_do/not/exist"
         )

@@ -53,6 +53,7 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm()
         .SetDefault(m_colorCount)
         .SetMinValueIncluded(2)
         .SetMaxValueIncluded(256);
+    AddArg("color-map", 0, _("Color map filename"), &m_colorMap);
 }
 
 /************************************************************************/
@@ -180,19 +181,66 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    const double oneOverStep = 1.0 / (bNeedTmpFile ? 3.0 : 2.0);
+    const double oneOverStep =
+        1.0 / ((m_colorMap.empty() ? 1 : 0) + (bNeedTmpFile ? 2 : 1));
 
     GDALColorTable oCT;
 
-    void *pScaledData =
-        GDALCreateScaledProgress(0, oneOverStep, pfnProgress, pProgressData);
-    bool bOK =
-        (GDALComputeMedianCutPCT(mapBands[GCI_RedBand], mapBands[GCI_GreenBand],
-                                 mapBands[GCI_BlueBand], nullptr, m_colorCount,
-                                 GDALColorTable::ToHandle(&oCT),
-                                 pScaledData ? GDALScaledProgress : nullptr,
-                                 pScaledData) == CE_None);
-    GDALDestroyScaledProgress(pScaledData);
+    bool bOK = true;
+    double dfLastProgress = 0;
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+        nullptr, GDALDestroyScaledProgress);
+    if (m_colorMap.empty())
+    {
+        pScaledData.reset(GDALCreateScaledProgress(0, oneOverStep, pfnProgress,
+                                                   pProgressData));
+        dfLastProgress = oneOverStep;
+        bOK = (GDALComputeMedianCutPCT(
+                   mapBands[GCI_RedBand], mapBands[GCI_GreenBand],
+                   mapBands[GCI_BlueBand], nullptr, m_colorCount,
+                   GDALColorTable::ToHandle(&oCT),
+                   pScaledData ? GDALScaledProgress : nullptr,
+                   pScaledData.get()) == CE_None);
+    }
+    else
+    {
+        GDALDriverH hDriver;
+        if ((hDriver = GDALIdentifyDriver(m_colorMap.c_str(), nullptr)) !=
+                nullptr &&
+            // Palette .txt files may be misidentified by the XYZ driver
+            !EQUAL(GDALGetDescription(hDriver), "XYZ"))
+        {
+            auto poPaletteDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                m_colorMap.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                nullptr, nullptr, nullptr));
+            bOK = poPaletteDS != nullptr && poPaletteDS->GetRasterCount() > 0;
+            if (bOK)
+            {
+                const auto poCT =
+                    poPaletteDS->GetRasterBand(1)->GetColorTable();
+                if (poCT)
+                {
+                    oCT = *poCT;
+                }
+                else
+                {
+                    bOK = false;
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Dataset '%s' does not contain a color table",
+                                m_colorMap.c_str());
+                }
+            }
+        }
+        else
+        {
+            auto poCT = GDALColorTable::LoadFromFile(m_colorMap.c_str());
+            bOK = poCT != nullptr;
+            if (bOK)
+            {
+                oCT = std::move(*(poCT.get()));
+            }
+        }
+    }
 
     std::unique_ptr<GDALDataset> poTmpDS;
     if (bOK)
@@ -237,16 +285,17 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         poTmpDS->SetMetadata(poSrcDS->GetMetadata());
 
-        pScaledData = GDALCreateScaledProgress(oneOverStep, 2 * oneOverStep,
-                                               pfnProgress, pProgressData);
+        pScaledData.reset(GDALCreateScaledProgress(dfLastProgress,
+                                                   dfLastProgress + oneOverStep,
+                                                   pfnProgress, pProgressData));
+        dfLastProgress += oneOverStep;
         bOK = GDALDitherRGB2PCT(
                   mapBands[GCI_RedBand], mapBands[GCI_GreenBand],
                   mapBands[GCI_BlueBand],
                   GDALRasterBand::ToHandle(poTmpDS->GetRasterBand(1)),
                   GDALColorTable::ToHandle(&oCT),
                   pScaledData ? GDALScaledProgress : nullptr,
-                  pScaledData) == CE_None;
-        GDALDestroyScaledProgress(pScaledData);
+                  pScaledData.get()) == CE_None;
     }
 
     if (bOK)
@@ -261,17 +310,18 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 GetGDALDriverManager()->GetDriverByName(m_format.c_str());
             CPLAssert(poOutDriver);
             const CPLStringList aosCO(m_creationOptions);
-            pScaledData = GDALCreateScaledProgress(2 * oneOverStep, 1.0,
-                                                   pfnProgress, pProgressData);
+            pScaledData.reset(GDALCreateScaledProgress(
+                dfLastProgress, 1.0, pfnProgress, pProgressData));
             auto poOutDS = std::unique_ptr<GDALDataset>(poOutDriver->CreateCopy(
                 m_outputDataset.GetName().c_str(), poTmpDS.get(),
                 /* bStrict = */ false, aosCO.List(),
-                pScaledData ? GDALScaledProgress : nullptr, pScaledData));
-            GDALDestroyScaledProgress(pScaledData);
+                pScaledData ? GDALScaledProgress : nullptr, pScaledData.get()));
             bOK = poOutDS != nullptr;
             m_outputDataset.Set(std::move(poOutDS));
         }
     }
+    if (bOK && pfnProgress)
+        pfnProgress(1.0, "", pProgressData);
 
     return bOK;
 }
