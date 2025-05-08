@@ -342,6 +342,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_OPENGIS_SCHEMAS", // from cpl_xml_validate.cpp
    "GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", // from rasterio.cpp, vrtwarped.cpp
    "GDAL_OVR_CHUNK_MAX_SIZE", // from overview.cpp
+   "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE", // from overview.cpp
    "GDAL_OVR_CHUNKYSIZE", // from overview.cpp
    "GDAL_OVR_PROPAGATE_NODATA", // from overview.cpp
    "GDAL_OVR_TEMP_DRIVER", // from overview.cpp

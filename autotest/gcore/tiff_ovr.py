@@ -2681,7 +2681,31 @@ def test_tiff_ovr_external_mask_update(tmp_vsimem):
 # of the default scanlines based one
 
 
-def test_tiff_ovr_fallback_to_multiband_overview_generate():
+@pytest.mark.parametrize(
+    "config_options",
+    [
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+            "GDAL_OVR_TEMP_DRIVER": "MEM",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+            "GDAL_OVR_TEMP_DRIVER": "GTIFF",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+            "GDAL_OVR_TEMP_DRIVER": "GTIFF",
+        },
+    ],
+)
+def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
 
     filename = "/vsimem/test_tiff_ovr_issue_4932_src.tif"
     ds = gdal.Translate(
@@ -2689,9 +2713,7 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
-    with gdaltest.config_options(
-        {"GDAL_OVR_CHUNK_MAX_SIZE": "1000", "GDAL_OVR_TEMP_DRIVER": "MEM"}
-    ):
+    with gdaltest.config_options(config_options):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
 
