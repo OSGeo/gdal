@@ -151,30 +151,13 @@ int MRFDataset::CloseDependentDatasets()
 
 MRFDataset::~MRFDataset()
 {  // Make sure everything gets written
-    if (eAccess != GA_ReadOnly && !bCrystalized)
-        if (!MRFDataset::Crystalize())
-        {
-            // Can't return error code from a destructor, just emit the error
-            CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
-        }
+    if (eAccess != GA_ReadOnly && !bCrystalized && !MRFDataset::Crystalize())
+    {
+        // Can't return error code from a destructor, just emit the error
+        CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
+    }
 
     MRFDataset::FlushCache(true);
-    if (eAccess != GA_ReadOnly)
-    {
-        // There could be data in the overviews that needs to be flushed
-        for (int i = 0; i < nBands; i++)
-        {
-            MRFRasterBand *band =
-                reinterpret_cast<MRFRasterBand *>(GetRasterBand(i + 1));
-            for (int j = 0; j < band->GetOverviewCount(); j++)
-            {
-                MRFRasterBand *ovrband =
-                    reinterpret_cast<MRFRasterBand *>(band->GetOverview(j));
-                if (ovrband)
-                    ovrband->FlushCache(true);
-            }
-        }
-    }
     MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
@@ -494,16 +477,12 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                     papapoOverviewBands[iBand] = &(papoOverviewBandList[iBand]);
                 }
 
-                //
-                // Ready, generate this overview
-                // Note that this function has a bug in GDAL, the block stepping
-                // is incorrect It can generate multiple overview in one call,
-                // Could rewrite this loop so this function only gets called
-                // once
-                //
                 GDALRegenerateOverviewsMultiBand(
                     nBands, papoBandList, 1, papapoOverviewBands, pszResampling,
                     pfnProgress, pProgressData, papszOptions);
+                // Flush the overview bands
+                for (int iBand = 0; iBand < nBands; iBand++)
+                    papoOverviewBandList[iBand]->FlushCache(false);
             }
         }
     }
