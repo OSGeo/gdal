@@ -89,6 +89,7 @@ Raster commands
    gdal_raster_pipeline
    gdal_raster_pixel_info
    gdal_raster_polygonize
+   gdal_raster_rgb_to_palette
    gdal_raster_reclassify
    gdal_raster_reproject
    gdal_raster_resize
@@ -129,6 +130,7 @@ Raster commands
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
     - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
+    - :ref:`gdal_raster_rgb_to_palette`: Convert a RGB image into a pseudo-color / paletted image
     - :ref:`gdal_raster_reclassify`: Reclassify a raster dataset
     - :ref:`gdal_raster_reproject`: Reproject a raster dataset
     - :ref:`gdal_raster_resize`: Resize a raster dataset without changing the georeferenced extents
