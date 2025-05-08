@@ -96,7 +96,7 @@ Standard options
         20.001  blue
         30      blue
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Adds an alpha mask band to the output.
 
