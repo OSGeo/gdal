@@ -158,9 +158,9 @@ MRFDataset::~MRFDataset()
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
 
+    MRFDataset::FlushCache(true);
     if (eAccess != GA_ReadOnly)
     {
-        MRFDataset::FlushCache(true);
         // There could be data in the overviews that needs to be flushed
         for (int i = 0; i < nBands; i++)
         {
