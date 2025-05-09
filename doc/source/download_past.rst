@@ -5,9 +5,9 @@
 Past Releases
 =============
 
-* **2025-04-07** `gdal-3.10.3.tar.gz`_ `3.10.3 "Gulf of Mexico" Release Notes`_ (`3.10.3 md5`_)
+* **2025-04-07** `gdal-3.10.3.tar.gz`_ `3.10.3 Release Notes`_ (`3.10.3 md5`_)
 
-.. _`3.10.3 "Gulf of Mexico" Release Notes`: https://github.com/OSGeo/gdal/blob/v3.10.3/NEWS.md
+.. _`3.10.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.10.3/NEWS.md
 .. _`gdal-3.10.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.10.3/gdal-3.10.3.tar.gz
 .. _`3.10.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.10.3/gdal-3.10.3.tar.gz.md5
 
