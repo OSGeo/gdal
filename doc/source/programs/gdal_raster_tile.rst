@@ -91,7 +91,7 @@ Standard options
 
     Minimum zoom level to generate. If not specified, equal to :option:`--max-zoom`.
 
-.. option:: --max-zoom <MIN-ZOOM>
+.. option:: --max-zoom <MAX-ZOOM>
 
     Maximum zoom level to generate. If not specified, this will be determined by
     comparing the resolution of the input dataset with the closest resolution in
