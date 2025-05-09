@@ -3023,7 +3023,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFilename(
                             VSI_ISDIR(psEntry->nMode))
                         {
                             std::string osVal;
-                            if (osDir.empty())
+                            if (osDir.empty() || osDir == ".")
                                 osVal = psEntry->pszName;
                             else
                                 osVal = CPLFormFilenameSafe(
@@ -3571,9 +3571,9 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
 /*                    FormatAutoCompleteFunction()                      */
 /************************************************************************/
 
-static std::vector<std::string>
-FormatAutoCompleteFunction(const GDALAlgorithmArg &arg,
-                           bool /* bStreamAllowed */, bool bGDALGAllowed)
+/* static */
+std::vector<std::string> GDALAlgorithm::FormatAutoCompleteFunction(
+    const GDALAlgorithmArg &arg, bool /* bStreamAllowed */, bool bGDALGAllowed)
 {
     std::vector<std::string> res;
     auto poDM = GetGDALDriverManager();
@@ -5356,26 +5356,28 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             }
         }
     }
-    else if (!args.empty() && STARTS_WITH(args.back().c_str(), "/vsi"))
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        for (const char *name :
-             {"dataset", "filename", "like", "source", "destination"})
-        {
-            if (!arg)
-            {
-                arg = GetArg(name);
-            }
-        }
-        if (arg)
-        {
-            ret = arg->GetAutoCompleteChoices(args.back());
-        }
-    }
     else
     {
         // List possible sub-algorithms
         ret = GetSubAlgorithmNames();
+
+        // Try filenames
+        if (ret.empty() && !args.empty())
+        {
+            auto arg = GetArg(GDAL_ARG_NAME_INPUT);
+            for (const char *name :
+                 {"dataset", "filename", "like", "source", "destination"})
+            {
+                if (!arg)
+                {
+                    arg = GetArg(name);
+                }
+            }
+            if (arg)
+            {
+                ret = arg->GetAutoCompleteChoices(args.back());
+            }
+        }
     }
 
     return ret;

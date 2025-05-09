@@ -2892,6 +2892,15 @@ class CPL_DLL GDALAlgorithmRegistry
      */
     virtual bool CheckSafeForStreamOutput();
 
+    /** Validate a format argument */
+    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                        bool bGDALGAllowed) const;
+
+    /** Completion function for a format argument */
+    static std::vector<std::string>
+    FormatAutoCompleteFunction(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                               bool bGDALGAllowed);
+
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
                      const std::string &alias);
@@ -2964,9 +2973,6 @@ class CPL_DLL GDALAlgorithmRegistry
             std::variant<std::vector<std::string>, std::vector<int>,
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
-
-    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
-                        bool bGDALGAllowed) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
