@@ -94,7 +94,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it, or --update to update it.",
+        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it.",
     ):
         alg.Run()
 
@@ -104,7 +104,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     alg["update"] = True
     with pytest.raises(
         Exception,
-        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append it.",
+        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it.",
     ):
         alg.Run()
 

@@ -4720,10 +4720,13 @@ GDALGetSTACCommonNameFromColorInterp(GDALColorInterp eInterp);
 std::string CPL_DLL GDALGetCacheDirectory();
 
 bool GDALDoesFileOrDatasetExist(const char *pszName,
-                                const char **ppszType = nullptr);
+                                const char **ppszType = nullptr,
+                                GDALDriver **ppDriver = nullptr);
 
 std::string CPL_DLL
 GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver);
+
+std::string GDALPrintDriverList(int nOptions, bool bJSON);
 
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different

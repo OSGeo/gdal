@@ -87,18 +87,18 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
            _("Round target extent to target resolution"),
            &m_targetAlignedPixels)
         .AddHiddenAlias("tap");
-    AddArg("srcnodata", 0, _("Set nodata values for input bands."),
+    AddArg("src-nodata", 0, _("Set nodata values for input bands."),
            &m_srcNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false);
-    AddArg("dstnodata", 0,
+    AddArg("dst-nodata", 0,
            _("Set nodata values at the destination band level."), &m_dstNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false);
-    AddArg("hidenodata", 0,
+    AddArg("hide-nodata", 0,
            _("Makes the destination band not report the NoData."),
            &m_hideNoData);
-    AddArg("addalpha", 0,
+    AddArg("add-alpha", 0,
            _("Adds an alpha mask band to the destination when the source "
              "raster have "
              "none."),
@@ -112,13 +112,7 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
 bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "gdal raster mosaic does not support outputting to an "
-                    "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     std::vector<GDALDatasetH> ahInputDatasets;
     CPLStringList aosInputDatasetNames;
@@ -177,17 +171,6 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         ReportError(CE_Failure, CPLE_NotSupported,
                     "Input datasets should be provided either all by reference "
                     "or all by name");
-        return false;
-    }
-
-    const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
         return false;
     }
 

@@ -1,6 +1,6 @@
 <mapml>
     <head>
-        <title>states</title>
+        <title>${TITLE}</title>
         <base href="${URL}" />
         <meta charset="utf-8" />
         <meta content="text/mapml;projection=${TILING_SCHEME}" http-equiv="Content-Type" />

@@ -73,6 +73,11 @@ The following options are available:
     Do not check the spatial reference systems of the inputs for consistency. All inputs will be assumed to have the
     spatial reference system of the first input, and this spatial reference system will be used for the output.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
 Examples
 --------
 

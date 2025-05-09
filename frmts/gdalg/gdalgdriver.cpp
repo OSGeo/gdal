@@ -24,7 +24,16 @@
 class GDALGDataset final : public GDALProxyDataset
 {
   public:
-    GDALGDataset(std::unique_ptr<GDALAlgorithm> poAlg, GDALDataset *poDS);
+    GDALGDataset(const std::string &filename,
+                 std::unique_ptr<GDALAlgorithm> poAlg, GDALDataset *poDS);
+
+    char **GetFileList(void) override
+    {
+        CPLStringList aosList;
+        if (!m_filename.empty())
+            aosList.push_back(m_filename);
+        return aosList.StealList();
+    }
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -40,6 +49,7 @@ class GDALGDataset final : public GDALProxyDataset
     }
 
   private:
+    const std::string m_filename;
     std::unique_ptr<GDALAlgorithm> m_poAlg{};
     GDALDataset *m_poUnderlyingDS = nullptr;
 
@@ -122,9 +132,10 @@ class GDALGRasterBand final : public GDALProxyRasterBand
 /*                      GDALGDataset::GDALGDataset()                    */
 /************************************************************************/
 
-GDALGDataset::GDALGDataset(std::unique_ptr<GDALAlgorithm> poAlg,
+GDALGDataset::GDALGDataset(const std::string &filename,
+                           std::unique_ptr<GDALAlgorithm> poAlg,
                            GDALDataset *poDS)
-    : m_poAlg(std::move(poAlg)), m_poUnderlyingDS(poDS)
+    : m_filename(filename), m_poAlg(std::move(poAlg)), m_poUnderlyingDS(poDS)
 {
     nRasterXSize = m_poUnderlyingDS->GetRasterXSize();
     nRasterYSize = m_poUnderlyingDS->GetRasterYSize();
@@ -194,6 +205,20 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         return nullptr;
     }
 
+    const auto CheckVersion = [&oDoc]()
+    {
+        const std::string osVersion = oDoc.GetRoot().GetString("gdal_version");
+        if (!osVersion.empty() &&
+            atoi(GDALVersionInfo("VERSION_NUM")) < atoi(osVersion.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The failure might be due to the .gdalg.json file having "
+                     "been created with GDAL VERSION_NUM=%s which is newer "
+                     "than current GDAL VERSION_NUM=%s",
+                     osVersion.c_str(), GDALVersionInfo("VERSION_NUM"));
+        }
+    };
+
     const CPLStringList aosArgs(CSLTokenizeString(osCommandLine.c_str()));
 
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
@@ -214,6 +239,7 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         args.push_back(aosArgs[i]);
     if (!alg->ParseCommandLineArguments(args))
     {
+        CheckVersion();
         return nullptr;
     }
     if (!alg->GetActualAlgorithm().SupportsStreamedOutput())
@@ -226,6 +252,7 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
 
     if (!alg->Run(nullptr, nullptr))
     {
+        CheckVersion();
         return nullptr;
     }
 
@@ -257,8 +284,9 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
                     return nullptr;
                 }
             }
-            return std::make_unique<GDALGDataset>(std::move(alg),
-                                                  poUnderlyingDS)
+            return std::make_unique<GDALGDataset>(
+                       poOpenInfo->pabyHeader ? poOpenInfo->pszFilename : "",
+                       std::move(alg), poUnderlyingDS)
                 .release();
         }
     }

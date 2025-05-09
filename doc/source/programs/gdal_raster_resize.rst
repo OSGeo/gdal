@@ -34,10 +34,12 @@ Standard options
 
 .. include:: gdal_options/overwrite.rst
 
-.. option:: --size <width>,<height>
+.. option:: --size <width[%]>,<height[%]>
 
-    Set output file size in pixels and lines. If width or height is set to 0,
-    the other dimension will be guessed from the computed resolution.
+    Set output raster width and height, expressed in pixels,
+    or percentage if using the ``%`` suffix.
+    If the width or the height is set to 0, the other dimension will be guessed
+    from the computed resolution.
 
 .. option:: -r, --resampling <RESAMPLING>
 
@@ -69,4 +71,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster resize --resize=1000,500 -r cubic in.tif out.tif --overwrite
+        $ gdal raster resize --size=1000,500 -r cubic in.tif out.tif --overwrite
+
+.. example::
+   :title: Resize a dataset to half size using cubic resampling
+
+   .. code-block:: bash
+
+        $ gdal raster resize --size=50%,50% -r cubic in.tif out.tif --overwrite

@@ -31,8 +31,16 @@ class VSIPDFFileStream final : public BaseStream
 
     virtual BaseStream *copy() override;
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 5)
+    virtual std::unique_ptr<Stream> makeSubStream(Goffset startA, bool limitedA,
+                                                  Goffset lengthA,
+                                                  Object &&dictA) override;
+#else
     virtual Stream *makeSubStream(Goffset startA, bool limitedA,
                                   Goffset lengthA, Object &&dictA) override;
+
+#endif
     virtual Goffset getPos() override;
     virtual Goffset getStart() override;
 

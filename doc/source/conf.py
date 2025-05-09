@@ -189,6 +189,7 @@ html_favicon = "../images/favicon.png"
 author_frankw = "Frank Warmerdam <warmerdam@pobox.com>"
 author_silker = "Silke Reimer <silke@intevation.de>"
 author_mikhailg = "Mikhail Gusev <gusevmihs@gmail.com>"
+author_dbaston = "Dan Baston <dbaston@gmail.com>"
 author_dmitryb = "Dmitry Baryshnikov <polimax@mail.ru>"
 author_evenr = "Even Rouault <even.rouault@spatialys.com>"
 author_elpaso = "Alessandro Pasotti <elpaso@itopen.it>"
@@ -257,6 +258,13 @@ man_pages = [
         "gdal-raster-set-type",
         "Modify the data type of bands of a raster dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_calc",
+        "gdal-raster-calc",
+        "Perform pixel-wise calculations on a raster",
+        [author_dbaston],
         1,
     ),
     (
@@ -379,6 +387,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_reclassify",
+        "gdal-raster-reclassify",
+        "Reclassify a raster dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
         "Reproject a raster dataset",
@@ -431,6 +446,13 @@ man_pages = [
         "programs/gdal_raster_stack",
         "gdal-raster-stack",
         "Combine together input bands into a multi-band output, either virtual (VRT) or materialized",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_tile",
+        "gdal-raster-tile",
+        "Generate tiles in separate files from a raster dataset",
         [author_evenr],
         1,
     ),
@@ -1080,8 +1102,15 @@ shutil.copy(
 )
 
 
+def builder_inited(app):
+
+    if app.builder.name == "html":
+        check_python_bindings()
+
+    # exclude the PDF toctree from HTML builds
+    if app.builder.name != "latex":
+        app.config.exclude_patterns.append("index_pdf.rst")
+
+
 def setup(app):
-    app.connect(
-        "builder-inited",
-        lambda app: check_python_bindings() if app.builder.name == "html" else None,
-    )
+    app.connect("builder-inited", builder_inited)

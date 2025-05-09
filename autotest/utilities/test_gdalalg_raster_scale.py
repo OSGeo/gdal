@@ -60,8 +60,8 @@ def test_gdalalg_raster_scale_srcmin_srcmax_only():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 0
-    alg["srcmax"] = 3
+    alg["src-min"] = 0
+    alg["src-max"] = 3
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (85, 170)
@@ -76,8 +76,8 @@ def test_gdalalg_raster_scale_dstcmin_dstmax_only():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dstmin"] = 0
-    alg["dstmax"] = 3
+    alg["dst-min"] = 0
+    alg["dst-max"] = 3
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 3)
@@ -92,8 +92,8 @@ def test_gdalalg_raster_scale_missing_srcmin():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmax"] = 0
-    with pytest.raises(Exception, match="scale: srcmin must be specified"):
+    alg["src-max"] = 0
+    with pytest.raises(Exception, match="scale: src-min must be specified"):
         alg.Run()
 
 
@@ -106,8 +106,8 @@ def test_gdalalg_raster_scale_missing_srcmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 0
-    with pytest.raises(Exception, match="scale: srcmax must be specified"):
+    alg["src-min"] = 0
+    with pytest.raises(Exception, match="scale: src-max must be specified"):
         alg.Run()
 
 
@@ -120,8 +120,8 @@ def test_gdalalg_raster_scale_missing_dstmin():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dstmax"] = 0
-    with pytest.raises(Exception, match="scale: dstmin must be specified"):
+    alg["dst-max"] = 0
+    with pytest.raises(Exception, match="scale: dst-min must be specified"):
         alg.Run()
 
 
@@ -134,8 +134,8 @@ def test_gdalalg_raster_scale_missing_dstmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dstmin"] = 0
-    with pytest.raises(Exception, match="scale: dstmax must be specified"):
+    alg["dst-min"] = 0
+    with pytest.raises(Exception, match="scale: dst-max must be specified"):
         alg.Run()
 
 
@@ -149,10 +149,10 @@ def test_gdalalg_raster_scale_srcmin_srcmax_destmin_dstmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 10
-    alg["srcmax"] = 20
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 10
+    alg["src-max"] = 20
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (150, 150)
@@ -170,10 +170,10 @@ def test_gdalalg_raster_scale_band():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["band"] = 1
-    alg["srcmin"] = 10
-    alg["srcmax"] = 20
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 10
+    alg["src-max"] = 20
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (150, 150)
@@ -190,10 +190,10 @@ def test_gdalalg_raster_exponent():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 10
-    alg["srcmax"] = 20
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 10
+    alg["src-max"] = 20
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     alg["exponent"] = 1.5
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
@@ -213,10 +213,10 @@ def test_gdalalg_raster_band_exponent_datatype():
     alg["output-format"] = "MEM"
     alg["output-data-type"] = "UInt16"
     alg["band"] = 2
-    alg["srcmin"] = 10
-    alg["srcmax"] = 20
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 10
+    alg["src-max"] = 20
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     alg["exponent"] = 1.5
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
@@ -234,10 +234,10 @@ def test_gdalalg_raster_scale_clip():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 1
-    alg["srcmax"] = 3
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 1
+    alg["src-max"] = 3
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert struct.unpack("B" * 5, out_ds.GetRasterBand(1).ReadRaster()) == (
@@ -258,10 +258,10 @@ def test_gdalalg_raster_scale_no_clip():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 1
-    alg["srcmax"] = 3
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 1
+    alg["src-max"] = 3
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     alg["no-clip"] = True
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
@@ -283,10 +283,10 @@ def test_gdalalg_raster_scale_no_clip_exponent():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["srcmin"] = 1
-    alg["srcmax"] = 3
-    alg["dstmin"] = 100
-    alg["dstmax"] = 200
+    alg["src-min"] = 1
+    alg["src-max"] = 3
+    alg["dst-min"] = 100
+    alg["dst-max"] = 200
     alg["exponent"] = 1.1
     alg["no-clip"] = True
     assert alg.Run()

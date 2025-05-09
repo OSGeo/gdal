@@ -45,6 +45,7 @@ Available sub-commands
 - :ref:`gdal_raster_sieve`
 - :ref:`gdal_raster_slope`
 - :ref:`gdal_raster_stack`
+- :ref:`gdal_raster_tile`
 - :ref:`gdal_raster_tpi`
 - :ref:`gdal_raster_tri`
 - :ref:`gdal_raster_unscale`
@@ -66,3 +67,10 @@ Examples
    .. code-block:: console
 
        $ gdal raster convert utm.tif utm.gpkg
+
+.. example::
+   :title: Getting the list of raster drivers (with JSON output)
+
+   .. code-block:: console
+
+       $ gdal raster --drivers

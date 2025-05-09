@@ -2714,7 +2714,7 @@ bool GDALGeoPackageDataset::OpenRaster(
                 }
                 sqlite3_stmt *hSQLStmt = nullptr;
                 int rc =
-                    sqlite3_prepare_v2(hDB, pszSQL, -1, &hSQLStmt, nullptr);
+                    SQLPrepareWithError(hDB, pszSQL, -1, &hSQLStmt, nullptr);
 
                 if (rc == SQLITE_OK)
                 {
@@ -2723,11 +2723,6 @@ bool GDALGeoPackageDataset::OpenRaster(
                         SetDataType(GDT_Float32);
                     }
                     sqlite3_finalize(hSQLStmt);
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error when running %s", pszSQL);
                 }
                 sqlite3_free(pszSQL);
             }
@@ -7658,7 +7653,7 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     if (rc != SQLITE_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
+                 "In ExecuteSQL(): sqlite3_prepare_v2(%s): %s",
                  osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB));
 
         if (hSQLStmt != nullptr)
@@ -10124,11 +10119,9 @@ bool GDALGeoPackageDataset::AddFieldDomain(
                            "description) VALUES ("
                            "?, 'range', NULL, ?, ?, ?, ?, ?)",
                            min_is_inclusive, max_is_inclusive);
-            if (sqlite3_prepare_v2(hDB, pszSQL, -1, &hInsertStmt, nullptr) !=
+            if (SQLPrepareWithError(hDB, pszSQL, -1, &hInsertStmt, nullptr) !=
                 SQLITE_OK)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to prepare SQL: %s", pszSQL);
                 return false;
             }
             sqlite3_bind_text(hInsertStmt, 1, domainName.c_str(),
@@ -10153,7 +10146,7 @@ bool GDALGeoPackageDataset::AddFieldDomain(
             if (sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to execute insertion: %s",
+                         "failed to execute insertion '%s': %s", pszSQL,
                          sqlite3_errmsg(hDB));
                 return false;
             }

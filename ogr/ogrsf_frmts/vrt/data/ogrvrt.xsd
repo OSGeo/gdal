@@ -400,7 +400,7 @@
 
     <xs:complexType name="SrcRegionType">
         <xs:simpleContent>
-            <xs:extension base="PolygonWKTType">
+            <xs:extension base="PolygonOrMultiPolygonWKTType">
                 <xs:attribute name="clip" type="OGRBooleanType">
                     <xs:annotation>
                         <xs:documentation>Defaults to FALSE.</xs:documentation>
@@ -410,12 +410,12 @@
         </xs:simpleContent>
     </xs:complexType>
 
-    <xs:simpleType name="PolygonWKTType">
+    <xs:simpleType name="PolygonOrMultiPolygonWKTType">
         <xs:annotation>
-            <xs:documentation>A valid WKT for a POLYGON</xs:documentation>
+            <xs:documentation>A valid WKT for a POLYGON or a MULTIPOLYGON</xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:pattern value="POLYGON.*"/>
+            <xs:pattern value="(MULTI)?POLYGON.*"/>
         </xs:restriction>
     </xs:simpleType>
 

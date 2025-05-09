@@ -1,6 +1,4 @@
-# GDAL/OGR 3.11.0 "Eganville" *Preliminary* Release Notes
-
-In progress... up to revision 7587621a9c3ffe5cfaea482025c5f5a22e0a090a
+# GDAL/OGR 3.11.0 "Eganville" Release Notes
 
 GDAL/OGR 3.11.0 is a feature release.
 Those notes include changes since GDAL 3.10.0, but not already included in a
@@ -13,8 +11,9 @@ Highlight:
 * [RFC 104](https://gdal.org/en/latest/development/rfc/rfc104_gdal_cli.html):
   Adding a "gdal" front-end command line interface.
   - See the [list of commands](https://gdal.org/en/latest/programs/index.html#gdal-application)
-  - Includes a completely new "gdal raster calc" utility.
-  - Includes "gdal vsi list/copy/delete" (ports of Python sample scripts)
+  - Includes new "gdal raster calc" and "gdal raster resclassify" utilities.
+  - "gdal raster tile", C++ port of gdal2tiles, runs faster (3x to 6x in some cases)
+  - Includes "gdal vsi list/copy/delete/move/sync" (ports of Python sample scripts)
   - Includes "gdal driver {driver_name}" for driver-specific commands.
   - Includes smart Bash autocompletion
   - Includes C, C++, Python API
@@ -94,7 +93,9 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.11/MIGRAT
 * CMake: Switch from SameMinorVersion to SameMajorVersion compatibility
 * CMake: Fix PATHS keyword
 * CMake: Use NAMES_PER_DIR where needed
+* CMake: Export GDAL library targets
 * Fix compiler warning with libxml 2.14.0
+* Fix compiler warning with libarrow 20.0
 
 ## Docker
 
@@ -137,6 +138,10 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.11/MIGRAT
 * Add CPLQuietWarningsErrorHandler()
 * CPLGetPhysicalRAM(): cache result to avoid multiple file openings on repeated
   calls
+* infback9: Fix potential vulnerable cloned functions. (#12244, CVE-2016-9840)
+* Add VSIMove()
+* VSIMkdirRecursive(): fix VSIMdirRecursive('dir_name') (without slash)
+* CPLStrdod(): fix setting *endptr for values *starting* with inf/nan/etc. special values
 
 ### Core
 
@@ -167,6 +172,16 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.11/MIGRAT
   support APPEND_SUBDATASET=YES creation option
 * Add GDALIsValueInRangeOf()
 * Add GDALRasterBand::SetNoDataValueAsString()
+* Fix ComputeRasterMinMax() and ComputeStatistics() on a raster with all
+  values to infinity
+* GDALComputeOvFactor(): try to return a power-of-two when possible (#12227)
+* Register KEA deferred plugin before HDF5
+* Improve error messages when creating a file with a known (deferred loading)
+  driver but not installed
+* tilematrixset: add definitions of WorldMercatorWGS84Quad,
+  PseudoTMS_GlobalMercator, GoogleCRS84Quad
+* GDALDriver::QuietDelete(): allow removing directories, except for containers
+  of MapInfo and shapefiles
 
 ### Algorithms
 
@@ -223,13 +238,19 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.11/MIGRAT
 * gdalwarp: fail on invalid -et values
 * gdalwarp: in term progress, only display the short filename of the file being
   processed
+* gdalwarp: speed-up warping to COG with heavy transformers (TPS / geoloc)
+  by avoiding to instantiate it twice (#12170)
+* gdalwarp: Emit error on invalid -srcnodata, -dstnodata
+* gdalwarp: Guard against numeric parsing failures in INIT_DEST
 * gdaldem: hillshade and slope: automatically set scale for geographic and
   projected CRS; add -xscale and -yscale
 * gdal_footprint: fix -lyr_name on a newly created dataset
+* gdal_rasterize: fix/simplify vertical/horizontal detection
 * add a gdal_minmax_location.py sample/unofficial script
 * gdal2tiles: apply srcnodata values in non-reprojected datasets
 * gdal2tiles: remap PIL (Python Imaging Library)' 'antialias' resampling to GDAL
   Lanczos (#12030)
+* gdal2tiles: fix wrong .kml file name and content at base resolution when --xyz is used
 * gdal2tiles: lealeft HTML: Enable the generated tile layer by default
 * gdal2tiles: change __version__ to be gdal.
 * rgb2pct: add --creation-option (#12031)
@@ -245,6 +266,9 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.11/MIGRAT
 
 AVIF driver:
  * add read-only GeoHEIF support. Requires libavif master (#11333)
+
+BMP driver:
+ * fix reading files with BITMAPV4/BITMAPV5 headers (3.4 regression) (#12196)
 
 COG driver:
  * add support for INTERLEAVE=BAND and TILE creation option (hyperspectral
@@ -288,8 +312,16 @@ HEIF driver:
  * add CreateCopy support (#11093)
  * add read-only GeoHEIF support. Requires libheif 1.19 (#11333)
 
+HTTP driver:
+ * Avoid warning with 'ogr2ogr out http://example.com/in.gpkg'
+
 JPEGXL driver:
  * add support for reading Float16 (as Float32)
+
+Leveller driver:
+ * Fix for 64-bit platform compatibility (#12166)
+ * Leveller: Increased highest supported document version number from 9 to 12.
+   (#12191)
 
 MBTiles driver:
  * Fix update with WEBP compression
@@ -299,6 +331,7 @@ MEM driver:
 
 MRF driver:
  * Fix JPEG max size and caching relative path handling (#11943)
+ * DeflateBlock(): avoid potential buffer overrun
 
 netCDF driver:
  * add support to identify a geolocation array for a variable that lacks a
@@ -336,6 +369,7 @@ STACIT driver:
 VRT driver:
  * VRT pixel functions: Add function to evaluate arbitrary expression (#11209)
  * VRT pixel functions: remove limitation to at least 2 sources for min/max builtin functions
+ * VRT pixel functions: add 'reclassify' pixel function (#12232)
  * VRT pixel functions: Allow mul and sum to apply constant factor to a single
    band
  * allow to use a <VRTDataset> instead of a <SourceFilename> inside a
@@ -373,6 +407,7 @@ ZARR driver:
 * OGRGeometry classes: implement move constructor and move assignment operator
 * OGRGeometry classes: make clone() detect out-of-memory and return null
 * Add OGRPolygon::OGRPolygon(double x1, double y1, double x2, double y2)
+* Add OGRPolygon::OGRPolygon(const OGREnvelope &envelope) constructor
 * Add a OGRGeometryFactory::GetDefaultArcStepSize() method to get value of
   OGR_ARC_STEPSIZE config option
 * OGRGeometryToHexEWKB(): return empty string if out of memory happened
@@ -433,6 +468,8 @@ GeoJSON driver:
  * add a FOREIGN_MEMBERS=AUTO/ALL/NONE/STAC open option
  * writing: optimize speed of json_double_with_precision()
  * issue more warnings when invalid constructs are found (#11990)
+ * do not advertise ODsCMeasuredGeometries, OLCMeasuredGeometries and
+   ODsCMeasuredGeometries
 
 GML driver:
  * add OGR_SCHEMA open option (RFC 103)
@@ -452,6 +489,11 @@ GPKG driver:
  * fix querying relationships immediately after creating tables
  * GPKG and SQLite: Fix out of sync (not restored) fields after a ROLLBACK
   (#11609)
+ * call sqlite3_errmsg() in error messages (#12247)
+
+KML driver:
+ * when reassembling multi-line text content, use newline character instead of
+   space (#12278)
 
 LIBKML driver:
  * fix error when creating a Id field of type integer (#11773)
@@ -494,6 +536,10 @@ PG driver:
 PGDump driver:
  * detect out-of-memory on large geometries
 
+S57 driver:
+ * fix nullptr deref on invalid file when S57 data resource files are missing
+   (ossfuzz#415669422)
+
 Shapefile driver:
  * ogr2ogr to Shapefile: write DateTime as ISO8601 string, both in Arrow and
    non-Arrow code paths
@@ -506,6 +552,10 @@ SQLite driver:
  * SQLite/GPKG: run PRELUDE_STATEMENTS after end of initialization, in
    particular after Spatialite loading (#11782)
 
+TopoJSON driver:
+ * do not advertise Z capabilities
+ * read a top level 'crs' member (#12216)
+
 VFK driver:
  * Fix invalid parcel "banana" geometries (#3376, #11688)
 
@@ -515,12 +565,15 @@ XODR driver:
 
 ## SWIG Language Bindings
 
+* Add Driver.CreateVector()
+
 ### CSharp bindings
 
 * Add VSIGetMemFileBuffer
 
 ### Python bindings
 
+* Accept CRS definition in osr.SpatialReference constructor
 * Add osgeo.gdal.VSIFile class
 * Add a osgeo.gdal_fsspec module that on import will register GDAL VSI file
   system handlers as fsspec AbstractFileSystem
@@ -534,6 +587,10 @@ XODR driver:
 * Accept NumPy types in Driver.Create
 * Support os.PathLike inputs to Driver.Rename, Driver.CopyFiles
 * Expose gdal_translate -epo and -eco from Python
+* Add Dataset.ReadAsMaskedArray()
+* Add mask_resample_alg arg to ReadAsArray methods
+* fix compatibility issue with SWIG 4.3.1 and PYTHONWARNINGS=
+* avoid deprecation warning with setuptools >= 77.0.3
 
 # GDAL/OGR 3.10.3 Release Notes
 

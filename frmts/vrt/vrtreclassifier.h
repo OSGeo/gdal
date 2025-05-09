@@ -46,12 +46,6 @@ class Reclassifier
         /// maximum value of range
         double dfMax;
 
-        /// whether the minimum value is included (closed interval)
-        bool bMinIncluded;
-
-        /// whether the maximum value is included (closed interval)
-        bool bMaxIncluded;
-
         /// Set the interval to represent a single value [x,x]
         void SetToConstant(double dfVal);
 
@@ -74,9 +68,11 @@ class Reclassifier
         /// Returns true if the interval contains a value
         bool Contains(double x) const
         {
-            return (x > dfMin || (bMinIncluded && x == dfMin)) &&
-                   (x < dfMax || (bMaxIncluded && x == dfMax));
+            return x >= dfMin && x <= dfMax;
         }
+
+        /// Returns true if the intervals overlap
+        bool Overlaps(const Interval &other) const;
     };
 
     /** Initialize a Reclassifier from text. The text consists of a series of
@@ -138,12 +134,24 @@ class Reclassifier
         m_defaultValue = value;
     }
 
-    /// mapping of constant inputs to outputs
-    std::map<double, double> m_oConstantMappings{};
+    /** Sets a value for an input NaN value
+     */
+    void SetNaNValue(double value)
+    {
+        m_NaNValue = value;
+    }
 
+    /** Prepare reclassifier for use. No more mappings may be added.
+     */
+    CPLErr Finalize();
+
+  private:
     /// mapping of ranges to outputs
     std::vector<std::pair<Interval, std::optional<double>>>
         m_aoIntervalMappings{};
+
+    /// output value for NaN inputs
+    std::optional<double> m_NaNValue{};
 
     /// output value for inputs not matching any Interval
     std::optional<double> m_defaultValue{};

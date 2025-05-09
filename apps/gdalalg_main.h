@@ -39,12 +39,12 @@ class GDALMainAlgorithm final : public GDALAlgorithm
 
   private:
     std::unique_ptr<GDALAlgorithm> m_subAlg{};
+    std::string m_output{};
     bool m_showUsage = true;
+    bool m_drivers = false;
+    bool m_version = false;
 
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return true;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

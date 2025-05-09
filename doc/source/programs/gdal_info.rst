@@ -34,3 +34,10 @@ Examples
 
    .. command-output:: gdal vector info --format=text --features poly.gpkg
       :cwd: ../../data
+
+.. example::
+   :title: Getting the list of all drivers (with JSON output)
+
+   .. code-block:: console
+
+       $ gdal --drivers

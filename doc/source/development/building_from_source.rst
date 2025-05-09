@@ -144,6 +144,19 @@ Similarly, recent versions of Homebrew no longer bundle `Boost <https://www.boos
 
     cmake -DGDAL_USE_LIBKML=OFF ..
 
+The following commands have been used to successfully build GDAL using dependencies fetched
+from Conda that supports unit tests.  They assume that you have git, cmake and ninja installed
+and that you're building from a `build` directory that you've created in the main directory
+of the cloned GDAL repository.
+
+.. code-block:: bash
+
+    conda create -c conda-forge --only-deps -n gdal libgdal-core
+    conda activate gdal
+    conda install setuptools swig pytest filelock numpy
+    cmake -G Ninja -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DGDAL_USE_LIBKML=OFF ..
+    . ../scripts/setdevenv.sh
+    ninja
 
 CMake general configure options
 +++++++++++++++++++++++++++++++

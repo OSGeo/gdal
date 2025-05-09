@@ -1578,13 +1578,6 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
         return CE_None;
 #endif
 
-    if (bExists && VSI_ISDIR(sStat.st_mode))
-    {
-        // It is not desirable to remove directories quietly.  Necessary to
-        // avoid ogr_mitab_12 to destroy file created at ogr_mitab_7.
-        return CE_None;
-    }
-
     GDALDriver *poDriver = nullptr;
     if (papszAllowedDrivers)
     {
@@ -1617,6 +1610,16 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
 
     if (poDriver == nullptr)
         return CE_None;
+
+    if (bExists && VSI_ISDIR(sStat.st_mode) &&
+        (EQUAL(poDriver->GetDescription(), "MapInfo File") ||
+         EQUAL(poDriver->GetDescription(), "ESRI Shapefile")))
+    {
+        // Those drivers are a bit special and handle directories as container
+        // of layers, but it is quite common to found other files too, and
+        // removing the directory might be non-desirable.
+        return CE_None;
+    }
 
     CPLDebug("GDAL", "QuietDelete(%s) invoking Delete()", pszName);
 

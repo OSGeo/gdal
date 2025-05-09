@@ -122,7 +122,7 @@ def test_gdalalg_raster_create_overwrite(tmp_vsimem):
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it, or --append to append to it.",
+        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it.",
     ):
         alg.Run()
 
@@ -426,3 +426,19 @@ def test_gdalalg_raster_create_creation_option(tmp_vsimem):
     assert alg.Finalize()
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+
+
+def test_gdalalg_raster_create_overwrite_mem_file_with_real_file_same_name(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.tif"
+
+    gdal.FileFromMemBuffer(out_filename, "")
+
+    alg = get_alg()
+    alg["output"] = out_filename
+    alg["output-format"] = "MEM"
+    alg["size"] = [1, 1]
+    alg["overwrite"] = True
+    assert alg.Run()
+
+    assert gdal.VSIStatL(out_filename) is not None

@@ -348,3 +348,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
                 // Hack for a file called MANAL_2023030103.grb2 that
             .AddAlias("ot")
         EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);
+.. include:: gdal_options/ot.rst

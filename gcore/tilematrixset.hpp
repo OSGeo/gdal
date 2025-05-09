@@ -107,9 +107,16 @@ class CPL_DLL TileMatrixSet
      * Set: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html */
     static std::unique_ptr<TileMatrixSet> parse(const char *fileOrDef);
 
+    /** Create a raster tiling scheme */
+    static std::unique_ptr<TileMatrixSet>
+    createRaster(int width, int height, int tileSize, int zoomLevelCount,
+                 double dfTopLeftX = 0.0, double dfTopLeftY = 0.0,
+                 double dfResXFull = 1.0, double dfResYFull = 1.0,
+                 const std::string &mCRS = std::string());
+
     /** Return hardcoded tile matrix set names (such as GoogleMapsCompatible),
      * as well as XXX for each tms_XXXX.json in GDAL data directory */
-    static std::set<std::string> listPredefinedTileMatrixSets();
+    static std::vector<std::string> listPredefinedTileMatrixSets();
 
     bool haveAllLevelsSameTopLeft() const;
 

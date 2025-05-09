@@ -68,9 +68,9 @@ The following options are available:
    To specify which overview level of source file must be used, when overviews
    are available on the source raster. By default the full resolution level is
    used. The index is 0-based, that is 0 means the first overview level.
-   This option is mutually exclusive with :option:`--srcnodata`.
+   This option is mutually exclusive with :option:`--src-nodata`.
 
-.. option:: --srcnodata <value>
+.. option:: --src-nodata <value>
 
     Set nodata values for input bands (different values can be supplied for each band).
     If a single value is specified, it applies to all selected bands.

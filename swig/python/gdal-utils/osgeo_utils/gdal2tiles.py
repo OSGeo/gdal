@@ -4363,6 +4363,7 @@ function ExtDraggableObject(src, opt_drag) {
         else:
             tiling_scheme = self.options.profile
 
+        s = s.replace("${TITLE}", gdal.EscapeString(self.options.title, gdal.CPLES_XML))
         s = s.replace("${TILING_SCHEME}", tiling_scheme)
         s = s.replace("${URL}", self.options.url if self.options.url else "./")
         tminx, tminy, tmaxx, tmaxy = self.tminmax[self.tmaxz]

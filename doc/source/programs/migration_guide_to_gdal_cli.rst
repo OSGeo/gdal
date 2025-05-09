@@ -159,6 +159,17 @@ compared to "minimum-x,minimum-y,maximum-x,maximum-y" for the ``--bbox`` option 
     gdal raster clean-collar --update --color-threshold=1 --pixel-distance=10 my.tif
 
 
+* Generating tiles between zoom level 2 and 5 of WebMercator from an input GeoTIFF
+
+.. code-block::
+
+     gdal2tiles --zoom=2-5 input.tif output_folder
+
+     ==>
+
+     gdal raster tile --min-zoom=2 --max-zoom=5 input.tif output_folder
+
+
 Vector commands
 ---------------
 

@@ -71,17 +71,6 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 
     SetAutoCompleteFunctionForFilename(mask, GDAL_OF_RASTER);
 
-    mask.AddValidationAction(
-        [&mask]()
-        {
-            // Check if the mask dataset is a valid raster dataset descriptor
-            // Try to open the dataset as a raster
-            std::unique_ptr<GDALDataset> poDS(
-                GDALDataset::Open(mask.Get<std::string>().c_str(),
-                                  GDAL_OF_RASTER, nullptr, nullptr, nullptr));
-            return static_cast<bool>(poDS);
-        });
-
     AddArg("strategy", 0,
            _("By default, pixels are interpolated using an inverse distance "
              "weighting (invdist). It is also possible to choose a nearest "
@@ -98,18 +87,6 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm() noexcept
 bool GDALRasterFillNodataAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             void *pProgressData)
 {
-
-    const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
-        return false;
-    }
-
     const CPLStringList creationOptions{m_creationOptions};
     const std::string destinationFormat{
         m_format.empty()

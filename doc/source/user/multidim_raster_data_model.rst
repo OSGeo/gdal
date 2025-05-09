@@ -171,54 +171,51 @@ A potential point of attention is that, when creating / editing a dataset, all
 those objects keep alive the underlying file descriptors, so changes are only
 guaranteed to be serialized when all objects related to a dataset have been released.
 
-Example in C++:
+.. tabs::
 
-.. code-block:: c++
+   .. code-tab:: c++
 
-    int main()
-    {
-        GDALAllRegister();
+      int main()
+      {
+          GDALAllRegister();
 
-        auto poDataset = std::unique_ptr<GDALDataset>(
-            GetGDALDriverManager()->GetDriverByName("netCDF")->
-                CreateMultiDimensional( "new.nc", nullptr, nullptr ));
-        auto poRootGroup = poDataset->GetRootGroup();
+          auto poDataset = std::unique_ptr<GDALDataset>(
+              GetGDALDriverManager()->GetDriverByName("netCDF")->
+                  CreateMultiDimensional( "new.nc", nullptr, nullptr ));
+          auto poRootGroup = poDataset->GetRootGroup();
 
-        // Could be closed a bit later too
-        poDataset.reset();
+          // Could be closed a bit later too
+          poDataset.reset();
 
-        auto poDim = poRootGroup->CreateDimension(
-            "my_dim", std::string(), std::string(), 10);
-        auto poArray = poRootGroup->CreateMDArray(
-            "my_var", {poDim}, GDALExtendedDataType::Create(GDT_Byte), nullptr);
+          auto poDim = poRootGroup->CreateDimension(
+              "my_dim", std::string(), std::string(), 10);
+          auto poArray = poRootGroup->CreateMDArray(
+              "my_var", {poDim}, GDALExtendedDataType::Create(GDT_Byte), nullptr);
 
-        // Can be closed in any order
-        poArray.reset();
-        poDim.reset();
-        poRootGroup.reset();
+          // Can be closed in any order
+          poArray.reset();
+          poDim.reset();
+          poRootGroup.reset();
 
-        // new.nc is fully valid just now
+          // new.nc is fully valid just now
 
-        return 0;
-    }
+          return 0;
+      }
 
+   .. code-tab:: python
 
-Example in Python:
+      from osgeo import gdal
 
-.. code-block:: python
+      with gdal.GetDriverByName("netCDF").CreateMultiDimensional("new.nc") as ds:
+          rg = ds.GetRootGroup()
+          dim = rg.CreateDimension("my_dim", "", "", 10)
+          array = rg.CreateMDArray("my_var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
 
-    from osgeo import gdal
+          del array
+          del dim
+          del rg
 
-    with gdal.GetDriverByName("netCDF").CreateMultiDimensional("new.nc") as ds:
-        rg = ds.GetRootGroup()
-        dim = rg.CreateDimension("my_dim", "", "", 10)
-        array = rg.CreateMDArray("my_var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-
-        del array
-        del dim
-        del rg
-
-    # new.nc is fully valid just now
+      # new.nc is fully valid just now
 
 Differences with the GDAL 2D raster data model
 ----------------------------------------------

@@ -56,7 +56,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
     AddArg("max-name", 0, _("Name of the maximum elevation field"), &m_amax);
     AddArg("3d", 0, _("Force production of 3D vectors instead of 2D"), &m_3d);
 
-    AddArg("srcnodata", 0, _("Input pixel value to treat as 'nodata'"),
+    AddArg("src-nodata", 0, _("Input pixel value to treat as 'nodata'"),
            &m_sNodata);
     AddArg("interval", 0, _("Elevation interval between contours"), &m_interval)
         .SetMutualExclusionGroup("levels")
@@ -88,13 +88,7 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLErrorReset();
 
     CPLAssert(m_inputDataset.GetDatasetRef());
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster contour does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (!m_outputFormat.empty())
@@ -175,17 +169,6 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         aosOptions.AddString("-nln");
         aosOptions.AddString(m_outputLayerName);
-    }
-
-    const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
-        return false;
     }
 
     // Check that one of --interval, --levels, --exp-base is specified

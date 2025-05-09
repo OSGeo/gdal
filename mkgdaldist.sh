@@ -151,6 +151,8 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_JAVA_BINDINGS=ON \
       -DGDAL_JAVA_GENERATE_JAVADOC=ON \
       -DGDAL_ENABLE_DRIVER_GTI=ON \
+      -DOGR_ENABLE_DRIVER_GPKG=ON \
+      -DOGR_ENABLE_DRIVER_OPENFILEGDB=ON \
       -B cmake-build-doc -S .
 cmake --build cmake-build-doc --target man doczip -j$(nproc)
 mkdir -p man/man1

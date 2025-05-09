@@ -44,8 +44,8 @@ GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
     AddCreationOptionsArg(&m_creationOptions);
     const char *exclusionGroup = "overwrite-append";
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup(exclusionGroup);
-    AddArg("append", 0, _("Append as a subdataset to existing output"),
-           &m_append)
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_append)
         .SetDefault(false)
         .SetMutualExclusionGroup(exclusionGroup);
 }
@@ -58,13 +58,7 @@ bool GDALRasterConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster convert does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (!m_outputFormat.empty())

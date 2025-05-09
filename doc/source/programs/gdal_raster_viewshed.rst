@@ -42,7 +42,7 @@ Standard options
    Only a single band can be used. Only the part of the raster within the specified
    maximum distance around the observer point is processed.
 
-.. option:: --dstnodata <value>
+.. option:: --dst-nodata <value>
 
    The value to be set for the cells in the output raster that have no data.
 
@@ -170,4 +170,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster viewshed --max-distance=500 --pos=-10147017,5108065s source.tif destination.tif
+       gdal raster viewshed --max-distance=500 --pos=-10147017,5108065 source.tif destination.tif

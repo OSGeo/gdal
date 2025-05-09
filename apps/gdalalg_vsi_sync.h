@@ -39,6 +39,9 @@ class GDALVSISyncAlgorithm final : public GDALAlgorithm
     std::string m_strategy = "timestamp";
     int m_numThreads = 0;
 
+    // Work variables
+    std::string m_numThreadsStr{};
+
     bool RunImpl(GDALProgressFunc, void *) override;
 };
 

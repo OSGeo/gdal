@@ -2930,16 +2930,17 @@ int IVSIS3LikeFSHandler::Rename(const char *oldpath, const char *newpath,
         int ret = 0;
         const CPLStringList aosList(VSIReadDir(oldpath));
         Mkdir(newpath, 0755);
-        for (int i = 0; ret == 0 && i < aosList.size(); i++)
+        const int nListSize = aosList.size();
+        for (int i = 0; ret == 0 && i < nListSize; i++)
         {
             const std::string osSrc =
                 CPLFormFilenameSafe(oldpath, aosList[i], nullptr);
             const std::string osTarget =
                 CPLFormFilenameSafe(newpath, aosList[i], nullptr);
-            void *pScaledProgress = GDALCreateScaledProgress(
-                static_cast<double>(i) / aosList.size(),
-                static_cast<double>(i + 1) / aosList.size(), pfnProgress,
-                pProgressData);
+            void *pScaledProgress =
+                GDALCreateScaledProgress(static_cast<double>(i) / nListSize,
+                                         static_cast<double>(i + 1) / nListSize,
+                                         pfnProgress, pProgressData);
             ret = Rename(osSrc.c_str(), osTarget.c_str(),
                          pScaledProgress ? GDALScaledProgress : nullptr,
                          pScaledProgress);

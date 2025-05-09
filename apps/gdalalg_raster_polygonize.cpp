@@ -44,26 +44,19 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite);
-    AddUpdateArg(&m_update);
+    auto &updateArg = AddUpdateArg(&m_update);
     AddArg("overwrite-layer", 0,
            _("Whether overwriting existing layer is allowed"),
            &m_overwriteLayer)
         .SetDefault(false)
         .AddValidationAction(
-            [this]
+            [&updateArg]
             {
-                GetArg(GDAL_ARG_NAME_UPDATE)->Set(true);
+                updateArg.Set(true);
                 return true;
             });
-    AddArg("append", 0, _("Whether appending to existing layer is allowed"),
-           &m_appendLayer)
-        .SetDefault(false)
-        .AddValidationAction(
-            [this]
-            {
-                GetArg(GDAL_ARG_NAME_UPDATE)->Set(true);
-                return true;
-            });
+    AddAppendUpdateArg(&m_appendLayer,
+                       _("Whether appending to existing layer is allowed"));
 
     // gdal_polygonize specific options
     AddBandArg(&m_band).SetDefault(m_band);
@@ -88,24 +81,6 @@ bool GDALRasterPolygonizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
-
-    const char *pszType = "";
-    if (!m_update && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        if (!m_overwrite)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s '%s' already exists. Specify the --overwrite "
-                        "option to overwrite it, or --update to update it.",
-                        pszType, m_outputDataset.GetName().c_str());
-            return false;
-        }
-        else
-        {
-            VSIUnlink(m_outputDataset.GetName().c_str());
-        }
-    }
 
     GDALDataset *poDstDS = m_outputDataset.GetDatasetRef();
     std::unique_ptr<GDALDataset> poRetDS;
@@ -185,7 +160,7 @@ bool GDALRasterPolygonizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' already exists. Specify the "
                         "--overwrite-layer option to overwrite it, or --append "
-                        "to append it.",
+                        "to append to it.",
                         m_outputLayerName.c_str());
             return false;
         }

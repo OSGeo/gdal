@@ -73,6 +73,7 @@ function (build_ogr_specialized_fuzzer _format _registerFunc _memfile _gdalfile)
     -DMEM_FILENAME="${_memfile}"
     -DGDAL_FILENAME="${_gdalfile}")
 endfunction ()
+build_fuzzer(NAME gdal_algorithm_fuzzer SOURCES gdal_algorithm_fuzzer.cpp)
 
 build_ogr_specialized_fuzzer(dxf RegisterOGRDXF "/vsimem/test" "/vsimem/test")
 build_ogr_specialized_fuzzer(openfilegdb RegisterOGROpenFileGDB "/vsimem/test.gdb.tar" "/vsimem/test.gdb.tar")

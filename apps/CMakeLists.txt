@@ -36,6 +36,7 @@ add_library(
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
   gdalalg_raster_read.cpp
+  gdalalg_raster_reclassify.cpp
   gdalalg_raster_reproject.cpp
   gdalalg_raster_resize.cpp
   gdalalg_raster_roughness.cpp
@@ -45,6 +46,7 @@ add_library(
   gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
+  gdalalg_raster_tile.cpp
   gdalalg_raster_tpi.cpp
   gdalalg_raster_tri.cpp
   gdalalg_raster_unscale.cpp
@@ -110,7 +112,9 @@ gdal_standard_includes(appslib)
 target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
-
+if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
+    gdal_target_link_libraries(appslib PRIVATE atomic)
+endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
@@ -310,6 +314,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/leaflet_template.html
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

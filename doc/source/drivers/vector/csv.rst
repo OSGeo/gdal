@@ -469,6 +469,7 @@ The following layer creation options are supported:
       Create the
       associated .csvt file (see above paragraph) to describe the type of
       each column of the layer and its optional width and precision.
+      This option also creates .prj file which stores coordinate system information.
 
 -  .. lco:: SEPARATOR
       :choices: COMMA, SEMICOLON, TAB, SPACE

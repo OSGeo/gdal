@@ -30,6 +30,7 @@
 
 struct GDALCalcOptions
 {
+    GDALDataType dstType{GDT_Float64};
     bool checkSRS{true};
     bool checkExtent{true};
 };
@@ -237,7 +238,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
  */
 static bool
 CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
-                     const std::string &expression,
+                     GDALDataType bandType, const std::string &expression,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps)
 {
@@ -254,8 +255,13 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
         CPLXMLNode *band = CPLCreateXMLNode(root, CXT_Element, "VRTRasterBand");
         CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        // TODO: Allow user specification of output data type?
-        CPLAddXMLAttributeAndValue(band, "dataType", "Float64");
+        CPLAddXMLAttributeAndValue(band, "dataType",
+                                   GDALGetDataTypeName(bandType));
+
+        CPLXMLNode *sourceTransferType =
+            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
+        CPLCreateXMLNode(sourceTransferType, CXT_Text,
+                         GDALGetDataTypeName(GDT_Float64));
 
         CPLXMLNode *pixelFunctionType =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
@@ -507,8 +513,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 
     for (const auto &origExpression : expressions)
     {
-        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, origExpression,
-                                  sources, sourceProps))
+        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, options.dstType,
+                                  origExpression, sources, sourceProps))
         {
             return nullptr;
         }
@@ -537,6 +543,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    m_supportsStreamedOutput = true;
+
     AddProgressArg();
 
     AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input raster datasets"), &m_inputs)
@@ -545,10 +553,12 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
         .SetAutoOpenDataset(false)
         .SetMetaVar("INPUTS");
 
-    AddOutputFormatArg(&m_format);
+    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                       /* bGDALGAllowed = */ true);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
+    AddOutputDataTypeArg(&m_type);
 
     AddArg("no-check-srs", 0,
            _("Do not check consistency of input spatial reference systems"),
@@ -568,28 +578,15 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
 bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {
-    if (m_outputDataset.GetDatasetRef())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "gdal raster calc does not support outputting to an "
-                 "already opened output dataset");
-        return false;
-    }
-
-    const char *pszType = "";
-    if (!m_overwrite && !m_outputDataset.GetName().empty() &&
-        GDALDoesFileOrDatasetExist(m_outputDataset.GetName().c_str(), &pszType))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "%s '%s' already exists. Specify the --overwrite "
-                    "option to overwrite it.",
-                    pszType, m_outputDataset.GetName().c_str());
-        return false;
-    }
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     GDALCalcOptions options;
     options.checkExtent = !m_NoCheckExtent;
     options.checkSRS = !m_NoCheckSRS;
+    if (!m_type.empty())
+    {
+        options.dstType = GDALGetDataTypeByName(m_type.c_str());
+    }
 
     if (!ReadFileLists(m_inputs))
     {
@@ -597,10 +594,15 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
 
     auto vrt = GDALCalcCreateVRTDerived(m_inputs, m_expr, options);
-
     if (vrt == nullptr)
     {
         return false;
+    }
+
+    if (m_format == "stream")
+    {
+        m_outputDataset.Set(std::move(vrt));
+        return true;
     }
 
     CPLStringList translateArgs;
@@ -626,14 +628,10 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             translateOptions, nullptr)));
     GDALTranslateOptionsFree(translateOptions);
 
-    if (!poOutDS)
-    {
-        return false;
-    }
-
+    const bool bOK = poOutDS != nullptr;
     m_outputDataset.Set(std::move(poOutDS));
 
-    return true;
+    return bOK;
 }
 
 //! @endcond

@@ -231,11 +231,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 }
             }
 
-            CPLJSONDocument oDoc;
-            oDoc.GetRoot().Add("type", "gdal_streamed_alg");
-            oDoc.GetRoot().Add("command_line", osCommandLine);
-
-            return oDoc.Save(filename);
+            return GDALAlgorithm::SaveGDALG(filename, osCommandLine);
         }
 
         const auto outputFormatArg =

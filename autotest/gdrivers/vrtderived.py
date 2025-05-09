@@ -1391,6 +1391,11 @@ def test_vrt_pixelfn_reclassify_no_default(tmp_vsimem):
         ("3= ", "expected number or NO_DATA"),
         ("1=NO_DATA", "NoData value is not set"),
         ("NO_DATA=15", "NoData value is not set"),
+        ("[1,3]=7;[3, 5]=8", "Interval .* overlaps"),
+        ("[1,3]=7;[2, 4]=8", "Interval .* overlaps"),
+        ("[1,NaN]=0", "NaN is not a valid value for bounds of interval"),
+        ("[NaN,1]=0", "NaN is not a valid value for bounds of interval"),
+        ("[2,1]", "Lower bound of interval must be lower or equal to upper bound"),
     ],
 )
 def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
@@ -1420,3 +1425,32 @@ def test_vrt_pixelfn_reclassify_invalid_mapping(tmp_vsimem, mapping, error):
 
     with pytest.raises(Exception, match=error):
         gdal.Open(xml).ReadAsArray()
+
+
+def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 2, 1, 1, gdal.GDT_Float32
+    ) as src:
+        src.WriteArray(np.array([[0, float("nan")]]))
+
+    xml = f"""
+    <VRTDataset rasterXSize="2" rasterYSize="1">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>reclassify</PixelFunctionType>
+        <PixelFunctionArguments mapping="0=1 ; nan=2" />
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    dst = gdal.Open(xml).ReadAsArray()
+    np.testing.assert_array_equal(
+        dst,
+        np.array([[1, 2]]),
+    )
