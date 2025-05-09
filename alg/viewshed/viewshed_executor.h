@@ -66,6 +66,7 @@ class ViewshedExecutor
     std::mutex iMutex{};
     std::mutex oMutex{};
     std::array<double, 6> m_adfTransform{0, 1, 0, 0, 0, 1};
+    std::array<double, 5> m_testAngle{};
     double (*oZcalc)(int, int, double, double, double){};
 
     double calcHeightAdjFactor();
@@ -87,13 +88,19 @@ class ViewshedExecutor
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,
                          std::vector<double> &vLastLineVal);
-    void processLineRight(int nYOffset, int iStart, int iEnd,
+    void processLineRight(int nYOffset, LineLimits &ll,
                           std::vector<double> &vResult,
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
     LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal);
-    void maskLineLeft(std::vector<double> &vResult, const LineLimits &ll);
-    void maskLineRight(std::vector<double> &vResult, const LineLimits &ll);
+    void maskInitial(std::vector<double> &vResult, int nLine);
+    bool maskAngleLeft(std::vector<double> &vResult, int nLine);
+    bool maskAngleRight(std::vector<double> &vResult, int nLine);
+    void maskLineLeft(std::vector<double> &vResult, const LineLimits &ll,
+                      int nLine);
+    void maskLineRight(std::vector<double> &vResult, const LineLimits &ll,
+                       int nLine);
+    void calcTestAngles();
 };
 
 }  // namespace viewshed

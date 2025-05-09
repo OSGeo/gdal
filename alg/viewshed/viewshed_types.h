@@ -7,6 +7,7 @@
 #define VIEWSHED_TYPES_H_INCLUDED
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "gdal_priv.h"
@@ -82,6 +83,16 @@ struct Options
     CellMode cellMode{CellMode::Edge};  //!< Mode of cell height calculation.
     int observerSpacing{10};  //!< Observer spacing in cumulative mode.
     uint8_t numJobs{3};       //!< Relative number of jobs in cumulative mode.
+
+    bool angleMasking() const
+    {
+        return startAngle != endAngle;
+    }
+
+    bool pitchMasking() const
+    {
+        return maxPitch != 90 || minPitch != -90;
+    }
 };
 
 /**
@@ -168,6 +179,13 @@ struct Window
     }
 };
 
+inline std::ostream &operator<<(std::ostream &out, const Window &w)
+{
+    out << "Xstart/stop Ystart/stop = " << w.xStart << "/" << w.xStop << " "
+        << w.yStart << "/" << w.yStop;
+    return out;
+}
+
 // Processing limits based on min/max distance restrictions.
 // The left side processing range is [left, leftMin).
 // The right side processing range is [rightMin, right).
@@ -183,6 +201,15 @@ struct LineLimits
     int rightMin;  //!< Starting (leftmost) cell on the right side.
     int right;     //!< One past the rightmost cell on the right side.
 };
+
+inline std::ostream &operator<<(std::ostream &out, const LineLimits &ll)
+{
+    out << "Left/LeftMin RightMin/Right = " << ll.left << "/" << ll.leftMin
+        << " " << ll.rightMin << "/" << ll.right;
+    return out;
+}
+
+constexpr int INVALID_ISECT = std::numeric_limits<int>::max();
 
 }  // namespace viewshed
 }  // namespace gdal

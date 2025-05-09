@@ -69,6 +69,55 @@ DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
 
 }  // namespace
 
+/**
+TEST(Viewshed, min_max_mask)
+{
+    const int xlen = 30;
+    const int ylen = 30;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+
+    SCOPED_TRACE("min_max_mask");
+    Options opts(stdOptions(15, 15));
+    opts.minDistance = 4;
+    opts.maxDistance = 9;
+    opts.startAngle = 240;
+    opts.endAngle = 300;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<uint8_t, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    std::cerr << "Xsize = " << band->GetXSize() << "!\n";
+    std::cerr << "Ysize = " << band->GetYSize() << "!\n";
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(), xOutLen,
+                                yOutLen, GDT_Int8, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    uint8_t *p = out.data();
+    for (int y = 0; y < yOutLen; ++y)
+    {
+        for (int x = 0; x < xOutLen; ++x)
+        {
+            char c;
+            if (*p == 0)
+                c = '*';
+            else if (*p == 127)
+                c = '.';
+            else
+                c = '?';
+            std::cerr << c;
+            p++;
+        }
+        std::cerr << "\n";
+    }
+    std::cerr << "\n";
+}
+**/
+
 TEST(Viewshed, all_visible)
 {
     // clang-format off

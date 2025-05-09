@@ -12,9 +12,6 @@
  ****************************************************************************/
 
 #include <algorithm>
-//ABELL
-#include <iostream>
-#include <iomanip>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -229,61 +226,45 @@ void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
 
     // Set the X boundaries for the angles
     //ABELL - Verify for out-of-raster.
-    int xStart = hIntersect(startAngle, nX, nY, win.yStart);
-    if (xStart == std::numeric_limits<int>::max())
-        xStart = hIntersect(startAngle, nX, nY, win.yStop);
-
-    int xStop = hIntersect(endAngle, nX, nY, win.yStart);
-    if (xStop == std::numeric_limits<int>::max())
-        xStop = hIntersect(endAngle, nX, nY, win.yStop);
+    int startAngleX = hIntersect(startAngle, nX, nY, win);
+    int stopAngleX = hIntersect(endAngle, nX, nY, win);
 
     int xmax = nX;
     if (!rayBetween(startAngle, endAngle, 0))
     {
-        if (xStart != (std::numeric_limits<int>::max)())
-            xmax = std::max(xmax, xStart);
-        if (xStop != (std::numeric_limits<int>::max)())
-            xmax = std::max(xmax, xStop);
-        oOutExtent.xStop = std::min(oOutExtent.xStop, xmax);
+        xmax = std::max(xmax, startAngleX);
+        xmax = std::max(xmax, stopAngleX);
+        // Add one to xmax since we want one past the stop. [start, stop)
+        oOutExtent.xStop = std::min(oOutExtent.xStop, xmax + 1);
     }
 
     int xmin = nX;
     if (!rayBetween(startAngle, endAngle, M_PI))
     {
-        if (!isnan(xStart))
-            xmin = std::min(xmin, xStart);
-        if (!isnan(xStop))
-            xmin = std::min(xmin, xStop);
+        xmin = std::min(xmin, startAngleX);
+        xmin = std::min(xmin, stopAngleX);
         oOutExtent.xStart = std::max(oOutExtent.xStart, xmin);
     }
 
     // Set the Y boundaries for the angles
     //ABELL - Verify for out-of-raster.
-    int yStart = vIntersect(startAngle, nX, nY, win.xStart);
-    if (yStart == std::numeric_limits<int>::max())
-        yStart = vIntersect(startAngle, nX, nY, win.xStop);
-
-    int yStop = vIntersect(endAngle, nX, nY, win.xStart);
-    if (yStop == std::numeric_limits<int>::max())
-        yStop = vIntersect(endAngle, nX, nY, win.xStop);
+    int startAngleY = vIntersect(startAngle, nX, nY, win);
+    int stopAngleY = vIntersect(endAngle, nX, nY, win);
 
     int ymin = nY;
     if (!rayBetween(startAngle, endAngle, M_PI / 2))
     {
-        if (yStart != std::numeric_limits<int>::max())
-            ymin = std::min(ymin, yStart);
-        if (yStop != std::numeric_limits<int>::max())
-            ymin = std::min(ymin, yStop);
+        ymin = std::min(ymin, startAngleY);
+        ymin = std::min(ymin, stopAngleY);
         oOutExtent.yStart = std::max(oOutExtent.yStart, ymin);
     }
     int ymax = nY;
     if (!rayBetween(startAngle, endAngle, 3 * M_PI / 2))
     {
-        if (yStart != std::numeric_limits<int>::max())
-            ymax = std::max(ymax, yStart);
-        if (yStop != std::numeric_limits<int>::max())
-            ymax = std::max(ymax, yStop);
-        oOutExtent.yStop = std::min(oOutExtent.yStop, ymax);
+        ymax = std::max(ymax, startAngleY);
+        ymax = std::max(ymax, stopAngleY);
+        // Add one to ymax since we want one past the stop. [start, stop)
+        oOutExtent.yStop = std::min(oOutExtent.yStop, ymax + 1);
     }
 }
 
@@ -307,8 +288,17 @@ bool Viewshed::calcExtents(int nX, int nY,
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
     if (!oOutExtent.contains(nX, nY))
+    {
+        if (oOpts.startAngle != oOpts.endAngle)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Angle masking is not supported with an out-of-raster "
+                     "observer.");
+            return false;
+        }
         CPLError(CE_Warning, CPLE_AppDefined,
                  "NOTE: The observer location falls outside of the DEM area");
+    }
 
     constexpr double EPSILON = 1e-8;
     if (oOpts.maxDistance > 0)
@@ -321,6 +311,10 @@ bool Viewshed::calcExtents(int nX, int nY,
         int nXStop = static_cast<int>(
             std::ceil(nX + adfInvTransform[1] * oOpts.maxDistance - EPSILON) +
             1);
+        //ABELL - These seem to be wrong. The transform of 1 is no transform, so not
+        //  sure why we're adding one in the first case. Really, the transformed distance
+        // should add EPSILON. Not sure what the change should be for a negative transform,
+        // which is what I think is being handled with the 1/0 addition/subtraction.
         int nYStart =
             static_cast<int>(std::floor(
                 nY - std::fabs(adfInvTransform[5]) * oOpts.maxDistance +
@@ -399,11 +393,35 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     int nY = static_cast<int>(dfY);
 
     if (oOpts.startAngle < 0 || oOpts.startAngle >= 360)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Start angle out of range. Must be [0, 360).");
+        return false;
+    }
     if (oOpts.endAngle < 0 || oOpts.endAngle >= 360)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "End angle out of range. Must be [0, 360).");
+        return false;
+    }
+    if (oOpts.maxPitch > 90)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid maxPitch. Cannot be greater than 90.");
+        return false;
+    }
+    if (oOpts.minPitch < -90)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid maxPitch. Cannot be less than -90.");
+        return false;
+    }
+    if (oOpts.maxPitch <= oOpts.minPitch)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid pitch. maxPitch must be > minPitch");
+        return false;
+    }
 
     // Normalize angle to radians and standard math arrangement.
     oOpts.startAngle = normalizeAngle(oOpts.startAngle);

@@ -56,8 +56,20 @@ int hIntersect(double angle, int nX, int nY, int y)
 {
     double x = horizontalIntersect(angle, nX, nY, y);
     if (std::isnan(x))
-        return (std::numeric_limits<int>::max)();
+        return INVALID_ISECT;
     return static_cast<int>(std::round(x));
+}
+
+int hIntersect(double angle, int nX, int nY, const Window &win)
+{
+    if (ARE_REAL_EQUAL(angle, M_PI))
+        return win.xStart;
+    if (ARE_REAL_EQUAL(angle, 0))
+        return win.xStop;
+    double x = horizontalIntersect(angle, nX, nY, win.yStart);
+    if (std::isnan(x))
+        x = horizontalIntersect(angle, nX, nY, win.yStop);
+    return std::clamp(static_cast<int>(std::round(x)), win.xStart, win.xStop);
 }
 
 /// Compute the Y intersect position on the line X = x with a ray extending
@@ -90,20 +102,32 @@ int vIntersect(double angle, int nX, int nY, int x)
 {
     double y = verticalIntersect(angle, nX, nY, x);
     if (std::isnan(y))
-        return (std::numeric_limits<int>::max)();
+        return INVALID_ISECT;
     return static_cast<int>(std::round(y));
 }
 
+int vIntersect(double angle, int nX, int nY, const Window &win)
+{
+    if (ARE_REAL_EQUAL(angle, M_PI / 2))
+        return win.yStart;
+    if (ARE_REAL_EQUAL(angle, 3 * M_PI / 2))
+        return win.yStop;
+    double y = verticalIntersect(angle, nX, nY, win.xStart);
+    if (std::isnan(y))
+        y = verticalIntersect(angle, nX, nY, win.xStop);
+    return std::clamp(static_cast<int>(std::round(y)), win.yStart, win.yStop);
+}
+
 // Determine if ray is in the slice between two rays starting at `start` and
-// going clockwise to `end`.
+// going clockwise to `end` (inclusive). [start, end]
 bool rayBetween(double start, double end, double test)
 {
     // Our angles go counterclockwise, so swap start and end
     std::swap(start, end);
     if (start < end)
-        return (test > start && test < end);
+        return (test >= start && test <= end);
     else if (start > end)
-        return (test > start || test < end);
+        return (test >= start || test <= end);
     return false;
 }
 
