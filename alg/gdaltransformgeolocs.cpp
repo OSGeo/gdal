@@ -82,54 +82,50 @@ CPLErr GDALTransformGeolocations(GDALRasterBandH hXBand, GDALRasterBandH hYBand,
     /* -------------------------------------------------------------------- */
     /*      Allocate a buffer large enough to hold one whole row.           */
     /* -------------------------------------------------------------------- */
-    double *padfX = static_cast<double *>(CPLMalloc(sizeof(double) * nXSize));
-    double *padfY = static_cast<double *>(CPLMalloc(sizeof(double) * nXSize));
-    double *padfZ = static_cast<double *>(CPLMalloc(sizeof(double) * nXSize));
-    int *panSuccess = static_cast<int *>(CPLMalloc(sizeof(int) * nXSize));
-    CPLErr eErr = CE_None;
+    std::unique_ptr<double, VSIFreeReleaser> padfX(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(sizeof(double), nXSize)));
+    std::unique_ptr<double, VSIFreeReleaser> padfY(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(sizeof(double), nXSize)));
+    std::unique_ptr<double, VSIFreeReleaser> padfZ(
+        static_cast<double *>(VSI_MALLOC2_VERBOSE(sizeof(double), nXSize)));
+    std::unique_ptr<int, VSIFreeReleaser> panSuccess(
+        static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nXSize)));
+    CPLErr eErr = padfX && padfY && padfZ && panSuccess ? CE_None : CE_Failure;
 
     pfnProgress(0.0, "", pProgressArg);
     for (int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++)
     {
-        eErr = poXBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfX, nXSize, 1,
-                                 GDT_Float64, 0, 0, nullptr);
+        eErr = poXBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfX.get(),
+                                 nXSize, 1, GDT_Float64, 0, 0, nullptr);
         if (eErr == CE_None)
-            eErr = poYBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfY,
+            eErr = poYBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfY.get(),
                                      nXSize, 1, GDT_Float64, 0, 0, nullptr);
         if (eErr == CE_None && poZBand != nullptr)
-            eErr = poZBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfZ,
+            eErr = poZBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, padfZ.get(),
                                      nXSize, 1, GDT_Float64, 0, 0, nullptr);
         else
-            memset(padfZ, 0, sizeof(double) * nXSize);
+            memset(padfZ.get(), 0, sizeof(double) * nXSize);
 
         if (eErr == CE_None)
         {
-            pfnTransformer(pTransformArg, FALSE, nXSize, padfX, padfY, padfZ,
-                           panSuccess);
+            pfnTransformer(pTransformArg, FALSE, nXSize, padfX.get(),
+                           padfY.get(), padfZ.get(), panSuccess.get());
         }
 
         if (eErr == CE_None)
-            eErr = poXBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfX,
+            eErr = poXBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfX.get(),
                                      nXSize, 1, GDT_Float64, 0, 0, nullptr);
         if (eErr == CE_None)
-            eErr = poYBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfY,
+            eErr = poYBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfY.get(),
                                      nXSize, 1, GDT_Float64, 0, 0, nullptr);
         if (eErr == CE_None && poZBand != nullptr)
-            eErr = poZBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfZ,
+            eErr = poZBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, padfZ.get(),
                                      nXSize, 1, GDT_Float64, 0, 0, nullptr);
 
         if (eErr == CE_None)
             pfnProgress((iLine + 1) / static_cast<double>(nYSize), "",
                         pProgressArg);
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup                                                         */
-    /* -------------------------------------------------------------------- */
-    CPLFree(padfX);
-    CPLFree(padfY);
-    CPLFree(padfZ);
-    CPLFree(panSuccess);
 
     return eErr;
 }
