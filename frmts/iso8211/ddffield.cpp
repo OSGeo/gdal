@@ -131,8 +131,8 @@ void DDFField::Dump(FILE *fp)
  * by the application.
  */
 
-const char *DDFField::GetSubfieldData(DDFSubfieldDefn *poSFDefn,
-                                      int *pnMaxBytes, int iSubfieldIndex)
+const char *DDFField::GetSubfieldData(const DDFSubfieldDefn *poSFDefn,
+                                      int *pnMaxBytes, int iSubfieldIndex) const
 
 {
     if (poSFDefn == nullptr)
@@ -149,7 +149,7 @@ const char *DDFField::GetSubfieldData(DDFSubfieldDefn *poSFDefn,
     {
         for (int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++)
         {
-            DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
+            const DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
 
             if (nDataSize <= iOffset)
             {
@@ -195,7 +195,7 @@ const char *DDFField::GetSubfieldData(DDFSubfieldDefn *poSFDefn,
  * for a demonstration of handling repeated fields properly.
  */
 
-int DDFField::GetRepeatCount()
+int DDFField::GetRepeatCount() const
 
 {
     if (!poDefn->IsRepeating())
@@ -227,7 +227,7 @@ int DDFField::GetRepeatCount()
         const int iOffsetBefore = iOffset;
         for (int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++)
         {
-            DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
+            const DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
 
             int nBytesConsumed = 0;
             if (poThisSFDefn->GetWidth() > nDataSize - iOffset)
@@ -298,7 +298,7 @@ const char *DDFField::GetInstanceData(int nInstance, int *pnInstanceSize)
     /* -------------------------------------------------------------------- */
     int nBytesRemaining1 = 0;
     int nBytesRemaining2 = 0;
-    DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
+    const DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
 
     const char *pachWrkData =
         GetSubfieldData(poFirstSubfield, &nBytesRemaining1, nInstance);
@@ -311,7 +311,7 @@ const char *DDFField::GetInstanceData(int nInstance, int *pnInstanceSize)
     /* -------------------------------------------------------------------- */
     if (pnInstanceSize != nullptr)
     {
-        DDFSubfieldDefn *poLastSubfield =
+        const DDFSubfieldDefn *poLastSubfield =
             poDefn->GetSubfield(poDefn->GetSubfieldCount() - 1);
 
         const char *pachLastData =

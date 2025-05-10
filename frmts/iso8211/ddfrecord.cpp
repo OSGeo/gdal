@@ -693,12 +693,12 @@ int DDFRecord::ReadHeader()
  * the next record read.
  */
 
-DDFField *DDFRecord::FindField(const char *pszName, int iFieldIndex)
+const DDFField *DDFRecord::FindField(const char *pszName, int iFieldIndex) const
 
 {
     for (int i = 0; i < nFieldCount; i++)
     {
-        DDFFieldDefn *poFieldDefn = paoFields[i].GetFieldDefn();
+        const DDFFieldDefn *poFieldDefn = paoFields[i].GetFieldDefn();
         if (poFieldDefn && EQUAL(poFieldDefn->GetName(), pszName))
         {
             if (iFieldIndex == 0)
@@ -723,7 +723,7 @@ DDFField *DDFRecord::FindField(const char *pszName, int iFieldIndex)
  * @return A DDFField pointer, or NULL if the index is out of range.
  */
 
-DDFField *DDFRecord::GetField(int i)
+const DDFField *DDFRecord::GetField(int i) const
 
 {
     if (i < 0 || i >= nFieldCount)
@@ -754,7 +754,7 @@ DDFField *DDFRecord::GetField(int i)
 
 int DDFRecord::GetIntSubfield(const char *pszField, int iFieldIndex,
                               const char *pszSubfield, int iSubfieldIndex,
-                              int *pnSuccess)
+                              int *pnSuccess) const
 
 {
     int nDummyErr = FALSE;
@@ -767,14 +767,14 @@ int DDFRecord::GetIntSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Fetch the field. If this fails, return zero.                    */
     /* -------------------------------------------------------------------- */
-    DDFField *poField = FindField(pszField, iFieldIndex);
+    const DDFField *poField = FindField(pszField, iFieldIndex);
     if (poField == nullptr)
         return 0;
 
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return 0;
@@ -839,14 +839,14 @@ double DDFRecord::GetFloatSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Fetch the field. If this fails, return zero.                    */
     /* -------------------------------------------------------------------- */
-    DDFField *poField = FindField(pszField, iFieldIndex);
+    const DDFField *poField = FindField(pszField, iFieldIndex);
     if (poField == nullptr)
         return 0;
 
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return 0;
@@ -911,14 +911,14 @@ const char *DDFRecord::GetStringSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Fetch the field. If this fails, return zero.                    */
     /* -------------------------------------------------------------------- */
-    DDFField *poField = FindField(pszField, iFieldIndex);
+    const DDFField *poField = FindField(pszField, iFieldIndex);
     if (poField == nullptr)
         return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return nullptr;
@@ -1635,7 +1635,7 @@ int DDFRecord::SetStringSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return FALSE;
@@ -1745,7 +1745,7 @@ int DDFRecord::SetIntSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return FALSE;
@@ -1853,7 +1853,7 @@ int DDFRecord::SetFloatSubfield(const char *pszField, int iFieldIndex,
     /* -------------------------------------------------------------------- */
     /*      Get the subfield definition                                     */
     /* -------------------------------------------------------------------- */
-    DDFSubfieldDefn *poSFDefn =
+    const DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn(pszSubfield);
     if (poSFDefn == nullptr)
         return FALSE;

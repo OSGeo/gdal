@@ -613,7 +613,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     }
     CPLDebug("ADRG", "BAD=%s", osBAD.c_str());
 
-    DDFSubfieldDefn *subfieldDefn = fieldDefn->GetSubfield(14);
+    const DDFSubfieldDefn *subfieldDefn = fieldDefn->GetSubfield(14);
     if (!(strcmp(subfieldDefn->GetName(), "TIF") == 0 &&
           (subfieldDefn->GetFormat())[0] == 'A'))
     {

@@ -526,7 +526,7 @@ void DDFModule::Dump(FILE *fp)
  * the DDFModule, and should not be deleted by application code.
  */
 
-DDFFieldDefn *DDFModule::FindFieldDefn(const char *pszFieldName)
+const DDFFieldDefn *DDFModule::FindFieldDefn(const char *pszFieldName) const
 
 {
     int i;

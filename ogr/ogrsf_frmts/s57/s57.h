@@ -315,13 +315,13 @@ class CPL_DLL S57Reader
     // cppcheck-suppress functionStatic
     void AssemblePointGeometry(DDFRecord *, OGRFeature *);
     void AssembleLineGeometry(DDFRecord *, OGRFeature *);
-    void AssembleAreaGeometry(DDFRecord *, OGRFeature *);
+    void AssembleAreaGeometry(const DDFRecord *, OGRFeature *);
 
     bool FetchPoint(int, int, double *, double *, double * = nullptr);
     bool FetchLine(DDFRecord *, int, int, OGRLineString *);
 
     OGRFeatureDefn *FindFDefn(DDFRecord *);
-    int ParseName(DDFField *, int = 0, int * = nullptr);
+    int ParseName(const DDFField *, int = 0, int * = nullptr);
 
     // cppcheck-suppress functionStatic
     bool ApplyRecordUpdate(DDFRecord *, DDFRecord *);

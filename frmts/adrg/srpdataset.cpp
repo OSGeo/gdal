@@ -537,8 +537,9 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
         if (field == nullptr)
             return false;
 
-        DDFFieldDefn *fieldDefn = field->GetFieldDefn();
-        DDFSubfieldDefn *subfieldDefn = fieldDefn->FindSubfieldDefn("TSI");
+        const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+        const DDFSubfieldDefn *subfieldDefn =
+            fieldDefn->FindSubfieldDefn("TSI");
         if (subfieldDefn == nullptr)
             return false;
 
