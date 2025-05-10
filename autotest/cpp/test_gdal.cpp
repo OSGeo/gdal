@@ -5362,4 +5362,73 @@ TEST_F(test_gdal, GDALComputeOvFactor)
     EXPECT_EQ(GDALComputeOvFactor(1, 1, (1000 + 25 - 1) / 25, 1000), 25);
 }
 
+TEST_F(test_gdal, GDALColorTable_from_qml_paletted)
+{
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        auto poCT =
+            GDALColorTable::LoadFromFile(GCORE_DATA_DIR "i_do_not_exist.txt");
+        EXPECT_EQ(poCT, nullptr);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        auto poCT = GDALColorTable::LoadFromFile(GCORE_DATA_DIR
+                                                 "qgis_qml_paletted.qml");
+        ASSERT_NE(poCT, nullptr);
+        EXPECT_EQ(poCT->GetColorEntryCount(), 256);
+        const GDALColorEntry *psEntry = poCT->GetColorEntry(74);
+        EXPECT_NE(psEntry, nullptr);
+        EXPECT_EQ(psEntry->c1, 67);
+        EXPECT_EQ(psEntry->c2, 27);
+        EXPECT_EQ(psEntry->c3, 225);
+        EXPECT_EQ(psEntry->c4, 255);
+    }
+
+    {
+        auto poCT = GDALColorTable::LoadFromFile(
+            GCORE_DATA_DIR "qgis_qml_singlebandpseudocolor.qml");
+        ASSERT_NE(poCT, nullptr);
+        EXPECT_EQ(poCT->GetColorEntryCount(), 256);
+        const GDALColorEntry *psEntry = poCT->GetColorEntry(74);
+        EXPECT_NE(psEntry, nullptr);
+        EXPECT_EQ(psEntry->c1, 255);
+        EXPECT_EQ(psEntry->c2, 255);
+        EXPECT_EQ(psEntry->c3, 204);
+        EXPECT_EQ(psEntry->c4, 255);
+    }
+
+    {
+        auto poCT = GDALColorTable::LoadFromFile(
+            UTILITIES_DATA_DIR "color_paletted_red_green_0-255.txt");
+        ASSERT_NE(poCT, nullptr);
+        EXPECT_EQ(poCT->GetColorEntryCount(), 256);
+        {
+            const GDALColorEntry *psEntry = poCT->GetColorEntry(0);
+            EXPECT_NE(psEntry, nullptr);
+            EXPECT_EQ(psEntry->c1, 255);
+            EXPECT_EQ(psEntry->c2, 255);
+            EXPECT_EQ(psEntry->c3, 255);
+            EXPECT_EQ(psEntry->c4, 0);
+        }
+        {
+            const GDALColorEntry *psEntry = poCT->GetColorEntry(1);
+            EXPECT_NE(psEntry, nullptr);
+            EXPECT_EQ(psEntry->c1, 128);
+            EXPECT_EQ(psEntry->c2, 128);
+            EXPECT_EQ(psEntry->c3, 128);
+            EXPECT_EQ(psEntry->c4, 255);
+        }
+        {
+            const GDALColorEntry *psEntry = poCT->GetColorEntry(2);
+            EXPECT_NE(psEntry, nullptr);
+            EXPECT_EQ(psEntry->c1, 255);
+            EXPECT_EQ(psEntry->c2, 0);
+            EXPECT_EQ(psEntry->c3, 0);
+            EXPECT_EQ(psEntry->c4, 255);
+        }
+    }
+}
+
 }  // namespace

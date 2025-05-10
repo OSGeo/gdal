@@ -387,6 +387,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_rgb_to_palette",
+        "gdal-raster-rgb-to-palette",
+        "Convert a RGB image into a pseudo-color / paletted image.",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_reclassify",
         "gdal-raster-reclassify",
         "Reclassify a raster dataset",

@@ -27,6 +27,7 @@
 #define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR SEP "gcore" SEP "data" SEP
 #define GDRIVERS_DATA_DIR GDAL_TEST_ROOT_DIR SEP "gdrivers" SEP "data" SEP
 #define GDRIVERS_DIR GDAL_TEST_ROOT_DIR SEP "gdrivers" SEP
+#define UTILITIES_DATA_DIR GDAL_TEST_ROOT_DIR SEP "utilities" SEP "data" SEP
 
 #define TUT_ROOT_DATA_DIR GDAL_TEST_ROOT_DIR SEP "cpp" SEP "data"
 #define TUT_ROOT_TMP_DIR GDAL_TEST_ROOT_DIR SEP "cpp" SEP "tmp"
@@ -36,6 +37,7 @@
 #define GCORE_DATA_DIR "../gcore/data/"
 #define GDRIVERS_DATA_DIR "../gdrivers/data/"
 #define GDRIVERS_DIR "../gdrivers/"
+#define UTILITIES_DATA_DIR "../utilities/data/"
 
 #define TUT_ROOT_DATA_DIR "data"
 #define TUT_ROOT_TMP_DIR "tmp"
