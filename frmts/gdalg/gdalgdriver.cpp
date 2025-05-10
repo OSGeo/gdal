@@ -166,7 +166,8 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
 
 /* static */ int GDALGDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
-    return (poOpenInfo->pabyHeader &&
+    return poOpenInfo->IsSingleAllowedDriver("GDALG") ||
+           (poOpenInfo->pabyHeader &&
             strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                    "\"gdal_streamed_alg\"")) ||
            (strstr(poOpenInfo->pszFilename, "\"gdal_streamed_alg\""));
@@ -178,8 +179,6 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
 
 /* static */ GDALDataset *GDALGDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
-        return nullptr;
     CPLJSONDocument oDoc;
     if (poOpenInfo->pabyHeader)
     {
@@ -197,7 +196,17 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         }
     }
     if (oDoc.GetRoot().GetString("type") != "gdal_streamed_alg")
+    {
+        CPLDebug("GDALG", "\"type\" = \"gdal_streamed_alg\" missing");
         return nullptr;
+    }
+
+    if (poOpenInfo->eAccess == GA_Update)
+    {
+        ReportUpdateNotSupportedByDriver("GDALG");
+        return nullptr;
+    }
+
     const std::string osCommandLine = oDoc.GetRoot().GetString("command_line");
     if (osCommandLine.empty())
     {
@@ -256,6 +265,7 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
         return nullptr;
     }
 
+    std::unique_ptr<GDALDataset> ret;
     const auto outputArg = alg->GetActualAlgorithm().GetArg("output");
     if (outputArg && outputArg->GetType() == GAAT_DATASET)
     {
@@ -284,14 +294,13 @@ GDALGRasterBand::GDALGRasterBand(GDALRasterBand *poUnderlyingBand)
                     return nullptr;
                 }
             }
-            return std::make_unique<GDALGDataset>(
-                       poOpenInfo->pabyHeader ? poOpenInfo->pszFilename : "",
-                       std::move(alg), poUnderlyingDS)
-                .release();
+            ret = std::make_unique<GDALGDataset>(
+                poOpenInfo->pabyHeader ? poOpenInfo->pszFilename : "",
+                std::move(alg), poUnderlyingDS);
         }
     }
 
-    return nullptr;
+    return ret.release();
 }
 
 /************************************************************************/
