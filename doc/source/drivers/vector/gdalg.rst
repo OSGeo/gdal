@@ -56,7 +56,7 @@ as relative to the location of the ``.gdalg.json`` file. If setting this member 
 they will be interpreted as being relative to the current working directory.
 
 ``.gdalg.json`` files can be validated against the following
-`JSON schema <https://github.com/OSGeo/gdal/blob/master/frmts/gdalg/data/gdalg.schema.json>`_
+JSON schema :source_file:`frmts/gdalg/data/gdalg.schema.json`
 
 This driver has also raster capabilities as detailed in :ref:`raster.gdalg`.
 
