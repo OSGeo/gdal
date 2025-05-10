@@ -1018,15 +1018,18 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
             memcpy(&dfNumber, pabyData + nIndexValue * 8, 8);
             HFAStandard(8, &dfNumber);
             dfDoubleRet = dfNumber;
-            if (dfNumber > std::numeric_limits<int>::max() ||
-                dfNumber < std::numeric_limits<int>::min() ||
-                std::isnan(dfNumber))
+            if (chReqType == 'i')
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Too large for int: %f",
-                         dfNumber);
-                return false;
+                if (dfNumber > std::numeric_limits<int>::max() ||
+                    dfNumber < std::numeric_limits<int>::min() ||
+                    std::isnan(dfNumber))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Too large for int: %f", dfNumber);
+                    return false;
+                }
+                nIntRet = static_cast<int>(dfNumber);
             }
-            nIntRet = static_cast<int>(dfNumber);
         }
         break;
 
@@ -1222,25 +1225,28 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                 HFAStandard(8, &dfValue);
 
                 dfDoubleRet = dfValue;
-                const int nMax = std::numeric_limits<int>::max();
-                const int nMin = std::numeric_limits<int>::min();
-                if (dfDoubleRet >= nMax)
+                if (chReqType == 'i')
                 {
-                    nIntRet = nMax;
-                }
-                else if (dfDoubleRet <= nMin)
-                {
-                    nIntRet = nMin;
-                }
-                else if (std::isnan(dfDoubleRet))
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "NaN converted to INT_MAX.");
-                    nIntRet = nMax;
-                }
-                else
-                {
-                    nIntRet = static_cast<int>(dfDoubleRet);
+                    const int nMax = std::numeric_limits<int>::max();
+                    const int nMin = std::numeric_limits<int>::min();
+                    if (dfDoubleRet >= nMax)
+                    {
+                        nIntRet = nMax;
+                    }
+                    else if (dfDoubleRet <= nMin)
+                    {
+                        nIntRet = nMin;
+                    }
+                    else if (std::isnan(dfDoubleRet))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "NaN converted to INT_MAX.");
+                        nIntRet = nMax;
+                    }
+                    else
+                    {
+                        nIntRet = static_cast<int>(dfDoubleRet);
+                    }
                 }
             }
             else
