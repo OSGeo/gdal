@@ -46,6 +46,7 @@ API
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
+       ogrgeomcoordinateprecision_cpp
        ogrlayer_cpp
 
    Spatial reference system API
