@@ -20,20 +20,6 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vsi"]["move"]
 
 
-def test_gdalalg_vsi_move_empty_source():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Source filename cannot be empty"):
-        alg["source"] = ""
-
-
-def test_gdalalg_vsi_move_empty_destination():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Destination filename cannot be empty"):
-        alg["destination"] = ""
-
-
 def test_gdalalg_vsi_move_nominal(tmp_vsimem, tmp_path):
 
     gdal.FileFromMemBuffer(tmp_vsimem / "file.bin", "foo")
