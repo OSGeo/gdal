@@ -103,11 +103,10 @@ static CPLErr GDALResampleChunk_NearT(const GDALOverviewResampleArgs &args,
     T *const pDstBuffer = *ppDstBuffer;
 
     int *panSrcXOff =
-        static_cast<int *>(VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(int)));
+        static_cast<int *>(VSI_MALLOC2_VERBOSE(nDstXWidth, sizeof(int)));
 
     if (panSrcXOff == nullptr)
     {
-        VSIFree(panSrcXOff);
         return CE_Failure;
     }
 
@@ -1202,11 +1201,10 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     };
 
     PrecomputedXValue *pasSrcX = static_cast<PrecomputedXValue *>(
-        VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(PrecomputedXValue)));
+        VSI_MALLOC2_VERBOSE(nDstXWidth, sizeof(PrecomputedXValue)));
 
     if (pasSrcX == nullptr)
     {
-        VSIFree(pasSrcX);
         return CE_Failure;
     }
 
@@ -4339,6 +4337,8 @@ CPLErr GDALRegenerateOverviews(GDALRasterBandH hSrcBand, int nOverviewCount,
 /*                     GDALRegenerateOverviewsEx()                      */
 /************************************************************************/
 
+constexpr int RADIUS_TO_DIAMETER = 2;
+
 /**
  * \brief Generate downsampled overviews.
  *
@@ -4530,9 +4530,27 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
     {
         // Make sure that round(nChunkYOff / nMaxOvrFactor) < round((nChunkYOff
         // + nFullResYChunk) / nMaxOvrFactor)
-        nFullResYChunk = std::max(nFullResYChunk, 2 * nMaxOvrFactor);
+        if (nMaxOvrFactor > INT_MAX / RADIUS_TO_DIAMETER)
+        {
+            return GINTBIG_MAX;
+        }
+        nFullResYChunk =
+            std::max(nFullResYChunk, RADIUS_TO_DIAMETER * nMaxOvrFactor);
+        if ((nKernelRadius > 0 &&
+             nMaxOvrFactor > INT_MAX / (RADIUS_TO_DIAMETER * nKernelRadius)) ||
+            nFullResYChunk >
+                INT_MAX - RADIUS_TO_DIAMETER * nKernelRadius * nMaxOvrFactor)
+        {
+            return GINTBIG_MAX;
+        }
         nMaxChunkYSizeQueried =
-            nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
+            nFullResYChunk + RADIUS_TO_DIAMETER * nKernelRadius * nMaxOvrFactor;
+        if (GDALGetDataTypeSizeBytes(eWrkDataType) >
+            std::numeric_limits<int64_t>::max() /
+                (static_cast<int64_t>(nMaxChunkYSizeQueried) * nWidth))
+        {
+            return GINTBIG_MAX;
+        }
         return static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
                nMaxChunkYSizeQueried * nWidth;
     };
@@ -4575,7 +4593,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
     else if (pszChunkYSize == nullptr)
     {
         // Try to get as close as possible to nChunkMaxSize
-        while (nChunkSize * 2 < nChunkMaxSize)
+        while (nChunkSize < nChunkMaxSize / 2)
         {
             nFullResYChunk *= 2;
             nChunkSize = UpdateChunkHeightAndGetChunkSize();
@@ -5344,10 +5362,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         const double dfYRatioDstToSrc =
             static_cast<double>(nSrcHeight) / nDstTotalHeight;
 
-        int nOvrFactor = std::max(static_cast<int>(0.5 + dfXRatioDstToSrc),
-                                  static_cast<int>(0.5 + dfYRatioDstToSrc));
-        if (nOvrFactor == 0)
-            nOvrFactor = 1;
+        const int nOvrFactor =
+            std::max(1, std::max(static_cast<int>(0.5 + dfXRatioDstToSrc),
+                                 static_cast<int>(0.5 + dfYRatioDstToSrc)));
 
         int nDstChunkXSize = 0;
         int nDstChunkYSize = 0;
@@ -5366,60 +5383,90 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                      nDstChunkYSize);
         }
 
+        constexpr int PIXEL_MARGIN = 2;
+
         // Try to extend the chunk size so that the memory needed to acquire
         // source pixels goes up to 10 MB.
         // This can help for drivers that support multi-threaded reading
-        const int nFullResYChunk =
-            2 + static_cast<int>(nDstChunkYSize * dfYRatioDstToSrc);
-        const int nFullResYChunkQueried =
-            nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+        const int nFullResYChunk = static_cast<int>(std::min<double>(
+            nSrcHeight, PIXEL_MARGIN + nDstChunkYSize * dfYRatioDstToSrc));
+        const int nFullResYChunkQueried = static_cast<int>(std::min<int64_t>(
+            nSrcHeight,
+            nFullResYChunk + static_cast<int64_t>(RADIUS_TO_DIAMETER) *
+                                 nKernelRadius * nOvrFactor));
         while (nDstChunkXSize < nDstWidth)
         {
-            const int nFullResXChunk =
-                2 + static_cast<int>(2 * nDstChunkXSize * dfXRatioDstToSrc);
+            constexpr int INCREASE_FACTOR = 2;
+
+            const int nFullResXChunk = static_cast<int>(std::min<double>(
+                nSrcWidth, PIXEL_MARGIN + INCREASE_FACTOR * nDstChunkXSize *
+                                              dfXRatioDstToSrc));
 
             const int nFullResXChunkQueried =
-                nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+                static_cast<int>(std::min<int64_t>(
+                    nSrcWidth,
+                    nFullResXChunk + static_cast<int64_t>(RADIUS_TO_DIAMETER) *
+                                         nKernelRadius * nOvrFactor));
 
             if (static_cast<GIntBig>(nFullResXChunkQueried) *
-                    nFullResYChunkQueried * nBands * nWrkDataTypeSize >
-                nChunkMaxSize)
+                    nFullResYChunkQueried >
+                nChunkMaxSize / (nBands * nWrkDataTypeSize))
             {
                 break;
             }
 
-            nDstChunkXSize *= 2;
+            nDstChunkXSize *= INCREASE_FACTOR;
         }
         nDstChunkXSize = std::min(nDstChunkXSize, nDstWidth);
 
-        const int nFullResXChunk =
-            2 + static_cast<int>(nDstChunkXSize * dfXRatioDstToSrc);
-        const int nFullResXChunkQueried =
-            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+        const int nFullResXChunk = static_cast<int>(std::min<double>(
+            nSrcWidth, PIXEL_MARGIN + nDstChunkXSize * dfXRatioDstToSrc));
+        const int nFullResXChunkQueried = static_cast<int>(std::min<int64_t>(
+            nSrcWidth,
+            nFullResXChunk + static_cast<int64_t>(RADIUS_TO_DIAMETER) *
+                                 nKernelRadius * nOvrFactor));
 
         // Make sure that the RAM requirements to acquire the source data does
         // not exceed nChunkMaxSizeForTempFile
         // If so, reduce the destination chunk size, generate overviews in a
         // temporary dataset, and copy that temporary dataset over the target
         // overview bands (to avoid issues with lossy compression)
+        const bool bOverflowFullResXChunkYChunkQueried =
+            nFullResYChunkQueried > INT_MAX / (nBands * nWrkDataTypeSize) ||
+            nFullResXChunkQueried >
+                std::numeric_limits<int64_t>::max() /
+                    (nFullResYChunkQueried * nBands * nWrkDataTypeSize);
         const auto nMemRequirement =
-            static_cast<GIntBig>(nFullResXChunkQueried) *
-            nFullResYChunkQueried * nBands * nWrkDataTypeSize;
-        if (nMemRequirement > nChunkMaxSizeForTempFile &&
-            !(pszDST_CHUNK_X_SIZE && pszDST_CHUNK_Y_SIZE))
+            bOverflowFullResXChunkYChunkQueried
+                ? 0
+                : static_cast<GIntBig>(nFullResXChunkQueried) *
+                      nFullResYChunkQueried * nBands * nWrkDataTypeSize;
+        if (bOverflowFullResXChunkYChunkQueried ||
+            (nMemRequirement > nChunkMaxSizeForTempFile &&
+             !(pszDST_CHUNK_X_SIZE && pszDST_CHUNK_Y_SIZE)))
         {
             // Compute a smaller destination chunk size
             const auto nOverShootFactor =
                 nMemRequirement / nChunkMaxSizeForTempFile;
-            const auto nSqrtOverShootFactor = std::max<GIntBig>(
-                4, static_cast<GIntBig>(std::ceil(
-                       std::sqrt(static_cast<double>(nOverShootFactor)))));
-            const int nReducedDstChunkXSize = std::max(
-                1,
-                static_cast<int>(nDstChunkXSize / nSqrtOverShootFactor) & ~15);
-            const int nReducedDstChunkYSize = std::max(
-                1,
-                static_cast<int>(nDstChunkYSize / nSqrtOverShootFactor) & ~15);
+            constexpr int MIN_OVERSHOOT_FACTOR = 4;
+            const auto nSqrtOverShootFactor =
+                std::max<GIntBig>(MIN_OVERSHOOT_FACTOR,
+                                  static_cast<GIntBig>(std::ceil(std::sqrt(
+                                      static_cast<double>(nOverShootFactor)))));
+            constexpr int DEFAULT_CHUNK_SIZE = 256;
+            constexpr int GTIFF_BLOCK_SIZE_MULTIPLE = 16;
+            const int nReducedDstChunkXSize =
+                bOverflowFullResXChunkYChunkQueried
+                    ? DEFAULT_CHUNK_SIZE
+                    : std::max(1, static_cast<int>(nDstChunkXSize /
+                                                   nSqrtOverShootFactor) &
+                                      ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
+            const int nReducedDstChunkYSize =
+                bOverflowFullResXChunkYChunkQueried
+                    ? DEFAULT_CHUNK_SIZE
+                    : std::max(1, static_cast<int>(nDstChunkYSize /
+                                                   nSqrtOverShootFactor) &
+                                      ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
             if (nReducedDstChunkXSize < nDstChunkXSize ||
                 nReducedDstChunkYSize < nDstChunkYSize)
             {
@@ -5431,14 +5478,25 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     "DST_CHUNK_Y_SIZE",
                     CPLSPrintf("%d", nReducedDstChunkYSize));
 
+                const bool bTmpDSMemRequirementOverflow =
+                    nDstTotalHeight >
+                        INT_MAX /
+                            (nBands * GDALGetDataTypeSizeBytes(eDataType)) ||
+                    nDstTotalWidth > std::numeric_limits<int64_t>::max() /
+                                         (nDstTotalHeight * nBands *
+                                          GDALGetDataTypeSizeBytes(eDataType));
                 const auto nTmpDSMemRequirement =
-                    static_cast<GIntBig>(nDstTotalWidth) * nDstTotalHeight *
-                    nBands * GDALGetDataTypeSizeBytes(eDataType);
+                    bTmpDSMemRequirementOverflow
+                        ? 0
+                        : static_cast<GIntBig>(nDstTotalWidth) *
+                              nDstTotalHeight * nBands *
+                              GDALGetDataTypeSizeBytes(eDataType);
                 std::unique_ptr<GDALDataset> poTmpDS;
                 // Config option mostly/only for autotest purposes
                 const char *pszGDAL_OVR_TEMP_DRIVER =
                     CPLGetConfigOption("GDAL_OVR_TEMP_DRIVER", "");
-                if ((nTmpDSMemRequirement <= nChunkMaxSizeForTempFile &&
+                if ((!bTmpDSMemRequirementOverflow &&
+                     nTmpDSMemRequirement <= nChunkMaxSizeForTempFile &&
                      !EQUAL(pszGDAL_OVR_TEMP_DRIVER, "GTIFF")) ||
                     EQUAL(pszGDAL_OVR_TEMP_DRIVER, "MEM"))
                 {
@@ -5482,8 +5540,10 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                              osTmpFilename.c_str(), nDstTotalWidth,
                              nDstTotalHeight, nBands);
                     CPLStringList aosCO;
-                    if ((nReducedDstChunkXSize % 16) == 0 &&
-                        (nReducedDstChunkYSize % 16) == 0)
+                    if ((nReducedDstChunkXSize % GTIFF_BLOCK_SIZE_MULTIPLE) ==
+                            0 &&
+                        (nReducedDstChunkYSize % GTIFF_BLOCK_SIZE_MULTIPLE) ==
+                            0)
                     {
                         aosCO.SetNameValue("TILED", "YES");
                         aosCO.SetNameValue(
@@ -5604,14 +5664,16 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     }
                 }
 
-                if (eErr != CE_None)
-                    break;
-
                 // Flush the data to overviews.
                 for (int iBand = 0; iBand < nBands; ++iBand)
                 {
-                    papapoOverviewBands[iBand][iOverview]->FlushCache(false);
+                    if (papapoOverviewBands[iBand][iOverview]->FlushCache(
+                            false) != CE_None)
+                        eErr = CE_Failure;
                 }
+
+                if (eErr != CE_None)
+                    break;
 
                 continue;
             }
@@ -5699,8 +5761,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         // Queue of jobs
         std::list<std::unique_ptr<OvrJob>> jobList;
 
-        std::vector<void *> apaChunk(nBands);
-        std::vector<GByte *> apabyChunkNoDataMask(nBands);
+        std::vector<std::unique_ptr<void, VSIFreeReleaser>> apaChunk(nBands);
+        std::vector<std::unique_ptr<GByte, VSIFreeReleaser>>
+            apabyChunkNoDataMask(nBands);
 
         // Iterate on destination overview, block by block.
         for (int nDstYOff = nDstYOffStart;
@@ -5723,7 +5786,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             CPLAssert(nYCount <= nFullResYChunk);
 
             int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrFactor;
-            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrFactor;
+            int nChunkYSizeQueried =
+                nYCount + RADIUS_TO_DIAMETER * nKernelRadius * nOvrFactor;
             if (nChunkYOffQueried < 0)
             {
                 nChunkYSizeQueried += nChunkYOffQueried;
@@ -5764,7 +5828,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                 int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrFactor;
                 int nChunkXSizeQueried =
-                    nXCount + 2 * nKernelRadius * nOvrFactor;
+                    nXCount + RADIUS_TO_DIAMETER * nKernelRadius * nOvrFactor;
                 if (nChunkXOffQueried < 0)
                 {
                     nChunkXSizeQueried += nChunkXOffQueried;
@@ -5811,14 +5875,15 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     eErr = WaitAndFinalizeOldestJob(jobList);
                 }
 
-                // (Re)allocate buffers if needed
-                for (int iBand = 0; iBand < nBands; ++iBand)
+                // Read the source buffers for all the bands.
+                for (int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand)
                 {
+                    // (Re)allocate buffers if needed
                     if (apaChunk[iBand] == nullptr)
                     {
-                        apaChunk[iBand] = VSI_MALLOC3_VERBOSE(
+                        apaChunk[iBand].reset(VSI_MALLOC3_VERBOSE(
                             nFullResXChunkQueried, nFullResYChunkQueried,
-                            nWrkDataTypeSize);
+                            nWrkDataTypeSize));
                         if (apaChunk[iBand] == nullptr)
                         {
                             eErr = CE_Failure;
@@ -5827,40 +5892,41 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     if (bUseNoDataMask &&
                         apabyChunkNoDataMask[iBand] == nullptr)
                     {
-                        apabyChunkNoDataMask[iBand] =
+                        apabyChunkNoDataMask[iBand].reset(
                             static_cast<GByte *>(VSI_MALLOC2_VERBOSE(
-                                nFullResXChunkQueried, nFullResYChunkQueried));
+                                nFullResXChunkQueried, nFullResYChunkQueried)));
                         if (apabyChunkNoDataMask[iBand] == nullptr)
                         {
                             eErr = CE_Failure;
                         }
                     }
-                }
 
-                // Read the source buffers for all the bands.
-                for (int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand)
-                {
-                    GDALRasterBand *poSrcBand = nullptr;
-                    if (iSrcOverview == -1)
-                        poSrcBand = papoSrcBands[iBand];
-                    else
-                        poSrcBand = papapoOverviewBands[iBand][iSrcOverview];
-                    eErr = poSrcBand->RasterIO(
-                        GF_Read, nChunkXOffQueried, nChunkYOffQueried,
-                        nChunkXSizeQueried, nChunkYSizeQueried, apaChunk[iBand],
-                        nChunkXSizeQueried, nChunkYSizeQueried, eWrkDataType, 0,
-                        0, nullptr);
-
-                    if (bUseNoDataMask && eErr == CE_None)
+                    if (eErr == CE_None)
                     {
-                        auto poMaskBand = poSrcBand->IsMaskBand()
-                                              ? poSrcBand
-                                              : poSrcBand->GetMaskBand();
-                        eErr = poMaskBand->RasterIO(
+                        GDALRasterBand *poSrcBand = nullptr;
+                        if (iSrcOverview == -1)
+                            poSrcBand = papoSrcBands[iBand];
+                        else
+                            poSrcBand =
+                                papapoOverviewBands[iBand][iSrcOverview];
+                        eErr = poSrcBand->RasterIO(
                             GF_Read, nChunkXOffQueried, nChunkYOffQueried,
                             nChunkXSizeQueried, nChunkYSizeQueried,
-                            apabyChunkNoDataMask[iBand], nChunkXSizeQueried,
-                            nChunkYSizeQueried, GDT_Byte, 0, 0, nullptr);
+                            apaChunk[iBand].get(), nChunkXSizeQueried,
+                            nChunkYSizeQueried, eWrkDataType, 0, 0, nullptr);
+
+                        if (bUseNoDataMask && eErr == CE_None)
+                        {
+                            auto poMaskBand = poSrcBand->IsMaskBand()
+                                                  ? poSrcBand
+                                                  : poSrcBand->GetMaskBand();
+                            eErr = poMaskBand->RasterIO(
+                                GF_Read, nChunkXOffQueried, nChunkYOffQueried,
+                                nChunkXSizeQueried, nChunkYSizeQueried,
+                                apabyChunkNoDataMask[iBand].get(),
+                                nChunkXSizeQueried, nChunkYSizeQueried,
+                                GDT_Byte, 0, 0, nullptr);
+                        }
                     }
                 }
 
@@ -5880,9 +5946,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     poJob->args.dfXRatioDstToSrc = dfXRatioDstToSrc;
                     poJob->args.dfYRatioDstToSrc = dfYRatioDstToSrc;
                     poJob->args.eWrkDataType = eWrkDataType;
-                    poJob->pChunk = apaChunk[iBand];
+                    poJob->pChunk = apaChunk[iBand].get();
                     poJob->args.pabyChunkNodataMask =
-                        apabyChunkNoDataMask[iBand];
+                        apabyChunkNoDataMask[iBand].get();
                     poJob->args.nChunkXOff = nChunkXOffQueried;
                     poJob->args.nChunkXSize = nChunkXSizeQueried;
                     poJob->args.nChunkYOff = nChunkYOffQueried;
@@ -5899,13 +5965,11 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                     if (poJobQueue)
                     {
-                        poJob->oSrcMaskBufferHolder.reset(
-                            new PointerHolder(apabyChunkNoDataMask[iBand]));
-                        apabyChunkNoDataMask[iBand] = nullptr;
+                        poJob->oSrcMaskBufferHolder.reset(new PointerHolder(
+                            apabyChunkNoDataMask[iBand].release()));
 
                         poJob->oSrcBufferHolder.reset(
-                            new PointerHolder(apaChunk[iBand]));
-                        apaChunk[iBand] = nullptr;
+                            new PointerHolder(apaChunk[iBand].release()));
 
                         poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
                         jobList.emplace_back(std::move(poJob));
@@ -5934,10 +5998,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         // Flush the data to overviews.
         for (int iBand = 0; iBand < nBands; ++iBand)
         {
-            CPLFree(apaChunk[iBand]);
-            papapoOverviewBands[iBand][iOverview]->FlushCache(false);
-
-            CPLFree(apabyChunkNoDataMask[iBand]);
+            if (papapoOverviewBands[iBand][iOverview]->FlushCache(false) !=
+                CE_None)
+                eErr = CE_Failure;
         }
     }
 
@@ -6086,13 +6149,13 @@ CPLErr CPL_STDCALL GDALComputeBandStats(GDALRasterBandH hSrcBand,
     if (bComplex)
     {
         pafData = static_cast<float *>(
-            VSI_MALLOC_VERBOSE(nWidth * 2 * sizeof(float)));
+            VSI_MALLOC2_VERBOSE(nWidth, 2 * sizeof(float)));
         eWrkType = GDT_CFloat32;
     }
     else
     {
         pafData =
-            static_cast<float *>(VSI_MALLOC_VERBOSE(nWidth * sizeof(float)));
+            static_cast<float *>(VSI_MALLOC2_VERBOSE(nWidth, sizeof(float)));
         eWrkType = GDT_Float32;
     }
 

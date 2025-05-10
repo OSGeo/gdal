@@ -20,6 +20,7 @@
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 
+#include <algorithm>
 #include <limits>
 #include <string>
 
@@ -5360,6 +5361,75 @@ TEST_F(test_gdal, GDALComputeOvFactor)
               256);
     EXPECT_EQ(GDALComputeOvFactor((1000 + 25 - 1) / 25, 1000, 1, 1), 25);
     EXPECT_EQ(GDALComputeOvFactor(1, 1, (1000 + 25 - 1) / 25, 1000), 25);
+}
+
+TEST_F(test_gdal, GDALRegenerateOverviewsMultiBand_very_large_block_size)
+{
+    class MyBand final : public GDALRasterBand
+    {
+      public:
+        explicit MyBand(int nSize)
+        {
+            nRasterXSize = nSize;
+            nRasterYSize = nSize;
+            nBlockXSize = std::max(1, nSize / 2);
+            nBlockYSize = std::max(1, nSize / 2);
+            eDataType = GDT_Float64;
+        }
+
+        CPLErr IReadBlock(int, int, void *) override
+        {
+            return CE_Failure;
+        }
+
+        CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                         GDALDataType, GSpacing, GSpacing,
+                         GDALRasterIOExtraArg *) override
+        {
+            IReadBlock(0, 0, nullptr);
+            return CE_Failure;
+        }
+    };
+
+    class MyDataset : public GDALDataset
+    {
+      public:
+        MyDataset()
+        {
+            nRasterXSize = INT_MAX;
+            nRasterYSize = INT_MAX;
+            SetBand(1, std::make_unique<MyBand>(INT_MAX));
+        }
+    };
+
+    MyDataset ds;
+    GDALRasterBand *poSrcBand = ds.GetRasterBand(1);
+    GDALRasterBand **ppoSrcBand = &poSrcBand;
+    GDALRasterBandH hSrcBand = GDALRasterBand::ToHandle(poSrcBand);
+
+    MyBand overBand1x1(1);
+    GDALRasterBand *poOvrBand = &overBand1x1;
+    GDALRasterBand **ppoOvrBand = &poOvrBand;
+    GDALRasterBandH hOverBand1x1 = GDALRasterBand::ToHandle(poOvrBand);
+
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+    EXPECT_EQ(GDALRegenerateOverviewsMultiBand(1, &poSrcBand, 1, &ppoSrcBand,
+                                               "AVERAGE", nullptr, nullptr,
+                                               nullptr),
+              CE_Failure);
+
+    EXPECT_EQ(GDALRegenerateOverviewsMultiBand(1, &poSrcBand, 1, &ppoOvrBand,
+                                               "AVERAGE", nullptr, nullptr,
+                                               nullptr),
+              CE_Failure);
+
+    EXPECT_EQ(GDALRegenerateOverviewsEx(hSrcBand, 1, &hSrcBand, "AVERAGE",
+                                        nullptr, nullptr, nullptr),
+              CE_Failure);
+
+    EXPECT_EQ(GDALRegenerateOverviewsEx(hSrcBand, 1, &hOverBand1x1, "AVERAGE",
+                                        nullptr, nullptr, nullptr),
+              CE_Failure);
 }
 
 }  // namespace
