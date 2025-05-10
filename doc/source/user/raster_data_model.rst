@@ -26,7 +26,7 @@ Dataset coordinate systems are represented as OpenGIS Well Known Text strings. T
 - A list of projection parameters (e.g., central_meridian).
 - A units name, and conversion factor to meters or radians.
 - Names and ordering for the axes.
-- Codes for most of the above in terms of predefined coordinate systems from authorities such as EPSG.
+- Codes for most of the above in terms of predefined coordinate systems from authorities such as :term:`EPSG`.
 
 For more information on OpenGIS WKT coordinate system definitions, and mechanisms to manipulate them, refer to the osr_tutorial document and/or the OGRSpatialReference class documentation.
 
