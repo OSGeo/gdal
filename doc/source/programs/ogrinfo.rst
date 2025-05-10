@@ -32,7 +32,7 @@ edit data.
 .. option:: -json
 
     Display the output in json format, conforming to the
-    `ogrinfo_output.schema.json <https://github.com/OSGeo/gdal/blob/master/apps/data/ogrinfo_output.schema.json>`__
+    ogrinfo_output.schema.json :source_file:`apps/data/ogrinfo_output.schema.json`
     schema.
 
     .. versionadded:: 3.7

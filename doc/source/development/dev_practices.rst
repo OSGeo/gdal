@@ -269,7 +269,7 @@ Source tree layout
 - :file:`autotest`: Regression test suite (C++ and Python)
 - :file:`cmake`: CMake modules and helpers functions
 - :file:`doc`: Source code of GDAL documentation and scripts
-- :file:`docker`: Dockerfile's for `GDAL Docker images <https://github.com/OSGeo/gdal/blob/master/docker/README.md>`__
+- :file:`docker`: Dockerfile's for GDAL Docker images :source_file:`docker/README.md`
 - :file:`gcore`: Raster core functionality. Base classes: :cpp:class:`GDALDataset`, :cpp:class:`GDALRasterBand`, :cpp:class:`GDALDriver`, overview building, etc.
 - :file:`frmts`: GDAL/raster drivers (mostly, with the exception of the GDAL GeoPackage raster support in ogr/ogrsf_frmts/gpkg)
 - :file:`fuzzer`: Source code and scripts for GDAL `OSS-Fuzz integration <https://github.com/google/oss-fuzz>`__
