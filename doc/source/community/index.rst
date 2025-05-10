@@ -101,6 +101,13 @@ It is the event for those interested in GDAL/OGR, other FOSS geospatial technolo
 + `State of GDAL 2.4 and 3.0 <https://download.osgeo.org/gdal/presentations/GDAL%202.4%20and%203.0%20%28FOSS4G%202019%29.pdf>`__
   by Even Rouault, Spatialys, at  `FOSS4G 2019 <https://2019.foss4g.org/>`_ in Bucharest, Romania. `Recording <https://av.tib.eu/media/43447>`__.
 
+.. spelling:word-list::
+    Mostar
+    Tartu
+    Firenze
+    Buenos
+
+
 Governance and Community Participation
 --------------------------------------
 
