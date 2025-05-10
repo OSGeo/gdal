@@ -27,6 +27,7 @@
 #include "cpl_float.h"
 #include "gdal_priv.h"
 #include "gdal_pam.h"
+#include "gdal_rat.h"
 #include "gdal_utils.h"
 #include "cpl_safemaths.hpp"
 #include "memmultidim.h"
@@ -10228,6 +10229,18 @@ GDALExtendedDataType::GDALExtendedDataType(GDALDataType eType)
 /************************************************************************/
 
 GDALExtendedDataType::GDALExtendedDataType(
+    const std::string &osName, GDALDataType eBaseType,
+    std::unique_ptr<GDALRasterAttributeTable> poRAT)
+    : m_osName(osName), m_eClass(GEDTC_NUMERIC), m_eNumericDT(eBaseType),
+      m_nSize(GDALGetDataTypeSizeBytes(eBaseType)), m_poRAT(std::move(poRAT))
+{
+}
+
+/************************************************************************/
+/*                        GDALExtendedDataType()                        */
+/************************************************************************/
+
+GDALExtendedDataType::GDALExtendedDataType(
     const std::string &osName, size_t nTotalSize,
     std::vector<std::unique_ptr<GDALEDTComponent>> &&components)
     : m_osName(osName), m_eClass(GEDTC_COMPOUND),
@@ -10243,7 +10256,8 @@ GDALExtendedDataType::GDALExtendedDataType(
 GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType &other)
     : m_osName(other.m_osName), m_eClass(other.m_eClass),
       m_eSubType(other.m_eSubType), m_eNumericDT(other.m_eNumericDT),
-      m_nSize(other.m_nSize), m_nMaxStringLength(other.m_nMaxStringLength)
+      m_nSize(other.m_nSize), m_nMaxStringLength(other.m_nMaxStringLength),
+      m_poRAT(other.m_poRAT ? other.m_poRAT->Clone() : nullptr)
 {
     if (m_eClass == GEDTC_COMPOUND)
     {
@@ -10270,6 +10284,7 @@ GDALExtendedDataType::operator=(const GDALExtendedDataType &other)
         m_eNumericDT = other.m_eNumericDT;
         m_nSize = other.m_nSize;
         m_nMaxStringLength = other.m_nMaxStringLength;
+        m_poRAT.reset(other.m_poRAT ? other.m_poRAT->Clone() : nullptr);
         m_aoComponents.clear();
         if (m_eClass == GEDTC_COMPOUND)
         {
@@ -10297,6 +10312,7 @@ GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
     m_nSize = other.m_nSize;
     m_nMaxStringLength = other.m_nMaxStringLength;
     m_aoComponents = std::move(other.m_aoComponents);
+    m_poRAT = std::move(other.m_poRAT);
     other.m_eClass = GEDTC_NUMERIC;
     other.m_eNumericDT = GDT_Unknown;
     other.m_nSize = 0;
@@ -10318,6 +10334,24 @@ GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
 GDALExtendedDataType GDALExtendedDataType::Create(GDALDataType eType)
 {
     return GDALExtendedDataType(eType);
+}
+
+/************************************************************************/
+/*                           Create()                                   */
+/************************************************************************/
+
+/** Return a new GDALExtendedDataType from a raster attribute table.
+ *
+ * @param osName Type name
+ * @param eBaseType Base integer data type.
+ * @param poRAT Raster attribute table. Must not be NULL.
+ * @since 3.12
+ */
+GDALExtendedDataType
+GDALExtendedDataType::Create(const std::string &osName, GDALDataType eBaseType,
+                             std::unique_ptr<GDALRasterAttributeTable> poRAT)
+{
+    return GDALExtendedDataType(osName, eBaseType, std::move(poRAT));
 }
 
 /************************************************************************/
@@ -10980,6 +11014,28 @@ GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
+/*                      GDALExtendedDataTypeGetRAT()                    */
+/************************************************************************/
+
+/** Return associated raster attribute table, when there is one.
+ *
+ * * For the netCDF driver, the RAT will capture enumerated types, with
+ * a "value" column with an integer value and a "name" column with the
+ * associated name.
+ * This is the same as the C++ method GDALExtendedDataType::GetRAT()
+ *
+ * @param hEDT Data type.
+ * @return raster attribute (owned by GDALExtendedDataTypeH), or NULL
+ * @since 3.12
+ */
+GDALRasterAttributeTableH GDALExtendedDataTypeGetRAT(GDALExtendedDataTypeH hEDT)
+{
+    VALIDATE_POINTER1(hEDT, __func__, nullptr);
+    return GDALRasterAttributeTable::ToHandle(
+        const_cast<GDALRasterAttributeTable *>(hEDT->m_poImpl->GetRAT()));
+}
+
+/************************************************************************/
 /*                     GDALExtendedDataTypeGetComponents()              */
 /************************************************************************/
 
@@ -11502,6 +11558,44 @@ CSLConstList GDALGroupGetStructuralInfo(GDALGroupH hGroup)
 {
     VALIDATE_POINTER1(hGroup, __func__, nullptr);
     return hGroup->m_poImpl->GetStructuralInfo();
+}
+
+/************************************************************************/
+/*                   GDALGroupGetDataTypeCount()                        */
+/************************************************************************/
+
+/** Return the number of data types associated with the group
+ * (typically enumerations).
+ *
+ * This is the same as the C++ method GDALGroup::GetDataTypes().size().
+ *
+ * @since 3.12
+ */
+size_t GDALGroupGetDataTypeCount(GDALGroupH hGroup)
+{
+    VALIDATE_POINTER1(hGroup, __func__, 0);
+    return hGroup->m_poImpl->GetDataTypes().size();
+}
+
+/************************************************************************/
+/*                      GDALGroupGetDataType()                          */
+/************************************************************************/
+
+/** Return one of the data types associated with the group.
+ *
+ * This is the same as the C++ method GDALGroup::GetDataTypes()[].
+ *
+ * @return a type to release with GDALExtendedDataTypeRelease() once done,
+ * or nullptr in case of error.
+ * @since 3.12
+ */
+GDALExtendedDataTypeH GDALGroupGetDataType(GDALGroupH hGroup, size_t nIdx)
+{
+    VALIDATE_POINTER1(hGroup, __func__, nullptr);
+    if (nIdx >= hGroup->m_poImpl->GetDataTypes().size())
+        return nullptr;
+    return new GDALExtendedDataTypeHS(new GDALExtendedDataType(
+        *(hGroup->m_poImpl->GetDataTypes()[nIdx].get())));
 }
 
 /************************************************************************/

@@ -247,6 +247,20 @@ public:
     return GDALGroupSubsetDimensionFromSelection(self, selection, options);
   }
 
+  size_t GetDataTypeCount() {
+    return GDALGroupGetDataTypeCount(self);
+  }
+
+%newobject GetType;
+  GDALExtendedDataTypeHS* GetDataType(size_t idx) {
+    if (idx >= GDALGroupGetDataTypeCount(self))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GetDataType(): invalid index");
+        return NULL;
+    }
+    return GDALGroupGetDataType(self, idx);
+  }
+
 } /* extend */
 }; /* GDALGroupH */
 
@@ -1439,7 +1453,6 @@ public:
 } /* extend */
 }; /* GDALDimensionH */
 
-
 //************************************************************************
 //
 // GDALExtendedDataTypeClass
@@ -1527,6 +1540,10 @@ public:
     return GDALExtendedDataTypeGetSubType(self);
   }
 
+  GDALRasterAttributeTableShadow* GetRAT() {
+    return GDALExtendedDataTypeGetRAT(self);
+  }
+
 #if defined(SWIGPYTHON)
   void GetComponents( GDALEDTComponentHS*** pcomps, size_t* pnCount ) {
     *pcomps = GDALExtendedDataTypeGetComponents(self, pnCount);
@@ -1550,7 +1567,7 @@ public:
 
 //************************************************************************
 //
-// GDALExtendedDataType
+// GDALEDTComponent
 //
 //************************************************************************
 
