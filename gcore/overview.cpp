@@ -5259,8 +5259,37 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                    : std::unique_ptr<CPLJobQueue>(nullptr);
 
     // Only configurable for debug / testing
-    const int nChunkMaxSize = std::max(
-        100, atoi(CPLGetConfigOption("GDAL_OVR_CHUNK_MAX_SIZE", "10485760")));
+    const GIntBig nChunkMaxSize = []() -> GIntBig
+    {
+        const char *pszVal =
+            CPLGetConfigOption("GDAL_OVR_CHUNK_MAX_SIZE", nullptr);
+        if (pszVal)
+        {
+            GIntBig nRet = 0;
+            CPLParseMemorySize(pszVal, &nRet, nullptr);
+            return std::max<GIntBig>(100, nRet);
+        }
+        return 10 * 1024 * 1024;
+    }();
+
+    // Only configurable for debug / testing
+    const GIntBig nChunkMaxSizeForTempFile = []() -> GIntBig
+    {
+        const char *pszVal = CPLGetConfigOption(
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE", nullptr);
+        if (pszVal)
+        {
+            GIntBig nRet = 0;
+            CPLParseMemorySize(pszVal, &nRet, nullptr);
+            return std::max<GIntBig>(100, nRet);
+        }
+        const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+        if (nUsableRAM > 0)
+            return nUsableRAM / 10;
+        // Select a value to be able to at least downsample by 2 for a RGB
+        // 1024x1024 tiled output: (2 * 1024 + 2) * (2 * 1024 + 2) * 3 = 12 MB
+        return 100 * 1024 * 1024;
+    }();
 
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
@@ -5369,25 +5398,28 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
 
         // Make sure that the RAM requirements to acquire the source data does
-        // not exceed nChunkMaxSize
+        // not exceed nChunkMaxSizeForTempFile
         // If so, reduce the destination chunk size, generate overviews in a
         // temporary dataset, and copy that temporary dataset over the target
         // overview bands (to avoid issues with lossy compression)
         const auto nMemRequirement =
             static_cast<GIntBig>(nFullResXChunkQueried) *
             nFullResYChunkQueried * nBands * nWrkDataTypeSize;
-        if (nMemRequirement > nChunkMaxSize &&
+        if (nMemRequirement > nChunkMaxSizeForTempFile &&
             !(pszDST_CHUNK_X_SIZE && pszDST_CHUNK_Y_SIZE))
         {
             // Compute a smaller destination chunk size
-            const auto nOverShootFactor = nMemRequirement / nChunkMaxSize;
+            const auto nOverShootFactor =
+                nMemRequirement / nChunkMaxSizeForTempFile;
             const auto nSqrtOverShootFactor = std::max<GIntBig>(
                 4, static_cast<GIntBig>(std::ceil(
                        std::sqrt(static_cast<double>(nOverShootFactor)))));
             const int nReducedDstChunkXSize = std::max(
-                1, static_cast<int>(nDstChunkXSize / nSqrtOverShootFactor));
+                1,
+                static_cast<int>(nDstChunkXSize / nSqrtOverShootFactor) & ~15);
             const int nReducedDstChunkYSize = std::max(
-                1, static_cast<int>(nDstChunkYSize / nSqrtOverShootFactor));
+                1,
+                static_cast<int>(nDstChunkYSize / nSqrtOverShootFactor) & ~15);
             if (nReducedDstChunkXSize < nDstChunkXSize ||
                 nReducedDstChunkYSize < nDstChunkYSize)
             {
@@ -5406,7 +5438,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 // Config option mostly/only for autotest purposes
                 const char *pszGDAL_OVR_TEMP_DRIVER =
                     CPLGetConfigOption("GDAL_OVR_TEMP_DRIVER", "");
-                if ((nTmpDSMemRequirement <= nChunkMaxSize &&
+                if ((nTmpDSMemRequirement <= nChunkMaxSizeForTempFile &&
                      !EQUAL(pszGDAL_OVR_TEMP_DRIVER, "GTIFF")) ||
                     EQUAL(pszGDAL_OVR_TEMP_DRIVER, "MEM"))
                 {
@@ -5450,6 +5482,24 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                              osTmpFilename.c_str(), nDstTotalWidth,
                              nDstTotalHeight, nBands);
                     CPLStringList aosCO;
+                    if ((nReducedDstChunkXSize % 16) == 0 &&
+                        (nReducedDstChunkYSize % 16) == 0)
+                    {
+                        aosCO.SetNameValue("TILED", "YES");
+                        aosCO.SetNameValue(
+                            "BLOCKXSIZE",
+                            CPLSPrintf("%d", nReducedDstChunkXSize));
+                        aosCO.SetNameValue(
+                            "BLOCKYSIZE",
+                            CPLSPrintf("%d", nReducedDstChunkYSize));
+                    }
+                    if (const char *pszCOList = poTmpDrv->GetMetadataItem(
+                            GDAL_DMD_CREATIONOPTIONLIST))
+                    {
+                        aosCO.SetNameValue("COMPRESS", strstr(pszCOList, "ZSTD")
+                                                           ? "ZSTD"
+                                                           : "LZW");
+                    }
                     poTmpDS.reset(poTmpDrv->Create(
                         osTmpFilename.c_str(), nDstTotalWidth, nDstTotalHeight,
                         nBands, eDataType, aosCO.List()));
@@ -5556,6 +5606,12 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                 if (eErr != CE_None)
                     break;
+
+                // Flush the data to overviews.
+                for (int iBand = 0; iBand < nBands; ++iBand)
+                {
+                    papapoOverviewBands[iBand][iOverview]->FlushCache(false);
+                }
 
                 continue;
             }
