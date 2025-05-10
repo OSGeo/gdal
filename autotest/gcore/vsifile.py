@@ -1226,6 +1226,27 @@ def test_vsifile_vsizip_stored():
 
 
 ###############################################################################
+# Test creating a file in a ZIP with non-Latin1 character
+
+
+def test_vsifile_vsizip_non_latin1_char(tmp_vsimem):
+
+    gdal.ErrorReset()
+    with gdal.VSIFile(
+        f"/vsizip/{tmp_vsimem}/test.zip/" + b"\xE5\xAE\x89.txt".decode("UTF-8"), "wb"
+    ) as f:
+        f.close()
+        assert gdal.GetLastErrorMsg() == ""
+
+    assert gdal.ReadDir(f"/vsizip/{tmp_vsimem}/test.zip") == [
+        b"\xE5\xAE\x89.txt".decode("UTF-8")
+    ]
+
+    with gdal.VSIFile(f"{tmp_vsimem}/test.zip", "rb") as f:
+        assert b"0xE50xAE0x89" in f.read()
+
+
+###############################################################################
 # Test that VSIFTruncateL() zeroize beyond the truncated area
 
 
