@@ -22,7 +22,7 @@ The build environment has the following dependencies:
 * nmake / Visual Studio
 * SWIG 3/4
 
-.. note:: The `GDAL test scripts <https://github.com/OSGeo/gdal/blob/master/.github/workflows/windows_build.yml>`__ use VS 2019 (MSVC Ver 1920) so it would make sense to use the same versions.
+.. note:: The GDAL test scripts :source_file:`.github/workflows/windows_build.yml` use VS 2019 (MSVC Ver 1920) so it would make sense to use the same versions.
 
 .. note:: `SWIG <http://www.swig.org/>`__ is used to build the API bindings. The GDAL test scripts use version 3 and the conda build use version 4. Both Work.
 

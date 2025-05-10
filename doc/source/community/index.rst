@@ -141,18 +141,18 @@ placed in the hands of a Project Steering Committee. This project steering
 committee operates under the rules of :ref:`rfc-1`, and is overall responsible for
 decisions related to the GDAL/OGR project. The current members are (@github username):
 
-- Frank Warmerdam      (@warmerdam)
-- Daniel Morissette    (@dmorissette)
-- Howard Butler        (@hobu)
-- Tamas Szekeres       (@szekerest)
-- Even Rouault (chair) (@rouault)
-- Jukka Rahkonen       (@jratike80)
-- Kurt Schwehr         (@schwehr)
-- Norman Barker        (@normanb)
-- Sean Gillies         (@sgillies)
-- Javier Jimenez Shaw  (@jjimenezshaw)
-- Dan Baston           (@dbaston)
-- Michael Smith        (@msmitherdc)
+- Frank Warmerdam      (`@warmerdam <https://github.com/warmerdam>`__)
+- Daniel Morissette    (`@dmorissette <https://github.com/dmorissette>`__)
+- Howard Butler        (`@hobu <https://github.com/hobu>`__)
+- Tamas Szekeres       (`@szekerest <https://github.com/szekerest>`__)
+- Even Rouault (chair) (`@rouault <https://github.com/rouault>`__)
+- Jukka Rahkonen       (`@jratike80 <https://github.com/jratike80>`__)
+- Kurt Schwehr         (`@schwehr <https://github.com/schwehr>`__)
+- Norman Barker        (`@normanb <https://github.com/normanb>`__)
+- Sean Gillies         (`@sgillies <https://github.com/sgillies>`__)
+- Javier Jimenez Shaw  (`@jjimenezshaw <https://github.com/jjimenezshaw>`__)
+- Dan Baston           (`@dbaston <https://github.com/dbaston>`__)
+- Michael Smith        (`@msmitherdc <https://github.com/msmitherdc>`__)
 
 Past members:
 
