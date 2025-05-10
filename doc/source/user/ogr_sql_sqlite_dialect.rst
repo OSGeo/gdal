@@ -59,5 +59,5 @@ restriction.
 The result of an ExecuteSQL() call is usually a temporary OGRLayer representing
 the results set from the statement.  This is the case for a SELECT statement
 for instance.  The returned temporary layer should be released with
-:cpp:func:`GDALDataset::ReleaseResultsSet` method when no longer needed.  Failure
+:cpp:func:`GDALDataset::ReleaseResultSet` method when no longer needed.  Failure
 to release it before the datasource is destroyed may result in a crash.

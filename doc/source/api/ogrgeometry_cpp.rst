@@ -84,6 +84,13 @@ OGRPolygon class
    :project: api
    :members:
 
+OGRCompoundCurve class
+----------------------
+
+.. doxygenclass:: OGRCompoundCurve
+   :project: api
+   :members:
+
 OGRCurvePolygon class
 ---------------------
 

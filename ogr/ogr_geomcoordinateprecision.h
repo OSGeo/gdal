@@ -18,6 +18,12 @@
 #include "cpl_string.h"
 #endif
 
+/**
+ * \file ogr_geomcoordinateprecision.h
+ *
+ * Geometry coordinate precision class.
+ */
+
 class OGRSpatialReference;
 
 /** Geometry coordinate precision.
