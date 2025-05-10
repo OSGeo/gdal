@@ -187,8 +187,14 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
 
     if (pszOutputSepFieldName != nullptr)
     {
+        const auto poOutDrv = poDstDS->GetDriver();
+        const char *pszVal =
+            poOutDrv ? poOutDrv->GetMetadataItem(GDAL_DMD_MAX_STRING_LENGTH)
+                     : nullptr;
+        const int nMaxFieldSize = pszVal ? atoi(pszVal) : 0;
+
         OGRFieldDefn oSepField(pszOutputSepFieldName, OFTString);
-        oSepField.SetWidth(254);
+        oSepField.SetWidth(nMaxFieldSize);
         if (poDstLayer->CreateField(&oSepField) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
