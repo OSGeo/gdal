@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import struct
+
 import gdaltest
 import pytest
 
@@ -1551,3 +1553,127 @@ def test_gdalalg_raster_tile_raster_kml_with_gx_latlonquad(tmp_vsimem):
             got
             == open("data/gdal_raster_tile_expected_byte_raster_0_0_0.kml", "rb").read()
         )
+
+
+def test_gdalalg_raster_tile_excluded_values_error(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = tmp_vsimem
+    alg["excluded-values"] = "0"
+    with pytest.raises(
+        Exception,
+        match="'excluded-values' can only be specified if 'resampling' is set to 'average'",
+    ):
+        alg.Run()
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = tmp_vsimem
+    alg["excluded-values"] = "0"
+    alg["resampling"] = "average"
+    alg["overview-resampling"] = "near"
+    with pytest.raises(
+        Exception,
+        match="'excluded-values' can only be specified if 'overview-resampling' is set to 'average'",
+    ):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_excluded_values(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+    )
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 11, 21, 31, 41)
+    )
+    src_ds.GetRasterBand(3).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 12, 22, 32, 42)
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    RES_Z1 = RES_Z0 / 2
+    # Spatial extent of tile (0,0) at zoom level 1
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z1, 0, MAX_GM, 0, -RES_Z1])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["excluded-values"] = "30,31,32"
+    alg["excluded-values-pct-threshold"] = 50
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 4, ds.ReadRaster(0, 0, 1, 1)) == (
+        (10 + 20 + 40) // 3,
+        (11 + 21 + 41) // 3,
+        (12 + 22 + 42) // 3,
+        255,
+    )
+
+
+def test_gdalalg_raster_tile_nodata_values_pct_threshold(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    for i in range(3):
+        src_ds.GetRasterBand(i + 1).SetNoDataValue(20)
+        src_ds.GetRasterBand(i + 1).WriteRaster(
+            0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+        )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    RES_Z1 = RES_Z0 / 2
+    # Spatial extent of tile (0,0) at zoom level 1
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z1, 0, MAX_GM, 0, -RES_Z1])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
+        round((10 + 30 + 40) / 3),
+        191,
+    )
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["nodata-values-pct-threshold"] = 50
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
+        round((10 + 30 + 40) / 3),
+        255,
+    )
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["nodata-values-pct-threshold"] = 25
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)

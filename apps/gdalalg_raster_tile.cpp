@@ -131,7 +131,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("no-alpha", 0, _("Whether to disable adding an alpha channel"),
            &m_noalpha)
         .SetMutualExclusionGroup("alpha");
-    AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData);
+    auto &dstNoDataArg =
+        AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData);
     AddArg("skip-blank", 0, _("Do not generate blank tiles"), &m_skipBlank);
 
     {
@@ -154,6 +155,37 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
 
     AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 
+    constexpr const char *ADVANCED_RESAMPLING_CATEGORY = "Advanced Resampling";
+    auto &excludedValuesArg =
+        AddArg("excluded-values", 0,
+               _("Tuples of values (e.g. <R>,<G>,<B> or (<R1>,<G1>,<B1>),"
+                 "(<R2>,<G2>,<B2>)) that must beignored as contributing source "
+                 "pixels during (average) resampling"),
+               &m_excludedValues)
+            .SetCategory(ADVANCED_RESAMPLING_CATEGORY);
+    auto &excludedValuesPctThresholdArg =
+        AddArg(
+            "excluded-values-pct-threshold", 0,
+            _("Minimum percentage of source pixels that must be set at one of "
+              "the --excluded-values to cause the excluded value to be used as "
+              "the target pixel value"),
+            &m_excludedValuesPctThreshold)
+            .SetDefault(m_excludedValuesPctThreshold)
+            .SetMinValueIncluded(0)
+            .SetMaxValueIncluded(100)
+            .SetCategory(ADVANCED_RESAMPLING_CATEGORY);
+    auto &nodataValuesPctThresholdArg =
+        AddArg(
+            "nodata-values-pct-threshold", 0,
+            _("Minimum percentage of source pixels that must be set at one of "
+              "nodata (or alpha=0 or any other way to express transparent pixel"
+              "to cause the target pixel value to be transparent"),
+            &m_nodataValuesPctThreshold)
+            .SetDefault(m_nodataValuesPctThreshold)
+            .SetMinValueIncluded(0)
+            .SetMaxValueIncluded(100)
+            .SetCategory(ADVANCED_RESAMPLING_CATEGORY);
+
     constexpr const char *PUBLICATION_CATEGORY = "Publication";
     AddArg("webviewer", 0, _("Web viewer to generate"), &m_webviewers)
         .SetDefault("all")
@@ -175,7 +207,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
         .SetCategory(PUBLICATION_CATEGORY);
 
     AddValidationAction(
-        [this]()
+        [this, &dstNoDataArg, &excludedValuesArg,
+         &excludedValuesPctThresholdArg, &nodataValuesPctThresholdArg]()
         {
             if (m_minTileX >= 0 && m_maxTileX >= 0 && m_minTileX > m_maxTileX)
             {
@@ -199,13 +232,37 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
                 return false;
             }
 
-            if (m_addalpha && GetArg("dst-nodata")->IsExplicitlySet())
+            if (m_addalpha && dstNoDataArg.IsExplicitlySet())
             {
                 ReportError(
                     CE_Failure, CPLE_IllegalArg,
                     "'add-alpha' and 'dst-nodata' are mutually exclusive");
                 return false;
             }
+
+            for (const auto *arg :
+                 {&excludedValuesArg, &excludedValuesPctThresholdArg,
+                  &nodataValuesPctThresholdArg})
+            {
+                if (arg->IsExplicitlySet() && m_resampling != "average")
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "'%s' can only be specified if 'resampling' is "
+                                "set to 'average'",
+                                arg->GetName().c_str());
+                    return false;
+                }
+                if (arg->IsExplicitlySet() && !m_overviewResampling.empty() &&
+                    m_overviewResampling != "average")
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "'%s' can only be specified if "
+                                "'overview-resampling' is set to 'average'",
+                                arg->GetName().c_str());
+                    return false;
+                }
+            }
+
             return true;
         });
 }
@@ -446,6 +503,7 @@ static bool
 GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
                      const std::string &outputFormat, const char *pszExtension,
                      CSLConstList creationOptions,
+                     CSLConstList papszWarpOptions,
                      const std::string &resampling,
                      const gdal::TileMatrixSet::TileMatrix &tileMatrix,
                      const std::string &outputDirectory, int nZoomLevel, int iX,
@@ -496,10 +554,11 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
     const double dfMinY = dfMaxY - tileMatrix.mResY * tileMatrix.mTileHeight;
 
     const bool resamplingCompatibleOfTranslate =
-        resampling == "nearest" || resampling == "average" ||
-        resampling == "bilinear" || resampling == "cubic" ||
-        resampling == "cubicspline" || resampling == "lanczos" ||
-        resampling == "mode";
+        papszWarpOptions == nullptr &&
+        (resampling == "nearest" || resampling == "average" ||
+         resampling == "bilinear" || resampling == "cubic" ||
+         resampling == "cubicspline" || resampling == "lanczos" ||
+         resampling == "mode");
 
     const std::string osTmpFilename = osFilename + ".tmp." + pszExtension;
 
@@ -664,6 +723,12 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
         aosOptions.AddString("-ts");
         aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
         aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileHeight));
+
+        for (int i = 0; papszWarpOptions && papszWarpOptions[i]; ++i)
+        {
+            aosOptions.AddString("-wo");
+            aosOptions.AddString(papszWarpOptions[i]);
+        }
 
         GDALWarpAppOptions *psOptions =
             GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
@@ -2025,6 +2090,22 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     else if (m_overviewResampling.empty())
         m_overviewResampling = m_resampling;
 
+    CPLStringList aosWarpOptions;
+    if (!m_excludedValues.empty() || m_nodataValuesPctThreshold < 100)
+    {
+        aosWarpOptions.SetNameValue(
+            "NODATA_VALUES_PCT_THRESHOLD",
+            CPLSPrintf("%g", m_nodataValuesPctThreshold));
+        if (!m_excludedValues.empty())
+        {
+            aosWarpOptions.SetNameValue("EXCLUDED_VALUES",
+                                        m_excludedValues.c_str());
+            aosWarpOptions.SetNameValue(
+                "EXCLUDED_VALUES_PCT_THRESHOLD",
+                CPLSPrintf("%g", m_excludedValuesPctThreshold));
+        }
+    }
+
     if (poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
             GCI_PaletteIndex &&
         ((m_resampling != "nearest" && m_resampling != "mode") ||
@@ -2536,6 +2617,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     psWO->papszWarpOptions = CSLSetNameValue(nullptr, "OPTIMIZE_SIZE", "YES");
     psWO->papszWarpOptions =
         CSLSetNameValue(psWO->papszWarpOptions, "SAMPLE_GRID", "YES");
+    psWO->papszWarpOptions =
+        CSLMerge(psWO->papszWarpOptions, aosWarpOptions.List());
 
     int bHasSrcNoData = false;
     const double dfSrcNoDataValue =
@@ -3053,7 +3136,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 {
                     auto job = [this, &oResourceManager, poDstDriver, &bFailure,
                                 &nCurTile, &nQueuedJobs, pszExtension,
-                                &aosCreationOptions, &ovrTileMatrix, iZ, iX, iY,
+                                &aosCreationOptions, &aosWarpOptions,
+                                &ovrTileMatrix, iZ, iX, iY,
                                 bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -3064,7 +3148,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             GenerateOverviewTile(
                                 *(resources->poSrcDS.get()), poDstDriver,
                                 m_outputFormat, pszExtension,
-                                aosCreationOptions.List(), m_overviewResampling,
+                                aosCreationOptions.List(),
+                                aosWarpOptions.List(), m_overviewResampling,
                                 ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
                                 m_convention, m_skipBlank, bUserAskedForAlpha,
                                 m_auxXML, m_resume))
@@ -3100,10 +3185,10 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 {
                     bRet = GenerateOverviewTile(
                         oSrcDS, poDstDriver, m_outputFormat, pszExtension,
-                        aosCreationOptions.List(), m_overviewResampling,
-                        ovrTileMatrix, m_outputDirectory, iZ, iX, iY,
-                        m_convention, m_skipBlank, bUserAskedForAlpha, m_auxXML,
-                        m_resume);
+                        aosCreationOptions.List(), aosWarpOptions.List(),
+                        m_overviewResampling, ovrTileMatrix, m_outputDirectory,
+                        iZ, iX, iY, m_convention, m_skipBlank,
+                        bUserAskedForAlpha, m_auxXML, m_resume);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
