@@ -19,5 +19,27 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON \
     -DGDAL_USE_TIFF_INTERNAL:BOOL=ON
 
+echo "Test turning GDAL drivers off"
+cp CMakeCache.txt CMakeCache.txt.bak
+cmake .. -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF > /dev/null
+grep GDAL_ENABLE_DRIVER_BMP:BOOL=OFF CMakeCache.txt
+grep GDAL_ENABLE_DRIVER_NITF:BOOL=OFF CMakeCache.txt
+cmake .. -DGDAL_ENABLE_DRIVER_BMP=ON > /dev/null
+grep GDAL_ENABLE_DRIVER_BMP:BOOL=ON CMakeCache.txt
+grep GDAL_ENABLE_DRIVER_NITF:BOOL=OFF CMakeCache.txt
+mv CMakeCache.txt.bak CMakeCache.txt
+
+echo "Test turning OGR drivers off"
+cp CMakeCache.txt CMakeCache.txt.bak
+cmake .. -DOGR_BUILD_OPTIONAL_DRIVERS=OFF > /dev/null
+grep OGR_ENABLE_DRIVER_SQLITE:BOOL=OFF CMakeCache.txt
+grep OGR_ENABLE_DRIVER_GML:BOOL=OFF CMakeCache.txt
+cmake .. -DOGR_ENABLE_DRIVER_SQLITE=ON > /dev/null
+grep OGR_ENABLE_DRIVER_SQLITE:BOOL=ON CMakeCache.txt
+grep OGR_ENABLE_DRIVER_GML:BOOL=OFF CMakeCache.txt
+mv CMakeCache.txt.bak CMakeCache.txt
+
+echo "Build original configuration"
+cmake .. >/dev/null
 make -j$(nproc)
 make -j$(nproc) install DESTDIR=/tmp/install-gdal
