@@ -362,6 +362,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
+
     switch (eType)
     {
         case GDT_Byte:
@@ -442,38 +444,44 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             const bool bIsNoDataRealNan =
                 CPL_TO_BOOL(std::isnan(padfNoData[0]));
 
-            double *padfWrk =
-                static_cast<double *>(CPLMalloc(nXSize * sizeof(double) * 2));
-            int bAllValid = TRUE;
-            for (int iLine = 0; iLine < nYSize; iLine++)
+            eErr = CE_Failure;
+            double *padfWrk = static_cast<double *>(
+                VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2));
+            if (padfWrk)
             {
-                GDALCopyWords((*ppImageData) + nWordSize * iLine * nXSize,
-                              eType, nWordSize, padfWrk, GDT_CFloat64, 16,
-                              nXSize);
-
-                for (int iPixel = 0; iPixel < nXSize; ++iPixel)
+                eErr = CE_None;
+                bool bAllValid = true;
+                for (int iLine = 0; iLine < nYSize; iLine++)
                 {
-                    if (((bIsNoDataRealNan &&
-                          std::isnan(padfWrk[iPixel * 2])) ||
-                         (!bIsNoDataRealNan &&
-                          ARE_REAL_EQUAL(padfWrk[iPixel * 2], padfNoData[0]))))
-                    {
-                        size_t iOffset =
-                            iPixel + static_cast<size_t>(iLine) * nXSize;
+                    GDALCopyWords((*ppImageData) + nWordSize * iLine * nXSize,
+                                  eType, nWordSize, padfWrk, GDT_CFloat64, 16,
+                                  nXSize);
 
-                        bAllValid = FALSE;
-                        CPLMaskClear(panValidityMask, iOffset);
+                    for (int iPixel = 0; iPixel < nXSize; ++iPixel)
+                    {
+                        if (((bIsNoDataRealNan &&
+                              std::isnan(padfWrk[iPixel * 2])) ||
+                             (!bIsNoDataRealNan &&
+                              ARE_REAL_EQUAL(padfWrk[iPixel * 2],
+                                             padfNoData[0]))))
+                        {
+                            size_t iOffset =
+                                iPixel + static_cast<size_t>(iLine) * nXSize;
+
+                            bAllValid = false;
+                            CPLMaskClear(panValidityMask, iOffset);
+                        }
                     }
                 }
-            }
-            *pbOutAllValid = bAllValid;
+                *pbOutAllValid = bAllValid;
 
-            CPLFree(padfWrk);
+                VSIFree(padfWrk);
+            }
         }
         break;
     }
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
