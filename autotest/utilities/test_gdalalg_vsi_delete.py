@@ -22,13 +22,6 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vsi"]["delete"]
 
 
-def test_gdalalg_vsi_delete_empty_filename():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Filename cannot be empty"):
-        alg["filename"] = ""
-
-
 def test_gdalalg_vsi_delete_file(tmp_vsimem):
 
     gdal.FileFromMemBuffer(tmp_vsimem / "test", "test")

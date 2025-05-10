@@ -35,19 +35,9 @@ GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
         auto &arg = AddArg("filename", 0, _("File or directory name to delete"),
                            &m_filename)
                         .SetPositional()
+                        .SetMinCharCount(1)
                         .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_filename.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
 
     AddArg("recursive", 'r', _("Delete directories recursively"), &m_recursive)
