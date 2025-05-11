@@ -56,7 +56,7 @@ to :cpp:func:`GDALOpenEx` / :cpp:func:`GDALDataset::Open`.
 
 Given an existing GDALDataset* instance, :cpp:func:`GDALDataset::IsThreadSafe`
 can be used to determine if it is thread-safe or not. If not,
-:cpp:func:`GDALDataset::GetThreadSafeDataset` can be used.
+:cpp:func:`GDALGetThreadSafeDataset` can be used.
 
 Note that the generic implementation of this capability involves opening one
 dataset the first time a thread-safe dataset/raster band is accessed by a thread.

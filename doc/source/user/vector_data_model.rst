@@ -134,11 +134,11 @@ The :cpp:class:`GDALDataset` also has support for executing a datasource specifi
 When using some drivers, the :cpp:class:`GDALDataset` also offers a mechanism for to start, commit, and rollback transactions when interacting with the underlying data store.
 
 
-A :cpp:class:`GDALDataset` may also be aware of relationships between layers (e.g., a foreign key relationship between database tables). Information about these relationships is stored in a :cpp:class:`GDALRelationshp`.
+A :cpp:class:`GDALDataset` may also be aware of relationships between layers (e.g., a foreign key relationship between database tables). Information about these relationships is stored in a :cpp:class:`GDALRelationship`.
 
 .. note::
 
-   Earlier versions of GDAL represented vector datasets using the :cpp:class:`OGRDataSource` class. This class has been maintained for backwards compatibility but is functionally equivalent to a :cpp:class:`GDALDataset` for vector data.
+   Earlier versions of GDAL represented vector datasets using the ``OGRDataSource`` class. This class has been maintained for backwards compatibility but is functionally equivalent to a :cpp:class:`GDALDataset` for vector data.
 
 Drivers
 -------
