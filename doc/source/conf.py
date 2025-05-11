@@ -1050,7 +1050,7 @@ primary_domain = "cpp"
 # -- Source file links ------------------------------------------
 
 source_file_root = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
+source_file_url_template = "https://github.com/OSGeo/gdal/release/3.11/{}"
 
 # -- ReadTheDocs configuration ----------------------------------
 
