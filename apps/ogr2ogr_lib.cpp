@@ -3597,8 +3597,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
-        std::vector<GIntBig> anLayerCountFeatures;
-        anLayerCountFeatures.resize(nLayerCount);
+        std::vector<GIntBig> anLayerCountFeatures(nLayerCount);
         GIntBig nCountLayersFeatures = 0;
         GIntBig nAccCountFeatures = 0;
 
