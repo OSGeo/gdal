@@ -15,6 +15,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 
 #include <algorithm>
 #include <array>

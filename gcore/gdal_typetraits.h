@@ -27,16 +27,7 @@
 #define GDAL_TYPETRAITS_H_INCLUDED
 
 #include "gdal_priv.h"
-
-// NOTE: below GDAL_ENABLE_FLOAT16 is not guaranteed to be stable and is
-// mostly for Esri internal needs for now. Might be revisited if/once RFC 100
-// (https://github.com/OSGeo/gdal/pull/10146) is adopted.
-#ifdef GDAL_ENABLE_FLOAT16
-#if defined(__GNUC__) || defined(__clang__)
-#define __STDC_WANT_IEC_60559_TYPES_EXT__
-#include <float.h>  // Also brings in GFloat16
-#endif
-#endif
+#include "cpl_float.h"
 
 #include <complex>
 
