@@ -54,9 +54,9 @@ std::string URLRemoveKey(const char *url, const std::string &key)
             break;
         }
     }
-    if (retval.back() == '&')
+    if (!retval.empty() && retval.back() == '&')
     {
-        retval.erase(retval.size() - 1);
+        retval.pop_back();
     }
     std::string retValAsStdString = std::move(retval);
     return retValAsStdString;
