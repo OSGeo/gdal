@@ -147,6 +147,13 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
+          - name: Ubuntu 24.04, armhf (32 bit)
+            id: armhf
+            container: armhf
+            build_script: build.sh
+            test_script: test.sh
+            os: ubuntu-22.04
+
     name: ${{ matrix.name }}
 
     runs-on: ${{ matrix.os }}
