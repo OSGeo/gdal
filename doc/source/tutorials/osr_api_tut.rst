@@ -622,6 +622,6 @@ Consequently the OGRSpatialReference class has been modified to act mostly as
 a wrapper on top of PROJ PJ* CRS objects, and tries to abstract away from
 the OGC WKT 1 representation as much as possible. However, for backward compatibility,
 some methods still expect arguments or return values that are specific of OGC WKT 1.
-The design of th OGRSpatialReference class is also still monolithic. Users wanting
+The design of the OGRSpatialReference class is also still monolithic. Users wanting
 direct and fine grained access to CRS representations might want to directly use
 the PROJ 6 C or C++ API.
