@@ -997,7 +997,7 @@ static int JXLPostEncode(TIFF *tif)
         int inStep = nBytesPerSample * td->td_samplesperpixel;
         uint8_t *cur_outbuffer = main_buffer;
         uint8_t *cur_inbuffer = sp->uncompressed_buffer;
-        for (; cur_outbuffer - main_buffer < main_size;
+        for (; (size_t)(cur_outbuffer - main_buffer) < main_size;
              cur_outbuffer += outChunkSize, cur_inbuffer += inStep)
         {
             memcpy(cur_outbuffer, cur_inbuffer, outChunkSize);
