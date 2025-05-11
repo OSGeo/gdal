@@ -15,6 +15,7 @@
 #include "../frmts/vrt/gdal_vrt.h"
 #include "../frmts/vrt/vrtdataset.h"
 
+#include "cpl_float.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 

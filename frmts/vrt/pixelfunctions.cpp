@@ -16,6 +16,7 @@
 #include "vrtdataset.h"
 #include "vrtexpression.h"
 #include "vrtreclassifier.h"
+#include "cpl_float.h"
 
 #include <limits>
 

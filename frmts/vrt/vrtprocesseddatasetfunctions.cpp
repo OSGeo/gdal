@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_float.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "vrtdataset.h"
