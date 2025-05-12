@@ -981,26 +981,17 @@ CPLStringList WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
     osOtherXML = "<Root>" + osOtherXML + "</Root>";
     CPLXMLNode *psXML = CPLParseXMLString(osOtherXML);
     CPLStringList opts;
-    if (CPLGetXMLValue(psXML, "Timeout", nullptr))
+    for (const char *pszOptionName :
+         {"Timeout", "UserAgent", "Accept", "Referer", "UserPwd"})
     {
-        opts.SetNameValue("TIMEOUT", CPLGetXMLValue(psXML, "Timeout", nullptr));
-    }
-    if (CPLGetXMLValue(psXML, "UserAgent", nullptr))
-    {
-        opts.SetNameValue("USERAGENT",
-                          CPLGetXMLValue(psXML, "UserAgent", nullptr));
-    }
-    if (CPLGetXMLValue(psXML, "Referer", nullptr))
-    {
-        opts.SetNameValue("REFERER", CPLGetXMLValue(psXML, "Referer", nullptr));
+        if (const char *pszVal = CPLGetXMLValue(psXML, pszOptionName, nullptr))
+        {
+            opts.SetNameValue(CPLString(pszOptionName).toupper(), pszVal);
+        }
     }
     if (CPLTestBool(CPLGetXMLValue(psXML, "UnsafeSSL", "false")))
     {
         opts.SetNameValue("UNSAFESSL", "1");
-    }
-    if (CPLGetXMLValue(psXML, "UserPwd", nullptr))
-    {
-        opts.SetNameValue("USERPWD", CPLGetXMLValue(psXML, "UserPwd", nullptr));
     }
     CPLDestroyXMLNode(psXML);
     return opts;

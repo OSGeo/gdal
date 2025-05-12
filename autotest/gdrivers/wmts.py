@@ -1972,6 +1972,52 @@ def test_wmts_force_opening_url(tmp_vsimem, webserver_port):
 
 
 ###############################################################################
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("options", [{}, {"GDAL_HTTP_HEADERS": "Accept: other"}])
+def test_wmts_http_headers(tmp_vsimem, webserver_port, options):
+
+    xmlfilename = tmp_vsimem / "test.xml"
+    gdal.FileFromMemBuffer(
+        xmlfilename,
+        f"""<GDAL_WMTS>
+  <GetCapabilitiesUrl>http://localhost:{webserver_port}/GetCapabilities</GetCapabilitiesUrl>
+  <Layer>geolandbasemap</Layer>
+  <Style>normal</Style>
+  <TileMatrixSet>google3857</TileMatrixSet>
+  <DataWindow>
+    <UpperLeftX>939258.203605596</UpperLeftX>
+    <UpperLeftY>6339992.874065002</UpperLeftY>
+    <LowerRightX>1878516.407175996</LowerRightX>
+    <LowerRightY>5870363.772279803</LowerRightY>
+  </DataWindow>
+  <BandsCount>4</BandsCount>
+  <DataType>Byte</DataType>
+  <Cache />
+  <UnsafeSSL>true</UnsafeSSL>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+  <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
+  <Accept>accept-val</Accept>
+  <UserAgent>my-user-agent</UserAgent>
+</GDAL_WMTS>""",
+    )
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/GetCapabilities",
+        200,
+        {"Content-type": "application/xml"},
+        open("data/wmts/WMTSCapabilities.xml", "rb").read(),
+        expected_headers={"Accept": "accept-val", "User-Agent": "my-user-agent"},
+    )
+    with gdaltest.config_options(options), webserver.install_http_handler(handler):
+        gdal.OpenEx(xmlfilename)
+
+
+###############################################################################
 # Test force opening
 
 
