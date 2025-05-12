@@ -52,11 +52,11 @@ Standard options
 
     Fixed buffer value (instead of the actual distance) (default: 0)
 
-.. options:: --nodata <NODATA>
+.. option:: --nodata <NODATA>
 
     Nodata value for the output raster. If not specified, the nodata value of the input band will be used.
 
-.. options:: --respect-input-nodata
+.. option:: --respect-input-nodata
 
     When set, nodata pixels in the input raster will be treated as nodata in the output raster.
 
