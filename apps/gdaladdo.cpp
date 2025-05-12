@@ -753,18 +753,37 @@ MAIN_START(nArgc, papszArgv)
     if (!bReadOnly)
     {
         CPLPushErrorHandler(GDALAddoErrorHandler);
+        if (bClean &&
+            aosOpenOptions.FetchNameValue("IGNORE_COG_LAYOUT_BREAK") == nullptr)
+        {
+            GDALDriverH hDrv = GDALIdentifyDriver(osFilename.c_str(), nullptr);
+            if (hDrv && EQUAL(GDALGetDescription(hDrv), "GTiff"))
+            {
+                // Cleaning does not break COG layout
+                aosOpenOptions.SetNameValue("IGNORE_COG_LAYOUT_BREAK", "YES");
+            }
+        }
+
         CPLSetCurrentErrorHandlerCatchDebug(FALSE);
         hDataset =
             GDALOpenEx(osFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_UPDATE,
                        nullptr, aosOpenOptions.List(), nullptr);
         CPLPopErrorHandler();
-        if (hDataset != nullptr)
+        const bool bIsCOG =
+            (aoErrors.size() == 1 &&
+             aoErrors[0].m_osMsg.find("C(loud) O(ptimized) G(eoTIFF) layout") !=
+                 std::string::npos &&
+             aosOpenOptions.FetchNameValue("IGNORE_COG_LAYOUT_BREAK") ==
+                 nullptr);
+        if (hDataset != nullptr || bIsCOG)
         {
             for (size_t i = 0; i < aoErrors.size(); i++)
             {
                 CPLError(aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
                          aoErrors[i].m_osMsg.c_str());
             }
+            if (bIsCOG)
+                exit(1);
         }
     }
 
