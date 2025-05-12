@@ -4,12 +4,17 @@
  * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2020, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2020-2025, Even Rouault <even.rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "heifdataset.h"
+
+#include "cpl_vsi_virtual.h"
+
+#include <algorithm>
+#include <cinttypes>
 
 extern "C" void CPL_DLL GDALRegister_HEIF();
 
@@ -100,6 +105,26 @@ int64_t GDALHEIFDataset::GetPositionCbk(void *userdata)
 int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
 {
     GDALHEIFDataset *poThis = static_cast<GDALHEIFDataset *>(userdata);
+
+    const uint64_t nCurPos = poThis->m_fpL->Tell();
+
+#ifdef DEBUG_VERBOSE
+    CPLDebugOnly("HEIF",
+                 "ReadCbk["
+                 "%" PRIu64 ","
+                 "%" PRIu64 "[",
+                 nCurPos, nCurPos + size);
+#endif
+
+    if (nCurPos >= poThis->m_nAdviseReadStartPos &&
+        nCurPos + size <=
+            poThis->m_nAdviseReadStartPos + poThis->m_nAdviseReadSize)
+    {
+        const size_t nRead = poThis->m_fpL->PRead(data, size, nCurPos);
+        poThis->m_fpL->Seek(nCurPos + nRead, SEEK_SET);
+        return nRead == size ? 0 : -1;
+    }
+
     return VSIFReadL(data, 1, size, poThis->m_fpL) == size ? 0 : -1;
 }
 
@@ -127,7 +152,60 @@ GDALHEIFDataset::WaitForFileSizeCbk(int64_t target_size, void *userdata)
     return heif_reader_grow_status_size_reached;
 }
 
+/************************************************************************/
+/*                         RequestRangeCbk()                            */
+/************************************************************************/
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+/* static */
+struct heif_reader_range_request_result
+GDALHEIFDataset::RequestRangeCbk(uint64_t start_pos, uint64_t end_pos,
+                                 void *userdata)
+{
+    GDALHEIFDataset *poThis = static_cast<GDALHEIFDataset *>(userdata);
+
+    heif_reader_range_request_result result;
+
+#ifdef DEBUG_VERBOSE
+    CPLDebugOnly("HEIF",
+                 "RequestRangeCbk["
+                 "%" PRIu64 ","
+                 "%" PRIu64 "[",
+                 start_pos, end_pos);
 #endif
+
+    // Somewhat arbitrary. Corresponds to the default chunk size of /vsicurl
+    const size_t MINIMUM_RANGE_SIZE = 16384;
+
+    if (poThis->m_fpL->HasPRead() && end_pos > start_pos + MINIMUM_RANGE_SIZE &&
+        poThis->m_fpL->GetAdviseReadTotalBytesLimit() > 0)
+    {
+        const vsi_l_offset nOffset = start_pos;
+        const size_t nSize = static_cast<size_t>(
+            std::min<uint64_t>(poThis->m_fpL->GetAdviseReadTotalBytesLimit(),
+                               end_pos - start_pos));
+        poThis->m_fpL->AdviseRead(1, &nOffset, &nSize);
+        poThis->m_nAdviseReadStartPos = nOffset;
+        poThis->m_nAdviseReadSize = nSize;
+    }
+
+    if (end_pos >= poThis->m_nSize)
+    {
+        result.status = heif_reader_grow_status_size_beyond_eof;
+    }
+    else
+    {
+        result.status = heif_reader_grow_status_size_reached;
+    }
+
+    result.range_end = poThis->m_nSize;
+    result.reader_error_code = 0;
+    result.reader_error_msg = nullptr;
+    return result;
+}
+#endif
+
+#endif  // HAS_CUSTOM_FILE_READER
 
 /************************************************************************/
 /*                              Init()                                  */
@@ -165,11 +243,19 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
     }
 
 #ifdef HAS_CUSTOM_FILE_READER
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    m_oReader.reader_api_version = 2;
+#else
     m_oReader.reader_api_version = 1;
+#endif
     m_oReader.get_position = GetPositionCbk;
     m_oReader.read = ReadCbk;
     m_oReader.seek = SeekCbk;
     m_oReader.wait_for_file_size = WaitForFileSizeCbk;
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    m_oReader.request_range = RequestRangeCbk;
+#endif
     m_fpL = fpL;
 
     VSIFSeekL(m_fpL, 0, SEEK_END);
