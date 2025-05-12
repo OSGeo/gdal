@@ -41,16 +41,25 @@ Standard options
 
 .. option:: --target-values <TARGET-VALUES>
 
-    A list of target pixel values in the source image to be considered target pixels.
+    A single value or a comma separated list of target pixel values in the source image
+    to be considered target pixels.
     If not specified, all non-zero pixels will be considered target pixels.
 
 .. option:: --max-distance <MAX-DISTANCE>
 
-    Maximum distance. The nodata value will be used for pixels beyond this distance (default: 0)
+    Maximum distance. The nodata value will be used for pixels beyond this distance.
+    Distance is interpreted in pixels unless `--distance-units geo` is specified.
+
+.. option:: --distance-units <pixel|geo>
+
+    Units for the distance. If `geo` is specified, the distance will be calculated in
+    georeferenced units (meters or degrees) using the pixel size of the input raster.
+    Otherwise, the distance is interpreted in pixels.
 
 .. option:: --fixed-buffer <FIXED-BUFFER>
 
-    Fixed buffer value (instead of the actual distance) (default: 0)
+    Define a fixed value to be written in the output pixels that are within the
+    specified maximum distance from the target pixels, instead of the actual distance.
 
 .. option:: --nodata <NODATA>
 
