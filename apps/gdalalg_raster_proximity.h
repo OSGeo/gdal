@@ -53,7 +53,6 @@ class GDALRasterProximityAlgorithm final : public GDALAlgorithm
     std::string m_distanceUnits = "pixel";  // pixel|geo
     double m_maxDistance = 0.0;
     double m_fixedBufferValue = 0.0;
-    bool m_respectInputNodata = false;
 };
 
 //! @endcond

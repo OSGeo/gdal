@@ -237,26 +237,23 @@ def test_gdalalg_raster_proximity_overwrite(tmp_vsimem):
     assert alg3.Finalize()
 
 
-@pytest.mark.parametrize(
-    "respect_input_nodata,expected_output_data",
-    (
-        (True, np.array([[128, 128, 128], [128, 1, 1], [2, 1, 0]], dtype=np.uint8)),
-        (False, np.array([[128, 128, 2], [128, 1, 1], [2, 1, 0]], dtype=np.uint8)),
-    ),
-)
 @pytest.mark.require_driver("GTiff")
-def test_respect_input_nodata(tmp_vsimem, respect_input_nodata, expected_output_data):
-    """Test the respect_input_nodata flag."""
+def test_respect_input_nodata(tmp_vsimem):
+    """Test the nodata value in the input dataset are not included in the proximity."""
+
     input_data = np.array([[3, 0, 255], [0, 0, 0], [0, 0, 1]], dtype=np.uint8)
     src_filename = f"{tmp_vsimem}/prox_in_nodata.tif"
     dst_filename = f"{tmp_vsimem}/prox_out_nodata.tif"
     create_gtiff_from_array(src_filename, input_data, nodata_val=255)
 
+    expected_output_data = np.array(
+        [[128, 128, 128], [128, 1, 1], [2, 1, 0]], dtype=np.uint8
+    )
+
     alg = get_alg()
     alg["input"] = str(src_filename)
     alg["output"] = str(dst_filename)
     alg["target-values"] = [1]
-    alg["respect-input-nodata"] = respect_input_nodata
     alg["distance-units"] = "PIXEL"
     alg["max-distance"] = 2
     alg["datatype"] = "Byte"

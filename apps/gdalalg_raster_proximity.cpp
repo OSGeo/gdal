@@ -52,9 +52,7 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
         .SetChoices("Byte", "UInt16", "Int16", "UInt32", "Int32", "Float32",
                     "Float64")
         .SetDefault(m_outputDataType);
-
     AddBandArg(&m_inputBand);
-
     AddArg("target-values", 0, _("Target pixel values"), &m_targetPixelValues);
     AddArg("distance-units", 0, _("Distance units"), &m_distanceUnits)
         .SetChoices("pixel", "geo")
@@ -72,12 +70,6 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
            _("Specify a nodata value to use for pixels that are beyond the "
              "maximum distance"),
            &m_noDataValue);
-
-    AddArg("respect-input-nodata", 0,
-           _("When set, nodata pixels in the input raster will be treated as "
-             "nodata in the output raster"),
-           &m_respectInputNodata)
-        .SetDefault(m_respectInputNodata);
 }
 
 /************************************************************************/
@@ -224,17 +216,9 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         dstBand->SetNoDataValue(m_noDataValue);
     }
 
-    if (GetArg("respect-input-nodata")->IsExplicitlySet())
-    {
-        if (m_respectInputNodata)
-        {
-            proximityOptions.AddString("USE_INPUT_NODATA=YES");
-        }
-        else
-        {
-            proximityOptions.AddString("USE_INPUT_NODATA=NO");
-        }
-    }
+    // Always set this to YES. Note that this was NOT the
+    // default behavior in the python implementation of the utility.
+    proximityOptions.AddString("USE_INPUT_NODATA=YES");
 
     if (GetArg("target-values")->IsExplicitlySet())
     {
