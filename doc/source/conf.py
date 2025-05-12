@@ -387,6 +387,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_proximity",
+        "gdal-raster-proximity",
+        "Produces a raster proximity map",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_raster_reclassify",
         "gdal-raster-reclassify",
         "Reclassify a raster dataset",

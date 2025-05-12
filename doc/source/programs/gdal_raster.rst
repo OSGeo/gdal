@@ -37,6 +37,7 @@ Available sub-commands
 - :ref:`gdal_raster_pipeline`
 - :ref:`gdal_raster_pixel_info`
 - :ref:`gdal_raster_polygonize`
+- :ref:`gdal_raster_proximity`
 - :ref:`gdal_raster_reproject`
 - :ref:`gdal_raster_resize`
 - :ref:`gdal_raster_roughness`
