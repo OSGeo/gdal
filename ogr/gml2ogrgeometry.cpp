@@ -2711,7 +2711,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
         if (poCurve != nullptr)
             return poCurve;
         if (poCC == nullptr)
-            return nullptr;
+            return std::make_unique<OGRLineString>();
 
         if (/* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString)
         {

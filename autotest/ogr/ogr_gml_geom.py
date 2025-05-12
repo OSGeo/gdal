@@ -1511,7 +1511,7 @@ def test_gml_invalid_geoms():
         ),
         ("<gml:Curve/>", None),
         ("<gml:Curve><foo/></gml:Curve>", None),
-        ("<gml:Curve><gml:segments/></gml:Curve>", None),
+        ("<gml:Curve><gml:segments/></gml:Curve>", "LINESTRING EMPTY"),
         ("<gml:Curve><gml:segments><foo/></gml:segments></gml:Curve>", None),
         (
             "<gml:Curve><gml:segments><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:segments></gml:Curve>",
@@ -1528,7 +1528,6 @@ def test_gml_invalid_geoms():
         ),
         ("<gml:Circle/>", None),
         ("<gml:Circle><gml:posList>0 0 0 1</gml:posList></gml:Circle>", None),
-        ("<gml:segments/>", None),
         ("<gml:segments><foo/></gml:segments>", None),
         ("<gml:segments><gml:LineStringSegment/></gml:segments>", None),
         (
