@@ -860,8 +860,7 @@ const char *const *GDALWMSDataset::GetHTTPRequestOpts()
         opts = CSLAddNameValue(opts, "USERAGENT", m_osUserAgent);
     else
         opts = CSLAddString(
-            opts,
-            "USERAGENT=GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
+            opts, "USERAGENT=GDAL WMS driver (https://gdal.org/frmt_wms.html)");
 
     if (!m_osReferer.empty())
         opts = CSLAddNameValue(opts, "REFERER", m_osReferer);

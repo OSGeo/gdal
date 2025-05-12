@@ -293,7 +293,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0,
                                  "URL: %s\n  HTTP status code: %d, error: %s.\n"
                                  "Add the HTTP status code to "
                                  "<ZeroBlockHttpCodes> to ignore this error "
-                                 "(see http://www.gdal.org/frmt_wms.html).",
+                                 "(see https://gdal.org/frmt_wms.html).",
                                  request.x, request.y,
                                  !request.URL.empty() ? request.Error.c_str()
                                                       : "(null)",
