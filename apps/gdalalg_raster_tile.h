@@ -65,6 +65,10 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     int m_numThreads = 0;
     bool m_kml = false;
 
+    std::string m_excludedValues{};
+    double m_excludedValuesPctThreshold = 50;
+    double m_nodataValuesPctThreshold = 100;
+
     std::vector<std::string> m_webviewers{};
     std::string m_url{};
     std::string m_title{};
