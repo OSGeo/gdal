@@ -39,6 +39,7 @@ def calc():
 @pytest.mark.parametrize("output_format", ("tif", "vrt"))
 def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/rgbsmall.tif"
@@ -62,6 +63,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
 @pytest.mark.parametrize("output_format", ("tif", "vrt"))
 def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -116,6 +118,7 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
 
 def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
@@ -162,6 +165,7 @@ def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 @pytest.mark.parametrize("expr", ("X + 3", "X[1] + 3"))
 def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -179,6 +183,7 @@ def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
 
 def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -207,6 +212,7 @@ def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 )
 def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     # convert 1-based indices to 0-based indices to evaluate expression
@@ -249,6 +255,7 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
 
 def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     input_1 = tmp_vsimem / "in1.tif"
@@ -278,6 +285,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
 def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     input_1 = tmp_vsimem / "in1.tif"
@@ -305,6 +313,7 @@ def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
 
 def test_gdalalg_calc_different_resolutions(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     xmax = 60

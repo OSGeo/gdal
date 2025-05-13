@@ -1182,6 +1182,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
 def test_vrt_pixelfn_expression(
     tmp_vsimem, expression, sources, result, dialect, dialects
 ):
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
@@ -1239,6 +1240,7 @@ def test_vrt_pixelfn_expression(
 def test_vrt_pixelfn_expression_invalid(
     tmp_vsimem, expression, sources, dialect, exception
 ):
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
