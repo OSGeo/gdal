@@ -2618,6 +2618,35 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     }
 
     struct curl_slist *headers = nullptr;
+    const char *pszAccept = CSLFetchNameValue(papszOptions, "ACCEPT");
+    if (pszAccept)
+    {
+        headers =
+            curl_slist_append(headers, CPLSPrintf("Accept: %s", pszAccept));
+    }
+
+    const auto AddHeader = [&headers, pszAccept](const char *pszHeader)
+    {
+        if (STARTS_WITH_CI(pszHeader, "Accept:") && pszAccept)
+        {
+            const char *pszVal = pszHeader + strlen("Accept:");
+            while (*pszVal == ' ')
+                ++pszVal;
+            if (!EQUAL(pszVal, pszAccept))
+            {
+                // Cf https://github.com/OSGeo/gdal/issues/7691#issuecomment-2873711603
+                CPLDebug(
+                    "HTTP",
+                    "Ignoring '%s' since ACCEPT option = '%s' is specified",
+                    pszHeader, pszAccept);
+            }
+        }
+        else
+        {
+            headers = curl_slist_append(headers, pszHeader);
+        }
+    };
+
     const char *pszHeaderFile = CSLFetchNameValue(papszOptions, "HEADER_FILE");
     if (pszHeaderFile == nullptr)
         pszHeaderFile = CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", nullptr);
@@ -2641,7 +2670,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
             const char *pszLine = nullptr;
             while ((pszLine = CPLReadLineL(fp)) != nullptr)
             {
-                headers = curl_slist_append(headers, pszLine);
+                AddHeader(pszLine);
             }
             VSIFCloseL(fp);
         }
@@ -2659,7 +2688,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
             const char *pszComma = strchr(pszHeaders, ',');
             if (pszComma != nullptr && strchr(pszComma, ':') == nullptr)
             {
-                headers = curl_slist_append(headers, pszHeaders);
+                AddHeader(pszHeaders);
                 bHeadersDone = true;
             }
         }
@@ -2681,7 +2710,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                 if (bAuthorizationHeaderAllowed ||
                     !STARTS_WITH_CI(aosTokens[i], "Authorization:"))
                 {
-                    headers = curl_slist_append(headers, aosTokens[i]);
+                    AddHeader(aosTokens[i]);
                 }
             }
         }
