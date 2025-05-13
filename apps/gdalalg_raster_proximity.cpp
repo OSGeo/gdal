@@ -65,6 +65,7 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
     AddArg("fixed-buffer", 0,
            _("Fixed buffer value (instead of the actual distance)"),
            &m_fixedBufferValue)
+        .SetMinValueIncluded(0)
         .SetDefault(m_fixedBufferValue);
     AddArg("nodata", 0,
            _("Specify a nodata value to use for pixels that are beyond the "
@@ -88,54 +89,6 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLAssert(srcBand);
 
     auto dstDs = m_outputDataset.GetDatasetRef();
-
-    if (dstDs == srcDS)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Input and output datasets cannot be the same.");
-        return false;
-    }
-
-    if (!dstDs && !m_outputDataset.GetName().empty())
-    {
-        VSIStatBufL sStat;
-        bool fileExists{VSIStatL(m_outputDataset.GetName().c_str(), &sStat) ==
-                        0};
-
-        {
-            CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-            dstDs = GDALDataset::FromHandle(GDALOpenEx(
-                m_outputDataset.GetName().c_str(),
-                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-                nullptr, nullptr, nullptr));
-            CPLErrorReset();
-        }
-
-        if ((dstDs || fileExists) && !m_overwrite)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Dataset '%s' already exists. Specify the --overwrite "
-                     "option to overwrite it or the --update option to "
-                     "update it.",
-                     m_outputDataset.GetName().c_str());
-            delete dstDs;
-            return false;
-        }
-
-        if (dstDs && fileExists && m_overwrite)
-        {
-            // Delete the existing file
-            delete dstDs;
-            dstDs = nullptr;
-            if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to delete existing dataset '%s'.",
-                         m_outputDataset.GetName().c_str());
-                return false;
-            }
-        }
-    }
 
     if (!dstDs && !m_outputDataset.GetName().empty())
     {

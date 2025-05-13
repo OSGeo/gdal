@@ -65,10 +65,6 @@ Standard options
 
     Nodata value for the output raster. If not specified, the nodata value of the input band will be used.
 
-.. option:: --respect-input-nodata
-
-    When set, nodata pixels in the input raster will be treated as nodata in the output raster.
-
 
 Advanced options
 ++++++++++++++++
