@@ -90,6 +90,7 @@ Raster commands
    gdal_raster_pipeline
    gdal_raster_pixel_info
    gdal_raster_polygonize
+   gdal_raster_proximity
    gdal_raster_reclassify
    gdal_raster_reproject
    gdal_raster_resize
