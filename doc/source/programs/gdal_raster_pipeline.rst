@@ -100,6 +100,12 @@ Details for options can be found in :ref:`gdal_raster_select`.
 
 Details for options can be found in :ref:`gdal_raster_set_type`.
 
+* sieve
+
+.. program-output:: gdal raster pipeline --help-doc=sieve
+
+Details for options can be found in :ref:`gdal_raster_sieve`.
+
 * slope
 
 .. program-output:: gdal raster pipeline --help-doc=slope

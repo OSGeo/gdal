@@ -58,6 +58,12 @@ Standard options
     all pixels in the mask band with a value other than zero
     will be considered suitable for inclusion in polygons.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
 Examples
 --------
