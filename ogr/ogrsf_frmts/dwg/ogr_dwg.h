@@ -85,7 +85,7 @@ class OGRDWGBlocksLayer final : public OGRLayer
 class OGRDWGLayer final : public OGRLayer
 {
 
-    void AddSRSIfPresent();
+    void AddSRSIfPresent(OdDbDatabasePtr pDb);
 
     OGRDWGDataSource *poDS;
 

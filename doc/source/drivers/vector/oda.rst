@@ -3,20 +3,20 @@
 Open Design Alliance - ODA Platform
 ===================================
 
-ODA Platform (previously named Teigha) is required to enable GDAL support for reading AutoCAD DWG and Microstation DGN v8 files. 
+ODA Platform (previously named Teigha) is required to enable GDAL support for reading AutoCAD DWG and Microstation DGN v8 files.
 GDAL/OGR must be built with ODA support in order to enable these drivers.
 
 ODA required products
 ---------------------
 
-ODA Platform includes several SDK. Drawings SDK provides access to all data in .dwg and .dgn through an object-oriented API. It is required to compile GDAL. 
+ODA Platform includes several SDK. Drawings SDK provides access to all data in .dwg and .dgn through an object-oriented API. It is required to compile GDAL.
 Since Kernel SDK is required by all products, these two products must be downloaded:
 
 -  Kernel
 -  Drawings
 
-These libraries are not publicly available. You have to became a member to get access to the libraries. 
-Upon authentication the libraries are available from: 
+These libraries are not publicly available. You have to became a member to get access to the libraries.
+Upon authentication the libraries are available from:
 `ODA Member Downloads <https://account.opendesign.com/downloads>`__
 
 Get the libraries
@@ -57,7 +57,7 @@ The libraries must be merged before compiling.
    tar xvzf Kernel_lnxX64_13dll_25.12.tar.gz -C Oda_25_12
    tar xvzf Drawings_lnxX64_13dll_25.12.tar.gz -C Oda_25_12
 
-To compile, an activation key is required. It can be requested from ODA Products Activation. 
+To compile, an activation key is required. It can be requested from ODA Products Activation.
 The activation key must be copied to `ThirdParty/activation/`.
 
 ::
@@ -82,7 +82,7 @@ Make sure your gcc major version matches ODA libs gcc version. On Ubuntu, for ex
 ODA libraries path
 ------------------
 
-After compiling ODA, the resulting libs are in a non standard search path. 
+After compiling ODA, the resulting libs are in a non standard search path.
 There is no `make install` included to copy the libraries to a standard location.
 This might be an issue.
 
@@ -116,8 +116,8 @@ Compiling GDAL
 
 After compiling ODA libraries, GDAL can be build using three additional options:
 
--  `-DTEIGHA_ROOT="/home/jgr/dev/cpp/ODA21.6/Oda_25_12" `
--  `-DTEIGHA_PLATFORM="lnxX64_13dll" `
+-  `-DTEIGHA_ROOT="/home/jgr/dev/cpp/ODA21.6/Oda_25_12"`
+-  `-DTEIGHA_PLATFORM="lnxX64_13dll"`
 -  `-DTEIGHA_ACTIVATION_FILE_DIRECTORY="/home/jgr/dev/cpp/ODA21.6/Oda_25_12/ThirdParty/Activation"`
 
 The value of `-DTEIGHA_ROOT` is the full path of the folder where the libraries were merged and compiled.
@@ -146,21 +146,21 @@ As an example, compiling GDAL can be:
    # Python support
    cd swig/python
    python3 setup.py build
-   sudo python3 setup.py install   
+   sudo python3 setup.py install
 
 We added `LDFLAGS="-L/usr/lib/x86_64-linux-gnu"` to use system libs over ODA's `libpcre`, `libcurl`, etc.
 
 Adding ODA Geodata capabilities
 -------------------------------
 
-Important infos from ODA documentation (https://docs.opendesign.com/td/db_geo_functionality.html) :
+Important information from ODA documentation (https://docs.opendesign.com/td/db_geo_functionality.html) :
 
-- The csmap library implements coordinate system support and calculations. It's an alternative to proj; see here : https://trac.osgeo.org/csmap
-- The csmap library should have access to a folder with the required dictionaries. The dictionaries are available for downloading from your personal account.
+- The ``csmap`` library implements coordinate system support and calculations. It's an alternative to proj; see here : https://trac.osgeo.org/csmap
+- The ``csmap`` library should have access to a folder with the required dictionaries. The dictionaries are available for downloading from your personal account.
 - Set the MENTOR_DICTIONARY_PATH or CS_MAP_DIR environment variables pointing to the CSDicts folder.
 
-So step 1 is to get and unzip those csmap dictionaries found at <https://account.opendesign.com/downloads>
-Step 2 is to set an env variable (CS_MAP_DIR for example) pointing at the unzipped folder.
+So step 1 is to get and unzip those ``csmap`` dictionaries found at <https://account.opendesign.com/downloads>
+Step 2 is to set an environment variable (CS_MAP_DIR for example) pointing at the unzipped folder.
 
 Testing
 -------
@@ -197,16 +197,16 @@ For example, you can try:
 ::
 
    export LD_LIBRARY_PATH=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll
-   ./configure --without-libtool LDFLAGS="-L/usr/lib/x86_64-linux-gnu" --with-python=python3 --with-proj=/usr/local --with-pg=yes --with-poppler --with-teigha=/home/jgr/dev/cpp/ODA21.6/base_7.2 --with-teigha-plt=lnxX64_7.2dll   
+   ./configure --without-libtool LDFLAGS="-L/usr/lib/x86_64-linux-gnu" --with-python=python3 --with-proj=/usr/local --with-pg=yes --with-poppler --with-teigha=/home/jgr/dev/cpp/ODA21.6/base_7.2 --with-teigha-plt=lnxX64_7.2dll
 
 You can force a run time location (with `rpath`) with:
 
 ::
 
-   ./configure --without-libtool LDFLAGS="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll" --with-python=python3 --with-proj=/usr/local --with-pg=yes --with-poppler --with-teigha=/home/jgr/dev/cpp/ODA21.6/base_7.2 --with-teigha-plt=lnxX64_7.2dll   
+   ./configure --without-libtool LDFLAGS="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll" --with-python=python3 --with-proj=/usr/local --with-pg=yes --with-poppler --with-teigha=/home/jgr/dev/cpp/ODA21.6/base_7.2 --with-teigha-plt=lnxX64_7.2dll
 
 
-Adjust these settings, according to your build environment. 
+Adjust these settings, according to your build environment.
 
 See Also
 --------
@@ -214,3 +214,10 @@ See Also
 -  `Introducing the ODA Platform <https://www.opendesign.com/products>`__
 -  :ref:`AutoCAD DWG <vector.dwg>`
 -  :ref:`Microstation DGN v8 <vector.dgnv8>`
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    lnxX

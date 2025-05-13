@@ -226,3 +226,16 @@ def test_ogr_dwg_5():
         )
 
         ds = None
+
+
+###############################################################################
+# Read coordinate system info from geolocated DWG
+
+
+def test_ogr_dwg_geolocated():
+    ds = gdal.OpenEx("data/cad/geolocated_ac2018_IL83-EF.dwg", allowed_drivers=["DWG"])
+    layer = ds.GetLayer(0)
+    spatialRef = layer.GetSpatialRef()
+    assert spatialRef is not None
+    f = layer.GetNextFeature()
+    assert f.GetGeometryRef().GetSpatialReference() is not None
