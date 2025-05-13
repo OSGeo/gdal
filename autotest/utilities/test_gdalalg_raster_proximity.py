@@ -248,12 +248,21 @@ def test_gdalalg_raster_proximity_overwrite(tmp_vsimem):
     dst_filename = tmp_vsimem / "prox_out_ow.tif"
     create_gtiff_from_array(src_filename, input_data)
 
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
     alg = get_alg()
     alg["input"] = str(src_filename)
     alg["output"] = str(dst_filename)
     alg["target-values"] = [1]
-    assert alg.Run()
+    assert alg.Run(my_progress)
     assert alg.Finalize()
+
+    assert tab_pct[0] == 1.0
 
     alg2 = get_alg()
     alg2["input"] = str(src_filename)
@@ -272,7 +281,7 @@ def test_gdalalg_raster_proximity_overwrite(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GTiff")
-def test_respect_input_nodata(tmp_vsimem):
+def test_gdalalg_raster_proximity_respect_input_nodata(tmp_vsimem):
     """Test the nodata value in the input dataset are not included in the proximity."""
 
     input_data = np.array([[3, 0, 255], [0, 0, 0], [0, 0, 1]], dtype=np.uint8)
@@ -299,3 +308,43 @@ def test_respect_input_nodata(tmp_vsimem):
     output_data = out_ds.GetRasterBand(1).ReadAsArray()
     assert np.allclose(output_data, expected_output_data, atol=1e-6)
     out_ds = None
+
+
+@pytest.mark.require_driver("GTiff")
+def test_gdalalg_raster_proximity_in_pipeline_invalid_band():
+
+    with pytest.raises(
+        Exception,
+        match="proximity: Value of 'band' should be greater or equal than 1 and less or equal than 1",
+    ):
+        gdal.Run(
+            "raster",
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! proximity --band 2 ! write --of=stream streamed_dataset",
+        )
+
+
+@pytest.mark.require_driver("GTiff")
+def test_gdalalg_raster_proximity_cannot_create_temp_file(tmp_path, tmp_vsimem):
+
+    input_data = np.array([[3, 0, 255], [0, 0, 0], [0, 0, 1]], dtype=np.uint8)
+    src_filename = tmp_vsimem / "prox_in_nodata.tif"
+    dst_filename = tmp_vsimem / "prox_out_nodata.tif"
+    create_gtiff_from_array(src_filename, input_data, nodata_val=255)
+
+    alg = get_alg()
+    alg["input"] = str(src_filename)
+    alg["output"] = str(dst_filename)
+    alg["target-values"] = [1]
+    alg["distance-units"] = "PIXEL"
+    alg["max-distance"] = 2
+    alg["datatype"] = "Byte"
+    alg["nodata"] = 128
+    with gdaltest.config_options(
+        {
+            "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET": "YES",
+            "CPL_TMPDIR": "/i_do/not/exist",
+        }
+    ):
+        with pytest.raises(Exception):
+            alg.Run()

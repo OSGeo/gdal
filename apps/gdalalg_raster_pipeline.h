@@ -90,7 +90,8 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
     std::unique_ptr<GDALDataset>
     CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
                            GDALDataType eDT, bool bTiledIfPossible,
-                           GDALDataset *poSrcDSForMetadata);
+                           GDALDataset *poSrcDSForMetadata,
+                           bool bCopyMetadata = true);
     std::unique_ptr<GDALDataset>
     CreateTemporaryCopy(GDALDataset *poSrcDS, int nSingleBand,
                         bool bTiledIfPossible, GDALProgressFunc pfnProgress,

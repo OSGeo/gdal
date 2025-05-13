@@ -13,8 +13,7 @@
 #ifndef GDALALG_RASTER_PROXIMITY_INCLUDED
 #define GDALALG_RASTER_PROXIMITY_INCLUDED
 
-#include "gdalalgorithm.h"
-#include "gdal.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -22,7 +21,8 @@
 /*                   GDALRasterProximityAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterProximityAlgorithm final : public GDALAlgorithm
+class GDALRasterProximityAlgorithm /* non final */
+    : public GDALRasterPipelineNonNativelyStreamingAlgorithm
 {
   public:
     static constexpr const char *NAME = "proximity";
@@ -31,19 +31,10 @@ class GDALRasterProximityAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_proximity.html";
 
-    explicit GDALRasterProximityAlgorithm();
+    explicit GDALRasterProximityAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     double m_noDataValue = 0.0;
     int m_inputBand = 1;
@@ -53,6 +44,20 @@ class GDALRasterProximityAlgorithm final : public GDALAlgorithm
     std::string m_distanceUnits = "pixel";  // pixel|geo
     double m_maxDistance = 0.0;
     double m_fixedBufferValue = 0.0;
+};
+
+/************************************************************************/
+/*                GDALRasterProximityAlgorithmStandalone                */
+/************************************************************************/
+
+class GDALRasterProximityAlgorithmStandalone final
+    : public GDALRasterProximityAlgorithm
+{
+  public:
+    GDALRasterProximityAlgorithmStandalone()
+        : GDALRasterProximityAlgorithm(/* standaloneStep = */ true)
+    {
+    }
 };
 
 //! @endcond

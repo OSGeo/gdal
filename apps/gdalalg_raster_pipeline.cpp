@@ -18,6 +18,7 @@
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
@@ -305,6 +306,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterFillNodataAlgorithm>();
     m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterProximityAlgorithm>();
     m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
@@ -707,7 +709,7 @@ static bool MustCreateOnDiskTempDataset(int nWidth, int nHeight, int nBands,
 std::unique_ptr<GDALDataset>
 GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryDataset(
     int nWidth, int nHeight, int nBands, GDALDataType eDT,
-    bool bTiledIfPossible, GDALDataset *poSrcDSForMetadata)
+    bool bTiledIfPossible, GDALDataset *poSrcDSForMetadata, bool bCopyMetadata)
 {
     const bool bOnDisk =
         MustCreateOnDiskTempDataset(nWidth, nHeight, nBands, eDT);
@@ -765,7 +767,10 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryDataset(
                                  poSrcDSForMetadata->GetGCPSpatialRef());
             }
         }
-        poOutDS->SetMetadata(poSrcDSForMetadata->GetMetadata());
+        if (bCopyMetadata)
+        {
+            poOutDS->SetMetadata(poSrcDSForMetadata->GetMetadata());
+        }
     }
 
     return poOutDS;
