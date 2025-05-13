@@ -16,11 +16,12 @@
 #include "../frmts/vrt/vrtdataset.h"
 
 #include "cpl_float.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 
 #include <algorithm>
-#include <cpl_vsi_virtual.h>
+#include <array>
 #include <optional>
 
 //! @cond Doxygen_Suppress

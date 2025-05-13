@@ -17,6 +17,8 @@
 #include "gdal_utils.h"
 #include "../frmts/vrt/vrtdataset.h"
 
+#include <array>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
