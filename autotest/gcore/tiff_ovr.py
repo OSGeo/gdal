@@ -3053,3 +3053,19 @@ def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
         ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5271, 1, 1)
         == b"\x00"
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_raster_with_ovr_huge_block(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.tif",
+        open("data/gtiff/huge_raster_with_ovr_huge_block.tif", "rb").read(),
+    )
+
+    with pytest.raises(Exception):
+        with gdal.Open(tmp_vsimem / "tmp.tif", gdal.GA_Update) as ds:
+            ds.BuildOverviews("AVERAGE", [2])
