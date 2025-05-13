@@ -164,8 +164,8 @@ def create_gtiff_from_array(
 def test_gdalalg_raster_proximity_options(tmp_vsimem, options, expected_output_data):
     """Test proximity calculation with several options."""
     input_data = np.array([[3, 0, 0], [0, 0, 0], [0, 0, 1]], dtype=np.uint8)
-    src_filename = f"{tmp_vsimem}/prox_in.tif"
-    dst_filename_file = f"{tmp_vsimem}/prox_out.tif"
+    src_filename = tmp_vsimem / "prox_in.tif"
+    dst_filename_file = tmp_vsimem / "prox_out.tif"
 
     create_gtiff_from_array(
         src_filename, input_data, gt=(10, 1, 0, 45, 0, -1), srs_wkt="EPSG:4326"
@@ -209,8 +209,8 @@ def test_gdalalg_raster_proximity_options(tmp_vsimem, options, expected_output_d
 def test_gdalalg_raster_proximity_overwrite(tmp_vsimem):
     """Test the overwrite flag."""
     input_data = np.array([[0, 1, 0]], dtype=np.uint8)
-    src_filename = f"{tmp_vsimem}/prox_in_ow.tif"
-    dst_filename = f"{tmp_vsimem}/prox_out_ow.tif"
+    src_filename = tmp_vsimem / "prox_in_ow.tif"
+    dst_filename = tmp_vsimem / "prox_out_ow.tif"
     create_gtiff_from_array(src_filename, input_data)
 
     alg = get_alg()
@@ -241,8 +241,8 @@ def test_respect_input_nodata(tmp_vsimem):
     """Test the nodata value in the input dataset are not included in the proximity."""
 
     input_data = np.array([[3, 0, 255], [0, 0, 0], [0, 0, 1]], dtype=np.uint8)
-    src_filename = f"{tmp_vsimem}/prox_in_nodata.tif"
-    dst_filename = f"{tmp_vsimem}/prox_out_nodata.tif"
+    src_filename = tmp_vsimem / "prox_in_nodata.tif"
+    dst_filename = tmp_vsimem / "prox_out_nodata.tif"
     create_gtiff_from_array(src_filename, input_data, nodata_val=255)
 
     expected_output_data = np.array(

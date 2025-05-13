@@ -31,6 +31,7 @@ Standard options
 .. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/co.rst
+
 .. include:: gdal_options/overwrite.rst
 
 .. include:: gdal_options/ot.rst
@@ -63,8 +64,8 @@ Standard options
 
 .. option:: --nodata <NODATA>
 
-    Nodata value for the output raster. If not specified, the nodata value of the input band will be used.
-
+    Nodata value for the output raster. If not specified, the NoData value of the input band will be used.
+    If the output band does not have a NoData value, then the value 65535 will be used.
 
 Advanced options
 ++++++++++++++++
