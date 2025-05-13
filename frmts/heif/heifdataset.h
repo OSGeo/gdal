@@ -52,12 +52,18 @@ class GDALHEIFDataset final : public GDALPamDataset
     heif_reader m_oReader{};
     VSILFILE *m_fpL = nullptr;
     vsi_l_offset m_nSize = 0;
+    vsi_l_offset m_nAdviseReadStartPos = 0;
+    size_t m_nAdviseReadSize = 0;
 
     static int64_t GetPositionCbk(void *userdata);
     static int ReadCbk(void *data, size_t size, void *userdata);
     static int SeekCbk(int64_t position, void *userdata);
     static enum heif_reader_grow_status WaitForFileSizeCbk(int64_t target_size,
                                                            void *userdata);
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    static struct heif_reader_range_request_result
+    RequestRangeCbk(uint64_t start_pos, uint64_t end_pos, void *userdata);
+#endif
 #endif
 
     bool Init(GDALOpenInfo *poOpenInfo);

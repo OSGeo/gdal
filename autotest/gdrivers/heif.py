@@ -18,6 +18,7 @@ import shutil
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -70,7 +71,7 @@ def _has_geoheif_support():
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
 def test_heif_exif_endian(endianness):
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     filename = "data/heif/byte_exif_%s.heic" % endianness
     gdal.ErrorReset()
@@ -102,7 +103,7 @@ def test_heif_exif_endian(endianness):
 
 def test_heif_thumbnail():
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     ds = gdal.Open("data/heif/byte_thumbnail.heic")
     assert ds
@@ -123,7 +124,7 @@ def test_heif_rgb_16bit():
     if get_version() < [1, 4, 0]:
         pytest.skip()
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     ds = gdal.Open("data/heif/small_world_16.heic")
     assert ds
@@ -137,7 +138,7 @@ def test_heif_rgb_16bit():
 
 def test_heif_rgba():
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     ds = gdal.Open("data/heif/stefan_full_rgba.heic")
     assert ds
@@ -156,7 +157,7 @@ def test_heif_rgba_16bit():
     if get_version() < [1, 4, 0]:
         pytest.skip()
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     ds = gdal.Open("data/heif/stefan_full_rgba_16.heic")
     assert ds
@@ -166,9 +167,9 @@ def test_heif_rgba_16bit():
 
 def test_heif_tiled():
     if not _has_tiling_support():
-        pytest.skip()
+        pytest.skip("no tiling support")
     if not _has_uncompressed_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     ds = gdal.Open("data/heif/uncompressed_comp_RGB_tiled.heif")
     assert ds
@@ -406,7 +407,7 @@ def test_heif_tiled():
 
 def test_heif_subdatasets(tmp_path):
     if not _has_hevc_decoding_support():
-        pytest.skip()
+        pytest.skip("no HEVC decoding support")
 
     filename = str(tmp_path / "out.heic")
     shutil.copy("data/heif/subdatasets.heic", filename)
@@ -505,6 +506,94 @@ def test_identify_various(major_brand, compatible_brands, expect_success):
     gdal.Unlink("/vsimem/heif_header.bin")
 
 
+@pytest.mark.require_curl()
+def test_heif_network_read(tmp_vsimem):
+
+    if not _has_read_write_support_for("UNCOMPRESSED"):
+        pytest.skip("does not support UNCOMPRESSED")
+    if get_version() < [1, 19, 0]:
+        pytest.skip("libheif >= 1.19.0 not met")
+
+    filename = tmp_vsimem / "test.hic"
+    gdal.Translate(
+        filename,
+        "data/small_world.tif",
+        options="-outsize 1024 0 -of HEIF -co CODEC=UNCOMPRESSED",
+    )
+
+    src_ds = gdal.Open(filename)
+
+    gdal.VSICurlClearCache()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    def extract(offset, size):
+        with gdal.VSIFile(filename, "rb") as f:
+            f.seek(offset)
+            return f.read(size)
+
+    try:
+        filesize = gdal.VSIStatL(filename).size
+
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.hic", 200, {"Content-Length": "%d" % filesize})
+        handler.add(
+            "GET",
+            "/test.hic",
+            206,
+            {"Content-Length": "16384"},
+            extract(0, 16384),
+            expected_headers={"Range": "bytes=0-16383"},
+        )
+        handler.add("GET", "/", 404)
+        handler.add("HEAD", "/test.aux", 404)
+        handler.add("HEAD", "/test.AUX", 404)
+        with gdaltest.config_option(
+            "GDAL_PAM_ENABLED", "NO"
+        ), webserver.install_http_handler(handler):
+            ds = gdal.Open("/vsicurl/http://localhost:%d/test.hic" % webserver_port)
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+
+                request.wfile.write(extract(start, end - start + 1))
+
+        handler.add("GET", "/test.hic", custom_method=method)
+        with webserver.install_http_handler(handler):
+            ret = ds.ReadRaster()
+        assert ret == src_ds.ReadRaster()
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
 def make_data():
     ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_Byte)
 
@@ -581,7 +670,7 @@ heif_codecs = ["AV1", "HEVC", "JPEG", "JPEG2000", "UNCOMPRESSED"]
 @pytest.mark.parametrize("codec", heif_codecs)
 def test_heif_create_copy(tmp_path, codec):
     if not _has_read_write_support_for(codec):
-        pytest.skip()
+        pytest.skip(f"no support for codec {codec}")
     tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + ".hif"))
     input_ds = make_data()
 
@@ -598,7 +687,7 @@ def test_heif_create_copy(tmp_path, codec):
 @pytest.mark.parametrize("codec", heif_codecs)
 def test_heif_create_copy_with_alpha(tmp_path, codec):
     if not _has_read_write_support_for(codec):
-        pytest.skip()
+        pytest.skip(f"no support for codec {codec}")
     tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + "_alpha.hif"))
     input_ds = make_data_with_alpha()
 
@@ -614,7 +703,7 @@ def test_heif_create_copy_with_alpha(tmp_path, codec):
 
 def test_heif_create_copy_defaults(tmp_path):
     if not _has_read_write_support_for("HEVC"):
-        pytest.skip()
+        pytest.skip("no HEVC encoding support")
     tempfile = str(tmp_path / "test_heif_create_copy.hif")
     input_ds = make_data()
 
