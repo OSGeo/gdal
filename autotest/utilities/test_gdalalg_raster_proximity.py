@@ -12,13 +12,12 @@
 ###############################################################################
 
 import gdaltest
-import numpy as np
 import pytest
 
 from osgeo import gdal
 
 gdaltest.importorskip_gdal_array()
-pytest.importorskip("numpy")
+np = pytest.importorskip("numpy")
 
 
 def get_alg():
