@@ -233,7 +233,7 @@ def test_gdalg_vector_filter_standalone_write_to_file_not_allowed():
             json.dumps(
                 {
                     "type": "gdal_streamed_alg",
-                    "command_line": "gdal vector filter ../ogr/data/poly.shp --output-format=Memory foo",
+                    "command_line": "gdal vector filter ../ogr/data/poly.shp --output-format=MEM foo",
                 }
             )
         )
@@ -256,8 +256,51 @@ def test_gdalg_lower_version(tmp_vsimem):
 
 
 def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
-    pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
+
+    pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "data/byte.tif",
+            "!",
+            "reproject",
+            "--dst-crs",
+            "EPSG:4326",
+            "!",
+            "write",
+            out_filename,
+            "--overwrite",
+        ]
+    )
+    j = json.loads(gdal.VSIFile(out_filename, "rb").read())
+    assert "gdal_version" in j
+    del j["gdal_version"]
+    assert j == {
+        "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --dst-crs EPSG:4326",
+        "type": "gdal_streamed_alg",
+    }
+
+    pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
+    with pytest.raises(
+        Exception,
+        match="already exists. Specify the --overwrite option to overwrite it",
+    ):
+        pipeline.ParseRunAndFinalize(
+            [
+                "read",
+                "data/byte.tif",
+                "!",
+                "reproject",
+                "--dst-crs",
+                "EPSG:4326",
+                "!",
+                "write",
+                out_filename,
+            ]
+        )
+
+    pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     assert pipeline.ParseRunAndFinalize(
         [
             "read",
@@ -357,3 +400,70 @@ def test_gdalg_generate_from_vector_pipeline_geom(tmp_vsimem):
         "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! geom set-type --geometry-type MULTIPOLYGON",
         "type": "gdal_streamed_alg",
     }
+
+
+def test_gdalg_invalid_inline():
+    with pytest.raises(Exception, match="JSON parsing error"):
+        gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal raster pipeline ! read data/byte.tif",
+                }
+            )[0:-10]
+        )
+
+
+def test_gdalg_invalid_file(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.gdalg.json",
+        json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "command_line": "gdal raster pipeline ! read data/byte.tif",
+            }
+        )[0:-10],
+    )
+
+    with pytest.raises(Exception, match="JSON parsing error"):
+        gdal.Open(tmp_vsimem / "tmp.gdalg.json")
+
+
+def test_gdalg_update():
+    with pytest.raises(
+        Exception,
+        match="The GDALG driver does not support update access to existing datasets",
+    ):
+        gdal.Open("data/gdalg/read_byte.gdalg.json", gdal.GA_Update)
+
+
+def test_gdalg_missing_type():
+    with pytest.raises(Exception):
+        gdal.Open(
+            json.dumps(
+                {
+                    "MISSING_type": "gdal_streamed_alg",
+                    "command_line": "gdal raster pipeline ! read data/byte.tif",
+                }
+            )
+        )
+
+
+def test_gdalg_missing_command_line():
+    with pytest.raises(Exception, match="command_line missing"):
+        gdal.Open(json.dumps({"type": "gdal_streamed_alg"}))
+
+
+def test_gdalg_alg_does_not_support_streaming():
+    with pytest.raises(
+        Exception, match="Algorithm add does not support a streamed output"
+    ):
+        gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal raster overview add data/byte.tif",
+                }
+            )
+        )

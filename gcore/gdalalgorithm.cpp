@@ -2327,6 +2327,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     {
                         CPLStringList aosDrivers;
                         aosDrivers.AddString(poDriver->GetDescription());
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
                         GDALDriver::QuietDelete(val.GetName().c_str(),
                                                 aosDrivers.List());
                     }
