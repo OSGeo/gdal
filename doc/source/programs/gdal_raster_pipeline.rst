@@ -52,6 +52,12 @@ Details for options can be found in :ref:`gdal_raster_color_map`.
 
 Details for options can be found in :ref:`gdal_raster_edit`.
 
+* fill-nodata
+
+.. program-output:: gdal raster pipeline --help-doc=fill-nodata
+
+Details for options can be found in :ref:`gdal_raster_fill_nodata`.
+
 * hillshade
 
 .. program-output:: gdal raster pipeline --help-doc=hillshade

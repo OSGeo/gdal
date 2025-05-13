@@ -53,8 +53,17 @@ def run_alg(alg, tmp_path, tmp_vsimem):
     assert ds.ReadAsArray(1, 1, 1, 1)[0][0] == 0
     del ds
 
-    assert alg.Run()
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
     assert alg.Finalize()
+
+    assert tab_pct[0] == 1.0
 
     # Check the value of pixel 1 - 1 is not nodata
     ds = gdal.Open(result_tif)
