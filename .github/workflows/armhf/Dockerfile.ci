@@ -1,0 +1,83 @@
+FROM ubuntu:24.04@sha256:6e75a10070b0fcb0bead763c5118a369bc7cc30dfc1b0749c491bbb21f15c3c7
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TARGET_ARCH=armhf
+ENV GCC_TRIPLE=arm-linux-gnueabihf
+ENV APT_ARCH_SUFFIX=:armhf
+
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-backports main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
+    && dpkg --add-architecture ${TARGET_ARCH} \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_TRIPLE} \
+    && ln -s ${GCC_TRIPLE}-gcc-13 /usr/bin/${GCC_TRIPLE}-gcc \
+    && ln -s ${GCC_TRIPLE}-g++-13 /usr/bin/${GCC_TRIPLE}-g++
+
+ENV CC=${GCC_TRIPLE}-gcc-13
+ENV CXX=${GCC_TRIPLE}-g++-13
+
+RUN apt-get update && \
+    apt-get install -y --allow-unauthenticated \
+    bash \
+    ccache \
+    cmake \
+    curl \
+    ninja-build \
+    libavif-dev${APT_ARCH_SUFFIX} \
+    libblosc-dev${APT_ARCH_SUFFIX} \
+    libboost-dev${APT_ARCH_SUFFIX} \
+    libcairo2-dev${APT_ARCH_SUFFIX} \
+    libcfitsio-dev${APT_ARCH_SUFFIX} \
+    libcrypto++-dev${APT_ARCH_SUFFIX} \
+    libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
+    libexpat-dev${APT_ARCH_SUFFIX} \
+    libfcgi-dev${APT_ARCH_SUFFIX} \
+    libfyba-dev${APT_ARCH_SUFFIX} \
+    libfreexl-dev${APT_ARCH_SUFFIX} \
+    libgeos-dev${APT_ARCH_SUFFIX} \
+    libgeotiff-dev${APT_ARCH_SUFFIX} \
+    libgif-dev${APT_ARCH_SUFFIX} \
+    libhdf4-alt-dev${APT_ARCH_SUFFIX} \
+    libhdf5-serial-dev${APT_ARCH_SUFFIX} \
+    libheif-dev${APT_ARCH_SUFFIX} \
+    libjpeg-dev${APT_ARCH_SUFFIX} \
+    libjxl-dev${APT_ARCH_SUFFIX} \
+    libkml-dev${APT_ARCH_SUFFIX} \
+    liblz4-dev${APT_ARCH_SUFFIX} \
+    liblzma-dev${APT_ARCH_SUFFIX} \
+    libmysqlclient-dev${APT_ARCH_SUFFIX} \
+    libnetcdf-dev${APT_ARCH_SUFFIX} \
+    libopenexr-dev${APT_ARCH_SUFFIX} \
+    libopenjp2-7-dev${APT_ARCH_SUFFIX} \
+    libpcre3-dev${APT_ARCH_SUFFIX} \
+    libpng-dev${APT_ARCH_SUFFIX} \
+    libpoppler-dev${APT_ARCH_SUFFIX} \
+    libpoppler-private-dev${APT_ARCH_SUFFIX} \
+    libpq-dev${APT_ARCH_SUFFIX} \
+    libproj-dev${APT_ARCH_SUFFIX} \
+    librasterlite2-dev${APT_ARCH_SUFFIX} \
+    libspatialite-dev${APT_ARCH_SUFFIX} \
+    libssl-dev${APT_ARCH_SUFFIX} \
+    libwebp-dev${APT_ARCH_SUFFIX} \
+    libxerces-c-dev${APT_ARCH_SUFFIX} \
+    libxml2-dev${APT_ARCH_SUFFIX} \
+    libxslt-dev${APT_ARCH_SUFFIX} \
+    libzstd-dev${APT_ARCH_SUFFIX} \
+    python3-dev${APT_ARCH_SUFFIX} \
+    python3-numpy${APT_ARCH_SUFFIX} \
+    python3-setuptools${APT_ARCH_SUFFIX} \
+    python3-lxml${APT_ARCH_SUFFIX} \
+    python3-pip \
+    swig \
+    unixodbc-dev${APT_ARCH_SUFFIX} \
+    wget \
+    zip
+
+COPY requirements.txt /tmp/
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U --break-system-packages -r /tmp/requirements.txt

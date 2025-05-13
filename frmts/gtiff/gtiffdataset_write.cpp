@@ -1333,7 +1333,11 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
     {
         sJob.poDS = this;
         sJob.bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
-        sJob.pabyBuffer = static_cast<GByte *>(CPLRealloc(sJob.pabyBuffer, cc));
+        GByte *pabyBuffer =
+            static_cast<GByte *>(VSI_REALLOC_VERBOSE(sJob.pabyBuffer, cc));
+        if (!pabyBuffer)
+            return false;
+        sJob.pabyBuffer = pabyBuffer;
         memcpy(sJob.pabyBuffer, pabyData, cc);
         sJob.nBufferSize = cc;
         sJob.nHeight = nHeight;
@@ -1348,6 +1352,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         sJob.nExtraSampleCount = 0;
         TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sJob.nExtraSampleCount,
                      &sJob.pExtraSamples);
+        return true;
     };
 
     if (poQueue == nullptr || !(m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
@@ -1366,23 +1371,25 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         {
             GTiffCompressionJob sJob;
             memset(&sJob, 0, sizeof(sJob));
-            SetupJob(sJob);
-            sJob.pszTmpFilename =
-                CPLStrdup(VSIMemGenerateHiddenFilename("temp.tif"));
-
-            ThreadCompressionFunc(&sJob);
-
-            if (sJob.nCompressedBufferSize)
+            if (SetupJob(sJob))
             {
-                sJob.poDS->WriteRawStripOrTile(sJob.nStripOrTile,
-                                               sJob.pabyCompressedBuffer,
-                                               sJob.nCompressedBufferSize);
-            }
+                sJob.pszTmpFilename =
+                    CPLStrdup(VSIMemGenerateHiddenFilename("temp.tif"));
 
-            CPLFree(sJob.pabyBuffer);
-            VSIUnlink(sJob.pszTmpFilename);
-            CPLFree(sJob.pszTmpFilename);
-            return sJob.nCompressedBufferSize > 0 && !m_bWriteError;
+                ThreadCompressionFunc(&sJob);
+
+                if (sJob.nCompressedBufferSize)
+                {
+                    sJob.poDS->WriteRawStripOrTile(sJob.nStripOrTile,
+                                                   sJob.pabyCompressedBuffer,
+                                                   sJob.nCompressedBufferSize);
+                }
+
+                CPLFree(sJob.pabyBuffer);
+                VSIUnlink(sJob.pszTmpFilename);
+                CPLFree(sJob.pszTmpFilename);
+                return sJob.nCompressedBufferSize > 0 && !m_bWriteError;
+            }
         }
 
         return false;
@@ -1415,11 +1422,14 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
     CPLAssert(nNextCompressionJobAvail >= 0);
 
     GTiffCompressionJob *psJob = &asJobs[nNextCompressionJobAvail];
-    SetupJob(*psJob);
-    poQueue->SubmitJob(ThreadCompressionFunc, psJob);
-    oQueue.push(nNextCompressionJobAvail);
+    bool bOK = SetupJob(*psJob);
+    if (bOK)
+    {
+        poQueue->SubmitJob(ThreadCompressionFunc, psJob);
+        oQueue.push(nNextCompressionJobAvail);
+    }
 
-    return true;
+    return bOK;
 }
 
 /************************************************************************/
