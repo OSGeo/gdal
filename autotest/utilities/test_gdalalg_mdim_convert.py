@@ -420,3 +420,20 @@ def test_gdalalg_mdim_convert_completion_array_option(gdal_path):
         f"{gdal_path} completion gdal mdim convert ../gdrivers/data/netcdf/byte.nc --array-option"
     ).split(" ")
     assert "USE_DEFAULT_FILL_AS_NODATA=" in out
+
+
+###############################################################################
+@pytest.mark.require_driver("ZARR")
+def test_gdalalg_mdim_convert_valid_transpose_axis(tmp_path):
+
+    tmpfile = tmp_path / "out.zarr"
+    alg = get_mdim_convert_alg()
+    alg["input"] = "../gdrivers/data/zarr/array_dimensions.zarr"
+    alg["output"] = tmpfile
+    alg["output-format"] = "ZARR"
+    alg["array"] = "name=var,transpose=[a,1]"
+    with pytest.raises(
+        Exception,
+        match=r"Invalid value for axis in transpose: a",
+    ):
+        alg.Run()
