@@ -23,6 +23,7 @@
 
 #include "gtest_include.h"
 
+#include <algorithm>
 #include <limits>
 
 namespace test_gdal_algorithm

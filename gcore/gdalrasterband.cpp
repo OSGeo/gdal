@@ -4089,6 +4089,18 @@ struct GDALNoDataValues
 };
 
 /************************************************************************/
+/*                            ARE_REAL_EQUAL()                          */
+/************************************************************************/
+
+inline bool ARE_REAL_EQUAL(GFloat16 dfVal1, GFloat16 dfVal2, int ulp = 2)
+{
+    using std::abs;
+    return dfVal1 == dfVal2 || /* Should cover infinity */
+           abs(dfVal1 - dfVal2) < cpl::NumericLimits<GFloat16>::epsilon() *
+                                      abs(dfVal1 + dfVal2) * ulp;
+}
+
+/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
