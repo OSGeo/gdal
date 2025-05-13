@@ -293,8 +293,8 @@ band object.
    gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>" -75.704 39.75
 
 
-Internet Imaging Protocol (IIP) (GDAL 2.1 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Internet Imaging Protocol (IIP)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Access to images served through `IIP
 protocol <https://en.wikipedia.org/wiki/Internet_Imaging_Protocol>`__.
@@ -309,6 +309,24 @@ the full resolution dimension and the number of resolutions.
 
 The XML definition can then be generated with "gdal_translate
 IIP:http://foo.com/FIF=image_name out.xml -of WMS"
+
+
+International Image Interoperability Framework Image API (IIIF)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.12
+
+Access to images served through `IIIF Image API 3.0 <https://iiif.io/api/image/3.0>`__.
+
+If using the XML syntax, the ServerURL must point to the image identifier URL,
+such that :file:`{url}/info.json` exists.
+
+Otherwise it is also possible to use "IIIF:https://path/to/image/identifier"
+syntax as connection string, to retrieve from the server information on
+the full resolution dimension and the number of resolutions.
+
+The XML definition can then be generated with "gdal_translate
+IIIF:https://path/to/image/identifier out.xml -of WMS"
 
 Caching
 -------
@@ -413,6 +431,9 @@ Examples
 
 -  IIP online sample server layer :source_file:`frmts/wms/frmt_wms_iip.xml` accessed with
    the IIP minidriver.
+
+-  IIIF online sample server layer :source_file:`frmts/wms/frmt_wms_iiif.xml` accessed with
+   the IIIF minidriver.
 
 Open syntax
 -----------

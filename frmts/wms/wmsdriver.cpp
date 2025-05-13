@@ -23,6 +23,7 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 #include "minidriver_arcgis_server.h"
+#include "minidriver_iiifimage.h"
 #include "minidriver_iip.h"
 #include "minidriver_mrf.h"
 #include "minidriver_ogcapimaps.h"
@@ -891,6 +892,91 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         CPLHTTPDestroyResult(psResult);
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+             STARTS_WITH_CI(pszFilename, "IIIF:"))
+    {
+        // Implements https://iiif.io/api/image/3.0/ "Image API 3.0"
+
+        std::string osURL(pszFilename + strlen("IIIF:"));
+        if (!osURL.empty() && osURL.back() == '/')
+            osURL.pop_back();
+        std::unique_ptr<CPLHTTPResult, decltype(&CPLHTTPDestroyResult)>
+            psResult(CPLHTTPFetch((osURL + "/info.json").c_str(), nullptr),
+                     CPLHTTPDestroyResult);
+        if (!psResult || !psResult->pabyData)
+            return nullptr;
+        CPLJSONDocument oDoc;
+        if (!oDoc.LoadMemory(
+                reinterpret_cast<const char *>(psResult->pabyData)))
+            return nullptr;
+        const CPLJSONObject oRoot = oDoc.GetRoot();
+        const int nWidth = oRoot.GetInteger("width");
+        const int nHeight = oRoot.GetInteger("height");
+        if (nWidth <= 0 || nHeight <= 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'width' and/or 'height' missing or invalid");
+            return nullptr;
+        }
+        int nBlockSizeX = 256;
+        int nBlockSizeY = 256;
+        const auto oTiles = oRoot.GetArray("tiles");
+        int nLevelCount = 1;
+        if (oTiles.Size() == 1)
+        {
+            nBlockSizeX = oTiles[0].GetInteger("width");
+            nBlockSizeY = oTiles[0].GetInteger("height");
+            if (nBlockSizeX <= 0 || nBlockSizeY <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "'tiles[0].width' and/or 'tiles[0].height' missing or "
+                         "invalid");
+                return nullptr;
+            }
+
+            const auto scaleFactors = oTiles[0].GetArray("scaleFactors");
+            if (scaleFactors.Size() >= 1)
+            {
+                nLevelCount = 0;
+                int expectedFactor = 1;
+                for (const auto &jVal : scaleFactors)
+                {
+                    if (nLevelCount < 30 && jVal.ToInteger() == expectedFactor)
+                    {
+                        ++nLevelCount;
+                        expectedFactor *= 2;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                nLevelCount = std::max(1, nLevelCount);
+            }
+        }
+
+        char *pszEscapedURL = CPLEscapeString(osURL.c_str(), -1, CPLES_XML);
+        const CPLString osXML =
+            CPLSPrintf("<GDAL_WMS>"
+                       "    <Service name=\"IIIFImage\">"
+                       "        <ServerUrl>%s</ServerUrl>"
+                       "        <ImageFormat>image/jpeg</ImageFormat>"
+                       "    </Service>"
+                       "    <DataWindow>"
+                       "        <SizeX>%d</SizeX>"
+                       "        <SizeY>%d</SizeY>"
+                       "        <TileLevel>%d</TileLevel>"
+                       "    </DataWindow>"
+                       "    <BlockSizeX>%d</BlockSizeX>"
+                       "    <BlockSizeY>%d</BlockSizeY>"
+                       "    <BandsCount>3</BandsCount>"
+                       "    <Cache />"
+                       "</GDAL_WMS>",
+                       pszEscapedURL, nWidth, nHeight, nLevelCount, nBlockSizeX,
+                       nBlockSizeY);
+        config = CPLParseXMLString(osXML);
+        CPLFree(pszEscapedURL);
+    }
     else
         return nullptr;
     if (config == nullptr)
@@ -1071,6 +1157,7 @@ void GDALRegister_WMS()
     RegisterMinidriver(VirtualEarth);
     RegisterMinidriver(AGS);
     RegisterMinidriver(IIP);
+    RegisterMinidriver(IIIFImage);
     RegisterMinidriver(MRF);
     RegisterMinidriver(OGCAPIMaps);
     RegisterMinidriver(OGCAPICoverage);
