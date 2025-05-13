@@ -2193,7 +2193,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
 
         CPLStringList aosOpenOptions;
         CPLStringList aosAllowedDrivers;
-        if (arg->GetName() == GDAL_ARG_NAME_INPUT)
+        if (arg->IsInput())
         {
             const auto ooArg = GetArg(GDAL_ARG_NAME_OPEN_OPTION);
             if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
@@ -2214,6 +2214,22 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         }
         if (osDatasetName == "-" && (flags & GDAL_OF_UPDATE) == 0)
             osDatasetName = "/vsistdin/";
+
+        // Handle special case of overview delete in GTiff which would fail
+        // if it is COG without IGNORE_COG_LAYOUT_BREAK=YES open option.
+        if ((flags & GDAL_OF_UPDATE) != 0 && m_callPath.size() == 4 &&
+            m_callPath[2] == "overview" && m_callPath[3] == "delete" &&
+            aosOpenOptions.FetchNameValue("IGNORE_COG_LAYOUT_BREAK") == nullptr)
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            GDALDriverH hDrv =
+                GDALIdentifyDriver(osDatasetName.c_str(), nullptr);
+            if (hDrv && EQUAL(GDALGetDescription(hDrv), "GTiff"))
+            {
+                // Cleaning does not break COG layout
+                aosOpenOptions.SetNameValue("IGNORE_COG_LAYOUT_BREAK", "YES");
+            }
+        }
 
         auto poDS =
             GDALDataset::Open(osDatasetName.c_str(), flags,
