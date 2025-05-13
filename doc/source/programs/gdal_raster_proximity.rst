@@ -65,7 +65,8 @@ Standard options
 .. option:: --nodata <NODATA>
 
     Nodata value for the output raster. If not specified, the NoData value of the input band will be used.
-    If the output band does not have a NoData value, then the value 65535 will be used.
+    If the output band does not have a NoData value, then the value 65535 will be used for floating point
+    output types and the maximum value that can be stored will be used for the integer output types.
 
 Advanced options
 ++++++++++++++++

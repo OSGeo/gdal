@@ -135,6 +135,42 @@ def create_gtiff_from_array(
             },
             np.array([[255, 255, 128], [255, 128, 128], [128, 128, 0]], dtype=np.uint8),
         ),
+        # Test fixed buffer value without nodata and Byte type
+        (
+            {
+                "datatype": "Byte",
+                "target-values": [1],
+                "distance-units": "PIXEL",
+                "max-distance": 2,
+                "fixed-buffer": 128,
+            },
+            np.array([[255, 255, 128], [255, 128, 128], [128, 128, 0]], dtype=np.uint8),
+        ),
+        # Test fixed buffer value without nodata and Int8 type
+        (
+            {
+                "datatype": "Int8",
+                "target-values": [1],
+                "distance-units": "PIXEL",
+                "max-distance": 2,
+                "fixed-buffer": 1,
+            },
+            np.array([[127, 127, 1], [127, 1, 1], [1, 1, 0]], dtype=np.int8),
+        ),
+        # Test fixed buffer value without nodata and Float32 type
+        (
+            {
+                "datatype": "Float32",
+                "target-values": [1],
+                "distance-units": "PIXEL",
+                "max-distance": 2,
+                "fixed-buffer": 128,
+            },
+            np.array(
+                [[65535, 65535, 128], [65535, 128, 128], [128, 128, 0]],
+                dtype=np.float32,
+            ),
+        ),
         # Test using band 2
         (
             {
