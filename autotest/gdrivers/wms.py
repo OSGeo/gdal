@@ -15,6 +15,7 @@
 
 import base64
 import hashlib
+import json
 import os
 from time import sleep
 
@@ -1187,3 +1188,171 @@ def test_wms_force_opening_url(tmp_vsimem, webserver_port):
     )
     with webserver.install_http_handler(handler):
         gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
+
+
+@pytest.mark.require_curl
+@pytest.mark.require_driver("JPEG")
+@gdaltest.enable_exceptions()
+def test_wms_iiif_online(tmp_vsimem):
+
+    url = "https://asge.jarvis.memooria.org/images/iiif/db/6431901e-7474-4c51-aa57-41dfddf13604"
+
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", str(tmp_vsimem)):
+        try:
+            ds = gdal.Open(f"IIIF:{url}")
+        except Exception:
+            if gdaltest.gdalurlopen(f"{url}/info.json", timeout=5) is None:
+                pytest.skip(f"Could not read from {url}")
+
+        assert ds.RasterXSize == 7236
+        assert ds.RasterYSize == 5238
+        assert ds.GetRasterBand(1).GetOverviewCount() == 6
+        ds.ReadRaster(0, 0, 256, 256)
+        ds.GetRasterBand(1).GetOverview(5).ReadRaster()
+
+
+@pytest.mark.require_curl
+@pytest.mark.require_driver("JPEG")
+@gdaltest.enable_exceptions()
+def test_wms_iiif_fake_nominal(tmp_vsimem, webserver_port):
+
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", str(tmp_vsimem)):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/my_image/info.json",
+            200,
+            {"Content-type": "application/json"},
+            json.dumps(
+                {
+                    "@context": "http://iiif.io/api/image/3/context.json",
+                    "protocol": "http://iiif.io/api/image",
+                    "width": 7236,
+                    "height": 5238,
+                    "sizes": [
+                        {"width": 226, "height": 163},
+                        {"width": 452, "height": 327},
+                        {"width": 904, "height": 654},
+                        {"width": 1809, "height": 1309},
+                        {"width": 3618, "height": 2619},
+                    ],
+                    "tiles": [
+                        {
+                            "width": 256,
+                            "height": 256,
+                            "scaleFactors": [1, 2, 4, 8, 16, 32],
+                        }
+                    ],
+                    "id": f"http://localhost:{webserver_port}/my_image",
+                    "type": "ImageService3",
+                    "profile": "level1",
+                    "maxWidth": 8000,
+                    "maxHeight": 8000,
+                    "service": [
+                        {
+                            "@context": "http://iiif.io/api/annex/services/physdim/1/context.json",
+                            "profile": "http://iiif.io/api/annex/services/physdim",
+                            "physicalScale": 0.1,
+                            "physicalUnits": "cm",
+                        }
+                    ],
+                }
+            ),
+        )
+
+        src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3)
+        src_ds.GetRasterBand(1).Fill(127)
+        src_ds.GetRasterBand(2).Fill(127)
+        src_ds.GetRasterBand(3).Fill(127)
+        gdal.Translate(tmp_vsimem / "tmp.jpg", src_ds)
+        with gdal.VSIFile(tmp_vsimem / "tmp.jpg", "rb") as f:
+            data = f.read()
+        handler.add(
+            "GET",
+            "/my_image/1024,2048,256,256/256,256/0/default.jpg",
+            200,
+            {"Content-type": "image/jpeg"},
+            data,
+        )
+
+        src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3)
+        src_ds.GetRasterBand(1).Fill(63)
+        src_ds.GetRasterBand(2).Fill(63)
+        src_ds.GetRasterBand(3).Fill(63)
+        gdal.Translate(tmp_vsimem / "tmp.jpg", src_ds)
+        with gdal.VSIFile(tmp_vsimem / "tmp.jpg", "rb") as f:
+            data = f.read()
+        handler.add(
+            "GET",
+            "/my_image/1024,2048,512,512/256,256/0/default.jpg",
+            200,
+            {"Content-type": "image/jpeg"},
+            data,
+        )
+
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(f"IIIF:http://localhost:{webserver_port}/my_image")
+
+            assert ds.RasterXSize == 7236
+            assert ds.RasterYSize == 5238
+            assert ds.GetRasterBand(1).GetOverviewCount() == 6
+
+            assert ds.ReadRaster(1024, 2048, 256, 256) == b"\x7F" * (256 * 256 * 3)
+
+            assert ds.ReadRaster(
+                1024, 2048, 256, 256, buf_xsize=128, buf_ysize=128
+            ) == b"\x3F" * (128 * 128 * 3)
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+def test_wms_iiif_fake_errors(tmp_vsimem, webserver_port):
+
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", str(tmp_vsimem)):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/my_image/info.json",
+            200,
+            {"Content-type": "application/json"},
+            json.dumps(
+                {
+                    "@context": "http://iiif.io/api/image/3/context.json",
+                    "protocol": "http://iiif.io/api/image",
+                }
+            ),
+        )
+
+        with pytest.raises(
+            Exception, match="'width' and/or 'height' missing or invalid"
+        ):
+            with webserver.install_http_handler(handler):
+                gdal.Open(f"IIIF:http://localhost:{webserver_port}/my_image")
+
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", str(tmp_vsimem)):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/my_image/info.json",
+            200,
+            {"Content-type": "application/json"},
+            json.dumps(
+                {
+                    "@context": "http://iiif.io/api/image/3/context.json",
+                    "protocol": "http://iiif.io/api/image",
+                    "width": 100,
+                    "height": 100,
+                    "tiles": [{}],
+                }
+            ),
+        )
+
+        with pytest.raises(
+            Exception,
+            match=r"tiles\[0\].width' and/or 'tiles\[0\].height' missing or invalid",
+        ):
+            with webserver.install_http_handler(handler):
+                gdal.Open(f"IIIF:http://localhost:{webserver_port}/my_image")
