@@ -73,12 +73,12 @@ the refreshed overviews by level and/or extent.
     A list of overview levels to build. Each overview level must be an integer
     value greater or equal to 2.
 
-    Otherwise all existing overviews are refreshed.
+    If not specified all existing overviews are refreshed.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
 
     This option performs a partial refresh of existing overviews, in the region
-    of interest specified by georeference coordinates, in CRS units.
+    of interest specified by georeferenced coordinates, in CRS units.
 
     'x' is longitude values for geographic CRS and easting for projected CRS.
     'y' is latitude values for geographic CRS and northing for projected CRS.
