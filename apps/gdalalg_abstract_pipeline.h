@@ -204,6 +204,15 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             for (size_t i = 0; i + 1 < m_steps.size(); ++i)
             {
                 const auto &step = m_steps[i];
+                if (!step->IsNativelyStreamingCompatible())
+                {
+                    GDALAlgorithm::ReportError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Step %s is not natively streaming compatible, and "
+                        "may cause significant processing time at opening",
+                        step->GDALAlgorithm::GetName().c_str());
+                }
+
                 if (i > 0)
                     osCommandLine += " !";
                 for (const auto &path : step->GDALAlgorithm::m_callPath)
@@ -303,7 +312,15 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
+    int countPipelinesWithProgress = 1;  // write
+    for (size_t i = 1; i + 1 < m_steps.size(); ++i)
+    {
+        if (!m_steps[i]->IsNativelyStreamingCompatible())
+            ++countPipelinesWithProgress;
+    }
+
     GDALDataset *poCurDS = nullptr;
+    int iCurPipelineWithProgress = 0;
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
         auto &step = m_steps[i];
@@ -350,8 +367,20 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 static_cast<int>(i), step->GetName().c_str());
             return false;
         }
-        if (!step->Run(i < m_steps.size() - 1 ? nullptr : pfnProgress,
-                       i < m_steps.size() - 1 ? nullptr : pProgressData))
+
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+            nullptr, GDALDestroyScaledProgress);
+        if (i == m_steps.size() - 1 || !step->IsNativelyStreamingCompatible())
+        {
+            pScaledData.reset(GDALCreateScaledProgress(
+                iCurPipelineWithProgress /
+                    static_cast<double>(countPipelinesWithProgress),
+                (iCurPipelineWithProgress + 1) /
+                    static_cast<double>(countPipelinesWithProgress),
+                pfnProgress, pProgressData));
+        }
+        if (!step->Run(pScaledData ? GDALScaledProgress : nullptr,
+                       pScaledData.get()))
         {
             return false;
         }
@@ -365,6 +394,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             return false;
         }
     }
+
+    if (pfnProgress)
+        pfnProgress(1.0, "", pProgressData);
 
     if (!GetOutputDataset().GetDatasetRef())
     {
