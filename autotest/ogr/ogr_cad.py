@@ -351,3 +351,16 @@ def test_ogr_cad_9():
 
     with pytest.raises(Exception, match=r".*does not support this version.*"):
         gdal.OpenEx("data/cad/AC1018_signature.dwg", allowed_drivers=["CAD"])
+
+
+###############################################################################
+# Read coordinate system info from geolocated DWG
+
+
+def test_ogr_cad_10():
+    ds = gdal.OpenEx("data/cad/geolocated_ac2018_IL83-EF.dwg", allowed_drivers=["CAD"])
+    layer = ds.GetLayer(0)
+    spatialRef = layer.GetSpatialRef()
+    # TODO: verify that the CRS read from the DWG matches IL83-EF (a crs chosen at random when making the sample DWG)
+    # call `exportToWkt()` on the `spatialRef` and compare to an expected value??
+
