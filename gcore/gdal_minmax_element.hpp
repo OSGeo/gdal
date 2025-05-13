@@ -316,33 +316,33 @@ template <> __m128d compeq<double>(__m128d a, __m128d b)
     return _mm_cmpeq_pd(a, b);
 }
 
-template <class T> static inline T blendv(T a, T b, T mask);
-
-template <> __m128i blendv(__m128i a, __m128i b, __m128i mask)
+template <class T, class SSE_T>
+static inline SSE_T blendv(SSE_T a, SSE_T b, SSE_T mask)
 {
+    if constexpr (std::is_same_v<T, float>)
+    {
 #if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_epi8(a, b, mask);
+        return _mm_blendv_ps(a, b, mask);
 #else
-    return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
+        return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
 #endif
-}
-
-template <> __m128 blendv(__m128 a, __m128 b, __m128 mask)
-{
+    }
+    else if constexpr (std::is_same_v<T, double>)
+    {
 #if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_ps(a, b, mask);
+        return _mm_blendv_pd(a, b, mask);
 #else
-    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+        return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
 #endif
-}
-
-template <> __m128d blendv(__m128d a, __m128d b, __m128d mask)
-{
+    }
+    else
+    {
 #if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_pd(a, b, mask);
+        return _mm_blendv_epi8(a, b, mask);
 #else
-    return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
+        return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
 #endif
+    }
 }
 
 // Using SSE2
@@ -460,7 +460,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                 [sse_neutral, sse_nodata](auto sse_val)
             {
                 const auto eq_nodata = compeq<T>(sse_val, sse_nodata);
-                return blendv(sse_val, sse_neutral, eq_nodata);
+                return blendv<T>(sse_val, sse_neutral, eq_nodata);
             };
 
             sse_val0 = replaceNoDataByNeutral(sse_val0);
