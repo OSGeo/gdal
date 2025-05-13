@@ -35,6 +35,7 @@ add_library(
   gdalalg_raster_polygonize.cpp
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
+  gdalalg_raster_overview_refresh.cpp
   gdalalg_raster_read.cpp
   gdalalg_raster_reclassify.cpp
   gdalalg_raster_reproject.cpp
@@ -129,6 +130,10 @@ if (GDAL_ENABLE_DRIVER_GTIFF)
 endif()
 
 target_compile_definitions(appslib PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
+if (NOT GDAL_ENABLE_DRIVER_GTI OR GDAL_ENABLE_DRIVER_GTI_PLUGIN)
+    target_compile_definitions(appslib PRIVATE -DGTI_DRIVER_DISABLED_OR_PLUGIN)
+endif()
 
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)

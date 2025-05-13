@@ -86,6 +86,7 @@ Raster commands
    gdal_raster_overview
    gdal_raster_overview_add
    gdal_raster_overview_delete
+   gdal_raster_overview_refresh
    gdal_raster_pipeline
    gdal_raster_pixel_info
    gdal_raster_polygonize

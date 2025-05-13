@@ -366,6 +366,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_overview_refresh",
+        "gdal-raster-overview-refresh",
+        "Refresh overviews",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
         "Process a raster dataset",
