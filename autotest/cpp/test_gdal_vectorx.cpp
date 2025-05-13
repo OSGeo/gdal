@@ -13,6 +13,7 @@
 
 #include "gdal_vectorx.h"
 
+#include <array>
 #include <cmath>
 #include <complex>
 #include <limits>

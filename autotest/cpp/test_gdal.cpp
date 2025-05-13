@@ -21,6 +21,7 @@
 #include "gdalcachedpixelaccessor.h"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <string>
 
