@@ -4,7 +4,7 @@
 ``gdal raster proximity``
 ================================================================================
 
-.. versionadded:: 3.11
+.. versionadded:: 3.12
 
 .. only:: html
 
@@ -20,7 +20,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal raster proximity` generates a raster proximity map indicating the distance from
+:program:`gdal raster proximity` generates a raster proximity map indicating the Cartesian distance from
 the center of each pixel to the center of the nearest pixel identified as a target pixel.
 Target pixels are those in the source raster for which the raster pixel value is in the set of
 target pixel values.
@@ -47,7 +47,7 @@ Standard options
 
 .. option:: --max-distance <MAX-DISTANCE>
 
-    Maximum distance. The nodata value will be used for pixels beyond this distance.
+    Maximum distance to search for a target pixel. The NoData value will be output if no target pixel is found within this distance.
     Distance is interpreted in pixels unless `--distance-units geo` is specified.
 
 .. option:: --distance-units <pixel|geo>
@@ -58,8 +58,8 @@ Standard options
 
 .. option:: --fixed-buffer <FIXED-BUFFER>
 
-    Define a fixed value to be written in the output pixels that are within the
-    specified maximum distance from the target pixels, instead of the actual distance.
+    Define a fixed value to be written to output pixels that are within :option:`--max-distance`
+    from the target pixels, instead of the actual distance.
 
 .. option:: --nodata <NODATA>
 
@@ -83,7 +83,7 @@ Examples
 
 .. example::
 
-   :title: Proximity map of the of a raster with max distance of 3 pixels
+   :title: Proximity map of a raster with max distance of 3 pixels
 
     .. code-block:: bash
 

@@ -84,13 +84,8 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLAssert(srcDS);
 
     const auto srcBand = srcDS->GetRasterBand(m_inputBand);
-
-    if (!srcBand)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Input band %d does not exist.", m_inputBand);
-        return false;
-    }
+    // Check done by GDALAlgorithm::AddBandArg()
+    CPLAssert(srcBand);
 
     auto dstDs = m_outputDataset.GetDatasetRef();
 

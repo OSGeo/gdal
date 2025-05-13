@@ -50,8 +50,7 @@ def create_gtiff_from_array(
     if nodata_val is not None:
         band2.SetNoDataValue(nodata_val)
 
-    dataset.FlushCache()
-    dataset = None  # Close and save file
+    dataset.Close()
 
 
 @pytest.mark.parametrize(
