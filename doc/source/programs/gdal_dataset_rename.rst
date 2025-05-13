@@ -1,7 +1,7 @@
-.. _gdal_manage_dataset_rename:
+.. _gdal_dataset_rename:
 
 ================================================================================
-``gdal manage-dataset rename``
+``gdal dataset rename``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,15 +10,15 @@
 
     Rename files of a dataset
 
-.. Index:: gdal manage-dataset rename
+.. Index:: gdal dataset rename
 
-:program:`gdal manage-dataset rename` rename the dataset file(s), including
+:program:`gdal dataset rename` rename the dataset file(s), including
 potential side-car/associated files.
 
 Synopsis
 --------
 
-.. program-output:: gdal manage-dataset rename --help-doc
+.. program-output:: gdal dataset rename --help-doc
 
 Options
 -------
@@ -45,4 +45,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal manage-dataset rename old_name.tif new_name.tif
+       $ gdal dataset rename old_name.tif new_name.tif

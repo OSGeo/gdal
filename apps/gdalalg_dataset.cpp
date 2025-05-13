@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset" subcommand
+ * Purpose:  gdal "dataset" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -12,29 +12,28 @@
 
 #include "gdalalgorithm.h"
 
-#include "gdalalg_manage_dataset_identify.h"
-#include "gdalalg_manage_dataset_copy.h"
-#include "gdalalg_manage_dataset_rename.h"
-#include "gdalalg_manage_dataset_delete.h"
+#include "gdalalg_dataset_identify.h"
+#include "gdalalg_dataset_copy.h"
+#include "gdalalg_dataset_rename.h"
+#include "gdalalg_dataset_delete.h"
 
 /************************************************************************/
-/*                      GDALManageDatasetAlgorithm                      */
+/*                         GDALDatasetAlgorithm                         */
 /************************************************************************/
 
-class GDALManageDatasetAlgorithm final : public GDALAlgorithm
+class GDALDatasetAlgorithm final : public GDALAlgorithm
 {
   public:
-    static constexpr const char *NAME = "manage-dataset";
+    static constexpr const char *NAME = "dataset";
     static constexpr const char *DESCRIPTION = "Commands to manage datasets.";
-    static constexpr const char *HELP_URL =
-        "/programs/gdal_manage_dataset.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_dataset.html";
 
-    GDALManageDatasetAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    GDALDatasetAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
-        RegisterSubAlgorithm<GDALManageDatasetIdentifyAlgorithm>();
-        RegisterSubAlgorithm<GDALManageDatasetCopyAlgorithm>();
-        RegisterSubAlgorithm<GDALManageDatasetRenameAlgorithm>();
-        RegisterSubAlgorithm<GDALManageDatasetDeleteAlgorithm>();
+        RegisterSubAlgorithm<GDALDatasetIdentifyAlgorithm>();
+        RegisterSubAlgorithm<GDALDatasetCopyAlgorithm>();
+        RegisterSubAlgorithm<GDALDatasetRenameAlgorithm>();
+        RegisterSubAlgorithm<GDALDatasetDeleteAlgorithm>();
     }
 
   private:
@@ -42,9 +41,9 @@ class GDALManageDatasetAlgorithm final : public GDALAlgorithm
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The Run() method should not be called directly on the \"gdal "
-                 "manage-dataset\" program.");
+                 "dataset\" program.");
         return false;
     }
 };
 
-GDAL_STATIC_REGISTER_ALG(GDALManageDatasetAlgorithm);
+GDAL_STATIC_REGISTER_ALG(GDALDatasetAlgorithm);

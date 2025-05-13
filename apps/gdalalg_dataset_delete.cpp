@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset delete" subcommand
+ * Purpose:  gdal "dataset delete" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_manage_dataset_delete.h"
+#include "gdalalg_dataset_delete.h"
 
 #include "gdal.h"
 
@@ -21,10 +21,10 @@
 #endif
 
 /************************************************************************/
-/*                      GDALManageDatasetDeleteAlgorithm()              */
+/*                        GDALDatasetDeleteAlgorithm()                  */
 /************************************************************************/
 
-GDALManageDatasetDeleteAlgorithm::GDALManageDatasetDeleteAlgorithm()
+GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     {
@@ -51,10 +51,10 @@ GDALManageDatasetDeleteAlgorithm::GDALManageDatasetDeleteAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALManageDatasetDeleteAlgorithm::RunImpl()            */
+/*                  GDALDatasetDeleteAlgorithm::RunImpl()               */
 /************************************************************************/
 
-bool GDALManageDatasetDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALDatasetDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     GDALDriverH hDriver = nullptr;
     if (!m_format.empty())

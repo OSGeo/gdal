@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset delete" subcommand
+ * Purpose:  gdal "dataset rename" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,37 +10,33 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_MANAGE_DATASET_DELETE_INCLUDED
-#define GDALALG_MANAGE_DATASET_DELETE_INCLUDED
+#ifndef GDALALG_DATASET_RENAME_INCLUDED
+#define GDALALG_DATASET_RENAME_INCLUDED
 
 #include "gdalalgorithm.h"
+#include "gdalalg_dataset_copy.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                GDALManageDatasetDeleteAlgorithm                      */
+/*                       GDALDatasetRenameAlgorithm                     */
 /************************************************************************/
 
-class GDALManageDatasetDeleteAlgorithm final : public GDALAlgorithm
+class GDALDatasetRenameAlgorithm final
+    : public GDALDatasetCopyRenameCommonAlgorithm
 {
   public:
-    static constexpr const char *NAME = "delete";
-    static constexpr const char *DESCRIPTION = "Delete dataset(s).";
+    static constexpr const char *NAME = "rename";
+    static constexpr const char *DESCRIPTION = "Rename files of a dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_manage_dataset_delete.html";
+        "/programs/gdal_dataset_rename.html";
 
     static std::vector<std::string> GetAliasesStatic()
     {
-        return {"rm", "remove"};
+        return {"ren", "mv"};
     }
 
-    GDALManageDatasetDeleteAlgorithm();
-
-  private:
-    std::vector<std::string> m_filename{};
-    std::string m_format{};
-
-    bool RunImpl(GDALProgressFunc, void *) override;
+    GDALDatasetRenameAlgorithm();
 };
 
 //! @endcond

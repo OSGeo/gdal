@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal manage-dataset identify' testing
+# Purpose:  'gdal dataset identify' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -20,15 +20,13 @@ import test_cli_utilities
 from osgeo import gdal
 
 
-def test_gdalalg_manage_dataset_identify_json():
+def test_gdalalg_dataset_identify_json():
 
-    with gdal.Run(
-        "manage-dataset", "identify", filename="../gcore/data/byte.tif"
-    ) as alg:
+    with gdal.Run("dataset", "identify", filename="../gcore/data/byte.tif") as alg:
         assert alg.Output() == [{"driver": "GTiff", "name": "../gcore/data/byte.tif"}]
 
 
-def test_gdalalg_manage_dataset_identify_several_files_json():
+def test_gdalalg_dataset_identify_several_files_json():
 
     tab_pct = [0]
 
@@ -38,7 +36,7 @@ def test_gdalalg_manage_dataset_identify_several_files_json():
         return True
 
     with gdal.Run(
-        "manage-dataset",
+        "dataset",
         "identify",
         filename=["../gcore/data/byte.tif", "../gcore/data/uint16.tif"],
         progress=my_progress,
@@ -51,47 +49,47 @@ def test_gdalalg_manage_dataset_identify_several_files_json():
     assert tab_pct[0] == 1
 
 
-def test_gdalalg_manage_dataset_identify_stdout():
+def test_gdalalg_dataset_identify_stdout():
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out = gdaltest.runexternal(f"{gdal_path} manage-dataset identify data/utmsmall.tif")
+    out = gdaltest.runexternal(f"{gdal_path} dataset identify data/utmsmall.tif")
     j = json.loads(out)
     assert j == [{"driver": "GTiff", "name": "data/utmsmall.tif"}]
 
 
-def test_gdalalg_manage_dataset_identify_complete():
+def test_gdalalg_dataset_identify_complete():
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
     out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal manage-dataset identify data/whiteblackred"
+        f"{gdal_path} completion gdal dataset identify data/whiteblackred"
     )
     assert out.replace("\\", "/") == "data/whiteblackred.tif"
 
 
-def test_gdalalg_manage_dataset_identify_text():
+def test_gdalalg_dataset_identify_text():
 
     with gdal.Run(
-        "manage-dataset", "identify", filename="../gcore/data/byte.tif", format="text"
+        "dataset", "identify", filename="../gcore/data/byte.tif", format="text"
     ) as alg:
         assert alg.Output() == "../gcore/data/byte.tif: GTiff\n"
 
 
-def test_gdalalg_manage_dataset_identify_report_failures_json():
+def test_gdalalg_dataset_identify_report_failures_json():
 
     with gdal.Run(
-        "manage-dataset", "identify", filename="/i_do/not/exist", report_failures=True
+        "dataset", "identify", filename="/i_do/not/exist", report_failures=True
     ) as alg:
         assert alg.Output() == [{"driver": None, "name": "/i_do/not/exist"}]
 
 
-def test_gdalalg_manage_dataset_identify_report_failures_text():
+def test_gdalalg_dataset_identify_report_failures_text():
 
     with gdal.Run(
-        "manage-dataset",
+        "dataset",
         "identify",
         filename="/i_do/not/exist",
         report_failures=True,
@@ -100,17 +98,17 @@ def test_gdalalg_manage_dataset_identify_report_failures_text():
         assert alg.Output() == "/i_do/not/exist: unrecognized\n"
 
 
-def test_gdalalg_manage_dataset_recursive():
+def test_gdalalg_dataset_recursive():
 
     with gdal.Run(
-        "manage-dataset", "identify", filename="../utilities/data", recursive=True
+        "dataset", "identify", filename="../utilities/data", recursive=True
     ) as alg:
         assert alg.Output() == [
             {"name": "../utilities/data", "driver": "ESRI Shapefile"}
         ]
 
 
-def test_gdalalg_manage_dataset_force_recursive():
+def test_gdalalg_dataset_force_recursive():
 
     tab_pct = [0]
 
@@ -120,7 +118,7 @@ def test_gdalalg_manage_dataset_force_recursive():
         return True
 
     with gdal.Run(
-        "manage-dataset",
+        "dataset",
         "identify",
         filename="../utilities/data",
         force_recursive=True,

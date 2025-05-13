@@ -1,7 +1,7 @@
-.. _gdal_manage_dataset_copy:
+.. _gdal_dataset_copy:
 
 ================================================================================
-``gdal manage-dataset copy``
+``gdal dataset copy``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,15 +10,15 @@
 
     Copy files of a dataset
 
-.. Index:: gdal manage-dataset copy
+.. Index:: gdal dataset copy
 
-:program:`gdal manage-dataset copy` creates a copy of the dataset file(s),
+:program:`gdal dataset copy` creates a copy of the dataset file(s),
 including potential side-car/associated files.
 
 Synopsis
 --------
 
-.. program-output:: gdal manage-dataset copy --help-doc
+.. program-output:: gdal dataset copy --help-doc
 
 Options
 -------
@@ -45,4 +45,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal manage-dataset copy source.tif destination.tif
+       $ gdal dataset copy source.tif destination.tif

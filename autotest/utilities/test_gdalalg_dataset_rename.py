@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal manage-dataset rename' testing
+# Purpose:  'gdal dataset rename' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -16,12 +16,12 @@ import pytest
 from osgeo import gdal
 
 
-def test_gdalalg_manage_dataset_rename(tmp_vsimem):
+def test_gdalalg_dataset_rename(tmp_vsimem):
 
     gdal.Translate(tmp_vsimem / "in.tif", "../gcore/data/byte.tif")
 
     assert gdal.Run(
-        "manage-dataset",
+        "dataset",
         "rename",
         source=tmp_vsimem / "in.tif",
         destination=tmp_vsimem / "out.tif",
@@ -33,13 +33,13 @@ def test_gdalalg_manage_dataset_rename(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "in.tif") is None
 
 
-def test_gdalalg_manage_dataset_rename_error(tmp_vsimem):
+def test_gdalalg_dataset_rename_error(tmp_vsimem):
 
     with pytest.raises(
         Exception, match="No identifiable driver for /i_do/not/exist.tif"
     ):
         gdal.Run(
-            "manage-dataset",
+            "dataset",
             "rename",
             source="/i_do/not/exist.tif",
             destination=tmp_vsimem / "out.tif",

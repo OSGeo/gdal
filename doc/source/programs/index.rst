@@ -225,19 +225,19 @@ Dataset management commands
    :maxdepth: 1
    :hidden:
 
-   gdal_manage_dataset
-   gdal_manage_dataset_identify
-   gdal_manage_dataset_copy
-   gdal_manage_dataset_rename
-   gdal_manage_dataset_delete
+   gdal_dataset
+   gdal_dataset_identify
+   gdal_dataset_copy
+   gdal_dataset_rename
+   gdal_dataset_delete
 
 .. only:: html
 
-    - :ref:`gdal_manage_dataset`: Entry point for dataset management commands
-    - :ref:`gdal_manage_dataset_identify`: Identify driver opening dataset(s)
-    - :ref:`gdal_manage_dataset_copy`: Copy files of a dataset.
-    - :ref:`gdal_manage_dataset_rename`: Rename files of a dataset.
-    - :ref:`gdal_manage_dataset_delete`: Delete dataset(s)
+    - :ref:`gdal_dataset`: Entry point for dataset management commands
+    - :ref:`gdal_dataset_identify`: Identify driver opening dataset(s)
+    - :ref:`gdal_dataset_copy`: Copy files of a dataset.
+    - :ref:`gdal_dataset_rename`: Rename files of a dataset.
+    - :ref:`gdal_dataset_delete`: Delete dataset(s)
 
 Virtual System Interface (VSI) commands
 +++++++++++++++++++++++++++++++++++++++

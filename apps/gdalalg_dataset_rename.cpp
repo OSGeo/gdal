@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset rename" subcommand
+ * Purpose:  gdal "dataset rename" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,16 +10,16 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_manage_dataset_rename.h"
+#include "gdalalg_dataset_rename.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/* GDALManageDatasetRenameAlgorithm::GDALManageDatasetRenameAlgorithm() */
+/*       GDALDatasetRenameAlgorithm::GDALDatasetRenameAlgorithm()       */
 /************************************************************************/
 
-GDALManageDatasetRenameAlgorithm::GDALManageDatasetRenameAlgorithm()
-    : GDALManageDatasetCopyRenameCommonAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALDatasetRenameAlgorithm::GDALDatasetRenameAlgorithm()
+    : GDALDatasetCopyRenameCommonAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
 }
 

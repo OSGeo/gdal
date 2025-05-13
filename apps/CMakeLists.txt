@@ -9,11 +9,11 @@ add_library(
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
-  gdalalg_manage_dataset.cpp
-  gdalalg_manage_dataset_identify.cpp
-  gdalalg_manage_dataset_copy.cpp
-  gdalalg_manage_dataset_rename.cpp
-  gdalalg_manage_dataset_delete.cpp
+  gdalalg_dataset.cpp
+  gdalalg_dataset_identify.cpp
+  gdalalg_dataset_copy.cpp
+  gdalalg_dataset_rename.cpp
+  gdalalg_dataset_delete.cpp
   gdalalg_main.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp

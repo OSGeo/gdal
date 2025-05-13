@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset identify" subcommand
+ * Purpose:  gdal "dataset identify" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_manage_dataset_identify.h"
+#include "gdalalg_dataset_identify.h"
 
 #include "cpl_string.h"
 
@@ -21,10 +21,10 @@
 #endif
 
 /************************************************************************/
-/*                      GDALManageDatasetIdentifyAlgorithm()            */
+/*                       GDALDatasetIdentifyAlgorithm()                 */
 /************************************************************************/
 
-GDALManageDatasetIdentifyAlgorithm::GDALManageDatasetIdentifyAlgorithm()
+GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_oWriter(JSONPrint, this)
 {
     AddProgressArg();
@@ -57,10 +57,10 @@ GDALManageDatasetIdentifyAlgorithm::GDALManageDatasetIdentifyAlgorithm()
 }
 
 /************************************************************************/
-/*              GDALManageDatasetIdentifyAlgorithm::Print()             */
+/*                GDALDatasetIdentifyAlgorithm::Print()                 */
 /************************************************************************/
 
-void GDALManageDatasetIdentifyAlgorithm::Print(const char *str)
+void GDALDatasetIdentifyAlgorithm::Print(const char *str)
 {
     if (m_stdout)
         fwrite(str, 1, strlen(str), stdout);
@@ -69,24 +69,23 @@ void GDALManageDatasetIdentifyAlgorithm::Print(const char *str)
 }
 
 /************************************************************************/
-/*              GDALManageDatasetIdentifyAlgorithm::JSONPrint()         */
+/*                 GDALDatasetIdentifyAlgorithm::JSONPrint()            */
 /************************************************************************/
 
-/* static */ void
-GDALManageDatasetIdentifyAlgorithm::JSONPrint(const char *pszTxt,
-                                              void *pUserData)
+/* static */ void GDALDatasetIdentifyAlgorithm::JSONPrint(const char *pszTxt,
+                                                          void *pUserData)
 {
-    static_cast<GDALManageDatasetIdentifyAlgorithm *>(pUserData)->Print(pszTxt);
+    static_cast<GDALDatasetIdentifyAlgorithm *>(pUserData)->Print(pszTxt);
 }
 
 /************************************************************************/
 /*                              Process()                               */
 /************************************************************************/
 
-bool GDALManageDatasetIdentifyAlgorithm::Process(const char *pszTarget,
-                                                 CSLConstList papszSiblingList,
-                                                 GDALProgressFunc pfnProgress,
-                                                 void *pProgressData)
+bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
+                                           CSLConstList papszSiblingList,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData)
 
 {
     GDALDriverH hDriver = nullptr;
@@ -159,11 +158,11 @@ bool GDALManageDatasetIdentifyAlgorithm::Process(const char *pszTarget,
 }
 
 /************************************************************************/
-/*               GDALManageDatasetIdentifyAlgorithm::RunImpl()          */
+/*                  GDALDatasetIdentifyAlgorithm::RunImpl()             */
 /************************************************************************/
 
-bool GDALManageDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                                 void *pProgressData)
+bool GDALDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                           void *pProgressData)
 {
     if (m_format == "json")
         m_oWriter.StartArray();

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset identify" subcommand
+ * Purpose:  gdal "dataset identify" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_MANAGE_DATASET_IDENTIFY_INCLUDED
-#define GDALALG_MANAGE_DATASET_IDENTIFY_INCLUDED
+#ifndef GDALALG_MANAGE_IDENTIFY_INCLUDED
+#define GDALALG_MANAGE_IDENTIFY_INCLUDED
 
 #include "gdalalgorithm.h"
 
@@ -20,19 +20,19 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                GDALManageDatasetIdentifyAlgorithm                    */
+/*                   GDALDatasetIdentifyAlgorithm                       */
 /************************************************************************/
 
-class GDALManageDatasetIdentifyAlgorithm final : public GDALAlgorithm
+class GDALDatasetIdentifyAlgorithm final : public GDALAlgorithm
 {
   public:
     static constexpr const char *NAME = "identify";
     static constexpr const char *DESCRIPTION =
         "Identify driver opening dataset(s).";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_manage_dataset_identify.html";
+        "/programs/gdal_dataset_identify.html";
 
-    GDALManageDatasetIdentifyAlgorithm();
+    GDALDatasetIdentifyAlgorithm();
 
   private:
     std::vector<std::string> m_filename{};

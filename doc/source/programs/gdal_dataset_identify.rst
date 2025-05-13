@@ -1,7 +1,7 @@
-.. _gdal_manage_dataset_identify:
+.. _gdal_dataset_identify:
 
 ================================================================================
-``gdal manage-dataset identify``
+``gdal dataset identify``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,7 +10,7 @@
 
     Identify driver opening dataset(s).
 
-.. Index:: gdal manage-dataset identify
+.. Index:: gdal dataset identify
 
 :program:`gdal manage-dataset identify` reports the name of drivers that can open one or
 several dataset(s).
@@ -18,7 +18,7 @@ several dataset(s).
 Synopsis
 --------
 
-.. program-output:: gdal manage-dataset identify --help-doc
+.. program-output:: gdal dataset identify --help-doc
 
 Options
 -------
@@ -52,7 +52,7 @@ Examples
 
    .. code-block:: console
 
-       $ gdal manage-dataset identify --of=text NE1_50M_SR_W.tif
+       $ gdal dataset identify --of=text NE1_50M_SR_W.tif
 
        NE1_50M_SR_W.tif: GTiff
 
@@ -61,7 +61,7 @@ Examples
 
    .. code-block:: console
 
-       $ gdal manage-dataset identify NE1_50M_SR_W.tif
+       $ gdal dataset identify NE1_50M_SR_W.tif
 
    .. code-block:: json
 
@@ -77,7 +77,7 @@ Examples
 
     .. code-block::
 
-        $ gdal manage-dataset identify --of=text -r 50m_raster/
+        $ gdal dataset identify --of=text -r 50m_raster/
 
         NE1_50M_SR_W/ne1_50m.jpg: JPEG
         NE1_50M_SR_W/ne1_50m.png: PNG

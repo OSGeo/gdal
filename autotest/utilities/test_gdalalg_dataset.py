@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal manage-dataset' testing
+# Purpose:  'gdal dataset' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -17,7 +17,7 @@ from osgeo import gdal
 
 
 def get_alg():
-    return gdal.GetGlobalAlgorithmRegistry()["manage-dataset"]
+    return gdal.GetGlobalAlgorithmRegistry()["dataset"]
 
 
 def test_gdalalg_vsi():

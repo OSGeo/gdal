@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal manage-dataset copy' testing
+# Purpose:  'gdal dataset copy' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -16,10 +16,10 @@ import pytest
 from osgeo import gdal
 
 
-def test_gdalalg_manage_dataset_copy(tmp_vsimem):
+def test_gdalalg_dataset_copy(tmp_vsimem):
 
     assert gdal.Run(
-        "manage-dataset",
+        "dataset",
         "copy",
         source="../gcore/data/byte.tif",
         destination=tmp_vsimem / "out.tif",
@@ -33,7 +33,7 @@ def test_gdalalg_manage_dataset_copy(tmp_vsimem):
         match="already exists. Specify the --overwrite option to overwrite it",
     ):
         gdal.Run(
-            "manage-dataset",
+            "dataset",
             "copy",
             source="../gcore/data/byte.tif",
             destination=tmp_vsimem / "out.tif",
@@ -42,7 +42,7 @@ def test_gdalalg_manage_dataset_copy(tmp_vsimem):
     gdal.FileFromMemBuffer(tmp_vsimem / "out.tif", "")
 
     assert gdal.Run(
-        "manage-dataset",
+        "dataset",
         "copy",
         format="GTiff",
         source="../gcore/data/byte.tif",
@@ -54,7 +54,7 @@ def test_gdalalg_manage_dataset_copy(tmp_vsimem):
         assert ds.GetDriver().GetDescription() == "GTiff"
 
 
-def test_gdalalg_manage_dataset_overwrite_existing_directory(tmp_vsimem):
+def test_gdalalg_dataset_overwrite_existing_directory(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "my_dir", 0o755)
 
@@ -63,7 +63,7 @@ def test_gdalalg_manage_dataset_overwrite_existing_directory(tmp_vsimem):
         match="already exists, but is not recognized as a valid GDAL dataset. Please manually delete it before retrying",
     ):
         gdal.Run(
-            "manage-dataset",
+            "dataset",
             "copy",
             source="../gcore/data/byte.tif",
             destination=tmp_vsimem / "my_dir",
@@ -72,12 +72,12 @@ def test_gdalalg_manage_dataset_overwrite_existing_directory(tmp_vsimem):
 
 
 @pytest.mark.require_driver("OpenFileGDB")
-def test_gdalalg_manage_dataset_overwrite_existing_dataset_directory(tmp_vsimem):
+def test_gdalalg_dataset_overwrite_existing_dataset_directory(tmp_vsimem):
 
     gdal.GetDriverByName("OpenFileGDB").CreateVector(tmp_vsimem / "out.gdb")
 
     gdal.Run(
-        "manage-dataset",
+        "dataset",
         "copy",
         source="../gcore/data/byte.tif",
         destination=tmp_vsimem / "out.gdb",
@@ -88,28 +88,26 @@ def test_gdalalg_manage_dataset_overwrite_existing_dataset_directory(tmp_vsimem)
         assert ds.GetDriver().GetDescription() == "GTiff"
 
 
-def test_gdalalg_manage_dataset_copy_error(tmp_vsimem):
+def test_gdalalg_dataset_copy_error(tmp_vsimem):
 
     with pytest.raises(
         Exception, match="No identifiable driver for /i_do/not/exist.tif"
     ):
         gdal.Run(
-            "manage-dataset",
+            "dataset",
             "copy",
             source="/i_do/not/exist.tif",
             destination=tmp_vsimem / "out.tif",
         )
 
 
-def test_gdalalg_manage_dataset_copy_complete():
+def test_gdalalg_dataset_copy_complete():
     import gdaltest
     import test_cli_utilities
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal manage-dataset copy --format="
-    )
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal dataset copy --format=")
     assert "GTiff " in out
     assert "ESRI\\ Shapefile " in out

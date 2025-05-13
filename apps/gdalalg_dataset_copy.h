@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset copy" subcommand
+ * Purpose:  gdal "dataset copy" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,24 +10,24 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_MANAGE_DATASET_COPY_INCLUDED
-#define GDALALG_MANAGE_DATASET_COPY_INCLUDED
+#ifndef GDALALG_DATASET_COPY_INCLUDED
+#define GDALALG_DATASET_COPY_INCLUDED
 
 #include "gdalalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*            GDALManageDatasetCopyRenameCommonAlgorithm                */
+/*                GDALDatasetCopyRenameCommonAlgorithm                  */
 /************************************************************************/
 
-class GDALManageDatasetCopyRenameCommonAlgorithm /* non-final */
+class GDALDatasetCopyRenameCommonAlgorithm /* non-final */
     : public GDALAlgorithm
 {
   protected:
-    GDALManageDatasetCopyRenameCommonAlgorithm(const std::string &name,
-                                               const std::string &description,
-                                               const std::string &helpURL);
+    GDALDatasetCopyRenameCommonAlgorithm(const std::string &name,
+                                         const std::string &description,
+                                         const std::string &helpURL);
 
   private:
     std::string m_source{};
@@ -39,24 +39,23 @@ class GDALManageDatasetCopyRenameCommonAlgorithm /* non-final */
 };
 
 /************************************************************************/
-/*                  GDALManageDatasetCopyAlgorithm                      */
+/*                     GDALDatasetCopyAlgorithm                         */
 /************************************************************************/
 
-class GDALManageDatasetCopyAlgorithm final
-    : public GDALManageDatasetCopyRenameCommonAlgorithm
+class GDALDatasetCopyAlgorithm final
+    : public GDALDatasetCopyRenameCommonAlgorithm
 {
   public:
     static constexpr const char *NAME = "copy";
     static constexpr const char *DESCRIPTION = "Copy files of a dataset.";
-    static constexpr const char *HELP_URL =
-        "/programs/gdal_manage_dataset_copy.html";
+    static constexpr const char *HELP_URL = "/programs/gdal_dataset_copy.html";
 
     static std::vector<std::string> GetAliasesStatic()
     {
         return {"cp"};
     }
 
-    GDALManageDatasetCopyAlgorithm();
+    GDALDatasetCopyAlgorithm();
 };
 
 //! @endcond

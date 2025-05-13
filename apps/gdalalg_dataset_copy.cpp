@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "manage-dataset copy" subcommand
+ * Purpose:  gdal "dataset copy" subcommand
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_manage_dataset_copy.h"
+#include "gdalalg_dataset_copy.h"
 
 #include "gdal.h"
 #include "gdal_priv.h"
@@ -22,13 +22,12 @@
 #endif
 
 /************************************************************************/
-/*              GDALManageDatasetCopyRenameCommonAlgorithm()             */
+/*                 GDALDatasetCopyRenameCommonAlgorithm()               */
 /************************************************************************/
 
-GDALManageDatasetCopyRenameCommonAlgorithm::
-    GDALManageDatasetCopyRenameCommonAlgorithm(const std::string &name,
-                                               const std::string &description,
-                                               const std::string &helpURL)
+GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL)
     : GDALAlgorithm(name, description, helpURL)
 {
     {
@@ -66,11 +65,10 @@ GDALManageDatasetCopyRenameCommonAlgorithm::
 }
 
 /************************************************************************/
-/*          GDALManageDatasetCopyRenameCommonAlgorithm::RunImpl()       */
+/*              GDALDatasetCopyRenameCommonAlgorithm::RunImpl()         */
 /************************************************************************/
 
-bool GDALManageDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc,
-                                                         void *)
+bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     const char *pszType = "";
     GDALDriver *poDriver = nullptr;
@@ -109,7 +107,7 @@ bool GDALManageDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc,
     GDALDriverH hDriver = nullptr;
     if (!m_format.empty())
         hDriver = GDALGetDriverByName(m_format.c_str());
-    if (GetName() == GDALManageDatasetCopyAlgorithm::NAME)
+    if (GetName() == GDALDatasetCopyAlgorithm::NAME)
     {
         return GDALCopyDatasetFiles(hDriver, m_destination.c_str(),
                                     m_source.c_str()) == CE_None;
@@ -122,11 +120,11 @@ bool GDALManageDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc,
 }
 
 /************************************************************************/
-/*   GDALManageDatasetCopyAlgorithm::GDALManageDatasetCopyAlgorithm()   */
+/*      GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()      */
 /************************************************************************/
 
-GDALManageDatasetCopyAlgorithm::GDALManageDatasetCopyAlgorithm()
-    : GDALManageDatasetCopyRenameCommonAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()
+    : GDALDatasetCopyRenameCommonAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
 }
 

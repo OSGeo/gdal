@@ -1,7 +1,7 @@
-.. _gdal_manage_dataset_delete:
+.. _gdal_dataset_delete:
 
 ================================================================================
-``gdal manage-dataset delete``
+``gdal dataset delete``
 ================================================================================
 
 .. versionadded:: 3.12
@@ -10,15 +10,15 @@
 
     Delete dataset(s).
 
-.. Index:: gdal manage-dataset delete
+.. Index:: gdal dataset delete
 
-:program:`gdal manage-dataset delete` delete dataset(s), including potential
+:program:`gdal dataset delete` delete dataset(s), including potential
 side-car/associated files.
 
 Synopsis
 --------
 
-.. program-output:: gdal manage-dataset delete --help-doc
+.. program-output:: gdal dataset delete --help-doc
 
 Options
 -------
@@ -39,4 +39,4 @@ Examples
 
    .. code-block:: console
 
-       $ gdal manage-dataset delete NE1_50M_SR_W.tif
+       $ gdal dataset delete NE1_50M_SR_W.tif
