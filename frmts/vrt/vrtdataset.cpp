@@ -1064,12 +1064,70 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         return nullptr;
     }
 
+    bool bFound_transpose = false;
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
+    {
+        if (EQUAL(pszKey, "transpose"))
+        {
+            bFound_transpose = true;
+            const CPLStringList aosTransposeTokens(
+                CSLTokenizeString2(pszValue, ":", 0));
+            if (aosTransposeTokens.size() != 2)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid transpose option: %s", pszValue);
+                return nullptr;
+            }
+            const CPLStringList aosTransposeIndex(
+                CSLTokenizeString2(aosTransposeTokens[1], ",", 0));
+            // fail if not two values
+            if (aosTransposeIndex.size() != 2)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid transpose option: %s", pszValue);
+                return nullptr;
+            }
+            int index_x = atoi(aosTransposeIndex[0]);
+            int index_y = atoi(aosTransposeIndex[1]);
+
+            auto poMDimDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(osFilename, GDAL_OF_MULTIDIM_RASTER));
+            if (!poMDimDS)
+                return nullptr;
+            auto poMdimGroup = poMDimDS->GetRootGroup();
+            if (!poMdimGroup)
+            {
+                return nullptr;
+            }
+            auto poArray =
+                poMdimGroup->OpenMDArrayFromFullname(aosTransposeTokens[0]);
+            if (!poArray)
+            {
+                return nullptr;
+            }
+
+            auto poClassicDS = poArray->AsClassicDataset(index_x, index_y);
+
+            if (!poClassicDS)
+                return nullptr;
+            poSrcDS =
+                std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
+                    poClassicDS);
+        }
+    }
     // scan for sd_name/sd in tokens, close the source dataset and reopen if found/valid
     bool bFound_subdataset = false;
     for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
     {
         if (EQUAL(pszKey, "sd_name"))
         {
+            if (bFound_transpose)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'sd_name' is mutually exclusive with option "
+                         "'transpose'");
+                return nullptr;
+            }
             if (bFound_subdataset)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1132,6 +1190,13 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
         if (EQUAL(pszKey, "sd"))
         {
+            if (bFound_transpose)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'sd' is mutually exclusive with option "
+                         "'transpose'");
+                return nullptr;
+            }
             if (bFound_subdataset)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1448,6 +1513,10 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         {
             // do nothing, we passed this in earlier
         }
+        else if (EQUAL(pszKey, "transpose"))
+        {
+            // do nothing, we passed this in earlier
+        }
         else if (EQUAL(pszKey, "unscale"))
         {
             if (CPLTestBool(pszValue))
@@ -1481,6 +1550,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-eco");
             }
         }
+
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
