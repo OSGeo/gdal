@@ -62,8 +62,9 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
              "beyond this distance"),
            &m_maxDistance)
         .SetDefault(m_maxDistance);
-    AddArg("fixed-buffer", 0,
-           _("Fixed buffer value (instead of the actual distance)"),
+    AddArg("fixed-value", 0,
+           _("Fixed value for the pixels that are beyond the "
+             "maximum distance (instead of the actual distance)"),
            &m_fixedBufferValue)
         .SetMinValueIncluded(0)
         .SetDefault(m_fixedBufferValue);
@@ -88,53 +89,47 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     // Check done by GDALAlgorithm::AddBandArg()
     CPLAssert(srcBand);
 
-    auto dstDs = m_outputDataset.GetDatasetRef();
+    const std::string outputFormat{
+        m_outputFormat.empty()
+            ? GetOutputDriverForRaster(m_outputDataset.GetName().c_str())
+            : m_outputFormat};
 
-    if (!dstDs && !m_outputDataset.GetName().empty())
+    const auto drv =
+        GDALDriver::FromHandle(GDALGetDriverByName(outputFormat.c_str()));
+    if (!drv)
     {
-        const std::string outputFormat{
-            m_outputFormat.empty()
-                ? GetOutputDriverForRaster(m_outputDataset.GetName().c_str())
-                : m_outputFormat};
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Output driver '%s' not found.", outputFormat.c_str());
+        return false;
+    }
+    // Create the output dataset with the specified type
+    CPLStringList creationOptions{m_creationOptions};
 
-        const auto drv =
-            GDALDriver::FromHandle(GDALGetDriverByName(outputFormat.c_str()));
-        if (!drv)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Output driver '%s' not found.", outputFormat.c_str());
-            return false;
-        }
-        // Create the output dataset with the specified type
-        CPLStringList creationOptions{m_creationOptions};
-
-        GDALDataType outputType = GDT_Float32;
-        if (!m_outputDataType.empty())
-        {
-            outputType = GDALGetDataTypeByName(m_outputDataType.c_str());
-        }
-
-        dstDs = GDALDataset::FromHandle(drv->Create(
-            m_outputDataset.GetName().c_str(), srcBand->GetXSize(),
-            srcBand->GetYSize(), 1, outputType, creationOptions.List()));
-
-        if (!dstDs)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Failed to create output dataset '%s'.",
-                        m_outputDataset.GetName().c_str());
-            return false;
-        }
-
-        double adfGeoTransform[6];
-        if (srcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-        {
-            dstDs->SetGeoTransform(adfGeoTransform);
-        }
-        dstDs->SetProjection(srcDS->GetProjectionRef());
+    GDALDataType outputType = GDT_Float32;
+    if (!m_outputDataType.empty())
+    {
+        outputType = GDALGetDataTypeByName(m_outputDataType.c_str());
     }
 
-    CPLAssert(dstDs);
+    std::unique_ptr<GDALDataset> dstDs{GDALDataset::FromHandle(drv->Create(
+        m_outputDataset.GetName().c_str(), srcBand->GetXSize(),
+        srcBand->GetYSize(), 1, outputType, creationOptions.List()))};
+
+    if (!dstDs)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Failed to create output dataset '%s'.",
+                    m_outputDataset.GetName().c_str());
+        return false;
+    }
+
+    double adfGeoTransform[6];
+    if (srcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    {
+        dstDs->SetGeoTransform(adfGeoTransform);
+    }
+
+    dstDs->SetSpatialRef(srcDS->GetSpatialRef());
 
     const auto dstBand = dstDs->GetRasterBand(1);
 
@@ -152,7 +147,7 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             CPLSPrintf("DISTUNITS=%s", m_distanceUnits.c_str()));
     }
 
-    if (GetArg("fixed-buffer")->IsExplicitlySet())
+    if (GetArg("fixed-value")->IsExplicitlySet())
     {
         proximityOptions.AddString(
             CPLSPrintf("FIXED_BUF_VAL=%.17g", m_fixedBufferValue));
@@ -191,7 +186,7 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    m_outputDataset.Set(std::unique_ptr<GDALDataset>(dstDs));
+    m_outputDataset.Set(std::move(dstDs));
 
     return true;
 }

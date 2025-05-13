@@ -57,7 +57,7 @@ Standard options
     georeferenced units (meters or degrees) using the pixel size of the input raster.
     Otherwise, the distance is interpreted in pixels.
 
-.. option:: --fixed-buffer <FIXED-BUFFER>
+.. option:: --fixed-value <FIXED-VALUE>
 
     Define a fixed value to be written to output pixels that are within :option:`--max-distance`
     from the target pixels, instead of the actual distance.
