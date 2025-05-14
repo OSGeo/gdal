@@ -218,6 +218,27 @@ Multidimensional raster commands
     - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
 
+Dataset management commands
++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_dataset
+   gdal_dataset_identify
+   gdal_dataset_copy
+   gdal_dataset_rename
+   gdal_dataset_delete
+
+.. only:: html
+
+    - :ref:`gdal_dataset`: Entry point for dataset management commands
+    - :ref:`gdal_dataset_identify`: Identify driver opening dataset(s)
+    - :ref:`gdal_dataset_copy`: Copy files of a dataset.
+    - :ref:`gdal_dataset_rename`: Rename files of a dataset.
+    - :ref:`gdal_dataset_delete`: Delete dataset(s)
+
 Virtual System Interface (VSI) commands
 +++++++++++++++++++++++++++++++++++++++
 
