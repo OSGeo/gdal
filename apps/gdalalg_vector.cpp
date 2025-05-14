@@ -19,6 +19,7 @@
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_layer_algebra.h"
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_rasterize.h"
 #include "gdalalg_vector_filter.h"
@@ -61,6 +62,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGeomAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
         RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
