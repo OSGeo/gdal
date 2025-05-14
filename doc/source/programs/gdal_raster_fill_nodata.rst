@@ -23,6 +23,12 @@ Description
 :program:`gdal raster fill-nodata` fills nodata areas by interpolating
 from valid pixels around the edges of the area.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
+Options
+-------
+
 The following options are available:
 
 .. include:: gdal_options/of_raster_create_copy.rst

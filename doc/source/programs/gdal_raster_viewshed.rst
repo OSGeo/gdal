@@ -27,6 +27,9 @@ create a minimum visible height raster of type Float64.
 
 It uses the method defined in [Wang2000]_ for a user defined point.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
 Standard options
 ++++++++++++++++
 

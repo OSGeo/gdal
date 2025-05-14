@@ -27,6 +27,8 @@ Then it converts the image into a pseudo-colored image using the color table.
 This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+
 Standard options
 ++++++++++++++++
 
