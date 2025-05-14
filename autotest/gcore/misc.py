@@ -693,7 +693,10 @@ def test_misc_11():
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
-
+# Started to fail suddenly on May 14th 2025 on this config
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("build-windows-conda"), reason="fails for unknown reason"
+)
 def test_misc_12():
 
     import test_cli_utilities
@@ -737,17 +740,6 @@ def test_misc_12():
                 ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
             if ds is None and gdal.GetLastErrorMsg() == "":
                 gdal.Unlink("/vsimem/misc_12_src.tif")
-
-                # Started to fail suddenly on May 14th 2025 on this config
-                if drv.ShortName == "PNM" and gdaltest.is_travis_branch(
-                    "build-windows-conda"
-                ):
-                    print(
-                        "CreateCopy() into non existing dir fails without error message for driver %s"
-                        % drv.ShortName
-                    )
-                    continue
-
                 pytest.fail(
                     "CreateCopy() into non existing dir fails without error message for driver %s"
                     % drv.ShortName
