@@ -193,29 +193,6 @@ def test_gdalalg_raster_rgb_to_palette_r_g_undefined():
             assert ds.GetRasterBand(1).Checksum() == 14890
 
 
-@pytest.mark.require_driver("JPEG")
-def test_gdalalg_raster_rgb_to_palette_invalid_output_format(tmp_vsimem):
-
-    with pytest.raises(Exception, match="Format JPEG does not support color tables"):
-        gdal.Run(
-            get_alg(),
-            input="../gdrivers/data/small_world.tif",
-            output=tmp_vsimem / "out.jpg",
-        )
-
-
-def test_gdalalg_raster_rgb_to_palette_cannot_guess_output_format(tmp_vsimem):
-
-    with pytest.raises(
-        Exception, match="Cannot guess output driver from output filename"
-    ):
-        gdal.Run(
-            get_alg(),
-            input="../gdrivers/data/small_world.tif",
-            output=tmp_vsimem / "out.xxx",
-        )
-
-
 def test_gdalalg_raster_rgb_to_palette_cannot_create_output_dataset():
 
     with pytest.raises(Exception, match="Attempt to create new tiff file"):
@@ -278,3 +255,16 @@ def test_gdalalg_raster_rgb_to_palette_colortable_from_non_existing_file():
         gdal.Run(
             get_alg(), input=src_ds, output_format="MEM", color_map="/i_do/not/exist"
         )
+
+
+def test_gdalalg_raster_rgb_to_palette_cannot_create_temp_file(tmp_vsimem):
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    with gdaltest.config_options(
+        {
+            "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET": "YES",
+            "CPL_TMPDIR": "/i_do/not/exist",
+        }
+    ):
+        with pytest.raises(Exception):
+            gdal.Run(get_alg(), input=src_ds, output=tmp_vsimem / "out.tif")

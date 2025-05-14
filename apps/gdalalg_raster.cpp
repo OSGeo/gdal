@@ -84,13 +84,13 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterEditAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterFootprintAlgorithm>();
         RegisterSubAlgorithm<GDALRasterHillshadeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterFillNodataAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterFillNodataAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterIndexAlgorithm>();
         RegisterSubAlgorithm<GDALRasterOverviewAlgorithm>();
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();
-        RegisterSubAlgorithm<GDALRasterProximityAlgorithm>();
-        RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterProximityAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReclassifyAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
@@ -101,14 +101,14 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSetTypeAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterSieveAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterSieveAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSlopeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterStackAlgorithm>();
         RegisterSubAlgorithm<GDALRasterTileAlgorithm>();
         RegisterSubAlgorithm<GDALRasterTPIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterTRIAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterUnscaleAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterViewshedAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterViewshedAlgorithmStandalone>();
     }
 
   private:

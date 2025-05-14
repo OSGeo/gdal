@@ -2870,6 +2870,9 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Validation function to use for key=value type of arguments. */
     bool ParseAndValidateKeyValue(GDALAlgorithmArg &arg);
 
+    /** Method used by GDALRaster|VectorPipelineAlgorithm */
+    bool RunPreStepPipelineValidations() const;
+
     /** Return whether output-format or output arguments express GDALG output */
     bool IsGDALGOutput() const;
 
@@ -2973,6 +2976,8 @@ class CPL_DLL GDALAlgorithmRegistry
             std::variant<std::vector<std::string>, std::vector<int>,
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
+
+    bool ValidateBandArg() const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 

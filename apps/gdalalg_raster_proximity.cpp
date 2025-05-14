@@ -13,12 +13,9 @@
 #include "gdalalg_raster_proximity.h"
 
 #include "cpl_conv.h"
-#include "cpl_vsi_virtual.h"
 
 #include "gdal_alg.h"
 #include "gdal_priv.h"
-#include "gdal_utils.h"
-#include "commonutils.h"
 
 //! @cond Doxygen_Suppress
 
@@ -27,27 +24,13 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()            */
+/*      GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()    */
 /************************************************************************/
 
-GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
+    : GDALRasterPipelineNonNativelyStreamingAlgorithm(NAME, DESCRIPTION,
+                                                      HELP_URL, standaloneStep)
 {
-
-    AddProgressArg();
-
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddOutputFormatArg(&m_outputFormat, /* bStreamAllowed = */ false,
-                       /* bGDALGAllowed = */ false)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
     AddOutputDataTypeArg(&m_outputDataType)
         .SetChoices("Byte", "UInt16", "Int16", "UInt32", "Int32", "Float32",
                     "Float64")
@@ -75,35 +58,14 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()
 }
 
 /************************************************************************/
-/*                 GDALRasterProximityAlgorithm::RunImpl()              */
+/*                 GDALRasterProximityAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+bool GDALRasterProximityAlgorithm::RunStep(GDALProgressFunc pfnProgress,
                                            void *pProgressData)
 {
-
-    auto srcDS = m_inputDataset.GetDatasetRef();
-    CPLAssert(srcDS);
-
-    const auto srcBand = srcDS->GetRasterBand(m_inputBand);
-    // Check done by GDALAlgorithm::AddBandArg()
-    CPLAssert(srcBand);
-
-    const std::string outputFormat{
-        m_outputFormat.empty()
-            ? GetOutputDriverForRaster(m_outputDataset.GetName().c_str())
-            : m_outputFormat};
-
-    const auto drv =
-        GDALDriver::FromHandle(GDALGetDriverByName(outputFormat.c_str()));
-    if (!drv)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Output driver '%s' not found.", outputFormat.c_str());
-        return false;
-    }
-    // Create the output dataset with the specified type
-    CPLStringList creationOptions{m_creationOptions};
+    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    CPLAssert(poSrcDS);
 
     GDALDataType outputType = GDT_Float32;
     if (!m_outputDataType.empty())
@@ -111,27 +73,17 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         outputType = GDALGetDataTypeByName(m_outputDataType.c_str());
     }
 
-    std::unique_ptr<GDALDataset> dstDs{GDALDataset::FromHandle(drv->Create(
-        m_outputDataset.GetName().c_str(), srcBand->GetXSize(),
-        srcBand->GetYSize(), 1, outputType, creationOptions.List()))};
-
-    if (!dstDs)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Failed to create output dataset '%s'.",
-                    m_outputDataset.GetName().c_str());
+    auto poTmpDS = CreateTemporaryDataset(
+        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1, outputType,
+        /* bTiledIfPossible = */ true, poSrcDS, /* bCopyMetadata = */ false);
+    if (!poTmpDS)
         return false;
-    }
 
-    double adfGeoTransform[6];
-    if (srcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-    {
-        dstDs->SetGeoTransform(adfGeoTransform);
-    }
+    const auto srcBand = poSrcDS->GetRasterBand(m_inputBand);
+    CPLAssert(srcBand);
 
-    dstDs->SetSpatialRef(srcDS->GetSpatialRef());
-
-    const auto dstBand = dstDs->GetRasterBand(1);
+    const auto dstBand = poTmpDS->GetRasterBand(1);
+    CPLAssert(dstBand);
 
     // Build options for GDALComputeProximity
     CPLStringList proximityOptions;
@@ -178,17 +130,14 @@ bool GDALRasterProximityAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     const auto error = GDALComputeProximity(srcBand, dstBand, proximityOptions,
                                             pfnProgress, pProgressData);
-
-    if (error != CE_None)
+    if (error == CE_None)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Failed to compute proximity map.");
-        return false;
+        if (pfnProgress)
+            pfnProgress(1.0, "", pProgressData);
+        m_outputDataset.Set(std::move(poTmpDS));
     }
 
-    m_outputDataset.Set(std::move(dstDs));
-
-    return true;
+    return error == CE_None;
 }
 
 //! @endcond

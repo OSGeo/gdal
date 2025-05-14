@@ -12,7 +12,9 @@
 ###############################################################################
 
 import json
+import os
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -628,3 +630,31 @@ def test_gdalalg_raster_pipeline_too_many_steps_for_vrt_output(tmp_vsimem):
                 out_filename,
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "config_options", [{}, {"GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET": "YES"}]
+)
+def test_gdalalg_raster_pipeline_to_gdalg_step_non_natively_streamable(
+    tmp_vsimem, config_options
+):
+
+    src_filename = os.path.join(os.getcwd(), "../gcore/data/byte.tif")
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        gdal.Run(
+            "raster",
+            "pipeline",
+            pipeline=f"read {src_filename} ! fill-nodata ! write {tmp_vsimem}/out.gdalg.json",
+        )
+
+    if gdal.GetDriverByName("GDALG"):
+        with gdaltest.config_options(config_options):
+            with gdal.Open(tmp_vsimem / "out.gdalg.json") as ds:
+                assert ds.GetRasterBand(1).Checksum() == 4672
+
+        new_options = {"CPL_TMPDIR": "/i_do/not/exist"}
+        new_options.update(config_options)
+        with gdaltest.config_options(new_options):
+            with pytest.raises(Exception):
+                gdal.Open(tmp_vsimem / "out.gdalg.json")

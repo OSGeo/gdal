@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_VIEWSHED_INCLUDED
 #define GDALALG_RASTER_VIEWSHED_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                   GDALRasterViewshedAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterViewshedAlgorithm final : public GDALAlgorithm
+class GDALRasterViewshedAlgorithm /* non final */
+    : public GDALRasterPipelineNonNativelyStreamingAlgorithm
 {
   public:
     static constexpr const char *NAME = "viewshed";
@@ -30,19 +31,10 @@ class GDALRasterViewshedAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_viewshed.html";
 
-    explicit GDALRasterViewshedAlgorithm();
+    explicit GDALRasterViewshedAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-
-    std::string m_format{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::vector<double> m_observerPos{};
     double m_targetHeight = 0;
@@ -61,6 +53,20 @@ class GDALRasterViewshedAlgorithm final : public GDALAlgorithm
 
     // Work variables
     std::string m_numThreadsStr{};
+};
+
+/************************************************************************/
+/*                GDALRasterViewshedAlgorithmStandalone                 */
+/************************************************************************/
+
+class GDALRasterViewshedAlgorithmStandalone final
+    : public GDALRasterViewshedAlgorithm
+{
+  public:
+    GDALRasterViewshedAlgorithmStandalone()
+        : GDALRasterViewshedAlgorithm(/* standaloneStep = */ true)
+    {
+    }
 };
 
 //! @endcond

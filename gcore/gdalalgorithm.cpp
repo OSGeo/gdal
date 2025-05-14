@@ -42,6 +42,8 @@ constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
 constexpr const char *GDAL_ARG_NAME_APPEND_UPDATE = "append-update";
 
+constexpr const char *GDAL_ARG_NAME_BAND = "band";
+
 //! @cond Doxygen_Suppress
 struct GDALAlgorithmArgHS
 {
@@ -3776,53 +3778,84 @@ GDALAlgorithm::AddLayerNameArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
+/*                  GDALAlgorithm::ValidateBandArg()                    */
+/************************************************************************/
+
+bool GDALAlgorithm::ValidateBandArg() const
+{
+    bool ret = true;
+    const auto bandArg = GetArg(GDAL_ARG_NAME_BAND);
+    const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
+    if (bandArg && bandArg->IsExplicitlySet() && inputDatasetArg &&
+        inputDatasetArg->IsExplicitlySet() &&
+        inputDatasetArg->GetType() == GAAT_DATASET &&
+        (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
+    {
+        auto poDS = inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
+        if (poDS)
+        {
+            const auto CheckBand = [this, poDS](int nBand)
+            {
+                if (nBand > poDS->GetRasterCount())
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Value of 'band' should be greater or equal than "
+                        "1 and less or equal than %d.",
+                        poDS->GetRasterCount());
+                    return false;
+                }
+                return true;
+            };
+
+            if (bandArg->GetType() == GAAT_INTEGER)
+            {
+                ret = CheckBand(bandArg->Get<int>());
+            }
+            else if (bandArg->GetType() == GAAT_INTEGER_LIST)
+            {
+                for (int nBand : bandArg->Get<std::vector<int>>())
+                {
+                    ret = ret && CheckBand(nBand);
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*             GDALAlgorithm::RunPreStepPipelineValidations()           */
+/************************************************************************/
+
+bool GDALAlgorithm::RunPreStepPipelineValidations() const
+{
+    return ValidateBandArg();
+}
+
+/************************************************************************/
 /*                    GDALAlgorithm::AddBandArg()                       */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddBandArg(int *pValue, const char *helpMessage)
 {
-    auto &arg =
-        AddArg("band", 'b',
-               MsgOrDefault(helpMessage, _("Input band (1-based index)")),
-               pValue)
-            .AddValidationAction(
-                [pValue]()
-                {
-                    if (*pValue <= 0)
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Value of 'band' should greater or equal to 1.");
-                        return false;
-                    }
-                    return true;
-                });
+    AddValidationAction([this]() { return ValidateBandArg(); });
 
-    AddValidationAction(
-        [this, &arg, pValue]()
-        {
-            auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
-            if (arg.IsExplicitlySet() && inputDatasetArg &&
-                inputDatasetArg->GetType() == GAAT_DATASET &&
-                inputDatasetArg->IsExplicitlySet() &&
-                (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
+    return AddArg(GDAL_ARG_NAME_BAND, 'b',
+                  MsgOrDefault(helpMessage, _("Input band (1-based index)")),
+                  pValue)
+        .AddValidationAction(
+            [pValue]()
             {
-                auto poDS =
-                    inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
-                if (poDS && *pValue > poDS->GetRasterCount())
+                if (*pValue <= 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Value of 'band' should be greater or equal than "
-                             "1 and less or equal than %d.",
-                             poDS->GetRasterCount());
+                             "Value of 'band' should greater or equal to 1.");
                     return false;
                 }
-            }
-            return true;
-        });
-
-    return arg;
+                return true;
+            });
 }
 
 /************************************************************************/
@@ -3832,56 +3865,26 @@ GDALAlgorithm::AddBandArg(int *pValue, const char *helpMessage)
 GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddBandArg(std::vector<int> *pValue, const char *helpMessage)
 {
-    auto &arg =
-        AddArg("band", 'b',
-               MsgOrDefault(helpMessage, _("Input band(s) (1-based index)")),
-               pValue)
-            .AddValidationAction(
-                [pValue]()
-                {
-                    for (int val : *pValue)
-                    {
-                        if (val <= 0)
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Value of 'band' should greater or equal "
-                                     "to 1.");
-                            return false;
-                        }
-                    }
-                    return true;
-                });
+    AddValidationAction([this]() { return ValidateBandArg(); });
 
-    AddValidationAction(
-        [this, &arg, pValue]()
-        {
-            auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
-            if (arg.IsExplicitlySet() && inputDatasetArg &&
-                inputDatasetArg->GetType() == GAAT_DATASET &&
-                inputDatasetArg->IsExplicitlySet() &&
-                (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
+    return AddArg(GDAL_ARG_NAME_BAND, 'b',
+                  MsgOrDefault(helpMessage, _("Input band(s) (1-based index)")),
+                  pValue)
+        .AddValidationAction(
+            [pValue]()
             {
-                auto poDS =
-                    inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
-                if (poDS)
+                for (int val : *pValue)
                 {
-                    for (int val : *pValue)
+                    if (val <= 0)
                     {
-                        if (val > poDS->GetRasterCount())
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Value of 'band' should be greater or "
-                                     "equal than 1 and less or equal than %d.",
-                                     poDS->GetRasterCount());
-                            return false;
-                        }
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of 'band' should greater or equal "
+                                 "to 1.");
+                        return false;
                     }
                 }
-            }
-            return true;
-        });
-
-    return arg;
+                return true;
+            });
 }
 
 /************************************************************************/

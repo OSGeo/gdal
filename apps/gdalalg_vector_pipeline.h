@@ -40,6 +40,11 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
 
+    virtual bool IsNativelyStreamingCompatible() const
+    {
+        return true;
+    }
+
     virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
     void AddInputArgs(bool hiddenForCLI);

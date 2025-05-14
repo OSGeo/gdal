@@ -168,7 +168,7 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_inputDataset.resize(1);
             m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
-            if (RunStep(nullptr, nullptr))
+            if (RunPreStepPipelineValidations() && RunStep(nullptr, nullptr))
             {
                 if (m_format == "stream")
                 {
@@ -194,7 +194,8 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        return RunPreStepPipelineValidations() &&
+               RunStep(pfnProgress, pProgressData);
     }
 }
 

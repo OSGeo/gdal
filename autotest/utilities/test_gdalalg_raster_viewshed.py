@@ -93,18 +93,6 @@ def test_gdalalg_raster_viewshed_overwrite_and_creation_option(
     assert ds.GetRasterBand(1).Checksum() == VIEWSHED_NOMINAL_CHECKSUM
 
 
-def test_gdalalg_raster_viewshed_cannot_guess_output_format():
-
-    alg = get_alg()
-    alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    alg["output"] = "my.unknown"
-    alg["position"] = [621528, 4817617, 100]
-    with pytest.raises(
-        Exception, match="Cannot guess output driver from output filename"
-    ):
-        alg.Run()
-
-
 def test_gdalalg_raster_viewshed_target_height(viewshed_input):
 
     alg = get_alg()
@@ -245,18 +233,6 @@ def test_gdalalg_raster_mode_cumulative(viewshed_input, tmp_vsimem):
     alg["overwrite"] = True
     with pytest.raises(
         Exception, match="In cumulative mode, the input dataset must be opened by name"
-    ):
-        alg.Run()
-
-    alg = get_alg()
-    alg["input"] = viewshed_input
-    alg["output"] = ""
-    alg["output-format"] = "MEM"
-    alg["position"] = [621528, 4817617, 100]
-    alg["mode"] = "cumulative"
-    with pytest.raises(
-        Exception,
-        match="In cumulative mode, the output dataset cannot be a MEM dataset",
     ):
         alg.Run()
 

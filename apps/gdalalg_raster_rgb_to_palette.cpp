@@ -15,9 +15,6 @@
 #include "cpl_string.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
-#include "commonutils.h"
-
-#include <array>
 
 //! @cond Doxygen_Suppress
 
@@ -29,24 +26,11 @@
 /*                    GDALRasterRGBToPaletteAlgorithm()                 */
 /************************************************************************/
 
-GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
+    bool standaloneStep)
+    : GDALRasterPipelineNonNativelyStreamingAlgorithm(NAME, DESCRIPTION,
+                                                      HELP_URL, standaloneStep)
 {
-    AddProgressArg();
-
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
-                       /* bGDALGAllowed = */ false)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
-
     AddArg("color-count", 0,
            _("Select the number of colors in the generated color table"),
            &m_colorCount)
@@ -57,32 +41,14 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm()
 }
 
 /************************************************************************/
-/*                GDALRasterRGBToPaletteAlgorithm::RunImpl()            */
+/*                GDALRasterRGBToPaletteAlgorithm::RunStep()            */
 /************************************************************************/
 
-bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
                                               void *pProgressData)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
-
-    if (m_format.empty())
-    {
-        m_format = GetOutputDriverForRaster(m_outputDataset.GetName().c_str());
-        if (m_format.empty())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot guess output driver from output filename");
-            return false;
-        }
-    }
-    if (EQUAL(m_format.c_str(), "JPEG") || EQUAL(m_format.c_str(), "WEBP"))
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Format %s does not support color tables",
-                    CPLString(m_format).toupper().c_str());
-        return false;
-    }
 
     const int nSrcBandCount = poSrcDS->GetRasterCount();
     if (nSrcBandCount < 3)
@@ -147,42 +113,13 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             GDALRasterBand::ToHandle(poSrcDS->GetRasterBand(3));
     }
 
-    bool bNeedTmpFile =
-        !EQUAL(m_format.c_str(), "MEM") && !EQUAL(m_format.c_str(), "GTiff");
-    if (EQUAL(m_format.c_str(), "GTiff"))
-    {
-        bool bIsCompressed = false;
-        bool bIsTiled = false;
-        for (const auto &co : m_creationOptions)
-        {
-            if (STARTS_WITH_CI(co.c_str(), "COMPRESS=") &&
-                !STARTS_WITH_CI(co.c_str(), "COMPRESS=NONE"))
-            {
-                bIsCompressed = true;
-            }
-            else if (STARTS_WITH_CI(co.c_str(), "TILED=") &&
-                     CPLTestBool(co.c_str() + strlen("TILED=")))
-            {
-                bIsTiled = true;
-            }
-        }
-        if (bIsCompressed && bIsTiled)
-            bNeedTmpFile = true;
-    }
-
-    const char *pszTmpDriverName =
-        EQUAL(m_format.c_str(), "MEM") ? "MEM" : "GTiff";
-    auto poTmpDriver =
-        GetGDALDriverManager()->GetDriverByName(pszTmpDriverName);
-    if (!poTmpDriver)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "%s driver not available",
-                    pszTmpDriverName);
+    auto poTmpDS = CreateTemporaryDataset(
+        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1, GDT_Byte,
+        /* bTiledIfPossible = */ true, poSrcDS, /* bCopyMetadata = */ true);
+    if (!poTmpDS)
         return false;
-    }
 
-    const double oneOverStep =
-        1.0 / ((m_colorMap.empty() ? 1 : 0) + (bNeedTmpFile ? 2 : 1));
+    const double oneOverStep = 1.0 / ((m_colorMap.empty() ? 1 : 0) + 1);
 
     GDALColorTable oCT;
 
@@ -242,53 +179,13 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    std::unique_ptr<GDALDataset> poTmpDS;
-    if (bOK)
-    {
-        const std::string osTmpFilename =
-            bNeedTmpFile ? m_outputDataset.GetName() + ".tmp.tif"
-                         : m_outputDataset.GetName();
-        CPLStringList aosTmpCO;
-        if (!bNeedTmpFile)
-            aosTmpCO = CPLStringList(m_creationOptions);
-        poTmpDS.reset(poTmpDriver->Create(
-            osTmpFilename.c_str(), poSrcDS->GetRasterXSize(),
-            poSrcDS->GetRasterYSize(), 1, GDT_Byte, aosTmpCO.List()));
-        bOK = poTmpDS != nullptr;
-        if (bOK && bNeedTmpFile)
-        {
-            // In file systems that allow it (all but Windows...), we want to
-            // delete the temporary file as soon as soon as possible after
-            // having open it, so that if someone kills the process there are
-            // no temp files left over. If that unlink() doesn't succeed
-            // (on Windows), then the file will eventually be deleted when
-            // poTmpDS is cleaned due to MarkSuppressOnClose().
-            VSIUnlink(osTmpFilename.c_str());
-            poTmpDS->MarkSuppressOnClose();
-        }
-    }
     if (bOK)
     {
         poTmpDS->GetRasterBand(1)->SetColorTable(&oCT);
-        poTmpDS->SetSpatialRef(poSrcDS->GetSpatialRef());
-        std::array<double, 6> adfGT{};
-        if (poSrcDS->GetGeoTransform(adfGT.data()) == CE_None)
-            poTmpDS->SetGeoTransform(adfGT.data());
-        if (const int nGCPCount = poSrcDS->GetGCPCount())
-        {
-            const auto apsGCPs = poSrcDS->GetGCPs();
-            if (apsGCPs)
-            {
-                poTmpDS->SetGCPs(nGCPCount, apsGCPs,
-                                 poSrcDS->GetGCPSpatialRef());
-            }
-        }
-        poTmpDS->SetMetadata(poSrcDS->GetMetadata());
 
-        pScaledData.reset(GDALCreateScaledProgress(dfLastProgress,
-                                                   dfLastProgress + oneOverStep,
+        pScaledData.reset(GDALCreateScaledProgress(dfLastProgress, 1.0,
                                                    pfnProgress, pProgressData));
-        dfLastProgress += oneOverStep;
+
         bOK = GDALDitherRGB2PCT(
                   mapBands[GCI_RedBand], mapBands[GCI_GreenBand],
                   mapBands[GCI_BlueBand],
@@ -300,28 +197,10 @@ bool GDALRasterRGBToPaletteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     if (bOK)
     {
-        if (!bNeedTmpFile)
-        {
-            m_outputDataset.Set(std::move(poTmpDS));
-        }
-        else
-        {
-            auto poOutDriver =
-                GetGDALDriverManager()->GetDriverByName(m_format.c_str());
-            CPLAssert(poOutDriver);
-            const CPLStringList aosCO(m_creationOptions);
-            pScaledData.reset(GDALCreateScaledProgress(
-                dfLastProgress, 1.0, pfnProgress, pProgressData));
-            auto poOutDS = std::unique_ptr<GDALDataset>(poOutDriver->CreateCopy(
-                m_outputDataset.GetName().c_str(), poTmpDS.get(),
-                /* bStrict = */ false, aosCO.List(),
-                pScaledData ? GDALScaledProgress : nullptr, pScaledData.get()));
-            bOK = poOutDS != nullptr;
-            m_outputDataset.Set(std::move(poOutDS));
-        }
+        m_outputDataset.Set(std::move(poTmpDS));
+        if (pfnProgress)
+            pfnProgress(1.0, "", pProgressData);
     }
-    if (bOK && pfnProgress)
-        pfnProgress(1.0, "", pProgressData);
 
     return bOK;
 }

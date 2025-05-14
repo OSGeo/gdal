@@ -76,6 +76,14 @@ Advanced options
 .. include:: gdal_options/if.rst
 
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+
+
 Examples
 --------
 

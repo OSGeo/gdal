@@ -48,6 +48,12 @@ Standard options
     The <FILENAME> must be either a raster file in a GDAL supported format with a palette
     or a color file in a supported format (.txt, QGIS .qml, QGIS .qlr).
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+
+
 Examples
 --------
 

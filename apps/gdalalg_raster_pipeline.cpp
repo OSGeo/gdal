@@ -16,24 +16,34 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
+#include "gdalalg_raster_rgb_to_palette.h"
 #include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_set_type.h"
+#include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
+#include "gdalalg_raster_viewshed.h"
 
 #include "cpl_conv.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_priv.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
+#include <array>
 
 //! @cond Doxygen_Suppress
 
@@ -58,6 +68,13 @@ GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
         AddInputArgs(false, false);
         AddProgressArg();
         AddOutputArgs(false);
+    }
+    else if (name != GDALRasterPipelineAlgorithm::NAME &&
+             name != GDALRasterReadAlgorithm::NAME)
+    {
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
+                           /* positionalAndRequired = */ false)
+            .SetHidden();
     }
 }
 
@@ -149,18 +166,30 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
+        const bool bIsStreaming = m_format == "stream";
+
         // Already checked by GDALAlgorithm::Run()
-        CPLAssert(!m_executionForStreamOutput ||
-                  EQUAL(m_format.c_str(), "stream"));
+        CPLAssert(!m_executionForStreamOutput || bIsStreaming);
 
         bool ret = false;
         if (readAlg.Run())
         {
             m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
-            if (RunStep(nullptr, nullptr))
+
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+                pScaledData(nullptr, GDALDestroyScaledProgress);
+            if (!IsNativelyStreamingCompatible())
             {
-                if (m_format == "stream")
+                pScaledData.reset(GDALCreateScaledProgress(
+                    0.0, bIsStreaming ? 1.0 : 0.5, pfnProgress, pProgressData));
+            }
+
+            if (RunPreStepPipelineValidations() &&
+                RunStep(pScaledData ? GDALScaledProgress : nullptr,
+                        pScaledData.get()))
+            {
+                if (bIsStreaming)
                 {
                     ret = true;
                 }
@@ -184,8 +213,18 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     writeAlg.m_outputVRTCompatible = m_outputVRTCompatible;
                     writeAlg.m_inputDataset.Set(
                         m_outputDataset.GetDatasetRef());
-                    if (writeAlg.Run(pfnProgress, pProgressData))
+                    if (pfnProgress)
                     {
+                        pScaledData.reset(GDALCreateScaledProgress(
+                            IsNativelyStreamingCompatible() ? 0.0 : 0.5, 1.0,
+                            pfnProgress, pProgressData));
+                    }
+                    if (writeAlg.Run(pScaledData ? GDALScaledProgress : nullptr,
+                                     pScaledData.get()))
+                    {
+                        if (pfnProgress)
+                            pfnProgress(1.0, "", pProgressData);
+
                         m_outputDataset.Set(
                             writeAlg.m_outputDataset.GetDatasetRef());
                         ret = true;
@@ -198,7 +237,8 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        return RunPreStepPipelineValidations() &&
+               RunStep(pfnProgress, pProgressData);
     }
 }
 
@@ -265,18 +305,23 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterColorMapAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
+    m_stepRegistry.Register<GDALRasterFillNodataAlgorithm>();
     m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterProximityAlgorithm>();
     m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterRGBToPaletteAlgorithm>();
     m_stepRegistry.Register<GDALRasterRoughnessAlgorithm>();
     m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
     m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
     m_stepRegistry.Register<GDALRasterSetTypeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterSieveAlgorithm>();
     m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
     m_stepRegistry.Register<GDALRasterTPIAlgorithm>();
     m_stepRegistry.Register<GDALRasterTRIAlgorithm>();
     m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
+    m_stepRegistry.Register<GDALRasterViewshedAlgorithm>();
 }
 
 /************************************************************************/
@@ -477,11 +522,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.front();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
@@ -491,11 +539,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.back();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
@@ -617,6 +668,195 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     ret += GetUsageForCLIEnd();
 
     return ret;
+}
+
+/************************************************************************/
+/*           GDALRasterPipelineNonNativelyStreamingAlgorithm()          */
+/************************************************************************/
+
+GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, bool standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(name, description, helpURL,
+                                      standaloneStep)
+{
+}
+
+/************************************************************************/
+/*                     MustCreateOnDiskTempDataset()                        */
+/************************************************************************/
+
+static bool MustCreateOnDiskTempDataset(int nWidth, int nHeight, int nBands,
+                                        GDALDataType eDT)
+{
+    // Config option mostly for autotest purposes
+    if (CPLTestBool(CPLGetConfigOption(
+            "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", "NO")))
+        return true;
+
+    // Allow up to 10% of RAM usage for temporary dataset
+    const auto nRAM = CPLGetUsablePhysicalRAM() / 10;
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    const bool bOnDisk =
+        nBands > 0 && nDTSize > 0 && nRAM > 0 &&
+        static_cast<int64_t>(nWidth) * nHeight > nRAM / (nBands * nDTSize);
+    return bOnDisk;
+}
+
+/************************************************************************/
+/*                      CreateTemporaryDataset()                        */
+/************************************************************************/
+
+std::unique_ptr<GDALDataset>
+GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryDataset(
+    int nWidth, int nHeight, int nBands, GDALDataType eDT,
+    bool bTiledIfPossible, GDALDataset *poSrcDSForMetadata, bool bCopyMetadata)
+{
+    const bool bOnDisk =
+        MustCreateOnDiskTempDataset(nWidth, nHeight, nBands, eDT);
+    const char *pszDriverName = bOnDisk ? "GTIFF" : "MEM";
+    GDALDriver *poDriver =
+        GetGDALDriverManager()->GetDriverByName(pszDriverName);
+    CPLStringList aosOptions;
+    std::string osTmpFilename;
+    if (bOnDisk)
+    {
+        osTmpFilename =
+            CPLGenerateTempFilenameSafe(
+                poSrcDSForMetadata
+                    ? CPLGetBasenameSafe(poSrcDSForMetadata->GetDescription())
+                          .c_str()
+                    : "") +
+            ".tif";
+        if (bTiledIfPossible)
+            aosOptions.SetNameValue("TILED", "YES");
+        const char *pszCOList =
+            poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
+        aosOptions.SetNameValue("COMPRESS",
+                                pszCOList && strstr(pszCOList, "ZSTD") ? "ZSTD"
+                                                                       : "LZW");
+        aosOptions.SetNameValue("SPARSE_OK", "YES");
+    }
+    std::unique_ptr<GDALDataset> poOutDS(
+        poDriver ? poDriver->Create(osTmpFilename.c_str(), nWidth, nHeight,
+                                    nBands, eDT, aosOptions.List())
+                 : nullptr);
+    if (poOutDS && bOnDisk)
+    {
+        // In file systems that allow it (all but Windows...), we want to
+        // delete the temporary file as soon as soon as possible after
+        // having open it, so that if someone kills the process there are
+        // no temp files left over. If that unlink() doesn't succeed
+        // (on Windows), then the file will eventually be deleted when
+        // poTmpDS is cleaned due to MarkSuppressOnClose().
+        VSIUnlink(osTmpFilename.c_str());
+        poOutDS->MarkSuppressOnClose();
+    }
+
+    if (poOutDS && poSrcDSForMetadata)
+    {
+        poOutDS->SetSpatialRef(poSrcDSForMetadata->GetSpatialRef());
+        std::array<double, 6> adfGT{};
+        if (poSrcDSForMetadata->GetGeoTransform(adfGT.data()) == CE_None)
+            poOutDS->SetGeoTransform(adfGT.data());
+        if (const int nGCPCount = poSrcDSForMetadata->GetGCPCount())
+        {
+            const auto apsGCPs = poSrcDSForMetadata->GetGCPs();
+            if (apsGCPs)
+            {
+                poOutDS->SetGCPs(nGCPCount, apsGCPs,
+                                 poSrcDSForMetadata->GetGCPSpatialRef());
+            }
+        }
+        if (bCopyMetadata)
+        {
+            poOutDS->SetMetadata(poSrcDSForMetadata->GetMetadata());
+        }
+    }
+
+    return poOutDS;
+}
+
+/************************************************************************/
+/*                       CreateTemporaryCopy()                          */
+/************************************************************************/
+
+std::unique_ptr<GDALDataset>
+GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryCopy(
+    GDALDataset *poSrcDS, int nSingleBand, bool bTiledIfPossible,
+    GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    const int nBands = nSingleBand > 0 ? 1 : poSrcDS->GetRasterCount();
+    const auto eDT =
+        nBands ? poSrcDS->GetRasterBand(1)->GetRasterDataType() : GDT_Unknown;
+    const bool bOnDisk = MustCreateOnDiskTempDataset(
+        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), nBands, eDT);
+    const char *pszDriverName = bOnDisk ? "GTIFF" : "MEM";
+
+    CPLStringList options;
+    if (nSingleBand > 0)
+    {
+        options.AddString("-b");
+        options.AddString(CPLSPrintf("%d", nSingleBand));
+    }
+
+    options.AddString("-of");
+    options.AddString(pszDriverName);
+
+    std::string osTmpFilename;
+    if (bOnDisk)
+    {
+        osTmpFilename =
+            CPLGenerateTempFilenameSafe(
+                CPLGetBasenameSafe(poSrcDS->GetDescription()).c_str()) +
+            ".tif";
+        if (bTiledIfPossible)
+        {
+            options.AddString("-co");
+            options.AddString("TILED=YES");
+        }
+
+        GDALDriver *poDriver =
+            GetGDALDriverManager()->GetDriverByName(pszDriverName);
+        const char *pszCOList =
+            poDriver ? poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST)
+                     : nullptr;
+        options.AddString("-co");
+        options.AddString(pszCOList && strstr(pszCOList, "ZSTD")
+                              ? "COMPRESS=ZSTD"
+                              : "COMPRESS=LZW");
+    }
+
+    GDALTranslateOptions *translateOptions =
+        GDALTranslateOptionsNew(options.List(), nullptr);
+
+    if (pfnProgress)
+        GDALTranslateOptionsSetProgress(translateOptions, pfnProgress,
+                                        pProgressData);
+
+    std::unique_ptr<GDALDataset> poOutDS(GDALDataset::FromHandle(
+        GDALTranslate(osTmpFilename.c_str(), GDALDataset::ToHandle(poSrcDS),
+                      translateOptions, nullptr)));
+    GDALTranslateOptionsFree(translateOptions);
+
+    if (!poOutDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Failed to create temporary dataset");
+    }
+    else if (bOnDisk)
+    {
+        // In file systems that allow it (all but Windows...), we want to
+        // delete the temporary file as soon as soon as possible after
+        // having open it, so that if someone kills the process there are
+        // no temp files left over. If that unlink() doesn't succeed
+        // (on Windows), then the file will eventually be deleted when
+        // poTmpDS is cleaned due to MarkSuppressOnClose().
+        VSIUnlink(osTmpFilename.c_str());
+        poOutDS->MarkSuppressOnClose();
+    }
+    return poOutDS;
 }
 
 //! @endcond

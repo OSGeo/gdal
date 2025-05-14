@@ -104,8 +104,18 @@ NODATA_value 0
     alg["output"] = result_tif
     alg["size-threshold"] = 2
     alg["mask"] = tmp_filename
-    assert alg.Run()
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
     assert alg.Finalize()
+
+    assert tab_pct[0] == 1.0
 
     ds = gdal.Open(result_tif)
     assert ds is not None
@@ -146,3 +156,26 @@ def test_gdalalg_raster_sieve_overwrite(tmp_path, tmp_vsimem):
     alg["overwrite"] = True
     assert alg.Run()
     assert alg.Finalize()
+
+
+@pytest.mark.require_driver("AAIGRID")
+@pytest.mark.require_driver("GTiff")
+def test_gdalalg_raster_sieve_cannot_create_temp_file(tmp_path, tmp_vsimem):
+
+    result_tif = str(tmp_path / "test_gdal_sieve.tif")
+    tmp_filename = str(tmp_vsimem / "tmp.grd")
+
+    gdal.FileFromMemBuffer(tmp_filename, open("../alg/data/sieve_src.grd", "rb").read())
+
+    alg = get_alg()
+    alg["input"] = tmp_filename
+    alg["output"] = result_tif
+    alg["size-threshold"] = 2
+    with gdaltest.config_options(
+        {
+            "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET": "YES",
+            "CPL_TMPDIR": "/i_do/not/exist",
+        }
+    ):
+        with pytest.raises(Exception):
+            alg.Run()

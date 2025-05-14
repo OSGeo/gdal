@@ -33,6 +33,11 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     friend class GDALRasterPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
 
+    virtual bool IsNativelyStreamingCompatible() const
+    {
+        return true;
+    }
+
     virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
@@ -63,6 +68,34 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool CheckSafeForStreamOutput() override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepAlgorithm)
+};
+
+/************************************************************************/
+/*           GDALRasterPipelineNonNativelyStreamingAlgorithm            */
+/************************************************************************/
+
+class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
+    : public GDALRasterPipelineStepAlgorithm
+{
+  protected:
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, bool standaloneStep);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    std::unique_ptr<GDALDataset>
+    CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
+                           GDALDataType eDT, bool bTiledIfPossible,
+                           GDALDataset *poSrcDSForMetadata,
+                           bool bCopyMetadata = true);
+    std::unique_ptr<GDALDataset>
+    CreateTemporaryCopy(GDALDataset *poSrcDS, int nSingleBand,
+                        bool bTiledIfPossible, GDALProgressFunc pfnProgress,
+                        void *pProgressData);
 };
 
 /************************************************************************/
