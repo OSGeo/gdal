@@ -323,6 +323,8 @@ DTEDInfo *DTEDOpenEx(VSILFILE *fp, const char *pszFilename,
 
     DTEDDetectVariantWithMissingColumns(psDInfo);
 
+    psDInfo->bAssumeConformant = CPLTestBool(CPLGetConfigOption("DTED_ASSUME_CONFORMANT", "NO"));
+
     return psDInfo;
 }
 
@@ -525,15 +527,13 @@ int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal)
     if (pabyData[0] & 0x80)
     {
         *panVal *= -1;
-        const char* pszAssume = CPLGetConfigOption("DTED_ASSUME_CONFORMANT", "NO");
-        const bool bAssumeConformant = CPLTestBool(pszAssume);
 
         /*
         ** It seems that some files are improperly generated in twos
         ** complement form for negatives.  For these, redo the job
         ** in twos complement.  eg. w_069_s50.dt0
         */
-        if (!bAssumeConformant && (*panVal < -16000) && (*panVal != DTED_NODATA_VALUE))
+        if (!psDInfo->bAssumeConformant && (*panVal < -16000) && (*panVal != DTED_NODATA_VALUE))
         {
             *panVal = (pabyData[0] << 8) | pabyData[1];
 

@@ -111,6 +111,8 @@ typedef struct
     int *
         panMapLogicalColsToOffsets; /* size of nXSize elements. Might be NULL */
 
+    bool bAssumeConformant;
+
 } DTEDInfo;
 
 /* -------------------------------------------------------------------- */

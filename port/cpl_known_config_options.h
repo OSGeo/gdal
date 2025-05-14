@@ -163,6 +163,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "DISABLE_OPEN_REAL_NETCDF_FILES", // from netcdfdataset.cpp, netcdfdrivercore.cpp
    "DRIVER_WISHED", // from test_ogrsf.cpp
    "DTED_APPLY_PIXEL_IS_POINT", // from dteddataset.cpp
+   "DTED_ASSUME_CONFORMANT", // from dted_api.c
    "DTED_VERIFY_CHECKSUM", // from dteddataset.cpp
    "DUMP_JP2_BOXES", // from gdaljp2metadata.cpp
    "DWG_ALL_ATTRIBUTES", // from ogrdwgdatasource.cpp
