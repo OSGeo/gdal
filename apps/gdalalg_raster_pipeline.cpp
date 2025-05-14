@@ -67,6 +67,13 @@ GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
         AddProgressArg();
         AddOutputArgs(false);
     }
+    else if (name != GDALRasterPipelineAlgorithm::NAME &&
+             name != GDALRasterReadAlgorithm::NAME)
+    {
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
+                           /* positionalAndRequired = */ false)
+            .SetHidden();
+    }
 }
 
 /************************************************************************/
@@ -176,7 +183,8 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     0.0, bIsStreaming ? 1.0 : 0.5, pfnProgress, pProgressData));
             }
 
-            if (RunStep(pScaledData ? GDALScaledProgress : nullptr,
+            if (RunPreStepPipelineValidations() &&
+                RunStep(pScaledData ? GDALScaledProgress : nullptr,
                         pScaledData.get()))
             {
                 if (bIsStreaming)
@@ -227,7 +235,8 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        return RunPreStepPipelineValidations() &&
+               RunStep(pfnProgress, pProgressData);
     }
 }
 
@@ -509,11 +518,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.front();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
@@ -523,11 +535,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.back();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
