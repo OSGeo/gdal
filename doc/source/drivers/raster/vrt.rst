@@ -2178,8 +2178,8 @@ an interface to the function :cpp:func:`GDALMDArray::AsClassicDataset` in the mu
 This can be valuable for reorienting an array that presents X and Y in YX or some other order. (There's a
 possible added advantage that a valid geotransform may be provided that the classic 2D model doesn't yet infer,
 because the multidimensional model can derive one from coordinates referenced in that form).
-The usage syntax is "vrt://somefile.extension?transpose=varname:iXDim,iYDim" with a no-op case
-"vrt://somefile.extension?transpose=varname:0,1" and "vrt://somefile.extension?transpose=varname:1,0" would be a
+The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` with a no-op case
+``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
 transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
 This option is mutually exclusive with ``sd_name`` and ``sd``.
 
