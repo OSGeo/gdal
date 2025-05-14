@@ -37,7 +37,8 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
 
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
                        /* bGDALGAllowed = */ false)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
