@@ -457,6 +457,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_rgb_to_palette",
+        "gdal-raster-rgb-to-palette",
+        "Convert a RGB image into a pseudo-color / paletted image.",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_roughness",
         "gdal-raster-roughness",
         "Generate a roughness map",

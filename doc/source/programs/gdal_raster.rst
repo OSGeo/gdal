@@ -40,6 +40,7 @@ Available sub-commands
 - :ref:`gdal_raster_proximity`
 - :ref:`gdal_raster_reproject`
 - :ref:`gdal_raster_resize`
+- :ref:`gdal_raster_rgb_to_palette`
 - :ref:`gdal_raster_roughness`
 - :ref:`gdal_raster_scale`
 - :ref:`gdal_raster_select`
