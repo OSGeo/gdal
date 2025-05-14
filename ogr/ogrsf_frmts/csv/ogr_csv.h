@@ -76,7 +76,8 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     VSILFILE *fpCSV;
     const int m_nMaxLineSize = -1;
 
-    int nNextFID;
+    static constexpr int64_t FID_INITIAL_VALUE = 1;
+    int64_t m_nNextFID = FID_INITIAL_VALUE;
 
     bool bHasFieldNames;
 
