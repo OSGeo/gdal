@@ -22,6 +22,7 @@
 #include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
+#include "gdalalg_raster_rgb_to_palette.h"
 #include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
@@ -310,6 +311,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
     m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterRGBToPaletteAlgorithm>();
     m_stepRegistry.Register<GDALRasterRoughnessAlgorithm>();
     m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
     m_stepRegistry.Register<GDALRasterSelectAlgorithm>();

@@ -82,6 +82,12 @@ Details for options can be found in :ref:`gdal_raster_reproject`.
 
 Details for options can be found in :ref:`gdal_raster_resize`.
 
+* rgb-to-palette
+
+.. program-output:: gdal raster pipeline --help-doc=rgb-to-palette
+
+Details for options can be found in :ref:`gdal_raster_rgb_to_palette`.
+
 * roughness
 
 .. program-output:: gdal raster pipeline --help-doc=roughness

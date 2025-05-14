@@ -90,7 +90,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();
         RegisterSubAlgorithm<GDALRasterProximityAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReclassifyAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
