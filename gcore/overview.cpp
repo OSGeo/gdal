@@ -5344,6 +5344,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                        nToplevelSrcHeight * nDstTotalHeight -
                                    EPS)),
                      nDstTotalHeight);
+        const int nDstHeight = nDstYOffEnd - nDstYOffStart;
 
         // Try to use previous level of overview as the source to compute
         // the next level.
@@ -5445,6 +5446,125 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             (nMemRequirement > nChunkMaxSizeForTempFile &&
              !(pszDST_CHUNK_X_SIZE && pszDST_CHUNK_Y_SIZE)))
         {
+            // If the full image accomodates chunking, do so and recurse
+            // to avoid generating full size temporary files
+            if (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight)
+            {
+                // Set up parameters for recursive call, they will be reused
+                CPLStringList aosOptions(papszOptions);
+
+                std::vector<GDALRasterBand *const *> apapoThisOverviewBands(nBands);
+                for (int i = 0; i < nBands; i++)
+                    apapoThisOverviewBands[i] = &papapoOverviewBands[i][iOverview];
+
+                // Loop over output height, in chunks
+                for (int nDstYOff = nDstYOffStart;
+                     nDstYOff < nDstYOffEnd && eErr == CE_None;
+                     nDstYOff += nDstChunkYSize)
+                {
+                    int nDstYCount(nDstChunkYSize);
+                    if (nDstYOff + nDstChunkYSize > nDstYOffEnd)
+                        nDstYCount = nDstYOffEnd - nDstYOff;
+
+                    int nChunkYOff =
+                        static_cast<int>(nDstYOff * dfYRatioDstToSrc);
+                    int nChunkYOff2 = static_cast<int>(
+                        dfYRatioDstToSrc * ceil(nDstYOff + nDstYCount));
+                    if (nChunkYOff2 > nSrcHeight ||
+                        nDstYOff + nDstYCount == nDstTotalHeight)
+                        nChunkYOff2 = nSrcHeight;
+                    int nYCount = nChunkYOff2 - nChunkYOff;
+                    CPLAssert(nYCount <= nFullResYChunk);
+
+                    int nChunkYOffQueried =
+                        nChunkYOff - nKernelRadius * nOvrFactor;
+                    int nChunkYSizeQueried =
+                        nYCount + 2 * nKernelRadius * nOvrFactor;
+                    if (nChunkYOffQueried < 0)
+                    {
+                        nChunkYSizeQueried += nChunkYOffQueried;
+                        nChunkYOffQueried = 0;
+                    }
+                    if (nChunkYSizeQueried + nChunkYOffQueried > nSrcHeight)
+                        nChunkYSizeQueried = nSrcHeight - nChunkYOffQueried;
+                    CPLAssert(nChunkYSizeQueried <= nFullResYChunkQueried);
+
+                    // Loop over output width, in chunks
+                    for (int nDstXOff = nDstXOffStart;
+                         nDstXOff < nDstXOffEnd && eErr == CE_None;
+                         nDstXOff += nDstChunkXSize)
+                    {
+                        int nDstXCount(nDstChunkXSize);
+                        if (nDstXOff + nDstChunkXSize > nDstXOffEnd)
+                            nDstXCount = nDstXOffEnd - nDstXOff;
+
+                        dfCurPixelCount +=
+                            static_cast<double>(nDstXCount) * nDstYCount;
+
+                        int nChunkXOff =
+                            static_cast<int>(nDstXOff * dfXRatioDstToSrc);
+                        int nChunkXOff2 = static_cast<int>(
+                            ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc));
+                        if (nChunkXOff2 > nSrcWidth ||
+                            nDstXOff + nDstXCount == nDstTotalWidth)
+                            nChunkXOff2 = nSrcWidth;
+                        const int nXCount = nChunkXOff2 - nChunkXOff;
+                        CPLAssert(nXCount <= nFullResXChunk);
+
+                        int nChunkXOffQueried =
+                            nChunkXOff - nKernelRadius * nOvrFactor;
+                        int nChunkXSizeQueried =
+                            nXCount + 2 * nKernelRadius * nOvrFactor;
+                        if (nChunkXOffQueried < 0)
+                        {
+                            nChunkXSizeQueried += nChunkXOffQueried;
+                            nChunkXOffQueried = 0;
+                        }
+                        if (nChunkXSizeQueried + nChunkXOffQueried > nSrcWidth)
+                            nChunkXSizeQueried = nSrcWidth - nChunkXOffQueried;
+                        CPLAssert(nChunkXSizeQueried <= nFullResXChunkQueried);
+
+                        #if DEBUG_VERBOSE
+                        CPLDebug("GDAL",
+                                 "Reading (%dx%d -> %dx%d) for output (%dx%d "
+                                 "-> %dx%d)",
+                                 nChunkXOffQueried, nChunkYOffQueried,
+                                 nChunkXSizeQueried, nChunkYSizeQueried,
+                                 nDstXOff, nDstYOff, nDstXCount, nDstYCount);
+                        #endif
+
+                        aosOptions.SetNameValue(
+                            "XOFF", CPLSPrintf("%d", nChunkXOffQueried));
+                        aosOptions.SetNameValue(
+                            "YOFF", CPLSPrintf("%d", nChunkYOffQueried));
+                        aosOptions.SetNameValue(
+                            "XSIZE", CPLSPrintf("%d", nChunkXSizeQueried));
+                        aosOptions.SetNameValue(
+                            "YSIZE", CPLSPrintf("%d", nChunkYSizeQueried));
+
+                        // This will be done using a temporary file
+                        // 
+                        eErr = GDALRegenerateOverviewsMultiBand(
+                            //nBands, papoSrcBands, 1, papapoOverviewBands,
+                            nBands, papoSrcBands, 1, apapoThisOverviewBands.data(),
+                            pszResampling, nullptr, nullptr, aosOptions.List());
+                    }  // width
+
+                    if (!pfnProgress(dfCurPixelCount / dfTotalPixelCount,
+                        nullptr, pProgressData))
+                    {
+                        CPLError(CE_Failure, CPLE_UserInterrupt,
+                                 "User terminated");
+                        eErr = CE_Failure;
+                    }
+
+                }  // height
+                if (CE_None == eErr)
+                    pfnProgress(1.0, nullptr, pProgressData);
+
+                return eErr;
+            } // chunking via temporary file
+
             // Compute a smaller destination chunk size
             const auto nOverShootFactor =
                 nMemRequirement / nChunkMaxSizeForTempFile;
@@ -5609,58 +5729,58 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     CPLFree(apapoOverviewBands[i]);
                 }
 
+                if (eErr != CE_None)
+                    break;
+
                 // Copy temporary dataset to destination overview bands
 
-                if (eErr == CE_None)
+                // Check if all papapoOverviewBands[][iOverview] bands point
+                // to the same dataset. If so, we can use
+                // GDALDatasetCopyWholeRaster()
+                GDALDataset *poDstOvrBandDS =
+                    papapoOverviewBands[0][iOverview]->GetDataset();
+                if (poDstOvrBandDS)
                 {
-                    // Check if all papapoOverviewBands[][iOverview] bands point
-                    // to the same dataset. If so, we can use
-                    // GDALDatasetCopyWholeRaster()
-                    GDALDataset *poDstOvrBandDS =
-                        papapoOverviewBands[0][iOverview]->GetDataset();
-                    if (poDstOvrBandDS)
+                    if (poDstOvrBandDS->GetRasterCount() != nBands ||
+                        poDstOvrBandDS->GetRasterBand(1) !=
+                            papapoOverviewBands[0][iOverview])
                     {
-                        if (poDstOvrBandDS->GetRasterCount() != nBands ||
-                            poDstOvrBandDS->GetRasterBand(1) !=
-                                papapoOverviewBands[0][iOverview])
-                        {
-                            poDstOvrBandDS = nullptr;
-                        }
-                        else
-                        {
-                            for (int i = 1; poDstOvrBandDS && i < nBands; ++i)
-                            {
-                                GDALDataset *poThisDstOvrBandDS =
-                                    papapoOverviewBands[i][iOverview]
-                                        ->GetDataset();
-                                if (poThisDstOvrBandDS == nullptr ||
-                                    poThisDstOvrBandDS != poDstOvrBandDS ||
-                                    poThisDstOvrBandDS->GetRasterBand(i + 1) !=
-                                        papapoOverviewBands[i][iOverview])
-                                {
-                                    poDstOvrBandDS = nullptr;
-                                }
-                            }
-                        }
-                    }
-                    if (poDstOvrBandDS)
-                    {
-                        eErr = GDALDatasetCopyWholeRaster(
-                            GDALDataset::ToHandle(poTmpDS.get()),
-                            GDALDataset::ToHandle(poDstOvrBandDS), nullptr,
-                            nullptr, nullptr);
+                        poDstOvrBandDS = nullptr;
                     }
                     else
                     {
-                        for (int i = 0; eErr == CE_None && i < nBands; ++i)
+                        for (int i = 1; poDstOvrBandDS && i < nBands; ++i)
                         {
-                            eErr = GDALRasterBandCopyWholeRaster(
-                                GDALRasterBand::ToHandle(
-                                    poTmpDS->GetRasterBand(i + 1)),
-                                GDALRasterBand::ToHandle(
-                                    papapoOverviewBands[i][iOverview]),
-                                nullptr, nullptr, nullptr);
+                            GDALDataset *poThisDstOvrBandDS =
+                                papapoOverviewBands[i][iOverview]
+                                    ->GetDataset();
+                            if (poThisDstOvrBandDS == nullptr ||
+                                poThisDstOvrBandDS != poDstOvrBandDS ||
+                                poThisDstOvrBandDS->GetRasterBand(i + 1) !=
+                                    papapoOverviewBands[i][iOverview])
+                            {
+                                poDstOvrBandDS = nullptr;
+                            }
                         }
+                    }
+                }
+                if (poDstOvrBandDS)
+                {
+                    eErr = GDALDatasetCopyWholeRaster(
+                        GDALDataset::ToHandle(poTmpDS.get()),
+                        GDALDataset::ToHandle(poDstOvrBandDS), nullptr,
+                        nullptr, nullptr);
+                }
+                else
+                {
+                    for (int i = 0; eErr == CE_None && i < nBands; ++i)
+                    {
+                        eErr = GDALRasterBandCopyWholeRaster(
+                            GDALRasterBand::ToHandle(
+                                poTmpDS->GetRasterBand(i + 1)),
+                            GDALRasterBand::ToHandle(
+                                papapoOverviewBands[i][iOverview]),
+                            nullptr, nullptr, nullptr);
                     }
                 }
 
