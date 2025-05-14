@@ -1765,6 +1765,32 @@ def test_vrt_protocol_expand_option():
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
 
 
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("HDF5")
+def test_vrt_protocol_transpose_option():
+
+    ds = gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?transpose=/MyDataField:0,1")
+    assert ds.RasterXSize == 2
+
+    ds = gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?transpose=/MyDataField:2,1")
+    assert ds.RasterXSize == 4
+
+    ## check exclusivity with sd_name/sd (transpose gets priority)
+    with pytest.raises(
+        Exception,
+        match=r"'sd_name' is mutually exclusive with option 'transpose'",
+    ):
+        gdal.Open(
+            "vrt://../gdrivers/data/hdf5/fwhm.h5?sd_name=MyDataField&transpose=/MyDataField:1,0"
+        )
+
+    with pytest.raises(
+        Exception,
+        match=r"'sd' is mutually exclusive with option 'transpose'",
+    ):
+        gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?sd=1&transpose=/MyDataField:1,0")
+
+
 def test_vrt_source_no_dstrect():
 
     vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">

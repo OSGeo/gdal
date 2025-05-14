@@ -2162,7 +2162,7 @@ The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``pro
 The effect of the ``sd_name`` option (added in GDAL 3.9) is to choose an individual subdataset by
 name for sources that have multiple subdatasets. This means that rather than a fully-qualified description
 such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd_name=somearray". This option
-is mutually exclusive with ``sd``.
+is mutually exclusive with ``sd``, and with ``transpose``.
 
 The effect of the ``sd`` option (added in GDAL 3.9) is to choose an individual subdataset by
 number for sources that have multiple subdatasets. This means that rather than a fully-qualified
@@ -2170,8 +2170,18 @@ description such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd=
 is between 1 and the number of subdatasets. Note that there is no guarantee of the order of the
 subdatasets within a source between GDAL versions (or in some cases between file series in datasets). This
 mode is for convenience only, please use ``sd_name`` to choose a subdataset by name explicitly.
-This option is mutually exclusive with ``sd_name``.
+This option is mutually exclusive with ``sd_name``, and with ``transpose``.
 
+The effect of the ``transpose`` option (added in GDAL 3.12) is to specify just one array by name from a
+multidimensional dataset and nominate the indexes for the two axes that define the 2D dataset. This is
+an interface to the function :cpp:func:`GDALMDArray::AsClassicDataset` in the multidimensional raster model.
+This can be valuable for reorienting an array that presents X and Y in YX or some other order. (There's a
+possible added advantage that a valid geotransform may be provided that the classic 2D model doesn't yet infer,
+because the multidimensional model can derive one from coordinates referenced in that form).
+The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` with a no-op case
+``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
+transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
+This option is mutually exclusive with ``sd_name`` and ``sd``.
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
