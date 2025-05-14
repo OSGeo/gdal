@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #endif
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <string>
 #include <vector>
@@ -1722,6 +1723,12 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
     }
 
     CSLDestroy(papszTokens);
+
+    if ((nNextFID % 100000) == 0)
+    {
+        CPLDebug("CSV", "FID = %d, file offset = %" PRIu64, nNextFID,
+                 static_cast<uint64_t>(fpCSV->Tell()));
+    }
 
     // Translate the record id.
     poFeature->SetFID(nNextFID++);
