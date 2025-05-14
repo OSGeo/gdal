@@ -97,7 +97,7 @@ Standard options
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
-    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
+    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels
 
     ``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
 
@@ -111,7 +111,7 @@ Standard options
 
     ``q3``: third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels.
 
-    ``sum``: compute the weighted sum of all non-NODATA contributing pixels (since GDAL 3.1)
+    ``sum``: compute the weighted sum of all non-NODATA contributing pixels
 
     .. note::
 
