@@ -4943,6 +4943,43 @@ int GDALDatasetIsLayerPrivate(GDALDatasetH hDS, int iLayer)
 }
 
 /************************************************************************/
+/*                            GetLayerIndex()                           */
+/************************************************************************/
+
+/**
+ \brief Returns the index of the layer specified by name.
+
+ @since GDAL 3.12
+
+ @param pszName layer name (not NULL)
+
+ @return an index >= 0, or -1 if not found.
+*/
+
+int GDALDataset::GetLayerIndex(const char *pszName)
+{
+    const int nLayerCount = GetLayerCount();
+    int iMatch = -1;
+    for (int i = 0; i < nLayerCount; ++i)
+    {
+        if (const auto poLayer = GetLayer(i))
+        {
+            const char *pszLayerName = poLayer->GetDescription();
+            if (strcmp(pszName, pszLayerName) == 0)
+            {
+                iMatch = i;
+                break;
+            }
+            else if (EQUAL(pszName, pszLayerName))
+            {
+                iMatch = i;
+            }
+        }
+    }
+    return iMatch;
+}
+
+/************************************************************************/
 /*                        GDALDatasetDeleteLayer()                      */
 /************************************************************************/
 
