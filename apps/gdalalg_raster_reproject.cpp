@@ -132,6 +132,8 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     AddArg("error-threshold", 0, _("Error threshold"), &m_errorThreshold)
         .AddAlias("et")
         .SetCategory(GAAC_ADVANCED);
+
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 
 /************************************************************************/
@@ -219,11 +221,31 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     {
         aosOptions.AddString("-dstalpha");
     }
+
+    bool bFoundNumThreads = false;
     for (const std::string &opt : m_warpOptions)
     {
         aosOptions.AddString("-wo");
+        if (STARTS_WITH_CI(opt.c_str(), "NUM_THREADS="))
+            bFoundNumThreads = true;
         aosOptions.AddString(opt.c_str());
     }
+    if (bFoundNumThreads)
+    {
+        if (GetArg("num-threads")->IsExplicitlySet())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "--num-threads argument and NUM_THREADS warp options "
+                        "are mutually exclusive.");
+            return false;
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-wo");
+        aosOptions.AddString(CPLSPrintf("NUM_THREADS=%d", m_numThreads));
+    }
+
     for (const std::string &opt : m_transformOptions)
     {
         aosOptions.AddString("-to");

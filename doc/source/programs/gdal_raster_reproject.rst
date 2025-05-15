@@ -164,6 +164,13 @@ Standard options
     Alignment means that xmin / resx, ymin / resy,
     xmax / resx and ymax / resy are integer values.
 
+.. option:: -j, --num-threads <value>
+
+    .. versionadded:: 3.12
+
+    Number of jobs to run at once.
+    Default: number of CPUs detected.
+
 Advanced options
 ++++++++++++++++
 

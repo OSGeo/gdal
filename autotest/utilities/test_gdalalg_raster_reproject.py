@@ -178,3 +178,40 @@ def test_gdalalg_raster_reproject_error_threshold(tmp_vsimem):
     alg["error-threshold"] = -1
     with pytest.raises(Exception, match="Invalid value for error threshold"):
         alg.Run()
+
+
+def test_gdalalg_raster_reproject_num_threads_warp_option(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    alg = get_reproject_alg()
+    assert alg.ParseRunAndFinalize(
+        [
+            "--src-crs=EPSG:32611",
+            "--dst-crs=EPSG:4326",
+            "../gcore/data/byte.tif",
+            "--wo=NUM_THREADS=2",
+            out_filename,
+        ],
+    )
+
+
+def test_gdalalg_raster_reproject_both_num_threads_and_warp_option(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.tif")
+
+    alg = get_reproject_alg()
+    with pytest.raises(
+        Exception,
+        match="--num-threads argument and NUM_THREADS warp options are mutually exclusive",
+    ):
+        alg.ParseRunAndFinalize(
+            [
+                "--src-crs=EPSG:32611",
+                "--dst-crs=EPSG:4326",
+                "../gcore/data/byte.tif",
+                "--wo=NUM_THREADS=1",
+                "--num-threads=2",
+                out_filename,
+            ],
+        )
