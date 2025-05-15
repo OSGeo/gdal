@@ -172,19 +172,26 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
             std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
                 pScaledData(nullptr, GDALDestroyScaledProgress);
-            if (pfnProgress && !IsNativelyStreamingCompatible())
+
+            const bool bCanHandleNextStep =
+                !bIsStreaming && CanHandleNextStep(&writeAlg);
+
+            if (pfnProgress &&
+                (bCanHandleNextStep || !IsNativelyStreamingCompatible()))
             {
                 pScaledData.reset(GDALCreateScaledProgress(
-                    0.0, bIsStreaming ? 1.0 : 0.5, pfnProgress, pProgressData));
+                    0.0, bIsStreaming || bCanHandleNextStep ? 1.0 : 0.5,
+                    pfnProgress, pProgressData));
             }
 
             GDALVectorPipelineStepRunContext stepCtxt;
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
-
+            if (bCanHandleNextStep)
+                stepCtxt.m_poNextStep = &writeAlg;
             if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
-                if (bIsStreaming)
+                if (bIsStreaming || bCanHandleNextStep)
                 {
                     ret = true;
                 }

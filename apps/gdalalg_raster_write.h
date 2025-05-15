@@ -31,6 +31,11 @@ class GDALRasterWriteAlgorithm final : public GDALRasterPipelineStepAlgorithm
 
     GDALRasterWriteAlgorithm();
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
   private:
     friend class GDALRasterPipelineStepAlgorithm;
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;

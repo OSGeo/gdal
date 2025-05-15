@@ -312,12 +312,22 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
-    int countPipelinesWithProgress = 1;  // write
-    for (size_t i = 1; i + 1 < m_steps.size(); ++i)
+    int countPipelinesWithProgress = 0;
+    for (size_t i = 1; i < m_steps.size(); ++i)
     {
-        if (!m_steps[i]->IsNativelyStreamingCompatible())
+        const bool bCanHandleNextStep =
+            i < m_steps.size() - 1 &&
+            !m_steps[i]->CanHandleNextStep(m_steps[i + 1].get());
+        if (bCanHandleNextStep &&
+            !m_steps[i + 1]->IsNativelyStreamingCompatible())
             ++countPipelinesWithProgress;
+        else if (!m_steps[i]->IsNativelyStreamingCompatible())
+            ++countPipelinesWithProgress;
+        if (bCanHandleNextStep)
+            ++i;
     }
+    if (countPipelinesWithProgress == 0)
+        countPipelinesWithProgress = 1;
 
     GDALDataset *poCurDS = nullptr;
     int iCurPipelineWithProgress = 0;
@@ -368,10 +378,16 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             return false;
         }
 
+        const bool bCanHandleNextStep =
+            i < m_steps.size() - 1 &&
+            step->CanHandleNextStep(m_steps[i + 1].get());
+
         std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
             nullptr, GDALDestroyScaledProgress);
         typename StepAlgorithm::StepRunContext stepCtxt;
-        if (i == m_steps.size() - 1 || !step->IsNativelyStreamingCompatible())
+        if ((bCanHandleNextStep &&
+             m_steps[i + 1]->IsNativelyStreamingCompatible()) ||
+            !step->IsNativelyStreamingCompatible())
         {
             pScaledData.reset(GDALCreateScaledProgress(
                 iCurPipelineWithProgress /
@@ -382,6 +398,10 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             ++iCurPipelineWithProgress;
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
+        }
+        if (bCanHandleNextStep)
+        {
+            stepCtxt.m_poNextStep = m_steps[i + 1].get();
         }
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
@@ -395,6 +415,11 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 "Step nr %d (%s) failed to produce an output dataset",
                 static_cast<int>(i), step->GetName().c_str());
             return false;
+        }
+
+        if (bCanHandleNextStep)
+        {
+            ++i;
         }
     }
 

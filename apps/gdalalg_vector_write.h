@@ -31,6 +31,11 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
 
     GDALVectorWriteAlgorithm();
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
   private:
     friend class GDALVectorPipelineStepAlgorithm;
     bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;

@@ -22,6 +22,8 @@
 /*                  GDALRasterPipelineStepRunContext                    */
 /************************************************************************/
 
+class GDALRasterPipelineStepAlgorithm;
+
 class GDALRasterPipelineStepRunContext
 {
   public:
@@ -29,6 +31,7 @@ class GDALRasterPipelineStepRunContext
 
     GDALProgressFunc m_pfnProgress = nullptr;
     void *m_pProgressData = nullptr;
+    GDALRasterPipelineStepAlgorithm *m_poNextStep = nullptr;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepRunContext)
@@ -40,6 +43,22 @@ class GDALRasterPipelineStepRunContext
 
 class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
+  public:
+    const GDALArgDatasetValue &GetOutputDataset() const
+    {
+        return m_outputDataset;
+    }
+
+    const std::string &GetOutputFormat() const
+    {
+        return m_format;
+    }
+
+    const std::vector<std::string> &GetCreationOptions() const
+    {
+        return m_creationOptions;
+    }
+
   protected:
     using StepRunContext = GDALRasterPipelineStepRunContext;
 
@@ -54,6 +73,11 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     virtual bool IsNativelyStreamingCompatible() const
     {
         return true;
+    }
+
+    virtual bool CanHandleNextStep(GDALRasterPipelineStepAlgorithm *) const
+    {
+        return false;
     }
 
     virtual bool RunStep(GDALRasterPipelineStepRunContext &ctxt) = 0;

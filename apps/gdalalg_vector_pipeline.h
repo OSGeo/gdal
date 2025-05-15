@@ -28,6 +28,8 @@
 /*                  GDALVectorPipelineStepRunContext                    */
 /************************************************************************/
 
+class GDALVectorPipelineStepAlgorithm;
+
 class GDALVectorPipelineStepRunContext
 {
   public:
@@ -35,6 +37,7 @@ class GDALVectorPipelineStepRunContext
 
     GDALProgressFunc m_pfnProgress = nullptr;
     void *m_pProgressData = nullptr;
+    GDALVectorPipelineStepAlgorithm *m_poNextStep = nullptr;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineStepRunContext)
@@ -61,6 +64,11 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     virtual bool IsNativelyStreamingCompatible() const
     {
         return true;
+    }
+
+    virtual bool CanHandleNextStep(GDALVectorPipelineStepAlgorithm *) const
+    {
+        return false;
     }
 
     virtual bool RunStep(GDALVectorPipelineStepRunContext &ctxt) = 0;
