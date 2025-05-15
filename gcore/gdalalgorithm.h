@@ -2824,6 +2824,10 @@ class CPL_DLL GDALAlgorithmRegistry
     AddLayerNameArg(std::vector<std::string> *pValue,
                     const char *helpMessage = nullptr);
 
+    /** Add geometry type argument */
+    GDALInConstructionAlgorithmArg &
+    AddGeometryTypeArg(std::string *pValue, const char *helpMessage = nullptr);
+
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &
     AddBandArg(int *pValue, const char *helpMessage = nullptr);
