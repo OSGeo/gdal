@@ -141,6 +141,7 @@ Open a subdataset returned by the above request:
    .. code-tab:: bash
 
     gdalinfo "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image"
+    # from GDAL 3.11+
     gdal raster info "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image"
 
    .. code-tab:: ps1
