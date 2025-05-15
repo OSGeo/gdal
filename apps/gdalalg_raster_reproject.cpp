@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_reproject.h"
+#include "gdalalg_raster_write.h"
 
 #include "gdal_alg.h"
 #include "gdal_priv.h"
@@ -162,18 +163,49 @@ void GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
 }
 
 /************************************************************************/
+/*          GDALRasterReprojectAlgorithm::CanHandleNextStep()           */
+/************************************************************************/
+
+bool GDALRasterReprojectAlgorithm::CanHandleNextStep(
+    GDALRasterPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
+}
+
+/************************************************************************/
 /*            GDALRasterReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReprojectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterReprojectAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString("VRT");
+    std::string outputFilename;
+    if (ctxt.m_poNextStep)
+    {
+        CPLAssert(CanHandleNextStep(ctxt.m_poNextStep));
+        outputFilename = ctxt.m_poNextStep->GetOutputDataset().GetName();
+        if (!ctxt.m_poNextStep->GetOutputFormat().empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(ctxt.m_poNextStep->GetOutputFormat().c_str());
+        }
+        for (const std::string &co : ctxt.m_poNextStep->GetCreationOptions())
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(co.c_str());
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-of");
+        aosOptions.AddString("VRT");
+    }
     if (!m_srsCrs.empty())
     {
         aosOptions.AddString("-s_srs");
@@ -262,19 +294,28 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
         aosOptions.AddString(CPLSPrintf("%.17g", m_errorThreshold));
     }
 
+    bool bOK = false;
     GDALWarpAppOptions *psOptions =
         GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
-
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALWarp("", nullptr, 1, &hSrcDS, psOptions, nullptr));
-    GDALWarpAppOptionsFree(psOptions);
-    if (!poRetDS)
-        return false;
-
-    m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-
-    return true;
+    if (psOptions)
+    {
+        if (ctxt.m_poNextStep)
+        {
+            GDALWarpAppOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
+                                          ctxt.m_pProgressData);
+        }
+        GDALDatasetH hSrcDS =
+            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        auto poRetDS = GDALDataset::FromHandle(GDALWarp(
+            outputFilename.c_str(), nullptr, 1, &hSrcDS, psOptions, nullptr));
+        GDALWarpAppOptionsFree(psOptions);
+        bOK = poRetDS != nullptr;
+        if (bOK)
+        {
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
+    }
+    return bOK;
 }
 
 //! @endcond
