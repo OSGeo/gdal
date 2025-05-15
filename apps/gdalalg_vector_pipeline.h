@@ -25,6 +25,22 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                  GDALVectorPipelineStepRunContext                    */
+/************************************************************************/
+
+class GDALVectorPipelineStepRunContext
+{
+  public:
+    GDALVectorPipelineStepRunContext() = default;
+
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineStepRunContext)
+};
+
+/************************************************************************/
 /*                GDALVectorPipelineStepAlgorithm                       */
 /************************************************************************/
 
@@ -36,6 +52,8 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    using StepRunContext = GDALVectorPipelineStepRunContext;
+
     friend class GDALVectorPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
@@ -45,7 +63,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return true;
     }
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    virtual bool RunStep(GDALVectorPipelineStepRunContext &ctxt) = 0;
 
     void AddInputArgs(bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);

@@ -67,7 +67,7 @@ GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
 /*              GDALRasterHillshadeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterHillshadeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterHillshadeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

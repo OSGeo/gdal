@@ -42,7 +42,7 @@ class GDALVectorGeomSimplifyAlgorithm final
     explicit GDALVectorGeomSimplifyAlgorithm(bool standaloneStep);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

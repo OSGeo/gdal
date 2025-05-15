@@ -35,7 +35,7 @@ class GDALRasterReprojectAlgorithm /* non final */
     explicit GDALRasterReprojectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::string m_srsCrs{};
     std::string m_dstCrs{};

@@ -46,7 +46,7 @@ GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
 /*               GDALRasterColorMapAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterColorMapAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);

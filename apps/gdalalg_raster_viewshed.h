@@ -34,7 +34,7 @@ class GDALRasterViewshedAlgorithm /* non final */
     explicit GDALRasterViewshedAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::vector<double> m_observerPos{};
     double m_targetHeight = 0;

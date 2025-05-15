@@ -179,15 +179,16 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
             std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
                 pScaledData(nullptr, GDALDestroyScaledProgress);
-            if (!IsNativelyStreamingCompatible())
+            if (pfnProgress && !IsNativelyStreamingCompatible())
             {
                 pScaledData.reset(GDALCreateScaledProgress(
                     0.0, bIsStreaming ? 1.0 : 0.5, pfnProgress, pProgressData));
             }
 
-            if (RunPreStepPipelineValidations() &&
-                RunStep(pScaledData ? GDALScaledProgress : nullptr,
-                        pScaledData.get()))
+            GDALRasterPipelineStepRunContext stepCtxt;
+            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
+            stepCtxt.m_pProgressData = pScaledData.get();
+            if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
                 if (bIsStreaming)
                 {
@@ -219,8 +220,11 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             IsNativelyStreamingCompatible() ? 0.0 : 0.5, 1.0,
                             pfnProgress, pProgressData));
                     }
-                    if (writeAlg.Run(pScaledData ? GDALScaledProgress : nullptr,
-                                     pScaledData.get()))
+                    stepCtxt.m_pfnProgress =
+                        pScaledData ? GDALScaledProgress : nullptr;
+                    stepCtxt.m_pProgressData = pScaledData.get();
+                    if (writeAlg.ValidateArguments() &&
+                        writeAlg.RunStep(stepCtxt))
                     {
                         if (pfnProgress)
                             pfnProgress(1.0, "", pProgressData);
@@ -237,8 +241,10 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunPreStepPipelineValidations() &&
-               RunStep(pfnProgress, pProgressData);
+        GDALRasterPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunPreStepPipelineValidations() && RunStep(stepCtxt);
     }
 }
 

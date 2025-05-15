@@ -71,9 +71,12 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm(
 /*                 GDALRasterFillNodataAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALRasterFillNodataAlgorithm::RunStep(GDALProgressFunc pfnProgress,
-                                            void *pProgressData)
+bool GDALRasterFillNodataAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
+
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
         GDALCreateScaledProgress(0.0, 0.5, pfnProgress, pProgressData),

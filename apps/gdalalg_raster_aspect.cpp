@@ -53,7 +53,7 @@ GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm(bool standaloneStep)
 /*                GDALRasterAspectAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterAspectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterAspectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

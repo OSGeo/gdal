@@ -35,7 +35,7 @@ class GDALRasterRoughnessAlgorithm /* non final */
     explicit GDALRasterRoughnessAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     bool m_noEdges = false;

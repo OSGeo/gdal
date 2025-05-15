@@ -71,7 +71,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(typename StepAlgorithm::StepRunContext &ctxt) override;
 };
 
 /************************************************************************/
@@ -146,7 +146,7 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
 
 template <class StepAlgorithm>
 bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
-    GDALProgressFunc pfnProgress, void *pProgressData)
+    typename StepAlgorithm::StepRunContext &ctxt)
 {
     if (m_steps.empty())
     {
@@ -370,6 +370,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 
         std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
             nullptr, GDALDestroyScaledProgress);
+        typename StepAlgorithm::StepRunContext stepCtxt;
         if (i == m_steps.size() - 1 || !step->IsNativelyStreamingCompatible())
         {
             pScaledData.reset(GDALCreateScaledProgress(
@@ -377,11 +378,12 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                     static_cast<double>(countPipelinesWithProgress),
                 (iCurPipelineWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
-                pfnProgress, pProgressData));
+                ctxt.m_pfnProgress, ctxt.m_pProgressData));
             ++iCurPipelineWithProgress;
+            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
+            stepCtxt.m_pProgressData = pScaledData.get();
         }
-        if (!step->Run(pScaledData ? GDALScaledProgress : nullptr,
-                       pScaledData.get()))
+        if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
             return false;
         }
@@ -396,8 +398,8 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
-    if (pfnProgress)
-        pfnProgress(1.0, "", pProgressData);
+    if (ctxt.m_pfnProgress)
+        ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
     if (!GetOutputDataset().GetDatasetRef())
     {

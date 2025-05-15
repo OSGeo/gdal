@@ -47,7 +47,7 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
 /*               GDALVectorFilterAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorFilterAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

@@ -236,7 +236,10 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        GDALRasterPipelineStepRunContext ctxt;
+        ctxt.m_pfnProgress = pfnProgress;
+        ctxt.m_pProgressData = pProgressData;
+        return RunStep(ctxt);
     }
 }
 
@@ -244,7 +247,7 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 /*                GDALRasterEditAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterEditAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

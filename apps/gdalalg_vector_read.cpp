@@ -151,7 +151,7 @@ OGRFeature *GDALVectorPipelineReadOutputDataset::GetNextFeature(
 /*                  GDALVectorReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALVectorReadAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorReadAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

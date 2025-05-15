@@ -266,7 +266,8 @@ GDALVectorGeomSetTypeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 /*            GDALVectorGeomSetTypeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomSetTypeAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &ctxt)
 {
     if (!m_opts.m_type.empty())
     {
@@ -282,7 +283,7 @@ bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
         m_opts.m_eType = OGRFromOGCGeomType(m_opts.m_type.c_str());
     }
 
-    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
+    return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 }
 
 //! @endcond

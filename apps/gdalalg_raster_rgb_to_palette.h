@@ -34,7 +34,7 @@ class GDALRasterRGBToPaletteAlgorithm /* non final */
     explicit GDALRasterRGBToPaletteAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc, void *) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     int m_colorCount = 256;
     std::string m_colorMap{};

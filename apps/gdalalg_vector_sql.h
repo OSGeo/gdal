@@ -33,7 +33,7 @@ class GDALVectorSQLAlgorithm /* non final */
     explicit GDALVectorSQLAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_sql{};
     std::vector<std::string> m_outputLayer{};

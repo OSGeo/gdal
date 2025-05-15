@@ -32,7 +32,8 @@ class GDALRasterWriteAlgorithm final : public GDALRasterPipelineStepAlgorithm
     GDALRasterWriteAlgorithm();
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    friend class GDALRasterPipelineStepAlgorithm;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond

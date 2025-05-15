@@ -19,12 +19,30 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                  GDALRasterPipelineStepRunContext                    */
+/************************************************************************/
+
+class GDALRasterPipelineStepRunContext
+{
+  public:
+    GDALRasterPipelineStepRunContext() = default;
+
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepRunContext)
+};
+
+/************************************************************************/
 /*                GDALRasterPipelineStepAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
   protected:
+    using StepRunContext = GDALRasterPipelineStepRunContext;
+
     GDALRasterPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
@@ -38,7 +56,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return true;
     }
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    virtual bool RunStep(GDALRasterPipelineStepRunContext &ctxt) = 0;
 
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI);

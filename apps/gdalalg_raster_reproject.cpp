@@ -165,7 +165,7 @@ void GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
 /*            GDALRasterReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReprojectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

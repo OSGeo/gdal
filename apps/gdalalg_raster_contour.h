@@ -34,18 +34,6 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
 
     explicit GDALRasterContourAlgorithm();
 
-    GDALDataset *GetDatasetRef()
-    {
-        return m_inputDataset.GetDatasetRef();
-    }
-
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        arg->Set(poDS);
-        arg->SetSkipIfAlreadySet();
-    }
-
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 

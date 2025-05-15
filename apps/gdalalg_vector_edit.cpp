@@ -187,7 +187,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 /*                GDALVectorEditAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorEditAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorEditAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
