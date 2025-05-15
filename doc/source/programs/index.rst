@@ -45,7 +45,7 @@ General
     - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
     - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized ``gdal`` commands
 
-Commands working with raster of vector inputs
+Commands working with raster or vector inputs
 +++++++++++++++++++++++++++++++++++++++++++++
 
 .. toctree::
