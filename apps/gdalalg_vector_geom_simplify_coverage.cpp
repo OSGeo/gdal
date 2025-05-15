@@ -117,9 +117,12 @@ class GDALVectorGeomSimplifyCoverageAlgorithmLayer final : public OGRLayer
 
     void ResetReading() override
     {
-        m_srcLayer.ResetReading();
+        if (!m_materialized)
+        {
+            m_srcLayer.ResetReading();
+            m_features.clear();
+        }
         m_pos = 0;
-        m_features.clear();
     }
 
     OGRFeature *GetNextFeature() override
@@ -136,28 +139,6 @@ class GDALVectorGeomSimplifyCoverageAlgorithmLayer final : public OGRLayer
         {
             return nullptr;
         }
-
-        GEOSGeometry *dstGeom = m_geos_result[m_pos];
-        if (m_outputMultiPart &&
-            GEOSGetNumGeometries_r(m_GEOSContext, dstGeom) == 1)
-        {
-            dstGeom = GEOSGeom_createCollection_r(
-                m_GEOSContext, GEOS_MULTIPOLYGON, &dstGeom, 1);
-        }
-
-        std::unique_ptr<OGRGeometry> poSimplified(
-            OGRGeometryFactory::createFromGEOS(m_GEOSContext, dstGeom));
-        GEOSGeom_destroy_r(m_GEOSContext, m_geos_result[m_pos]);
-        m_geos_result[m_pos] = nullptr;
-
-        if (poSimplified == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to convert result from GEOS");
-            return nullptr;
-        }
-
-        m_features[m_pos]->SetGeometry(std::move(poSimplified));
 
         auto &ret = m_features[m_pos];
         m_pos++;
@@ -229,8 +210,34 @@ class GDALVectorGeomSimplifyCoverageAlgorithmLayer final : public OGRLayer
         unsigned int nResultGeoms;
         m_geos_result = GEOSGeom_releaseCollection_r(m_GEOSContext, geos_result,
                                                      &nResultGeoms);
-
+        GEOSGeom_destroy_r(m_GEOSContext, geos_result);
         CPLAssert(m_features.size() == nResultGeoms);
+
+        for (size_t i = 0; i < m_features.size(); i++)
+        {
+            GEOSGeometry *dstGeom = m_geos_result[i];
+
+            if (m_outputMultiPart &&
+                GEOSGetNumGeometries_r(m_GEOSContext, dstGeom) == 1)
+            {
+                dstGeom = GEOSGeom_createCollection_r(
+                    m_GEOSContext, GEOS_MULTIPOLYGON, &dstGeom, 1);
+            }
+
+            std::unique_ptr<OGRGeometry> poSimplified(
+                OGRGeometryFactory::createFromGEOS(m_GEOSContext, dstGeom));
+            GEOSGeom_destroy_r(m_GEOSContext, m_geos_result[i]);
+            m_geos_result[i] = nullptr;
+
+            if (poSimplified == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to convert result from GEOS");
+                return false;
+            }
+
+            m_features[i]->SetGeometry(std::move(poSimplified));
+        }
 
         m_materialized = true;
 
