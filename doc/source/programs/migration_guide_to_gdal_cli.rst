@@ -44,6 +44,17 @@ Raster commands
     gdal raster reproject --dst-crs=EPSG:4326 --co=TILED=YES,COMPRESS=DEFLATE --overwrite in.tif out.tif
 
 
+* Update existing out.tif with content of in.tif using cubic interpolation
+
+.. code-block::
+
+    gdalwarp -r cubic in.tif out.tif
+
+    ==>
+
+    gdal raster update -r cubic in.tif out.tif
+
+
 * Converting a PNG file to a tiled GeoTIFF file, adding georeferencing for world coverage in WGS 84 and metadata
 
 .. code-block::

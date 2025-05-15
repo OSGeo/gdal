@@ -39,12 +39,8 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
-    AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
-        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
-                    "average", "rms", "mode", "min", "max", "med", "q1", "q3",
-                    "sum")
-        .SetDefault("nearest")
-        .SetHiddenChoices("near");
+
+    GDALRasterReprojectUtils::AddResamplingArg(this, m_resampling);
 
     AddArg("resolution", 0, _("Target resolution (in destination CRS units)"),
            &m_resolution)
@@ -92,15 +88,45 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
              "raster have none."),
            &m_addAlpha)
         .SetCategory(GAAC_ADVANCED);
+
+    GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
+        this, m_warpOptions, m_transformOptions, m_errorThreshold);
+}
+
+/************************************************************************/
+/*           GDALRasterReprojectUtils::AddResamplingArg()               */
+/************************************************************************/
+
+/*static */ void
+GDALRasterReprojectUtils::AddResamplingArg(GDALAlgorithm *alg,
+                                           std::string &resampling)
+{
+    alg->AddArg("resampling", 'r', _("Resampling method"), &resampling)
+        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
+                    "average", "rms", "mode", "min", "max", "med", "q1", "q3",
+                    "sum")
+        .SetDefault("nearest")
+        .SetHiddenChoices("near");
+}
+
+/************************************************************************/
+/*            AddWarpOptTransformOptErrorThresholdArg()                 */
+/************************************************************************/
+
+/* static */
+void GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
+    GDALAlgorithm *alg, std::vector<std::string> &warpOptions,
+    std::vector<std::string> &transformOptions, double &errorThreshold)
+{
     {
         auto &arg =
-            AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
+            alg->AddArg("warp-option", 0, _("Warping option(s)"), &warpOptions)
                 .AddAlias("wo")
                 .SetMetaVar("<NAME>=<VALUE>")
                 .SetCategory(GAAC_ADVANCED)
                 .SetPackedValuesAllowed(false);
-        arg.AddValidationAction([this, &arg]()
-                                { return ParseAndValidateKeyValue(arg); });
+        arg.AddValidationAction([alg, &arg]()
+                                { return alg->ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {
@@ -111,14 +137,14 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             });
     }
     {
-        auto &arg = AddArg("transform-option", 0, _("Transform option(s)"),
-                           &m_transformOptions)
+        auto &arg = alg->AddArg("transform-option", 0, _("Transform option(s)"),
+                                &transformOptions)
                         .AddAlias("to")
                         .SetMetaVar("<NAME>=<VALUE>")
                         .SetCategory(GAAC_ADVANCED)
                         .SetPackedValuesAllowed(false);
-        arg.AddValidationAction([this, &arg]()
-                                { return ParseAndValidateKeyValue(arg); });
+        arg.AddValidationAction([alg, &arg]()
+                                { return alg->ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {
@@ -129,8 +155,9 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
                 return ret;
             });
     }
-    AddArg("error-threshold", 0, _("Error threshold"), &m_errorThreshold)
+    alg->AddArg("error-threshold", 0, _("Error threshold"), &errorThreshold)
         .AddAlias("et")
+        .SetMinValueIncluded(0)
         .SetCategory(GAAC_ADVANCED);
 }
 

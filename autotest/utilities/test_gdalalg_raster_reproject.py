@@ -172,9 +172,7 @@ def test_gdalalg_raster_reproject_error_threshold(tmp_vsimem):
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
 
     alg = get_reproject_alg()
-    alg["input"] = src_ds
-    alg["output"] = ""
-    alg["output-format"] = "MEM"
-    alg["error-threshold"] = -1
-    with pytest.raises(Exception, match="Invalid value for error threshold"):
-        alg.Run()
+    with pytest.raises(
+        Exception, match="Value of argument 'error-threshold' is -1, but should be >= 0"
+    ):
+        alg["error-threshold"] = -1
