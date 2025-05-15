@@ -26,7 +26,8 @@ and target datasets do not have the same coordinate reference systems.
 The extent, size, resolution or coordinate reference system of the target dataset
 are not modified by this operation.
 
-Overviews are *not* updated by this command, but may be if using :ref:`gdal_raster_overview_refresh`.
+Overviews are updated by this command (using :ref:`gdal_raster_overview_refresh`),
+unless :option:`--no-update-overviews` is specified.
 
 Standard options
 ++++++++++++++++
@@ -51,6 +52,10 @@ Standard options
     dataset.
     The geometry will be reprojected from the geometry-crs to the CRS of the
     dataset being updated.
+
+.. option:: --no-update-overviews
+
+    Do not update existing overviews.
 
 Advanced options
 ++++++++++++++++

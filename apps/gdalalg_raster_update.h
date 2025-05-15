@@ -50,6 +50,7 @@ class GDALRasterUpdateAlgorithm final : public GDALAlgorithm,
     std::vector<std::string> m_warpOptions{};
     std::vector<std::string> m_transformOptions{};
     double m_errorThreshold = std::numeric_limits<double>::quiet_NaN();
+    bool m_noUpdateOverviews = false;
 };
 
 //! @endcond

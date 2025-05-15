@@ -14,7 +14,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 np = pytest.importorskip("numpy")
 gdaltest.importorskip_gdal_array()
@@ -154,3 +154,72 @@ def test_gdalalg_raster_update_geometry_invalid():
         gdal.Run(
             "gdal", "raster", "update", input=src_ds, output=out_ds, geometry="invalid"
         )
+
+
+@pytest.mark.parametrize("with_crs", [True, False])
+def test_gdalalg_raster_update_refresh_overviews(with_crs):
+
+    crs = osr.SpatialReference(epsg=32631)
+
+    out_ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024)
+    out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_ds.BuildOverviews("NEAR", [2])
+    out_ds.GetRasterBand(1).GetOverview(0).Fill(127)
+    if with_crs:
+        out_ds.SetSpatialRef(crs)
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src_ds.SetGeoTransform([511, 1, 0, -511, 0, -1])
+    src_ds.GetRasterBand(1).Fill(255)
+    if with_crs:
+        src_ds.SetSpatialRef(crs)
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert gdal.Run(
+        "gdal",
+        "raster",
+        "update",
+        input=src_ds,
+        output=out_ds,
+        resampling="cubic",
+        progress=my_progress,
+    )
+
+    assert tab_pct[0] == 1.0
+
+    np.testing.assert_array_equal(
+        out_ds.ReadAsArray(511, 511, 2, 2), np.array([[255, 255], [255, 255]])
+    )
+
+    np.testing.assert_array_equal(
+        out_ds.GetRasterBand(1).GetOverview(0).ReadAsArray(254, 254, 4, 4),
+        np.array(
+            [
+                [127, 127, 127, 127],
+                [127, 76, 76, 127],
+                [127, 76, 76, 127],
+                [127, 127, 127, 127],
+            ]
+        ),
+    )
+
+
+def test_gdalalg_raster_update_cannot_update_overviews():
+
+    out_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_ds.SetSpatialRef(osr.SpatialReference(epsg=32631))
+    out_ds.BuildOverviews("NEAR", [2])
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([1, 1, 0, -1, 0, -1])
+    src_ds.SetSpatialRef(osr.SpatialReference("+proj=longlat +a=1"))
+
+    with pytest.raises(Exception), gdaltest.error_raises(gdal.CE_Warning):
+        gdal.Run("gdal", "raster", "update", input=src_ds, output=out_ds)

@@ -17,7 +17,11 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdalalg_raster_reproject.h"  // for GDALRasterReprojectUtils
+#include "gdalalg_raster_overview_refresh.h"
+#include "ogr_spatialref.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <tuple>
 
@@ -56,6 +60,9 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm()
 
     GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
         this, m_warpOptions, m_transformOptions, m_errorThreshold);
+
+    AddArg("no-update-overviews", 0, _("Do not update existing overviews"),
+           &m_noUpdateOverviews);
 }
 
 /************************************************************************/
@@ -125,6 +132,75 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(poClipGeom->exportToWkt());
     }
 
+    bool bOvrCanBeUpdated = false;
+    std::vector<double> overviewRefreshBBox;
+    if (poDstDS->GetRasterBand(1)->GetOverviewCount() > 0 &&
+        !m_noUpdateOverviews)
+    {
+        std::array<double, 6> adfGT;
+        const auto poSrcCRS = poSrcDS->GetSpatialRef();
+        const auto poDstCRS = poDstDS->GetSpatialRef();
+        const bool bBothCRS = poSrcCRS && poDstCRS;
+        const bool bBothNoCRS = !poSrcCRS && !poDstCRS;
+        if ((bBothCRS || bBothNoCRS) &&
+            poSrcDS->GetGeoTransform(adfGT.data()) == CE_None)
+        {
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                bBothCRS ? OGRCreateCoordinateTransformation(poSrcCRS, poDstCRS)
+                         : nullptr);
+            if (bBothNoCRS || poCT)
+            {
+                const double dfTLX = adfGT[0];
+                const double dfTLY = adfGT[3];
+
+                double dfTRX = 0;
+                double dfTRY = 0;
+                GDALApplyGeoTransform(adfGT.data(), poSrcDS->GetRasterXSize(),
+                                      0, &dfTRX, &dfTRY);
+
+                double dfBLX = 0;
+                double dfBLY = 0;
+                GDALApplyGeoTransform(
+                    adfGT.data(), 0, poSrcDS->GetRasterYSize(), &dfBLX, &dfBLY);
+
+                double dfBRX = 0;
+                double dfBRY = 0;
+                GDALApplyGeoTransform(adfGT.data(), poSrcDS->GetRasterXSize(),
+                                      poSrcDS->GetRasterYSize(), &dfBRX,
+                                      &dfBRY);
+
+                const double dfXMin =
+                    std::min(std::min(dfTLX, dfTRX), std::min(dfBLX, dfBRX));
+                const double dfYMin =
+                    std::min(std::min(dfTLY, dfTRY), std::min(dfBLY, dfBRY));
+                const double dfXMax =
+                    std::max(std::max(dfTLX, dfTRX), std::max(dfBLX, dfBRX));
+                const double dfYMax =
+                    std::max(std::max(dfTLY, dfTRY), std::max(dfBLY, dfBRY));
+                double dfOutXMin = dfXMin;
+                double dfOutYMin = dfYMin;
+                double dfOutXMax = dfXMax;
+                double dfOutYMax = dfYMax;
+                if (!poCT || poCT->TransformBounds(
+                                 dfXMin, dfYMin, dfXMax, dfYMax, &dfOutXMin,
+                                 &dfOutYMin, &dfOutXMax, &dfOutYMax, 21))
+                {
+                    bOvrCanBeUpdated = true;
+                    CPLDebug("update",
+                             "Refresh overviews from (%f,%f) to (%f,%f)",
+                             dfOutXMin, dfOutYMin, dfOutXMax, dfOutYMax);
+                    overviewRefreshBBox = std::vector<double>{
+                        dfOutXMin, dfOutYMin, dfOutXMax, dfOutYMax};
+                }
+            }
+        }
+        if (!bOvrCanBeUpdated)
+        {
+            ReportError(CE_Warning, CPLE_AppDefined,
+                        "Overviews can not be updated");
+        }
+    }
+
     bool bOK = false;
     GDALWarpAppOptions *psOptions =
         GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
@@ -134,7 +210,11 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             nullptr, GDALDestroyScaledProgress);
         if (pfnProgress)
         {
-            GDALWarpAppOptionsSetProgress(psOptions, pfnProgress, pProgressData);
+            pScaledData.reset(
+                GDALCreateScaledProgress(0.0, bOvrCanBeUpdated ? 0.75 : 1.0,
+                                         pfnProgress, pProgressData));
+            GDALWarpAppOptionsSetProgress(psOptions, GDALScaledProgress,
+                                          pScaledData.get());
         }
 
         GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
@@ -144,6 +224,18 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         GDALWarpAppOptionsFree(psOptions);
 
         bOK = poRetDS != nullptr;
+        if (bOK && bOvrCanBeUpdated)
+        {
+            GDALRasterOverviewAlgorithmRefresh refresh;
+            refresh.GetArg("dataset")->Set(poRetDS);
+            if (!m_resampling.empty())
+                refresh.GetArg("resampling")->Set(m_resampling);
+            refresh.GetArg("bbox")->Set(overviewRefreshBBox);
+            pScaledData.reset(GDALCreateScaledProgress(0.75, 1.0, pfnProgress,
+                                                       pProgressData));
+            bOK = refresh.Run(pScaledData ? GDALScaledProgress : nullptr,
+                              pScaledData.get());
+        }
         if (bOK && pfnProgress)
             pfnProgress(1.0, "", pProgressData);
     }
