@@ -437,6 +437,37 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         assert "set-type" in out
 
 
+def test_gdal_completion_gdal_vector_info_layer(gdal_path):
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer"
+    ).split(" ")
+    assert out == ["poly"]
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer p"
+    ).split(" ")
+    assert out == ["poly"]
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer poly"
+    ).split(" ")
+    assert out == [""]
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer poly XX"
+    ).split(" ")
+    assert out == [""]
+
+
+def test_gdal_completion_gdal_vector_pipeline_read_layer(gdal_path):
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector pipeline read ../ogr/data/poly.shp --layer"
+    ).split(" ")
+    assert out == ["poly"]
+
+
 def test_gdal_algorithm_getter_setter():
 
     with pytest.raises(

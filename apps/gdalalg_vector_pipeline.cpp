@@ -64,19 +64,22 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR})
         .SetHiddenForCLI(hiddenForCLI);
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
-                       /* positionalAndRequired = */ !hiddenForCLI)
-        .SetMinCount(1)
-        .SetMaxCount((GetName() == GDALVectorPipelineAlgorithm::NAME ||
-                      GetName() == GDALVectorConcatAlgorithm::NAME)
-                         ? INT_MAX
-                         : 1)
-        .SetHiddenForCLI(hiddenForCLI);
+    auto &datasetArg =
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
+                           /* positionalAndRequired = */ !hiddenForCLI)
+            .SetMinCount(1)
+            .SetMaxCount((GetName() == GDALVectorPipelineAlgorithm::NAME ||
+                          GetName() == GDALVectorConcatAlgorithm::NAME)
+                             ? INT_MAX
+                             : 1)
+            .SetHiddenForCLI(hiddenForCLI);
     if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
-        AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
-            .AddAlias("layer")
-            .SetHiddenForCLI(hiddenForCLI);
+        auto &layerArg = AddArg("input-layer", 'l', _("Input layer name(s)"),
+                                &m_inputLayerNames)
+                             .AddAlias("layer")
+                             .SetHiddenForCLI(hiddenForCLI);
+        SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     }
 }
 

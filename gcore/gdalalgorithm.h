@@ -2829,6 +2829,11 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddGeometryTypeArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** Register an auto complete function for a layer name argument */
+    static void SetAutoCompleteFunctionForLayerName(
+        GDALInConstructionAlgorithmArg &layerArg,
+        GDALInConstructionAlgorithmArg &datasetArg);
+
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &
     AddBandArg(int *pValue, const char *helpMessage = nullptr);

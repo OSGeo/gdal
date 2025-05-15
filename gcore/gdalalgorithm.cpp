@@ -20,6 +20,7 @@
 
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -3829,6 +3830,58 @@ GDALAlgorithm::AddGeometryTypeArg(std::string *pValue, const char *helpMessage)
                 }
                 return true;
             });
+}
+
+/************************************************************************/
+/*          GDALAlgorithm::SetAutoCompleteFunctionForLayerName()        */
+/************************************************************************/
+
+/* static */
+void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
+    GDALInConstructionAlgorithmArg &layerArg,
+    GDALInConstructionAlgorithmArg &datasetArg)
+{
+    CPLAssert(datasetArg.GetType() == GAAT_DATASET ||
+              datasetArg.GetType() == GAAT_DATASET_LIST);
+
+    layerArg.SetAutoCompleteFunction(
+        [&datasetArg](const std::string &currentValue)
+        {
+            std::vector<std::string> ret;
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            GDALArgDatasetValue *dsVal = nullptr;
+            if (datasetArg.GetType() == GAAT_DATASET)
+            {
+                dsVal = &(datasetArg.Get<GDALArgDatasetValue>());
+            }
+            else
+            {
+                auto &val = datasetArg.Get<std::vector<GDALArgDatasetValue>>();
+                if (val.size() == 1)
+                {
+                    dsVal = &val[0];
+                }
+            }
+            if (dsVal && !dsVal->GetName().empty())
+            {
+                auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                    dsVal->GetName().c_str(), GDAL_OF_VECTOR));
+                if (poDS)
+                {
+                    for (auto &&poLayer : poDS->GetLayers())
+                    {
+                        if (currentValue == poLayer->GetDescription())
+                        {
+                            ret.clear();
+                            ret.push_back(poLayer->GetDescription());
+                            break;
+                        }
+                        ret.push_back(poLayer->GetDescription());
+                    }
+                }
+            }
+            return ret;
+        });
 }
 
 /************************************************************************/
