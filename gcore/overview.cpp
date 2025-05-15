@@ -5797,8 +5797,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 nChunkYSizeQueried = nSrcHeight - nChunkYOffQueried;
             CPLAssert(nChunkYSizeQueried <= nFullResYChunkQueried);
 
-            if (!pfnProgress(dfCurPixelCount / dfTotalPixelCount, nullptr,
-                             pProgressData))
+            if (!pfnProgress(std::min(1.0, dfCurPixelCount / dfTotalPixelCount),
+                             nullptr, pProgressData))
             {
                 CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                 eErr = CE_Failure;
