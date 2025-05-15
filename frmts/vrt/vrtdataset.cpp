@@ -1746,6 +1746,14 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             if (pszLanguage != nullptr)
                 poDerivedBand->SetPixelFunctionLanguage(pszLanguage);
 
+            const char *pszSkipNonContributingSources =
+                CSLFetchNameValue(papszOptions, "SkipNonContributingSources");
+            if (pszSkipNonContributingSources != nullptr)
+            {
+                poDerivedBand->SetSkipNonContributingSources(
+                    CPLTestBool(pszSkipNonContributingSources));
+            }
+
             const char *pszTransferTypeName =
                 CSLFetchNameValue(papszOptions, "SourceTransferType");
             if (pszTransferTypeName != nullptr)
@@ -1764,7 +1772,7 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             }
 
             /* We're done with the derived band specific stuff, so */
-            /* we can assigned the base class pointer now. */
+            /* we can assign the base class pointer now. */
             poBand = poDerivedBand;
         }
         else
