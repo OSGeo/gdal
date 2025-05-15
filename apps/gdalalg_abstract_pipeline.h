@@ -378,6 +378,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 (iCurPipelineWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
                 pfnProgress, pProgressData));
+            ++iCurPipelineWithProgress;
         }
         if (!step->Run(pScaledData ? GDALScaledProgress : nullptr,
                        pScaledData.get()))
