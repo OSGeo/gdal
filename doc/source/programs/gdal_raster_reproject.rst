@@ -210,7 +210,7 @@ Advanced options
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple options may be listed.
 
-.. option:: -to <NAME>=<VALUE>
+.. option:: --to <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
