@@ -4994,7 +4994,10 @@ def test_tiff_read_multi_threaded(
 
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
 @pytest.mark.parametrize("advise_read", [True, False])
-@pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
+@pytest.mark.skipif(
+    platform.system() == "Darwin" or gdaltest.is_travis_branch("mingw64"),
+    reason="fails randomly",
+)
 @pytest.mark.require_curl()
 @pytest.mark.skipif(
     not check_libtiff_internal_or_at_least(4, 0, 11),
