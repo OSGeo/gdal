@@ -233,7 +233,7 @@ def test_ogr_dwg_5():
 
 
 def test_ogr_dwg_geolocated():
-    ds = gdal.OpenEx("data/cad/geolocated_ac2018_IL83-EF.dwg", allowed_drivers=["DWG"])
+    ds = gdal.OpenEx("data/cad/geolocated_rectangle_colorado_state_plane.dwg", allowed_drivers=["DWG"])
     layer = ds.GetLayer(0)
     spatialRef = layer.GetSpatialRef()
     assert spatialRef is not None
