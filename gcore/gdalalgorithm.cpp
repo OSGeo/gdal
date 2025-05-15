@@ -5398,7 +5398,11 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                 }
                 ret = arg->GetAutoCompleteChoices(value);
             }
-            if (ret.empty())
+            if (!ret.empty() && ret.back() == value)
+            {
+                ret.clear();
+            }
+            else if (ret.empty())
             {
                 ret.push_back("**");
                 // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
@@ -5416,18 +5420,44 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
         // Try filenames
         if (ret.empty() && !args.empty())
         {
-            auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-            for (const char *name :
-                 {"dataset", "filename", "like", "source", "destination"})
+            {
+                CPLErrorStateBackuper oErrorQuieter(CPLQuietErrorHandler);
+                SetParseForAutoCompletion();
+                CPL_IGNORE_RET_VAL(ParseCommandLineArguments(args));
+            }
+
+            const std::string &lastArg = args.back();
+            GDALAlgorithmArg *arg = nullptr;
+            for (const char *name : {GDAL_ARG_NAME_INPUT, "dataset", "filename",
+                                     "like", "source", "destination"})
             {
                 if (!arg)
                 {
-                    arg = GetArg(name);
+                    auto newArg = GetArg(name);
+                    if (newArg)
+                    {
+                        if (!newArg->IsExplicitlySet())
+                        {
+                            arg = newArg;
+                        }
+                        else if (newArg->GetType() == GAAT_STRING ||
+                                 newArg->GetType() == GAAT_STRING_LIST ||
+                                 newArg->GetType() == GAAT_DATASET ||
+                                 newArg->GetType() == GAAT_DATASET_LIST)
+                        {
+                            VSIStatBufL sStat;
+                            if ((!lastArg.empty() && lastArg.back() == '/') ||
+                                VSIStatL(lastArg.c_str(), &sStat) != 0)
+                            {
+                                arg = newArg;
+                            }
+                        }
+                    }
                 }
             }
             if (arg)
             {
-                ret = arg->GetAutoCompleteChoices(args.back());
+                ret = arg->GetAutoCompleteChoices(lastArg);
             }
         }
     }
