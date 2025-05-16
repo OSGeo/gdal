@@ -4870,8 +4870,22 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
 char **GDALJPGDriver::GetMetadata(const char *pszDomain)
 {
-    GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
+    std::lock_guard oLock(m_oMutex);
+    InitializeMetadata();
     return GDALDriver::GetMetadata(pszDomain);
+}
+
+const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
+                                           const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+
+    if (pszName != nullptr && EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) &&
+        (pszDomain == nullptr || EQUAL(pszDomain, "")))
+    {
+        InitializeMetadata();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
 }
 
 // C_ARITH_CODING_SUPPORTED is defined in libjpeg-turbo's jconfig.h
@@ -4914,12 +4928,12 @@ static bool GDALJPEGIsArithmeticCodingAvailable()
 }
 #endif
 
-const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
-                                           const char *pszDomain)
+void GDALJPGDriver::InitializeMetadata()
 {
-    if (pszName != nullptr && EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) &&
-        (pszDomain == nullptr || EQUAL(pszDomain, "")) &&
-        GDALDriver::GetMetadataItem(pszName, pszDomain) == nullptr)
+    if (m_bMetadataInitialized)
+        return;
+    m_bMetadataInitialized = true;
+
     {
         CPLString osCreationOptions =
             "<CreationOptionList>\n"
@@ -4975,7 +4989,6 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
             "</CreationOptionList>\n";
         SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
     }
-    return GDALDriver::GetMetadataItem(pszName, pszDomain);
 }
 
 void GDALRegister_JPEG()

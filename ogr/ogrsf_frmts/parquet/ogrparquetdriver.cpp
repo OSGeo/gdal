@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <tuple>
 
 #include "ogr_parquet.h"
@@ -535,6 +536,7 @@ static GDALDataset *OGRParquetDriverCreate(const char *pszName, int nXSize,
 
 class OGRParquetDriver final : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 
@@ -542,6 +544,7 @@ class OGRParquetDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, GDAL_DS_LAYER_CREATIONOPTIONLIST))
         {
             InitMetadata();
@@ -551,6 +554,7 @@ class OGRParquetDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitMetadata();
         return GDALDriver::GetMetadata(pszDomain);
     }
