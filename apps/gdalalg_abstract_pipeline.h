@@ -401,7 +401,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
         if (bCanHandleNextStep)
         {
-            stepCtxt.m_poNextStep = m_steps[i + 1].get();
+            stepCtxt.m_poNextUsableStep = m_steps[i + 1].get();
         }
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {

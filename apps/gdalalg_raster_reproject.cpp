@@ -188,11 +188,11 @@ bool GDALRasterReprojectAlgorithm::RunStep(
 
     CPLStringList aosOptions;
     std::string outputFilename;
-    if (ctxt.m_poNextStep)
+    if (ctxt.m_poNextUsableStep)
     {
-        CPLAssert(CanHandleNextStep(ctxt.m_poNextStep));
-        outputFilename = ctxt.m_poNextStep->GetOutputDataset().GetName();
-        const auto &format = ctxt.m_poNextStep->GetOutputFormat();
+        CPLAssert(CanHandleNextStep(ctxt.m_poNextUsableStep));
+        outputFilename = ctxt.m_poNextUsableStep->GetOutputDataset().GetName();
+        const auto &format = ctxt.m_poNextUsableStep->GetOutputFormat();
         if (!format.empty())
         {
             aosOptions.AddString("-of");
@@ -200,7 +200,8 @@ bool GDALRasterReprojectAlgorithm::RunStep(
         }
 
         bool bFoundNumThreads = false;
-        for (const std::string &co : ctxt.m_poNextStep->GetCreationOptions())
+        for (const std::string &co :
+             ctxt.m_poNextUsableStep->GetCreationOptions())
         {
             aosOptions.AddString("-co");
             if (STARTS_WITH_CI(co.c_str(), "NUM_THREADS="))
@@ -338,7 +339,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(
         GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
     if (psOptions)
     {
-        if (ctxt.m_poNextStep)
+        if (ctxt.m_poNextUsableStep)
         {
             GDALWarpAppOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
                                           ctxt.m_pProgressData);

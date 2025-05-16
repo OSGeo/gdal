@@ -188,7 +188,7 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
             if (bCanHandleNextStep)
-                stepCtxt.m_poNextStep = &writeAlg;
+                stepCtxt.m_poNextUsableStep = &writeAlg;
             if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
                 if (bIsStreaming || bCanHandleNextStep)

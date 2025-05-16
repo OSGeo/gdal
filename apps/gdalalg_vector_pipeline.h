@@ -35,9 +35,15 @@ class GDALVectorPipelineStepRunContext
   public:
     GDALVectorPipelineStepRunContext() = default;
 
+    // Progress callback to use during execution of the step
     GDALProgressFunc m_pfnProgress = nullptr;
     void *m_pProgressData = nullptr;
-    GDALVectorPipelineStepAlgorithm *m_poNextStep = nullptr;
+
+    // If there is a step in the pipeline immediately following step to which
+    // this instance of GDALRasterPipelineStepRunContext is passed, and that
+    // this next step is usable by the current step (as determined by
+    // CanHandleNextStep()), then this member will point to this next step.
+    GDALVectorPipelineStepAlgorithm *m_poNextUsableStep = nullptr;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineStepRunContext)
