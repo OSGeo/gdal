@@ -2628,6 +2628,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
   protected:
     friend class GDALInConstructionAlgorithmArg;
+    friend class GDALRasterReprojectUtils;
 
     /** Selected sub-algorithm. Set by ParseCommandLineArguments() when
      * handling over on a sub-algorithm. */

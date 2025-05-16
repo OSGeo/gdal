@@ -534,6 +534,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_update",
+        "gdal-raster-update",
+        "Update the destination raster with the content of the input one.",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_viewshed",
         "gdal-raster-viewshed",
         "Compute the viewshed of a raster dataset.",

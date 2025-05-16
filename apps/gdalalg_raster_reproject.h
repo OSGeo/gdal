@@ -67,6 +67,20 @@ class GDALRasterReprojectAlgorithmStandalone final
     }
 };
 
+/************************************************************************/
+/*                     GDALRasterReprojectUtils                         */
+/************************************************************************/
+
+class GDALRasterReprojectUtils final
+{
+  public:
+    static void AddResamplingArg(GDALAlgorithm *alg, std::string &resampling);
+
+    static void AddWarpOptTransformOptErrorThresholdArg(
+        GDALAlgorithm *alg, std::vector<std::string> &warpOptions,
+        std::vector<std::string> &transformOptions, double &errorThreshold);
+};
+
 //! @endcond
 
 #endif /* GDALALG_RASTER_REPROJECT_INCLUDED */

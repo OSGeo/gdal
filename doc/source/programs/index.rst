@@ -106,6 +106,7 @@ Raster commands
    gdal_raster_tpi
    gdal_raster_tri
    gdal_raster_unscale
+   gdal_raster_update
    gdal_raster_viewshed
 
 .. only:: html
@@ -147,6 +148,7 @@ Raster commands
     - :ref:`gdal_raster_tpi`: Generate a Topographic Position Index (TPI) map.
     - :ref:`gdal_raster_tri`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
+    - :ref:`gdal_raster_update`: Update the destination raster with the content of the input one.
     - :ref:`gdal_raster_viewshed`: Compute the viewshed of a raster dataset.
 
 Vector commands
