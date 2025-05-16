@@ -53,6 +53,10 @@ class GDALRasterReprojectAlgorithm /* non final */
     std::vector<std::string> m_warpOptions{};
     std::vector<std::string> m_transformOptions{};
     double m_errorThreshold = std::numeric_limits<double>::quiet_NaN();
+    int m_numThreads = 0;
+
+    // Work variables
+    std::string m_numThreadsStr{"ALL_CPUS"};
 };
 
 /************************************************************************/

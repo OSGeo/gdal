@@ -92,6 +92,8 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
 
     GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
         this, m_warpOptions, m_transformOptions, m_errorThreshold);
+
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 
 /************************************************************************/
@@ -190,15 +192,32 @@ bool GDALRasterReprojectAlgorithm::RunStep(
     {
         CPLAssert(CanHandleNextStep(ctxt.m_poNextStep));
         outputFilename = ctxt.m_poNextStep->GetOutputDataset().GetName();
-        if (!ctxt.m_poNextStep->GetOutputFormat().empty())
+        const auto &format = ctxt.m_poNextStep->GetOutputFormat();
+        if (!format.empty())
         {
             aosOptions.AddString("-of");
-            aosOptions.AddString(ctxt.m_poNextStep->GetOutputFormat().c_str());
+            aosOptions.AddString(format.c_str());
         }
+
+        bool bFoundNumThreads = false;
         for (const std::string &co : ctxt.m_poNextStep->GetCreationOptions())
         {
             aosOptions.AddString("-co");
+            if (STARTS_WITH_CI(co.c_str(), "NUM_THREADS="))
+                bFoundNumThreads = true;
             aosOptions.AddString(co.c_str());
+        }
+
+        // Forward m_numThreads to GeoTIFF driver if --co NUM_THREADS not
+        // specified
+        if (!bFoundNumThreads && m_numThreads > 1 &&
+            (EQUAL(format.c_str(), "GTIFF") || EQUAL(format.c_str(), "COG") ||
+             (format.empty() &&
+              EQUAL(CPLGetExtensionSafe(outputFilename.c_str()).c_str(),
+                    "tif"))))
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(CPLSPrintf("NUM_THREADS=%d", m_numThreads));
         }
     }
     else
@@ -278,11 +297,31 @@ bool GDALRasterReprojectAlgorithm::RunStep(
     {
         aosOptions.AddString("-dstalpha");
     }
+
+    bool bFoundNumThreads = false;
     for (const std::string &opt : m_warpOptions)
     {
         aosOptions.AddString("-wo");
+        if (STARTS_WITH_CI(opt.c_str(), "NUM_THREADS="))
+            bFoundNumThreads = true;
         aosOptions.AddString(opt.c_str());
     }
+    if (bFoundNumThreads)
+    {
+        if (GetArg("num-threads")->IsExplicitlySet())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "--num-threads argument and NUM_THREADS warp options "
+                        "are mutually exclusive.");
+            return false;
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-wo");
+        aosOptions.AddString(CPLSPrintf("NUM_THREADS=%d", m_numThreads));
+    }
+
     for (const std::string &opt : m_transformOptions)
     {
         aosOptions.AddString("-to");
