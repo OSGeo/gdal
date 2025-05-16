@@ -147,17 +147,9 @@ def test_gdalalg_vector_edit_geometry_type_geometry():
 
 def test_gdalalg_vector_edit_geometry_type_invalid():
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
-    src_ds.CreateLayer("the_layer", geom_type=ogr.wkbPoint)
-
     alg = get_edit_alg()
-    alg["input"] = src_ds
-
-    assert alg.ParseCommandLineArguments(
-        ["--geometry-type=invalid", "--of", "MEM", "--output", "memory_ds"]
-    )
     with pytest.raises(Exception, match="edit: Invalid geometry type 'invalid'"):
-        assert alg.Run()
+        alg["geometry-type"] = "invalid"
 
 
 def test_gdalalg_vector_edit_active_layer():

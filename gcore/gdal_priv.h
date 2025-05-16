@@ -1027,6 +1027,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     Layers GetLayers();
 
     virtual OGRLayer *GetLayerByName(const char *);
+
+    int GetLayerIndex(const char *pszName);
+
     virtual OGRErr DeleteLayer(int iLayer);
 
     virtual void ResetReading();

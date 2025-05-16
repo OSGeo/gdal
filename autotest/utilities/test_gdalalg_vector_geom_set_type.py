@@ -55,16 +55,9 @@ def test_gdalalg_vector_geom_set_type_geometry_type():
 
 def test_gdalalg_vector_geom_set_type_geometry_type_invalid():
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
-
     alg = get_alg()
-    alg["input"] = src_ds
-    alg["output"] = ""
-    alg["output-format"] = "stream"
-    alg["geometry-type"] = "INVALID"
-
-    with pytest.raises(Exception, match="set-type: Invalid geometry type 'INVALID'"):
-        alg.Run()
+    with pytest.raises(Exception, match="set-type: Invalid geometry type 'invalid'"):
+        alg["geometry-type"] = "invalid"
 
 
 @pytest.mark.parametrize("other_option", ["multi", "single", "linear", "curve", "dim"])

@@ -660,6 +660,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_layer_algebra",
+        "gdal-vector-layer-algebra",
+        "Perform algebraic operation between 2 layers",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
         "Process a vector dataset",

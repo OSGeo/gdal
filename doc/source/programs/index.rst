@@ -174,6 +174,7 @@ Vector commands
    gdal_vector_geom_buffer
    gdal_vector_geom_swap_xy
    gdal_vector_grid
+   gdal_vector_layer_algebra
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
@@ -198,6 +199,7 @@ Vector commands
     - :ref:`gdal_vector_geom_buffer`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_geom_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points
+    - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_pipeline`: Process a vector dataset
     - :ref:`gdal_vector_reproject`: Reproject a vector dataset

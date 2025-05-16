@@ -37,29 +37,7 @@ GDALVectorGeomSetTypeAlgorithm::GDALVectorGeomSetTypeAlgorithm(
            &m_opts.m_featureGeomOnly)
         .SetMutualExclusionGroup("only");
 
-    AddArg("geometry-type", 0, _("Geometry type"), &m_opts.m_type)
-        .SetAutoCompleteFunction(
-            [](const std::string &currentValue)
-            {
-                std::vector<std::string> oRet;
-                for (const char *type :
-                     {"GEOMETRY", "POINT", "LINESTRING", "POLYGON",
-                      "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON",
-                      "GEOMETRYCOLLECTION", "CURVE", "CIRCULARSTRING",
-                      "COMPOUNDCURVE", "SURFACE", "CURVEPOLYGON", "MULTICURVE",
-                      "MULTISURFACE", "POLYHEDRALSURFACE", "TIN"})
-                {
-                    if (currentValue.empty() ||
-                        STARTS_WITH(type, currentValue.c_str()))
-                    {
-                        oRet.push_back(type);
-                        oRet.push_back(std::string(type).append("Z"));
-                        oRet.push_back(std::string(type).append("M"));
-                        oRet.push_back(std::string(type).append("ZM"));
-                    }
-                }
-                return oRet;
-            });
+    AddGeometryTypeArg(&m_opts.m_type);
 
     AddArg("multi", 0, _("Force geometries to MULTI geometry types"),
            &m_opts.m_multi)
@@ -302,13 +280,6 @@ bool GDALVectorGeomSetTypeAlgorithm::RunStep(GDALProgressFunc, void *)
         }
 
         m_opts.m_eType = OGRFromOGCGeomType(m_opts.m_type.c_str());
-        if (wkbFlatten(m_opts.m_eType) == wkbUnknown &&
-            !STARTS_WITH_CI(m_opts.m_type.c_str(), "GEOMETRY"))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Invalid geometry type '%s'", m_opts.m_type.c_str());
-            return false;
-        }
     }
 
     return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);

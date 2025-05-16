@@ -86,6 +86,7 @@ add_library(
   gdalalg_vector_grid_invdistnn.cpp
   gdalalg_vector_grid_linear.cpp
   gdalalg_vector_grid_nearest.cpp
+  gdalalg_vector_layer_algebra.cpp
   gdalalg_vector_output_abstract.cpp
   gdalalg_vector_reproject.cpp
   gdalalg_vector_select.cpp
