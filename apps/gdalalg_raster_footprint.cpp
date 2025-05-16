@@ -47,7 +47,8 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
         .SetDefault(m_outputLayerName);
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddAppendUpdateArg(&m_append);
+    AddUpdateArg(&m_update).SetHidden();  // needed for correct append execution
+    AddAppendLayerArg(&m_append);
     AddOverwriteArg(&m_overwrite);
 
     AddBandArg(&m_bands);

@@ -4662,4 +4662,50 @@ TEST_F(test_gdal_algorithm, AddNumThreadsArg)
     }
 }
 
+TEST_F(test_gdal_algorithm, AddAppendLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddAppendLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: --update argument must exist for --append, even if hidden");
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddOverwriteLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddOverwriteLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: --update argument must exist for "
+                     "--overwrite-layer, even if hidden");
+    }
+}
+
 }  // namespace test_gdal_algorithm

@@ -40,8 +40,6 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT_DATA_TYPE = "output-data-type";
 
 constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
-constexpr const char *GDAL_ARG_NAME_APPEND_UPDATE = "append-update";
-
 constexpr const char *GDAL_ARG_NAME_BAND = "band";
 
 //! @cond Doxygen_Suppress
@@ -2126,15 +2124,8 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     bool ret = true;
 
     const auto updateArg = algForOutput->GetArg(GDAL_ARG_NAME_UPDATE);
-    const auto appendUpdateArg =
-        algForOutput->GetArg(GDAL_ARG_NAME_APPEND_UPDATE);
     const bool hasUpdateArg = updateArg && updateArg->GetType() == GAAT_BOOLEAN;
-    const bool hasAppendUpdateArg =
-        appendUpdateArg && appendUpdateArg->GetType() == GAAT_BOOLEAN;
-    const bool appendUpdate =
-        hasAppendUpdateArg && appendUpdateArg->Get<bool>();
-    const bool update =
-        (hasUpdateArg && updateArg->Get<bool>()) || appendUpdate;
+    const bool update = hasUpdateArg && updateArg->Get<bool>();
     const auto overwriteArg = algForOutput->GetArg(GDAL_ARG_NAME_OVERWRITE);
     const bool overwrite =
         (arg->IsOutput() && overwriteArg &&
@@ -2288,7 +2279,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         const bool hasAppendArg =
             appendArg && appendArg->GetType() == GAAT_BOOLEAN;
         const bool append = (hasAppendArg && appendArg->Get<bool>());
-        if (!append && !appendUpdate)
+        if (!append)
         {
             // If outputting to MEM, do not try to erase a real file of the same name!
             const auto outputFormatArg =
@@ -2312,7 +2303,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                             "%s '%s' already exists. Specify the --overwrite "
                             "option to overwrite it%s.",
                             pszType, val.GetName().c_str(),
-                            hasAppendArg || hasAppendUpdateArg
+                            hasAppendArg
                                 ? " or the --append option to append to it"
                             : hasUpdateArg
                                 ? " or the --update option to update it"
@@ -3198,6 +3189,43 @@ GDALAlgorithm::AddOverwriteArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
+/*                GDALAlgorithm::AddOverwriteLayerArg()                 */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddOverwriteLayerArg(bool *pValue, const char *helpMessage)
+{
+    AddValidationAction(
+        [this]
+        {
+            auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+            if (!(updateArg && updateArg->GetType() == GAAT_BOOLEAN))
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "--update argument must exist for "
+                            "--overwrite-layer, even if hidden");
+                return false;
+            }
+            return true;
+        });
+    return AddArg(GDAL_ARG_NAME_OVERWRITE_LAYER, 0,
+                  MsgOrDefault(
+                      helpMessage,
+                      _("Whether overwriting existing output is allowed")),
+                  pValue)
+        .SetDefault(false)
+        .AddAction(
+            [this]
+            {
+                auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+                if (updateArg && updateArg->GetType() == GAAT_BOOLEAN)
+                {
+                    updateArg->Set(true);
+                }
+            });
+}
+
+/************************************************************************/
 /*                 GDALAlgorithm::AddUpdateArg()                        */
 /************************************************************************/
 
@@ -3213,18 +3241,40 @@ GDALAlgorithm::AddUpdateArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                GDALAlgorithm::AddAppendUpdateArg()                   */
+/*                GDALAlgorithm::AddAppendLayerArg()                    */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddAppendUpdateArg(bool *pValue, const char *helpMessage)
+GDALAlgorithm::AddAppendLayerArg(bool *pValue, const char *helpMessage)
 {
-    return AddArg("append", 0,
-                  MsgOrDefault(helpMessage,
-                               _("Whether to append to an existing dataset")),
+    AddValidationAction(
+        [this]
+        {
+            auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+            if (!(updateArg && updateArg->GetType() == GAAT_BOOLEAN))
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "--update argument must exist for --append, even "
+                            "if hidden");
+                return false;
+            }
+            return true;
+        });
+    return AddArg(GDAL_ARG_NAME_APPEND, 0,
+                  MsgOrDefault(
+                      helpMessage,
+                      _("Whether appending to existing layer is allowed")),
                   pValue)
-        .AddHiddenAlias(GDAL_ARG_NAME_APPEND_UPDATE)
-        .SetDefault(false);
+        .SetDefault(false)
+        .AddAction(
+            [this]
+            {
+                auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+                if (updateArg && updateArg->GetType() == GAAT_BOOLEAN)
+                {
+                    updateArg->Set(true);
+                }
+            });
 }
 
 /************************************************************************/
