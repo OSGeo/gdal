@@ -5348,13 +5348,13 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                      nDstTotalHeight);
         const int nDstHeight = nDstYOffEnd - nDstYOffStart;
 
-        CPLDebug("GDAL",
-                 "Generating overview %d/%d (%dx%d -> %dx%d) from %dx%d",
-                 iOverview + 1, nOverviews, nDstWidth, nDstHeight,
-                 nToplevelSrcWidth, nToplevelSrcHeight, nSrcXSize, nSrcYSize);
-        // Also print the bounds of the source region to read
-        CPLDebug("GDAL", "Source region to read: %d,%d,%d,%d", nSrcXOff,
-                 nSrcYOff, nSrcXOff + nSrcXSize, nSrcYOff + nSrcYSize);
+        //CPLDebug("GDAL",
+        //         "Generating overview %d/%d (%dx%d -> %dx%d) from %dx%d",
+        //         iOverview + 1, nOverviews, nDstWidth, nDstHeight,
+        //         nToplevelSrcWidth, nToplevelSrcHeight, nSrcXSize, nSrcYSize);
+        //// Also print the bounds of the source region to read
+        //CPLDebug("GDAL", "Source region to read: %d,%d,%d,%d", nSrcXOff,
+        //         nSrcYOff, nSrcXOff + nSrcXSize, nSrcYOff + nSrcYSize);
 
         // Try to use previous level of overview as the source to compute
         // the next level.
