@@ -191,6 +191,8 @@ typedef struct
     /*! Height in pixels of the area of interest. Only valid if
      * bFloatingPointWindowValidity = TRUE */
     double dfYSize;
+    /*! Do not use overviews even if it would be possible */
+    int bDoNotUseOverviews;
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
@@ -208,6 +210,7 @@ typedef struct
         (s).pfnProgress = CPL_NULLPTR;                                         \
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
+        (s).bDoNotUseOverviews = FALSE;                                        \
     } while (0)
 
 /** Value indicating the start of the range for color interpretations belonging

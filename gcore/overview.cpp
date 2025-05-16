@@ -36,7 +36,6 @@
 #include "gdal.h"
 #include "gdal_thread_pool.h"
 #include "gdalwarper.h"
-
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
@@ -5497,7 +5496,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                             "XSIZE",
                             CPLSPrintf("%u", uint32_t(nDstXCount * dfXRatioDstToSrc)));
 
-                        // Recurse using a temporary dataset
+                        // Recurse using a temporary dataset, see below
                         eErr = GDALRegenerateOverviewsMultiBand(
                             nBands, papoThisSrcBands.data(), 1,
                             apapoThisOverviewBands.data(), pszResampling,
@@ -5662,9 +5661,6 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 poVRTBand->AddSource(poVRTSrc);
             }
 
-            // avoid reading from the overview that is being generated
-            poVRTDS->SetEnableOverviews(false);
-
             // Allocate a band buffer with the overview chunk size
             auto pDstBuffer = CPLMalloc(size_t(nWrkDataTypeSize) *
                                         nDstChunkXSize * nDstChunkYSize);
@@ -5673,6 +5669,12 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 eErr = CE_Failure;
                 break;
             }
+
+            // Use a flag to avoid reading the overview being built
+            GDALRasterIOExtraArg sExtraArg;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+            if (iSrcOverview == -1)
+                sExtraArg.bDoNotUseOverviews = true;
 
             // Scale and copy data from the VRT to the temp file
             for (int nDstYOff = nDstYOffStart; nDstYOff < nDstYOffEnd;
@@ -5701,7 +5703,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                         eErr = poSrcBand->RasterIO(
                             GF_Read, nDstXOff, nDstYOff, nDstXCount, nDstYCount,
                             pDstBuffer, nDstXCount, nDstYCount, eWrkDataType,
-                            0, 0, nullptr);
+                            0, 0, &sExtraArg);
                         if (eErr != CE_None)
                             break;
                         // Write to the temporary dataset, shifted
