@@ -87,7 +87,7 @@ for i in range(gdal.GetDriverCount()):
         ), f"Driver {shortname} declares DCAP_CREATECOPY but doc does not!"
     else:
         if not drv.GetMetadataItem(gdal.DCAP_CREATE):
-            if shortname == "JP2MrSID":
+            if shortname in ("AVIF", "JP2MrSID"):
                 continue  # build dependent
             assert (
                 "supports_createcopy" not in doc_caps
