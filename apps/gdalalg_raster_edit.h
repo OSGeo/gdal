@@ -33,7 +33,7 @@ class GDALRasterEditAlgorithm /* non final */
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only
     bool m_readOnly = false;          // standalone mode only

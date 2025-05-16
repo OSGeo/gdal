@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()    */
+/*          GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()        */
 /************************************************************************/
 
 GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
@@ -101,7 +101,7 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALRasterStackAlgorithm::RunImpl()               */
+/*                   GDALRasterStackAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALRasterStackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

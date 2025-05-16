@@ -25,6 +25,31 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                  GDALVectorPipelineStepRunContext                    */
+/************************************************************************/
+
+class GDALVectorPipelineStepAlgorithm;
+
+class GDALVectorPipelineStepRunContext
+{
+  public:
+    GDALVectorPipelineStepRunContext() = default;
+
+    // Progress callback to use during execution of the step
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+
+    // If there is a step in the pipeline immediately following step to which
+    // this instance of GDALRasterPipelineStepRunContext is passed, and that
+    // this next step is usable by the current step (as determined by
+    // CanHandleNextStep()), then this member will point to this next step.
+    GDALVectorPipelineStepAlgorithm *m_poNextUsableStep = nullptr;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineStepRunContext)
+};
+
+/************************************************************************/
 /*                GDALVectorPipelineStepAlgorithm                       */
 /************************************************************************/
 
@@ -36,6 +61,8 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    using StepRunContext = GDALVectorPipelineStepRunContext;
+
     friend class GDALVectorPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
@@ -45,7 +72,12 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return true;
     }
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    virtual bool CanHandleNextStep(GDALVectorPipelineStepAlgorithm *) const
+    {
+        return false;
+    }
+
+    virtual bool RunStep(GDALVectorPipelineStepRunContext &ctxt) = 0;
 
     void AddInputArgs(bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);

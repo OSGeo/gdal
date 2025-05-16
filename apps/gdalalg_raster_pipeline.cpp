@@ -172,41 +172,47 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         CPLAssert(!m_executionForStreamOutput || bIsStreaming);
 
         bool ret = false;
-        if (readAlg.Run())
+        if (!m_outputVRTCompatible &&
+            (EQUAL(m_format.c_str(), "VRT") ||
+             (m_format.empty() &&
+              EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str())
+                        .c_str(),
+                    "VRT"))))
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "VRT output is not supported. Consider using the "
+                        "GDALG driver instead (files with .gdalg.json "
+                        "extension)");
+        }
+        else if (readAlg.Run())
         {
             m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
 
             std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
                 pScaledData(nullptr, GDALDestroyScaledProgress);
-            if (!IsNativelyStreamingCompatible())
+
+            const bool bCanHandleNextStep =
+                !bIsStreaming && CanHandleNextStep(&writeAlg);
+
+            if (pfnProgress &&
+                (bCanHandleNextStep || !IsNativelyStreamingCompatible()))
             {
                 pScaledData.reset(GDALCreateScaledProgress(
-                    0.0, bIsStreaming ? 1.0 : 0.5, pfnProgress, pProgressData));
+                    0.0, bIsStreaming || bCanHandleNextStep ? 1.0 : 0.5,
+                    pfnProgress, pProgressData));
             }
 
-            if (RunPreStepPipelineValidations() &&
-                RunStep(pScaledData ? GDALScaledProgress : nullptr,
-                        pScaledData.get()))
+            GDALRasterPipelineStepRunContext stepCtxt;
+            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
+            stepCtxt.m_pProgressData = pScaledData.get();
+            if (bCanHandleNextStep)
+                stepCtxt.m_poNextUsableStep = &writeAlg;
+            if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
-                if (bIsStreaming)
+                if (bIsStreaming || bCanHandleNextStep)
                 {
                     ret = true;
-                }
-                else if (!m_outputVRTCompatible &&
-                         (EQUAL(m_format.c_str(), "VRT") ||
-                          (m_format.empty() &&
-                           EQUAL(CPLGetExtensionSafe(
-                                     writeAlg.m_outputDataset.GetName().c_str())
-                                     .c_str(),
-                                 "VRT"))))
-                {
-                    ReportError(
-                        CE_Failure, CPLE_NotSupported,
-                        "VRT output is not supported. Consider using the "
-                        "GDALG driver instead (files with .gdalg.json "
-                        "extension)");
-                    ret = false;
                 }
                 else
                 {
@@ -219,8 +225,11 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             IsNativelyStreamingCompatible() ? 0.0 : 0.5, 1.0,
                             pfnProgress, pProgressData));
                     }
-                    if (writeAlg.Run(pScaledData ? GDALScaledProgress : nullptr,
-                                     pScaledData.get()))
+                    stepCtxt.m_pfnProgress =
+                        pScaledData ? GDALScaledProgress : nullptr;
+                    stepCtxt.m_pProgressData = pScaledData.get();
+                    if (writeAlg.ValidateArguments() &&
+                        writeAlg.RunStep(stepCtxt))
                     {
                         if (pfnProgress)
                             pfnProgress(1.0, "", pProgressData);
@@ -237,8 +246,10 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunPreStepPipelineValidations() &&
-               RunStep(pfnProgress, pProgressData);
+        GDALRasterPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunPreStepPipelineValidations() && RunStep(stepCtxt);
     }
 }
 

@@ -280,8 +280,8 @@ GDALVectorGeomExplodeCollectionsAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 /*          GDALVectorGeomExplodeCollectionsAlgorithm::RunStep()        */
 /************************************************************************/
 
-bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
-                                                        void *)
+bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &ctxt)
 {
     if (!m_opts.m_type.empty())
     {
@@ -295,7 +295,7 @@ bool GDALVectorGeomExplodeCollectionsAlgorithm::RunStep(GDALProgressFunc,
         }
     }
 
-    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
+    return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 }
 
 //! @endcond

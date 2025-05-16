@@ -84,7 +84,7 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
 /*              GDALRasterResizeAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterResizeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

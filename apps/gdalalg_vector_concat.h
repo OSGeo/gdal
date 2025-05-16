@@ -34,7 +34,7 @@ class GDALVectorConcatAlgorithm /* non final */
     explicit GDALVectorConcatAlgorithm(bool bStandalone = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::string m_layerNameTemplate{};

@@ -71,7 +71,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(typename StepAlgorithm::StepRunContext &ctxt) override;
 };
 
 /************************************************************************/
@@ -146,7 +146,7 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
 
 template <class StepAlgorithm>
 bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
-    GDALProgressFunc pfnProgress, void *pProgressData)
+    typename StepAlgorithm::StepRunContext &ctxt)
 {
     if (m_steps.empty())
     {
@@ -312,12 +312,22 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
-    int countPipelinesWithProgress = 1;  // write
-    for (size_t i = 1; i + 1 < m_steps.size(); ++i)
+    int countPipelinesWithProgress = 0;
+    for (size_t i = 1; i < m_steps.size(); ++i)
     {
-        if (!m_steps[i]->IsNativelyStreamingCompatible())
+        const bool bCanHandleNextStep =
+            i < m_steps.size() - 1 &&
+            !m_steps[i]->CanHandleNextStep(m_steps[i + 1].get());
+        if (bCanHandleNextStep &&
+            !m_steps[i + 1]->IsNativelyStreamingCompatible())
             ++countPipelinesWithProgress;
+        else if (!m_steps[i]->IsNativelyStreamingCompatible())
+            ++countPipelinesWithProgress;
+        if (bCanHandleNextStep)
+            ++i;
     }
+    if (countPipelinesWithProgress == 0)
+        countPipelinesWithProgress = 1;
 
     GDALDataset *poCurDS = nullptr;
     int iCurPipelineWithProgress = 0;
@@ -368,20 +378,32 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             return false;
         }
 
+        const bool bCanHandleNextStep =
+            i < m_steps.size() - 1 &&
+            step->CanHandleNextStep(m_steps[i + 1].get());
+
         std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
             nullptr, GDALDestroyScaledProgress);
-        if (i == m_steps.size() - 1 || !step->IsNativelyStreamingCompatible())
+        typename StepAlgorithm::StepRunContext stepCtxt;
+        if ((bCanHandleNextStep &&
+             m_steps[i + 1]->IsNativelyStreamingCompatible()) ||
+            !step->IsNativelyStreamingCompatible())
         {
             pScaledData.reset(GDALCreateScaledProgress(
                 iCurPipelineWithProgress /
                     static_cast<double>(countPipelinesWithProgress),
                 (iCurPipelineWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
-                pfnProgress, pProgressData));
+                ctxt.m_pfnProgress, ctxt.m_pProgressData));
             ++iCurPipelineWithProgress;
+            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
+            stepCtxt.m_pProgressData = pScaledData.get();
         }
-        if (!step->Run(pScaledData ? GDALScaledProgress : nullptr,
-                       pScaledData.get()))
+        if (bCanHandleNextStep)
+        {
+            stepCtxt.m_poNextUsableStep = m_steps[i + 1].get();
+        }
+        if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
             return false;
         }
@@ -394,10 +416,15 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
                 static_cast<int>(i), step->GetName().c_str());
             return false;
         }
+
+        if (bCanHandleNextStep)
+        {
+            ++i;
+        }
     }
 
-    if (pfnProgress)
-        pfnProgress(1.0, "", pProgressData);
+    if (ctxt.m_pfnProgress)
+        ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
     if (!GetOutputDataset().GetDatasetRef())
     {

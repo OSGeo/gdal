@@ -14,6 +14,7 @@
 
 import json
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -62,7 +63,10 @@ def test_gdalg_raster_pipeline_explicit_write_step():
 
 
 def test_gdalg_raster_pipeline_warn_about_config():
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Configuration options passed with the 'config' argument are ignored",
+    ):
         ds = gdal.Open(
             json.dumps(
                 {
@@ -70,10 +74,6 @@ def test_gdalg_raster_pipeline_warn_about_config():
                     "command_line": "gdal raster pipeline ! read --config FOO=BAR data/byte.tif",
                 }
             )
-        )
-        assert (
-            gdal.GetLastErrorMsg()
-            == "read: Configuration options passed with the 'config' argument are ignored"
         )
     assert ds.GetRasterBand(1).Checksum() == 4672
 

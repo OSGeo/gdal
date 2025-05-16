@@ -34,7 +34,7 @@ class GDALRasterSetTypeAlgorithm /* non final */
     explicit GDALRasterSetTypeAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::string m_type{};
 };

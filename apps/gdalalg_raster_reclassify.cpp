@@ -109,7 +109,7 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 /*           GDALRasterReclassifyAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReclassifyAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);

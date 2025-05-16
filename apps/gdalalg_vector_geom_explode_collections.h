@@ -46,7 +46,7 @@ class GDALVectorGeomExplodeCollectionsAlgorithm final
     explicit GDALVectorGeomExplodeCollectionsAlgorithm(bool standaloneStep);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

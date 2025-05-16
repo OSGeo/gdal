@@ -102,9 +102,11 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
 /*                 GDALRasterViewshedAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterViewshedAlgorithm::RunStep(GDALProgressFunc pfnProgress,
-                                          void *pProgressData)
+bool GDALRasterViewshedAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());

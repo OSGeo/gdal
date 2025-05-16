@@ -82,7 +82,7 @@ GDALRasterSelectAlgorithm::GDALRasterSelectAlgorithm(bool standaloneStep)
 /*              GDALRasterSelectAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterSelectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterSelectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

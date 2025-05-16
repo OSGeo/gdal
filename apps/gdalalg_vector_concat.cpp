@@ -176,7 +176,7 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
 /*                   GDALVectorConcatAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALVectorConcatAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorConcatAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     std::unique_ptr<OGRSpatialReference> poSrcCRS;
     if (!m_srsCrs.empty())
@@ -420,7 +420,10 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        GDALVectorPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunStep(stepCtxt);
     }
 }
 

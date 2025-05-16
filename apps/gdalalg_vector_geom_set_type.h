@@ -53,7 +53,7 @@ class GDALVectorGeomSetTypeAlgorithm final
     CreateAlgLayer(OGRLayer &srcLayer) override;
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

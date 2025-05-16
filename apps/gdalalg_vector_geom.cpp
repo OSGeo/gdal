@@ -47,7 +47,7 @@ GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
 /*                GDALVectorGeomAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorGeomAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
@@ -77,7 +77,8 @@ GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
 /*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomAbstractAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

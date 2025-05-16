@@ -123,11 +123,13 @@ GDALVectorGeomSimplifyAlgorithm::CreateAlgLayer(
 /*                GDALVectorGeomSimplifyAlgorithm::RunStep()            */
 /************************************************************************/
 
-bool GDALVectorGeomSimplifyAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomSimplifyAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
-    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
+    return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 #else
+    (void)ctxt;
     ReportError(CE_Failure, CPLE_NotSupported,
                 "This algorithm is only supported for builds against GEOS");
     return false;

@@ -157,9 +157,10 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
+        const bool bIsStreaming = m_format == "stream";
+
         // Already checked by GDALAlgorithm::Run()
-        CPLAssert(!m_executionForStreamOutput ||
-                  EQUAL(m_format.c_str(), "stream"));
+        CPLAssert(!m_executionForStreamOutput || bIsStreaming);
 
         bool ret = false;
         if (readAlg.Run())
@@ -168,9 +169,29 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_inputDataset.resize(1);
             m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
-            if (RunPreStepPipelineValidations() && RunStep(nullptr, nullptr))
+
+            std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+                pScaledData(nullptr, GDALDestroyScaledProgress);
+
+            const bool bCanHandleNextStep =
+                !bIsStreaming && CanHandleNextStep(&writeAlg);
+
+            if (pfnProgress &&
+                (bCanHandleNextStep || !IsNativelyStreamingCompatible()))
             {
-                if (m_format == "stream")
+                pScaledData.reset(GDALCreateScaledProgress(
+                    0.0, bIsStreaming || bCanHandleNextStep ? 1.0 : 0.5,
+                    pfnProgress, pProgressData));
+            }
+
+            GDALVectorPipelineStepRunContext stepCtxt;
+            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
+            stepCtxt.m_pProgressData = pScaledData.get();
+            if (bCanHandleNextStep)
+                stepCtxt.m_poNextUsableStep = &writeAlg;
+            if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
+            {
+                if (bIsStreaming || bCanHandleNextStep)
                 {
                     ret = true;
                 }
@@ -180,7 +201,17 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     writeAlg.m_inputDataset.resize(1);
                     writeAlg.m_inputDataset[0].Set(
                         m_outputDataset.GetDatasetRef());
-                    if (writeAlg.Run(pfnProgress, pProgressData))
+                    if (pfnProgress)
+                    {
+                        pScaledData.reset(GDALCreateScaledProgress(
+                            IsNativelyStreamingCompatible() ? 0.0 : 0.5, 1.0,
+                            pfnProgress, pProgressData));
+                    }
+                    stepCtxt.m_pfnProgress =
+                        pScaledData ? GDALScaledProgress : nullptr;
+                    stepCtxt.m_pProgressData = pScaledData.get();
+                    if (writeAlg.ValidateArguments() &&
+                        writeAlg.RunStep(stepCtxt))
                     {
                         m_outputDataset.Set(
                             writeAlg.m_outputDataset.GetDatasetRef());
@@ -194,8 +225,10 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunPreStepPipelineValidations() &&
-               RunStep(pfnProgress, pProgressData);
+        GDALVectorPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunPreStepPipelineValidations() && RunStep(stepCtxt);
     }
 }
 

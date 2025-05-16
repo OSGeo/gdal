@@ -160,7 +160,8 @@ GDALVectorGeomMakeValidAlgorithm::CreateAlgLayer(
 /*                GDALVectorGeomMakeValidAlgorithm::RunStep()           */
 /************************************************************************/
 
-bool GDALVectorGeomMakeValidAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomMakeValidAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
 
@@ -175,8 +176,9 @@ bool GDALVectorGeomMakeValidAlgorithm::RunStep(GDALProgressFunc, void *)
     }
 #endif
 
-    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
+    return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 #else
+    (void)ctxt;
     ReportError(CE_Failure, CPLE_NotSupported,
                 "This algorithm is only supported for builds against GEOS");
     return false;

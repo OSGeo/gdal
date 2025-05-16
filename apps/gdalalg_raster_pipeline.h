@@ -19,12 +19,55 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                  GDALRasterPipelineStepRunContext                    */
+/************************************************************************/
+
+class GDALRasterPipelineStepAlgorithm;
+
+class GDALRasterPipelineStepRunContext
+{
+  public:
+    GDALRasterPipelineStepRunContext() = default;
+
+    // Progress callback to use during execution of the step
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+
+    // If there is a step in the pipeline immediately following step to which
+    // this instance of GDALRasterPipelineStepRunContext is passed, and that
+    // this next step is usable by the current step (as determined by
+    // CanHandleNextStep()), then this member will point to this next step.
+    GDALRasterPipelineStepAlgorithm *m_poNextUsableStep = nullptr;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepRunContext)
+};
+
+/************************************************************************/
 /*                GDALRasterPipelineStepAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
+  public:
+    const GDALArgDatasetValue &GetOutputDataset() const
+    {
+        return m_outputDataset;
+    }
+
+    const std::string &GetOutputFormat() const
+    {
+        return m_format;
+    }
+
+    const std::vector<std::string> &GetCreationOptions() const
+    {
+        return m_creationOptions;
+    }
+
   protected:
+    using StepRunContext = GDALRasterPipelineStepRunContext;
+
     GDALRasterPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
@@ -38,7 +81,12 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return true;
     }
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    virtual bool CanHandleNextStep(GDALRasterPipelineStepAlgorithm *) const
+    {
+        return false;
+    }
+
+    virtual bool RunStep(GDALRasterPipelineStepRunContext &ctxt) = 0;
 
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI);

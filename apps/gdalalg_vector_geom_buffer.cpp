@@ -153,14 +153,16 @@ GDALVectorGeomBufferAlgorithm::CreateAlgLayer(
 /*                GDALVectorGeomBufferAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALVectorGeomBufferAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomBufferAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
     if (m_opts.m_side == "right")
         m_opts.m_distance = -m_opts.m_distance;
 
-    return GDALVectorGeomAbstractAlgorithm::RunStep(nullptr, nullptr);
+    return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 #else
+    (void)ctxt;
     ReportError(CE_Failure, CPLE_NotSupported,
                 "This algorithm is only supported for builds against GEOS");
     return false;
