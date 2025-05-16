@@ -129,7 +129,9 @@ How do I cite GDAL ?
 
 See `CITATION`_
 
-.. _`CITATION`: :source_file:`CITATION``
+.. developer note: do not use :source_file:, as it breaks latexpdf output
+
+.. _`CITATION`: https://github.com/OSGeo/gdal/blob/master/CITATION
 
 
 .. below is an allow-list for spelling checker.
