@@ -1290,6 +1290,7 @@ class VRTDriver final : public GDALDriver
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTDriver)
 
+    std::mutex m_oMutex{};
     std::map<std::string, VRTSourceParser> m_oMapSourceParser{};
 
   public:
