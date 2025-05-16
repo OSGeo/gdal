@@ -794,7 +794,7 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                 {
                     const CPLString &osArgName = osValue;
                     CPLString osVal;
-                    double dfVal;
+                    double dfVal = 0;
 
                     int success;
                     if (osArgName == "NoData")
