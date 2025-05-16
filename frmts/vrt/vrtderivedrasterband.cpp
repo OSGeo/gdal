@@ -763,6 +763,7 @@ bool VRTDerivedRasterBand::InitializePython()
 
 CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
     const CPLString &osMetadata,
+    const std::vector<int> &anMapBufferIdxToSourceIdx,
     std::vector<std::pair<CPLString, CPLString>> &oAdditionalArgs)
 {
 
@@ -791,19 +792,50 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                         std::pair<CPLString, CPLString>(osName, osValue));
                 if (osType == "builtin")
                 {
-                    double dfVal;
+                    const CPLString &osArgName = osValue;
+                    CPLString osVal;
+                    double dfVal = 0;
+
                     int success;
-                    if (osValue == "NoData")
+                    if (osArgName == "NoData")
                         dfVal = this->GetNoDataValue(&success);
-                    else if (osValue == "scale")
+                    else if (osArgName == "scale")
                         dfVal = this->GetScale(&success);
-                    else if (osValue == "offset")
+                    else if (osArgName == "offset")
                         dfVal = this->GetOffset(&success);
+                    else if (osArgName == "source_names")
+                    {
+                        for (size_t iBuffer = 0;
+                             iBuffer < anMapBufferIdxToSourceIdx.size();
+                             iBuffer++)
+                        {
+                            int iSource = anMapBufferIdxToSourceIdx[iBuffer];
+                            const VRTSource *poSource = papoSources[iSource];
+
+                            if (iBuffer > 0)
+                            {
+                                osVal += "|";
+                            }
+
+                            const auto &osSourceName = poSource->GetName();
+                            if (osSourceName.empty())
+                            {
+                                osVal += "B" + std::to_string(iBuffer + 1);
+                            }
+                            else
+                            {
+                                osVal += osSourceName;
+                            }
+                        }
+
+                        success = true;
+                    }
                     else
                     {
-                        CPLError(CE_Failure, CPLE_NotSupported,
-                                 "PixelFunction builtin %s not supported",
-                                 osValue.c_str());
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "PixelFunction builtin argument %s not supported",
+                            osArgName.c_str());
                         return CE_Failure;
                     }
                     if (!success)
@@ -817,11 +849,16 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                         return CE_Failure;
                     }
 
-                    oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
-                        osValue, CPLSPrintf("%.17g", dfVal)));
+                    if (osVal.empty())
+                    {
+                        osVal = CPLSPrintf("%.17g", dfVal);
+                    }
+
+                    oAdditionalArgs.push_back(
+                        std::pair<CPLString, CPLString>(osArgName, osVal));
                     CPLDebug("VRT",
                              "Added builtin pixel function argument %s = %s",
-                             osValue.c_str(), CPLSPrintf("%.17g", dfVal));
+                             osArgName.c_str(), osVal.c_str());
                 }
             }
         }
@@ -959,15 +996,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                      "Derived band pixel function '%s' not registered.",
                      this->pszFuncName);
             return CE_Failure;
-        }
-
-        if (poPixelFunc->second != "")
-        {
-            if (GetPixelFunctionArguments(poPixelFunc->second,
-                                          oAdditionalArgs) != CE_None)
-            {
-                return CE_Failure;
-            }
         }
     }
 
@@ -1210,6 +1238,17 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
     }
 
+    // Collect any pixel function arguments
+    if (poPixelFunc != nullptr && !poPixelFunc->second.empty())
+    {
+        if (GetPixelFunctionArguments(poPixelFunc->second,
+                                      anMapBufferIdxToSourceIdx,
+                                      oAdditionalArgs) != CE_None)
+        {
+            eErr = CE_Failure;
+        }
+    }
+
     // Apply pixel function.
     if (eErr == CE_None && EQUAL(m_poPrivate->m_osLanguage, "Python"))
     {
@@ -1372,31 +1411,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             const char *pszValue = oArg.second.c_str();
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
-
-        CPLString osSourceNames;
-        for (int iBuffer = 0; iBuffer < nBufferCount; iBuffer++)
-        {
-            int iSource = anMapBufferIdxToSourceIdx[iBuffer];
-            const VRTSource *poSource = papoSources[iSource];
-
-            if (iBuffer > 0)
-            {
-                osSourceNames += "|";
-            }
-
-            const auto &osName = poSource->GetName();
-            if (osName.empty())
-            {
-                osSourceNames += "B" + std::to_string(iBuffer + 1);
-            }
-            else
-            {
-                osSourceNames += osName;
-            }
-        }
-
-        papszArgs =
-            CSLSetNameValue(papszArgs, "SOURCE_NAMES", osSourceNames.c_str());
 
         eErr = (poPixelFunc->first)(
             static_cast<void **>(pBuffers), nBufferCount, pData, nBufXSize,
