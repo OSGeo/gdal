@@ -29,6 +29,7 @@
 #endif
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -7174,6 +7175,7 @@ static const char *const apszFieldsBLOCKA[] = {
 
 class NITFDriver final : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bCreationOptionListInitialized = false;
     void InitCreationOptionList();
 
@@ -7181,6 +7183,7 @@ class NITFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
         {
             InitCreationOptionList();
@@ -7190,6 +7193,7 @@ class NITFDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitCreationOptionList();
         return GDALDriver::GetMetadata(pszDomain);
     }
