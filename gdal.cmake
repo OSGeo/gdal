@@ -548,11 +548,6 @@ endif ()
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/frmts/drivers.ini DESTINATION ${INSTALL_PLUGIN_DIR})
 
 # ######################################################################################################################
-
-# Note: this file is generated but not used.
-configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/gdal_def.h.in ${CMAKE_CURRENT_BINARY_DIR}/gcore/gdal_def.h @ONLY)
-
-# ######################################################################################################################
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
