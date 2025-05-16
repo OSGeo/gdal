@@ -70,6 +70,7 @@ char **VRTDriver::GetMetadataDomainList()
 char **VRTDriver::GetMetadata(const char *pszDomain)
 
 {
+    std::lock_guard oLock(m_oMutex);
     if (pszDomain && EQUAL(pszDomain, "SourceParsers"))
         return papszSourceParsers;
 
@@ -83,6 +84,7 @@ char **VRTDriver::GetMetadata(const char *pszDomain)
 CPLErr VRTDriver::SetMetadata(char **papszMetadata, const char *pszDomain)
 
 {
+    std::lock_guard oLock(m_oMutex);
     if (pszDomain && EQUAL(pszDomain, "SourceParsers"))
     {
         m_oMapSourceParser.clear();

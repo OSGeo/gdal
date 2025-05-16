@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <set>
 #include <queue>
 #include <string>
@@ -10208,6 +10209,7 @@ class GDALnetCDFDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
         {
             InitializeDCAPVirtualIO();
@@ -10217,11 +10219,13 @@ class GDALnetCDFDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitializeDCAPVirtualIO();
         return GDALDriver::GetMetadata(pszDomain);
     }
 
   private:
+    std::mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeDCAPVirtualIO()

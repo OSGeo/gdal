@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <limits>
+#include <mutex>
 
 #ifdef HAVE_BLOSC
 #include <blosc.h>
@@ -749,6 +750,7 @@ static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
 
 class ZarrDriver final : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 
@@ -756,6 +758,7 @@ class ZarrDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, "COMPRESSORS") ||
             EQUAL(pszName, "BLOSC_COMPRESSORS") ||
             EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) ||
@@ -768,6 +771,7 @@ class ZarrDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitMetadata();
         return GDALDriver::GetMetadata(pszDomain);
     }
