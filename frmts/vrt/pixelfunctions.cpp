@@ -1637,10 +1637,11 @@ static const char pszExprPixelFuncMetadata[] =
     "   <Argument name='dialect' "
     "             description='Expression dialect' "
     "             type='string-select'"
-    "             default='exprtk'>"
+    "             default='muparser'>"
     "       <Value>exprtk</Value>"
     "       <Value>muparser</Value>"
-    "    </Argument>"
+    "   </Argument>"
+    "   <Argument type='builtin' value='source_names' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1661,7 +1662,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
 
-    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "SOURCE_NAMES");
+    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "source_names");
     const CPLStringList aosSourceNames(
         CSLTokenizeString2(pszSourceNames, "|", 0));
 

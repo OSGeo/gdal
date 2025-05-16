@@ -1171,6 +1171,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     bool InitializePython();
     CPLErr
     GetPixelFunctionArguments(const CPLString &,
+                              const std::vector<int> &anMapBufferIdxToSourceIdx,
                               std::vector<std::pair<CPLString, CPLString>> &);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
