@@ -93,6 +93,11 @@ int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return TRUE;
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+             STARTS_WITH_CI(pszFilename, "IIIF:"))
+    {
+        return TRUE;
+    }
     else
         return FALSE;
 }
