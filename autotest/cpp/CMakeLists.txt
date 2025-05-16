@@ -389,6 +389,9 @@ gdal_gtest_target(testlog test-log
 gdal_gtest_target(test_deferred_plugin test-deferred-plugin
     FILES
         test_deferred_plugin.cpp)
+gdal_gtest_target(test_driver_metadata_multithread test-driver-metadata-multithread.cpp
+    FILES
+        test_driver_metadata_multithread.cpp)
 
 if (GDAL_ENABLE_DRIVER_JPEG_PLUGIN)
     target_compile_definitions(test_deferred_plugin PRIVATE -DJPEG_PLUGIN)
