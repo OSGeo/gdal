@@ -44,6 +44,7 @@ class GDALRasterFootprintAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_creationOptions{};
     std::vector<std::string> m_layerCreationOptions{};
     std::string m_outputLayerName = "footprint";
+    bool m_update = false;
     bool m_append = false;
     bool m_overwrite = false;
 

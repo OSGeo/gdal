@@ -61,20 +61,9 @@ GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite);
-    auto &updateArg = AddUpdateArg(&m_update);
-    AddArg("overwrite-layer", 0,
-           _("Whether overwriting existing layer is allowed"),
-           &m_overwriteLayer)
-        .SetDefault(false)
-        .AddValidationAction(
-            [&updateArg]()
-            {
-                updateArg.Set(true);
-                return true;
-            });
-    AddAppendUpdateArg(&m_appendLayer,
-                       _("Whether appending to existing layer is allowed"))
-        .SetDefault(false);
+    AddUpdateArg(&m_update);
+    AddOverwriteLayerArg(&m_overwriteLayer);
+    AddAppendLayerArg(&m_appendLayer);
 
     AddArg("input-layer", 0, _("Input layer name"), &m_inputLayerName);
     AddArg("method-layer", 0, _("Method layer name"), &m_methodLayerName);
@@ -258,9 +247,11 @@ bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Output layer '%s' already exists. Specify "
-                        "--overwrite, --overwrite-layer, --append or "
-                        "--update + --output-layer with a different name",
-                        m_outputLayerName.c_str());
+                        "--%s, --%s, --%s or "
+                        "--%s + --output-layer with a different name",
+                        m_outputLayerName.c_str(), GDAL_ARG_NAME_OVERWRITE,
+                        GDAL_ARG_NAME_OVERWRITE_LAYER, GDAL_ARG_NAME_APPEND,
+                        GDAL_ARG_NAME_UPDATE);
             return false;
         }
     }

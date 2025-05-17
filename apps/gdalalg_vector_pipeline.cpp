@@ -100,22 +100,9 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-    auto &updateArg = AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
-    AddArg("overwrite-layer", 0,
-           _("Whether overwriting existing layer is allowed"),
-           &m_overwriteLayer)
-        .SetDefault(false)
-        .SetHiddenForCLI(hiddenForCLI)
-        .AddValidationAction(
-            [&updateArg]()
-            {
-                updateArg.Set(true);
-                return true;
-            });
-    AddAppendUpdateArg(&m_appendLayer,
-                       _("Whether appending to existing layer is allowed"))
-        .SetDefault(false)
-        .SetHiddenForCLI(hiddenForCLI);
+    AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
+    AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
+    AddAppendLayerArg(&m_appendLayer).SetHiddenForCLI(hiddenForCLI);
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
         GetName() != GDALVectorConcatAlgorithm::NAME)
     {

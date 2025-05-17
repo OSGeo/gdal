@@ -35,26 +35,13 @@ void GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup("overwrite-update");
-    AddUpdateArg(&m_update).SetMutualExclusionGroup("overwrite-update");
-    AddArg("overwrite-layer", 0,
-           _("Whether overwriting existing layer is allowed"),
-           &m_overwriteLayer)
-        .SetDefault(false)
-        .AddValidationAction(
-            [this]
-            {
-                GetArg(GDAL_ARG_NAME_UPDATE)->Set(true);
-                return true;
-            });
+    auto &updateArg =
+        AddUpdateArg(&m_update).SetMutualExclusionGroup("overwrite-update");
+    AddOverwriteLayerArg(&m_overwriteLayer);
     AddArg("append", 0, _("Whether appending to existing layer is allowed"),
            &m_appendLayer)
         .SetDefault(false)
-        .AddValidationAction(
-            [this]
-            {
-                GetArg(GDAL_ARG_NAME_UPDATE)->Set(true);
-                return true;
-            });
+        .AddAction([&updateArg] { updateArg.Set(true); });
     {
         auto &arg = AddLayerNameArg(&m_outputLayerName)
                         .AddAlias("nln")
@@ -152,9 +139,10 @@ GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' already exists. Specify the "
-                        "--overwrite-layer option to overwrite it, or --append "
+                        "--%s option to overwrite it, or --%s "
                         "to append to it.",
-                        m_outputLayerName.c_str());
+                        m_outputLayerName.c_str(),
+                        GDAL_ARG_NAME_OVERWRITE_LAYER, GDAL_ARG_NAME_APPEND);
             return ret;
         }
     }
