@@ -404,6 +404,24 @@ void VRTDerivedRasterBand::SetPixelFunctionLanguage(const char *pszLanguage)
 }
 
 /************************************************************************/
+/*                 SetSkipNonContributingSources()                      */
+/************************************************************************/
+
+/** Whether sources that do not intersect the VRTRasterBand RasterIO() requested
+ * region should be omitted. By default, data for all sources, including ones
+ * that do not intersect it, are passed to the pixel function. By setting this
+ * parameter to false, only sources that intersect the requested region will be
+ * passed.
+ *
+ * @param bSkip whether to skip non-contirbuting sources
+ */
+void VRTDerivedRasterBand::SetSkipNonContributingSources(bool bSkip)
+{
+    m_poPrivate->m_bSkipNonContributingSources = bSkip;
+    m_poPrivate->m_bSkipNonContributingSourcesSpecified = true;
+}
+
+/************************************************************************/
 /*                         SetSourceTransferType()                      */
 /************************************************************************/
 
@@ -1532,13 +1550,12 @@ CPLErr VRTDerivedRasterBand::XMLInit(const CPLXMLNode *psTree,
     }
 
     // Whether to skip non contributing sources
-    const char *pszSkipNonContributiongSources =
+    const char *pszSkipNonContributingSources =
         CPLGetXMLValue(psTree, "SkipNonContributingSources", nullptr);
-    if (pszSkipNonContributiongSources)
+    if (pszSkipNonContributingSources)
     {
-        m_poPrivate->m_bSkipNonContributingSourcesSpecified = true;
-        m_poPrivate->m_bSkipNonContributingSources =
-            CPLTestBool(pszSkipNonContributiongSources);
+        SetSkipNonContributingSources(
+            CPLTestBool(pszSkipNonContributingSources));
     }
 
     return CE_None;

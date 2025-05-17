@@ -4604,6 +4604,7 @@ def BuildVRTOptions(options=None,
                     hideNodata=None,
                     nodataMaxMaskThreshold=None,
                     strict=False,
+                    pixelFunction=None,
                     creationOptions=None,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
@@ -4645,6 +4646,10 @@ def BuildVRTOptions(options=None,
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
+    pixelFunction: str
+        a pixel function to use to calculate output pixel values when multiple
+        sources overlap. For a list of available pixel functions, see
+        :ref:`builtin_pixel_functions`.
     creationOptions:
         list or dict of creation options
     callback:
@@ -4701,6 +4706,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-strict']
         if creationOptions is not None:
             _addCreationOptions(new_options, creationOptions)
+        if pixelFunction:
+            new_options += ['-pixel-function', pixelFunction]
 
     if return_option_list:
         return new_options

@@ -969,3 +969,32 @@ def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
             gt = ds.GetGeoTransform()
             assert gt[1] == expected
             assert -gt[5] == expected
+
+
+def test_gdalbuildvrt_pixel_function(tmp_vsimem):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 3, 1) as src1_ds:
+        src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        src1_ds.GetRasterBand(1).Fill(1)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 3, 1) as src2_ds:
+        src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+        src2_ds.GetRasterBand(1).Fill(2)
+
+    # test -pixel-function exclusive with -separate
+    with pytest.raises(RuntimeError, match="Argument .* not allowed"):
+        gdal.BuildVRT(
+            "",
+            [tmp_vsimem / "src1.tif", tmp_vsimem / "src2.tif"],
+            pixelFunction="sum",
+            separate=True,
+        )
+
+    with gdal.BuildVRT(
+        "", [tmp_vsimem / "src1.tif", tmp_vsimem / "src2.tif"], pixelFunction="sum"
+    ) as ds:
+        dst_values = ds.ReadAsArray()
+        np.testing.assert_array_equal(dst_values, np.array([[1, 3, 3, 2]]))

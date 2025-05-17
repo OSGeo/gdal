@@ -248,6 +248,7 @@ class VRTBuilder
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
     CPLStringList aosCreateOptions{};
+    std::string osPixelFunction{};
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -287,6 +288,7 @@ class VRTBuilder
                const char *pszVRTNoData, bool bUseSrcMaskBand,
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
+               const char *pszPixelFunctionName,
                const char *const *papszOpenOptionsIn,
                const CPLStringList &aosCreateOptionsIn);
 
@@ -312,13 +314,19 @@ VRTBuilder::VRTBuilder(
     const char *pszSrcNoDataIn, const char *pszVRTNoDataIn,
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
-    const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
+    const char *pszResamplingIn, const char *pszPixelFunction,
+    const char *const *papszOpenOptionsIn,
     const CPLStringList &aosCreateOptionsIn)
     : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
     papszOpenOptions = CSLDuplicate(const_cast<char **>(papszOpenOptionsIn));
+
+    if (pszPixelFunction != nullptr)
+    {
+        osPixelFunction = pszPixelFunction;
+    }
 
     if (ppszInputFilenamesIn)
     {
@@ -1226,9 +1234,24 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 {
     VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(hVRTDS);
+    CPLStringList aosOptions;
+
+    if (!osPixelFunction.empty())
+    {
+        aosOptions.AddNameValue("subclass", "VRTDerivedRasterBand");
+        aosOptions.AddNameValue("PixelFunctionType", osPixelFunction.c_str());
+
+        aosOptions.AddNameValue("SkipNonContributingSources", "1");
+
+        // FIXME determine based on input/output types?
+        aosOptions.AddNameValue("SourceTransferType", "Float64");
+
+        // FIXME pixel function arguments?
+    }
+
     for (int j = 0; j < nSelectedBands; j++)
     {
-        poVRTDS->AddBand(asBandProperties[j].dataType);
+        poVRTDS->AddBand(asBandProperties[j].dataType, aosOptions.List());
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(j + 1);
         poBand->SetColorInterpretation(asBandProperties[j].colorInterpretation);
         if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
@@ -1833,6 +1856,7 @@ struct GDALBuildVRTOptions
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    std::string osPixelFunction{};
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = true;
@@ -1984,6 +2008,8 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
+        sOptions.osPixelFunction.empty() ? nullptr
+                                         : sOptions.osPixelFunction.c_str(),
         sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
     oBuilder.m_osProgramName = sOptions.osProgramName;
 
@@ -2151,10 +2177,25 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
             .help(_("Text file with an input filename on each line"));
     }
 
-    argParser->add_argument("-separate")
-        .flag()
-        .store_into(psOptions->bSeparate)
-        .help(_("Place each input file into a separate band."));
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+
+        group.add_argument("-separate")
+            .flag()
+            .store_into(psOptions->bSeparate)
+            .help(_("Place each input file into a separate band."));
+
+        group.add_argument("-pixel-function")
+            .metavar("<function>")
+            .action(
+                [psOptions](const std::string &s)
+                {
+                    // FIXME make sure it's a real function?
+                    psOptions->osPixelFunction = s;
+                })
+
+            .help("Function to calculate value from overlapping inputs");
+    }
 
     argParser->add_argument("-allow_projection_difference")
         .flag()

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -401,3 +402,53 @@ def test_gdalalg_raster_mosaic_inconsistent_characteristics():
         Exception, match="gdal raster mosaic does not support heterogeneous projection"
     ):
         assert alg.Run()
+
+
+@pytest.mark.parametrize("pixfn", ("sum", "min"))
+def test_gdalalg_raster_mosaic_pixel_function(pixfn):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ds.GetRasterBand(1).Fill(1)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+    src2_ds.GetRasterBand(1).Fill(2)
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output"] = ""
+    alg["pixel-function"] = pixfn
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+
+    dst_values = ds.ReadAsArray()
+    if pixfn == "sum":
+        np.testing.assert_array_equal(dst_values, np.array([[1, 3, 3, 2]]))
+    elif pixfn == "min":
+        np.testing.assert_array_equal(dst_values, np.array([[1, 1, 1, 2]]))
+    else:
+        pytest.fail("Unexpected pixel function")
+
+    assert alg.Finalize()
+
+
+def test_gdalalg_raster_mosaic_pixel_function_invalid():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
+    src_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+
+    alg = get_mosaic_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["pixel-function"] = "does_not_exist"
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+
+    with pytest.raises(RuntimeError, match="pixel function .* not registered"):
+        ds.ReadAsArray()
+
+    assert alg.Finalize()
