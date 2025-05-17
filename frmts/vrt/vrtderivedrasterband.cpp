@@ -1414,8 +1414,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         eErr = (poPixelFunc->first)(
-            apBuffers.data(), nBufferCount, pData, nBufXSize,
-            nBufYSize, eSrcType, eBufType, static_cast<int>(nPixelSpace),
+            apBuffers.data(), nBufferCount, pData, nBufXSize, nBufYSize,
+            eSrcType, eBufType, static_cast<int>(nPixelSpace),
             static_cast<int>(nLineSpace), aosArgs.List());
     }
 end:
