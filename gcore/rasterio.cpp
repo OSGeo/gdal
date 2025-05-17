@@ -367,7 +367,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      this request?                                                   */
     /* ==================================================================== */
     if ((nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0 &&
-        eRWFlag == GF_Read)
+        eRWFlag == GF_Read && !psExtraArg->bDoNotUseOverviews)
     {
         GDALRasterIOExtraArg sExtraArg;
         GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
