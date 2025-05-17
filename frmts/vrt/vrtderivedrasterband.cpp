@@ -936,7 +936,38 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     GDALDataType eSrcType = eSourceTransferType;
     if (eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount)
     {
-        eSrcType = eBufType;
+        // Check the largest data type for all sources
+        GDALDataType eAllSrcType = GDT_Unknown;
+        for (int iSource = 0; iSource < nSources; iSource++)
+        {
+            if (papoSources[iSource]->GetType() ==
+                VRTSimpleSource::GetTypeStatic())
+            {
+                const auto poSS =
+                    static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                auto l_poBand = poSS->GetRasterBand();
+                if (l_poBand)
+                {
+                    eAllSrcType = GDALDataTypeUnion(
+                        eAllSrcType, l_poBand->GetRasterDataType());
+                }
+                else
+                {
+                    eAllSrcType = GDT_Unknown;
+                    break;
+                }
+            }
+            else
+            {
+                eAllSrcType = GDT_Unknown;
+                break;
+            }
+        }
+
+        if (eAllSrcType != GDT_Unknown)
+            eSrcType = eAllSrcType;
+        else
+            eSrcType = eBufType;
     }
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
