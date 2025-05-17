@@ -367,8 +367,8 @@ class GDALPDFArrayRW : public GDALPDFArray
 class GDALPDFObjectPoppler : public GDALPDFObject
 {
   private:
-    Object *m_po;
-    const bool m_bDestroy;
+    Object *m_poToDestroy;
+    const Object *m_poConst;
     GDALPDFDictionary *m_poDict = nullptr;
     GDALPDFArray *m_poArray = nullptr;
     GDALPDFStream *m_poStream = nullptr;
@@ -383,7 +383,12 @@ class GDALPDFObjectPoppler : public GDALPDFObject
 
   public:
     GDALPDFObjectPoppler(Object *po, bool bDestroy)
-        : m_po(po), m_bDestroy(bDestroy)
+        : m_poToDestroy(bDestroy ? po : nullptr), m_poConst(po)
+    {
+    }
+
+    GDALPDFObjectPoppler(const Object *po)
+        : m_poToDestroy(nullptr), m_poConst(po)
     {
     }
 

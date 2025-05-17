@@ -45,9 +45,14 @@
 #include <Object.h>
 #include <Stream.h>
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
+#include <Page.h>
+#else
 #define private public /* Ugly! Page::pageObj is private but we need it... */
 #include <Page.h>
 #undef private
+#endif
 
 #include <Dict.h>
 
