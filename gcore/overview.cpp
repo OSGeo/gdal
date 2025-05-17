@@ -5348,14 +5348,6 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                      nDstTotalHeight);
         const int nDstHeight = nDstYOffEnd - nDstYOffStart;
 
-        //CPLDebug("GDAL",
-        //         "Generating overview %d/%d (%dx%d -> %dx%d) from %dx%d",
-        //         iOverview + 1, nOverviews, nDstWidth, nDstHeight,
-        //         nToplevelSrcWidth, nToplevelSrcHeight, nSrcXSize, nSrcYSize);
-        //// Also print the bounds of the source region to read
-        //CPLDebug("GDAL", "Source region to read: %d,%d,%d,%d", nSrcXOff,
-        //         nSrcYOff, nSrcXOff + nSrcXSize, nSrcYOff + nSrcYSize);
-
         // Try to use previous level of overview as the source to compute
         // the next level.
         int nSrcWidth = nToplevelSrcWidth;
@@ -5434,11 +5426,35 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             nFullResXChunkQueried >
                 std::numeric_limits<int64_t>::max() /
                     (nFullResYChunkQueried * nBands * nWrkDataTypeSize);
+
         const auto nMemRequirement =
             bOverflowFullResXChunkYChunkQueried
                 ? 0
                 : static_cast<GIntBig>(nFullResXChunkQueried) *
                       nFullResYChunkQueried * nBands * nWrkDataTypeSize;
+        // Use a temporary dataset with a smaller destination chunk size
+        const auto nOverShootFactor =
+            nMemRequirement / nChunkMaxSizeForTempFile;
+
+        constexpr int MIN_OVERSHOOT_FACTOR = 4;
+        const auto nSqrtOverShootFactor = std::max<GIntBig>(
+            MIN_OVERSHOOT_FACTOR, static_cast<GIntBig>(std::ceil(std::sqrt(
+                                      static_cast<double>(nOverShootFactor)))));
+        constexpr int DEFAULT_CHUNK_SIZE = 256;
+        constexpr int GTIFF_BLOCK_SIZE_MULTIPLE = 16;
+        const int nReducedDstChunkXSize =
+            bOverflowFullResXChunkYChunkQueried
+                ? DEFAULT_CHUNK_SIZE
+                : std::max(1, static_cast<int>(nDstChunkXSize /
+                                               nSqrtOverShootFactor) &
+                                  ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
+        const int nReducedDstChunkYSize =
+            bOverflowFullResXChunkYChunkQueried
+                ? DEFAULT_CHUNK_SIZE
+                : std::max(1, static_cast<int>(nDstChunkYSize /
+                                               nSqrtOverShootFactor) &
+                                  ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
+
         if (bOverflowFullResXChunkYChunkQueried ||
             nMemRequirement > nChunkMaxSizeForTempFile)
         {
@@ -5446,61 +5462,85 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             // to avoid generating full size temporary files
             if (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight)
             {
-                // Set up options for recursive call, they will be reused
-                CPLStringList aosOptions(papszOptions);
+                // Create a VRT with the smaller chunk to do the scaling
+                auto poVRTDS = std::unique_ptr<VRTDataset>(new VRTDataset(
+                    nDstTotalWidth, nDstTotalHeight, nReducedDstChunkXSize,
+                    nReducedDstChunkYSize));
 
-                std::vector<GDALRasterBand *> papoThisSrcBands(nBands);
-                for (int i = 0; i < nBands; i++)
+                std::vector<GDALRasterBand *> apoVRTBand(nBands);
+                std::vector<GDALRasterBand *> apoDstBand(nBands);
+                std::vector<GDALDataType> aeDataType(nBands);
+                int nMaxDataTypeSize = 1;
+                for (int iBand = 0; iBand < nBands; ++iBand)
                 {
-                    papoThisSrcBands[i] = papoSrcBands[i];
+                    apoDstBand[iBand] = papapoOverviewBands[iBand][iOverview];
+                    aeDataType[iBand] = apoDstBand[iBand]->GetRasterDataType();
+                    nMaxDataTypeSize =
+                        std::max(GDALGetDataTypeSizeBytes(aeDataType[iBand]),
+                                 nMaxDataTypeSize);
+                    auto poVRTSrc = new VRTSimpleSource();
+                    poVRTSrc->SetResampling(pszResampling);
+                    poVRTDS->AddBand(eWrkDataType);
+                    auto poVRTBand = static_cast<VRTSourcedRasterBand *>(
+                        poVRTDS->GetRasterBand(iBand + 1));
+
+                    auto poSrcBand = papoSrcBands[iBand];
                     if (iSrcOverview != -1)
-                        papoThisSrcBands[i] =
-                            papapoOverviewBands[i][iSrcOverview];
+                        poSrcBand = papapoOverviewBands[iBand][iSrcOverview];
+                    poVRTBand->ConfigureSource(poVRTSrc, poSrcBand, 0, 0, 0,
+                                               nSrcWidth, nSrcHeight, 0, 0,
+                                               nDstTotalWidth, nDstTotalHeight);
+                    // Add the source to the band
+                    poVRTBand->AddSource(poVRTSrc);
+                    if (bPropagateNoData && pabHasNoData[iBand])
+                        poVRTBand->SetNoDataValue(padfNoDataValue[iBand]);
+                    apoVRTBand[iBand] = poVRTBand;
                 }
-                std::vector<GDALRasterBand *const *> apapoThisOverviewBands(
-                    nBands);
-                for (int i = 0; i < nBands; i++)
-                    apapoThisOverviewBands[i] = &papapoOverviewBands[i][iOverview];
+
+                // Use a flag to avoid reading from the overview being built
+                GDALRasterIOExtraArg sExtraArg;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+                if (iSrcOverview == -1)
+                    sExtraArg.bDoNotUseOverviews = true;
+
+                // A single band buffer for data transfer to the overview
+                std::vector<GByte> abyChunk(GUInt64(nMaxDataTypeSize) *
+                                            nDstChunkXSize * nDstChunkYSize);
 
                 // Loop over output height, in chunks
                 for (int nDstYOff = nDstYOffStart;
                      nDstYOff < nDstYOffEnd && eErr == CE_None;
                      nDstYOff += nDstChunkYSize)
                 {
-                    int nDstYCount(nDstChunkYSize);
-                    if (nDstYOff + nDstChunkYSize > nDstYOffEnd)
-                        nDstYCount = nDstYOffEnd - nDstYOff;
-
-                    aosOptions.SetNameValue(
-                        "YOFF", CPLSPrintf("%u", uint32_t(nDstYOff *
-                                                          dfYRatioDstToSrc)));
-                    aosOptions.SetNameValue(
-                        "YSIZE", CPLSPrintf("%u", uint32_t(nDstYCount *
-                                                           dfYRatioDstToSrc)));
-                    // Loop over output width, in chunks
+                    int nDstYCount(
+                        std::min(nDstChunkYSize, nDstYOffEnd - nDstYOff));
+                    // Loop over output width, in output chunks
                     for (int nDstXOff = nDstXOffStart;
                          nDstXOff < nDstXOffEnd && eErr == CE_None;
                          nDstXOff += nDstChunkXSize)
                     {
-                        int nDstXCount(nDstChunkXSize);
-                        if (nDstXOff + nDstChunkXSize > nDstXOffEnd)
-                            nDstXCount = nDstXOffEnd - nDstXOff;
+                        int nDstXCount(
+                            std::min(nDstChunkXSize, nDstXOffEnd - nDstXOff));
+                        // Read and transfer the chunk to the overview
+                        for (int iBand = 0; iBand < nBands; ++iBand)
+                        {
+                            if (eErr != CE_None)
+                                break;
+                            eErr = apoVRTBand[iBand]->RasterIO(
+                                GF_Read, nDstXOff, nDstYOff, nDstXCount,
+                                nDstYCount, abyChunk.data(), nDstXCount,
+                                nDstYCount, aeDataType[iBand], 0, 0,
+                                &sExtraArg);
+                            if (eErr != CE_None)
+                                break;
+                            eErr = apoDstBand[iBand]->RasterIO(
+                                GF_Write, nDstXOff, nDstYOff, nDstXCount,
+                                nDstYCount, abyChunk.data(), nDstXCount,
+                                nDstYCount, aeDataType[iBand], 0, 0, nullptr);
+                        }
 
                         dfCurPixelCount +=
                             static_cast<double>(nDstXCount) * nDstYCount;
-
-                        aosOptions.SetNameValue(
-                            "XOFF",
-                            CPLSPrintf("%u", uint32_t(nDstXOff * dfXRatioDstToSrc)));
-                        aosOptions.SetNameValue(
-                            "XSIZE",
-                            CPLSPrintf("%u", uint32_t(nDstXCount * dfXRatioDstToSrc)));
-
-                        // Recurse using a temporary dataset, see below
-                        eErr = GDALRegenerateOverviewsMultiBand(
-                            nBands, papoThisSrcBands.data(), 1,
-                            apapoThisOverviewBands.data(), pszResampling,
-                            nullptr, nullptr, aosOptions.List());
                     }  // width
 
                     if (!pfnProgress(dfCurPixelCount / dfTotalPixelCount,
@@ -5510,40 +5550,24 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                  "User terminated");
                         eErr = CE_Failure;
                     }
-
                 }  // height
-                if (CE_None == eErr)
-                    pfnProgress(1.0, nullptr, pProgressData);
 
-                return eErr;
+                if (CE_None != eErr)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error while writing overview");
+                    return CE_Failure;
+                }
 
-                continue;
+                pfnProgress(1.0, nullptr, pProgressData);
+                // Flush the overviews we just generated
+                for (int iBand = 0; iBand < nBands; ++iBand)
+                    apoDstBand[iBand]->FlushCache(false);
+
+                continue; // Next overview
             } // chunking via temporary dataset
 
-            // Use a temporary dataset with a smaller destination chunk size
-            const auto nOverShootFactor =
-                nMemRequirement / nChunkMaxSizeForTempFile;
-
-            constexpr int MIN_OVERSHOOT_FACTOR = 4;
-            const auto nSqrtOverShootFactor =
-                std::max<GIntBig>(MIN_OVERSHOOT_FACTOR,
-                                  static_cast<GIntBig>(std::ceil(std::sqrt(
-                                      static_cast<double>(nOverShootFactor)))));
-            constexpr int DEFAULT_CHUNK_SIZE = 256;
-            constexpr int GTIFF_BLOCK_SIZE_MULTIPLE = 16;
-            const int nReducedDstChunkXSize =
-                bOverflowFullResXChunkYChunkQueried
-                    ? DEFAULT_CHUNK_SIZE
-                    : std::max(1, static_cast<int>(nDstChunkXSize /
-                                                   nSqrtOverShootFactor) &
-                                      ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
-            const int nReducedDstChunkYSize =
-                bOverflowFullResXChunkYChunkQueried
-                    ? DEFAULT_CHUNK_SIZE
-                    : std::max(1, static_cast<int>(nDstChunkYSize /
-                                                   nSqrtOverShootFactor) &
-                                      ~(GTIFF_BLOCK_SIZE_MULTIPLE - 1));
-
+            // Too much memory needed and no chunking possible?
             const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
             const bool bTmpDSMemRequirementOverflow =
                 nDstHeight > INT_MAX / (nBands * nDTSize) ||
@@ -5659,6 +5683,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                            nDstTotalWidth, nDstTotalHeight);
                 // Add the source to the band
                 poVRTBand->AddSource(poVRTSrc);
+                if (bPropagateNoData && pabHasNoData[iBand])
+                    poVRTBand->SetNoDataValue(padfNoDataValue[iBand]);
             }
 
             // Allocate a band buffer with the overview chunk size
@@ -5764,8 +5790,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             if (eErr != CE_None)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                                            "Failed to write overview %d", iOverview);
-                break;
+                         "Failed to write overview %d", iOverview);
+                return eErr;
             }
 
             // Flush the data to overviews.
