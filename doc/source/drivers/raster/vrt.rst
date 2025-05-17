@@ -207,13 +207,24 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If the input datasets to be composed have a nodata value for this raster band, set this element's value to that nodata value for it to be reflected in the VRT. This must not be confused with the NODATA element of a VRTComplexSource element.
+- **NoDataValue**: Specifies the NoData value that the raster band will report.
+  If not specified, NoData pixels from the band's sources (as well as pixels
+  not covered by any source) will be set to zero. If the source rasters have
+  their own NoData values that differ from the one specified in
+  ``<NoDataValue>``, a ``ComplexSource`` with a ``<NODATA>`` element can be
+  used to convert source NoData pixels to the value specified here.
 
 .. code-block:: xml
 
   <NoDataValue>-100.0</NoDataValue>
 
-- **HideNoDataValue**: If this value is 1, the nodata value will not be reported.  Essentially, the caller will not be aware of a nodata pixel when it reads one.  Any datasets copied/translated from this will not have a nodata value.  This is useful when you want to specify a fixed background value for the dataset.  The background will be the value specified by the NoDataValue element. Default value is 0 when this element is absent.
+- **HideNoDataValue**: If this value is ``YES``/``TRUE``/``1``, the NoData
+  value specified by ``<NoDataValue>`` will not be reported.  Essentially, the
+  reader will not be aware of a NoData pixel when it reads one.  Any datasets
+  copied/translated from this will not have a NoData value.  This is useful
+  when you want to specify a fixed background value for the dataset. (The
+  background will be the value specified by the NoDataValue element.) Default
+  value is ``NO`` when this element is absent.
 
 .. code-block:: xml
 
