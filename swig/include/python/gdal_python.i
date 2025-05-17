@@ -4604,6 +4604,7 @@ def BuildVRTOptions(options=None,
                     hideNodata=None,
                     nodataMaxMaskThreshold=None,
                     strict=False,
+                    writeAbsolutePath=False,
                     creationOptions=None,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
@@ -4647,6 +4648,8 @@ def BuildVRTOptions(options=None,
         set to True if warnings should be failures
     creationOptions:
         list or dict of creation options
+    writeAbsolutePath:
+        Enables writing the absolute path of the input datasets. By default, input filenames are written in a relative way with respect to the VRT filename (when possible)
     callback:
         callback method.
     callback_data:
@@ -4699,6 +4702,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-hidenodata']
         if strict:
             new_options += ['-strict']
+        if writeAbsolutePath:
+            new_options += ['-write_absolute_path']
         if creationOptions is not None:
             _addCreationOptions(new_options, creationOptions)
 

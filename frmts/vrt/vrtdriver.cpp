@@ -262,9 +262,9 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Create the virtual dataset.                                     */
     /* -------------------------------------------------------------------- */
-    VRTDataset *poVRTDS = static_cast<VRTDataset *>(VRTDataset::Create(
+    auto poVRTDS = VRTDataset::CreateVRTDataset(
         pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 0,
-        GDT_Byte, papszOptions));
+        GDT_Byte, papszOptions);
     if (poVRTDS == nullptr)
         return nullptr;
 
@@ -446,7 +446,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
              (GMF_PER_DATASET | GMF_ALL_VALID | GMF_NODATA)) == 0)
         {
             VRTSourcedRasterBand *poVRTMaskBand = new VRTSourcedRasterBand(
-                poVRTDS, 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
+                poVRTDS.get(), 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
                 poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
             poVRTMaskBand->AddMaskBandSource(poSrcBand);
             poVRTBand->SetMaskBand(poVRTMaskBand);
@@ -462,7 +462,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
         VRTSourcedRasterBand *poVRTMaskBand = new VRTSourcedRasterBand(
-            poVRTDS, 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
+            poVRTDS.get(), 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
             poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
         poVRTMaskBand->AddMaskBandSource(poSrcBand);
         poVRTDS->SetMaskBand(poVRTMaskBand);
@@ -474,12 +474,11 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         poVRTDS->FlushCache(true);
         if (CPLGetLastErrorType() != CE_None)
         {
-            delete poVRTDS;
-            poVRTDS = nullptr;
+            poVRTDS.reset();
         }
     }
 
-    return poVRTDS;
+    return poVRTDS.release();
 }
 
 /************************************************************************/

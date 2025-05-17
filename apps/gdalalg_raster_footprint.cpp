@@ -125,10 +125,7 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
            _("Disable creating a field with the path of the input dataset"),
            &m_noLocation)
         .SetMutualExclusionGroup("location");
-    AddArg("absolute-path", 0,
-           _("Whether the path to the input dataset should be stored as an "
-             "absolute path"),
-           &m_writeAbsolutePaths);
+    AddAbsolutePathArg(&m_writeAbsolutePaths);
 
     AddValidationAction(
         [this]

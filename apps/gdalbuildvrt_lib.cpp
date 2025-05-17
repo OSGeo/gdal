@@ -247,7 +247,8 @@ class VRTBuilder
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
-    CPLStringList aosCreateOptions{};
+    const CPLStringList aosCreateOptions;
+    const bool bWriteAbsolutePath;
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -270,8 +271,8 @@ class VRTBuilder
     std::string AnalyseRaster(GDALDatasetH hDS,
                               DatasetProperty *psDatasetProperties);
 
-    void CreateVRTSeparate(VRTDatasetH hVRTDS);
-    void CreateVRTNonSeparate(VRTDatasetH hVRTDS);
+    void CreateVRTSeparate(VRTDataset *poVTDS);
+    void CreateVRTNonSeparate(VRTDataset *poVRTDS);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTBuilder)
 
@@ -288,11 +289,13 @@ class VRTBuilder
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
                const char *const *papszOpenOptionsIn,
-               const CPLStringList &aosCreateOptionsIn);
+               const CPLStringList &aosCreateOptionsIn,
+               bool bWriteAbsolutePathIn);
 
     ~VRTBuilder();
 
-    GDALDataset *Build(GDALProgressFunc pfnProgress, void *pProgressData);
+    std::unique_ptr<GDALDataset> Build(GDALProgressFunc pfnProgress,
+                                       void *pProgressData);
 
     std::string m_osProgramName{};
 };
@@ -313,8 +316,9 @@ VRTBuilder::VRTBuilder(
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
     const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
-    const CPLStringList &aosCreateOptionsIn)
-    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
+    const CPLStringList &aosCreateOptionsIn, bool bWriteAbsolutePathIn)
+    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn),
+      bWriteAbsolutePath(bWriteAbsolutePathIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
@@ -1047,10 +1051,40 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                         WriteAbsolutePath()                          */
+/************************************************************************/
+
+static void WriteAbsolutePath(VRTSimpleSource *poSource, const char *dsFileName)
+{
+    if (dsFileName[0])
+    {
+        if (CPLIsFilenameRelative(dsFileName))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(dsFileName, &sStat) == 0)
+            {
+                if (char *pszCurDir = CPLGetCurrentDir())
+                {
+                    poSource->SetSourceDatasetName(
+                        CPLFormFilenameSafe(pszCurDir, dsFileName, nullptr)
+                            .c_str(),
+                        false);
+                    CPLFree(pszCurDir);
+                }
+            }
+        }
+        else
+        {
+            poSource->SetSourceDatasetName(dsFileName, false);
+        }
+    }
+}
+
+/************************************************************************/
 /*                         CreateVRTSeparate()                          */
 /************************************************************************/
 
-void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
+void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 {
     int iBand = 1;
     for (int i = 0; ppszInputFilenames != nullptr && i < nInputFiles; i++)
@@ -1128,33 +1162,29 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                                         ? panSelectedBandList[iBandToIter] - 1
                                         : iBandToIter;
             assert(nSrcBandIdx >= 0);
-            GDALAddBand(hVRTDS, psDatasetProperties->aeBandType[nSrcBandIdx],
-                        nullptr);
-
-            VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
-                GDALGetRasterBand(hVRTDS, iBand));
-
-            if (bHideNoData)
-                GDALSetMetadataItem(hVRTBand, "HideNoDataValue", "1", nullptr);
+            poVRTDS->AddBand(psDatasetProperties->aeBandType[nSrcBandIdx],
+                             nullptr);
 
             VRTSourcedRasterBand *poVRTBand =
-                static_cast<VRTSourcedRasterBand *>(hVRTBand);
+                static_cast<VRTSourcedRasterBand *>(
+                    poVRTDS->GetRasterBand(iBand));
+
+            if (bHideNoData)
+                poVRTBand->SetMetadataItem("HideNoDataValue", "1", nullptr);
 
             if (bAllowVRTNoData)
             {
                 if (nVRTNoDataCount > 0)
                 {
                     if (iBand - 1 < nVRTNoDataCount)
-                        GDALSetRasterNoDataValue(hVRTBand,
-                                                 padfVRTNoData[iBand - 1]);
+                        poVRTBand->SetNoDataValue(padfVRTNoData[iBand - 1]);
                     else
-                        GDALSetRasterNoDataValue(
-                            hVRTBand, padfVRTNoData[nVRTNoDataCount - 1]);
+                        poVRTBand->SetNoDataValue(
+                            padfVRTNoData[nVRTNoDataCount - 1]);
                 }
                 else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
                 {
-                    GDALSetRasterNoDataValue(
-                        hVRTBand,
+                    poVRTBand->SetNoDataValue(
                         psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
                 }
             }
@@ -1200,6 +1230,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                 FALSE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
 
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
+
             if (psDatasetProperties->abHasOffset[nSrcBandIdx])
                 poVRTBand->SetOffset(
                     psDatasetProperties->adfOffset[nSrcBandIdx]);
@@ -1223,9 +1256,8 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 /*                       CreateVRTNonSeparate()                         */
 /************************************************************************/
 
-void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
+void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 {
-    VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(hVRTDS);
     for (int j = 0; j < nSelectedBands; j++)
     {
         poVRTDS->AddBand(asBandProperties[j].dataType);
@@ -1415,19 +1447,23 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                                        dfSrcYSize, dfDstXOff, dfDstYOff,
                                        dfDstXSize, dfDstYSize);
 
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
+
             poVRTBand->AddSource(poSimpleSource);
         }
 
         if (bAddAlpha && !psDatasetProperties->bLastBandIsAlpha)
         {
-            VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
-                GDALGetRasterBand(hVRTDS, nSelectedBands + 1));
+            VRTSourcedRasterBand *poVRTBand =
+                static_cast<VRTSourcedRasterBand *>(
+                    poVRTDS->GetRasterBand(nSelectedBands + 1));
             /* Little trick : we use an offset of 255 and a scaling of 0, so
              * that in areas covered */
             /* by the source, the value of the alpha band will be 255, otherwise
              * it will be 0 */
-            static_cast<VRTSourcedRasterBand *>(hVRTBand)->AddComplexSource(
-                static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
+            poVRTBand->AddComplexSource(
+                GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
                 dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize, 255, 0, VRT_NODATA_UNSET);
         }
@@ -1452,6 +1488,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                 static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
                 TRUE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
+
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSource, dsFileName);
 
             poMaskVRTBand->AddSource(poSource);
         }
@@ -1508,8 +1547,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 /*                             Build()                                  */
 /************************************************************************/
 
-GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
-                               void *pProgressData)
+std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
+                                               void *pProgressData)
 {
     if (bHasRunBuild)
         return nullptr;
@@ -1690,21 +1729,21 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         return nullptr;
     }
 
-    VRTDatasetH hVRTDS = cpl::down_cast<VRTDataset *>(
-        VRTDataset::Create(pszOutputFilename, nRasterXSize, nRasterYSize, 0,
-                           GDT_Unknown, aosCreateOptions.List()));
-    if (!hVRTDS)
+    auto poDS = VRTDataset::CreateVRTDataset(pszOutputFilename, nRasterXSize,
+                                             nRasterYSize, 0, GDT_Unknown,
+                                             aosCreateOptions.List());
+    if (!poDS)
     {
         return nullptr;
     }
 
     if (pszOutputSRS)
     {
-        GDALSetProjection(hVRTDS, pszOutputSRS);
+        poDS->SetProjection(pszOutputSRS);
     }
     else if (pszProjectionRef)
     {
-        GDALSetProjection(hVRTDS, pszProjectionRef);
+        poDS->SetProjection(pszProjectionRef);
     }
 
     if (bHasGeoTransform)
@@ -1716,19 +1755,19 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
         adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
         adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
-        GDALSetGeoTransform(hVRTDS, adfGeoTransform);
+        poDS->SetGeoTransform(adfGeoTransform);
     }
 
     if (bSeparate)
     {
-        CreateVRTSeparate(hVRTDS);
+        CreateVRTSeparate(poDS.get());
     }
     else
     {
-        CreateVRTNonSeparate(hVRTDS);
+        CreateVRTNonSeparate(poDS.get());
     }
 
-    return static_cast<GDALDataset *>(hVRTDS);
+    return poDS;
 }
 
 /************************************************************************/
@@ -1833,6 +1872,7 @@ struct GDALBuildVRTOptions
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    bool bWriteAbsolutePath = false;
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = true;
@@ -1984,11 +2024,12 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
+        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions,
+        sOptions.bWriteAbsolutePath);
     oBuilder.m_osProgramName = sOptions.osProgramName;
 
     return GDALDataset::ToHandle(
-        oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData));
+        oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData).release());
 }
 
 /************************************************************************/
@@ -2238,6 +2279,12 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
     argParser->add_open_options_argument(&psOptions->aosOpenOptions);
 
     argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    argParser->add_argument("-write_absolute_path")
+        .flag()
+        .store_into(psOptions->bWriteAbsolutePath)
+        .help(_("Write the absolute path of the raster files in the tile index "
+                "file."));
 
     argParser->add_argument("-ignore_srcmaskband")
         .flag()

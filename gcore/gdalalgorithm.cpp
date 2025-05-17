@@ -4436,6 +4436,20 @@ GDALAlgorithm::AddNumThreadsArg(int *pValue, std::string *pStrValue,
 }
 
 /************************************************************************/
+/*                 GDALAlgorithm::AddAbsolutePathArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddAbsolutePathArg(bool *pValue, const char *helpMessage)
+{
+    return AddArg(
+        "absolute-path", 0,
+        MsgOrDefault(helpMessage, _("Whether the path to the input dataset "
+                                    "should be stored as an absolute path")),
+        pValue);
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::AddProgressArg()                     */
 /************************************************************************/
 

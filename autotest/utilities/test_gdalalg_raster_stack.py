@@ -41,3 +41,28 @@ def test_gdalalg_raster_stack_resolution_common(stack):
     assert ds.RasterXSize == 15
     assert ds.RasterYSize == 15
     assert ds.GetGeoTransform() == pytest.approx((2.0, 1.0, 0.0, 49.0, 0.0, -1.0))
+
+
+def test_gdalalg_raster_stack_abolute_path(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.vrt")
+
+    gdal.Translate(tmp_vsimem / "byte.tif", "../gcore/data/byte.tif")
+
+    gdal.Run(
+        "raster",
+        "stack",
+        input=tmp_vsimem / "byte.tif",
+        output=out_filename,
+        absolute_path=True,
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        content = f.read().decode("utf-8")
+    assert (
+        '<SourceFilename relativeToVRT="0">' + str(tmp_vsimem / "byte.tif") in content
+    )
+    assert '<SourceFilename relativeToVRT="1">byte.tif' not in content
