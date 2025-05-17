@@ -42,15 +42,6 @@
 
 // #define DEBUG_VERBOSE 1
 
-// See #5459
-#ifdef isnan
-#define HAS_ISNAN_MACRO
-#endif
-#include <algorithm>
-#if defined(HAS_ISNAN_MACRO) && !defined(isnan)
-#define isnan std::isnan
-#endif
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             VRTSource                                */
