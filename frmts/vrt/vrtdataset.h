@@ -433,11 +433,15 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
-    static VRTDataset *OpenXML(const char *, const char * = nullptr,
-                               GDALAccess eAccess = GA_ReadOnly);
+    static std::unique_ptr<VRTDataset>
+    OpenXML(const char *, const char * = nullptr,
+            GDALAccess eAccess = GA_ReadOnly);
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
                                char **papszOptions);
+    static std::unique_ptr<VRTDataset>
+    CreateVRTDataset(const char *pszName, int nXSize, int nYSize, int nBands,
+                     GDALDataType eType, CSLConstList papszOptions);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
