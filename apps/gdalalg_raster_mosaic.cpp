@@ -48,6 +48,10 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddBandArg(&m_bands);
     AddOverwriteArg(&m_overwrite);
+    AddAbsolutePathArg(
+        &m_writeAbsolutePaths,
+        _("Whether the path to the input datasets should be stored as an "
+          "absolute path"));
     {
         auto &arg =
             AddArg("resolution", 0,
@@ -256,6 +260,10 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_hideNoData)
     {
         aosOptions.push_back("-hidenodata");
+    }
+    if (m_writeAbsolutePaths)
+    {
+        aosOptions.push_back("-write_absolute_path");
     }
 
     GDALBuildVRTOptions *psOptions =
