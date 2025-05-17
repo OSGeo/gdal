@@ -68,6 +68,319 @@ static inline void GDALCopyXMMToInt16(const __m128i xmm, void *pDest)
     memcpy(pDest, &i, 2);
 }
 
+class XMMReg4Float
+{
+  public:
+    __m128 xmm;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+    /* coverity[uninit_member] */
+    XMMReg4Float() = default;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    XMMReg4Float(const XMMReg4Float &other) : xmm(other.xmm)
+    {
+    }
+
+    static inline XMMReg4Float Zero()
+    {
+        XMMReg4Float reg;
+        reg.Zeroize();
+        return reg;
+    }
+
+    static inline XMMReg4Float Set1(float f)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_set1_ps(f);
+        return reg;
+    }
+
+    static inline XMMReg4Float Load4Val(const float *ptr)
+    {
+        XMMReg4Float reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg4Float Load4Val(const unsigned char *ptr)
+    {
+        XMMReg4Float reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg4Float Load4Val(const short *ptr)
+    {
+        XMMReg4Float reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg4Float Load4Val(const unsigned short *ptr)
+    {
+        XMMReg4Float reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg4Float Load4Val(const int *ptr)
+    {
+        XMMReg4Float reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg4Float Equals(const XMMReg4Float &expr1,
+                                      const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_cmpeq_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Float NotEquals(const XMMReg4Float &expr1,
+                                         const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_cmpneq_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Float Greater(const XMMReg4Float &expr1,
+                                       const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_cmpgt_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Float And(const XMMReg4Float &expr1,
+                                   const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_and_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Float Ternary(const XMMReg4Float &cond,
+                                       const XMMReg4Float &true_expr,
+                                       const XMMReg4Float &false_expr)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_or_ps(_mm_and_ps(cond.xmm, true_expr.xmm),
+                            _mm_andnot_ps(cond.xmm, false_expr.xmm));
+        return reg;
+    }
+
+    static inline XMMReg4Float Min(const XMMReg4Float &expr1,
+                                   const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_min_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const float *ptr)
+    {
+        xmm = _mm_loadu_ps(ptr);
+    }
+
+    static inline void Load16Val(const float *ptr, XMMReg4Float &r0,
+                                 XMMReg4Float &r1, XMMReg4Float &r2,
+                                 XMMReg4Float &r3)
+    {
+        r0.nsLoad4Val(ptr);
+        r1.nsLoad4Val(ptr + 4);
+        r2.nsLoad4Val(ptr + 8);
+        r3.nsLoad4Val(ptr + 12);
+    }
+
+    inline void nsLoad4Val(const int *ptr)
+    {
+        const __m128i xmm_i =
+            _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr));
+        xmm = _mm_cvtepi32_ps(xmm_i);
+    }
+
+    static inline void Load16Val(const int *ptr, XMMReg4Float &r0,
+                                 XMMReg4Float &r1, XMMReg4Float &r2,
+                                 XMMReg4Float &r3)
+    {
+        r0.nsLoad4Val(ptr);
+        r1.nsLoad4Val(ptr + 4);
+        r2.nsLoad4Val(ptr + 8);
+        r3.nsLoad4Val(ptr + 12);
+    }
+
+    static inline __m128i cvtepu8_epi32(__m128i x)
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_cvtepu8_epi32(x);
+#else
+        return _mm_unpacklo_epi16(_mm_unpacklo_epi8(x, _mm_setzero_si128()),
+                                  _mm_setzero_si128());
+#endif
+    }
+
+    inline void nsLoad4Val(const unsigned char *ptr)
+    {
+        const __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
+        xmm = _mm_cvtepi32_ps(cvtepu8_epi32(xmm_i));
+    }
+
+    static inline void Load16Val(const unsigned char *ptr, XMMReg4Float &r0,
+                                 XMMReg4Float &r1, XMMReg4Float &r2,
+                                 XMMReg4Float &r3)
+    {
+        const __m128i xmm_i =
+            _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr));
+        r0.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(xmm_i));
+        r1.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(_mm_srli_si128(xmm_i, 4)));
+        r2.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(_mm_srli_si128(xmm_i, 8)));
+        r3.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(_mm_srli_si128(xmm_i, 12)));
+    }
+
+    static inline __m128i cvtepi16_epi32(__m128i x)
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_cvtepi16_epi32(x);
+#else
+        /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */
+        return _mm_srai_epi32(
+            /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
+            _mm_unpacklo_epi16(x, x), 16);
+#endif
+    }
+
+    inline void nsLoad4Val(const short *ptr)
+    {
+        const __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
+        xmm = _mm_cvtepi32_ps(cvtepi16_epi32(xmm_i));
+    }
+
+    static inline void Load8Val(const short *ptr, XMMReg4Float &r0,
+                                XMMReg4Float &r1)
+    {
+        const __m128i xmm_i =
+            _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr));
+        r0.xmm = _mm_cvtepi32_ps(cvtepi16_epi32(xmm_i));
+        r1.xmm = _mm_cvtepi32_ps(cvtepi16_epi32(_mm_srli_si128(xmm_i, 8)));
+    }
+
+    static inline void Load16Val(const short *ptr, XMMReg4Float &r0,
+                                 XMMReg4Float &r1, XMMReg4Float &r2,
+                                 XMMReg4Float &r3)
+    {
+        Load8Val(ptr, r0, r1);
+        Load8Val(ptr + 8, r2, r3);
+    }
+
+    static inline __m128i cvtepu16_epi32(__m128i x)
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_cvtepu16_epi32(x);
+#else
+        return _mm_unpacklo_epi16(
+            x, _mm_setzero_si128()); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|0|b|0|a */
+#endif
+    }
+
+    inline void nsLoad4Val(const unsigned short *ptr)
+    {
+        const __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
+        xmm = _mm_cvtepi32_ps(cvtepu16_epi32(xmm_i));
+    }
+
+    static inline void Load8Val(const unsigned short *ptr, XMMReg4Float &r0,
+                                XMMReg4Float &r1)
+    {
+        const __m128i xmm_i =
+            _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr));
+        r0.xmm = _mm_cvtepi32_ps(cvtepu16_epi32(xmm_i));
+        r1.xmm = _mm_cvtepi32_ps(cvtepu16_epi32(_mm_srli_si128(xmm_i, 8)));
+    }
+
+    static inline void Load16Val(const unsigned short *ptr, XMMReg4Float &r0,
+                                 XMMReg4Float &r1, XMMReg4Float &r2,
+                                 XMMReg4Float &r3)
+    {
+        Load8Val(ptr, r0, r1);
+        Load8Val(ptr + 8, r2, r3);
+    }
+
+    inline void Zeroize()
+    {
+        xmm = _mm_setzero_ps();
+    }
+
+    inline XMMReg4Float &operator=(const XMMReg4Float &other)
+    {
+        xmm = other.xmm;
+        return *this;
+    }
+
+    inline XMMReg4Float &operator+=(const XMMReg4Float &other)
+    {
+        xmm = _mm_add_ps(xmm, other.xmm);
+        return *this;
+    }
+
+    inline XMMReg4Float &operator*=(const XMMReg4Float &other)
+    {
+        xmm = _mm_mul_ps(xmm, other.xmm);
+        return *this;
+    }
+
+    inline XMMReg4Float operator+(const XMMReg4Float &other) const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_add_ps(xmm, other.xmm);
+        return ret;
+    }
+
+    inline XMMReg4Float operator-(const XMMReg4Float &other) const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_sub_ps(xmm, other.xmm);
+        return ret;
+    }
+
+    inline XMMReg4Float operator*(const XMMReg4Float &other) const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_mul_ps(xmm, other.xmm);
+        return ret;
+    }
+
+    inline XMMReg4Float operator/(const XMMReg4Float &other) const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_div_ps(xmm, other.xmm);
+        return ret;
+    }
+
+    inline void Store4Val(float *ptr) const
+    {
+        _mm_storeu_ps(ptr, xmm);
+    }
+
+    inline void Store4ValAligned(float *ptr) const
+    {
+        _mm_store_ps(ptr, xmm);
+    }
+
+    inline operator float() const
+    {
+        return _mm_cvtss_f32(xmm);
+    }
+};
+
 class XMMReg2Double
 {
   public:
@@ -89,6 +402,13 @@ class XMMReg2Double
 
     XMMReg2Double(const XMMReg2Double &other) : xmm(other.xmm)
     {
+    }
+
+    static inline XMMReg2Double Set1(double d)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_set1_pd(d);
+        return reg;
     }
 
     static inline XMMReg2Double Zero()
@@ -141,6 +461,13 @@ class XMMReg2Double
     }
 
     static inline XMMReg2Double Load2Val(const unsigned short *ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg2Double Load2Val(const int *ptr)
     {
         XMMReg2Double reg;
         reg.nsLoad2Val(ptr);
@@ -215,6 +542,11 @@ class XMMReg2Double
     inline void nsLoad2Val(const float *ptr)
     {
         xmm = _mm_cvtps_pd(_mm_castsi128_ps(GDALCopyInt64ToXMM(ptr)));
+    }
+
+    inline void nsLoad2Val(const int *ptr)
+    {
+        xmm = _mm_cvtepi32_pd(GDALCopyInt64ToXMM(ptr));
     }
 
     inline void nsLoad2Val(const unsigned char *ptr)
@@ -442,6 +774,14 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Set1(double d)
+    {
+        XMMReg2Double reg;
+        reg.low = d;
+        reg.high = d;
+        return reg;
+    }
+
     static inline XMMReg2Double Load1ValHighAndLow(const double *ptr)
     {
         XMMReg2Double reg;
@@ -589,6 +929,13 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Load2Val(const int *ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+
     inline void nsLoad1ValHighAndLow(const double *ptr)
     {
         low = ptr[0];
@@ -626,6 +973,12 @@ class XMMReg2Double
     }
 
     inline void nsLoad2Val(const unsigned short *ptr)
+    {
+        low = ptr[0];
+        high = ptr[1];
+    }
+
+    inline void nsLoad2Val(const int *ptr)
     {
         low = ptr[0];
         high = ptr[1];
@@ -752,14 +1105,14 @@ class XMMReg2Double
 
     void Store2Val(unsigned char *ptr) const
     {
-        ptr[0] = (unsigned char)(low + 0.5);
-        ptr[1] = (unsigned char)(high + 0.5);
+        ptr[0] = static_cast<unsigned char>(low + 0.5);
+        ptr[1] = static_cast<unsigned char>(high + 0.5);
     }
 
     void Store2Val(unsigned short *ptr) const
     {
-        ptr[0] = (GUInt16)(low + 0.5);
-        ptr[1] = (GUInt16)(high + 0.5);
+        ptr[0] = static_cast<GUInt16>(low + 0.5);
+        ptr[1] = static_cast<GUInt16>(high + 0.5);
     }
 
     inline void StoreMask(unsigned char *ptr) const
@@ -800,6 +1153,13 @@ class XMMReg4Double
         return reg;
     }
 
+    static inline XMMReg4Double Set1(double d)
+    {
+        XMMReg4Double reg;
+        reg.ymm = _mm256_set1_pd(d);
+        return reg;
+    }
+
     inline void Zeroize()
     {
         ymm = _mm256_setzero_pd();
@@ -831,6 +1191,16 @@ class XMMReg4Double
         ymm = _mm256_cvtepi32_pd(xmm_i);
     }
 
+    static inline void Load8Val(const unsigned char *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        const __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
+        const __m128i xmm_i_low = _mm_cvtepu8_epi32(xmm_i);
+        low.ymm = _mm256_cvtepi32_pd(xmm_i_low);
+        const __m128i xmm_i_high = _mm_cvtepu8_epi32(_mm_srli_si128(xmm_i, 4));
+        high.ymm = _mm256_cvtepi32_pd(xmm_i_high);
+    }
+
     static inline XMMReg4Double Load4Val(const short *ptr)
     {
         XMMReg4Double reg;
@@ -843,6 +1213,13 @@ class XMMReg4Double
         __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
         xmm_i = _mm_cvtepi16_epi32(xmm_i);
         ymm = _mm256_cvtepi32_pd(xmm_i);
+    }
+
+    static inline void Load8Val(const short *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low.nsLoad4Val(ptr);
+        high.nsLoad4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Load4Val(const unsigned short *ptr)
@@ -861,6 +1238,13 @@ class XMMReg4Double
                      // range, so cannot be interpreted as negative int32
     }
 
+    static inline void Load8Val(const unsigned short *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low.nsLoad4Val(ptr);
+        high.nsLoad4Val(ptr + 4);
+    }
+
     static inline XMMReg4Double Load4Val(const double *ptr)
     {
         XMMReg4Double reg;
@@ -871,6 +1255,13 @@ class XMMReg4Double
     inline void nsLoad4Val(const double *ptr)
     {
         ymm = _mm256_loadu_pd(ptr);
+    }
+
+    static inline void Load8Val(const double *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low.nsLoad4Val(ptr);
+        high.nsLoad4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Load4ValAligned(const double *ptr)
@@ -895,6 +1286,33 @@ class XMMReg4Double
     inline void nsLoad4Val(const float *ptr)
     {
         ymm = _mm256_cvtps_pd(_mm_loadu_ps(ptr));
+    }
+
+    static inline void Load8Val(const float *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low.nsLoad4Val(ptr);
+        high.nsLoad4Val(ptr + 4);
+    }
+
+    static inline XMMReg4Double Load4Val(const int *ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const int *ptr)
+    {
+        ymm = _mm256_cvtepi32_pd(
+            _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr)));
+    }
+
+    static inline void Load8Val(const int *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low.nsLoad4Val(ptr);
+        high.nsLoad4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Equals(const XMMReg4Double &expr1,
@@ -1075,6 +1493,14 @@ class XMMReg4Double
         return reg;
     }
 
+    static inline XMMReg4Double Set1(double d)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::Set1(d);
+        reg.high = XMMReg2Double::Set1(d);
+        return reg;
+    }
+
     static inline XMMReg4Double Load1ValHighAndLow(const double *ptr)
     {
         XMMReg4Double reg;
@@ -1090,12 +1516,26 @@ class XMMReg4Double
         return reg;
     }
 
+    static inline void Load8Val(const unsigned char *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
+    }
+
     static inline XMMReg4Double Load4Val(const short *ptr)
     {
         XMMReg4Double reg;
         reg.low.nsLoad2Val(ptr);
         reg.high.nsLoad2Val(ptr + 2);
         return reg;
+    }
+
+    static inline void Load8Val(const short *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Load4Val(const unsigned short *ptr)
@@ -1106,12 +1546,41 @@ class XMMReg4Double
         return reg;
     }
 
+    static inline void Load8Val(const unsigned short *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
+    }
+
+    static inline XMMReg4Double Load4Val(const int *ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad2Val(ptr);
+        reg.high.nsLoad2Val(ptr + 2);
+        return reg;
+    }
+
+    static inline void Load8Val(const int *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
+    }
+
     static inline XMMReg4Double Load4Val(const double *ptr)
     {
         XMMReg4Double reg;
         reg.low.nsLoad2Val(ptr);
         reg.high.nsLoad2Val(ptr + 2);
         return reg;
+    }
+
+    static inline void Load8Val(const double *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Load4ValAligned(const double *ptr)
@@ -1127,6 +1596,13 @@ class XMMReg4Double
         XMMReg4Double reg;
         XMMReg2Double::Load4Val(ptr, reg.low, reg.high);
         return reg;
+    }
+
+    static inline void Load8Val(const float *ptr, XMMReg4Double &low,
+                                XMMReg4Double &high)
+    {
+        low = Load4Val(ptr);
+        high = Load4Val(ptr + 4);
     }
 
     static inline XMMReg4Double Equals(const XMMReg4Double &expr1,
