@@ -248,6 +248,7 @@ class VRTBuilder
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
     const CPLStringList aosCreateOptions;
+    const bool bWriteAbsolutePath;
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -288,7 +289,8 @@ class VRTBuilder
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
                const char *const *papszOpenOptionsIn,
-               const CPLStringList &aosCreateOptionsIn);
+               const CPLStringList &aosCreateOptionsIn,
+               bool bWriteAbsolutePathIn);
 
     ~VRTBuilder();
 
@@ -314,8 +316,9 @@ VRTBuilder::VRTBuilder(
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
     const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
-    const CPLStringList &aosCreateOptionsIn)
-    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
+    const CPLStringList &aosCreateOptionsIn, bool bWriteAbsolutePathIn)
+    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn),
+      bWriteAbsolutePath(bWriteAbsolutePathIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
@@ -1048,6 +1051,36 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                         WriteAbsolutePath()                          */
+/************************************************************************/
+
+static void WriteAbsolutePath(VRTSimpleSource *poSource, const char *dsFileName)
+{
+    if (dsFileName[0])
+    {
+        if (CPLIsFilenameRelative(dsFileName))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(dsFileName, &sStat) == 0)
+            {
+                if (char *pszCurDir = CPLGetCurrentDir())
+                {
+                    poSource->SetSourceDatasetName(
+                        CPLFormFilenameSafe(pszCurDir, dsFileName, nullptr)
+                            .c_str(),
+                        false);
+                    CPLFree(pszCurDir);
+                }
+            }
+        }
+        else
+        {
+            poSource->SetSourceDatasetName(dsFileName, false);
+        }
+    }
+}
+
+/************************************************************************/
 /*                         CreateVRTSeparate()                          */
 /************************************************************************/
 
@@ -1196,6 +1229,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                     GDALGetRasterBand(hSourceDS, nSrcBandIdx + 1)),
                 FALSE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
+
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
 
             if (psDatasetProperties->abHasOffset[nSrcBandIdx])
                 poVRTBand->SetOffset(
@@ -1411,6 +1447,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
                                        dfSrcYSize, dfDstXOff, dfDstYOff,
                                        dfDstXSize, dfDstYSize);
 
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
+
             poVRTBand->AddSource(poSimpleSource);
         }
 
@@ -1449,6 +1488,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
                 static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
                 TRUE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
+
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSource, dsFileName);
 
             poMaskVRTBand->AddSource(poSource);
         }
@@ -1830,6 +1872,7 @@ struct GDALBuildVRTOptions
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    bool bWriteAbsolutePath = false;
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = true;
@@ -1981,7 +2024,8 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
+        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions,
+        sOptions.bWriteAbsolutePath);
     oBuilder.m_osProgramName = sOptions.osProgramName;
 
     return GDALDataset::ToHandle(
@@ -2235,6 +2279,12 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
     argParser->add_open_options_argument(&psOptions->aosOpenOptions);
 
     argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    argParser->add_argument("-write_absolute_path")
+        .flag()
+        .store_into(psOptions->bWriteAbsolutePath)
+        .help(_("Write the absolute path of the raster files in the tile index "
+                "file."));
 
     argParser->add_argument("-ignore_srcmaskband")
         .flag()
