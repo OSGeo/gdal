@@ -2,6 +2,16 @@ blank_issues_enabled: false
 
 contact_links:
 
+  - name: '"pip install GDAL" does not work'
+    url: https://gdal.org/en/stable/download.html#conda
+    about: >
+      "pip install GDAL" only works if you have the development headers and
+      library of the native libgdal matching the version of the GDAL python
+      bindings you want to install. Which may not be easily found, in particular
+      on Windows. We do not consider the lack of pip binary wheels as a defect.
+      Our best suggestion is to recommend using GDAL Conda builds instead as
+      documented at https://gdal.org/en/stable/download.html#conda
+
   - name: Question
     url: https://gis.stackexchange.com/
     about: >
