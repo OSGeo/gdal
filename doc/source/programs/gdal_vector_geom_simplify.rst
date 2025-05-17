@@ -20,7 +20,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal vector geom simplify` simplify geometries, ensuring that
+:program:`gdal vector geom simplify` simplifies geometries, ensuring that
 the result is a valid geometry having the same dimension and number of
 components as the input.
 
@@ -30,7 +30,7 @@ similar to the one used in the Douglas-Peucker algorithm.
 This done by the :cpp:func:`OGRGeometry::SimplifyPreserveTopology` method which
 preserves the topology per feature, but not for a whole layer.
 Thus gaps or overlaps between geometries that were initially contiguous may
-happen.
+happen. To perform simplification that preserves shared boundaries between geometries, see :ref:`gdal_vector_geom_simplify_coverage`.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
 
