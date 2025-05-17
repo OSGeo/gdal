@@ -964,9 +964,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 
         for (int iLine = 0; iLine < nBufYSize; iLine++)
         {
-            GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
-                          static_cast<GByte *>(pData) + nLineSpace * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
+                            static_cast<GByte *>(pData) + nLineSpace * iLine,
+                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
         }
     }
 
@@ -1011,6 +1011,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     if (nBufferRadius > (INT_MAX - nBufXSize) / 2 ||
         nBufferRadius > (INT_MAX - nBufYSize) / 2)
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Integer overflow: "
+                 "nBufferRadius > (INT_MAX - nBufXSize) / 2 || "
+                 "nBufferRadius > (INT_MAX - nBufYSize) / 2)");
         return CE_Failure;
     }
     const int nExtBufXSize = nBufXSize + 2 * nBufferRadius;
@@ -1078,9 +1082,11 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
         else
         {
-            GDALCopyWords(&m_dfNoDataValue, GDT_Float64, 0,
-                          static_cast<GByte *>(pBuffers[nBufferCount]),
-                          eSrcType, nSrcTypeSize, nExtBufXSize * nExtBufYSize);
+            GDALCopyWords64(&m_dfNoDataValue, GDT_Float64, 0,
+                            static_cast<GByte *>(pBuffers[nBufferCount]),
+                            eSrcType, nSrcTypeSize,
+                            static_cast<GPtrDiff_t>(nExtBufXSize) *
+                                nExtBufYSize);
         }
 
         ++nBufferCount;
@@ -1172,9 +1178,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         eErr = static_cast<VRTSource *>(papoSources[iSource])
                    ->RasterIO(
                        eSrcType, nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
-                       pabyBuffer +
-                           (nYShiftInBuffer * nExtBufXSize + nXShiftInBuffer) *
-                               nSrcTypeSize,
+                       pabyBuffer + (static_cast<size_t>(nYShiftInBuffer) *
+                                         nExtBufXSize +
+                                     nXShiftInBuffer) *
+                                        nSrcTypeSize,
                        nExtBufXSizeReq, nExtBufYSizeReq, eSrcType, nSrcTypeSize,
                        static_cast<GSpacing>(nSrcTypeSize) * nExtBufXSize,
                        &sExtraArg, oWorkingState);
@@ -1388,11 +1395,11 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                     (static_cast<size_t>(iY + nBufferRadius) * nExtBufXSize +
                      nBufferRadius) *
                     GDALGetDataTypeSizeBytes(eDataType);
-                GDALCopyWords(pabyTmpBuffer + nSrcOffset, eDataType,
-                              GDALGetDataTypeSizeBytes(eDataType),
-                              static_cast<GByte *>(pData) + iY * nLineSpace,
-                              eBufType, static_cast<int>(nPixelSpace),
-                              nBufXSize);
+                GDALCopyWords64(pabyTmpBuffer + nSrcOffset, eDataType,
+                                GDALGetDataTypeSizeBytes(eDataType),
+                                static_cast<GByte *>(pData) + iY * nLineSpace,
+                                eBufType, static_cast<int>(nPixelSpace),
+                                nBufXSize);
             }
 
             VSIFree(pabyTmpBuffer);
