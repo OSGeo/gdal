@@ -1177,7 +1177,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
 
   public:
-    char *pszFuncName;
+    CPLString osFuncName{};
     GDALDataType eSourceTransferType;
 
     using PixelFunc =
