@@ -4183,3 +4183,67 @@ def test_netcdf_multidim_WGS84_and_EGM96_height(tmp_path):
         srs = ar.GetSpatialRef()
         assert srs.GetAuthorityCode(None) == "9707"
         assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_enumeration():
+
+    # File generated with:
+    if False:
+        import netCDF4
+        import numpy as np
+
+        nc = netCDF4.Dataset("data/netcdf/enumeration.nc", "w")
+        nc.createEnumType(np.uint8, "my_enum", {"two": 2, "one": 1, "three": 3})
+        nc.close()
+
+    ds = gdal.OpenEx("data/netcdf/enumeration.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    assert rg.GetDataTypeCount() == 1
+    with pytest.raises(Exception, match="invalid index"):
+        rg.GetDataType(1)
+
+    types = rg.GetDataTypes()
+    assert (len(types)) == 1
+    assert types[0].GetName() == "my_enum"
+    assert types[0].GetNumericDataType() == gdal.GDT_Byte
+    rat = types[0].GetRAT()
+    assert rat
+    assert rat.GetRowCount() == 3
+    assert rat.GetColumnCount() == 2
+    assert rat.GetNameOfCol(0) == "value"
+    assert rat.GetTypeOfCol(0) == gdal.GFT_Integer
+    assert rat.GetUsageOfCol(0) == gdal.GFU_MinMax
+    assert rat.GetNameOfCol(1) == "name"
+    assert rat.GetTypeOfCol(1) == gdal.GFT_String
+    assert rat.GetUsageOfCol(1) == gdal.GFU_Name
+    assert rat.GetValueAsInt(0, 0) == 2
+    assert rat.GetValueAsString(0, 1) == "two"
+    assert rat.GetValueAsInt(1, 0) == 1
+    assert rat.GetValueAsString(1, 1) == "one"
+    assert rat.GetValueAsInt(2, 0) == 3
+    assert rat.GetValueAsString(2, 1) == "three"
+
+    j = gdal.MultiDimInfo(ds)
+    assert j == {
+        "type": "group",
+        "driver": "netCDF",
+        "name": "/",
+        "datatypes": [
+            {
+                "name": "my_enum",
+                "type": "Byte",
+                "attribute_table": [
+                    {"value": 2, "name": "two"},
+                    {"value": 1, "name": "one"},
+                    {"value": 3, "name": "three"},
+                ],
+            }
+        ],
+        "structural_info": {"NC_FORMAT": "NETCDF4"},
+    }
+    gdaltest.validate_json(j, "gdalmdiminfo_output.schema.json")
