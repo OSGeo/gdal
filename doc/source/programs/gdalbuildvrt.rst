@@ -248,6 +248,13 @@ changed in later versions.
 
     .. versionadded:: 3.4.2
 
+.. option:: -write_absolute_path
+
+    .. versionadded:: 3.12.0
+
+    Enables writing the absolute path of the input datasets. By default, input
+    filenames are written in a relative way with respect to the VRT filename (when possible).
+
 Examples
 --------
 

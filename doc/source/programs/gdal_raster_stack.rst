@@ -66,6 +66,13 @@ The following options are available:
     Both must be positive values.
 
 
+.. option:: --absolute-path
+
+    .. versionadded:: 3.12.0
+
+    When writing a VRT file, enables writing the absolute path of the input datasets. By default, input
+    filenames are written in a relative way with respect to the VRT filename (when possible).
+
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
 
     Set georeferenced extents of output file. The values must be expressed in georeferenced units.

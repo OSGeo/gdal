@@ -87,10 +87,10 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
            &m_locationName)
         .SetDefault(m_locationName)
         .SetMinCharCount(1);
-    AddArg("absolute-path", 0,
-           _("Whether the path to the input datasets should be stored as an "
-             "absolute path"),
-           &m_writeAbsolutePaths);
+    AddAbsolutePathArg(
+        &m_writeAbsolutePaths,
+        _("Whether the path to the input datasets should be stored as an "
+          "absolute path"));
     AddArg("dst-crs", 0, _("Destination CRS"), &m_crs)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");

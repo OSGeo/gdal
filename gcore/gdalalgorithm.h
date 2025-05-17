@@ -2853,6 +2853,10 @@ class CPL_DLL GDALAlgorithmRegistry
     AddNumThreadsArg(int *pValue, std::string *pStrValue,
                      const char *helpMessage = nullptr);
 
+    /** Add an argument to ask writing absolute paths. */
+    GDALInConstructionAlgorithmArg &
+    AddAbsolutePathArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 

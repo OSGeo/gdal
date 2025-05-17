@@ -47,6 +47,7 @@ class GDALRasterStackAlgorithm final : public GDALAlgorithm
     std::vector<double> m_dstNoData{};
     std::vector<int> m_bands{};
     bool m_hideNoData = false;
+    bool m_writeAbsolutePaths = false;
 };
 
 //! @endcond
