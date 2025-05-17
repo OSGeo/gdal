@@ -121,9 +121,16 @@ MAIN_START(argc, argv)
         args.push_back(argv[i]);
     CSLDestroy(argv);
 
+    alg->SetCalledFromCommandLine();
+
     if (!alg->ParseCommandLineArguments(args))
     {
-        if (strstr(CPLGetLastErrorMsg(), "Do you mean") == nullptr)
+        if (strstr(CPLGetLastErrorMsg(), "Do you mean") == nullptr &&
+            strstr(CPLGetLastErrorMsg(), "Should be one among") == nullptr &&
+            strstr(CPLGetLastErrorMsg(), "Potential values for argument") ==
+                nullptr &&
+            strstr(CPLGetLastErrorMsg(),
+                   "Single potential value for argument") == nullptr)
         {
             fprintf(stderr, "%s", alg->GetUsageForCLI(true).c_str());
         }
@@ -139,8 +146,6 @@ MAIN_START(argc, argv)
     GDALProgressFunc pfnProgress =
         alg->IsProgressBarRequested() ? GDALTermProgress : nullptr;
     void *pProgressData = nullptr;
-
-    alg->SetCalledFromCommandLine();
 
     int ret = 0;
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())

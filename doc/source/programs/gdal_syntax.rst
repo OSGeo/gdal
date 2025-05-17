@@ -74,3 +74,53 @@ The following command lines are valid:
     gdal raster convert --input input.tif --output output.tif
     gdal raster convert --creation-option COMPRESS=LZW --creation-option TILED=YES --overwrite input.tif output.tif
     gdal raster convert input.tif output.tif--co COMPRESS=LZW,TILED=YES --overwrite
+
+
+Suggestions for argument values
++++++++++++++++++++++++++++++++
+
+As an alternative to :ref:`gdal_bash_completion`, it is possible to ask for
+potential enumerated values for an argument by appending ``=?`` to the argument name.
+
+.. example::
+   :title: Asking for the layer names of a vector dataset
+
+   .. code-block:: bash
+
+        gdal vector info my.gpkg --layer=?
+
+   can return:
+
+   .. code-block::
+
+        ERROR 1: info: Potential values for argument 'layer' are:
+        - towns
+        - countries
+
+
+.. example::
+   :title: Asking for the allowed values of the resampling argument
+
+   .. code-block:: bash
+
+        gdal raster reproject --resampling=?
+
+   returns:
+
+   .. code-block::
+
+        ERROR 1: reproject: Potential values for argument 'resampling' are:
+        - nearest
+        - bilinear
+        - cubic
+        - cubicspline
+        - lanczos
+        - average
+        - rms
+        - mode
+        - min
+        - max
+        - med
+        - q1
+        - q3
+        - sum
