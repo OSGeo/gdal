@@ -226,6 +226,19 @@ void VRTSimpleSource::SetSrcBand(GDALRasterBand *poNewSrcBand)
 }
 
 /************************************************************************/
+/*                      SetSourceDatasetName()                          */
+/************************************************************************/
+
+void VRTSimpleSource::SetSourceDatasetName(const char *pszFilename,
+                                           bool bRelativeToVRT)
+{
+    CPLAssert(m_nBand >= 0);
+    m_osSrcDSName = pszFilename;
+    m_osSourceFileNameOri = pszFilename;
+    m_bRelativeToVRTOri = bRelativeToVRT;
+}
+
+/************************************************************************/
 /*                          SetSrcMaskBand()                            */
 /************************************************************************/
 

@@ -1436,6 +1436,9 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
         return m_osSrcDSName;
     }
 
+    // Must be called after SetSrcBand()
+    void SetSourceDatasetName(const char *pszFilename, bool bRelativeToVRT);
+
     const CPLString &GetResampling() const
     {
         return m_osResampling;
