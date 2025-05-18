@@ -395,7 +395,7 @@ static int ComputeEqualizationLUTs(GDALDatasetH hDataset, int nLUTBins,
         /* ----------------------------------------------------------------- */
         /*      Get a reasonable histogram.                                  */
         /* ----------------------------------------------------------------- */
-        CPLErr eErr = GDALGetDefaultHistogramEx(
+        const CPLErr eErr = GDALGetDefaultHistogramEx(
             hBand, *ppadfScaleMin + iBand, *ppadfScaleMax + iBand, &nHistSize,
             &panHistogram, TRUE, pfnProgress, nullptr);
 
@@ -410,8 +410,10 @@ static int ComputeEqualizationLUTs(GDALDatasetH hDataset, int nLUTBins,
         /*      We take care to use big integers as there may be more than 4 */
         /*      Gigapixels.                                                  */
         /* ----------------------------------------------------------------- */
-        GUIntBig *panCumHist =
-            static_cast<GUIntBig *>(CPLCalloc(sizeof(GUIntBig), nHistSize));
+        GUIntBig *panCumHist = static_cast<GUIntBig *>(
+            VSI_CALLOC_VERBOSE(sizeof(GUIntBig), nHistSize));
+        if (!panCumHist)
+            return FALSE;
         GUIntBig nTotal = 0;
 
         for (int iHist = 0; iHist < nHistSize; iHist++)
@@ -433,12 +435,19 @@ static int ComputeEqualizationLUTs(GDALDatasetH hDataset, int nLUTBins,
         /* ----------------------------------------------------------------- */
         /*      Now compute a LUT from the cumulative histogram.             */
         /* ----------------------------------------------------------------- */
-        int *panLUT = static_cast<int *>(CPLCalloc(sizeof(int), nLUTBins));
+        int *panLUT =
+            static_cast<int *>(VSI_CALLOC_VERBOSE(sizeof(int), nLUTBins));
+        if (!panLUT)
+        {
+            CPLFree(panCumHist);
+            return FALSE;
+        }
 
         for (int iLUT = 0; iLUT < nLUTBins; iLUT++)
         {
-            int iHist = (iLUT * nHistSize) / nLUTBins;
-            int nValue =
+            const int iHist = static_cast<int>(
+                (static_cast<int64_t>(iLUT) * nHistSize) / nLUTBins);
+            const int nValue =
                 static_cast<int>((panCumHist[iHist] * nLUTBins) / nTotal);
 
             panLUT[iLUT] = std::max(0, std::min(nLUTBins - 1, nValue));
@@ -473,7 +482,9 @@ static CPLErr EnhancerCallback(void *hCBData, int nXOff, int nYOff, int nXSize,
 
     GByte *pabyOutImage = static_cast<GByte *>(pData);
     float *pafSrcImage = static_cast<float *>(
-        CPLCalloc(sizeof(float), static_cast<size_t>(nXSize) * nYSize));
+        VSI_MALLOC3_VERBOSE(sizeof(float), nXSize, nYSize));
+    if (!pafSrcImage)
+        return CE_Failure;
 
     CPLErr eErr = psEInfo->poSrcBand->RasterIO(
         GF_Read, nXOff, nYOff, nXSize, nYSize, pafSrcImage, nXSize, nYSize,
@@ -485,14 +496,14 @@ static CPLErr EnhancerCallback(void *hCBData, int nXOff, int nYOff, int nXSize,
         return eErr;
     }
 
-    int nPixelCount = nXSize * nYSize;
+    const size_t nPixelCount = static_cast<size_t>(nXSize) * nYSize;
     int bHaveNoData;
-    float fNoData =
+    const float fNoData =
         static_cast<float>(psEInfo->poSrcBand->GetNoDataValue(&bHaveNoData));
-    double dfScale =
+    const double dfScale =
         psEInfo->nLUTBins / (psEInfo->dfScaleMax - psEInfo->dfScaleMin);
 
-    for (int iPixel = 0; iPixel < nPixelCount; iPixel++)
+    for (size_t iPixel = 0; iPixel < nPixelCount; iPixel++)
     {
         if (bHaveNoData && pafSrcImage[iPixel] == fNoData)
         {
@@ -500,9 +511,21 @@ static CPLErr EnhancerCallback(void *hCBData, int nXOff, int nYOff, int nXSize,
             continue;
         }
 
-        int iBin = static_cast<int>(
-            (pafSrcImage[iPixel] - psEInfo->dfScaleMin) * dfScale);
-        iBin = std::max(0, std::min(psEInfo->nLUTBins - 1, iBin));
+        const double dfBin =
+            (pafSrcImage[iPixel] - psEInfo->dfScaleMin) * dfScale;
+        int iBin = 0;
+        if (!(dfBin > 0))
+        {
+            // nothing to do
+        }
+        else if (!(dfBin < psEInfo->nLUTBins - 1))
+        {
+            iBin = psEInfo->nLUTBins - 1;
+        }
+        else
+        {
+            iBin = static_cast<int>(dfBin);
+        }
 
         if (psEInfo->panLUT)
             pabyOutImage[iPixel] = static_cast<GByte>(psEInfo->panLUT[iBin]);
