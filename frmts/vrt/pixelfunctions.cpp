@@ -919,10 +919,10 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2 && CSLFetchNameValue(papszArgs, "k") == nullptr)
+    if (nSources < 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "sum requires at least two sources or a specified constant k");
+                 "sum requires at least one source");
         return CE_Failure;
     }
 
