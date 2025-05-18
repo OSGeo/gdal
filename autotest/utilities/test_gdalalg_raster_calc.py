@@ -496,6 +496,7 @@ def test_gdalalg_raster_calc_expression_rewriting(
     calc["input"] = [f"{source}={infile}"]
     calc["output"] = outfile
     calc["calc"] = [expr]
+    calc["no-check-expression"] = True
 
     assert calc.Run()
 
@@ -521,3 +522,31 @@ def test_gdalalg_raster_calc_gdalg_json(calc, tmp_vsimem):
 
     with gdal.Open(outfile) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.parametrize(
+    "output_format,ext",
+    [
+        ("VRT", None),
+        ("VRT", "vrt"),
+        ("stream", None),
+        ("GDALG", None),
+        ("GDALG", "gdalg.json"),
+        ("GTiff", None),
+        ("GTiff", "tif"),
+    ],
+)
+def test_gdalalg_raster_calc_invalid_formula(calc, tmp_vsimem, output_format, ext):
+
+    if output_format != "stream" and gdal.GetDriverByName(output_format) is None:
+        pytest.skip(f"{output_format} not available")
+
+    calc["input"] = "../gcore/data/byte.tif"
+    if ext:
+        calc["output"] = tmp_vsimem / f"out.{ext}"
+    else:
+        calc["output-format"] = output_format
+        calc["output"] = tmp_vsimem / "out"
+    calc["calc"] = "invalid"
+    with pytest.raises(Exception, match="Invalid variable name"):
+        calc.Run()

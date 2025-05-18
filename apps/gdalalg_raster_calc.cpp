@@ -572,6 +572,21 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
         .SetRequired()
         .SetPackedValuesAllowed(false)
         .SetMinCount(1);
+
+    // This is a hidden option only used by test_gdalalg_raster_calc_expression_rewriting()
+    // for now
+    AddArg("no-check-expression", 0,
+           _("Whether to skip expression validity checks for virtual format "
+             "output"),
+           &m_noCheckExpression)
+        .SetHidden();
+
+    AddValidationAction(
+        [this]()
+        {
+            return m_noCheckExpression || !IsGDALGOutput() ||
+                   RunImpl(nullptr, nullptr);
+        });
 }
 
 /************************************************************************/
@@ -600,6 +615,35 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (vrt == nullptr)
     {
         return false;
+    }
+
+    if (!m_noCheckExpression)
+    {
+        const bool bIsVRT =
+            m_format == "VRT" ||
+            (m_format.empty() &&
+             EQUAL(
+                 CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
+                 "VRT"));
+        const bool bIsGDALG =
+            m_format == "GDALG" ||
+            (m_format.empty() &&
+             cpl::ends_with(m_outputDataset.GetName(), ".gdalg.json"));
+        if (m_format == "stream" || bIsVRT || bIsGDALG)
+        {
+            // Try reading a single pixel to check formulas are valid.
+            std::vector<GByte> dummyData(vrt->GetRasterCount());
+            if (vrt->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1, 1,
+                              GDT_Byte, vrt->GetRasterCount(), nullptr, 0, 0, 0,
+                              nullptr) != CE_None)
+            {
+                return false;
+            }
+            if (bIsGDALG)
+            {
+                return true;
+            }
+        }
     }
 
     if (m_format == "stream")
