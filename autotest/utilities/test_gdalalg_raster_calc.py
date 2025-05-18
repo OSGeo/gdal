@@ -185,11 +185,35 @@ def test_gdalalg_raster_calc_several_inputs_same_name(calc, tmp_vsimem):
 
     calc["input"] = ["A=../gcore/data/byte.tif", "A=../gcore/data/uint16.tif"]
     calc["output"] = tmp_vsimem / "out.vrt"
-    calc["calc"] = "A+B"
+    calc["calc"] = "A"
 
     with pytest.raises(
         Exception, match="An input with name 'A' has already been provided"
     ):
+        calc.Run()
+
+
+@pytest.mark.parametrize(
+    "name,expected_error_msg",
+    [
+        ("_pi", "Name '_pi' is illegal because it starts with a '_'"),
+        ("0ko", "Name '0ko' is illegal because it starts with a '0'"),
+        ("ko-", "Name 'ko-' is illegal because character '-' is not allowed"),
+        ("ok", None),
+        ("ok_", None),
+        ("o0123456789", None),
+    ],
+)
+def test_gdalalg_raster_calc_test_name(calc, name, expected_error_msg):
+
+    calc["input"] = f"{name}=../gcore/data/byte.tif"
+    calc["output-format"] = "MEM"
+    calc["calc"] = name
+
+    if expected_error_msg:
+        with pytest.raises(Exception, match=expected_error_msg):
+            calc.Run()
+    else:
         calc.Run()
 
 

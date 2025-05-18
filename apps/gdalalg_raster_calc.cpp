@@ -400,6 +400,36 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
             name = input.substr(0, pos);
         }
 
+        // Check input name is legal
+        for (size_t i = 0; i < name.size(); ++i)
+        {
+            const char c = name[i];
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+            {
+                // ok
+            }
+            else if (c == '_' || (c >= '0' && c <= '9'))
+            {
+                if (i == 0)
+                {
+                    // Reserved constants in MuParser start with an underscore
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Name '%s' is illegal because it starts with a '%c'",
+                        name.c_str(), c);
+                    return false;
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Name '%s' is illegal because character '%c' is not "
+                         "allowed",
+                         name.c_str(), c);
+                return false;
+            }
+        }
+
         std::string dsn =
             (pos == std::string::npos) ? input : input.substr(pos + 1);
         if (datasets.find(name) != datasets.end())
