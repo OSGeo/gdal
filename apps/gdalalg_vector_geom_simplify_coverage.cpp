@@ -19,6 +19,8 @@
 #include "ogr_geos.h"
 #include "ogrsf_frmts.h"
 
+#include <cinttypes>
+
 #ifndef _
 #define _(x) (x)
 #endif
@@ -81,7 +83,10 @@ class GDALVectorGeomSimplifyCoverageOutputDataset
 
             // Avoid segfault with non-polygonal inputs on GEOS < 3.12.2
             // Later versions produce an error instead
-            if (fgeom == nullptr || fgeom->getDimension() != 2)
+            const auto eFGType =
+                fgeom ? wkbFlatten(fgeom->getGeometryType()) : wkbUnknown;
+            if (eFGType != wkbPolygon && eFGType != wkbMultiPolygon &&
+                eFGType != wkbCurvePolygon && eFGType != wkbMultiSurface)
             {
                 for (auto &geom : geoms)
                 {
@@ -89,11 +94,28 @@ class GDALVectorGeomSimplifyCoverageOutputDataset
                 }
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Coverage simplification can only be performed on "
-                         "polygonal geometries.");
+                         "polygonal geometries. Feature %" PRId64
+                         " does not have one",
+                         static_cast<int64_t>(feature->GetFID()));
                 return false;
             }
 
-            geoms.push_back(fgeom->exportToGEOS(m_poGeosContext, false));
+            GEOSGeometry *geosGeom =
+                fgeom->exportToGEOS(m_poGeosContext, false);
+            if (!geosGeom)
+            {
+                // should not happen normally
+                for (auto &geom : geoms)
+                {
+                    GEOSGeom_destroy_r(m_poGeosContext, geom);
+                }
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Geometry of feature %" PRId64
+                         " failed to convert to GEOS",
+                         static_cast<int64_t>(feature->GetFID()));
+                return false;
+            }
+            geoms.push_back(geosGeom);
 
             feature->SetGeometry(nullptr);  // free some memory
             feature->SetFDefnUnsafe(dstLayer.GetLayerDefn());

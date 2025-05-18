@@ -98,7 +98,14 @@ def test_gdalalg_vector_geom_simplify_coverage_active_layer(alg):
     assert alg.Finalize()
 
 
-@pytest.mark.parametrize("geom", (ogr.CreateGeometryFromWkt("POINT (3 8)"), None))
+@pytest.mark.parametrize(
+    "geom",
+    (
+        ogr.CreateGeometryFromWkt("POINT (3 8)"),
+        ogr.CreateGeometryFromWkt("TIN (((0 0,0 1,1 1,0 0)))"),
+        None,
+    ),
+)
 def test_gdalalg_vector_geom_simplify_coverage_non_polygonal_inputs(
     alg, geom, tmp_vsimem
 ):
