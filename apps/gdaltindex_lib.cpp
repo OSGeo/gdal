@@ -700,7 +700,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     if (poExistingLayer && poExistingLayer->GetName() ==
                                                psOptions->osIndexLayerName)
                     {
-                        poTileIndexDS->DeleteLayer(i);
+                        if (poTileIndexDS->DeleteLayer(i) != OGRERR_NONE)
+                            return nullptr;
                         break;
                     }
                 }

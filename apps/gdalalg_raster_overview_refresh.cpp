@@ -18,6 +18,7 @@
 #include "vrt_priv.h"
 
 #include <algorithm>
+#include <limits>
 
 //! @cond Doxygen_Suppress
 
@@ -136,7 +137,8 @@ PartialRefreshFromSourceTimestamp(GDALDataset *poDS, const char *pszResampling,
 
     std::vector<GTISourceDesc> regions;
 
-    double dfTotalPixels = 0;
+    // init slightly above zero to please Coverity Scan
+    double dfTotalPixels = std::numeric_limits<double>::min();
 
     if (dynamic_cast<VRTDataset *>(poDS))
     {
@@ -304,7 +306,8 @@ static bool PartialRefreshFromSourceExtent(
 
     std::vector<Region> regions;
 
-    double dfTotalPixels = 0;
+    // init slightly above zero to please Coverity Scan
+    double dfTotalPixels = std::numeric_limits<double>::min();
     for (const std::string &filename : sources)
     {
         auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(

@@ -130,27 +130,26 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
         VSIStatL(pszTarget, &sStatBuf) == 0 && VSI_ISDIR(sStatBuf.st_mode))
     {
         const CPLStringList aosSiblingList(VSIReadDir(pszTarget));
-        int i = 0;
-        for (const char *pszSubTarget : cpl::Iterate(aosSiblingList))
+        const int nListSize = aosSiblingList.size();
+        for (int i = 0; i < nListSize; ++i)
         {
+            const char *pszSubTarget = aosSiblingList[i];
             if (!(EQUAL(pszSubTarget, "..") || EQUAL(pszSubTarget, ".")))
             {
                 const std::string osSubTarget =
                     CPLFormFilenameSafe(pszTarget, pszSubTarget, nullptr);
 
                 std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
-                    pScaledProgress(
-                        GDALCreateScaledProgress(
-                            static_cast<double>(i) / aosSiblingList.size(),
-                            static_cast<double>(i + 1) / aosSiblingList.size(),
-                            pfnProgress, pProgressData),
-                        GDALDestroyScaledProgress);
+                    pScaledProgress(GDALCreateScaledProgress(
+                                        static_cast<double>(i) / nListSize,
+                                        static_cast<double>(i + 1) / nListSize,
+                                        pfnProgress, pProgressData),
+                                    GDALDestroyScaledProgress);
                 ret = ret &&
                       Process(osSubTarget.c_str(), aosSiblingList.List(),
                               pScaledProgress ? GDALScaledProgress : nullptr,
                               pScaledProgress.get());
             }
-            ++i;
         }
     }
 
