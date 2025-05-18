@@ -2430,6 +2430,8 @@ int CPL_DLL GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
                                        GDALExtendedDataTypeH hSecondEDT);
 GDALExtendedDataTypeSubType CPL_DLL
 GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT);
+GDALRasterAttributeTableH CPL_DLL
+GDALExtendedDataTypeGetRAT(GDALExtendedDataTypeH hEDT) CPL_WARN_UNUSED_RESULT;
 
 GDALEDTComponentH CPL_DLL
 GDALEDTComponentCreate(const char *pszName, size_t nOffset,
@@ -2508,6 +2510,9 @@ bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
 GDALGroupH CPL_DLL GDALGroupSubsetDimensionFromSelection(
     GDALGroupH hGroup, const char *pszSelection, CSLConstList papszOptions);
+size_t CPL_DLL GDALGroupGetDataTypeCount(GDALGroupH hGroup);
+GDALExtendedDataTypeH CPL_DLL GDALGroupGetDataType(GDALGroupH hGroup,
+                                                   size_t nIdx);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);

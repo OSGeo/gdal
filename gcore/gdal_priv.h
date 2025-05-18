@@ -2830,6 +2830,9 @@ class CPL_DLL GDALExtendedDataType
 
     static GDALExtendedDataType Create(GDALDataType eType);
     static GDALExtendedDataType
+    Create(const std::string &osName, GDALDataType eBaseType,
+           std::unique_ptr<GDALRasterAttributeTable>);
+    static GDALExtendedDataType
     Create(const std::string &osName, size_t nTotalSize,
            std::vector<std::unique_ptr<GDALEDTComponent>> &&components);
     static GDALExtendedDataType
@@ -2913,6 +2916,21 @@ class CPL_DLL GDALExtendedDataType
         return m_nMaxStringLength;
     }
 
+    /** Return associated raster attribute table, when there is one.
+     *
+     * For the netCDF driver, the RAT will capture enumerated types, with
+     * a "value" column with an integer value and a "name" column with the
+     * associated name.
+     *
+     * This is the same as the C function GDALExtendedDataTypeGetRAT()
+     *
+     * @since 3.12
+     */
+    const GDALRasterAttributeTable *GetRAT() const
+    {
+        return m_poRAT.get();
+    }
+
     bool CanConvertTo(const GDALExtendedDataType &other) const;
 
     bool NeedsFreeDynamicMemory() const;
@@ -2932,6 +2950,8 @@ class CPL_DLL GDALExtendedDataType
     GDALExtendedDataType(size_t nMaxStringLength,
                          GDALExtendedDataTypeSubType eSubType);
     explicit GDALExtendedDataType(GDALDataType eType);
+    GDALExtendedDataType(const std::string &osName, GDALDataType eBaseType,
+                         std::unique_ptr<GDALRasterAttributeTable>);
     GDALExtendedDataType(
         const std::string &osName, size_t nTotalSize,
         std::vector<std::unique_ptr<GDALEDTComponent>> &&components);
@@ -2943,6 +2963,7 @@ class CPL_DLL GDALExtendedDataType
     std::vector<std::unique_ptr<GDALEDTComponent>> m_aoComponents{};
     size_t m_nSize = 0;
     size_t m_nMaxStringLength = 0;
+    std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 };
 
 /* ******************************************************************** */
@@ -3060,6 +3081,10 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //from its original, without altering its name
     const std::string m_osContext{};
 
+    // List of types owned by the group.
+    std::vector<std::shared_ptr<GDALExtendedDataType>> m_apoTypes{};
+
+    //! Weak pointer to this
     std::weak_ptr<GDALGroup> m_pSelf{};
 
     //! Can be set to false by the owing group, when deleting this object
@@ -3111,6 +3136,18 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     const std::string &GetFullName() const
     {
         return m_osFullName;
+    }
+
+    /** Return data types associated with the group (typically enumerations)
+     *
+     * This is the same as the C function GDALGroupGetDataTypeCount() and GDALGroupGetDataType()
+     *
+     * @since 3.12
+     */
+    const std::vector<std::shared_ptr<GDALExtendedDataType>> &
+    GetDataTypes() const
+    {
+        return m_apoTypes;
     }
 
     virtual std::vector<std::string>
