@@ -262,11 +262,6 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
         CPLAddXMLAttributeAndValue(band, "dataType",
                                    GDALGetDataTypeName(bandType));
 
-        CPLXMLNode *sourceTransferType =
-            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
-        CPLCreateXMLNode(sourceTransferType, CXT_Text,
-                         GDALGetDataTypeName(GDT_Float64));
-
         CPLXMLNode *pixelFunctionType =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
         CPLCreateXMLNode(pixelFunctionType, CXT_Text, "expression");
@@ -344,8 +339,6 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                     CPLCreateXMLNode(source, CXT_Element, "SourceBand");
                 CPLCreateXMLNode(sourceBand, CXT_Text,
                                  std::to_string(nInBand).c_str());
-
-                // TODO add <SourceProperties> ?
 
                 if (fakeSourceFilename.empty())
                 {
