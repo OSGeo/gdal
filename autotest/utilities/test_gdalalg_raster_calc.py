@@ -289,7 +289,8 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
         np.testing.assert_allclose(dat, eval(numpy_expr), rtol=1e-6)
 
 
-def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
+@pytest.mark.parametrize("formula", ["A+B", "sum(A, B)"])
+def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formula):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -311,7 +312,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
     calc["input"] = [f"@{input_txt}"]
     calc["output"] = outfile
-    calc["calc"] = ["A + B"]
+    calc["calc"] = formula
 
     assert calc.Run()
 
