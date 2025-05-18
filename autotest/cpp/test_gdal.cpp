@@ -157,6 +157,15 @@ INSTANTIATE_TEST_SUITE_P(
 // Test GDALDataTypeUnion()
 TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
 {
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Byte, GDT_CInt16), GDT_CInt16);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Byte, GDT_CInt32), GDT_CInt32);
+    // special case (should be GDT_CFloat16)
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Byte, GDT_CFloat16), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Byte, GDT_CFloat32), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Byte, GDT_CFloat64), GDT_CFloat64);
+
+    EXPECT_EQ(GDALDataTypeUnion(GDT_UInt16, GDT_CInt16), GDT_CInt32);
+
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int16, GDT_UInt16), GDT_Int32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int16, GDT_UInt32), GDT_Int64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_UInt32, GDT_Int16), GDT_Int64);
