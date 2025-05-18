@@ -1032,8 +1032,7 @@ class GDALPDFStreamPoppler : public GDALPDFStream
 
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
-    if (m_bDestroy)
-        delete m_po;
+    delete m_poToDestroy;
     delete m_poDict;
     delete m_poArray;
     delete m_poStream;
@@ -1045,7 +1044,7 @@ GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 
 GDALPDFObjectType GDALPDFObjectPoppler::GetType()
 {
-    switch (m_po->getType())
+    switch (m_poConst->getType())
     {
         case objNull:
             return PDFObjectType_Null;
@@ -1076,7 +1075,7 @@ GDALPDFObjectType GDALPDFObjectPoppler::GetType()
 
 const char *GDALPDFObjectPoppler::GetTypeNameNative()
 {
-    return m_po->getTypeName();
+    return m_poConst->getTypeName();
 }
 
 /************************************************************************/
@@ -1086,7 +1085,7 @@ const char *GDALPDFObjectPoppler::GetTypeNameNative()
 int GDALPDFObjectPoppler::GetBool()
 {
     if (GetType() == PDFObjectType_Bool)
-        return m_po->getBool();
+        return m_poConst->getBool();
     else
         return 0;
 }
@@ -1098,7 +1097,7 @@ int GDALPDFObjectPoppler::GetBool()
 int GDALPDFObjectPoppler::GetInt()
 {
     if (GetType() == PDFObjectType_Int)
-        return m_po->getInt();
+        return m_poConst->getInt();
     else
         return 0;
 }
@@ -1110,7 +1109,7 @@ int GDALPDFObjectPoppler::GetInt()
 double GDALPDFObjectPoppler::GetReal()
 {
     if (GetType() == PDFObjectType_Real)
-        return m_po->getReal();
+        return m_poConst->getReal();
     else
         return 0.0;
 }
@@ -1123,7 +1122,7 @@ const std::string &GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
-        const GooString *gooString = m_po->getString();
+        const GooString *gooString = m_poConst->getString();
         const std::string &osStdStr = gooString->toStr();
         const bool bLEUnicodeMarker =
             osStdStr.size() >= 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
@@ -1161,7 +1160,7 @@ const std::string &GDALPDFObjectPoppler::GetString()
 const std::string &GDALPDFObjectPoppler::GetName()
 {
     if (GetType() == PDFObjectType_Name)
-        return (osStr = m_po->getName());
+        return (osStr = m_poConst->getName());
     else
         return (osStr = "");
 }
@@ -1178,8 +1177,9 @@ GDALPDFDictionary *GDALPDFObjectPoppler::GetDictionary()
     if (m_poDict)
         return m_poDict;
 
-    Dict *poDict = (m_po->getType() == objStream) ? m_po->getStream()->getDict()
-                                                  : m_po->getDict();
+    Dict *poDict = (m_poConst->getType() == objStream)
+                       ? m_poConst->getStream()->getDict()
+                       : m_poConst->getDict();
     if (poDict == nullptr)
         return nullptr;
     m_poDict = new GDALPDFDictionaryPoppler(poDict);
@@ -1198,7 +1198,7 @@ GDALPDFArray *GDALPDFObjectPoppler::GetArray()
     if (m_poArray)
         return m_poArray;
 
-    Array *poArray = m_po->getArray();
+    Array *poArray = m_poConst->getArray();
     if (poArray == nullptr)
         return nullptr;
     m_poArray = new GDALPDFArrayPoppler(poArray);
@@ -1211,12 +1211,12 @@ GDALPDFArray *GDALPDFObjectPoppler::GetArray()
 
 GDALPDFStream *GDALPDFObjectPoppler::GetStream()
 {
-    if (m_po->getType() != objStream)
+    if (m_poConst->getType() != objStream)
         return nullptr;
 
     if (m_poStream)
         return m_poStream;
-    m_poStream = new GDALPDFStreamPoppler(m_po->getStream());
+    m_poStream = new GDALPDFStreamPoppler(m_poConst->getStream());
     return m_poStream;
 }
 

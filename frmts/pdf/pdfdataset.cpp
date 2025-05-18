@@ -4791,9 +4791,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
+#if POPPLER_MAJOR_VERSION > 25 ||                                              \
+    (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
+        const Object &oPageObj = poPagePoppler->getPageObj();
+#else
         /* Here's the dirty part: this is a private member */
         /* so we had to #define private public to get it ! */
-        Object &oPageObj = poPagePoppler->pageObj;
+        const Object &oPageObj = poPagePoppler->pageObj;
+#endif
         if (!oPageObj.isDict())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -4802,7 +4807,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        poPageObj = new GDALPDFObjectPoppler(&oPageObj, FALSE);
+        poPageObj = new GDALPDFObjectPoppler(&oPageObj);
         Ref *poPageRef = poCatalogPoppler->getPageRef(iPage);
         if (poPageRef != nullptr)
         {
