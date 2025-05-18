@@ -381,9 +381,9 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
 
     for (const auto &input : inputs)
     {
-        std::string name = "";
+        std::string name;
 
-        auto pos = input.find('=');
+        const auto pos = input.find('=');
         if (pos == std::string::npos)
         {
             if (inputs.size() > 1)
@@ -402,6 +402,13 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
 
         std::string dsn =
             (pos == std::string::npos) ? input : input.substr(pos + 1);
+        if (datasets.find(name) != datasets.end())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "An input with name '%s' has already been provided",
+                     name.c_str());
+            return false;
+        }
         datasets[name] = std::move(dsn);
 
         if (isFirst)

@@ -181,6 +181,18 @@ def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
         np.testing.assert_array_equal(src.ReadAsArray() + 3.0, dst.ReadAsArray())
 
 
+def test_gdalalg_raster_calc_several_inputs_same_name(calc, tmp_vsimem):
+
+    calc["input"] = ["A=../gcore/data/byte.tif", "A=../gcore/data/uint16.tif"]
+    calc["output"] = tmp_vsimem / "out.vrt"
+    calc["calc"] = "A+B"
+
+    with pytest.raises(
+        Exception, match="An input with name 'A' has already been provided"
+    ):
+        calc.Run()
+
+
 def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 
     gdaltest.importorskip_gdal_array()
