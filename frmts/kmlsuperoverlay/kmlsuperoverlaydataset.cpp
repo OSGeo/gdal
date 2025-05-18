@@ -27,6 +27,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal_frmts.h"
+#include "memdataset.h"
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
@@ -38,8 +39,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
                           int rxsize, int rysize, CPL_UNUSED int ix,
                           CPL_UNUSED int iy, int rx, int ry, int dxsize,
                           int dysize, int bands, GDALDataset *poSrcDs,
-                          GDALDriver *poOutputTileDriver,
-                          GDALDriver *poMemDriver, bool isJpegDriver)
+                          GDALDriver *poOutputTileDriver, bool isJpegDriver)
 {
     GDALRasterBand *alphaBand = nullptr;
 
@@ -50,7 +50,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
         bands = 3;
 
     auto poTmpDataset = std::unique_ptr<GDALDataset>(
-        poMemDriver->Create("", dxsize, dysize, bands, GDT_Byte, nullptr));
+        MEMDataset::Create("", dxsize, dysize, bands, GDT_Byte, nullptr));
 
     if (!isJpegDriver)  // Jpeg dataset only has one or three bands
     {
@@ -635,10 +635,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    GDALDriver *poMemDriver = GetGDALDriverManager()->GetDriverByName("MEM");
-
-    if (poMemDriver == nullptr ||
-        (!isAutoDriver && poOutputTileDriver == nullptr) ||
+    if ((!isAutoDriver && poOutputTileDriver == nullptr) ||
         (isAutoDriver && (poJpegOutputTileDriver == nullptr ||
                           poPngOutputTileDriver == nullptr)))
     {
@@ -904,7 +901,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
                 GenerateTiles(filename, zoom, rxsize, rysize, ix, iy, rx, ry,
                               dxsize, dysize, bands, poSrcDS,
-                              poOutputTileDriver, poMemDriver, isJpegDriver);
+                              poOutputTileDriver, isJpegDriver);
                 std::string childKmlfile = zoomDir + "/" + iyStr.str() + ".kml";
                 if (isKmz)
                 {

@@ -3424,7 +3424,8 @@ OGRLayer *MEMDataset::ExecuteSQL(const char *pszStatement,
 
 void GDALRegister_MEM()
 {
-    if (GDALGetDriverByName("MEM") != nullptr)
+    auto poDM = GetGDALDriverManager();
+    if (poDM->GetDriverByName("MEM") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -3504,5 +3505,5 @@ void GDALRegister_MEM()
     poDriver->pfnCreateMultiDimensional = MEMDataset::CreateMultiDimensional;
     poDriver->pfnDelete = MEMDatasetDelete;
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    poDM->RegisterDriver(poDriver);
 }

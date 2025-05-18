@@ -20,6 +20,7 @@
 #include "ogr_swq.h"
 #include "ogr_p.h"
 #include "ogrwfsfilter.h"
+#include "memdataset.h"
 
 #include <algorithm>
 
@@ -259,15 +260,8 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
         if (poLayerGetCapabilitiesLayer != nullptr)
             return poLayerGetCapabilitiesLayer;
 
-        GDALDriver *poMEMDrv = GetGDALDriverManager()->GetDriverByName("MEM");
-        if (poMEMDrv == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
-            return nullptr;
-        }
-
-        poLayerGetCapabilitiesDS = poMEMDrv->Create("WFSGetCapabilities", 0, 0,
-                                                    0, GDT_Unknown, nullptr);
+        poLayerGetCapabilitiesDS = MEMDataset::Create(
+            "WFSGetCapabilities", 0, 0, 0, GDT_Unknown, nullptr);
         poLayerGetCapabilitiesLayer = poLayerGetCapabilitiesDS->CreateLayer(
             "WFSGetCapabilities", nullptr, wkbNone, nullptr);
         OGRFieldDefn oFDefn("content", OFTString);
@@ -2244,15 +2238,8 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
             return nullptr;
         }
 
-        GDALDriver *poMEMDrv = GetGDALDriverManager()->GetDriverByName("MEM");
-        if (poMEMDrv == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
-            return nullptr;
-        }
-
-        GDALDataset *poMEMDS =
-            poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, nullptr);
+        auto poMEMDS = std::unique_ptr<MEMDataset>(
+            MEMDataset::Create("dummy_name", 0, 0, 0, GDT_Unknown, nullptr));
         OGRLayer *poMEMLayer =
             poMEMDS->CreateLayer("FID_LIST", nullptr, wkbNone, nullptr);
         OGRFieldDefn oFDefn("gml_id", OFTString);
@@ -2273,7 +2260,7 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
 
         OGRLayer *poResLayer =
-            new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);
+            new OGRWFSWrappedResultLayer(poMEMDS.release(), poMEMLayer);
         oMap[poResLayer] = nullptr;
         return poResLayer;
     }

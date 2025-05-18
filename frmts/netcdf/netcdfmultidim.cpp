@@ -15,6 +15,7 @@
 #include <map>
 
 #include "gdal_rat.h"
+#include "memdataset.h"
 
 #include "netcdfdataset.h"
 #include "netcdfdrivercore.h"
@@ -3632,10 +3633,6 @@ bool netCDFVariable::IAdviseRead(const GUInt64 *arrayStartIdx,
     if (eDT.GetClass() != GEDTC_NUMERIC)
         return false;
 
-    auto poMemDriver = static_cast<GDALDriver *>(GDALGetDriverByName("MEM"));
-    if (poMemDriver == nullptr)
-        return false;
-
     m_poCachedArray.reset();
 
     size_t nElts = 1;
@@ -3652,9 +3649,9 @@ bool netCDFVariable::IAdviseRead(const GUInt64 *arrayStartIdx,
         return false;
     }
 
-    auto poDS = poMemDriver->CreateMultiDimensional("", nullptr, nullptr);
+    auto poDS = std::unique_ptr<GDALDataset>(
+        MEMDataset::CreateMultiDimensional("", nullptr, nullptr));
     auto poGroup = poDS->GetRootGroup();
-    delete poDS;
 
     std::vector<std::shared_ptr<GDALDimension>> apoMemDims;
     const auto &poDims = GetDimensions();

@@ -20,6 +20,7 @@
 
 #include "ogr_parquet.h"
 #include "ogrparquetdrivercore.h"
+#include "memdataset.h"
 
 #include "../arrow_common/ograrrowrandomaccessfile.h"
 #include "../arrow_common/vsiarrowfilesystem.hpp"
@@ -194,11 +195,8 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
     if (poLayer->GeomColsBBOXParquet(0, iParquetXMin, iParquetYMin,
                                      iParquetXMax, iParquetYMax))
     {
-        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
-        if (!poMemDrv)
-            return nullptr;
         auto poMemDS = std::unique_ptr<GDALDataset>(
-            poMemDrv->Create("", 0, 0, 0, GDT_Unknown, nullptr));
+            MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr));
         if (!poMemDS)
             return nullptr;
         OGRSpatialReference *poTmpSRS = nullptr;
