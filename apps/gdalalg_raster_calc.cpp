@@ -570,6 +570,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
 
     AddArg("calc", 0, _("Expression(s) to evaluate"), &m_expr)
         .SetRequired()
+        .SetPackedValuesAllowed(false)
         .SetMinCount(1);
 }
 
