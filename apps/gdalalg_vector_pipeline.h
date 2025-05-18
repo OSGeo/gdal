@@ -240,8 +240,14 @@ class GDALVectorNonStreamingAlgorithmDataset : public GDALDataset
 
     bool AddProcessedLayer(OGRLayer &srcLayer)
     {
-        OGRMemLayer *poDstLayer = cpl::down_cast<OGRMemLayer *>(
-            m_ds->CreateLayer(*srcLayer.GetLayerDefn(), nullptr));
+        CPLStringList aosOptions;
+        if (srcLayer.TestCapability(OLCStringsAsUTF8))
+        {
+            aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
+        }
+
+        OGRMemLayer *poDstLayer =
+            m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
         m_layers.push_back(poDstLayer);
 
         if (!Process(srcLayer, *poDstLayer))
