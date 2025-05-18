@@ -22,6 +22,8 @@
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
+#include "../frmts/mem/memdataset.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -720,6 +722,12 @@ GDALVectorPipelineOutputLayer::GDALVectorPipelineOutputLayer(OGRLayer &srcLayer)
 }
 
 /************************************************************************/
+/*                 ~GDALVectorPipelineOutputLayer()                     */
+/************************************************************************/
+
+GDALVectorPipelineOutputLayer::~GDALVectorPipelineOutputLayer() = default;
+
+/************************************************************************/
 /*             GDALVectorPipelineOutputLayer::ResetReading()            */
 /************************************************************************/
 
@@ -775,6 +783,12 @@ GDALVectorPipelineOutputDataset::GDALVectorPipelineOutputDataset(
     SetDescription(m_srcDS.GetDescription());
     SetMetadata(m_srcDS.GetMetadata());
 }
+
+/************************************************************************/
+/*                ~GDALVectorPipelineOutputDataset()                    */
+/************************************************************************/
+
+GDALVectorPipelineOutputDataset::~GDALVectorPipelineOutputDataset() = default;
 
 /************************************************************************/
 /*            GDALVectorPipelineOutputDataset::AddLayer()               */
@@ -877,6 +891,92 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
         *ppoBelongingLayer = m_belongingLayer;
     m_idxInPendingFeatures = 1;
     return poFeature;
+}
+
+/************************************************************************/
+/*                 GDALVectorNonStreamingAlgorithmDataset()             */
+/************************************************************************/
+
+GDALVectorNonStreamingAlgorithmDataset::GDALVectorNonStreamingAlgorithmDataset()
+    : m_ds(MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr))
+{
+}
+
+/************************************************************************/
+/*                ~GDALVectorNonStreamingAlgorithmDataset()             */
+/************************************************************************/
+
+GDALVectorNonStreamingAlgorithmDataset::
+    ~GDALVectorNonStreamingAlgorithmDataset() = default;
+
+/************************************************************************/
+/*    GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer()       */
+/************************************************************************/
+
+bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
+    OGRLayer &srcLayer)
+{
+    CPLStringList aosOptions;
+    if (srcLayer.TestCapability(OLCStringsAsUTF8))
+    {
+        aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
+    }
+
+    OGRMemLayer *poDstLayer =
+        m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
+    m_layers.push_back(poDstLayer);
+
+    const bool bRet = Process(srcLayer, *poDstLayer);
+    poDstLayer->SetUpdatable(false);
+    return bRet;
+}
+
+/************************************************************************/
+/*    GDALVectorNonStreamingAlgorithmDataset::AddPassThroughLayer()     */
+/************************************************************************/
+
+void GDALVectorNonStreamingAlgorithmDataset::AddPassThroughLayer(
+    OGRLayer &oLayer)
+{
+    m_passthrough_layers.push_back(
+        std::make_unique<GDALVectorPipelinePassthroughLayer>(oLayer));
+    m_layers.push_back(m_passthrough_layers.back().get());
+}
+
+/************************************************************************/
+/*       GDALVectorNonStreamingAlgorithmDataset::GetLayerCount()        */
+/************************************************************************/
+
+int GDALVectorNonStreamingAlgorithmDataset::GetLayerCount()
+{
+    return static_cast<int>(m_layers.size());
+}
+
+/************************************************************************/
+/*       GDALVectorNonStreamingAlgorithmDataset::GetLayer()             */
+/************************************************************************/
+
+OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx)
+{
+    if (idx < 0 || idx >= static_cast<int>(m_layers.size()))
+    {
+        return nullptr;
+    }
+    return m_layers[idx];
+}
+
+/************************************************************************/
+/*    GDALVectorNonStreamingAlgorithmDataset::TestCapability()          */
+/************************************************************************/
+
+int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *pszCap)
+{
+    if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
+    {
+        return false;
+    }
+
+    return m_ds->TestCapability(pszCap);
 }
 
 //! @endcond

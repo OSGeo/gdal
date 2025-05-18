@@ -65,8 +65,8 @@ def test_gdalalg_vector_geom_simplify_coverage_active_layer(alg):
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
 
     with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly:
-        src_ds.CopyLayer(poly.GetLayer(0), "poly1")
-        src_ds.CopyLayer(poly.GetLayer(0), "poly2")
+        src_ds.CopyLayer(poly.GetLayer(0), "poly1", options=["ADVERTIZE_UTF8=YES"])
+        src_ds.CopyLayer(poly.GetLayer(0), "poly2", options=["ADVERTIZE_UTF8=YES"])
 
     alg["input"] = src_ds
     alg["output"] = ""
@@ -92,6 +92,8 @@ def test_gdalalg_vector_geom_simplify_coverage_active_layer(alg):
     assert count_points(dst_ds.GetLayerByName("poly2")) < count_points(
         dst_ds.GetLayerByName("poly1")
     )
+
+    assert dst_ds.GetLayerByName("poly1").TestCapability(ogr.OLCStringsAsUTF8)
 
     assert alg.Finalize()
 

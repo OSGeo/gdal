@@ -19,8 +19,6 @@
 #include "ogrsf_frmts.h"
 #include "ogrlayerwithtranslatefeature.h"
 
-#include "../frmts/mem/memdataset.h"
-
 #include <map>
 #include <vector>
 
@@ -173,6 +171,7 @@ class GDALVectorPipelineOutputLayer /* non final */
 {
   protected:
     explicit GDALVectorPipelineOutputLayer(OGRLayer &oSrcLayer);
+    ~GDALVectorPipelineOutputLayer();
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorPipelineOutputLayer)
 
@@ -221,75 +220,30 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     }
 };
 
+/************************************************************************/
+/*                 GDALVectorNonStreamingAlgorithmDataset               */
+/************************************************************************/
+
+class MEMDataset;
+
 /**
  * Dataset used to read all input features into memory and perform some
  * processing.
  */
-class GDALVectorNonStreamingAlgorithmDataset : public GDALDataset
+class GDALVectorNonStreamingAlgorithmDataset /* non final */
+    : public GDALDataset
 {
   public:
-    GDALVectorNonStreamingAlgorithmDataset()
-    {
-        GDALDriver *poMemDriver =
-            GetGDALDriverManager()->GetDriverByName("MEM");
-        m_ds.reset(cpl::down_cast<MEMDataset *>(
-            poMemDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr)));
-    }
+    GDALVectorNonStreamingAlgorithmDataset();
+    ~GDALVectorNonStreamingAlgorithmDataset();
 
     virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
 
-    bool AddProcessedLayer(OGRLayer &srcLayer)
-    {
-        CPLStringList aosOptions;
-        if (srcLayer.TestCapability(OLCStringsAsUTF8))
-        {
-            aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
-        }
-
-        OGRMemLayer *poDstLayer =
-            m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
-        m_layers.push_back(poDstLayer);
-
-        if (!Process(srcLayer, *poDstLayer))
-        {
-            return false;
-        }
-
-        poDstLayer->SetUpdatable(false);
-
-        return true;
-    }
-
-    void AddPassThroughLayer(OGRLayer &oLayer)
-    {
-        m_passthrough_layers.push_back(
-            std::make_unique<GDALVectorPipelinePassthroughLayer>(oLayer));
-        m_layers.push_back(m_passthrough_layers.back().get());
-    }
-
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
-
-    OGRLayer *GetLayer(int idx) override
-    {
-        if (idx < 0 || idx >= static_cast<int>(m_layers.size()))
-        {
-            return nullptr;
-        }
-        return m_layers[idx];
-    }
-
-    int TestCapability(const char *pszCap) override
-    {
-        if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
-        {
-            return false;
-        }
-
-        return m_ds->TestCapability(pszCap);
-    }
+    bool AddProcessedLayer(OGRLayer &srcLayer);
+    void AddPassThroughLayer(OGRLayer &oLayer);
+    int GetLayerCount() final override;
+    OGRLayer *GetLayer(int idx) final override;
+    int TestCapability(const char *pszCap) override;
 
   private:
     std::vector<std::unique_ptr<OGRLayer>> m_passthrough_layers{};
@@ -321,6 +275,7 @@ class GDALVectorPipelineOutputDataset final : public GDALDataset
 
   public:
     explicit GDALVectorPipelineOutputDataset(GDALDataset &oSrcDS);
+    ~GDALVectorPipelineOutputDataset();
 
     void AddLayer(OGRLayer &oSrcLayer,
                   std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer);
