@@ -19,6 +19,8 @@
 #include "ogrsf_frmts.h"
 #include "ogrlayerwithtranslatefeature.h"
 
+#include "../frmts/mem/memdataset.h"
+
 #include <map>
 #include <vector>
 
@@ -190,7 +192,7 @@ class GDALVectorPipelineOutputLayer /* non final */
 /************************************************************************/
 
 /** Class that forwards GetNextFeature() calls to the source layer and
- * can be aded to GDALVectorPipelineOutputDataset::AddLayer()
+ * can be added to GDALVectorPipelineOutputDataset::AddLayer()
  */
 class GDALVectorPipelinePassthroughLayer /* non final */
     : public GDALVectorPipelineOutputLayer
@@ -217,6 +219,82 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     {
         apoOutFeatures.push_back(std::move(poSrcFeature));
     }
+};
+
+/**
+ * Dataset used to read all input features into memory and perform some
+ * processing.
+ */
+class GDALVectorNonStreamingAlgorithmDataset : public GDALDataset
+{
+  public:
+    GDALVectorNonStreamingAlgorithmDataset()
+    {
+        GDALDriver *poMemDriver =
+            GetGDALDriverManager()->GetDriverByName("MEM");
+        m_ds.reset(cpl::down_cast<MEMDataset *>(
+            poMemDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr)));
+    }
+
+    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
+
+    bool AddProcessedLayer(OGRLayer &srcLayer)
+    {
+        CPLStringList aosOptions;
+        if (srcLayer.TestCapability(OLCStringsAsUTF8))
+        {
+            aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
+        }
+
+        OGRMemLayer *poDstLayer =
+            m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
+        m_layers.push_back(poDstLayer);
+
+        if (!Process(srcLayer, *poDstLayer))
+        {
+            return false;
+        }
+
+        poDstLayer->SetUpdatable(false);
+
+        return true;
+    }
+
+    void AddPassThroughLayer(OGRLayer &oLayer)
+    {
+        m_passthrough_layers.push_back(
+            std::make_unique<GDALVectorPipelinePassthroughLayer>(oLayer));
+        m_layers.push_back(m_passthrough_layers.back().get());
+    }
+
+    int GetLayerCount() override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    OGRLayer *GetLayer(int idx) override
+    {
+        if (idx < 0 || idx >= static_cast<int>(m_layers.size()))
+        {
+            return nullptr;
+        }
+        return m_layers[idx];
+    }
+
+    int TestCapability(const char *pszCap) override
+    {
+        if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
+        {
+            return false;
+        }
+
+        return m_ds->TestCapability(pszCap);
+    }
+
+  private:
+    std::vector<std::unique_ptr<OGRLayer>> m_passthrough_layers{};
+    std::vector<OGRLayer *> m_layers{};
+    std::unique_ptr<MEMDataset> m_ds{};
 };
 
 /************************************************************************/

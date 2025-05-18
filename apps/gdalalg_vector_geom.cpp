@@ -16,6 +16,7 @@
 #include "gdalalg_vector_geom_make_valid.h"
 #include "gdalalg_vector_geom_segmentize.h"
 #include "gdalalg_vector_geom_simplify.h"
+#include "gdalalg_vector_geom_simplify_coverage.h"
 #include "gdalalg_vector_geom_buffer.h"
 #include "gdalalg_vector_geom_swap_xy.h"
 
@@ -39,6 +40,8 @@ GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
     RegisterSubAlgorithm<GDALVectorGeomMakeValidAlgorithm>(standaloneStep);
     RegisterSubAlgorithm<GDALVectorGeomSegmentizeAlgorithm>(standaloneStep);
     RegisterSubAlgorithm<GDALVectorGeomSimplifyAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorGeomSimplifyCoverageAlgorithm>(
+        standaloneStep);
     RegisterSubAlgorithm<GDALVectorGeomBufferAlgorithm>(standaloneStep);
     RegisterSubAlgorithm<GDALVectorGeomSwapXYAlgorithm>(standaloneStep);
 }

@@ -171,6 +171,7 @@ Vector commands
    gdal_vector_geom_make_valid
    gdal_vector_geom_segmentize
    gdal_vector_geom_simplify
+   gdal_vector_geom_simplify_coverage
    gdal_vector_geom_buffer
    gdal_vector_geom_swap_xy
    gdal_vector_grid
@@ -196,6 +197,7 @@ Vector commands
     - :ref:`gdal_vector_geom_make_valid`: Fix validity of geometries of a vector dataset
     - :ref:`gdal_vector_geom_segmentize`: Segmentize geometries of a vector dataset
     - :ref:`gdal_vector_geom_simplify`: Simplify geometries of a vector dataset
+    - :ref:`gdal_vector_geom_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
     - :ref:`gdal_vector_geom_buffer`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_geom_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points

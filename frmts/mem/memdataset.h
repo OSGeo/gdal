@@ -135,6 +135,9 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
     OGRLayer *GetLayer(int) override;
 
+    OGRMemLayer *CreateLayer(const OGRFeatureDefn &oDefn,
+                             CSLConstList papszOptions);
+
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
@@ -252,6 +255,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // Clone poSRS if not nullptr
     OGRMemLayer(const char *pszName, const OGRSpatialReference *poSRS,
                 OGRwkbGeometryType eGeomType);
+    explicit OGRMemLayer(const OGRFeatureDefn &oFeatureDefn);
     virtual ~OGRMemLayer();
 
     void ResetReading() override;
