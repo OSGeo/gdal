@@ -3217,6 +3217,26 @@ static CPLErr MEMDatasetDelete(const char * /* fileName */)
 }
 
 /************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRMemLayer *MEMDataset::CreateLayer(const OGRFeatureDefn &oDefn,
+                                     CSLConstList papszOptions)
+{
+    auto poLayer = std::make_unique<OGRMemLayer>(oDefn);
+
+    if (CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false))
+        poLayer->SetAdvertizeUTF8(true);
+
+    poLayer->SetDataset(this);
+    poLayer->SetFIDColumn(CSLFetchNameValueDef(papszOptions, "FID", ""));
+
+    // Add layer to data source layer list.
+    m_apoLayers.emplace_back(std::move(poLayer));
+    return m_apoLayers.back().get();
+}
+
+/************************************************************************/
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
