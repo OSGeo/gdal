@@ -5460,7 +5460,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         {
             // If the overview accomodates chunking, do so and recurse
             // to avoid generating full size temporary files
-            if (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight)
+            if (!bOverflowFullResXChunkYChunkQueried &&
+                (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight))
             {
                 // Create a VRT with the smaller chunk to do the scaling
                 auto poVRTDS = std::unique_ptr<VRTDataset>(new VRTDataset(
