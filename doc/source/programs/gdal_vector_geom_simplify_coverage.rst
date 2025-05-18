@@ -12,6 +12,8 @@
 
 .. Index:: gdal vector geom simplify-coverage
 
+
+
 Synopsis
 --------
 
@@ -32,6 +34,12 @@ an alternative that can process geometries in a streaming manner.
 Simplification is performed using the Visvalingam-Whyatt algorithm.
 
 This command can also be used as a step of :ref:`gdal_vector_pipeline`.
+
+.. only:: html
+
+   .. figure:: ../../images/programs/gdal_vector_geom_simplify_coverage.svg
+
+   Polygon dataset before (left) and after (right) simplification with :program:`gdal vector geom simplify-coverage`.
 
 .. note:: This command requires a GDAL build against the GEOS library (version 3.12 or greater).
 
