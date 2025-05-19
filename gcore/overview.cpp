@@ -5636,12 +5636,11 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     aosCO.SetNameValue("BLOCKYSIZE",
                                        CPLSPrintf("%d", nReducedDstChunkYSize));
                 }
-                if (const char *pszCOList = poTmpDrv->GetMetadataItem(
-                        GDAL_DMD_CREATIONOPTIONLIST))
+                if (const char *pszCOList =
+                        poTmpDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST))
                 {
-                    aosCO.SetNameValue("COMPRESS", strstr(pszCOList, "ZSTD")
-                                                        ? "ZSTD"
-                                                        : "LZW");
+                    aosCO.SetNameValue(
+                        "COMPRESS", strstr(pszCOList, "ZSTD") ? "ZSTD" : "LZW");
                 }
                 poTmpDS.reset(poTmpDrv->Create(osTmpFilename.c_str(), nDstWidth,
                                                nDstHeight, nBands, eDataType,
