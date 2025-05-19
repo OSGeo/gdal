@@ -1215,6 +1215,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **expression**
      - 1
      - ``expression``
+       
        ``dialect`` (optional)
      - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
        or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
