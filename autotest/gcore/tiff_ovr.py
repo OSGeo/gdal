@@ -2719,7 +2719,7 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
 
     ds = gdal.Open(filename)
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 37308
+    assert cs == 36766
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)

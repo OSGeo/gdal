@@ -5502,7 +5502,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 GDALRasterIOExtraArg sExtraArg;
                 INIT_RASTERIO_EXTRA_ARG(sExtraArg);
                 if (iSrcOverview == -1)
-                    sExtraArg.bDoNotUseOverviews = true;
+                    sExtraArg.bUseOnlyThisScale = true;
 
                 // A single band buffer for data transfer to the overview
                 std::vector<GByte> abyChunk(GUInt64(nMaxDataTypeSize) *
@@ -5697,7 +5697,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             GDALRasterIOExtraArg sExtraArg;
             INIT_RASTERIO_EXTRA_ARG(sExtraArg);
             if (iSrcOverview == -1)
-                sExtraArg.bDoNotUseOverviews = true;
+                sExtraArg.bUseOnlyThisScale = true;
 
             // Scale and copy data from the VRT to the temp file
             for (int nDstYOff = nDstYOffStart; nDstYOff < nDstYOffEnd;

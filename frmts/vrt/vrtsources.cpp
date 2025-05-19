@@ -1365,7 +1365,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     {
         psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
         psExtraArg->pProgressData = psExtraArgIn->pProgressData;
-        psExtraArg->bDoNotUseOverviews = psExtraArgIn->bDoNotUseOverviews;
+        psExtraArg->bUseOnlyThisScale = psExtraArgIn->bUseOnlyThisScale;
     }
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +

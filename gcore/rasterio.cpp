@@ -3666,7 +3666,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
                                   int nBufXSize, int nBufYSize,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
-    if (psExtraArg != nullptr && psExtraArg->bDoNotUseOverviews)
+    if (psExtraArg != nullptr && psExtraArg->bUseOnlyThisScale)
         return -1;
     /* -------------------------------------------------------------------- */
     /*      Compute the desired downsampling factor.  It is                 */
@@ -5142,7 +5142,7 @@ void GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
         psDestArg->eResampleAlg = psSrcArg->eResampleAlg;
         psDestArg->pfnProgress = psSrcArg->pfnProgress;
         psDestArg->pProgressData = psSrcArg->pProgressData;
-        psDestArg->bDoNotUseOverviews = psSrcArg->bDoNotUseOverviews;
+        psDestArg->bUseOnlyThisScale = psSrcArg->bUseOnlyThisScale;
         psDestArg->bFloatingPointWindowValidity =
             psSrcArg->bFloatingPointWindowValidity;
         if (psSrcArg->bFloatingPointWindowValidity)
