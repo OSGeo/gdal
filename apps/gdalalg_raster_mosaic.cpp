@@ -107,6 +107,10 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
              "raster have "
              "none."),
            &m_addAlpha);
+    AddArg("pixel-function", 0,
+           _("Specify a pixel function to calculate output value from "
+             "overlapping inputs"),
+           &m_pixelFunction);
 }
 
 /************************************************************************/
@@ -266,8 +270,19 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.push_back("-write_absolute_path");
     }
 
+    if (!m_pixelFunction.empty())
+    {
+        aosOptions.push_back("-pixel-function");
+        aosOptions.push_back(m_pixelFunction);
+    }
+
     GDALBuildVRTOptions *psOptions =
         GDALBuildVRTOptionsNew(aosOptions.List(), nullptr);
+    if (!psOptions)
+    {
+        return false;
+    }
+
     if (bVRTOutput)
     {
         GDALBuildVRTOptionsSetProgress(psOptions, pfnProgress, pProgressData);

@@ -15,22 +15,23 @@ Synopsis
 
 .. code-block::
 
-   gdalbuildvrt [--help] [--long-usage] [--help-general]
-                [--quiet]
-                [[-strict]|[-non_strict]]
-                [-tile_index <field_name>]
-                [-resolution user|common|average|highest|lowest|same]
-                [-tr <xres> <yes>] [-input_file_list <filename>] [-separate]
-                [-allow_projection_difference] [-sd <n>] [-tap]
-                [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
-                [-hidenodata] [-overwrite]
-                [-srcnodata "<value>[ <value>]..."]
-                [-vrtnodata "<value>[ <value>]..."] [-a_srs <srs_def>]
-                [-r nearest|bilinear|cubic|cubicspline|lanczos|average|mode]
-                [-oo <NAME>=<VALUE>]... [-co <NAME>=<VALUE>]...
-                [-ignore_srcmaskband]
-                [-nodata_max_mask_threshold <threshold>]
-                <vrt_dataset_name> [<src_dataset_name>]...
+    gdalbuildvrt [--help] [--long-usage] [--help-general]
+                 [--quiet]
+                 [[-strict]|[-non_strict]]
+                 [-tile_index <field_name>]
+                 [-resolution user|average|common|highest|lowest|same]
+                 [-tr <xres> <yes>] [-input_file_list <filename>]
+                 [[-separate]|[-pixel-function <function>]]
+                 [-allow_projection_difference] [-sd <n>] [-tap]
+                 [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
+                 [-hidenodata] [-overwrite]
+                 [-srcnodata "<value>[ <value>]..."]
+                 [-vrtnodata "<value>[ <value>]..."] [-a_srs <srs_def>]
+                 [-r nearest|bilinear|cubic|cubicspline|lanczos|average|mode]
+                 [-oo <NAME>=<VALUE>]... [-co <NAME>=<VALUE>]...
+                 [-ignore_srcmaskband]
+                 [-nodata_max_mask_threshold <threshold>]
+                 <vrt_dataset_name> [<src_dataset_name>]...
 
 
 Description
@@ -191,12 +192,22 @@ changed in later versions.
     Place each input file into a separate band. See :example:`separate`.
     Contrary to the default mode, it is not
     required that all bands have the same datatype.
+    This option is mutually exclusive with :option:`-pixel-function`.
 
     Starting with GDAL 3.8, all bands of each input file are added as separate
     VRT bands, unless :option:`-b` is specified to select a subset of them.
     Before GDAL 3.8, only the first band of each input file was placed into a
     new VRT band, and :option:`-b` was ignored.
 
+.. option:: -pixel-function
+
+    Specify a function name to calculate a value from overlapping inputs.
+    For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
+    If no function is specified, values will be taken from the last overlapping input.
+    This option is mutually exclusive with with :option:`-separate`.
+
+    .. versionadded:: 3.12
+    
 .. option:: -allow_projection_difference
 
     When this option is specified, the utility will create a VRT even if the input datasets do not have

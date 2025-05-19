@@ -348,8 +348,10 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction(
  *
  * @param pszFuncNameIn The name associated with the pixel function.
  *
- * @return A derived band pixel function, or NULL if none have been
- * registered for pszFuncName.
+ * @return A pointer to a std::pair whose first element is the pixel
+ *         function pointer and second element is the pixel function
+ *         metadata string. If no pixel function has been registered
+ *         for pszFuncNameIn, nullptr will be returned.
  */
 const std::pair<VRTDerivedRasterBand::PixelFunc, std::string> *
 VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
@@ -385,6 +387,23 @@ void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
 }
 
 /************************************************************************/
+/*                     AddPixelFunctionArgument()                       */
+/************************************************************************/
+
+/**
+ *  Set a pixel function argument to a specified value.
+ * @param pszArg the argument name
+ * @param pszValue the argument value
+ *
+ * @since 3.12
+ */
+void VRTDerivedRasterBand::AddPixelFunctionArgument(const char *pszArg,
+                                                    const char *pszValue)
+{
+    m_poPrivate->m_oFunctionArgs.emplace_back(pszArg, pszValue);
+}
+
+/************************************************************************/
 /*                         SetPixelFunctionLanguage()                   */
 /************************************************************************/
 
@@ -398,6 +417,26 @@ void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
 void VRTDerivedRasterBand::SetPixelFunctionLanguage(const char *pszLanguage)
 {
     m_poPrivate->m_osLanguage = pszLanguage;
+}
+
+/************************************************************************/
+/*                 SetSkipNonContributingSources()                      */
+/************************************************************************/
+
+/** Whether sources that do not intersect the VRTRasterBand RasterIO() requested
+ * region should be omitted. By default, data for all sources, including ones
+ * that do not intersect it, are passed to the pixel function. By setting this
+ * parameter to true, only sources that intersect the requested region will be
+ * passed.
+ *
+ * @param bSkip whether to skip non-contributing sources
+ *
+ * @since 3.12
+ */
+void VRTDerivedRasterBand::SetSkipNonContributingSources(bool bSkip)
+{
+    m_poPrivate->m_bSkipNonContributingSources = bSkip;
+    m_poPrivate->m_bSkipNonContributingSourcesSpecified = true;
 }
 
 /************************************************************************/
@@ -1507,9 +1546,8 @@ CPLErr VRTDerivedRasterBand::XMLInit(const CPLXMLNode *psTree,
         {
             if (psIter->eType == CXT_Attribute)
             {
-                m_poPrivate->m_oFunctionArgs.push_back(
-                    std::pair<CPLString, CPLString>(psIter->pszValue,
-                                                    psIter->psChild->pszValue));
+                AddPixelFunctionArgument(psIter->pszValue,
+                                         psIter->psChild->pszValue);
             }
         }
     }
@@ -1523,13 +1561,12 @@ CPLErr VRTDerivedRasterBand::XMLInit(const CPLXMLNode *psTree,
     }
 
     // Whether to skip non contributing sources
-    const char *pszSkipNonContributiongSources =
+    const char *pszSkipNonContributingSources =
         CPLGetXMLValue(psTree, "SkipNonContributingSources", nullptr);
-    if (pszSkipNonContributiongSources)
+    if (pszSkipNonContributingSources)
     {
-        m_poPrivate->m_bSkipNonContributingSourcesSpecified = true;
-        m_poPrivate->m_bSkipNonContributingSources =
-            CPLTestBool(pszSkipNonContributiongSources);
+        SetSkipNonContributingSources(
+            CPLTestBool(pszSkipNonContributingSources));
     }
 
     return CE_None;
