@@ -660,6 +660,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_index_index",
+        "gdal-index-index",
+        "Create a vector index of index datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_layer_algebra",
         "gdal-vector-layer-algebra",
         "Perform algebraic operation between 2 layers",
