@@ -367,7 +367,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      this request?                                                   */
     /* ==================================================================== */
     if ((nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0 &&
-        eRWFlag == GF_Read && !psExtraArg->bDoNotUseOverviews)
+        eRWFlag == GF_Read)
     {
         GDALRasterIOExtraArg sExtraArg;
         GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
@@ -3666,6 +3666,8 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
                                   int nBufXSize, int nBufYSize,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
+    if (psExtraArg != nullptr && psExtraArg->bDoNotUseOverviews)
+        return -1;
     /* -------------------------------------------------------------------- */
     /*      Compute the desired downsampling factor.  It is                 */
     /*      based on the least reduced axis, and represents the number      */
@@ -5140,6 +5142,7 @@ void GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
         psDestArg->eResampleAlg = psSrcArg->eResampleAlg;
         psDestArg->pfnProgress = psSrcArg->pfnProgress;
         psDestArg->pProgressData = psSrcArg->pProgressData;
+        psDestArg->bDoNotUseOverviews = psSrcArg->bDoNotUseOverviews;
         psDestArg->bFloatingPointWindowValidity =
             psSrcArg->bFloatingPointWindowValidity;
         if (psSrcArg->bFloatingPointWindowValidity)
