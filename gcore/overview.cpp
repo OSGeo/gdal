@@ -5545,7 +5545,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     }  // width
 
                     if (!pfnProgress(dfCurPixelCount / dfTotalPixelCount,
-                        nullptr, pProgressData))
+                                     nullptr, pProgressData))
                     {
                         CPLError(CE_Failure, CPLE_UserInterrupt,
                                  "User terminated");
@@ -5565,8 +5565,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 for (int iBand = 0; iBand < nBands; ++iBand)
                     apoDstBand[iBand]->FlushCache(false);
 
-                continue; // Next overview
-            } // chunking via temporary dataset
+                continue;  // Next overview
+            }              // chunking via temporary dataset
 
             // Too much memory needed and no chunking possible?
             const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -5585,20 +5585,19 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             const char *pszGDAL_OVR_TEMP_DRIVER =
                 CPLGetConfigOption("GDAL_OVR_TEMP_DRIVER", "");
             if ((!bTmpDSMemRequirementOverflow &&
-                    nTmpDSMemRequirement <= nChunkMaxSizeForTempFile &&
-                    !EQUAL(pszGDAL_OVR_TEMP_DRIVER, "GTIFF")) ||
+                 nTmpDSMemRequirement <= nChunkMaxSizeForTempFile &&
+                 !EQUAL(pszGDAL_OVR_TEMP_DRIVER, "GTIFF")) ||
                 EQUAL(pszGDAL_OVR_TEMP_DRIVER, "MEM"))
             {
-                auto poTmpDrv =
-                    GetGDALDriverManager()->GetDriverByName("MEM");
+                auto poTmpDrv = GetGDALDriverManager()->GetDriverByName("MEM");
                 if (!poTmpDrv)
                 {
                     eErr = CE_Failure;
                     break;
                 }
                 poTmpDS.reset(poTmpDrv->Create("", nDstTotalWidth,
-                                                nDstTotalHeight, nBands,
-                                                eDataType, nullptr));
+                                               nDstTotalHeight, nBands,
+                                               eDataType, nullptr));
             }
             else
             {
@@ -5632,12 +5631,10 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                           (nReducedDstChunkYSize % GTIFF_BLOCK_SIZE_MULTIPLE)))
                 {
                     aosCO.SetNameValue("TILED", "YES");
-                    aosCO.SetNameValue(
-                        "BLOCKXSIZE",
-                        CPLSPrintf("%d", nReducedDstChunkXSize));
-                    aosCO.SetNameValue(
-                        "BLOCKYSIZE",
-                        CPLSPrintf("%d", nReducedDstChunkYSize));
+                    aosCO.SetNameValue("BLOCKXSIZE",
+                                       CPLSPrintf("%d", nReducedDstChunkXSize));
+                    aosCO.SetNameValue("BLOCKYSIZE",
+                                       CPLSPrintf("%d", nReducedDstChunkYSize));
                 }
                 if (const char *pszCOList = poTmpDrv->GetMetadataItem(
                         GDAL_DMD_CREATIONOPTIONLIST))
@@ -5729,8 +5726,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                         auto poSrcBand = poVRTDS->GetRasterBand(iBand + 1);
                         eErr = poSrcBand->RasterIO(
                             GF_Read, nDstXOff, nDstYOff, nDstXCount, nDstYCount,
-                            pDstBuffer, nDstXCount, nDstYCount, eWrkDataType,
-                            0, 0, &sExtraArg);
+                            pDstBuffer, nDstXCount, nDstYCount, eWrkDataType, 0,
+                            0, &sExtraArg);
                         if (eErr != CE_None)
                             break;
                         // Write to the temporary dataset, shifted
@@ -5755,7 +5752,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     nDstYCount = nDstYOffEnd - nDstYOff;
 
                 for (int nDstXOff = nDstXOffStart; nDstXOff < nDstXOffEnd;
-                    nDstXOff += nDstChunkXSize)
+                     nDstXOff += nDstChunkXSize)
                 {
                     if (eErr != CE_None)
                         break;
@@ -5778,9 +5775,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                         // Write to the destination overview bands
                         auto poOvrBand = papapoOverviewBands[iBand][iOverview];
                         eErr = poOvrBand->RasterIO(
-                            GF_Write, nDstXOff, nDstYOff, nDstXCount, nDstYCount,
-                            pDstBuffer, nDstXCount, nDstYCount, eWrkDataType, 0,
-                            0, nullptr);
+                            GF_Write, nDstXOff, nDstYOff, nDstXCount,
+                            nDstYCount, pDstBuffer, nDstXCount, nDstYCount,
+                            eWrkDataType, 0, 0, nullptr);
                     }
                 }
             }
