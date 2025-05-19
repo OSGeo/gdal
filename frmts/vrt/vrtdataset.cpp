@@ -601,6 +601,15 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
                 return CE_Failure;
             }
 
+            if (CPLGetXMLNode(psChild, "PixelFunctionType") != nullptr &&
+                !EQUAL(pszSubclass, "VRTDerivedRasterBand"))
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Pixel functions may only be used with "
+                         "subClass=VRTDerivedRasterBand");
+                return CE_Failure;
+            }
+
             VRTRasterBand *poBand = InitBand(pszSubclass, l_nBands + 1, true);
             if (poBand != nullptr &&
                 poBand->XMLInit(psChild, pszVRTPathIn, m_oMapSharedSources) ==

@@ -201,6 +201,30 @@ def test_vrtderived_4(tmp_vsimem):
 
 
 ###############################################################################
+# Check handling of pixel function without correct subclass
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_wrong_subclass():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Byte" band="1">
+        <PixelFunctionType>inv</PixelFunctionType>
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(
+        RuntimeError, match="may only be used with subClass=VRTDerivedRasterBand"
+    ):
+        gdal.Open(xml)
+
+
+###############################################################################
 # Check Python derived function with BufferRadius=1
 
 
