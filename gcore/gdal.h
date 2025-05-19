@@ -213,7 +213,7 @@ typedef struct
         (s).pfnProgress = CPL_NULLPTR;                                         \
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
-        (s).bUseOnlyThisScale = FALSE;                                            \
+        (s).bUseOnlyThisScale = FALSE;                                         \
     } while (0)
 
 /** Value indicating the start of the range for color interpretations belonging
