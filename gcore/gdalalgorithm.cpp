@@ -573,6 +573,13 @@ bool GDALAlgorithmArg::Set(const std::vector<std::string> &value)
     {
         return Set(value[0]);
     }
+    else if (m_decl.GetType() == GAAT_DATASET_LIST)
+    {
+        std::vector<GDALArgDatasetValue> dsVector;
+        for (const std::string &s : value)
+            dsVector.emplace_back(s);
+        return Set(std::move(dsVector));
+    }
 
     if (m_decl.GetType() != GAAT_STRING_LIST)
     {

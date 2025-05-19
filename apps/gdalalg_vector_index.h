@@ -21,7 +21,8 @@
 /*                     GDALVectorIndexAlgorithm                         */
 /************************************************************************/
 
-class GDALVectorIndexAlgorithm final : public GDALVectorOutputAbstractAlgorithm
+class CPL_DLL GDALVectorIndexAlgorithm final
+    : public GDALVectorOutputAbstractAlgorithm
 {
   public:
     static constexpr const char *NAME = "index";
