@@ -1174,11 +1174,17 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **diff**
      - 2
      - -
-     - Computes the difference between 2 raster bands (``b1 - b2``)
+     - Computes the difference between 2 raster bands (``b1 - b2``).
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+       will be the NoData value.
    * - **div**
      - 2
      - -
-     - Divide one raster band by another (``b1 / b2``)
+     - Divide one raster band by another (``b1 / b2``).
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+       will be the NoData value.
    * - **exp**
      - 1
      - ``base`` (optional)
@@ -1195,6 +1201,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
        logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case
 
        ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
+
    * - **expression**
      - 1
      - ``expression``
@@ -1228,44 +1238,46 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - >= 2
      - ``t0``, ``dt``, ``t``
      - Interpolate a value at time (or position) ``t`` given input sources
-       beginning at position ``t0`` with spacing ``dt`` using exponential interpolation
+       beginning at position ``t0`` with spacing ``dt`` using exponential interpolation.
+       Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
+       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       NoData value.
    * - **interpolate_linear**
      - >= 2
      - ``t0``, ``dt``, ``t``
      - Interpolate a value at time (or position) ``t`` given input sources
-       beginning at ``t0`` with spacing ``dt`` using linear interpolation
+       beginning at ``t0`` with spacing ``dt`` using linear interpolation.
+       Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
+       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       NoData value.
    * - **inv**
      - 1
      - ``k`` (optional)
      - Inverse (``1./x``). If the optional ``k`` parameter is set,
-
-       then the result is multiplied by ``k`` (``k / x``)
+       then the result is multiplied by ``k`` (``k / x``).
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **log10**
      - 1
      - -
      - Compute the logarithm (base 10) of the abs of a single raster band
-
        (real or complex): ``log10( abs( x ) )``
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **max**
      - >= 2
-     - ``propagateNoData`` (optional)
-     - (GDAL >= 3.8) Maximum of 2 or more raster bands, ignoring by default pixels at nodata.
-
+     - ``propagateNoData`` (optional, default=``false``)
+     - (GDAL >= 3.8) Maximum of 2 or more raster bands.
        If the optional ``propagateNoData`` parameter is set to ``true``, then
-
-       if a nodata pixel is found in one of the bands,
-
-       if will be propagated to the output value.
+       if a NoData pixel is found in one of the bands, if will be propagated to
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **min**
      - >= 2
-     - ``propagateNoData`` (optional)
-     - (GDAL >= 3.8) Minimum of 2 or more raster bands, ignoring by default pixels at nodata.
-
+     - ``propagateNoData`` (optional, default=``false``)
+     - (GDAL >= 3.8) Minimum of 2 or more raster bands.
        If the optional ``propagateNoData`` parameter is set to ``true``, then
-
-       if a nodata pixel is found in one of the bands,
-
-       if will be propagated to the output value.
+       if a NoData pixel is found in one of the bands, if will be propagated to
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **mod**
      - 1
      - -
@@ -1273,13 +1285,22 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **mul**
      - >= 1
      - ``k`` (optional)
-     - Multiply 1 or more raster bands.
 
-       If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
+       ``propagatenodata`` (optional)
+     - Multiply 1 or more raster bands.
+       If the optional ``k`` parameter is provided then the result is
+       multiplied by the scalar ``k``.  Starting with GDAL 3.12, if
+       ``propagateNoData`` is true, any input pixel equal to the derived band's
+       NoData value (set with ``<NoDataValue>``) will cause the result to be
+       the NoData value. If ``propagateNoData`` is false, input NoData values
+       will be ignored.
    * - **norm_diff**
      - 2
      - -
      - Computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+       will be the NoData value.
    * - **phase**
      - 1
      - -
@@ -1302,6 +1323,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - ``power``
      - Raise a single raster band to a constant power, specified with argument ``power`` (real only)
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
      - -
@@ -1339,15 +1362,25 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - = 1
      - -
      - Perform scaling according to the ``offset`` and ``scale`` values of the raster band
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **sqrt**
      - 1
      - -
-     - Perform the square root of a single raster band (real only)
+     - Perform the square root of a single raster band (real only).
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **sum**
      - >= 1
      - ``k`` (optional)
+
+       ``propagateNoData`` (optional, default=``false``)
      - Sum 1 or more raster bands. If the optional ``k`` parameter is provided
-       then it is added to each element of the result
+       then it is added to each element of the result.
+       Starting with GDAL 3.12, if ``propagateNoData`` is true, any input pixel
+       equal to the derived band's NoData value (set with ``<NoDataValue>``)
+       will cause the result to be the NoData value. If ``propagateNoData`` is
+       false, input NoData values will be ignored.
 
 .. example::
    :title: VRT expression with a simple condition
