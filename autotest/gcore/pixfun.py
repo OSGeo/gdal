@@ -535,6 +535,41 @@ def test_pixfun_div_r():
     assert numpy.all(data == (refdata1 / refdata2))
 
 
+@pytest.mark.parametrize(
+    "dtype,expected",
+    [(gdal.GDT_Float32, float("inf")), (gdal.GDT_Int16, 32767), (gdal.GDT_Byte, 255)],
+)
+def test_pixfun_div_by_zero(tmp_vsimem, dtype, expected):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, 2, dtype
+    ) as src:
+        src.GetRasterBand(1).Fill(5)
+        src.GetRasterBand(2).Fill(0)
+
+    nodata_value = 123
+
+    xml = f"""
+    <VRTDataset rasterXSize="1" rasterYSize="1">
+      <VRTRasterBand dataType="{gdal.GetDataTypeName(dtype)}" band="1" subclass="VRTDerivedRasterBand">
+        <NoDataValue>{nodata_value}</NoDataValue>
+        <PixelFunctionType>div</PixelFunctionType>
+        <SimpleSource>
+           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+        <SimpleSource>
+           <SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename>
+           <SourceBand>2</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    result = gdal.Open(xml).ReadAsArray()[0, 0]
+
+    assert result == expected
+
+
 ###############################################################################
 # Verify the division of 2 (complex) datasets.
 
