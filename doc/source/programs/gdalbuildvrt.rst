@@ -22,6 +22,7 @@ Synopsis
                  [-resolution user|average|common|highest|lowest|same]
                  [-tr <xres> <yes>] [-input_file_list <filename>]
                  [[-separate]|[-pixel-function <function>]]
+                 [-pixel-function-arg <NAME>=<VALUE>]...
                  [-allow_projection_difference] [-sd <n>] [-tap]
                  [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
                  [-hidenodata] [-overwrite]
@@ -205,6 +206,14 @@ changed in later versions.
     For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
     If no function is specified, values will be taken from the last overlapping input.
     This option is mutually exclusive with with :option:`-separate`.
+
+    .. versionadded:: 3.12
+
+.. option:: -pixel-function-arg
+
+    Specify an argument to be provided to a pixel function, in the format
+    ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
+    option.
 
     .. versionadded:: 3.12
     

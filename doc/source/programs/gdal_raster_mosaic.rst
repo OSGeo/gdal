@@ -127,11 +127,19 @@ The following options are available:
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
 
-.. option:: -pixel-function
+.. option:: --pixel-function
 
     Specify a function name to calculate a value from overlapping inputs.
     For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
     If no function is specified, values will be taken from the last overlapping input.
+
+    .. versionadded:: 3.12
+
+.. option:: --pixel-function-arg
+
+    Specify an argument to be provided to a pixel function, in the format
+    ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
+    option.
 
     .. versionadded:: 3.12
 
