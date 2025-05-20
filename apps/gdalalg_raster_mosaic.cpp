@@ -111,6 +111,11 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
            _("Specify a pixel function to calculate output value from "
              "overlapping inputs"),
            &m_pixelFunction);
+    AddArg("pixel-function-arg", 0,
+           _("Specify argument(s) to pass to the pixel function"),
+           &m_pixelFunctionArgs)
+        .SetMetaVar("<NAME>=<VALUE>")
+        .SetRepeatedArgAllowed(true);
 }
 
 /************************************************************************/
@@ -274,6 +279,12 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         aosOptions.push_back("-pixel-function");
         aosOptions.push_back(m_pixelFunction);
+    }
+
+    for (const auto &arg : m_pixelFunctionArgs)
+    {
+        aosOptions.push_back("-pixel-function-arg");
+        aosOptions.push_back(arg);
     }
 
     GDALBuildVRTOptions *psOptions =

@@ -429,8 +429,8 @@ def test_gdalalg_raster_mosaic_abolute_path(tmp_vsimem):
     assert '<SourceFilename relativeToVRT="1">byte.tif' not in content
 
 
-@pytest.mark.parametrize("pixfn", ("sum", "min"))
-def test_gdalalg_raster_mosaic_pixel_function(pixfn):
+@pytest.mark.parametrize("pixfn,args", [("sum", ["k=4"]), ("min", [])])
+def test_gdalalg_raster_mosaic_pixel_function(pixfn, args):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -448,12 +448,13 @@ def test_gdalalg_raster_mosaic_pixel_function(pixfn):
     alg["output"] = ""
     alg["dst-nodata"] = [-999]
     alg["pixel-function"] = pixfn
+    alg["pixel-function-arg"] = args
     assert alg.Run()
     ds = alg["output"].GetDataset()
 
     dst_values = ds.ReadAsArray()
     if pixfn == "sum":
-        np.testing.assert_array_equal(dst_values, np.array([[1, 3, 3, 2]]))
+        np.testing.assert_array_equal(dst_values, np.array([[1, 3, 3, 2]]) + 4)
     elif pixfn == "min":
         np.testing.assert_array_equal(dst_values, np.array([[1, 1, 1, 2]]))
     else:

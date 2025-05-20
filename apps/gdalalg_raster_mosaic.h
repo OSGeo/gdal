@@ -49,6 +49,7 @@ class GDALRasterMosaicAlgorithm final : public GDALAlgorithm
     bool m_addAlpha = false;
     bool m_writeAbsolutePaths = false;
     std::string m_pixelFunction{};
+    std::vector<std::string> m_pixelFunctionArgs{};
 };
 
 //! @endcond
