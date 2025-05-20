@@ -15,6 +15,9 @@ build:
       - (git --no-pager log --pretty="tformat:%s -- %b" -1 | paste -s -d " " | grep -viqP "skip ci|ci skip") || exit 183
     pre_build:
       - ./doc/rtd/pre_build.sh
+    build:
+      pdf:
+        - export RTD_PRF_BUILD=1
 
   apt_packages:
     - ant

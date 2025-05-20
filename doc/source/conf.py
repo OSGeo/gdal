@@ -99,6 +99,11 @@ exclude_patterns = [
     "gdal_rtd/README.md",
 ]
 
+is_pdf = os.environ.get("RTD_PDF_BUILD")
+
+if "latex" not in str(tags) and not is_pdf:  # noqa: F821
+    exclude_patterns.append("index_pdf.rst")
+
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
 # Cf https://stackoverflow.com/questions/15258831/how-to-handle-two-dashes-in-rest
 smartquotes = False
@@ -1176,10 +1181,6 @@ def builder_inited(app):
 
     if app.builder.name == "html":
         check_python_bindings()
-
-    # exclude the PDF toctree from HTML builds
-    if app.builder.name != "latex":
-        app.config.exclude_patterns.append("index_pdf.rst")
 
 
 def setup(app):

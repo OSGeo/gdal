@@ -143,7 +143,7 @@ if (BUILD_DOCS)
             OUTPUT ${GDAL_DOC_PDF}
             DEPENDS gdalapps doxygen_xml ${SPHINX_SOURCE_FILES}
             COMMAND ${CMAKE_COMMAND} -E env ${BUILD_RUN_ENV} BUILDDIR=${SPHINX_BUILD_DIR}
-                    ${SPHINX_BUILD} -M latexpdf
+                    ${SPHINX_BUILD} -M latexpdf --tag latex
                                     ${CMAKE_CURRENT_SOURCE_DIR}/source
                                     ${CMAKE_CURRENT_BINARY_DIR}/build
     )
