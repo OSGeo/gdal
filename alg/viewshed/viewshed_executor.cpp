@@ -15,6 +15,7 @@
 #include <atomic>
 #include <cassert>
 #include <cmath>
+#include <limits>
 
 #include "viewshed_executor.h"
 #include "progress.h"
