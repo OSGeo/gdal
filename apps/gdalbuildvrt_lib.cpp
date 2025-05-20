@@ -2507,6 +2507,13 @@ GDALBuildVRTOptionsNew(char **papszArgv,
             psOptions->ymax = (*oTE)[3];
         }
 
+        if (psOptions->osPixelFunction.empty() &&
+            !psOptions->aosPixelFunctionArgs.empty())
+        {
+            throw std::runtime_error(
+                "Pixel function arguments provided without a pixel function");
+        }
+
         return psOptions.release();
     }
     catch (const std::exception &err)

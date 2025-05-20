@@ -1077,3 +1077,11 @@ def test_gdalbuildvrt_pixel_function_invalid():
 
     with pytest.raises(RuntimeError, match="not a registered pixel function"):
         gdal.BuildVRT("", "../gcore/data/byte.tif", pixelFunction="does_not_exist")
+
+
+def test_gdalbuildvrt_pixel_function_arg_no_pixel_function():
+
+    with pytest.raises(
+        RuntimeError, match="arguments provided without a pixel function"
+    ):
+        gdal.BuildVRT("", "../gcore/data/byte.tif", pixelFunctionArgs={"k": 7})
