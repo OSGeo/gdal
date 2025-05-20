@@ -5469,12 +5469,11 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     : static_cast<GIntBig>(nDstWidth) * nDstHeight * nBands *
                           nDTSize;
 
-            // One band buffer might overflow size_t
+            // make sure that one band buffer doesn't overflow size_t
             const bool bChunkSizeOverflow =
                 nDstHeight > INT_MAX / nDTSize ||
-                nDstWidth >
+                size_t(nDstWidth) >
                     std::numeric_limits<size_t>::max() / (nDstHeight * nDTSize);
-
             const size_t nChunkSize =
                 bChunkSizeOverflow
                     ? 0
