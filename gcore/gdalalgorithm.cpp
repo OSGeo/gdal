@@ -2354,6 +2354,8 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                   outputFormatArg->GetType() == GAAT_STRING &&
                   (EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") ||
                    EQUAL(outputFormatArg->Get<std::string>().c_str(),
+                         "stream") ||
+                   EQUAL(outputFormatArg->Get<std::string>().c_str(),
                          "Memory"))))
             {
                 const char *pszType = "";
@@ -2418,14 +2420,15 @@ bool GDALAlgorithm::ValidateArguments()
     if (m_specialActionRequested)
         return true;
 
-    // If only --output=format=MEM is specified and not --output,
+    // If only --output=format=MEM/stream is specified and not --output,
     // then set empty name for --output.
     auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
     auto outputFormatArg = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
     if (outputArg && outputFormatArg && outputFormatArg->IsExplicitlySet() &&
         !outputArg->IsExplicitlySet() &&
         outputFormatArg->GetType() == GAAT_STRING &&
-        EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") &&
+        (EQUAL(outputFormatArg->Get<std::string>().c_str(), "MEM") ||
+         EQUAL(outputFormatArg->Get<std::string>().c_str(), "stream")) &&
         outputArg->GetType() == GAAT_DATASET &&
         (outputArg->GetDatasetInputFlags() & GADV_NAME))
     {
@@ -2986,7 +2989,7 @@ GDALAlgorithm::AddArg(const std::string &longName, char chShortName,
 inline const char *MsgOrDefault(const char *helpMessage,
                                 const char *defaultMessage)
 {
-    return helpMessage ? helpMessage : defaultMessage;
+    return helpMessage && helpMessage[0] ? helpMessage : defaultMessage;
 }
 
 /************************************************************************/

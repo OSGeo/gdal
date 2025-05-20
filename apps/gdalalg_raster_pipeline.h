@@ -73,6 +73,29 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    struct ConstructorOptions
+    {
+        bool standaloneStep = false;
+        std::string inputDatasetHelpMsg{};
+
+        inline ConstructorOptions &SetStandaloneStep(bool b)
+        {
+            standaloneStep = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetHelpMsg(const std::string &s)
+        {
+            inputDatasetHelpMsg = s;
+            return *this;
+        }
+    };
+
+    GDALRasterPipelineStepAlgorithm(const std::string &name,
+                                    const std::string &description,
+                                    const std::string &helpURL,
+                                    const ConstructorOptions &options);
+
     friend class GDALRasterPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
 
@@ -95,6 +118,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     bool m_outputVRTCompatible = true;
     bool m_standaloneStep = false;
+    const ConstructorOptions m_constructorOptions;
 
     // Input arguments
     GDALArgDatasetValue m_inputDataset{};
