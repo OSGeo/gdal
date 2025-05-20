@@ -1237,6 +1237,33 @@ GDAL provides a set of default pixel functions that can be used without writing 
        ExprTk and muparser support a number of built-in functions and control structures.
 
        Refer to the documentation of those libraries for details.
+   * - **geometric_mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Geometric mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+   * - **harmonic_mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+
+       ``propagateZero`` (optional, default=false)
+     - (GDAL >= 3.12) Harmonic mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+
+       If zero values are encountered in one of the bands, the output will
+
+       be set to NoData unless ``propagateZero`` is set to ``true``.
+
    * - **imag**
      - 1
      - -
@@ -1299,6 +1326,26 @@ GDAL provides a set of default pixel functions that can be used without writing 
        if a NoData pixel is found in one of the bands, if will be propagated to
 
        the output value. Otherwise, NoData pixels will be ignored.
+   * - **mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Arithmetic mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+   * - **median**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Median of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **min**
      - >= 2
      - ``propagateNoData`` (optional, default=false)
@@ -1313,6 +1360,16 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - Extract module from a single raster band (real or complex)
+   * - **mode**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Mode (most common value) of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **mul**
      - >= 1
      - ``k`` (optional)

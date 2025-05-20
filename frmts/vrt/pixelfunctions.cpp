@@ -1997,6 +1997,304 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ReclassifyPixelFunc
 
+struct MeanKernel
+{
+    static constexpr const char *pszName = "mean";
+
+    double dfSum = 0;
+    int nValidSources = 0;
+
+    void Reset()
+    {
+        dfSum = 0;
+        nValidSources = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        dfSum += dfVal;
+        nValidSources++;
+    }
+
+    bool HasValue() const
+    {
+        return nValidSources > 0;
+    }
+
+    double GetValue() const
+    {
+        return dfSum / nValidSources;
+    }
+};
+
+struct GeoMeanKernel
+{
+    static constexpr const char *pszName = "geometric_mean";
+
+    double dfProduct = 1;
+    int nValidSources = 0;
+
+    void Reset()
+    {
+        dfProduct = 1;
+        nValidSources = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        dfProduct *= dfVal;
+        nValidSources++;
+    }
+
+    bool HasValue() const
+    {
+        return nValidSources > 0;
+    }
+
+    double GetValue() const
+    {
+        return std::pow(dfProduct, 1.0 / nValidSources);
+    }
+};
+
+struct HarmonicMeanKernel
+{
+    static constexpr const char *pszName = "harmonic_mean";
+
+    double dfDenom = 0;
+    int nValidSources = 0;
+    bool bValueIsZero = false;
+    bool bPropagateZero = false;
+
+    void Reset()
+    {
+        dfDenom = 0;
+        nValidSources = 0;
+        bValueIsZero = false;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (dfVal == 0)
+        {
+            bValueIsZero = true;
+        }
+        else
+        {
+            dfDenom += 1 / dfVal;
+        }
+        nValidSources++;
+    }
+
+    CPLErr ProcessArguments(CSLConstList papszArgs)
+    {
+        bPropagateZero =
+            CPLTestBool(CSLFetchNameValueDef(papszArgs, "propagateZero", "0"));
+        return CE_None;
+    }
+
+    bool HasValue() const
+    {
+        return dfDenom > 0 && (bPropagateZero || !bValueIsZero);
+    }
+
+    double GetValue() const
+    {
+        if (bPropagateZero && bValueIsZero)
+        {
+            return 0;
+        }
+        return static_cast<double>(nValidSources) / dfDenom;
+    }
+};
+
+struct MedianKernel
+{
+    static constexpr const char *pszName = "median";
+
+    mutable std::vector<double> values{};
+
+    void Reset()
+    {
+        values.clear();
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (!std::isnan(dfVal))
+        {
+            values.push_back(dfVal);
+        }
+    }
+
+    bool HasValue() const
+    {
+        return !values.empty();
+    }
+
+    double GetValue() const
+    {
+        std::sort(values.begin(), values.end());
+        if (values.size() % 2 == 0)
+        {
+            return 0.5 *
+                   (values[values.size() / 2 - 1] + values[values.size() / 2]);
+        }
+
+        return values[values.size() / 2];
+    }
+};
+
+struct ModeKernel
+{
+    static constexpr const char *pszName = "mode";
+
+    std::map<double, size_t> counts{};
+    std::size_t nanCount{0};
+    double dfMax = std::numeric_limits<double>::quiet_NaN();
+    decltype(counts.begin()) oMax = counts.end();
+
+    void Reset()
+    {
+        nanCount = 0;
+        counts.clear();
+        oMax = counts.end();
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (std::isnan(dfVal))
+        {
+            nanCount += 1;
+            return;
+        }
+
+        // if dfVal is NaN, try_emplace will return an entry for a different key!
+        auto [it, inserted] = counts.try_emplace(dfVal, 0);
+
+        it->second += 1;
+
+        if (oMax == counts.end() || it->second > oMax->second)
+        {
+            oMax = it;
+        }
+    }
+
+    bool HasValue() const
+    {
+        return nanCount > 0 || oMax != counts.end();
+    }
+
+    double GetValue() const
+    {
+        size_t nCount = oMax == counts.end() ? 0 : oMax->second;
+        return nanCount > nCount ? std::numeric_limits<double>::quiet_NaN()
+                                 : oMax->first;
+    }
+};
+
+static const char pszBasicPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
+    "</PixelFunctionArgumentsList>";
+
+template <typename T>
+static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+    T oKernel;
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Complex data types not supported by %s", oKernel.pszName);
+        return CE_Failure;
+    }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
+
+    if (oKernel.ProcessArguments(papszArgs) == CE_Failure)
+    {
+        return CE_Failure;
+    }
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            oKernel.Reset();
+            bool bWriteNoData = false;
+
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                const double dfVal = GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                if (bHasNoData && IsNoData(dfVal, dfNoData))
+                {
+                    if (bPropagateNoData)
+                    {
+                        bWriteNoData = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    oKernel.ProcessPixel(dfVal);
+                }
+            }
+
+            double dfPixVal{dfNoData};
+            if (!bWriteNoData && oKernel.HasValue())
+            {
+                dfPixVal = oKernel.GetValue();
+            }
+
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // BasicPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -2128,5 +2426,17 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszExprPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
                                         pszReclassifyPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("mean", BasicPixelFunc<MeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("geometric_mean",
+                                        BasicPixelFunc<GeoMeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("harmonic_mean",
+                                        BasicPixelFunc<HarmonicMeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("median", BasicPixelFunc<MedianKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("mode", BasicPixelFunc<ModeKernel>,
+                                        pszBasicPixelFuncMetadata);
     return CE_None;
 }

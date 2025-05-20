@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
 import os
 import threading
 
@@ -1491,6 +1492,14 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("div", [3, 7], 7, {}, 7),
         ("div", [7, 3], 7, {}, 7),
         ("exp", [7], 7, {}, 7),
+        ("geometric_mean", [3, 7, 9], 7, {}, math.sqrt(3 * 9)),
+        ("geometric_mean", [7, 7, 7], 7, {}, 7),
+        ("geometric_mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("harmonic_mean", [3, 7, 9], 7, {}, 2 / (1 / 3 + 1 / 9)),
+        ("harmonic_mean", [3, 7, 0], 7, {}, 7),  # divide by zero => NoData
+        ("harmonic_mean", [3, 7, 0], 7, {"propagateZero": True}, 0),
+        ("harmonic_mean", [7, 7, 7], 7, {}, 7),
+        ("harmonic_mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 5}, 7),
         ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": -1}, 7),
         ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 10}, 10),
@@ -1507,10 +1516,20 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("log10", [7], 7, {}, 7),
         ("max", [3, 7, 9], 7, {}, 9),
         ("max", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("mean", [3, 7, 9], 7, {}, (3 + 9) / 2),
+        ("mean", [7, 7, 7], 7, {}, 7),
+        ("mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("median", [3, 7, 11], 7, {}, (3 + 11) / 2),
+        ("median", [3, 7, 9, 11], 7, {}, 9),
+        ("median", [7, 7, 7], 7, {}, 7),
+        ("median", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("min", [3, 7, 9], 7, {}, 3),
         ("min", [3, float("nan"), 9], 7, {}, 3),
         ("min", [3, float("nan"), 9], 7, {"propagateNoData": True}, 7),  # should be 3?
         ("min", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("mode", [3, 7, 9, 9, 9], 7, {"propagateNoData": True}, 7),
+        ("mode", [3, 7, 9, 9, 9], 7, {}, 9),
+        ("mode", [3, 7, float("nan"), float("nan")], 7, {}, float("nan")),
         ("mul", [3, 7, 9], 7, {}, 27),
         ("mul", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("mul", [3, 7, float("nan")], 7, {}, float("nan")),
