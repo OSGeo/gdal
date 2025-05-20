@@ -2855,9 +2855,15 @@ public:
   %clear (const char* name_null_ok );
 #endif
 
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { const char * GetName };
+#endif
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
   }
+#ifdef SWIGCSHARP
+  %clear (const char * GetName );
+#endif
 
 #ifdef SWIGJAVA
   StringAsByteArray* GetNameAsByteArray() {
