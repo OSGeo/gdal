@@ -2841,6 +2841,9 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { (const char* name_null_ok) };
+#endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed",
                       OGRFieldType field_type=OFTString) {
     if (ValidateOGRFieldType(field_type))
@@ -2848,6 +2851,9 @@ public:
     else
         return NULL;
   }
+#ifdef SWIGCSHARP
+  %clear (const char* name_null_ok );
+#endif
 
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
