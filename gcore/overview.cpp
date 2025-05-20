@@ -5545,8 +5545,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                             eErr = apoVRTBand[iBand]->RasterIO(
                                 GF_Read, nDstXOff, nDstYOff, nDstXCount,
                                 nDstYCount, abyChunk.data(), nDstXCount,
-                                nDstYCount, eDataType, 0, 0,
-                                &sExtraArg);
+                                nDstYCount, eDataType, 0, 0, &sExtraArg);
                             if (eErr != CE_None)
                                 break;
                             eErr = apoDstBand[iBand]->RasterIO(
