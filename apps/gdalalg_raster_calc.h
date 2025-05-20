@@ -43,6 +43,7 @@ class GDALRasterCalcAlgorithm : public GDALAlgorithm
     bool m_overwrite{false};
     bool m_NoCheckSRS{false};
     bool m_NoCheckExtent{false};
+    bool m_noCheckExpression{false};
 };
 
 //! @endcond
