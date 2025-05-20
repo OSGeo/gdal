@@ -14,6 +14,7 @@
 #pragma once
 
 #include <array>
+#include <limits>
 #include <mutex>
 
 #include "gdal_priv.h"

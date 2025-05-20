@@ -5,7 +5,9 @@
  ****************************************************************************/
 
 #include <array>
+#include <cmath>
 #include <iostream>
+#include <limits>
 
 #include "gdal_priv.h"
 #include "util.h"

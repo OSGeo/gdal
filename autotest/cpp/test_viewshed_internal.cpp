@@ -9,11 +9,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include <math.h>
+#include <cmath>
 #include <utility>
 #include <iostream>
-
-//#include "gdal_unit_test.h"
 
 #include "gtest_include.h"
 
