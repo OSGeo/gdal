@@ -66,7 +66,10 @@ interpretation, etc. If not, files that do not match the common characteristics 
 unless :option:`-strict` is used.
 (This is only true in the default mode, and not when using the :option:`-separate` option)
 
-If the inputs spatially overlap, the order of the input list is used to determine priority.
+Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
+be specified (:option:`-pixel-function`) to calculate pixel values from
+overlapping inputs. If no function is specified, or in earlier versions, 
+the order of the input list is used to determine priority.
 Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
 to potentially fetch data from lower-priority datasets, but currently, alpha channel
