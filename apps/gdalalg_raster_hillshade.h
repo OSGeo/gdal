@@ -34,6 +34,8 @@ class GDALRasterHillshadeAlgorithm /* non final */
 
     explicit GDALRasterHillshadeAlgorithm(bool standaloneStep = false);
 
+    bool CanHandleNextStep(GDALRasterPipelineStepAlgorithm *) const override;
+
   private:
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
