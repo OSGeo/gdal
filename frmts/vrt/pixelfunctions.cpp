@@ -2150,10 +2150,6 @@ struct MedianKernel
     double GetValue() const
     {
         std::sort(values.begin(), values.end());
-        if (values.size() == 1)
-        {
-            return values[0];
-        }
         if (values.size() % 2 == 0)
         {
             return 0.5 *
