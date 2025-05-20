@@ -84,6 +84,7 @@ struct Options
     int observerSpacing{10};  //!< Observer spacing in cumulative mode.
     uint8_t numJobs{3};       //!< Relative number of jobs in cumulative mode.
 
+    /// True if angle masking will occur.
     bool angleMasking() const
     {
         return startAngle != endAngle;
@@ -100,6 +101,7 @@ struct Window
     int yStart{};  //!< Y start position
     int yStop{};   //!< Y end position
 
+    /// Returns true when one window is equal to the other.
     bool operator==(const Window &w2) const
     {
         return xStart == w2.xStart && xStop == w2.xStop &&
@@ -181,9 +183,9 @@ inline std::ostream &operator<<(std::ostream &out, const Window &w)
     return out;
 }
 
-// Processing limits based on min/max distance restrictions.
-// The left side processing range is [left, leftMin).
-// The right side processing range is [rightMin, right).
+/// Processing limits based on min/max distance restrictions.
+/// The left side processing range is [left, leftMin).
+/// The right side processing range is [rightMin, right).
 struct LineLimits
 {
     LineLimits(int leftArg, int leftMinArg, int rightMinArg, int rightArg)
