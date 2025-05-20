@@ -2869,9 +2869,17 @@ public:
     return OGR_Fld_GetNameRef(self);
   }
 
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { (const char* name) };
+#endif
+
   void SetName( const char* name) {
     OGR_Fld_SetName(self, name);
   }
+
+#ifdef SWIGCSHARP
+  %clear (const char* name );
+#endif
 
   const char * GetAlternativeName() {
     return OGR_Fld_GetAlternativeNameRef(self);
