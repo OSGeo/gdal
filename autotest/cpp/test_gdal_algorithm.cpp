@@ -2145,6 +2145,24 @@ TEST_F(test_gdal_algorithm, vector_int)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
 }
 
 TEST_F(test_gdal_algorithm, vector_int_validation_fails)
@@ -2201,6 +2219,24 @@ TEST_F(test_gdal_algorithm, vector_double)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=1,foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
