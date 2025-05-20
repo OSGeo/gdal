@@ -19,6 +19,13 @@
 #include <algorithm>
 #include <limits>
 
+#if defined(__x86_64) || defined(_M_X64)
+#define HAVE_SSE2
+#endif
+#ifdef HAVE_SSE2
+#include "gdalsse_priv.h"
+#endif
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -199,6 +206,150 @@ static void hsv_to_rgb(float h, float s, GByte v, GByte *r, GByte *g, GByte *b)
         *g = choose_among(i, t, v, v, q, p, p);
     if (b)
         *b = choose_among(i, p, p, t, v, v, q);
+}
+
+/************************************************************************/
+/*                           XMM_RGB_to_HS()                            */
+/************************************************************************/
+
+#ifdef HAVE_SSE2
+static inline void
+XMM_RGB_to_HS(const GByte *CPL_RESTRICT pInR, const GByte *CPL_RESTRICT pInG,
+              const GByte *CPL_RESTRICT pInB, const XMMReg4Float &zero,
+              const XMMReg4Float &one, const XMMReg4Float &six,
+              const XMMReg4Float &two_over_six,
+              const XMMReg4Float &four_over_six, XMMReg4Float &h,
+              XMMReg4Float &s)
+{
+    const auto r = XMMReg4Float::Load4Val(pInR);
+    const auto g = XMMReg4Float::Load4Val(pInG);
+    const auto b = XMMReg4Float::Load4Val(pInB);
+    const auto minc = XMMReg4Float::Min(XMMReg4Float::Min(r, g), b);
+    const auto maxc = XMMReg4Float::Max(XMMReg4Float::Max(r, g), b);
+    const auto max_minus_min = maxc - minc;
+    s = max_minus_min / XMMReg4Float::Max(one, maxc);
+    const auto inv_max_minus_min_times_6_0 =
+        XMMReg4Float::Ternary(XMMReg4Float::Equals(max_minus_min, zero), one,
+                              six * max_minus_min)
+            .inverse();
+    const auto tmp = (g - b) * inv_max_minus_min_times_6_0;
+    h = XMMReg4Float::Ternary(
+        XMMReg4Float::Equals(maxc, b),
+        four_over_six + (r - g) * inv_max_minus_min_times_6_0,
+        XMMReg4Float::Ternary(
+            XMMReg4Float::Equals(maxc, g),
+            two_over_six + (b - r) * inv_max_minus_min_times_6_0,
+            XMMReg4Float::Ternary(XMMReg4Float::Lesser(tmp, zero), tmp + one,
+                                  tmp)));
+}
+#endif
+
+/************************************************************************/
+/*                         patch_value_line()                           */
+/************************************************************************/
+
+static
+#ifdef __GNUC__
+    __attribute__((__noinline__))
+#endif
+    void
+    patch_value_line(int nCount, const GByte *CPL_RESTRICT pInR,
+                     const GByte *CPL_RESTRICT pInG,
+                     const GByte *CPL_RESTRICT pInB,
+                     const GByte *CPL_RESTRICT pInGray,
+                     GByte *CPL_RESTRICT pOutR, GByte *CPL_RESTRICT pOutG,
+                     GByte *CPL_RESTRICT pOutB)
+{
+    int i = 0;
+#ifdef HAVE_SSE2
+    const auto zero = XMMReg4Float::Zero();
+    const auto one = XMMReg4Float::Set1(1.0f);
+    const auto six = XMMReg4Float::Set1(6.0f);
+    const auto two_over_six = XMMReg4Float::Set1(2.0f / 6.0f);
+    const auto four_over_six = two_over_six + two_over_six;
+
+    constexpr int ELTS = 8;
+    for (; i + (ELTS - 1) < nCount; i += ELTS)
+    {
+        XMMReg4Float h0, s0;
+        XMM_RGB_to_HS(pInR + i, pInG + i, pInB + i, zero, one, six,
+                      two_over_six, four_over_six, h0, s0);
+        XMMReg4Float h1, s1;
+        XMM_RGB_to_HS(pInR + i + ELTS / 2, pInG + i + ELTS / 2,
+                      pInB + i + ELTS / 2, zero, one, six, two_over_six,
+                      four_over_six, h1, s1);
+
+        XMMReg4Float v0, v1;
+        XMMReg4Float::Load8Val(pInGray + i, v0, v1);
+
+        const auto half = XMMReg4Float::Set1(0.5f);
+        const auto six_h0 = six * h0;
+        const auto idx0 = six_h0.truncate_to_int();
+        const auto f0 = six_h0 - idx0.to_float();
+        const auto p0 = (v0 * (one - s0) + half).truncate_to_int();
+        const auto q0 = (v0 * (one - s0 * f0) + half).truncate_to_int();
+        const auto t0 = (v0 * (one - s0 * (one - f0)) + half).truncate_to_int();
+
+        const auto six_h1 = six * h1;
+        const auto idx1 = six_h1.truncate_to_int();
+        const auto f1 = six_h1 - idx1.to_float();
+        const auto p1 = (v1 * (one - s1) + half).truncate_to_int();
+        const auto q1 = (v1 * (one - s1 * f1) + half).truncate_to_int();
+        const auto t1 = (v1 * (one - s1 * (one - f1)) + half).truncate_to_int();
+
+        const auto idx = XMMReg8Byte::Pack(idx0, idx1);
+        const auto v =
+            XMMReg8Byte::Pack(v0.truncate_to_int(), v1.truncate_to_int());
+        const auto p = XMMReg8Byte::Pack(p0, p1);
+        const auto q = XMMReg8Byte::Pack(q0, q1);
+        const auto t = XMMReg8Byte::Pack(t0, t1);
+
+        const auto equalsTo0 = XMMReg8Byte::Equals(idx, XMMReg8Byte::Zero());
+        const auto one8Byte = XMMReg8Byte::Set1(1);
+        const auto equalsTo1 = XMMReg8Byte::Equals(idx, one8Byte);
+        const auto two8Byte = one8Byte + one8Byte;
+        const auto equalsTo2 = XMMReg8Byte::Equals(idx, two8Byte);
+        const auto four8Byte = two8Byte + two8Byte;
+        const auto equalsTo4 = XMMReg8Byte::Equals(idx, four8Byte);
+        const auto equalsTo3 = XMMReg8Byte::Equals(idx, four8Byte - one8Byte);
+        // clang-format off
+        if (pOutR)
+        {
+            const auto out_r =
+                XMMReg8Byte::Ternary(equalsTo0, v,
+                XMMReg8Byte::Ternary(equalsTo1, q,
+                XMMReg8Byte::Ternary(XMMReg8Byte::Or(equalsTo2, equalsTo3), p,
+                XMMReg8Byte::Ternary(equalsTo4, t, v))));
+            out_r.Store8Val(pOutR + i);
+        }
+        if (pOutG)
+        {
+            const auto out_g =
+                XMMReg8Byte::Ternary(equalsTo0, t,
+                XMMReg8Byte::Ternary(XMMReg8Byte::Or(equalsTo1, equalsTo2), v,
+                XMMReg8Byte::Ternary(equalsTo3, q, p)));
+            out_g.Store8Val(pOutG + i);
+        }
+        if (pOutB)
+        {
+            const auto out_b =
+                XMMReg8Byte::Ternary(XMMReg8Byte::Or(equalsTo0, equalsTo1), p,
+                XMMReg8Byte::Ternary(equalsTo2, t,
+                XMMReg8Byte::Ternary(XMMReg8Byte::Or(equalsTo3, equalsTo4),
+                                     v, q)));
+            out_b.Store8Val(pOutB + i);
+        }
+        // clang-format on
+    }
+#endif
+
+    for (; i < nCount; ++i)
+    {
+        float h, s;
+        rgb_to_hs(pInR[i], pInG[i], pInB[i], &h, &s);
+        hsv_to_rgb(h, s, pInGray[i], pOutR ? pOutR + i : nullptr,
+                   pOutG ? pOutG + i : nullptr, pOutB ? pOutB + i : nullptr);
+    }
 }
 
 /************************************************************************/
@@ -438,16 +589,29 @@ CPLErr HSVMergeDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         for (int j = 0; j < nBufYSize; ++j)
         {
             auto nDstOffset = j * nLineSpace;
-            for (int i = 0; i < nBufXSize;
-                 ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+            if (nPixelSpace == 1 && nLineSpace >= nPixelSpace * nBufXSize &&
+                nBandSpace >= nLineSpace * nBufYSize)
             {
-                float h, s;
-                rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx], &h,
-                          &s);
-                hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
-                           &pabyDst[nDstOffset + 0 * nBandSpace],
-                           &pabyDst[nDstOffset + 1 * nBandSpace],
-                           &pabyDst[nDstOffset + 2 * nBandSpace]);
+                patch_value_line(nBufXSize, pabyR + nSrcIdx, pabyG + nSrcIdx,
+                                 pabyB + nSrcIdx, pabyGrayScale + nSrcIdx,
+                                 pabyDst + nDstOffset,
+                                 pabyDst + nDstOffset + nBandSpace,
+                                 pabyDst + nDstOffset + 2 * nBandSpace);
+                nSrcIdx += nBufXSize;
+            }
+            else
+            {
+                for (int i = 0; i < nBufXSize;
+                     ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+                {
+                    float h, s;
+                    rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx],
+                              &h, &s);
+                    hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
+                               &pabyDst[nDstOffset + 0 * nBandSpace],
+                               &pabyDst[nDstOffset + 1 * nBandSpace],
+                               &pabyDst[nDstOffset + 2 * nBandSpace]);
+                }
             }
         }
 
@@ -514,27 +678,39 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         for (int j = 0; j < nBufYSize; ++j)
         {
             auto nDstOffset = j * nLineSpace;
-            for (int i = 0; i < nBufXSize;
-                 ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
+            if (nPixelSpace == 1 && nLineSpace >= nPixelSpace * nBufXSize)
             {
-                float h, s;
-                rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx], &h,
-                          &s);
-                if (nBand == 1)
+                patch_value_line(nBufXSize, pabyR + nSrcIdx, pabyG + nSrcIdx,
+                                 pabyB + nSrcIdx, pabyGrayScale + nSrcIdx,
+                                 nBand == 1 ? pabyDst + nDstOffset : nullptr,
+                                 nBand == 2 ? pabyDst + nDstOffset : nullptr,
+                                 nBand == 3 ? pabyDst + nDstOffset : nullptr);
+                nSrcIdx += nBufXSize;
+            }
+            else
+            {
+                for (int i = 0; i < nBufXSize;
+                     ++i, ++nSrcIdx, nDstOffset += nPixelSpace)
                 {
-                    hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
-                               &pabyDst[nDstOffset], nullptr, nullptr);
-                }
-                else if (nBand == 2)
-                {
-                    hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr,
-                               &pabyDst[nDstOffset], nullptr);
-                }
-                else
-                {
-                    CPLAssert(nBand == 3);
-                    hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr, nullptr,
-                               &pabyDst[nDstOffset]);
+                    float h, s;
+                    rgb_to_hs(pabyR[nSrcIdx], pabyG[nSrcIdx], pabyB[nSrcIdx],
+                              &h, &s);
+                    if (nBand == 1)
+                    {
+                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx],
+                                   &pabyDst[nDstOffset], nullptr, nullptr);
+                    }
+                    else if (nBand == 2)
+                    {
+                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr,
+                                   &pabyDst[nDstOffset], nullptr);
+                    }
+                    else
+                    {
+                        CPLAssert(nBand == 3);
+                        hsv_to_rgb(h, s, pabyGrayScale[nSrcIdx], nullptr,
+                                   nullptr, &pabyDst[nDstOffset]);
+                    }
                 }
             }
         }

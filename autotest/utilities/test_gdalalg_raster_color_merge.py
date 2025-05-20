@@ -156,6 +156,13 @@ def test_gdalalg_raster_color_merge_check_rgb_hsb_conversion():
             subsampled
             == rgba_ds.GetRasterBand(1).GetOverview(0).GetDataset().ReadRaster()
         )
+
+        assert out_ds.GetRasterBand(1).ReadRaster(
+            1.5, 0.25, 2.5, 1, buf_xsize=1, buf_ysize=1
+        ) == rgba_ds.GetRasterBand(1).ReadRaster(
+            1.5, 0.25, 2.5, 1, buf_xsize=1, buf_ysize=1
+        )
+
         assert out_ds.ReadRaster(
             1, 0, 3, 2, buf_xsize=5, buf_ysize=6, buf_type=gdal.GDT_UInt16
         ) == rgba_ds.ReadRaster(
@@ -169,6 +176,34 @@ def test_gdalalg_raster_color_merge_check_rgb_hsb_conversion():
         assert out_ds.GetRasterBand(4).ReadBlock(0, 1) == rgba_ds.GetRasterBand(
             4
         ).ReadBlock(0, 1)
+
+        assert (
+            out_ds.ReadRaster(buf_pixel_space=2)[::2]
+            == rgba_ds.ReadRaster(buf_pixel_space=2)[::2]
+        )
+        assert (
+            out_ds.GetRasterBand(1).ReadRaster(buf_pixel_space=2)[::2]
+            == rgba_ds.GetRasterBand(1).ReadRaster(buf_pixel_space=2)[::2]
+        )
+        assert (
+            out_ds.GetRasterBand(2).ReadRaster(buf_pixel_space=2)[::2]
+            == rgba_ds.GetRasterBand(2).ReadRaster(buf_pixel_space=2)[::2]
+        )
+        assert (
+            out_ds.GetRasterBand(3).ReadRaster(buf_pixel_space=2)[::2]
+            == rgba_ds.GetRasterBand(3).ReadRaster(buf_pixel_space=2)[::2]
+        )
+
+        for i in range(N):
+            assert out_ds.ReadRaster(i * N, 0, 7, 1) == rgba_ds.ReadRaster(
+                i * N, 0, 7, 1
+            )
+            assert out_ds.ReadRaster(i + N // 2 * N, 0, 7, 1) == rgba_ds.ReadRaster(
+                i + N // 2 * N, 0, 7, 1
+            )
+            assert out_ds.ReadRaster(
+                i + N // 2 * N * (N - 1) - 8, 0, 7, 1
+            ) == rgba_ds.ReadRaster(i + N // 2 * N * (N - 1) - 8, 0, 7, 1)
 
     grayscale_ds.GetRasterBand(1).GetOverview(0).Fill(0)
     with gdal.Run(
