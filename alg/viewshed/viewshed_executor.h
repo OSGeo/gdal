@@ -67,6 +67,8 @@ class ViewshedExecutor
     std::mutex oMutex{};
     std::array<double, 6> m_adfTransform{0, 1, 0, 0, 0, 1};
     std::array<double, 5> m_testAngle{};
+    double m_lowTanPitch{std::numeric_limits<double>::quiet_NaN()};
+    double m_highTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double (*oZcalc)(int, int, double, double, double){};
 
     double calcHeightAdjFactor();
@@ -100,6 +102,9 @@ class ViewshedExecutor
                       int nLine);
     void maskLineRight(std::vector<double> &vResult, const LineLimits &ll,
                        int nLine);
+    void maskLowPitch(double &dfZ, int nXOffset, int nYOffset);
+    void maskHighPitch(double &dfResult, double dfZ, int nXOffset,
+                       int nYOffset);
     void calcTestAngles();
 };
 

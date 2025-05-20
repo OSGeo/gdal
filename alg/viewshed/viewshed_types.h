@@ -70,10 +70,10 @@ struct Options
         0.0};  //!< minimum distance from observer to compute value.
     double startAngle{0.0};  //!< start angle of observable range
     double endAngle{0.0};    //!< end angle of observable range
-    double maxPitch{
-        90.0};  //!< maximum pitch (vertical angle) of observable points
-    double minPitch{
+    double lowPitch{
         -90.0};  //!< minimum pitch (vertical angle) of observable points
+    double highPitch{
+        90.0};  //!< maximum pitch (vertical angle) of observable points
     double curveCoeff{.85714};  //!< coefficient for atmospheric refraction
     OutputMode outputMode{OutputMode::Normal};  //!< Output information.
         //!< Normal, Height from DEM or Height from ground
@@ -87,11 +87,6 @@ struct Options
     bool angleMasking() const
     {
         return startAngle != endAngle;
-    }
-
-    bool pitchMasking() const
-    {
-        return maxPitch != 90 || minPitch != -90;
     }
 };
 

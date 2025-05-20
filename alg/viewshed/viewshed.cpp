@@ -404,22 +404,22 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                  "End angle out of range. Must be [0, 360).");
         return false;
     }
-    if (oOpts.maxPitch > 90)
+    if (oOpts.highPitch > 90)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid maxPitch. Cannot be greater than 90.");
+                 "Invalid highPitch. Cannot be greater than 90.");
         return false;
     }
-    if (oOpts.minPitch < -90)
+    if (oOpts.lowPitch < -90)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid maxPitch. Cannot be less than -90.");
+                 "Invalid lowPitch. Cannot be less than -90.");
         return false;
     }
-    if (oOpts.maxPitch <= oOpts.minPitch)
+    if (oOpts.highPitch <= oOpts.lowPitch)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid pitch. maxPitch must be > minPitch");
+                 "Invalid pitch. highPitch must be > lowPitch");
         return false;
     }
 

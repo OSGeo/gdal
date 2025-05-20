@@ -130,6 +130,10 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
 {
     if (m_dfMaxDistance2 == 0)
         m_dfMaxDistance2 = std::numeric_limits<double>::max();
+    if (opts.lowPitch != -90.0)
+        m_lowTanPitch = std::tan(oOpts.lowPitch * (2 * M_PI / 360.0));
+    if (opts.highPitch != 90.0)
+        m_highTanPitch = std::tan(oOpts.highPitch * (2 * M_PI / 360.0));
     m_srcBand.GetDataset()->GetGeoTransform(m_adfTransform.data());
     int hasNoData = false;
     m_noDataValue = m_srcBand.GetNoDataValue(&hasNoData);
@@ -427,7 +431,11 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
+        {
+            maskLowPitch(*pThis, 1, 0);
             setOutput(vResult[iStart], *pThis, *pThis);
+        }
+        maskHighPitch(vResult[iStart], *pThis, 1, 0);
         iStart--;
         pThis--;
     }
@@ -437,7 +445,9 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll,
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ = CalcHeightLine(nXOffset, *(pThis + 1));
+        maskLowPitch(dfZ, nXOffset, 0);
         setOutput(vResult[iPixel], *pThis, dfZ);
+        maskHighPitch(vResult[iPixel], dfZ, nXOffset, 0);
     }
 
     maskLineLeft(vResult, ll, m_nY);
@@ -615,7 +625,11 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
+        {
+            maskLowPitch(*pThis, 1, 0);
             setOutput(vResult[iStart], *pThis, *pThis);
+        }
+        maskHighPitch(vResult[iStart], *pThis, 1, 0);
         iStart++;
         pThis++;
     }
@@ -625,7 +639,9 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll,
     {
         int nXOffset = std::abs(iPixel - m_nX);
         double dfZ = CalcHeightLine(nXOffset, *(pThis - 1));
+        maskLowPitch(dfZ, nXOffset, 0);
         setOutput(vResult[iPixel], *pThis, dfZ);
+        maskHighPitch(vResult[iPixel], dfZ, nXOffset, 0);
     }
 
     maskLineRight(vResult, ll, m_nY);
@@ -664,7 +680,11 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
+        {
+            maskLowPitch(*pThis, m_nX - iStart, nYOffset);
             setOutput(vResult[iStart], *pThis, *pThis);
+            maskHighPitch(vResult[iStart], *pThis, m_nX - iStart, nYOffset);
+        }
         iStart--;
         pThis--;
         pLast--;
@@ -685,7 +705,9 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
+        maskLowPitch(dfZ, nXOffset, nYOffset);
         setOutput(vResult[iPixel], *pThis, dfZ);
+        maskHighPitch(vResult[iPixel], dfZ, nXOffset, nYOffset);
     }
 
     maskLineLeft(vResult, ll, nLine);
@@ -724,7 +746,11 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
+        {
+            maskLowPitch(*pThis, m_nX, nYOffset);
             setOutput(vResult[0], *pThis, *pThis);
+            maskHighPitch(vResult[0], *pThis, m_nX, nYOffset);
+        }
         iStart++;
         pThis++;
         pLast++;
@@ -745,7 +771,9 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
+        maskLowPitch(dfZ, nXOffset, nYOffset);
         setOutput(vResult[iPixel], *pThis, dfZ);
+        maskHighPitch(vResult[iPixel], dfZ, nXOffset, nYOffset);
     }
 
     maskLineRight(vResult, ll, nLine);
@@ -802,7 +830,9 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
                 dfZ = vThisLineVal[m_nX];
             else
                 dfZ = CalcHeightLine(nYOffset, vLastLineVal[m_nX]);
+            maskLowPitch(dfZ, 0, nYOffset);
             setOutput(vResult[m_nX], vThisLineVal[m_nX], dfZ);
+            maskHighPitch(vResult[m_nX], dfZ, 0, nYOffset);
         }
         else
             vResult[m_nX] = oOpts.outOfRangeVal;
@@ -917,6 +947,29 @@ bool ViewshedExecutor::run()
                     err = true;
         });
     return true;
+}
+
+void ViewshedExecutor::maskLowPitch(double &dfZ, int nXOffset, int nYOffset)
+{
+    if (std::isnan(m_lowTanPitch))
+        return;
+
+    double dfDist = std::sqrt(nXOffset * nXOffset + nYOffset * nYOffset);
+    double dfZmask = dfDist * m_lowTanPitch;
+    if (dfZmask > dfZ)
+        dfZ = dfZmask;
+}
+
+void ViewshedExecutor::maskHighPitch(double &dfResult, double dfZ, int nXOffset,
+                                     int nYOffset)
+{
+    if (std::isnan(m_highTanPitch))
+        return;
+
+    double dfDist = std::sqrt(nXOffset * nXOffset + nYOffset * nYOffset);
+    double dfZmask = dfDist * m_highTanPitch;
+    if (dfZmask < dfZ)
+        dfResult = oOpts.outOfRangeVal;
 }
 
 }  // namespace viewshed
