@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_color_map.h"
+#include "gdalalg_raster_write.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -43,10 +44,22 @@ GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
+/*           GDALRasterColorMapAlgorithm::CanHandleNextStep()           */
+/************************************************************************/
+
+bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
+    GDALRasterPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
+}
+
+/************************************************************************/
 /*               GDALRasterColorMapAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterColorMapAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -54,8 +67,31 @@ bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString("VRT");
+    std::string outputFilename;
+    if (ctxt.m_poNextUsableStep)
+    {
+        CPLAssert(CanHandleNextStep(ctxt.m_poNextUsableStep));
+        outputFilename = ctxt.m_poNextUsableStep->GetOutputDataset().GetName();
+        const auto &format = ctxt.m_poNextUsableStep->GetOutputFormat();
+        if (!format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(format.c_str());
+        }
+
+        for (const std::string &co :
+             ctxt.m_poNextUsableStep->GetCreationOptions())
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(co.c_str());
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-of");
+        aosOptions.AddString("VRT");
+    }
+
     aosOptions.AddString("-b");
     aosOptions.AddString(CPLSPrintf("%d", m_band));
 
@@ -82,6 +118,11 @@ bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+        if (ctxt.m_poNextUsableStep)
+        {
+            GDALTranslateOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
+                                            ctxt.m_pProgressData);
+        }
 
         // Backup error state since GDALTranslate() resets it multiple times
         const auto nLastErrorNum = CPLGetLastErrorNo();
@@ -89,9 +130,9 @@ bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
         const std::string osLastErrorMsg = CPLGetLastErrorMsg();
         const auto nLastErrorCounter = CPLGetErrorCounter();
 
-        auto poOutDS =
-            std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALTranslate(
-                "", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
+        auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+            GDALTranslate(outputFilename.c_str(),
+                          GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
 
         if (nLastErrorCounter > 0 && CPLGetErrorCounter() == 0)
         {
@@ -119,19 +160,27 @@ bool GDALRasterColorMapAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 
         GDALDEMProcessingOptions *psOptions =
             GDALDEMProcessingOptionsNew(aosOptions.List(), nullptr);
-
-        auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-            GDALDEMProcessing("", GDALDataset::ToHandle(poSrcDS),
-                              "color-relief", m_colorMap.c_str(), psOptions,
-                              nullptr)));
-        GDALDEMProcessingOptionsFree(psOptions);
-        const bool bRet = poOutDS != nullptr;
-        if (poOutDS)
+        bool bOK = false;
+        if (psOptions)
         {
-            m_outputDataset.Set(std::move(poOutDS));
+            if (ctxt.m_poNextUsableStep)
+            {
+                GDALDEMProcessingOptionsSetProgress(
+                    psOptions, ctxt.m_pfnProgress, ctxt.m_pProgressData);
+            }
+            auto poOutDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::FromHandle(GDALDEMProcessing(
+                    outputFilename.c_str(),
+                    GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
+                    "color-relief", m_colorMap.c_str(), psOptions, nullptr)));
+            GDALDEMProcessingOptionsFree(psOptions);
+            bOK = poOutDS != nullptr;
+            if (poOutDS)
+            {
+                m_outputDataset.Set(std::move(poOutDS));
+            }
         }
-
-        return bRet;
+        return bOK;
     }
 }
 
