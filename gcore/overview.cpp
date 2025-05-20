@@ -5458,9 +5458,32 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         if (bOverflowFullResXChunkYChunkQueried ||
             nMemRequirement > nChunkMaxSizeForTempFile)
         {
+            const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+            const bool bTmpDSMemRequirementOverflow =
+                nDstHeight > INT_MAX / (nBands * nDTSize) ||
+                nDstWidth > std::numeric_limits<int64_t>::max() /
+                                (nDstHeight * nBands * nDTSize);
+            const auto nTmpDSMemRequirement =
+                bTmpDSMemRequirementOverflow
+                    ? 0
+                    : static_cast<GIntBig>(nDstWidth) * nDstHeight * nBands *
+                          nDTSize;
+
+            // One band buffer might overflow size_t
+            const bool bChunkSizeOverflow =
+                nDstHeight > INT_MAX / nDTSize ||
+                nDstWidth >
+                    std::numeric_limits<size_t>::max() / (nDstHeight * nDTSize);
+
+            const size_t nChunkSize =
+                bChunkSizeOverflow
+                    ? 0
+                    : static_cast<size_t>(nDstWidth) * nDstHeight * nDTSize;
+
             // If the overview accomodates chunking, do so and recurse
             // to avoid generating full size temporary files
             if (!bOverflowFullResXChunkYChunkQueried &&
+                !bTmpDSMemRequirementOverflow && !bChunkSizeOverflow &&
                 (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight))
             {
                 // Create a VRT with the smaller chunk to do the scaling
@@ -5470,15 +5493,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                 std::vector<GDALRasterBand *> apoVRTBand(nBands);
                 std::vector<GDALRasterBand *> apoDstBand(nBands);
-                std::vector<GDALDataType> aeDataType(nBands);
-                int nMaxDataTypeSize = 1;
                 for (int iBand = 0; iBand < nBands; ++iBand)
                 {
                     apoDstBand[iBand] = papapoOverviewBands[iBand][iOverview];
-                    aeDataType[iBand] = apoDstBand[iBand]->GetRasterDataType();
-                    nMaxDataTypeSize =
-                        std::max(GDALGetDataTypeSizeBytes(aeDataType[iBand]),
-                                 nMaxDataTypeSize);
                     auto poVRTSrc = new VRTSimpleSource();
                     poVRTSrc->SetResampling(pszResampling);
                     poVRTDS->AddBand(eWrkDataType);
@@ -5505,8 +5522,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     sExtraArg.bUseOnlyThisScale = true;
 
                 // A single band buffer for data transfer to the overview
-                std::vector<GByte> abyChunk(GUInt64(nMaxDataTypeSize) *
-                                            nDstChunkXSize * nDstChunkYSize);
+                std::vector<GByte> abyChunk(nChunkSize);
 
                 // Loop over output height, in chunks
                 for (int nDstYOff = nDstYOffStart;
@@ -5530,14 +5546,14 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                             eErr = apoVRTBand[iBand]->RasterIO(
                                 GF_Read, nDstXOff, nDstYOff, nDstXCount,
                                 nDstYCount, abyChunk.data(), nDstXCount,
-                                nDstYCount, aeDataType[iBand], 0, 0,
+                                nDstYCount, eDataType, 0, 0,
                                 &sExtraArg);
                             if (eErr != CE_None)
                                 break;
                             eErr = apoDstBand[iBand]->RasterIO(
                                 GF_Write, nDstXOff, nDstYOff, nDstXCount,
                                 nDstYCount, abyChunk.data(), nDstXCount,
-                                nDstYCount, aeDataType[iBand], 0, 0, nullptr);
+                                nDstYCount, eDataType, 0, 0, nullptr);
                         }
 
                         dfCurPixelCount +=
@@ -5567,18 +5583,6 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                 continue;  // Next overview
             }              // chunking via temporary dataset
-
-            // Too much memory needed and no chunking possible?
-            const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-            const bool bTmpDSMemRequirementOverflow =
-                nDstHeight > INT_MAX / (nBands * nDTSize) ||
-                nDstWidth > std::numeric_limits<int64_t>::max() /
-                                (nDstHeight * nBands * nDTSize);
-            const auto nTmpDSMemRequirement =
-                bTmpDSMemRequirementOverflow
-                    ? 0
-                    : static_cast<GIntBig>(nDstWidth) * nDstHeight * nBands *
-                          nDTSize;
 
             std::unique_ptr<GDALDataset> poTmpDS;
             // Config option mostly/only for autotest purposes
