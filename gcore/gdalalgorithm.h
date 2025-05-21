@@ -2359,6 +2359,12 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_helpFullURL;
     }
 
+    /** Returns whether this algorithm is hidden */
+    bool IsHidden() const
+    {
+        return m_hidden;
+    }
+
     /** Returns whether this algorithm has sub-algorithms */
     bool HasSubAlgorithms() const;
 
@@ -2659,6 +2665,9 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Whether this algorithm is run to generated a streamed output dataset. */
     bool m_executionForStreamOutput = false;
 
+    /** Whether this algorithm should be hidden (but can be instantiate if name known) */
+    bool m_hidden = false;
+
     /** Constructor */
     GDALAlgorithm(const std::string &name, const std::string &description,
                   const std::string &helpURL);
@@ -2937,6 +2946,13 @@ class CPL_DLL GDALAlgorithmRegistry
     void SetDisplayInJSONUsage(bool b)
     {
         m_displayInJSONUsage = b;
+    }
+
+    /** Method that an algorithm can implement to issue a warning message about
+     * its deprecation. This is called at the beginning of the Run() method.
+     */
+    virtual void WarnIfDeprecated()
+    {
     }
 
     //! @cond Doxygen_Suppress
