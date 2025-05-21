@@ -1841,7 +1841,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     /** Autocompletion function */
     std::function<std::vector<std::string>(const std::string &)>
         m_autoCompleteFunction{};
-    /** Algorith that may own this argument. */
+    /** Algorithm that may own this argument. */
     GDALAlgorithm *m_owner = nullptr;
 
   private:
