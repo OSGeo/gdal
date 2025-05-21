@@ -3027,3 +3027,15 @@ def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
     assert ds.ReadRaster(
         buf_xsize=10, buf_ysize=1
     ) == b"\xFF\xFF\xFF\xFF\xFB\xF1\xF0\xF0\xF0\xF0" + (b"\xFF" * 10)
+
+
+###############################################################################
+
+
+def test_vrt_read_CheckCompatibleForDatasetIO():
+
+    anonymous_vrt = gdal.Translate("", "data/rgbsmall.tif", format="MEM")
+    another_vrt = gdal.Translate("", anonymous_vrt, width=25, format="VRT")
+    assert (
+        another_vrt.GetMetadataItem("CheckCompatibleForDatasetIO()", "__DEBUG__") == "1"
+    )

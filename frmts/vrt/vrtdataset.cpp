@@ -229,6 +229,8 @@ const char *VRTDataset::GetMetadataItem(const char *pszName,
     {
         if (EQUAL(pszName, "MULTI_THREADED_RASTERIO_LAST_USED"))
             return m_bMultiThreadedRasterIOLastUsed ? "1" : "0";
+        else if (EQUAL(pszName, "CheckCompatibleForDatasetIO()"))
+            return CheckCompatibleForDatasetIO() ? "1" : "0";
     }
     return GDALDataset::GetMetadataItem(pszName, pszDomain);
 }
@@ -2147,6 +2149,7 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
 
     m_nCompatibleForDatasetIO = false;
 
+    GDALDataset *poFirstBandSourceDS = nullptr;
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         auto poVRTBand = static_cast<VRTRasterBand *>(papoBands[iBand]);
@@ -2176,8 +2179,12 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
                     return false;
 
                 if (poSource->m_nBand != iBand + 1 ||
-                    poSource->m_bGetMaskBand || poSource->m_osSrcDSName.empty())
+                    poSource->m_bGetMaskBand ||
+                    (nSources > 1 && poSource->m_osSrcDSName.empty()))
                     return false;
+                if (nSources == 1 && poSource->m_osSrcDSName.empty())
+                    poFirstBandSourceDS =
+                        poSource->GetRasterBand()->GetDataset();
                 osResampling = poSource->GetResampling();
             }
         }
@@ -2200,12 +2207,19 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
                 if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
                     return false;
                 if (poSource->m_nBand != iBand + 1 ||
-                    poSource->m_bGetMaskBand || poSource->m_osSrcDSName.empty())
+                    poSource->m_bGetMaskBand ||
+                    (nSources > 1 && poSource->m_osSrcDSName.empty()))
                     return false;
                 if (!poSource->IsSameExceptBandNumber(poRefSource))
                     return false;
                 if (osResampling.compare(poSource->GetResampling()) != 0)
                     return false;
+                if (nSources == 1 && poSource->m_osSrcDSName.empty() &&
+                    poFirstBandSourceDS !=
+                        poSource->GetRasterBand()->GetDataset())
+                {
+                    return false;
+                }
             }
         }
     }

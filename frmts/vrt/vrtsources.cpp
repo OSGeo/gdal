@@ -900,7 +900,6 @@ bool VRTSimpleSource::IsSameExceptBandNumber(
            m_dfDstYOff == poOtherSource->m_dfDstYOff &&
            m_dfDstXSize == poOtherSource->m_dfDstXSize &&
            m_dfDstYSize == poOtherSource->m_dfDstYSize &&
-           !m_osSrcDSName.empty() &&
            m_osSrcDSName == poOtherSource->m_osSrcDSName;
 }
 
