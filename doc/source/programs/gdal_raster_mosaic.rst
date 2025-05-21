@@ -33,7 +33,10 @@ on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 in the resulting file have similar characteristics: number of bands, projection, color
 interpretation, etc. If not, files that do not match the common characteristics will be skipped.
 
-If the inputs spatially overlap, the order of the input list is used to determine priority.
+Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
+be specified (:option:`--pixel-function`) to calculate pixel values from
+overlapping inputs. If no function is specified, or in earlier versions, 
+the order of the input list is used to determine priority.
 Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
 to potentially fetch data from lower-priority datasets, but currently, alpha channel
@@ -126,6 +129,22 @@ The following options are available:
     the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
+
+.. option:: --pixel-function
+
+    Specify a function name to calculate a value from overlapping inputs.
+    For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
+    If no function is specified, values will be taken from the last overlapping input.
+
+    .. versionadded:: 3.12
+
+.. option:: --pixel-function-arg
+
+    Specify an argument to be provided to a pixel function, in the format
+    ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
+    option.
+
+    .. versionadded:: 3.12
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

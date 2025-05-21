@@ -248,6 +248,8 @@ class VRTBuilder
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
     const CPLStringList aosCreateOptions;
+    std::string osPixelFunction{};
+    const CPLStringList aosPixelFunctionArgs;
     const bool bWriteAbsolutePath;
 
     /* Internal variables */
@@ -288,6 +290,8 @@ class VRTBuilder
                const char *pszVRTNoData, bool bUseSrcMaskBand,
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
+               const char *pszPixelFunctionName,
+               const CPLStringList &aosPixelFunctionArgs,
                const char *const *papszOpenOptionsIn,
                const CPLStringList &aosCreateOptionsIn,
                bool bWriteAbsolutePathIn);
@@ -315,14 +319,22 @@ VRTBuilder::VRTBuilder(
     const char *pszSrcNoDataIn, const char *pszVRTNoDataIn,
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
-    const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
+    const char *pszResamplingIn, const char *pszPixelFunctionIn,
+    const CPLStringList &aosPixelFunctionArgsIn,
+    const char *const *papszOpenOptionsIn,
     const CPLStringList &aosCreateOptionsIn, bool bWriteAbsolutePathIn)
     : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn),
+      aosPixelFunctionArgs(aosPixelFunctionArgsIn),
       bWriteAbsolutePath(bWriteAbsolutePathIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
     papszOpenOptions = CSLDuplicate(const_cast<char **>(papszOpenOptionsIn));
+
+    if (pszPixelFunctionIn != nullptr)
+    {
+        osPixelFunction = pszPixelFunctionIn;
+    }
 
     if (ppszInputFilenamesIn)
     {
@@ -1258,9 +1270,27 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 
 void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 {
+    CPLStringList aosOptions;
+
+    if (!osPixelFunction.empty())
+    {
+        aosOptions.AddNameValue("subclass", "VRTDerivedRasterBand");
+        aosOptions.AddNameValue("PixelFunctionType", osPixelFunction.c_str());
+        aosOptions.AddNameValue("SkipNonContributingSources", "1");
+        aosOptions.AddNameValue("SourceTransferType", "Float64");
+
+        CPLString osName;
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(aosPixelFunctionArgs))
+        {
+            osName.Printf("_PIXELFN_ARG_%s", pszKey);
+            aosOptions.AddNameValue(osName.c_str(), pszValue);
+        }
+    }
+
     for (int j = 0; j < nSelectedBands; j++)
     {
-        poVRTDS->AddBand(asBandProperties[j].dataType);
+        poVRTDS->AddBand(asBandProperties[j].dataType, aosOptions.List());
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(j + 1);
         poBand->SetColorInterpretation(asBandProperties[j].colorInterpretation);
         if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
@@ -1873,6 +1903,8 @@ struct GDALBuildVRTOptions
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
     bool bWriteAbsolutePath = false;
+    std::string osPixelFunction{};
+    CPLStringList aosPixelFunctionArgs{};
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = true;
@@ -2024,8 +2056,10 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions,
-        sOptions.bWriteAbsolutePath);
+        sOptions.osPixelFunction.empty() ? nullptr
+                                         : sOptions.osPixelFunction.c_str(),
+        sOptions.aosPixelFunctionArgs, sOptions.aosOpenOptions.List(),
+        sOptions.aosCreateOptions, sOptions.bWriteAbsolutePath);
     oBuilder.m_osProgramName = sOptions.osProgramName;
 
     return GDALDataset::ToHandle(
@@ -2192,10 +2226,39 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
             .help(_("Text file with an input filename on each line"));
     }
 
-    argParser->add_argument("-separate")
-        .flag()
-        .store_into(psOptions->bSeparate)
-        .help(_("Place each input file into a separate band."));
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+
+        group.add_argument("-separate")
+            .flag()
+            .store_into(psOptions->bSeparate)
+            .help(_("Place each input file into a separate band."));
+
+        group.add_argument("-pixel-function")
+            .metavar("<function>")
+            .action(
+                [psOptions](const std::string &s)
+                {
+                    auto *poPixFun =
+                        VRTDerivedRasterBand::GetPixelFunction(s.c_str());
+                    if (poPixFun == nullptr)
+                    {
+                        throw std::invalid_argument(
+                            s + " is not a registered pixel function.");
+                    }
+
+                    psOptions->osPixelFunction = s;
+                })
+
+            .help("Function to calculate value from overlapping inputs");
+    }
+
+    argParser->add_argument("-pixel-function-arg")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosPixelFunctionArgs.AddString(s); })
+        .help(_("Pixel function argument(s)"));
 
     argParser->add_argument("-allow_projection_difference")
         .flag()
@@ -2442,6 +2505,13 @@ GDALBuildVRTOptionsNew(char **papszArgv,
             psOptions->ymin = (*oTE)[1];
             psOptions->xmax = (*oTE)[2];
             psOptions->ymax = (*oTE)[3];
+        }
+
+        if (psOptions->osPixelFunction.empty() &&
+            !psOptions->aosPixelFunctionArgs.empty())
+        {
+            throw std::runtime_error(
+                "Pixel function arguments provided without a pixel function");
         }
 
         return psOptions.release();
