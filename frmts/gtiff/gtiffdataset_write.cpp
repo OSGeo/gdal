@@ -4609,14 +4609,13 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
     if ((papszParamList == nullptr) && (pDS == nullptr))
         return;
 
-    const char *pszValue = nullptr;
-    if (pDS != nullptr)
-        pszValue = pDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE");
-    else
-        pszValue = CSLFetchNameValue(papszParamList, "SOURCE_ICC_PROFILE");
-    if (pszValue != nullptr)
+    const char *pszICCProfile =
+        (pDS != nullptr)
+            ? pDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
+            : CSLFetchNameValue(papszParamList, "SOURCE_ICC_PROFILE");
+    if (pszICCProfile != nullptr)
     {
-        char *pEmbedBuffer = CPLStrdup(pszValue);
+        char *pEmbedBuffer = CPLStrdup(pszICCProfile);
         int32_t nEmbedLen =
             CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
 
@@ -4639,32 +4638,30 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
         bool bOutputCHR = true;
         for (int i = 0; i < 3 && bOutputCHR; ++i)
         {
-            if (pDS != nullptr)
-                pszValue =
-                    pDS->GetMetadataItem(pszCHRNames[i], "COLOR_PROFILE");
-            else
-                pszValue = CSLFetchNameValue(papszParamList, pszCHRNames[i]);
-            if (pszValue == nullptr)
+            const char *pszColorProfile =
+                (pDS != nullptr)
+                    ? pDS->GetMetadataItem(pszCHRNames[i], "COLOR_PROFILE")
+                    : CSLFetchNameValue(papszParamList, pszCHRNames[i]);
+            if (pszColorProfile == nullptr)
             {
                 bOutputCHR = false;
                 break;
             }
 
-            char **papszTokens = CSLTokenizeString2(pszValue, ",",
-                                                    CSLT_ALLOWEMPTYTOKENS |
-                                                        CSLT_STRIPLEADSPACES |
-                                                        CSLT_STRIPENDSPACES);
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                pszColorProfile, ",",
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+                    CSLT_STRIPENDSPACES));
 
-            if (CSLCount(papszTokens) != 3)
+            if (aosTokens.size() != 3)
             {
                 bOutputCHR = false;
-                CSLDestroy(papszTokens);
                 break;
             }
 
             for (int j = 0; j < 3; ++j)
             {
-                float v = static_cast<float>(CPLAtof(papszTokens[j]));
+                float v = static_cast<float>(CPLAtof(aosTokens[j]));
 
                 if (j == 2)
                 {
@@ -4680,8 +4677,6 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                     pCHR[i * 2 + j] = v;
                 }
             }
-
-            CSLDestroy(papszTokens);
         }
 
         if (bOutputCHR)
@@ -4690,21 +4685,20 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
         }
 
         // Output whitepoint.
-        if (pDS != nullptr)
-            pszValue =
-                pDS->GetMetadataItem("SOURCE_WHITEPOINT", "COLOR_PROFILE");
-        else
-            pszValue = CSLFetchNameValue(papszParamList, "SOURCE_WHITEPOINT");
-        if (pszValue != nullptr)
+        const char *pszSourceWhitePoint =
+            (pDS != nullptr)
+                ? pDS->GetMetadataItem("SOURCE_WHITEPOINT", "COLOR_PROFILE")
+                : CSLFetchNameValue(papszParamList, "SOURCE_WHITEPOINT");
+        if (pszSourceWhitePoint != nullptr)
         {
-            char **papszTokens = CSLTokenizeString2(pszValue, ",",
-                                                    CSLT_ALLOWEMPTYTOKENS |
-                                                        CSLT_STRIPLEADSPACES |
-                                                        CSLT_STRIPENDSPACES);
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                pszSourceWhitePoint, ",",
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+                    CSLT_STRIPENDSPACES));
 
             bool bOutputWhitepoint = true;
             float pWP[2] = {0.0f, 0.0f};  // Whitepoint
-            if (CSLCount(papszTokens) != 3)
+            if (aosTokens.size() != 3)
             {
                 bOutputWhitepoint = false;
             }
@@ -4712,7 +4706,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
             {
                 for (int j = 0; j < 3; ++j)
                 {
-                    const float v = static_cast<float>(CPLAtof(papszTokens[j]));
+                    const float v = static_cast<float>(CPLAtof(aosTokens[j]));
 
                     if (j == 2)
                     {
@@ -4729,7 +4723,6 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                     }
                 }
             }
-            CSLDestroy(papszTokens);
 
             if (bOutputWhitepoint)
             {
@@ -4738,29 +4731,26 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
         }
 
         // Set transfer function metadata.
-        char const *pszTFRed = nullptr;
-        if (pDS != nullptr)
-            pszTFRed = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_RED",
-                                            "COLOR_PROFILE");
-        else
-            pszTFRed = CSLFetchNameValue(papszParamList,
-                                         "TIFFTAG_TRANSFERFUNCTION_RED");
+        char const *pszTFRed =
+            (pDS != nullptr)
+                ? pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_RED",
+                                       "COLOR_PROFILE")
+                : CSLFetchNameValue(papszParamList,
+                                    "TIFFTAG_TRANSFERFUNCTION_RED");
 
-        char const *pszTFGreen = nullptr;
-        if (pDS != nullptr)
-            pszTFGreen = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_GREEN",
-                                              "COLOR_PROFILE");
-        else
-            pszTFGreen = CSLFetchNameValue(papszParamList,
-                                           "TIFFTAG_TRANSFERFUNCTION_GREEN");
+        char const *pszTFGreen =
+            (pDS != nullptr)
+                ? pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_GREEN",
+                                       "COLOR_PROFILE")
+                : CSLFetchNameValue(papszParamList,
+                                    "TIFFTAG_TRANSFERFUNCTION_GREEN");
 
-        char const *pszTFBlue = nullptr;
-        if (pDS != nullptr)
-            pszTFBlue = pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_BLUE",
-                                             "COLOR_PROFILE");
-        else
-            pszTFBlue = CSLFetchNameValue(papszParamList,
-                                          "TIFFTAG_TRANSFERFUNCTION_BLUE");
+        char const *pszTFBlue =
+            (pDS != nullptr)
+                ? pDS->GetMetadataItem("TIFFTAG_TRANSFERFUNCTION_BLUE",
+                                       "COLOR_PROFILE")
+                : CSLFetchNameValue(papszParamList,
+                                    "TIFFTAG_TRANSFERFUNCTION_BLUE");
 
         if ((pszTFRed != nullptr) && (pszTFGreen != nullptr) &&
             (pszTFBlue != nullptr))
@@ -4770,88 +4760,76 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
                 1 << ((pDS != nullptr) ? pDS->m_nBitsPerSample
                                        : l_nBitsPerSample);
 
-            char **papszTokensRed = CSLTokenizeString2(
+            const CPLStringList aosTokensRed(CSLTokenizeString2(
                 pszTFRed, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
-                    CSLT_STRIPENDSPACES);
-            char **papszTokensGreen = CSLTokenizeString2(
+                    CSLT_STRIPENDSPACES));
+            const CPLStringList aosTokensGreen(CSLTokenizeString2(
                 pszTFGreen, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
-                    CSLT_STRIPENDSPACES);
-            char **papszTokensBlue = CSLTokenizeString2(
+                    CSLT_STRIPENDSPACES));
+            const CPLStringList aosTokensBlue(CSLTokenizeString2(
                 pszTFBlue, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
-                    CSLT_STRIPENDSPACES);
+                    CSLT_STRIPENDSPACES));
 
-            if ((CSLCount(papszTokensRed) == nTransferFunctionLength) &&
-                (CSLCount(papszTokensGreen) == nTransferFunctionLength) &&
-                (CSLCount(papszTokensBlue) == nTransferFunctionLength))
+            if ((aosTokensRed.size() == nTransferFunctionLength) &&
+                (aosTokensGreen.size() == nTransferFunctionLength) &&
+                (aosTokensBlue.size() == nTransferFunctionLength))
             {
-                uint16_t *pTransferFuncRed = static_cast<uint16_t *>(
-                    CPLMalloc(sizeof(uint16_t) * nTransferFunctionLength));
-                uint16_t *pTransferFuncGreen = static_cast<uint16_t *>(
-                    CPLMalloc(sizeof(uint16_t) * nTransferFunctionLength));
-                uint16_t *pTransferFuncBlue = static_cast<uint16_t *>(
-                    CPLMalloc(sizeof(uint16_t) * nTransferFunctionLength));
+                std::vector<uint16_t> anTransferFuncRed(
+                    nTransferFunctionLength);
+                std::vector<uint16_t> anTransferFuncGreen(
+                    nTransferFunctionLength);
+                std::vector<uint16_t> anTransferFuncBlue(
+                    nTransferFunctionLength);
 
                 // Convert our table in string format into int16_t format.
                 for (int i = 0; i < nTransferFunctionLength; ++i)
                 {
-                    pTransferFuncRed[i] =
-                        static_cast<uint16_t>(atoi(papszTokensRed[i]));
-                    pTransferFuncGreen[i] =
-                        static_cast<uint16_t>(atoi(papszTokensGreen[i]));
-                    pTransferFuncBlue[i] =
-                        static_cast<uint16_t>(atoi(papszTokensBlue[i]));
+                    anTransferFuncRed[i] =
+                        static_cast<uint16_t>(atoi(aosTokensRed[i]));
+                    anTransferFuncGreen[i] =
+                        static_cast<uint16_t>(atoi(aosTokensGreen[i]));
+                    anTransferFuncBlue[i] =
+                        static_cast<uint16_t>(atoi(aosTokensBlue[i]));
                 }
 
-                TIFFSetField(l_hTIFF, TIFFTAG_TRANSFERFUNCTION,
-                             pTransferFuncRed, pTransferFuncGreen,
-                             pTransferFuncBlue);
-
-                CPLFree(pTransferFuncRed);
-                CPLFree(pTransferFuncGreen);
-                CPLFree(pTransferFuncBlue);
+                TIFFSetField(
+                    l_hTIFF, TIFFTAG_TRANSFERFUNCTION, anTransferFuncRed.data(),
+                    anTransferFuncGreen.data(), anTransferFuncBlue.data());
             }
-
-            CSLDestroy(papszTokensRed);
-            CSLDestroy(papszTokensGreen);
-            CSLDestroy(papszTokensBlue);
         }
 
         // Output transfer range.
         bool bOutputTransferRange = true;
         for (int i = 0; (i < 2) && bOutputTransferRange; ++i)
         {
-            if (pDS != nullptr)
-                pszValue =
-                    pDS->GetMetadataItem(pszTXRNames[i], "COLOR_PROFILE");
-            else
-                pszValue = CSLFetchNameValue(papszParamList, pszTXRNames[i]);
-            if (pszValue == nullptr)
+            const char *pszTXRVal =
+                (pDS != nullptr)
+                    ? pDS->GetMetadataItem(pszTXRNames[i], "COLOR_PROFILE")
+                    : CSLFetchNameValue(papszParamList, pszTXRNames[i]);
+            if (pszTXRVal == nullptr)
             {
                 bOutputTransferRange = false;
                 break;
             }
 
-            char **papszTokens = CSLTokenizeString2(pszValue, ",",
-                                                    CSLT_ALLOWEMPTYTOKENS |
-                                                        CSLT_STRIPLEADSPACES |
-                                                        CSLT_STRIPENDSPACES);
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                pszTXRVal, ",",
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+                    CSLT_STRIPENDSPACES));
 
-            if (CSLCount(papszTokens) != 3)
+            if (aosTokens.size() != 3)
             {
                 bOutputTransferRange = false;
-                CSLDestroy(papszTokens);
                 break;
             }
 
             for (int j = 0; j < 3; ++j)
             {
-                pTXR[i + j * 2] = static_cast<uint16_t>(atoi(papszTokens[j]));
+                pTXR[i + j * 2] = static_cast<uint16_t>(atoi(aosTokens[j]));
             }
-
-            CSLDestroy(papszTokens);
         }
 
         if (bOutputTransferRange)
@@ -5119,8 +5097,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     const bool bTiled = CPLFetchBool(papszParamList, "TILED", false);
 
     int l_nBlockXSize = 0;
-    const char *pszValue = CSLFetchNameValue(papszParamList, "BLOCKXSIZE");
-    if (pszValue != nullptr)
+    if (const char *pszValue = CSLFetchNameValue(papszParamList, "BLOCKXSIZE"))
     {
         l_nBlockXSize = atoi(pszValue);
         if (l_nBlockXSize < 0)
@@ -5132,8 +5109,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     int l_nBlockYSize = 0;
-    pszValue = CSLFetchNameValue(papszParamList, "BLOCKYSIZE");
-    if (pszValue != nullptr)
+    if (const char *pszValue = CSLFetchNameValue(papszParamList, "BLOCKYSIZE"))
     {
         l_nBlockYSize = atoi(pszValue);
         if (l_nBlockYSize < 0)
@@ -5156,17 +5132,16 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     int nPlanar = 0;
 
     // Hidden @TILE_INTERLEAVE=YES parameter used by the COG driver
-    if (bCreateCopy &&
-        (pszValue = CSLFetchNameValue(papszParamList, "@TILE_INTERLEAVE")) &&
-        CPLTestBool(pszValue))
+    if (bCreateCopy && CPLTestBool(CSLFetchNameValueDef(
+                           papszParamList, "@TILE_INTERLEAVE", "NO")))
     {
         bTileInterleavingOut = true;
         nPlanar = PLANARCONFIG_SEPARATE;
     }
     else
     {
-        pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
-        if (pszValue != nullptr)
+        if (const char *pszValue =
+                CSLFetchNameValue(papszParamList, "INTERLEAVE"))
         {
             if (EQUAL(pszValue, "PIXEL"))
                 nPlanar = PLANARCONFIG_CONTIG;
@@ -5194,8 +5169,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     int l_nCompression = COMPRESSION_NONE;
-    pszValue = CSLFetchNameValue(papszParamList, "COMPRESS");
-    if (pszValue != nullptr)
+    if (const char *pszValue = CSLFetchNameValue(papszParamList, "COMPRESS"))
     {
         l_nCompression = GTIFFGetCompressionMethod(pszValue, "COMPRESS");
         if (l_nCompression < 0)
@@ -5356,10 +5330,10 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 #endif
 
     int nPredictor = PREDICTOR_NONE;
-    pszValue = CSLFetchNameValue(papszParamList, "PREDICTOR");
-    if (pszValue != nullptr)
+    const char *pszPredictor = CSLFetchNameValue(papszParamList, "PREDICTOR");
+    if (pszPredictor)
     {
-        nPredictor = atoi(pszValue);
+        nPredictor = atoi(pszPredictor);
     }
 
     if (nPredictor != PREDICTOR_NONE &&
@@ -5435,7 +5409,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         else
         {
             ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
-                        "PREDICTOR=%s is not supported.", pszValue);
+                        "PREDICTOR=%s is not supported.", pszPredictor);
             return nullptr;
         }
     }
@@ -5593,20 +5567,20 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
 
     int eEndianness = ENDIANNESS_NATIVE;
-    pszValue = CSLFetchNameValue(papszParamList, "ENDIANNESS");
-    if (pszValue == nullptr)
-        pszValue = CPLGetConfigOption("GDAL_TIFF_ENDIANNESS", nullptr);
-    if (pszValue != nullptr)
+    const char *pszEndianness = CSLFetchNameValue(papszParamList, "ENDIANNESS");
+    if (pszEndianness == nullptr)
+        pszEndianness = CPLGetConfigOption("GDAL_TIFF_ENDIANNESS", nullptr);
+    if (pszEndianness != nullptr)
     {
-        if (EQUAL(pszValue, "LITTLE"))
+        if (EQUAL(pszEndianness, "LITTLE"))
         {
             eEndianness = ENDIANNESS_LITTLE;
         }
-        else if (EQUAL(pszValue, "BIG"))
+        else if (EQUAL(pszEndianness, "BIG"))
         {
             eEndianness = ENDIANNESS_BIG;
         }
-        else if (EQUAL(pszValue, "INVERTED"))
+        else if (EQUAL(pszEndianness, "INVERTED"))
         {
 #ifdef CPL_LSB
             eEndianness = ENDIANNESS_BIG;
@@ -5614,11 +5588,11 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             eEndianness = ENDIANNESS_LITTLE;
 #endif
         }
-        else if (!EQUAL(pszValue, "NATIVE"))
+        else if (!EQUAL(pszEndianness, "NATIVE"))
         {
             ReportError(pszFilename, CE_Warning, CPLE_NotSupported,
                         "ENDIANNESS=%s not supported. Defaulting to NATIVE",
-                        pszValue);
+                        pszEndianness);
         }
     }
 
@@ -5721,8 +5695,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     int nSamplesAccountedFor = 1;
     bool bForceColorTable = false;
 
-    pszValue = CSLFetchNameValue(papszParamList, "PHOTOMETRIC");
-    if (pszValue != nullptr)
+    if (const char *pszValue = CSLFetchNameValue(papszParamList, "PHOTOMETRIC"))
     {
         if (EQUAL(pszValue, "MINISBLACK"))
             TIFFSetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
