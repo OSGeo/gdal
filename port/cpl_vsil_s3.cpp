@@ -1795,7 +1795,8 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
             return nullptr;
         }
 
-        const std::string osTmpFilename(CPLGenerateTempFilenameSafe(nullptr));
+        const std::string osTmpFilename(
+            CPLGenerateTempFilenameSafe(CPLGetFilename(pszFilename)));
         if (strchr(pszAccess, 'r'))
         {
             auto poExistingFile =
@@ -1815,9 +1816,9 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
 
         auto fpTemp = VSIVirtualHandleUniquePtr(
             VSIFOpenL(osTmpFilename.c_str(), pszAccess));
+        VSIUnlink(osTmpFilename.c_str());
         if (!fpTemp)
         {
-            VSIUnlink(osTmpFilename.c_str());
             return nullptr;
         }
 
