@@ -2653,7 +2653,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     {
         // Longitude in degrees, to be transformed to meters (or degrees in
         // case of latlon).
-        rMinX = meta->gds.lon1;
+        rMinX = Lon360to180(meta->gds.lon1);
         // Latitude in degrees, to be transformed to meters.
         double dfGridOriY = meta->gds.lat1;
 
