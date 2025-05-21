@@ -308,8 +308,11 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
 
-/** Name of the argument for overwrite. */
+/** Name of the argument for overwriting a dataset. */
 constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
+
+/** Name of the argument for overwriting a layer. */
+constexpr const char *GDAL_ARG_NAME_OVERWRITE_LAYER = "overwrite-layer";
 
 /** Name of the argument for append. */
 constexpr const char *GDAL_ARG_NAME_APPEND = "append";
@@ -2774,13 +2777,17 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddOverwriteArg(bool *pValue, const char *helpMessage = nullptr);
 
+    /** Add \--overwrite-layer argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOverwriteLayerArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add \--update argument. */
     GDALInConstructionAlgorithmArg &
     AddUpdateArg(bool *pValue, const char *helpMessage = nullptr);
 
-    /** Add \--append argument. */
+    /** Add \--append argument for a vector layer. */
     GDALInConstructionAlgorithmArg &
-    AddAppendUpdateArg(bool *pValue, const char *helpMessage = nullptr);
+    AddAppendLayerArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add (non-CLI) output-string argument. */
     GDALInConstructionAlgorithmArg &

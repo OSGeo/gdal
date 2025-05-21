@@ -42,19 +42,9 @@ GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite);
-    auto &updateArg = AddUpdateArg(&m_update);
-    AddArg("overwrite-layer", 0,
-           _("Whether overwriting existing layer is allowed"),
-           &m_overwriteLayer)
-        .SetDefault(false)
-        .AddValidationAction(
-            [&updateArg]()
-            {
-                updateArg.Set(true);
-                return true;
-            });
-    AddAppendUpdateArg(&m_appendLayer,
-                       _("Whether appending to existing layer is allowed"));
+    AddUpdateArg(&m_update);
+    AddOverwriteLayerArg(&m_overwriteLayer);
+    AddAppendLayerArg(&m_appendLayer);
     AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
         .AddAlias("layer");
     AddArg("output-layer", 0, _("Output layer name"), &m_outputLayerName)
