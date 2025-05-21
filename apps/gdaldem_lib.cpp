@@ -185,13 +185,13 @@ struct GDALDEMProcessingOptions
 template <class T> struct GDALGeneric3x3ProcessingAlg
 {
     typedef float (*type)(const T *pafWindow, float fDstNoDataValue,
-                          void *pData);
+                          const void *pData);
 };
 
 template <class T> struct GDALGeneric3x3ProcessingAlg_multisample
 {
     typedef int (*type)(const T *pafThreeLineWin, int nLine1Off, int nLine2Off,
-                        int nLine3Off, int nXSize, void *pData,
+                        int nLine3Off, int nXSize, const void *pData,
                         float *pafOutputBuf);
 };
 
@@ -847,9 +847,10 @@ static double DifferenceBetweenAngles(double angle1, double angle2,
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
-                                  void *pData)
+                                  const void *pData)
 {
-    GDALHillshadeAlgData *psData = static_cast<GDALHillshadeAlgData *>(pData);
+    const GDALHillshadeAlgData *psData =
+        static_cast<const GDALHillshadeAlgData *>(pData);
 
     double slopeDegrees;
     if (alg == GradientAlg::HORN)
@@ -906,9 +907,10 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              void *pData)
+                              const void *pData)
 {
-    GDALHillshadeAlgData *psData = static_cast<GDALHillshadeAlgData *>(pData);
+    const GDALHillshadeAlgData *psData =
+        static_cast<const GDALHillshadeAlgData *>(pData);
 
     // First Slope ...
     double x, y;
@@ -931,9 +933,11 @@ static float GDALHillshadeAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T>
 static float GDALHillshadeAlg_same_res(const T *afWin,
-                                       float /*fDstNoDataValue*/, void *pData)
+                                       float /*fDstNoDataValue*/,
+                                       const void *pData)
 {
-    GDALHillshadeAlgData *psData = static_cast<GDALHillshadeAlgData *>(pData);
+    const GDALHillshadeAlgData *psData =
+        static_cast<const GDALHillshadeAlgData *>(pData);
 
     // First Slope ...
     /*x = (afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
@@ -975,10 +979,11 @@ template <class T>
 static int
 GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
                                       int nLine2Off, int nLine3Off, int nXSize,
-                                      void *pData, float *pafOutputBuf)
+                                      const void *pData, float *pafOutputBuf)
 {
     // Only valid for T == int
-    GDALHillshadeAlgData *psData = static_cast<GDALHillshadeAlgData *>(pData);
+    const GDALHillshadeAlgData *psData =
+        static_cast<const GDALHillshadeAlgData *>(pData);
     const __m128d reg_fact_x =
         _mm_load1_pd(&(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
     const __m128d reg_fact_y =
@@ -1082,9 +1087,10 @@ static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI * M_PI) / 4);
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeCombinedAlg(const T *afWin, float /*fDstNoDataValue*/,
-                                      void *pData)
+                                      const void *pData)
 {
-    GDALHillshadeAlgData *psData = static_cast<GDALHillshadeAlgData *>(pData);
+    const GDALHillshadeAlgData *psData =
+        static_cast<const GDALHillshadeAlgData *>(pData);
 
     // First Slope ...
     double x, y;
@@ -1169,7 +1175,7 @@ typedef struct
 template <class T, GradientAlg alg>
 static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
                                               float /*fDstNoDataValue*/,
-                                              void *pData)
+                                              const void *pData)
 {
     const GDALHillshadeMultiDirectionalAlgData *psData =
         static_cast<const GDALHillshadeMultiDirectionalAlgData *>(pData);
@@ -1265,7 +1271,7 @@ typedef struct
 
 template <class T>
 static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              void *pData)
+                              const void *pData)
 {
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
@@ -1289,7 +1295,7 @@ static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
 template <class T>
 static float GDALSlopeZevenbergenThorneAlg(const T *afWin,
                                            float /*fDstNoDataValue*/,
-                                           void *pData)
+                                           const void *pData)
 {
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
@@ -1327,7 +1333,8 @@ typedef struct
 } GDALAspectAlgData;
 
 template <class T>
-static float GDALAspectAlg(const T *afWin, float fDstNoDataValue, void *pData)
+static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
+                           const void *pData)
 {
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
@@ -1366,7 +1373,8 @@ static float GDALAspectAlg(const T *afWin, float fDstNoDataValue, void *pData)
 
 template <class T>
 static float GDALAspectZevenbergenThorneAlg(const T *afWin,
-                                            float fDstNoDataValue, void *pData)
+                                            float fDstNoDataValue,
+                                            const void *pData)
 {
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
@@ -2261,28 +2269,16 @@ static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
 /*                         GDALTRIAlg()                                 */
 /************************************************************************/
 
-template <class T> static T MyAbs(T x);
-
-template <> float MyAbs(float x)
-{
-    return fabsf(x);
-}
-
-template <> int MyAbs(int x)
-{
-    return x >= 0 ? x : -x;
-}
-
 // Implements Wilson et al. (2007), for bathymetric use cases
 template <class T>
 static float GDALTRIAlgWilson(const T *afWin, float /*fDstNoDataValue*/,
-                              void * /*pData*/)
+                              const void * /*pData*/)
 {
     // Terrain Ruggedness is average difference in height
-    return (MyAbs(afWin[0] - afWin[4]) + MyAbs(afWin[1] - afWin[4]) +
-            MyAbs(afWin[2] - afWin[4]) + MyAbs(afWin[3] - afWin[4]) +
-            MyAbs(afWin[5] - afWin[4]) + MyAbs(afWin[6] - afWin[4]) +
-            MyAbs(afWin[7] - afWin[4]) + MyAbs(afWin[8] - afWin[4])) *
+    return (std::abs(afWin[0] - afWin[4]) + std::abs(afWin[1] - afWin[4]) +
+            std::abs(afWin[2] - afWin[4]) + std::abs(afWin[3] - afWin[4]) +
+            std::abs(afWin[5] - afWin[4]) + std::abs(afWin[6] - afWin[4]) +
+            std::abs(afWin[7] - afWin[4]) + std::abs(afWin[8] - afWin[4])) *
            0.125f;
 }
 
@@ -2291,7 +2287,7 @@ static float GDALTRIAlgWilson(const T *afWin, float /*fDstNoDataValue*/,
 // of Science, Vol.5, No.1-4, pp.23-27 for terrestrial use cases
 template <class T>
 static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
-                             void * /*pData*/)
+                             const void * /*pData*/)
 {
     const auto square = [](double x) { return x * x; };
 
@@ -2308,7 +2304,7 @@ static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T>
 static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
-                        void * /*pData*/)
+                        const void * /*pData*/)
 {
     // Terrain Position is the difference between
     // The central cell and the mean of the surrounding cells
@@ -2323,7 +2319,7 @@ static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T>
 static float GDALRoughnessAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              void * /*pData*/)
+                              const void * /*pData*/)
 {
     // Roughness is the largest difference between any two cells
 
