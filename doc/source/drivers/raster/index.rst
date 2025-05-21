@@ -16,7 +16,7 @@ Raster drivers
 
     The following drivers have been removed in GDAL 3.5: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
 
-    The following drivers have been removed in GDAL 3.11: BLX, BT, CTable2, FIT, GSAG (Golden Software ASCII grid), GSBG (Golden Software 6.0 binary grid), JP2Lura, OZI, Rasterlite (v1), R object data store (.rda), RDB, SDTS, SGI, XPM
+    The following drivers have been removed in GDAL 3.11: BLX, BT, CTable2, FIT, GSAG (Golden Software ASCII grid), JP2Lura, OZI, Rasterlite (v1), R object data store (.rda), RDB, SDTS, SGI, XPM
 
     Write support for the following formats has been removed in GDAL 3.11: ADRG, BYN, ELAS, LAN, MFF, MFF2/HKV, ISIS2, PAux, USGSDEM
 
@@ -71,6 +71,7 @@ Raster drivers
    grassasciigrid
    grib
    gs7bg
+   gsbg
    gsc
    gdalg
    gta

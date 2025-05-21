@@ -125,6 +125,7 @@ void DeclareDeferredWCSPlugin(void);
 void CPL_DLL GDALRegister_WMS(void);
 void DeclareDeferredWMSPlugin(void);
 void CPL_DLL GDALRegister_HTTP(void);
+void CPL_DLL GDALRegister_GSBG(void);
 void CPL_DLL GDALRegister_GS7BG(void);
 void CPL_DLL GDALRegister_GRIB(void);
 void DeclareDeferredGRIBPlugin(void);
