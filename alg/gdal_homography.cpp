@@ -110,6 +110,9 @@ void *GDALCreateHomographyTransformer(double adfHomography[9])
         return psInfo;
     }
 
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "GDALCreateHomographyTransformer() failed, because "
+             "GDALInvHomography() failed");
     GDALDestroyHomographyTransformer(psInfo);
     return nullptr;
 }
@@ -172,14 +175,17 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
         max_geoy = std::max(max_geoy, pasGCPList[i].dfGCPY);
     }
 
-    double EPS = 1.0e-12;
+    constexpr double EPSILON = 1.0e-12;
 
-    if (std::abs(max_pixel - min_pixel) < EPS ||
-        std::abs(max_line - min_line) < EPS ||
-        std::abs(max_geox - min_geox) < EPS ||
-        std::abs(max_geoy - min_geoy) < EPS)
+    if (std::abs(max_pixel - min_pixel) < EPSILON ||
+        std::abs(max_line - min_line) < EPSILON ||
+        std::abs(max_geox - min_geox) < EPSILON ||
+        std::abs(max_geoy - min_geoy) < EPSILON)
     {
-        return FALSE;  // degenerate in at least one dimension.
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALGCPsToHomography() failed: GCPs degenerate in at least "
+                 "one dimension.");
+        return FALSE;
     }
 
     double pl_normalize[9], geo_normalize[9];
@@ -207,6 +213,8 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     double inv_geo_normalize[9] = {0.0};
     if (!GDALInvHomography(geo_normalize, inv_geo_normalize))
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALGCPsToHomography() failed: GDALInvHomography() failed");
         return FALSE;
     }
 
@@ -231,6 +239,10 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
             !GDALApplyHomography(geo_normalize, pasGCPList[i].dfGCPX,
                                  pasGCPList[i].dfGCPY, &geox, &geoy))
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALGCPsToHomography() failed: GDALApplyHomography() "
+                     "failed on GCP %d.",
+                     i);
             return FALSE;
         }
 
@@ -260,10 +272,15 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     GDALMatrix h_normalized(9, 1);
     if (!GDALLinearSystemSolve(AtA, rhs, h_normalized))
     {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GDALGCPsToHomography() failed: GDALLinearSystemSolve() failed");
         return FALSE;
     }
     if (std::abs(h_normalized(6, 0)) < 1.0e-15)
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALGCPsToHomography() failed: h_normalized(6, 0) not zero");
         return FALSE;
     }
 
@@ -295,6 +312,8 @@ int GDALGCPsToHomography(int nGCPCount, const GDAL_GCP *pasGCPList,
     double cross23 = x[2] * y[3] - x[3] * y[2];
     if (cross12 * cross23 <= 0.0)
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALGCPsToHomography() failed: cross12 * cross23 <= 0.0");
         return FALSE;
     }
 
@@ -423,7 +442,7 @@ int GDALApplyHomography(const double *padfHomography, double dfPixel,
 int GDALInvHomography(const double *padfHIn, double *padfHOut)
 
 {
-    // Special case - no rotation - to avoid computing determinate
+    // Special case - no rotation - to avoid computing determinant
     // and potential precision issues.
     if (padfHIn[2] == 0.0 && padfHIn[4] == 0.0 && padfHIn[1] != 0.0 &&
         padfHIn[5] != 0.0 && padfHIn[7] == 0.0 && padfHIn[8] == 0.0 &&
@@ -438,10 +457,10 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
         padfHOut[6] = 1.0 / padfHIn[6];
         padfHOut[7] = 0.0;
         padfHOut[8] = 0.0;
-        return 1;
+        return TRUE;
     }
 
-    // Compute determinate.
+    // Compute determinant.
 
     const double det = padfHIn[1] * padfHIn[5] * padfHIn[6] -
                        padfHIn[2] * padfHIn[4] * padfHIn[6] +
@@ -454,7 +473,11 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
                  std::max(fabs(padfHIn[4]), fabs(padfHIn[5])));
 
     if (fabs(det) <= 1e-10 * magnitude * magnitude)
-        return 0;
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALInvHomography() failed: null determinant");
+        return FALSE;
+    }
 
     const double inv_det = 1.0 / det;
 
@@ -472,7 +495,7 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
     padfHOut[3] = (padfHIn[0] * padfHIn[4] - padfHIn[1] * padfHIn[3]) * inv_det;
     padfHOut[6] = (padfHIn[1] * padfHIn[5] - padfHIn[2] * padfHIn[4]) * inv_det;
 
-    return 1;
+    return TRUE;
 }
 
 /************************************************************************/
