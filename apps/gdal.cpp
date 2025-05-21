@@ -16,6 +16,7 @@
 #include "gdal.h"
 
 #include <cassert>
+#include <utility>
 
 // #define DEBUG_COMPLETION
 
@@ -111,14 +112,36 @@ MAIN_START(argc, argv)
 
     GDALAllRegister();
 
+    // Prevent GDALGeneralCmdLineProcessor() to process --format XXX, unless
+    // "gdal" is invoked only with it. Cf #12411
+    std::vector<std::pair<char **, char *>> apOrigFormat;
+    constexpr const char *pszFormatReplaced = "--format-XXXX";
+    if (!(argc == 3 && strcmp(argv[1], "--format") == 0))
+    {
+        for (int i = 1; i < argc; ++i)
+        {
+            if (strcmp(argv[i], "--format") == 0)
+            {
+                apOrigFormat.emplace_back(argv + i, argv[i]);
+                argv[i] = const_cast<char *>(pszFormatReplaced);
+            }
+        }
+    }
+
     argc = GDALGeneralCmdLineProcessor(
         argc, &argv, GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
+    for (auto &pair : apOrigFormat)
+    {
+        *(pair.first) = pair.second;
+    }
+
     if (argc < 1)
         return (-argc);
 
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i)
-        args.push_back(argv[i]);
+        args.push_back(strcmp(argv[i], pszFormatReplaced) == 0 ? "--format"
+                                                               : argv[i]);
     CSLDestroy(argv);
 
     if (!alg->ParseCommandLineArguments(args))

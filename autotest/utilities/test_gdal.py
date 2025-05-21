@@ -62,6 +62,23 @@ def test_gdal_invalid_command_line(gdal_path):
     assert "ret code = 1" in err
 
 
+def test_gdal_format_only(gdal_path):
+
+    out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} --format MEM")
+    assert "Short Name: MEM" in out
+    assert err == ""
+
+
+def test_gdal_format_as_output_format(gdal_path, tmp_path):
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster convert --format GTIFF ../gcore/data/byte.tif {tmp_path}/out.xxx"
+    )
+    assert out == ""
+    assert err == ""
+    assert gdal.VSIStatL(f"{tmp_path}/out.xxx") is not None
+
+
 def test_gdal_failure_during_run(gdal_path):
 
     out, err = gdaltest.runexternal_out_and_err(
