@@ -248,6 +248,9 @@ struct GDALWarpAppOptions
 
     /*! Destination bands */
     std::vector<int> anDstBands{};
+
+    /*! Used when using a temporary TIFF file while warping */
+    bool bDeleteOutputFileOnceCreated = false;
 };
 
 static CPLErr
@@ -1356,8 +1359,8 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         dfStartPctCreateCopy = 2. / 3;
         psOptions->pProgressData = GDALCreateScaledProgress(
             0, dfStartPctCreateCopy, pfnProgress, pProgressData);
-        osTmpFilename = pszDest;
-        osTmpFilename += ".tmp.tif";
+        psOptions->bDeleteOutputFileOnceCreated = true;
+        osTmpFilename = CPLGenerateTempFilenameSafe(CPLGetFilename(pszDest));
         hTmpDS = GDALWarpDirect(osTmpFilename, nullptr, nSrcCount, pahSrcDS,
                                 std::move(hUniqueTransformArg), psOptions,
                                 pbUsageError);
@@ -1374,7 +1377,9 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
                                    pScaledProgressData);
         GDALDestroyScaledProgress(pScaledProgressData);
         GDALClose(hTmpDS);
-        if (!osTmpFilename.empty())
+        VSIStatBufL sStat;
+        if (!osTmpFilename.empty() &&
+            VSIStatL(osTmpFilename.c_str(), &sStat) == 0)
         {
             GDALDeleteDataset(GDALGetDriverByName("GTiff"), osTmpFilename);
         }
@@ -4783,6 +4788,12 @@ static GDALDatasetH GDALWarpCreateOutput(
         if (hCT != nullptr)
             GDALDestroyColorTable(hCT);
         return nullptr;
+    }
+
+    if (psOptions->bDeleteOutputFileOnceCreated)
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        GDALDeleteDataset(hDriver, pszFilename);
     }
 
     /* -------------------------------------------------------------------- */
