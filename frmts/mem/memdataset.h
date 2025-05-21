@@ -135,6 +135,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
     OGRLayer *GetLayer(int) override;
 
+    using GDALDataset::CreateLayer;
+
     OGRMemLayer *CreateLayer(const OGRFeatureDefn &oDefn,
                              CSLConstList papszOptions);
 

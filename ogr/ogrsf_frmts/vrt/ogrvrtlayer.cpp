@@ -38,6 +38,7 @@
 #include "ogrpgeogeometry.h"
 #include "ogrsf_frmts.h"
 #include "ogrvrtgeometrytypes.h"
+#include "memdataset.h"
 
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."
@@ -618,14 +619,8 @@ try_again:
     CPLErrorReset();
     if (EQUAL(osSrcDSName.c_str(), "@dummy@"))
     {
-        GDALDriver *poMemDriver =
-            GetGDALDriverManager()->GetDriverByName("MEM");
-        if (poMemDriver != nullptr)
-        {
-            poSrcDS =
-                poMemDriver->Create("@dummy@", 0, 0, 0, GDT_Unknown, nullptr);
-            poSrcDS->CreateLayer("@dummy@");
-        }
+        poSrcDS = MEMDataset::Create("@dummy@", 0, 0, 0, GDT_Unknown, nullptr);
+        poSrcDS->CreateLayer("@dummy@");
     }
     else if (bSrcDSShared)
     {
