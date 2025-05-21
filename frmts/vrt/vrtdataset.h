@@ -1344,6 +1344,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
   protected:
     friend class VRTSourcedRasterBand;
+    friend class VRTDerivedRasterBand;
     friend class VRTDataset;
     friend class GDALTileIndexDataset;
     friend class GDALTileIndexBand;

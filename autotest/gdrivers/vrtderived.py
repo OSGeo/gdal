@@ -1577,3 +1577,116 @@ def test_vrt_pixelfn_nodata(
     result = gdal.Open(xml).ReadAsArray()[0, 0]
 
     assert result == pytest.approx(expected, nan_ok=True)
+
+
+@pytest.mark.parametrize(
+    "src_type",
+    [
+        "Byte",
+        "Int8",
+        "UInt16",
+        "Int16",
+        "UInt32",
+        "Int32",
+        "UInt64",
+        "Int64",
+        "Float16",
+        "Float32",
+        "Float64",
+        "CInt16",
+        "CInt32",
+        "CFloat16",
+        "CFloat32",
+        "CFloat64",
+    ],
+)
+@pytest.mark.parametrize(
+    "dst_type", ["Byte", "UInt16", "Int16", "UInt32", "Int32", "Float32", "Float64"]
+)
+@pytest.mark.parametrize(
+    "transfer_type",
+    [
+        None,
+        "Byte",
+        "UInt16",
+        "Int16",
+        "UInt32",
+        "Int32",
+        "Float32",
+        "Float64",
+    ],
+)
+def test_vrt_pixelfn_sum_optimization(tmp_vsimem, src_type, dst_type, transfer_type):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    width = 17
+    height = 2
+
+    ar1 = np.array([np.arange(width), np.arange(width) + 50])
+    ar2 = np.array([np.arange(width) + 20, np.arange(width) + 70])
+    if (
+        src_type.startswith("Float")
+        and dst_type.startswith("Float")
+        and (not transfer_type or transfer_type.startswith("Float"))
+    ):
+        ar1 = ar1 / 2
+        ar2 = ar2 / 4
+        constant = 3.5
+        constant_res = 3.5
+    elif (
+        not src_type.startswith("Float")
+        and not dst_type.startswith("Float")
+        and (not transfer_type or not transfer_type.startswith("Float"))
+    ):
+        constant = 3.2
+        constant_res = 3
+    else:
+        constant = 3
+        constant_res = 3
+
+    big_constant = transfer_type is None
+    if big_constant:
+        constant = 255
+        constant_res = 255
+
+    src_type = gdal.GetDataTypeByName(src_type)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src1.tif", width, height, 1, src_type
+    ) as src:
+        src.WriteArray(ar1)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src2.tif", width, height, 1, src_type
+    ) as src:
+        src.WriteArray(ar2)
+
+    if transfer_type:
+        transfer = f"<SourceTransferType>{transfer_type}</SourceTransferType>"
+    else:
+        transfer = ""
+
+    xml = f"""
+    <VRTDataset rasterXSize="{width}" rasterYSize="{height}">
+      <VRTRasterBand dataType="{dst_type}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>sum</PixelFunctionType>
+        <PixelFunctionArguments k="{constant}" />
+        {transfer}
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src1.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src2.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    dst = gdal.Open(xml).ReadAsArray()
+    if dst_type == "Byte" and big_constant:
+        np.testing.assert_array_equal(dst, np.ones((height, width)) * constant)
+    else:
+        np.testing.assert_array_equal(dst, constant_res + ar1 + ar2)

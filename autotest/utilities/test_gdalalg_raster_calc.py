@@ -181,6 +181,42 @@ def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
         np.testing.assert_array_equal(src.ReadAsArray() + 3.0, dst.ReadAsArray())
 
 
+def test_gdalalg_raster_calc_several_inputs_same_name(calc, tmp_vsimem):
+
+    calc["input"] = ["A=../gcore/data/byte.tif", "A=../gcore/data/uint16.tif"]
+    calc["output"] = tmp_vsimem / "out.vrt"
+    calc["calc"] = "A"
+
+    with pytest.raises(
+        Exception, match="An input with name 'A' has already been provided"
+    ):
+        calc.Run()
+
+
+@pytest.mark.parametrize(
+    "name,expected_error_msg",
+    [
+        ("_pi", "Name '_pi' is illegal because it starts with a '_'"),
+        ("0ko", "Name '0ko' is illegal because it starts with a '0'"),
+        ("ko-", "Name 'ko-' is illegal because character '-' is not allowed"),
+        ("ok", None),
+        ("ok_", None),
+        ("o0123456789", None),
+    ],
+)
+def test_gdalalg_raster_calc_test_name(calc, name, expected_error_msg):
+
+    calc["input"] = f"{name}=../gcore/data/byte.tif"
+    calc["output-format"] = "MEM"
+    calc["calc"] = name
+
+    if expected_error_msg:
+        with pytest.raises(Exception, match=expected_error_msg):
+            calc.Run()
+    else:
+        calc.Run()
+
+
 def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 
     gdaltest.importorskip_gdal_array()
@@ -253,7 +289,8 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
         np.testing.assert_allclose(dat, eval(numpy_expr), rtol=1e-6)
 
 
-def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
+@pytest.mark.parametrize("formula", ["A+B", "sum(A, B)"])
+def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formula):
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
@@ -275,7 +312,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
     calc["input"] = [f"@{input_txt}"]
     calc["output"] = outfile
-    calc["calc"] = ["A + B"]
+    calc["calc"] = formula
 
     assert calc.Run()
 

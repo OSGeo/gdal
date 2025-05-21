@@ -18,6 +18,13 @@
 #include "vrtreclassifier.h"
 #include "cpl_float.h"
 
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+#define USE_SSE2
+#include "gdalsse_priv.h"
+#endif
+
+#include "gdal_priv_templates.hpp"
+
 #include <limits>
 
 template <typename T>
@@ -484,6 +491,418 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ConjPixelFunc
 
+#ifdef USE_SSE2
+
+/************************************************************************/
+/*                        OptimizedSumToFloat_SSE2()                    */
+/************************************************************************/
+
+template <typename Tsrc>
+static void OptimizedSumToFloat_SSE2(double dfK, void *pOutBuffer,
+                                     int nLineSpace, int nXSize, int nYSize,
+                                     int nSources,
+                                     const void *const *papoSources)
+{
+    const XMMReg4Float cst = XMMReg4Float::Set1(static_cast<float>(dfK));
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        float *CPL_RESTRICT const pDest = reinterpret_cast<float *>(
+            static_cast<GByte *>(pOutBuffer) +
+            static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+        constexpr int VALUES_PER_REG = 4;
+        constexpr int UNROLLING = 4 * VALUES_PER_REG;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+        {
+            XMMReg4Float d0(cst);
+            XMMReg4Float d1(cst);
+            XMMReg4Float d2(cst);
+            XMMReg4Float d3(cst);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                XMMReg4Float t0, t1, t2, t3;
+                XMMReg4Float::Load16Val(
+                    static_cast<const Tsrc * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol,
+                    t0, t1, t2, t3);
+                d0 += t0;
+                d1 += t1;
+                d2 += t2;
+                d3 += t3;
+            }
+            d0.Store4Val(pDest + iCol + VALUES_PER_REG * 0);
+            d1.Store4Val(pDest + iCol + VALUES_PER_REG * 1);
+            d2.Store4Val(pDest + iCol + VALUES_PER_REG * 2);
+            d3.Store4Val(pDest + iCol + VALUES_PER_REG * 3);
+        }
+
+        for (; iCol < nXSize; iCol++)
+        {
+            float d = static_cast<float>(dfK);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                d += static_cast<const Tsrc * CPL_RESTRICT>(
+                    papoSources[iSrc])[iOffsetLine + iCol];
+            }
+            pDest[iCol] = d;
+        }
+    }
+}
+
+/************************************************************************/
+/*                       OptimizedSumToDouble_SSE2()                    */
+/************************************************************************/
+
+template <typename Tsrc>
+static void OptimizedSumToDouble_SSE2(double dfK, void *pOutBuffer,
+                                      int nLineSpace, int nXSize, int nYSize,
+                                      int nSources,
+                                      const void *const *papoSources)
+{
+    const XMMReg4Double cst = XMMReg4Double::Set1(dfK);
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        double *CPL_RESTRICT const pDest = reinterpret_cast<double *>(
+            static_cast<GByte *>(pOutBuffer) +
+            static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+        constexpr int VALUES_PER_REG = 4;
+        constexpr int UNROLLING = 2 * VALUES_PER_REG;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+        {
+            XMMReg4Double d0(cst);
+            XMMReg4Double d1(cst);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                XMMReg4Double t0, t1;
+                XMMReg4Double::Load8Val(
+                    static_cast<const Tsrc * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol,
+                    t0, t1);
+                d0 += t0;
+                d1 += t1;
+            }
+            d0.Store4Val(pDest + iCol + VALUES_PER_REG * 0);
+            d1.Store4Val(pDest + iCol + VALUES_PER_REG * 1);
+        }
+
+        for (; iCol < nXSize; iCol++)
+        {
+            double d = dfK;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                d += static_cast<const Tsrc * CPL_RESTRICT>(
+                    papoSources[iSrc])[iOffsetLine + iCol];
+            }
+            pDest[iCol] = d;
+        }
+    }
+}
+
+#endif  // USE_SSE2
+
+/************************************************************************/
+/*                       OptimizedSumPackedOutput()                     */
+/************************************************************************/
+
+template <typename Tsrc, typename Tdest>
+static void OptimizedSumPackedOutput(double dfK, void *pOutBuffer,
+                                     int nLineSpace, int nXSize, int nYSize,
+                                     int nSources,
+                                     const void *const *papoSources)
+{
+#ifdef USE_SSE2
+    if constexpr (std::is_same_v<Tdest, float> && !std::is_same_v<Tsrc, double>)
+    {
+        OptimizedSumToFloat_SSE2<Tsrc>(dfK, pOutBuffer, nLineSpace, nXSize,
+                                       nYSize, nSources, papoSources);
+    }
+    else if constexpr (std::is_same_v<Tdest, double>)
+    {
+        OptimizedSumToDouble_SSE2<Tsrc>(dfK, pOutBuffer, nLineSpace, nXSize,
+                                        nYSize, nSources, papoSources);
+    }
+    else
+#endif  // USE_SSE2
+    {
+        const Tdest nCst = static_cast<Tdest>(dfK);
+        for (int iLine = 0; iLine < nYSize; ++iLine)
+        {
+            Tdest *CPL_RESTRICT const pDest = reinterpret_cast<Tdest *>(
+                static_cast<GByte *>(pOutBuffer) +
+                static_cast<GSpacing>(nLineSpace) * iLine);
+            const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+#define LOAD_SRCVAL(iSrc_, j_)                                                 \
+    static_cast<Tdest>(static_cast<const Tsrc * CPL_RESTRICT>(                 \
+        papoSources[(iSrc_)])[iOffsetLine + iCol + (j_)])
+
+            constexpr int UNROLLING = 4;
+            int iCol = 0;
+            for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+            {
+                Tdest d[4] = {nCst, nCst, nCst, nCst};
+                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                {
+                    d[0] += LOAD_SRCVAL(iSrc, 0);
+                    d[1] += LOAD_SRCVAL(iSrc, 1);
+                    d[2] += LOAD_SRCVAL(iSrc, 2);
+                    d[3] += LOAD_SRCVAL(iSrc, 3);
+                }
+                pDest[iCol + 0] = d[0];
+                pDest[iCol + 1] = d[1];
+                pDest[iCol + 2] = d[2];
+                pDest[iCol + 3] = d[3];
+            }
+            for (; iCol < nXSize; iCol++)
+            {
+                Tdest d0 = nCst;
+                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                {
+                    d0 += LOAD_SRCVAL(iSrc, 0);
+                }
+                pDest[iCol] = d0;
+            }
+#undef LOAD_SRCVAL
+        }
+    }
+}
+
+/************************************************************************/
+/*                       OptimizedSumPackedOutput()                     */
+/************************************************************************/
+
+template <typename Tdest>
+static bool OptimizedSumPackedOutput(GDALDataType eSrcType, double dfK,
+                                     void *pOutBuffer, int nLineSpace,
+                                     int nXSize, int nYSize, int nSources,
+                                     const void *const *papoSources)
+{
+    switch (eSrcType)
+    {
+        case GDT_Byte:
+            OptimizedSumPackedOutput<uint8_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_UInt16:
+            OptimizedSumPackedOutput<uint16_t, Tdest>(
+                dfK, pOutBuffer, nLineSpace, nXSize, nYSize, nSources,
+                papoSources);
+            return true;
+
+        case GDT_Int16:
+            OptimizedSumPackedOutput<int16_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_Int32:
+            OptimizedSumPackedOutput<int32_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_Float32:
+            OptimizedSumPackedOutput<float, Tdest>(dfK, pOutBuffer, nLineSpace,
+                                                   nXSize, nYSize, nSources,
+                                                   papoSources);
+            return true;
+
+        case GDT_Float64:
+            OptimizedSumPackedOutput<double, Tdest>(dfK, pOutBuffer, nLineSpace,
+                                                    nXSize, nYSize, nSources,
+                                                    papoSources);
+            return true;
+
+        default:
+            break;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                    OptimizedSumThroughLargerType()                   */
+/************************************************************************/
+
+namespace
+{
+template <typename Tsrc, typename Tdest, typename Enable = void>
+struct TintermediateS
+{
+    using type = double;
+};
+
+template <typename Tsrc, typename Tdest>
+struct TintermediateS<
+    Tsrc, Tdest,
+    std::enable_if_t<
+        (std::is_same_v<Tsrc, uint8_t> || std::is_same_v<Tsrc, int16_t> ||
+         std::is_same_v<Tsrc, uint16_t>)&&(std::is_same_v<Tdest, uint8_t> ||
+                                           std::is_same_v<Tdest, int16_t> ||
+                                           std::is_same_v<Tdest, uint16_t>),
+        bool>>
+{
+    using type = int32_t;
+};
+
+}  // namespace
+
+template <typename Tsrc, typename Tdest>
+static bool OptimizedSumThroughLargerType(double dfK, void *pOutBuffer,
+                                          int nPixelSpace, int nLineSpace,
+                                          int nXSize, int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    using Tintermediate = typename TintermediateS<Tsrc, Tdest>::type;
+    const Tintermediate k = static_cast<Tintermediate>(dfK);
+
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        GByte *CPL_RESTRICT pDest = static_cast<GByte *>(pOutBuffer) +
+                                    static_cast<GSpacing>(nLineSpace) * iLine;
+
+        constexpr int UNROLLING = 4;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1);
+             iCol += UNROLLING, ii += UNROLLING)
+        {
+            Tintermediate aSum[4] = {k, k, k, k};
+
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                aSum[0] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 0];
+                aSum[1] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 1];
+                aSum[2] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 2];
+                aSum[3] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 3];
+            }
+
+            GDALCopyWord(aSum[0], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[1], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[2], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[3], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+        }
+        for (; iCol < nXSize; ++iCol, ++ii, pDest += nPixelSpace)
+        {
+            Tintermediate sum = k;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                sum += static_cast<const Tsrc *>(papoSources[iSrc])[ii];
+            }
+
+            auto pDst = reinterpret_cast<Tdest *>(pDest);
+            GDALCopyWord(sum, *pDst);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                     OptimizedSumThroughLargerType()                  */
+/************************************************************************/
+
+template <typename Tsrc>
+static bool OptimizedSumThroughLargerType(GDALDataType eBufType, double dfK,
+                                          void *pOutBuffer, int nPixelSpace,
+                                          int nLineSpace, int nXSize,
+                                          int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    switch (eBufType)
+    {
+        case GDT_Byte:
+            return OptimizedSumThroughLargerType<Tsrc, uint8_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_UInt16:
+            return OptimizedSumThroughLargerType<Tsrc, uint16_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_Int16:
+            return OptimizedSumThroughLargerType<Tsrc, int16_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_Int32:
+            return OptimizedSumThroughLargerType<Tsrc, int32_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        // Float32 and Float64 already covered by OptimizedSum() for packed case
+        default:
+            break;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                    OptimizedSumThroughLargerType()                   */
+/************************************************************************/
+
+static bool OptimizedSumThroughLargerType(GDALDataType eSrcType,
+                                          GDALDataType eBufType, double dfK,
+                                          void *pOutBuffer, int nPixelSpace,
+                                          int nLineSpace, int nXSize,
+                                          int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    switch (eSrcType)
+    {
+        case GDT_Byte:
+            return OptimizedSumThroughLargerType<uint8_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_UInt16:
+            return OptimizedSumThroughLargerType<uint16_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Int16:
+            return OptimizedSumThroughLargerType<int16_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Int32:
+            return OptimizedSumThroughLargerType<int32_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Float32:
+            return OptimizedSumThroughLargerType<float>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Float64:
+            return OptimizedSumThroughLargerType<double>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                            SumPixelFunc()                            */
+/************************************************************************/
+
 static const char pszSumPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='k' description='Optional constant term' type='double' "
@@ -500,10 +919,10 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2 && CSLFetchNameValue(papszArgs, "k") == nullptr)
+    if (nSources < 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "sum requires at least two sources or a specified constant k");
+                 "sum requires at least one source");
         return CE_Failure;
     }
 
@@ -512,12 +931,15 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
 
     double dfNoData{0};
-    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
     if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     const bool bPropagateNoData = CPLTestBool(
         CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
+
+    if (dfNoData == 0 && !bPropagateNoData)
+        bHasNoData = false;
 
     /* ---- Set pixels ---- */
     if (GDALDataTypeIsComplex(eSrcType))
@@ -555,37 +977,78 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        size_t ii = 0;
-        for (int iLine = 0; iLine < nYSize; ++iLine)
+        bool bGeneralCase = true;
+        if (dfNoData == 0 && !bPropagateNoData)
         {
-            for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+            if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
             {
-                double dfSum = dfK;  // Not complex.
+                bGeneralCase = !OptimizedSumPackedOutput<float>(
+                    eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
+            else if (eBufType == GDT_Float64 && nPixelSpace == sizeof(double))
+            {
+                bGeneralCase = !OptimizedSumPackedOutput<double>(
+                    eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
+            else if (
+                dfK >= 0 && dfK <= INT_MAX && eBufType == GDT_Int32 &&
+                nPixelSpace == sizeof(int32_t) && eSrcType == GDT_Byte &&
+                // Limitation to avoid overflow of int32 if all source values are at the max of their data type
+                nSources <=
+                    (INT_MAX - dfK) / std::numeric_limits<uint8_t>::max())
+            {
+                bGeneralCase = false;
+                OptimizedSumPackedOutput<uint8_t, int32_t>(
+                    dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
 
-                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            if (bGeneralCase && dfK >= 0 && dfK <= INT_MAX &&
+                nSources <=
+                    (INT_MAX - dfK) / std::numeric_limits<uint16_t>::max())
+            {
+                bGeneralCase = !OptimizedSumThroughLargerType(
+                    eSrcType, eBufType, dfK, pData, nPixelSpace, nLineSpace,
+                    nXSize, nYSize, nSources, papoSources);
+            }
+        }
+
+        if (bGeneralCase)
+        {
+            size_t ii = 0;
+            for (int iLine = 0; iLine < nYSize; ++iLine)
+            {
+                for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
                 {
-                    const double dfVal =
-                        GetSrcVal(papoSources[iSrc], eSrcType, ii);
-
-                    if (bHasNoData && IsNoData(dfVal, dfNoData))
+                    double dfSum = dfK;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
                     {
-                        if (bPropagateNoData)
+                        const double dfVal =
+                            GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                        if (bHasNoData && IsNoData(dfVal, dfNoData))
                         {
-                            dfSum = dfNoData;
-                            break;
+                            if (bPropagateNoData)
+                            {
+                                dfSum = dfNoData;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            dfSum += dfVal;
                         }
                     }
-                    else
-                    {
-                        dfSum += dfVal;
-                    }
-                }
 
-                GDALCopyWords(&dfSum, GDT_Float64, 0,
-                              static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
-                                  iCol * nPixelSpace,
-                              eBufType, nPixelSpace, 1);
+                    GDALCopyWords(&dfSum, GDT_Float64, 0,
+                                  static_cast<GByte *>(pData) +
+                                      static_cast<GSpacing>(nLineSpace) *
+                                          iLine +
+                                      iCol * nPixelSpace,
+                                  eBufType, nPixelSpace, 1);
+                }
             }
         }
     }

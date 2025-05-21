@@ -26,6 +26,10 @@ gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(gdal_vrt PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()
+
 if (GDAL_USE_EXPRTK)
     target_sources(gdal_vrt PRIVATE vrtexpression_exprtk.cpp)
         if (MSVC)

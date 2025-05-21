@@ -975,7 +975,38 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     GDALDataType eSrcType = eSourceTransferType;
     if (eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount)
     {
-        eSrcType = eBufType;
+        // Check the largest data type for all sources
+        GDALDataType eAllSrcType = GDT_Unknown;
+        for (int iSource = 0; iSource < nSources; iSource++)
+        {
+            if (papoSources[iSource]->GetType() ==
+                VRTSimpleSource::GetTypeStatic())
+            {
+                const auto poSS =
+                    static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                auto l_poBand = poSS->GetRasterBand();
+                if (l_poBand)
+                {
+                    eAllSrcType = GDALDataTypeUnion(
+                        eAllSrcType, l_poBand->GetRasterDataType());
+                }
+                else
+                {
+                    eAllSrcType = GDT_Unknown;
+                    break;
+                }
+            }
+            else
+            {
+                eAllSrcType = GDT_Unknown;
+                break;
+            }
+        }
+
+        if (eAllSrcType != GDT_Unknown)
+            eSrcType = eAllSrcType;
+        else
+            eSrcType = eBufType;
     }
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
@@ -1102,25 +1133,47 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             return CE_Failure;
         }
 
-        /* ------------------------------------------------------------ */
-        /* #4045: Initialize the newly allocated buffers before handing */
-        /* them off to the sources. These buffers are packed, so we     */
-        /* don't need any special line-by-line handling when a nonzero  */
-        /* nodata value is set.                                         */
-        /* ------------------------------------------------------------ */
-        if (!m_bNoDataValueSet || m_dfNoDataValue == 0)
+        bool bBufferInit = true;
+        if (papoSources[iSource]->GetType() == VRTSimpleSource::GetTypeStatic())
         {
-            memset(apBuffers[nBufferCount], 0,
-                   static_cast<size_t>(nSrcTypeSize) * nExtBufXSize *
-                       nExtBufYSize);
+            const auto poSS =
+                static_cast<VRTSimpleSource *>(papoSources[iSource]);
+            auto l_poBand = poSS->GetRasterBand();
+            if (l_poBand != nullptr && poSS->m_dfSrcXOff == 0.0 &&
+                poSS->m_dfSrcYOff == 0.0 &&
+                poSS->m_dfSrcXOff + poSS->m_dfSrcXSize ==
+                    l_poBand->GetXSize() &&
+                poSS->m_dfSrcYOff + poSS->m_dfSrcYSize ==
+                    l_poBand->GetYSize() &&
+                poSS->m_dfDstXOff == 0.0 && poSS->m_dfDstYOff == 0.0 &&
+                poSS->m_dfDstXOff + poSS->m_dfDstXSize == nRasterXSize &&
+                poSS->m_dfDstYOff + poSS->m_dfDstYSize == nRasterYSize)
+            {
+                bBufferInit = false;
+            }
         }
-        else
+        if (bBufferInit)
         {
-            GDALCopyWords64(&m_dfNoDataValue, GDT_Float64, 0,
-                            static_cast<GByte *>(apBuffers[nBufferCount]),
-                            eSrcType, nSrcTypeSize,
-                            static_cast<GPtrDiff_t>(nExtBufXSize) *
-                                nExtBufYSize);
+            /* ------------------------------------------------------------ */
+            /* #4045: Initialize the newly allocated buffers before handing */
+            /* them off to the sources. These buffers are packed, so we     */
+            /* don't need any special line-by-line handling when a nonzero  */
+            /* nodata value is set.                                         */
+            /* ------------------------------------------------------------ */
+            if (!m_bNoDataValueSet || m_dfNoDataValue == 0)
+            {
+                memset(apBuffers[nBufferCount], 0,
+                       static_cast<size_t>(nSrcTypeSize) * nExtBufXSize *
+                           nExtBufYSize);
+            }
+            else
+            {
+                GDALCopyWords64(&m_dfNoDataValue, GDT_Float64, 0,
+                                static_cast<GByte *>(apBuffers[nBufferCount]),
+                                eSrcType, nSrcTypeSize,
+                                static_cast<GPtrDiff_t>(nExtBufXSize) *
+                                    nExtBufYSize);
+            }
         }
 
         ++nBufferCount;
