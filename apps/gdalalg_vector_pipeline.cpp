@@ -701,11 +701,14 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
             name != GDALVectorConcatAlgorithm::NAME &&
             name != GDALVectorWriteAlgorithm::NAME)
         {
-            ret += '\n';
             auto alg = GetStepAlg(name);
             assert(alg);
-            alg->SetCallPath({name});
-            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            if (!alg->IsHidden())
+            {
+                ret += '\n';
+                alg->SetCallPath({name});
+                ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            }
         }
     }
     {
