@@ -21,7 +21,7 @@ For algorithms that support GDALG output, it is also possible to use the
 ``stream`` output format to indicate that a raster or vector streamed dataset
 must be returned.
 
-For example the following snippet, runs that "gdal vector geom set-type"
+For example the following snippet, runs that "gdal vector set-type"
 algorithm on a source dataset and iterates over features from the returned
 streamed dataset.
 

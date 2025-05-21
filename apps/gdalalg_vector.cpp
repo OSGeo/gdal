@@ -13,10 +13,12 @@
 #include "gdalalgorithm.h"
 
 #include "gdalalg_vector_info.h"
+#include "gdalalg_vector_buffer.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_convert.h"
 #include "gdalalg_vector_edit.h"
+#include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_grid.h"
 #include "gdalalg_vector_layer_algebra.h"
@@ -24,8 +26,14 @@
 #include "gdalalg_vector_rasterize.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_geom_type.h"
+#include "gdalalg_vector_simplify.h"
+#include "gdalalg_vector_simplify_coverage.h"
 #include "gdalalg_vector_sql.h"
+#include "gdalalg_vector_make_valid.h"
+#include "gdalalg_vector_swap_xy.h"
 
 #include "gdal_priv.h"
 
@@ -53,19 +61,27 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         AddOutputStringArg(&m_output);
 
         RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
         RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGridAlgorithm>();
         RegisterSubAlgorithm<GDALVectorRasterizeAlgorithm>();
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGeomAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSwapXYAlgorithmStandalone>();
     }
 
   private:

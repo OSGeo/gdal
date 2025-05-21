@@ -159,55 +159,52 @@ Vector commands
    :hidden:
 
    gdal_vector
-   gdal_vector_info
+   gdal_vector_buffer
    gdal_vector_clip
    gdal_vector_concat
    gdal_vector_convert
    gdal_vector_edit
    gdal_vector_filter
-   gdal_vector_geom
-   gdal_vector_geom_set_type
-   gdal_vector_geom_explode_collections
-   gdal_vector_geom_make_valid
-   gdal_vector_geom_segmentize
-   gdal_vector_geom_simplify
-   gdal_vector_geom_simplify_coverage
-   gdal_vector_geom_buffer
-   gdal_vector_geom_swap_xy
+   gdal_vector_info
+   gdal_vector_explode_collections
    gdal_vector_grid
    gdal_vector_layer_algebra
+   gdal_vector_make_valid
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
    gdal_vector_select
+   gdal_vector_segmentize
+   gdal_vector_set_geom_type
+   gdal_vector_simplify
+   gdal_vector_simplify_coverage
    gdal_vector_sql
+   gdal_vector_swap_xy
 
 .. only:: html
 
     - :ref:`gdal_vector`: Entry point for vector commands
-    - :ref:`gdal_vector_info`: Get information on a vector dataset
+    - :ref:`gdal_vector_buffer`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
+    - :ref:`gdal_vector_explode_collections`: Explode geometries of type collection of a vector dataset
     - :ref:`gdal_vector_filter`: Filter a vector dataset
-    - :ref:`gdal_vector_geom`: Geometry operations on a vector dataset
-    - :ref:`gdal_vector_geom_set_type`: Modify the geometry type of a vector dataset
-    - :ref:`gdal_vector_geom_explode_collections`: Explode geometries of type collection of a vector dataset
-    - :ref:`gdal_vector_geom_make_valid`: Fix validity of geometries of a vector dataset
-    - :ref:`gdal_vector_geom_segmentize`: Segmentize geometries of a vector dataset
-    - :ref:`gdal_vector_geom_simplify`: Simplify geometries of a vector dataset
-    - :ref:`gdal_vector_geom_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
-    - :ref:`gdal_vector_geom_buffer`: Compute a buffer around geometries of a vector dataset
-    - :ref:`gdal_vector_geom_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points
+    - :ref:`gdal_vector_info`: Get information on a vector dataset
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
-    - :ref:`gdal_vector_convert`: Convert a vector dataset
+    - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
     - :ref:`gdal_vector_pipeline`: Process a vector dataset
-    - :ref:`gdal_vector_reproject`: Reproject a vector dataset
-    - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
+    - :ref:`gdal_vector_reproject`: Reproject a vector dataset
+    - :ref:`gdal_vector_segmentize`: Segmentize geometries of a vector dataset
+    - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
+    - :ref:`gdal_vector_set_geom_type`: Modify the geometry type of a vector dataset
+    - :ref:`gdal_vector_simplify`: Simplify geometries of a vector dataset
+    - :ref:`gdal_vector_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
     - :ref:`gdal_vector_sql`: Apply SQL statement(s) to a dataset
+    - :ref:`gdal_vector_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
 
 Multidimensional raster commands
 ++++++++++++++++++++++++++++++++

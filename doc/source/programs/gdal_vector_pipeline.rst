@@ -28,6 +28,12 @@ Potential steps are:
 
 .. program-output:: gdal vector pipeline --help-doc=read
 
+* buffer
+
+.. program-output:: gdal vector pipeline --help-doc=buffer
+
+Details for options can be found in :ref:`gdal_vector_buffer`.
+
 * concat
 
 .. program-output:: gdal vector pipeline --help-doc=concat
@@ -46,17 +52,23 @@ Details for options can be found in :ref:`gdal_vector_clip`.
 
 Details for options can be found in :ref:`gdal_vector_edit`.
 
+* explode-collections
+
+.. program-output:: gdal vector pipeline --help-doc=explode-collections
+
+Details for options can be found in :ref:`gdal_vector_explode_collections`.
+
 * filter
 
 .. program-output:: gdal vector pipeline --help-doc=filter
 
 Details for options can be found in :ref:`gdal_vector_filter`.
 
-* geom
+* make-valid
 
-.. program-output:: gdal vector pipeline --help-doc=geom
+.. program-output:: gdal vector pipeline --help-doc=make-valid
 
-Details for options can be found in :ref:`gdal_vector_geom`.
+Details for options can be found in :ref:`gdal_vector_make_valid`.
 
 * reproject
 
@@ -64,17 +76,47 @@ Details for options can be found in :ref:`gdal_vector_geom`.
 
 Details for options can be found in :ref:`gdal_vector_reproject`.
 
+* segmentize
+
+.. program-output:: gdal vector pipeline --help-doc=segmentize
+
+Details for options can be found in :ref:`gdal_vector_segmentize`.
+
 * select
 
 .. program-output:: gdal vector pipeline --help-doc=select
 
 Details for options can be found in :ref:`gdal_vector_select`.
 
+* set-geom-type
+
+.. program-output:: gdal vector pipeline --help-doc=set-geom-type
+
+Details for options can be found in :ref:`gdal_vector_set_geom_type`.
+
+* simplify
+
+.. program-output:: gdal vector pipeline --help-doc=simplify
+
+Details for options can be found in :ref:`gdal_vector_simplify`.
+
+* simplify-coverage
+
+.. program-output:: gdal vector pipeline --help-doc=simplify-coverage
+
+Details for options can be found in :ref:`gdal_vector_simplify_coverage`.
+
 * sql
 
 .. program-output:: gdal vector pipeline --help-doc=sql
 
 Details for options can be found in :ref:`gdal_vector_sql`.
+
+* swap-xy
+
+.. program-output:: gdal vector pipeline --help-doc=swap-xy
+
+Details for options can be found in :ref:`gdal_vector_swap_xy`.
 
 * write
 
