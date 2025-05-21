@@ -19,6 +19,7 @@
 #include "cpl_azure.h"
 #include "cpl_port.h"
 #include "cpl_json.h"
+#include "cpl_http.h"
 #include "cpl_string.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
@@ -417,11 +418,24 @@ class VSICurlHandle : public VSIVirtualHandle
     struct AdviseReadRange
     {
         bool bDone = false;
+        bool bToRetry = true;
+        double dfSleepDelay = 0.0;
         std::mutex oMutex{};
         std::condition_variable oCV{};
         vsi_l_offset nStartOffset = 0;
         size_t nSize = 0;
         std::vector<GByte> abyData{};
+        CPLHTTPRetryContext retryContext;
+
+        explicit AdviseReadRange(const CPLHTTPRetryParameters &oRetryParameters)
+            : retryContext(oRetryParameters)
+        {
+        }
+
+        AdviseReadRange(const AdviseReadRange &) = delete;
+        AdviseReadRange &operator=(const AdviseReadRange &) = delete;
+        AdviseReadRange(AdviseReadRange &&) = delete;
+        AdviseReadRange &operator=(AdviseReadRange &&) = delete;
     };
 
     std::vector<std::unique_ptr<AdviseReadRange>> m_aoAdviseReadRanges{};
