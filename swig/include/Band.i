@@ -279,7 +279,7 @@ public:
   }
 
   GDALRasterBandShadow *GetSampleOverview(GUIntBig nDesiredSamples) {
-    return (GDALRasterBandShadow*) GDALGetRasterSampleOverview( self, nDesiredSamples );
+    return (GDALRasterBandShadow*) GDALGetRasterSampleOverviewEx( self, nDesiredSamples );
   }
 
 #if defined (SWIGJAVA)
