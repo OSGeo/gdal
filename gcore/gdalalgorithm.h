@@ -1838,6 +1838,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     /** Autocompletion function */
     std::function<std::vector<std::string>(const std::string &)>
         m_autoCompleteFunction{};
+    /** Algorith that may own this argument. */
+    GDALAlgorithm *m_owner = nullptr;
 
   private:
     bool m_skipIfAlreadySet = false;
@@ -1858,6 +1860,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     std::string ValidateChoice(const std::string &value) const;
     bool ValidateIntRange(int val) const;
     bool ValidateRealRange(double val) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALAlgorithmArg)
 };
 
 /************************************************************************/
@@ -1884,8 +1888,9 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     template <class T>
     GDALInConstructionAlgorithmArg(GDALAlgorithm *owner,
                                    const GDALAlgorithmArgDecl &decl, T *pValue)
-        : GDALAlgorithmArg(decl, pValue), m_owner(owner)
+        : GDALAlgorithmArg(decl, pValue)
     {
+        m_owner = owner;
     }
 
     /** Add a documented alias for the argument */
@@ -2217,14 +2222,6 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetIsCRSArg(bool noneAllowed = false,
                 const std::vector<std::string> &specialValues =
                     std::vector<std::string>());
-
-  private:
-    GDALAlgorithm *const m_owner;
-
-    GDALInConstructionAlgorithmArg(const GDALInConstructionAlgorithmArg &) =
-        delete;
-    GDALInConstructionAlgorithmArg &
-    operator=(const GDALInConstructionAlgorithmArg &) = delete;
 };
 
 /************************************************************************/
@@ -2828,6 +2825,11 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add geometry type argument */
     GDALInConstructionAlgorithmArg &
     AddGeometryTypeArg(std::string *pValue, const char *helpMessage = nullptr);
+
+    /** Register an auto complete function for a layer name argument */
+    static void SetAutoCompleteFunctionForLayerName(
+        GDALInConstructionAlgorithmArg &layerArg,
+        GDALInConstructionAlgorithmArg &datasetArg);
 
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &

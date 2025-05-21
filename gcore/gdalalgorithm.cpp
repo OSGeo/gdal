@@ -20,6 +20,7 @@
 
 #include "gdalalgorithm.h"
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -823,6 +824,10 @@ std::string GDALAlgorithmArg::ValidateChoice(const std::string &value) const
         expected += choice;
         expected += '\'';
     }
+    if (m_owner && m_owner->IsCalledFromCommandLine() && value == "?")
+    {
+        return "?";
+    }
     CPLError(CE_Failure, CPLE_IllegalArg,
              "Invalid value '%s' for string argument '%s'. Should be "
              "one among %s.",
@@ -1353,6 +1358,9 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
             const std::string &osVal =
                 static_cast<const GDALInConstructionAlgorithmArg *>(this)
                     ->Get<std::string>();
+            if (osVal == "?" && m_owner && m_owner->IsCalledFromCommandLine())
+                return true;
+
             if ((!noneAllowed || (osVal != "none" && osVal != "null")) &&
                 std::find(specialValues.begin(), specialValues.end(), osVal) ==
                     specialValues.end())
@@ -1731,6 +1739,8 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                     m_referencePath);
                 m_selectedSubAlg->m_executionForStreamOutput =
                     m_executionForStreamOutput;
+                m_selectedSubAlg->m_calledFromCommandLine =
+                    m_calledFromCommandLine;
                 bool bRet = m_selectedSubAlg->ParseCommandLineArguments(
                     std::vector<std::string>(args.begin() + 1, args.end()));
                 m_selectedSubAlg->PropagateSpecialActionTo(this);
@@ -1756,6 +1766,7 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         inConstructionValues;
 
     std::vector<std::string> lArgs(args);
+    bool helpValueRequested = false;
     for (size_t i = 0; i < lArgs.size(); /* incremented in loop */)
     {
         const auto &strArg = lArgs[i];
@@ -1763,6 +1774,8 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         std::string name;
         std::string value;
         bool hasValue = false;
+        if (m_calledFromCommandLine && cpl::ends_with(strArg, "=?"))
+            helpValueRequested = true;
         if (strArg.size() >= 2 && strArg[0] == '-' && strArg[1] == '-')
         {
             const auto equalPos = strArg.find('=');
@@ -2087,7 +2100,7 @@ bool GDALAlgorithm::ParseCommandLineArguments(
         ++iCurPosArg;
     }
     // Check if this positional argument is required.
-    if (iCurPosArg < m_positionalArgs.size() &&
+    if (iCurPosArg < m_positionalArgs.size() && !helpValueRequested &&
         (GDALAlgorithmArgTypeIsList(m_positionalArgs[iCurPosArg]->GetType())
              ? m_positionalArgs[iCurPosArg]->GetMinCount() > 0
              : m_positionalArgs[iCurPosArg]->IsRequired()))
@@ -2097,6 +2110,53 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                     "specified.",
                     m_positionalArgs[iCurPosArg]->GetMetaVar().c_str());
         return false;
+    }
+
+    if (m_calledFromCommandLine)
+    {
+        for (auto &arg : m_args)
+        {
+            if (arg->IsExplicitlySet() &&
+                ((arg->GetType() == GAAT_STRING &&
+                  arg->Get<std::string>() == "?") ||
+                 (arg->GetType() == GAAT_STRING_LIST &&
+                  arg->Get<std::vector<std::string>>().size() == 1 &&
+                  arg->Get<std::vector<std::string>>()[0] == "?")))
+            {
+                {
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    ValidateArguments();
+                }
+
+                auto choices = arg->GetChoices();
+                if (choices.empty())
+                    choices = arg->GetAutoCompleteChoices(std::string());
+                if (!choices.empty())
+                {
+                    if (choices.size() == 1)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Single potential value for argument '%s' is '%s'",
+                            arg->GetName().c_str(), choices.front().c_str());
+                    }
+                    else
+                    {
+                        std::string msg("Potential values for argument '");
+                        msg += arg->GetName();
+                        msg += "' are:";
+                        for (const auto &v : choices)
+                        {
+                            msg += "\n- ";
+                            msg += v;
+                        }
+                        ReportError(CE_Failure, CPLE_AppDefined, "%s",
+                                    msg.c_str());
+                    }
+                    return false;
+                }
+            }
+        }
     }
 
     return m_skipValidationInParseCommandLine || ValidateArguments();
@@ -3838,6 +3898,58 @@ GDALAlgorithm::AddGeometryTypeArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
+/*          GDALAlgorithm::SetAutoCompleteFunctionForLayerName()        */
+/************************************************************************/
+
+/* static */
+void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
+    GDALInConstructionAlgorithmArg &layerArg,
+    GDALInConstructionAlgorithmArg &datasetArg)
+{
+    CPLAssert(datasetArg.GetType() == GAAT_DATASET ||
+              datasetArg.GetType() == GAAT_DATASET_LIST);
+
+    layerArg.SetAutoCompleteFunction(
+        [&datasetArg](const std::string &currentValue)
+        {
+            std::vector<std::string> ret;
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            GDALArgDatasetValue *dsVal = nullptr;
+            if (datasetArg.GetType() == GAAT_DATASET)
+            {
+                dsVal = &(datasetArg.Get<GDALArgDatasetValue>());
+            }
+            else
+            {
+                auto &val = datasetArg.Get<std::vector<GDALArgDatasetValue>>();
+                if (val.size() == 1)
+                {
+                    dsVal = &val[0];
+                }
+            }
+            if (dsVal && !dsVal->GetName().empty())
+            {
+                auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                    dsVal->GetName().c_str(), GDAL_OF_VECTOR));
+                if (poDS)
+                {
+                    for (auto &&poLayer : poDS->GetLayers())
+                    {
+                        if (currentValue == poLayer->GetDescription())
+                        {
+                            ret.clear();
+                            ret.push_back(poLayer->GetDescription());
+                            break;
+                        }
+                        ret.push_back(poLayer->GetDescription());
+                    }
+                }
+            }
+            return ret;
+        });
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::ValidateBandArg()                    */
 /************************************************************************/
 
@@ -5418,11 +5530,17 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                 }
                 ret = arg->GetAutoCompleteChoices(value);
             }
-            if (ret.empty())
+            if (!ret.empty() && ret.back() == value)
+            {
+                ret.clear();
+            }
+            else if (ret.empty())
             {
                 ret.push_back("**");
-                ret.push_back(
-                    std::string("description: ").append(arg->GetDescription()));
+                // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
+                ret.push_back(std::string("\xC2\xA0"
+                                          "description: ")
+                                  .append(arg->GetDescription()));
             }
         }
     }
@@ -5434,18 +5552,44 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
         // Try filenames
         if (ret.empty() && !args.empty())
         {
-            auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-            for (const char *name :
-                 {"dataset", "filename", "like", "source", "destination"})
+            {
+                CPLErrorStateBackuper oErrorQuieter(CPLQuietErrorHandler);
+                SetParseForAutoCompletion();
+                CPL_IGNORE_RET_VAL(ParseCommandLineArguments(args));
+            }
+
+            const std::string &lastArg = args.back();
+            GDALAlgorithmArg *arg = nullptr;
+            for (const char *name : {GDAL_ARG_NAME_INPUT, "dataset", "filename",
+                                     "like", "source", "destination"})
             {
                 if (!arg)
                 {
-                    arg = GetArg(name);
+                    auto newArg = GetArg(name);
+                    if (newArg)
+                    {
+                        if (!newArg->IsExplicitlySet())
+                        {
+                            arg = newArg;
+                        }
+                        else if (newArg->GetType() == GAAT_STRING ||
+                                 newArg->GetType() == GAAT_STRING_LIST ||
+                                 newArg->GetType() == GAAT_DATASET ||
+                                 newArg->GetType() == GAAT_DATASET_LIST)
+                        {
+                            VSIStatBufL sStat;
+                            if ((!lastArg.empty() && lastArg.back() == '/') ||
+                                VSIStatL(lastArg.c_str(), &sStat) != 0)
+                            {
+                                arg = newArg;
+                            }
+                        }
+                    }
                 }
             }
             if (arg)
             {
-                ret = arg->GetAutoCompleteChoices(args.back());
+                ret = arg->GetAutoCompleteChoices(lastArg);
             }
         }
     }

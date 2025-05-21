@@ -66,19 +66,22 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR})
         .SetHiddenForCLI(hiddenForCLI);
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
-                       /* positionalAndRequired = */ !hiddenForCLI)
-        .SetMinCount(1)
-        .SetMaxCount((GetName() == GDALVectorPipelineAlgorithm::NAME ||
-                      GetName() == GDALVectorConcatAlgorithm::NAME)
-                         ? INT_MAX
-                         : 1)
-        .SetHiddenForCLI(hiddenForCLI);
+    auto &datasetArg =
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
+                           /* positionalAndRequired = */ !hiddenForCLI)
+            .SetMinCount(1)
+            .SetMaxCount((GetName() == GDALVectorPipelineAlgorithm::NAME ||
+                          GetName() == GDALVectorConcatAlgorithm::NAME)
+                             ? INT_MAX
+                             : 1)
+            .SetHiddenForCLI(hiddenForCLI);
     if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
-        AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
-            .AddAlias("layer")
-            .SetHiddenForCLI(hiddenForCLI);
+        auto &layerArg = AddArg("input-layer", 'l', _("Input layer name(s)"),
+                                &m_inputLayerNames)
+                             .AddAlias("layer")
+                             .SetHiddenForCLI(hiddenForCLI);
+        SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     }
 }
 
@@ -496,8 +499,27 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         steps.back().args.push_back("streamed_dataset");
     }
 
+    bool helpRequested = false;
+    if (IsCalledFromCommandLine())
+    {
+        for (auto &step : steps)
+            step.alg->SetCalledFromCommandLine();
+
+        for (const std::string &v : args)
+        {
+            if (cpl::ends_with(v, "=?"))
+                helpRequested = true;
+        }
+    }
+
     if (steps.size() < 2)
     {
+        if (!steps.empty() && helpRequested)
+        {
+            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            return false;
+        }
+
         ReportError(CE_Failure, CPLE_AppDefined,
                     "At least 2 steps must be provided");
         return false;
@@ -525,6 +547,11 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
     }
     if (steps.back().alg->GetName() != GDALVectorWriteAlgorithm::NAME)
     {
+        if (helpRequested)
+        {
+            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            return false;
+        }
         ReportError(CE_Failure, CPLE_AppDefined, "Last step should be '%s'",
                     GDALVectorWriteAlgorithm::NAME);
         return false;

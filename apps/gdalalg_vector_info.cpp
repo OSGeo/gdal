@@ -33,8 +33,11 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
-    AddInputDatasetArg(&m_dataset, GDAL_OF_VECTOR).AddAlias("dataset");
-    AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
+    auto &datasetArg =
+        AddInputDatasetArg(&m_dataset, GDAL_OF_VECTOR).AddAlias("dataset");
+    auto &layerArg =
+        AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
+    SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     AddArg("features", 0,
            _("List all features (beware of RAM consumption on large layers)"),
            &m_listFeatures);
