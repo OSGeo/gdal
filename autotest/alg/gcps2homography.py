@@ -226,26 +226,26 @@ def test_gcps2h_8():
 
 def test_gcps2h_broken_hour_glass():
 
-    h = gdal.GCPsToHomography(
-        _list2gcps(
-            [
-                (0, 0, 0, 0),
-                (0, 10, 0, 10),
-                (10, 0, 10, 10),
-                (10, 10, 10, 0),
-            ]
+    with pytest.raises(Exception, match=r"cross12 \* cross23 <= 0.0"):
+        gdal.GCPsToHomography(
+            _list2gcps(
+                [
+                    (0, 0, 0, 0),
+                    (0, 10, 0, 10),
+                    (10, 0, 10, 10),
+                    (10, 10, 10, 0),
+                ]
+            )
         )
-    )
-    assert h is None
 
-    h = gdal.GCPsToHomography(
-        _list2gcps(
-            [
-                (0, 0, 0, 0),
-                (0, 10, 10, 10),
-                (10, 0, 10, 0),
-                (10, 10, 0, 10),
-            ]
+    with pytest.raises(Exception, match=r"cross12 \* cross23 <= 0.0"):
+        gdal.GCPsToHomography(
+            _list2gcps(
+                [
+                    (0, 0, 0, 0),
+                    (0, 10, 10, 10),
+                    (10, 0, 10, 0),
+                    (10, 10, 0, 10),
+                ]
+            )
         )
-    )
-    assert h is None
