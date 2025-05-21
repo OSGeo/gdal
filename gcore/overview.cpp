@@ -5486,9 +5486,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 (nDstChunkXSize < nDstWidth || nDstChunkYSize < nDstHeight))
             {
                 // Create a VRT with the smaller chunk to do the scaling
-                auto poVRTDS = std::unique_ptr<VRTDataset>(new VRTDataset(
+                auto poVRTDS = std::make_unique<VRTDataset>(
                     nDstTotalWidth, nDstTotalHeight, nReducedDstChunkXSize,
-                    nReducedDstChunkYSize));
+                    nReducedDstChunkYSize);
 
                 std::vector<GDALRasterBand *> apoVRTBand(nBands);
                 std::vector<GDALRasterBand *> apoDstBand(nBands);
@@ -5526,36 +5526,38 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 // Loop over output height, in chunks
                 for (int nDstYOff = nDstYOffStart;
                      nDstYOff < nDstYOffEnd && eErr == CE_None;
-                     nDstYOff += nDstChunkYSize)
+                     /* */)
                 {
-                    int nDstYCount(
-                        std::min(nDstChunkYSize, nDstYOffEnd - nDstYOff));
+                    const int nDstYCount =
+                        std::min(nDstChunkYSize, nDstYOffEnd - nDstYOff);
                     // Loop over output width, in output chunks
                     for (int nDstXOff = nDstXOffStart;
                          nDstXOff < nDstXOffEnd && eErr == CE_None;
-                         nDstXOff += nDstChunkXSize)
+                         /* */)
                     {
-                        int nDstXCount(
-                            std::min(nDstChunkXSize, nDstXOffEnd - nDstXOff));
+                        const int nDstXCount =
+                            std::min(nDstChunkXSize, nDstXOffEnd - nDstXOff);
                         // Read and transfer the chunk to the overview
-                        for (int iBand = 0; iBand < nBands; ++iBand)
+                        for (int iBand = 0; iBand < nBands && eErr == CE_None;
+                             ++iBand)
                         {
-                            if (eErr != CE_None)
-                                break;
                             eErr = apoVRTBand[iBand]->RasterIO(
                                 GF_Read, nDstXOff, nDstYOff, nDstXCount,
                                 nDstYCount, abyChunk.data(), nDstXCount,
                                 nDstYCount, eDataType, 0, 0, &sExtraArg);
-                            if (eErr != CE_None)
-                                break;
-                            eErr = apoDstBand[iBand]->RasterIO(
-                                GF_Write, nDstXOff, nDstYOff, nDstXCount,
-                                nDstYCount, abyChunk.data(), nDstXCount,
-                                nDstYCount, eDataType, 0, 0, nullptr);
+                            if (eErr == CE_None)
+                            {
+                                eErr = apoDstBand[iBand]->RasterIO(
+                                    GF_Write, nDstXOff, nDstYOff, nDstXCount,
+                                    nDstYCount, abyChunk.data(), nDstXCount,
+                                    nDstYCount, eDataType, 0, 0, nullptr);
+                            }
                         }
 
                         dfCurPixelCount +=
                             static_cast<double>(nDstXCount) * nDstYCount;
+
+                        nDstXOff += nDstXCount;
                     }  // width
 
                     if (!pfnProgress(dfCurPixelCount / dfTotalPixelCount,
@@ -5565,6 +5567,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                  "User terminated");
                         eErr = CE_Failure;
                     }
+
+                    nDstYOff += nDstYCount;
                 }  // height
 
                 if (CE_None != eErr)
@@ -5687,8 +5691,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             }
 
             // Allocate a band buffer with the overview chunk size
-            auto pDstBuffer = CPLMalloc(size_t(nWrkDataTypeSize) *
-                                        nDstChunkXSize * nDstChunkYSize);
+            auto pDstBuffer = VSI_MALLOC3_VERBOSE(
+                size_t(nWrkDataTypeSize), nDstChunkXSize, nDstChunkYSize);
             if (pDstBuffer == nullptr)
             {
                 eErr = CE_Failure;
@@ -5702,89 +5706,82 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 sExtraArg.bUseOnlyThisScale = true;
 
             // Scale and copy data from the VRT to the temp file
-            for (int nDstYOff = nDstYOffStart; nDstYOff < nDstYOffEnd;
-                 nDstYOff += nReducedDstChunkYSize)
+            for (int nDstYOff = nDstYOffStart;
+                 nDstYOff < nDstYOffEnd && eErr == CE_None;
+                 /* */)
             {
-                if (eErr != CE_None)
-                    break;
-                int nDstYCount(nReducedDstChunkYSize);
-                if (nDstYOff + nReducedDstChunkYSize > nDstYOffEnd)
-                    nDstYCount = nDstYOffEnd - nDstYOff;
-
-                for (int nDstXOff = nDstXOffStart; nDstXOff < nDstXOffEnd;
-                     nDstXOff += nReducedDstChunkXSize)
+                const int nDstYCount =
+                    std::min(nReducedDstChunkYSize, nDstYOffEnd - nDstYOff);
+                for (int nDstXOff = nDstXOffStart;
+                     nDstXOff < nDstXOffEnd && eErr == CE_None;
+                     /* */)
                 {
-                    if (eErr != CE_None)
-                        break;
-                    int nDstXCount(nReducedDstChunkXSize);
-                    if (nDstXOff + nReducedDstChunkXSize > nDstXOffEnd)
-                        nDstXCount = nDstXOffEnd - nDstXOff;
-
-                    for (int iBand = 0; iBand < nBands; ++iBand)
+                    const int nDstXCount =
+                        std::min(nReducedDstChunkXSize, nDstXOffEnd - nDstXOff);
+                    for (int iBand = 0; iBand < nBands && eErr == CE_None;
+                         ++iBand)
                     {
-                        if (eErr != CE_None)
-                            break;
                         auto poSrcBand = poVRTDS->GetRasterBand(iBand + 1);
                         eErr = poSrcBand->RasterIO(
                             GF_Read, nDstXOff, nDstYOff, nDstXCount, nDstYCount,
                             pDstBuffer, nDstXCount, nDstYCount, eWrkDataType, 0,
                             0, &sExtraArg);
-                        if (eErr != CE_None)
-                            break;
-                        // Write to the temporary dataset, shifted
-                        auto poOvrBand = poTmpDS->GetRasterBand(iBand + 1);
-                        eErr = poOvrBand->RasterIO(
-                            GF_Write, nDstXOff - nDstXOffStart,
-                            nDstYOff - nDstYOffStart, nDstXCount, nDstYCount,
-                            pDstBuffer, nDstXCount, nDstYCount, eWrkDataType, 0,
-                            0, nullptr);
+                        if (eErr == CE_None)
+                        {
+                            // Write to the temporary dataset, shifted
+                            auto poOvrBand = poTmpDS->GetRasterBand(iBand + 1);
+                            eErr = poOvrBand->RasterIO(
+                                GF_Write, nDstXOff - nDstXOffStart,
+                                nDstYOff - nDstYOffStart, nDstXCount,
+                                nDstYCount, pDstBuffer, nDstXCount, nDstYCount,
+                                eWrkDataType, 0, 0, nullptr);
+                        }
                     }
+                    nDstXOff += nDstXCount;
                 }
+                nDstYOff += nDstYCount;
             }
 
             // Copy from the temporary to the overview
-            for (int nDstYOff = nDstYOffStart; nDstYOff < nDstYOffEnd;
-                 nDstYOff += nDstChunkYSize)
+            for (int nDstYOff = nDstYOffStart;
+                 nDstYOff < nDstYOffEnd && eErr == CE_None;
+                 /* */)
             {
-                if (eErr != CE_None)
-                    break;
-                int nDstYCount(nDstChunkYSize);
-                if (nDstYOff + nDstChunkYSize > nDstYOffEnd)
-                    nDstYCount = nDstYOffEnd - nDstYOff;
-
-                for (int nDstXOff = nDstXOffStart; nDstXOff < nDstXOffEnd;
-                     nDstXOff += nDstChunkXSize)
+                const int nDstYCount =
+                    std::min(nDstChunkYSize, nDstYOffEnd - nDstYOff);
+                for (int nDstXOff = nDstXOffStart;
+                     nDstXOff < nDstXOffEnd && eErr == CE_None;
+                     /* */)
                 {
-                    if (eErr != CE_None)
-                        break;
-                    int nDstXCount(nDstChunkXSize);
-                    if (nDstXOff + nDstChunkXSize > nDstXOffEnd)
-                        nDstXCount = nDstXOffEnd - nDstXOff;
-
-                    for (int iBand = 0; iBand < nBands; ++iBand)
+                    const int nDstXCount =
+                        std::min(nDstChunkXSize, nDstXOffEnd - nDstXOff);
+                    for (int iBand = 0; iBand < nBands && eErr == CE_None;
+                         ++iBand)
                     {
-                        if (eErr != CE_None)
-                            break;
                         auto poSrcBand = poTmpDS->GetRasterBand(iBand + 1);
                         eErr = poSrcBand->RasterIO(
                             GF_Read, nDstXOff - nDstXOffStart,
                             nDstYOff - nDstYOffStart, nDstXCount, nDstYCount,
                             pDstBuffer, nDstXCount, nDstYCount, eWrkDataType, 0,
                             0, nullptr);
-                        if (eErr != CE_None)
-                            break;
-                        // Write to the destination overview bands
-                        auto poOvrBand = papapoOverviewBands[iBand][iOverview];
-                        eErr = poOvrBand->RasterIO(
-                            GF_Write, nDstXOff, nDstYOff, nDstXCount,
-                            nDstYCount, pDstBuffer, nDstXCount, nDstYCount,
-                            eWrkDataType, 0, 0, nullptr);
+                        if (eErr == CE_None)
+                        {
+                            // Write to the destination overview bands
+                            auto poOvrBand =
+                                papapoOverviewBands[iBand][iOverview];
+                            eErr = poOvrBand->RasterIO(
+                                GF_Write, nDstXOff, nDstYOff, nDstXCount,
+                                nDstYCount, pDstBuffer, nDstXCount, nDstYCount,
+                                eWrkDataType, 0, 0, nullptr);
+                        }
                     }
+                    nDstXOff += nDstXCount;
                 }
+                nDstYOff += nDstYCount;
             }
 
             // Free the buffer
-            CPLFree(pDstBuffer);
+            VSIFree(pDstBuffer);
 
             if (eErr != CE_None)
             {
