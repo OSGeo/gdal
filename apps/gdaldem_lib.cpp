@@ -107,10 +107,10 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-#if defined(__SSE2__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64)
 #define HAVE_16_SSE_REG
-#define HAVE_SSE2
 #include "emmintrin.h"
+#include "gdalsse_priv.h"
 #endif
 
 static const double kdfDegreesToRadians = M_PI / 180.0;
@@ -333,9 +333,9 @@ static CPLErr GDALGeneric3x3Processing(
     const double dfNoDataValue =
         GDALGetRasterNoDataValue(hSrcBand, &bSrcHasNoData);
 
-    int bIsSrcNoDataNan = FALSE;
+    bool bIsSrcNoDataNan = false;
     T fSrcNoDataValue = 0;
-    if (cpl::NumericLimits<T>::is_integer)
+    if constexpr (std::numeric_limits<T>::is_integer)
     {
         eReadDT = GDT_Int32;
         if (bSrcHasNoData)
@@ -391,22 +391,22 @@ static CPLErr GDALGeneric3x3Processing(
                                     CPL_TO_BOOL(bSrcHasNoData),
                                     CPL_TO_BOOL(bSrcHasNoData)};
 
-    // Create an extra scope for VC12 to ignore i.
+    for (int i = 0; i < 2 && i < nYSize; i++)
     {
-        for (int i = 0; i < 2 && i < nYSize; i++)
+        if (GDALRasterIO(hSrcBand, GF_Read, 0, i, nXSize, 1,
+                         pafThreeLineWin + i * nXSize, nXSize, 1, eReadDT, 0,
+                         0) != CE_None)
         {
-            if (GDALRasterIO(hSrcBand, GF_Read, 0, i, nXSize, 1,
-                             pafThreeLineWin + i * nXSize, nXSize, 1, eReadDT,
-                             0, 0) != CE_None)
-            {
-                CPLFree(pafOutputBuf);
-                CPLFree(pafThreeLineWin);
+            CPLFree(pafOutputBuf);
+            CPLFree(pafThreeLineWin);
 
-                return CE_Failure;
-            }
-            if (cpl::NumericLimits<T>::is_integer && bSrcHasNoData)
+            return CE_Failure;
+        }
+        if (bSrcHasNoData)
+        {
+            abLineHasNoDataValue[i] = false;
+            if constexpr (std::numeric_limits<T>::is_integer)
             {
-                abLineHasNoDataValue[i] = false;
                 for (int iX = 0; iX < nXSize; iX++)
                 {
                     if (pafThreeLineWin[i * nXSize + iX] == fSrcNoDataValue)
@@ -416,8 +416,20 @@ static CPLErr GDALGeneric3x3Processing(
                     }
                 }
             }
+            else
+            {
+                for (int iX = 0; iX < nXSize; iX++)
+                {
+                    if (pafThreeLineWin[i * nXSize + iX] == fSrcNoDataValue ||
+                        std::isnan(pafThreeLineWin[i * nXSize + iX]))
+                    {
+                        abLineHasNoDataValue[i] = true;
+                        break;
+                    }
+                }
+            }
         }
-    }  // End extra scope for VC12
+    }
 
     CPLErr eErr = CE_None;
     if (bComputeAtEdges && nXSize >= 2 && nYSize >= 2)
@@ -440,10 +452,9 @@ static CPLErr GDALGeneric3x3Processing(
                 pafThreeLineWin[nXSize + jmin],
                 pafThreeLineWin[nXSize + j],
                 pafThreeLineWin[nXSize + jmax]};
-            pafOutputBuf[j] =
-                ComputeVal(CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-                           CPL_TO_BOOL(bIsSrcNoDataNan), afWin, fDstNoDataValue,
-                           pfnAlg, pData.get(), bComputeAtEdges);
+            pafOutputBuf[j] = ComputeVal(
+                CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, fDstNoDataValue, pfnAlg, pData.get(), bComputeAtEdges);
         }
         eErr = GDALRasterIO(hDstBand, GF_Write, 0, 0, nXSize, 1, pafOutputBuf,
                             nXSize, 1, GDT_Float32, 0, 0);
@@ -490,36 +501,83 @@ static CPLErr GDALGeneric3x3Processing(
         // In case none of the 3 lines have nodata values, then no need to
         // check it in ComputeVal()
         bool bOneOfThreeLinesHasNoData = CPL_TO_BOOL(bSrcHasNoData);
-        if (cpl::NumericLimits<T>::is_integer && bSrcHasNoData)
+        if (bSrcHasNoData)
         {
-            bool bLastLineHasNoDataValue = false;
-            int iX = 0;
-            for (; iX + 3 < nXSize; iX += 4)
+            if constexpr (std::numeric_limits<T>::is_integer)
             {
-                if (pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue ||
-                    pafThreeLineWin[nLine3Off + iX + 1] == fSrcNoDataValue ||
-                    pafThreeLineWin[nLine3Off + iX + 2] == fSrcNoDataValue ||
-                    pafThreeLineWin[nLine3Off + iX + 3] == fSrcNoDataValue)
+                bool bLastLineHasNoDataValue = false;
+                int iX = 0;
+                for (; iX + 3 < nXSize; iX += 4)
                 {
-                    bLastLineHasNoDataValue = true;
-                    break;
-                }
-            }
-            if (!bLastLineHasNoDataValue)
-            {
-                for (; iX < nXSize; iX++)
-                {
-                    if (pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue)
+                    if (pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue ||
+                        pafThreeLineWin[nLine3Off + iX + 1] ==
+                            fSrcNoDataValue ||
+                        pafThreeLineWin[nLine3Off + iX + 2] ==
+                            fSrcNoDataValue ||
+                        pafThreeLineWin[nLine3Off + iX + 3] == fSrcNoDataValue)
                     {
                         bLastLineHasNoDataValue = true;
+                        break;
                     }
                 }
-            }
-            abLineHasNoDataValue[nLine3Off / nXSize] = bLastLineHasNoDataValue;
+                if (!bLastLineHasNoDataValue)
+                {
+                    for (; iX < nXSize; iX++)
+                    {
+                        if (pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue)
+                        {
+                            bLastLineHasNoDataValue = true;
+                        }
+                    }
+                }
+                abLineHasNoDataValue[nLine3Off / nXSize] =
+                    bLastLineHasNoDataValue;
 
-            bOneOfThreeLinesHasNoData = abLineHasNoDataValue[0] ||
-                                        abLineHasNoDataValue[1] ||
-                                        abLineHasNoDataValue[2];
+                bOneOfThreeLinesHasNoData = abLineHasNoDataValue[0] ||
+                                            abLineHasNoDataValue[1] ||
+                                            abLineHasNoDataValue[2];
+            }
+            else
+            {
+                bool bLastLineHasNoDataValue = false;
+                int iX = 0;
+                for (; iX + 3 < nXSize; iX += 4)
+                {
+                    if (pafThreeLineWin[nLine3Off + iX] == fSrcNoDataValue ||
+                        std::isnan(pafThreeLineWin[nLine3Off + iX]) ||
+                        pafThreeLineWin[nLine3Off + iX + 1] ==
+                            fSrcNoDataValue ||
+                        std::isnan(pafThreeLineWin[nLine3Off + iX + 1]) ||
+                        pafThreeLineWin[nLine3Off + iX + 2] ==
+                            fSrcNoDataValue ||
+                        std::isnan(pafThreeLineWin[nLine3Off + iX + 2]) ||
+                        pafThreeLineWin[nLine3Off + iX + 3] ==
+                            fSrcNoDataValue ||
+                        std::isnan(pafThreeLineWin[nLine3Off + iX + 3]))
+                    {
+                        bLastLineHasNoDataValue = true;
+                        break;
+                    }
+                }
+                if (!bLastLineHasNoDataValue)
+                {
+                    for (; iX < nXSize; iX++)
+                    {
+                        if (pafThreeLineWin[nLine3Off + iX] ==
+                                fSrcNoDataValue ||
+                            std::isnan(pafThreeLineWin[nLine3Off + iX]))
+                        {
+                            bLastLineHasNoDataValue = true;
+                        }
+                    }
+                }
+                abLineHasNoDataValue[nLine3Off / nXSize] =
+                    bLastLineHasNoDataValue;
+
+                bOneOfThreeLinesHasNoData = abLineHasNoDataValue[0] ||
+                                            abLineHasNoDataValue[1] ||
+                                            abLineHasNoDataValue[2];
+            }
         }
 
         if (bComputeAtEdges && nXSize >= 2)
@@ -542,9 +600,8 @@ static CPLErr GDALGeneric3x3Processing(
                           pafThreeLineWin[nLine3Off + j + 1]};
 
             pafOutputBuf[j] = ComputeVal(
-                CPL_TO_BOOL(bOneOfThreeLinesHasNoData), fSrcNoDataValue,
-                CPL_TO_BOOL(bIsSrcNoDataNan), afWin, fDstNoDataValue, pfnAlg,
-                pData.get(), bComputeAtEdges);
+                bOneOfThreeLinesHasNoData, fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, fDstNoDataValue, pfnAlg, pData.get(), bComputeAtEdges);
         }
         else
         {
@@ -573,9 +630,8 @@ static CPLErr GDALGeneric3x3Processing(
                           pafThreeLineWin[nLine3Off + j + 1]};
 
             pafOutputBuf[j] = ComputeVal(
-                CPL_TO_BOOL(bOneOfThreeLinesHasNoData), fSrcNoDataValue,
-                CPL_TO_BOOL(bIsSrcNoDataNan), afWin, fDstNoDataValue, pfnAlg,
-                pData.get(), bComputeAtEdges);
+                bOneOfThreeLinesHasNoData, fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, fDstNoDataValue, pfnAlg, pData.get(), bComputeAtEdges);
         }
 
         if (bComputeAtEdges && nXSize >= 2)
@@ -599,9 +655,8 @@ static CPLErr GDALGeneric3x3Processing(
                                    bSrcHasNoData, fSrcNoDataValue)};
 
             pafOutputBuf[j] = ComputeVal(
-                CPL_TO_BOOL(bOneOfThreeLinesHasNoData), fSrcNoDataValue,
-                CPL_TO_BOOL(bIsSrcNoDataNan), afWin, fDstNoDataValue, pfnAlg,
-                pData.get(), bComputeAtEdges);
+                bOneOfThreeLinesHasNoData, fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, fDstNoDataValue, pfnAlg, pData.get(), bComputeAtEdges);
         }
         else
         {
@@ -665,10 +720,9 @@ static CPLErr GDALGeneric3x3Processing(
                          fSrcNoDataValue),
             };
 
-            pafOutputBuf[j] =
-                ComputeVal(CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-                           CPL_TO_BOOL(bIsSrcNoDataNan), afWin, fDstNoDataValue,
-                           pfnAlg, pData.get(), bComputeAtEdges);
+            pafOutputBuf[j] = ComputeVal(
+                CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, fDstNoDataValue, pfnAlg, pData.get(), bComputeAtEdges);
         }
         eErr = GDALRasterIO(hDstBand, GF_Write, 0, i, nXSize, 1, pafOutputBuf,
                             nXSize, 1, GDT_Float32, 0, 0);
@@ -975,7 +1029,8 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
 }
 
 #ifdef HAVE_16_SSE_REG
-template <class T>
+
+template <class T, class REG_T>
 static int
 GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
                                       int nLine2Off, int nLine3Off, int nXSize,
@@ -984,17 +1039,17 @@ GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
     // Only valid for T == int
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
-    const __m128d reg_fact_x =
-        _mm_load1_pd(&(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
-    const __m128d reg_fact_y =
-        _mm_load1_pd(&(psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
-    const __m128d reg_constant_num =
-        _mm_load1_pd(&(psData->sin_altRadians_mul_254));
-    const __m128d reg_constant_denom =
-        _mm_load1_pd(&(psData->square_z_mul_square_inv_res));
-    const __m128d reg_half = _mm_set1_pd(0.5);
-    const __m128d reg_one = _mm_add_pd(reg_half, reg_half);
-    const __m128 reg_one_float = _mm_set1_ps(1);
+    const auto reg_fact_x = XMMReg4Double::Set1(
+        psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_fact_y = XMMReg4Double::Set1(
+        psData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res);
+    const auto reg_constant_num =
+        XMMReg4Double::Set1(psData->sin_altRadians_mul_254);
+    const auto reg_constant_denom =
+        XMMReg4Double::Set1(psData->square_z_mul_square_inv_res);
+    const auto reg_half = XMMReg4Double::Set1(0.5);
+    const auto reg_one = reg_half + reg_half;
+    const auto reg_one_float = XMMReg4Float::Set1(1.0f);
 
     int j = 1;  // Used after for.
     for (; j < nXSize - 4; j += 4)
@@ -1003,81 +1058,38 @@ GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
         const T *secondLine = pafThreeLineWin + nLine2Off + j - 1;
         const T *thirdLine = pafThreeLineWin + nLine3Off + j - 1;
 
-        __m128i firstLine0 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(firstLine));
-        __m128i firstLine1 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(firstLine + 1));
-        __m128i firstLine2 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(firstLine + 2));
-        __m128i thirdLine0 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(thirdLine));
-        __m128i thirdLine1 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(thirdLine + 1));
-        __m128i thirdLine2 =
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(thirdLine + 2));
-        __m128i accX = _mm_sub_epi32(firstLine0, thirdLine2);
-        const __m128i six_minus_two = _mm_sub_epi32(thirdLine0, firstLine2);
-        __m128i accY = accX;
-        const __m128i three_minus_five = _mm_sub_epi32(
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(secondLine)),
-            _mm_loadu_si128(reinterpret_cast<__m128i const *>(secondLine + 2)));
-        const __m128i one_minus_seven = _mm_sub_epi32(firstLine1, thirdLine1);
-        accX = _mm_add_epi32(accX, three_minus_five);
-        accY = _mm_add_epi32(accY, one_minus_seven);
-        accX = _mm_add_epi32(accX, three_minus_five);
-        accY = _mm_add_epi32(accY, one_minus_seven);
-        accX = _mm_add_epi32(accX, six_minus_two);
-        accY = _mm_sub_epi32(accY, six_minus_two);
+        const auto firstLine0 = REG_T::Load4Val(firstLine);
+        const auto firstLine1 = REG_T::Load4Val(firstLine + 1);
+        const auto firstLine2 = REG_T::Load4Val(firstLine + 2);
+        const auto thirdLine0 = REG_T::Load4Val(thirdLine);
+        const auto thirdLine1 = REG_T::Load4Val(thirdLine + 1);
+        const auto thirdLine2 = REG_T::Load4Val(thirdLine + 2);
+        auto accX = firstLine0 - thirdLine2;
+        const auto six_minus_two = thirdLine0 - firstLine2;
+        auto accY = accX;
+        const auto three_minus_five =
+            REG_T::Load4Val(secondLine) - REG_T::Load4Val(secondLine + 2);
+        const auto one_minus_seven = firstLine1 - thirdLine1;
+        accX += three_minus_five;
+        accY += one_minus_seven;
+        accX += three_minus_five;
+        accY += one_minus_seven;
+        accX += six_minus_two;
+        accY -= six_minus_two;
 
-        __m128d reg_x0 = _mm_cvtepi32_pd(accX);
-        __m128d reg_x1 = _mm_cvtepi32_pd(_mm_srli_si128(accX, 8));
-        __m128d reg_y0 = _mm_cvtepi32_pd(accY);
-        __m128d reg_y1 = _mm_cvtepi32_pd(_mm_srli_si128(accY, 8));
-        __m128d reg_xx_plus_yy0 =
-            _mm_add_pd(_mm_mul_pd(reg_x0, reg_x0), _mm_mul_pd(reg_y0, reg_y0));
-        __m128d reg_xx_plus_yy1 =
-            _mm_add_pd(_mm_mul_pd(reg_x1, reg_x1), _mm_mul_pd(reg_y1, reg_y1));
+        const auto reg_x = accX.cast_to_double();
+        const auto reg_y = accY.cast_to_double();
+        const auto reg_xx_plus_yy = reg_x * reg_x + reg_y * reg_y;
+        const auto reg_numerator =
+            reg_constant_num + reg_fact_x * reg_x + reg_fact_y * reg_y;
+        const auto reg_denominator =
+            reg_one + reg_constant_denom * reg_xx_plus_yy;
+        const auto num_div_sqrt_denom =
+            reg_numerator * reg_denominator.approx_inv_sqrt(reg_one, reg_half);
 
-        __m128d reg_numerator0 = _mm_add_pd(
-            reg_constant_num, _mm_add_pd(_mm_mul_pd(reg_fact_x, reg_x0),
-                                         _mm_mul_pd(reg_fact_y, reg_y0)));
-        __m128d reg_numerator1 = _mm_add_pd(
-            reg_constant_num, _mm_add_pd(_mm_mul_pd(reg_fact_x, reg_x1),
-                                         _mm_mul_pd(reg_fact_y, reg_y1)));
-        __m128d reg_denominator0 = _mm_add_pd(
-            reg_one, _mm_mul_pd(reg_constant_denom, reg_xx_plus_yy0));
-        __m128d reg_denominator1 = _mm_add_pd(
-            reg_one, _mm_mul_pd(reg_constant_denom, reg_xx_plus_yy1));
-
-        __m128d regB0 = reg_denominator0;
-        __m128d regB1 = reg_denominator1;
-        __m128d regB0_half = _mm_mul_pd(regB0, reg_half);
-        __m128d regB1_half = _mm_mul_pd(regB1, reg_half);
-        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
-        regB0 = _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(regB0)));
-        regB1 = _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(regB1)));
-        // And perform one step of Newton-Raphson approximation to improve it
-        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
-        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
-        const __m128d reg_one_and_a_half = _mm_add_pd(reg_one, reg_half);
-        regB0 = _mm_mul_pd(
-            regB0,
-            _mm_sub_pd(reg_one_and_a_half,
-                       _mm_mul_pd(regB0_half, _mm_mul_pd(regB0, regB0))));
-        regB1 = _mm_mul_pd(
-            regB1,
-            _mm_sub_pd(reg_one_and_a_half,
-                       _mm_mul_pd(regB1_half, _mm_mul_pd(regB1, regB1))));
-        reg_numerator0 = _mm_mul_pd(reg_numerator0, regB0);
-        reg_numerator1 = _mm_mul_pd(reg_numerator1, regB1);
-
-        __m128 res = _mm_castsi128_ps(
-            _mm_unpacklo_epi64(_mm_castps_si128(_mm_cvtpd_ps(reg_numerator0)),
-                               _mm_castps_si128(_mm_cvtpd_ps(reg_numerator1))));
-        res = _mm_add_ps(res, reg_one_float);
-        res = _mm_max_ps(res, reg_one_float);
-
-        _mm_storeu_ps(pafOutputBuf + j, res);
+        auto res = num_div_sqrt_denom.cast_to_float();
+        res = XMMReg4Float::Max(reg_one_float, res + reg_one_float);
+        res.Store4Val(pafOutputBuf + j);
     }
     return j;
 }
@@ -2391,10 +2403,10 @@ template <class T> class GDALGeneric3x3Dataset : public GDALDataset
 template <class T> class GDALGeneric3x3RasterBand : public GDALRasterBand
 {
     friend class GDALGeneric3x3Dataset<T>;
-    int bSrcHasNoData;
-    T fSrcNoDataValue;
-    int bIsSrcNoDataNan;
-    GDALDataType eReadDT;
+    int bSrcHasNoData = false;
+    T fSrcNoDataValue = 0;
+    bool bIsSrcNoDataNan = false;
+    GDALDataType eReadDT = GDT_Unknown;
 
     void InitWithNoData(void *pImage);
 
@@ -2454,8 +2466,6 @@ const OGRSpatialReference *GDALGeneric3x3Dataset<T>::GetSpatialRef() const
 template <class T>
 GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
     GDALGeneric3x3Dataset<T> *poDSIn, GDALDataType eDstDataType)
-    : bSrcHasNoData(FALSE), fSrcNoDataValue(0), bIsSrcNoDataNan(FALSE),
-      eReadDT(GDT_Unknown)
 {
     poDS = poDSIn;
     nBand = 1;
@@ -2465,7 +2475,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
 
     const double dfNoDataValue =
         GDALGetRasterNoDataValue(poDSIn->hSrcBand, &bSrcHasNoData);
-    if (cpl::NumericLimits<T>::is_integer)
+    if (std::numeric_limits<T>::is_integer)
     {
         eReadDT = GDT_Int32;
         if (bSrcHasNoData)
@@ -2563,7 +2573,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
                 const float fVal = ComputeVal(
                     CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-                    CPL_TO_BOOL(bIsSrcNoDataNan), afWin,
+                    bIsSrcNoDataNan, afWin,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
@@ -2617,7 +2627,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
                 const float fVal = ComputeVal(
                     CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-                    CPL_TO_BOOL(bIsSrcNoDataNan), afWin,
+                    bIsSrcNoDataNan, afWin,
                     static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
                     poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
@@ -2694,10 +2704,9 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 
         {
             const float fVal = ComputeVal(
-                CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-                CPL_TO_BOOL(bIsSrcNoDataNan), afWin,
-                static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
-                poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
+                CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue, bIsSrcNoDataNan,
+                afWin, static_cast<float>(poGDS->dfDstNoDataValue),
+                poGDS->pfnAlg, poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
             if (eDataType == GDT_Byte)
                 static_cast<GByte *>(pImage)[j] =
@@ -2725,8 +2734,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                      bSrcHasNoData, fSrcNoDataValue);
 
         const float fVal = ComputeVal(
-            CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-            CPL_TO_BOOL(bIsSrcNoDataNan), afWin,
+            CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue, bIsSrcNoDataNan, afWin,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
@@ -2765,8 +2773,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
             poGDS->apafSourceBuf[2][j + 1]};
 
         const float fVal = ComputeVal(
-            CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue,
-            CPL_TO_BOOL(bIsSrcNoDataNan), afWin,
+            CPL_TO_BOOL(bSrcHasNoData), fSrcNoDataValue, bIsSrcNoDataNan, afWin,
             static_cast<float>(poGDS->dfDstNoDataValue), poGDS->pfnAlg,
             poGDS->pAlgData.get(), poGDS->bComputeAtEdges);
 
@@ -3596,6 +3603,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     VSIVoidUniquePtr pData;
     GDALGeneric3x3ProcessingAlg<float>::type pfnAlgFloat = nullptr;
     GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlgInt32 = nullptr;
+    GDALGeneric3x3ProcessingAlg_multisample<float>::type
+        pfnAlgFloat_multisample = nullptr;
     GDALGeneric3x3ProcessingAlg_multisample<GInt32>::type
         pfnAlgInt32_multisample = nullptr;
 
@@ -3678,8 +3687,12 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     pfnAlgFloat = GDALHillshadeAlg_same_res<float>;
                     pfnAlgInt32 = GDALHillshadeAlg_same_res<GInt32>;
 #ifdef HAVE_16_SSE_REG
+                    pfnAlgFloat_multisample =
+                        GDALHillshadeAlg_same_res_multisample<float,
+                                                              XMMReg4Float>;
                     pfnAlgInt32_multisample =
-                        GDALHillshadeAlg_same_res_multisample<GInt32>;
+                        GDALHillshadeAlg_same_res_multisample<GInt32,
+                                                              XMMReg4Int>;
 #endif
                 }
                 else
@@ -3957,8 +3970,9 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         else
         {
             GDALGeneric3x3Processing<float>(
-                hSrcBand, hDstBand, pfnAlgFloat, nullptr, std::move(pData),
-                psOptions->bComputeAtEdges, pfnProgress, pProgressData);
+                hSrcBand, hDstBand, pfnAlgFloat, pfnAlgFloat_multisample,
+                std::move(pData), psOptions->bComputeAtEdges, pfnProgress,
+                pProgressData);
         }
     }
 

@@ -70,6 +70,8 @@ static inline void GDALCopyXMMToInt16(const __m128i xmm, void *pDest)
 
 class XMMReg4Int;
 
+class XMMReg4Double;
+
 class XMMReg4Float
 {
   public:
@@ -357,6 +359,12 @@ class XMMReg4Float
         return *this;
     }
 
+    inline XMMReg4Float &operator-=(const XMMReg4Float &other)
+    {
+        xmm = _mm_sub_ps(xmm, other.xmm);
+        return *this;
+    }
+
     inline XMMReg4Float &operator*=(const XMMReg4Float &other)
     {
         xmm = _mm_mul_ps(xmm, other.xmm);
@@ -399,6 +407,8 @@ class XMMReg4Float
     }
 
     inline XMMReg4Int truncate_to_int() const;
+
+    inline XMMReg4Double cast_to_double() const;
 
     inline void Store4Val(float *ptr) const
     {
@@ -449,6 +459,18 @@ class XMMReg4Int
         return reg;
     }
 
+    static inline XMMReg4Int Load4Val(const int *ptr)
+    {
+        XMMReg4Int reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const int *ptr)
+    {
+        xmm = _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr));
+    }
+
     static inline XMMReg4Int Equals(const XMMReg4Int &expr1,
                                     const XMMReg4Int &expr2)
     {
@@ -466,6 +488,34 @@ class XMMReg4Int
                                _mm_andnot_si128(cond.xmm, false_expr.xmm));
         return reg;
     }
+
+    inline XMMReg4Int &operator+=(const XMMReg4Int &other)
+    {
+        xmm = _mm_add_epi32(xmm, other.xmm);
+        return *this;
+    }
+
+    inline XMMReg4Int &operator-=(const XMMReg4Int &other)
+    {
+        xmm = _mm_sub_epi32(xmm, other.xmm);
+        return *this;
+    }
+
+    inline XMMReg4Int operator+(const XMMReg4Int &other) const
+    {
+        XMMReg4Int ret;
+        ret.xmm = _mm_add_epi32(xmm, other.xmm);
+        return ret;
+    }
+
+    inline XMMReg4Int operator-(const XMMReg4Int &other) const
+    {
+        XMMReg4Int ret;
+        ret.xmm = _mm_sub_epi32(xmm, other.xmm);
+        return ret;
+    }
+
+    XMMReg4Double cast_to_double() const;
 
     XMMReg4Float to_float() const
     {
@@ -941,11 +991,10 @@ class XMMReg2Double
     double low;
     double high;
 
-    XMMReg2Double()
-    {
-    }
+    // cppcheck-suppress uninitMemberVar
+    XMMReg2Double() = default;
 
-    XMMReg2Double(double val)
+    explicit XMMReg2Double(double val)
     {
         low = val;
         high = 0.0;
@@ -1615,6 +1664,33 @@ class XMMReg4Double
         return _mm_cvtsd_f64(_mm256_castpd256_pd128(ymm_tmp1));
     }
 
+    inline XMMReg4Double approx_inv_sqrt(const XMMReg4Double &one,
+                                         const XMMReg4Double &half) const
+    {
+        __m256d reg = ymm;
+        __m256d reg_half = _mm256_mul_pd(reg, half.ymm);
+        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
+        reg = _mm256_cvtps_pd(_mm_rsqrt_ps(_mm256_cvtpd_ps(reg)));
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m256d one_and_a_half = _mm256_add_pd(one.ymm, half.ymm);
+        reg = _mm256_mul_pd(
+            reg,
+            _mm256_sub_pd(one_and_a_half,
+                          _mm256_mul_pd(reg_half, _mm256_mul_pd(reg, reg))));
+        XMMReg4Double ret;
+        ret.ymm = reg;
+        return ret;
+    }
+
+    inline XMMReg4Float cast_to_float() const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm256_cvtpd_ps(ymm);
+        return ret;
+    }
+
     inline void Store4Val(unsigned char *ptr) const
     {
         __m128i xmm_i =
@@ -1651,6 +1727,20 @@ class XMMReg4Double
                             _mm256_castpd_si256(ymm));
     }
 };
+
+inline XMMReg4Double XMMReg4Float::cast_to_double() const
+{
+    XMMReg4Double ret;
+    ret.ymm = _mm256_cvtps_pd(xmm);
+    return ret;
+}
+
+inline XMMReg4Double XMMReg4Int::cast_to_double() const
+{
+    XMMReg4Double ret;
+    ret.ymm = _mm256_cvtepi32_pd(xmm);
+    return ret;
+}
 
 #else
 
@@ -1913,6 +2003,43 @@ class XMMReg4Double
         return (low + high).GetHorizSum();
     }
 
+#if !defined(USE_SSE2_EMULATION)
+    inline XMMReg4Double approx_inv_sqrt(const XMMReg4Double &one,
+                                         const XMMReg4Double &half) const
+    {
+        __m128d reg0 = low.xmm;
+        __m128d reg1 = high.xmm;
+        __m128d reg0_half = _mm_mul_pd(reg0, half.low.xmm);
+        __m128d reg1_half = _mm_mul_pd(reg1, half.low.xmm);
+        // Compute rough approximation of 1 / sqrt(b) with _mm_rsqrt_ps
+        reg0 = _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(reg0)));
+        reg1 = _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(reg1)));
+        // And perform one step of Newton-Raphson approximation to improve it
+        // approx_inv_sqrt_x = approx_inv_sqrt_x*(1.5 -
+        //                            0.5*x*approx_inv_sqrt_x*approx_inv_sqrt_x);
+        const __m128d one_and_a_half = _mm_add_pd(one.low.xmm, half.low.xmm);
+        reg0 = _mm_mul_pd(
+            reg0, _mm_sub_pd(one_and_a_half,
+                             _mm_mul_pd(reg0_half, _mm_mul_pd(reg0, reg0))));
+        reg1 = _mm_mul_pd(
+            reg1, _mm_sub_pd(one_and_a_half,
+                             _mm_mul_pd(reg1_half, _mm_mul_pd(reg1, reg1))));
+        XMMReg4Double ret;
+        ret.low.xmm = reg0;
+        ret.high.xmm = reg1;
+        return ret;
+    }
+
+    inline XMMReg4Float cast_to_float() const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_castsi128_ps(
+            _mm_unpacklo_epi64(_mm_castps_si128(_mm_cvtpd_ps(low.xmm)),
+                               _mm_castps_si128(_mm_cvtpd_ps(high.xmm))));
+        return ret;
+    }
+#endif
+
     inline void Store4Val(unsigned char *ptr) const
     {
 #ifdef USE_SSE2_EMULATION
@@ -1972,6 +2099,25 @@ class XMMReg4Double
         high.StoreMask(ptr + 16);
     }
 };
+
+#if !defined(USE_SSE2_EMULATION)
+inline XMMReg4Double XMMReg4Float::cast_to_double() const
+{
+    XMMReg4Double ret;
+    ret.low.xmm = _mm_cvtps_pd(xmm);
+    ret.high.xmm = _mm_cvtps_pd(
+        _mm_castsi128_ps(_mm_srli_si128(_mm_castps_si128(xmm), 8)));
+    return ret;
+}
+
+inline XMMReg4Double XMMReg4Int::cast_to_double() const
+{
+    XMMReg4Double ret;
+    ret.low.xmm = _mm_cvtepi32_pd(xmm);
+    ret.high.xmm = _mm_cvtepi32_pd(_mm_srli_si128(xmm, 8));
+    return ret;
+}
+#endif
 
 #endif
 
