@@ -34,7 +34,7 @@
 /************************************************************************/
 
 GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_opts{}
 {
     AddProgressArg();
 

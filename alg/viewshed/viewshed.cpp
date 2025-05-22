@@ -472,7 +472,9 @@ double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
     return curveCoeff;
 }
 
+#if defined(__clang__) || defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
+#endif
 
 void testShrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
                                double startAngle, double endAngle)
