@@ -130,6 +130,7 @@ Raster commands
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
     - :ref:`gdal_raster_overview_add`: Add overviews to a raster dataset
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
+    - :ref:`gdal_raster_overview_refresh`: Refresh overviews
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
     - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
