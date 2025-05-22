@@ -686,10 +686,13 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         if (name != GDALRasterReadAlgorithm::NAME &&
             name != GDALRasterWriteAlgorithm::NAME)
         {
-            ret += '\n';
             auto alg = GetStepAlg(name);
-            alg->SetCallPath({name});
-            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            if (!alg->IsHidden())
+            {
+                ret += '\n';
+                alg->SetCallPath({name});
+                ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            }
         }
     }
     {

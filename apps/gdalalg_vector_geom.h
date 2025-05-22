@@ -35,6 +35,8 @@ class GDALVectorGeomAlgorithm /* non final */
   private:
     bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
+    void WarnIfDeprecated() override;
+
     /** Register the sub-algorithm of type MyAlgorithm.
      */
     template <class MyAlgorithm> bool RegisterSubAlgorithm(bool standalone)

@@ -12,14 +12,22 @@
 
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
+#include "gdalalg_vector_buffer.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_edit.h"
+#include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_geom.h"
+#include "gdalalg_vector_make_valid.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_geom_type.h"
+#include "gdalalg_vector_simplify.h"
+#include "gdalalg_vector_simplify_coverage.h"
 #include "gdalalg_vector_sql.h"
+#include "gdalalg_vector_swap_xy.h"
 #include "gdalalg_vector_write.h"
 
 #include "../frmts/mem/memdataset.h"
@@ -282,15 +290,23 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
                   /* shortNameOutputLayerAllowed=*/false);
 
     m_stepRegistry.Register<GDALVectorReadAlgorithm>();
+    m_stepRegistry.Register<GDALVectorBufferAlgorithm>();
     m_stepRegistry.Register<GDALVectorConcatAlgorithm>();
     m_stepRegistry.Register<GDALVectorWriteAlgorithm>();
     m_stepRegistry.Register<GDALVectorClipAlgorithm>();
     m_stepRegistry.Register<GDALVectorEditAlgorithm>();
+    m_stepRegistry.Register<GDALVectorExplodeCollectionsAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
     m_stepRegistry.Register<GDALVectorGeomAlgorithm>();
+    m_stepRegistry.Register<GDALVectorMakeValidAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSegmentizeAlgorithm>();
     m_stepRegistry.Register<GDALVectorSelectAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSetGeomTypeAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSimplifyAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSimplifyCoverageAlgorithm>();
     m_stepRegistry.Register<GDALVectorSQLAlgorithm>();
+    m_stepRegistry.Register<GDALVectorSwapXYAlgorithm>();
 }
 
 /************************************************************************/
@@ -701,11 +717,14 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
             name != GDALVectorConcatAlgorithm::NAME &&
             name != GDALVectorWriteAlgorithm::NAME)
         {
-            ret += '\n';
             auto alg = GetStepAlg(name);
             assert(alg);
-            alg->SetCallPath({name});
-            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            if (!alg->IsHidden())
+            {
+                ret += '\n';
+                alg->SetCallPath({name});
+                ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+            }
         }
     }
     {

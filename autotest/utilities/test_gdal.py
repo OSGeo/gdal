@@ -451,7 +451,7 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         out = gdaltest.runexternal(
             f"{gdal_path} completion gdal {subcommand} pipeline read foo ! geom"
         ).split(" ")
-        assert "set-type" in out
+        assert "set-geom-type" in out
 
 
 def test_gdal_completion_gdal_vector_info_layer(gdal_path):

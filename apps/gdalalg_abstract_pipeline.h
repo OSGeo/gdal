@@ -463,9 +463,12 @@ std::string GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetUsageAsJSON() const
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         auto alg = GetStepAlg(name);
-        CPLJSONDocument oStepDoc;
-        CPL_IGNORE_RET_VAL(oStepDoc.LoadMemory(alg->GetUsageAsJSON()));
-        jPipelineSteps.Add(oStepDoc.GetRoot());
+        if (!alg->IsHidden())
+        {
+            CPLJSONDocument oStepDoc;
+            CPL_IGNORE_RET_VAL(oStepDoc.LoadMemory(alg->GetUsageAsJSON()));
+            jPipelineSteps.Add(oStepDoc.GetRoot());
+        }
     }
     oDoc.GetRoot().Add("pipeline_algorithms", jPipelineSteps);
 
