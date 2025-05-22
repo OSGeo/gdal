@@ -538,7 +538,8 @@ class VRTPansharpenedDataset final : public VRTDataset
 
     GDALPansharpenOperation *m_poPansharpener;
     VRTPansharpenedDataset *m_poMainDataset;
-    std::vector<VRTPansharpenedDataset *> m_apoOverviewDatasets{};
+    std::vector<std::unique_ptr<VRTPansharpenedDataset>>
+        m_apoOverviewDatasets{};
     // Map from absolute to relative.
     std::map<CPLString, CPLString> m_oMapToRelativeFilenames{};
 
@@ -554,7 +555,8 @@ class VRTPansharpenedDataset final : public VRTDataset
     GTAdjustment m_eGTAdjustment;
     int m_bNoDataDisabled;
 
-    std::vector<GDALDataset *> m_apoDatasetsToClose{};
+    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
+        m_apoDatasetsToReleaseRef{};
 
     CPL_DISALLOW_COPY_ASSIGN(VRTPansharpenedDataset)
 
