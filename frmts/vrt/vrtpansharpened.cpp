@@ -466,16 +466,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     const double dfPanMinY = dfMinY;
     const double dfPanMaxY = dfMaxY;
 
-    CPLString osPanProjection, osPanProjectionProj4;
-    if (poPanDataset->GetProjectionRef())
-    {
-        osPanProjection = poPanDataset->GetProjectionRef();
-        char *pszProj4 = nullptr;
-        OGRSpatialReference oSRS(osPanProjection);
-        if (oSRS.exportToProj4(&pszProj4) == OGRERR_NONE)
-            osPanProjectionProj4 = pszProj4;
-        CPLFree(pszProj4);
-    }
+    const auto poPanSRS = poPanDataset->GetSpatialRef();
 
     /* -------------------------------------------------------------------- */
     /*      First pass on spectral datasets to check their georeferencing.  */
@@ -557,31 +548,18 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         // Check that the spectral band has a georeferencing consistent
         // of the pan band. Allow an error of at most the size of one pixel
         // of the spectral band.
-        CPLString osProjection;
-        if (poDataset->GetProjectionRef())
-            osProjection = poDataset->GetProjectionRef();
-
-        if (!osPanProjection.empty())
+        const auto poSpectralSRS = poDataset->GetSpatialRef();
+        if (poPanSRS)
         {
-            if (!osProjection.empty())
+            if (poSpectralSRS)
             {
-                if (osPanProjection != osProjection)
+                if (!poPanSRS->IsSame(poSpectralSRS))
                 {
-                    CPLString osProjectionProj4;
-                    char *pszProj4 = nullptr;
-                    OGRSpatialReference oSRS(osProjection);
-                    if (oSRS.exportToProj4(&pszProj4) == OGRERR_NONE)
-                        osProjectionProj4 = pszProj4;
-                    CPLFree(pszProj4);
-
-                    if (osPanProjectionProj4 != osProjectionProj4)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Pan dataset and %s do not seem to "
-                                 "have same projection. Results might "
-                                 "be incorrect",
-                                 osSourceFilename.c_str());
-                    }
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Pan dataset and %s do not seem to "
+                             "have same projection. Results might "
+                             "be incorrect",
+                             osSourceFilename.c_str());
                 }
             }
             else
@@ -592,7 +570,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                          osSourceFilename.c_str());
             }
         }
-        else if (!osProjection.empty())
+        else if (poSpectralSRS)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Pan dataset has no projection, whereas %s has "
@@ -879,16 +857,15 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     {
         double adfOutGT[6];
         if (GetGeoTransform(adfOutGT) != CE_None && GetGCPCount() == 0 &&
-            GetProjectionRef()[0] == '\0')
+            GetSpatialRef() == nullptr)
         {
             if (bPanGeoTransformValid)
             {
                 SetGeoTransform(adfPanGT);
             }
-            if (poPanDataset->GetProjectionRef() != nullptr &&
-                poPanDataset->GetProjectionRef()[0] != '\0')
+            if (poPanSRS)
             {
-                SetProjection(poPanDataset->GetProjectionRef());
+                SetSpatialRef(poPanSRS);
             }
         }
     }
@@ -897,7 +874,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     /*      Parse rest of PansharpeningOptions                              */
     /* -------------------------------------------------------------------- */
     iSpectralBand = 0;
-    for (CPLXMLNode *psIter = psOptions->psChild; psIter;
+    for (const CPLXMLNode *psIter = psOptions->psChild; psIter;
          psIter = psIter->psNext)
     {
         if (psIter->eType != CXT_Element ||
