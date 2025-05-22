@@ -22,8 +22,9 @@
 /************************************************************************/
 
 GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
-    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+    : GDALRasterPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
     AddInputArgs(/* openForMixedRasterVector = */ false,
                  /* hiddenForCLI = */ false);

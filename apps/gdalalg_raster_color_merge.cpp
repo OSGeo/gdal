@@ -33,7 +33,7 @@
 #endif
 
 /************************************************************************/
-/*     GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm()  */
+/*     GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm()   */
 /************************************************************************/
 
 GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
@@ -42,13 +42,34 @@ GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
-              .SetInputDatasetHelpMsg(_("Input RGB/RGBA raster dataset")))
+              .SetAddDefaultArguments(false)
+              .SetInputDatasetHelpMsg(_("Input RGB/RGBA raster dataset"))
+              .SetInputDatasetAlias("color-input")
+              .SetInputDatasetMetaVar("COLOR-INPUT")
+              .SetOutputDatasetHelpMsg(_("Output RGB/RGBA raster dataset")))
 {
-    auto &arg = AddArg("grayscale", 0, _("Grayscale dataset"),
-                       &m_grayScaleDataset, GDAL_OF_RASTER)
-                    .SetRequired();
+    const auto AddGrayscaleDataset = [this]()
+    {
+        auto &arg = AddArg("grayscale", 0, _("Grayscale dataset"),
+                           &m_grayScaleDataset, GDAL_OF_RASTER)
+                        .SetPositional()
+                        .SetRequired();
 
-    SetAutoCompleteFunctionForFilename(arg, GDAL_OF_RASTER);
+        SetAutoCompleteFunctionForFilename(arg, GDAL_OF_RASTER);
+    };
+
+    if (standaloneStep)
+    {
+        AddInputArgs(false, false);
+        AddGrayscaleDataset();
+        AddProgressArg();
+        AddOutputArgs(false);
+    }
+    else
+    {
+        AddHiddenInputDatasetArg();
+        AddGrayscaleDataset();
+    }
 }
 
 namespace

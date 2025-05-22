@@ -61,6 +61,15 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    struct ConstructorOptions
+    {
+    };
+
+    GDALVectorPipelineStepAlgorithm(const std::string &name,
+                                    const std::string &description,
+                                    const std::string &helpURL,
+                                    const ConstructorOptions &options) = delete;
+
     using StepRunContext = GDALVectorPipelineStepRunContext;
 
     friend class GDALVectorPipelineAlgorithm;

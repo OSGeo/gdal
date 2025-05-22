@@ -76,7 +76,11 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     struct ConstructorOptions
     {
         bool standaloneStep = false;
+        bool addDefaultArguments = true;
         std::string inputDatasetHelpMsg{};
+        std::string inputDatasetAlias{};
+        std::string inputDatasetMetaVar = "INPUT";
+        std::string outputDatasetHelpMsg{};
 
         inline ConstructorOptions &SetStandaloneStep(bool b)
         {
@@ -84,9 +88,33 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             return *this;
         }
 
+        inline ConstructorOptions &SetAddDefaultArguments(bool b)
+        {
+            addDefaultArguments = b;
+            return *this;
+        }
+
         inline ConstructorOptions &SetInputDatasetHelpMsg(const std::string &s)
         {
             inputDatasetHelpMsg = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetAlias(const std::string &s)
+        {
+            inputDatasetAlias = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetMetaVar(const std::string &s)
+        {
+            inputDatasetMetaVar = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetOutputDatasetHelpMsg(const std::string &s)
+        {
+            outputDatasetHelpMsg = s;
             return *this;
         }
     };
@@ -113,6 +141,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI);
+    void AddHiddenInputDatasetArg();
 
     void SetOutputVRTCompatible(bool b);
 

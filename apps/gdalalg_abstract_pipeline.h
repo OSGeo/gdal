@@ -48,6 +48,14 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     {
     }
 
+    GDALAbstractPipelineAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL,
+        const typename StepAlgorithm::ConstructorOptions &options)
+        : StepAlgorithm(name, description, helpURL, options)
+    {
+    }
+
     ~GDALAbstractPipelineAlgorithm() override
     {
         // Destroy steps in the reverse order they have been constructed,
