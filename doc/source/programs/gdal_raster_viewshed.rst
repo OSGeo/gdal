@@ -86,14 +86,14 @@ Standard options
 
 .. option:: --high-pitch <value>
 
-   High angle for visibity. Measured up from 0 horizontal.
+   High angle for visibility. Measured up from 0 horizontal.
    Values above the high pitch are marked out of range.
    Must be greater than '--low-pitch'.
    (Not supported in cumulative mode)
 
 .. option:: --low-pitch <value>
 
-   Low angle for visibity. Measured up from 0 horizontal.
+   Low angle for visibility. Measured up from 0 horizontal.
    Cell values are clamped to be no lower than the intersection
    of the angle.  Must be less than '--high-pitch'.
    (Not supported in cumulative mode)
