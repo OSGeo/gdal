@@ -1672,7 +1672,7 @@ static bool GDALColorReliefGetRGBA(
             (asColorAssociation[i].dfVal - asColorAssociation[i - 1].dfVal);
         const auto LinearInterpolation = [dfRatio](int nValBefore, int nVal)
         {
-            return std::clamp(static_cast<int>(0.45 + nValBefore +
+            return std::clamp(static_cast<int>(0.5 + nValBefore +
                                                dfRatio * (nVal - nValBefore)),
                               0, 255);
         };

@@ -545,11 +545,11 @@ def test_gdaldem_lib_color_relief():
     )
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -587,7 +587,7 @@ def test_gdaldem_lib_color_relief():
         colorFilename="data/color_file.txt",
         colorSelection="linear_interpolation",
     )
-    assert ds.GetRasterBand(1).Checksum() == 55009
+    assert ds.GetRasterBand(1).Checksum() == 55066
 
     with pytest.raises(ValueError):
         gdal.DEMProcessing(

@@ -309,11 +309,11 @@ def test_gdaldem_color_relief(gdaldem_path, n43_colorrelief_tif):
     ds = gdal.Open(n43_colorrelief_tif)
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -342,11 +342,11 @@ def test_gdaldem_color_relief_cpt(gdaldem_path, tmp_path):
     ds = gdal.Open(output_tif)
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -419,11 +419,11 @@ def test_gdaldem_color_relief_from_float32(gdaldem_path, n43_float32_tif, tmp_pa
     ds = gdal.Open(output_tif)
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     ds = None
 
@@ -443,11 +443,11 @@ def test_gdaldem_color_relief_png(gdaldem_path, tmp_path):
     ds = gdal.Open(output_png)
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     ds = None
 
@@ -469,11 +469,11 @@ def test_gdaldem_color_relief_from_float32_to_png(
     ds = gdal.Open(output_png)
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     ds = None
 
