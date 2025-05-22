@@ -5526,7 +5526,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 return poVRTDS;
             };
 
-            // If the overview accomodates chunking, do so and recurse
+            // If the overview accommodates chunking, do so and recurse
             // to avoid generating full size temporary files
             if (!bOverflowFullResXChunkYChunkQueried &&
                 !bTmpDSMemRequirementOverflow && !bChunkSizeOverflow &&
