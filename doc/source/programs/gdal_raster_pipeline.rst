@@ -70,6 +70,12 @@ Details for options can be found in :ref:`gdal_raster_fill_nodata`.
 
 Details for options can be found in :ref:`gdal_raster_hillshade`.
 
+* pansharpen
+
+.. program-output:: gdal raster pipeline --help-doc=pansharpen
+
+Details for options can be found in :ref:`gdal_raster_pansharpen`.
+
 * proximity
 
 .. program-output:: gdal raster pipeline --help-doc=proximity
