@@ -74,6 +74,7 @@ Raster commands
    gdal_raster_clean_collar
    gdal_raster_clip
    gdal_raster_color_map
+   gdal_raster_color_merge
    gdal_raster_contour
    gdal_raster_convert
    gdal_raster_create
@@ -117,7 +118,8 @@ Raster commands
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
-    - :ref:`gdal_raster_color_map`: Generate a RGB or RGBA dataset from a single band, using a color map
+    - :ref:`gdal_raster_color_map`: Use a grayscale raster to replace the intensity of a RGB/RGBA dataset
+    - :ref:`gdal_raster_color_merge`: Replace the color value of a RGB/RGBA dataset by the one of a grayscale raster
     - :ref:`gdal_raster_convert`: Convert a raster dataset
     - :ref:`gdal_raster_contour`: Builds vector contour lines from a raster elevation model
     - :ref:`gdal_raster_create`: Create a new raster dataset

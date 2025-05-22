@@ -18,6 +18,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_clean_collar.h"
 #include "gdalalg_raster_color_map.h"
+#include "gdalalg_raster_color_merge.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_create.h"
 #include "gdalalg_raster_edit.h"
@@ -79,6 +80,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterCalcAlgorithm>();
         RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
         RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterColorMergeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterConvertAlgorithm>();
         RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCreateAlgorithm>();

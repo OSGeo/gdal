@@ -68,6 +68,8 @@ static inline void GDALCopyXMMToInt16(const __m128i xmm, void *pDest)
     memcpy(pDest, &i, 2);
 }
 
+class XMMReg4Int;
+
 class XMMReg4Float
 {
   public:
@@ -152,6 +154,14 @@ class XMMReg4Float
         return reg;
     }
 
+    static inline XMMReg4Float Lesser(const XMMReg4Float &expr1,
+                                      const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_cmplt_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
     static inline XMMReg4Float Greater(const XMMReg4Float &expr1,
                                        const XMMReg4Float &expr2)
     {
@@ -183,6 +193,14 @@ class XMMReg4Float
     {
         XMMReg4Float reg;
         reg.xmm = _mm_min_ps(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Float Max(const XMMReg4Float &expr1,
+                                   const XMMReg4Float &expr2)
+    {
+        XMMReg4Float reg;
+        reg.xmm = _mm_max_ps(expr1.xmm, expr2.xmm);
         return reg;
     }
 
@@ -232,6 +250,14 @@ class XMMReg4Float
     {
         const __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
         xmm = _mm_cvtepi32_ps(cvtepu8_epi32(xmm_i));
+    }
+
+    static inline void Load8Val(const unsigned char *ptr, XMMReg4Float &r0,
+                                XMMReg4Float &r1)
+    {
+        const __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
+        r0.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(xmm_i));
+        r1.xmm = _mm_cvtepi32_ps(cvtepu8_epi32(_mm_srli_si128(xmm_i, 4)));
     }
 
     static inline void Load16Val(const unsigned char *ptr, XMMReg4Float &r0,
@@ -365,6 +391,15 @@ class XMMReg4Float
         return ret;
     }
 
+    inline XMMReg4Float inverse() const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_div_ps(_mm_set1_ps(1.0f), xmm);
+        return ret;
+    }
+
+    inline XMMReg4Int truncate_to_int() const;
+
     inline void Store4Val(float *ptr) const
     {
         _mm_storeu_ps(ptr, xmm);
@@ -378,6 +413,159 @@ class XMMReg4Float
     inline operator float() const
     {
         return _mm_cvtss_f32(xmm);
+    }
+};
+
+class XMMReg4Int
+{
+  public:
+    __m128i xmm;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+    /* coverity[uninit_member] */
+    XMMReg4Int() = default;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    XMMReg4Int(const XMMReg4Int &other) : xmm(other.xmm)
+    {
+    }
+
+    static inline XMMReg4Int Zero()
+    {
+        XMMReg4Int reg;
+        reg.xmm = _mm_setzero_si128();
+        return reg;
+    }
+
+    static inline XMMReg4Int Set1(int i)
+    {
+        XMMReg4Int reg;
+        reg.xmm = _mm_set1_epi32(i);
+        return reg;
+    }
+
+    static inline XMMReg4Int Equals(const XMMReg4Int &expr1,
+                                    const XMMReg4Int &expr2)
+    {
+        XMMReg4Int reg;
+        reg.xmm = _mm_cmpeq_epi32(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg4Int Ternary(const XMMReg4Int &cond,
+                                     const XMMReg4Int &true_expr,
+                                     const XMMReg4Int &false_expr)
+    {
+        XMMReg4Int reg;
+        reg.xmm = _mm_or_si128(_mm_and_si128(cond.xmm, true_expr.xmm),
+                               _mm_andnot_si128(cond.xmm, false_expr.xmm));
+        return reg;
+    }
+
+    XMMReg4Float to_float() const
+    {
+        XMMReg4Float ret;
+        ret.xmm = _mm_cvtepi32_ps(xmm);
+        return ret;
+    }
+};
+
+inline XMMReg4Int XMMReg4Float::truncate_to_int() const
+{
+    XMMReg4Int ret;
+    ret.xmm = _mm_cvttps_epi32(xmm);
+    return ret;
+}
+
+class XMMReg8Byte
+{
+  public:
+    __m128i xmm;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+    /* coverity[uninit_member] */
+    XMMReg8Byte() = default;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    XMMReg8Byte(const XMMReg8Byte &other) : xmm(other.xmm)
+    {
+    }
+
+    static inline XMMReg8Byte Zero()
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_setzero_si128();
+        return reg;
+    }
+
+    static inline XMMReg8Byte Set1(char i)
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_set1_epi8(i);
+        return reg;
+    }
+
+    static inline XMMReg8Byte Equals(const XMMReg8Byte &expr1,
+                                     const XMMReg8Byte &expr2)
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_cmpeq_epi8(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg8Byte Or(const XMMReg8Byte &expr1,
+                                 const XMMReg8Byte &expr2)
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_or_si128(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+
+    static inline XMMReg8Byte Ternary(const XMMReg8Byte &cond,
+                                      const XMMReg8Byte &true_expr,
+                                      const XMMReg8Byte &false_expr)
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_or_si128(_mm_and_si128(cond.xmm, true_expr.xmm),
+                               _mm_andnot_si128(cond.xmm, false_expr.xmm));
+        return reg;
+    }
+
+    inline XMMReg8Byte operator+(const XMMReg8Byte &other) const
+    {
+        XMMReg8Byte ret;
+        ret.xmm = _mm_add_epi8(xmm, other.xmm);
+        return ret;
+    }
+
+    inline XMMReg8Byte operator-(const XMMReg8Byte &other) const
+    {
+        XMMReg8Byte ret;
+        ret.xmm = _mm_sub_epi8(xmm, other.xmm);
+        return ret;
+    }
+
+    static inline XMMReg8Byte Pack(const XMMReg4Int &r0, const XMMReg4Int &r1)
+    {
+        XMMReg8Byte reg;
+        reg.xmm = _mm_packs_epi32(r0.xmm, r1.xmm);
+        reg.xmm = _mm_packus_epi16(reg.xmm, reg.xmm);
+        return reg;
+    }
+
+    inline void Store8Val(unsigned char *ptr) const
+    {
+        GDALCopyXMMToInt64(xmm, reinterpret_cast<GInt64 *>(ptr));
     }
 };
 

@@ -26,6 +26,7 @@ Available sub-commands
 - :ref:`gdal_raster_clean_collar`
 - :ref:`gdal_raster_clip`
 - :ref:`gdal_raster_color_map`
+- :ref:`gdal_raster_color_merge`
 - :ref:`gdal_raster_convert`
 - :ref:`gdal_raster_create`
 - :ref:`gdal_raster_footprint`

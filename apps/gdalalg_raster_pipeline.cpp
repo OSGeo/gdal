@@ -15,6 +15,7 @@
 #include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
+#include "gdalalg_raster_color_merge.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
@@ -58,8 +59,21 @@
 GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
     const std::string &name, const std::string &description,
     const std::string &helpURL, bool standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(
+          name, description, helpURL,
+          ConstructorOptions().SetStandaloneStep(standaloneStep))
+{
+}
+
+/************************************************************************/
+/*  GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm()  */
+/************************************************************************/
+
+GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL, const ConstructorOptions &options)
     : GDALAlgorithm(name, description, helpURL),
-      m_standaloneStep(standaloneStep)
+      m_standaloneStep(options.standaloneStep), m_constructorOptions(options)
 {
     if (m_standaloneStep)
     {
@@ -97,7 +111,8 @@ void GDALRasterPipelineStepAlgorithm::AddInputArgs(
                        openForMixedRasterVector
                            ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
                            : GDAL_OF_RASTER,
-                       /* positionalAndRequired = */ !hiddenForCLI)
+                       /* positionalAndRequired = */ !hiddenForCLI,
+                       m_constructorOptions.inputDatasetHelpMsg.c_str())
         .SetHiddenForCLI(hiddenForCLI);
 }
 
@@ -315,6 +330,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterAspectAlgorithm>();
     m_stepRegistry.Register<GDALRasterClipAlgorithm>();
     m_stepRegistry.Register<GDALRasterColorMapAlgorithm>();
+    m_stepRegistry.Register<GDALRasterColorMergeAlgorithm>();
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterFillNodataAlgorithm>();
     m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
