@@ -218,7 +218,7 @@ def test_gdalalg_raster_mode_cumulative(viewshed_input, tmp_vsimem):
     alg = get_alg()
     alg["input"] = viewshed_input
     alg["output"] = tmp_filename
-    alg["position"] = [621528, 4817617, 100]
+    alg["height"] = 100
     alg["mode"] = "cumulative"
     assert alg.Run()
     with gdal.Open(tmp_filename) as ds:
@@ -228,7 +228,7 @@ def test_gdalalg_raster_mode_cumulative(viewshed_input, tmp_vsimem):
     alg = get_alg()
     alg["input"] = viewshed_input
     alg["output"] = tmp_filename
-    alg["position"] = [621528, 4817617, 100]
+    alg["height"] = 100
     alg["mode"] = "cumulative"
     alg["overwrite"] = True
     alg["observer-spacing"] = 20
@@ -240,7 +240,7 @@ def test_gdalalg_raster_mode_cumulative(viewshed_input, tmp_vsimem):
     alg = get_alg()
     alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
     alg["output"] = tmp_filename
-    alg["position"] = [621528, 4817617, 100]
+    alg["height"] = 100
     alg["mode"] = "cumulative"
     alg["overwrite"] = True
     with pytest.raises(
@@ -252,7 +252,7 @@ def test_gdalalg_raster_mode_cumulative(viewshed_input, tmp_vsimem):
     alg["input"] = viewshed_input
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["position"] = [621528, 4817617, 100]
+    alg["height"] = 100
     alg["mode"] = "cumulative"
     with pytest.raises(
         Exception,

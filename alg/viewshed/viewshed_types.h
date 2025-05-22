@@ -188,6 +188,7 @@ inline std::ostream &operator<<(std::ostream &out, const Window &w)
 /// The right side processing range is [rightMin, right).
 struct LineLimits
 {
+    /// Constructor that takes the members in order.
     LineLimits(int leftArg, int leftMinArg, int rightMinArg, int rightArg)
         : left(leftArg), leftMin(leftMinArg), rightMin(rightMinArg),
           right(rightArg)

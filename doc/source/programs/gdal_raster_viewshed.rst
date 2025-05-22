@@ -68,6 +68,36 @@ Standard options
    It is also used to clamp the extent of the output raster.
    (Not supported in cumulative mode)
 
+.. option:: --min-distance <value>
+
+   Minimum distance from observer to compute visibility.
+   Must be less than '--max-distance'
+   (Not supported in cumulative mode)
+
+.. option:: --start-angle <value>
+
+   Start angle for visibility. Measured clockwise from 0 North.
+   (Not supported in cumulative mode)
+
+.. option:: --end-angle <value>
+
+   End angle for visibility. Measured clockwise from 0 North.
+   (Not supported in cumulative mode)
+
+.. option:: --high-pitch <value>
+
+   High angle for visibity. Measured up from 0 horizontal.
+   Values above the high pitch are marked out of range.
+   Must be greater than '--low-pitch'.
+   (Not supported in cumulative mode)
+
+.. option:: --low-pitch <value>
+
+   Low angle for visibity. Measured up from 0 horizontal.
+   Cell values are clamped to be no lower than the intersection
+   of the angle.  Must be less than '--high-pitch'.
+   (Not supported in cumulative mode)
+
 .. option:: --curvature-coefficient <value>
 
    Coefficient to consider the effect of the curvature and refraction.

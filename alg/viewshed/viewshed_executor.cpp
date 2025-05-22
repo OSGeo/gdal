@@ -17,6 +17,8 @@
 #include <cmath>
 #include <limits>
 
+#include <iostream>
+
 #include "viewshed_executor.h"
 #include "progress.h"
 #include "util.h"
@@ -428,14 +430,15 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll,
     // If the start cell is next to the observer, just mark it visible.
     if (iStart + 1 == m_nX || iStart + 1 == oCurExtent.xStop)
     {
+        double dfZ = *pThis;
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
         {
-            maskLowPitch(*pThis, 1, 0);
-            setOutput(vResult[iStart], *pThis, *pThis);
+            maskLowPitch(dfZ, 1, 0);
+            setOutput(vResult[iStart], *pThis, dfZ);
         }
-        maskHighPitch(vResult[iStart], *pThis, 1, 0);
+        maskHighPitch(vResult[iStart], dfZ, 1, 0);
         iStart--;
         pThis--;
     }
@@ -622,14 +625,15 @@ void ViewshedExecutor::processFirstLineRight(const LineLimits &ll,
     // If the start cell is next to the observer, just mark it visible.
     if (iStart - 1 == m_nX || iStart == oCurExtent.xStart)
     {
+        double dfZ = *pThis;
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
         {
-            maskLowPitch(*pThis, 1, 0);
-            setOutput(vResult[iStart], *pThis, *pThis);
+            maskLowPitch(dfZ, 1, 0);
+            setOutput(vResult[iStart], *pThis, dfZ);
         }
-        maskHighPitch(vResult[iStart], *pThis, 1, 0);
+        maskHighPitch(vResult[iStart], dfZ, 1, 0);
         iStart++;
         pThis++;
     }
@@ -662,7 +666,6 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
     int iStart = m_nX - 1;
     int iEnd = ll.left - 1;
     int nLine = m_nY + nYOffset;
-
     // If start to the left of end, everything is taken care of by processing right.
     if (iStart <= iEnd)
         return;
@@ -675,6 +678,7 @@ void ViewshedExecutor::processLineLeft(int nYOffset, LineLimits &ll,
     // If the observer is to the right of the raster, mark the first cell to the left as
     // visible. This may mark an out-of-range cell with a value, but this will be fixed
     // with the out of range assignment at the end.
+
     if (iStart == oCurExtent.xStop - 1)
     {
         if (oOpts.outputMode == OutputMode::Normal)
@@ -851,7 +855,6 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
             processLineRight(nYOffset, ll, vResult, vThisLineVal, vLastLineVal);
         });
     pQueue->WaitCompletion();
-
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
 
