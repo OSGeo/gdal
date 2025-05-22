@@ -77,6 +77,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
 
     GDALAlgorithmRegistry m_stepRegistry{};
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
+    std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
   private:
     bool RunStep(typename StepAlgorithm::StepRunContext &ctxt) override;
@@ -156,6 +157,14 @@ template <class StepAlgorithm>
 bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     typename StepAlgorithm::StepRunContext &ctxt)
 {
+    if (m_stepOnWhichHelpIsRequested)
+    {
+        printf(
+            "%s",
+            m_stepOnWhichHelpIsRequested->GetUsageForCLI(false).c_str()); /*ok*/
+        return true;
+    }
+
     if (m_steps.empty())
     {
         // If invoked programmatically, not from the command line.
