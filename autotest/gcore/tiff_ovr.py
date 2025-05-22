@@ -2719,7 +2719,7 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
 
     ds = gdal.Open(filename)
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 37308
+    assert cs == 36766
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
@@ -3069,3 +3069,56 @@ def test_tiff_ovr_huge_raster_with_ovr_huge_block(tmp_vsimem):
     with pytest.raises(Exception):
         with gdal.Open(tmp_vsimem / "tmp.tif", gdal.GA_Update) as ds:
             ds.BuildOverviews("AVERAGE", [2])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_reduction_factor_nodata(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "test.tif",
+        1024,
+        1024,
+        3,
+        options=["BLOCKYSIZE=1024", "COMPRESS=LZW"],
+    )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.GetRasterBand(2).SetNoDataValue(0)
+    ds.GetRasterBand(3).SetNoDataValue(0)
+    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    with gdaltest.config_options(
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+        }
+    ):
+        ds.BuildOverviews("AVERAGE", [1024])
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_reduction_factor_mask(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "test.tif",
+        1024,
+        1024,
+        3,
+        options=["BLOCKYSIZE=1024", "COMPRESS=LZW"],
+    )
+    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(511, 511, 1, 1, b"\xFF")
+    with gdaltest.config_options(
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+        }
+    ):
+        ds.BuildOverviews("AVERAGE", [1024])
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"

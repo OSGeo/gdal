@@ -191,6 +191,11 @@ typedef struct
     /*! Height in pixels of the area of interest. Only valid if
      * bFloatingPointWindowValidity = TRUE */
     double dfYSize;
+    /*! Indicate if overviews should be considered. Tested in
+        GDALBandGetBestOverviewLevel(), mostly reserved for use by
+        GDALRegenerateOverviewsMultiBand()
+    */
+    int bUseOnlyThisScale;
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
@@ -208,6 +213,7 @@ typedef struct
         (s).pfnProgress = CPL_NULLPTR;                                         \
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
+        (s).bUseOnlyThisScale = FALSE;                                         \
     } while (0)
 
 /** Value indicating the start of the range for color interpretations belonging
