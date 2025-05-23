@@ -17,8 +17,6 @@
 #include <cmath>
 #include <limits>
 
-#include <iostream>
-
 #include "viewshed_executor.h"
 #include "progress.h"
 #include "util.h"
@@ -583,8 +581,9 @@ void ViewshedExecutor::maskLineLeft(std::vector<double> &vResult,
     // Mask cells from the left edge to the left limit.
     std::fill(vResult.begin(), vResult.begin() + ll.left, oOpts.outOfRangeVal);
     // Mask cells from the left min to the observer.
-    std::fill(vResult.begin() + ll.leftMin, vResult.begin() + m_nX,
-              oOpts.outOfRangeVal);
+    if (ll.leftMin < m_nX)
+        std::fill(vResult.begin() + ll.leftMin, vResult.begin() + m_nX,
+                  oOpts.outOfRangeVal);
 }
 
 void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
@@ -598,8 +597,9 @@ void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
     std::fill(vResult.begin() + m_nX + 1, vResult.begin() + ll.rightMin,
               oOpts.outOfRangeVal);
     // Mask cells from the right limit to the right edge.
-    std::fill(vResult.begin() + ll.right + 1, vResult.end(),
-              oOpts.outOfRangeVal);
+    if (ll.right + 1 < static_cast<int>(vResult.size()))
+        std::fill(vResult.begin() + ll.right + 1, vResult.end(),
+                  oOpts.outOfRangeVal);
 }
 
 /// Process the part of the first line to the right of the observer.
