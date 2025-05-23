@@ -2431,6 +2431,8 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
 {
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
 
+    GDALReferenceDataset(hSrcDS);
+
     nRasterXSize = GDALGetRasterXSize(hSrcDS);
     nRasterYSize = GDALGetRasterYSize(hSrcDS);
 
@@ -2446,6 +2448,8 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
 
 template <class T> GDALGeneric3x3Dataset<T>::~GDALGeneric3x3Dataset()
 {
+    GDALReleaseDataset(hSrcDS);
+
     CPLFree(apafSourceBuf[0]);
     CPLFree(apafSourceBuf[1]);
     CPLFree(apafSourceBuf[2]);
