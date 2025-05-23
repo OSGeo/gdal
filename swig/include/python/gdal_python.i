@@ -4732,7 +4732,7 @@ def BuildVRTOptions(options=None,
             else:
                 for opt in pixelFunctionArgs:
                     new_options += ['-pixel-function-arg', opt]
-       
+
 
     if return_option_list:
         return new_options
@@ -6010,7 +6010,14 @@ class VSIFile(BytesIO):
 
         if arg_type == GAAT_STRING_LIST:
             if isinstance(value, list):
-                return self.SetAsStringList([str(v) for v in value])
+                if self.GetName() == "gcp" and len(value) >= 1 and \
+                   isinstance(value[0], list) and len(value[0]) >= 4 and \
+                   (isinstance(value[0][0], int) or isinstance(value[0][0], float)):
+                    return self.SetAsStringList([','.join(["%.17g" % x for x in v]) for v in value])
+                elif self.GetName() == "gcp" and len(value) >= 1 and isinstance(value[0], GCP):
+                    return self.SetAsStringList(["%.17g,%.17g,%.17g,%.17g,%.17g" % (gcp.GCPPixel, gcp.GCPLine, gcp.GCPX, gcp.GCPY, gcp.GCPZ) for gcp in value])
+                else:
+                    return self.SetAsStringList([str(v) for v in value])
             elif isinstance(value, dict):
                 return self.SetAsStringList([f"{k}={str(value[k])}" for k in value])
             else:
