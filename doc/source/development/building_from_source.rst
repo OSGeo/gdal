@@ -153,7 +153,7 @@ of the cloned GDAL repository.
 
     conda create -c conda-forge --only-deps -n gdal libgdal-core
     conda activate gdal
-    conda install setuptools swig pytest filelock numpy
+    conda install -c conda-forge setuptools swig pytest filelock numpy
     cmake -G Ninja -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DGDAL_USE_LIBKML=OFF ..
     . ../scripts/setdevenv.sh
     ninja
