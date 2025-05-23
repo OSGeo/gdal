@@ -55,9 +55,10 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
                             ok = true;
                         }
                     }
-                    else if (endptr &&
-                             ((endptr[0] == ' ' && endptr[1] == '%') ||
-                              endptr[0] == '%'))
+                    else if (endptr && ((endptr[0] == ' ' && endptr[1] == '%' &&
+                                         endptr + 2 == s.c_str() + s.size()) ||
+                                        (endptr[0] == '%' &&
+                                         endptr + 1 == s.c_str() + s.size())))
                     {
                         if (val >= 0)
                         {
