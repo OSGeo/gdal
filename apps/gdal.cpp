@@ -144,6 +144,8 @@ MAIN_START(argc, argv)
                                                                : argv[i]);
     CSLDestroy(argv);
 
+    alg->SetCalledFromCommandLine();
+
     if (!alg->ParseCommandLineArguments(args))
     {
         if (strstr(CPLGetLastErrorMsg(), "Do you mean") == nullptr)
@@ -162,8 +164,6 @@ MAIN_START(argc, argv)
     GDALProgressFunc pfnProgress =
         alg->IsProgressBarRequested() ? GDALTermProgress : nullptr;
     void *pProgressData = nullptr;
-
-    alg->SetCalledFromCommandLine();
 
     int ret = 0;
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())

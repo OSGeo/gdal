@@ -1721,6 +1721,8 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                     m_referencePath);
                 m_selectedSubAlg->m_executionForStreamOutput =
                     m_executionForStreamOutput;
+                m_selectedSubAlg->m_calledFromCommandLine =
+                    m_calledFromCommandLine;
                 bool bRet = m_selectedSubAlg->ParseCommandLineArguments(
                     std::vector<std::string>(args.begin() + 1, args.end()));
                 m_selectedSubAlg->PropagateSpecialActionTo(this);

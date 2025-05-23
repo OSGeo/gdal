@@ -425,6 +425,12 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         steps.back().args.push_back("streamed_dataset");
     }
 
+    if (IsCalledFromCommandLine())
+    {
+        for (auto &step : steps)
+            step.alg->SetCalledFromCommandLine();
+    }
+
     if (steps.size() < 2)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
