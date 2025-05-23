@@ -15,6 +15,11 @@
 
 #include "gdalalg_raster_pipeline.h"
 
+namespace gdal
+{
+class GCP;
+}
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -30,10 +35,11 @@ class GDALRasterEditAlgorithm /* non final */
     static constexpr const char *HELP_URL = "/programs/gdal_raster_edit.html";
 
     explicit GDALRasterEditAlgorithm(bool standaloneStep = false);
+    ~GDALRasterEditAlgorithm() override;
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    std::vector<gdal::GCP> ParseGCPs() const;
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only
     bool m_readOnly = false;          // standalone mode only
@@ -42,6 +48,7 @@ class GDALRasterEditAlgorithm /* non final */
     std::vector<std::string> m_metadata{};
     std::vector<std::string> m_unsetMetadata{};
     std::string m_nodata{};
+    std::vector<std::string> m_gcps{};
     bool m_stats = false;        // standalone mode only
     bool m_approxStats = false;  // standalone mode only
     bool m_hist = false;         // standalone mode only
