@@ -100,25 +100,27 @@ TEST(ViewshedInternal, shrinkbox)
         EXPECT_EQ(extent, expected);
     };
 
-    testExtent(3 * M_PI / 4, M_PI / 4, {-2, 2, -2, 0});
+    // Angles are standard (0 right going counter-clockwise
+    // We go clockwise from start to stop.
+    testExtent(3 * M_PI / 4, M_PI / 4, {-2, 3, -2, 1});
     testExtent(M_PI / 4, 3 * M_PI / 4, {-3, 3, -2, 2});
     testExtent(0.321750554, 2 * M_PI - 0.321750554,
-               {0, 3, -1, 1});  // <2, 1>, <2, -1>
+               {0, 3, -1, 2});  // <2, 1>, <2, -1>
     testExtent(2 * M_PI - 0.321750554, 0.321750554,
                {-3, 3, -2, 2});  // <2, -1>, <2, 1>
-    testExtent(7 * M_PI / 4, 5 * M_PI / 4, {-2, 2, 0, 2});
+    testExtent(7 * M_PI / 4, 5 * M_PI / 4, {-2, 3, 0, 2});
     testExtent(5 * M_PI / 4, 7 * M_PI / 4, {-3, 3, -2, 2});
     testExtent(M_PI + 0.321750554, M_PI - 0.321750554,
-               {-3, 0, -1, 1});  // <-2, -1>, <-2, 1>
+               {-3, 1, -1, 2});  // <-2, -1>, <-2, 1>
     testExtent(M_PI - 0.321750554, M_PI + 0.321750554,
                {-3, 3, -2, 2});                         // <-2, 1>, <-2, -1>
-    testExtent(M_PI / 4, 0.321750554, {0, 3, -2, 0});   // <2, 2>, <2, 1>
+    testExtent(M_PI / 4, 0.321750554, {0, 3, -2, 1});   // <2, 2>, <2, 1>
     testExtent(0.321750554, M_PI / 4, {-3, 3, -2, 2});  // <2, 1>, <2, 2>
     testExtent(M_PI / 4, 7 * M_PI / 4, {0, 3, -2, 2});
     testExtent(M_PI / 4, M_PI + 0.321750554,
                {-3, 3, -2, 2});  // <2, 2>, <-2, -1>
     testExtent(M_PI + 0.321750554, M_PI / 4,
-               {-3, 2, -2, 1});  // <-2, -1>, <2, 2>
+               {-3, 3, -2, 2});  // <-2, -1>, <2, 2>
 }
 
 }  // namespace viewshed
