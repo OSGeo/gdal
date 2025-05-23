@@ -888,6 +888,18 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 (nRasterXSize + panOverviewList[i] - 1) / panOverviewList[i];
             poOvrDS->nRasterYSize =
                 (nRasterYSize + panOverviewList[i] - 1) / panOverviewList[i];
+            poOvrDS->bGeoTransformSet = bGeoTransformSet;
+            memcpy(poOvrDS->adfGeoTransform, adfGeoTransform,
+                   6 * sizeof(double));
+            poOvrDS->adfGeoTransform[1] *=
+                static_cast<double>(nRasterXSize) / poOvrDS->nRasterXSize;
+            poOvrDS->adfGeoTransform[2] *=
+                static_cast<double>(nRasterXSize) / poOvrDS->nRasterXSize;
+            poOvrDS->adfGeoTransform[4] *=
+                static_cast<double>(nRasterYSize) / poOvrDS->nRasterYSize;
+            poOvrDS->adfGeoTransform[5] *=
+                static_cast<double>(nRasterYSize) / poOvrDS->nRasterYSize;
+            poOvrDS->m_oSRS = m_oSRS;
             for (int iBand = 0; iBand < nBands; iBand++)
             {
                 const GDALDataType eDT =
