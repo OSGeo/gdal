@@ -95,6 +95,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 
@@ -190,8 +191,8 @@ template <class T> struct GDALGeneric3x3ProcessingAlg
 
 template <class T> struct GDALGeneric3x3ProcessingAlg_multisample
 {
-    typedef int (*type)(const T *pafThreeLineWin, int nLine1Off, int nLine2Off,
-                        int nLine3Off, int nXSize, const void *pData,
+    typedef int (*type)(const T *pafFirstLine, const T *pafSecondLine,
+                        const T *pafThirdLine, int nXSize, const void *pData,
                         float *pafOutputBuf);
 };
 
@@ -325,7 +326,7 @@ static CPLErr GDALGeneric3x3Processing(
         static_cast<float *>(VSI_MALLOC2_VERBOSE(sizeof(float), nXSize));
     // 3 line rotating source buffer.
     T *pafThreeLineWin =
-        static_cast<T *>(VSI_MALLOC2_VERBOSE(3 * sizeof(T), nXSize + 1));
+        static_cast<T *>(VSI_MALLOC2_VERBOSE(3 * sizeof(T), nXSize));
     if (pafOutputBuf == nullptr || pafThreeLineWin == nullptr)
     {
         VSIFree(pafOutputBuf);
@@ -617,9 +618,9 @@ static CPLErr GDALGeneric3x3Processing(
         int j = 1;
         if (pfnAlg_multisample && !bOneOfThreeLinesHasNoData)
         {
-            j = pfnAlg_multisample(pafThreeLineWin, nLine1Off, nLine2Off,
-                                   nLine3Off, nXSize, pData.get(),
-                                   pafOutputBuf);
+            j = pfnAlg_multisample(
+                pafThreeLineWin + nLine1Off, pafThreeLineWin + nLine2Off,
+                pafThreeLineWin + nLine3Off, nXSize, pData.get(), pafOutputBuf);
         }
 
         for (; j < nXSize - 1; j++)
@@ -1036,10 +1037,11 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
 #ifdef HAVE_16_SSE_REG
 
 template <class T, class REG_T>
-static int
-GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
-                                      int nLine2Off, int nLine3Off, int nXSize,
-                                      const void *pData, float *pafOutputBuf)
+static int GDALHillshadeAlg_same_res_multisample(const T *pafFirstLine,
+                                                 const T *pafSecondLine,
+                                                 const T *pafThirdLine,
+                                                 int nXSize, const void *pData,
+                                                 float *pafOutputBuf)
 {
     // Only valid for T == int
     const GDALHillshadeAlgData *psData =
@@ -1059,9 +1061,9 @@ GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
     int j = 1;  // Used after for.
     for (; j < nXSize - 4; j += 4)
     {
-        const T *firstLine = pafThreeLineWin + nLine1Off + j - 1;
-        const T *secondLine = pafThreeLineWin + nLine2Off + j - 1;
-        const T *thirdLine = pafThreeLineWin + nLine3Off + j - 1;
+        const T *firstLine = pafFirstLine + j - 1;
+        const T *secondLine = pafSecondLine + j - 1;
+        const T *thirdLine = pafThirdLine + j - 1;
 
         const auto firstLine0 = REG_T::Load4Val(firstLine);
         const auto firstLine1 = REG_T::Load4Val(firstLine + 1);
@@ -2369,24 +2371,30 @@ template <class T> class GDALGeneric3x3Dataset : public GDALDataset
 {
     friend class GDALGeneric3x3RasterBand<T>;
 
-    typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg;
+    const typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg;
+    const typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+        pfnAlg_multisample;
     VSIVoidUniquePtr pAlgData{};
-    GDALDatasetH hSrcDS;
-    GDALRasterBandH hSrcBand;
-    T *apafSourceBuf[3];
-    int bDstHasNoData;
-    double dfDstNoDataValue;
-    int nCurLine;
-    bool bComputeAtEdges;
+    GDALDatasetH hSrcDS = nullptr;
+    GDALRasterBandH hSrcBand = nullptr;
+    std::array<T *, 3> apafSourceBuf = {nullptr, nullptr, nullptr};
+    std::array<bool, 3> abLineHasNoDataValue = {false, false, false};
+    std::unique_ptr<float, VSIFreeReleaser> pafOutputBuf{};
+    int bDstHasNoData = false;
+    double dfDstNoDataValue = 0;
+    int nCurLine = -1;
+    const bool bComputeAtEdges;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeneric3x3Dataset)
 
   public:
-    GDALGeneric3x3Dataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
-                          GDALDataType eDstDataType, int bDstHasNoData,
-                          double dfDstNoDataValue,
-                          typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
-                          VSIVoidUniquePtr pAlgData, bool bComputeAtEdges);
+    GDALGeneric3x3Dataset(
+        GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
+        GDALDataType eDstDataType, int bDstHasNoData, double dfDstNoDataValue,
+        typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
+        typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+            pfnAlg_multisample,
+        VSIVoidUniquePtr pAlgData, bool bComputeAtEdges);
     ~GDALGeneric3x3Dataset();
 
     bool InitOK() const
@@ -2428,10 +2436,12 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
     GDALDatasetH hSrcDSIn, GDALRasterBandH hSrcBandIn,
     GDALDataType eDstDataType, int bDstHasNoDataIn, double dfDstNoDataValueIn,
     typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlgIn,
+    typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+        pfnAlg_multisampleIn,
     VSIVoidUniquePtr pAlgDataIn, bool bComputeAtEdgesIn)
-    : pfnAlg(pfnAlgIn), pAlgData(std::move(pAlgDataIn)), hSrcDS(hSrcDSIn),
-      hSrcBand(hSrcBandIn), bDstHasNoData(bDstHasNoDataIn),
-      dfDstNoDataValue(dfDstNoDataValueIn), nCurLine(-1),
+    : pfnAlg(pfnAlgIn), pfnAlg_multisample(pfnAlg_multisampleIn),
+      pAlgData(std::move(pAlgDataIn)), hSrcDS(hSrcDSIn), hSrcBand(hSrcBandIn),
+      bDstHasNoData(bDstHasNoDataIn), dfDstNoDataValue(dfDstNoDataValueIn),
       bComputeAtEdges(bComputeAtEdgesIn)
 {
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
@@ -2449,6 +2459,11 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
     apafSourceBuf[2] =
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
+    if (pfnAlg_multisample && eDstDataType == GDT_Byte)
+    {
+        pafOutputBuf.reset(static_cast<float *>(
+            VSI_MALLOC2_VERBOSE(sizeof(float), nRasterXSize)));
+    }
 }
 
 template <class T> GDALGeneric3x3Dataset<T>::~GDALGeneric3x3Dataset()
@@ -2542,6 +2557,34 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 {
     auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
 
+    const auto UpdateLineNoDataFlag = [this, poGDS](int iLine)
+    {
+        if (bSrcHasNoData)
+        {
+            poGDS->abLineHasNoDataValue[iLine] = false;
+            for (int i = 0; i < nRasterXSize; ++i)
+            {
+                if constexpr (std::numeric_limits<T>::is_integer)
+                {
+                    if (poGDS->apafSourceBuf[iLine][i] == fSrcNoDataValue)
+                    {
+                        poGDS->abLineHasNoDataValue[iLine] = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (poGDS->apafSourceBuf[iLine][i] == fSrcNoDataValue ||
+                        std::isnan(poGDS->apafSourceBuf[iLine][i]))
+                    {
+                        poGDS->abLineHasNoDataValue[iLine] = true;
+                        break;
+                    }
+                }
+            }
+        }
+    };
+
     if (poGDS->bComputeAtEdges && nRasterXSize >= 2 && nRasterYSize >= 2)
     {
         if (nBlockYOff == 0)
@@ -2556,6 +2599,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     InitWithNoData(pImage);
                     return eErr;
                 }
+                UpdateLineNoDataFlag(i + 1);
             }
             poGDS->nCurLine = 0;
 
@@ -2610,6 +2654,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                         InitWithNoData(pImage);
                         return eErr;
                     }
+                    UpdateLineNoDataFlag(i + 1);
                 }
             }
 
@@ -2674,6 +2719,8 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                 InitWithNoData(pImage);
                 return eErr;
             }
+
+            UpdateLineNoDataFlag(2);
         }
         else
         {
@@ -2688,6 +2735,8 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     InitWithNoData(pImage);
                     return eErr;
                 }
+
+                UpdateLineNoDataFlag(i);
             }
         }
 
@@ -2772,7 +2821,28 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
         }
     }
 
-    for (int j = 1; j < nBlockXSize - 1; j++)
+    int j = 1;
+    if (poGDS->pfnAlg_multisample &&
+        (eDataType == GDT_Float32 || poGDS->pafOutputBuf) &&
+        !poGDS->abLineHasNoDataValue[0] && !poGDS->abLineHasNoDataValue[1] &&
+        !poGDS->abLineHasNoDataValue[2])
+    {
+        j = poGDS->pfnAlg_multisample(
+            poGDS->apafSourceBuf[0], poGDS->apafSourceBuf[1],
+            poGDS->apafSourceBuf[2], nRasterXSize, poGDS->pAlgData.get(),
+            poGDS->pafOutputBuf ? poGDS->pafOutputBuf.get()
+                                : static_cast<float *>(pImage));
+
+        if (poGDS->pafOutputBuf)
+        {
+            GDALCopyWords64(poGDS->pafOutputBuf.get() + 1, GDT_Float32,
+                            static_cast<int>(sizeof(float)),
+                            static_cast<GByte *>(pImage) + 1, GDT_Byte, 1,
+                            j - 1);
+        }
+    }
+
+    for (; j < nBlockXSize - 1; j++)
     {
         T afWin[9] = {
             poGDS->apafSourceBuf[0][j - 1], poGDS->apafSourceBuf[0][j],
@@ -3894,8 +3964,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 GDALGeneric3x3Dataset<GInt32> *poDS =
                     new GDALGeneric3x3Dataset<GInt32>(
                         hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
-                        dfDstNoDataValue, pfnAlgInt32, std::move(pData),
-                        psOptions->bComputeAtEdges);
+                        dfDstNoDataValue, pfnAlgInt32, pfnAlgInt32_multisample,
+                        std::move(pData), psOptions->bComputeAtEdges);
 
                 if (!(poDS->InitOK()))
                 {
@@ -3909,8 +3979,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 GDALGeneric3x3Dataset<float> *poDS =
                     new GDALGeneric3x3Dataset<float>(
                         hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
-                        dfDstNoDataValue, pfnAlgFloat, std::move(pData),
-                        psOptions->bComputeAtEdges);
+                        dfDstNoDataValue, pfnAlgFloat, pfnAlgFloat_multisample,
+                        std::move(pData), psOptions->bComputeAtEdges);
 
                 if (!(poDS->InitOK()))
                 {
