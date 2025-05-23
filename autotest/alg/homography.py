@@ -12,18 +12,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
-
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
 
 ###############################################################################
 # Test gdal.InvHomography()
@@ -52,16 +43,16 @@ def test_homography_1():
     assert res == pytest.approx(expected_inv_h, abs=1e-6), res
 
     h = (10, 1, 1, 20, 2, 2, 1, 0, 0)
-    res = gdal.InvHomography(h)
-    assert not res
+    with pytest.raises(Exception, match="null determinant"):
+        gdal.InvHomography(h)
 
     h = (10, 1e10, 1e10, 20, 2e10, 2e10, 1, 0, 0)
-    res = gdal.InvHomography(h)
-    assert not res
+    with pytest.raises(Exception, match="null determinant"):
+        gdal.InvHomography(h)
 
     h = (10, 1e-10, 1e-10, 20, 2e-10, 2e-10, 1, 0, 0)
-    res = gdal.InvHomography(h)
-    assert not res
+    with pytest.raises(Exception, match="null determinant"):
+        gdal.InvHomography(h)
 
     # Test fix for #1615
     h = (-2, 1e-8, 1e-9, 52, 1e-9, -1e-8, 1, 0, 0)
