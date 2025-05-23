@@ -86,6 +86,13 @@ def test_gdalalg_raster_hillshade_band():
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).Checksum() == 63031
 
+    with gdal.Run(
+        "raster", "hillshade", input=src_ds, band=2, output="", output_format="stream"
+    ) as alg:
+        out_ds = alg.Output()
+    del src_ds
+    assert out_ds.GetRasterBand(1).Checksum() == 63031
+
 
 @pytest.mark.require_driver("GDALG")
 def test_gdalalg_raster_hillshade_gdalg(tmp_vsimem):
