@@ -20,3 +20,10 @@ GDALDataset class
 .. doxygenclass:: GDALDataset
    :project: api
    :members:
+
+GDALRelationship class
+----------------------
+
+.. doxygenclass:: GDALRelationship
+   :project: api
+   :members:

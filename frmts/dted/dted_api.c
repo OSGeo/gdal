@@ -323,6 +323,9 @@ DTEDInfo *DTEDOpenEx(VSILFILE *fp, const char *pszFilename,
 
     DTEDDetectVariantWithMissingColumns(psDInfo);
 
+    psDInfo->bAssumeConformant =
+        CPLTestBool(CPLGetConfigOption("DTED_ASSUME_CONFORMANT", "NO"));
+
     return psDInfo;
 }
 
@@ -531,7 +534,8 @@ int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal)
         ** complement form for negatives.  For these, redo the job
         ** in twos complement.  eg. w_069_s50.dt0
         */
-        if ((*panVal < -16000) && (*panVal != DTED_NODATA_VALUE))
+        if (!psDInfo->bAssumeConformant && (*panVal < -16000) &&
+            (*panVal != DTED_NODATA_VALUE))
         {
             *panVal = (pabyData[0] << 8) | pabyData[1];
 
@@ -547,9 +551,13 @@ int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal)
 #endif
                     "The DTED driver found values less than -16000, and has "
                     "adjusted\n"
-                    "them assuming they are improperly two-complemented.  No "
-                    "more warnings\n"
-                    "will be issued in this session about this operation.");
+                    "them assuming they are improperly two-complemented.  If "
+                    "you wish to\n"
+                    "disable this behavior, set the DTED_ASSUME_CONFORMANT "
+                    "configuration\n"
+                    "option to YES. No more warnings will be issued in this "
+                    "session\n"
+                    "about this operation.");
             }
         }
     }

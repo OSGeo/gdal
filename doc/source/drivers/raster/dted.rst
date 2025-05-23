@@ -60,6 +60,17 @@ the default behavior of the DTED driver.
       If ``TRUE``, apply a pixel-is-point interpretation to the data when
       reading the geotransform.
 
+-  .. config:: DTED_ASSUME_CONFORMANT
+      :choices: TRUE, FALSE
+      :default: FALSE
+      :since: 3.12
+
+      If ``TRUE``, assume that the DTED file is conformant to the DTED
+      standard and not in two's complement form. This will cause the DTED
+      driver to skip the check for values less than -16000 and not change
+      them to signed magnitude - assuming they are two's complement before
+      the conversion.
+
 
 Read Issues
 -----------

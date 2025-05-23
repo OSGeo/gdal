@@ -85,6 +85,11 @@ static const char grib2_table_4_2_0_21_csv [] = {
             , 0
 };
 
+static const char grib2_table_4_2_0_22_csv [] = {
+    #embed "../../data/grib2_table_4_2_0_22.csv"
+            , 0
+};
+
 static const char grib2_table_4_2_0_3_csv [] = {
     #embed "../../data/grib2_table_4_2_0_3.csv"
             , 0
@@ -170,6 +175,11 @@ static const char grib2_table_4_2_20_2_csv [] = {
             , 0
 };
 
+static const char grib2_table_4_2_20_3_csv [] = {
+    #embed "../../data/grib2_table_4_2_20_3.csv"
+            , 0
+};
+
 static const char grib2_table_4_2_2_0_csv [] = {
     #embed "../../data/grib2_table_4_2_2_0.csv"
             , 0
@@ -192,6 +202,11 @@ static const char grib2_table_4_2_2_5_csv [] = {
 
 static const char grib2_table_4_2_2_6_csv [] = {
     #embed "../../data/grib2_table_4_2_2_6.csv"
+            , 0
+};
+
+static const char grib2_table_4_2_2_7_csv [] = {
+    #embed "../../data/grib2_table_4_2_2_7.csv"
             , 0
 };
 

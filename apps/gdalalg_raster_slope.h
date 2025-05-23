@@ -34,7 +34,7 @@ class GDALRasterSlopeAlgorithm /* non final */
     explicit GDALRasterSlopeAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     std::string m_unit = "degree";

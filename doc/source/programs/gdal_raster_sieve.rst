@@ -27,6 +27,9 @@ The input dataset is read as integer data which means that floating point
 values are rounded to integers. Re-scaling source data may be necessary in
 some cases (e.g. 32-bit floating point data with min=0 and max=1).
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
 Standard options
 ++++++++++++++++
 
@@ -58,6 +61,12 @@ Standard options
     all pixels in the mask band with a value other than zero
     will be considered suitable for inclusion in polygons.
 
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
 Examples
 --------

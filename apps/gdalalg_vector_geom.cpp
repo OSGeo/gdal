@@ -11,13 +11,13 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_geom.h"
-#include "gdalalg_vector_geom_set_type.h"
-#include "gdalalg_vector_geom_explode_collections.h"
-#include "gdalalg_vector_geom_make_valid.h"
-#include "gdalalg_vector_geom_segmentize.h"
-#include "gdalalg_vector_geom_simplify.h"
-#include "gdalalg_vector_geom_buffer.h"
-#include "gdalalg_vector_geom_swap_xy.h"
+#include "gdalalg_vector_set_geom_type.h"
+#include "gdalalg_vector_explode_collections.h"
+#include "gdalalg_vector_make_valid.h"
+#include "gdalalg_vector_segmentize.h"
+#include "gdalalg_vector_simplify.h"
+#include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_swap_xy.h"
 
 //! @cond Doxygen_Suppress
 
@@ -33,21 +33,34 @@ GDALVectorGeomAlgorithm::GDALVectorGeomAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep = */ false)
 {
-    RegisterSubAlgorithm<GDALVectorGeomSetTypeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomExplodeCollectionsAlgorithm>(
-        standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomMakeValidAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomSegmentizeAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomSimplifyAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomBufferAlgorithm>(standaloneStep);
-    RegisterSubAlgorithm<GDALVectorGeomSwapXYAlgorithm>(standaloneStep);
+    m_hidden = true;
+
+    RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorMakeValidAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorSimplifyAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorBufferAlgorithm>(standaloneStep);
+    RegisterSubAlgorithm<GDALVectorSwapXYAlgorithm>(standaloneStep);
+}
+
+/************************************************************************/
+/*              GDALVectorGeomAlgorithm::WarnIfDeprecated()             */
+/************************************************************************/
+
+void GDALVectorGeomAlgorithm::WarnIfDeprecated()
+{
+    ReportError(CE_Warning, CPLE_AppDefined,
+                "'gdal vector geom' is deprecated in GDAL 3.12, and will be "
+                "removed in GDAL 3.13. Is subcommands are directly available "
+                "under 'gdal vector'");
 }
 
 /************************************************************************/
 /*                GDALVectorGeomAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorGeomAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
@@ -77,7 +90,8 @@ GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
 /*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorGeomAbstractAlgorithm::RunStep(
+    GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

@@ -10,13 +10,17 @@ STACIT - Spatio-Temporal Asset Catalog Items
 
 .. built_in_by_default::
 
-This driver supports opening STAC API ItemCollections, with the input usually being a `STAC API search query <https://github.com/radiantearth/stac-api-spec/tree/main/item-search>`_ or the results saved as a JSON file. Items in the response must include projection information following the `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_.
+This driver supports opening STAC API ItemCollections, with the input usually being a `STAC API search query <https://github.com/radiantearth/stac-api-spec/tree/main/item-search>`_
+or the results saved as a JSON file. Items in the response must include projection information following the
+`Projection Extension Specification <https://github.com/stac-extensions/projection/>`_.
 It builds a virtual mosaic from the items.
 
 A STACIT dataset which has no subdatasets is actually a :ref:`raster.vrt` dataset.
 Thus, translating it into VRT will result in a VRT file that directly references the items.
 
-Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_ are not the same as  `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_. STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
+Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_
+are not the same as  `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_.
+STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
 
 Open syntax
 -----------
@@ -108,16 +112,49 @@ Examples
 List the subdatasets associated to a `STAC search <https://github.com/radiantearth/stac-api-spec/tree/master/item-search>`_
 on a given collection, bbox and starting from a datetime:
 
-::
+.. tabs::
+
+   .. code-tab:: bash
 
     gdalinfo "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\""
+    # from GDAL 3.11+
+    gdal raster info "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\""
 
+
+   .. code-tab:: ps1
+
+    gdalinfo 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\"'
+    # from GDAL 3.11+
+    gdal raster info 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\"'
+
+   .. group-tab:: Python
+
+      .. literalinclude :: examples/drivers/raster/stacit.py
+         :language: python
+         :start-after: # Example 1
+         :end-before: # Example 2
 
 Open a subdataset returned by the above request:
 
-::
+.. tabs::
+
+   .. code-tab:: bash
 
     gdalinfo "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image"
+    # from GDAL 3.11+
+    gdal raster info "STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image"
+
+   .. code-tab:: ps1
+
+    gdalinfo 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image'
+    # from GDAL 3.11+
+    gdal raster info 'STACIT:\"https://planetarycomputer.microsoft.com/api/stac/v1/search?collections=naip&bbox=-100,40,-99,41&datetime=2019-01-01T00:00:00Z%2F..\":asset=image'
+
+   .. group-tab:: Python
+
+      .. literalinclude :: examples/drivers/raster/stacit.py
+         :language: python
+         :start-after: # Example 2
 
 
 See Also

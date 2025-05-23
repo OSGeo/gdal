@@ -2841,6 +2841,9 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { (const char* name_null_ok) };
+#endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed",
                       OGRFieldType field_type=OFTString) {
     if (ValidateOGRFieldType(field_type))
@@ -2848,10 +2851,19 @@ public:
     else
         return NULL;
   }
+#ifdef SWIGCSHARP
+  %clear (const char* name_null_ok );
+#endif
 
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { const char * GetName };
+#endif
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
   }
+#ifdef SWIGCSHARP
+  %clear (const char * GetName );
+#endif
 
 #ifdef SWIGJAVA
   StringAsByteArray* GetNameAsByteArray() {
@@ -2863,9 +2875,17 @@ public:
     return OGR_Fld_GetNameRef(self);
   }
 
+#ifdef SWIGCSHARP
+  %apply ( const char *utf8_path ) { (const char* name) };
+#endif
+
   void SetName( const char* name) {
     OGR_Fld_SetName(self, name);
   }
+
+#ifdef SWIGCSHARP
+  %clear (const char* name );
+#endif
 
   const char * GetAlternativeName() {
     return OGR_Fld_GetAlternativeNameRef(self);

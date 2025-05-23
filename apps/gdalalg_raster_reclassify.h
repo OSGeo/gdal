@@ -33,7 +33,7 @@ class GDALRasterReclassifyAlgorithm : public GDALRasterPipelineStepAlgorithm
     explicit GDALRasterReclassifyAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::string m_mapping{};
     std::string m_type{};

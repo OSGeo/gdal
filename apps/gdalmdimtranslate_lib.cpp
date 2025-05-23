@@ -798,7 +798,20 @@ static bool ParseArraySpec(const std::string &arraySpec, std::string &srcName,
                 CSLTokenizeString2(transposeExpr.c_str(), ",", 0));
             for (int i = 0; i < aosAxis.size(); ++i)
             {
-                anTransposedAxis.push_back(atoi(aosAxis[i]));
+                int iAxis = atoi(aosAxis[i]);
+                // check for non-integer characters
+                if (iAxis == 0)
+                {
+                    if (!EQUAL(aosAxis[i], "0"))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid value for axis in transpose: %s",
+                                 aosAxis[i]);
+                        return false;
+                    }
+                }
+
+                anTransposedAxis.push_back(iAxis);
             }
         }
         else if (STARTS_WITH(token.c_str(), "view="))

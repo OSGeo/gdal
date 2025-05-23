@@ -175,16 +175,16 @@ It is important that there be no spaces or other content before the
 +-----------------------------------+-----------------------------------+
 | <GDAL_WMTS>                       |                                   |
 +-----------------------------------+-----------------------------------+
-| <GetCapabilitiesUrl>http://foo/WM | URL (or filename for local files) |
-| TSCapabilities.xml</GetCapabiliti | to GetCapabilities response       |
-| esUrl>                            | document (required). For a KVP    |
+| <GetCapabilitiesUrl>              | URL (or filename for local files) |
+| http://foo/WMTSCapabilities.xml   | to GetCapabilities response       |
+| </GetCapabilitiesUrl>             | document (required). For a KVP    |
 |                                   | only server, will be like         |
 |                                   | http://end_point?SERVICE=WMTS&amp |
 |                                   | ;REQUEST=GetCapabilities          |
 |                                   | .                                 |
 +-----------------------------------+-----------------------------------+
 | <ExtraQueryParameters>foo=bar&amp;| URL query parameters to add to    |
-|                                   | all requests (GetCapabilities,    |
+| </ExtraQueryParameters>           | all requests (GetCapabilities,    |
 |                                   | GetTile, GetFeatureInfo)          |
 |                                   | (added in GDAL 3.5.1)             |
 +-----------------------------------+-----------------------------------+
@@ -204,8 +204,8 @@ It is important that there be no spaces or other content before the
 |                                   | may be needed to disambiguate     |
 |                                   | between several tile matrix sets) |
 +-----------------------------------+-----------------------------------+
-| <TileMatrix>tile_matrix_id</TileM | Tile Matrix identifier. Must be   |
-| atrix>                            | one of the listed tile matrix of  |
+| <TileMatrix>tile_matrix_id        | Tile Matrix identifier. Must be   |
+| </TileMatrix>                     | one of the listed tile matrix of  |
 |                                   | the select tile matrix set for    |
 |                                   | the layer. (optional, GDAL >=     |
 |                                   | 2.2. Exclusive with ZoomLevel. If |
@@ -229,8 +229,8 @@ It is important that there be no spaces or other content before the
 |                                   | disambiguate between several      |
 |                                   | Format)                           |
 +-----------------------------------+-----------------------------------+
-| <InfoFormat>application/xml</Info | Info format, used by              |
-| Format>                           | GetFeatureInfo requests. Must be  |
+| <InfoFormat>application/xml       | Info format, used by              |
+| </InfoFormat>                     | GetFeatureInfo requests. Must be  |
 |                                   | one of the listed InfoFormat for  |
 |                                   | the layer. (optional, but may be  |
 |                                   | needed to disambiguate between    |
@@ -267,8 +267,8 @@ It is important that there be no spaces or other content before the
 +-----------------------------------+-----------------------------------+
 | </DataWindow>                     |                                   |
 +-----------------------------------+-----------------------------------+
-| <Projection>EPSG:4326</Projection | Declared projection, in case the  |
-| >                                 | one of the TileMatrixSet is not   |
+| <Projection>EPSG:4326             | Declared projection, in case the  |
+| </Projection>                     | one of the TileMatrixSet is not   |
 |                                   | desirable (optional, defaults to  |
 |                                   | value of the TileMatrixSet)       |
 +-----------------------------------+-----------------------------------+
@@ -281,8 +281,8 @@ It is important that there be no spaces or other content before the
 |                                   | Float32, Float64, etc..           |
 |                                   | (optional, defaults to Byte)      |
 +-----------------------------------+-----------------------------------+
-| <ExtendBeyondDateLine>false</Exte | Whether to make the extent go     |
-| ndBeyondDateLine>                 | over dateline and warp tile       |
+| <ExtendBeyondDateLine>false       | Whether to make the extent go     |
+| </ExtendBeyondDateLine>           | over dateline and warp tile       |
 |                                   | requests. Only appropriate when   |
 |                                   | the 2 following conditions are    |
 |                                   | met (optional, defaults to        |
@@ -352,8 +352,8 @@ It is important that there be no spaces or other content before the
 +-----------------------------------+-----------------------------------+
 | </Cache>                          |                                   |
 +-----------------------------------+-----------------------------------+
-| <MaxConnections>2</MaxConnections | Maximum number of simultaneous    |
-| >                                 | connections. (optional, defaults  |
+| <MaxConnections>2                 | Maximum number of simultaneous    |
+| </MaxConnections                  | connections. (optional, defaults  |
 |                                   | to 2)                             |
 +-----------------------------------+-----------------------------------+
 | <Timeout>300</Timeout>            | Connection timeout in seconds.    |
@@ -365,12 +365,11 @@ It is important that there be no spaces or other content before the
 |                                   | (optional, defaults to false)     |
 +-----------------------------------+-----------------------------------+
 | <UserAgent>GDAL WMS driver        | HTTP User-agent string. Some      |
-| (http://www.gdal.org/frmt_wms.htm | servers might require a           |
-| l)</UserAgent>                    | well-known user-agent such as     |
+| (http://gdal.org/frmt_wms.html)   | servers might require a           |
+| </UserAgent>                      | well-known user-agent such as     |
 |                                   | "Mozilla/5.0" (optional, defaults |
 |                                   | to "GDAL WMS driver               |
-|                                   | (http://www.gdal.org/frmt_wms.htm |
-|                                   | l)").                             |
+|                                   | (http://gdal.org/frmt_wms.html)   |
 +-----------------------------------+-----------------------------------+
 | <Accept>mimetype>/Accept>         | HTTP Accept header to specify the |
 |                                   | MIME type of the expected output  |
@@ -387,11 +386,11 @@ It is important that there be no spaces or other content before the
 |                                   | to false, but set to true in      |
 |                                   | autogenerated XML).               |
 +-----------------------------------+-----------------------------------+
-| <Referer>http://example.foo/</Ref | HTTP Referer string. Some servers |
-| erer>                             | might require it (optional).      |
+| <Referer>http://example.foo/      | HTTP Referer string. Some servers |
+| </Referer>                        | might require it (optional).      |
 +-----------------------------------+-----------------------------------+
-| <ZeroBlockHttpCodes>204,404</Zero | Comma separated list of HTTP      |
-| BlockHttpCodes>                   | response codes that will be       |
+| <ZeroBlockHttpCodes>204,404       | Comma separated list of HTTP      |
+| </ZeroBlockHttpCodes>             | response codes that will be       |
 |                                   | interpreted as a 0 filled image   |
 |                                   | (i.e. black for 3 bands, and      |
 |                                   | transparent for 4 bands) instead  |
@@ -400,16 +399,14 @@ It is important that there be no spaces or other content before the
 |                                   | but set to 204,404 in             |
 |                                   | autogenerated XML)                |
 +-----------------------------------+-----------------------------------+
-| <ZeroBlockOnServerException>true< | Whether to treat a Service        |
-| /ZeroBlockOnServerException>      | Exception returned by the server  |
+| <ZeroBlockOnServerException>true  | Whether to treat a Service        |
+| </ZeroBlockOnServerException>     | Exception returned by the server  |
 |                                   | as a 0 filled image instead of    |
 |                                   | aborting the request. (optional,  |
 |                                   | defaults to false, but set to     |
 |                                   | true in autogenerated XML)        |
 +-----------------------------------+-----------------------------------+
 | </GDAL_WMTS>                      |                                   |
-+-----------------------------------+-----------------------------------+
-|                                   |                                   |
 +-----------------------------------+-----------------------------------+
 
 Starting with GDAL 2.3, additional HTTP headers can be sent by setting the

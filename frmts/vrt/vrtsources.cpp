@@ -42,15 +42,6 @@
 
 // #define DEBUG_VERBOSE 1
 
-// See #5459
-#ifdef isnan
-#define HAS_ISNAN_MACRO
-#endif
-#include <algorithm>
-#if defined(HAS_ISNAN_MACRO) && !defined(isnan)
-#define isnan std::isnan
-#endif
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             VRTSource                                */
@@ -232,6 +223,19 @@ void VRTSimpleSource::SetSrcBand(GDALRasterBand *poNewSrcBand)
         m_aosOpenOptions = CSLDuplicate(poDS->GetOpenOptions());
         m_aosOpenOptionsOri = m_aosOpenOptions;
     }
+}
+
+/************************************************************************/
+/*                      SetSourceDatasetName()                          */
+/************************************************************************/
+
+void VRTSimpleSource::SetSourceDatasetName(const char *pszFilename,
+                                           bool bRelativeToVRT)
+{
+    CPLAssert(m_nBand >= 0);
+    m_osSrcDSName = pszFilename;
+    m_osSourceFileNameOri = pszFilename;
+    m_bRelativeToVRTOri = bRelativeToVRT;
 }
 
 /************************************************************************/
@@ -896,7 +900,6 @@ bool VRTSimpleSource::IsSameExceptBandNumber(
            m_dfDstYOff == poOtherSource->m_dfDstYOff &&
            m_dfDstXSize == poOtherSource->m_dfDstXSize &&
            m_dfDstYSize == poOtherSource->m_dfDstYSize &&
-           !m_osSrcDSName.empty() &&
            m_osSrcDSName == poOtherSource->m_osSrcDSName;
 }
 
@@ -1365,6 +1368,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     {
         psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
         psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+        psExtraArg->bUseOnlyThisScale = psExtraArgIn->bUseOnlyThisScale;
     }
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +

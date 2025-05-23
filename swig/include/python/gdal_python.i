@@ -1877,6 +1877,13 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
     return ret
 %}
 
+%pythoncode %{
+  def GetDataTypes(self):
+      """Return data types associated with that group (typically enumerations)
+      """
+      return [self.GetDataType(i) for i in range(self.GetDataTypeCount())]
+%}
+
 }
 
 %extend GDALMDArrayHS {
@@ -4604,6 +4611,9 @@ def BuildVRTOptions(options=None,
                     hideNodata=None,
                     nodataMaxMaskThreshold=None,
                     strict=False,
+                    writeAbsolutePath=False,
+                    pixelFunction=None,
+                    pixelFunctionArgs=None,
                     creationOptions=None,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
@@ -4645,8 +4655,16 @@ def BuildVRTOptions(options=None,
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
+    pixelFunction: str
+        a pixel function to use to calculate output pixel values when multiple
+        sources overlap. For a list of available pixel functions, see
+        :ref:`builtin_pixel_functions`.
+    pixelFunctionArgs:
+        list or dict of pixel function arguments
     creationOptions:
         list or dict of creation options
+    writeAbsolutePath:
+        Enables writing the absolute path of the input datasets. By default, input filenames are written in a relative way with respect to the VRT filename (when possible)
     callback:
         callback method.
     callback_data:
@@ -4699,8 +4717,22 @@ def BuildVRTOptions(options=None,
             new_options += ['-hidenodata']
         if strict:
             new_options += ['-strict']
+        if writeAbsolutePath:
+            new_options += ['-write_absolute_path']
         if creationOptions is not None:
             _addCreationOptions(new_options, creationOptions)
+        if pixelFunction:
+            new_options += ['-pixel-function', pixelFunction]
+        if pixelFunctionArgs:
+            if isinstance(pixelFunctionArgs, str):
+                new_options += ['-pixel-function-arg', pixelFunctionArgs]
+            elif isinstance(pixelFunctionArgs, dict):
+                for k, v in pixelFunctionArgs.items():
+                    new_options += ['-pixel-function-arg', f'{k}={v}']
+            else:
+                for opt in pixelFunctionArgs:
+                    new_options += ['-pixel-function-arg', opt]
+       
 
     if return_option_list:
         return new_options

@@ -433,11 +433,15 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
-    static VRTDataset *OpenXML(const char *, const char * = nullptr,
-                               GDALAccess eAccess = GA_ReadOnly);
+    static std::unique_ptr<VRTDataset>
+    OpenXML(const char *, const char * = nullptr,
+            GDALAccess eAccess = GA_ReadOnly);
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
                                char **papszOptions);
+    static std::unique_ptr<VRTDataset>
+    CreateVRTDataset(const char *pszName, int nXSize, int nYSize, int nBands,
+                     GDALDataType eType, CSLConstList papszOptions);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
@@ -1171,12 +1175,13 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     bool InitializePython();
     CPLErr
     GetPixelFunctionArguments(const CPLString &,
+                              const std::vector<int> &anMapBufferIdxToSourceIdx,
                               std::vector<std::pair<CPLString, CPLString>> &);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDerivedRasterBand)
 
   public:
-    char *pszFuncName;
+    CPLString osFuncName{};
     GDALDataType eSourceTransferType;
 
     using PixelFunc =
@@ -1207,6 +1212,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     GetPixelFunction(const char *pszFuncNameIn);
 
     void SetPixelFunctionName(const char *pszFuncNameIn);
+    void AddPixelFunctionArgument(const char *pszArg, const char *pszValue);
+    void SetSkipNonContributingSources(bool bSkip);
     void SetSourceTransferType(GDALDataType eDataType);
     void SetPixelFunctionLanguage(const char *pszLanguage);
 
@@ -1290,6 +1297,7 @@ class VRTDriver final : public GDALDriver
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTDriver)
 
+    std::mutex m_oMutex{};
     std::map<std::string, VRTSourceParser> m_oMapSourceParser{};
 
   public:
@@ -1336,6 +1344,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
   protected:
     friend class VRTSourcedRasterBand;
+    friend class VRTDerivedRasterBand;
     friend class VRTDataset;
     friend class GDALTileIndexDataset;
     friend class GDALTileIndexBand;
@@ -1429,6 +1438,9 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     {
         return m_osSrcDSName;
     }
+
+    // Must be called after SetSrcBand()
+    void SetSourceDatasetName(const char *pszFilename, bool bRelativeToVRT);
 
     const CPLString &GetResampling() const
     {

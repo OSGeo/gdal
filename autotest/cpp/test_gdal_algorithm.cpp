@@ -23,6 +23,7 @@
 
 #include "gtest_include.h"
 
+#include <algorithm>
 #include <limits>
 
 namespace test_gdal_algorithm
@@ -2144,6 +2145,24 @@ TEST_F(test_gdal_algorithm, vector_int)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
 }
 
 TEST_F(test_gdal_algorithm, vector_int_validation_fails)
@@ -2200,6 +2219,24 @@ TEST_F(test_gdal_algorithm, vector_double)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=1,foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
@@ -4658,6 +4695,52 @@ TEST_F(test_gdal_algorithm, AddNumThreadsArg)
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"num-threads=2147483648"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddAppendLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddAppendLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: --update argument must exist for --append, even if hidden");
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddOverwriteLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddOverwriteLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: --update argument must exist for "
+                     "--overwrite-layer, even if hidden");
     }
 }
 

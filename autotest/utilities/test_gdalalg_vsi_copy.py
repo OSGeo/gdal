@@ -20,20 +20,6 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vsi"]["copy"]
 
 
-def test_gdalalg_vsi_copy_empty_source():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Source filename cannot be empty"):
-        alg["source"] = ""
-
-
-def test_gdalalg_vsi_copy_empty_destination():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Destination filename cannot be empty"):
-        alg["destination"] = ""
-
-
 def test_gdalalg_vsi_copy_single_dir_destination(tmp_vsimem):
 
     alg = get_alg()

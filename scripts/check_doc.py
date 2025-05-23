@@ -13,27 +13,28 @@ for subdir in ("raster", "vector"):
     dirname = os.path.join(doc_source, "drivers", subdir)
     for f in os.listdir(dirname):
         filename = os.path.join(dirname, f)
-        shortnames = []
-        supports_create = False
-        supports_createcopy = False
-        for l in open(filename, "rt").readlines():
-            if l.startswith(".. shortname:: "):
-                shortnames.append(l[len(".. shortname:: ") : -1])
-            elif "supports_create::" in l:
-                supports_create = True
-            elif "supports_createcopy::" in l:
-                supports_createcopy = True
-        for shortname in shortnames:
-            d = {}
-            if supports_create:
-                d["supports_create"] = True
-            if supports_createcopy:
-                d["supports_createcopy"] = True
-            if shortname.upper() in map_doc_caps:
-                assert subdir == "vector"
-                map_doc_caps["OGR_" + shortname.upper()] = d
-            else:
-                map_doc_caps[shortname.upper()] = d
+        if os.path.isfile(filename):
+            shortnames = []
+            supports_create = False
+            supports_createcopy = False
+            for l in open(filename, "rt").readlines():
+                if l.startswith(".. shortname:: "):
+                    shortnames.append(l[len(".. shortname:: ") : -1])
+                elif "supports_create::" in l:
+                    supports_create = True
+                elif "supports_createcopy::" in l:
+                    supports_createcopy = True
+            for shortname in shortnames:
+                d = {}
+                if supports_create:
+                    d["supports_create"] = True
+                if supports_createcopy:
+                    d["supports_createcopy"] = True
+                if shortname.upper() in map_doc_caps:
+                    assert subdir == "vector"
+                    map_doc_caps["OGR_" + shortname.upper()] = d
+                else:
+                    map_doc_caps[shortname.upper()] = d
 
 for i in range(gdal.GetDriverCount()):
     drv = gdal.GetDriver(i)
@@ -87,7 +88,7 @@ for i in range(gdal.GetDriverCount()):
         ), f"Driver {shortname} declares DCAP_CREATECOPY but doc does not!"
     else:
         if not drv.GetMetadataItem(gdal.DCAP_CREATE):
-            if shortname == "JP2MrSID":
+            if shortname in ("AVIF", "JP2MrSID"):
                 continue  # build dependent
             assert (
                 "supports_createcopy" not in doc_caps

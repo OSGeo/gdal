@@ -22,6 +22,7 @@
 #endif
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -189,39 +190,6 @@ VSIArchiveEntryFileOffset *VSITarReader::GetFileOffset()
     return new VSITarEntryFileOffset(nCurOffset);
 }
 
-#ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-
-/************************************************************************/
-/*                           CPLmemmem()                                */
-/************************************************************************/
-
-static void *CPLmemmem(const void *haystack, size_t haystacklen,
-                       const void *needle, size_t needlelen)
-{
-    const char *pachHaystack = reinterpret_cast<const char *>(haystack);
-    if (haystacklen < needlelen)
-        return nullptr;
-    while (true)
-    {
-        const char *pachSubstrStart = reinterpret_cast<const char *>(
-            memchr(pachHaystack, reinterpret_cast<const char *>(needle)[0],
-                   haystacklen));
-        if (pachSubstrStart == nullptr)
-            return nullptr;
-        if (static_cast<size_t>(pachSubstrStart - pachHaystack) + needlelen >
-            haystacklen)
-            return nullptr;
-        if (memcmp(pachSubstrStart, needle, needlelen) == 0)
-        {
-            return const_cast<void *>(
-                static_cast<const void *>(pachSubstrStart));
-        }
-        haystacklen -= pachSubstrStart - pachHaystack + 1;
-        pachHaystack = pachSubstrStart + 1;
-    }
-}
-#endif
-
 /************************************************************************/
 /*                       IsNumericFieldTerminator()                     */
 /************************************************************************/
@@ -284,17 +252,18 @@ int VSITarReader::GotoNextFile()
                 }
             }
 
-            void *pNewFileMarker = CPLmemmem(
-                m_abyBuffer + m_abyBufferIdx, m_abyBufferSize - m_abyBufferIdx,
-                "***NEWFILE***:", nNewFileMarkerSize);
-            if (pNewFileMarker == nullptr)
+            std::string_view abyBuffer(reinterpret_cast<char *>(m_abyBuffer),
+                                       m_abyBufferSize);
+            const auto posNewFile = abyBuffer.find(
+                std::string_view("***NEWFILE***:", nNewFileMarkerSize),
+                m_abyBufferIdx);
+            if (posNewFile == std::string::npos)
             {
                 m_abyBufferIdx = m_abyBufferSize;
             }
             else
             {
-                m_abyBufferIdx = static_cast<int>(
-                    static_cast<const GByte *>(pNewFileMarker) - m_abyBuffer);
+                m_abyBufferIdx = static_cast<int>(posNewFile);
                 // 2: space for at least one-char filename and '\n'
                 if (m_abyBufferIdx < m_abyBufferSize - (nNewFileMarkerSize + 2))
                 {

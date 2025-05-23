@@ -16,6 +16,14 @@
 #include "vrtdataset.h"
 #include "vrtexpression.h"
 #include "vrtreclassifier.h"
+#include "cpl_float.h"
+
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+#define USE_SSE2
+#include "gdalsse_priv.h"
+#endif
+
+#include "gdal_priv_templates.hpp"
 
 #include <limits>
 
@@ -65,6 +73,11 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
             break;
     }
     return 0;
+}
+
+static bool IsNoData(double dfVal, double dfNoData)
+{
+    return dfVal == dfNoData || (std::isnan(dfVal) && std::isnan(dfNoData));
 }
 
 static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName,
@@ -478,10 +491,426 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ConjPixelFunc
 
+#ifdef USE_SSE2
+
+/************************************************************************/
+/*                        OptimizedSumToFloat_SSE2()                    */
+/************************************************************************/
+
+template <typename Tsrc>
+static void OptimizedSumToFloat_SSE2(double dfK, void *pOutBuffer,
+                                     int nLineSpace, int nXSize, int nYSize,
+                                     int nSources,
+                                     const void *const *papoSources)
+{
+    const XMMReg4Float cst = XMMReg4Float::Set1(static_cast<float>(dfK));
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        float *CPL_RESTRICT const pDest = reinterpret_cast<float *>(
+            static_cast<GByte *>(pOutBuffer) +
+            static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+        constexpr int VALUES_PER_REG = 4;
+        constexpr int UNROLLING = 4 * VALUES_PER_REG;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+        {
+            XMMReg4Float d0(cst);
+            XMMReg4Float d1(cst);
+            XMMReg4Float d2(cst);
+            XMMReg4Float d3(cst);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                XMMReg4Float t0, t1, t2, t3;
+                XMMReg4Float::Load16Val(
+                    static_cast<const Tsrc * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol,
+                    t0, t1, t2, t3);
+                d0 += t0;
+                d1 += t1;
+                d2 += t2;
+                d3 += t3;
+            }
+            d0.Store4Val(pDest + iCol + VALUES_PER_REG * 0);
+            d1.Store4Val(pDest + iCol + VALUES_PER_REG * 1);
+            d2.Store4Val(pDest + iCol + VALUES_PER_REG * 2);
+            d3.Store4Val(pDest + iCol + VALUES_PER_REG * 3);
+        }
+
+        for (; iCol < nXSize; iCol++)
+        {
+            float d = static_cast<float>(dfK);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                d += static_cast<const Tsrc * CPL_RESTRICT>(
+                    papoSources[iSrc])[iOffsetLine + iCol];
+            }
+            pDest[iCol] = d;
+        }
+    }
+}
+
+/************************************************************************/
+/*                       OptimizedSumToDouble_SSE2()                    */
+/************************************************************************/
+
+template <typename Tsrc>
+static void OptimizedSumToDouble_SSE2(double dfK, void *pOutBuffer,
+                                      int nLineSpace, int nXSize, int nYSize,
+                                      int nSources,
+                                      const void *const *papoSources)
+{
+    const XMMReg4Double cst = XMMReg4Double::Set1(dfK);
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        double *CPL_RESTRICT const pDest = reinterpret_cast<double *>(
+            static_cast<GByte *>(pOutBuffer) +
+            static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+        constexpr int VALUES_PER_REG = 4;
+        constexpr int UNROLLING = 2 * VALUES_PER_REG;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+        {
+            XMMReg4Double d0(cst);
+            XMMReg4Double d1(cst);
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                XMMReg4Double t0, t1;
+                XMMReg4Double::Load8Val(
+                    static_cast<const Tsrc * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol,
+                    t0, t1);
+                d0 += t0;
+                d1 += t1;
+            }
+            d0.Store4Val(pDest + iCol + VALUES_PER_REG * 0);
+            d1.Store4Val(pDest + iCol + VALUES_PER_REG * 1);
+        }
+
+        for (; iCol < nXSize; iCol++)
+        {
+            double d = dfK;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                d += static_cast<const Tsrc * CPL_RESTRICT>(
+                    papoSources[iSrc])[iOffsetLine + iCol];
+            }
+            pDest[iCol] = d;
+        }
+    }
+}
+
+#endif  // USE_SSE2
+
+/************************************************************************/
+/*                       OptimizedSumPackedOutput()                     */
+/************************************************************************/
+
+template <typename Tsrc, typename Tdest>
+static void OptimizedSumPackedOutput(double dfK, void *pOutBuffer,
+                                     int nLineSpace, int nXSize, int nYSize,
+                                     int nSources,
+                                     const void *const *papoSources)
+{
+#ifdef USE_SSE2
+    if constexpr (std::is_same_v<Tdest, float> && !std::is_same_v<Tsrc, double>)
+    {
+        OptimizedSumToFloat_SSE2<Tsrc>(dfK, pOutBuffer, nLineSpace, nXSize,
+                                       nYSize, nSources, papoSources);
+    }
+    else if constexpr (std::is_same_v<Tdest, double>)
+    {
+        OptimizedSumToDouble_SSE2<Tsrc>(dfK, pOutBuffer, nLineSpace, nXSize,
+                                        nYSize, nSources, papoSources);
+    }
+    else
+#endif  // USE_SSE2
+    {
+        const Tdest nCst = static_cast<Tdest>(dfK);
+        for (int iLine = 0; iLine < nYSize; ++iLine)
+        {
+            Tdest *CPL_RESTRICT const pDest = reinterpret_cast<Tdest *>(
+                static_cast<GByte *>(pOutBuffer) +
+                static_cast<GSpacing>(nLineSpace) * iLine);
+            const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+
+#define LOAD_SRCVAL(iSrc_, j_)                                                 \
+    static_cast<Tdest>(static_cast<const Tsrc * CPL_RESTRICT>(                 \
+        papoSources[(iSrc_)])[iOffsetLine + iCol + (j_)])
+
+            constexpr int UNROLLING = 4;
+            int iCol = 0;
+            for (; iCol < nXSize - (UNROLLING - 1); iCol += UNROLLING)
+            {
+                Tdest d[4] = {nCst, nCst, nCst, nCst};
+                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                {
+                    d[0] += LOAD_SRCVAL(iSrc, 0);
+                    d[1] += LOAD_SRCVAL(iSrc, 1);
+                    d[2] += LOAD_SRCVAL(iSrc, 2);
+                    d[3] += LOAD_SRCVAL(iSrc, 3);
+                }
+                pDest[iCol + 0] = d[0];
+                pDest[iCol + 1] = d[1];
+                pDest[iCol + 2] = d[2];
+                pDest[iCol + 3] = d[3];
+            }
+            for (; iCol < nXSize; iCol++)
+            {
+                Tdest d0 = nCst;
+                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                {
+                    d0 += LOAD_SRCVAL(iSrc, 0);
+                }
+                pDest[iCol] = d0;
+            }
+#undef LOAD_SRCVAL
+        }
+    }
+}
+
+/************************************************************************/
+/*                       OptimizedSumPackedOutput()                     */
+/************************************************************************/
+
+template <typename Tdest>
+static bool OptimizedSumPackedOutput(GDALDataType eSrcType, double dfK,
+                                     void *pOutBuffer, int nLineSpace,
+                                     int nXSize, int nYSize, int nSources,
+                                     const void *const *papoSources)
+{
+    switch (eSrcType)
+    {
+        case GDT_Byte:
+            OptimizedSumPackedOutput<uint8_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_UInt16:
+            OptimizedSumPackedOutput<uint16_t, Tdest>(
+                dfK, pOutBuffer, nLineSpace, nXSize, nYSize, nSources,
+                papoSources);
+            return true;
+
+        case GDT_Int16:
+            OptimizedSumPackedOutput<int16_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_Int32:
+            OptimizedSumPackedOutput<int32_t, Tdest>(dfK, pOutBuffer,
+                                                     nLineSpace, nXSize, nYSize,
+                                                     nSources, papoSources);
+            return true;
+
+        case GDT_Float32:
+            OptimizedSumPackedOutput<float, Tdest>(dfK, pOutBuffer, nLineSpace,
+                                                   nXSize, nYSize, nSources,
+                                                   papoSources);
+            return true;
+
+        case GDT_Float64:
+            OptimizedSumPackedOutput<double, Tdest>(dfK, pOutBuffer, nLineSpace,
+                                                    nXSize, nYSize, nSources,
+                                                    papoSources);
+            return true;
+
+        default:
+            break;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                    OptimizedSumThroughLargerType()                   */
+/************************************************************************/
+
+namespace
+{
+template <typename Tsrc, typename Tdest, typename Enable = void>
+struct TintermediateS
+{
+    using type = double;
+};
+
+template <typename Tsrc, typename Tdest>
+struct TintermediateS<
+    Tsrc, Tdest,
+    std::enable_if_t<
+        (std::is_same_v<Tsrc, uint8_t> || std::is_same_v<Tsrc, int16_t> ||
+         std::is_same_v<Tsrc, uint16_t>)&&(std::is_same_v<Tdest, uint8_t> ||
+                                           std::is_same_v<Tdest, int16_t> ||
+                                           std::is_same_v<Tdest, uint16_t>),
+        bool>>
+{
+    using type = int32_t;
+};
+
+}  // namespace
+
+template <typename Tsrc, typename Tdest>
+static bool OptimizedSumThroughLargerType(double dfK, void *pOutBuffer,
+                                          int nPixelSpace, int nLineSpace,
+                                          int nXSize, int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    using Tintermediate = typename TintermediateS<Tsrc, Tdest>::type;
+    const Tintermediate k = static_cast<Tintermediate>(dfK);
+
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        GByte *CPL_RESTRICT pDest = static_cast<GByte *>(pOutBuffer) +
+                                    static_cast<GSpacing>(nLineSpace) * iLine;
+
+        constexpr int UNROLLING = 4;
+        int iCol = 0;
+        for (; iCol < nXSize - (UNROLLING - 1);
+             iCol += UNROLLING, ii += UNROLLING)
+        {
+            Tintermediate aSum[4] = {k, k, k, k};
+
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                aSum[0] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 0];
+                aSum[1] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 1];
+                aSum[2] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 2];
+                aSum[3] += static_cast<const Tsrc *>(papoSources[iSrc])[ii + 3];
+            }
+
+            GDALCopyWord(aSum[0], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[1], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[2], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+            GDALCopyWord(aSum[3], *reinterpret_cast<Tdest *>(pDest));
+            pDest += nPixelSpace;
+        }
+        for (; iCol < nXSize; ++iCol, ++ii, pDest += nPixelSpace)
+        {
+            Tintermediate sum = k;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                sum += static_cast<const Tsrc *>(papoSources[iSrc])[ii];
+            }
+
+            auto pDst = reinterpret_cast<Tdest *>(pDest);
+            GDALCopyWord(sum, *pDst);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                     OptimizedSumThroughLargerType()                  */
+/************************************************************************/
+
+template <typename Tsrc>
+static bool OptimizedSumThroughLargerType(GDALDataType eBufType, double dfK,
+                                          void *pOutBuffer, int nPixelSpace,
+                                          int nLineSpace, int nXSize,
+                                          int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    switch (eBufType)
+    {
+        case GDT_Byte:
+            return OptimizedSumThroughLargerType<Tsrc, uint8_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_UInt16:
+            return OptimizedSumThroughLargerType<Tsrc, uint16_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_Int16:
+            return OptimizedSumThroughLargerType<Tsrc, int16_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        case GDT_Int32:
+            return OptimizedSumThroughLargerType<Tsrc, int32_t>(
+                dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize, nYSize,
+                nSources, papoSources);
+
+        // Float32 and Float64 already covered by OptimizedSum() for packed case
+        default:
+            break;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                    OptimizedSumThroughLargerType()                   */
+/************************************************************************/
+
+static bool OptimizedSumThroughLargerType(GDALDataType eSrcType,
+                                          GDALDataType eBufType, double dfK,
+                                          void *pOutBuffer, int nPixelSpace,
+                                          int nLineSpace, int nXSize,
+                                          int nYSize, int nSources,
+                                          const void *const *papoSources)
+{
+    switch (eSrcType)
+    {
+        case GDT_Byte:
+            return OptimizedSumThroughLargerType<uint8_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_UInt16:
+            return OptimizedSumThroughLargerType<uint16_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Int16:
+            return OptimizedSumThroughLargerType<int16_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Int32:
+            return OptimizedSumThroughLargerType<int32_t>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Float32:
+            return OptimizedSumThroughLargerType<float>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        case GDT_Float64:
+            return OptimizedSumThroughLargerType<double>(
+                eBufType, dfK, pOutBuffer, nPixelSpace, nLineSpace, nXSize,
+                nYSize, nSources, papoSources);
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                            SumPixelFunc()                            */
+/************************************************************************/
+
 static const char pszSumPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='k' description='Optional constant term' type='double' "
     "default='0.0' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
@@ -490,16 +919,27 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    if (nSources < 2 && CSLFetchNameValue(papszArgs, "k") == nullptr)
+    if (nSources < 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "sum requires at least two sources or a specified constant k");
+                 "sum requires at least one source");
         return CE_Failure;
     }
 
     double dfK = 0.0;
     if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
         return CE_Failure;
+
+    double dfNoData{0};
+    bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
+
+    if (dfNoData == 0 && !bPropagateNoData)
+        bHasNoData = false;
 
     /* ---- Set pixels ---- */
     if (GDALDataTypeIsComplex(eSrcType))
@@ -537,25 +977,78 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        size_t ii = 0;
-        for (int iLine = 0; iLine < nYSize; ++iLine)
+        bool bGeneralCase = true;
+        if (dfNoData == 0 && !bPropagateNoData)
         {
-            for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+            if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
             {
-                double dfSum = dfK;  // Not complex.
+                bGeneralCase = !OptimizedSumPackedOutput<float>(
+                    eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
+            else if (eBufType == GDT_Float64 && nPixelSpace == sizeof(double))
+            {
+                bGeneralCase = !OptimizedSumPackedOutput<double>(
+                    eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
+            else if (
+                dfK >= 0 && dfK <= INT_MAX && eBufType == GDT_Int32 &&
+                nPixelSpace == sizeof(int32_t) && eSrcType == GDT_Byte &&
+                // Limitation to avoid overflow of int32 if all source values are at the max of their data type
+                nSources <=
+                    (INT_MAX - dfK) / std::numeric_limits<uint8_t>::max())
+            {
+                bGeneralCase = false;
+                OptimizedSumPackedOutput<uint8_t, int32_t>(
+                    dfK, pData, nLineSpace, nXSize, nYSize, nSources,
+                    papoSources);
+            }
 
-                for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            if (bGeneralCase && dfK >= 0 && dfK <= INT_MAX &&
+                nSources <=
+                    (INT_MAX - dfK) / std::numeric_limits<uint16_t>::max())
+            {
+                bGeneralCase = !OptimizedSumThroughLargerType(
+                    eSrcType, eBufType, dfK, pData, nPixelSpace, nLineSpace,
+                    nXSize, nYSize, nSources, papoSources);
+            }
+        }
+
+        if (bGeneralCase)
+        {
+            size_t ii = 0;
+            for (int iLine = 0; iLine < nYSize; ++iLine)
+            {
+                for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
                 {
-                    // Source raster pixels may be obtained with GetSrcVal
-                    // macro.
-                    dfSum += GetSrcVal(papoSources[iSrc], eSrcType, ii);
-                }
+                    double dfSum = dfK;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        const double dfVal =
+                            GetSrcVal(papoSources[iSrc], eSrcType, ii);
 
-                GDALCopyWords(&dfSum, GDT_Float64, 0,
-                              static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
-                                  iCol * nPixelSpace,
-                              eBufType, nPixelSpace, 1);
+                        if (bHasNoData && IsNoData(dfVal, dfNoData))
+                        {
+                            if (bPropagateNoData)
+                            {
+                                dfSum = dfNoData;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            dfSum += dfVal;
+                        }
+                    }
+
+                    GDALCopyWords(&dfSum, GDT_Float64, 0,
+                                  static_cast<GByte *>(pData) +
+                                      static_cast<GSpacing>(nLineSpace) *
+                                          iLine +
+                                      iCol * nPixelSpace,
+                                  eBufType, nPixelSpace, 1);
+                }
             }
         }
     }
@@ -564,13 +1057,23 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 } /* SumPixelFunc */
 
+static const char pszDiffPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize, GDALDataType eSrcType,
                             GDALDataType eBufType, int nPixelSpace,
-                            int nLineSpace)
+                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 2)
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     if (GDALDataTypeIsComplex(eSrcType))
@@ -611,11 +1114,14 @@ static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
         {
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
-                // Source raster pixels may be obtained with GetSrcVal macro.
-                // Not complex.
+                const double dfA = GetSrcVal(papoSources[0], eSrcType, ii);
+                const double dfB = GetSrcVal(papoSources[1], eSrcType, ii);
+
                 const double dfPixVal =
-                    GetSrcVal(papoSources[0], eSrcType, ii) -
-                    GetSrcVal(papoSources[1], eSrcType, ii);
+                    bHasNoData &&
+                            (IsNoData(dfA, dfNoData) || IsNoData(dfB, dfNoData))
+                        ? dfNoData
+                        : dfA - dfB;
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -634,6 +1140,10 @@ static const char pszMulPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='k' description='Optional constant factor' "
     "type='double' default='1.0' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
@@ -652,6 +1162,14 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
     double dfK = 1.0;
     if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
         return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
 
     /* ---- Set pixels ---- */
     if (GDALDataTypeIsComplex(eSrcType))
@@ -704,9 +1222,21 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
 
                 for (int iSrc = 0; iSrc < nSources; ++iSrc)
                 {
-                    // Source raster pixels may be obtained with GetSrcVal
-                    // macro.
-                    dfPixVal *= GetSrcVal(papoSources[iSrc], eSrcType, ii);
+                    const double dfVal =
+                        GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                    if (bHasNoData && IsNoData(dfVal, dfNoData))
+                    {
+                        if (bPropagateNoData)
+                        {
+                            dfPixVal = dfNoData;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        dfPixVal *= dfVal;
+                    }
                 }
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
@@ -722,13 +1252,24 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // MulPixelFunc
 
+static const char pszDivPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   "
+    "<Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize, GDALDataType eSrcType,
                            GDALDataType eBufType, int nPixelSpace,
-                           int nLineSpace)
+                           int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 2)
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     /* ---- Set pixels ---- */
@@ -779,12 +1320,18 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
         {
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
-                const double dfVal = GetSrcVal(papoSources[1], eSrcType, ii);
-                // coverity[divide_by_zero]
-                double dfPixVal =
-                    dfVal == 0
-                        ? std::numeric_limits<double>::infinity()
-                        : GetSrcVal(papoSources[0], eSrcType, ii) / dfVal;
+                const double dfNum = GetSrcVal(papoSources[0], eSrcType, ii);
+                const double dfDenom = GetSrcVal(papoSources[1], eSrcType, ii);
+
+                double dfPixVal = dfNoData;
+                if (!bHasNoData || (!IsNoData(dfNum, dfNoData) &&
+                                    !IsNoData(dfDenom, dfNoData)))
+                {
+                    // coverity[divide_by_zero]
+                    dfPixVal = dfDenom == 0
+                                   ? std::numeric_limits<double>::infinity()
+                                   : dfNum / dfDenom;
+                }
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -872,6 +1419,8 @@ static const char pszInvPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='k' description='Optional constant factor' "
     "type='double' default='1.0' />"
+    "   "
+    "<Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
@@ -885,6 +1434,11 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
 
     double dfK = 1.0;
     if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     /* ---- Set pixels ---- */
@@ -929,10 +1483,14 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
                 const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
-                // coverity[divide_by_zero]
-                const double dfPixVal =
-                    dfVal == 0 ? std::numeric_limits<double>::infinity()
-                               : dfK / dfVal;
+                double dfPixVal = dfNoData;
+
+                if (!bHasNoData || !IsNoData(dfVal, dfNoData))
+                {
+                    dfPixVal = dfVal == 0
+                                   ? std::numeric_limits<double>::infinity()
+                                   : dfK / dfVal;
+                }
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -1008,15 +1566,25 @@ static CPLErr IntensityPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // IntensityPixelFunc
 
+static const char pszSqrtPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true'/>"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize, GDALDataType eSrcType,
                             GDALDataType eBufType, int nPixelSpace,
-                            int nLineSpace)
+                            int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 1)
         return CE_Failure;
     if (GDALDataTypeIsComplex(eSrcType))
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     /* ---- Set pixels ---- */
@@ -1026,8 +1594,16 @@ static CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             // Source raster pixels may be obtained with GetSrcVal macro.
-            const double dfPixVal =
-                sqrt(GetSrcVal(papoSources[0], eSrcType, ii));
+            double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            if (bHasNoData && IsNoData(dfPixVal, dfNoData))
+            {
+                dfPixVal = dfNoData;
+            }
+            else
+            {
+                dfPixVal = std::sqrt(dfPixVal);
+            }
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1044,10 +1620,16 @@ static CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
 static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources,
                                    void *pData, int nXSize, int nYSize,
                                    GDALDataType eSrcType, GDALDataType eBufType,
-                                   int nPixelSpace, int nLineSpace, double fact)
+                                   int nPixelSpace, int nLineSpace,
+                                   CSLConstList papszArgs, double fact)
 {
     /* ---- Init ---- */
     if (nSources != 1)
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     if (GDALDataTypeIsComplex(eSrcType))
@@ -1094,8 +1676,11 @@ static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources,
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
                 // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfSrcVal = GetSrcVal(papoSources[0], eSrcType, ii);
                 const double dfPixVal =
-                    fact * log10(fabs(GetSrcVal(papoSources[0], eSrcType, ii)));
+                    bHasNoData && IsNoData(dfSrcVal, dfNoData)
+                        ? dfNoData
+                        : fact * std::log10(std::abs(dfSrcVal));
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -1110,20 +1695,26 @@ static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources,
     return CE_None;
 }  // Log10PixelFuncHelper
 
+static const char pszLog10PixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true'/>"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr Log10PixelFunc(void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize, GDALDataType eSrcType,
                              GDALDataType eBufType, int nPixelSpace,
-                             int nLineSpace)
+                             int nLineSpace, CSLConstList papszArgs)
 {
     return Log10PixelFuncHelper(papoSources, nSources, pData, nXSize, nYSize,
                                 eSrcType, eBufType, nPixelSpace, nLineSpace,
-                                1.0);
+                                papszArgs, 1.0);
 }  // Log10PixelFunc
 
 static const char pszDBPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='fact' description='Factor' type='double' "
     "default='20.0' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr DBPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1137,18 +1728,24 @@ static CPLErr DBPixelFunc(void **papoSources, int nSources, void *pData,
 
     return Log10PixelFuncHelper(papoSources, nSources, pData, nXSize, nYSize,
                                 eSrcType, eBufType, nPixelSpace, nLineSpace,
-                                dfFact);
+                                papszArgs, dfFact);
 }  // DBPixelFunc
 
 static CPLErr ExpPixelFuncHelper(void **papoSources, int nSources, void *pData,
                                  int nXSize, int nYSize, GDALDataType eSrcType,
                                  GDALDataType eBufType, int nPixelSpace,
-                                 int nLineSpace, double base, double fact)
+                                 int nLineSpace, CSLConstList papszArgs,
+                                 double base, double fact)
 {
     /* ---- Init ---- */
     if (nSources != 1)
         return CE_Failure;
     if (GDALDataTypeIsComplex(eSrcType))
+        return CE_Failure;
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
         return CE_Failure;
 
     /* ---- Set pixels ---- */
@@ -1158,8 +1755,10 @@ static CPLErr ExpPixelFuncHelper(void **papoSources, int nSources, void *pData,
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             // Source raster pixels may be obtained with GetSrcVal macro.
-            const double dfPixVal =
-                pow(base, GetSrcVal(papoSources[0], eSrcType, ii) * fact);
+            const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                        ? dfNoData
+                                        : pow(base, dfVal * fact);
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1178,6 +1777,7 @@ static const char pszExpPixelFuncMetadata[] =
     "   <Argument name='base' description='Base' type='double' "
     "default='2.7182818284590452353602874713526624' />"
     "   <Argument name='fact' description='Factor' type='double' default='1' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ExpPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1196,7 +1796,7 @@ static CPLErr ExpPixelFunc(void **papoSources, int nSources, void *pData,
 
     return ExpPixelFuncHelper(papoSources, nSources, pData, nXSize, nYSize,
                               eSrcType, eBufType, nPixelSpace, nLineSpace,
-                              dfBase, dfFact);
+                              papszArgs, dfBase, dfFact);
 }  // ExpPixelFunc
 
 static CPLErr dB2AmpPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1205,8 +1805,8 @@ static CPLErr dB2AmpPixelFunc(void **papoSources, int nSources, void *pData,
                               int nLineSpace)
 {
     return ExpPixelFuncHelper(papoSources, nSources, pData, nXSize, nYSize,
-                              eSrcType, eBufType, nPixelSpace, nLineSpace, 10.0,
-                              1. / 20);
+                              eSrcType, eBufType, nPixelSpace, nLineSpace,
+                              nullptr, 10.0, 1. / 20);
 }  // dB2AmpPixelFunc
 
 static CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1215,14 +1815,15 @@ static CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
                               int nLineSpace)
 {
     return ExpPixelFuncHelper(papoSources, nSources, pData, nXSize, nYSize,
-                              eSrcType, eBufType, nPixelSpace, nLineSpace, 10.0,
-                              1. / 10);
+                              eSrcType, eBufType, nPixelSpace, nLineSpace,
+                              nullptr, 10.0, 1. / 10);
 }  // dB2PowPixelFunc
 
 static const char pszPowPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='power' description='Exponent' type='double' "
     "mandatory='1' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr PowPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1240,14 +1841,22 @@ static CPLErr PowPixelFunc(void **papoSources, int nSources, void *pData,
     if (FetchDoubleArg(papszArgs, "power", &power) != CE_None)
         return CE_Failure;
 
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
     /* ---- Set pixels ---- */
     size_t ii = 0;
     for (int iLine = 0; iLine < nYSize; ++iLine)
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
-            const double dfPixVal =
-                std::pow(GetSrcVal(papoSources[0], eSrcType, ii), power);
+            const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                        ? dfNoData
+                                        : std::pow(dfVal, power);
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1299,6 +1908,7 @@ static const char pszInterpolatePixelFuncMetadata[] =
     "   <Argument name='t0' description='t0' type='double' mandatory='1' />"
     "   <Argument name='dt' description='dt' type='double' mandatory='1' />"
     "   <Argument name='t' description='t' type='double' mandatory='1' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 template <decltype(InterpolateLinear) InterpolationFunction>
@@ -1323,6 +1933,11 @@ CPLErr InterpolatePixelFunc(void **papoSources, int nSources, void *pData,
     if (FetchDoubleArg(papszArgs, "dt", &dfDt) == CE_Failure)
         return CE_Failure;
 
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
     if (nSources < 2)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1338,8 +1953,8 @@ CPLErr InterpolatePixelFunc(void **papoSources, int nSources, void *pData,
 
     const auto i0 = intervalLeft(dfT0, dfDt, nSources, dfT);
     const auto i1 = i0 + 1;
-    dfT0 = dfT0 + static_cast<double>(i0) * dfDt;
-    double dfX1 = dfT0 + dfDt;
+    const double dfX0 = dfT0 + static_cast<double>(i0) * dfDt;
+    const double dfX1 = dfT0 + static_cast<double>(i0 + 1) * dfDt;
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
@@ -1350,8 +1965,14 @@ CPLErr InterpolatePixelFunc(void **papoSources, int nSources, void *pData,
             const double dfY0 = GetSrcVal(papoSources[i0], eSrcType, ii);
             const double dfY1 = GetSrcVal(papoSources[i1], eSrcType, ii);
 
-            const double dfPixVal =
-                InterpolationFunction(dfT0, dfX1, dfY0, dfY1, dfT);
+            double dfPixVal = dfNoData;
+            if (dfT == dfX0)
+                dfPixVal = dfY0;
+            else if (dfT == dfX1)
+                dfPixVal = dfY1;
+            else if (!bHasNoData ||
+                     (!IsNoData(dfY0, dfNoData) && !IsNoData(dfY1, dfNoData)))
+                dfPixVal = InterpolationFunction(dfX0, dfX1, dfY0, dfY1, dfT);
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1427,6 +2048,7 @@ static const char pszScalePixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument type='builtin' value='offset' />"
     "   <Argument type='builtin' value='scale' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
@@ -1444,6 +2066,11 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
     double dfScale, dfOffset;
     if (FetchDoubleArg(papszArgs, "scale", &dfScale) != CE_None)
         return CE_Failure;
@@ -1456,8 +2083,11 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
-            const double dfPixVal =
-                GetSrcVal(papoSources[0], eSrcType, ii) * dfScale + dfOffset;
+            const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                        ? dfNoData
+                                        : dfVal * dfScale + dfOffset;
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1471,10 +2101,15 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
+static const char pszNormDiffPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
                                 int nXSize, int nYSize, GDALDataType eSrcType,
                                 GDALDataType eBufType, int nPixelSpace,
-                                int nLineSpace)
+                                int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 2)
@@ -1487,6 +2122,11 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
     /* ---- Set pixels ---- */
     size_t ii = 0;
     for (int iLine = 0; iLine < nYSize; ++iLine)
@@ -1496,12 +2136,17 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
             const double dfLeftVal = GetSrcVal(papoSources[0], eSrcType, ii);
             const double dfRightVal = GetSrcVal(papoSources[1], eSrcType, ii);
 
-            const double dfDenom = (dfLeftVal + dfRightVal);
+            double dfPixVal = dfNoData;
 
-            // coverity[divide_by_zero]
-            const double dfPixVal =
-                dfDenom == 0 ? std::numeric_limits<double>::infinity()
-                             : (dfLeftVal - dfRightVal) / dfDenom;
+            if (!bHasNoData || (!IsNoData(dfLeftVal, dfNoData) &&
+                                !IsNoData(dfRightVal, dfNoData)))
+            {
+                const double dfDenom = (dfLeftVal + dfRightVal);
+                // coverity[divide_by_zero]
+                dfPixVal = dfDenom == 0
+                               ? std::numeric_limits<double>::infinity()
+                               : (dfLeftVal - dfRightVal) / dfDenom;
+            }
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1636,10 +2281,11 @@ static const char pszExprPixelFuncMetadata[] =
     "   <Argument name='dialect' "
     "             description='Expression dialect' "
     "             type='string-select'"
-    "             default='exprtk'>"
+    "             default='muparser'>"
     "       <Value>exprtk</Value>"
     "       <Value>muparser</Value>"
-    "    </Argument>"
+    "   </Argument>"
+    "   <Argument type='builtin' value='source_names' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1660,7 +2306,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
 
-    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "SOURCE_NAMES");
+    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "source_names");
     const CPLStringList aosSourceNames(
         CSLTokenizeString2(pszSourceNames, "|", 0));
 
@@ -1814,6 +2460,304 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ReclassifyPixelFunc
 
+struct MeanKernel
+{
+    static constexpr const char *pszName = "mean";
+
+    double dfSum = 0;
+    int nValidSources = 0;
+
+    void Reset()
+    {
+        dfSum = 0;
+        nValidSources = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        dfSum += dfVal;
+        nValidSources++;
+    }
+
+    bool HasValue() const
+    {
+        return nValidSources > 0;
+    }
+
+    double GetValue() const
+    {
+        return dfSum / nValidSources;
+    }
+};
+
+struct GeoMeanKernel
+{
+    static constexpr const char *pszName = "geometric_mean";
+
+    double dfProduct = 1;
+    int nValidSources = 0;
+
+    void Reset()
+    {
+        dfProduct = 1;
+        nValidSources = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        dfProduct *= dfVal;
+        nValidSources++;
+    }
+
+    bool HasValue() const
+    {
+        return nValidSources > 0;
+    }
+
+    double GetValue() const
+    {
+        return std::pow(dfProduct, 1.0 / nValidSources);
+    }
+};
+
+struct HarmonicMeanKernel
+{
+    static constexpr const char *pszName = "harmonic_mean";
+
+    double dfDenom = 0;
+    int nValidSources = 0;
+    bool bValueIsZero = false;
+    bool bPropagateZero = false;
+
+    void Reset()
+    {
+        dfDenom = 0;
+        nValidSources = 0;
+        bValueIsZero = false;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (dfVal == 0)
+        {
+            bValueIsZero = true;
+        }
+        else
+        {
+            dfDenom += 1 / dfVal;
+        }
+        nValidSources++;
+    }
+
+    CPLErr ProcessArguments(CSLConstList papszArgs)
+    {
+        bPropagateZero =
+            CPLTestBool(CSLFetchNameValueDef(papszArgs, "propagateZero", "0"));
+        return CE_None;
+    }
+
+    bool HasValue() const
+    {
+        return dfDenom > 0 && (bPropagateZero || !bValueIsZero);
+    }
+
+    double GetValue() const
+    {
+        if (bPropagateZero && bValueIsZero)
+        {
+            return 0;
+        }
+        return static_cast<double>(nValidSources) / dfDenom;
+    }
+};
+
+struct MedianKernel
+{
+    static constexpr const char *pszName = "median";
+
+    mutable std::vector<double> values{};
+
+    void Reset()
+    {
+        values.clear();
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (!std::isnan(dfVal))
+        {
+            values.push_back(dfVal);
+        }
+    }
+
+    bool HasValue() const
+    {
+        return !values.empty();
+    }
+
+    double GetValue() const
+    {
+        std::sort(values.begin(), values.end());
+        if (values.size() % 2 == 0)
+        {
+            return 0.5 *
+                   (values[values.size() / 2 - 1] + values[values.size() / 2]);
+        }
+
+        return values[values.size() / 2];
+    }
+};
+
+struct ModeKernel
+{
+    static constexpr const char *pszName = "mode";
+
+    std::map<double, size_t> counts{};
+    std::size_t nanCount{0};
+    double dfMax = std::numeric_limits<double>::quiet_NaN();
+    decltype(counts.begin()) oMax = counts.end();
+
+    void Reset()
+    {
+        nanCount = 0;
+        counts.clear();
+        oMax = counts.end();
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (std::isnan(dfVal))
+        {
+            nanCount += 1;
+            return;
+        }
+
+        // if dfVal is NaN, try_emplace will return an entry for a different key!
+        auto [it, inserted] = counts.try_emplace(dfVal, 0);
+
+        it->second += 1;
+
+        if (oMax == counts.end() || it->second > oMax->second)
+        {
+            oMax = it;
+        }
+    }
+
+    bool HasValue() const
+    {
+        return nanCount > 0 || oMax != counts.end();
+    }
+
+    double GetValue() const
+    {
+        size_t nCount = oMax == counts.end() ? 0 : oMax->second;
+        return nanCount > nCount ? std::numeric_limits<double>::quiet_NaN()
+                                 : oMax->first;
+    }
+};
+
+static const char pszBasicPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
+    "</PixelFunctionArgumentsList>";
+
+template <typename T>
+static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+    T oKernel;
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Complex data types not supported by %s", oKernel.pszName);
+        return CE_Failure;
+    }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
+
+    if (oKernel.ProcessArguments(papszArgs) == CE_Failure)
+    {
+        return CE_Failure;
+    }
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            oKernel.Reset();
+            bool bWriteNoData = false;
+
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                const double dfVal = GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                if (bHasNoData && IsNoData(dfVal, dfNoData))
+                {
+                    if (bPropagateNoData)
+                    {
+                        bWriteNoData = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    oKernel.ProcessPixel(dfVal);
+                }
+            }
+
+            double dfPixVal{dfNoData};
+            if (!bWriteNoData && oKernel.HasValue())
+            {
+                dfPixVal = oKernel.GetValue();
+            }
+
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // BasicPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1900,16 +2844,20 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc,
                                         pszSumPixelFuncMetadata);
-    GDALAddDerivedBandPixelFunc("diff", DiffPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("diff", DiffPixelFunc,
+                                        pszDiffPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("mul", MulPixelFunc,
                                         pszMulPixelFuncMetadata);
-    GDALAddDerivedBandPixelFunc("div", DivPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("div", DivPixelFunc,
+                                        pszDivPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("cmul", CMulPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("inv", InvPixelFunc,
                                         pszInvPixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("intensity", IntensityPixelFunc);
-    GDALAddDerivedBandPixelFunc("sqrt", SqrtPixelFunc);
-    GDALAddDerivedBandPixelFunc("log10", Log10PixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("sqrt", SqrtPixelFunc,
+                                        pszSqrtPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("log10", Log10PixelFunc,
+                                        pszLog10PixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("dB", DBPixelFunc,
                                         pszDBPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("exp", ExpPixelFunc,
@@ -1931,7 +2879,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszReplaceNoDataPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("scale", ScalePixelFunc,
                                         pszScalePixelFuncMetadata);
-    GDALAddDerivedBandPixelFunc("norm_diff", NormDiffPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("norm_diff", NormDiffPixelFunc,
+                                        pszNormDiffPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("min", MinPixelFunc,
                                         pszMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("max", MaxPixelFunc,
@@ -1940,5 +2889,17 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszExprPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
                                         pszReclassifyPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("mean", BasicPixelFunc<MeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("geometric_mean",
+                                        BasicPixelFunc<GeoMeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("harmonic_mean",
+                                        BasicPixelFunc<HarmonicMeanKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("median", BasicPixelFunc<MedianKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("mode", BasicPixelFunc<ModeKernel>,
+                                        pszBasicPixelFuncMetadata);
     return CE_None;
 }

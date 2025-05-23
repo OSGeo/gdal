@@ -160,8 +160,8 @@ The following entity types are supported:
    label. Block content for MULTILEADERS is treated as for INSERT.
    Spline leaders are tessellated into line segments.
 
--  WIPEOUT: a light support of WIPEOUT entities can parse the outline 
-   geometry of WIPEOUT entities and translate it into a POLYGON feature. 
+-  WIPEOUT: a light support of WIPEOUT entities can parse the outline
+   geometry of WIPEOUT entities and translate it into a POLYGON feature.
    The feature is 2D support only - Z coordinates are ignored.
 
 -  3DSOLID, REGION, BODY, SURFACE: See below.
@@ -509,8 +509,7 @@ likely to be wrong - potentially very wrong.
 See also
 --------
 
-`List of known
-issues <https://github.com/OSGeo/gdal/blob/master/ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md>`__
+List of known issues :source_file:`ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md`
 
 `AutoCAD 2000 DXF
 Reference <http://www.autodesk.com/techpubs/autocad/acad2000/dxf/>`__

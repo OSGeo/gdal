@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_reproject.h"
+#include "gdalalg_raster_write.h"
 
 #include "gdal_alg.h"
 #include "gdal_priv.h"
@@ -39,12 +40,8 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
-    AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
-        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
-                    "average", "rms", "mode", "min", "max", "med", "q1", "q3",
-                    "sum")
-        .SetDefault("nearest")
-        .SetHiddenChoices("near");
+
+    GDALRasterReprojectUtils::AddResamplingArg(this, m_resampling);
 
     AddArg("resolution", 0, _("Target resolution (in destination CRS units)"),
            &m_resolution)
@@ -92,15 +89,47 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
              "raster have none."),
            &m_addAlpha)
         .SetCategory(GAAC_ADVANCED);
+
+    GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
+        this, m_warpOptions, m_transformOptions, m_errorThreshold);
+
+    AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
+}
+
+/************************************************************************/
+/*           GDALRasterReprojectUtils::AddResamplingArg()               */
+/************************************************************************/
+
+/*static */ void
+GDALRasterReprojectUtils::AddResamplingArg(GDALAlgorithm *alg,
+                                           std::string &resampling)
+{
+    alg->AddArg("resampling", 'r', _("Resampling method"), &resampling)
+        .SetChoices("nearest", "bilinear", "cubic", "cubicspline", "lanczos",
+                    "average", "rms", "mode", "min", "max", "med", "q1", "q3",
+                    "sum")
+        .SetDefault("nearest")
+        .SetHiddenChoices("near");
+}
+
+/************************************************************************/
+/*            AddWarpOptTransformOptErrorThresholdArg()                 */
+/************************************************************************/
+
+/* static */
+void GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
+    GDALAlgorithm *alg, std::vector<std::string> &warpOptions,
+    std::vector<std::string> &transformOptions, double &errorThreshold)
+{
     {
         auto &arg =
-            AddArg("warp-option", 0, _("Warping option(s)"), &m_warpOptions)
+            alg->AddArg("warp-option", 0, _("Warping option(s)"), &warpOptions)
                 .AddAlias("wo")
                 .SetMetaVar("<NAME>=<VALUE>")
                 .SetCategory(GAAC_ADVANCED)
                 .SetPackedValuesAllowed(false);
-        arg.AddValidationAction([this, &arg]()
-                                { return ParseAndValidateKeyValue(arg); });
+        arg.AddValidationAction([alg, &arg]()
+                                { return alg->ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {
@@ -111,14 +140,14 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             });
     }
     {
-        auto &arg = AddArg("transform-option", 0, _("Transform option(s)"),
-                           &m_transformOptions)
+        auto &arg = alg->AddArg("transform-option", 0, _("Transform option(s)"),
+                                &transformOptions)
                         .AddAlias("to")
                         .SetMetaVar("<NAME>=<VALUE>")
                         .SetCategory(GAAC_ADVANCED)
                         .SetPackedValuesAllowed(false);
-        arg.AddValidationAction([this, &arg]()
-                                { return ParseAndValidateKeyValue(arg); });
+        arg.AddValidationAction([alg, &arg]()
+                                { return alg->ParseAndValidateKeyValue(arg); });
         arg.SetAutoCompleteFunction(
             [](const std::string &currentValue)
             {
@@ -129,24 +158,74 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
                 return ret;
             });
     }
-    AddArg("error-threshold", 0, _("Error threshold"), &m_errorThreshold)
+    alg->AddArg("error-threshold", 0, _("Error threshold"), &errorThreshold)
         .AddAlias("et")
+        .SetMinValueIncluded(0)
         .SetCategory(GAAC_ADVANCED);
+}
+
+/************************************************************************/
+/*          GDALRasterReprojectAlgorithm::CanHandleNextStep()           */
+/************************************************************************/
+
+bool GDALRasterReprojectAlgorithm::CanHandleNextStep(
+    GDALRasterPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
 }
 
 /************************************************************************/
 /*            GDALRasterReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReprojectAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString("VRT");
+    std::string outputFilename;
+    if (ctxt.m_poNextUsableStep)
+    {
+        CPLAssert(CanHandleNextStep(ctxt.m_poNextUsableStep));
+        outputFilename = ctxt.m_poNextUsableStep->GetOutputDataset().GetName();
+        const auto &format = ctxt.m_poNextUsableStep->GetOutputFormat();
+        if (!format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(format.c_str());
+        }
+
+        bool bFoundNumThreads = false;
+        for (const std::string &co :
+             ctxt.m_poNextUsableStep->GetCreationOptions())
+        {
+            aosOptions.AddString("-co");
+            if (STARTS_WITH_CI(co.c_str(), "NUM_THREADS="))
+                bFoundNumThreads = true;
+            aosOptions.AddString(co.c_str());
+        }
+
+        // Forward m_numThreads to GeoTIFF driver if --co NUM_THREADS not
+        // specified
+        if (!bFoundNumThreads && m_numThreads > 1 &&
+            (EQUAL(format.c_str(), "GTIFF") || EQUAL(format.c_str(), "COG") ||
+             (format.empty() &&
+              EQUAL(CPLGetExtensionSafe(outputFilename.c_str()).c_str(),
+                    "tif"))))
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(CPLSPrintf("NUM_THREADS=%d", m_numThreads));
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-of");
+        aosOptions.AddString("VRT");
+    }
     if (!m_srsCrs.empty())
     {
         aosOptions.AddString("-s_srs");
@@ -219,11 +298,31 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     {
         aosOptions.AddString("-dstalpha");
     }
+
+    bool bFoundNumThreads = false;
     for (const std::string &opt : m_warpOptions)
     {
         aosOptions.AddString("-wo");
+        if (STARTS_WITH_CI(opt.c_str(), "NUM_THREADS="))
+            bFoundNumThreads = true;
         aosOptions.AddString(opt.c_str());
     }
+    if (bFoundNumThreads)
+    {
+        if (GetArg("num-threads")->IsExplicitlySet())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "--num-threads argument and NUM_THREADS warp options "
+                        "are mutually exclusive.");
+            return false;
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-wo");
+        aosOptions.AddString(CPLSPrintf("NUM_THREADS=%d", m_numThreads));
+    }
+
     for (const std::string &opt : m_transformOptions)
     {
         aosOptions.AddString("-to");
@@ -235,19 +334,28 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString(CPLSPrintf("%.17g", m_errorThreshold));
     }
 
+    bool bOK = false;
     GDALWarpAppOptions *psOptions =
         GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
-
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALWarp("", nullptr, 1, &hSrcDS, psOptions, nullptr));
-    GDALWarpAppOptionsFree(psOptions);
-    if (!poRetDS)
-        return false;
-
-    m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-
-    return true;
+    if (psOptions)
+    {
+        if (ctxt.m_poNextUsableStep)
+        {
+            GDALWarpAppOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
+                                          ctxt.m_pProgressData);
+        }
+        GDALDatasetH hSrcDS =
+            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        auto poRetDS = GDALDataset::FromHandle(GDALWarp(
+            outputFilename.c_str(), nullptr, 1, &hSrcDS, psOptions, nullptr));
+        GDALWarpAppOptionsFree(psOptions);
+        bOK = poRetDS != nullptr;
+        if (bOK)
+        {
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
+    }
+    return bOK;
 }
 
 //! @endcond

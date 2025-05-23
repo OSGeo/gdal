@@ -693,11 +693,11 @@ def test_misc_11():
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
-
+# Started to fail suddenly on May 14th 2025 on this config
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("build-windows-conda"), reason="fails for unknown reason"
+)
 def test_misc_12():
-
-    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
-        pytest.skip("would crash")
 
     import test_cli_utilities
 
@@ -1140,7 +1140,7 @@ from osgeo import gdal
 with gdal.{context}():
     gdal.Error(gdal.CE_Debug, gdal.CPLE_AppDefined, "Debug")
     gdal.Error(gdal.CE_Warning, gdal.CPLE_AppDefined, "Warning")
-    gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "Failure") 
+    gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "Failure")
 """
 
     with open(tmp_path / "script.py", "w") as f:

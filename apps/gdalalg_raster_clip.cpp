@@ -73,7 +73,7 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
 /*                 GDALRasterClipAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterClipAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterClipAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);

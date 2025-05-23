@@ -23,9 +23,19 @@ Description
 :program:`gdal raster fill-nodata` fills nodata areas by interpolating
 from valid pixels around the edges of the area.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
+Options
+-------
+
 The following options are available:
 
-.. include:: gdal_options/of_raster_create.rst
+.. include:: gdal_options/of_raster_create_copy.rst
+
+.. include:: gdal_options/co.rst
+
+.. include:: gdal_options/overwrite.rst
 
 .. option:: --output-layer <OUTPUT-LAYER>
 
@@ -60,6 +70,13 @@ The following options are available:
 
     Use the first band of the specified file as a
     validity mask (zero is invalid, non-zero is valid).
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
 Examples
 --------

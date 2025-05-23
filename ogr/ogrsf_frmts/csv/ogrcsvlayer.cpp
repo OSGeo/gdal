@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #endif
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <string>
 #include <vector>
@@ -56,7 +57,7 @@ OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
                          const char *pszFilenameIn, int bNewIn,
                          int bInWriteModeIn, char chDelimiterIn)
     : m_poDS(poDS), poFeatureDefn(nullptr), fpCSV(fp),
-      m_nMaxLineSize(nMaxLineSize), nNextFID(1), bHasFieldNames(false),
+      m_nMaxLineSize(nMaxLineSize), bHasFieldNames(false),
       bNew(CPL_TO_BOOL(bNewIn)), bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
       bUseCRLF(false), bNeedRewindBeforeRead(false),
       eGeometryFormat(OGR_CSV_GEOM_NONE), pszFilename(CPLStrdup(pszFilenameIn)),
@@ -1284,7 +1285,7 @@ void OGRCSVLayer::ResetReading()
 
     bNeedRewindBeforeRead = false;
 
-    nNextFID = 1;
+    m_nNextFID = FID_INITIAL_VALUE;
 }
 
 /************************************************************************/
@@ -1318,17 +1319,17 @@ char **OGRCSVLayer::GetNextLineTokens()
 
 OGRFeature *OGRCSVLayer::GetFeature(GIntBig nFID)
 {
-    if (nFID < 1 || fpCSV == nullptr)
+    if (nFID < FID_INITIAL_VALUE || fpCSV == nullptr)
         return nullptr;
-    if (nFID < nNextFID || bNeedRewindBeforeRead)
+    if (nFID < m_nNextFID || bNeedRewindBeforeRead)
         ResetReading();
-    while (nNextFID < nFID)
+    while (m_nNextFID < nFID)
     {
         char **papszTokens = GetNextLineTokens();
         if (papszTokens == nullptr)
             return nullptr;
         CSLDestroy(papszTokens);
-        nNextFID++;
+        m_nNextFID++;
     }
     return GetNextUnfilteredFeature();
 }
@@ -1460,9 +1461,10 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             {
                 bWarningBadTypeOrWidth = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Invalid value type found in record %d for field %s. "
+                         "Invalid value type found in record %" PRId64
+                         " for field %s. "
                          "This warning will no longer be emitted",
-                         nNextFID, poFieldDefn->GetNameRef());
+                         m_nNextFID, poFieldDefn->GetNameRef());
             };
         };
 
@@ -1473,9 +1475,9 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 bWarningBadTypeOrWidth = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Value with a width greater than field width "
-                         "found in record %d for field %s. "
+                         "found in record %" PRId64 " for field %s. "
                          "This warning will no longer be emitted",
-                         nNextFID, poFieldDefn->GetNameRef());
+                         m_nNextFID, poFieldDefn->GetNameRef());
             };
         };
 
@@ -1558,10 +1560,10 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                             bWarningBadTypeOrWidth = true;
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Value with a precision greater than "
-                                     "field precision found in record %d for "
-                                     "field %s. "
+                                     "field precision found in record %" PRId64
+                                     " for field %s. "
                                      "This warning will no longer be emitted",
-                                     nNextFID, poFieldDefn->GetNameRef());
+                                     m_nNextFID, poFieldDefn->GetNameRef());
                         }
                     }
                 }
@@ -1723,8 +1725,14 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
 
     CSLDestroy(papszTokens);
 
+    if ((m_nNextFID % 100000) == 0)
+    {
+        CPLDebug("CSV", "FID = %" PRId64 ", file offset = %" PRIu64, m_nNextFID,
+                 static_cast<uint64_t>(fpCSV->Tell()));
+    }
+
     // Translate the record id.
-    poFeature->SetFID(nNextFID++);
+    poFeature->SetFID(m_nNextFID++);
 
     m_nFeaturesRead++;
 

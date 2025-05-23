@@ -58,6 +58,20 @@ MAIN_START(nArgc, papszArgv)
 
     EarlySetConfigOptions(nArgc, papszArgv);
 
+    GDALAllRegister();
+
+    nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
+    if (nArgc < 1)
+        exit(-nArgc);
+
+    CPLStringList aosArgv;
+    for (int i = 0; i < nArgc; i++)
+    {
+        aosArgv.AddString(papszArgv[i]);
+    }
+
+    CSLDestroy(papszArgv);
+
     /* -------------------------------------------------------------------- */
     /*      Processing command line arguments.                              */
     /* -------------------------------------------------------------------- */
@@ -75,7 +89,6 @@ MAIN_START(nArgc, papszArgv)
     std::string osSrcSRSName;
     int i_SrcSRSName = -1;
     SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
-    size_t nMaxFieldSize = 254;
     std::vector<std::string> aosSrcDatasets;
     std::vector<std::string> aosLayerNames;
     std::vector<int> anLayerNumbers;
@@ -171,13 +184,6 @@ MAIN_START(nArgc, papszArgv)
         .store_into(aosSrcDatasets)
         .help(_("Name of the source dataset(s)."));
 
-    CPLStringList aosArgv;
-
-    for (int i = 0; i < nArgc; i++)
-    {
-        aosArgv.AddString(papszArgv[i]);
-    }
-
     try
     {
         argParser.parse_args(aosArgv);
@@ -202,11 +208,6 @@ MAIN_START(nArgc, papszArgv)
     }
 
     bLayersWildcarded = aosLayerNames.empty() && anLayerNumbers.empty();
-
-    /* -------------------------------------------------------------------- */
-    /*      Register format(s).                                             */
-    /* -------------------------------------------------------------------- */
-    OGRRegisterAll();
 
     /* -------------------------------------------------------------------- */
     /*      Create and validate target SRS if given.                        */
@@ -274,9 +275,6 @@ MAIN_START(nArgc, papszArgv)
         {
             osFormat = osOutputFormat;
         }
-
-        if (!EQUAL(osFormat, "ESRI Shapefile"))
-            nMaxFieldSize = 0;
 
         GDALDriverH hDriver = GDALGetDriverByName(osFormat.c_str());
         if (hDriver == nullptr)
@@ -399,6 +397,12 @@ MAIN_START(nArgc, papszArgv)
         fprintf(stderr, "Can't find any layer in output tileindex!\n");
         GDALExit(1);
     }
+
+    const auto poOutDrv = poDstDS->GetDriver();
+    const char *pszVal =
+        poOutDrv ? poOutDrv->GetMetadataItem(GDAL_DMD_MAX_STRING_LENGTH)
+                 : nullptr;
+    const size_t nMaxFieldSize = pszVal ? atoi(pszVal) : 0;
 
     const int iTileIndexField =
         poDstLayer->GetLayerDefn()->GetFieldIndex(osTileIndexField.c_str());

@@ -163,6 +163,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "DISABLE_OPEN_REAL_NETCDF_FILES", // from netcdfdataset.cpp, netcdfdrivercore.cpp
    "DRIVER_WISHED", // from test_ogrsf.cpp
    "DTED_APPLY_PIXEL_IS_POINT", // from dteddataset.cpp
+   "DTED_ASSUME_CONFORMANT", // from dted_api.c
    "DTED_VERIFY_CHECKSUM", // from dteddataset.cpp
    "DUMP_JP2_BOXES", // from gdaljp2metadata.cpp
    "DWG_ALL_ATTRIBUTES", // from ogrdwgdatasource.cpp
@@ -342,6 +343,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_OPENGIS_SCHEMAS", // from cpl_xml_validate.cpp
    "GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", // from rasterio.cpp, vrtwarped.cpp
    "GDAL_OVR_CHUNK_MAX_SIZE", // from overview.cpp
+   "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE", // from overview.cpp
    "GDAL_OVR_CHUNKYSIZE", // from overview.cpp
    "GDAL_OVR_PROPAGATE_NODATA", // from overview.cpp
    "GDAL_OVR_TEMP_DRIVER", // from overview.cpp
@@ -368,6 +370,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PNG_WHOLE_IMAGE_OPTIM", // from pngdataset.cpp
    "GDAL_PROXY_AUTH", // from cpl_http.cpp
    "GDAL_PYTHON_DRIVER_PATH", // from gdalpythondriverloader.cpp
+   "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", // from gdalalg_raster_pipeline.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_KML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTERIO_RESAMPLING", // from gdal_misc.cpp

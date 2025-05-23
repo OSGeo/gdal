@@ -16,6 +16,7 @@
 #include "gdalalgorithm.h"
 
 #include <cctype>
+#include <mutex>
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
@@ -415,6 +416,7 @@ static CPLErr OGRGeoPackageDriverDelete(const char *pszFilename)
 
 class GDALGPKGDriver final : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeCreationOptionList();
@@ -425,6 +427,7 @@ class GDALGPKGDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
         {
             InitializeCreationOptionList();
@@ -434,6 +437,7 @@ class GDALGPKGDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitializeCreationOptionList();
         return GDALDriver::GetMetadata(pszDomain);
     }

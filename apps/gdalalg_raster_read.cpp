@@ -22,8 +22,9 @@
 /************************************************************************/
 
 GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
-    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+    : GDALRasterPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
     AddInputArgs(/* openForMixedRasterVector = */ false,
                  /* hiddenForCLI = */ false);
@@ -33,7 +34,7 @@ GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
 /*                  GDALRasterReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterReadAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReadAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

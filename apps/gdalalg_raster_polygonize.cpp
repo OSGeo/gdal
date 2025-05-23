@@ -44,19 +44,9 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm()
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite);
-    auto &updateArg = AddUpdateArg(&m_update);
-    AddArg("overwrite-layer", 0,
-           _("Whether overwriting existing layer is allowed"),
-           &m_overwriteLayer)
-        .SetDefault(false)
-        .AddValidationAction(
-            [&updateArg]
-            {
-                updateArg.Set(true);
-                return true;
-            });
-    AddAppendUpdateArg(&m_appendLayer,
-                       _("Whether appending to existing layer is allowed"));
+    AddUpdateArg(&m_update);
+    AddOverwriteLayerArg(&m_overwriteLayer);
+    AddAppendLayerArg(&m_appendLayer);
 
     // gdal_polygonize specific options
     AddBandArg(&m_band).SetDefault(m_band);
@@ -159,9 +149,10 @@ bool GDALRasterPolygonizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' already exists. Specify the "
-                        "--overwrite-layer option to overwrite it, or --append "
+                        "--%s option to overwrite it, or --%s "
                         "to append to it.",
-                        m_outputLayerName.c_str());
+                        m_outputLayerName.c_str(),
+                        GDAL_ARG_NAME_OVERWRITE_LAYER, GDAL_ARG_NAME_APPEND);
             return false;
         }
     }

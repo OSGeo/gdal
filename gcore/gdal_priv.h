@@ -47,7 +47,6 @@ class GDALAlgorithm;
 #include "gdalsubdatasetinfo.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
-#include "cpl_float.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -1028,6 +1027,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     Layers GetLayers();
 
     virtual OGRLayer *GetLayerByName(const char *);
+
+    int GetLayerIndex(const char *pszName);
+
     virtual OGRErr DeleteLayer(int iLayer);
 
     virtual void ResetReading();
@@ -1410,6 +1412,9 @@ class CPL_DLL GDALColorTable
     int CreateColorRamp(int nStartIndex, const GDALColorEntry *psStartColor,
                         int nEndIndex, const GDALColorEntry *psEndColor);
     bool IsIdentity() const;
+
+    static std::unique_ptr<GDALColorTable>
+    LoadFromFile(const char *pszFilename);
 
     /** Convert a GDALColorTable* to a GDALRasterBandH.
      * @since GDAL 2.3
@@ -2825,6 +2830,9 @@ class CPL_DLL GDALExtendedDataType
 
     static GDALExtendedDataType Create(GDALDataType eType);
     static GDALExtendedDataType
+    Create(const std::string &osName, GDALDataType eBaseType,
+           std::unique_ptr<GDALRasterAttributeTable>);
+    static GDALExtendedDataType
     Create(const std::string &osName, size_t nTotalSize,
            std::vector<std::unique_ptr<GDALEDTComponent>> &&components);
     static GDALExtendedDataType
@@ -2908,6 +2916,21 @@ class CPL_DLL GDALExtendedDataType
         return m_nMaxStringLength;
     }
 
+    /** Return associated raster attribute table, when there is one.
+     *
+     * For the netCDF driver, the RAT will capture enumerated types, with
+     * a "value" column with an integer value and a "name" column with the
+     * associated name.
+     *
+     * This is the same as the C function GDALExtendedDataTypeGetRAT()
+     *
+     * @since 3.12
+     */
+    const GDALRasterAttributeTable *GetRAT() const
+    {
+        return m_poRAT.get();
+    }
+
     bool CanConvertTo(const GDALExtendedDataType &other) const;
 
     bool NeedsFreeDynamicMemory() const;
@@ -2927,6 +2950,8 @@ class CPL_DLL GDALExtendedDataType
     GDALExtendedDataType(size_t nMaxStringLength,
                          GDALExtendedDataTypeSubType eSubType);
     explicit GDALExtendedDataType(GDALDataType eType);
+    GDALExtendedDataType(const std::string &osName, GDALDataType eBaseType,
+                         std::unique_ptr<GDALRasterAttributeTable>);
     GDALExtendedDataType(
         const std::string &osName, size_t nTotalSize,
         std::vector<std::unique_ptr<GDALEDTComponent>> &&components);
@@ -2938,6 +2963,7 @@ class CPL_DLL GDALExtendedDataType
     std::vector<std::unique_ptr<GDALEDTComponent>> m_aoComponents{};
     size_t m_nSize = 0;
     size_t m_nMaxStringLength = 0;
+    std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 };
 
 /* ******************************************************************** */
@@ -3055,6 +3081,10 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //from its original, without altering its name
     const std::string m_osContext{};
 
+    // List of types owned by the group.
+    std::vector<std::shared_ptr<GDALExtendedDataType>> m_apoTypes{};
+
+    //! Weak pointer to this
     std::weak_ptr<GDALGroup> m_pSelf{};
 
     //! Can be set to false by the owing group, when deleting this object
@@ -3106,6 +3136,18 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     const std::string &GetFullName() const
     {
         return m_osFullName;
+    }
+
+    /** Return data types associated with the group (typically enumerations)
+     *
+     * This is the same as the C function GDALGroupGetDataTypeCount() and GDALGroupGetDataType()
+     *
+     * @since 3.12
+     */
+    const std::vector<std::shared_ptr<GDALExtendedDataType>> &
+    GetDataTypes() const
+    {
+        return m_apoTypes;
     }
 
     virtual std::vector<std::string>
@@ -3748,10 +3790,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
     std::shared_ptr<GDALMDArray> GetUnscaled(
-        double dfOverriddenScale = cpl::NumericLimits<double>::quiet_NaN(),
-        double dfOverriddenOffset = cpl::NumericLimits<double>::quiet_NaN(),
+        double dfOverriddenScale = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenOffset = std::numeric_limits<double>::quiet_NaN(),
         double dfOverriddenDstNodata =
-            cpl::NumericLimits<double>::quiet_NaN()) const;
+            std::numeric_limits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
@@ -4627,29 +4669,21 @@ GDALDataset *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
 // TODO: The expression `abs(fVal1 + fVal2)` looks strange; is this a bug?
 // Should this be `abs(fVal1) + abs(fVal2)` instead?
 
-inline bool ARE_REAL_EQUAL(GFloat16 dfVal1, GFloat16 dfVal2, int ulp = 2)
-{
-    using std::abs;
-    return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < cpl::NumericLimits<GFloat16>::epsilon() *
-                                      abs(dfVal1 + dfVal2) * ulp;
-}
-
 inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
     using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
            abs(fVal1 - fVal2) <
-               cpl::NumericLimits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
+               std::numeric_limits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
 }
 
-// We are using `cpl::NumericLimits<float>::epsilon()` for backward
+// We are using `std::numeric_limits<float>::epsilon()` for backward
 // compatibility
 inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < cpl::NumericLimits<float>::epsilon() *
+           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
 
@@ -4727,6 +4761,18 @@ std::string CPL_DLL
 GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver);
 
 std::string GDALPrintDriverList(int nOptions, bool bJSON);
+
+struct GDALColorAssociation
+{
+    double dfVal;
+    int nR;
+    int nG;
+    int nB;
+    int nA;
+};
+
+std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
+                                                       GDALRasterBand *poBand);
 
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different

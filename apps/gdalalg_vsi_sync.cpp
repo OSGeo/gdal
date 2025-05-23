@@ -33,38 +33,18 @@ GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()
         auto &arg =
             AddArg("source", 0, _("Source file or directory name"), &m_source)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_source.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Source filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
     {
         auto &arg =
             AddArg("destination", 0, _("Destination file or directory name"),
                    &m_destination)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_destination.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Destination filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
 
     AddArg("recursive", 'r', _("Synchronize recursively"), &m_recursive);

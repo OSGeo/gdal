@@ -22,3 +22,4 @@ Available sub-commands
 
 - :ref:`gdal_raster_overview_add`
 - :ref:`gdal_raster_overview_delete`
+- :ref:`gdal_raster_overview_refresh`

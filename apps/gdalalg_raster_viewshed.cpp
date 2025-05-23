@@ -33,24 +33,11 @@
 /*       GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()     */
 /************************************************************************/
 
-GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_opts{}
+GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
+    : GDALRasterPipelineNonNativelyStreamingAlgorithm(NAME, DESCRIPTION,
+                                                      HELP_URL, standaloneStep),
+      m_opts{}
 {
-    AddProgressArg();
-
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddOutputFormatArg(&m_opts.outputFormat, /* bStreamAllowed = */ false,
-                       /* bGDALGAllowed = */ false)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
-
     AddArg("position", 'p', _("Observer position"), &m_observerPos)
         .AddAlias("pos")
         .SetMetaVar("<X,Y> or <X,Y,H>")
@@ -154,12 +141,16 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()
 }
 
 /************************************************************************/
-/*                 GDALRasterViewshedAlgorithm::RunImpl()               */
+/*                 GDALRasterViewshedAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                          void *pProgressData)
+bool GDALRasterViewshedAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
+    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (GetArg("height")->IsExplicitlySet())
@@ -201,20 +192,11 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     m_opts.numJobs = static_cast<uint8_t>(std::clamp(m_numThreads, 0, 255));
 
-    m_opts.outputFilename = m_outputDataset.GetName();
-    if (m_opts.outputFormat.empty())
-    {
-        m_opts.outputFormat =
-            GetOutputDriverForRaster(m_opts.outputFilename.c_str());
-        if (m_opts.outputFormat.empty())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot guess output driver from output filename");
-            return false;
-        }
-    }
-
-    m_opts.creationOpts = CPLStringList(m_creationOptions);
+    m_opts.outputFilename =
+        CPLGenerateTempFilenameSafe(
+            CPLGetBasenameSafe(poSrcDS->GetDescription()).c_str()) +
+        ".tif";
+    m_opts.outputFormat = "GTiff";
 
     if (m_opts.outputMode == gdal::viewshed::OutputMode::Cumulative)
     {
@@ -232,7 +214,6 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 return false;
             }
 
-        auto poSrcDS = m_inputDataset.GetDatasetRef();
         auto poSrcDriver = poSrcDS->GetDriver();
         if (EQUAL(poSrcDS->GetDescription(), "") || !poSrcDriver ||
             EQUAL(poSrcDriver->GetDescription(), "MEM"))
@@ -240,13 +221,6 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             ReportError(
                 CE_Failure, CPLE_AppDefined,
                 "In cumulative mode, the input dataset must be opened by name");
-            return false;
-        }
-        if (EQUAL(m_opts.outputFormat.c_str(), "MEM"))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "In cumulative mode, the output dataset cannot be a "
-                        "MEM dataset");
             return false;
         }
         gdal::viewshed::Cumulative oViewshed(m_opts);
@@ -260,7 +234,6 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                   GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                                   nullptr, nullptr, nullptr)));
         }
-        return bSuccess;
     }
     else
     {
@@ -286,16 +259,28 @@ bool GDALRasterViewshedAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         gdal::viewshed::Viewshed oViewshed(m_opts);
         const bool bSuccess = oViewshed.run(
-            GDALRasterBand::ToHandle(
-                m_inputDataset.GetDatasetRef()->GetRasterBand(m_band)),
+            GDALRasterBand::ToHandle(poSrcDS->GetRasterBand(m_band)),
             pfnProgress ? pfnProgress : GDALDummyProgress, pProgressData);
         if (bSuccess)
         {
             m_outputDataset.Set(oViewshed.output());
         }
-
-        return bSuccess;
     }
+
+    auto poOutDS = m_outputDataset.GetDatasetRef();
+    if (poOutDS && poOutDS->GetDescription()[0])
+    {
+        // In file systems that allow it (all but Windows...), we want to
+        // delete the temporary file as soon as soon as possible after
+        // having open it, so that if someone kills the process there are
+        // no temp files left over. If that unlink() doesn't succeed
+        // (on Windows), then the file will eventually be deleted when
+        // poTmpDS is cleaned due to MarkSuppressOnClose().
+        VSIUnlink(poOutDS->GetDescription());
+        poOutDS->MarkSuppressOnClose();
+    }
+
+    return poOutDS != nullptr;
 }
 
 //! @endcond

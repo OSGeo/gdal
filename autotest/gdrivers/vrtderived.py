@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
 import os
 import threading
 
@@ -198,6 +199,30 @@ def test_vrtderived_4(tmp_vsimem):
     with gdal.quiet_errors():
         ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
     assert ret != 0, "invalid SourceTransferType value not detected"
+
+
+###############################################################################
+# Check handling of pixel function without correct subclass
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_wrong_subclass():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Byte" band="1">
+        <PixelFunctionType>inv</PixelFunctionType>
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(
+        RuntimeError, match="may only be used with subClass=VRTDerivedRasterBand"
+    ):
+        gdal.Open(xml)
 
 
 ###############################################################################
@@ -1182,6 +1207,7 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
 def test_vrt_pixelfn_expression(
     tmp_vsimem, expression, sources, result, dialect, dialects
 ):
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
@@ -1239,6 +1265,7 @@ def test_vrt_pixelfn_expression(
 def test_vrt_pixelfn_expression_invalid(
     tmp_vsimem, expression, sources, dialect, exception
 ):
+    gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
     if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
@@ -1454,3 +1481,212 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         dst,
         np.array([[1, 2]]),
     )
+
+
+@pytest.mark.parametrize(
+    "pixelfn,values,nodata_value,pixelfn_args,expected",
+    [
+        ("dB", [7], 7, {}, 7),
+        ("diff", [3, 7], 7, {}, 7),
+        ("diff", [7, 3], 7, {}, 7),
+        ("div", [3, 7], 7, {}, 7),
+        ("div", [7, 3], 7, {}, 7),
+        ("exp", [7], 7, {}, 7),
+        ("geometric_mean", [3, 7, 9], 7, {}, math.sqrt(3 * 9)),
+        ("geometric_mean", [7, 7, 7], 7, {}, 7),
+        ("geometric_mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("harmonic_mean", [3, 7, 9], 7, {}, 2 / (1 / 3 + 1 / 9)),
+        ("harmonic_mean", [3, 7, 0], 7, {}, 7),  # divide by zero => NoData
+        ("harmonic_mean", [3, 7, 0], 7, {"propagateZero": True}, 0),
+        ("harmonic_mean", [7, 7, 7], 7, {}, 7),
+        ("harmonic_mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 5}, 7),
+        ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": -1}, 7),
+        ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 10}, 10),
+        ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 11}, 11),
+        ("interpolate_linear", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 20}, 20),
+        ("interpolate_exp", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 5}, 7),
+        ("interpolate_exp", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": -1}, 7),
+        ("interpolate_exp", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 10}, 10),
+        ("interpolate_exp", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 11}, 10.717734),
+        ("interpolate_exp", [7, 10, 20, 7], 7, {"t0": 0, "dt": 10, "t": 20}, 20),
+        ("inv", [7], 7, {}, 7),
+        ("inv", [float("nan")], 7, {}, float("nan")),
+        ("inv", [float("nan")], float("nan"), {}, float("nan")),
+        ("log10", [7], 7, {}, 7),
+        ("max", [3, 7, 9], 7, {}, 9),
+        ("max", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("mean", [3, 7, 9], 7, {}, (3 + 9) / 2),
+        ("mean", [7, 7, 7], 7, {}, 7),
+        ("mean", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("median", [3, 7, 11], 7, {}, (3 + 11) / 2),
+        ("median", [3, 7, 9, 11], 7, {}, 9),
+        ("median", [7, 7, 7], 7, {}, 7),
+        ("median", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("min", [3, 7, 9], 7, {}, 3),
+        ("min", [3, float("nan"), 9], 7, {}, 3),
+        ("min", [3, float("nan"), 9], 7, {"propagateNoData": True}, 7),  # should be 3?
+        ("min", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("mode", [3, 7, 9, 9, 9], 7, {"propagateNoData": True}, 7),
+        ("mode", [3, 7, 9, 9, 9], 7, {}, 9),
+        ("mode", [3, 7, float("nan"), float("nan")], 7, {}, float("nan")),
+        ("mul", [3, 7, 9], 7, {}, 27),
+        ("mul", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("mul", [3, 7, float("nan")], 7, {}, float("nan")),
+        ("mul", [3, 7, float("nan")], 7, {"propagateNoData": True}, 7),
+        ("mul", [3, float("nan"), 9], float("nan"), {}, 27),
+        (
+            "mul",
+            [3, float("nan"), 9],
+            float("nan"),
+            {"propagateNoData": True},
+            float("nan"),
+        ),
+        ("norm_diff", [3, 7], 7, {}, 7),
+        ("norm_diff", [7, 3], 7, {}, 7),
+        ("pow", [7], 7, {"power": 10}, 7),
+        ("scale", [7], 7, {"scale": 5, "offset": 10}, 7),
+        ("sqrt", [7], 7, {}, 7),
+        ("sum", [3, 7, 9], 7, {}, 12),
+        ("sum", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+    ],
+)
+def test_vrt_pixelfn_nodata(
+    tmp_vsimem, pixelfn, values, nodata_value, pixelfn_args, expected
+):
+
+    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, len(values), gdal.GDT_Float32
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="2" rasterYSize="1">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <NoDataValue>{nodata_value}</NoDataValue>
+        <PixelFunctionType>{pixelfn}</PixelFunctionType>
+        <PixelFunctionArguments {" ".join(f'{k}="{v}"' for k, v in pixelfn_args.items())} />
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    result = gdal.Open(xml).ReadAsArray()[0, 0]
+
+    assert result == pytest.approx(expected, nan_ok=True)
+
+
+@pytest.mark.parametrize(
+    "src_type",
+    [
+        "Byte",
+        "Int8",
+        "UInt16",
+        "Int16",
+        "UInt32",
+        "Int32",
+        "UInt64",
+        "Int64",
+        "Float16",
+        "Float32",
+        "Float64",
+        "CInt16",
+        "CInt32",
+        "CFloat16",
+        "CFloat32",
+        "CFloat64",
+    ],
+)
+@pytest.mark.parametrize(
+    "dst_type", ["Byte", "UInt16", "Int16", "UInt32", "Int32", "Float32", "Float64"]
+)
+@pytest.mark.parametrize(
+    "transfer_type",
+    [
+        None,
+        "Byte",
+        "UInt16",
+        "Int16",
+        "UInt32",
+        "Int32",
+        "Float32",
+        "Float64",
+    ],
+)
+def test_vrt_pixelfn_sum_optimization(tmp_vsimem, src_type, dst_type, transfer_type):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    width = 17
+    height = 2
+
+    ar1 = np.array([np.arange(width), np.arange(width) + 50])
+    ar2 = np.array([np.arange(width) + 20, np.arange(width) + 70])
+    if (
+        src_type.startswith("Float")
+        and dst_type.startswith("Float")
+        and (not transfer_type or transfer_type.startswith("Float"))
+    ):
+        ar1 = ar1 / 2
+        ar2 = ar2 / 4
+        constant = 3.5
+        constant_res = 3.5
+    elif (
+        not src_type.startswith("Float")
+        and not dst_type.startswith("Float")
+        and (not transfer_type or not transfer_type.startswith("Float"))
+    ):
+        constant = 3.2
+        constant_res = 3
+    else:
+        constant = 3
+        constant_res = 3
+
+    big_constant = transfer_type is None
+    if big_constant:
+        constant = 255
+        constant_res = 255
+
+    src_type = gdal.GetDataTypeByName(src_type)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src1.tif", width, height, 1, src_type
+    ) as src:
+        src.WriteArray(ar1)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src2.tif", width, height, 1, src_type
+    ) as src:
+        src.WriteArray(ar2)
+
+    if transfer_type:
+        transfer = f"<SourceTransferType>{transfer_type}</SourceTransferType>"
+    else:
+        transfer = ""
+
+    xml = f"""
+    <VRTDataset rasterXSize="{width}" rasterYSize="{height}">
+      <VRTRasterBand dataType="{dst_type}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>sum</PixelFunctionType>
+        <PixelFunctionArguments k="{constant}" />
+        {transfer}
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src1.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src2.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    dst = gdal.Open(xml).ReadAsArray()
+    if dst_type == "Byte" and big_constant:
+        np.testing.assert_array_equal(dst, np.ones((height, width)) * constant)
+    else:
+        np.testing.assert_array_equal(dst, constant_res + ar1 + ar2)

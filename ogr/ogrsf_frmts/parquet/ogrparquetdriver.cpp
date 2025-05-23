@@ -15,10 +15,12 @@
 
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <tuple>
 
 #include "ogr_parquet.h"
 #include "ogrparquetdrivercore.h"
+#include "memdataset.h"
 
 #include "../arrow_common/ograrrowrandomaccessfile.h"
 #include "../arrow_common/vsiarrowfilesystem.hpp"
@@ -193,11 +195,8 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
     if (poLayer->GeomColsBBOXParquet(0, iParquetXMin, iParquetYMin,
                                      iParquetXMax, iParquetYMax))
     {
-        auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
-        if (!poMemDrv)
-            return nullptr;
         auto poMemDS = std::unique_ptr<GDALDataset>(
-            poMemDrv->Create("", 0, 0, 0, GDT_Unknown, nullptr));
+            MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr));
         if (!poMemDS)
             return nullptr;
         OGRSpatialReference *poTmpSRS = nullptr;
@@ -535,6 +534,7 @@ static GDALDataset *OGRParquetDriverCreate(const char *pszName, int nXSize,
 
 class OGRParquetDriver final : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bMetadataInitialized = false;
     void InitMetadata();
 
@@ -542,6 +542,7 @@ class OGRParquetDriver final : public GDALDriver
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         if (EQUAL(pszName, GDAL_DS_LAYER_CREATIONOPTIONLIST))
         {
             InitMetadata();
@@ -551,6 +552,7 @@ class OGRParquetDriver final : public GDALDriver
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitMetadata();
         return GDALDriver::GetMetadata(pszDomain);
     }

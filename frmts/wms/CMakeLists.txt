@@ -2,6 +2,7 @@ add_gdal_driver(
   TARGET gdal_WMS
   SOURCES gdalhttp.cpp
           gdalwmsrasterband.cpp
+          minidriver_iiifimage.cpp
           minidriver_iip.cpp
           minidriver_tiled_wms.cpp
           minidriver_tms.cpp
@@ -10,6 +11,7 @@ add_gdal_driver(
           wmsutils.cpp
           gdalhttp.h
           minidriver.cpp
+          minidriver_iiifimage.h
           minidriver_iip.h
           minidriver_tiled_wms.h
           minidriver_tms.h

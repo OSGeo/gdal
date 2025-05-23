@@ -38,9 +38,10 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
 /*                  GDALVectorWriteAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
-                                       void *pProgressData)
+bool GDALVectorWriteAlgorithm::RunStep(GDALVectorPipelineStepRunContext &ctxt)
 {
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 

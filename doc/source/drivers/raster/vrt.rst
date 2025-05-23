@@ -207,13 +207,24 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If the input datasets to be composed have a nodata value for this raster band, set this element's value to that nodata value for it to be reflected in the VRT. This must not be confused with the NODATA element of a VRTComplexSource element.
+- **NoDataValue**: Specifies the NoData value that the raster band will report.
+  If not specified, NoData pixels from the band's sources (as well as pixels
+  not covered by any source) will be set to zero. If the source rasters have
+  their own NoData values that differ from the one specified in
+  ``<NoDataValue>``, a ``ComplexSource`` with a ``<NODATA>`` element can be
+  used to convert source NoData pixels to the value specified here.
 
 .. code-block:: xml
 
   <NoDataValue>-100.0</NoDataValue>
 
-- **HideNoDataValue**: If this value is 1, the nodata value will not be reported.  Essentially, the caller will not be aware of a nodata pixel when it reads one.  Any datasets copied/translated from this will not have a nodata value.  This is useful when you want to specify a fixed background value for the dataset.  The background will be the value specified by the NoDataValue element. Default value is 0 when this element is absent.
+- **HideNoDataValue**: If this value is ``YES``/``TRUE``/``1``, the NoData
+  value specified by ``<NoDataValue>`` will not be reported.  Essentially, the
+  reader will not be aware of a NoData pixel when it reads one.  Any datasets
+  copied/translated from this will not have a NoData value.  This is useful
+  when you want to specify a fixed background value for the dataset. (The
+  background will be the value specified by the NoDataValue element.) Default
+  value is ``NO`` when this element is absent.
 
 .. code-block:: xml
 
@@ -1057,7 +1068,7 @@ A VRTRasterBand can be made a VRTDerivedRasterBand by setting attribute subClass
 Some of the common subelements for VRTRasterBand (whose subClass="VRTDerivedRasterBand") are listed here. They can be used with built-in, C++, or Python pixel functions.
 
 - **PixelFunctionType**: (required): A pixel function with this name must be defined.
-- **SkipNonContributingSources**: (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
+- **SkipNonContributingSources**: (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to true, only sources that intersect the requested region will be passed.
 
 .. example::
    :title: Calculating a derived band
@@ -1113,7 +1124,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
 
 .. list-table::
-   :widths: 15 10 20 55
+   :widths: 15 10 10 65
    :header-rows: 1
 
    * - PixelFunctionType
@@ -1123,125 +1134,361 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **cmul**
      - 2
      - -
-     - multiply the first band for the complex conjugate of the second
+     - Multiply the first band for the complex conjugate of the second
    * - **complex**
      - 2
      - -
-     - make a complex band merging two bands used as real and imag values
+     - Make a complex band merging two bands used as real and imag values
    * - **conj**
      - 1
      - -
-     - computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
+     - Computes the complex conjugate of a single raster band
+
+       (just a copy if the input is non-complex)
    * - **dB**
      - 1
      - ``fact`` (optional)
-     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``. The optional ``fact`` parameter can be set to ``10`` to get the alternative formula: ``10. * log10( abs( x ) )``
+     - Perform conversion to dB of the abs of a single raster band (real or complex):
+
+       ``20. * log10( abs( x ) )``.
+
+       The optional ``fact`` parameter can be set to ``10``
+
+       to get the alternative formula: ``10. * log10( abs( x ) )``
    * - **dB2amp**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
+     - Perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` )
+       of a single raster band (real only).
+
+       Deprecated in GDAL 3.5. Please use the ``exp`` pixel function with
+       ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
    * - **dB2pow**
      - 1
      - -
-     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only). Deprecated in GDAL v3.5. Please use the ``exp`` pixel function with ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
+     - Perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` )
+       of a single raster band (real only).
+
+       Deprecated in GDAL 3.5. Please use the ``exp`` pixel function with
+       ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
    * - **diff**
      - 2
      - -
-     - computes the difference between 2 raster bands (``b1 - b2``)
+     - Computes the difference between 2 raster bands (``b1 - b2``).
+
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+
+       will be the NoData value.
    * - **div**
      - 2
      - -
-     - divide one raster band by another (``b1 / b2``)
+     - Divide one raster band by another (``b1 / b2``).
+
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+
+       will be the NoData value.
    * - **exp**
      - 1
-     - ``base`` (optional), ``fact`` (optional)
-     - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+     - ``base`` (optional)
+
+       ``fact`` (optional)
+     - Computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``.
+
+       The function also accepts two optional parameters: ``base`` and ``fact``
+
+       that allow to compute the generalized formula: ``base ^ ( fact * x )``.
+
+       Note: this function is the recommended one to perform conversion form
+
+       logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case
+
+       ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
+
    * - **expression**
      - 1
      - ``expression``
-     - evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default) or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__. The expression is specified using the "expression" argument; the dialect may be specified using the "dialect" argument. Within the expression, band values can be accessed through the variables ``B1``, ``B2``, etc. ; by giving a name to a source band (e.g., ``<SimpleSource name="NIR">``); or through the ``BANDS`` vector. With ExprTk, ``BANDS`` is exposed as a standard (0-indexed) vector. With muparser, it is expanded into a list of all input bands.
+       
+       ``dialect`` (optional)
+     - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
+       or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
 
-       ExprTk and muparser support a number of built-in functions and control structures. Refer to the documentation of those libraries for details.
+       The expression is specified using the "expression" argument.
+       The dialect may be specified using the "dialect" argument.
+
+       Within the expression, band values can be accessed:
+
+       - through the variables ``B1``, ``B2``, etc.
+
+       - by giving a name to a source band (e.g., ``<SimpleSource name="NIR">``)
+
+       - or through the ``BANDS`` vector.
+         With ExprTk, ``BANDS`` is exposed as a standard (0-indexed) vector.
+
+         With muparser, it is expanded into a list of all input bands.
+
+       ExprTk and muparser support a number of built-in functions and control structures.
+
+       Refer to the documentation of those libraries for details.
+   * - **geometric_mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Geometric mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+   * - **harmonic_mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+
+       ``propagateZero`` (optional, default=false)
+     - (GDAL >= 3.12) Harmonic mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+
+       If zero values are encountered in one of the bands, the output will
+
+       be set to NoData unless ``propagateZero`` is set to ``true``.
+
    * - **imag**
      - 1
      - -
-     - extract imaginary part from a single raster band (0 for non-complex)
+     - Extract imaginary part from a single raster band (0 for non-complex)
    * - **intensity**
      - 1
      - -
-     - computes the intensity ``Re( x * conj(x) )`` of a single raster band (real or complex)
+     - Computes the intensity ``Re( x * conj(x) )`` of a single raster band (real or complex)
    * - **interpolate_exp**
      - >= 2
      - ``t0``, ``dt``, ``t``
-     - interpolate a value at time (or position) ``t`` given input sources beginning at position ``t0`` with spacing ``dt`` using exponential interpolation
+     - Interpolate a value at time (or position) ``t`` given input sources
+
+       beginning at position ``t0`` with spacing ``dt`` using exponential interpolation.
+
+       Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
+
+       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+
+       NoData value.
    * - **interpolate_linear**
      - >= 2
      - ``t0``, ``dt``, ``t``
-     - interpolate a value at time (or position) ``t`` given input sources beginning at ``t0`` with spacing ``dt`` using linear interpolation
+     - Interpolate a value at time (or position) ``t`` given input sources
+
+       beginning at ``t0`` with spacing ``dt`` using linear interpolation.
+
+       Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
+
+       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+
+       NoData value.
    * - **inv**
      - 1
      - ``k`` (optional)
-     - inverse (``1./x``). If the optional ``k`` parameter is set then the result is multiplied by ``k`` (``k / x``)
+     - Inverse (``1./x``). If the optional ``k`` parameter is set,
+
+       then the result is multiplied by ``k`` (``k / x``).
+
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **log10**
      - 1
      - -
-     - compute the logarithm (base 10) of the abs of a single raster band (real or complex): ``log10( abs( x ) )``
+     - Compute the logarithm (base 10) of the abs of a single raster band
+
+       (real or complex): ``log10( abs( x ) )``
+
+       Starting with GDAL 3.12, if ``x`` is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **max**
      - >= 2
-     - ``propagateNoData`` (optional)
-     - (GDAL >= 3.8) maximum of 2 or more raster bands, ignoring by default pixels at nodata. If the optional ``propagateNoData`` parameter is set to ``true``, then if a nodata pixel is found in one of the bands, if will be propagated to the output value.
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.8) Maximum of 2 or more raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+   * - **mean**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Arithmetic mean of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
+   * - **median**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Median of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **min**
      - >= 2
-     - ``propagateNoData`` (optional)
-     - (GDAL >= 3.8) minimum of 2 or more raster bands, ignoring by default pixels at nodata. If the optional ``propagateNoData`` parameter is set to ``true``, then if a nodata pixel is found in one of the bands, if will be propagated to the output value.
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.8) Minimum of 2 or more raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **mod**
      - 1
      - -
-     - extract module from a single raster band (real or complex)
+     - Extract module from a single raster band (real or complex)
+   * - **mode**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Mode (most common value) of input raster bands.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be ignored.
    * - **mul**
      - >= 1
      - ``k`` (optional)
-     - multiply 1 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
+
+       ``propagateNoData`` (optional, default=false)
+     - Multiply 1 or more raster bands.
+
+       If the optional ``k`` parameter is provided then the result is
+
+       multiplied by the scalar ``k``.
+       
+       Starting with GDAL 3.12, if ``propagateNoData`` is true, any input pixel
+
+       equal to the derived band's NoData value (set with ``<NoDataValue>``)
+
+       will cause the result to be the NoData value. If ``propagateNoData`` is
+
+       false, input NoData values will be ignored.
    * - **norm_diff**
      - 2
      - -
-     - computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
+     - Computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
+
+       Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
+
+       derived band's NoData value (set with ``<NoDataValue>``), the result
+
+       will be the NoData value.
    * - **phase**
      - 1
      - -
-     - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
+     - Extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
    * - **polar**
      - 2
      - ``amplitude_type`` (optional)
-     - make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``. The optional (string) parameter ``amplitude_type`` can be ``AMPLITUDE`` (default) ``INTENSITY`` or ``dB``. Note: if ``amplitude_type`` is set to ``INTENSITY`` then negative values are clipped to zero.
+     - Make a complex band using input bands for amplitude and phase values ``b1 * exp( j * b2 )``.
+
+       The optional (string) parameter ``amplitude_type`` can be:
+
+       - ``AMPLITUDE`` (default),
+
+       - ``INTENSITY`` or
+
+       - ``dB``.
+
+       Note: if ``amplitude_type`` is set to ``INTENSITY`` then negative values are clipped to zero.
    * - **pow**
      - 1
      - ``power``
-     - raise a single raster band to a constant power, specified with argument ``power`` (real only)
+     - Raise a single raster band to a constant power, specified with argument ``power`` (real only)
+
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
      - -
-     - extract real part from a single raster band (just a copy if the input is non-complex)
+     - Extract real part from a single raster band (just a copy if the input is non-complex)
    * - **reclassify**
      - = 1
-     - ``mapping``, ``default``
-     - reclassify values according to a mapping provided by ``mapping``. The format of the mapping is ``SOURCE=DEST;SOURCE=DEST;...`` where each ``SOURCE`` element is either a single value, an interval (e.g., ``(-inf,30]``), ``NO_DATA``, or ``DEFAULT``. ``DEST`` may be any constant, ``PASS_THROUGH`` (to skip reclassification for certain values), or ``NO_DATA``. An error will be raised if a pixel value is not covered by any interval. A similar functionality, but with interpolation, is offered by the ``ComplexSource``.
+     - ``mapping``
+
+       ``default``
+     - Reclassify values according to a mapping provided by ``mapping``.
+
+       The format of the mapping is ``SOURCE=DEST;SOURCE=DEST;...`` where each
+       ``SOURCE`` element is:
+
+       - either a single value
+
+       - an interval (e.g., ``(-inf,30]``), ``NO_DATA``, or ``DEFAULT``.
+
+       ``DEST`` may be:
+
+       - any constant,
+
+       - ``PASS_THROUGH`` (to skip reclassification for certain values),
+
+       - or ``NO_DATA``.
+
+       An error will be raised if a pixel value is not covered by any interval.
+
+       A similar functionality, but with interpolation, is offered by the ``ComplexSource``.
    * - **replace_nodata**
      - = 1
      - ``to`` (optional)
-     - convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
+     - Convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
    * - **scale**
      - = 1
      - -
-     - perform scaling according to the ``offset`` and ``scale`` values of the raster band
+     - Perform scaling according to the ``offset`` and ``scale`` values of the raster band
+
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **sqrt**
      - 1
      - -
-     - perform the square root of a single raster band (real only)
+     - Perform the square root of a single raster band (real only).
+
+       Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **sum**
      - >= 1
      - ``k`` (optional)
-     - sum 1 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
+
+       ``propagateNoData`` (optional, default=``false``)
+     - Sum 1 or more raster bands. If the optional ``k`` parameter is provided
+
+       then it is added to each element of the result.
+
+       Starting with GDAL 3.12, if ``propagateNoData`` is true, any input pixel
+
+       equal to the derived band's NoData value (set with ``<NoDataValue>``)
+
+       will cause the result to be the NoData value. If ``propagateNoData`` is
+
+       false, input NoData values will be ignored.
 
 .. example::
    :title: VRT expression with a simple condition
@@ -1257,7 +1504,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
       <PixelFunctionType>expression</PixelFunctionType>
       <PixelFunctionArguments dialect="muparser" expression="B1 ? 1.5*B3 : B1" />
 
-    or
+   or
 
    .. code-block:: xml
 
@@ -2162,7 +2409,7 @@ The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``pro
 The effect of the ``sd_name`` option (added in GDAL 3.9) is to choose an individual subdataset by
 name for sources that have multiple subdatasets. This means that rather than a fully-qualified description
 such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd_name=somearray". This option
-is mutually exclusive with ``sd``.
+is mutually exclusive with ``sd``, and with ``transpose``.
 
 The effect of the ``sd`` option (added in GDAL 3.9) is to choose an individual subdataset by
 number for sources that have multiple subdatasets. This means that rather than a fully-qualified
@@ -2170,8 +2417,18 @@ description such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd=
 is between 1 and the number of subdatasets. Note that there is no guarantee of the order of the
 subdatasets within a source between GDAL versions (or in some cases between file series in datasets). This
 mode is for convenience only, please use ``sd_name`` to choose a subdataset by name explicitly.
-This option is mutually exclusive with ``sd_name``.
+This option is mutually exclusive with ``sd_name``, and with ``transpose``.
 
+The effect of the ``transpose`` option (added in GDAL 3.12) is to specify just one array by name from a
+multidimensional dataset and nominate the indexes for the two axes that define the 2D dataset. This is
+an interface to the function :cpp:func:`GDALMDArray::AsClassicDataset` in the multidimensional raster model.
+This can be valuable for reorienting an array that presents X and Y in YX or some other order. (There's a
+possible added advantage that a valid geotransform may be provided that the classic 2D model doesn't yet infer,
+because the multidimensional model can derive one from coordinates referenced in that form).
+The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` with a no-op case
+``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
+transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
+This option is mutually exclusive with ``sd_name`` and ``sd``.
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

@@ -32,7 +32,7 @@ class GDALRasterReadAlgorithm final : public GDALRasterPipelineStepAlgorithm
     GDALRasterReadAlgorithm();
 
   private:
-    bool RunStep(GDALProgressFunc, void *) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond

@@ -268,7 +268,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         CPLXMLNode sVRTDatasetTmp = *psVRTDataset;
         sVRTDatasetTmp.psNext = nullptr;
         char *pszXML = CPLSerializeXMLTree(&sVRTDatasetTmp);
-        m_poSrcDS.reset(VRTDataset::OpenXML(pszXML, pszVRTPathIn, GA_ReadOnly));
+        m_poSrcDS = VRTDataset::OpenXML(pszXML, pszVRTPathIn, GA_ReadOnly);
         CPLFree(pszXML);
     }
     else

@@ -148,7 +148,7 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
     if src_srs_format == "-src_srs_format WKT":
         if ogr.GetDriverByName("SQLite") is None:
             pytest.skip("SQLite driver not available")
-        output_filename = str(tmp_path / "tileindex.shp")
+        output_filename = str(tmp_path / "tileindex.db")
         output_format = " -f SQLite"
 
     (_, err) = gdaltest.runexternal_out_and_err(

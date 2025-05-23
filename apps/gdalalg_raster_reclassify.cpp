@@ -17,6 +17,8 @@
 #include "gdal_utils.h"
 #include "../frmts/vrt/vrtdataset.h"
 
+#include <array>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -107,7 +109,7 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 /*           GDALRasterReclassifyAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReclassifyAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset.GetDatasetRef();
     CPLAssert(poSrcDS);

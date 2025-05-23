@@ -657,14 +657,14 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         poTileIndexDS = poTileIndexDSUnique.get();
     }
 
-    if (osFormat.empty())
-    {
-        if (auto poOutDrv = poTileIndexDS->GetDriver())
-            osFormat = poOutDrv->GetDescription();
-    }
+    auto poOutDrv = poTileIndexDS->GetDriver();
+    if (osFormat.empty() && poOutDrv)
+        osFormat = poOutDrv->GetDescription();
 
-    const int nMaxFieldSize =
-        EQUAL(osFormat.c_str(), "ESRI Shapefile") ? 254 : 0;
+    const char *pszVal =
+        poOutDrv ? poOutDrv->GetMetadataItem(GDAL_DMD_MAX_STRING_LENGTH)
+                 : nullptr;
+    const int nMaxFieldSize = pszVal ? atoi(pszVal) : 0;
 
     if (poLayer)
     {
@@ -700,7 +700,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     if (poExistingLayer && poExistingLayer->GetName() ==
                                                psOptions->osIndexLayerName)
                     {
-                        poTileIndexDS->DeleteLayer(i);
+                        if (poTileIndexDS->DeleteLayer(i) != OGRERR_NONE)
+                            return nullptr;
                         break;
                     }
                 }

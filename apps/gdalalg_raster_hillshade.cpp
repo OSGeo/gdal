@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_write.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -64,18 +65,53 @@ GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
+/*          GDALRasterHillshadeAlgorithm::CanHandleNextStep()           */
+/************************************************************************/
+
+bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
+    GDALRasterPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
+}
+
+/************************************************************************/
 /*              GDALRasterHillshadeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterHillshadeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterHillshadeAlgorithm::RunStep(
+    GDALRasterPipelineStepRunContext &ctxt)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString("stream");
+    std::string outputFilename;
+    if (ctxt.m_poNextUsableStep)
+    {
+        CPLAssert(CanHandleNextStep(ctxt.m_poNextUsableStep));
+        outputFilename = ctxt.m_poNextUsableStep->GetOutputDataset().GetName();
+        const auto &format = ctxt.m_poNextUsableStep->GetOutputFormat();
+        if (!format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(format.c_str());
+        }
+
+        for (const std::string &co :
+             ctxt.m_poNextUsableStep->GetCreationOptions())
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(co.c_str());
+        }
+    }
+    else
+    {
+        aosOptions.AddString("-of");
+        aosOptions.AddString("stream");
+    }
+
     aosOptions.AddString("-b");
     aosOptions.AddString(CPLSPrintf("%d", m_band));
     aosOptions.AddString("-z");
@@ -134,19 +170,28 @@ bool GDALRasterHillshadeAlgorithm::RunStep(GDALProgressFunc, void *)
 
     GDALDEMProcessingOptions *psOptions =
         GDALDEMProcessingOptionsNew(aosOptions.List(), nullptr);
-
-    auto poOutDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALDEMProcessing(
-            "", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-            "hillshade", nullptr, psOptions, nullptr)));
-    GDALDEMProcessingOptionsFree(psOptions);
-    const bool bRet = poOutDS != nullptr;
-    if (poOutDS)
+    bool bOK = false;
+    if (psOptions)
     {
-        m_outputDataset.Set(std::move(poOutDS));
+        if (ctxt.m_poNextUsableStep)
+        {
+            GDALDEMProcessingOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
+                                                ctxt.m_pProgressData);
+        }
+        auto poOutDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::FromHandle(GDALDEMProcessing(
+                outputFilename.c_str(),
+                GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
+                "hillshade", nullptr, psOptions, nullptr)));
+        GDALDEMProcessingOptionsFree(psOptions);
+        bOK = poOutDS != nullptr;
+        if (poOutDS)
+        {
+            m_outputDataset.Set(std::move(poOutDS));
+        }
     }
 
-    return bRet;
+    return bOK;
 }
 
 //! @endcond

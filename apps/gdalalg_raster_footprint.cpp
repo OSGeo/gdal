@@ -13,7 +13,6 @@
 #include "gdalalg_raster_footprint.h"
 
 #include "cpl_conv.h"
-#include "cpl_vsi_virtual.h"
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -38,7 +37,8 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
 
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
                        /* bGDALGAllowed = */ false)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
@@ -47,7 +47,8 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
         .SetDefault(m_outputLayerName);
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddAppendUpdateArg(&m_append);
+    AddUpdateArg(&m_update).SetHidden();  // needed for correct append execution
+    AddAppendLayerArg(&m_append);
     AddOverwriteArg(&m_overwrite);
 
     AddBandArg(&m_bands);
@@ -125,10 +126,7 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
            _("Disable creating a field with the path of the input dataset"),
            &m_noLocation)
         .SetMutualExclusionGroup("location");
-    AddArg("absolute-path", 0,
-           _("Whether the path to the input dataset should be stored as an "
-             "absolute path"),
-           &m_writeAbsolutePaths);
+    AddAbsolutePathArg(&m_writeAbsolutePaths);
 
     AddValidationAction(
         [this]
@@ -170,52 +168,6 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
 bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                            void *pProgressData)
 {
-    GDALDatasetH hDstDS =
-        GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
-
-    const bool dstDSWasNull{!hDstDS};
-
-    if (!hDstDS && !m_outputDataset.GetName().empty())
-    {
-        VSIStatBufL sStat;
-        bool fileExists{VSIStatL(m_outputDataset.GetName().c_str(), &sStat) ==
-                        0};
-
-        {
-            CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-            hDstDS = GDALOpenEx(m_outputDataset.GetName().c_str(),
-                                GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR |
-                                    GDAL_OF_UPDATE,
-                                nullptr, nullptr, nullptr);
-            CPLErrorReset();
-        }
-
-        if ((hDstDS || fileExists) && !m_overwrite && !m_append)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Dataset '%s' already exists. Specify the --overwrite "
-                     "option to overwrite it or the --append option to "
-                     "append to it.",
-                     m_outputDataset.GetName().c_str());
-            GDALClose(hDstDS);
-            return false;
-        }
-
-        if (hDstDS && fileExists && m_overwrite)
-        {
-            // Delete the existing file
-            GDALClose(hDstDS);
-            hDstDS = nullptr;
-            if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to delete existing dataset '%s'.",
-                         m_outputDataset.GetName().c_str());
-                return false;
-            }
-        }
-    }
-
     CPLStringList aosOptions;
     for (int band : m_bands)
     {
@@ -323,37 +275,30 @@ bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             aosOptions.push_back("-write_absolute_path");
     }
 
+    bool bOK = false;
     std::unique_ptr<GDALFootprintOptions, decltype(&GDALFootprintOptionsFree)>
         psOptions{GDALFootprintOptionsNew(aosOptions.List(), nullptr),
                   GDALFootprintOptionsFree};
-    if (!psOptions)
-        return false;
-
-    GDALFootprintOptionsSetProgress(psOptions.get(), pfnProgress,
-                                    pProgressData);
-
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALFootprint(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
-                      psOptions.get(), nullptr));
-    if (!poRetDS)
-        return false;
-
-    if (!hDstDS)
+    if (psOptions)
     {
-        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-    }
-    else if (dstDSWasNull)
-    {
-        if (GDALClose(hDstDS) != CE_None)
+        GDALFootprintOptionsSetProgress(psOptions.get(), pfnProgress,
+                                        pProgressData);
+
+        GDALDatasetH hSrcDS =
+            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        GDALDatasetH hDstDS =
+            GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALFootprint(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
+                          psOptions.get(), nullptr));
+        bOK = poRetDS != nullptr;
+        if (bOK && !hDstDS)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to close output dataset");
-            return false;
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
         }
     }
 
-    return true;
+    return bOK;
 }
 
 //! @endcond

@@ -71,6 +71,17 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
     m_poFeatureDefn->Seal(/* bSealFields = */ true);
 }
 
+OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
+    : m_poFeatureDefn(oFeatureDefn.Clone())
+{
+    m_poFeatureDefn->Reference();
+
+    SetDescription(m_poFeatureDefn->GetName());
+
+    m_oMapFeaturesIter = m_oMapFeatures.begin();
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
+}
+
 /************************************************************************/
 /*                           ~OGRMemLayer()                           */
 /************************************************************************/

@@ -2363,3 +2363,36 @@ def test_ogr_libkml_create_field_id_integer(tmp_vsimem):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f["id"] == "1"
+
+
+###############################################################################
+#
+
+
+def test_ogr_libkml_create_field_bool(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        fld_defn = ogr.FieldDefn("b", ogr.OFTInteger)
+        fld_defn.SetSubType(ogr.OFSTBoolean)
+        lyr.CreateField(fld_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["b"] = True
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["b"] = False
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+        lyr = ds.GetLayer(0)
+        idx = lyr.GetLayerDefn().GetFieldIndex("b")
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+        assert fld_defn.GetType() == ogr.OFTInteger
+        assert fld_defn.GetSubType() == ogr.OFSTBoolean
+        f = lyr.GetNextFeature()
+        assert f["b"]
+        f = lyr.GetNextFeature()
+        assert not f["b"]

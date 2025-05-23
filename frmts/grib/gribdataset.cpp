@@ -28,6 +28,7 @@
 #endif
 
 #include <algorithm>
+#include <mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -2652,7 +2653,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     {
         // Longitude in degrees, to be transformed to meters (or degrees in
         // case of latlon).
-        rMinX = meta->gds.lon1;
+        rMinX = Lon360to180(meta->gds.lon1);
         // Latitude in degrees, to be transformed to meters.
         double dfGridOriY = meta->gds.lat1;
 
@@ -2880,7 +2881,9 @@ static void GDALDeregister_GRIB(GDALDriver *)
 
 class GDALGRIBDriver : public GDALDriver
 {
+    std::mutex m_oMutex{};
     bool m_bHasFullInitMetadata = false;
+    void InitializeMetadata();
 
   public:
     GDALGRIBDriver() = default;
@@ -2891,12 +2894,11 @@ class GDALGRIBDriver : public GDALDriver
 };
 
 /************************************************************************/
-/*                            GetMetadata()                             */
+/*                         InitializeMetadata()                         */
 /************************************************************************/
 
-char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
+void GDALGRIBDriver::InitializeMetadata()
 {
-    if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
@@ -2987,6 +2989,19 @@ char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
             SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osCreationOptionList);
         }
     }
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (pszDomain == nullptr || EQUAL(pszDomain, ""))
+    {
+        InitializeMetadata();
+    }
     return GDALDriver::GetMetadata(pszDomain);
 }
 
@@ -2997,12 +3012,13 @@ char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
 const char *GDALGRIBDriver::GetMetadataItem(const char *pszName,
                                             const char *pszDomain)
 {
+    std::lock_guard oLock(m_oMutex);
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
         if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
-            GetMetadata();
+            InitializeMetadata();
     }
     return GDALDriver::GetMetadataItem(pszName, pszDomain);
 }

@@ -219,6 +219,41 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_dataset",
+        "gdal-dataset",
+        "Entry point for dataset management commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_dataset_identify",
+        "gdal-dataset-identify",
+        "Identify driver opening dataset(s)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_dataset_copy",
+        "gdal-dataset-copy",
+        "Copy files of a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_dataset_rename",
+        "gdal-dataset-rename",
+        "Rename files of a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_dataset_delete",
+        "gdal-dataset-delete",
+        "Delete dataset(s)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_mdim",
         "gdal-mdim",
         "Entry point for multidimensional commands",
@@ -285,6 +320,13 @@ man_pages = [
         "programs/gdal_raster_color_map",
         "gdal-raster-color-map",
         "Generate a RGB or RGBA dataset from a single band, using a color map",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_color_merge",
+        "gdal-raster-color-merge",
+        "Use a grayscale raster to replace the intensity of a RGB/RGBA dataset",
         [author_evenr],
         1,
     ),
@@ -366,6 +408,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_overview_refresh",
+        "gdal-raster-overview-refresh",
+        "Refresh overviews",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
         "Process a raster dataset",
@@ -387,6 +436,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_proximity",
+        "gdal-raster-proximity",
+        "Produces a raster proximity map",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_raster_reclassify",
         "gdal-raster-reclassify",
         "Reclassify a raster dataset",
@@ -404,6 +460,13 @@ man_pages = [
         "programs/gdal_raster_resize",
         "gdal-raster-resize",
         "Resize a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_rgb_to_palette",
+        "gdal-raster-rgb-to-palette",
+        "Convert a RGB image into a pseudo-color / paletted image.",
         [author_evenr],
         1,
     ),
@@ -478,6 +541,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_update",
+        "gdal-raster-update",
+        "Update the destination raster with the content of the input one.",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_viewshed",
         "gdal-raster-viewshed",
         "Compute the viewshed of a raster dataset.",
@@ -534,57 +604,50 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_geom",
-        "gdal-vector-geom",
-        "Geometry operations on a vector dataset",
-        [author_evenr],
-        1,
-    ),
-    (
-        "programs/gdal_vector_geom_set_type",
-        "gdal-vector-geom-set-type",
+        "programs/gdal_vector_set_geom_type",
+        "gdal-vector-set-geom-type",
         "Modify the geometry type of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_explode_collections",
-        "gdal-vector-geom-explode-collections",
+        "programs/gdal_vector_explode_collections",
+        "gdal-vector-explode-collections",
         "Explode geometries of type collection of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_make_valid",
-        "gdal-vector-geom-make-valid",
+        "programs/gdal_vector_make_valid",
+        "gdal-vector-make-valid",
         "Fix validity of geometries of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_segmentize",
-        "gdal-vector-geom-segmentize",
+        "programs/gdal_vector_segmentize",
+        "gdal-vector-segmentize",
         "Segmentize geometries of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_simplify",
-        "gdal-vector-geom-simplify",
+        "programs/gdal_vector_simplify",
+        "gdal-vector-simplify",
         "Simplify geometries of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_buffer",
-        "gdal-vector-geom-buffer",
+        "programs/gdal_vector_buffer",
+        "gdal-vector-buffer",
         "Compute a buffer around geometries of a vector dataset",
         [author_evenr],
         1,
     ),
     (
-        "programs/gdal_vector_geom_swap_xy",
-        "gdal-vector-geom-swap-xy",
+        "programs/gdal_vector_swap_xy",
+        "gdal-vector-swap-xy",
         "Swap X and Y coordinates of geometries of a vector datasett",
         [author_evenr],
         1,
@@ -593,6 +656,13 @@ man_pages = [
         "programs/gdal_vector_grid",
         "gdal-vector-grid",
         "Create a regular grid from scattered points",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_layer_algebra",
+        "gdal-vector-layer-algebra",
+        "Perform algebraic operation between 2 layers",
         [author_evenr],
         1,
     ),
@@ -1106,10 +1176,6 @@ def builder_inited(app):
 
     if app.builder.name == "html":
         check_python_bindings()
-
-    # exclude the PDF toctree from HTML builds
-    if app.builder.name != "latex":
-        app.config.exclude_patterns.append("index_pdf.rst")
 
 
 def setup(app):

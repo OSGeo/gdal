@@ -182,7 +182,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 /*                 GDALVectorClipAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorClipAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorClipAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

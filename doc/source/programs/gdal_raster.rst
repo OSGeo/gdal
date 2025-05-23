@@ -26,6 +26,7 @@ Available sub-commands
 - :ref:`gdal_raster_clean_collar`
 - :ref:`gdal_raster_clip`
 - :ref:`gdal_raster_color_map`
+- :ref:`gdal_raster_color_merge`
 - :ref:`gdal_raster_convert`
 - :ref:`gdal_raster_create`
 - :ref:`gdal_raster_footprint`
@@ -37,8 +38,10 @@ Available sub-commands
 - :ref:`gdal_raster_pipeline`
 - :ref:`gdal_raster_pixel_info`
 - :ref:`gdal_raster_polygonize`
+- :ref:`gdal_raster_proximity`
 - :ref:`gdal_raster_reproject`
 - :ref:`gdal_raster_resize`
+- :ref:`gdal_raster_rgb_to_palette`
 - :ref:`gdal_raster_roughness`
 - :ref:`gdal_raster_scale`
 - :ref:`gdal_raster_select`
@@ -49,6 +52,7 @@ Available sub-commands
 - :ref:`gdal_raster_tpi`
 - :ref:`gdal_raster_tri`
 - :ref:`gdal_raster_unscale`
+- :ref:`gdal_raster_update`
 - :ref:`gdal_raster_viewshed`
 
 Examples

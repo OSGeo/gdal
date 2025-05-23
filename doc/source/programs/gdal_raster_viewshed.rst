@@ -27,10 +27,13 @@ create a minimum visible height raster of type Float64.
 
 It uses the method defined in [Wang2000]_ for a user defined point.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
 Standard options
 ++++++++++++++++
 
-.. include:: gdal_options/of_raster_create.rst
+.. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/co.rst
 
@@ -182,6 +185,13 @@ Standard options
 
    Number of jobs to run at once. (only supported in cumulative mode).
    Default: 3
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
 Examples
 --------

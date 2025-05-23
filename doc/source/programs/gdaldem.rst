@@ -91,7 +91,7 @@ and slope computation, starting with GDAL 3.11, if none of :option:`-scale`,
 :option:`-xscale` and :option:`-yscale` are specified, and the CRS is a
 geographic or projected CRS, :program:`gdaldem` will automatically determine the
 appropriate ratio from the units of the CRS, as well as the potential value of
-the units of the raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+the units of the raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
 is metre, foot international or US survey foot). Note that for geographic CRS,
 the result for source datasets at high latitudes may be incorrect, and prior
 reprojection to a polar projection might be needed.
@@ -210,7 +210,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.
@@ -228,7 +228,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.
@@ -245,7 +245,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.
@@ -305,7 +305,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.
@@ -323,7 +323,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.
@@ -340,7 +340,7 @@ The following specific options are available :
     :option:`-yscale` are specified, and the CRS is a geographic or projected CRS,
     :program:`gdaldem` will automatically determine the appropriate ratio from
     the units of the CRS, as well as the potential value of the units of the
-    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitsType`, if it
+    raster band (as returned by :cpp:func:`GDALRasterBand::GetUnitType`, if it
     is metre, foot international or US survey foot). Note that for geographic CRS,
     the result for source datasets at high latitudes may be incorrect, and prior
     reprojection to a polar projection might be needed.

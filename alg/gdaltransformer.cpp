@@ -1952,6 +1952,8 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
            "description for details, assumptions, and defaults. If this "
            "option is set, DST_METHOD=GEOLOC_ARRAY will be assumed if not "
            "set.'/>"
+           "<Option name='NUM_THREADS' type='string' "
+           "description='Number of threads to use'/>"
            "</OptionList>";
 }
 

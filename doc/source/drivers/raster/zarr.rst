@@ -376,7 +376,7 @@ The following dataset open options are available:
       :since: 3.8
 
       Name or index of the X dimension (only used when MULTIBAND=YES and with
-      th classic 2D API). If not specified, deduced from dimension type
+      the classic 2D API). If not specified, deduced from dimension type
       (when equal to "HORIZONTAL_X"), or the last dimension (i.e. fastest
       varying one), if no dimension type found.
 
@@ -385,7 +385,7 @@ The following dataset open options are available:
       :since: 3.8
 
       Name or index of the Y dimension (only used when MULTIBAND=YES and with
-      th classic 2D API). If not specified, deduced from dimension type
+      the classic 2D API). If not specified, deduced from dimension type
       (when equal to "HORIZONTAL_Y"), or the before last dimension, if no
       dimension type found.
 

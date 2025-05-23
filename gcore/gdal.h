@@ -191,6 +191,11 @@ typedef struct
     /*! Height in pixels of the area of interest. Only valid if
      * bFloatingPointWindowValidity = TRUE */
     double dfYSize;
+    /*! Indicate if overviews should be considered. Tested in
+        GDALBandGetBestOverviewLevel(), mostly reserved for use by
+        GDALRegenerateOverviewsMultiBand()
+    */
+    int bUseOnlyThisScale;
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
@@ -208,6 +213,7 @@ typedef struct
         (s).pfnProgress = CPL_NULLPTR;                                         \
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
+        (s).bUseOnlyThisScale = FALSE;                                         \
     } while (0)
 
 /** Value indicating the start of the range for color interpretations belonging
@@ -485,6 +491,19 @@ typedef enum
  * @since GDAL 2.3
  * */
 #define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
+
+/** Maximum size of a String field that can be created (OGRFieldDefn.GetWidth()).
+ *
+ * It is undefined whether this is a number of bytes or Unicode character count.
+ * Most of the time, this will be a number of bytes, so a Unicode string whose
+ * character count is the maximum size could not fit.
+ *
+ * This metadata item is set only on a small number of drivers, in particular
+ * "ESRI Shapefile" and "MapInfo File", which use fixed-width storage of strings.
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DMD_MAX_STRING_LENGTH "DMD_MAX_STRING_LENGTH"
 
 /** List of (space separated) capability flags supported by the CreateField() API.
  *
@@ -2417,6 +2436,8 @@ int CPL_DLL GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
                                        GDALExtendedDataTypeH hSecondEDT);
 GDALExtendedDataTypeSubType CPL_DLL
 GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT);
+GDALRasterAttributeTableH CPL_DLL
+GDALExtendedDataTypeGetRAT(GDALExtendedDataTypeH hEDT) CPL_WARN_UNUSED_RESULT;
 
 GDALEDTComponentH CPL_DLL
 GDALEDTComponentCreate(const char *pszName, size_t nOffset,
@@ -2495,6 +2516,9 @@ bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
 GDALGroupH CPL_DLL GDALGroupSubsetDimensionFromSelection(
     GDALGroupH hGroup, const char *pszSelection, CSLConstList papszOptions);
+size_t CPL_DLL GDALGroupGetDataTypeCount(GDALGroupH hGroup);
+GDALExtendedDataTypeH CPL_DLL GDALGroupGetDataType(GDALGroupH hGroup,
+                                                   size_t nIdx);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);

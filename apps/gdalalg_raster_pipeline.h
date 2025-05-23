@@ -19,29 +19,135 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                  GDALRasterPipelineStepRunContext                    */
+/************************************************************************/
+
+class GDALRasterPipelineStepAlgorithm;
+
+class GDALRasterPipelineStepRunContext
+{
+  public:
+    GDALRasterPipelineStepRunContext() = default;
+
+    // Progress callback to use during execution of the step
+    GDALProgressFunc m_pfnProgress = nullptr;
+    void *m_pProgressData = nullptr;
+
+    // If there is a step in the pipeline immediately following step to which
+    // this instance of GDALRasterPipelineStepRunContext is passed, and that
+    // this next step is usable by the current step (as determined by
+    // CanHandleNextStep()), then this member will point to this next step.
+    GDALRasterPipelineStepAlgorithm *m_poNextUsableStep = nullptr;
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepRunContext)
+};
+
+/************************************************************************/
 /*                GDALRasterPipelineStepAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
+  public:
+    const GDALArgDatasetValue &GetOutputDataset() const
+    {
+        return m_outputDataset;
+    }
+
+    const std::string &GetOutputFormat() const
+    {
+        return m_format;
+    }
+
+    const std::vector<std::string> &GetCreationOptions() const
+    {
+        return m_creationOptions;
+    }
+
   protected:
+    using StepRunContext = GDALRasterPipelineStepRunContext;
+
     GDALRasterPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    struct ConstructorOptions
+    {
+        bool standaloneStep = false;
+        bool addDefaultArguments = true;
+        std::string inputDatasetHelpMsg{};
+        std::string inputDatasetAlias{};
+        std::string inputDatasetMetaVar = "INPUT";
+        std::string outputDatasetHelpMsg{};
+
+        inline ConstructorOptions &SetStandaloneStep(bool b)
+        {
+            standaloneStep = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddDefaultArguments(bool b)
+        {
+            addDefaultArguments = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetHelpMsg(const std::string &s)
+        {
+            inputDatasetHelpMsg = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetAlias(const std::string &s)
+        {
+            inputDatasetAlias = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetMetaVar(const std::string &s)
+        {
+            inputDatasetMetaVar = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetOutputDatasetHelpMsg(const std::string &s)
+        {
+            outputDatasetHelpMsg = s;
+            return *this;
+        }
+    };
+
+    GDALRasterPipelineStepAlgorithm(const std::string &name,
+                                    const std::string &description,
+                                    const std::string &helpURL,
+                                    const ConstructorOptions &options);
+
     friend class GDALRasterPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    virtual bool IsNativelyStreamingCompatible() const
+    {
+        return true;
+    }
+
+    virtual bool CanHandleNextStep(GDALRasterPipelineStepAlgorithm *) const
+    {
+        return false;
+    }
+
+    virtual bool RunStep(GDALRasterPipelineStepRunContext &ctxt) = 0;
 
     void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI);
+    void AddHiddenInputDatasetArg();
 
     void SetOutputVRTCompatible(bool b);
 
     bool m_outputVRTCompatible = true;
     bool m_standaloneStep = false;
+    const ConstructorOptions m_constructorOptions;
 
     // Input arguments
     GDALArgDatasetValue m_inputDataset{};
@@ -63,6 +169,34 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool CheckSafeForStreamOutput() override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepAlgorithm)
+};
+
+/************************************************************************/
+/*           GDALRasterPipelineNonNativelyStreamingAlgorithm            */
+/************************************************************************/
+
+class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
+    : public GDALRasterPipelineStepAlgorithm
+{
+  protected:
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, bool standaloneStep);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    std::unique_ptr<GDALDataset>
+    CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
+                           GDALDataType eDT, bool bTiledIfPossible,
+                           GDALDataset *poSrcDSForMetadata,
+                           bool bCopyMetadata = true);
+    std::unique_ptr<GDALDataset>
+    CreateTemporaryCopy(GDALDataset *poSrcDS, int nSingleBand,
+                        bool bTiledIfPossible, GDALProgressFunc pfnProgress,
+                        void *pProgressData);
 };
 
 /************************************************************************/

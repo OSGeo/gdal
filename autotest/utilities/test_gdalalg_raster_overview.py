@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal raster iveview' testing
+# Purpose:  'gdal raster overview' testing
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -146,3 +147,39 @@ def test_gdalalg_overview_delete():
     assert delete.Run()
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalalg_overview_cog(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024)
+    filename = tmp_vsimem / "my_cog.tif"
+    gdal.GetDriverByName("COG").CreateCopy(filename, src_ds)
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() > 0
+
+    delete = get_overview_delete_alg()
+    delete["dataset"] = filename
+    assert delete.Run()
+    assert delete.Finalize()
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+    add = get_overview_add_alg()
+    add["dataset"] = filename
+    with pytest.raises(
+        Exception, match=r"has C\(loud\) O\(ptimized\) G\(eoTIFF\) layout"
+    ):
+        add.Run()
+
+    add = get_overview_add_alg()
+    add["dataset"] = filename
+    add["open-option"] = {"IGNORE_COG_LAYOUT_BREAK": "YES"}
+    with gdaltest.error_raised(gdal.CE_Warning):
+        assert add.Run()
+    assert delete.Finalize()
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() > 0

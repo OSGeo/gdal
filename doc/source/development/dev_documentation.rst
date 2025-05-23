@@ -79,10 +79,10 @@ the updated Python module must be loadable by the Python interpreter Sphinx is u
 documentation using CMake (e..g, ``cmake --build . --target html``) this will be done automatically.
 If using ``sphinx-build`` or ``sphinx-autobuild`` manually, the updated Python bindings must be
 rebuilt (``cmake --build . --target python_binding``) and made visible to Python, either by installing
-them or by sourcing  ``scripts/setdevenv.sh`` from the build directory. 
+them or by sourcing  ``scripts/setdevenv.sh`` from the build directory.
 
 Sphinx cannot detect changes to the Python module, so when iteratively rebuilding Python API documentation it is
-necessary to manually update the timestamp of the ``rst`` files associated with the page where the modified 
+necessary to manually update the timestamp of the ``rst`` files associated with the page where the modified
 documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
 
 
@@ -301,8 +301,8 @@ The ``literalinclude`` directive has options for syntax highlighting, line numbe
       :start-after: Coordinate System is:
       :end-before: Origin =
 
-Reference files and paths
--------------------------
+Reference files and paths (without link)
+----------------------------------------
 
 Use the following syntax to reference files and paths::
 
@@ -328,11 +328,23 @@ If you want to reference a non-specific path or file name::
 
 This will output: :file:`{your/own/path/to}/myfile.txt`
 
+Reference files in GDAL source tree (with link)
+-----------------------------------------------
+
 To reference a file in the GDAL source tree, use::
 
     :source_file:`gcore/gdaldriver.cpp`
 
 This will output a link to the file on GitHub: :source_file:`gcore/gdaldriver.cpp`
+
+This is a GDAL Sphinx extension defined at :source_file:`doc/source/_extensions/source_file.py`.
+
+The two parameters are set in :source_file:`doc/source/conf.py`:
+
+.. code-block:: rst
+
+    source_file_root = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
 
 Reference code
 --------------

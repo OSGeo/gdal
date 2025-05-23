@@ -30,6 +30,7 @@
 #include <setjmp.h>
 
 #include <algorithm>
+#include <mutex>
 #include <string>
 
 #include "cpl_conv.h"
@@ -408,13 +409,16 @@ class JPGMaskBand final : public GDALRasterBand
 class GDALJPGDriver final : public GDALDriver
 {
   public:
-    GDALJPGDriver()
-    {
-    }
+    GDALJPGDriver() = default;
 
     char **GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
+
+  private:
+    std::mutex m_oMutex{};
+    bool m_bMetadataInitialized = false;
+    void InitializeMetadata();
 };
 
 #endif  // !defined(JPGDataset)

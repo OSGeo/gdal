@@ -30,29 +30,7 @@ GDALVectorEditAlgorithm::GDALVectorEditAlgorithm(bool standaloneStep)
                                       standaloneStep)
 {
     AddActiveLayerArg(&m_activeLayer);
-    AddArg("geometry-type", 0, _("Layer geometry type"), &m_geometryType)
-        .SetAutoCompleteFunction(
-            [](const std::string &currentValue)
-            {
-                std::vector<std::string> oRet;
-                for (const char *type :
-                     {"GEOMETRY", "POINT", "LINESTRING", "POLYGON",
-                      "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON",
-                      "GEOMETRYCOLLECTION", "CURVE", "CIRCULARSTRING",
-                      "COMPOUNDCURVE", "SURFACE", "CURVEPOLYGON", "MULTICURVE",
-                      "MULTISURFACE", "POLYHEDRALSURFACE", "TIN"})
-                {
-                    if (currentValue.empty() ||
-                        STARTS_WITH(type, currentValue.c_str()))
-                    {
-                        oRet.push_back(type);
-                        oRet.push_back(std::string(type).append("Z"));
-                        oRet.push_back(std::string(type).append("M"));
-                        oRet.push_back(std::string(type).append("ZM"));
-                    }
-                }
-                return oRet;
-            });
+    AddGeometryTypeArg(&m_geometryType, _("Layer geometry type"));
 
     AddArg("crs", 0, _("Override CRS (without reprojection)"), &m_overrideCrs)
         .AddHiddenAlias("a_srs")
@@ -209,7 +187,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 /*                GDALVectorEditAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorEditAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorEditAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
@@ -224,13 +202,6 @@ bool GDALVectorEditAlgorithm::RunStep(GDALProgressFunc, void *)
     if (!m_geometryType.empty())
     {
         eType = OGRFromOGCGeomType(m_geometryType.c_str());
-        if (wkbFlatten(eType) == wkbUnknown &&
-            !STARTS_WITH_CI(m_geometryType.c_str(), "GEOMETRY"))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Invalid geometry type '%s'", m_geometryType.c_str());
-            return false;
-        }
         bChangeGeomType = true;
     }
 

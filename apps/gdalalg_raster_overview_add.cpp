@@ -42,7 +42,7 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("nearest", "average", "cubic", "cubicspline", "lanczos",
                     "bilinear", "gauss", "average_magphase", "rms", "mode")
-        .SetHiddenChoices("near");
+        .SetHiddenChoices("near", "none");
 
     AddArg("levels", 0, _("Levels / decimation factors"), &m_levels)
         .SetMinValueIncluded(2);

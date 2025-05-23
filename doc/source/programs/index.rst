@@ -45,7 +45,7 @@ General
     - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
     - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized ``gdal`` commands
 
-Commands working with raster of vector inputs
+Commands working with raster or vector inputs
 +++++++++++++++++++++++++++++++++++++++++++++
 
 .. toctree::
@@ -74,6 +74,7 @@ Raster commands
    gdal_raster_clean_collar
    gdal_raster_clip
    gdal_raster_color_map
+   gdal_raster_color_merge
    gdal_raster_contour
    gdal_raster_convert
    gdal_raster_create
@@ -86,12 +87,15 @@ Raster commands
    gdal_raster_overview
    gdal_raster_overview_add
    gdal_raster_overview_delete
+   gdal_raster_overview_refresh
    gdal_raster_pipeline
    gdal_raster_pixel_info
    gdal_raster_polygonize
+   gdal_raster_proximity
    gdal_raster_reclassify
    gdal_raster_reproject
    gdal_raster_resize
+   gdal_raster_rgb_to_palette
    gdal_raster_roughness
    gdal_raster_scale
    gdal_raster_select
@@ -103,6 +107,7 @@ Raster commands
    gdal_raster_tpi
    gdal_raster_tri
    gdal_raster_unscale
+   gdal_raster_update
    gdal_raster_viewshed
 
 .. only:: html
@@ -113,7 +118,8 @@ Raster commands
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
     - :ref:`gdal_raster_clip`: Clip a raster dataset
-    - :ref:`gdal_raster_color_map`: Generate a RGB or RGBA dataset from a single band, using a color map
+    - :ref:`gdal_raster_color_map`: Use a grayscale raster to replace the intensity of a RGB/RGBA dataset
+    - :ref:`gdal_raster_color_merge`: Replace the color value of a RGB/RGBA dataset by the one of a grayscale raster
     - :ref:`gdal_raster_convert`: Convert a raster dataset
     - :ref:`gdal_raster_contour`: Builds vector contour lines from a raster elevation model
     - :ref:`gdal_raster_create`: Create a new raster dataset
@@ -126,9 +132,11 @@ Raster commands
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
     - :ref:`gdal_raster_overview_add`: Add overviews to a raster dataset
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
+    - :ref:`gdal_raster_overview_refresh`: Refresh overviews
     - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
     - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
+    - :ref:`gdal_raster_rgb_to_palette`: Convert a RGB image into a pseudo-color / paletted image
     - :ref:`gdal_raster_reclassify`: Reclassify a raster dataset
     - :ref:`gdal_raster_reproject`: Reproject a raster dataset
     - :ref:`gdal_raster_resize`: Resize a raster dataset without changing the georeferenced extents
@@ -143,6 +151,7 @@ Raster commands
     - :ref:`gdal_raster_tpi`: Generate a Topographic Position Index (TPI) map.
     - :ref:`gdal_raster_tri`: Generate a Terrain Ruggedness Index (TRI) map.
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
+    - :ref:`gdal_raster_update`: Update the destination raster with the content of the input one.
     - :ref:`gdal_raster_viewshed`: Compute the viewshed of a raster dataset.
 
 Vector commands
@@ -153,51 +162,52 @@ Vector commands
    :hidden:
 
    gdal_vector
-   gdal_vector_info
+   gdal_vector_buffer
    gdal_vector_clip
    gdal_vector_concat
    gdal_vector_convert
    gdal_vector_edit
    gdal_vector_filter
-   gdal_vector_geom
-   gdal_vector_geom_set_type
-   gdal_vector_geom_explode_collections
-   gdal_vector_geom_make_valid
-   gdal_vector_geom_segmentize
-   gdal_vector_geom_simplify
-   gdal_vector_geom_buffer
-   gdal_vector_geom_swap_xy
+   gdal_vector_info
+   gdal_vector_explode_collections
    gdal_vector_grid
+   gdal_vector_layer_algebra
+   gdal_vector_make_valid
    gdal_vector_pipeline
    gdal_vector_rasterize
    gdal_vector_reproject
    gdal_vector_select
+   gdal_vector_segmentize
+   gdal_vector_set_geom_type
+   gdal_vector_simplify
+   gdal_vector_simplify_coverage
    gdal_vector_sql
+   gdal_vector_swap_xy
 
 .. only:: html
 
     - :ref:`gdal_vector`: Entry point for vector commands
-    - :ref:`gdal_vector_info`: Get information on a vector dataset
+    - :ref:`gdal_vector_buffer`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
+    - :ref:`gdal_vector_explode_collections`: Explode geometries of type collection of a vector dataset
     - :ref:`gdal_vector_filter`: Filter a vector dataset
-    - :ref:`gdal_vector_geom`: Geometry operations on a vector dataset
-    - :ref:`gdal_vector_geom_set_type`: Modify the geometry type of a vector dataset
-    - :ref:`gdal_vector_geom_explode_collections`: Explode geometries of type collection of a vector dataset
-    - :ref:`gdal_vector_geom_make_valid`: Fix validity of geometries of a vector dataset
-    - :ref:`gdal_vector_geom_segmentize`: Segmentize geometries of a vector dataset
-    - :ref:`gdal_vector_geom_simplify`: Simplify geometries of a vector dataset
-    - :ref:`gdal_vector_geom_buffer`: Compute a buffer around geometries of a vector dataset
-    - :ref:`gdal_vector_geom_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points
-    - :ref:`gdal_vector_convert`: Convert a vector dataset
+    - :ref:`gdal_vector_info`: Get information on a vector dataset
+    - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
+    - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
     - :ref:`gdal_vector_pipeline`: Process a vector dataset
-    - :ref:`gdal_vector_reproject`: Reproject a vector dataset
-    - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
+    - :ref:`gdal_vector_reproject`: Reproject a vector dataset
+    - :ref:`gdal_vector_segmentize`: Segmentize geometries of a vector dataset
+    - :ref:`gdal_vector_select`: Select a subset of fields from a vector dataset.
+    - :ref:`gdal_vector_set_geom_type`: Modify the geometry type of a vector dataset
+    - :ref:`gdal_vector_simplify`: Simplify geometries of a vector dataset
+    - :ref:`gdal_vector_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
     - :ref:`gdal_vector_sql`: Apply SQL statement(s) to a dataset
+    - :ref:`gdal_vector_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
 
 Multidimensional raster commands
 ++++++++++++++++++++++++++++++++
@@ -215,6 +225,27 @@ Multidimensional raster commands
     - :ref:`gdal_mdim`: Entry point for multidimensional commands
     - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
+
+Dataset management commands
++++++++++++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   gdal_dataset
+   gdal_dataset_identify
+   gdal_dataset_copy
+   gdal_dataset_rename
+   gdal_dataset_delete
+
+.. only:: html
+
+    - :ref:`gdal_dataset`: Entry point for dataset management commands
+    - :ref:`gdal_dataset_identify`: Identify driver opening dataset(s)
+    - :ref:`gdal_dataset_copy`: Copy files of a dataset.
+    - :ref:`gdal_dataset_rename`: Rename files of a dataset.
+    - :ref:`gdal_dataset_delete`: Delete dataset(s)
 
 Virtual System Interface (VSI) commands
 +++++++++++++++++++++++++++++++++++++++

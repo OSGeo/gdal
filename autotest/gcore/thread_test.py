@@ -33,15 +33,13 @@ def thread_test_1_worker(args_dict):
             if ds.GetRasterBand(1).Checksum() != 4672:
                 args_dict["ret"] = False
         else:
-            ds.GetRasterBand(1).ReadAsArray()
+            ds.GetRasterBand(1).ReadRaster()
     for i in range(1000):
         with gdaltest.disable_exceptions(), gdaltest.error_handler():
             gdal.Open("i_dont_exist")
 
 
 def test_thread_test_1():
-
-    pytest.importorskip("numpy")
 
     threads = []
     args_array = []

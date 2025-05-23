@@ -83,3 +83,19 @@ jobs:
         python3 -c 'from osgeo import gdal'
         ctest -V -R spelling --output-on-failure
       working-directory: build
+
+    # ReadTheDocs pull requests do not build PDF, but we can break it though,
+    # so build it here
+    - name: PDF build
+      shell: bash -l {0}
+      run: |
+        apt install -y dvipng latexmk texlive-latex-base \
+                       texlive-latex-extra git latex-cjk-all texlive-lang-all tex-gyre
+        cmake --build . --target latexpdf
+      working-directory: build
+
+    - name: Upload PDF
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: gdal.pdf
+        path: build/doc/build/latex/gdal.pdf

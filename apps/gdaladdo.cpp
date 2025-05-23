@@ -207,15 +207,15 @@ static bool PartialRefreshFromSourceTimestamp(
                        nMinSize, anOvrIndices))
         return false;
 
-    VSIStatBufL sStatVRTOvr;
+    VSIStatBufL sStatOvr;
     std::string osVRTOvr(std::string(poDS->GetDescription()) + ".ovr");
-    if (VSIStatL(osVRTOvr.c_str(), &sStatVRTOvr) != 0)
+    if (VSIStatL(osVRTOvr.c_str(), &sStatOvr) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s\n",
                  osVRTOvr.c_str());
         return false;
     }
-    if (sStatVRTOvr.st_mtime == 0)
+    if (sStatOvr.st_mtime == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot get modification time of %s\n", osVRTOvr.c_str());
@@ -247,7 +247,7 @@ static bool PartialRefreshFromSourceTimestamp(
                 if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
                              &sStatSource) == 0)
                 {
-                    if (sStatSource.st_mtime > sStatVRTOvr.st_mtime)
+                    if (sStatSource.st_mtime > sStatOvr.st_mtime)
                     {
                         double dfXOff, dfYOff, dfXSize, dfYSize;
                         poSource->GetDstWindow(dfXOff, dfYOff, dfXSize,
@@ -308,7 +308,7 @@ static bool PartialRefreshFromSourceTimestamp(
 #else
     else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
     {
-        regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
+        regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatOvr.st_mtime);
         for (const auto &region : regions)
         {
             dfTotalPixels +=
@@ -320,7 +320,7 @@ static bool PartialRefreshFromSourceTimestamp(
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "--partial-refresh-from-source-timestamp only works on a VRT "
-                 "dataset");
+                 "or GTI dataset");
         return false;
     }
 
@@ -753,18 +753,37 @@ MAIN_START(nArgc, papszArgv)
     if (!bReadOnly)
     {
         CPLPushErrorHandler(GDALAddoErrorHandler);
+        if (bClean &&
+            aosOpenOptions.FetchNameValue("IGNORE_COG_LAYOUT_BREAK") == nullptr)
+        {
+            GDALDriverH hDrv = GDALIdentifyDriver(osFilename.c_str(), nullptr);
+            if (hDrv && EQUAL(GDALGetDescription(hDrv), "GTiff"))
+            {
+                // Cleaning does not break COG layout
+                aosOpenOptions.SetNameValue("IGNORE_COG_LAYOUT_BREAK", "YES");
+            }
+        }
+
         CPLSetCurrentErrorHandlerCatchDebug(FALSE);
         hDataset =
             GDALOpenEx(osFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_UPDATE,
                        nullptr, aosOpenOptions.List(), nullptr);
         CPLPopErrorHandler();
-        if (hDataset != nullptr)
+        const bool bIsCOG =
+            (aoErrors.size() == 1 &&
+             aoErrors[0].m_osMsg.find("C(loud) O(ptimized) G(eoTIFF) layout") !=
+                 std::string::npos &&
+             aosOpenOptions.FetchNameValue("IGNORE_COG_LAYOUT_BREAK") ==
+                 nullptr);
+        if (hDataset != nullptr || bIsCOG)
         {
             for (size_t i = 0; i < aoErrors.size(); i++)
             {
                 CPLError(aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
                          aoErrors[i].m_osMsg.c_str());
             }
+            if (bIsCOG)
+                exit(1);
         }
     }
 

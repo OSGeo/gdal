@@ -291,6 +291,7 @@ struct Float16
         return reprToCompute(rValue);
     }
 
+    // cppcheck-suppress uninitMemberVar
     Float16() = default;
     Float16(const Float16 &) = default;
     Float16(Float16 &&) = default;

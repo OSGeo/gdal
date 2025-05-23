@@ -485,3 +485,37 @@ def test_gdaladdo_illegal_factor(gdaladdo_path, tmp_path):
     assert "Value '-1' is not a positive integer subsampling factor" in err
     with gdal.Open(f"{tmp_path}/byte.tif") as ds:
         assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+
+###############################################################################
+#
+
+
+@pytest.mark.require_driver("COG")
+def test_gdaladdo_cog(gdaladdo_path, tmp_path):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024)
+    filename = tmp_path / "my_cog.tif"
+    gdal.GetDriverByName("COG").CreateCopy(filename, src_ds)
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() > 0
+
+    _, err = gdaltest.runexternal_out_and_err(f"{gdaladdo_path} -clean {filename}")
+    assert err == ""
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+    _, err = gdaltest.runexternal_out_and_err(f"{gdaladdo_path} {filename}")
+    assert "has C(loud) O(ptimized) G(eoTIFF) layout" in err
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} {filename} -oo IGNORE_COG_LAYOUT_BREAK=YES"
+    )
+    assert (
+        "Adding new overviews invalidates the LAYOUT=IFDS_BEFORE_DATA property" in err
+    )
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() > 0
