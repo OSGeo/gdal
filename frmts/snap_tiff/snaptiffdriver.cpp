@@ -134,6 +134,7 @@ int SNAPTIFFDataset::Identify(GDALOpenInfo *poOpenInfo)
     CPLAssert(f->size() == uint64_t(poOpenInfo->nHeaderBytes));
     char dummy;
     CPLAssert(f->read(poOpenInfo->nHeaderBytes, 1, &dummy) == 0);
+    CPL_IGNORE_RET_VAL(dummy);
 #endif
     auto image = LIBERTIFF_NS::open</*acceptBigTIFF = */ false>(std::move(f));
     // Checks that it is a single-band Float32 uncompressed dataset, made
@@ -218,6 +219,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
     // Just to increase coverage testing
     char dummy;
     CPLAssert(f->read(f->size(), 1, &dummy) == 0);
+    CPL_IGNORE_RET_VAL(dummy);
 #endif
 
     auto poDS = std::make_unique<SNAPTIFFDataset>();

@@ -327,6 +327,7 @@ class RMFDataset final : public GDALDataset
                                    const char *pszDomain = "") override;
     virtual CPLErr SetMetadata(char **papszMetadata,
                                const char *pszDomain = "") override;
+    // cppcheck-suppress functionStatic
     vsi_l_offset GetFileOffset(GUInt32 iRMFOffset) const;
     GUInt32 GetRMFOffset(vsi_l_offset iFileOffset,
                          vsi_l_offset *piNewFileOffset) const;
