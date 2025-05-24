@@ -105,7 +105,7 @@ static void JP2OpenJPEG_ErrorCallback(const char *pszMsg,
 
 static size_t JP2Dataset_Read(void *pBuffer, size_t nBytes, void *pUserData)
 {
-    JP2File *psJP2File = (JP2File *)pUserData;
+    JP2File *psJP2File = static_cast<JP2File *>(pUserData);
     size_t nRet =
         static_cast<size_t>(VSIFReadL(pBuffer, 1, nBytes, psJP2File->fp_));
 #ifdef DEBUG_IO
@@ -125,7 +125,7 @@ static size_t JP2Dataset_Read(void *pBuffer, size_t nBytes, void *pUserData)
 
 static size_t JP2Dataset_Write(void *pBuffer, size_t nBytes, void *pUserData)
 {
-    JP2File *psJP2File = (JP2File *)pUserData;
+    JP2File *psJP2File = static_cast<JP2File *>(pUserData);
     size_t nRet =
         static_cast<size_t>(VSIFWriteL(pBuffer, 1, nBytes, psJP2File->fp_));
 #ifdef DEBUG_IO
@@ -144,7 +144,7 @@ static size_t JP2Dataset_Write(void *pBuffer, size_t nBytes, void *pUserData)
 
 static OPJ_BOOL JP2Dataset_Seek(int64_t nBytes, void *pUserData)
 {
-    JP2File *psJP2File = (JP2File *)pUserData;
+    JP2File *psJP2File = static_cast<JP2File *>(pUserData);
 #ifdef DEBUG_IO
     CPLDebug(OPJCodecWrapper::debugId(), "JP2Dataset_Seek(" CPL_FRMT_GUIB ")",
              static_cast<GUIntBig>(nBytes));
@@ -159,7 +159,7 @@ static OPJ_BOOL JP2Dataset_Seek(int64_t nBytes, void *pUserData)
 
 static int64_t JP2Dataset_Skip(int64_t nBytes, void *pUserData)
 {
-    JP2File *psJP2File = (JP2File *)pUserData;
+    JP2File *psJP2File = static_cast<JP2File *>(pUserData);
     vsi_l_offset nOffset = VSIFTellL(psJP2File->fp_);
     nOffset += nBytes;
 #ifdef DEBUG_IO
@@ -179,11 +179,7 @@ static int64_t JP2Dataset_Skip(int64_t nBytes, void *pUserData)
 
 struct OPJCodecWrapper
 {
-    OPJCodecWrapper(void)
-        : pCodec(nullptr), pStream(nullptr), psImage(nullptr),
-          pasBandParams(nullptr), psJP2File(nullptr)
-    {
-    }
+    OPJCodecWrapper() = default;
 
     explicit OPJCodecWrapper(OPJCodecWrapper *rhs)
         : pCodec(rhs->pCodec), pStream(rhs->pStream), psImage(rhs->psImage),
@@ -278,8 +274,8 @@ struct OPJCodecWrapper
 
     void allocComponentParams(int nBands)
     {
-        pasBandParams = (jp2_image_comp_param *)CPLMalloc(
-            nBands * sizeof(jp2_image_comp_param));
+        pasBandParams = static_cast<jp2_image_comp_param *>(
+            CPLMalloc(nBands * sizeof(jp2_image_comp_param)));
     }
 
     void free(void)
@@ -317,8 +313,8 @@ struct OPJCodecWrapper
     {
 
         OPJCodecWrapper codec;
-        pCodec = opj_create_decompress(
-            (OPJ_CODEC_FORMAT)OPJCodecWrapper::cvtenum(JP2_CODEC_J2K));
+        pCodec = opj_create_decompress(static_cast<OPJ_CODEC_FORMAT>(
+            OPJCodecWrapper::cvtenum(JP2_CODEC_J2K)));
         if (pCodec == nullptr)
             return false;
 
@@ -394,7 +390,7 @@ struct OPJCodecWrapper
         // CPLDebug(OPJCodecWrapper::debugId(), "psImage->color_space = %d", psImage->color_space);
         CPLDebug(OPJCodecWrapper::debugId(), "numResolutions = %d",
                  *numResolutions);
-        for (int i = 0; i < (int)psImage->numcomps; i++)
+        for (int i = 0; i < static_cast<int>(psImage->numcomps); i++)
         {
             CPLDebug(OPJCodecWrapper::debugId(), "psImage->comps[%d].dx = %u",
                      i, psImage->comps[i].dx);
@@ -446,7 +442,8 @@ struct OPJCodecWrapper
                       int nNumResolutions, JP2_PROG_ORDER eProgOrder, int bYCC,
                       int nCblockW, int nCblockH, int bYCBCR420, int bProfile1,
                       int nBands, int nXSize, int nYSize,
-                      JP2_COLOR_SPACE eColorSpace, CPL_UNUSED int numThreads)
+                      JP2_COLOR_SPACE eColorSpace,
+                      [[maybe_unused]] int numThreads)
     {
         int bSOP =
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
@@ -460,9 +457,9 @@ struct OPJCodecWrapper
         if (bEPH)
             compressParams.csty |= 0x04;
         compressParams.cp_disto_alloc = 1;
-        compressParams.tcp_numlayers = (int)adfRates.size();
-        for (int i = 0; i < (int)adfRates.size(); i++)
-            compressParams.tcp_rates[i] = (float)adfRates[i];
+        compressParams.tcp_numlayers = static_cast<int>(adfRates.size());
+        for (size_t i = 0; i < adfRates.size(); i++)
+            compressParams.tcp_rates[i] = static_cast<float>(adfRates[i]);
         compressParams.cp_tx0 = 0;
         compressParams.cp_ty0 = 0;
         compressParams.tile_size_on = TRUE;
@@ -470,7 +467,7 @@ struct OPJCodecWrapper
         compressParams.cp_tdy = nBlockYSize;
         compressParams.irreversible = bIsIrreversible;
         compressParams.numresolution = nNumResolutions;
-        compressParams.prog_order = (OPJ_PROG_ORDER)eProgOrder;
+        compressParams.prog_order = static_cast<OPJ_PROG_ORDER>(eProgOrder);
         compressParams.tcp_mct = static_cast<char>(bYCC);
         compressParams.cblockw_init = nCblockW;
         compressParams.cblockh_init = nCblockH;
@@ -617,8 +614,8 @@ struct OPJCodecWrapper
 
         /* Always ask OpenJPEG to do codestream only. We will take care */
         /* of JP2 boxes */
-        pCodec = opj_create_compress(
-            (OPJ_CODEC_FORMAT)OPJCodecWrapper::cvtenum(JP2_CODEC_J2K));
+        pCodec = opj_create_compress(static_cast<OPJ_CODEC_FORMAT>(
+            OPJCodecWrapper::cvtenum(JP2_CODEC_J2K)));
         if (pCodec == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -630,8 +627,8 @@ struct OPJCodecWrapper
         opj_set_warning_handler(pCodec, JP2OpenJPEG_WarningCallback, nullptr);
         opj_set_error_handler(pCodec, JP2OpenJPEG_ErrorCallback, nullptr);
 
-        psImage = opj_image_tile_create(nBands, pasBandParams,
-                                        (OPJ_COLOR_SPACE)eColorSpace);
+        psImage = opj_image_tile_create(
+            nBands, pasBandParams, static_cast<OPJ_COLOR_SPACE>(eColorSpace));
 
         if (psImage == nullptr)
         {
@@ -645,7 +642,7 @@ struct OPJCodecWrapper
         psImage->y0 = 0;
         psImage->x1 = nXSize;
         psImage->y1 = nYSize;
-        psImage->color_space = (OPJ_COLOR_SPACE)eColorSpace;
+        psImage->color_space = static_cast<OPJ_COLOR_SPACE>(eColorSpace);
         psImage->numcomps = nBands;
 
         if (!opj_setup_encoder(pCodec, &compressParams, psImage))
@@ -736,11 +733,14 @@ struct OPJCodecWrapper
         return pStream;
     }
 
-    jp2_codec *pCodec;
-    jp2_stream *pStream;
-    jp2_image *psImage;
-    jp2_image_comp_param *pasBandParams;
-    JP2File *psJP2File;
+    jp2_codec *pCodec = nullptr;
+    jp2_stream *pStream = nullptr;
+    jp2_image *psImage = nullptr;
+    jp2_image_comp_param *pasBandParams = nullptr;
+    JP2File *psJP2File = nullptr;
+
+    OPJCodecWrapper(const OPJCodecWrapper &) = delete;
+    OPJCodecWrapper &operator=(const OPJCodecWrapper &) = delete;
 };
 
 /************************************************************************/
@@ -755,6 +755,8 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
     OPJCodecWrapper *m_codec = nullptr;
     int *m_pnLastLevel = nullptr;
     bool m_bStrict = true;
+
+    virtual ~JP2OPJDatasetBase();
 
     void init(void)
     {
@@ -801,8 +803,8 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
 
         if (codec->pCodec == nullptr)
         {
-            codec->pCodec = opj_create_decompress(
-                (OPJ_CODEC_FORMAT)OPJCodecWrapper::cvtenum(JP2_CODEC_J2K));
+            codec->pCodec = opj_create_decompress(static_cast<OPJ_CODEC_FORMAT>(
+                OPJCodecWrapper::cvtenum(JP2_CODEC_J2K)));
             if (codec->pCodec == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
