@@ -15,6 +15,7 @@
 #ifndef RMFDATASET_H_INCLUDED
 #define RMFDATASET_H_INCLUDED
 
+#include <array>
 #include <list>
 #include "gdal_priv.h"
 #include "cpl_worker_thread_pool.h"

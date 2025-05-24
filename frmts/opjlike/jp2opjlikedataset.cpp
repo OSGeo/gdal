@@ -304,9 +304,8 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
         if (this->m_nBlocksToLoad > 1)
         {
             const int l_nThreads = std::min(this->m_nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread **pahThreads =
-                (CPLJoinableThread **)VSI_CALLOC_VERBOSE(
-                    sizeof(CPLJoinableThread *), l_nThreads);
+            CPLJoinableThread **pahThreads = static_cast<CPLJoinableThread **>(
+                VSI_CALLOC_VERBOSE(sizeof(CPLJoinableThread *), l_nThreads));
             if (pahThreads == nullptr)
             {
                 this->m_nBlocksToLoad = 0;
