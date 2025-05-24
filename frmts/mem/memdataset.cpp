@@ -888,6 +888,18 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 (nRasterXSize + panOverviewList[i] - 1) / panOverviewList[i];
             poOvrDS->nRasterYSize =
                 (nRasterYSize + panOverviewList[i] - 1) / panOverviewList[i];
+            poOvrDS->bGeoTransformSet = bGeoTransformSet;
+            memcpy(poOvrDS->adfGeoTransform, adfGeoTransform,
+                   6 * sizeof(double));
+            poOvrDS->adfGeoTransform[1] *=
+                static_cast<double>(nRasterXSize) / poOvrDS->nRasterXSize;
+            poOvrDS->adfGeoTransform[2] *=
+                static_cast<double>(nRasterXSize) / poOvrDS->nRasterXSize;
+            poOvrDS->adfGeoTransform[4] *=
+                static_cast<double>(nRasterYSize) / poOvrDS->nRasterYSize;
+            poOvrDS->adfGeoTransform[5] *=
+                static_cast<double>(nRasterYSize) / poOvrDS->nRasterYSize;
+            poOvrDS->m_oSRS = m_oSRS;
             for (int iBand = 0; iBand < nBands; iBand++)
             {
                 const GDALDataType eDT =
@@ -897,7 +909,7 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                     return CE_Failure;
                 }
             }
-            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
+            m_apoOverviewDS.emplace_back(poOvrDS.release());
         }
     }
 
@@ -1079,7 +1091,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
         for (const auto &poOvrDS : m_apoOverviewDS)
         {
             poNewDS->m_apoOverviewDS.emplace_back(
-                poOvrDS->Clone(nScopeFlags, bCanShareState));
+                poOvrDS->Clone(nScopeFlags, bCanShareState).release());
         }
 
         poNewDS->SetDescription(GetDescription());
