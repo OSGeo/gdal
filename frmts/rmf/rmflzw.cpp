@@ -116,8 +116,8 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, GByte bFollow)
 static LZWStringTab *LZWCreateTab()
 {
     // Allocate space for the new table and pre-fill it
-    LZWStringTab *poCodeTab =
-        (LZWStringTab *)CPLMalloc(TABSIZE * sizeof(LZWStringTab));
+    LZWStringTab *poCodeTab = reinterpret_cast<LZWStringTab *>(
+        CPLMalloc(TABSIZE * sizeof(LZWStringTab)));
 
     memset(poCodeTab, 0, TABSIZE * sizeof(LZWStringTab));
 

@@ -6,7 +6,8 @@ add_gdal_driver(
           rmflzw.cpp
           rmfjpeg.cpp
           PLUGIN_CAPABLE
-          NO_DEPS)
+          NO_DEPS
+          STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_RMF)
 
 if (HAVE_JPEG OR GDAL_USE_JPEG_INTERNAL)
