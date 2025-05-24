@@ -985,6 +985,8 @@ class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
     const GIntBig m_nMaxFeatureCount;
     OGRFeature **const m_papoFeatures;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemLayerIteratorArray)
+
   public:
     OGRMemLayerIteratorArray(GIntBig nMaxFeatureCount,
                              OGRFeature **papoFeatures)
