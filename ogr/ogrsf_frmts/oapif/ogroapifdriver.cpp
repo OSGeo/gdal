@@ -71,24 +71,24 @@ class OGROAPIFDataset final : public GDALDataset
     CPLString m_osServerBaseURL{};
 
     // Service base URL. Like "https://example.com/ogcapi"
-    CPLString m_osRootURL;
+    CPLString m_osRootURL{};
 
-    CPLString m_osUserQueryParams;
-    CPLString m_osUserPwd;
+    CPLString m_osUserQueryParams{};
+    CPLString m_osUserPwd{};
     int m_nPageSize = 1000;
     int m_nInitialRequestPageSize = 20;
     bool m_bPageSizeSetFromOpenOptions = false;
-    std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
+    std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
     std::string m_osAskedCRS{};
     OGRSpatialReference m_oAskedCRS{};
     bool m_bAskedCRSIsRequired = false;
     bool m_bServerFeaturesAxisOrderGISFriendly = false;
 
     bool m_bAPIDocLoaded = false;
-    CPLJSONDocument m_oAPIDoc;
+    CPLJSONDocument m_oAPIDoc{};
 
     bool m_bLandingPageDocLoaded = false;
-    CPLJSONDocument m_oLandingPageDoc;
+    CPLJSONDocument m_oLandingPageDoc{};
 
     bool m_bIgnoreSchema = false;
 
@@ -146,23 +146,23 @@ class OGROAPIFLayer final : public OGRLayer
     bool m_bHasEmittedContentCRSWarning = false;
     bool m_bHasEmittedJsonCRWarning = false;
     std::string m_osActiveCRS{};
-    CPLString m_osURL;
-    CPLString m_osPath;
-    OGREnvelope m_oExtent;
-    OGREnvelope m_oOriginalExtent;
-    OGRSpatialReference m_oOriginalExtentCRS;
+    CPLString m_osURL{};
+    CPLString m_osPath{};
+    OGREnvelope m_oExtent{};
+    OGREnvelope m_oOriginalExtent{};
+    OGRSpatialReference m_oOriginalExtentCRS{};
     bool m_bFeatureDefnEstablished = false;
-    std::unique_ptr<GDALDataset> m_poUnderlyingDS;
+    std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
     OGRLayer *m_poUnderlyingLayer = nullptr;
     GIntBig m_nFID = 1;
-    CPLString m_osGetURL;
-    CPLString m_osAttributeFilter;
-    CPLString m_osGetID;
+    CPLString m_osGetURL{};
+    CPLString m_osAttributeFilter{};
+    CPLString m_osGetID{};
     std::vector<std::string> m_oSupportedCRSList{};
     OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
     bool m_bFilterMustBeClientSideEvaluated = false;
     bool m_bGotQueryableAttributes = false;
-    std::set<CPLString> m_aoSetQueryableAttributes;
+    std::set<CPLString> m_aoSetQueryableAttributes{};
     bool m_bHasCQLText = false;
     // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
     bool m_bHasJSONFilterExpression = false;
@@ -188,6 +188,8 @@ class OGROAPIFLayer final : public OGRLayer
     void GetQueryableAttributes();
     void GetSchema();
     void ComputeExtent();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROAPIFLayer)
 
   public:
     OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
@@ -3123,7 +3125,8 @@ OGRErr OGROAPIFLayer::SetAttributeFilter(const char *pszQuery)
     {
         GetQueryableAttributes();
 
-        swq_expr_node *poNode = (swq_expr_node *)m_poAttrQuery->GetSWQExpr();
+        swq_expr_node *poNode =
+            static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 
