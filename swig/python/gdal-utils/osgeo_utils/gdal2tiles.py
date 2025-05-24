@@ -76,7 +76,7 @@ def isfile(path):
     """Wrapper for os.path.isfile() that can work with /vsi files too"""
     if path.startswith("/vsi"):
         stat_res = gdal.VSIStatL(path)
-        if stat is None:
+        if stat_res is None:
             return False
         return stat.S_ISREG(stat_res.mode)
     else:
