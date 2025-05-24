@@ -1,0 +1,17 @@
+<VRTDataset rasterXSize="284" rasterYSize="1281">
+  <GeoTransform> -1.7500000000000000e+00,  4.5000000000000000e+00,  0.0000000000000000e+00,-1.75,  0.0000000000000000e+00,4.5 </GeoTransform>
+  <Metadata>
+    <MDI key="GEOREFERENCING_CONVENTION">TOP_LEFT_CORNER</MDI>
+    <MDI key="LINE_OFFSET">-1.75</MDI>
+    <MDI key="LINE_STEP">4.5</MDI>
+    <MDI key="PIXEL_OFFSET">-1.75</MDI>
+    <MDI key="PIXEL_STEP">4.5</MDI>
+    <MDI key="SRS">EPSG:4326</MDI>
+    <MDI key="X_BAND">1</MDI>
+    <MDI key="Y_BAND">2</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Float64" band="1">
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Float64" band="2">
+  </VRTRasterBand>
+</VRTDataset>

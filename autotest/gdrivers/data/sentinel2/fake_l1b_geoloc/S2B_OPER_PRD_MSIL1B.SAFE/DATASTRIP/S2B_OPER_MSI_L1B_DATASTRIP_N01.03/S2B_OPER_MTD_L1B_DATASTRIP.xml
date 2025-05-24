@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<n1:Level-1B_DataStrip_ID xmlns:n1="https://psd-15.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Datastrip_Metadata.xsd" datastripIdentifier="S2B_OPER_MSI_L1B_DS_2BPS_20241019T153411_S20241019T120215_N05.11" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-15.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Datastrip_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_DS_L1B/06.03.00/scripts/../../../schemas/15.00.00/PSD/S2_PDI_Level-1B_Datastrip_Metadata.xsd">
+
+    <n1:General_Info> <!-- removed -->
+  </n1:General_Info>
+
+  <n1:Image_Data_Info>
+    <Granules_Information metadataLevel="Standard">
+      <Detector_List>
+        <Detector detectorId="01">
+          <Granule_List>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>1</POSITION>
+            </Granule>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>2305</POSITION>
+            </Granule>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>4609</POSITION>
+            </Granule>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>6913</POSITION>
+            </Granule>
+            <Granule granuleId="S2B_OPER_MSI_L1B_1_N01.03">
+              <POSITION>9217</POSITION>
+            </Granule>
+          </Granule_List>
+        </Detector>
+      </Detector_List>
+    </Granules_Information>
+    <!-- lots of stuff removed -->
+  </n1:Image_Data_Info>
+  <!-- lots of stuff removed -->
+</n1:Level-1B_DataStrip_ID>
