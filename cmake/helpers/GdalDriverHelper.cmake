@@ -133,6 +133,10 @@ function(add_gdal_driver)
         message(FATAL_ERROR "ADD_GDAL_DRIVER(): SOURCES is a mandatory argument.")
     endif ()
 
+    if(DEFINED _DRIVER_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "add_gdal_driver(): unknown arguments found: ${_DRIVER_UNPARSED_ARGUMENTS}")
+    endif()
+
     # Set *_FORMATS properties for summary and gdal_config utility
     string(FIND "${_DRIVER_TARGET}" "ogr" IS_OGR)
     if (IS_OGR EQUAL -1) # raster
