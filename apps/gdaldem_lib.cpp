@@ -270,10 +270,14 @@ static T INTERPOL(T a, T b, int bSrcHasNodata, T fSrcNoDataValue);
 template <>
 float INTERPOL(float a, float b, int bSrcHasNoData, float fSrcNoDataValue)
 {
-    return ((bSrcHasNoData && (ARE_REAL_EQUAL(a, fSrcNoDataValue) ||
-                               ARE_REAL_EQUAL(b, fSrcNoDataValue)))
-                ? fSrcNoDataValue
-                : 2 * (a) - (b));
+    if (bSrcHasNoData && (ARE_REAL_EQUAL(a, fSrcNoDataValue) ||
+                          ARE_REAL_EQUAL(b, fSrcNoDataValue)))
+        return fSrcNoDataValue;
+    const float fVal = 2 * a - b;
+    if (bSrcHasNoData && ARE_REAL_EQUAL(fVal, fSrcNoDataValue))
+        return fSrcNoDataValue *
+               (1 + 3 * std::numeric_limits<float>::epsilon());
+    return fVal;
 }
 
 template <>
@@ -281,9 +285,10 @@ GInt32 INTERPOL(GInt32 a, GInt32 b, int bSrcHasNoData, GInt32 fSrcNoDataValue)
 {
     if (bSrcHasNoData && ((a == fSrcNoDataValue) || (b == fSrcNoDataValue)))
         return fSrcNoDataValue;
-    int nVal = 2 * a - b;
+    const int nVal = static_cast<int>(
+        std::clamp<int64_t>(2 * static_cast<int64_t>(a) - b, INT_MIN, INT_MAX));
     if (bSrcHasNoData && fSrcNoDataValue == nVal)
-        return nVal + 1;
+        return nVal == INT_MAX ? INT_MAX - 1 : nVal + 1;
     return nVal;
 }
 
