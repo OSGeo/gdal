@@ -19,6 +19,7 @@
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_pansharpen.h"
 #include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
@@ -351,6 +352,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterFillNodataAlgorithm>();
     m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterPansharpenAlgorithm>();
     m_stepRegistry.Register<GDALRasterProximityAlgorithm>();
     m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();

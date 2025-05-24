@@ -1071,7 +1071,7 @@ def test_vrtpansharpen_2():
 # Test with overviews
 
 
-def test_vrtpansharpen_3():
+def test_vrtpansharpen_3(tmp_vsimem):
 
     shutil.copy("data/small_world.tif", "tmp/small_world.tif")
 
@@ -1161,6 +1161,7 @@ def test_vrtpansharpen_3():
 
     gdal.Unlink("tmp/small_world_pan_cropped.vrt")
     gdal.Unlink("tmp/small_world_pan.tif.ovr")
+    gdal.Unlink("tmp/small_world.tif.ovr")
 
 
 ###############################################################################
@@ -2074,6 +2075,16 @@ def test_vrtpansharpen_11():
         pan_ds.GetRasterBand(1),
         [ms_ds.GetRasterBand(i + 1) for i in range(3)],
     )
+    assert pan_ds.GetRefCount() == 2
+    assert ms_ds.GetRefCount() == 4
+
+    pan_mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", pan_ds)
+    ms_mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", ms_ds)
+
+    # Check that dropping our ref to the input datasets works
+    del pan_ds
+    del ms_ds
+
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     expected_cs = (
@@ -2084,10 +2095,6 @@ def test_vrtpansharpen_11():
     assert cs in expected_cs
 
     # Also test with completely anonymous datasets
-    pan_mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", pan_ds)
-    ms_mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", ms_ds)
-    pan_ds = None
-    ms_ds = None
 
     vrt_ds = gdal.CreatePansharpenedVRT(
         """<VRTDataset subClass="VRTPansharpenedDataset">

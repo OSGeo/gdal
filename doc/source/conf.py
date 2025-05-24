@@ -415,6 +415,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_pansharpen",
+        "gdal-raster-pansharpen",
+        "Perform a pansharpen operation",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
         "Process a raster dataset",
