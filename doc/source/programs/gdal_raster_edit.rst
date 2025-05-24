@@ -71,15 +71,32 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
     Compute raster band statistics for all bands.
 
+.. option:: --gcp <GCP>
+
+    .. versionadded:: 3.12
+
+    Set ground control point(s), replacing any existing GCPs. Each GCP must be formatted as a string
+    "pixel,line,easting,northing" or "pixel,line,easting,northing,elevation".
+    Each GCP must be specified with a ``--gcp`` argument.
+
+    It is also possible to provide a single ``--gcp`` argument whose value is
+    the filename of a vector dataset, prefixed with `@`. This dataset must have
+    a single layer with the following required fields ``column``, ``line``, ``x``, ``y``,
+    and optionally ``id``, ``info`` and ``z``.
+
 .. option:: --approx-stats
 
     Compute raster band statistics for all bands. They may be computed
     based on overviews or a subset of all tiles. Useful if you are in a
     hurry and don't need precise stats.
 
+    .. note:: This option is not available when the command is part of a pipeline.
+
 .. option:: --hist
 
     Compute histogram information for all bands.
+
+    .. note:: This option is not available when the command is part of a pipeline.
 
 
 Examples
@@ -112,3 +129,17 @@ Examples
    .. code-block:: bash
 
         $ gdal raster edit --unset-metadata AUTHOR my.tif
+
+.. example::
+   :title: Add 2 ground control point (GCP) for (column=0,line=0,X=2,Y=49) and (column=50,line=100,X=3,Y=48)
+
+   .. code-block:: bash
+
+        $ gdal raster edit --gcp 0,0,2,49 --gcp 50,100,3,48 my.tif
+
+.. example::
+   :title: Add ground control point (GCP) from :file:`gcps.csv`, that must have fields named ``column``, ``line``, ``x`` and  ``y``.
+
+   .. code-block:: bash
+
+        $ gdal raster edit --gcp @gcps.csv my.tif
