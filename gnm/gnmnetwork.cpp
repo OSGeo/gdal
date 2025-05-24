@@ -60,21 +60,21 @@ const char *CPL_STDCALL GNMGetName(GNMNetworkH hNet)
 {
     VALIDATE_POINTER1(hNet, "GNMGetVersion", nullptr);
 
-    return ((GNMNetwork *)hNet)->GetName();
+    return GNMNetwork::FromHandle(hNet)->GetName();
 }
 
 int CPL_STDCALL GNMGetVersion(GNMNetworkH hNet)
 {
     VALIDATE_POINTER1(hNet, "GNMGetVersion", 0);
 
-    return ((GNMNetwork *)hNet)->GetVersion();
+    return GNMNetwork::FromHandle(hNet)->GetVersion();
 }
 
 CPLErr CPL_STDCALL GNMDisconnectAll(GNMNetworkH hNet)
 {
     VALIDATE_POINTER1(hNet, "GNMDisconnectAll", CE_Failure);
 
-    return ((GNMNetwork *)hNet)->DisconnectAll();
+    return GNMNetwork::FromHandle(hNet)->DisconnectAll();
 }
 
 OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID(GNMNetworkH hNet,
@@ -82,7 +82,8 @@ OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID(GNMNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMGetFeatureByGlobalFID", nullptr);
 
-    return (OGRFeatureH)((GNMNetwork *)hNet)->GetFeatureByGlobalFID(nGFID);
+    return OGRFeature::ToHandle(
+        GNMNetwork::FromHandle(hNet)->GetFeatureByGlobalFID(nGFID));
 }
 
 OGRLayerH CPL_STDCALL GNMGetPath(GNMNetworkH hNet, GNMGFID nStartFID,
@@ -92,18 +93,18 @@ OGRLayerH CPL_STDCALL GNMGetPath(GNMNetworkH hNet, GNMGFID nStartFID,
 {
     VALIDATE_POINTER1(hNet, "GNMGetPath", nullptr);
 
-    return (OGRLayerH)((GNMNetwork *)hNet)
-        ->GetPath(nStartFID, nEndFID, eAlgorithm, papszOptions);
+    return OGRLayer::ToHandle(GNMNetwork::FromHandle(hNet)->GetPath(
+        nStartFID, nEndFID, eAlgorithm, papszOptions));
 }
 
 GNMNetworkH CPL_STDCALL GNMCastToNetwork(GDALMajorObjectH hBase)
 {
-    return reinterpret_cast<GNMNetworkH>(
-        dynamic_cast<GNMNetwork *>(reinterpret_cast<GDALMajorObject *>(hBase)));
+    return GNMNetwork::ToHandle(
+        dynamic_cast<GNMNetwork *>(GDALMajorObject::FromHandle(hBase)));
 }
 
 GNMGenericNetworkH CPL_STDCALL GNMCastToGenericNetwork(GDALMajorObjectH hBase)
 {
-    return reinterpret_cast<GNMGenericNetworkH>(
-        dynamic_cast<GNMNetwork *>(reinterpret_cast<GDALMajorObject *>(hBase)));
+    return GNMGenericNetwork::ToHandle(
+        dynamic_cast<GNMGenericNetwork *>(GDALMajorObject::FromHandle(hBase)));
 }

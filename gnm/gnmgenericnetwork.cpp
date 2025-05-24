@@ -35,13 +35,7 @@
 #include <set>
 
 //! @cond Doxygen_Suppress
-GNMGenericNetwork::GNMGenericNetwork()
-    : GNMNetwork(), m_nVersion(0), m_nGID(0), m_nVirtualConnectionGID(-1),
-      m_poMetadataLayer(nullptr), m_poGraphLayer(nullptr),
-      m_poFeaturesLayer(nullptr), m_poLayerDriver(nullptr),
-      m_bIsRulesChanged(false), m_bIsGraphLoaded(false)
-{
-}
+GNMGenericNetwork::GNMGenericNetwork() = default;
 
 GNMGenericNetwork::~GNMGenericNetwork()
 {
@@ -51,19 +45,19 @@ GNMGenericNetwork::~GNMGenericNetwork()
 
 int GNMGenericNetwork::GetLayerCount()
 {
-    return (int)m_apoLayers.size();
+    return static_cast<int>(m_apoLayers.size());
 }
 
 OGRLayer *GNMGenericNetwork::GetLayer(int nIndex)
 {
-    if (nIndex < 0 || nIndex >= (int)m_apoLayers.size())
+    if (nIndex < 0 || nIndex >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
     return m_apoLayers[nIndex];
 }
 
 OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
 {
-    if (nIndex < 0 || nIndex >= (int)m_apoLayers.size())
+    if (nIndex < 0 || nIndex >= static_cast<int>(m_apoLayers.size()))
         return OGRERR_FAILURE;
 
     const char *pszLayerName = m_apoLayers[nIndex]->GetName();
@@ -581,13 +575,12 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
     }
 
     // now walk through all lines and find nearest points for line start and end
-    OGRFeature *poFeature;
     for (size_t i = 0; i < paLineLayers.size(); ++i)
     {
         poLayer = paLineLayers[i];
 
         poLayer->ResetReading();
-        while ((poFeature = poLayer->GetNextFeature()) != nullptr)
+        for (auto &&poFeature : poLayer)
         {
             const OGRGeometry *poGeom = poFeature->GetGeometryRef();
             if (nullptr != poGeom)
@@ -595,22 +588,19 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
                 eType = wkbFlatten(poGeom->getGeometryType());
                 if (eType == wkbLineString)
                 {
-                    const OGRLineString *poLineString =
-                        (const OGRLineString *)poGeom;
+                    const auto poLineString = poGeom->toLineString();
                     ConnectPointsByLine(poFeature->GetFID(), poLineString,
                                         paPointLayers, dfTolerance, dfCost,
                                         dfInvCost, eDir);
                 }
                 else if (eType == wkbMultiLineString)
                 {
-                    const OGRMultiLineString *poMultiLineString =
-                        (const OGRMultiLineString *)poGeom;
+                    const auto poMultiLineString = poGeom->toMultiLineString();
                     ConnectPointsByMultiline(
                         poFeature->GetFID(), poMultiLineString, paPointLayers,
                         dfTolerance, dfCost, dfInvCost, eDir);
                 }
             }
-            OGRFeature::DestroyFeature(poFeature);
         }
     }
 
@@ -905,7 +895,8 @@ void GNMGenericNetwork::ConnectPointsByLine(
         return;
 
     // connect nSrcFID with nTgtFID via nFID
-    ConnectFeatures(nSrcFID, nTgtFID, (GNMGFID)nFID, dfCost, dfInvCost, eDir);
+    ConnectFeatures(nSrcFID, nTgtFID, static_cast<GNMGFID>(nFID), dfCost,
+                    dfInvCost, eDir);
 }
 
 GNMGFID GNMGenericNetwork::FindNearestPoint(
@@ -965,24 +956,21 @@ bool GNMGenericNetwork::SaveRules()
         return false;
 
     bool bOK = true;
-    OGRFeature *poFeature;
-    for (int i = 0; i < (int)m_asRules.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_asRules.size()); ++i)
     {
-        poFeature =
-            OGRFeature::CreateFeature(m_poMetadataLayer->GetLayerDefn());
+        auto poFeature =
+            std::make_unique<OGRFeature>(m_poMetadataLayer->GetLayerDefn());
         poFeature->SetField(GNM_SYSFIELD_PARAMNAME,
                             CPLSPrintf("%s%d", GNM_MD_RULE, i + 1));
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_asRules[i]);
-        if (m_poMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+        if (m_poMetadataLayer->CreateFeature(poFeature.get()) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
                      m_asRules[i].c_str());
             bOK = false;
             // TODO: do we need interrupt here?
-            // OGRFeature::DestroyFeature( poFeature );
             // return CE_Failure;
         }
-        OGRFeature::DestroyFeature(poFeature);
     }
     return bOK;
 }
@@ -1453,8 +1441,8 @@ CPLErr CPL_STDCALL GNMConnectFeatures(GNMGenericNetworkH hNet, GNMGFID nSrcFID,
 {
     VALIDATE_POINTER1(hNet, "GNMConnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)
-        ->ConnectFeatures(nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
+    return GNMGenericNetwork::FromHandle(hNet)->ConnectFeatures(
+        nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
 }
 
 CPLErr CPL_STDCALL GNMDisconnectFeatures(GNMGenericNetworkH hNet,
@@ -1463,8 +1451,8 @@ CPLErr CPL_STDCALL GNMDisconnectFeatures(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMDisconnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)
-        ->DisconnectFeatures(nSrcFID, nTgtFID, nConFID);
+    return GNMGenericNetwork::FromHandle(hNet)->DisconnectFeatures(
+        nSrcFID, nTgtFID, nConFID);
 }
 
 CPLErr CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
@@ -1472,7 +1460,7 @@ CPLErr CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMDisconnectFeaturesWithId", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->DisconnectFeaturesWithId(nFID);
+    return GNMGenericNetwork::FromHandle(hNet)->DisconnectFeaturesWithId(nFID);
 }
 
 CPLErr CPL_STDCALL GNMReconnectFeatures(GNMGenericNetworkH hNet,
@@ -1482,8 +1470,8 @@ CPLErr CPL_STDCALL GNMReconnectFeatures(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMReconnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)
-        ->ReconnectFeatures(nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
+    return GNMGenericNetwork::FromHandle(hNet)->ReconnectFeatures(
+        nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
 }
 
 CPLErr CPL_STDCALL GNMCreateRule(GNMGenericNetworkH hNet,
@@ -1491,14 +1479,14 @@ CPLErr CPL_STDCALL GNMCreateRule(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMCreateRule", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->CreateRule(pszRuleStr);
+    return GNMGenericNetwork::FromHandle(hNet)->CreateRule(pszRuleStr);
 }
 
 CPLErr CPL_STDCALL GNMDeleteAllRules(GNMGenericNetworkH hNet)
 {
     VALIDATE_POINTER1(hNet, "GNMDeleteAllRules", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->DeleteAllRules();
+    return GNMGenericNetwork::FromHandle(hNet)->DeleteAllRules();
 }
 
 CPLErr CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet,
@@ -1506,14 +1494,14 @@ CPLErr CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMDeleteRule", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->DeleteRule(pszRuleStr);
+    return GNMGenericNetwork::FromHandle(hNet)->DeleteRule(pszRuleStr);
 }
 
 char **CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet)
 {
     VALIDATE_POINTER1(hNet, "GNMDeleteRule", nullptr);
 
-    return ((GNMGenericNetwork *)hNet)->GetRules();
+    return GNMGenericNetwork::FromHandle(hNet)->GetRules();
 }
 
 CPLErr CPL_STDCALL GNMConnectPointsByLines(GNMGenericNetworkH hNet,
@@ -1523,9 +1511,8 @@ CPLErr CPL_STDCALL GNMConnectPointsByLines(GNMGenericNetworkH hNet,
 {
     VALIDATE_POINTER1(hNet, "GNMConnectPointsByLines", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)
-        ->ConnectPointsByLines(papszLayerList, dfTolerance, dfCost, dfInvCost,
-                               eDir);
+    return GNMGenericNetwork::FromHandle(hNet)->ConnectPointsByLines(
+        papszLayerList, dfTolerance, dfCost, dfInvCost, eDir);
 }
 
 CPLErr CPL_STDCALL GNMChangeBlockState(GNMGenericNetworkH hNet, GNMGFID nFID,
@@ -1533,14 +1520,16 @@ CPLErr CPL_STDCALL GNMChangeBlockState(GNMGenericNetworkH hNet, GNMGFID nFID,
 {
     VALIDATE_POINTER1(hNet, "GNMChangeBlockState", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->ChangeBlockState(nFID, bIsBlock);
+    return GNMGenericNetwork::FromHandle(hNet)->ChangeBlockState(nFID,
+                                                                 bIsBlock);
 }
 
 CPLErr CPL_STDCALL GNMChangeAllBlockState(GNMGenericNetworkH hNet, int bIsBlock)
 {
     VALIDATE_POINTER1(hNet, "GNMChangeAllBlockState", CE_Failure);
 
-    return ((GNMGenericNetwork *)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
+    return GNMGenericNetwork::FromHandle(hNet)->ChangeAllBlockState(bIsBlock ==
+                                                                    TRUE);
 }
 
 //! @endcond

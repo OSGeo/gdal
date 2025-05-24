@@ -163,6 +163,18 @@ class CPL_DLL GNMNetwork : public GDALDataset
                               GNMGraphAlgorithmType eAlgorithm,
                               char **papszOptions) = 0;
 
+    /** Casts a handle to a pointer */
+    static inline GNMNetwork *FromHandle(GNMGenericNetworkH hNet)
+    {
+        return static_cast<GNMNetwork *>(hNet);
+    }
+
+    /** Casts a pointer to a handle */
+    static inline GNMGenericNetworkH ToHandle(GNMNetwork *poNetwork)
+    {
+        return static_cast<GNMGenericNetworkH>(poNetwork);
+    }
+
   protected:
     /**
      * @brief Check if network already exist
@@ -175,7 +187,7 @@ class CPL_DLL GNMNetwork : public GDALDataset
 
   protected:
     //! @cond Doxygen_Suppress
-    CPLString m_soName;
+    CPLString m_soName{};
     OGRSpatialReference m_oSRS{};
     //! @endcond
 };
@@ -404,6 +416,18 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
                               GNMGraphAlgorithmType eAlgorithm,
                               char **papszOptions) override;
 
+    /** Casts a handle to a pointer */
+    static inline GNMGenericNetwork *FromHandle(GNMGenericNetworkH hNet)
+    {
+        return static_cast<GNMGenericNetwork *>(hNet);
+    }
+
+    /** Casts a pointer to a handle */
+    static inline GNMGenericNetworkH ToHandle(GNMGenericNetwork *poNetwork)
+    {
+        return static_cast<GNMGenericNetworkH>(poNetwork);
+    }
+
   protected:
     /**
      * @brief Check or create layer OGR driver
@@ -460,23 +484,25 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
     //! @endcond
   protected:
     //! @cond Doxygen_Suppress
-    int m_nVersion;
-    GNMGFID m_nGID;
-    GNMGFID m_nVirtualConnectionGID;
-    OGRLayer *m_poMetadataLayer;
-    OGRLayer *m_poGraphLayer;
-    OGRLayer *m_poFeaturesLayer;
+    int m_nVersion = 0;
+    GNMGFID m_nGID = 0;
+    GNMGFID m_nVirtualConnectionGID = -1;
+    OGRLayer *m_poMetadataLayer = nullptr;
+    OGRLayer *m_poGraphLayer = nullptr;
+    OGRLayer *m_poFeaturesLayer = nullptr;
 
-    GDALDriver *m_poLayerDriver;
+    GDALDriver *m_poLayerDriver = nullptr;
 
-    std::map<GNMGFID, CPLString> m_moFeatureFIDMap;
-    std::vector<OGRLayer *> m_apoLayers;
-    std::vector<GNMRule> m_asRules;
-    bool m_bIsRulesChanged;
+    std::map<GNMGFID, CPLString> m_moFeatureFIDMap{};
+    std::vector<OGRLayer *> m_apoLayers{};
+    std::vector<GNMRule> m_asRules{};
+    bool m_bIsRulesChanged = false;
 
-    GNMGraph m_oGraph;
-    bool m_bIsGraphLoaded;
+    GNMGraph m_oGraph{};
+    bool m_bIsGraphLoaded = false;
     //! @endcond
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GNMGenericNetwork)
 };
 
 /**
@@ -601,11 +627,14 @@ class GNMGenericLayer : public OGRLayer
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
   protected:
-    CPLString m_soLayerName;
-    OGRLayer *m_poLayer;
-    GNMGenericNetwork *m_poNetwork;
-    std::map<GNMGFID, GIntBig> m_mnFIDMap;
+    CPLString m_soLayerName{};
+    OGRLayer *m_poLayer = nullptr;
+    GNMGenericNetwork *m_poNetwork = nullptr;
+    std::map<GNMGFID, GIntBig> m_mnFIDMap{};
     //! @endcond
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GNMGenericLayer)
 };
 
 typedef enum
@@ -685,13 +714,13 @@ class CPL_DLL GNMRule
     virtual bool ParseRuleString();
 
   protected:
-    CPLString m_soSrcLayerName;
-    CPLString m_soTgtLayerName;
-    CPLString m_soConnLayerName;
+    CPLString m_soSrcLayerName{};
+    CPLString m_soTgtLayerName{};
+    CPLString m_soConnLayerName{};
     bool m_bAllow = false;
     bool m_bValid = false;
     bool m_bAny = false;
-    CPLString m_soRuleString;
+    CPLString m_soRuleString{};
     //! @endcond
 };
 
@@ -734,9 +763,12 @@ class OGRGNMWrappedResultLayer : public OGRLayer
 
   protected:
     //! @cond Doxygen_Suppress
-    GDALDataset *poDS;
-    OGRLayer *poLayer;
+    GDALDataset *poDS = nullptr;
+    OGRLayer *poLayer = nullptr;
     //! @endcond
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(OGRGNMWrappedResultLayer)
 };
 
 #endif  // __cplusplus
