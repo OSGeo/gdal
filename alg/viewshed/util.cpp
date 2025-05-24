@@ -103,7 +103,7 @@ int hIntersect(double angle, int nX, int nY, const Window &win)
 /// @param angle  Angle in radians, standard arrangement.
 /// @param nX  X coordinate of ray endpoint.
 /// @param nY  Y coordinte of ray endpoint.
-/// @param y  Vertical  line where X = x.
+/// @param x  Vertical  line where X = x.
 /// @return  Y intersect or NaN
 double verticalIntersect(double angle, int nX, int nY, int x)
 {
@@ -134,7 +134,7 @@ double verticalIntersect(double angle, int nX, int nY, int x)
 /// @param angle  Angle in radians, standard arrangement.
 /// @param nX  X coordinate of ray endpoint.
 /// @param nY  Y coordinte of ray endpoint.
-/// @param y  Horizontal line where X = x.
+/// @param x  Horizontal line where X = x.
 /// @return  Rounded Y intersection of the sentinel INVALID_ISECT
 int vIntersect(double angle, int nX, int nY, int x)
 {
