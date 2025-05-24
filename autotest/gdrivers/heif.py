@@ -507,6 +507,8 @@ def test_identify_various(major_brand, compatible_brands, expect_success):
 
 
 @pytest.mark.require_curl()
+# Hangs on 24.04 CI targets since ~ May 23th 2025
+@pytest.mark.skipif(gdaltest.is_ci(), reason="hangs on CI")
 def test_heif_network_read(tmp_vsimem):
 
     if not _has_read_write_support_for("UNCOMPRESSED"):
