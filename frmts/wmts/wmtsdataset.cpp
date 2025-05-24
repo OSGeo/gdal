@@ -20,6 +20,7 @@
 #include "wmtsdrivercore.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <map>
 #include <set>
@@ -53,15 +54,15 @@ typedef enum
 class WMTSTileMatrix
 {
   public:
-    CPLString osIdentifier;
-    double dfScaleDenominator;
-    double dfPixelSize;
-    double dfTLX;
-    double dfTLY;
-    int nTileWidth;
-    int nTileHeight;
-    int nMatrixWidth;
-    int nMatrixHeight;
+    CPLString osIdentifier{};
+    double dfScaleDenominator = 0;
+    double dfPixelSize = 0;
+    double dfTLX = 0;
+    double dfTLY = 0;
+    int nTileWidth = 0;
+    int nTileHeight = 0;
+    int nMatrixWidth = 0;
+    int nMatrixHeight = 0;
 
     OGREnvelope GetExtent() const
     {
@@ -83,11 +84,11 @@ class WMTSTileMatrix
 class WMTSTileMatrixLimits
 {
   public:
-    CPLString osIdentifier;
-    int nMinTileRow;
-    int nMaxTileRow;
-    int nMinTileCol;
-    int nMaxTileCol;
+    CPLString osIdentifier{};
+    int nMinTileRow = 0;
+    int nMaxTileRow = 0;
+    int nMinTileCol = 0;
+    int nMaxTileCol = 0;
 
     OGREnvelope GetExtent(const WMTSTileMatrix &oTM) const
     {
@@ -111,13 +112,13 @@ class WMTSTileMatrixLimits
 class WMTSTileMatrixSet
 {
   public:
-    OGRSpatialReference oSRS;
-    CPLString osSRS;
-    bool bBoundingBoxValid;
-    OGREnvelope sBoundingBox; /* expressed in TMS SRS */
-    std::vector<WMTSTileMatrix> aoTM;
+    OGRSpatialReference oSRS{};
+    CPLString osSRS{};
+    bool bBoundingBoxValid = false;
+    OGREnvelope sBoundingBox{}; /* expressed in TMS SRS */
+    std::vector<WMTSTileMatrix> aoTM{};
 
-    WMTSTileMatrixSet() : oSRS(OGRSpatialReference()), bBoundingBoxValid(false)
+    WMTSTileMatrixSet()
     {
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
@@ -133,20 +134,20 @@ class WMTSDataset final : public GDALPamDataset
 {
     friend class WMTSBand;
 
-    CPLString osLayer;
-    CPLString osTMS;
-    CPLString osXML;
-    CPLString osURLFeatureInfoTemplate;
-    WMTSTileMatrixSet oTMS;
+    CPLString osLayer{};
+    CPLString osTMS{};
+    CPLString osXML{};
+    CPLString osURLFeatureInfoTemplate{};
+    WMTSTileMatrixSet oTMS{};
 
     CPLStringList m_aosHTTPOptions{};
 
-    std::vector<GDALDataset *> apoDatasets;
+    std::vector<GDALDataset *> apoDatasets{};
     OGRSpatialReference m_oSRS{};
-    double adfGT[6];
+    std::array<double, 6> adfGT = {0, 1, 0, 0, 0, 1};
 
-    CPLString osLastGetFeatureInfoURL;
-    CPLString osMetadataItemGetFeatureInfo;
+    CPLString osLastGetFeatureInfoURL{};
+    CPLString osMetadataItemGetFeatureInfo{};
 
     static CPLStringList BuildHTTPRequestOpts(CPLString osOtherXML);
     static CPLXMLNode *GetCapabilitiesResponse(const CPLString &osFilename,
@@ -236,7 +237,7 @@ WMTSBand::WMTSBand(WMTSDataset *poDSIn, int nBandIn, GDALDataType eDataTypeIn)
 
 CPLErr WMTSBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
     return poGDS->apoDatasets[0]->GetRasterBand(nBand)->ReadBlock(
         nBlockXOff, nBlockYOff, pImage);
 }
@@ -251,7 +252,7 @@ CPLErr WMTSBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                            GSpacing nPixelSpace, GSpacing nLineSpace,
                            GDALRasterIOExtraArg *psExtraArg)
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
 
     if ((nBufXSize < nXSize || nBufYSize < nYSize) &&
         poGDS->apoDatasets.size() > 1 && eRWFlag == GF_Read)
@@ -275,10 +276,10 @@ CPLErr WMTSBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
 
 int WMTSBand::GetOverviewCount()
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
 
     if (poGDS->apoDatasets.size() > 1)
-        return (int)poGDS->apoDatasets.size() - 1;
+        return static_cast<int>(poGDS->apoDatasets.size()) - 1;
     else
         return 0;
 }
@@ -289,7 +290,7 @@ int WMTSBand::GetOverviewCount()
 
 GDALRasterBand *WMTSBand::GetOverview(int nLevel)
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
 
     if (nLevel < 0 || nLevel >= GetOverviewCount())
         return nullptr;
@@ -307,7 +308,7 @@ GDALRasterBand *WMTSBand::GetOverview(int nLevel)
 
 GDALColorInterp WMTSBand::GetColorInterpretation()
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
     if (poGDS->nBands == 1)
     {
         return GCI_GrayIndex;
@@ -334,7 +335,7 @@ GDALColorInterp WMTSBand::GetColorInterpretation()
 const char *WMTSBand::GetMetadataItem(const char *pszName,
                                       const char *pszDomain)
 {
-    WMTSDataset *poGDS = (WMTSDataset *)poDS;
+    WMTSDataset *poGDS = cpl::down_cast<WMTSDataset *>(poDS);
 
     /* ==================================================================== */
     /*      LocationInfo handling.                                          */
@@ -355,10 +356,10 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
 
         const WMTSTileMatrix &oTM = poGDS->oTMS.aoTM.back();
 
-        iPixel +=
-            (int)floor(0.5 + (poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize);
-        iLine +=
-            (int)floor(0.5 + (oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize);
+        iPixel += static_cast<int>(
+            std::round((poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize));
+        iLine += static_cast<int>(
+            std::round((oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize));
 
         CPLString osURL(poGDS->osURLFeatureInfoTemplate);
         osURL = WMTSDataset::Replace(osURL, "{TileMatrixSet}", poGDS->osTMS);
@@ -380,7 +381,8 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
             CPLHTTPResult *psResult =
                 CPLHTTPFetch(osURL, poGDS->m_aosHTTPOptions.List());
             if (psResult && psResult->nStatus == 0 && psResult->pabyData)
-                pszRes = CPLStrdup((const char *)psResult->pabyData);
+                pszRes = CPLStrdup(
+                    reinterpret_cast<const char *>(psResult->pabyData));
             CPLHTTPDestroyResult(psResult);
 
             if (pszRes)
@@ -432,12 +434,6 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
 WMTSDataset::WMTSDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGT[0] = 0;
-    adfGT[1] = 1;
-    adfGT[2] = 0;
-    adfGT[3] = 0;
-    adfGT[4] = 0;
-    adfGT[5] = 1;
 }
 
 /************************************************************************/
@@ -502,7 +498,7 @@ CPLErr WMTSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 CPLErr WMTSDataset::GetGeoTransform(double *padfGT)
 {
-    memcpy(padfGT, adfGT, 6 * sizeof(double));
+    memcpy(padfGT, adfGT.data(), 6 * sizeof(double));
     return CE_None;
 }
 
@@ -910,7 +906,8 @@ CPLXMLNode *WMTSDataset::GetCapabilitiesResponse(const CPLString &osFilename,
             CPLHTTPDestroyResult(psResult);
             return nullptr;
         }
-        psXML = CPLParseXMLString((const char *)psResult->pabyData);
+        psXML = CPLParseXMLString(
+            reinterpret_cast<const char *>(psResult->pabyData));
         CPLHTTPDestroyResult(psResult);
     }
     return psXML;
@@ -1091,7 +1088,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     if ((psXML != nullptr && CPLGetXMLNode(psXML, "=GDAL_WMTS") != nullptr) ||
         STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS") ||
         (poOpenInfo->nHeaderBytes > 0 &&
-         strstr((const char *)poOpenInfo->pabyHeader, "<GDAL_WMTS")))
+         strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                "<GDAL_WMTS")))
     {
         CPLXMLNode *psGDALWMTS;
         if (psXML != nullptr && CPLGetXMLNode(psXML, "=GDAL_WMTS") != nullptr)
@@ -2376,15 +2374,16 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                     nTileY, nSizeX2, nSizeY, oTM.nTileWidth, oTM.nTileHeight,
                     nBands, GDALGetDataTypeName(eDataType), osOtherXML.c_str());
 
-                GDALDataset *poWMSDS2 = (GDALDataset *)GDALOpenEx(
-                    osStr, GDAL_OF_RASTER | GDAL_OF_SHARED, nullptr, nullptr,
-                    nullptr);
+                GDALDataset *poWMSDS2 =
+                    GDALDataset::Open(osStr, GDAL_OF_RASTER | GDAL_OF_SHARED,
+                                      nullptr, nullptr, nullptr);
                 CPLAssert(poWMSDS2);
 
                 for (int iBand = 1; iBand <= nBands; iBand++)
                 {
                     VRTSourcedRasterBandH hVRTBand =
-                        (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
+                        reinterpret_cast<VRTSourcedRasterBandH>(
+                            GDALGetRasterBand(hVRTDS, iBand));
                     VRTAddSimpleSource(
                         hVRTBand, GDALGetRasterBand(poWMSDS, iBand), nSrcXOff,
                         nSrcYOff, nSizeX1, nSizeY, nDstXOff, nDstYOff, nSizeX1,
@@ -2402,7 +2401,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                 for (int iBand = 1; iBand <= nBands; iBand++)
                 {
                     VRTSourcedRasterBandH hVRTBand =
-                        (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
+                        reinterpret_cast<VRTSourcedRasterBandH>(
+                            GDALGetRasterBand(hVRTDS, iBand));
                     VRTAddSimpleSource(
                         hVRTBand, GDALGetRasterBand(poWMSDS, iBand), nSrcXOff,
                         nSrcYOff, nSizeX, nSizeY, nDstXOff, nDstYOff, nSizeX,
@@ -2412,7 +2412,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
             poWMSDS->Dereference();
 
-            poDS->apoDatasets.push_back((GDALDataset *)hVRTDS);
+            poDS->apoDatasets.push_back(GDALDataset::FromHandle(hVRTDS));
         }
 
         if (poDS->apoDatasets.empty())
