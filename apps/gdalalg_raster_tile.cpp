@@ -571,7 +571,7 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
             dfMinXUpper + adfUpperGT[1] * oSrcDS.GetRasterXSize();
         const double dfMaxYUpper = adfUpperGT[3];
         const double dfMinYUpper =
-            dfMaxXUpper + adfUpperGT[5] * oSrcDS.GetRasterYSize();
+            dfMaxYUpper + adfUpperGT[5] * oSrcDS.GetRasterYSize();
         if (dfMinX >= dfMinXUpper && dfMaxX <= dfMaxXUpper &&
             dfMinY >= dfMinYUpper && dfMaxY <= dfMaxYUpper)
         {
