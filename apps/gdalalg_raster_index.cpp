@@ -32,7 +32,8 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
 {
     AddProgressArg();
     AddInputDatasetArg(&m_inputDatasets, GDAL_OF_RASTER)
-        .SetAutoOpenDataset(false);
+        .SetAutoOpenDataset(false)
+        .SetDatasetInputFlags(GADV_NAME);
     GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs();
 
     AddCommonOptions();

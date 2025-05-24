@@ -107,6 +107,8 @@ GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()
     {
         m_outputLayerName = CPLGetBasenameSafe(poDstDS->GetDescription());
     }
+    if (m_outputLayerName.empty() && poDstDS->GetLayerCount() == 1)
+        m_outputLayerName = poDstDS->GetLayer(0)->GetDescription();
 
     auto poDstLayer = m_outputLayerName.empty()
                           ? nullptr

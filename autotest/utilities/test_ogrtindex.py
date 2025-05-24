@@ -181,3 +181,21 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
         ogrtest.check_feature_geometry(feat, expected_wkts[i], context=f"i={i}")
 
     ds = None
+
+
+###############################################################################
+# More options
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogrtindex_options(ogrtindex_path, tmp_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        f"{ogrtindex_path} -f GPKG -lnum 0 -lname poly -tileindex my_loc -accept_different_schemas {tmp_path}/out.gpkg ../ogr/data/poly.shp"
+    )
+    assert err is None or err == ""
+    ds = ogr.Open(tmp_path / "out.gpkg")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == "tileindex"
+    f = lyr.GetNextFeature()
+    assert f["my_loc"] == "../ogr/data/poly.shp,0"

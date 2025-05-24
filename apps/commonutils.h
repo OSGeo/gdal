@@ -96,6 +96,8 @@ void GDALRemoveBOM(GByte *pabyData);
 
 int ArgIsNumeric(const char *pszArg);
 
+bool GDALPatternMatch(const char *input, const char *pattern);
+
 // those values shouldn't be changed, because overview levels >= 0 are meant
 // to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
 // automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
