@@ -75,7 +75,7 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
     .. versionadded:: 3.12
 
-    Add ground control point(s). Each GCP must be formatted as a string
+    Set ground control point(s), replacing any existing GCPs. Each GCP must be formatted as a string
     "pixel,line,easting,northing" or "pixel,line,easting,northing,elevation".
     Each GCP must be specified with a ``--gcp`` argument.
 
