@@ -1,3 +1,71 @@
+%feature("docstring")  CreateAttribute "
+
+Create an attribute within a :py:class:`osgeo.gdal.MDArray` or :py:class:`osgeo.gdal.Group`.
+
+See :cpp:func:`GDALIHasAttribute::CreateAttribute`.
+
+Parameters
+----------
+name : str
+    name
+dimensions : list
+    List of dimensions, ordered from the slowest varying
+    dimension first to the fastest varying dimension last.
+    Might be empty for a scalar array (if supported by driver)
+data_type: :py:class:`osgeo.gdal.ExtendedDataType`
+    Attribute data type
+options: dict/list
+    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
+
+Returns
+-------
+
+Attribute:
+    the new :py:class:`osgeo.gdal.Attribute` or ``None`` on failure.
+
+Examples
+--------
+>>> numeric_attr = ar.CreateAttribute('numeric_attr', [], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+>>> string_attr = ar.CreateAttribute('string_attr', [], gdal.ExtendedDataType.CreateString())
+
+";
+
+%feature("docstring")  CreateDimension "
+
+Create a dimension within a :py:class:`osgeo.gdal.Group`.
+
+See :cpp:func:`GDALGroup::CreateDimension`.
+
+Parameters
+----------
+name : str
+    Dimension name
+dim_type : str
+    Dimension type (might be empty, and ignored by drivers)
+direction: str
+    Dimension direction (might be empty, and ignored by drivers)
+size : int
+    Number of values indexed by this dimension. Should be > 0
+options: dict/list
+    an optional dict or list of driver specific ``NAME=VALUE`` option strings.
+
+Returns
+-------
+
+Dimension:
+    the new :py:class:`osgeo.gdal.Dimension` or ``None`` on failure.
+
+Examples
+--------
+>>> dim_band = rg.CreateDimension('band', None, None, 3)
+>>> dim_x = rg.CreateDimension('X', None, None, 2)
+>>> dim_x.GetFullName()
+'/X'
+>>> lat = rg.CreateDimension('latitude', gdal.DIM_TYPE_HORIZONTAL_X, None, 2)
+>>> lat.GetType()
+'HORIZONTAL_X'
+";
+
 %feature("docstring")  CreateMDArray "
 
 Create a multidimensional array within a group.
@@ -17,6 +85,7 @@ dimensions : list
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
 data_type: :py:class:`osgeo.gdal.ExtendedDataType`
+    Array data type
 options: dict/list
     an optional dict or list of driver specific ``NAME=VALUE`` option strings.
 

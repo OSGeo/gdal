@@ -179,6 +179,7 @@ public:
 %clear char **;
 
 %newobject CreateGroup;
+%feature ("kwargs") CreateGroup;
   GDALGroupHS *CreateGroup( const char *name,
                             char **options = 0 ) {
     return GDALGroupCreateGroup(self, name, options);
@@ -190,12 +191,13 @@ public:
   }
 
 %newobject CreateDimension;
+%feature ("kwargs") CreateDimension;
   GDALDimensionHS *CreateDimension( const char *name,
-                                    const char* type,
+                                    const char* dim_type,
                                     const char* direction,
                                     GUIntBig size,
                                     char **options = 0 ) {
-    return GDALGroupCreateDimension(self, name, type, direction, size, options);
+    return GDALGroupCreateDimension(self, name, dim_type, direction, size, options);
   }
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
