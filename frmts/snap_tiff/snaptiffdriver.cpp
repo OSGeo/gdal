@@ -8,7 +8,7 @@
 #include "rawdataset.h"
 
 #define LIBERTIFF_NS GDAL_libertiff
-#include "../../third_party/libertiff/libertiff.hpp"
+#include "libertiff.hpp"
 
 #include <algorithm>
 #include <cmath>
