@@ -10,11 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-// g++ -g -Wall -fPIC frmts/nitf/ecrgtocdataset.cpp -shared -o gdal_ECRGTOC.so
-// -Iport -Igcore -Iogr -Ifrmts/vrt -L. -lgdal
-
 #include "cpl_port.h"
 
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -65,19 +63,17 @@ typedef struct
 class ECRGTOCDataset final : public GDALPamDataset
 {
     OGRSpatialReference m_oSRS{};
-    char **papszSubDatasets;
-    double adfGeoTransform[6];
+    char **papszSubDatasets = nullptr;
+    std::array<double, 6> adfGeoTransform = {0};
+    char **papszFileList = nullptr;
 
-    char **papszFileList;
+    CPL_DISALLOW_COPY_ASSIGN(ECRGTOCDataset)
 
   public:
     ECRGTOCDataset()
     {
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        papszSubDatasets = nullptr;
-        papszFileList = nullptr;
-        memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
     }
 
     virtual ~ECRGTOCDataset()
@@ -98,7 +94,8 @@ class ECRGTOCDataset final : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform(double *padfGeoTransform) override
     {
-        memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
+        memcpy(padfGeoTransform, adfGeoTransform.data(),
+               sizeof(adfGeoTransform));
         return CE_None;
     }
 
@@ -124,7 +121,8 @@ class ECRGTOCDataset final : public GDALPamDataset
 
 class ECRGTOCSubDataset final : public VRTDataset
 {
-    char **papszFileList;
+    char **papszFileList = nullptr;
+    CPL_DISALLOW_COPY_ASSIGN(ECRGTOCSubDataset)
 
   public:
     ECRGTOCSubDataset(int nXSize, int nYSize) : VRTDataset(nXSize, nYSize)
@@ -134,10 +132,7 @@ class ECRGTOCSubDataset final : public VRTDataset
 
         /* The driver is set to VRT in VRTDataset constructor. */
         /* We have to set it to the expected value ! */
-        poDriver =
-            reinterpret_cast<GDALDriver *>(GDALGetDriverByName("ECRGTOC"));
-
-        papszFileList = nullptr;
+        poDriver = GDALDriver::FromHandle(GDALGetDriverByName("ECRGTOC"));
     }
 
     ~ECRGTOCSubDataset()
@@ -544,7 +539,8 @@ GDALDataset *ECRGTOCSubDataset::Build(
     {
         poVirtualDS->AddBand(GDT_Byte, nullptr);
         GDALRasterBand *poBand = poVirtualDS->GetRasterBand(i + 1);
-        poBand->SetColorInterpretation((GDALColorInterp)(GCI_RedBand + i));
+        poBand->SetColorInterpretation(
+            static_cast<GDALColorInterp>(GCI_RedBand + i));
     }
 
     poVirtualDS->SetDescription(pszTOCFilename);

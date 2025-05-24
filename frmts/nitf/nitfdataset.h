@@ -55,29 +55,29 @@ class NITFDataset final : public GDALPamDataset
     friend class NITFWrapperRasterBand;
     friend class NITFComplexRasterBand;
 
-    NITFFile *psFile;
-    NITFImage *psImage;
+    NITFFile *psFile = nullptr;
+    NITFImage *psImage = nullptr;
 
-    GDALDataset *poJ2KDataset;
-    int bJP2Writing;
+    std::unique_ptr<GDALDataset> poJ2KDataset{};
+    int bJP2Writing = false;
     vsi_l_offset m_nImageOffset = 0;
     int m_nIMIndex = 0;
     int m_nImageCount = 0;
     vsi_l_offset m_nICOffset = 0;
     bool m_bHasComplexRasterBand = false;
 
-    GDALDataset *poJPEGDataset;
+    std::unique_ptr<GDALDataset> poJPEGDataset{};
 
-    int bGotGeoTransform;
-    double adfGeoTransform[6];
+    int bGotGeoTransform = false;
+    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
 
     OGRSpatialReference m_oSRS{};
 
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
     OGRSpatialReference m_oGCPSRS{};
 
-    GDALMultiDomainMetadata oSpecialMD;
+    GDALMultiDomainMetadata oSpecialMD{};
 
 #ifdef ESRI_BUILD
     void InitializeNITFDESMetadata();
@@ -90,9 +90,9 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset;
-    GByte *pabyJPEGBlock;
-    int nQLevel;
+    GIntBig *panJPEGBlockOffset = nullptr;
+    GByte *pabyJPEGBlock = nullptr;
+    int nQLevel = 0;
 
     int ScanJPEGQLevel(GUIntBig *pnDataStart, bool *pbError);
     CPLErr ScanJPEGBlocks();
@@ -101,21 +101,21 @@ class NITFDataset final : public GDALPamDataset
     char **AddFile(char **papszFileList, const char *EXTENSION,
                    const char *extension);
 
-    int nIMIndex;
-    CPLString osNITFFilename;
+    int nIMIndex = 0;
+    CPLString osNITFFilename{};
 
-    CPLString osRSetVRT;
+    CPLString osRSetVRT{};
     int CheckForRSets(const char *pszFilename, char **papszSiblingFiles);
 
-    char **papszTextMDToWrite;
-    char **papszCgmMDToWrite;
-    CPLStringList aosCreationOptions;
+    char **papszTextMDToWrite = nullptr;
+    char **papszCgmMDToWrite = nullptr;
+    CPLStringList aosCreationOptions{};
 
-    int bInLoadXML;
+    int bInLoadXML = false;
 
-    CPLString m_osRPCTXTFilename;
+    CPLString m_osRPCTXTFilename{};
 
-    int bExposeUnderlyingJPEGDatasetOverviews;
+    int bExposeUnderlyingJPEGDatasetOverviews = false;
 
     int ExposeUnderlyingJPEGDatasetOverviews() const
     {
@@ -123,6 +123,8 @@ class NITFDataset final : public GDALPamDataset
     }
 
     bool Validate();
+
+    CPL_DISALLOW_COPY_ASSIGN(NITFDataset)
 
   protected:
     virtual int CloseDependentDatasets() override;
@@ -189,13 +191,15 @@ class NITFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
     friend class NITFDataset;
 
-    NITFImage *psImage;
+    NITFImage *psImage = nullptr;
 
-    GDALColorTable *poColorTable;
+    GDALColorTable *poColorTable = nullptr;
 
-    GByte *pUnpackData;
+    GByte *pUnpackData = nullptr;
 
-    int bScanlineAccess;
+    int bScanlineAccess = false;
+
+    CPL_DISALLOW_COPY_ASSIGN(NITFRasterBand)
 
   public:
     NITFRasterBand(NITFDataset *, int);
@@ -229,7 +233,7 @@ class NITFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
   private:
-    std::map<CPLString, char **> oMDMap;
+    std::map<CPLString, char **> oMDMap{};
 
   protected:
     virtual GDALRasterBand *RefUnderlyingRasterBand() = 0;
@@ -335,10 +339,12 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
 class NITFWrapperRasterBand final : public NITFProxyPamRasterBand
 {
-    GDALRasterBand *poBaseBand;
-    GDALColorTable *poColorTable;
-    GDALColorInterp eInterp;
-    int bIsJPEG;
+    GDALRasterBand *const poBaseBand;
+    GDALColorTable *poColorTable = nullptr;
+    GDALColorInterp eInterp = GCI_Undefined;
+    const bool bIsJPEG;
+
+    CPL_DISALLOW_COPY_ASSIGN(NITFWrapperRasterBand)
 
   protected:
     /* Pure virtual method of the NITFProxyPamRasterBand */

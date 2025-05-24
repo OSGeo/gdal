@@ -519,7 +519,8 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
                 RPFTOCFree(toc);
                 return nullptr;
             }
-            frameRow = (unsigned short)((entry->nVertFrames - 1) - frameRow);
+            frameRow = static_cast<unsigned short>((entry->nVertFrames - 1) -
+                                                   frameRow);
         }
 
         if (frameRow >= entry->nVertFrames)

@@ -80,24 +80,11 @@ static void SetBandMetadata(NITFImage *psImage, GDALRasterBand *poBand,
 /************************************************************************/
 
 NITFDataset::NITFDataset()
-    : psFile(nullptr), psImage(nullptr), poJ2KDataset(nullptr),
-      bJP2Writing(FALSE), poJPEGDataset(nullptr), bGotGeoTransform(FALSE),
-      nGCPCount(0), pasGCPList(nullptr), panJPEGBlockOffset(nullptr),
-      pabyJPEGBlock(nullptr), nQLevel(0), nIMIndex(0),
-      papszTextMDToWrite(nullptr), papszCgmMDToWrite(nullptr),
-      bInLoadXML(FALSE), bExposeUnderlyingJPEGDatasetOverviews(FALSE)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
-    poDriver = reinterpret_cast<GDALDriver *>(GDALGetDriverByName("NITF"));
+    poDriver = GDALDriver::FromHandle(GDALGetDriverByName("NITF"));
 }
 
 /************************************************************************/
@@ -160,8 +147,7 @@ int NITFDataset::CloseDependentDatasets()
     /* -------------------------------------------------------------------- */
     if (poJ2KDataset != nullptr)
     {
-        GDALClose((GDALDatasetH)poJ2KDataset);
-        poJ2KDataset = nullptr;
+        poJ2KDataset.reset();
         bHasDroppedRef = TRUE;
     }
 
@@ -171,7 +157,8 @@ int NITFDataset::CloseDependentDatasets()
     /* -------------------------------------------------------------------- */
     if (bJP2Writing)
     {
-        GIntBig nPixelCount = nRasterXSize * ((GIntBig)nRasterYSize) * nBands;
+        const GIntBig nPixelCount =
+            static_cast<GIntBig>(nRasterXSize) * nRasterYSize * nBands;
 
         CPL_IGNORE_RET_VAL(NITFPatchImageLength(GetDescription(), m_nIMIndex,
                                                 m_nImageOffset, nPixelCount,
@@ -186,8 +173,7 @@ int NITFDataset::CloseDependentDatasets()
     /* -------------------------------------------------------------------- */
     if (poJPEGDataset != nullptr)
     {
-        GDALClose((GDALDatasetH)poJPEGDataset);
-        poJPEGDataset = nullptr;
+        poJPEGDataset.reset();
         bHasDroppedRef = TRUE;
     }
 
@@ -235,13 +221,13 @@ CPLErr NITFDataset::FlushCache(bool bAtClosing)
     // ourselves to as well.
     if (poJPEGDataset != nullptr &&
         (poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS) &&
-        (reinterpret_cast<GDALPamDataset *>(poJPEGDataset)->GetPamFlags() &
+        (cpl::down_cast<GDALPamDataset *>(poJPEGDataset.get())->GetPamFlags() &
          GPF_DIRTY))
         MarkPamDirty();
 
     if (poJ2KDataset != nullptr &&
         (poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS) &&
-        (reinterpret_cast<GDALPamDataset *>(poJ2KDataset)->GetPamFlags() &
+        (cpl::down_cast<GDALPamDataset *>(poJ2KDataset.get())->GetPamFlags() &
          GPF_DIRTY))
         MarkPamDirty();
 
@@ -561,7 +547,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (poWritableJ2KDataset != nullptr)
         {
-            poDS->poJ2KDataset = poWritableJ2KDataset;
+            poDS->poJ2KDataset.reset(poWritableJ2KDataset);
             poDS->bJP2Writing = TRUE;
             poWritableJ2KDataset = nullptr;
         }
@@ -571,8 +557,9 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
             // to be opened by a random driver.
             static const char *const apszDrivers[] = {
                 "JP2KAK", "JP2ECW", "JP2MRSID", "JP2OPENJPEG", nullptr};
-            poDS->poJ2KDataset = GDALDataset::FromHandle(GDALOpenEx(
-                osDSName, GDAL_OF_RASTER, apszDrivers, nullptr, nullptr));
+            poDS->poJ2KDataset.reset(GDALDataset::Open(
+                osDSName, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, apszDrivers,
+                nullptr, nullptr));
 
             if (poDS->poJ2KDataset == nullptr)
             {
@@ -602,11 +589,11 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             if (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
             {
-                reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset)
-                    ->SetPamFlags(
-                        reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset)
-                            ->GetPamFlags() |
-                        GPF_NOSAVE);
+                reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
+                    ->SetPamFlags(reinterpret_cast<GDALPamDataset *>(
+                                      poDS->poJ2KDataset.get())
+                                      ->GetPamFlags() |
+                                  GPF_NOSAVE);
             }
         }
 
@@ -696,11 +683,12 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         CPLDebug("GDAL", "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
 
-        poDS->poJPEGDataset =
-            GDALDataset::FromHandle(GDALOpen(osDSName, GA_ReadOnly));
+        poDS->poJPEGDataset.reset(GDALDataset::Open(
+            osDSName, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
         if (poDS->poJPEGDataset == nullptr)
         {
-            int bFoundJPEGDriver = GDALGetDriverByName("JPEG") != nullptr;
+            const bool bFoundJPEGDriver =
+                GDALGetDriverByName("JPEG") != nullptr;
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to open JPEG image within NITF file.\n%s\n%s",
                      (!bFoundJPEGDriver)
@@ -728,11 +716,11 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
         {
-            (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset))
-                ->SetPamFlags(
-                    (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset))
-                        ->GetPamFlags() |
-                    GPF_NOSAVE);
+            (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
+                ->SetPamFlags((reinterpret_cast<GDALPamDataset *>(
+                                   poDS->poJPEGDataset.get()))
+                                  ->GetPamFlags() |
+                              GPF_NOSAVE);
         }
 
         if (poDS->poJPEGDataset->GetRasterCount() < nUsableBands)
@@ -758,9 +746,9 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
     GDALDataset *poBaseDS = nullptr;
     if (poDS->poJ2KDataset != nullptr)
-        poBaseDS = poDS->poJ2KDataset;
+        poBaseDS = poDS->poJ2KDataset.get();
     else if (poDS->poJPEGDataset != nullptr)
-        poBaseDS = poDS->poJPEGDataset;
+        poBaseDS = poDS->poJPEGDataset.get();
 
     for (int iBand = 0; iBand < nUsableBands; iBand++)
     {
@@ -953,8 +941,9 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     /*      Try looking for a .nfw file.                                    */
     /* -------------------------------------------------------------------- */
-    if (psImage && GDALReadWorldFile2(pszFilename, "nfw", poDS->adfGeoTransform,
-                                      poOpenInfo->GetSiblingFiles(), nullptr))
+    if (psImage &&
+        GDALReadWorldFile2(pszFilename, "nfw", poDS->adfGeoTransform.data(),
+                           poOpenInfo->GetSiblingFiles(), nullptr))
     {
         int isNorth;
         int zone;
@@ -1107,11 +1096,10 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRCoordinateTransformationH hCT =
-            (OGRCoordinateTransformationH)OGRCreateCoordinateTransformation(
-                &oSRS_WGS84, &oSRS_AEQD);
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(&oSRS_WGS84, &oSRS_AEQD));
         CPLPopErrorHandler();
-        if (hCT)
+        if (poCT)
         {
             double dfULX_AEQD = psImage->dfULX;
             double dfULY_AEQD = psImage->dfULY;
@@ -1123,10 +1111,10 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
             double dfLRY_AEQD = psImage->dfLRY;
             double z = 0;
             int bSuccess = TRUE;
-            bSuccess &= OCTTransform(hCT, 1, &dfULX_AEQD, &dfULY_AEQD, &z);
-            bSuccess &= OCTTransform(hCT, 1, &dfURX_AEQD, &dfURY_AEQD, &z);
-            bSuccess &= OCTTransform(hCT, 1, &dfLLX_AEQD, &dfLLY_AEQD, &z);
-            bSuccess &= OCTTransform(hCT, 1, &dfLRX_AEQD, &dfLRY_AEQD, &z);
+            bSuccess &= poCT->Transform(1, &dfULX_AEQD, &dfULY_AEQD, &z);
+            bSuccess &= poCT->Transform(1, &dfURX_AEQD, &dfURY_AEQD, &z);
+            bSuccess &= poCT->Transform(1, &dfLLX_AEQD, &dfLLY_AEQD, &z);
+            bSuccess &= poCT->Transform(1, &dfLRX_AEQD, &dfLRY_AEQD, &z);
             if (bSuccess)
             {
                 /* Check that the coordinates of the 4 corners in Azimuthal
@@ -1150,7 +1138,6 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                         (dfLLY_AEQD - dfULY_AEQD) / poDS->nRasterYSize;
                 }
             }
-            OCTDestroyCoordinateTransformation(hCT);
         }
         else
         {
@@ -1260,8 +1247,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         /* nothing */
     }
     else if (poDS->bGotGeoTransform == FALSE && nGCPCount > 0 &&
-             GDALGCPsToGeoTransform(nGCPCount, psGCPs, poDS->adfGeoTransform,
-                                    FALSE))
+             GDALGCPsToGeoTransform(nGCPCount, psGCPs,
+                                    poDS->adfGeoTransform.data(), FALSE))
     {
         poDS->bGotGeoTransform = TRUE;
     }
@@ -1768,9 +1755,9 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /*      If we have jpeg or jpeg2000 bands we may need to set the        */
     /*      overview file on their dataset. (#3276)                         */
     /* -------------------------------------------------------------------- */
-    GDALDataset *poSubDS = poDS->poJ2KDataset;
+    GDALDataset *poSubDS = poDS->poJ2KDataset.get();
     if (poDS->poJPEGDataset)
-        poSubDS = poDS->poJPEGDataset;
+        poSubDS = poDS->poJPEGDataset.get();
 
     if (poSubDS && pszOverviewFile != nullptr)
     {
@@ -1783,16 +1770,16 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     if (poDS->poJ2KDataset != nullptr &&
         (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS))
-        (reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset))
+        (cpl::down_cast<GDALPamDataset *>(poDS->poJ2KDataset.get()))
             ->SetPamFlags(
-                (reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset))
+                (cpl::down_cast<GDALPamDataset *>(poDS->poJ2KDataset.get()))
                     ->GetPamFlags() &
                 ~GPF_DIRTY);
     if (poDS->poJPEGDataset != nullptr &&
         (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS))
-        (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset))
+        (cpl::down_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
             ->SetPamFlags(
-                (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset))
+                (cpl::down_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
                     ->GetPamFlags() &
                 ~GPF_DIRTY);
 
@@ -2192,21 +2179,17 @@ void NITFDataset::CheckGeoSDEInfo()
                  pszMAPLOB + 0);
     }
 
-    double adfGT[6];
-    adfGT[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
-    adfGT[1] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
-    adfGT[2] = 0.0;
-    adfGT[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
-    adfGT[4] = 0.0;
-    adfGT[5] =
+    adfGeoTransform[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
+    adfGeoTransform[1] =
+        CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] =
         -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
 
-    /* -------------------------------------------------------------------- */
-    /*      Apply back to dataset.                                          */
-    /* -------------------------------------------------------------------- */
     m_oSRS = std::move(oSRS);
 
-    memcpy(adfGeoTransform, adfGT, sizeof(double) * 6);
     bGotGeoTransform = TRUE;
 }
 
@@ -2273,7 +2256,7 @@ CPLErr NITFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr NITFDataset::GetGeoTransform(double *padfGeoTransform)
 
 {
-    memcpy(padfGeoTransform, adfGeoTransform, sizeof(double) * 6);
+    memcpy(padfGeoTransform, adfGeoTransform.data(), sizeof(adfGeoTransform));
 
     if (bGotGeoTransform)
         return CE_None;
@@ -2291,8 +2274,9 @@ CPLErr NITFDataset::SetGeoTransform(double *padfGeoTransform)
     bGotGeoTransform = TRUE;
     /* Valgrind would complain because SetGeoTransform() is called */
     /* from SetProjection() with adfGeoTransform as argument */
-    if (adfGeoTransform != padfGeoTransform)
-        memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    if (adfGeoTransform.data() != padfGeoTransform)
+        memcpy(adfGeoTransform.data(), padfGeoTransform,
+               sizeof(adfGeoTransform));
 
     double dfIGEOLOULX = padfGeoTransform[0] + 0.5 * padfGeoTransform[1] +
                          0.5 * padfGeoTransform[2];
@@ -2480,7 +2464,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_oSRS = *poSRS;
 
     if (bGotGeoTransform)
-        SetGeoTransform(adfGeoTransform);
+        SetGeoTransform(adfGeoTransform.data());
 
     return CE_None;
 }
@@ -2908,7 +2892,7 @@ void NITFDataset::InitializeCGMMetadata()
         /* --------------------------------------------------------------------
          */
 
-        char *pabyCGMData = reinterpret_cast<char *>(VSI_CALLOC_VERBOSE(
+        char *pabyCGMData = static_cast<char *>(VSI_CALLOC_VERBOSE(
             1, static_cast<size_t>(psSegment->nSegmentSize)));
         if (pabyCGMData == nullptr)
         {
@@ -2916,7 +2900,8 @@ void NITFDataset::InitializeCGMMetadata()
             return;
         }
         if (VSIFSeekL(psFile->fp, psSegment->nSegmentStart, SEEK_SET) != 0 ||
-            VSIFReadL(pabyCGMData, 1, (size_t)psSegment->nSegmentSize,
+            VSIFReadL(pabyCGMData, 1,
+                      static_cast<size_t>(psSegment->nSegmentSize),
                       psFile->fp) != psSegment->nSegmentSize)
         {
             CPLError(CE_Warning, CPLE_FileIO,
@@ -2988,11 +2973,12 @@ void NITFDataset::InitializeTextMetadata()
          */
 
         /* Allocate one extra byte for the NULL terminating character */
-        char *pabyHeaderData = reinterpret_cast<char *>(CPLCalloc(
+        char *pabyHeaderData = static_cast<char *>(CPLCalloc(
             1, static_cast<size_t>(psSegment->nSegmentHeaderSize + 1)));
         if (VSIFSeekL(psFile->fp, psSegment->nSegmentHeaderStart, SEEK_SET) !=
                 0 ||
-            VSIFReadL(pabyHeaderData, 1, (size_t)psSegment->nSegmentHeaderSize,
+            VSIFReadL(pabyHeaderData, 1,
+                      static_cast<size_t>(psSegment->nSegmentHeaderSize),
                       psFile->fp) != psSegment->nSegmentHeaderSize)
         {
             CPLError(
@@ -3014,8 +3000,8 @@ void NITFDataset::InitializeTextMetadata()
         /* --------------------------------------------------------------------
          */
         /* Allocate one extra byte for the NULL terminating character */
-        char *pabyTextData = reinterpret_cast<char *>(
-            VSI_CALLOC_VERBOSE(1, (size_t)psSegment->nSegmentSize + 1));
+        char *pabyTextData = static_cast<char *>(VSI_CALLOC_VERBOSE(
+            1, static_cast<size_t>(psSegment->nSegmentSize) + 1));
         if (pabyTextData == nullptr)
         {
             return;
@@ -3647,9 +3633,9 @@ CPLErr NITFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /*      If we are working with jpeg or jpeg2000, let the underlying     */
     /*      dataset know about the overview file.                           */
     /* -------------------------------------------------------------------- */
-    GDALDataset *poSubDS = poJ2KDataset;
+    GDALDataset *poSubDS = poJ2KDataset.get();
     if (poJPEGDataset)
-        poSubDS = poJPEGDataset;
+        poSubDS = poJPEGDataset.get();
 
     const char *pszOverviewFile = GetMetadataItem("OVERVIEW_FILE", "OVERVIEWS");
 
@@ -3788,7 +3774,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
             return CE_Failure;
         }
 
-        if (VSIFReadL(abyBlock, 1, nReadSize, psFile->fp) < (size_t)nReadSize)
+        if (VSIFReadL(abyBlock, 1, nReadSize, psFile->fp) < nReadSize)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Read error to jpeg data stream.");
@@ -3892,7 +3878,8 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
                     nQLevel = ScanJPEGQLevel(&nOffset, &bError);
                     /* The beginning of the JPEG stream should be the offset */
                     /* from the panBlockStart table */
-                    if (bError || nOffset != (GUIntBig)panJPEGBlockOffset[i])
+                    if (bError ||
+                        nOffset != static_cast<GUIntBig>(panJPEGBlockOffset[i]))
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "JPEG block doesn't start at expected offset");
@@ -5444,8 +5431,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
         // Now we need to figure out the actual length of the file
         // and correct the image segment size information.
-        GIntBig nPixelCount =
-            nXSize * ((GIntBig)nYSize) * poSrcDS->GetRasterCount();
+        const GIntBig nPixelCount =
+            static_cast<GIntBig>(nXSize) * nYSize * poSrcDS->GetRasterCount();
 
         bool bOK = NITFPatchImageLength(pszFilename, nIMIndex, nImageOffset,
                                         nPixelCount, "C8", nICOffset,
@@ -5506,8 +5493,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
         // Now we need to figure out the actual length of the file
         // and correct the image segment size information.
-        GIntBig nPixelCount =
-            nXSize * ((GIntBig)nYSize) * poSrcDS->GetRasterCount();
+        const GIntBig nPixelCount =
+            static_cast<GIntBig>(nXSize) * nYSize * poSrcDS->GetRasterCount();
 
         NITFClose(psFile);
 
@@ -6578,7 +6565,8 @@ static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
     bool bOK = VSIFSeekL(fp, 0, SEEK_END) == 0;
     bOK &= VSIFWriteL("DE", 1, 2, fp) == 2;
     bOK &= VSIFWriteL(CPLSPrintf("%-25s", pszDESName), 1, 25, fp) == 25;
-    bOK &= (int)VSIFWriteL(pabyDESData, 1, nArrayLen, fp) == nArrayLen;
+    bOK &= VSIFWriteL(pabyDESData, 1, nArrayLen, fp) ==
+           static_cast<size_t>(nArrayLen);
 
     // Update LDSH and LD in the NITF Header
     bOK &= VSIFSeekL(fp, nOffsetLDSH + iDES * 13, SEEK_SET) == 0;
@@ -6702,15 +6690,16 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
             return false;
         }
 
-        char *pszDESName = (char *)CPLMalloc(nNameLength + 1);
+        char *pszDESName = static_cast<char *>(CPLMalloc(nNameLength + 1));
         memcpy(pszDESName, papszOptions[iOption] + 4, nNameLength);
         pszDESName[nNameLength] = '\0';
 
         const char *pszEscapedContents = pszDelim + 1;
 
         int nContentLength = 0;
-        GByte *pabyUnescapedContents = (GByte *)CPLUnescapeString(
-            pszEscapedContents, &nContentLength, CPLES_BackslashQuotable);
+        GByte *pabyUnescapedContents =
+            reinterpret_cast<GByte *>(CPLUnescapeString(
+                pszEscapedContents, &nContentLength, CPLES_BackslashQuotable));
 
         if (!NITFWriteDES(fpVSIL, pszFilename, nNumDESOffset + 3, iDES,
                           pszDESName, pabyUnescapedContents, nContentLength))
@@ -6930,13 +6919,13 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     nOffset++;
 
     /* Number of image blocks per row */
-    nUInt16 = (GUInt16)nNBPR;
+    nUInt16 = static_cast<GUInt16>(nNBPR);
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
 
     /* Number of image blocks per column */
-    nUInt16 = (GUInt16)nNBPC;
+    nUInt16 = static_cast<GUInt16>(nNBPC);
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
@@ -7046,7 +7035,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
                     nCurPos - nStartOffset - nIMDATOFF;
                 if (nBlockOffset <= UINT_MAX)
                 {
-                    GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
+                    GUInt32 nBlockOffset32 = static_cast<GUInt32>(nBlockOffset);
                     CPL_MSBPTR32(&nBlockOffset32);
                     bOK &= VSIFWriteL(&nBlockOffset32, 4, 1, fp) == 1;
                 }
