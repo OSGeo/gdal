@@ -909,7 +909,7 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                     return CE_Failure;
                 }
             }
-            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
+            m_apoOverviewDS.emplace_back(poOvrDS.release());
         }
     }
 
@@ -1091,7 +1091,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
         for (const auto &poOvrDS : m_apoOverviewDS)
         {
             poNewDS->m_apoOverviewDS.emplace_back(
-                poOvrDS->Clone(nScopeFlags, bCanShareState));
+                poOvrDS->Clone(nScopeFlags, bCanShareState).release());
         }
 
         poNewDS->SetDescription(GetDescription());

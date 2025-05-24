@@ -1224,6 +1224,13 @@ struct CPL_DLL GDALDatasetUniquePtrReleaser
 using GDALDatasetUniquePtr =
     std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter>;
 
+/** Kind of shared pointer type for GDALDataset, using GDALDataset built-in
+ * reference counting.
+ * @since GDAL 3.12
+ */
+using GDALDatasetRefCountedPtr =
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>;
+
 /* ******************************************************************** */
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */

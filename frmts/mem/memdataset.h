@@ -52,7 +52,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     std::vector<gdal::GCP> m_aoGCPs{};
     OGRSpatialReference m_oGCPSRS{};
 
-    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
+    std::vector<GDALDatasetRefCountedPtr> m_apoOverviewDS{};
 
     struct Private;
     std::unique_ptr<Private> m_poPrivate;
