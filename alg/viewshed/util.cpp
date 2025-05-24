@@ -20,6 +20,8 @@ namespace viewshed
 
 /// Normalize a masking angle. Change from clockwise with 0 north (up) to counterclockwise
 /// with 0 to the east (right) and change to radians.
+///
+// @param maskAngle  Masking angle in degrees.
 double normalizeAngle(double maskAngle)
 {
     maskAngle = 90 - maskAngle;
@@ -30,7 +32,12 @@ double normalizeAngle(double maskAngle)
 
 /// Compute the X intersect position on the line Y = y with a ray extending
 /// from (nX, nY) along `angle`.
-///ABELL doc args
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param y  Horizontal line where Y = y.
+/// @return  X intersect or NaN
 double horizontalIntersect(double angle, int nX, int nY, int y)
 {
     double x = std::numeric_limits<double>::quiet_NaN();
@@ -54,6 +61,14 @@ double horizontalIntersect(double angle, int nX, int nY, int y)
     return x;
 }
 
+/// Compute the X intersect position on the line Y = y with a ray extending
+/// from (nX, nY) along `angle`.
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param y  Horizontal line where Y = y.
+/// @return  Rounded X intersection of the sentinel INVALID_ISECT
 int hIntersect(double angle, int nX, int nY, int y)
 {
     double x = horizontalIntersect(angle, nX, nY, y);
@@ -62,6 +77,14 @@ int hIntersect(double angle, int nX, int nY, int y)
     return static_cast<int>(std::round(x));
 }
 
+/// Compute the X intersect on one of the horizontal edges of a window
+/// with a ray extending from (nX, nY) along `angle`, clamped the the extent of a window.
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param win  Window to intersect.
+/// @return  X intersect, clamped to the window extent.
 int hIntersect(double angle, int nX, int nY, const Window &win)
 {
     if (ARE_REAL_EQUAL(angle, M_PI))
@@ -74,9 +97,14 @@ int hIntersect(double angle, int nX, int nY, const Window &win)
     return std::clamp(static_cast<int>(std::round(x)), win.xStart, win.xStop);
 }
 
-/// Compute the Y intersect position on the line X = x with a ray extending
+/// Compute the X intersect position on the line Y = y with a ray extending
 /// from (nX, nY) along `angle`.
-///ABELL doc args
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param y  Vertical  line where X = x.
+/// @return  Y intersect or NaN
 double verticalIntersect(double angle, int nX, int nY, int x)
 {
     double y = std::numeric_limits<double>::quiet_NaN();
@@ -100,6 +128,14 @@ double verticalIntersect(double angle, int nX, int nY, int x)
     return y;
 }
 
+/// Compute the X intersect position on the line Y = y with a ray extending
+/// from (nX, nY) along `angle`.
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param y  Horizontal line where X = x.
+/// @return  Rounded Y intersection of the sentinel INVALID_ISECT
 int vIntersect(double angle, int nX, int nY, int x)
 {
     double y = verticalIntersect(angle, nX, nY, x);
@@ -108,6 +144,15 @@ int vIntersect(double angle, int nX, int nY, int x)
     return static_cast<int>(std::round(y));
 }
 
+/// Compute the Y intersect on one of the vertical edges of a window
+/// with a ray extending from (nX, nY) along `angle`, clamped the the extent
+/// of the window.
+///
+/// @param angle  Angle in radians, standard arrangement.
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinte of ray endpoint.
+/// @param win  Window to intersect.
+/// @return  y intersect, clamped to the window extent.
 int vIntersect(double angle, int nX, int nY, const Window &win)
 {
     if (ARE_REAL_EQUAL(angle, M_PI / 2))
@@ -120,8 +165,12 @@ int vIntersect(double angle, int nX, int nY, const Window &win)
     return std::clamp(static_cast<int>(std::round(y)), win.yStart, win.yStop);
 }
 
-// Determine if ray is in the slice between two rays starting at `start` and
-// going clockwise to `end` (inclusive). [start, end]
+/// Determine if ray is in the slice between two rays starting at `start` and
+/// going clockwise to `end` (inclusive). [start, end]
+/// @param  start  Start angle.
+/// @param  end  End angle.
+/// @param  test  Test angle.
+/// @return  Whether `test` lies in the slice [start, end]
 bool rayBetween(double start, double end, double test)
 {
     // Our angles go counterclockwise, so swap start and end

@@ -29,14 +29,20 @@ namespace viewshed
 namespace
 {
 
-bool valid(int x)
+/// Determines whether a value is a valid intersection coordinate.
+/// @param  i  Value to test.
+/// @return  True if the value doesn't represent an invalid intersection.
+bool valid(int i)
 {
-    return x != INVALID_ISECT;
+    return i != INVALID_ISECT;
 }
 
-bool invalid(int x)
+/// Determines whether a value is an invalid intersection coordinate.
+/// @param  i  Value to test.
+/// @return  True if the value represents an invalid intersection.
+bool invalid(int i)
 {
-    return !valid(x);
+    return !valid(i);
 }
 
 /// Calculate the height at nDistance units along a line through the origin given the height
@@ -454,6 +460,11 @@ void ViewshedExecutor::processFirstLineLeft(const LineLimits &ll,
     maskLineLeft(vResult, ll, m_nY);
 }
 
+/// Mask cells based on angle intersection to the left of the observer.
+///
+/// @param vResult  Result raaster line.
+/// @param nLine  Line number.
+/// @return  True when all cells have been masked.
 bool ViewshedExecutor::maskAngleLeft(std::vector<double> &vResult, int nLine)
 {
     auto clamp = [this](int x)
@@ -510,6 +521,11 @@ bool ViewshedExecutor::maskAngleLeft(std::vector<double> &vResult, int nLine)
     return false;
 }
 
+/// Mask cells based on angle intersection to the right of the observer.
+///
+/// @param vResult  Result raaster line.
+/// @param nLine  Line number.
+/// @return  True when all cells have been masked.
 bool ViewshedExecutor::maskAngleRight(std::vector<double> &vResult, int nLine)
 {
     int lineLength = static_cast<int>(vResult.size());
@@ -571,6 +587,11 @@ bool ViewshedExecutor::maskAngleRight(std::vector<double> &vResult, int nLine)
     return false;
 }
 
+/// Perform angle and min/max masking to the left of the observer.
+///
+/// @param vResult  Raster line to mask.
+/// @param ll  Min/max line limits.
+/// @param nLine  Line number.
 void ViewshedExecutor::maskLineLeft(std::vector<double> &vResult,
                                     const LineLimits &ll, int nLine)
 {
@@ -586,6 +607,11 @@ void ViewshedExecutor::maskLineLeft(std::vector<double> &vResult,
                   oOpts.outOfRangeVal);
 }
 
+/// Perform angle and min/max masking to the right of the observer.
+///
+/// @param vResult  Raster line to mask.
+/// @param ll  Min/max line limits.
+/// @param nLine  Line number.
 void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
                                      const LineLimits &ll, int nLine)
 {
@@ -783,7 +809,9 @@ void ViewshedExecutor::processLineRight(int nYOffset, LineLimits &ll,
     maskLineRight(vResult, ll, nLine);
 }
 
-// Apply angular mask to the initial X position.  Assumes m_nX is in the raster.
+/// Apply angular mask to the initial X position.  Assumes m_nX is in the raster.
+/// @param vResult  Raster line on which to apply mask.
+/// @param nLine  Line number.
 void ViewshedExecutor::maskInitial(std::vector<double> &vResult, int nLine)
 {
     if (!oOpts.angleMasking())
@@ -952,6 +980,12 @@ bool ViewshedExecutor::run()
     return true;
 }
 
+/// Mask cells lower than the low pitch angle of intersection by setting the value
+/// to the intersection value.
+///
+/// @param dfZ  Initial/modified cell height.
+/// @param nXOffset  Cell X offset from observer.
+/// @param nYOffset  Cell Y offset from observer.
 void ViewshedExecutor::maskLowPitch(double &dfZ, int nXOffset, int nYOffset)
 {
     if (std::isnan(m_lowTanPitch))
@@ -963,6 +997,13 @@ void ViewshedExecutor::maskLowPitch(double &dfZ, int nXOffset, int nYOffset)
         dfZ = dfZmask;
 }
 
+/// Mask cells higher than the high pitch angle of intersection by setting the value
+/// to out-of-range.
+///
+/// @param dfResult  Result value.
+/// @param dfZ  Cell height.
+/// @param nXOffset  Cell X offset from observer.
+/// @param nYOffset  Cell Y offset from observer.
 void ViewshedExecutor::maskHighPitch(double &dfResult, double dfZ, int nXOffset,
                                      int nYOffset)
 {

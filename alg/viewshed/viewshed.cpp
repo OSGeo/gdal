@@ -217,16 +217,26 @@ bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
     return true;
 }
 
+/// Shrink the extent of a window to just cover the slice defined by rays from
+/// (nX, nY) and [startAngle, endAngle]
+///
+/// @param oOutExtent  Window to modify
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinate of ray endpoint.
+/// @param startAngle  Start angle of slice (standard mathmatics notion, in radians)
+/// @param endAngle  End angle of slice (standard mathmatics notion, in radians)
 void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
                            double startAngle, double endAngle)
 {
+    /// NOTE: This probably doesn't work when the observer is outside the raster and
+    ///   needs to be enhanced for that case.
+
     if (startAngle == endAngle)
         return;
 
     Window win = oOutExtent;
 
     // Set the X boundaries for the angles
-    //ABELL - Verify for out-of-raster.
     int startAngleX = hIntersect(startAngle, nX, nY, win);
     int stopAngleX = hIntersect(endAngle, nX, nY, win);
 
@@ -248,7 +258,6 @@ void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
     }
 
     // Set the Y boundaries for the angles
-    //ABELL - Verify for out-of-raster.
     int startAngleY = vIntersect(startAngle, nX, nY, win);
     int stopAngleY = vIntersect(endAngle, nX, nY, win);
 
