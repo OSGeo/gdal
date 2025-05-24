@@ -132,7 +132,7 @@ int SNAPTIFFDataset::Identify(GDALOpenInfo *poOpenInfo)
 #ifdef DEBUG
     // Just to increase coverage testing
     CPLAssert(f->size() == uint64_t(poOpenInfo->nHeaderBytes));
-    char dummy;
+    char dummy = 0;
     CPLAssert(f->read(poOpenInfo->nHeaderBytes, 1, &dummy) == 0);
     CPL_IGNORE_RET_VAL(dummy);
 #endif
@@ -217,7 +217,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
     auto f = std::make_shared<const MyFileReader>(poOpenInfo->fpL);
 #ifdef DEBUG
     // Just to increase coverage testing
-    char dummy;
+    char dummy = 0;
     CPLAssert(f->read(f->size(), 1, &dummy) == 0);
     CPL_IGNORE_RET_VAL(dummy);
 #endif
