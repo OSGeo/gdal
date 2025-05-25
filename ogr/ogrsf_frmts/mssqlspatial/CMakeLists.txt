@@ -11,7 +11,9 @@ add_gdal_driver(
   CORE_SOURCES
           ogrmssqlspatialdrivercore.cpp
   PLUGIN_CAPABLE
-  NO_SHARED_SYMBOL_WITH_CORE)
+  NO_SHARED_SYMBOL_WITH_CORE
+  WFLAG_OLD_STYLE_CAST
+)
 
 if(TARGET ogr_MSSQLSpatial_core)
     if (GDAL_USE_MSSQL_ODBC)

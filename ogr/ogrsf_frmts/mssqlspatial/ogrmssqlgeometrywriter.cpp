@@ -92,11 +92,13 @@ SegmentType (1 byte)
 /*                         Geometry writer macros                       */
 /************************************************************************/
 
-#define WriteInt32(nPos, value) (*((unsigned int *)(pszData + (nPos))) = value)
+#define WriteInt32(nPos, value)                                                \
+    (*(reinterpret_cast<unsigned int *>(pszData + (nPos))) = value)
 
 #define WriteByte(nPos, value) (pszData[nPos] = value)
 
-#define WriteDouble(nPos, value) (*((double *)(pszData + (nPos))) = value)
+#define WriteDouble(nPos, value)                                               \
+    (*(reinterpret_cast<double *>(pszData + (nPos))) = value)
 
 #define ParentOffset(iShape) (nShapePos + (iShape)*9)
 #define FigureOffset(iShape) (nShapePos + (iShape)*9 + 4)
@@ -601,7 +603,7 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry *poGeom)
                                     nNumPoints += c;
                                 else
                                     nNumPoints += c - 1;
-                                nNumSegments += (int)((c - 1) / 2);
+                                nNumSegments += static_cast<int>((c - 1) / 2);
                             }
                             break;
 
