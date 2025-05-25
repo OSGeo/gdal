@@ -479,9 +479,8 @@ int ILI2Reader::ReadModel(OGRILI2DataSource *poDS, ImdReader *poImdReader,
              poImdReader->featureDefnInfos.begin();
          it != poImdReader->featureDefnInfos.end(); ++it)
     {
-        OGRLayer *layer =
-            new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, poDS);
-        m_listLayer.push_back(layer);
+        m_listLayer.push_back(std::make_unique<OGRILI2Layer>(
+            it->GetTableDefnRef(), it->poGeomFieldInfos, poDS));
     }
     return 0;
 }
@@ -638,14 +637,6 @@ ILI2Reader::~ILI2Reader()
 
     if (m_bXercesInitialized)
         OGRDeinitializeXerces();
-
-    list<OGRLayer *>::const_iterator layerIt = m_listLayer.begin();
-    while (layerIt != m_listLayer.end())
-    {
-        OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
-        delete tmpLayer;
-        ++layerIt;
-    }
 }
 
 void ILI2Reader::SetSourceFile(const char *pszFilename)
@@ -781,7 +772,7 @@ int ILI2Reader::SaveClasses(const char *pszFile = nullptr)
     return TRUE;
 }
 
-list<OGRLayer *> ILI2Reader::GetLayers()
+std::vector<std::unique_ptr<OGRLayer>> &ILI2Reader::GetLayers()
 {
     return m_listLayer;
 }
@@ -793,13 +784,12 @@ int ILI2Reader::GetLayerCount()
 
 OGRLayer *ILI2Reader::GetLayer(const char *pszName)
 {
-    for (list<OGRLayer *>::reverse_iterator layerIt = m_listLayer.rbegin();
-         layerIt != m_listLayer.rend(); ++layerIt)
+    for (auto it = m_listLayer.rbegin(); it != m_listLayer.rend(); ++it)
     {
-        OGRFeatureDefn *fDef = (*layerIt)->GetLayerDefn();
+        const OGRFeatureDefn *fDef = (*it)->GetLayerDefn();
         if (cmpStr(fDef->GetName(), pszName) == 0)
         {
-            return *layerIt;
+            return it->get();
         }
     }
     return nullptr;
@@ -811,23 +801,25 @@ int ILI2Reader::AddFeature(DOMElement *elem)
     // CPLDebug( "OGR_ILI", "Reading layer: %s", osName.c_str() );
 
     // test if this layer exist
-    OGRILI2Layer *curLayer = dynamic_cast<OGRILI2Layer *>(GetLayer(osName));
-    bool newLayer = (curLayer == nullptr);
+    OGRILI2Layer *curLayer = cpl::down_cast<OGRILI2Layer *>(GetLayer(osName));
+    const bool needsNewLayer = (curLayer == nullptr);
+    std::unique_ptr<OGRILI2Layer> newLayer;
 
     // add a layer
-    if (newLayer)
+    if (needsNewLayer)
     {
         CPLDebug("OGR_ILI", "Adding layer: %s", osName.c_str());
         OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn(osName);
         poFeatureDefn->SetGeomType(wkbUnknown);
         GeomFieldInfos oGeomFieldInfos;
-        curLayer = new OGRILI2Layer(poFeatureDefn, oGeomFieldInfos, nullptr);
-        m_listLayer.push_back(curLayer);
+        newLayer = std::make_unique<OGRILI2Layer>(poFeatureDefn,
+                                                  oGeomFieldInfos, nullptr);
+        curLayer = newLayer.get();
     }
 
     // the feature and field definition
     OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
-    if (newLayer)
+    if (needsNewLayer)
     {
         // add TID field
         OGRFieldDefn ofieldDefn(ILI2_TID, OFTString);
@@ -853,6 +845,9 @@ int ILI2Reader::AddFeature(DOMElement *elem)
 
     SetFieldValues(feature, elem);
     curLayer->AddFeature(feature);
+
+    if (needsNewLayer)
+        m_listLayer.push_back(std::move(newLayer));
 
     return 0;
 }
