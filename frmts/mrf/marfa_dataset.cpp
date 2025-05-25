@@ -151,14 +151,6 @@ int MRFDataset::CloseDependentDatasets()
 
 MRFDataset::~MRFDataset()
 {  // Make sure everything gets written
-    if (0 != write_timer.count())
-        CPLDebug("MRF_Timing", "Compression took %fms",
-                 1e-6 * write_timer.count());
-
-    if (0 != read_timer.count())
-        CPLDebug("MRF_Timing", "Decompression took %fms",
-                 1e-6 * read_timer.count());
-
     if (eAccess != GA_ReadOnly && !bCrystalized)
         if (!MRFDataset::Crystalize())
         {
@@ -183,6 +175,14 @@ MRFDataset::~MRFDataset()
     ZSTD_freeCCtx(static_cast<ZSTD_CCtx *>(pzscctx));
     ZSTD_freeDCtx(static_cast<ZSTD_DCtx *>(pzsdctx));
 #endif
+    // total time spend doing compression and decompression
+    if (0 != write_timer.count())
+        CPLDebug("MRF_Timing", "Compression took %fms",
+                 1e-6 * write_timer.count());
+
+    if (0 != read_timer.count())
+        CPLDebug("MRF_Timing", "Decompression took %fms",
+                 1e-6 * read_timer.count());
 }
 
 /*
@@ -236,6 +236,9 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                    CSLConstList papszOptions)
 
 {
+    if (pfnProgress == nullptr)
+        pfnProgress = GDALDummyProgress;
+
     CPLErr eErr = CE_None;
     CPLDebug("MRF_OVERLAY", "IBuildOverviews %d, bands %d\n", nOverviews,
              nBandsIn);
@@ -276,20 +279,9 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         return CE_None;
     }
 
-    // Array of source bands
-    GDALRasterBand **papoBandList =
-        static_cast<GDALRasterBand **>(CPLCalloc(sizeof(void *), nBands));
-    // Array of destination bands
-    GDALRasterBand **papoOverviewBandList =
-        static_cast<GDALRasterBand **>(CPLCalloc(sizeof(void *), nBands));
-    // Triple level pointer, that's what GDAL ROMB wants
-    GDALRasterBand ***papapoOverviewBands =
-        static_cast<GDALRasterBand ***>(CPLCalloc(sizeof(void *), nBands));
-
-    int *panOverviewListNew =
-        static_cast<int *>(CPLMalloc(sizeof(int) * nOverviews));
-    memcpy(panOverviewListNew, panOverviewList, sizeof(int) * nOverviews);
-
+    std::vector<int> panOverviewListNew(nOverviews);
+    for (int i = 0; i < nOverviews; i++)
+        panOverviewListNew[i] = panOverviewList[i];
     try
     {  // Throw an error code, to make sure memory gets freed properly
         // Modify the metadata file if it doesn't already have the Rset model
@@ -328,8 +320,8 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                      EQUALN("Nnb", pszResampling, 3)))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "MRF internal resampling only works for a scale "
-                             "factor of two");
+                             "MRF internal resampling requires a scale factor "
+                             "of two");
                     throw CE_Failure;
                 }
 
@@ -391,12 +383,9 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                              "Generating %d levels instead of the %d requested",
                              ovrcount, nOverviews);
                     nOverviews = ovrcount;
-                    panOverviewListNew = reinterpret_cast<int *>(CPLRealloc(
-                        panOverviewListNew, sizeof(int) * nOverviews));
-                    panOverviewListNew[0] = static_cast<int>(scale);
-                    for (int i = 1; i < nOverviews; i++)
-                        panOverviewListNew[i] =
-                            static_cast<int>(scale * panOverviewListNew[i - 1]);
+                    panOverviewListNew.resize(ovrcount);
+                    for (int i = 0; i < ovrcount; i++)
+                        panOverviewListNew[i] = int(std::pow(scale, i + 1));
                 }
             }
         }
@@ -404,21 +393,24 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         if (static_cast<int>(scale) != 2 && (EQUALN("Avg", pszResampling, 3) ||
                                              EQUALN("Nnb", pszResampling, 3)))
         {
-            CPLError(
-                CE_Failure, CPLE_IllegalArg,
-                "MRF internal resampling only works for a scale factor of two");
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "MRF internal resampling requires a scale factor of two");
             throw CE_Failure;
         }
 
+        // First pass, count the pixels to be processed, mark invalid levels
+        double dfTotalPixels = 0.0;
+        double dfPixels = double(nRasterXSize) * nRasterYSize;
         for (int i = 0; i < nOverviews; i++)
         {
             // Verify that scales are reasonable, val/scale has to be an integer
             if (!IsPower(panOverviewListNew[i], scale))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "MRF:IBuildOverviews, overview factor %d is not a "
-                         "power of %f",
+                         "MRF:IBuildOverviews, skipping overview factor %d,"
+                         " it is not a power of %f",
                          panOverviewListNew[i], scale);
+                panOverviewListNew[i] = -1;
                 continue;
             };
 
@@ -432,17 +424,29 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                          "MRF:IBuildOverviews, overview factor %d is not valid "
                          "for this dataset",
                          panOverviewListNew[i]);
+                panOverviewListNew[i] = -1;
                 continue;
             }
+            dfTotalPixels += dfPixels * std::pow(scale, -srclevel);
+        }
 
-            // Generate the overview using the previous level as the source
+        dfPixels = 0;
+        for (int i = 0; i < nOverviews; i++)
+        {
+            // Skip the invalid levels
+            if (panOverviewListNew[i] < 0)
+                continue;
 
+            int srclevel = int(logbase(panOverviewListNew[i], scale) - 0.5);
+            auto dfLevelPixels =
+                std::pow(scale, -srclevel) * nRasterXSize * nRasterYSize;
             // Use "avg" flag to trigger the internal average sampling
             if (EQUALN("Avg", pszResampling, 3) ||
                 EQUALN("Nnb", pszResampling, 3))
             {
                 int sampling = EQUALN("Avg", pszResampling, 3) ? SAMPLING_Avg
                                                                : SAMPLING_Near;
+                auto b = static_cast<MRFRasterBand *>(GetRasterBand(1));
                 // Internal, using PatchOverview
                 if (srclevel > 0)
                     b = static_cast<MRFRasterBand *>(
@@ -456,11 +460,10 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             }
             else
             {
-                //
-                // Use the GDAL method, which is slightly different for bilinear
-                // interpolation and also handles nearest mode
-                //
-                //
+                // Use the GDAL method
+                std::vector<GDALRasterBand *> papoBandList(nBands);
+                std::vector<GDALRasterBand *> papoOverviewBandList(nBands);
+                std::vector<GDALRasterBand **> papapoOverviewBands(nBands);
                 for (int iBand = 0; iBand < nBands; iBand++)
                 {
                     // This is the base level
@@ -468,28 +471,28 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                     // Set up the destination
                     papoOverviewBandList[iBand] =
                         papoBandList[iBand]->GetOverview(srclevel);
-
-                    // Use the previous level as the source, the overviews are 0
-                    // based thus an extra -1
+                    // Use the previous level as the source
                     if (srclevel > 0)
                         papoBandList[iBand] =
                             papoBandList[iBand]->GetOverview(srclevel - 1);
-
                     // Hook it up, via triple pointer level
                     papapoOverviewBands[iBand] = &(papoOverviewBandList[iBand]);
                 }
 
-                //
-                // Ready, generate this overview
-                // Note that this function has a bug in GDAL, the block stepping
-                // is incorrect It can generate multiple overview in one call,
-                // Could rewrite this loop so this function only gets called
-                // once
-                //
-                GDALRegenerateOverviewsMultiBand(
-                    nBands, papoBandList, 1, papapoOverviewBands, pszResampling,
-                    pfnProgress, pProgressData, papszOptions);
+                auto pScaledProgress = GDALCreateScaledProgress(
+                    dfPixels / dfTotalPixels,
+                    (dfPixels + dfLevelPixels) / dfTotalPixels, pfnProgress,
+                    pProgressData);
+                eErr = GDALRegenerateOverviewsMultiBand(
+                    nBands, papoBandList.data(), 1, papapoOverviewBands.data(),
+                    pszResampling, GDALScaledProgress, pScaledProgress,
+                    papszOptions);
+                GDALDestroyScaledProgress(pScaledProgress);
             }
+            dfPixels += dfLevelPixels;
+            pfnProgress(dfPixels / dfTotalPixels, "", pProgressData);
+            if (eErr == CE_Failure)
+                throw eErr;
         }
     }
     catch (const CPLErr &e)
@@ -497,10 +500,6 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         eErr = e;
     }
 
-    CPLFree(panOverviewListNew);
-    CPLFree(papapoOverviewBands);
-    CPLFree(papoOverviewBandList);
-    CPLFree(papoBandList);
     return eErr;
 }
 
