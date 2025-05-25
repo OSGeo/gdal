@@ -2670,9 +2670,14 @@ struct ModeKernel
 
     double GetValue() const
     {
-        size_t nCount = oMax == counts.end() ? 0 : oMax->second;
-        return nanCount > nCount ? std::numeric_limits<double>::quiet_NaN()
-                                 : oMax->first;
+        double ret = std::numeric_limits<double>::quiet_NaN();
+        if (oMax != counts.end())
+        {
+            const size_t nCount = oMax->second;
+            if (nCount > nanCount)
+                ret = oMax->first;
+        }
+        return ret;
     }
 };
 
