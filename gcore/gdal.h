@@ -154,7 +154,8 @@ typedef enum
     /*! @endcond */
 } GDALRIOResampleAlg;
 
-/* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG
+/* NOTE to developers: if required, only add members at the end of the
+ * structure, and when doing so increase RASTERIO_EXTRA_ARG_CURRENT_VERSION
  */
 /** Structure to pass extra arguments to RasterIO() method,
  * must be initialized with INIT_RASTERIO_EXTRA_ARG
@@ -194,12 +195,13 @@ typedef struct
     /*! Indicate if overviews should be considered. Tested in
         GDALBandGetBestOverviewLevel(), mostly reserved for use by
         GDALRegenerateOverviewsMultiBand()
+        Only available if RASTERIO_EXTRA_ARG_CURRENT_VERSION >= 2
     */
     int bUseOnlyThisScale;
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
-#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 1
+#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 2
 #endif
 
 /** Macro to initialize an instance of GDALRasterIOExtraArg structure.
