@@ -312,7 +312,8 @@ OGRErr OGRJMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
                         eGeomType != wkbPolygon && eGeomType != wkbMultiPolygon)
                     {
                         GBool bIsNull;
-                        pszColor = ((OGRStylePen *)poTool)->Color(bIsNull);
+                        pszColor = cpl::down_cast<OGRStylePen *>(poTool)->Color(
+                            bIsNull);
                         if (bIsNull)
                             pszColor = nullptr;
                     }
@@ -320,7 +321,8 @@ OGRErr OGRJMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
                     {
                         GBool bIsNull;
                         pszColor =
-                            ((OGRStyleBrush *)poTool)->ForeColor(bIsNull);
+                            cpl::down_cast<OGRStyleBrush *>(poTool)->ForeColor(
+                                bIsNull);
                         if (bIsNull)
                             pszColor = nullptr;
                     }

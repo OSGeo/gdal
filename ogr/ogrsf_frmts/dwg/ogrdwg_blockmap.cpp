@@ -23,7 +23,8 @@
 void OGRDWGDataSource::ReadBlocksSection()
 
 {
-    OGRDWGLayer *poReaderLayer = (OGRDWGLayer *)GetLayerByName("Entities");
+    OGRDWGLayer *poReaderLayer =
+        cpl::down_cast<OGRDWGLayer *>(GetLayerByName("Entities"));
     int bMergeBlockGeometries =
         CPLTestBool(CPLGetConfigOption("DWG_MERGE_BLOCK_GEOMETRIES", "TRUE"));
 

@@ -152,7 +152,7 @@ class OGRMSSQLGeometryValidator
 class OGRMSSQLGeometryParser
 {
   protected:
-    unsigned char *pszData;
+    const unsigned char *pszData;
     /* version information */
     char chVersion;
     /* serialization properties */
@@ -193,7 +193,7 @@ class OGRMSSQLGeometryParser
 
   public:
     explicit OGRMSSQLGeometryParser(int nGeomColumnType);
-    OGRErr ParseSqlGeometry(unsigned char *pszInput, int nLen,
+    OGRErr ParseSqlGeometry(const unsigned char *pszInput, int nLen,
                             OGRGeometry **poGeom);
 
     int GetSRSId()

@@ -92,11 +92,11 @@ SegmentType (1 byte)
 /*                         Geometry parser macros                       */
 /************************************************************************/
 
-#define ReadInt32(nPos) (*((int *)(pszData + (nPos))))
+#define ReadInt32(nPos) (*(reinterpret_cast<const int *>(pszData + (nPos))))
 
 #define ReadByte(nPos) (pszData[nPos])
 
-#define ReadDouble(nPos) (*((double *)(pszData + (nPos))))
+#define ReadDouble(nPos) (*(reinterpret_cast<const double *>(pszData + (nPos))))
 
 #define ParentOffset(iShape) (ReadInt32(nShapePos + (iShape)*9))
 #define FigureOffset(iShape) (ReadInt32(nShapePos + (iShape)*9 + 4))
@@ -601,7 +601,7 @@ OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape)
 /*                         ParseSqlGeometry()                           */
 /************************************************************************/
 
-OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char *pszInput,
+OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(const unsigned char *pszInput,
                                                 int nLen, OGRGeometry **poGeom)
 {
     if (nLen < 10)
@@ -648,8 +648,9 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char *pszInput,
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0), ReadZ(0));
             else if (chProps & SP_HASMVALUES)
             {
-                *poGeom = new OGRPoint(ReadY(0), ReadX(0));
-                ((OGRPoint *)(*poGeom))->setM(ReadZ(0));
+                OGRPoint *p = new OGRPoint(ReadY(0), ReadX(0));
+                p->setM(ReadZ(0));
+                *poGeom = p;
             }
             else
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0));
@@ -662,8 +663,9 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char *pszInput,
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0), ReadZ(0));
             else if (chProps & SP_HASMVALUES)
             {
-                *poGeom = new OGRPoint(ReadX(0), ReadY(0));
-                ((OGRPoint *)(*poGeom))->setM(ReadZ(0));
+                OGRPoint *p = new OGRPoint(ReadX(0), ReadY(0));
+                p->setM(ReadZ(0));
+                *poGeom = p;
             }
             else
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0));

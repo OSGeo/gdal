@@ -32,7 +32,7 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
     if (m_nFeaturesRead > 0 && poFeatureDefn != nullptr)
     {
         CPLDebug("OGR_MSSQLSpatial", "%d features read on layer '%s'.",
-                 (int)m_nFeaturesRead, poFeatureDefn->GetName());
+                 static_cast<int>(m_nFeaturesRead), poFeatureDefn->GetName());
     }
 
     ClearStatement();
@@ -88,7 +88,7 @@ void OGRMSSQLSpatialLayer::BuildFeatureDefn(const char *pszLayerName,
     nRawColumns = poStmtIn->GetColCount();
 
     CPLFree(panFieldOrdinals);
-    panFieldOrdinals = (int *)CPLMalloc(sizeof(int) * nRawColumns);
+    panFieldOrdinals = static_cast<int *>(CPLMalloc(sizeof(int) * nRawColumns));
 
     for (int iCol = 0; iCol < nRawColumns; iCol++)
     {
@@ -451,7 +451,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
             poFeature->SetFieldNull(iField);
         else if (poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary)
             poFeature->SetField(iField, poStmt->GetColDataLength(iSrcField),
-                                (GByte *)pszValue);
+                                reinterpret_cast<const GByte *>(pszValue));
         else
             poFeature->SetField(iField, pszValue);
     }
@@ -480,7 +480,9 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                     {
                         OGRMSSQLGeometryParser oParser(nGeomColumnType);
                         eErr = oParser.ParseSqlGeometry(
-                            (unsigned char *)pszGeomText, nLength, &poGeom);
+                            reinterpret_cast<const unsigned char *>(
+                                pszGeomText),
+                            nLength, &poGeom);
                         nSRSId = oParser.GetSRSId();
                     }
                     break;
@@ -663,10 +665,8 @@ const char *OGRMSSQLSpatialLayer::GetGeometryColumn()
 char *OGRMSSQLSpatialLayer::GByteArrayToHexString(const GByte *pabyData,
                                                   int nLen)
 {
-    char *pszTextBuf;
-
     const size_t nTextBufLen = nLen * 2 + 3;
-    pszTextBuf = (char *)CPLMalloc(nTextBufLen);
+    char *pszTextBuf = static_cast<char *>(CPLMalloc(nTextBufLen));
 
     int iSrc, iDst = 0;
 
