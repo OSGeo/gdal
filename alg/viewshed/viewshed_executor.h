@@ -14,6 +14,7 @@
 #pragma once
 
 #include <array>
+#include <limits>
 #include <mutex>
 
 #include "gdal_priv.h"
@@ -60,11 +61,15 @@ class ViewshedExecutor
     const Options oOpts;
     Progress &oProgress;
     double m_dfHeightAdjFactor{0};
+    double m_dfMinDistance2;
     double m_dfMaxDistance2;
     double m_dfZObserver{0};
     std::mutex iMutex{};
     std::mutex oMutex{};
     std::array<double, 6> m_adfTransform{0, 1, 0, 0, 0, 1};
+    std::array<double, 5> m_testAngle{};
+    double m_lowTanPitch{std::numeric_limits<double>::quiet_NaN()};
+    double m_highTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double (*oZcalc)(int, int, double, double, double){};
 
     double calcHeightAdjFactor();
@@ -73,25 +78,35 @@ class ViewshedExecutor
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nLine, std::vector<double> &vLastLineVal);
     bool processFirstLine(std::vector<double> &vLastLineVal);
-    void processFirstLineLeft(int iStart, int iEnd,
+    void processFirstLineLeft(const LineLimits &ll,
                               std::vector<double> &vResult,
                               std::vector<double> &vThisLineVal);
-    void processFirstLineRight(int iStart, int iEnd,
+    void processFirstLineRight(const LineLimits &ll,
                                std::vector<double> &vResult,
                                std::vector<double> &vThisLineVal);
-    void processFirstLineTopOrBottom(int iLeft, int iRight,
+    void processFirstLineTopOrBottom(const LineLimits &ll,
                                      std::vector<double> &vResult,
                                      std::vector<double> &vThisLineVal);
-    void processLineLeft(int nYOffset, int iStart, int iEnd,
+    void processLineLeft(int nYOffset, LineLimits &ll,
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,
                          std::vector<double> &vLastLineVal);
-    void processLineRight(int nYOffset, int iStart, int iEnd,
+    void processLineRight(int nYOffset, LineLimits &ll,
                           std::vector<double> &vResult,
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
-    std::pair<int, int> adjustHeight(int iLine,
-                                     std::vector<double> &thisLineVal);
+    LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal);
+    void maskInitial(std::vector<double> &vResult, int nLine);
+    bool maskAngleLeft(std::vector<double> &vResult, int nLine);
+    bool maskAngleRight(std::vector<double> &vResult, int nLine);
+    void maskLineLeft(std::vector<double> &vResult, const LineLimits &ll,
+                      int nLine);
+    void maskLineRight(std::vector<double> &vResult, const LineLimits &ll,
+                       int nLine);
+    void maskLowPitch(double &dfZ, int nXOffset, int nYOffset);
+    void maskHighPitch(double &dfResult, double dfZ, int nXOffset,
+                       int nYOffset);
+    void calcTestAngles();
 };
 
 }  // namespace viewshed

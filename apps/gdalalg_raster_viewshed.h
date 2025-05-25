@@ -14,6 +14,7 @@
 #define GDALALG_RASTER_VIEWSHED_INCLUDED
 
 #include "gdalalg_raster_pipeline.h"
+#include "viewshed/viewshed_types.h"
 
 //! @cond Doxygen_Suppress
 
@@ -37,19 +38,11 @@ class GDALRasterViewshedAlgorithm /* non final */
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::vector<double> m_observerPos{};
-    double m_targetHeight = 0;
+    gdal::viewshed::Options m_opts{};
 
     std::string m_outputMode = "normal";
-
     int m_band = 1;
-    double m_maxDistance = 0;
-    double m_curveCoefficient = 0.85714;
-    int m_observerSpacing = 10;
     int m_numThreads = 3;
-    int m_dstNoData = -1;
-    int m_visibleVal = 255;
-    int m_invisibleVal = 0;
-    int m_outOfRangeVal = 0;
 
     // Work variables
     std::string m_numThreadsStr{};
