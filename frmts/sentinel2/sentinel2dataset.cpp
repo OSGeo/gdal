@@ -3060,14 +3060,16 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
         (eLevel == SENTINEL2_L1C) ? "SENTINEL2_L1C" : "SENTINEL2_L2A";
     CPLAssert(STARTS_WITH_CI(poOpenInfo->pszFilename, pszPrefix));
     osFilename = poOpenInfo->pszFilename + strlen(pszPrefix) + 1;
-    const char *pszEPSGCode = strrchr(osFilename.c_str(), ':');
-    if (pszEPSGCode == nullptr || pszEPSGCode == osFilename.c_str())
+    const char *pszColumn = strrchr(osFilename.c_str(), ':');
+    if (pszColumn == nullptr || pszColumn == osFilename.c_str())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid syntax for %s:", pszPrefix);
         return nullptr;
     }
-    osFilename.resize(static_cast<size_t>(pszEPSGCode - osFilename.c_str()));
+    const auto nPos = static_cast<size_t>(pszColumn - osFilename.c_str());
+    const std::string osEPSGCode = osFilename.substr(nPos + 1);
+    osFilename.resize(nPos);
     const char *pszPrecision = strrchr(osFilename.c_str(), ':');
     if (pszPrecision == nullptr)
     {
@@ -3076,14 +3078,14 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
         return nullptr;
     }
 
-    if (!STARTS_WITH_CI(pszEPSGCode + 1, "EPSG_"))
+    if (!STARTS_WITH_CI(osEPSGCode.c_str(), "EPSG_"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid syntax for %s:", pszPrefix);
         return nullptr;
     }
 
-    const int nSubDSEPSGCode = atoi(pszEPSGCode + 1 + strlen("EPSG_"));
+    const int nSubDSEPSGCode = atoi(osEPSGCode.c_str() + strlen("EPSG_"));
     const bool bIsPreview = STARTS_WITH_CI(pszPrecision + 1, "PREVIEW");
     const bool bIsTCI = STARTS_WITH_CI(pszPrecision + 1, "TCI");
     const int nSubDSPrecision = (bIsPreview) ? 320
