@@ -781,7 +781,7 @@ int CPL_DLL DGNGetAssocID(DGNHandle, DGNElemCore *);
 int CPL_DLL DGNGetElementExtents(DGNHandle, DGNElemCore *, DGNPoint *,
                                  DGNPoint *);
 
-void CPL_DLL DGNDumpElement(DGNHandle, DGNElemCore *, FILE *);
+void CPL_DLL DGNDumpElement(DGNHandle, const DGNElemCore *, FILE *);
 const char CPL_DLL *DGNTypeToName(int);
 
 void CPL_DLL DGNRotationToQuaternion(double, int *);
@@ -790,11 +790,11 @@ int CPL_DLL DGNStrokeArc(DGNHandle, DGNElemArc *, int, DGNPoint *);
 int CPL_DLL DGNStrokeCurve(DGNHandle, DGNElemMultiPoint *, int, DGNPoint *);
 void CPL_DLL DGNSetSpatialFilter(DGNHandle hDGN, double dfXMin, double dfYMin,
                                  double dfXMax, double dfYMax);
-int CPL_DLL DGNGetAttrLinkSize(DGNHandle, DGNElemCore *, int);
-unsigned char CPL_DLL *DGNGetLinkage(DGNHandle hDGN, DGNElemCore *psElement,
-                                     int iIndex, int *pnLinkageType,
-                                     int *pnEntityNum, int *pnMSLink,
-                                     int *pnLinkSize);
+int CPL_DLL DGNGetAttrLinkSize(DGNHandle, const DGNElemCore *, int);
+unsigned char CPL_DLL *DGNGetLinkage(DGNHandle hDGN,
+                                     const DGNElemCore *psElement, int iIndex,
+                                     int *pnLinkageType, int *pnEntityNum,
+                                     int *pnMSLink, int *pnLinkSize);
 
 /* Write API */
 
@@ -807,7 +807,7 @@ DGNHandle CPL_DLL DGNCreate(const char *pszNewFilename, const char *pszSeedFile,
                             const char *pszMasterUnits,
                             const char *pszSubUnits);
 DGNElemCore CPL_DLL *DGNCloneElement(DGNHandle hDGNSrc, DGNHandle hDGNDst,
-                                     DGNElemCore *psSrcElement);
+                                     const DGNElemCore *psSrcElement);
 int CPL_DLL DGNUpdateElemCore(DGNHandle hDGN, DGNElemCore *psElement,
                               int nLevel, int nGraphicGroup, int nColor,
                               int nWeight, int nStyle);

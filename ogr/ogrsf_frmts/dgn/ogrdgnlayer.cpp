@@ -558,7 +558,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             }
             else
             {
-                DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *)psElement;
+                DGNElemMultiPoint *psEMP =
+                    reinterpret_cast<DGNElemMultiPoint *>(psElement);
 
                 if (psEMP->num_vertices > 0)
                 {
@@ -580,7 +581,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
 
         case DGNST_ARC:
         {
-            DGNElemArc *psArc = (DGNElemArc *)psElement;
+            DGNElemArc *psArc = reinterpret_cast<DGNElemArc *>(psElement);
             int nPoints = static_cast<int>(
                 std::max(1.0, std::abs(psArc->sweepang) / 5.0) + 1.0);
             if (nPoints > 90)
@@ -796,7 +797,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
 
         case DGNST_COMPLEX_HEADER:
         {
-            DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *)psElement;
+            DGNElemComplexHeader *psHdr =
+                reinterpret_cast<DGNElemComplexHeader *>(psElement);
             OGRMultiLineString oChildren;
 
             /* collect subsequent child geometries. */
