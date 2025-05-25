@@ -117,14 +117,14 @@ static bool GetElevation(const GDALRasterBandH hBand, const int x, const int y,
                         0) == CE_None;
 }
 
-// Check a single location is above terrain.
+// Check a single location is above (or equal) to terrain height.
 static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
                            const int y, const double z)
 {
     double terrainHeight;
     if (GetElevation(hBand, x, y, terrainHeight))
     {
-        return z > terrainHeight;
+        return z >= terrainHeight;
     }
     else
     {
@@ -144,6 +144,7 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  * https://www.researchgate.net/publication/2411280_Efficient_Line-of-Sight_Algorithms_for_Real_Terrain_Data
  * Line of sight is computed in raster coordinate space, and thus may not be appropriate.
  * For example, datasets referenced against geographic coordinate at high latitudes may have issues.
+ * A point exactly at the height of the DEM is treated as visible from above.
  *
  * @param hBand The band to read the DEM data from. This must NOT be null.
  *
@@ -345,7 +346,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
         return lerp(zA, zB, ratio);
     };
 
-    // Lambda to get elevation at a bresenham-computed location.
+    // Lambda to get if above terrain at a bresenham-computed location.
     auto OnBresenhamPoint = [&](const int x, const int y) -> bool
     {
         const auto z = GetZValueFromXY(x, y);

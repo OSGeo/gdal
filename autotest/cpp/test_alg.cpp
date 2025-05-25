@@ -320,6 +320,11 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
     // One point below terrain
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr,
                                           nullptr, nullptr));
+
+    // One point exactly on terrain
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, val, 0, 0, 43.0, nullptr,
+                                          nullptr, nullptr));
+
     int xIntersection, yIntersection;
     int *pXIntersection = &xIntersection;
     int *pYIntersection = &yIntersection;
@@ -421,7 +426,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     const double mesaLatBottom = 43.4645;
     const double mesaLngBottom = -79.8985;
 
-    // In between the two locations, the mesa reaches a local max altiude of 321.
+    // In between the two locations, the mesa reaches a local max altitude of 321.
 
     double dMesaTopX, dMesaTopY, dMesaBottomX, dMesaBottomY;
     GDALApplyGeoTransform(geoInvTransform.data(), mesaLngTop, mesaLatTop,
@@ -469,7 +474,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     EXPECT_EQ(*pXIntersection, 2);
     EXPECT_EQ(*pYIntersection, 2);
 
-    // Test positive slope bresenham diagnoals across the whole raster.
+    // Test positive slope bresenham diagonals across the whole raster.
     // Both high above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 120, 460, 120, 0, 460,
                                          nullptr, nullptr, nullptr));
@@ -480,6 +485,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
                                           pXIntersection, pYIntersection,
                                           nullptr));
 
+    // These fail with new changes.
     EXPECT_EQ(*pXIntersection, 120);
     EXPECT_EQ(*pYIntersection, 0);
 
