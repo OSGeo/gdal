@@ -5452,9 +5452,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         {
             const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
             const bool bTmpDSMemRequirementOverflow =
-                nDstHeight > INT_MAX / (nBands * nDTSize) ||
-                nDstWidth > std::numeric_limits<int64_t>::max() /
-                                (nDstHeight * nBands * nDTSize);
+                nDTSize * nBands >
+                std::numeric_limits<int64_t>::max() /
+                    (static_cast<int64_t>(nDstWidth) * nDstHeight);
             const auto nTmpDSMemRequirement =
                 bTmpDSMemRequirementOverflow
                     ? 0
@@ -5463,9 +5463,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
             // make sure that one band buffer doesn't overflow size_t
             const bool bChunkSizeOverflow =
-                nDstHeight > INT_MAX / nDTSize ||
-                size_t(nDstWidth) >
-                    std::numeric_limits<size_t>::max() / (nDstHeight * nDTSize);
+                static_cast<size_t>(nDTSize) >
+                std::numeric_limits<size_t>::max() /
+                    (static_cast<uint64_t>(nDstWidth) * nDstHeight);
             const size_t nChunkSize =
                 bChunkSizeOverflow
                     ? 0
