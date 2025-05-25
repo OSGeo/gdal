@@ -291,7 +291,8 @@ void OGROCIDataSource::ValidateLayer(const char *pszLayerName)
     /* -------------------------------------------------------------------- */
     /*      Verify we have an FID and geometry column for this table.       */
     /* -------------------------------------------------------------------- */
-    OGROCITableLayer *poLayer = (OGROCITableLayer *)papoLayers[iLayer];
+    OGROCITableLayer *poLayer =
+        cpl::down_cast<OGROCITableLayer *>(papoLayers[iLayer]);
 
     if (strlen(poLayer->GetFIDColumn()) == 0)
     {
