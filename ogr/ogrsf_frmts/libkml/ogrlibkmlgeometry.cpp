@@ -598,7 +598,7 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
                     poOgrTmpGeometry = kml2geom_rec(poKmlLinearRing, poOgrSRS);
 
                     poOgrPolygon->addRingDirectly(
-                        (OGRLinearRing *)poOgrTmpGeometry);
+                        poOgrTmpGeometry->toLinearRing());
                 }
             }
             const size_t nRings =
@@ -614,7 +614,7 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
                     poOgrTmpGeometry = kml2geom_rec(poKmlLinearRing, poOgrSRS);
 
                     poOgrPolygon->addRingDirectly(
-                        (OGRLinearRing *)poOgrTmpGeometry);
+                        poOgrTmpGeometry->toLinearRing());
                 }
             }
             poOgrGeometry = poOgrPolygon;
