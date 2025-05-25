@@ -1362,7 +1362,7 @@ static DGNElemCore *DGNParseTagSet(DGNInfo *psDGN)
 {
     DGNElemTagSet *psTagSet =
         static_cast<DGNElemTagSet *>(CPLCalloc(sizeof(DGNElemTagSet), 1));
-    DGNElemCore *psElement = (DGNElemCore *)psTagSet;
+    DGNElemCore *psElement = reinterpret_cast<DGNElemCore *>(psTagSet);
     psElement->stype = DGNST_TAG_SET;
 
     DGNParseCore(psDGN, psElement);
