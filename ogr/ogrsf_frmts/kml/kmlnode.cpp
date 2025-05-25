@@ -15,6 +15,7 @@
 #include "kmlnode.h"
 
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
