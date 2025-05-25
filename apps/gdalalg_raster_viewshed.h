@@ -38,7 +38,7 @@ class GDALRasterViewshedAlgorithm /* non final */
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 
     std::vector<double> m_observerPos{};
-    gdal::viewshed::Options m_opts;
+    gdal::viewshed::Options m_opts{};
 
     std::string m_outputMode = "normal";
     int m_band = 1;

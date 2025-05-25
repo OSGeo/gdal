@@ -421,7 +421,7 @@ endforeach ()
 
 ###
 
-gdal_gtest_target(viewshed_internal_test vit
+gdal_gtest_target(viewshed_internal_test test-viewshed-internal
     FILES
         test_viewshed_internal.cpp
         ../../alg/viewshed/viewshed.cpp

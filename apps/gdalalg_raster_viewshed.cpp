@@ -35,8 +35,7 @@
 
 GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
     : GDALRasterPipelineNonNativelyStreamingAlgorithm(NAME, DESCRIPTION,
-                                                      HELP_URL, standaloneStep),
-      m_opts{}
+                                                      HELP_URL, standaloneStep)
 {
     AddArg("position", 'p', _("Observer position"), &m_observerPos)
         .AddAlias("pos")
