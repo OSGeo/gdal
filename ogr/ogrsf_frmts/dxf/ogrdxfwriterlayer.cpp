@@ -241,7 +241,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT(OGRFeature *poFeature)
     }
     if (poTool && poTool->GetType() == OGRSTCSymbol)
     {
-        OGRStyleSymbol *poSymbol = (OGRStyleSymbol *)poTool;
+        OGRStyleSymbol *poSymbol = cpl::down_cast<OGRStyleSymbol *>(poTool);
         GBool bDefault;
 
         if (poSymbol->Color(bDefault) != nullptr && !bDefault)
@@ -344,7 +344,7 @@ OGRErr OGRDXFWriterLayer::WritePOINT(OGRFeature *poFeature)
     }
     if (poTool && poTool->GetType() == OGRSTCPen)
     {
-        OGRStylePen *poPen = (OGRStylePen *)poTool;
+        OGRStylePen *poPen = cpl::down_cast<OGRStylePen *>(poTool);
         GBool bDefault;
 
         if (poPen->Color(bDefault) != nullptr && !bDefault)
@@ -488,7 +488,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
 
     if (poTool && poTool->GetType() == OGRSTCLabel)
     {
-        OGRStyleLabel *poLabel = (OGRStyleLabel *)poTool;
+        OGRStyleLabel *poLabel = cpl::down_cast<OGRStyleLabel *>(poTool);
         GBool bDefault;
 
         /* --------------------------------------------------------------------
@@ -808,7 +808,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
     /* -------------------------------------------------------------------- */
     if (poTool && poTool->GetType() == OGRSTCPen)
     {
-        OGRStylePen *poPen = (OGRStylePen *)poTool;
+        OGRStylePen *poPen = cpl::down_cast<OGRStylePen *>(poTool);
         GBool bDefault;
 
         if (poPen->Color(bDefault) != nullptr && !bDefault)
@@ -1081,7 +1081,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     // Write style brush fore color
     if (poTool && poTool->GetType() == OGRSTCBrush)
     {
-        OGRStyleBrush *poBrush = (OGRStyleBrush *)poTool;
+        OGRStyleBrush *poBrush = cpl::down_cast<OGRStyleBrush *>(poTool);
         GBool bDefault;
 
         if (poBrush->ForeColor(bDefault) != nullptr && !bDefault)
