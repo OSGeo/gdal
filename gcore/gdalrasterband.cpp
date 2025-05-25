@@ -332,7 +332,7 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
         psExtraArg = &sExtraArg;
     }
-    else if (CPL_UNLIKELY(psExtraArg->nVersion !=
+    else if (CPL_UNLIKELY(psExtraArg->nVersion >
                           RASTERIO_EXTRA_ARG_CURRENT_VERSION))
     {
         ReportError(CE_Failure, CPLE_AppDefined,
