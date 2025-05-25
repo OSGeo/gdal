@@ -257,7 +257,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
     {
         case CADGeometry::POINT:
         {
-            CADPoint3D *const poCADPoint = (CADPoint3D *)poCADGeometry;
+            CADPoint3D *const poCADPoint =
+                cpl::down_cast<CADPoint3D *>(poCADGeometry);
             CADVector stPositionVector = poCADPoint->getPosition();
 
             poFeature->SetGeometryDirectly(
@@ -269,7 +270,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::LINE:
         {
-            CADLine *const poCADLine = (CADLine *)poCADGeometry;
+            CADLine *const poCADLine = cpl::down_cast<CADLine *>(poCADGeometry);
             OGRLineString *poLS = new OGRLineString();
             poLS->addPoint(poCADLine->getStart().getPosition().getX(),
                            poCADLine->getStart().getPosition().getY(),
@@ -285,7 +286,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::SOLID:
         {
-            CADSolid *const poCADSolid = (CADSolid *)poCADGeometry;
+            CADSolid *const poCADSolid =
+                cpl::down_cast<CADSolid *>(poCADGeometry);
             OGRPolygon *poPoly = new OGRPolygon();
             OGRLinearRing *poLR = new OGRLinearRing();
 
@@ -306,7 +308,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::CIRCLE:
         {
-            CADCircle *poCADCircle = static_cast<CADCircle *>(poCADGeometry);
+            CADCircle *poCADCircle = cpl::down_cast<CADCircle *>(poCADGeometry);
             OGRCircularString *poCircle = new OGRCircularString();
 
             CADVector stCircleCenter = poCADCircle->getPosition();
@@ -359,7 +361,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::ARC:
         {
-            CADArc *poCADArc = static_cast<CADArc *>(poCADGeometry);
+            CADArc *poCADArc = cpl::down_cast<CADArc *>(poCADGeometry);
             OGRCircularString *poCircle = new OGRCircularString();
 
             // Need at least 3 points in arc
@@ -411,7 +413,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::FACE3D:
         {
-            CADFace3D *const poCADFace = (CADFace3D *)poCADGeometry;
+            CADFace3D *const poCADFace =
+                cpl::down_cast<CADFace3D *>(poCADGeometry);
             OGRPolygon *poPoly = new OGRPolygon();
             OGRLinearRing *poLR = new OGRLinearRing();
 
@@ -438,7 +441,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
         case CADGeometry::LWPOLYLINE:
         {
             CADLWPolyline *const poCADLWPolyline =
-                (CADLWPolyline *)poCADGeometry;
+                cpl::down_cast<CADLWPolyline *>(poCADGeometry);
 
             poFeature->SetField(FIELD_NAME_GEOMTYPE, "CADLWPolyline");
 
@@ -613,12 +616,13 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
                     /*
                      * Tessellate the arc segment and append to the linestring.
                      */
-                    OGRLineString *poArcpoLS = (OGRLineString *)
+                    OGRLineString *poArcpoLS =
                         OGRGeometryFactory::approximateArcAngles(
                             stOgrArcCenter.getX(), stOgrArcCenter.getY(),
                             stOgrArcCenter.getZ(), dfOgrArcRadius,
                             dfOgrArcRadius, dfOgrArcRotation,
-                            dfOgrArcStartAngle, dfOgrArcEndAngle, 0.0);
+                            dfOgrArcStartAngle, dfOgrArcEndAngle, 0.0)
+                            ->toLineString();
 
                     poLS->addSubLineString(poArcpoLS);
 
@@ -642,7 +646,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
         case CADGeometry::POLYLINE3D:
         {
             CADPolyline3D *const poCADPolyline3D =
-                (CADPolyline3D *)poCADGeometry;
+                cpl::down_cast<CADPolyline3D *>(poCADGeometry);
             OGRLineString *poLS = new OGRLineString();
 
             for (size_t i = 0; i < poCADPolyline3D->getVertexCount(); ++i)
@@ -660,7 +664,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::TEXT:
         {
-            CADText *const poCADText = (CADText *)poCADGeometry;
+            CADText *const poCADText = cpl::down_cast<CADText *>(poCADGeometry);
             OGRPoint *poPoint = new OGRPoint(poCADText->getPosition().getX(),
                                              poCADText->getPosition().getY(),
                                              poCADText->getPosition().getZ());
@@ -679,7 +683,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::MTEXT:
         {
-            CADMText *const poCADMText = (CADMText *)poCADGeometry;
+            CADMText *const poCADMText =
+                cpl::down_cast<CADMText *>(poCADGeometry);
             OGRPoint *poPoint = new OGRPoint(poCADMText->getPosition().getX(),
                                              poCADMText->getPosition().getY(),
                                              poCADMText->getPosition().getZ());
@@ -698,7 +703,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::SPLINE:
         {
-            CADSpline *const poCADSpline = (CADSpline *)poCADGeometry;
+            CADSpline *const poCADSpline =
+                cpl::down_cast<CADSpline *>(poCADGeometry);
             OGRLineString *poLS = new OGRLineString();
 
             // TODO: Interpolate spline as points or curves
@@ -716,7 +722,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::ELLIPSE:
         {
-            CADEllipse *poCADEllipse = static_cast<CADEllipse *>(poCADGeometry);
+            CADEllipse *poCADEllipse =
+                cpl::down_cast<CADEllipse *>(poCADGeometry);
 
             // FIXME: Start/end angles should be swapped to work exactly as DXF
             // driver. is it correct?
@@ -796,7 +803,8 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
 
         case CADGeometry::ATTDEF:
         {
-            CADAttdef *const poCADAttdef = (CADAttdef *)poCADGeometry;
+            CADAttdef *const poCADAttdef =
+                cpl::down_cast<CADAttdef *>(poCADGeometry);
             OGRPoint *poPoint = new OGRPoint(poCADAttdef->getPosition().getX(),
                                              poCADAttdef->getPosition().getY(),
                                              poCADAttdef->getPosition().getZ());
