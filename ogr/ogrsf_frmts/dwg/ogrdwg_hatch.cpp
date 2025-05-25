@@ -140,10 +140,8 @@ static OGRErr DWGCollectBoundaryLoop(OdDbHatchPtr poHatch, int iLoop,
     EdgeArray oEdges;
     poHatch->getLoopAt(iLoop, oEdges);
 
-    for (i = 0; i < (int)oEdges.size(); i++)
+    for (OdGeCurve2d *poEdge : oEdges)
     {
-        OdGeCurve2d *poEdge = oEdges[i];
-
         if (poEdge->type() == OdGe::kLineSeg2d)
         {
             OGRLineString *poLS = new OGRLineString();
@@ -156,7 +154,7 @@ static OGRErr DWGCollectBoundaryLoop(OdDbHatchPtr poHatch, int iLoop,
         }
         else if (poEdge->type() == OdGe::kCircArc2d)
         {
-            OdGeCircArc2d *poCircArc = (OdGeCircArc2d *)poEdge;
+            OdGeCircArc2d *poCircArc = static_cast<OdGeCircArc2d *>(poEdge);
             OdGePoint2d oCenter = poCircArc->center();
             double dfStartAngle = poCircArc->startAng() * 180 / M_PI;
             double dfEndAngle = poCircArc->endAng() * 180 / M_PI;
@@ -181,7 +179,7 @@ static OGRErr DWGCollectBoundaryLoop(OdDbHatchPtr poHatch, int iLoop,
         }
         else if (poEdge->type() == OdGe::kEllipArc2d)
         {
-            OdGeEllipArc2d *poArc = (OdGeEllipArc2d *)poEdge;
+            OdGeEllipArc2d *poArc = static_cast<OdGeEllipArc2d *>(poEdge);
             OdGePoint2d oCenter = poArc->center();
             double dfRatio = poArc->minorRadius() / poArc->majorRadius();
             OdGeVector2d oMajorAxis = poArc->majorAxis();
