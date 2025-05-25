@@ -5143,7 +5143,6 @@ void GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
         psDestArg->eResampleAlg = psSrcArg->eResampleAlg;
         psDestArg->pfnProgress = psSrcArg->pfnProgress;
         psDestArg->pProgressData = psSrcArg->pProgressData;
-        psDestArg->bUseOnlyThisScale = psSrcArg->bUseOnlyThisScale;
         psDestArg->bFloatingPointWindowValidity =
             psSrcArg->bFloatingPointWindowValidity;
         if (psSrcArg->bFloatingPointWindowValidity)
@@ -5152,6 +5151,10 @@ void GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
             psDestArg->dfYOff = psSrcArg->dfYOff;
             psDestArg->dfXSize = psSrcArg->dfXSize;
             psDestArg->dfYSize = psSrcArg->dfYSize;
+        }
+        if (psSrcArg->nVersion >= 2)
+        {
+            psDestArg->bUseOnlyThisScale = psSrcArg->bUseOnlyThisScale;
         }
     }
 }
