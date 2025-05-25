@@ -37,37 +37,24 @@ enum Nodetype
 
 struct Attribute
 {
-    std::string sName;
-    std::string sValue;
+    std::string sName{};
+    std::string sValue{};
 };
 
 struct Coordinate
 {
-    double dfLongitude;
-    double dfLatitude;
-    double dfAltitude;
-    bool bHasZ;
-
-    Coordinate() : dfLongitude(0), dfLatitude(0), dfAltitude(0), bHasZ(false)
-    {
-    }
+    double dfLongitude = 0;
+    double dfLatitude = 0;
+    double dfAltitude = 0;
+    bool bHasZ = false;
 };
 
 struct Feature
 {
-    Nodetype eType;
-    std::string sName;
-    std::string sDescription;
-    OGRGeometry *poGeom;
-
-    Feature() : eType(Unknown), poGeom(nullptr)
-    {
-    }
-
-    ~Feature()
-    {
-        delete poGeom;
-    }
+    Nodetype eType = Unknown;
+    std::string sName{};
+    std::string sDescription{};
+    std::unique_ptr<OGRGeometry> poGeom{};
 };
 
 }  // namespace OGRKML

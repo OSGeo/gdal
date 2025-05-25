@@ -44,10 +44,8 @@ OGRKMLLayer::OGRKMLLayer(const char *pszName,
                          OGRwkbGeometryType eReqType, OGRKMLDataSource *poDSIn)
     : poDS_(poDSIn),
       poSRS_(poSRSIn ? new OGRSpatialReference(nullptr) : nullptr),
-      poCT_(nullptr), poFeatureDefn_(new OGRFeatureDefn(pszName)),
-      iNextKMLId_(0), bWriter_(bWriterIn), nLayerNumber_(0),
-      nWroteFeatureCount_(0), bSchemaWritten_(false),
-      pszName_(CPLStrdup(pszName)), nLastAsked(-1), nLastCount(-1)
+      poFeatureDefn_(new OGRFeatureDefn(pszName)), bWriter_(bWriterIn),
+      pszName_(CPLStrdup(pszName))
 {
     // KML should be created as WGS84.
     if (poSRSIn != nullptr)
@@ -154,18 +152,17 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 
     while (true)
     {
-        Feature *poFeatureKML =
-            poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount);
+        auto poFeatureKML = std::unique_ptr<Feature>(
+            poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount));
 
         if (poFeatureKML == nullptr)
             return nullptr;
 
-        OGRFeature *poFeature = new OGRFeature(poFeatureDefn_);
+        auto poFeature = std::make_unique<OGRFeature>(poFeatureDefn_);
 
         if (poFeatureKML->poGeom)
         {
-            poFeature->SetGeometryDirectly(poFeatureKML->poGeom);
-            poFeatureKML->poGeom = nullptr;
+            poFeature->SetGeometry(std::move(poFeatureKML->poGeom));
         }
 
         // Add fields.
@@ -175,9 +172,6 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
                             poFeatureKML->sDescription.c_str());
         poFeature->SetFID(iNextKMLId_ - 1);
 
-        // Clean up.
-        delete poFeatureKML;
-
         if (poFeature->GetGeometryRef() != nullptr && poSRS_ != nullptr)
         {
             poFeature->GetGeometryRef()->assignSpatialReference(poSRS_);
@@ -186,12 +180,11 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         // Check spatial/attribute filters.
         if ((m_poFilterGeom == nullptr ||
              FilterGeometry(poFeature->GetGeometryRef())) &&
-            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
+            (m_poAttrQuery == nullptr ||
+             m_poAttrQuery->Evaluate(poFeature.get())))
         {
-            return poFeature;
+            return poFeature.release();
         }
-
-        delete poFeature;
     }
 
 #endif /* HAVE_EXPAT */
@@ -411,7 +404,7 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
                 OGRStyleTool *poTool = oSM.GetPart(i);
                 if (poTool && poTool->GetType() == OGRSTCPen)
                 {
-                    poPen = (OGRStylePen *)poTool;
+                    poPen = cpl::down_cast<OGRStylePen *>(poTool);
                     break;
                 }
                 delete poTool;
@@ -540,9 +533,7 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
             poWGS84Geom = poFeature->GetGeometryRef();
         }
 
-        // TODO - porting
-        // pszGeometry = poFeature->GetGeometryRef()->exportToKML();
-        pszGeometry = OGR_G_ExportToKML((OGRGeometryH)poWGS84Geom,
+        pszGeometry = OGR_G_ExportToKML(OGRGeometry::ToHandle(poWGS84Geom),
                                         poDS_->GetAltitudeMode());
         if (pszGeometry != nullptr)
         {

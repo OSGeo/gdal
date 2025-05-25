@@ -3,6 +3,7 @@ add_gdal_driver(
   SOURCES kmlutility.h ogr_kml.h ogrkmldriver.cpp ogrkmldatasource.cpp ogrkmllayer.cpp
   PLUGIN_CAPABLE
   NO_DEPS
+  STRONG_CXX_WFLAGS
 )
 gdal_standard_includes(ogr_KML)
 
