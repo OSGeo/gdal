@@ -93,7 +93,8 @@ CPLString OGRCARTOEscapeLiteral(const char *pszStr)
 char *OGRCARTOTableLayer::OGRCARTOGetHexGeometry(OGRGeometry *poGeom, int i)
 {
     OGRCartoGeomFieldDefn *poGeomFieldDefn =
-        (OGRCartoGeomFieldDefn *)(poFeatureDefn->GetGeomFieldDefn(i));
+        cpl::down_cast<OGRCartoGeomFieldDefn *>(
+            poFeatureDefn->GetGeomFieldDefn(i));
     int nSRID = poGeomFieldDefn->nSRID;
     if (nSRID == 0)
         nSRID = 4326;
@@ -1471,7 +1472,8 @@ OGRErr OGRCARTOTableLayer::ISetFeature(OGRFeature *poFeature)
         else
         {
             OGRCartoGeomFieldDefn *poGeomFieldDefn =
-                (OGRCartoGeomFieldDefn *)(poFeatureDefn->GetGeomFieldDefn(i));
+                cpl::down_cast<OGRCartoGeomFieldDefn *>(
+                    poFeatureDefn->GetGeomFieldDefn(i));
             int nSRID = poGeomFieldDefn->nSRID;
             if (nSRID == 0)
                 nSRID = 4326;
@@ -1908,7 +1910,8 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
     for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
         OGRCartoGeomFieldDefn *poFieldDefn =
-            (OGRCartoGeomFieldDefn *)(poFeatureDefn->GetGeomFieldDefn(i));
+            cpl::down_cast<OGRCartoGeomFieldDefn *>(
+                poFeatureDefn->GetGeomFieldDefn(i));
         OGRwkbGeometryType eGType = poFieldDefn->GetType();
         if (eGType == wkbNone)
             continue;
