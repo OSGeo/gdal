@@ -2181,10 +2181,20 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
                 if (poSource->m_nBand != iBand + 1 ||
                     poSource->m_bGetMaskBand ||
                     (nSources > 1 && poSource->m_osSrcDSName.empty()))
+                {
                     return false;
+                }
                 if (nSources == 1 && poSource->m_osSrcDSName.empty())
-                    poFirstBandSourceDS =
-                        poSource->GetRasterBand()->GetDataset();
+                {
+                    if (auto poSourceBand = poSource->GetRasterBand())
+                    {
+                        poFirstBandSourceDS = poSourceBand->GetDataset();
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
                 osResampling = poSource->GetResampling();
             }
         }
@@ -2214,11 +2224,14 @@ bool VRTDataset::CheckCompatibleForDatasetIO() const
                     return false;
                 if (osResampling.compare(poSource->GetResampling()) != 0)
                     return false;
-                if (nSources == 1 && poSource->m_osSrcDSName.empty() &&
-                    poFirstBandSourceDS !=
-                        poSource->GetRasterBand()->GetDataset())
+                if (nSources == 1 && poSource->m_osSrcDSName.empty())
                 {
-                    return false;
+                    auto poSourceBand = poSource->GetRasterBand();
+                    if (!poSourceBand ||
+                        poFirstBandSourceDS != poSourceBand->GetDataset())
+                    {
+                        return false;
+                    }
                 }
             }
         }
