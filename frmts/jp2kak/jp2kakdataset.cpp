@@ -1460,30 +1460,29 @@ CPLErr JP2KAKDataset::DirectRasterIO(
                     {
                         // TODO(schwehr): Cleanup this block.
                         if (eBufType == GDT_Byte)
-                            ((GByte *)pData)[iX * nPixelSpace +
-                                             iY * nLineSpace + i * nBandSpace] =
-                                pabyIntermediate[iSrcX * nBandCount +
-                                                 static_cast<GPtrDiff_t>(
-                                                     iSrcY) *
-                                                     l_dims.size.x *
-                                                     nBandCount +
-                                                 i];
+                            static_cast<GByte *>(
+                                pData)[iX * nPixelSpace + iY * nLineSpace +
+                                       i * nBandSpace] = pabyIntermediate
+                                [iSrcX * nBandCount +
+                                 static_cast<GPtrDiff_t>(iSrcY) *
+                                     l_dims.size.x * nBandCount +
+                                 i];
                         else if (eBufType == GDT_Int16 ||
                                  eBufType == GDT_UInt16)
-                            ((GUInt16 *)pData)[iX * nPixelSpace / 2 +
-                                               iY * nLineSpace / 2 +
-                                               i * nBandSpace / 2] =
-                                ((GUInt16 *)pabyIntermediate)
+                            static_cast<GUInt16 *>(pData)[iX * nPixelSpace / 2 +
+                                                          iY * nLineSpace / 2 +
+                                                          i * nBandSpace / 2] =
+                                reinterpret_cast<GUInt16 *>(pabyIntermediate)
                                     [iSrcX * nBandCount +
                                      static_cast<GPtrDiff_t>(iSrcY) *
                                          l_dims.size.x * nBandCount +
                                      i];
                         else if (eBufType == GDT_Int32 ||
                                  eBufType == GDT_UInt32)
-                            ((GUInt32 *)pData)[iX * nPixelSpace / 4 +
-                                               iY * nLineSpace / 4 +
-                                               i * nBandSpace / 4] =
-                                ((GUInt32 *)pabyIntermediate)
+                            static_cast<GUInt32 *>(pData)[iX * nPixelSpace / 4 +
+                                                          iY * nLineSpace / 4 +
+                                                          i * nBandSpace / 4] =
+                                reinterpret_cast<GUInt32 *>(pabyIntermediate)
                                     [iSrcX * nBandCount +
                                      static_cast<GPtrDiff_t>(iSrcY) *
                                          l_dims.size.x * nBandCount +
