@@ -330,7 +330,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                 char *pszWKT = nullptr;
 
                 OGRPGDumpGeomFieldDefn *poGFldDefn =
-                    (OGRPGDumpGeomFieldDefn *)poFeature->GetGeomFieldDefnRef(i);
+                    cpl::down_cast<OGRPGDumpGeomFieldDefn *>(
+                        poFeature->GetGeomFieldDefnRef(i));
 
                 poGeom->closeRings();
                 poGeom->set3D(poGFldDefn->m_nGeometryTypeFlags &
