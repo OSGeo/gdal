@@ -124,7 +124,7 @@ AIGRasterBand::AIGRasterBand(AIGDataset *poDSIn, int nBandIn)
 CPLErr AIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
     GInt32 *panGridRaster;
 
     if (poODS->psInfo->nCellType == AIG_CELLTYPE_INT)
@@ -182,7 +182,7 @@ CPLErr AIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Read info raster attribute table, if present.                   */
@@ -206,7 +206,7 @@ GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
 double AIGRasterBand::GetMinimum(int *pbSuccess)
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
 
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
@@ -221,7 +221,7 @@ double AIGRasterBand::GetMinimum(int *pbSuccess)
 double AIGRasterBand::GetMaximum(int *pbSuccess)
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
 
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
@@ -258,7 +258,7 @@ double AIGRasterBand::GetNoDataValue(int *pbSuccess)
 GDALColorInterp AIGRasterBand::GetColorInterpretation()
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
 
     if (poODS->poCT != nullptr)
         return GCI_PaletteIndex;
@@ -273,7 +273,7 @@ GDALColorInterp AIGRasterBand::GetColorInterpretation()
 GDALColorTable *AIGRasterBand::GetColorTable()
 
 {
-    AIGDataset *poODS = (AIGDataset *)poDS;
+    AIGDataset *poODS = cpl::down_cast<AIGDataset *>(poDS);
 
     if (poODS->poCT != nullptr)
         return poODS->poCT;
