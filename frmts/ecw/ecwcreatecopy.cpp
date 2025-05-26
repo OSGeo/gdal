@@ -1443,7 +1443,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Cleanup, and return read-only handle.                           */
     /* -------------------------------------------------------------------- */
     oCompressor.CloseDown();
-    pfnProgress(1.001, nullptr, pProgressData);
+    pfnProgress(1.0, nullptr, pProgressData);
 
     /* -------------------------------------------------------------------- */
     /*      Re-open dataset, and copy any auxiliary pam information.         */
@@ -1452,9 +1452,11 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     GDALPamDataset *poDS = nullptr;
 
     if (bIsJPEG2000)
-        poDS = (GDALPamDataset *)ECWDatasetOpenJPEG2000(&oOpenInfo);
+        poDS = cpl::down_cast<GDALPamDataset *>(
+            ECWDatasetOpenJPEG2000(&oOpenInfo));
     else
-        poDS = (GDALPamDataset *)ECWDataset::OpenECW(&oOpenInfo);
+        poDS =
+            cpl::down_cast<GDALPamDataset *>(ECWDataset::OpenECW(&oOpenInfo));
 
     if (poDS)
     {
@@ -1482,12 +1484,13 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
 #endif
 
-        ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(TRUE);
+        cpl::down_cast<ECWDataset *>(poDS)->SetPreventCopyingSomeMetadata(TRUE);
         int nFlags = GCIF_PAM_DEFAULT;
         if (bIsJPEG2000 && !CPLFetchBool(papszOptions, "WRITE_METADATA", false))
             nFlags &= ~GCIF_METADATA;
         poDS->CloneInfo(poSrcDS, nFlags);
-        ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(FALSE);
+        cpl::down_cast<ECWDataset *>(poDS)->SetPreventCopyingSomeMetadata(
+            FALSE);
     }
 
     return poDS;
@@ -2045,7 +2048,7 @@ CPLErr ECWWriteDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     if (eRWFlag == GF_Write && nBandCount == 3 && nBands == 4)
     {
-        po4thBand = (ECWWriteRasterBand *)GetRasterBand(4);
+        po4thBand = cpl::down_cast<ECWWriteRasterBand *>(GetRasterBand(4));
         poIORequest = po4thBand->poIORequest;
         if (poIORequest != nullptr)
         {
