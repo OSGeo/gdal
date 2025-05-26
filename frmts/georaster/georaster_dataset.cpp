@@ -1383,9 +1383,10 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //  Create a GeoRaster on the server or select one to overwrite
     //  -----------------------------------------------------------
 
-    GeoRasterDataset *poDstDS = (GeoRasterDataset *)GeoRasterDataset::Create(
-        pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-        poSrcDS->GetRasterCount(), eType, papszOptions);
+    GeoRasterDataset *poDstDS =
+        cpl::down_cast<GeoRasterDataset *>(GeoRasterDataset::Create(
+            pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(), eType, papszOptions));
 
     if (poDstDS == nullptr)
     {
@@ -1444,8 +1445,8 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     for (int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++)
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand);
-        GeoRasterRasterBand *poDstBand =
-            (GeoRasterRasterBand *)poDstDS->GetRasterBand(iBand);
+        GeoRasterRasterBand *poDstBand = cpl::down_cast<GeoRasterRasterBand *>(
+            poDstDS->GetRasterBand(iBand));
 
         // ----------------------------------------------------------------
         //  Copy Color Table
@@ -2855,7 +2856,8 @@ CPLErr GeoRasterDataset::IBuildOverviews(
 
     for (i = 0; i < nBands; i++)
     {
-        GeoRasterRasterBand *poBand = (GeoRasterRasterBand *)papoBands[i];
+        GeoRasterRasterBand *poBand =
+            cpl::down_cast<GeoRasterRasterBand *>(papoBands[i]);
 
         //  -------------------------------------------------------
         //  Clean up previous overviews
@@ -2893,7 +2895,8 @@ CPLErr GeoRasterDataset::IBuildOverviews(
 
     for (i = 0; i < nBands; i++)
     {
-        GeoRasterRasterBand *poBand = (GeoRasterRasterBand *)papoBands[i];
+        GeoRasterRasterBand *poBand =
+            cpl::down_cast<GeoRasterRasterBand *>(papoBands[i]);
 
         void *pScaledProgressData = GDALCreateScaledProgress(
             i / (double)nBands, (i + 1) / (double)nBands, pfnProgress,
