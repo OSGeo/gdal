@@ -83,7 +83,7 @@ GXFRasterBand::GXFRasterBand(GXFDataset *poDSIn, int nBandIn)
 double GXFRasterBand::GetNoDataValue(int *bGotNoDataValue)
 
 {
-    GXFDataset *poGXF_DS = (GXFDataset *)poDS;
+    GXFDataset *poGXF_DS = cpl::down_cast<GXFDataset *>(poDS);
     if (bGotNoDataValue)
         *bGotNoDataValue = (fabs(poGXF_DS->dfNoDataValue - -1e12) > .1);
     if (eDataType == GDT_Float32)
@@ -99,7 +99,7 @@ double GXFRasterBand::GetNoDataValue(int *bGotNoDataValue)
 CPLErr GXFRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                  void *pImage)
 {
-    GXFDataset *const poGXF_DS = (GXFDataset *)poDS;
+    GXFDataset *const poGXF_DS = cpl::down_cast<GXFDataset *>(poDS);
 
     if (eDataType == GDT_Float32)
     {
