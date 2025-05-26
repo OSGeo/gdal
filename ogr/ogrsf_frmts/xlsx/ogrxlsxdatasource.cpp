@@ -904,8 +904,8 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
-            ((OGRMemLayer *)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
-            ((OGRXLSXLayer *)poCurLayer)->SetUpdated(false);
+            poCurLayer->SetUpdatable(CPL_TO_BOOL(bUpdatable));
+            poCurLayer->SetUpdated(false);
         }
 
         poCurLayer = nullptr;
@@ -2160,7 +2160,7 @@ static bool WriteWorkbook(const char *pszName, GDALDataset *poDS)
     VSIFPrintfL(fp, "<sheets>\n");
     for (int i = 0; i < poDS->GetLayerCount(); i++)
     {
-        OGRXLSXLayer *poLayer = (OGRXLSXLayer *)poDS->GetLayer(i);
+        auto poLayer = poDS->GetLayer(i);
         const char *pszLayerName = poLayer->GetName();
         char *pszXML = OGRGetXML_UTF8_EscapedString(pszLayerName);
         VSIFPrintfL(fp,
