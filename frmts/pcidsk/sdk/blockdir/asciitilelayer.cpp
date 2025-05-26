@@ -179,7 +179,7 @@ void AsciiTileLayer::ReadTileList(void)
         return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
 
     PCIDSKBuffer oTileListAutoPtr;
-    oTileListAutoPtr.buffer = (char *) pabyTileList;
+    oTileListAutoPtr.buffer = reinterpret_cast<char *>(pabyTileList);
 
     ReadFromLayer(pabyTileList, 128, nSize);
 

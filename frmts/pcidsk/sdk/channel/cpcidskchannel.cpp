@@ -59,7 +59,7 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
 
         is_locked = image_header.buffer[200] == 'W';
         byte_order = image_header.buffer[201];
-        if( ((uint8 *) &test_value)[0] == 1 )
+        if( (reinterpret_cast<uint8 *>(&test_value))[0] == 1 )
             needs_swap = (byte_order != 'S');
         else
             needs_swap = (byte_order == 'S');
