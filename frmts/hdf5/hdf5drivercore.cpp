@@ -264,30 +264,48 @@ static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
         // Works at least on:
         // - /vsis3/noaa-s102-pds/ed2.1.0/national_bathymetric_source/boston/dcf2/tiles/102US00_US4MA1GC.h5
         // - https://datahub.admiralty.co.uk/portal/sharing/rest/content/items/6fd07bde26124d48820b6dee60695389/data (S-102_Liverpool_Trial_Cells.zip)
-        const int nLenMainGroup =
-            static_cast<int>(strlen(pszMainGroupName) + 1);
-        const int nLenGroupF = static_cast<int>(strlen("Group_F\0") + 1);
+        const int nLenMainGroup = static_cast<int>(strlen(pszMainGroupName));
+        const int nLenGroupF = static_cast<int>(strlen("Group_F"));
+        const int nLenProductSpecification =
+            static_cast<int>(strlen("productSpecification"));
         bool bFoundMainGroup = false;
         bool bFoundGroupF = false;
-        for (int i = 0;
-             i < poOpenInfo->nHeaderBytes - std::max(nLenMainGroup, nLenGroupF);
-             ++i)
+        bool bFoundProductSpecification = false;
+        for (int iTry = 0; iTry < 2; ++iTry)
         {
-            if (poOpenInfo->pabyHeader[i] == pszMainGroupName[0] &&
-                memcmp(poOpenInfo->pabyHeader + i, pszMainGroupName,
-                       nLenMainGroup) == 0)
+            for (int i = 0; i <= poOpenInfo->nHeaderBytes - nLenGroupF; ++i)
             {
-                bFoundMainGroup = true;
-                if (bFoundGroupF)
-                    return true;
+                if (poOpenInfo->pabyHeader[i] == pszMainGroupName[0] &&
+                    i <= poOpenInfo->nHeaderBytes - nLenMainGroup &&
+                    memcmp(poOpenInfo->pabyHeader + i, pszMainGroupName,
+                           nLenMainGroup) == 0)
+                {
+                    bFoundMainGroup = true;
+                    if (bFoundGroupF)
+                        return true;
+                }
+                if (poOpenInfo->pabyHeader[i] == 'G' &&
+                    memcmp(poOpenInfo->pabyHeader + i, "Group_F", nLenGroupF) ==
+                        0)
+                {
+                    bFoundGroupF = true;
+                    if (bFoundMainGroup)
+                        return true;
+                }
+                if (poOpenInfo->pabyHeader[i] == 'p' &&
+                    i <= poOpenInfo->nHeaderBytes - nLenProductSpecification &&
+                    memcmp(poOpenInfo->pabyHeader + i, "productSpecification",
+                           nLenProductSpecification) == 0)
+                {
+                    // For 102DE00OS08J.H5
+                    bFoundProductSpecification = true;
+                }
             }
-            if (poOpenInfo->pabyHeader[i] == 'G' &&
-                memcmp(poOpenInfo->pabyHeader + i, "Group_F\0", nLenGroupF) ==
-                    0)
+            if (!(iTry == 0 && bFoundProductSpecification &&
+                  poOpenInfo->nHeaderBytes == 1024 &&
+                  poOpenInfo->TryToIngest(4096)))
             {
-                bFoundGroupF = true;
-                if (bFoundMainGroup)
-                    return true;
+                break;
             }
         }
     }
