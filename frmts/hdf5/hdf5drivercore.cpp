@@ -275,8 +275,8 @@ static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
         {
             for (int i = 0; i <= poOpenInfo->nHeaderBytes - nLenGroupF; ++i)
             {
-                if (poOpenInfo->pabyHeader[i] == pszMainGroupName[0] &&
-                    i <= poOpenInfo->nHeaderBytes - nLenMainGroup &&
+                if (i <= poOpenInfo->nHeaderBytes - nLenMainGroup &&
+                    poOpenInfo->pabyHeader[i] == pszMainGroupName[0] &&
                     memcmp(poOpenInfo->pabyHeader + i, pszMainGroupName,
                            nLenMainGroup) == 0)
                 {
@@ -292,8 +292,8 @@ static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
                     if (bFoundMainGroup)
                         return true;
                 }
-                if (poOpenInfo->pabyHeader[i] == 'p' &&
-                    i <= poOpenInfo->nHeaderBytes - nLenProductSpecification &&
+                if (i <= poOpenInfo->nHeaderBytes - nLenProductSpecification &&
+                    poOpenInfo->pabyHeader[i] == 'p' &&
                     memcmp(poOpenInfo->pabyHeader + i, "productSpecification",
                            nLenProductSpecification) == 0)
                 {
