@@ -294,7 +294,8 @@ int VFKReaderSQLite::ReadDataBlocks(bool bSuppressGeometry)
                  * OGR_VFK_DB_READ_ALL_BLOCKS NO" than attempt to fetch feature
                  * from geometry-included layer: SOBR -fid 1
                  */
-                ((VFKDataBlockSQLite *)poNewDataBlock)->AddGeometryColumn();
+                cpl::down_cast<VFKDataBlockSQLite *>(poNewDataBlock)
+                    ->AddGeometryColumn();
             }
             poNewDataBlock->SetProperties(pszDefn);
             VFKReader::AddDataBlock(poNewDataBlock, nullptr);
@@ -550,7 +551,8 @@ void VFKReaderSQLite::CreateIndices()
             EQUAL(pszBlockName, "ZVB") || EQUAL(pszBlockName, "PAR") ||
             EQUAL(pszBlockName, "BUD"))
         {
-            const char *pszKey = ((VFKDataBlockSQLite *)poDataBlock)->GetKey();
+            const char *pszKey =
+                cpl::down_cast<VFKDataBlockSQLite *>(poDataBlock)->GetKey();
             if (pszKey)
             {
                 /* ID */
@@ -684,8 +686,8 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock,
                 (GUIntBig)m_poFStat->st_size, pszBlockName, pszDefn);
             ExecuteSQL(osCommand.c_str());
 
-            int geom_type =
-                ((VFKDataBlockSQLite *)poDataBlock)->GetGeometrySQLType();
+            int geom_type = cpl::down_cast<VFKDataBlockSQLite *>(poDataBlock)
+                                ->GetGeometrySQLType();
             /* update VFK_DB_GEOMETRY_TABLE */
             osCommand.Printf("INSERT INTO %s (f_table_name, f_geometry_column, "
                              "geometry_type, "
