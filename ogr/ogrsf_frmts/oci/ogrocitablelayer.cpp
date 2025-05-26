@@ -1270,10 +1270,11 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 
         // Do the binding.
         if (poSession->Failed(
-                OCIBindByName(oInsert.GetStatement(), &hBindOrd,
-                              poSession->hError, (text *)":elem_info", (sb4)-1,
-                              nullptr, 0, SQLT_NTY, nullptr, nullptr, nullptr,
-                              (ub4)0, nullptr, (ub4)OCI_DEFAULT),
+                OCIBindByName(
+                    oInsert.GetStatement(), &hBindOrd, poSession->hError,
+                    reinterpret_cast<text *>(const_cast<char *>(":elem_info")),
+                    (sb4)-1, nullptr, 0, SQLT_NTY, nullptr, nullptr, nullptr,
+                    (ub4)0, nullptr, (ub4)OCI_DEFAULT),
                 "OCIBindByName(:elem_info)"))
             return OGRERR_FAILURE;
 
