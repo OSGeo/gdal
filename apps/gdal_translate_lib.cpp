@@ -1566,12 +1566,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->srcWin.dfXOff * adfDstGeoTransform[4] +
             psOptions->srcWin.dfYOff * adfDstGeoTransform[5];
 
-        const double dfX = static_cast<double>(nOXSize);
-        const double dfY = static_cast<double>(nOYSize);
-        adfDstGeoTransform[1] *= psOptions->srcWin.dfXSize / dfX;
-        adfDstGeoTransform[2] *= psOptions->srcWin.dfYSize / dfY;
-        adfDstGeoTransform[4] *= psOptions->srcWin.dfXSize / dfX;
-        adfDstGeoTransform[5] *= psOptions->srcWin.dfYSize / dfY;
+        const double dfXRatio = psOptions->srcWin.dfXSize / nOXSize;
+        const double dfYRatio = psOptions->srcWin.dfYSize / nOYSize;
+        GDALRescaleGeoTransform(adfDstGeoTransform, dfXRatio, dfYRatio);
 
         if (psOptions->dfXRes != 0.0)
         {

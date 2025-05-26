@@ -4774,6 +4774,9 @@ struct GDALColorAssociation
 std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
                                                        GDALRasterBand *poBand);
 
+void GDALRescaleGeoTransform(double adfGeoTransform[6], double dfXRatio,
+                             double dfYRatio);
+
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different
 // names
