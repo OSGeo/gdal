@@ -522,12 +522,14 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
     GByte *pabyRecord = (GByte *)CPLMalloc(nDSRSize - 13);
 
-    GUInt32 *tpLat = ((GUInt32 *)pabyRecord) + nTPPerLine * 0; /* latitude */
-    GUInt32 *tpLon = ((GUInt32 *)pabyRecord) + nTPPerLine * 1; /* longitude */
-    GUInt32 *tpLtc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 4; /* lat. DEM correction */
-    GUInt32 *tpLnc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
+    GUInt32 *tpLat =
+        reinterpret_cast<GUInt32 *>(pabyRecord) + nTPPerLine * 0; /* latitude */
+    GUInt32 *tpLon = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 1; /* longitude */
+    GUInt32 *tpLtc = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 4; /* lat. DEM correction */
+    GUInt32 *tpLnc = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 5; /* lon. DEM correction */
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *)CPLCalloc(
