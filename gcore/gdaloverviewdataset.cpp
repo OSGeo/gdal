@@ -376,14 +376,11 @@ CPLErr GDALOverviewDataset::GetGeoTransform(double *padfTransform)
     if (poMainDS->GetGeoTransform(adfGeoTransform) != CE_None)
         return CE_Failure;
 
-    adfGeoTransform[1] *=
+    const double dfOvrXRatio =
         static_cast<double>(poMainDS->GetRasterXSize()) / nRasterXSize;
-    adfGeoTransform[2] *=
+    const double dfOvrYRatio =
         static_cast<double>(poMainDS->GetRasterYSize()) / nRasterYSize;
-    adfGeoTransform[4] *=
-        static_cast<double>(poMainDS->GetRasterXSize()) / nRasterXSize;
-    adfGeoTransform[5] *=
-        static_cast<double>(poMainDS->GetRasterYSize()) / nRasterYSize;
+    GDALRescaleGeoTransform(adfGeoTransform, dfOvrXRatio, dfOvrYRatio);
 
     memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
 

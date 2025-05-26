@@ -95,6 +95,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 
@@ -115,8 +116,6 @@
 
 static const double kdfDegreesToRadians = M_PI / 180.0;
 static const double kdfRadiansToDegrees = 180.0 / M_PI;
-
-using VSIVoidUniquePtr = std::unique_ptr<void, VSIFreeReleaser>;
 
 typedef enum
 {
@@ -179,33 +178,45 @@ struct GDALDEMProcessingOptions
 };
 
 /************************************************************************/
+/*                       AlgorithmParameters                            */
+/************************************************************************/
+
+struct AlgorithmParameters
+{
+    virtual ~AlgorithmParameters() = default;
+
+    virtual std::unique_ptr<AlgorithmParameters>
+    CreateScaledParameters(double dfXRatio, double dfYRatio) = 0;
+};
+
+/************************************************************************/
 /*                          ComputeVal()                                */
 /************************************************************************/
 
 template <class T> struct GDALGeneric3x3ProcessingAlg
 {
     typedef float (*type)(const T *pafWindow, float fDstNoDataValue,
-                          const void *pData);
+                          const AlgorithmParameters *pData);
 };
 
 template <class T> struct GDALGeneric3x3ProcessingAlg_multisample
 {
-    typedef int (*type)(const T *pafThreeLineWin, int nLine1Off, int nLine2Off,
-                        int nLine3Off, int nXSize, const void *pData,
-                        float *pafOutputBuf);
+    typedef int (*type)(const T *pafFirstLine, const T *pafSecondLine,
+                        const T *pafThirdLine, int nXSize,
+                        const AlgorithmParameters *pData, float *pafOutputBuf);
 };
 
 template <class T>
 static float ComputeVal(bool bSrcHasNoData, T fSrcNoDataValue,
                         bool bIsSrcNoDataNan, T *afWin, float fDstNoDataValue,
                         typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
-                        void *pData, bool bComputeAtEdges);
+                        const AlgorithmParameters *pData, bool bComputeAtEdges);
 
 template <>
 float ComputeVal(bool bSrcHasNoData, float fSrcNoDataValue,
                  bool bIsSrcNoDataNan, float *afWin, float fDstNoDataValue,
-                 GDALGeneric3x3ProcessingAlg<float>::type pfnAlg, void *pData,
-                 bool bComputeAtEdges)
+                 GDALGeneric3x3ProcessingAlg<float>::type pfnAlg,
+                 const AlgorithmParameters *pData, bool bComputeAtEdges)
 {
     if (bSrcHasNoData &&
         ((!bIsSrcNoDataNan && ARE_REAL_EQUAL(afWin[4], fSrcNoDataValue)) ||
@@ -236,8 +247,8 @@ template <>
 float ComputeVal(bool bSrcHasNoData, GInt32 fSrcNoDataValue,
                  bool /* bIsSrcNoDataNan */, GInt32 *afWin,
                  float fDstNoDataValue,
-                 GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlg, void *pData,
-                 bool bComputeAtEdges)
+                 GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlg,
+                 const AlgorithmParameters *pData, bool bComputeAtEdges)
 {
     if (bSrcHasNoData && afWin[4] == fSrcNoDataValue)
     {
@@ -302,8 +313,8 @@ static CPLErr GDALGeneric3x3Processing(
     typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
     typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
         pfnAlg_multisample,
-    VSIVoidUniquePtr pData, bool bComputeAtEdges, GDALProgressFunc pfnProgress,
-    void *pProgressData)
+    std::unique_ptr<AlgorithmParameters> pData, bool bComputeAtEdges,
+    GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
@@ -325,7 +336,7 @@ static CPLErr GDALGeneric3x3Processing(
         static_cast<float *>(VSI_MALLOC2_VERBOSE(sizeof(float), nXSize));
     // 3 line rotating source buffer.
     T *pafThreeLineWin =
-        static_cast<T *>(VSI_MALLOC2_VERBOSE(3 * sizeof(T), nXSize + 1));
+        static_cast<T *>(VSI_MALLOC2_VERBOSE(3 * sizeof(T), nXSize));
     if (pafOutputBuf == nullptr || pafThreeLineWin == nullptr)
     {
         VSIFree(pafOutputBuf);
@@ -617,9 +628,9 @@ static CPLErr GDALGeneric3x3Processing(
         int j = 1;
         if (pfnAlg_multisample && !bOneOfThreeLinesHasNoData)
         {
-            j = pfnAlg_multisample(pafThreeLineWin, nLine1Off, nLine2Off,
-                                   nLine3Off, nXSize, pData.get(),
-                                   pafOutputBuf);
+            j = pfnAlg_multisample(
+                pafThreeLineWin + nLine1Off, pafThreeLineWin + nLine2Off,
+                pafThreeLineWin + nLine3Off, nXSize, pData.get(), pafOutputBuf);
         }
 
         for (; j < nXSize - 1; j++)
@@ -788,25 +799,39 @@ template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 /*                         GDALHillshade()                              */
 /************************************************************************/
 
-typedef struct
+struct GDALHillshadeAlgData final : public AlgorithmParameters
 {
-    double inv_nsres_yscale;
-    double inv_ewres_xscale;
-    double sin_altRadians;
-    double cos_alt_mul_z;
-    double azRadians;
-    double cos_az_mul_cos_alt_mul_z;
-    double sin_az_mul_cos_alt_mul_z;
-    double square_z;
-    double sin_altRadians_mul_254;
-    double cos_az_mul_cos_alt_mul_z_mul_254;
-    double sin_az_mul_cos_alt_mul_z_mul_254;
+    double inv_nsres_yscale = 0;
+    double inv_ewres_xscale = 0;
+    double sin_altRadians = 0;
+    double cos_alt_mul_z = 0;
+    double azRadians = 0;
+    double cos_az_mul_cos_alt_mul_z = 0;
+    double sin_az_mul_cos_alt_mul_z = 0;
+    double square_z = 0;
+    double sin_altRadians_mul_254 = 0;
+    double cos_az_mul_cos_alt_mul_z_mul_254 = 0;
+    double sin_az_mul_cos_alt_mul_z_mul_254 = 0;
 
-    double square_z_mul_square_inv_res;
-    double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
-    double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res;
-    double z_factor;
-} GDALHillshadeAlgData;
+    double square_z_mul_square_inv_res = 0;
+    double cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
+    double sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res = 0;
+    double z_factor = 0;
+
+    std::unique_ptr<AlgorithmParameters>
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override
+    {
+        auto newData = std::make_unique<GDALHillshadeAlgData>(*this);
+        newData->inv_ewres_xscale /= dfXRatio;
+        newData->inv_nsres_yscale /= dfYRatio;
+
+        newData->square_z_mul_square_inv_res /= dfXRatio * dfXRatio;
+        newData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
+        newData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
+
+        return newData;
+    }
+};
 
 /* Unoptimized formulas are :
     x = psData->z*((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
@@ -906,7 +931,7 @@ static double DifferenceBetweenAngles(double angle1, double angle2,
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
-                                  const void *pData)
+                                  const AlgorithmParameters *pData)
 {
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
@@ -966,7 +991,7 @@ static float GDALHillshadeIgorAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              const void *pData)
+                              const AlgorithmParameters *pData)
 {
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
@@ -993,7 +1018,7 @@ static float GDALHillshadeAlg(const T *afWin, float /*fDstNoDataValue*/,
 template <class T>
 static float GDALHillshadeAlg_same_res(const T *afWin,
                                        float /*fDstNoDataValue*/,
-                                       const void *pData)
+                                       const AlgorithmParameters *pData)
 {
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
@@ -1036,10 +1061,9 @@ static float GDALHillshadeAlg_same_res(const T *afWin,
 #ifdef HAVE_16_SSE_REG
 
 template <class T, class REG_T>
-static int
-GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
-                                      int nLine2Off, int nLine3Off, int nXSize,
-                                      const void *pData, float *pafOutputBuf)
+static int GDALHillshadeAlg_same_res_multisample(
+    const T *pafFirstLine, const T *pafSecondLine, const T *pafThirdLine,
+    int nXSize, const AlgorithmParameters *pData, float *pafOutputBuf)
 {
     // Only valid for T == int
     const GDALHillshadeAlgData *psData =
@@ -1059,9 +1083,9 @@ GDALHillshadeAlg_same_res_multisample(const T *pafThreeLineWin, int nLine1Off,
     int j = 1;  // Used after for.
     for (; j < nXSize - 4; j += 4)
     {
-        const T *firstLine = pafThreeLineWin + nLine1Off + j - 1;
-        const T *secondLine = pafThreeLineWin + nLine2Off + j - 1;
-        const T *thirdLine = pafThreeLineWin + nLine3Off + j - 1;
+        const T *firstLine = pafFirstLine + j - 1;
+        const T *secondLine = pafSecondLine + j - 1;
+        const T *thirdLine = pafThirdLine + j - 1;
 
         const auto firstLine0 = REG_T::Load4Val(firstLine);
         const auto firstLine1 = REG_T::Load4Val(firstLine + 1);
@@ -1104,7 +1128,7 @@ static const double INV_SQUARE_OF_HALF_PI = 1.0 / ((M_PI * M_PI) / 4);
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeCombinedAlg(const T *afWin, float /*fDstNoDataValue*/,
-                                      const void *pData)
+                                      const AlgorithmParameters *pData)
 {
     const GDALHillshadeAlgData *psData =
         static_cast<const GDALHillshadeAlgData *>(pData);
@@ -1133,13 +1157,11 @@ static float GDALHillshadeCombinedAlg(const T *afWin, float /*fDstNoDataValue*/,
     return fcang;
 }
 
-static VSIVoidUniquePtr GDALCreateHillshadeData(const double *adfGeoTransform,
-                                                double z, double xscale,
-                                                double yscale, double alt,
-                                                double az, GradientAlg eAlg)
+static std::unique_ptr<AlgorithmParameters>
+GDALCreateHillshadeData(const double *adfGeoTransform, double z, double xscale,
+                        double yscale, double alt, double az, GradientAlg eAlg)
 {
-    GDALHillshadeAlgData *pData = static_cast<GDALHillshadeAlgData *>(
-        CPLCalloc(1, sizeof(GDALHillshadeAlgData)));
+    auto pData = std::make_unique<GDALHillshadeAlgData>();
 
     pData->inv_nsres_yscale = 1.0 / (adfGeoTransform[5] * yscale);
     pData->inv_ewres_xscale = 1.0 / (adfGeoTransform[1] * xscale);
@@ -1169,30 +1191,39 @@ static VSIVoidUniquePtr GDALCreateHillshadeData(const double *adfGeoTransform,
             pData->sin_az_mul_cos_alt_mul_z_mul_254 * pData->inv_ewres_xscale;
     }
 
-    return VSIVoidUniquePtr(pData);
+    return pData;
 }
 
 /************************************************************************/
 /*                   GDALHillshadeMultiDirectional()                    */
 /************************************************************************/
 
-typedef struct
+struct GDALHillshadeMultiDirectionalAlgData final : public AlgorithmParameters
 {
-    double inv_nsres_yscale;
-    double inv_ewres_xscale;
-    double square_z;
-    double sin_altRadians_mul_127;
-    double sin_altRadians_mul_254;
+    double inv_nsres_yscale = 0;
+    double inv_ewres_xscale = 0;
+    double square_z = 0;
+    double sin_altRadians_mul_127 = 0;
+    double sin_altRadians_mul_254 = 0;
 
-    double cos_alt_mul_z_mul_127;
-    double cos225_az_mul_cos_alt_mul_z_mul_127;
+    double cos_alt_mul_z_mul_127 = 0;
+    double cos225_az_mul_cos_alt_mul_z_mul_127 = 0;
 
-} GDALHillshadeMultiDirectionalAlgData;
+    std::unique_ptr<AlgorithmParameters>
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override
+    {
+        auto newData =
+            std::make_unique<GDALHillshadeMultiDirectionalAlgData>(*this);
+        newData->inv_ewres_xscale /= dfXRatio;
+        newData->inv_nsres_yscale /= dfYRatio;
+        return newData;
+    }
+};
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
                                               float /*fDstNoDataValue*/,
-                                              const void *pData)
+                                              const AlgorithmParameters *pData)
 {
     const GDALHillshadeMultiDirectionalAlgData *psData =
         static_cast<const GDALHillshadeMultiDirectionalAlgData *>(pData);
@@ -1250,14 +1281,12 @@ static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
     return static_cast<float>(cang);
 }
 
-static VSIVoidUniquePtr
+static std::unique_ptr<AlgorithmParameters>
 GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
                                         double xscale, double yscale,
                                         double alt, GradientAlg eAlg)
 {
-    GDALHillshadeMultiDirectionalAlgData *pData =
-        static_cast<GDALHillshadeMultiDirectionalAlgData *>(
-            CPLCalloc(1, sizeof(GDALHillshadeMultiDirectionalAlgData)));
+    auto pData = std::make_unique<GDALHillshadeMultiDirectionalAlgData>();
 
     pData->inv_nsres_yscale = 1.0 / (adfGeoTransform[5] * yscale);
     pData->inv_ewres_xscale = 1.0 / (adfGeoTransform[1] * xscale);
@@ -1272,23 +1301,32 @@ GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
     pData->cos225_az_mul_cos_alt_mul_z_mul_127 =
         127.0 * cos(225 * kdfDegreesToRadians) * cos_alt_mul_z;
 
-    return VSIVoidUniquePtr(pData);
+    return pData;
 }
 
 /************************************************************************/
 /*                         GDALSlope()                                  */
 /************************************************************************/
 
-typedef struct
+struct GDALSlopeAlgData final : public AlgorithmParameters
 {
-    double nsres_yscale;
-    double ewres_xscale;
-    int slopeFormat;
-} GDALSlopeAlgData;
+    double nsres_yscale = 0;
+    double ewres_xscale = 0;
+    int slopeFormat = 0;
+
+    std::unique_ptr<AlgorithmParameters>
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override
+    {
+        auto newData = std::make_unique<GDALSlopeAlgData>(*this);
+        newData->ewres_xscale *= dfXRatio;
+        newData->nsres_yscale *= dfYRatio;
+        return newData;
+    }
+};
 
 template <class T>
 static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              const void *pData)
+                              const AlgorithmParameters *pData)
 {
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
@@ -1312,7 +1350,7 @@ static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
 template <class T>
 static float GDALSlopeZevenbergenThorneAlg(const T *afWin,
                                            float /*fDstNoDataValue*/,
-                                           const void *pData)
+                                           const AlgorithmParameters *pData)
 {
     const GDALSlopeAlgData *psData =
         static_cast<const GDALSlopeAlgData *>(pData);
@@ -1327,31 +1365,35 @@ static float GDALSlopeZevenbergenThorneAlg(const T *afWin,
     return static_cast<float>(100 * (sqrt(key) / 2));
 }
 
-static VSIVoidUniquePtr GDALCreateSlopeData(double *adfGeoTransform,
-                                            double xscale, double yscale,
-                                            int slopeFormat)
+static std::unique_ptr<AlgorithmParameters>
+GDALCreateSlopeData(double *adfGeoTransform, double xscale, double yscale,
+                    int slopeFormat)
 {
-    GDALSlopeAlgData *pData =
-        static_cast<GDALSlopeAlgData *>(CPLMalloc(sizeof(GDALSlopeAlgData)));
-
+    auto pData = std::make_unique<GDALSlopeAlgData>();
     pData->nsres_yscale = adfGeoTransform[5] * yscale;
     pData->ewres_xscale = adfGeoTransform[1] * xscale;
     pData->slopeFormat = slopeFormat;
-    return VSIVoidUniquePtr(pData);
+    return pData;
 }
 
 /************************************************************************/
 /*                         GDALAspect()                                 */
 /************************************************************************/
 
-typedef struct
+struct GDALAspectAlgData final : public AlgorithmParameters
 {
-    bool bAngleAsAzimuth;
-} GDALAspectAlgData;
+    bool bAngleAsAzimuth = false;
+
+    std::unique_ptr<AlgorithmParameters> CreateScaledParameters(double,
+                                                                double) override
+    {
+        return std::make_unique<GDALAspectAlgData>(*this);
+    }
+};
 
 template <class T>
 static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
-                           const void *pData)
+                           const AlgorithmParameters *pData)
 {
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
@@ -1391,7 +1433,7 @@ static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
 template <class T>
 static float GDALAspectZevenbergenThorneAlg(const T *afWin,
                                             float fDstNoDataValue,
-                                            const void *pData)
+                                            const AlgorithmParameters *pData)
 {
     const GDALAspectAlgData *psData =
         static_cast<const GDALAspectAlgData *>(pData);
@@ -1423,13 +1465,12 @@ static float GDALAspectZevenbergenThorneAlg(const T *afWin,
     return aspect;
 }
 
-static VSIVoidUniquePtr GDALCreateAspectData(bool bAngleAsAzimuth)
+static std::unique_ptr<AlgorithmParameters>
+GDALCreateAspectData(bool bAngleAsAzimuth)
 {
-    GDALAspectAlgData *pData =
-        static_cast<GDALAspectAlgData *>(CPLMalloc(sizeof(GDALAspectAlgData)));
-
+    auto pData = std::make_unique<GDALAspectAlgData>();
     pData->bAngleAsAzimuth = bAngleAsAzimuth;
-    return VSIVoidUniquePtr(pData);
+    return pData;
 }
 
 /************************************************************************/
@@ -2289,7 +2330,7 @@ static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
 // Implements Wilson et al. (2007), for bathymetric use cases
 template <class T>
 static float GDALTRIAlgWilson(const T *afWin, float /*fDstNoDataValue*/,
-                              const void * /*pData*/)
+                              const AlgorithmParameters * /*pData*/)
 {
     // Terrain Ruggedness is average difference in height
     return (std::abs(afWin[0] - afWin[4]) + std::abs(afWin[1] - afWin[4]) +
@@ -2304,7 +2345,7 @@ static float GDALTRIAlgWilson(const T *afWin, float /*fDstNoDataValue*/,
 // of Science, Vol.5, No.1-4, pp.23-27 for terrestrial use cases
 template <class T>
 static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
-                             const void * /*pData*/)
+                             const AlgorithmParameters * /*pData*/)
 {
     const auto square = [](double x) { return x * x; };
 
@@ -2321,7 +2362,7 @@ static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T>
 static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
-                        const void * /*pData*/)
+                        const AlgorithmParameters * /*pData*/)
 {
     // Terrain Position is the difference between
     // The central cell and the mean of the surrounding cells
@@ -2336,7 +2377,7 @@ static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T>
 static float GDALRoughnessAlg(const T *afWin, float /*fDstNoDataValue*/,
-                              const void * /*pData*/)
+                              const AlgorithmParameters * /*pData*/)
 {
     // Roughness is the largest difference between any two cells
 
@@ -2365,28 +2406,41 @@ static float GDALRoughnessAlg(const T *afWin, float /*fDstNoDataValue*/,
 
 template <class T> class GDALGeneric3x3RasterBand;
 
-template <class T> class GDALGeneric3x3Dataset : public GDALDataset
+template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
 {
     friend class GDALGeneric3x3RasterBand<T>;
 
-    typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg;
-    VSIVoidUniquePtr pAlgData{};
-    GDALDatasetH hSrcDS;
-    GDALRasterBandH hSrcBand;
-    T *apafSourceBuf[3];
-    int bDstHasNoData;
-    double dfDstNoDataValue;
-    int nCurLine;
-    bool bComputeAtEdges;
+    const typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg;
+    const typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+        pfnAlg_multisample;
+    std::unique_ptr<AlgorithmParameters> pAlgData;
+    GDALDatasetH hSrcDS = nullptr;
+    GDALRasterBandH hSrcBand = nullptr;
+    std::array<T *, 3> apafSourceBuf = {nullptr, nullptr, nullptr};
+    std::array<bool, 3> abLineHasNoDataValue = {false, false, false};
+    std::unique_ptr<float, VSIFreeReleaser> pafOutputBuf{};
+    int bDstHasNoData = false;
+    double dfDstNoDataValue = 0;
+    int nCurLine = -1;
+    const bool bComputeAtEdges;
+    const bool bTakeReference;
+
+    using GDALDatasetRefCountedPtr =
+        std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>;
+
+    std::vector<GDALDatasetRefCountedPtr> m_apoOverviewDS{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeneric3x3Dataset)
 
   public:
-    GDALGeneric3x3Dataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
-                          GDALDataType eDstDataType, int bDstHasNoData,
-                          double dfDstNoDataValue,
-                          typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
-                          VSIVoidUniquePtr pAlgData, bool bComputeAtEdges);
+    GDALGeneric3x3Dataset(
+        GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
+        GDALDataType eDstDataType, int bDstHasNoData, double dfDstNoDataValue,
+        typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlg,
+        typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+            pfnAlg_multisample,
+        std::unique_ptr<AlgorithmParameters> pAlgData, bool bComputeAtEdges,
+        bool bTakeReferenceIn);
     ~GDALGeneric3x3Dataset();
 
     bool InitOK() const
@@ -2405,7 +2459,7 @@ template <class T> class GDALGeneric3x3Dataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-template <class T> class GDALGeneric3x3RasterBand : public GDALRasterBand
+template <class T> class GDALGeneric3x3RasterBand final : public GDALRasterBand
 {
     friend class GDALGeneric3x3Dataset<T>;
     int bSrcHasNoData = false;
@@ -2421,6 +2475,20 @@ template <class T> class GDALGeneric3x3RasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *pbHasNoData) override;
+
+    int GetOverviewCount() override
+    {
+        auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
+        return static_cast<int>(poGDS->m_apoOverviewDS.size());
+    }
+
+    GDALRasterBand *GetOverview(int idx) override
+    {
+        auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
+        return idx >= 0 && idx < GetOverviewCount()
+                   ? poGDS->m_apoOverviewDS[idx]->GetRasterBand(1)
+                   : nullptr;
+    }
 };
 
 template <class T>
@@ -2428,15 +2496,19 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
     GDALDatasetH hSrcDSIn, GDALRasterBandH hSrcBandIn,
     GDALDataType eDstDataType, int bDstHasNoDataIn, double dfDstNoDataValueIn,
     typename GDALGeneric3x3ProcessingAlg<T>::type pfnAlgIn,
-    VSIVoidUniquePtr pAlgDataIn, bool bComputeAtEdgesIn)
-    : pfnAlg(pfnAlgIn), pAlgData(std::move(pAlgDataIn)), hSrcDS(hSrcDSIn),
-      hSrcBand(hSrcBandIn), bDstHasNoData(bDstHasNoDataIn),
-      dfDstNoDataValue(dfDstNoDataValueIn), nCurLine(-1),
-      bComputeAtEdges(bComputeAtEdgesIn)
+    typename GDALGeneric3x3ProcessingAlg_multisample<T>::type
+        pfnAlg_multisampleIn,
+    std::unique_ptr<AlgorithmParameters> pAlgDataIn, bool bComputeAtEdgesIn,
+    bool bTakeReferenceIn)
+    : pfnAlg(pfnAlgIn), pfnAlg_multisample(pfnAlg_multisampleIn),
+      pAlgData(std::move(pAlgDataIn)), hSrcDS(hSrcDSIn), hSrcBand(hSrcBandIn),
+      bDstHasNoData(bDstHasNoDataIn), dfDstNoDataValue(dfDstNoDataValueIn),
+      bComputeAtEdges(bComputeAtEdgesIn), bTakeReference(bTakeReferenceIn)
 {
     CPLAssert(eDstDataType == GDT_Byte || eDstDataType == GDT_Float32);
 
-    GDALReferenceDataset(hSrcDS);
+    if (bTakeReference)
+        GDALReferenceDataset(hSrcDS);
 
     nRasterXSize = GDALGetRasterXSize(hSrcDS);
     nRasterYSize = GDALGetRasterYSize(hSrcDS);
@@ -2449,11 +2521,42 @@ GDALGeneric3x3Dataset<T>::GDALGeneric3x3Dataset(
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
     apafSourceBuf[2] =
         static_cast<T *>(VSI_MALLOC2_VERBOSE(sizeof(T), nRasterXSize));
+    if (pfnAlg_multisample && eDstDataType == GDT_Byte)
+    {
+        pafOutputBuf.reset(static_cast<float *>(
+            VSI_MALLOC2_VERBOSE(sizeof(float), nRasterXSize)));
+    }
+
+    const int nOvrCount = GDALGetOverviewCount(hSrcBandIn);
+    for (int i = 0;
+         i < nOvrCount && m_apoOverviewDS.size() == static_cast<size_t>(i); ++i)
+    {
+        auto hOvrBand = GDALGetOverview(hSrcBandIn, i);
+        auto hOvrDS = GDALGetBandDataset(hOvrBand);
+        if (hOvrDS && hOvrDS != hSrcDSIn)
+        {
+            auto poOvrDS = std::make_unique<GDALGeneric3x3Dataset>(
+                hOvrDS, hOvrBand, eDstDataType, bDstHasNoData, dfDstNoDataValue,
+                pfnAlg, pfnAlg_multisampleIn,
+                pAlgData ? pAlgData->CreateScaledParameters(
+                               static_cast<double>(nRasterXSize) /
+                                   GDALGetRasterXSize(hOvrDS),
+                               static_cast<double>(nRasterYSize) /
+                                   GDALGetRasterYSize(hOvrDS))
+                         : nullptr,
+                bComputeAtEdges, false);
+            if (poOvrDS->InitOK())
+            {
+                m_apoOverviewDS.emplace_back(poOvrDS.release());
+            }
+        }
+    }
 }
 
 template <class T> GDALGeneric3x3Dataset<T>::~GDALGeneric3x3Dataset()
 {
-    GDALReleaseDataset(hSrcDS);
+    if (bTakeReference)
+        GDALReleaseDataset(hSrcDS);
 
     CPLFree(apafSourceBuf[0]);
     CPLFree(apafSourceBuf[1]);
@@ -2542,6 +2645,34 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
 {
     auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
 
+    const auto UpdateLineNoDataFlag = [this, poGDS](int iLine)
+    {
+        if (bSrcHasNoData)
+        {
+            poGDS->abLineHasNoDataValue[iLine] = false;
+            for (int i = 0; i < nRasterXSize; ++i)
+            {
+                if constexpr (std::numeric_limits<T>::is_integer)
+                {
+                    if (poGDS->apafSourceBuf[iLine][i] == fSrcNoDataValue)
+                    {
+                        poGDS->abLineHasNoDataValue[iLine] = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (poGDS->apafSourceBuf[iLine][i] == fSrcNoDataValue ||
+                        std::isnan(poGDS->apafSourceBuf[iLine][i]))
+                    {
+                        poGDS->abLineHasNoDataValue[iLine] = true;
+                        break;
+                    }
+                }
+            }
+        }
+    };
+
     if (poGDS->bComputeAtEdges && nRasterXSize >= 2 && nRasterYSize >= 2)
     {
         if (nBlockYOff == 0)
@@ -2556,6 +2687,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     InitWithNoData(pImage);
                     return eErr;
                 }
+                UpdateLineNoDataFlag(i + 1);
             }
             poGDS->nCurLine = 0;
 
@@ -2610,6 +2742,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                         InitWithNoData(pImage);
                         return eErr;
                     }
+                    UpdateLineNoDataFlag(i + 1);
                 }
             }
 
@@ -2674,6 +2807,8 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                 InitWithNoData(pImage);
                 return eErr;
             }
+
+            UpdateLineNoDataFlag(2);
         }
         else
         {
@@ -2688,6 +2823,8 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
                     InitWithNoData(pImage);
                     return eErr;
                 }
+
+                UpdateLineNoDataFlag(i);
             }
         }
 
@@ -2772,7 +2909,28 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock(int /*nBlockXOff*/,
         }
     }
 
-    for (int j = 1; j < nBlockXSize - 1; j++)
+    int j = 1;
+    if (poGDS->pfnAlg_multisample &&
+        (eDataType == GDT_Float32 || poGDS->pafOutputBuf) &&
+        !poGDS->abLineHasNoDataValue[0] && !poGDS->abLineHasNoDataValue[1] &&
+        !poGDS->abLineHasNoDataValue[2])
+    {
+        j = poGDS->pfnAlg_multisample(
+            poGDS->apafSourceBuf[0], poGDS->apafSourceBuf[1],
+            poGDS->apafSourceBuf[2], nRasterXSize, poGDS->pAlgData.get(),
+            poGDS->pafOutputBuf ? poGDS->pafOutputBuf.get()
+                                : static_cast<float *>(pImage));
+
+        if (poGDS->pafOutputBuf)
+        {
+            GDALCopyWords64(poGDS->pafOutputBuf.get() + 1, GDT_Float32,
+                            static_cast<int>(sizeof(float)),
+                            static_cast<GByte *>(pImage) + 1, GDT_Byte, 1,
+                            j - 1);
+        }
+    }
+
+    for (; j < nBlockXSize - 1; j++)
     {
         T afWin[9] = {
             poGDS->apafSourceBuf[0][j - 1], poGDS->apafSourceBuf[0][j],
@@ -3609,7 +3767,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     double dfDstNoDataValue = 0.0;
     bool bDstHasNoData = false;
-    VSIVoidUniquePtr pData;
+    std::unique_ptr<AlgorithmParameters> pData;
     GDALGeneric3x3ProcessingAlg<float>::type pfnAlgFloat = nullptr;
     GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlgInt32 = nullptr;
     GDALGeneric3x3ProcessingAlg_multisample<float>::type
@@ -3876,48 +4034,43 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
         if (eUtilityMode == COLOR_RELIEF)
         {
-            GDALColorReliefDataset *poDS = new GDALColorReliefDataset(
+            auto poDS = std::make_unique<GDALColorReliefDataset>(
                 hSrcDataset, hSrcBand, pszColorFilename,
                 psOptions->eColorSelectionMode, psOptions->bAddAlpha);
             if (!(poDS->InitOK()))
             {
-                delete poDS;
                 return nullptr;
             }
-            hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
+            hIntermediateDataset = GDALDataset::ToHandle(poDS.release());
         }
         else
         {
             if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 ||
                 eSrcDT == GDT_UInt16)
             {
-                GDALGeneric3x3Dataset<GInt32> *poDS =
-                    new GDALGeneric3x3Dataset<GInt32>(
-                        hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
-                        dfDstNoDataValue, pfnAlgInt32, std::move(pData),
-                        psOptions->bComputeAtEdges);
+                auto poDS = std::make_unique<GDALGeneric3x3Dataset<GInt32>>(
+                    hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
+                    dfDstNoDataValue, pfnAlgInt32, pfnAlgInt32_multisample,
+                    std::move(pData), psOptions->bComputeAtEdges, true);
 
                 if (!(poDS->InitOK()))
                 {
-                    delete poDS;
                     return nullptr;
                 }
-                hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
+                hIntermediateDataset = GDALDataset::ToHandle(poDS.release());
             }
             else
             {
-                GDALGeneric3x3Dataset<float> *poDS =
-                    new GDALGeneric3x3Dataset<float>(
-                        hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
-                        dfDstNoDataValue, pfnAlgFloat, std::move(pData),
-                        psOptions->bComputeAtEdges);
+                auto poDS = std::make_unique<GDALGeneric3x3Dataset<float>>(
+                    hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
+                    dfDstNoDataValue, pfnAlgFloat, pfnAlgFloat_multisample,
+                    std::move(pData), psOptions->bComputeAtEdges, true);
 
                 if (!(poDS->InitOK()))
                 {
-                    delete poDS;
                     return nullptr;
                 }
-                hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
+                hIntermediateDataset = GDALDataset::ToHandle(poDS.release());
             }
         }
 
