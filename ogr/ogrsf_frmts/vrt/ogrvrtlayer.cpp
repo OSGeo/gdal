@@ -666,9 +666,13 @@ try_again:
             // Is it a VRT datasource?
             if (poSrcDS != nullptr && poSrcDS->GetDriver() == poDS->GetDriver())
             {
-                OGRVRTDataSource *poVRTSrcDS = (OGRVRTDataSource *)poSrcDS;
-                poVRTSrcDS->SetCallLevel(poDS->GetCallLevel() + 1);
-                poVRTSrcDS->SetParentDS(poDS);
+                OGRVRTDataSource *poVRTSrcDS =
+                    dynamic_cast<OGRVRTDataSource *>(poSrcDS);
+                if (poVRTSrcDS)
+                {
+                    poVRTSrcDS->SetCallLevel(poDS->GetCallLevel() + 1);
+                    poVRTSrcDS->SetParentDS(poDS);
+                }
             }
         }
         else

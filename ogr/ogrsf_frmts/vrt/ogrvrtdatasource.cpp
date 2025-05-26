@@ -860,11 +860,12 @@ char **OGRVRTDataSource::GetFileList()
         switch (paeLayerType[nLayers - 1])
         {
             case OGR_VRT_PROXIED_LAYER:
-                poVRTLayer = (OGRVRTLayer *)((OGRProxiedLayer *)poLayer)
-                                 ->GetUnderlyingLayer();
+                poVRTLayer = cpl::down_cast<OGRVRTLayer *>(
+                    cpl::down_cast<OGRProxiedLayer *>(poLayer)
+                        ->GetUnderlyingLayer());
                 break;
             case OGR_VRT_LAYER:
-                poVRTLayer = (OGRVRTLayer *)poLayer;
+                poVRTLayer = cpl::down_cast<OGRVRTLayer *>(poLayer);
                 break;
             default:
                 break;
