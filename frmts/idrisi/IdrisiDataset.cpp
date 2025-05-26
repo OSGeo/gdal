@@ -501,7 +501,8 @@ IdrisiDataset::~IdrisiDataset()
 
         for (int i = 0; i < nBands; i++)
         {
-            IdrisiRasterBand *poBand = (IdrisiRasterBand *)GetRasterBand(i + 1);
+            IdrisiRasterBand *poBand =
+                cpl::down_cast<IdrisiRasterBand *>(GetRasterBand(i + 1));
             poBand->ComputeStatistics(false, &dfMin, &dfMax, &dfMean, &dfStdDev,
                                       nullptr, nullptr);
             /*
@@ -658,7 +659,8 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 
     for (int i = 0; i < poDS->nBands; i++)
     {
-        IdrisiRasterBand *band = (IdrisiRasterBand *)poDS->GetRasterBand(i + 1);
+        IdrisiRasterBand *band =
+            cpl::down_cast<IdrisiRasterBand *>(poDS->GetRasterBand(i + 1));
         if (band->pabyScanLine == nullptr)
         {
             delete poDS;
@@ -1114,9 +1116,9 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
     //      Create the dataset
     // --------------------------------------------------------------------
 
-    IdrisiDataset *poDS = (IdrisiDataset *)IdrisiDataset::Create(
+    IdrisiDataset *poDS = cpl::down_cast<IdrisiDataset *>(IdrisiDataset::Create(
         pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-        poSrcDS->GetRasterCount(), eType, papszOptions);
+        poSrcDS->GetRasterCount(), eType, papszOptions));
 
     if (poDS == nullptr)
         return nullptr;
@@ -1144,7 +1146,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(i);
         IdrisiRasterBand *poDstBand =
-            (IdrisiRasterBand *)poDS->GetRasterBand(i);
+            cpl::down_cast<IdrisiRasterBand *>(poDS->GetRasterBand(i));
 
         if (poDS->nBands == 1)
         {
@@ -1422,7 +1424,7 @@ IdrisiRasterBand::~IdrisiRasterBand()
 CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                     void *pImage)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (VSIFSeekL(poGDS->fp, vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET) <
         0)
@@ -1470,7 +1472,7 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                                      void *pImage)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
 #ifdef CPL_MSB
     // Swap in input buffer if needed.
@@ -1525,7 +1527,8 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     {
         for (int i = 0; i < nBlockXSize; i++)
         {
-            float fVal = ((float *)pabyScanLine)[i];  // this is fine
+            float fVal =
+                reinterpret_cast<float *>(pabyScanLine)[i];  // this is fine
             if (!bHasNoDataValue || fVal != fNoDataValue)
             {
                 if (bFirstVal)
@@ -1548,7 +1551,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     {
         for (int i = 0; i < nBlockXSize; i++)
         {
-            float fVal = (float)((GInt16 *)pabyScanLine)[i];
+            float fVal = (float)(reinterpret_cast<GInt16 *>(pabyScanLine))[i];
             if (!bHasNoDataValue || fVal != fNoDataValue)
             {
                 if (bFirstVal)
@@ -1624,7 +1627,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (myCSLFetchNameValue(poGDS->papszRDC, rdcMIN_VALUE) == nullptr)
         return GDALPamRasterBand::GetMinimum(pbSuccess);
@@ -1647,7 +1650,7 @@ double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 
 double IdrisiRasterBand::GetMaximum(int *pbSuccess)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (myCSLFetchNameValue(poGDS->papszRDC, rdcMAX_VALUE) == nullptr)
         return GDALPamRasterBand::GetMaximum(pbSuccess);
@@ -1670,7 +1673,7 @@ double IdrisiRasterBand::GetMaximum(int *pbSuccess)
 
 double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     const char *pszFlagDefn = nullptr;
 
@@ -1708,7 +1711,7 @@ double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
 
 CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     poGDS->papszRDC = CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE,
                                       CPLSPrintf("%.7g", dfNoDataValue));
@@ -1724,7 +1727,7 @@ CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 
 GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (poGDS->nBands == 3)
     {
@@ -1751,7 +1754,7 @@ GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 
 char **IdrisiRasterBand::GetCategoryNames()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     return poGDS->papszCategories;
 }
@@ -1767,7 +1770,7 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
     if (nCatCount == 0)
         return CE_None;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     CSLDestroy(poGDS->papszCategories);
     poGDS->papszCategories = CSLDuplicate(papszCategoryNames);
@@ -1821,7 +1824,7 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
 
 GDALColorTable *IdrisiRasterBand::GetColorTable()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (poGDS->poColorTable->GetColorEntryCount() == 0)
     {
@@ -1847,7 +1850,7 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
         return CE_None;
     }
 
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     delete poGDS->poColorTable;
 
@@ -1907,7 +1910,7 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
 const char *IdrisiRasterBand::GetUnitType()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     return poGDS->pszUnitType;
 }
@@ -1918,7 +1921,7 @@ const char *IdrisiRasterBand::GetUnitType()
 
 CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (strlen(pszUnitType) == 0)
     {
@@ -1940,7 +1943,7 @@ CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 
 CPLErr IdrisiRasterBand::SetMinMax(double dfMin, double dfMax)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     fMinimum = (float)dfMin;
     fMaximum = (float)dfMax;
@@ -2205,7 +2208,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
 
 GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
+    IdrisiDataset *poGDS = cpl::down_cast<IdrisiDataset *>(poDS);
 
     if (poGDS->papszCategories == nullptr)
     {
