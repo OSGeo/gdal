@@ -656,7 +656,7 @@ CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         nCurrentBand = panBandList[nBandCount];
         // get the band
         KEARasterBand *pBand =
-            (KEARasterBand *)this->GetRasterBand(nCurrentBand);
+            cpl::down_cast<KEARasterBand *>(GetRasterBand(nCurrentBand));
         // create the overview object
         pBand->CreateOverviews(nOverviews, panOverviewList);
 
