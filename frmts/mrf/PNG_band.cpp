@@ -116,7 +116,8 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
     const buf_mgr src_ori = src;
     png_bytep *png_rowp = nullptr;
-    volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *)&png_rowp;
+    volatile png_bytep *p_volatile_png_rowp =
+        reinterpret_cast<volatile png_bytep *>(&png_rowp);
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
     png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr,

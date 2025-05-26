@@ -156,21 +156,21 @@ static void swab_buff(buf_mgr &src, const ILImage &img)
     {
         case 16:
         {
-            short int *b = (short int *)src.buffer;
+            short int *b = reinterpret_cast<short int *>(src.buffer);
             for (i = src.size / 2; i; b++, i--)
                 *b = swab16(*b);
             break;
         }
         case 32:
         {
-            int *b = (int *)src.buffer;
+            int *b = reinterpret_cast<int *>(src.buffer);
             for (i = src.size / 4; i; b++, i--)
                 *b = swab32(*b);
             break;
         }
         case 64:
         {
-            long long *b = (long long *)src.buffer;
+            long long *b = reinterpret_cast<long long *>(src.buffer);
             for (i = src.size / 8; i; b++, i--)
                 *b = swab64(*b);
             break;
@@ -186,9 +186,9 @@ static int ZPack(const buf_mgr &src, buf_mgr &dst, int flags)
     int err;
 
     memset(&stream, 0, sizeof(stream));
-    stream.next_in = (Bytef *)src.buffer;
+    stream.next_in = reinterpret_cast<Bytef *>(src.buffer);
     stream.avail_in = (uInt)src.size;
-    stream.next_out = (Bytef *)dst.buffer;
+    stream.next_out = reinterpret_cast<Bytef *>(dst.buffer);
     stream.avail_out = (uInt)dst.size;
 
     int level = std::clamp(flags & ZFLAG_LMASK, 1, 9);
@@ -230,9 +230,9 @@ static int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags)
     int err;
 
     memset(&stream, 0, sizeof(stream));
-    stream.next_in = (Bytef *)src.buffer;
+    stream.next_in = reinterpret_cast<Bytef *>(src.buffer);
     stream.avail_in = (uInt)src.size;
-    stream.next_out = (Bytef *)dst.buffer;
+    stream.next_out = reinterpret_cast<Bytef *>(dst.buffer);
     stream.avail_out = (uInt)dst.size;
 
     // 32 means autodetec gzip or zlib header, negative 15 is for raw
