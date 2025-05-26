@@ -1952,7 +1952,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       IS->ipackLen = nd5;
       IS->ipack = newipack;
    }
-   c_ipack = (uChar *) IS->ipack;
+   c_ipack = reinterpret_cast<uChar *>(IS->ipack);
    /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
    IS->ipack[nd5 - 1] = 0;
    /* Init first 2 sInt4 to sect0. */
