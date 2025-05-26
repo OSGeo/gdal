@@ -661,8 +661,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
             // Now apply to the output buffer in a type specific way.
             if (eDataType == EPT_u8)
             {
-                ((GByte *)pabyDest)[nPixelsOutput] =
-                    static_cast<GByte>(nDataValue);
+                pabyDest[nPixelsOutput] = static_cast<GByte>(nDataValue);
             }
             else if (eDataType == EPT_u1)
             {
@@ -703,33 +702,35 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
             }
             else if (eDataType == EPT_s8)
             {
-                ((GInt8 *)pabyDest)[nPixelsOutput] =
+                reinterpret_cast<GInt8 *>(pabyDest)[nPixelsOutput] =
                     static_cast<GInt8>(nDataValue);
             }
             else if (eDataType == EPT_u16)
             {
-                ((GUInt16 *)pabyDest)[nPixelsOutput] =
+                reinterpret_cast<GUInt16 *>(pabyDest)[nPixelsOutput] =
                     static_cast<GUInt16>(nDataValue);
             }
             else if (eDataType == EPT_s16)
             {
-                ((GInt16 *)pabyDest)[nPixelsOutput] =
+                reinterpret_cast<GInt16 *>(pabyDest)[nPixelsOutput] =
                     static_cast<GInt16>(nDataValue);
             }
             else if (eDataType == EPT_s32)
             {
-                ((GInt32 *)pabyDest)[nPixelsOutput] = nDataValue;
+                reinterpret_cast<GInt32 *>(pabyDest)[nPixelsOutput] =
+                    nDataValue;
             }
             else if (eDataType == EPT_u32)
             {
-                ((GUInt32 *)pabyDest)[nPixelsOutput] = nDataValue;
+                reinterpret_cast<GUInt32 *>(pabyDest)[nPixelsOutput] =
+                    nDataValue;
             }
             else if (eDataType == EPT_f32)
             {
                 // Note, floating point values are handled as if they were
                 // signed 32-bit integers (bug #1000).
-                memcpy(&(((float *)pabyDest)[nPixelsOutput]), &nDataValue,
-                       sizeof(float));
+                memcpy(&(reinterpret_cast<float *>(pabyDest)[nPixelsOutput]),
+                       &nDataValue, sizeof(float));
             }
             else
             {
@@ -876,8 +877,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
                 // Bad data can trigger this assert.  r23498
                 CPLAssert(nDataValue < 256);
 #endif
-                ((GByte *)pabyDest)[nPixelsOutput++] =
-                    static_cast<GByte>(nDataValue);
+                pabyDest[nPixelsOutput++] = static_cast<GByte>(nDataValue);
             }
         }
         else if (eDataType == EPT_u16)
@@ -888,7 +888,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
                 CPLAssert(nDataValue >= 0);
                 CPLAssert(nDataValue < 65536);
 #endif
-                ((GUInt16 *)pabyDest)[nPixelsOutput++] =
+                reinterpret_cast<GUInt16 *>(pabyDest)[nPixelsOutput++] =
                     static_cast<GUInt16>(nDataValue);
             }
         }
@@ -916,7 +916,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
                 CPLAssert(nDataValue >= -32768);
                 CPLAssert(nDataValue < 32768);
 #endif
-                ((GInt16 *)pabyDest)[nPixelsOutput++] =
+                reinterpret_cast<GInt16 *>(pabyDest)[nPixelsOutput++] =
                     static_cast<GInt16>(nDataValue);
             }
         }
@@ -929,7 +929,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
                 // Bad data can trigger this assert.  r23498
                 CPLAssert(nDataValue >= 0);
 #endif
-                ((GUInt32 *)pabyDest)[nPixelsOutput++] =
+                reinterpret_cast<GUInt32 *>(pabyDest)[nPixelsOutput++] =
                     static_cast<GUInt32>(nDataValue);
             }
         }
@@ -937,7 +937,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
         {
             for (int i = 0; i < nRepeatCount; i++)
             {
-                ((GInt32 *)pabyDest)[nPixelsOutput++] =
+                reinterpret_cast<GInt32 *>(pabyDest)[nPixelsOutput++] =
                     static_cast<GInt32>(nDataValue);
             }
         }
@@ -948,7 +948,8 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
             memcpy(&fDataValue, &nDataValue, 4);
             for (int i = 0; i < nRepeatCount; i++)
             {
-                ((float *)pabyDest)[nPixelsOutput++] = fDataValue;
+                reinterpret_cast<float *>(pabyDest)[nPixelsOutput++] =
+                    fDataValue;
             }
         }
         else if (eDataType == EPT_u1)

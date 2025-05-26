@@ -70,7 +70,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand,
 {
     if (poDT != nullptr)
     {
-        nRows = poDT->GetIntField("numRows");
+        nRows = std::max(0, poDT->GetIntField("numRows"));
 
         // Scan under table for columns.
         for (HFAEntry *poDTChild = poDT->GetChild(); poDTChild != nullptr;
@@ -199,7 +199,7 @@ HFARasterAttributeTable::~HFARasterAttributeTable()
 
 GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
 {
-    if ((GetRowCount() * GetColumnCount()) > RAT_MAX_ELEM_FOR_CLONE)
+    if (nRows > 0 && GetColumnCount() > RAT_MAX_ELEM_FOR_CLONE / nRows)
         return nullptr;
 
     GDALDefaultRasterAttributeTable *poRAT =
@@ -221,8 +221,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, panColData) != CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, panColData) != CE_None)
             {
                 CPLFree(panColData);
                 delete poRAT;
@@ -245,8 +245,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, padfColData) != CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, padfColData) != CE_None)
             {
                 CPLFree(padfColData);
                 delete poRAT;
@@ -269,9 +269,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, papszColData) !=
-                CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, papszColData) != CE_None)
             {
                 CPLFree(papszColData);
                 delete poRAT;
@@ -373,13 +372,14 @@ const char *HFARasterAttributeTable::GetValueAsString(int iRow,
 {
     // Get ValuesIO do do the work.
     char *apszStrList[1] = {nullptr};
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, apszStrList) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, apszStrList) != CE_None)
     {
         return "";
     }
 
-    ((HFARasterAttributeTable *)this)->osWorkingResult = apszStrList[0];
+    const_cast<HFARasterAttributeTable *>(this)->osWorkingResult =
+        apszStrList[0];
     CPLFree(apszStrList[0]);
 
     return osWorkingResult;
@@ -393,8 +393,8 @@ int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 {
     // Get ValuesIO do do the work.
     int nValue = 0;
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, &nValue) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &nValue) != CE_None)
     {
         return 0;
     }
@@ -410,8 +410,8 @@ double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 {
     // Get ValuesIO do do the work.
     double dfValue = 0.0;
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, &dfValue) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &dfValue) != CE_None)
     {
         return 0.0;
     }
@@ -2250,8 +2250,8 @@ void HFARasterBand::EstablishOverviews()
 
         for (int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++)
         {
-            papoOverviewBands[iOvIndex] =
-                new HFARasterBand((HFADataset *)poDS, nBand, iOvIndex);
+            papoOverviewBands[iOvIndex] = new HFARasterBand(
+                cpl::down_cast<HFADataset *>(poDS), nBand, iOvIndex);
             if (papoOverviewBands[iOvIndex]->GetXSize() == 0)
             {
                 delete papoOverviewBands[iOvIndex];
@@ -2716,8 +2716,8 @@ CPLErr HFARasterBand::BuildOverviews(const char *pszResampling,
             nOverviews = iResult + 1;
             papoOverviewBands = static_cast<HFARasterBand **>(
                 CPLRealloc(papoOverviewBands, sizeof(void *) * nOverviews));
-            papoOverviewBands[iResult] =
-                new HFARasterBand((HFADataset *)poDS, nBand, iResult);
+            papoOverviewBands[iResult] = new HFARasterBand(
+                cpl::down_cast<HFADataset *>(poDS), nBand, iResult);
 
             papoOvBands[iOverview] = papoOverviewBands[iResult];
         }
@@ -5011,9 +5011,9 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    HFADataset *poDS = (HFADataset *)Create(
-        pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-        nBandCount, eType, papszModOptions);
+    HFADataset *poDS = cpl::down_cast<HFADataset *>(
+        Create(pszFilename, poSrcDS->GetRasterXSize(),
+               poSrcDS->GetRasterYSize(), nBandCount, eType, papszModOptions));
 
     CSLDestroy(papszModOptions);
 
