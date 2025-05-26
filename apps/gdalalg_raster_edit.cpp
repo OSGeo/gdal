@@ -14,6 +14,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
+#include "ogrsf_frmts.h"
 
 //! @cond Doxygen_Suppress
 
@@ -22,14 +23,26 @@
 #endif
 
 /************************************************************************/
+/*                          GetGCPFilename()                            */
+/************************************************************************/
+
+static std::string GetGCPFilename(const std::vector<std::string> &gcps)
+{
+    if (gcps.size() == 1 && !gcps[0].empty() && gcps[0][0] == '@')
+    {
+        return gcps[0].substr(1);
+    }
+    return std::string();
+}
+
+/************************************************************************/
 /*          GDALRasterEditAlgorithm::GDALRasterEditAlgorithm()          */
 /************************************************************************/
 
 GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
-          // Avoid automatic addition of input/output arguments
-          /*standaloneStep = */ false)
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
     if (standaloneStep)
     {
@@ -45,12 +58,11 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
                &m_readOnly)
             .AddHiddenAlias("ro")
             .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
-
-        m_standaloneStep = true;
     }
 
     AddArg("crs", 0, _("Override CRS (without reprojection)"), &m_overrideCrs)
         .AddHiddenAlias("a_srs")
+        .AddHiddenAlias("srs")
         .SetIsCRSArg(/*noneAllowed=*/true);
 
     AddBBOXArg(&m_bbox);
@@ -71,6 +83,41 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
            &m_unsetMetadata)
         .SetMetaVar("<KEY>");
 
+    AddArg("gcp", 0,
+           _("Add ground control point, formatted as "
+             "pixel,line,easting,northing[,elevation], or @filename"),
+           &m_gcps)
+        .SetPackedValuesAllowed(false)
+        .AddValidationAction(
+            [this]()
+            {
+                if (GetGCPFilename(m_gcps).empty())
+                {
+                    for (const std::string &gcp : m_gcps)
+                    {
+                        const CPLStringList aosTokens(
+                            CSLTokenizeString2(gcp.c_str(), ",", 0));
+                        if (aosTokens.size() != 4 && aosTokens.size() != 5)
+                        {
+                            ReportError(CE_Failure, CPLE_IllegalArg,
+                                        "Bad format for %s", gcp.c_str());
+                            return false;
+                        }
+                        for (int i = 0; i < aosTokens.size(); ++i)
+                        {
+                            if (CPLGetValueType(aosTokens[i]) ==
+                                CPL_VALUE_STRING)
+                            {
+                                ReportError(CE_Failure, CPLE_IllegalArg,
+                                            "Bad format for %s", gcp.c_str());
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            });
+
     if (standaloneStep)
     {
         AddArg("stats", 0, _("Compute statistics, using all pixels"), &m_stats)
@@ -84,16 +131,105 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALRasterEditAlgorithm::RunImpl()                    */
+/*           GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm()        */
 /************************************************************************/
 
-bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                      void *pProgressData)
+GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm() = default;
+
+/************************************************************************/
+/*                              ParseGCPs()                             */
+/************************************************************************/
+
+std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
 {
-    if (m_standaloneStep)
+    std::vector<gdal::GCP> ret;
+    const std::string osGCPFilename = GetGCPFilename(m_gcps);
+    if (!osGCPFilename.empty())
     {
-        auto poDS = m_dataset.GetDatasetRef();
-        CPLAssert(poDS);
+        auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            osGCPFilename.c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR));
+        if (!poDS)
+            return ret;
+        if (poDS->GetLayerCount() != 1)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "GCPs can only be specified for single-layer datasets");
+            return ret;
+        }
+        auto poLayer = poDS->GetLayer(0);
+        const auto poLayerDefn = poLayer->GetLayerDefn();
+        int nIdIdx = -1, nInfoIdx = -1, nColIdx = -1, nLineIdx = -1, nXIdx = -1,
+            nYIdx = -1, nZIdx = -1;
+
+        const struct
+        {
+            int &idx;
+            const char *name;
+            bool required;
+        } aFields[] = {
+            {nIdIdx, "id", false},     {nInfoIdx, "info", false},
+            {nColIdx, "column", true}, {nLineIdx, "line", true},
+            {nXIdx, "x", true},        {nYIdx, "y", true},
+            {nZIdx, "z", false},
+        };
+
+        for (auto &field : aFields)
+        {
+            field.idx = poLayerDefn->GetFieldIndex(field.name);
+            if (field.idx < 0 && field.required)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Field '%s' cannot be found in '%s'", field.name,
+                            poDS->GetDescription());
+                return ret;
+            }
+        }
+        for (auto &&poFeature : poLayer)
+        {
+            gdal::GCP gcp;
+            if (nIdIdx >= 0)
+                gcp.SetId(poFeature->GetFieldAsString(nIdIdx));
+            if (nInfoIdx >= 0)
+                gcp.SetInfo(poFeature->GetFieldAsString(nInfoIdx));
+            gcp.Pixel() = poFeature->GetFieldAsDouble(nColIdx);
+            gcp.Line() = poFeature->GetFieldAsDouble(nLineIdx);
+            gcp.X() = poFeature->GetFieldAsDouble(nXIdx);
+            gcp.Y() = poFeature->GetFieldAsDouble(nYIdx);
+            if (nZIdx >= 0 && poFeature->IsFieldSetAndNotNull(nZIdx))
+                gcp.Z() = poFeature->GetFieldAsDouble(nZIdx);
+            ret.push_back(std::move(gcp));
+        }
+    }
+    else
+    {
+        for (const std::string &gcpStr : m_gcps)
+        {
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(gcpStr.c_str(), ",", 0));
+            // Verified by validation action
+            CPLAssert(aosTokens.size() == 4 || aosTokens.size() == 5);
+            gdal::GCP gcp;
+            gcp.Pixel() = CPLAtof(aosTokens[0]);
+            gcp.Line() = CPLAtof(aosTokens[1]);
+            gcp.X() = CPLAtof(aosTokens[2]);
+            gcp.Y() = CPLAtof(aosTokens[3]);
+            if (aosTokens.size() == 5)
+                gcp.Z() = CPLAtof(aosTokens[4]);
+            ret.push_back(std::move(gcp));
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                GDALRasterEditAlgorithm::RunStep()                    */
+/************************************************************************/
+
+bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+{
+    GDALDataset *poDS = m_dataset.GetDatasetRef();
+    if (poDS)
+    {
         if (poDS->GetAccess() != GA_Update && !m_readOnly)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
@@ -101,7 +237,31 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         "--auxiliary is set");
             return false;
         }
+    }
+    else
+    {
+        CPLAssert(m_inputDataset.GetDatasetRef());
+        CPLAssert(m_outputDataset.GetName().empty());
+        CPLAssert(!m_outputDataset.GetDatasetRef());
 
+        CPLStringList aosOptions;
+        aosOptions.push_back("-of");
+        aosOptions.push_back("VRT");
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+        GDALDatasetH hSrcDS =
+            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        auto poRetDS = GDALDataset::FromHandle(
+            GDALTranslate("", hSrcDS, psOptions, nullptr));
+        GDALTranslateOptionsFree(psOptions);
+        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        poDS = m_outputDataset.GetDatasetRef();
+    }
+
+    bool ret = poDS != nullptr;
+
+    if (poDS)
+    {
         if (m_overrideCrs == "null" || m_overrideCrs == "none")
         {
             if (poDS->SetSpatialRef(nullptr) != CE_None)
@@ -111,7 +271,7 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 return false;
             }
         }
-        else if (!m_overrideCrs.empty())
+        else if (!m_overrideCrs.empty() && m_gcps.empty())
         {
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput(m_overrideCrs.c_str());
@@ -181,19 +341,39 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
+        if (!m_gcps.empty())
+        {
+            const auto gcps = ParseGCPs();
+            if (gcps.empty())
+                return false;  // error already emitted by ParseGCPs()
+
+            OGRSpatialReference oSRS;
+            if (!m_overrideCrs.empty())
+            {
+                oSRS.SetFromUserInput(m_overrideCrs.c_str());
+                oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+
+            if (poDS->SetGCPs(static_cast<int>(gcps.size()), gcps[0].c_ptr(),
+                              oSRS.IsEmpty() ? nullptr : &oSRS) != CE_None)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined, "Setting GCPs failed");
+                return false;
+            }
+        }
+
         const int nBands = poDS->GetRasterCount();
         int nCurProgress = 0;
         const double dfTotalProgress =
             ((m_stats || m_approxStats) ? nBands : 0) + (m_hist ? nBands : 0);
-        bool ret = true;
         if (m_stats || m_approxStats)
         {
             for (int i = 0; (i < nBands) && ret; ++i)
             {
                 void *pScaledProgress = GDALCreateScaledProgress(
                     nCurProgress / dfTotalProgress,
-                    (nCurProgress + 1) / dfTotalProgress, pfnProgress,
-                    pProgressData);
+                    (nCurProgress + 1) / dfTotalProgress, ctxt.m_pfnProgress,
+                    ctxt.m_pProgressData);
                 ++nCurProgress;
                 double dfMin = 0.0;
                 double dfMax = 0.0;
@@ -201,18 +381,20 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 double dfStdDev = 0.0;
                 ret = poDS->GetRasterBand(i + 1)->ComputeStatistics(
                           m_approxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                          GDALScaledProgress, pScaledProgress) == CE_None;
+                          pScaledProgress ? GDALScaledProgress : nullptr,
+                          pScaledProgress) == CE_None;
                 GDALDestroyScaledProgress(pScaledProgress);
             }
         }
+
         if (m_hist)
         {
             for (int i = 0; (i < nBands) && ret; ++i)
             {
                 void *pScaledProgress = GDALCreateScaledProgress(
                     nCurProgress / dfTotalProgress,
-                    (nCurProgress + 1) / dfTotalProgress, pfnProgress,
-                    pProgressData);
+                    (nCurProgress + 1) / dfTotalProgress, ctxt.m_pfnProgress,
+                    ctxt.m_pProgressData);
                 ++nCurProgress;
                 double dfMin = 0.0;
                 double dfMax = 0.0;
@@ -220,7 +402,8 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 GUIntBig *panHistogram = nullptr;
                 ret = poDS->GetRasterBand(i + 1)->GetDefaultHistogram(
                           &dfMin, &dfMax, &nBucketCount, &panHistogram, TRUE,
-                          GDALScaledProgress, pScaledProgress) == CE_None;
+                          pScaledProgress ? GDALScaledProgress : nullptr,
+                          pScaledProgress) == CE_None;
                 if (ret)
                 {
                     ret = poDS->GetRasterBand(i + 1)->SetDefaultHistogram(
@@ -231,75 +414,9 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 GDALDestroyScaledProgress(pScaledProgress);
             }
         }
-
-        return ret;
-    }
-    else
-    {
-        GDALRasterPipelineStepRunContext ctxt;
-        ctxt.m_pfnProgress = pfnProgress;
-        ctxt.m_pProgressData = pProgressData;
-        return RunStep(ctxt);
-    }
-}
-
-/************************************************************************/
-/*                GDALRasterEditAlgorithm::RunStep()                    */
-/************************************************************************/
-
-bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
-{
-    CPLAssert(m_inputDataset.GetDatasetRef());
-    CPLAssert(m_outputDataset.GetName().empty());
-    CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    CPLStringList aosOptions;
-    aosOptions.AddString("-of");
-    aosOptions.AddString("VRT");
-    if (!m_overrideCrs.empty())
-    {
-        aosOptions.AddString("-a_srs");
-        aosOptions.AddString(m_overrideCrs.c_str());
-    }
-    if (!m_bbox.empty())
-    {
-        aosOptions.AddString("-a_ullr");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[0]));  // upper-left X
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));  // upper-left Y
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));  // lower-right X
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));  // lower-right Y
     }
 
-    for (const auto &val : m_metadata)
-    {
-        aosOptions.AddString("-mo");
-        aosOptions.AddString(val.c_str());
-    }
-
-    for (const std::string &key : m_unsetMetadata)
-    {
-        aosOptions.AddString("-mo");
-        aosOptions.AddString((key + "=").c_str());
-    }
-
-    if (!m_nodata.empty())
-    {
-        aosOptions.AddString("-a_nodata");
-        aosOptions.AddString(m_nodata);
-    }
-
-    GDALTranslateOptions *psOptions =
-        GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-    auto poRetDS =
-        GDALDataset::FromHandle(GDALTranslate("", hSrcDS, psOptions, nullptr));
-    GDALTranslateOptionsFree(psOptions);
-    const bool ok = poRetDS != nullptr;
-    if (ok)
-        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
-
-    return ok;
+    return poDS != nullptr;
 }
 
 //! @endcond
