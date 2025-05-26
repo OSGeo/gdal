@@ -110,7 +110,7 @@ HF2RasterBand::~HF2RasterBand()
 CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
 
 {
-    HF2Dataset *poGDS = (HF2Dataset *)poDS;
+    HF2Dataset *poGDS = cpl::down_cast<HF2Dataset *>(poDS);
 
     const int nXBlocks = DIV_ROUND_UP(nRasterXSize, poGDS->nTileSize);
 
