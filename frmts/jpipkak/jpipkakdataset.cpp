@@ -1483,7 +1483,7 @@ JPIPKAKAsyncReader::~JPIPKAKAsyncReader()
 
 void JPIPKAKAsyncReader::Start()
 {
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     // stop the currently running thread
     // start making requests to the server to the server
@@ -1499,12 +1499,11 @@ void JPIPKAKAsyncReader::Start()
     else
     {
         // Ensure we are working against full res
-        ((JPIPKAKDataset *)poDS)
-            ->poCodestream->apply_input_restrictions(0, 0, 0, 0, nullptr);
+        poJDS->poCodestream->apply_input_restrictions(0, 0, 0, 0, nullptr);
 
         // calculate the url the worker function is going to retrieve
         // calculate the kakadu adjust image size
-        channels.configure(*(((JPIPKAKDataset *)poDS)->poCodestream));
+        channels.configure(*(poJDS->poCodestream));
 
         // find current canvas width and height in the cache and check we don't
         // exceed this in our process request
@@ -1513,10 +1512,8 @@ void JPIPKAKAsyncReader::Start()
         ref_expansion.x = 1;
         ref_expansion.y = 1;
 
-        view_dims = ((JPIPKAKDataset *)poDS)
-                        ->poDecompressor->get_rendered_image_dims(
-                            *((JPIPKAKDataset *)poDS)->poCodestream, &channels,
-                            -1, nLevel, ref_expansion);
+        view_dims = poJDS->poDecompressor->get_rendered_image_dims(
+            *(poJDS->poCodestream), &channels, -1, nLevel, ref_expansion);
 
         kdu_coords *view_siz = view_dims.access_size();
 
@@ -1564,9 +1561,9 @@ void JPIPKAKAsyncReader::Start()
 
         jpipUrl.Printf("%s&type=jpp-stream&roff=%i,%i&rsiz=%i,%i&fsiz=%i,%i,"
                        "closest&quality=%i&comps=%s",
-                       ((JPIPKAKDataset *)poDS)->osRequestUrl.c_str(),
-                       rr_win.pos.x, rr_win.pos.y, rr_win.size.x, rr_win.size.y,
-                       fx, fy, nQualityLayers, comps.c_str());
+                       poJDS->osRequestUrl.c_str(), rr_win.pos.x, rr_win.pos.y,
+                       rr_win.size.x, rr_win.size.y, fx, fy, nQualityLayers,
+                       comps.c_str());
 
         JPIPRequest *pRequest = new JPIPRequest();
         pRequest->bPriority = bHighPriority;
@@ -1592,7 +1589,7 @@ void JPIPKAKAsyncReader::Start()
 /************************************************************************/
 void JPIPKAKAsyncReader::Stop()
 {
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     bComplete = 1;
     if (poJDS->pGlobalMutex)
@@ -1639,7 +1636,7 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                                                              int *pnybufsize)
 {
     GDALAsyncStatusType result = GARIO_ERROR;
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     long nSize = 0;
     // take a snapshot of the volatile variables
@@ -1861,9 +1858,9 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                 else if (nBytesPerPixel == 2)
                 {
                     bIsDecompressing = poJDS->poDecompressor->process(
-                        (kdu_uint16 **)&(channel_bufs[0]), false, pixel_gap,
-                        origin, row_gap, 1000000, 0, incomplete_region,
-                        region_pass, nPrecision, false);
+                        reinterpret_cast<kdu_uint16 **>(&(channel_bufs[0])),
+                        false, pixel_gap, origin, row_gap, 1000000, 0,
+                        incomplete_region, region_pass, nPrecision, false);
                 }
 
                 CPLDebug("JPIPKAK",
@@ -1975,7 +1972,7 @@ static void JPIPWorkerFunc(void *req)
 
     JPIPRequest *pRequest = (JPIPRequest *)req;
     JPIPKAKDataset *poJDS =
-        (JPIPKAKDataset *)(pRequest->poARIO->GetGDALDataset());
+        cpl::down_cast<JPIPKAKDataset *>(pRequest->poARIO->GetGDALDataset());
 
     int bPriority = pRequest->bPriority;
 
@@ -2059,7 +2056,7 @@ static void JPIPWorkerFunc(void *req)
 
         int bError;
         int bComplete =
-            ((JPIPKAKDataset *)pRequest->poARIO->GetGDALDataset())
+            cpl::down_cast<JPIPKAKDataset *>(pRequest->poARIO->GetGDALDataset())
                 ->ReadFromInput(psResult->pabyData, psResult->nDataLen, bError);
         if (bPriority)
             poJDS->nHighThreadByteCount += psResult->nDataLen;
