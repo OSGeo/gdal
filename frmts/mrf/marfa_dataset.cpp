@@ -65,6 +65,7 @@
 #include <assert.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 #if defined(ZSTD_SUPPORT)
 #include <zstd.h>
@@ -399,7 +400,9 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         }
 
         // First pass, count the pixels to be processed, mark invalid levels
-        double dfTotalPixels = 0.0;
+        // Smallest positive value to avoid Coverity Scan complaining about
+        // division by zero
+        double dfTotalPixels = std::numeric_limits<double>::min();
         double dfPixels = double(nRasterXSize) * nRasterYSize;
         for (int i = 0; i < nOverviews; i++)
         {
@@ -461,22 +464,20 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             else
             {
                 // Use the GDAL method
-                std::vector<GDALRasterBand *> papoBandList(nBands);
-                std::vector<GDALRasterBand *> papoOverviewBandList(nBands);
-                std::vector<GDALRasterBand **> papapoOverviewBands(nBands);
+                std::vector<GDALRasterBand *> apoSrcBandList(nBands);
+                std::vector<std::vector<GDALRasterBand *>> aapoOverviewBandList(
+                    nBands);
                 for (int iBand = 0; iBand < nBands; iBand++)
                 {
                     // This is the base level
-                    papoBandList[iBand] = GetRasterBand(panBandList[iBand]);
+                    apoSrcBandList[iBand] = GetRasterBand(panBandList[iBand]);
                     // Set up the destination
-                    papoOverviewBandList[iBand] =
-                        papoBandList[iBand]->GetOverview(srclevel);
+                    aapoOverviewBandList[iBand] = std::vector<GDALRasterBand *>{
+                        apoSrcBandList[iBand]->GetOverview(srclevel)};
                     // Use the previous level as the source
                     if (srclevel > 0)
-                        papoBandList[iBand] =
-                            papoBandList[iBand]->GetOverview(srclevel - 1);
-                    // Hook it up, via triple pointer level
-                    papapoOverviewBands[iBand] = &(papoOverviewBandList[iBand]);
+                        apoSrcBandList[iBand] =
+                            apoSrcBandList[iBand]->GetOverview(srclevel - 1);
                 }
 
                 auto pScaledProgress = GDALCreateScaledProgress(
@@ -484,9 +485,8 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                     (dfPixels + dfLevelPixels) / dfTotalPixels, pfnProgress,
                     pProgressData);
                 eErr = GDALRegenerateOverviewsMultiBand(
-                    nBands, papoBandList.data(), 1, papapoOverviewBands.data(),
-                    pszResampling, GDALScaledProgress, pScaledProgress,
-                    papszOptions);
+                    apoSrcBandList, aapoOverviewBandList, pszResampling,
+                    GDALScaledProgress, pScaledProgress, papszOptions);
                 GDALDestroyScaledProgress(pScaledProgress);
             }
             dfPixels += dfLevelPixels;
@@ -494,6 +494,8 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             if (eErr == CE_Failure)
                 throw eErr;
         }
+
+        pfnProgress(1.0, "", pProgressData);
     }
     catch (const CPLErr &e)
     {
