@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <cinttypes>
+
 #include "tiff_common.h"
 
 // Use code from internal libtiff for LZW, PackBits and LERC codecs
