@@ -173,8 +173,9 @@ class CPL_DLL GDALRasterAttributeTable
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
      * @param pszValue the value to assign.
+     * @return (since 3.12) CE_None in case of success, error code otherwise
      */
-    virtual void SetValue(int iRow, int iField, const char *pszValue) = 0;
+    virtual CPLErr SetValue(int iRow, int iField, const char *pszValue) = 0;
 
     /**
      * \brief Set field value from integer.
@@ -188,8 +189,9 @@ class CPL_DLL GDALRasterAttributeTable
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
      * @param nValue the value to assign.
+     * @return (since 3.12) CE_None in case of success, error code otherwise
      */
-    virtual void SetValue(int iRow, int iField, int nValue) = 0;
+    virtual CPLErr SetValue(int iRow, int iField, int nValue) = 0;
 
     /**
      * \brief Set field value from double.
@@ -203,8 +205,9 @@ class CPL_DLL GDALRasterAttributeTable
      * @param iRow row to fetch (zero based).
      * @param iField column to fetch (zero based).
      * @param dfValue the value to assign.
+     * @return (since 3.12) CE_None in case of success, error code otherwise
      */
-    virtual void SetValue(int iRow, int iField, double dfValue) = 0;
+    virtual CPLErr SetValue(int iRow, int iField, double dfValue) = 0;
 
     /**
      * \brief Determine whether changes made to this RAT are reflected directly
@@ -365,9 +368,9 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     int GetValueAsInt(int iRow, int iField) const override;
     double GetValueAsDouble(int iRow, int iField) const override;
 
-    void SetValue(int iRow, int iField, const char *pszValue) override;
-    void SetValue(int iRow, int iField, double dfValue) override;
-    void SetValue(int iRow, int iField, int nValue) override;
+    CPLErr SetValue(int iRow, int iField, const char *pszValue) override;
+    CPLErr SetValue(int iRow, int iField, double dfValue) override;
+    CPLErr SetValue(int iRow, int iField, int nValue) override;
 
     int ChangesAreWrittenToFile() override;
     void SetRowCount(int iCount) override;
