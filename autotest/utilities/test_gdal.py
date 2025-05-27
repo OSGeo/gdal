@@ -380,15 +380,23 @@ def test_gdal_completion_dst_crs(gdal_path):
 
 def test_gdal_completion_config(gdal_path):
 
-    out = gdaltest.runexternal(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} completion gdal raster convert --config"
-    ).split(" ")
+    )
     assert "CPL_DEBUG=" in out
+    assert err == ""
 
-    out = gdaltest.runexternal(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} completion gdal raster convert --config="
-    ).split(" ")
+    )
     assert "CPL_DEBUG=" in out
+    assert err == ""
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} completion gdal raster convert --config CPL_"
+    )
+    assert "CPL_DEBUG=" in out
+    assert err == ""
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster convert --config FOO="
