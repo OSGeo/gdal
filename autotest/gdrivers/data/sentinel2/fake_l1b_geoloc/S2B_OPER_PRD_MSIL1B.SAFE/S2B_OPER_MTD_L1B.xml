@@ -1,0 +1,240 @@
+<n1:Level-1B_User_Product xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/User_Product_Level-1B.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pdgs.s2.esa.int/PSD/User_Product_Level-1B.xsd S2_User_Product_Level-1B_Metadata.xsd">
+    <n1:General_Info>
+        <Product_Info>
+            <PRODUCT_START_TIME>2015-12-31T23:59:59.999Z</PRODUCT_START_TIME>
+            <PRODUCT_STOP_TIME>2015-12-31T23:59:59.999Z</PRODUCT_STOP_TIME>
+            <PRODUCT_URI/>
+            <PROCESSING_LEVEL>Level-1B</PROCESSING_LEVEL>
+            <PRODUCT_TYPE>S2MSI1B</PRODUCT_TYPE>
+            <PROCESSING_BASELINE>01.03</PROCESSING_BASELINE>
+            <GENERATION_TIME>2015-12-31T23:59:59.999Z</GENERATION_TIME>
+            <PREVIEW_IMAGE_URL>http://example.com</PREVIEW_IMAGE_URL>
+            <PREVIEW_GEO_INFO>BrowseImageFootprint</PREVIEW_GEO_INFO>
+            <Datatake datatakeIdentifier="GS2B_20151231T235959_000123_N01.03">
+      <SPACECRAFT_NAME>Sentinel-2B</SPACECRAFT_NAME>
+      <DATATAKE_TYPE>INS-NOBS</DATATAKE_TYPE>
+      <DATATAKE_SENSING_START>2015-12-31T23:59:59.999Z</DATATAKE_SENSING_START>
+      <SENSING_ORBIT_NUMBER>22</SENSING_ORBIT_NUMBER>
+      <SENSING_ORBIT_DIRECTION>DESCENDING</SENSING_ORBIT_DIRECTION>
+    </Datatake>
+<Query_Options>
+<Area_Of_Interest>
+                    <Bbox>
+                        <LOWER_CORNER>-90.0 -180.0</LOWER_CORNER>
+                        <UPPER_CORNER>90.0 180.0</UPPER_CORNER>
+                    </Bbox>
+                </Area_Of_Interest>
+                <FULL_SWATH_DATATAKE>false</FULL_SWATH_DATATAKE>
+<PREVIEW_IMAGE>false</PREVIEW_IMAGE>
+<Band_List>
+<BAND_NAME>B1</BAND_NAME>
+<BAND_NAME>B2</BAND_NAME>
+<BAND_NAME>B3</BAND_NAME>
+<BAND_NAME>B4</BAND_NAME>
+<BAND_NAME>B5</BAND_NAME>
+<BAND_NAME>B6</BAND_NAME>
+<BAND_NAME>B7</BAND_NAME>
+<BAND_NAME>B8</BAND_NAME>
+<BAND_NAME>B9</BAND_NAME>
+<BAND_NAME>B10</BAND_NAME>
+<BAND_NAME>B11</BAND_NAME>
+<BAND_NAME>B12</BAND_NAME>
+<BAND_NAME>B8A</BAND_NAME>
+</Band_List>
+<METADATA_LEVEL>Standard</METADATA_LEVEL>
+<Aux_List productLevel="Level-1B">
+<aux>
+                        <GIPP>YES</GIPP>
+                    </aux>
+<aux>
+                        <IERS>YES</IERS>
+                    </aux>
+</Aux_List>
+<PRODUCT_FORMAT>SAFE</PRODUCT_FORMAT>
+<AGGREGATION_FLAG>false</AGGREGATION_FLAG>
+</Query_Options>
+<Product_Organisation>
+                <Granule_List>
+                    <Granules datastripIdentifier="S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03" granuleIdentifier="S2B_OPER_MSI_L1B_N01.03" imageFormat="JPEG2000">
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B01</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B06</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B10</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B08</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B07</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B09</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B05</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B12</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B11</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B04</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B03</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B02</IMAGE_ID>
+                        <IMAGE_ID>S2B_OPER_MSI_L1B_B8A</IMAGE_ID>
+                    </Granules>
+                </Granule_List>
+</Product_Organisation>
+        </Product_Info>
+        <Product_Image_Characteristics>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>0</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>SATURATED</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>65535</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Image_Display_Order>
+                <RED_CHANNEL>3</RED_CHANNEL>
+                <GREEN_CHANNEL>2</GREEN_CHANNEL>
+                <BLUE_CHANNEL>1</BLUE_CHANNEL>
+            </Image_Display_Order>
+            <Product_Image_Size>
+                <Dimensions_List>
+                    <Dimensions bandId="0">
+                        <Detector_Dimensions detectorId="01">
+                            <NCOLS>425</NCOLS>
+                            <NROWS>1920</NROWS>
+                        </Detector_Dimensions>
+                    </Dimensions>
+                    <Dimensions bandId="1">
+                        <Detector_Dimensions detectorId="01">
+                            <NCOLS>2552</NCOLS>
+                            <NROWS>11520</NROWS>
+                        </Detector_Dimensions>
+                    </Dimensions>
+                    <Dimensions bandId="4">
+                        <Detector_Dimensions detectorId="01">
+                            <NCOLS>1276</NCOLS>
+                            <NROWS>5760</NROWS>
+                        </Detector_Dimensions>
+                    </Dimensions>
+                </Dimensions_List>
+            </Product_Image_Size>
+            <PHYSICAL_GAINS bandId="0">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="1">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="2">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="3">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="4">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="5">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="6">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="7">6</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="8">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="9">8</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="10">61</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="11">37</PHYSICAL_GAINS>
+            <Restoration_Parameters processed="false">
+        <Restored_Band_List>
+          <Restored_Band bandId="0">
+            <RESTORATION_SCENARIO>NONE</RESTORATION_SCENARIO>
+            <Levelling_Values>
+              <XMIN>0</XMIN>
+              <XMAX>4095</XMAX>
+            </Levelling_Values>
+          </Restored_Band>
+        </Restored_Band_List>
+      </Restoration_Parameters>
+            <Equalization_Parameters processed="true">
+        <Equalized_Band_List>
+          <Equalized_Band bandId="0">
+            <OFFSET_PROC>true</OFFSET_PROC>
+            <DARK_SIGNAL_NON_UNIFORMITY_PROC>true</DARK_SIGNAL_NON_UNIFORMITY_PROC>
+          </Equalized_Band>
+        </Equalized_Band_List>
+      </Equalization_Parameters>
+        </Product_Image_Characteristics>
+    </n1:General_Info>
+    <n1:Geometric_Info>
+        <Product_Footprint>
+            <Product_Footprint>
+                <Global_Footprint>
+                    <EXT_POS_LIST> 46 11 45 11 45 13 46 13 46 11</EXT_POS_LIST>
+                </Global_Footprint>
+            </Product_Footprint>
+            <RASTER_CS_TYPE>POINT</RASTER_CS_TYPE>
+            <PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+        </Product_Footprint>
+        <Coordinate_Reference_System>
+            <GEO_TABLES version="1">EPSG</GEO_TABLES>
+            <Horizontal_CS>
+                <HORIZONTAL_CS_TYPE>GEOGRAPHIC</HORIZONTAL_CS_TYPE>
+                <HORIZONTAL_CS_NAME>XX</HORIZONTAL_CS_NAME>
+                <HORIZONTAL_CS_CODE>EPSG:1495</HORIZONTAL_CS_CODE>
+            </Horizontal_CS>
+        </Coordinate_Reference_System>
+
+<Geometric_Header_List>
+      <Geometric_Header geometry="QL">
+        <GPS_TIME>2015-12-31T23:59:59.999</GPS_TIME>
+        <LINE_INDEX>0</LINE_INDEX>
+        <Pointing_Angles>
+          <Satellite_Reference>
+            <ROLL unit="deg">0</ROLL>
+            <PITCH unit="deg">0</PITCH>
+            <YAW unit="deg">0</YAW>
+          </Satellite_Reference>
+          <Image_Reference>
+            <PSI_X unit="deg">0</PSI_X>
+            <PSI_Y unit="deg">0</PSI_Y>
+          </Image_Reference>
+        </Pointing_Angles>
+        <Located_Geometric_Header pos="begin">
+          <ORIENTATION unit="deg">0</ORIENTATION>
+          <Incidence_Angles>
+            <ZENITH_ANGLE unit="deg">0</ZENITH_ANGLE>
+            <AZIMUTH_ANGLE unit="deg">0</AZIMUTH_ANGLE>
+          </Incidence_Angles>
+          <Solar_Angles>
+            <ZENITH_ANGLE unit="deg">0</ZENITH_ANGLE>
+            <AZIMUTH_ANGLE unit="deg">0</AZIMUTH_ANGLE>
+          </Solar_Angles>
+          <Pixel_Size>
+            <ALONG_TRACK unit="m">10</ALONG_TRACK>
+            <ACROSS_TRACK unit="m">10</ACROSS_TRACK>
+          </Pixel_Size>
+        </Located_Geometric_Header>
+
+        <Located_Geometric_Header pos="end">
+          <ORIENTATION unit="deg">0</ORIENTATION>
+          <Incidence_Angles>
+            <ZENITH_ANGLE unit="deg">0</ZENITH_ANGLE>
+            <AZIMUTH_ANGLE unit="deg">0</AZIMUTH_ANGLE>
+          </Incidence_Angles>
+          <Solar_Angles>
+            <ZENITH_ANGLE unit="deg">0</ZENITH_ANGLE>
+            <AZIMUTH_ANGLE unit="deg">0</AZIMUTH_ANGLE>
+          </Solar_Angles>
+          <Pixel_Size>
+            <ALONG_TRACK unit="m">10</ALONG_TRACK>
+            <ACROSS_TRACK unit="m">10</ACROSS_TRACK>
+          </Pixel_Size>
+        </Located_Geometric_Header>
+      </Geometric_Header>
+
+    </Geometric_Header_List>
+
+    </n1:Geometric_Info>
+    <n1:Auxiliary_Data_Info>
+        <GIPP_List_Ref>
+      <GIPP_FILENAME type="GIP_BLINDP" version="0003">S2B_OPER_GIP_BLINDP_MPC__20150605T094736_V20150622T000000_21000101T000000_B00</GIPP_FILENAME>
+    </GIPP_List_Ref>
+        <PRODUCTION_DEM_TYPE>S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000</PRODUCTION_DEM_TYPE>
+        <IERS_BULLETIN_FILENAME>S2__OPER_AUX_UT1UTC_PDMC_20151001T000000_V20151002T000000_20161001T000000</IERS_BULLETIN_FILENAME>
+        <GRI_FILENAME>S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000</GRI_FILENAME>
+    </n1:Auxiliary_Data_Info>
+    <n1:Quality_Indicators_Info>
+        <Cloud_Coverage_Assessment>0.0</Cloud_Coverage_Assessment>
+        <Technical_Quality_Assessment>
+            <DEGRADED_ANC_DATA_PERCENTAGE>0</DEGRADED_ANC_DATA_PERCENTAGE>
+            <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+        </Technical_Quality_Assessment>
+        <Quality_Control_Checks>
+            <Quality_Inspections>
+                <SENSOR_QUALITY_FLAG>PASSED</SENSOR_QUALITY_FLAG>
+                <GEOMETRIC_QUALITY_FLAG>PASSED</GEOMETRIC_QUALITY_FLAG>
+                <GENERAL_QUALITY_FLAG>PASSED</GENERAL_QUALITY_FLAG>
+                <FORMAT_CORRECTNESS_FLAG>PASSED</FORMAT_CORRECTNESS_FLAG>
+                <RADIOMETRIC_QUALITY_FLAG>PASSED</RADIOMETRIC_QUALITY_FLAG>
+            </Quality_Inspections>
+            <Failed_Inspections/>
+        </Quality_Control_Checks>
+    </n1:Quality_Indicators_Info>
+</n1:Level-1B_User_Product>

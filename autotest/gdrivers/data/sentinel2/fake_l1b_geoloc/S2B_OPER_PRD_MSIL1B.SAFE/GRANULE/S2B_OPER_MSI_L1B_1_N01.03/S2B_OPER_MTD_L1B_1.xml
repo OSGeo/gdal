@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<n1:Level-1B_Granule_ID xmlns:n1="https://psd-13.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-12.sentinel2.eo.esa.int/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd /dpc/app/s2ipf/FORMAT_METADATA_GR_L1B/02.09.06/scripts/../../../schemas/02.11.07/PSD/S2_PDI_Level-1B_Granule_Metadata.xsd">
+
+  <n1:General_Info>
+    <GRANULE_ID metadataLevel="Brief">S2B_OPER_MSI_L1B_GR_MTI__20151231T235959_S20151231T235959_D02_N01.03</GRANULE_ID>
+    <DETECTOR_ID metadataLevel="Brief">02</DETECTOR_ID>
+    <DATASTRIP_ID metadataLevel="Brief">S2B_OPER_MSI_L1B_DS_MTI__20151231T235959_S20151231T235959_N01.03</DATASTRIP_ID>
+    <DOWNLINK_PRIORITY metadataLevel="Standard">NOMINAL</DOWNLINK_PRIORITY>
+    <SENSING_TIME metadataLevel="Standard">2015-12-31T23:59:59.999Z</SENSING_TIME>
+    <Archiving_Info metadataLevel="Expertise">
+      <ARCHIVING_CENTRE>MTI_</ARCHIVING_CENTRE>
+      <ARCHIVING_TIME>2015-12-31T23:59:59.999Z</ARCHIVING_TIME>
+    </Archiving_Info>
+  </n1:General_Info>
+
+  <n1:Geometric_Info>
+  <Granule_Footprint metadataLevel="Brief">
+    <Granule_Footprint>
+    <Footprint>
+    <EXT_POS_LIST>46 11 1 45 11 2 45 13 3 46 13 4 46 11 1</EXT_POS_LIST>
+    </Footprint>
+    </Granule_Footprint>
+    <RASTER_CS_TYPE>POINT</RASTER_CS_TYPE>
+    <PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+    </Granule_Footprint>
+<Granule_Position metadataLevel="Standard">
+<POSITION>1</POSITION>
+<Geometric_Header>
+<GROUND_CENTER>45.5 12 2.5</GROUND_CENTER>
+<QL_CENTER>0 0</QL_CENTER>
+<Incidence_Angles>
+<ZENITH_ANGLE unit="deg">8</ZENITH_ANGLE>
+<AZIMUTH_ANGLE unit="deg">96</AZIMUTH_ANGLE>
+</Incidence_Angles>
+<Solar_Angles>
+<ZENITH_ANGLE unit="deg">43</ZENITH_ANGLE>
+<AZIMUTH_ANGLE unit="deg">158</AZIMUTH_ANGLE>
+</Solar_Angles>
+</Geometric_Header>
+</Granule_Position>
+<Granule_Dimensions metadataLevel="Standard">
+<Size resolution="10">
+<NROWS>2304</NROWS>
+<NCOLS>2552</NCOLS>
+</Size>
+<Size resolution="20">
+<NROWS>1152</NROWS>
+<NCOLS>1276</NCOLS>
+</Size>
+<Size resolution="60">
+<NROWS>384</NROWS>
+<NCOLS>1276</NCOLS>
+</Size>
+</Granule_Dimensions>
+
+  </n1:Geometric_Info>
+
+<n1:Quality_Indicators_Info metadataLevel="Standard">
+<Image_Content_QI>
+<CLOUDY_PIXEL_PERCENTAGE>0</CLOUDY_PIXEL_PERCENTAGE>
+<DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+</Image_Content_QI>
+<Pixel_Level_QI geometry="FULL_RESOLUTION">
+<MASK_FILENAME bandId="0" detectorId="02" type="MSK_CLOLOW">S2B_OPER_MSK_CLOLOW_MTI__20151231T235959_S20151231T235959_D02_B01_MSIL1B.gml</MASK_FILENAME>
+</Pixel_Level_QI>
+</n1:Quality_Indicators_Info>
+
+</n1:Level-1B_Granule_ID>
