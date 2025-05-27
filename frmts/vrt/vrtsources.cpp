@@ -1368,7 +1368,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     {
         psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
         psExtraArg->pProgressData = psExtraArgIn->pProgressData;
-        if (psExtraArg->nVersion >= 2)
+        if (psExtraArgIn->nVersion >= 2)
         {
             psExtraArg->bUseOnlyThisScale = psExtraArgIn->bUseOnlyThisScale;
         }
