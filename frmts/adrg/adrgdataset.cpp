@@ -147,7 +147,7 @@ GDALColorInterp ADRGRasterBand::GetColorInterpretation()
 CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    ADRGDataset *l_poDS = (ADRGDataset *)this->poDS;
+    ADRGDataset *l_poDS = cpl::down_cast<ADRGDataset *>(poDS);
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {

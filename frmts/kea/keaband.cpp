@@ -304,8 +304,8 @@ void KEARasterBand::CreateOverviews(int nOverviews, const int *panOverviewList)
 
         // create one of our objects to represent it
         m_panOverviewBands[nCount] = new KEAOverview(
-            (KEADataset *)this->poDS, this->nBand, GA_Update, this->m_pImageIO,
-            this->m_pRefCount, nCount + 1, nXSize, nYSize);
+            cpl::down_cast<KEADataset *>(poDS), this->nBand, GA_Update,
+            this->m_pImageIO, this->m_pRefCount, nCount + 1, nXSize, nYSize);
     }
 }
 
@@ -842,7 +842,7 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
     try
     {
         KEARasterAttributeTable *pKEATable =
-            (KEARasterAttributeTable *)this->GetDefaultRAT();
+            cpl::down_cast<KEARasterAttributeTable *>(GetDefaultRAT());
         if (pKEATable == nullptr)
             return CE_Failure;
 
@@ -1302,7 +1302,7 @@ void KEARasterBand::readExistingOverviews()
         this->m_pImageIO->getOverviewSize(this->nBand, nCount + 1, &nXSize,
                                           &nYSize);
         m_panOverviewBands[nCount] = new KEAOverview(
-            (KEADataset *)this->poDS, this->nBand, GA_ReadOnly,
+            cpl::down_cast<KEADataset *>(poDS), this->nBand, GA_ReadOnly,
             this->m_pImageIO, this->m_pRefCount, nCount + 1, nXSize, nYSize);
     }
 }

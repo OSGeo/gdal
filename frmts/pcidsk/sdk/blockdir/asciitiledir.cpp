@@ -338,7 +338,7 @@ void AsciiTileDir::ReadFullDir(void)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadFullDir().");
 
     PCIDSKBuffer oBlockDirAutoPtr;
-    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
+    oBlockDirAutoPtr.buffer = reinterpret_cast<char *>(pabyBlockDir);
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -437,7 +437,7 @@ void AsciiTileDir::ReadPartialDir(void)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadPartialDir().");
 
     PCIDSKBuffer oBlockDirAutoPtr;
-    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
+    oBlockDirAutoPtr.buffer = reinterpret_cast<char *>(pabyBlockDir);
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -482,7 +482,7 @@ void AsciiTileDir::ReadPartialDir(void)
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
     {
         size_t nSize = sizeof(TileLayerInfo);
-        SwapTileLayer((TileLayerInfo *) pabyBlockDirIter);
+        SwapTileLayer(reinterpret_cast<TileLayerInfo *>(pabyBlockDirIter));
         memcpy(moTileLayerInfoList[iLayer], pabyBlockDirIter, nSize);
         pabyBlockDirIter += nSize;
     }
@@ -641,7 +641,7 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
 
     PCIDSKBuffer oBlockDirAutoPtr;
-    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
+    oBlockDirAutoPtr.buffer =  reinterpret_cast<char *>(pabyBlockDir);
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -844,7 +844,7 @@ void AsciiTileDir::WriteDir(void)
     {
         size_t nSize = sizeof(TileLayerInfo);
         memcpy(pabyBlockDirIter, moTileLayerInfoList[iLayer], nSize);
-        SwapTileLayer((TileLayerInfo *) pabyBlockDirIter);
+        SwapTileLayer(reinterpret_cast<TileLayerInfo *>(pabyBlockDirIter));
         pabyBlockDirIter += nSize;
     }
 

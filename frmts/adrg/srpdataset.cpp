@@ -138,7 +138,7 @@ double SRPRasterBand::GetNoDataValue(int *pbSuccess)
 GDALColorInterp SRPRasterBand::GetColorInterpretation()
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
 
     if (l_poDS->oCT.GetColorEntryCount() > 0)
         return GCI_PaletteIndex;
@@ -153,7 +153,7 @@ GDALColorInterp SRPRasterBand::GetColorInterpretation()
 GDALColorTable *SRPRasterBand::GetColorTable()
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
 
     if (l_poDS->oCT.GetColorEntryCount() > 0)
         return &(l_poDS->oCT);
@@ -168,7 +168,7 @@ GDALColorTable *SRPRasterBand::GetColorTable()
 CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
     vsi_l_offset offset;
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)

@@ -470,7 +470,7 @@ void CBandInterleavedChannel
 /* -------------------------------------------------------------------- */
     unsigned short test_value = 1;
 
-    if( ((uint8 *) &test_value)[0] == 1 )
+    if( (reinterpret_cast<uint8 *>(&test_value))[0] == 1 )
         needs_swap = (byte_order != 'S');
     else
         needs_swap = (byte_order == 'S');

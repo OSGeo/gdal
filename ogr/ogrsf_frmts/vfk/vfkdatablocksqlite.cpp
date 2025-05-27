@@ -49,7 +49,7 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
     osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X,%s,rowid FROM %s",
                  FID_COLUMN, m_pszName);
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
     sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
 
     if (poReader->IsSpatial())
@@ -113,7 +113,7 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine,
                                                std::vector<int> &rowIdFeat,
                                                int &nGeometries)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     oOGRLine->setCoordinateDimension(2); /* force 2D */
 
@@ -218,7 +218,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     int nInvalid = 0;
 
     VFKDataBlockSQLite *poDataBlockPoints =
-        (VFKDataBlockSQLite *)m_poReader->GetDataBlock("SOBR");
+        cpl::down_cast<VFKDataBlockSQLite *>(m_poReader->GetDataBlock("SOBR"));
     if (nullptr == poDataBlockPoints)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.\n",
@@ -227,7 +227,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     }
 
     int nGeometries = 0;
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     poDataBlockPoints->LoadGeometry();
 
@@ -284,7 +284,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             if (ipcb == 1)
             {
                 VFKFeatureSQLite *poFeature =
-                    (VFKFeatureSQLite *)GetFeatureByIndex(iIdx);
+                    cpl::down_cast<VFKFeatureSQLite *>(GetFeatureByIndex(iIdx));
                 if (poFeature == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -308,8 +308,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 iIdx++;
             }
 
-            VFKFeatureSQLite *poPoint =
-                (VFKFeatureSQLite *)poDataBlockPoints->GetFeature("ID", id);
+            VFKFeatureSQLite *poPoint = cpl::down_cast<VFKFeatureSQLite *>(
+                poDataBlockPoints->GetFeature("ID", id));
             if (poPoint)
             {
                 const OGRGeometry *pt = poPoint->GetGeometry();
@@ -365,10 +365,10 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 int VFKDataBlockSQLite::LoadGeometryLineStringHP()
 {
     int nInvalid = 0;
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     VFKDataBlockSQLite *poDataBlockLines =
-        (VFKDataBlockSQLite *)m_poReader->GetDataBlock("SBP");
+        cpl::down_cast<VFKDataBlockSQLite *>(m_poReader->GetDataBlock("SBP"));
     if (nullptr == poDataBlockLines)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.",
@@ -407,7 +407,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
         const int rowId = sqlite3_column_int(hStmt, 2);
 
         VFKFeatureSQLite *poFeature =
-            (VFKFeatureSQLite *)GetFeatureByIndex(rowId - 1);
+            cpl::down_cast<VFKFeatureSQLite *>(GetFeatureByIndex(rowId - 1));
         if (poFeature == nullptr || poFeature->GetFID() != iFID)
         {
             continue;
@@ -461,24 +461,24 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
 
 #else
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     VFKDataBlockSQLite *poDataBlockLines1 = nullptr;
     VFKDataBlockSQLite *poDataBlockLines2 = nullptr;
     bool bIsPar = false;
     if (EQUAL(m_pszName, "PAR"))
     {
-        poDataBlockLines1 =
-            (VFKDataBlockSQLite *)m_poReader->GetDataBlock("HP");
+        poDataBlockLines1 = cpl::down_cast<VFKDataBlockSQLite *>(
+            m_poReader->GetDataBlock("HP"));
         poDataBlockLines2 = poDataBlockLines1;
         bIsPar = true;
     }
     else
     {
-        poDataBlockLines1 =
-            (VFKDataBlockSQLite *)m_poReader->GetDataBlock("OB");
-        poDataBlockLines2 =
-            (VFKDataBlockSQLite *)m_poReader->GetDataBlock("SBP");
+        poDataBlockLines1 = cpl::down_cast<VFKDataBlockSQLite *>(
+            m_poReader->GetDataBlock("OB"));
+        poDataBlockLines2 = cpl::down_cast<VFKDataBlockSQLite *>(
+            m_poReader->GetDataBlock("SBP"));
         bIsPar = false;
     }
     if (nullptr == poDataBlockLines1)
@@ -535,7 +535,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         const int rowId = sqlite3_column_int(hStmt, 2);
 
         VFKFeatureSQLite *poFeature =
-            (VFKFeatureSQLite *)GetFeatureByIndex(rowId - 1);
+            cpl::down_cast<VFKFeatureSQLite *>(GetFeatureByIndex(rowId - 1));
         if (poFeature == nullptr || poFeature->GetFID() != iFID)
         {
             continue;
@@ -653,7 +653,7 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(GIntBig nFID)
         LoadGeometry();
     }
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     CPLString osSQL;
     osSQL.Printf("SELECT rowid FROM %s WHERE %s = " CPL_FRMT_GIB, m_pszName,
@@ -686,7 +686,7 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(GIntBig nFID)
 VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column,
                                                  GUIntBig value, bool bGeom)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     CPLString osSQL;
     osSQL.Printf("SELECT %s from %s WHERE %s = " CPL_FRMT_GUIB, FID_COLUMN,
@@ -709,7 +709,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column,
     if (idx < 0 || idx >= m_nFeatureCount)  // ? assert
         return nullptr;
 
-    return (VFKFeatureSQLite *)GetFeatureByIndex(idx);
+    return cpl::down_cast<VFKFeatureSQLite *>(GetFeatureByIndex(idx));
 }
 
 /*!
@@ -726,7 +726,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column,
                                                  GUIntBig *value, int num,
                                                  bool bGeom)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     CPLString osSQL;
     osSQL.Printf("SELECT %s FROM %s WHERE ", FID_COLUMN, m_pszName);
@@ -756,7 +756,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column,
     if (idx < 0 || idx >= m_nFeatureCount)  // ? assert
         return nullptr;
 
-    return (VFKFeatureSQLite *)GetFeatureByIndex(idx);
+    return cpl::down_cast<VFKFeatureSQLite *>(GetFeatureByIndex(idx));
 }
 
 /*!
@@ -771,7 +771,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column,
 VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column,
                                                      GUIntBig *value, int num)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     CPLString osItem;
     CPLString osSQL;
@@ -824,7 +824,7 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom,
 
     sqlite3_stmt *hStmt = nullptr;
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     /* check if geometry column exists (see SUPPRESS_GEOMETRY open
        option) */
@@ -876,7 +876,7 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom,
 */
 bool VFKDataBlockSQLite::LoadGeometryFromDB()
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     if (!poReader->IsSpatial()) /* check if DB is spatial */
         return false;
@@ -970,7 +970,7 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries)
 {
     CPLString osSQL;
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     /* update number of features in VFK_DB_TABLE table */
     const int nFeatCount = (int)GetFeatureCount();
@@ -1005,7 +1005,7 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries)
 void VFKDataBlockSQLite::UpdateFID(GIntBig iFID, const std::vector<int> &rowId)
 {
     CPLString osSQL, osValue;
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     /* update number of geometries in VFK_DB_TABLE table */
     osSQL.Printf("UPDATE %s SET %s = " CPL_FRMT_GIB " WHERE rowid IN (",
@@ -1087,7 +1087,7 @@ OGRErr VFKDataBlockSQLite::AddGeometryColumn() const
 {
     CPLString osSQL;
 
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;
+    VFKReaderSQLite *poReader = cpl::down_cast<VFKReaderSQLite *>(m_poReader);
 
     osSQL.Printf("SELECT %s FROM %s LIMIT 0", GEOM_COLUMN, m_pszName);
     if (poReader->ExecuteSQL(osSQL.c_str(), CE_None) == OGRERR_FAILURE)
@@ -1120,7 +1120,8 @@ OGRErr VFKDataBlockSQLite::LoadProperties()
     if (EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG"))
         osSQL += " WHERE PORADOVE_CISLO_BODU = 1";
 
-    m_hStmt = ((VFKReaderSQLite *)m_poReader)->PrepareStatement(osSQL.c_str());
+    m_hStmt = cpl::down_cast<VFKReaderSQLite *>(m_poReader)
+                  ->PrepareStatement(osSQL.c_str());
 
     if (m_hStmt == nullptr)
         return OGRERR_FAILURE;

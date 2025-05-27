@@ -655,7 +655,7 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
         crn_uint32 *pSrc_image = nullptr;
         if (nColorType == DDS_COLOR_TYPE_RGB_ALPHA)
-            pSrc_image = (crn_uint32 *)pabyScanlines;
+            pSrc_image = reinterpret_cast<crn_uint32 *>(pabyScanlines);
         else if (nColorType == DDS_COLOR_TYPE_RGB)
         { /* crunch needs 32bits integers */
             int nPixels = nXSize * cDXTBlockSize;

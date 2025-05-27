@@ -81,7 +81,7 @@ BIGGifRasterBand::BIGGifRasterBand(BIGGIFDataset *poDSIn, int nBackground)
 CPLErr BIGGifRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                     void *pImage)
 {
-    BIGGIFDataset *poGDS = (BIGGIFDataset *)poDS;
+    BIGGIFDataset *poGDS = cpl::down_cast<BIGGIFDataset *>(poDS);
 
     CPLAssert(nBlockXOff == 0);
 

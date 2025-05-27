@@ -465,14 +465,16 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
 #define resample(T)                                                            \
     if (hasNoData)                                                             \
     {                                                                          \
-        count = MatchCount((T *)buffer.data(), 4 * tsz_x * tsz_y, T(ndv));     \
+        count = MatchCount(reinterpret_cast<T *>(buffer.data()),               \
+                           4 * tsz_x * tsz_y, T(ndv));                         \
         if (4 * tsz_x * tsz_y == count)                                        \
             bdst->FillBlock(buffer.data());                                    \
         else if (0 != count)                                                   \
-            AverageByFour((T *)buffer.data(), tsz_x, tsz_y, T(ndv));           \
+            AverageByFour(reinterpret_cast<T *>(buffer.data()), tsz_x, tsz_y,  \
+                          T(ndv));                                             \
     }                                                                          \
     if (0 == count)                                                            \
-        AverageByFour((T *)buffer.data(), tsz_x, tsz_y);                       \
+        AverageByFour(reinterpret_cast<T *>(buffer.data()), tsz_x, tsz_y);     \
     break;
 
                     switch (eDataType)
@@ -509,14 +511,16 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
 #define resample(T)                                                            \
     if (hasNoData)                                                             \
     {                                                                          \
-        count = MatchCount((T *)buffer.data(), 4 * tsz_x * tsz_y, T(ndv));     \
+        count = MatchCount(reinterpret_cast<T *>(buffer.data()),               \
+                           4 * tsz_x * tsz_y, T(ndv));                         \
         if (4 * tsz_x * tsz_y == count)                                        \
             bdst->FillBlock(buffer.data());                                    \
         else if (0 != count)                                                   \
-            NearByFour((T *)buffer.data(), tsz_x, tsz_y, T(ndv));              \
+            NearByFour(reinterpret_cast<T *>(buffer.data()), tsz_x, tsz_y,     \
+                       T(ndv));                                                \
     }                                                                          \
     if (0 == count)                                                            \
-        NearByFour((T *)buffer.data(), tsz_x, tsz_y);                          \
+        NearByFour(reinterpret_cast<T *>(buffer.data()), tsz_x, tsz_y);        \
     break;
                     switch (eDataType)
                     {

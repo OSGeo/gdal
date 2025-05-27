@@ -329,7 +329,7 @@ BMPRasterBand::~BMPRasterBand()
 CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                  void *pImage)
 {
-    BMPDataset *poGDS = (BMPDataset *)poDS;
+    BMPDataset *poGDS = cpl::down_cast<BMPDataset *>(poDS);
     vsi_l_offset iScanOffset = 0;
 
     if (poGDS->sInfoHeader.iHeight > 0)
@@ -387,7 +387,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             // in quadruplet should be discarded as it has no meaning.
             // That is why we always use 3 byte count in the following
             // pabyTemp index.
-            ((GByte *)pImage)[i] = *pabyTemp;
+            static_cast<GByte *>(pImage)[i] = *pabyTemp;
             pabyTemp += iBytesPerPixel;
         }
     }
@@ -402,7 +402,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         // 8-bit, support BMPC_BITFIELDS channel mask indicators,
         // and generalize band handling.
 
-        GUInt16 *pScan16 = (GUInt16 *)pabyScan;
+        GUInt16 *pScan16 = reinterpret_cast<GUInt16 *>(pabyScan);
 #ifdef CPL_MSB
         GDALSwapWords(pScan16, sizeof(GUInt16), nBlockXSize, 0);
 #endif
@@ -532,7 +532,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
 CPLErr BMPRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
-    BMPDataset *poGDS = (BMPDataset *)poDS;
+    BMPDataset *poGDS = cpl::down_cast<BMPDataset *>(poDS);
 
     CPLAssert(poGDS != nullptr && nBlockXOff >= 0 && nBlockYOff >= 0 &&
               pImage != nullptr);
@@ -579,7 +579,7 @@ CPLErr BMPRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 GDALColorTable *BMPRasterBand::GetColorTable()
 {
-    BMPDataset *poGDS = (BMPDataset *)poDS;
+    BMPDataset *poGDS = cpl::down_cast<BMPDataset *>(poDS);
 
     return poGDS->poColorTable;
 }
@@ -590,7 +590,7 @@ GDALColorTable *BMPRasterBand::GetColorTable()
 
 CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
 {
-    BMPDataset *poGDS = (BMPDataset *)poDS;
+    BMPDataset *poGDS = cpl::down_cast<BMPDataset *>(poDS);
 
     if (poColorTable)
     {
@@ -645,7 +645,7 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
 GDALColorInterp BMPRasterBand::GetColorInterpretation()
 {
-    BMPDataset *poGDS = (BMPDataset *)poDS;
+    BMPDataset *poGDS = cpl::down_cast<BMPDataset *>(poDS);
 
     if (poGDS->sInfoHeader.iBitCount == 24 ||
         poGDS->sInfoHeader.iBitCount == 32 ||

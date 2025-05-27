@@ -429,7 +429,7 @@ char **GTARasterBand::GetCategoryNames()
 {
     if (!papszCategoryNames)
     {
-        GTADataset *poGDS = (GTADataset *)poDS;
+        GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
         const char *pszCatCount =
             poGDS->oHeader.component_taglist(nBand - 1).get(
                 "GDAL/CATEGORY_COUNT");
@@ -472,7 +472,7 @@ CPLErr GTARasterBand::SetCategoryNames(char **)
 double GTARasterBand::GetMinimum(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("MIN_VALUE");
     if (pszValue)
@@ -494,7 +494,7 @@ double GTARasterBand::GetMinimum(int *pbSuccess)
 double GTARasterBand::GetMaximum(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("MAX_VALUE");
     if (pszValue)
@@ -516,7 +516,7 @@ double GTARasterBand::GetMaximum(int *pbSuccess)
 double GTARasterBand::GetNoDataValue(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("NO_DATA_VALUE");
     if (pszValue)
@@ -550,7 +550,7 @@ CPLErr GTARasterBand::SetNoDataValue(double)
 double GTARasterBand::GetOffset(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("GDAL/OFFSET");
     if (pszValue)
@@ -584,7 +584,7 @@ CPLErr GTARasterBand::SetOffset(double)
 double GTARasterBand::GetScale(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("GDAL/SCALE");
     if (pszValue)
@@ -618,7 +618,7 @@ CPLErr GTARasterBand::SetScale(double)
 const char *GTARasterBand::GetUnitType()
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszValue =
         poGDS->oHeader.component_taglist(nBand - 1).get("UNIT");
     return pszValue ? pszValue : "";
@@ -643,7 +643,7 @@ CPLErr GTARasterBand::SetUnitType(const char *)
 GDALColorInterp GTARasterBand::GetColorInterpretation()
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
     const char *pszColorInterpretation =
         poGDS->oHeader.component_taglist(nBand - 1).get("INTERPRETATION");
     if (pszColorInterpretation)
@@ -701,7 +701,7 @@ CPLErr GTARasterBand::SetColorInterpretation(GDALColorInterp)
 CPLErr GTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
 
     // Read and cache block containing all bands at once
     if (poGDS->ReadBlock(nBlockXOff, nBlockYOff) != CE_None)
@@ -737,7 +737,7 @@ CPLErr GTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 CPLErr GTARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    GTADataset *poGDS = (GTADataset *)poDS;
+    GTADataset *poGDS = cpl::down_cast<GTADataset *>(poDS);
 
     if (poGDS->oHeader.compression() != gta::none)
     {

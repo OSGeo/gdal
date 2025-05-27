@@ -188,10 +188,6 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "ogrgeometrycollection.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
-# Ignore dangerousTypeCast (with cppcheck master), although we should fix them by enabling STRONG_CXX_WFLAGS
-grep -v -e "dangerousTypeCast" ${LOG_FILE} > ${LOG_FILE}.tmp
-mv ${LOG_FILE}.tmp ${LOG_FILE}
-
 if grep "null pointer" ${LOG_FILE} ; then
     echo "Null pointer check failed"
     ret_code=1

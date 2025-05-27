@@ -882,7 +882,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             {
                 char *psSemanticsdBufBeg = psSemanticsdBuf + offset;
                 SXFRecordAttributeInfo stAttInfo =
-                    *(SXFRecordAttributeInfo *)psSemanticsdBufBeg;
+                    *reinterpret_cast<SXFRecordAttributeInfo *>(
+                        psSemanticsdBufBeg);
                 CPL_LSBPTR16(&(stAttInfo.nCode));
                 offset += 4;
 

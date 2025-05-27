@@ -222,7 +222,7 @@ SAR_CEOSRasterBand::SAR_CEOSRasterBand(SAR_CEOSDataset *poGDSIn, int nBandIn,
 CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                       void *pImage)
 {
-    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *)poDS;
+    SAR_CEOSDataset *poGDS = cpl::down_cast<SAR_CEOSDataset *>(poDS);
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
@@ -357,7 +357,7 @@ Im(SVV) = byte(10) ysca/127
 CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                  void *pImage)
 {
-    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *)poDS;
+    SAR_CEOSDataset *poGDS = cpl::down_cast<SAR_CEOSDataset *>(poDS);
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
@@ -498,7 +498,7 @@ PALSARRasterBand::PALSARRasterBand(SAR_CEOSDataset *poGDSIn, int nBandIn)
 CPLErr PALSARRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                     void *pImage)
 {
-    SAR_CEOSDataset *poGDS = (SAR_CEOSDataset *)poDS;
+    SAR_CEOSDataset *poGDS = cpl::down_cast<SAR_CEOSDataset *>(poDS);
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 

@@ -175,7 +175,7 @@ int OGROCISession::EstablishSession(const char *pszUseridIn,
 
     if (Failed(OCIAttrSet(static_cast<dvoid *>(hSvcCtx), OCI_HTYPE_SVCCTX,
                           static_cast<dvoid *>(hServer), (ub4)0,
-                          OCI_ATTR_SERVER, (OCIError *)hError)))
+                          OCI_ATTR_SERVER, static_cast<OCIError *>(hError))))
     {
         return FALSE;
     }

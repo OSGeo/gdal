@@ -94,7 +94,8 @@ void VFKFeatureSQLite::FinalizeSQL()
 */
 OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poDataBlock->GetReader();
+    VFKReaderSQLite *poReader =
+        cpl::down_cast<VFKReaderSQLite *>(m_poDataBlock->GetReader());
     sqlite3 *poDB = poReader->m_poDB;
 
     int rc = sqlite3_prepare_v2(poDB, pszSQLCommand, -1, &m_hStmt, nullptr);
@@ -200,7 +201,8 @@ bool VFKFeatureSQLite::LoadGeometryPolygon()
 */
 OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {
-    sqlite3_stmt *hStmt = ((VFKDataBlockSQLite *)m_poDataBlock)->m_hStmt;
+    sqlite3_stmt *hStmt =
+        cpl::down_cast<VFKDataBlockSQLite *>(m_poDataBlock)->m_hStmt;
     if (hStmt == nullptr)
     {
         /* random access */
@@ -217,10 +219,11 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
     {
         /* sequential access */
         VFKReaderSQLite *poReader =
-            (VFKReaderSQLite *)m_poDataBlock->GetReader();
+            cpl::down_cast<VFKReaderSQLite *>(m_poDataBlock->GetReader());
         if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
         {
-            ((VFKDataBlockSQLite *)m_poDataBlock)->m_hStmt = nullptr;
+            cpl::down_cast<VFKDataBlockSQLite *>(m_poDataBlock)->m_hStmt =
+                nullptr;
             return OGRERR_FAILURE;
         }
     }

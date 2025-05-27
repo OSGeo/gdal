@@ -245,7 +245,7 @@ CPLErr GS7BGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    GS7BGDataset *poGDS = (GS7BGDataset *)(poDS);
+    GS7BGDataset *poGDS = cpl::down_cast<GS7BGDataset *>(poDS);
 
     if (VSIFSeekL(poGDS->fp,
                   (poGDS->nData_Position +
@@ -293,7 +293,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    GS7BGDataset *poGDS = (GS7BGDataset *)(poDS);
+    GS7BGDataset *poGDS = cpl::down_cast<GS7BGDataset *>(poDS);
 
     if (pafRowMinZ == nullptr || pafRowMaxZ == nullptr || nMinZRow < 0 ||
         nMaxZRow < 0)
@@ -776,7 +776,8 @@ CPLErr GS7BGDataset::GetGeoTransform(double *padfGeoTransform)
     if (padfGeoTransform == nullptr)
         return CE_Failure;
 
-    GS7BGRasterBand *poGRB = (GS7BGRasterBand *)GetRasterBand(1);
+    GS7BGRasterBand *poGRB =
+        cpl::down_cast<GS7BGRasterBand *>(GetRasterBand(1));
 
     if (poGRB == nullptr)
     {

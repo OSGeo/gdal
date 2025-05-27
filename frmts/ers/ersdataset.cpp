@@ -1463,7 +1463,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Reopen.                                                         */
     /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(osErsFile, GA_Update);
-    ERSDataset *poDS = (ERSDataset *)Open(&oOpenInfo);
+    ERSDataset *poDS = cpl::down_cast<ERSDataset *>(Open(&oOpenInfo));
     if (poDS == nullptr)
         return nullptr;
 

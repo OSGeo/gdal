@@ -4276,7 +4276,7 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
 
     for (int iLine = 0; iLine < nRowBlockSize; iLine++)
     {
-        JSAMPLE *ppSamples = (JSAMPLE *)pabyScanline;
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
         jpeg_read_scanlines(&sDInfo, &ppSamples, 1);
         pabyScanline += (nColumnBlockSize * nBandBlockSize);
     }
@@ -4366,7 +4366,7 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
 
     for (int iLine = 0; iLine < nRowBlockSize; iLine++)
     {
-        JSAMPLE *ppSamples = (JSAMPLE *)pabyScanline;
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
         jpeg_write_scanlines(&sCInfo, &ppSamples, 1);
         pabyScanline += (nColumnBlockSize * nBandBlockSize);
     }

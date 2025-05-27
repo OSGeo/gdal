@@ -172,7 +172,7 @@ CTGRasterBand::~CTGRasterBand()
 CPLErr CTGRasterBand::IReadBlock(int /* nBlockXOff */, int /* nBlockYOff */,
                                  void *pImage)
 {
-    CTGDataset *poGDS = (CTGDataset *)poDS;
+    CTGDataset *poGDS = cpl::down_cast<CTGDataset *>(poDS);
 
     poGDS->ReadImagery();
     memcpy(pImage,
@@ -315,9 +315,9 @@ int CTGDataset::ReadImagery()
             int nVal = atoi(ExtractField(szField, szLine, 20 + 10 * i, 10));
             if (nVal >= 2000000000)
                 nVal = 0;
-            ((int *)
-                 pabyImage)[i * nCells +
-                            static_cast<int>(nCellY) * nRasterXSize + nCellX] =
+            reinterpret_cast<int *>(
+                pabyImage)[i * nCells +
+                           static_cast<int>(nCellY) * nRasterXSize + nCellX] =
                 nVal;
         }
 

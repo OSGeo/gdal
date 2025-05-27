@@ -1561,7 +1561,7 @@ GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
         lt_uint8 minor;
         char letter;
         MrSIDImageReader *poMrSIDImageReader =
-            (MrSIDImageReader *)poDS->poImageReader;
+            static_cast<MrSIDImageReader *>(poDS->poImageReader);
         poMrSIDImageReader->getVersion(major, minor, minor, letter);
         if (major < 2)
             major = 2;
@@ -1577,11 +1577,12 @@ GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
 #ifdef MRSID_J2K
     if (bIsJP2)
         poDS->nOverviewCount =
-            ((J2KImageReader *)(poDS->poImageReader))->getNumLevels();
+            static_cast<J2KImageReader *>(poDS->poImageReader)->getNumLevels();
     else
 #endif
         poDS->nOverviewCount =
-            ((MrSIDImageReader *)(poDS->poImageReader))->getNumLevels();
+            static_cast<MrSIDImageReader *>(poDS->poImageReader)
+                ->getNumLevels();
 
     if (poDS->nOverviewCount > 0)
     {

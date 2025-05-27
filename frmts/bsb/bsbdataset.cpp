@@ -117,7 +117,7 @@ BSBRasterBand::BSBRasterBand(BSBDataset *poDSIn)
 CPLErr BSBRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                  void *pImage)
 {
-    BSBDataset *poGDS = (BSBDataset *)poDS;
+    BSBDataset *poGDS = cpl::down_cast<BSBDataset *>(poDS);
     GByte *pabyScanline = (GByte *)pImage;
 
     if (BSBReadScanline(poGDS->psInfo, nBlockYOff, pabyScanline))

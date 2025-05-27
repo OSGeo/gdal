@@ -113,7 +113,7 @@ DTEDRasterBand::DTEDRasterBand(DTEDDataset *poDSIn, int nBandIn)
 CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                   void *pImage)
 {
-    DTEDDataset *poDTED_DS = (DTEDDataset *)poDS;
+    DTEDDataset *poDTED_DS = cpl::down_cast<DTEDDataset *>(poDS);
     int nYSize = poDTED_DS->psDTED->nYSize;
     GInt16 *panData;
 
@@ -181,7 +181,7 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
 CPLErr DTEDRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                    void *pImage)
 {
-    DTEDDataset *poDTED_DS = (DTEDDataset *)poDS;
+    DTEDDataset *poDTED_DS = cpl::down_cast<DTEDDataset *>(poDS);
     GInt16 *panData;
 
     (void)nBlockXOff;

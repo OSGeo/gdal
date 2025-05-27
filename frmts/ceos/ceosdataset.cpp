@@ -74,7 +74,7 @@ CEOSRasterBand::CEOSRasterBand(CEOSDataset *poDSIn, int nBandIn)
 CPLErr CEOSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void *pImage)
 {
-    CEOSDataset *poCEOS_DS = (CEOSDataset *)poDS;
+    CEOSDataset *poCEOS_DS = cpl::down_cast<CEOSDataset *>(poDS);
 
     CPLAssert(nBlockXOff == 0);
 
