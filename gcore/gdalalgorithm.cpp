@@ -2298,7 +2298,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
             else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
-                assignToOutputArg = true;
+                if (updateArg->GetMutualExclusionGroup().empty() ||
+                    outputArg->GetMutualExclusionGroup().empty() ||
+                    updateArg->GetMutualExclusionGroup() !=
+                        outputArg->GetMutualExclusionGroup())
+                {
+                    assignToOutputArg = true;
+                }
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
             }
         }
@@ -2392,7 +2398,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
              val.GetDatasetRef())
     {
-        outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
+        if (updateArg->GetMutualExclusionGroup().empty() ||
+            outputArg->GetMutualExclusionGroup().empty() ||
+            updateArg->GetMutualExclusionGroup() !=
+                outputArg->GetMutualExclusionGroup())
+        {
+            outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
+        }
     }
 
     // Deal with overwriting the output dataset

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -28,7 +29,7 @@ def test_gdalalg_vector_sql_base(tmp_vsimem):
 
     sql_alg = get_sql_alg()
     assert sql_alg.ParseRunAndFinalize(
-        ["../ogr/data/poly.shp", out_filename, "select * from poly limit 1"]
+        ["../ogr/data/poly.shp", out_filename, "--sql=select * from poly limit 1"]
     )
 
     with gdal.OpenEx(out_filename) as ds:
@@ -48,7 +49,7 @@ def test_gdalalg_vector_sql_layer_name(tmp_vsimem):
             "--output-layer=foo",
             "../ogr/data/poly.shp",
             out_filename,
-            "select * from poly limit 1",
+            "--sql=select * from poly limit 1",
         ]
     )
 
@@ -73,7 +74,7 @@ def test_gdalalg_vector_sql_error_2_layers(tmp_vsimem):
     sql_alg = get_sql_alg()
     with pytest.raises(Exception):
         sql_alg.ParseRunAndFinalize(
-            ["../ogr/data/poly.shp", out_filename, "select * from poly", "error"]
+            ["../ogr/data/poly.shp", out_filename, "--sql=select * from poly", "error"]
         )
 
 
@@ -91,7 +92,7 @@ def test_gdalalg_vector_sql_layer_name_inconsistent_number(tmp_vsimem):
                 "--output-layer=foo,bar",
                 "../ogr/data/poly.shp",
                 out_filename,
-                "select * from poly limit 1",
+                "--sql=select * from poly limit 1",
             ]
         )
 
@@ -105,8 +106,8 @@ def test_gdalalg_vector_sql_several(tmp_vsimem):
         [
             "../ogr/data/poly.shp",
             out_filename,
-            "select * from poly limit 1",
-            "select * from poly limit 2",
+            "--sql=select * from poly limit 1",
+            "--sql=select * from poly limit 2",
         ]
     )
 
@@ -134,7 +135,7 @@ def test_gdalalg_vector_sql_dialect(tmp_vsimem):
             "SQLite",
             "../ogr/data/poly.shp",
             out_filename,
-            "select *, sqlite_version() from poly limit 1",
+            "--sql=select *, sqlite_version() as version from poly limit 1",
         ]
     )
 
@@ -153,8 +154,8 @@ def test_gdalalg_vector_sql_layer_names(tmp_vsimem):
             "lyr1,lyr2",
             "../ogr/data/poly.shp",
             out_filename,
-            "select * from poly limit 1",
-            "select * from poly limit 2",
+            "--sql=select * from poly limit 1",
+            "--sql=select * from poly limit 2",
         ]
     )
 
@@ -164,3 +165,91 @@ def test_gdalalg_vector_sql_layer_names(tmp_vsimem):
         assert ds.GetLayer(0).GetDescription() == "lyr1"
         assert ds.GetLayer(1).GetFeatureCount() == 2
         assert ds.GetLayer(1).GetDescription() == "lyr2"
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_sql_no_result_set(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.gpkg"
+
+    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
+
+    with pytest.raises(
+        Exception,
+        match="Execution of the SQL statement 'PRAGMA foo=bar' did not result in a result layer",
+    ):
+        gdal.Run(
+            "vector",
+            "sql",
+            input=out_filename,
+            output=tmp_vsimem / "out.gpkg",
+            sql="PRAGMA foo=bar",
+        )
+
+    with pytest.raises(
+        Exception,
+        match="Execution of the SQL statement 'PRAGMA foo=bar' did not result in a result layer",
+    ):
+        gdal.Run(
+            "vector",
+            "sql",
+            input=out_filename,
+            output=tmp_vsimem / "out.gpkg",
+            sql=["SELECT 1", "PRAGMA foo=bar"],
+        )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_sql_update(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.gpkg"
+
+    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
+
+    gdal.Run(
+        "vector",
+        "sql",
+        update=True,
+        input=out_filename,
+        sql="DELETE FROM poly WHERE EAS_ID=170",
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 9
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_sql_missing_update(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.gpkg"
+
+    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
+
+    with pytest.raises(
+        Exception, match="Perhaps you need to specify the 'update' argument"
+    ):
+        gdal.Run("vector", "sql", input=out_filename, sql="DELETE FROM poly")
+
+
+def test_gdalalg_vector_sql_update_return_result_set(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.shp"
+
+    gdal.VectorTranslate(out_filename, "../ogr/data/poly.shp")
+
+    with gdaltest.error_raised(gdal.CE_Warning, match="returned a result set"):
+        gdal.Run("vector", "sql", input=out_filename, sql="SELECT * FROM poly")
+
+
+def test_gdalalg_vector_sql_in_pipeline(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "poly.shp"
+
+    gdal.Run(
+        "vector",
+        "pipeline",
+        pipeline=f'read ../ogr/data/poly.shp | sql "SELECT * FROM poly WHERE eas_id=170" ! write {out_filename}',
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
