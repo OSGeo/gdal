@@ -83,14 +83,17 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
 
 MAIN_START(argc, argv)
 {
+    EarlySetConfigOptions(argc, argv);
+
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
         GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);
     assert(alg);
 
+    // Register GDAL drivers
+    GDALAllRegister();
+
     if (argc >= 3 && strcmp(argv[1], "completion") == 0)
     {
-        GDALAllRegister();
-
         const bool bLastWordIsComplete =
             EQUAL(argv[argc - 1], "last_word_is_complete=true");
         if (STARTS_WITH(argv[argc - 1], "last_word_is_complete="))
@@ -102,15 +105,6 @@ MAIN_START(argc, argv)
                        bLastWordIsComplete);
         return 0;
     }
-
-    EarlySetConfigOptions(argc, argv);
-
-    /* -------------------------------------------------------------------- */
-    /*      Register standard GDAL drivers, and process generic GDAL        */
-    /*      command options.                                                */
-    /* -------------------------------------------------------------------- */
-
-    GDALAllRegister();
 
     // Prevent GDALGeneralCmdLineProcessor() to process --format XXX, unless
     // "gdal" is invoked only with it. Cf #12411
@@ -128,6 +122,7 @@ MAIN_START(argc, argv)
         }
     }
 
+    // Process generic cmomand options
     argc = GDALGeneralCmdLineProcessor(
         argc, &argv, GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
     for (auto &pair : apOrigFormat)
