@@ -171,6 +171,7 @@ Vector commands
    gdal_vector_info
    gdal_vector_explode_collections
    gdal_vector_grid
+   gdal_vector_index
    gdal_vector_layer_algebra
    gdal_vector_make_valid
    gdal_vector_pipeline
@@ -196,6 +197,7 @@ Vector commands
     - :ref:`gdal_vector_filter`: Filter a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points
     - :ref:`gdal_vector_info`: Get information on a vector dataset
+    - :ref:`gdal_vector_index`: Create a vector index of vector datasets
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
     - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
     - :ref:`gdal_vector_pipeline`: Process a vector dataset
