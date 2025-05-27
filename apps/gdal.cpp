@@ -12,6 +12,7 @@
 
 #include "gdalalgorithm.h"
 #include "commonutils.h"
+#include "cpl_error.h"
 
 #include "gdal.h"
 
@@ -83,7 +84,17 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
 
 MAIN_START(argc, argv)
 {
-    EarlySetConfigOptions(argc, argv);
+    const bool bIsCompletion = argc >= 3 && strcmp(argv[1], "completion") == 0;
+
+    if (bIsCompletion)
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EarlySetConfigOptions(argc, argv);
+    }
+    else
+    {
+        EarlySetConfigOptions(argc, argv);
+    }
 
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
         GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);
@@ -92,7 +103,7 @@ MAIN_START(argc, argv)
     // Register GDAL drivers
     GDALAllRegister();
 
-    if (argc >= 3 && strcmp(argv[1], "completion") == 0)
+    if (bIsCompletion)
     {
         const bool bLastWordIsComplete =
             EQUAL(argv[argc - 1], "last_word_is_complete=true");
