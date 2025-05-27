@@ -43,6 +43,7 @@ add_library(
   gdalalg_raster_overview_add.cpp
   gdalalg_raster_overview_delete.cpp
   gdalalg_raster_overview_refresh.cpp
+  gdalalg_raster_pansharpen.cpp
   gdalalg_raster_rgb_to_palette.cpp
   gdalalg_raster_read.cpp
   gdalalg_raster_reclassify.cpp

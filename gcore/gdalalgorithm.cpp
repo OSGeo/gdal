@@ -1965,6 +1965,56 @@ bool GDALAlgorithm::ParseCommandLineArguments(
     // option name.
     size_t i = 0;
     size_t iCurPosArg = 0;
+
+    // Special case for <INPUT> <AUXILIARY>... <OUTPUT>
+    if (m_positionalArgs.size() == 3 &&
+        (m_positionalArgs[0]->IsRequired() ||
+         m_positionalArgs[0]->GetMinCount() == 1) &&
+        m_positionalArgs[0]->GetMaxCount() == 1 &&
+        (m_positionalArgs[1]->IsRequired() ||
+         m_positionalArgs[1]->GetMinCount() == 1) &&
+        /* Second argument may have several occurrences */
+        m_positionalArgs[1]->GetMaxCount() >= 1 &&
+        (m_positionalArgs[2]->IsRequired() ||
+         m_positionalArgs[2]->GetMinCount() == 1) &&
+        m_positionalArgs[2]->GetMaxCount() == 1 &&
+        !m_positionalArgs[0]->IsExplicitlySet() &&
+        !m_positionalArgs[1]->IsExplicitlySet() &&
+        !m_positionalArgs[2]->IsExplicitlySet())
+    {
+        if (lArgs.size() - i < 3)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Not enough positional values.");
+            return false;
+        }
+        bool ok = ParseArgument(m_positionalArgs[0],
+                                m_positionalArgs[0]->GetName().c_str(),
+                                lArgs[i], inConstructionValues);
+        if (ok)
+        {
+            ++i;
+            for (; i + 1 < lArgs.size() && ok; ++i)
+            {
+                ok = ParseArgument(m_positionalArgs[1],
+                                   m_positionalArgs[1]->GetName().c_str(),
+                                   lArgs[i], inConstructionValues);
+            }
+        }
+        if (ok)
+        {
+            ok = ParseArgument(m_positionalArgs[2],
+                               m_positionalArgs[2]->GetName().c_str(), lArgs[i],
+                               inConstructionValues);
+            ++i;
+        }
+        if (!ok)
+        {
+            ProcessInConstructionValues();
+            return false;
+        }
+    }
+
     while (i < lArgs.size() && iCurPosArg < m_positionalArgs.size())
     {
         GDALAlgorithmArg *arg = m_positionalArgs[iCurPosArg];
