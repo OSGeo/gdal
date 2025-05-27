@@ -5551,6 +5551,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     if (option.empty() && !args.empty() && !args.back().empty() &&
         args.back()[0] == '-')
     {
+        const auto &lastArg = args.back();
         // List available options
         for (const auto &arg : GetArgs())
         {
@@ -5564,15 +5565,24 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             }
             if (!arg->GetShortName().empty())
             {
-                ret.push_back(std::string("-").append(arg->GetShortName()));
+                std::string str = std::string("-").append(arg->GetShortName());
+                if (lastArg == str)
+                    ret.push_back(std::move(str));
             }
-            for (const std::string &alias : arg->GetAliases())
+            if (lastArg != "-" && lastArg != "--")
             {
-                ret.push_back(std::string("--").append(alias));
+                for (const std::string &alias : arg->GetAliases())
+                {
+                    std::string str = std::string("--").append(alias);
+                    if (cpl::starts_with(str, lastArg))
+                        ret.push_back(std::move(str));
+                }
             }
             if (!arg->GetName().empty())
             {
-                ret.push_back(std::string("--").append(arg->GetName()));
+                std::string str = std::string("--").append(arg->GetName());
+                if (cpl::starts_with(str, lastArg))
+                    ret.push_back(std::move(str));
             }
         }
     }
