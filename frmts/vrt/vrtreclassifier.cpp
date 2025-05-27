@@ -354,6 +354,11 @@ static std::optional<size_t> FindInterval(
         &arr,
     double srcVal)
 {
+    if (arr.empty())
+    {
+        return std::nullopt;
+    }
+
     size_t low = 0;
     size_t high = arr.size() - 1;
 
