@@ -521,17 +521,17 @@ bool netCDFLayer::Create(char **papszOptions,
                 m_poFeatureDefn->GetGeomType();
             std::vector<std::string> coordNames;
             std::string strXVarName =
-                std::string(this->GetName()) + std::string("_coordX");
+                std::string(this->GetName()).append("_coordX");
             std::string strYVarName =
-                std::string(this->GetName()) + std::string("_coordY");
-            coordNames.push_back(strXVarName);
-            coordNames.push_back(strYVarName);
+                std::string(this->GetName()).append("_coordY");
+            coordNames.push_back(std::move(strXVarName));
+            coordNames.push_back(std::move(strYVarName));
 
             if (nccfdriver::OGRHasZandSupported(geometryContainerType))
             {
                 std::string strZVarName =
-                    std::string(this->GetName()) + std::string("_coordZ");
-                coordNames.push_back(strZVarName);
+                    std::string(this->GetName()).append("_coordZ");
+                coordNames.push_back(std::move(strZVarName));
             }
 
             if (m_layerSGDefn.getWritableType() == nccfdriver::NONE)
