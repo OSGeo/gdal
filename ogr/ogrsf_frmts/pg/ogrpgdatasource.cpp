@@ -1401,7 +1401,7 @@ void OGRPGDataSource::LoadTables()
         }
         if (osRegisteredLayers.find(osDefnName) != osRegisteredLayers.end())
             continue;
-        osRegisteredLayers.insert(osDefnName);
+        osRegisteredLayers.insert(std::move(osDefnName));
 
         OGRPGTableLayer *poLayer = OpenTable(
             osCurrentSchema, papsTables[iRecord]->pszTableName,
