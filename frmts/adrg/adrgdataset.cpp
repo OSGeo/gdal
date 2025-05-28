@@ -1019,7 +1019,7 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             const char *pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
             if (pszBAD == nullptr || strlen(pszBAD) != 12)
                 continue;
-            CPLString osBAD = pszBAD;
+            std::string osBAD = pszBAD;
             {
                 char *c = (char *)strchr(osBAD.c_str(), ' ');
                 if (c)
@@ -1030,12 +1030,12 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             /* Build full IMG file name from BAD value */
             CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
-            const CPLString osFileName =
+            std::string osFileName =
                 CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
-            if (VSIStatL(osFileName, &sStatBuf) == 0)
+            if (VSIStatL(osFileName.c_str(), &sStatBuf) == 0)
             {
-                osBAD = osFileName;
+                osBAD = std::move(osFileName);
                 CPLDebug("ADRG", "Building IMG full file name : %s",
                          osBAD.c_str());
             }
