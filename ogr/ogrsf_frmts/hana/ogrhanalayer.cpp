@@ -752,7 +752,7 @@ OGRErr OGRHanaLayer::InitFeatureDefinition(const CPLString &schemaName,
 
         if (!attributeColumnDesc.isFeatureID)
             featureDefn_->AddFieldDefn(field.get());
-        attrColumns_.push_back(attributeColumnDesc);
+        attrColumns_.push_back(std::move(attributeColumnDesc));
     }
 
     return OGRERR_NONE;
