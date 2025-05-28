@@ -47,10 +47,11 @@ class SAGADataset final : public GDALPamDataset
 {
     friend class SAGARasterBand;
 
-    static CPLErr WriteHeader(CPLString osHDRFilename, GDALDataType eType,
-                              int nXSize, int nYSize, double dfMinX,
-                              double dfMinY, double dfCellsize, double dfNoData,
-                              double dfZFactor, bool bTopToBottom);
+    static CPLErr WriteHeader(const CPLString &osHDRFilename,
+                              GDALDataType eType, int nXSize, int nYSize,
+                              double dfMinX, double dfMinY, double dfCellsize,
+                              double dfNoData, double dfZFactor,
+                              bool bTopToBottom);
     VSILFILE *fp;
     OGRSpatialReference m_oSRS{};
     bool headerDirty = false;
@@ -776,9 +777,9 @@ CPLErr SAGADataset::SetGeoTransform(double *padfGeoTransform)
 /*                             WriteHeader()                            */
 /************************************************************************/
 
-CPLErr SAGADataset::WriteHeader(CPLString osHDRFilename, GDALDataType eType,
-                                int nXSize, int nYSize, double dfMinX,
-                                double dfMinY, double dfCellsize,
+CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
+                                GDALDataType eType, int nXSize, int nYSize,
+                                double dfMinX, double dfMinY, double dfCellsize,
                                 double dfNoData, double dfZFactor,
                                 bool bTopToBottom)
 
