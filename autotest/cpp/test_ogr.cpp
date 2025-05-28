@@ -2567,7 +2567,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
             {
                 entryLocal.error = pszError;
             }
-            queryLogLocal->push_back(entryLocal);
+            queryLogLocal->push_back(std::move(entryLocal));
         },
         &queryLog);
 

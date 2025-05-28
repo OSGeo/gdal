@@ -731,7 +731,7 @@ TEST_P(OGRWKBTransformFixture, test)
     OGREnvelope3D sEnv;
     EXPECT_TRUE(
         OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
-    const auto abyWkbOri = abyWkb;
+    std::vector<GByte> abyWkbOri = abyWkb;
 
     poGeom = nullptr;
     OGRGeometryFactory::createFromWkb(abyWkb.data(), nullptr, &poGeom,
@@ -764,7 +764,7 @@ TEST_P(OGRWKBTransformFixture, test)
 
         if (abyWkb.size() > 9)
         {
-            abyWkb = abyWkbOri;
+            abyWkb = std::move(abyWkbOri);
             if (!STARTS_WITH(pszInput, "POINT"))
             {
                 // Corrupt number of sub-geometries
