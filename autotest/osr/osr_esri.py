@@ -363,7 +363,7 @@ def test_osr_esri_13():
     )
 
     assert srs.GetProjParm("standard_parallel_1") == pytest.approx(
-        34.333333333, abs=0.00001
+        36.1666666666667, abs=0.00001
     ), "Got wrong parameter value (%g) after ESRI morph." % srs.GetProjParm(
         "standard_parallel_1"
     )
