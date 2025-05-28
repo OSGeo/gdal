@@ -235,6 +235,38 @@ const char *CPL_STDCALL VSIGetLastErrorMsg()
 }
 
 /**********************************************************************
+ *                     VSIErrorNumToString()
+ **********************************************************************/
+
+/** Translate a VSI error number into a string.
+ *
+ * @since GDAL 3.12
+ */
+const char *VSIErrorNumToString(int eErr)
+{
+#define CASE(x)                                                                \
+    case VSIE_##x:                                                             \
+        return #x;
+    switch (eErr)
+    {
+        CASE(None)
+        CASE(FileError)
+        CASE(HttpError)
+        CASE(ObjectStorageGenericError)
+        CASE(AccessDenied)
+        CASE(BucketNotFound)
+        CASE(ObjectNotFound)
+        CASE(InvalidCredentials)
+        CASE(SignatureDoesNotMatch)
+        default:
+            break;
+    }
+#undef CASE
+    CPLAssert(false);
+    return "UnknownError";
+}
+
+/**********************************************************************
  *                          VSItoCPLError()
  **********************************************************************/
 

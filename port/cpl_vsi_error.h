@@ -80,6 +80,7 @@ void CPL_DLL CPL_STDCALL VSIErrorReset(void);
 VSIErrorNum CPL_DLL CPL_STDCALL VSIGetLastErrorNo(void);
 const char CPL_DLL *CPL_STDCALL VSIGetLastErrorMsg(void);
 
+const char *VSIErrorNumToString(int eErr);
 int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass,
                                       CPLErrorNum eDefaultErrorNo);
 void CPL_DLL VSIToCPLErrorWithMsg(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo,
