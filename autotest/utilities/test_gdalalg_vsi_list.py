@@ -293,3 +293,13 @@ def test_gdalalg_vsi_list(tmp_vsimem):
     assert alg.Run()
     assert "unknown unknown" in alg["output-string"]
     assert "utmsmall.tif" in alg["output-string"]
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_list_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["filename"] = "/vsioss/i_do_not/exist.bin"
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()
