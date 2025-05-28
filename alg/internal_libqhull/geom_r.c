@@ -14,6 +14,7 @@
 */
 
 #include "qhull_ra.h"
+#include <limits.h>
 
 /*-<a                             href="qh-geom_r.htm#TOC"
   >-------------------------------</a><a name="distplane">-</a>
@@ -568,7 +569,7 @@ void qh_backnormal(qhT *qh, realT **rows, int numrow, int numcol, boolT sign,
   normalp= normal + numcol - 1;
   *normalp--= (sign ? -1.0 : 1.0);
   for (i=numrow; i--; ) {
-    *normalp= 0.0;
+    *normalp= DBL_MIN;
     ai= rows[i] + i + 1;
     ak= normalp+1;
     for (j=i+1; j < numcol; j++)
@@ -845,7 +846,7 @@ void qh_normalize(qhT *qh, coordT *normal, int dim, boolT toporient) {
 void qh_normalize2(qhT *qh, coordT *normal, int dim, boolT toporient,
             realT *minnorm, boolT *ismin) {
   int k;
-  realT *colp, *maxp, norm= 0, temp, *norm1, *norm2, *norm3;
+  realT *colp, *maxp, norm= DBL_MIN, temp, *norm1, *norm2, *norm3;
   boolT zerodiv;
 
   norm1= normal+1;
