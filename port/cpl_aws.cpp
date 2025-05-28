@@ -1984,7 +1984,7 @@ bool VSIS3HandleHelper::GetConfiguration(
         "For unauthenticated requests on public resources, set the "
         "AWS_NO_SIGN_REQUEST configuration option to YES.",
         osCredentials.c_str());
-    CPLDebug("GS", "%s", osMsg.c_str());
+    CPLDebug("AWS", "%s", osMsg.c_str());
     VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
 
     return false;
