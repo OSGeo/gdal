@@ -182,7 +182,7 @@ static void AddInterestLayersForDSName(const CPLString &osDSName,
     oDSToBeOpened.nPID = CPLGetPID();
     oDSToBeOpened.osDSName = osDSName;
     oDSToBeOpened.osInterestLayers = osInterestLayers;
-    oListDSToBeOpened.push_back(oDSToBeOpened);
+    oListDSToBeOpened.push_back(std::move(oDSToBeOpened));
 }
 
 /************************************************************************/
