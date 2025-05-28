@@ -109,8 +109,8 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource *pParentDataSource,
             // cppcheck-suppress danglingTemporaryLifetime
             m_pFeatureDefn->AddFieldDefn(&oFieldDefn);
 
-            m_vOGRFieldToESRIField.push_back(fieldName);
-            m_vOGRFieldToESRIFieldType.push_back(strFieldType);
+            m_vOGRFieldToESRIField.push_back(std::move(fieldName));
+            m_vOGRFieldToESRIFieldType.push_back(std::move(strFieldType));
         }
     }
 }
