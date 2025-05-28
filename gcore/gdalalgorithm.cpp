@@ -962,11 +962,11 @@ bool GDALAlgorithmArg::RunValidationActions()
         auto &values = Get<std::vector<std::string>>();
         for (std::string &val : values)
         {
-            const std::string validVal = ValidateChoice(val);
+            std::string validVal = ValidateChoice(val);
             if (validVal.empty())
                 ret = false;
             else
-                val = validVal;
+                val = std::move(validVal);
         }
     }
 
@@ -1416,7 +1416,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                 {
                     // If there is a single match, remove the name from the suggestion.
                     oRet.clear();
-                    oRet.push_back(osCode);
+                    oRet.push_back(std::move(osCode));
                 }
             }
             if (currentValue.empty() || oRet.empty())

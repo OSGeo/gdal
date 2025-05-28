@@ -1072,7 +1072,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                     osFilename.replaceAll('\\', '/');
                     if (cpl::contains(oSetExistingDestFiles, osFilename))
                     {
-                        oSetExistingDestFilesFoundInSource.insert(osFilename);
+                        oSetExistingDestFilesFoundInSource.insert(
+                            std::move(osFilename));
                     }
                 }
             }

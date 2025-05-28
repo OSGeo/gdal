@@ -1232,7 +1232,7 @@ void GDALDriverManager::ReorderDrivers()
                 else if (cpl::contains(oMapNameToDrivers, osUCDriverName))
                 {
                     aosOrderedDrivers.emplace_back(pszLine);
-                    oSetOrderedDrivers.insert(osUCDriverName);
+                    oSetOrderedDrivers.insert(std::move(osUCDriverName));
                 }
 #ifdef DEBUG_VERBOSE
                 else

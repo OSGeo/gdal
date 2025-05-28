@@ -2393,7 +2393,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                         else
                             oDesc.osLabel = CPLGetFilename(oDesc.osFile);
 
-                        aoBoxes.push_back(oDesc);
+                        aoBoxes.push_back(std::move(oDesc));
                     }
                 }
                 else if (poBox &&
