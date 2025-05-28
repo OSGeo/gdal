@@ -661,7 +661,7 @@ OGRFeature *OGRWFSJoinLayer::GetNextFeature()
             CPLMD5Final((unsigned char *)osDigest.c_str(), &sMD5Context);
             if (aoSetMD5.find(osDigest) == aoSetMD5.end())
             {
-                aoSetMD5.insert(osDigest);
+                aoSetMD5.insert(std::move(osDigest));
                 return poNewFeature;
             }
             else
