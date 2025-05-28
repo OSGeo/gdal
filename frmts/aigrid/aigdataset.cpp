@@ -354,7 +354,7 @@ class AIGErrorDescription
   public:
     CPLErr eErr;
     CPLErrorNum no;
-    CPLString osMsg;
+    std::string osMsg;
 };
 
 static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, CPLErrorNum no,
@@ -371,7 +371,7 @@ static void CPL_STDCALL AIGErrorHandlerVATOpen(CPLErr eErr, CPLErrorNum no,
     oError.eErr = eErr;
     oError.no = no;
     oError.osMsg = msg;
-    paoErrors->push_back(oError);
+    paoErrors->push_back(std::move(oError));
 }
 
 /************************************************************************/
