@@ -1538,16 +1538,24 @@ retry:
                 goto retry;
             }
 
-            if (UseLimitRangeGetInsteadOfHead() &&
-                sWriteFuncData.pBuffer != nullptr &&
-                CanRestartOnError(sWriteFuncData.pBuffer,
-                                  sWriteFuncHeaderData.pBuffer, bSetError))
+            if (sWriteFuncData.pBuffer != nullptr)
             {
-                oFileProp.bHasComputedFileSize = false;
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(sWriteFuncHeaderData.pBuffer);
-                curl_easy_cleanup(hCurlHandle);
-                return GetFileSizeOrHeaders(bSetError, bGetHeaders);
+                if (UseLimitRangeGetInsteadOfHead() &&
+                    CanRestartOnError(sWriteFuncData.pBuffer,
+                                      sWriteFuncHeaderData.pBuffer, bSetError))
+                {
+                    oFileProp.bHasComputedFileSize = false;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    curl_easy_cleanup(hCurlHandle);
+                    return GetFileSizeOrHeaders(bSetError, bGetHeaders);
+                }
+                else
+                {
+                    CPL_IGNORE_RET_VAL(CanRestartOnError(
+                        sWriteFuncData.pBuffer, sWriteFuncHeaderData.pBuffer,
+                        bSetError));
+                }
             }
 
             // If there was no VSI error thrown in the process,

@@ -728,6 +728,7 @@ class VSIADLSHandle final : public VSICurlHandle
     virtual struct curl_slist *
     GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders) override;
+    bool CanRestartOnError(const char *, const char *, bool) override;
 
   public:
     VSIADLSHandle(VSIADLSFSHandler *poFS, const char *pszFilename,
@@ -2162,6 +2163,17 @@ VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
                               const struct curl_slist *psExistingHeaders)
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
+
+/************************************************************************/
+/*                          CanRestartOnError()                         */
+/************************************************************************/
+
+bool VSIADLSHandle::CanRestartOnError(const char *pszErrorMsg,
+                                      const char *pszHeaders, bool bSetError)
+{
+    return m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
+                                               bSetError);
 }
 
 } /* end of namespace cpl */
