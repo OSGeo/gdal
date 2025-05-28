@@ -472,7 +472,7 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
         oRegion.byValue =
             static_cast<GByte>(atoi(CPLGetXMLValue(psRegion, "Value", "0")));
 
-        poHandle->aoRegions.push_back(oRegion);
+        poHandle->aoRegions.push_back(std::move(oRegion));
     }
 
     /* -------------------------------------------------------------------- */

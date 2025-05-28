@@ -844,7 +844,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
         osPathForOption.c_str(), "CPL_AWS_EC2_API_ROOT_URL",
         osEC2DefaultURL.c_str()));
     // coverity[tainted_data]
-    const std::string osECSFullURI(VSIGetPathSpecificOption(
+    std::string osECSFullURI(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_FULL_URI", ""));
     // coverity[tainted_data]
     const std::string osECSRelativeURI(
@@ -861,7 +861,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                                        ""));
 
     // coverity[tainted_data]
-    const std::string osECSTokenValue(
+    std::string osECSTokenValue(
         (osECSFullURI.empty() && osECSRelativeURI.empty() &&
          !osECSTokenFile.empty())
             ? std::string()
@@ -879,14 +879,14 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     }
     else if (!osECSTokenValue.empty())
     {
-        osECSToken = osECSTokenValue;
+        osECSToken = std::move(osECSTokenValue);
     }
 
     std::string osToken;
     if (!osECSFullURI.empty())
     {
         // Cf https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
-        osURLRefreshCredentials = osECSFullURI;
+        osURLRefreshCredentials = std::move(osECSFullURI);
     }
     else if (osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty())
     {
@@ -1197,7 +1197,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     const std::string osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
-    const std::string osDotAws(GetAWSRootDirectory());
+    std::string osDotAws(GetAWSRootDirectory());
 
     // Read first ~/.aws/credential file
 
@@ -1229,7 +1229,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     else
     {
-        osConfig = osDotAws;
+        osConfig = std::move(osDotAws);
         osConfig += GetDirSeparator();
         osConfig += "config";
     }
@@ -2064,13 +2064,13 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
     // This variable overrides the default region of the in-use profile, if
     // set."
-    const std::string osDefaultRegion = CSLFetchNameValueDef(
+    std::string osDefaultRegion = CSLFetchNameValueDef(
         papszOptions, "AWS_DEFAULT_REGION",
         VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_REGION",
                                  ""));
     if (!osDefaultRegion.empty())
     {
-        osRegion = osDefaultRegion;
+        osRegion = std::move(osDefaultRegion);
     }
 
     std::string osEndpoint = VSIGetPathSpecificOption(
