@@ -254,9 +254,10 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
     virtual int GetValueAsInt(int iRow, int iField) const override;
     virtual double GetValueAsDouble(int iRow, int iField) const override;
 
-    virtual void SetValue(int iRow, int iField, const char *pszValue) override;
-    virtual void SetValue(int iRow, int iField, double dfValue) override;
-    virtual void SetValue(int iRow, int iField, int nValue) override;
+    virtual CPLErr SetValue(int iRow, int iField,
+                            const char *pszValue) override;
+    virtual CPLErr SetValue(int iRow, int iField, double dfValue) override;
+    virtual CPLErr SetValue(int iRow, int iField, int nValue) override;
 
     virtual CPLErr ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow,
                             int iLength, double *pdfData) override;

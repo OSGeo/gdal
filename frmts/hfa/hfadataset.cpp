@@ -370,7 +370,7 @@ int HFARasterAttributeTable::GetRowCount() const
 const char *HFARasterAttributeTable::GetValueAsString(int iRow,
                                                       int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     char *apszStrList[1] = {nullptr};
     if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
             GF_Read, iField, iRow, 1, apszStrList) != CE_None)
@@ -391,7 +391,7 @@ const char *HFARasterAttributeTable::GetValueAsString(int iRow,
 
 int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     int nValue = 0;
     if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
             GF_Read, iField, iRow, 1, &nValue) != CE_None)
@@ -408,7 +408,7 @@ int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 
 double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     double dfValue = 0.0;
     if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
             GF_Read, iField, iRow, 1, &dfValue) != CE_None)
@@ -423,31 +423,32 @@ double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField,
-                                       const char *pszValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
+                                         const char *pszValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, (char **)&pszValue);
+    // Let ValuesIO do the work.
+    char *apszValues[1] = {const_cast<char *>(pszValue)};
+    return ValuesIO(GF_Write, iField, iRow, 1, apszValues);
 }
 
 /************************************************************************/
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, &dfValue);
+    // Let ValuesIO do the work.
+    return ValuesIO(GF_Write, iField, iRow, 1, &dfValue);
 }
 
 /************************************************************************/
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, &nValue);
+    // Let ValuesIO do the work.
+    return ValuesIO(GF_Write, iField, iRow, 1, &nValue);
 }
 
 /************************************************************************/

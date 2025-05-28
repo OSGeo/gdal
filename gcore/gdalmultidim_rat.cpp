@@ -270,27 +270,30 @@ class GDALRasterAttributeTableFromMDArrays final
     }
 
     //
-    void SetValue(int, int, const char *) override
+    CPLErr SetValue(int, int, const char *) override
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
     }
 
     //
-    void SetValue(int, int, int) override
+    CPLErr SetValue(int, int, int) override
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
     }
 
     //
-    void SetValue(int, int, double) override
+    CPLErr SetValue(int, int, double) override
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "GDALRasterAttributeTableFromMDArrays::SetValue(): not supported");
+        return CE_Failure;
     }
 
     //
