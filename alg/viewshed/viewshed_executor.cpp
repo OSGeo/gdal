@@ -991,7 +991,10 @@ void ViewshedExecutor::maskLowPitch(double &dfZ, int nXOffset, int nYOffset)
     if (std::isnan(m_lowTanPitch))
         return;
 
-    double dfDist = std::sqrt(nXOffset * nXOffset + nYOffset * nYOffset);
+    double dfX = m_adfTransform[1] * nXOffset + m_adfTransform[2] * nYOffset;
+    double dfY = m_adfTransform[4] * nXOffset + m_adfTransform[5] * nYOffset;
+    double dfR2 = dfX * dfX + dfY * dfY;
+    double dfDist = std::sqrt(dfR2);
     double dfZmask = dfDist * m_lowTanPitch;
     if (dfZmask > dfZ)
         dfZ = dfZmask;
@@ -1010,7 +1013,10 @@ void ViewshedExecutor::maskHighPitch(double &dfResult, double dfZ, int nXOffset,
     if (std::isnan(m_highTanPitch))
         return;
 
-    double dfDist = std::sqrt(nXOffset * nXOffset + nYOffset * nYOffset);
+    double dfX = m_adfTransform[1] * nXOffset + m_adfTransform[2] * nYOffset;
+    double dfY = m_adfTransform[4] * nXOffset + m_adfTransform[5] * nYOffset;
+    double dfR2 = dfX * dfX + dfY * dfY;
+    double dfDist = std::sqrt(dfR2);
     double dfZmask = dfDist * m_highTanPitch;
     if (dfZmask < dfZ)
         dfResult = oOpts.outOfRangeVal;
