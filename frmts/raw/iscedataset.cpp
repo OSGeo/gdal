@@ -106,6 +106,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
         osXMLFilename =
             CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "xml");
         VSIStatBufL psXMLStatBuf;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         if (VSIStatL(osXMLFilename, &psXMLStatBuf) != 0)
         {
             osXMLFilename = "";
