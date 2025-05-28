@@ -1679,7 +1679,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /*      What file contains the actual data?                             */
     /* -------------------------------------------------------------------- */
     const char *pszCore = poDS->GetKeyword("IsisCube.Core.^Core");
-    const CPLString osQubeFile(
+    CPLString osQubeFile(
         EQUAL(pszCore, "")
             ? CPLString(poOpenInfo->pszFilename)
             : CPLFormFilenameSafe(
@@ -2234,7 +2234,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
 
-        poDS->m_sLayout.osRawFilename = osQubeFile;
+        poDS->m_sLayout.osRawFilename = std::move(osQubeFile);
         if (nBands > 1)
             poDS->m_sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
         poDS->m_sLayout.eDataType = eDataType;
@@ -3117,12 +3117,12 @@ void ISIS3Dataset::BuildLabel()
             if (oFilenameCap.GetType() == CPLJSONObject::Type::String)
             {
                 VSIStatBufL sStat;
-                const CPLString osSrcFilename(CPLFormFilenameSafe(
+                CPLString osSrcFilename(CPLFormFilenameSafe(
                     CPLGetPathSafe(osLabelSrcFilename).c_str(),
                     oFilenameCap.ToString().c_str(), nullptr));
                 if (VSIStatL(osSrcFilename, &sStat) == 0)
                 {
-                    oSection.osSrcFilename = osSrcFilename;
+                    oSection.osSrcFilename = std::move(osSrcFilename);
                 }
                 else
                 {
@@ -3172,7 +3172,7 @@ void ISIS3Dataset::BuildLabel()
                 oObj.Delete(osKeyFilename);
             }
 
-            m_aoNonPixelSections.push_back(oSection);
+            m_aoNonPixelSections.push_back(std::move(oSection));
         }
     }
     m_oJSonLabel = std::move(oLabel);
