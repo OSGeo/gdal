@@ -224,7 +224,7 @@ class HFARasterAttributeTable final : public GDALRasterAttributeTable
         aField.bIsBinValues = bIsBinValues;
         aField.bConvertColors = bConvertColors;
 
-        aoFields.push_back(aField);
+        aoFields.push_back(std::move(aField));
     }
 
     void CreateDT()
