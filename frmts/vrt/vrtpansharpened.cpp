@@ -194,6 +194,7 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
         {
             if (poMainDatasetLocal->m_apoOverviewDatasets[i].get() == this)
             {
+                // coverity[leaked_storage]
                 CPL_IGNORE_RET_VAL(
                     poMainDatasetLocal->m_apoOverviewDatasets[i].release());
                 break;

@@ -292,8 +292,10 @@ static void cpl_uffd_fault_handler(void *ptr)
                 // any such threads have been handled by them, so sleep for
                 // 1/100th of a second.
                 // Coverity complains about sleeping under a mutex
+#ifndef __COVERITY__
                 // coverity[sleep]
                 usleep(10000);
+#endif
                 if (sigaction(SIGSEGV, &old_segv, nullptr) == -1)
                 {
                     CPLError(

@@ -506,6 +506,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         oGuard.unlock();
         // coverity[wait_not_in_locked_loop]
         psWorkerThread->m_cv.wait(oGuardThisThread);
+        // coverity[lock_order]
         oGuard.lock();
     }
 }
