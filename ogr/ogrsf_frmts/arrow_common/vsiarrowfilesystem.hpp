@@ -139,8 +139,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
                 bParquetFound = EQUAL(
                     CPLGetExtensionSafe(psEntry->pszName).c_str(), "parquet");
 
-            const std::string osFilename =
-                select.base_dir + '/' + psEntry->pszName;
+            std::string osFilename = select.base_dir + '/' + psEntry->pszName;
             int nMode = psEntry->nMode;
             if (!psEntry->bModeKnown)
             {
@@ -155,12 +154,12 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
             else if (VSI_ISDIR(nMode))
                 fileType = arrow::fs::FileType::Directory;
 
-            arrow::fs::FileInfo info(osFilename, fileType);
+            arrow::fs::FileInfo info(std::move(osFilename), fileType);
             if (fileType == arrow::fs::FileType::File && psEntry->bSizeKnown)
             {
                 info.set_size(psEntry->nSize);
             }
-            res.push_back(info);
+            res.push_back(std::move(info));
 
             if (m_osEnvVarPrefix == "PARQUET")
             {
