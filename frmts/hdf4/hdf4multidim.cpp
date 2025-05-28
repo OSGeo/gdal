@@ -2878,7 +2878,7 @@ std::vector<std::string> HDF4GRsGroup::GetMDArrayNames(CSLConstList) const
         {
             osName.resize(strlen(osName.c_str()));
             m_oMapNameToGRIdx[osName] = i;
-            res.push_back(osName);
+            res.push_back(std::move(osName));
         }
 
         GRendaccess(iGR);
