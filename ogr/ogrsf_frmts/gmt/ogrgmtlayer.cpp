@@ -378,7 +378,7 @@ void OGRGmtLayer::ResetReading()
 bool OGRGmtLayer::ScanAheadForHole()
 
 {
-    const CPLString osSavedLine = osLine;
+    CPLString osSavedLine = osLine;
     const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
 
     while (ReadLine() && osLine[0] == '#')
@@ -388,7 +388,7 @@ bool OGRGmtLayer::ScanAheadForHole()
     }
 
     VSIFSeekL(m_fp, nSavedLocation, SEEK_SET);
-    osLine = osSavedLine;
+    osLine = std::move(osSavedLine);
 
     // We do not actually restore papszKeyedValues, but we
     // assume it does not matter since this method is only called
@@ -408,7 +408,7 @@ bool OGRGmtLayer::ScanAheadForHole()
 bool OGRGmtLayer::NextIsFeature()
 
 {
-    const CPLString osSavedLine = osLine;
+    CPLString osSavedLine = osLine;
     const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
     bool bReturn = false;
 
@@ -418,7 +418,7 @@ bool OGRGmtLayer::NextIsFeature()
         bReturn = true;
 
     VSIFSeekL(m_fp, nSavedLocation, SEEK_SET);
-    osLine = osSavedLine;
+    osLine = std::move(osSavedLine);
 
     // We do not actually restore papszKeyedValues, but we
     // assume it does not matter since this method is only called
