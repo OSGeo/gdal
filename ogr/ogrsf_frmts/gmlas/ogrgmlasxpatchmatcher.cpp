@@ -106,7 +106,7 @@ void GMLASXPathMatcher::SetDocumentMapURIToPrefix(
             XPathComponent comp;
             comp.m_osValue = std::move(osCurNode);
             comp.m_bDirectChild = bDirectChild;
-            oVector.push_back(comp);
+            oVector.push_back(std::move(comp));
 
             if (iPosNextSlash == std::string::npos)
                 iPos = osXPath.size();
@@ -118,7 +118,7 @@ void GMLASXPathMatcher::SetDocumentMapURIToPrefix(
 
         if (iPos < osXPath.size())
             oVector.clear();
-        m_aosReferenceXPaths.push_back(oVector);
+        m_aosReferenceXPaths.push_back(std::move(oVector));
     }
 }
 
