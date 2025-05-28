@@ -306,7 +306,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                     bool bValid = oDimList.Size() > 0;
                     for (int j = 0; j < oDimList.Size(); ++j)
                     {
-                        const auto osDimensionName = oDimList[j].ToString();
+                        std::string osDimensionName = oDimList[j].ToString();
                         const auto oIter = oMapDimensionNameToSize.find(
                             osDimensionName.c_str());
                         if (oIter == oMapDimensionNameToSize.end())
@@ -315,9 +315,10 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                             break;
                         }
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = oIter->second;
-                        oDataFieldMetadata.aoDimensions.push_back(oDim);
+                        oDataFieldMetadata.aoDimensions.push_back(
+                            std::move(oDim));
                     }
                     if (bValid)
                     {
@@ -504,7 +505,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     bool bValid = oDimList.Size() > 0;
                     for (int j = 0; j < oDimList.Size(); ++j)
                     {
-                        const auto osDimensionName = oDimList[j].ToString();
+                        std::string osDimensionName = oDimList[j].ToString();
                         const auto oIter = oMapDimensionNameToSize.find(
                             osDimensionName.c_str());
                         if (oIter == oMapDimensionNameToSize.end())
@@ -513,9 +514,9 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                             break;
                         }
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = oIter->second;
-                        oMetadata.aoDimensions.push_back(oDim);
+                        oMetadata.aoDimensions.push_back(std::move(oDim));
                     }
                     if (bValid)
                     {

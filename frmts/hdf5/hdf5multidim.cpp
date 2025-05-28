@@ -1668,8 +1668,8 @@ HDF5Array::GetCoordinateVariables() const
                                     "Geolocation Fields"));
                 if (poLongitude && poLatitude)
                 {
-                    ret.push_back(poLongitude);
-                    ret.push_back(poLatitude);
+                    ret.push_back(std::move(poLongitude));
+                    ret.push_back(std::move(poLatitude));
                 }
             }
         }
