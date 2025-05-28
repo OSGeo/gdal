@@ -55,8 +55,8 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     const CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
     CPLString osVersion = CPLURLGetValue(pszBaseURL, "VERSION");
-    const CPLString osSRS = CPLURLGetValue(pszBaseURL, "SRS");
-    const CPLString osCRS = CPLURLGetValue(pszBaseURL, "CRS");
+    CPLString osSRS = CPLURLGetValue(pszBaseURL, "SRS");
+    CPLString osCRS = CPLURLGetValue(pszBaseURL, "CRS");
     CPLString osBBOX = CPLURLGetValue(pszBaseURL, "BBOX");
     CPLString osFormat = CPLURLGetValue(pszBaseURL, "FORMAT");
     const CPLString osTransparent = CPLURLGetValue(pszBaseURL, "TRANSPARENT");
@@ -118,7 +118,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
                      "WMS version 1.3 and above expects CRS however SRS was "
                      "set instead.");
         }
-        osSRSValue = osCRS;
+        osSRSValue = std::move(osCRS);
         osSRSTag = "CRS";
     }
     else
@@ -129,7 +129,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
                      "WMS version 1.1.1 and below expects SRS however CRS was "
                      "set instead.");
         }
-        osSRSValue = osSRS;
+        osSRSValue = std::move(osSRS);
         osSRSTag = "SRS";
     }
 

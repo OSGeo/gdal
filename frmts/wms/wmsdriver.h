@@ -194,7 +194,7 @@ class WMSMiniDriver
     {
     }
 
-    virtual OGRSpatialReference GetSpatialRef()
+    virtual const OGRSpatialReference &GetSpatialRef() const
     {
         return m_oSRS;
     }
