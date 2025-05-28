@@ -2067,7 +2067,7 @@ retry:
             CanRestartOnError(
                 reinterpret_cast<const char *>(sWriteFuncData.pBuffer),
                 reinterpret_cast<const char *>(sWriteFuncHeaderData.pBuffer),
-                false))
+                true))
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -5430,7 +5430,7 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
          CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))))
     {
-        pStatBuf->st_size = poHandle->GetFileSize(false);
+        pStatBuf->st_size = poHandle->GetFileSize(true);
     }
 
     const int nRet =
