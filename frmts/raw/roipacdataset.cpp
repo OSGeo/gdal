@@ -71,7 +71,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles == nullptr)
     {
-        const CPLString osRscFilename =
+        CPLString osRscFilename =
             CPLFormFilenameSafe(nullptr, poOpenInfo->pszFilename, "rsc");
         VSIStatBufL psRscStatBuf;
         if (VSIStatL(osRscFilename, &psRscStatBuf) != 0)
