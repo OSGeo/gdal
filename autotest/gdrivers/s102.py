@@ -197,7 +197,10 @@ def test_s102_multidim():
 @pytest.mark.parametrize(
     "filename,quality_group_name",
     [
-        ("data/s102/test_s102_v2.2_with_QualityOfSurvey.h5", "QualityOfSurvey"),
+        (
+            "data/s102/test_s102_v2.2_with_QualityOfSurvey_nodata_0.h5",
+            "QualityOfSurvey",
+        ),
         (
             "data/s102/test_s102_v3.0_with_QualityOfBathymetryCoverage.h5",
             "QualityOfBathymetryCoverage",
@@ -281,13 +284,15 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
 def test_s102_QualityOfSurvey_multidim():
 
     ds = gdal.OpenEx(
-        "data/s102/test_s102_v2.2_with_QualityOfSurvey.h5", gdal.OF_MULTIDIM_RASTER
+        "data/s102/test_s102_v2.2_with_QualityOfSurvey_nodata_0.h5",
+        gdal.OF_MULTIDIM_RASTER,
     )
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArrayFromFullname(
         "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values"
     )
     assert ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ar.GetNoDataValue() == 0
 
     assert ar.GetDimensions()[0].GetName() == "Y"
     y = ar.GetDimensions()[0].GetIndexingVariable()
@@ -354,3 +359,14 @@ def test_s102_metadata_compute_stats_after(tmp_path):
     with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
         assert ds.GetMetadataItem("foo") == "bar"
+
+
+###############################################################################
+
+
+def test_s102_no_uncertainty():
+
+    ds = gdal.Open("data/s102/test_s102_v3.0_without_uncertainty_nodata_0.h5")
+    assert ds.RasterCount == 1
+    assert struct.unpack("f" * 6, ds.ReadRaster()) == (1e6, 4, 5, 0, 1, 2)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
