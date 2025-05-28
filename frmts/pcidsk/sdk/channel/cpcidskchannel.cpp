@@ -157,9 +157,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
         if( !STARTS_WITH(keys[i].c_str(), "_Overview_") )
             continue;
 
-        std::string value = GetMetadataValue( keys[i] );
-
-        overview_infos.push_back( value );
+        overview_infos.push_back( GetMetadataValue( keys[i] ) );
         overview_bands.push_back( nullptr );
         overview_decimations.push_back( atoi(keys[i].c_str()+10) );
     }
