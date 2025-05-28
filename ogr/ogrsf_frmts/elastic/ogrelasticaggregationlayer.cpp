@@ -64,7 +64,7 @@ OGRElasticAggregationLayer::Build(OGRElasticDataSource *poDS,
     if (!oDoc.LoadMemory(pszAggregation))
         return nullptr;
     const auto oRoot = oDoc.GetRoot();
-    const auto osIndex = oRoot.GetString("index");
+    std::string osIndex = oRoot.GetString("index");
     if (osIndex.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -119,9 +119,8 @@ OGRElasticAggregationLayer::Build(OGRElasticDataSource *poDS,
         }
     }
 
-    auto poLayer = std::unique_ptr<OGRElasticAggregationLayer>(
-        new OGRElasticAggregationLayer(poDS));
-    poLayer->m_osIndexName = osIndex;
+    auto poLayer = std::make_unique<OGRElasticAggregationLayer>(poDS);
+    poLayer->m_osIndexName = std::move(osIndex);
     poLayer->m_osGeometryField = std::move(osGeometryField);
 
     // Parse geohash_grid options
