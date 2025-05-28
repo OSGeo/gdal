@@ -1424,6 +1424,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         osRPCTXTFilename = CPLFormFilenameSafe(
             osDirName.c_str(), std::string(osBaseName).append("_RPC").c_str(),
             "TXT");
+        CPL_IGNORE_RET_VAL(osBaseName);
         if (CPLCheckForFile(osRPCTXTFilename.data(),
                             poOpenInfo->GetSiblingFiles()))
         {
@@ -3538,7 +3539,7 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
             if (VSIStatL(osTarget, &sStat) != 0)
                 break;
 
-            aosRSetFilenames.push_back(osTarget);
+            aosRSetFilenames.push_back(std::move(osTarget));
         }
 
         if (aosRSetFilenames.empty())
