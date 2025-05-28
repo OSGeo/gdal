@@ -63,12 +63,42 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     struct ConstructorOptions
     {
+        bool standaloneStep = false;
+        bool outputDatasetRequired = true;
+        std::string updateMutualExclusionGroup{};
+        std::string outputDatasetMutualExclusionGroup{};
+
+        inline ConstructorOptions &SetStandaloneStep(bool b)
+        {
+            standaloneStep = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetOutputDatasetRequired(bool b)
+        {
+            outputDatasetRequired = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &
+        SetUpdateMutualExclusionGroup(const std::string &s)
+        {
+            updateMutualExclusionGroup = s;
+            return *this;
+        }
+
+        inline ConstructorOptions &
+        SetOutputDatasetMutualExclusionGroup(const std::string &s)
+        {
+            outputDatasetMutualExclusionGroup = s;
+            return *this;
+        }
     };
 
     GDALVectorPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
-                                    const ConstructorOptions &options) = delete;
+                                    const ConstructorOptions &options);
 
     using StepRunContext = GDALVectorPipelineStepRunContext;
 
@@ -92,6 +122,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);
 
     bool m_standaloneStep = false;
+    const ConstructorOptions m_constructorOptions;
 
     bool m_outputVRTCompatible = false;
 
