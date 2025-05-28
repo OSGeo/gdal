@@ -360,9 +360,9 @@ TileDBGroup::GetMDArrayNames(CSLConstList /*papszOptions */) const
             tiledb::ArraySchema schema(m_poSharedResource->GetCtx(), obj.uri());
             if (schema.array_type() == TILEDB_DENSE)
             {
-                const std::string osName =
-                    obj.name().has_value() ? *(obj.name())
-                                           : CPLGetFilename(obj.uri().c_str());
+                std::string osName = obj.name().has_value()
+                                         ? *(obj.name())
+                                         : CPLGetFilename(obj.uri().c_str());
                 const auto nAttributes = schema.attribute_num();
                 if (nAttributes != 1)
                 {
@@ -374,7 +374,7 @@ TileDBGroup::GetMDArrayNames(CSLConstList /*papszOptions */) const
                 }
                 else
                 {
-                    aosNames.push_back(osName);
+                    aosNames.push_back(std::move(osName));
                 }
             }
         }
