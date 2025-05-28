@@ -4860,7 +4860,7 @@ static size_t FillValidityArrayFromAttrQuery(
                 UsedFieldsInfo info;
                 info.iOGRFieldIndex = iOGRFieldIndex;
                 info.anArrowPath = oIter->second;
-                aoUsedFieldsInfo.push_back(info);
+                aoUsedFieldsInfo.push_back(std::move(info));
             }
             else
             {
