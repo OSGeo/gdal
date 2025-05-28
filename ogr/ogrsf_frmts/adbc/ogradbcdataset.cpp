@@ -241,10 +241,10 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             const auto iPos2 = osSQL.find("'", iPos);
             if (iPos2 != std::string::npos)
             {
-                const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
+                std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
                 if (IsParquetExtension(osFilename.c_str()))
                 {
-                    m_osParquetFilename = osFilename;
+                    m_osParquetFilename = std::move(osFilename);
                     bIsParquet = true;
                 }
             }
