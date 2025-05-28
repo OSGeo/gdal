@@ -611,7 +611,7 @@ retry:
                 // Set a dummy name so that PAM goes here
                 CPLPushErrorHandler(CPLQuietErrorHandler);
 
-                const std::string osTmpFilename =
+                std::string osTmpFilename =
                     VSIMemGenerateHiddenFilename("ogrplscenesDataV1");
 
                 poOutDS->SetDescription(osTmpFilename.c_str());
@@ -655,6 +655,7 @@ retry:
                 VSIUnlink(
                     std::string(osTmpFilename).append(".aux.xml").c_str());
                 CPLPopErrorHandler();
+                CPL_IGNORE_RET_VAL(osTmpFilename);
             }
         }
 
