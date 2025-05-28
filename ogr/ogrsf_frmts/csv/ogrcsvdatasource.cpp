@@ -476,7 +476,7 @@ OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
 
 CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 {
-    const CPLString osExt = CPLGetExtensionSafe(osFilename);
+    CPLString osExt = CPLGetExtensionSafe(osFilename);
     if (STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (osFilename.size() > 7 &&
