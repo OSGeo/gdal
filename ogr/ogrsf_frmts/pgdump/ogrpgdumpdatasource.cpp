@@ -599,7 +599,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
                          OGRPGDumpEscapeColumnName(osIndexName.c_str()).c_str(),
                          pszSchemaEscaped, pszTableEscaped, pszSpatialIndexType,
                          OGRPGDumpEscapeColumnName(pszGFldName).c_str());
-        aosSpatialIndexCreationCommands.push_back(osCommand);
+        aosSpatialIndexCreationCommands.push_back(std::move(osCommand));
     }
 
     /* -------------------------------------------------------------------- */
