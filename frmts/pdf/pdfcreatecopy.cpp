@@ -1085,7 +1085,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteOCG(const char *pszLayerName,
     oOCGDesc.nParentId = nParentId;
     oOCGDesc.osLayerName = pszLayerName;
 
-    m_asOCGs.push_back(oOCGDesc);
+    m_asOCGs.push_back(std::move(oOCGDesc));
 
     StartObj(nOCGId);
     {
@@ -1309,7 +1309,7 @@ bool GDALPDFWriter::WriteImagery(GDALDataset *poDS, const char *pszLayerName,
         }
     }
 
-    oPageContext.asRasterDesc.push_back(oRasterDesc);
+    oPageContext.asRasterDesc.push_back(std::move(oRasterDesc));
 
     return true;
 }
@@ -1511,7 +1511,7 @@ bool GDALPDFWriter::WriteClippedImagery(
         }
     }
 
-    oPageContext.asRasterDesc.push_back(oRasterDesc);
+    oPageContext.asRasterDesc.push_back(std::move(oRasterDesc));
 
     return true;
 }
@@ -2881,7 +2881,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc &osVectorDesc,
     iObj++;
 
     osVectorDesc.aUserPropertiesIds.push_back(nFeatureUserProperties);
-    osVectorDesc.aFeatureNames.push_back(osFeatureName);
+    osVectorDesc.aFeatureNames.push_back(std::move(osFeatureName));
 
     return TRUE;
 }
