@@ -24,27 +24,39 @@ def generate(
     with_QualityOfSurvey=False,
     with_QualityOfCoverage=False,
     use_compound_type_for_Quality=False,
+    nodata=1e6,
+    with_uncertainty=True,
 ):
     f = h5py.File(os.path.join(os.path.dirname(__file__), f"{filename}.h5"), "w")
     BathymetryCoverage = f.create_group("BathymetryCoverage")
     BathymetryCoverage_01 = BathymetryCoverage.create_group("BathymetryCoverage.01")
     Group_001 = BathymetryCoverage_01.create_group("Group_001")
 
-    values_struct_type = np.dtype(
-        [
-            ("depth", "f4"),
-            ("uncertainty", "f4"),
-        ]
-    )
+    if with_uncertainty:
+        values_struct_type = np.dtype(
+            [
+                ("depth", "f4"),
+                ("uncertainty", "f4"),
+            ]
+        )
+    else:
+        values_struct_type = np.dtype(
+            [
+                ("depth", "f4"),
+            ]
+        )
     values = Group_001.create_dataset("values", (2, 3), dtype=values_struct_type)
     data = np.array(
-        [(0, 100), (1, 101), (2, 102), (1e6, 103), (4, 1e6), (5, 105)],
+        [(0, 100), (1, 101), (2, 102), (1e6, 103), (4, 1e6), (5, 105)]
+        if with_uncertainty
+        else [(0,), (1,), (2,), (1e6,), (4,), (5,)],
         dtype=values_struct_type,
     ).reshape(values.shape)
     values[...] = data
 
-    Group_001.attrs["minimumUncertainty"] = np.float32(100)
-    Group_001.attrs["maximumUncertainty"] = np.float32(105)
+    if with_uncertainty:
+        Group_001.attrs["minimumUncertainty"] = np.float32(100)
+        Group_001.attrs["maximumUncertainty"] = np.float32(105)
     Group_001.attrs["minimumDepth"] = np.float32(0)
     Group_001.attrs["maximumDepth"] = np.float32(5)
 
@@ -77,6 +89,33 @@ def generate(
 
     open(os.path.join(os.path.dirname(__file__), f.attrs["metadata"]), "wb").write(
         b"<nothing/>"
+    )
+
+    GroupFQuality_struct_type = np.dtype(
+        [
+            ("code", "S16"),
+            ("name", "S16"),
+            ("uom.name", "S16"),
+            ("fillValue", "S16"),
+            ("datatype", "S16"),
+            ("lower", "S16"),
+            ("upper", "S16"),
+            ("closure", "S16"),
+        ]
+    )
+    GroupFQuality = group_f.create_dataset(
+        "BathymetryCoverage",
+        (2,) if with_uncertainty else (1,),
+        dtype=GroupFQuality_struct_type,
+    )
+    GroupFQuality[...] = np.array(
+        [
+            ("depth", "", "", str(nodata), "H5T_FLOAT", "", "", "geSemiInterval"),
+            ("uncertainty", "", "", str(nodata), "H5T_FLOAT", "", "", "geSemiInterval"),
+        ]
+        if with_uncertainty
+        else [("depth", "", "", str(nodata), "H5T_FLOAT", "", "", "geSemiInterval")],
+        dtype=GroupFQuality_struct_type,
     )
 
     if with_QualityOfSurvey or with_QualityOfCoverage:
@@ -164,9 +203,10 @@ generate("test_s102_v2.1", "INT.IHO.S-102.2.1")
 generate("test_s102_v2.2", "INT.IHO.S-102.2.2")
 
 generate(
-    "test_s102_v2.2_with_QualityOfSurvey",
+    "test_s102_v2.2_with_QualityOfSurvey_nodata_0",
     "INT.IHO.S-102.2.2",
     with_QualityOfSurvey=True,
+    nodata=0,
 )
 
 generate(
@@ -174,4 +214,13 @@ generate(
     "INT.IHO.S-102.3.0.0",
     with_QualityOfCoverage=True,
     use_compound_type_for_Quality=True,
+)
+
+generate(
+    "test_s102_v3.0_without_uncertainty_nodata_0",
+    "INT.IHO.S-102.3.0.0",
+    with_QualityOfCoverage=True,
+    use_compound_type_for_Quality=True,
+    with_uncertainty=False,
+    nodata=0,
 )
