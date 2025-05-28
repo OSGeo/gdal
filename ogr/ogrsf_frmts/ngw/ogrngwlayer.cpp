@@ -1872,7 +1872,7 @@ OGRErr OGRNGWLayer::SetAttributeFilter(const char *pszQuery)
             {
                 bClientSideAttributeFilter = false;
                 CPLDebug("NGW", "Attribute filter: %s", osWhereIn.c_str());
-                osWhere = osWhereIn;
+                osWhere = std::move(osWhereIn);
             }
         }
     }
