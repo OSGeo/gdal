@@ -298,23 +298,24 @@ int CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo)
                      VSIGetLastErrorMsg());
             break;
         case VSIE_AccessDenied:
-            CPLError(eErrClass, CPLE_AccessDenied, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AccessDenied, "%s: %s",
+                     VSIErrorNumToString(err), VSIGetLastErrorMsg());
             break;
         case VSIE_BucketNotFound:
-            CPLError(eErrClass, CPLE_BucketNotFound, "%s",
-                     VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_BucketNotFound, "%s: %s",
+                     VSIErrorNumToString(err), VSIGetLastErrorMsg());
             break;
         case VSIE_ObjectNotFound:
-            CPLError(eErrClass, CPLE_ObjectNotFound, "%s",
-                     VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_ObjectNotFound, "%s: %s",
+                     VSIErrorNumToString(err), VSIGetLastErrorMsg());
             break;
         case VSIE_InvalidCredentials:
-            CPLError(eErrClass, CPLE_InvalidCredentials, "%s",
-                     VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_InvalidCredentials, "%s: %s",
+                     VSIErrorNumToString(err), VSIGetLastErrorMsg());
             break;
         case VSIE_SignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_SignatureDoesNotMatch, "%s",
-                     VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_SignatureDoesNotMatch, "%s: %s",
+                     VSIErrorNumToString(err), VSIGetLastErrorMsg());
             break;
         default:
             CPLError(eErrClass, CPLE_HttpResponse,
