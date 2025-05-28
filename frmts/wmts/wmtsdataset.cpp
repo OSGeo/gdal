@@ -787,7 +787,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
             // has a TileMatrix 0 with MatrixWidth = MatrixHeight = 0
             if (oTM.nMatrixWidth < 1 || oTM.nMatrixHeight < 1)
                 continue;
-            oTMS.aoTM.push_back(oTM);
+            oTMS.aoTM.push_back(std::move(oTM));
             if ((nMaxZoomLevel >= 0 &&
                  static_cast<int>(oTMS.aoTM.size()) - 1 == nMaxZoomLevel) ||
                 (!osMaxTileMatrixIdentifier.empty() &&
