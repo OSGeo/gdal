@@ -481,7 +481,7 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
-            curStep.alg->SetCallPath({algName});
+            curStep.alg->SetCallPath({std::move(algName)});
         }
         else
         {

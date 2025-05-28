@@ -4185,9 +4185,9 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     auto argParser =
         GDALDEMAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
 
-    auto tryHandleArgv = [&]()
+    auto tryHandleArgv = [&](const CPLStringList &args)
     {
-        argParser->parse_args_without_binary_name(aosArgv);
+        argParser->parse_args_without_binary_name(args);
         // Validate the parsed options
 
         if (psOptions->nBand <= 0)
@@ -4251,19 +4251,18 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
         {
             try
             {
-                tryHandleArgv();
+                tryHandleArgv(aosArgv);
             }
             catch (std::exception &)
             {
-                CPLStringList aosArgvCopy{aosArgv};
                 bool bSuccess = false;
                 for (const auto &processingMode : processingModes)
                 {
-                    aosArgv = aosArgvCopy;
-                    aosArgv.InsertString(0, processingMode.c_str());
+                    CPLStringList aosArgvTmp{aosArgv};
+                    aosArgvTmp.InsertString(0, processingMode.c_str());
                     try
                     {
-                        tryHandleArgv();
+                        tryHandleArgv(aosArgvTmp);
                         bSuccess = true;
                         break;
                     }
@@ -4290,7 +4289,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
         }
         else
         {
-            tryHandleArgv();
+            tryHandleArgv(aosArgv);
         }
     }
     catch (const std::exception &err)

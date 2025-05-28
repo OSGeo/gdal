@@ -452,7 +452,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
-            curStep.alg->SetCallPath({algName});
+            curStep.alg->SetCallPath({std::move(algName)});
         }
         else
         {
@@ -480,10 +480,10 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                 continue;
             }
 #endif
-            std::string value = arg;
 
 // #define GDAL_PIPELINE_NATURAL_LANGUAGE
 #ifdef GDAL_PIPELINE_NATURAL_LANGUAGE
+            std::string &value = arg;
             // gdal vector pipeline "read [from] poly.gpkg, reproject [from EPSG:4326] to EPSG:32632 and write to out.gpkg with overwriting"
             if (value == "and")
             {
@@ -526,7 +526,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 #endif
 
             {
-                curStep.args.push_back(value);
+                curStep.args.push_back(arg);
             }
         }
     }

@@ -1040,15 +1040,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (psOptions->osFormat.empty())
     {
-        const std::string osFormat = GetOutputDriverForRaster(pszDest);
-        if (osFormat.empty())
+        psOptions->osFormat = GetOutputDriverForRaster(pszDest);
+        if (psOptions->osFormat.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not identify an output driver for %s", pszDest);
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
-        psOptions->osFormat = osFormat;
     }
 
     GDALDriverH hDriver = GDALGetDriverByName(psOptions->osFormat.c_str());
@@ -3416,8 +3415,8 @@ GDALTranslateOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
         {
             ++i;
-            const std::string s = papszArgv[i];
-            if (EQUAL(s.c_str(), "none") || EQUAL(s.c_str(), "null"))
+            const char *s = papszArgv[i];
+            if (EQUAL(s, "none") || EQUAL(s, "null"))
             {
                 psOptions->bUnsetNoData = true;
             }

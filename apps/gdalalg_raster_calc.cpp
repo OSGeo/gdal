@@ -485,7 +485,7 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
 
         if (isFirst)
         {
-            firstSourceName = name;
+            firstSourceName = std::move(name);
             isFirst = false;
         }
     }
