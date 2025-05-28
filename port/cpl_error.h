@@ -66,11 +66,12 @@ typedef enum
     CPLE_UserInterrupt,
     CPLE_ObjectNull,
     CPLE_HttpResponse,
-    CPLE_AWSBucketNotFound,
-    CPLE_AWSObjectNotFound,
-    CPLE_AWSAccessDenied,
-    CPLE_AWSInvalidCredentials,
-    CPLE_AWSSignatureDoesNotMatch,
+    CPLE_BucketNotFound,
+    CPLE_ObjectNotFound,
+    CPLE_AccessDenied,
+    CPLE_InvalidCredentials,
+    CPLE_SignatureDoesNotMatch,
+    CPLE_ObjectStorageGenericError,
 } CPLErrorNum;
 
 #else
@@ -106,22 +107,58 @@ typedef int CPLErrorNum;
  */
 /** HTTP response */
 #define CPLE_HttpResponse 11
-/** AWSBucketNotFound */
-#define CPLE_AWSBucketNotFound 12
-/** AWSObjectNotFound */
-#define CPLE_AWSObjectNotFound 13
-/** AWSAccessDenied */
-#define CPLE_AWSAccessDenied 14
-/** AWSInvalidCredentials */
-#define CPLE_AWSInvalidCredentials 15
-/** AWSSignatureDoesNotMatch */
-#define CPLE_AWSSignatureDoesNotMatch 16
-/** VSIE_AWSError */
-#define CPLE_AWSError 17
+/** VSIE_BucketNotFound */
+#define CPLE_BucketNotFound 12
+/** VSIE_ObjectNotFound */
+#define CPLE_ObjectNotFound 13
+/** VSIE_AccessDenied */
+#define CPLE_AccessDenied 14
+/** VSIE_InvalidCredentials */
+#define CPLE_InvalidCredentials 15
+/** VSIE_SignatureDoesNotMatch */
+#define CPLE_SignatureDoesNotMatch 16
+/** VSIE_ObjectStorageGenericError */
+#define CPLE_ObjectStorageGenericError 17
 
 /* 100 - 299 reserved for GDAL */
 
 #endif
+
+/** Deprecated alias for CPLE_BucketNotFound
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSBucketNotFound CPLE_BucketNotFound
+
+/** Deprecated alias for CPLE_ObjectNotFound
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSObjectNotFound CPLE_ObjectNotFound
+
+/** Deprecated alias for CPLE_AccessDenied
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSAccessDenied CPLE_AccessDenied
+
+/** Deprecated alias for CPLE_AWSInvalidCredentials
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSInvalidCredentials CPLE_InvalidCredentials
+
+/** Deprecated alias for CPLE_SignatureDoesNotMatch
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSSignatureDoesNotMatch CPLE_SignatureDoesNotMatch
+
+/** Deprecated alias for CPLE_ObjectStorageGenericError
+ *
+ * @deprecated since 3.12
+ */
+#define CPLE_AWSError CPLE_ObjectStorageGenericError
 
 void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no,
                       CPL_FORMAT_STRING(const char *fmt), ...)

@@ -1767,7 +1767,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                                      "AWS_ACCESS_KEY_ID", ""));
         if (osAccessKeyId.empty())
         {
-            VSIError(VSIE_AWSInvalidCredentials,
+            VSIError(VSIE_InvalidCredentials,
                      "AWS_ACCESS_KEY_ID configuration option not defined");
             return false;
         }
@@ -1871,7 +1871,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                                         osSessionToken))
                 {
                     VSIError(
-                        VSIE_AWSInvalidCredentials,
+                        VSIE_InvalidCredentials,
                         "Cannot retrieve credentials for source profile %s",
                         osSourceProfile.c_str());
                     return false;
@@ -1991,7 +1991,7 @@ bool VSIS3HandleHelper::GetConfiguration(
         "AWS_NO_SIGN_REQUEST configuration option to YES.",
         osCredentials.c_str());
     CPLDebug(AWS_DEBUG_KEY, "%s", osMsg.c_str());
-    VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
+    VSIError(VSIE_InvalidCredentials, "%s", osMsg.c_str());
 
     return false;
 }
@@ -2327,7 +2327,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "Invalid AWS response: %s",
+                     pszErrorMsg);
         }
         return false;
     }
@@ -2337,8 +2338,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed AWS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -2349,8 +2350,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         CPLDestroyXMLNode(psTree);
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed AWS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -2364,8 +2365,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             CPLDestroyXMLNode(psTree);
             if (bSetError)
             {
-                VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                         pszErrorMsg);
+                VSIError(VSIE_ObjectStorageGenericError,
+                         "Malformed AWS XML response: %s", pszErrorMsg);
             }
             return false;
         }
@@ -2392,8 +2393,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             CPLDestroyXMLNode(psTree);
             if (bSetError)
             {
-                VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                         pszErrorMsg);
+                VSIError(VSIE_ObjectStorageGenericError,
+                         "Malformed AWS XML response: %s", pszErrorMsg);
             }
             return false;
         }
@@ -2459,27 +2460,27 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
 
         if (pszMessage == nullptr)
         {
-            VSIError(VSIE_AWSError, "%s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszErrorMsg);
         }
         else if (EQUAL(pszCode, "AccessDenied"))
         {
-            VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);
+            VSIError(VSIE_AccessDenied, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchBucket"))
         {
-            VSIError(VSIE_AWSBucketNotFound, "%s", pszMessage);
+            VSIError(VSIE_BucketNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchKey"))
         {
-            VSIError(VSIE_AWSObjectNotFound, "%s", pszMessage);
+            VSIError(VSIE_ObjectNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "SignatureDoesNotMatch"))
         {
-            VSIError(VSIE_AWSSignatureDoesNotMatch, "%s", pszMessage);
+            VSIError(VSIE_SignatureDoesNotMatch, "%s", pszMessage);
         }
         else
         {
-            VSIError(VSIE_AWSError, "%s", pszMessage);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszMessage);
         }
     }
 

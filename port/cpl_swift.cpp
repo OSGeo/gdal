@@ -97,7 +97,7 @@ bool VSISwiftHandleHelper::GetConfiguration(const std::string &osPathForOption,
         {
             const char *pszMsg = "Missing SWIFT_AUTH_TOKEN";
             CPLDebug("SWIFT", "%s", pszMsg);
-            VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+            VSIError(VSIE_InvalidCredentials, "%s", pszMsg);
             return false;
         }
         return true;
@@ -147,7 +147,7 @@ bool VSISwiftHandleHelper::GetConfiguration(const std::string &osPathForOption,
     const char *pszMsg = "Missing SWIFT_STORAGE_URL+SWIFT_AUTH_TOKEN or "
                          "appropriate authentication options";
     CPLDebug("SWIFT", "%s", pszMsg);
-    VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+    VSIError(VSIE_InvalidCredentials, "%s", pszMsg);
 
     return false;
 }
@@ -186,7 +186,7 @@ bool VSISwiftHandleHelper::AuthV1(const std::string &osPathForOption,
     if (osStorageURL.empty() || osAuthToken.empty())
     {
         CPLDebug("SWIFT", "Authentication failed: %s", osErrorMsg.c_str());
-        VSIError(VSIE_AWSInvalidCredentials, "Authentication failed: %s",
+        VSIError(VSIE_InvalidCredentials, "Authentication failed: %s",
                  osErrorMsg.c_str());
         return false;
     }
@@ -389,7 +389,7 @@ bool VSISwiftHandleHelper::AuthV3(const std::string &osPathForOption,
     {
         CPLDebug("SWIFT", "Unsupported OS SWIFT Auth Type: %s",
                  osAuthType.c_str());
-        VSIError(VSIE_AWSInvalidCredentials, "%s", osAuthType.c_str());
+        VSIError(VSIE_InvalidCredentials, "%s", osAuthType.c_str());
         return false;
     }
     CPLJSONObject postObject(
@@ -428,7 +428,7 @@ bool VSISwiftHandleHelper::AuthV3(const std::string &osPathForOption,
         std::string osErrorMsg =
             reinterpret_cast<const char *>(psResult->pabyData);
         CPLDebug("SWIFT", "Authentication failed: %s", osErrorMsg.c_str());
-        VSIError(VSIE_AWSInvalidCredentials, "Authentication failed: %s",
+        VSIError(VSIE_InvalidCredentials, "Authentication failed: %s",
                  osErrorMsg.c_str());
         CPLHTTPDestroyResult(psResult);
         return false;
@@ -501,7 +501,7 @@ bool VSISwiftHandleHelper::CheckCredentialsV1(
     if (pszMissingKey)
     {
         CPLDebug("SWIFT", "Missing %s configuration option", pszMissingKey);
-        VSIError(VSIE_AWSInvalidCredentials, "%s", pszMissingKey);
+        VSIError(VSIE_InvalidCredentials, "%s", pszMissingKey);
         return false;
     }
 
@@ -534,7 +534,7 @@ bool VSISwiftHandleHelper::CheckCredentialsV3(
     {
         CPLDebug("SWIFT", "Unsupported OS SWIFT Auth Type: %s",
                  osAuthType.c_str());
-        VSIError(VSIE_AWSInvalidCredentials, "%s", osAuthType.c_str());
+        VSIError(VSIE_InvalidCredentials, "%s", osAuthType.c_str());
         return false;
     }
     for (auto const *pszOptionKey : papszMandatoryOptionKeys)
@@ -544,7 +544,7 @@ bool VSISwiftHandleHelper::CheckCredentialsV3(
         if (option.empty())
         {
             CPLDebug("SWIFT", "Missing %s configuration option", pszOptionKey);
-            VSIError(VSIE_AWSInvalidCredentials, "%s", pszOptionKey);
+            VSIError(VSIE_InvalidCredentials, "%s", pszOptionKey);
             return false;
         }
     }

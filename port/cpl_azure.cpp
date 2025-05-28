@@ -230,7 +230,7 @@ static std::string AzureCSGetParameter(const std::string &osStr,
         if (bErrorIfMissing)
         {
             CPLDebug("AZURE", "%s", pszMsg);
-            VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+            VSIError(VSIE_InvalidCredentials, "%s", pszMsg);
         }
         return std::string();
     }
@@ -771,7 +771,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                         "or AZURE_NO_SIGN_REQUEST configuration option "
                         "not defined";
                     CPLDebug("AZURE", "%s", pszMsg);
-                    VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+                    VSIError(VSIE_InvalidCredentials, "%s", pszMsg);
                     return false;
                 }
             }
@@ -800,7 +800,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
         "For unauthenticated requests on public resources, set the "
         "AZURE_NO_SIGN_REQUEST configuration option to YES.";
     CPLDebug("AZURE", "%s", pszMsg);
-    VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+    VSIError(VSIE_InvalidCredentials, "%s", pszMsg);
     return false;
 }
 

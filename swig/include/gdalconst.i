@@ -167,11 +167,19 @@
 %constant CPLE_UserInterrupt              = CPLE_UserInterrupt;
 %constant CPLE_ObjectNull                 = CPLE_ObjectNull;
 %constant CPLE_HttpResponse               = CPLE_HttpResponse;
-%constant CPLE_AWSBucketNotFound          = CPLE_AWSBucketNotFound;
-%constant CPLE_AWSObjectNotFound          = CPLE_AWSObjectNotFound;
-%constant CPLE_AWSAccessDenied            = CPLE_AWSAccessDenied;
-%constant CPLE_AWSInvalidCredentials      = CPLE_AWSInvalidCredentials;
-%constant CPLE_AWSSignatureDoesNotMatch   = CPLE_AWSSignatureDoesNotMatch;
+%constant CPLE_BucketNotFound             = CPLE_BucketNotFound;
+%constant CPLE_ObjectNotFound             = CPLE_ObjectNotFound;
+%constant CPLE_AccessDenied               = CPLE_AccessDenied;
+%constant CPLE_InvalidCredentials         = CPLE_InvalidCredentials;
+%constant CPLE_SignatureDoesNotMatch      = CPLE_SignatureDoesNotMatch;
+%constant CPLE_ObjectStorageGenericError  = CPLE_ObjectStorageGenericError;
+
+// Deprecated values
+%constant CPLE_AWSBucketNotFound          = CPLE_BucketNotFound;
+%constant CPLE_AWSObjectNotFound          = CPLE_ObjectNotFound;
+%constant CPLE_AWSAccessDenied            = CPLE_AccessDenied;
+%constant CPLE_AWSInvalidCredentials      = CPLE_InvalidCredentials;
+%constant CPLE_AWSSignatureDoesNotMatch   = CPLE_SignatureDoesNotMatch;
 
 // Open flags
 %constant OF_ALL     = GDAL_OF_ALL;

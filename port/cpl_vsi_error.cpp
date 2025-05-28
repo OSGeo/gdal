@@ -261,27 +261,27 @@ int CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo)
         case VSIE_HttpError:
             CPLError(eErrClass, CPLE_HttpResponse, "%s", VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSError:
-            CPLError(eErrClass, CPLE_AWSError, "%s", VSIGetLastErrorMsg());
-            break;
-        case VSIE_AWSAccessDenied:
-            CPLError(eErrClass, CPLE_AWSAccessDenied, "%s",
+        case VSIE_ObjectStorageGenericError:
+            CPLError(eErrClass, CPLE_ObjectStorageGenericError, "%s",
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSBucketNotFound:
-            CPLError(eErrClass, CPLE_AWSBucketNotFound, "%s",
+        case VSIE_AccessDenied:
+            CPLError(eErrClass, CPLE_AccessDenied, "%s", VSIGetLastErrorMsg());
+            break;
+        case VSIE_BucketNotFound:
+            CPLError(eErrClass, CPLE_BucketNotFound, "%s",
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSObjectNotFound:
-            CPLError(eErrClass, CPLE_AWSObjectNotFound, "%s",
+        case VSIE_ObjectNotFound:
+            CPLError(eErrClass, CPLE_ObjectNotFound, "%s",
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSInvalidCredentials:
-            CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s",
+        case VSIE_InvalidCredentials:
+            CPLError(eErrClass, CPLE_InvalidCredentials, "%s",
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSSignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s",
+        case VSIE_SignatureDoesNotMatch:
+            CPLError(eErrClass, CPLE_SignatureDoesNotMatch, "%s",
                      VSIGetLastErrorMsg());
             break;
         default:
@@ -322,28 +322,28 @@ void VSIToCPLErrorWithMsg(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo,
             CPLError(eErrClass, CPLE_HttpResponse, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSError:
-            CPLError(eErrClass, CPLE_AWSError, "%s: %s", pszMsg,
+        case VSIE_ObjectStorageGenericError:
+            CPLError(eErrClass, CPLE_ObjectStorageGenericError, "%s: %s",
+                     pszMsg, VSIGetLastErrorMsg());
+            break;
+        case VSIE_AccessDenied:
+            CPLError(eErrClass, CPLE_AccessDenied, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSAccessDenied:
-            CPLError(eErrClass, CPLE_AWSAccessDenied, "%s: %s", pszMsg,
+        case VSIE_BucketNotFound:
+            CPLError(eErrClass, CPLE_BucketNotFound, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSBucketNotFound:
-            CPLError(eErrClass, CPLE_AWSBucketNotFound, "%s: %s", pszMsg,
+        case VSIE_ObjectNotFound:
+            CPLError(eErrClass, CPLE_ObjectNotFound, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSObjectNotFound:
-            CPLError(eErrClass, CPLE_AWSObjectNotFound, "%s: %s", pszMsg,
+        case VSIE_InvalidCredentials:
+            CPLError(eErrClass, CPLE_InvalidCredentials, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
-        case VSIE_AWSInvalidCredentials:
-            CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s: %s", pszMsg,
-                     VSIGetLastErrorMsg());
-            break;
-        case VSIE_AWSSignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s: %s", pszMsg,
+        case VSIE_SignatureDoesNotMatch:
+            CPLError(eErrClass, CPLE_SignatureDoesNotMatch, "%s: %s", pszMsg,
                      VSIGetLastErrorMsg());
             break;
         default:

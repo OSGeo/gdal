@@ -1669,7 +1669,7 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
                              : "(null)");
                 if (requestHelper.sWriteFuncData.pBuffer != nullptr)
                 {
-                    VSIError(VSIE_AWSError, "%s",
+                    VSIError(VSIE_ObjectStorageGenericError, "%s",
                              requestHelper.sWriteFuncData.pBuffer);
                     if (strstr(requestHelper.sWriteFuncData.pBuffer,
                                "PathNotFound"))
