@@ -3069,3 +3069,24 @@ def test_tiff_ovr_huge_raster_with_ovr_huge_block(tmp_vsimem):
     with pytest.raises(Exception):
         with gdal.Open(tmp_vsimem / "tmp.tif", gdal.GA_Update) as ds:
             ds.BuildOverviews("AVERAGE", [2])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_internal(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_external(tmp_vsimem):
+
+    gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds = gdal.Open(tmp_vsimem / "out.tif")
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])

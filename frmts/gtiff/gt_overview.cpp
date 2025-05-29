@@ -641,16 +641,16 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         for (iOverview = 0; iOverview < nOverviews; iOverview++)
         {
             const int nOXSize =
-                panOverviewList ? (nXSize + panOverviewList[iOverview] - 1) /
-                                      panOverviewList[iOverview]
-                                :
-                                // cppcheck-suppress nullPointer
+                panOverviewList
+                    ? DIV_ROUND_UP(nXSize, panOverviewList[iOverview])
+                    :
+                    // cppcheck-suppress nullPointer
                     pasOverviewSize[iOverview].first;
             const int nOYSize =
-                panOverviewList ? (nYSize + panOverviewList[iOverview] - 1) /
-                                      panOverviewList[iOverview]
-                                :
-                                // cppcheck-suppress nullPointer
+                panOverviewList
+                    ? DIV_ROUND_UP(nYSize, panOverviewList[iOverview])
+                    :
+                    // cppcheck-suppress nullPointer
                     pasOverviewSize[iOverview].second;
 
             dfUncompressedOverviewSize +=
@@ -893,23 +893,19 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
 
     for (iOverview = 0; iOverview < nOverviews; iOverview++)
     {
-        const int nOXSize = panOverviewList
-                                ? (nXSize + panOverviewList[iOverview] - 1) /
-                                      panOverviewList[iOverview]
-                                :
-                                // cppcheck-suppress nullPointer
-                                pasOverviewSize[iOverview].first;
-        const int nOYSize = panOverviewList
-                                ? (nYSize + panOverviewList[iOverview] - 1) /
-                                      panOverviewList[iOverview]
-                                :
-                                // cppcheck-suppress nullPointer
-                                pasOverviewSize[iOverview].second;
+        const int nOXSize =
+            panOverviewList ? DIV_ROUND_UP(nXSize, panOverviewList[iOverview]) :
+                            // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].first;
+        const int nOYSize =
+            panOverviewList ? DIV_ROUND_UP(nYSize, panOverviewList[iOverview]) :
+                            // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].second;
 
-        unsigned nTileXCount = DIV_ROUND_UP(nOXSize, nOvrBlockXSize);
-        unsigned nTileYCount = DIV_ROUND_UP(nOYSize, nOvrBlockYSize);
+        const int nTileXCount = DIV_ROUND_UP(nOXSize, nOvrBlockXSize);
+        const int nTileYCount = DIV_ROUND_UP(nOYSize, nOvrBlockYSize);
         // libtiff implementation limitation
-        if (nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount)
+        if (nTileXCount > INT_MAX / (bCreateBigTIFF ? 8 : 4) / nTileYCount)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "File too large regarding tile size. This would result "
