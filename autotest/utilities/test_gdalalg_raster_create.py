@@ -447,15 +447,14 @@ def test_gdalalg_raster_create_overwrite_mem_file_with_real_file_same_name(tmp_v
 def test_gdalalg_raster_create_driver_not_available():
 
     alg = get_alg()
-    alg["output-format"] = "GTiff"
-    alg["output"] = "/vsimem/out.tif"
+    alg["output-format"] = "MEM"
     alg["size"] = [1, 1]
 
     # Totally non-nominal !
-    drv = gdal.GetDriverByName("GTiff")
+    drv = gdal.GetDriverByName("MEM")
     drv.Deregister()
     try:
-        with pytest.raises(Exception, match="Cannot find driver GTiff"):
+        with pytest.raises(Exception, match="Cannot find driver MEM"):
             alg.Run()
     finally:
         drv.Register()
