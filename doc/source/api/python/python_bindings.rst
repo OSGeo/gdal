@@ -8,8 +8,8 @@ This Python package and extensions are a number of tools for programming and man
 
 The GDAL project maintains SWIG generated Python
 bindings for GDAL/OGR. Generally speaking the classes and methods mostly
-match those of the GDAL and OGR C++ classes. There is no Python specific
-reference documentation, but the :ref:`tutorials <tutorials>` includes Python examples.
+match those of the GDAL and OGR C++ classes. API documentation is available at :ref:`python_osgeo`,
+and the :ref:`tutorials <tutorials>` include Python examples.
 
 Dependencies
 ------------
@@ -168,7 +168,7 @@ Examples
   are implemented in Python and can be useful examples.
 * The majority of GDAL regression tests are written in Python. They are available at
   `https://github.com/OSGeo/gdal/tree/master/autotest <https://github.com/OSGeo/gdal/tree/master/autotest>`__
-* Some examples of GDAL/numpy integration can be found is found in the following scripts:
+* Some examples of GDAL/numpy integration can be found in the following scripts:
 
   - `gdal_calc.py`
   - `val_repl.py`
