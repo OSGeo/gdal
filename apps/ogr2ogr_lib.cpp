@@ -2679,6 +2679,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     std::vector<std::string> aoDrivers;
     if (poODS == nullptr && psOptions->osFormat.empty())
     {
+        const auto nErrorCount = CPLGetErrorCounter();
         aoDrivers = CPLStringList(GDALGetOutputDriversForDatasetName(
             pszDest, GDAL_OF_VECTOR, /* bSingleMatch = */ true,
             /* bWarn = */ true));
@@ -2691,6 +2692,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 bUpdate = true;
             }
+        }
+        else if (aoDrivers.empty() && CPLGetErrorCounter() > nErrorCount &&
+                 CPLGetLastErrorType() == CE_Failure)
+        {
+            return nullptr;
         }
     }
 
