@@ -11113,3 +11113,41 @@ def test_ogr_gpkg_gdal_driver_gpkg_repack(tmp_path):
 
     size_after = os.stat(tmp_path / "test.gpkg").st_size
     assert size_after < size_before
+
+
+###############################################################################
+# Test appending to a layer with a (wrong) feature_count = INT64_MAX
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_append_to_layer_feature_count_int64_max(tmp_vsimem):
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "tmp.gpkg") as ds:
+        ds.CreateLayer("test")
+
+    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        ds.ExecuteSQL("UPDATE gpkg_ogr_contents SET feature_count = -2")
+
+    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+
+    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        ds.ExecuteSQL(
+            "UPDATE gpkg_ogr_contents SET feature_count = 9223372036854775807"
+        )
+
+    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 9223372036854775807
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        with ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert not f.IsFieldSetAndNotNull("feature_count")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
