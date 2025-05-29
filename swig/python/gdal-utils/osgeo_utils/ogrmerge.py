@@ -211,12 +211,27 @@ def process(argv, progress=None, progress_arg=None):
         elif arg == "-a_srs" and i + 1 < len(argv):
             i = i + 1
             a_srs = argv[i]
+            srs = osr.SpatialReference()
+            try:
+                srs.SetFromUserInput(a_srs)
+            except Exception:
+                raise ValueError("Invalid value for -a_srs")
         elif arg == "-s_srs" and i + 1 < len(argv):
             i = i + 1
             s_srs = argv[i]
+            srs = osr.SpatialReference()
+            try:
+                srs.SetFromUserInput(s_srs)
+            except Exception:
+                raise ValueError("Invalid value for -s_srs")
         elif arg == "-t_srs" and i + 1 < len(argv):
             i = i + 1
             t_srs = argv[i]
+            srs = osr.SpatialReference()
+            try:
+                srs.SetFromUserInput(t_srs)
+            except Exception:
+                raise ValueError("Invalid value for -t_srs")
         elif arg == "-nln" and i + 1 < len(argv):
             i = i + 1
             layer_name_template = argv[i]
