@@ -4057,37 +4057,33 @@ retry:
 
     if (nOpenFlags & GDAL_OF_VERBOSE_ERROR)
     {
+        if (nDriverCount == 0)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
+        }
+        else if (poMissingPluginDriver)
+        {
+            std::string osMsg("`");
+            osMsg += pszFilename;
+            osMsg += "' not recognized as being in a supported file format. "
+                     "It could have been recognized by driver ";
+            osMsg += poMissingPluginDriver->GetDescription();
+            osMsg += ", but plugin ";
+            osMsg +=
+                GDALGetMessageAboutMissingPluginDriver(poMissingPluginDriver);
+
+            CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
+        }
         // Check to see if there was a filesystem error, and report it if so.
         // If not, return a more generic error.
-        if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
+        else if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
         {
-            if (nDriverCount == 0)
+            if (oOpenInfo.bStatOK)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
-            }
-            else if (oOpenInfo.bStatOK)
-            {
-                if (!poMissingPluginDriver)
-                {
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as being in a supported file "
-                             "format.",
-                             pszFilename);
-                }
-                else
-                {
-                    std::string osMsg("`");
-                    osMsg += pszFilename;
-                    osMsg +=
-                        "' not recognized as being in a supported file format. "
-                        "It could have been recognized by driver ";
-                    osMsg += poMissingPluginDriver->GetDescription();
-                    osMsg += ", but plugin ";
-                    osMsg += GDALGetMessageAboutMissingPluginDriver(
-                        poMissingPluginDriver);
-
-                    CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
-                }
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "`%s' not recognized as being in a supported file "
+                         "format.",
+                         pszFilename);
             }
             else
             {
