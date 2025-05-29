@@ -3264,3 +3264,21 @@ def test_ogr2ogr_lib_warn_different_coordinate_operations(tmp_vsimem, source_for
             dstSRS="EPSG:4326",  # WGS 84
             coordinateOperationOptions=["ALLOW_BALLPARK=NO", "ONLY_BEST=YES"],
         )
+
+
+###############################################################################
+# Test callback with erroneously big feature count
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_progress_huge_feature_count():
+
+    tab = [0]
+    # Just check it does not crash
+    gdal.VectorTranslate(
+        "",
+        "../ogr/data/gpkg/huge_feature_count.gpkg",
+        format="MEM",
+        callback=mycallback,
+        callback_data=tab,
+    )
