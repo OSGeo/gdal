@@ -5739,8 +5739,8 @@ bool BAGCreator::CreateElevationOrUncertainty(
                     H5Sclose(hMemSpace);
 
                     if (!pfnProgress(
-                            static_cast<double>(iY * nXBlocks + iX + 1) /
-                                (nXBlocks * nYBlocks),
+                            (static_cast<double>(iY) * nXBlocks + iX + 1) /
+                                (static_cast<double>(nXBlocks) * nYBlocks),
                             "", pProgressData))
                     {
                         ret = false;
