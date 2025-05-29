@@ -3161,7 +3161,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
     if (aosDriverNames.empty() && bEmitWarning &&
         aosMissingDriverNames.size() == 1 && poMissingPluginDriver)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "No installed driver matching %s %s, but %s driver is "
                  "known. However plugin %s",
                  osMatchingPrefix.empty() ? osExt.c_str()
