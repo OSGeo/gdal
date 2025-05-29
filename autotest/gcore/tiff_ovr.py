@@ -3122,3 +3122,24 @@ def test_tiff_ovr_huge_reduction_factor_mask(tmp_vsimem):
     ):
         ds.BuildOverviews("AVERAGE", [1024])
     assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_internal(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_external(tmp_vsimem):
+
+    gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds = gdal.Open(tmp_vsimem / "out.tif")
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])

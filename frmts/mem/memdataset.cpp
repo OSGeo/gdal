@@ -885,9 +885,9 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             auto poOvrDS = std::make_unique<MEMDataset>();
             poOvrDS->eAccess = GA_Update;
             poOvrDS->nRasterXSize =
-                (nRasterXSize + panOverviewList[i] - 1) / panOverviewList[i];
+                DIV_ROUND_UP(nRasterXSize, panOverviewList[i]);
             poOvrDS->nRasterYSize =
-                (nRasterYSize + panOverviewList[i] - 1) / panOverviewList[i];
+                DIV_ROUND_UP(nRasterYSize, panOverviewList[i]);
             poOvrDS->bGeoTransformSet = bGeoTransformSet;
             memcpy(poOvrDS->adfGeoTransform, adfGeoTransform,
                    6 * sizeof(double));

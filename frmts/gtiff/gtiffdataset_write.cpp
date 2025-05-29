@@ -3176,12 +3176,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             // If we already have a 1x1 overview and this new one would result
             // in it too, then don't create it.
             if (poODS->GetRasterXSize() == 1 && poODS->GetRasterYSize() == 1 &&
-                (GetRasterXSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1 &&
-                (GetRasterYSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1)
+                DIV_ROUND_UP(GetRasterXSize(), panOverviewList[i]) == 1 &&
+                DIV_ROUND_UP(GetRasterYSize(), panOverviewList[i]) == 1)
             {
                 abRequireNewOverview[i] = false;
                 break;
@@ -3209,10 +3205,10 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 m_bWriteKnownIncompatibleEdition = true;
             }
 
-            const int nOXSize = (GetRasterXSize() + panOverviewList[i] - 1) /
-                                panOverviewList[i];
-            const int nOYSize = (GetRasterYSize() + panOverviewList[i] - 1) /
-                                panOverviewList[i];
+            const int nOXSize =
+                DIV_ROUND_UP(GetRasterXSize(), panOverviewList[i]);
+            const int nOYSize =
+                DIV_ROUND_UP(GetRasterYSize(), panOverviewList[i]);
 
             const toff_t nOverviewOffset = GTIFFWriteDirectory(
                 m_hTIFF, FILETYPE_REDUCEDIMAGE, nOXSize, nOYSize,

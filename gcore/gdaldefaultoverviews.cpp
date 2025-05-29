@@ -489,12 +489,12 @@ int GDALOvLevelAdjust2(int nOvLevel, int nXSize, int nYSize)
     // in an attempt to behave closer as previous behavior.
     if (nXSize >= nYSize / 2 && !(nXSize < nYSize && nXSize < nOvLevel))
     {
-        const int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+        const int nOXSize = DIV_ROUND_UP(nXSize, nOvLevel);
 
         return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
     }
 
-    const int nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
+    const int nOYSize = DIV_ROUND_UP(nYSize, nOvLevel);
 
     return static_cast<int>(0.5 + nYSize / static_cast<double>(nOYSize));
 }
@@ -529,11 +529,10 @@ int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
             0.5 + nRasterXSize / static_cast<double>(nOvrXSize));
         // Try to return a power-of-two value
         const int nValPowerOfTwo = GetFloorPowerOfTwo(nVal);
-        for (int fact = 1; fact <= 2; ++fact)
+        for (int fact = 1; fact <= 2 && nValPowerOfTwo <= INT_MAX / fact;
+             ++fact)
         {
-            if ((nRasterXSize + fact * nValPowerOfTwo - 1) /
-                    (fact * nValPowerOfTwo) ==
-                nOvrXSize)
+            if (DIV_ROUND_UP(nRasterXSize, fact * nValPowerOfTwo) == nOvrXSize)
                 return fact * nValPowerOfTwo;
         }
         return nVal;
@@ -543,11 +542,9 @@ int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
         static_cast<int>(0.5 + nRasterYSize / static_cast<double>(nOvrYSize));
     // Try to return a power-of-two value
     const int nValPowerOfTwo = GetFloorPowerOfTwo(nVal);
-    for (int fact = 1; fact <= 2; ++fact)
+    for (int fact = 1; fact <= 2 && nValPowerOfTwo <= INT_MAX / fact; ++fact)
     {
-        if ((nRasterYSize + fact * nValPowerOfTwo - 1) /
-                (fact * nValPowerOfTwo) ==
-            nOvrYSize)
+        if (DIV_ROUND_UP(nRasterYSize, fact * nValPowerOfTwo) == nOvrYSize)
             return fact * nValPowerOfTwo;
     }
     return nVal;
@@ -770,12 +767,8 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         // If we already have a 1x1 overview and this new one would result
         // in it too, then don't create it.
         if (bFoundSinglePixelOverview &&
-            (poBand->GetXSize() + panOverviewList[i] - 1) /
-                    panOverviewList[i] ==
-                1 &&
-            (poBand->GetYSize() + panOverviewList[i] - 1) /
-                    panOverviewList[i] ==
-                1)
+            DIV_ROUND_UP(poBand->GetXSize(), panOverviewList[i]) == 1 &&
+            DIV_ROUND_UP(poBand->GetYSize(), panOverviewList[i]) == 1)
         {
             abValidLevel[i] = false;
             continue;
@@ -833,12 +826,8 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
                 panNewOverviewList[nNewOverviews++] = panOverviewList[i];
             }
 
-            if ((poBand->GetXSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1 &&
-                (poBand->GetYSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1)
+            if (DIV_ROUND_UP(poBand->GetXSize(), panOverviewList[i]) == 1 &&
+                DIV_ROUND_UP(poBand->GetYSize(), panOverviewList[i]) == 1)
             {
                 bFoundSinglePixelOverview = true;
             }
