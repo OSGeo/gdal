@@ -1813,7 +1813,7 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands, int nDTSize,
             " MB of RAM would be needed to open the dataset. If you are "
             "comfortable with this, you can set the RAW_MEM_ALLOC_LIMIT_MB "
             "configuration option to that value or above",
-            (nTotalBufferSize + MB_IN_BYTES - 1) / MB_IN_BYTES);
+            DIV_ROUND_UP(nTotalBufferSize, MB_IN_BYTES));
         return false;
     }
 

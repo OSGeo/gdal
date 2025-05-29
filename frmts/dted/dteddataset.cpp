@@ -123,7 +123,7 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     if (nBlockXSize != 1)
     {
         const int cbs = 32;  // optimize for 64 byte cache line size
-        const int bsy = (nBlockYSize + cbs - 1) / cbs * cbs;
+        const int bsy = DIV_ROUND_UP(nBlockYSize, cbs) * cbs;
         panData = (GInt16 *)pImage;
         GInt16 *panBuffer = (GInt16 *)CPLMalloc(sizeof(GInt16) * cbs * bsy);
         for (int i = 0; i < nBlockXSize; i += cbs)

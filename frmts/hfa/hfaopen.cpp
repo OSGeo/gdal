@@ -2009,8 +2009,8 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
     }
 
     // Work out some details about the tiling scheme.
-    const int nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
-    const int nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+    const int nBlocksPerRow = DIV_ROUND_UP(nXSize, nBlockSize);
+    const int nBlocksPerColumn = DIV_ROUND_UP(nYSize, nBlockSize);
     const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
     const int nBytesPerBlock =
         (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
@@ -3004,8 +3004,8 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     CPLFree(pszFullFilename);
 
     // Work out some details about the tiling scheme.
-    const int nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
-    const int nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+    const int nBlocksPerRow = DIV_ROUND_UP(nXSize, nBlockSize);
+    const int nBlocksPerColumn = DIV_ROUND_UP(nYSize, nBlockSize);
     // const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
     const int nBytesPerBlock =
         (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;

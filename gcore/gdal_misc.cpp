@@ -1525,10 +1525,8 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
     int nBlockYSize = 0;
     poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    const int nBlocksPerRow =
-        (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
-    const int nBlocksPerColumn =
-        (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+    const int nBlocksPerRow = DIV_ROUND_UP(poBand->GetXSize(), nBlockXSize);
+    const int nBlocksPerColumn = DIV_ROUND_UP(poBand->GetYSize(), nBlockYSize);
 
     const GIntBig nBlockPixels =
         static_cast<GIntBig>(nBlockXSize) * nBlockYSize;

@@ -3703,9 +3703,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     fabs(m_adfGeoTransform[5]) * nOvFactor;
                 int nTileWidth, nTileHeight;
                 GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-                int nTileMatrixWidth = (nOvXSize + nTileWidth - 1) / nTileWidth;
-                int nTileMatrixHeight =
-                    (nOvYSize + nTileHeight - 1) / nTileHeight;
+                int nTileMatrixWidth = DIV_ROUND_UP(nOvXSize, nTileWidth);
+                int nTileMatrixHeight = DIV_ROUND_UP(nOvYSize, nTileHeight);
                 pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_tile_matrix "
                     "(table_name,zoom_level,matrix_width,matrix_height,tile_"

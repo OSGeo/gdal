@@ -2050,8 +2050,8 @@ static int HFAGetOverviewBlockSize()
 int HFABand::CreateOverview(int nOverviewLevel, const char *pszResampling)
 
 {
-    const int nOXSize = (psInfo->nXSize + nOverviewLevel - 1) / nOverviewLevel;
-    const int nOYSize = (psInfo->nYSize + nOverviewLevel - 1) / nOverviewLevel;
+    const int nOXSize = DIV_ROUND_UP(psInfo->nXSize, nOverviewLevel);
+    const int nOYSize = DIV_ROUND_UP(psInfo->nYSize, nOverviewLevel);
 
     // Do we want to use a dependent file (.rrd) for the overviews?
     // Or just create them directly in this file?

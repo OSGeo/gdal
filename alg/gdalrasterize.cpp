@@ -1181,7 +1181,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
             nYChunkSize = poDS->GetRasterYSize();
 
         CPLDebug("GDAL", "Rasterizer operating on %d swaths of %d scanlines.",
-                 (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
+                 DIV_ROUND_UP(poDS->GetRasterYSize(), nYChunkSize),
                  nYChunkSize);
 
         pabyChunkBuf = static_cast<unsigned char *>(VSI_MALLOC2_VERBOSE(
@@ -1259,10 +1259,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
         /*      the block size of the output file. */
         /* --------------------------------------------------------------------
          */
-        const int nXBlocks =
-            (poBand->GetXSize() + nXBlockSize - 1) / nXBlockSize;
-        const int nYBlocks =
-            (poBand->GetYSize() + nYBlockSize - 1) / nYBlockSize;
+        const int nXBlocks = DIV_ROUND_UP(poBand->GetXSize(), nXBlockSize);
+        const int nYBlocks = DIV_ROUND_UP(poBand->GetYSize(), nYBlockSize);
 
         const GDALDataType eType =
             poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
@@ -1589,8 +1587,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
         nYChunkSize = poDS->GetRasterYSize();
 
     CPLDebug("GDAL", "Rasterizer operating on %d swaths of %d scanlines.",
-             (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
-             nYChunkSize);
+             DIV_ROUND_UP(poDS->GetRasterYSize(), nYChunkSize), nYChunkSize);
     unsigned char *pabyChunkBuf = static_cast<unsigned char *>(
         VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes));
     if (pabyChunkBuf == nullptr)

@@ -289,8 +289,8 @@ int HF2Dataset::LoadBlockMap()
 
     bHasLoaderBlockMap = TRUE;
 
-    const int nXBlocks = (nRasterXSize + nTileSize - 1) / nTileSize;
-    const int nYBlocks = (nRasterYSize + nTileSize - 1) / nTileSize;
+    const int nXBlocks = DIV_ROUND_UP(nRasterXSize, nTileSize);
+    const int nYBlocks = DIV_ROUND_UP(nRasterYSize, nTileSize);
     if (nXBlocks * nYBlocks > 1000000)
     {
         vsi_l_offset nCurOff = VSIFTellL(fp);
@@ -477,8 +477,8 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
-    const int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
-    const int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
+    const int nXBlocks = DIV_ROUND_UP(nXSize, nTileSize);
+    const int nYBlocks = DIV_ROUND_UP(nYSize, nTileSize);
     if (nXBlocks > INT_MAX / nYBlocks)
     {
         return nullptr;
@@ -955,8 +955,8 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Copy imagery                                                    */
     /* -------------------------------------------------------------------- */
-    const int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
-    const int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
+    const int nXBlocks = DIV_ROUND_UP(nXSize, nTileSize);
+    const int nYBlocks = DIV_ROUND_UP(nYSize, nTileSize);
 
     void *pTileBuffer = VSI_MALLOC3_VERBOSE(nTileSize, nTileSize,
                                             GDALGetDataTypeSizeBytes(eReqDT));

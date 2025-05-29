@@ -139,15 +139,6 @@ static size_t GetCacheMax(size_t nCacheSize)
 }
 
 /************************************************************************/
-/*                           DIV_ROUND_UP()                             */
-/************************************************************************/
-
-template <class T> inline T DIV_ROUND_UP(T a, T b)
-{
-    return a / b + (((a % b) == 0) ? 0 : 1);
-}
-
-/************************************************************************/
 /*                           VSICachedFile()                            */
 /************************************************************************/
 
@@ -155,7 +146,7 @@ VSICachedFile::VSICachedFile(VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
                              size_t nCacheSize)
     : m_poBase(poBaseHandle),
       m_nChunkSize(nChunkSize ? nChunkSize : VSI_CACHED_DEFAULT_CHUNK_SIZE),
-      m_oCache{DIV_ROUND_UP(GetCacheMax(nCacheSize), m_nChunkSize), 0}
+      m_oCache{cpl::div_round_up(GetCacheMax(nCacheSize), m_nChunkSize), 0}
 {
     m_poBase->Seek(0, SEEK_END);
     m_nFileSize = m_poBase->Tell();
@@ -306,7 +297,7 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
     bool ret = true;
     if (nToRead > nDataRead + m_nChunkSize - 1)
     {
-        size_t nNewBlockCount = (nDataRead + m_nChunkSize - 1) / m_nChunkSize;
+        size_t nNewBlockCount = cpl::div_round_up(nDataRead, m_nChunkSize);
         if (nNewBlockCount < nBlockCount)
         {
             nBlockCount = nNewBlockCount;
