@@ -5,6 +5,8 @@
 
 .. _python_mdim_api:
 
+.. py:currentmodule:: osgeo.gdal
+
 Multi-dimensional array API
 ===========================
 
@@ -20,7 +22,7 @@ examples of working with the Multi-dimensional array API.
 Group
 -----------------------------
 
-.. autoclass:: osgeo.gdal.Group
+.. autoclass:: Group
     :members:
     :undoc-members:
     :exclude-members: thisown
@@ -29,7 +31,7 @@ Group
 Dimension
 -----------------------------
 
-.. autoclass:: osgeo.gdal.Dimension
+.. autoclass:: Dimension
     :members:
     :undoc-members:
     :exclude-members: thisown
@@ -38,7 +40,7 @@ Dimension
 MDArray
 -----------------------------
 
-.. autoclass:: osgeo.gdal.MDArray
+.. autoclass:: MDArray
     :members:
     :undoc-members:
     :exclude-members: thisown
@@ -47,7 +49,7 @@ MDArray
 Attribute
 -----------------------------
 
-.. autoclass:: osgeo.gdal.Attribute
+.. autoclass:: Attribute
     :members:
     :undoc-members:
     :exclude-members: thisown
@@ -56,7 +58,7 @@ Attribute
 ExtendedDataType
 -----------------------------
 
-.. autoclass:: osgeo.gdal.ExtendedDataType
+.. autoclass:: ExtendedDataType
     :members:
     :undoc-members:
     :exclude-members: thisown

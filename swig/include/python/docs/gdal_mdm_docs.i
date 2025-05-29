@@ -1,6 +1,6 @@
 %feature("docstring")  CreateAttribute "
 
-Create an attribute within a :py:class:`osgeo.gdal.MDArray` or :py:class:`osgeo.gdal.Group`.
+Create an attribute within a :py:class:`MDArray` or :py:class:`Group`.
 
 See :cpp:func:`GDALIHasAttribute::CreateAttribute`.
 
@@ -12,7 +12,7 @@ dimensions : list
     List of dimensions, ordered from the slowest varying
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
-data_type: :py:class:`osgeo.gdal.ExtendedDataType`
+data_type: :py:class:`ExtendedDataType`
     Attribute data type
 options: dict/list
     an optional dict or list of driver specific ``NAME=VALUE`` option strings.
@@ -21,10 +21,16 @@ Returns
 -------
 
 Attribute:
-    the new :py:class:`osgeo.gdal.Attribute` or ``None`` on failure.
+    the new :py:class:`Attribute` or ``None`` on failure.
 
 Examples
 --------
+
+>>> drv = gdal.GetDriverByName('MEM')
+>>> mem_ds = drv.CreateMultiDimensional('myds')
+>>> rg = mem_ds.GetRootGroup()
+>>> dim = rg.CreateDimension('dim', None, None, 2)
+>>> ar = rg.CreateMDArray('ar_double', [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
 >>> numeric_attr = ar.CreateAttribute('numeric_attr', [], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
 >>> string_attr = ar.CreateAttribute('string_attr', [], gdal.ExtendedDataType.CreateString())
 
@@ -32,7 +38,7 @@ Examples
 
 %feature("docstring")  CreateDimension "
 
-Create a dimension within a :py:class:`osgeo.gdal.Group`.
+Create a dimension within a :py:class:`Group`.
 
 See :cpp:func:`GDALGroup::CreateDimension`.
 
@@ -53,10 +59,14 @@ Returns
 -------
 
 Dimension:
-    the new :py:class:`osgeo.gdal.Dimension` or ``None`` on failure.
+    the new :py:class:`Dimension` or ``None`` on failure.
 
 Examples
 --------
+
+>>> drv = gdal.GetDriverByName('MEM')
+>>> mem_ds = drv.CreateMultiDimensional('myds')
+>>> rg = mem_ds.GetRootGroup()
 >>> dim_band = rg.CreateDimension('band', None, None, 3)
 >>> dim_x = rg.CreateDimension('X', None, None, 2)
 >>> dim_x.GetFullName()
@@ -84,7 +94,7 @@ dimensions : list
     List of dimensions, ordered from the slowest varying
     dimension first to the fastest varying dimension last.
     Might be empty for a scalar array (if supported by driver)
-data_type: :py:class:`osgeo.gdal.ExtendedDataType`
+data_type: :py:class:`ExtendedDataType`
     Array data type
 options: dict/list
     an optional dict or list of driver specific ``NAME=VALUE`` option strings.
@@ -93,7 +103,7 @@ Returns
 -------
 
 MDArray:
-    the new :py:class:`osgeo.gdal.MDArray` or ``None`` on failure.
+    the new :py:class:`MDArray` or ``None`` on failure.
 
 Examples
 --------
