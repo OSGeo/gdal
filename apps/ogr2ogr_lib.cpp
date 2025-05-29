@@ -3642,7 +3642,18 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     if (psOptions->nLimit >= 0)
                         anLayerCountFeatures[iLayer] = std::min(
                             anLayerCountFeatures[iLayer], psOptions->nLimit);
-                    nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    if (anLayerCountFeatures[iLayer] >= 0 &&
+                        anLayerCountFeatures[iLayer] <=
+                            std::numeric_limits<GIntBig>::max() -
+                                nCountLayersFeatures)
+                    {
+                        nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    }
+                    else
+                    {
+                        nCountLayersFeatures = 0;
+                        psOptions->bDisplayProgress = false;
+                    }
                 }
             }
         }
@@ -3711,9 +3722,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                             1.0 / nCountLayersFeatures,
                         psOptions->pfnProgress, psOptions->pProgressData);
                 }
-            }
 
-            nAccCountFeatures += anLayerCountFeatures[iLayer];
+                nAccCountFeatures += anLayerCountFeatures[iLayer];
+            }
 
             auto psInfo = oSetup.Setup(poPassedLayer,
                                        psOptions->osNewLayerName.empty()
