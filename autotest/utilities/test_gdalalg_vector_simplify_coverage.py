@@ -60,6 +60,87 @@ def test_gdalalg_vector_simplify_coverage(alg):
     assert alg.Finalize()
 
 
+def test_gdalalg_vector_simplify_coverage_with_progress(alg):
+
+    src_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    src_lyr = src_ds.GetLayer(0)
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["tolerance"] = 2
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert alg.Run(my_progress)
+
+    assert tab_pct[0] == 1.0
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == src_lyr.GetFeatureCount()
+    assert dst_lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
+
+    assert count_points(dst_lyr) < count_points(src_lyr)
+
+    assert alg.Finalize()
+
+
+def test_gdalalg_vector_simplify_coverage_with_progress_but_src_has_no_fast_feature_count():
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    assert gdal.Run(
+        "vector",
+        "pipeline",
+        pipeline="read ../ogr/data/poly.shp ! explode-collections ! simplify-coverage --tolerance 2 ! write streamed_dataset --of=stream",
+        progress=my_progress,
+    )
+
+    assert tab_pct[0] == 1.0
+
+
+@pytest.mark.parametrize("stop_ratio", [0, 0.02, 0.1, 0.5, 0.9, 0.98, 1.0])
+def test_gdalalg_vector_simplify_coverage_with_progress_interrupted(alg, stop_ratio):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    for i in range(1000):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetGeometryDirectly(
+            ogr.CreateGeometryFromWkt(
+                f"POLYGON (({i} 0,{i + 1} 0,{i + 1} 1,{i} 1,{i} 0))"
+            )
+        )
+        src_lyr.CreateFeature(f)
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["tolerance"] = 2
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return pct < stop_ratio
+
+    with pytest.raises(Exception, match="Processing interrupted by user"):
+        alg.Run(my_progress)
+
+
 def test_gdalalg_vector_simplify_coverage_active_layer(alg):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")

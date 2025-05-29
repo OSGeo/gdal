@@ -994,7 +994,7 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer)
+    OGRLayer &srcLayer, std::function<bool(double)> *progressFunc)
 {
     CPLStringList aosOptions;
     if (srcLayer.TestCapability(OLCStringsAsUTF8))
@@ -1006,7 +1006,7 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
         m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
     m_layers.push_back(poDstLayer);
 
-    const bool bRet = Process(srcLayer, *poDstLayer);
+    const bool bRet = Process(srcLayer, *poDstLayer, progressFunc);
     poDstLayer->SetUpdatable(false);
     return bRet;
 }
