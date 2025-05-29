@@ -991,20 +991,6 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
 #endif  // ENABLE_WHOLE_IMAGE_OPTIMIZATION
 
 /************************************************************************/
-/*                            IsFullBandMap()                           */
-/************************************************************************/
-
-static int IsFullBandMap(const int *panBandMap, int nBands)
-{
-    for (int i = 0; i < nBands; i++)
-    {
-        if (panBandMap[i] != i + 1)
-            return FALSE;
-    }
-    return TRUE;
-}
-
-/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -1028,7 +1014,7 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
         (eBufType == GDT_Byte) &&
         (eBufType == GetRasterBand(1)->GetRasterDataType()) &&
-        (pData != nullptr) && IsFullBandMap(panBandMap, nBands))
+        (pData != nullptr) && IsAllBands(nBands, panBandMap))
     {
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
         // Below should work without SSE2, but the lack of optimized

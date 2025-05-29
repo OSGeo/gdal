@@ -2700,8 +2700,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         nYSize == nBufYSize &&
         (nBufXSize > nBandBlockXSize || nBufYSize > nBandBlockYSize) &&
         eBufType == GDT_Byte && nBandCount == nBands &&
-        (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
-         panBandMap[2] == 3 && (nBands == 3 || panBandMap[3] == 4)))
+        IsAllBands(nBandCount, panBandMap))
     {
         bReadPixels = TRUE;
 #ifdef HAVE_PODOFO

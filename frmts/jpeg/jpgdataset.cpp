@@ -2682,7 +2682,7 @@ CPLErr JPGDatasetCommon::IRasterIO(
         (nXSize == nRasterXSize) && (nYSize == nBufYSize) &&
         (nYSize == nRasterYSize) && (eBufType == GDT_Byte) &&
         (GetDataPrecision() != 12) && (pData != nullptr) &&
-        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
+        IsAllBands(nBandCount, panBandMap) &&
         // These color spaces need to be transformed to RGB.
         GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK)
     {
