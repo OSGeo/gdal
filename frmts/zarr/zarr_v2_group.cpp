@@ -336,7 +336,7 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
         if (osName.size() > strlen("/.zattrs") &&
             osName.substr(osName.size() - strlen("/.zattrs")) == "/.zattrs")
         {
-            const auto osObjectFullnameNoLeadingSlash =
+            std::string osObjectFullnameNoLeadingSlash =
                 osName.substr(0, osName.size() - strlen("/.zattrs"));
             auto poSubGroup = std::dynamic_pointer_cast<ZarrV2Group>(
                 OpenGroupFromFullname('/' + osObjectFullnameNoLeadingSlash));
@@ -369,7 +369,8 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
                     else
                     {
                         ArrayDesc desc;
-                        desc.osArrayFullname = osObjectFullnameNoLeadingSlash;
+                        desc.osArrayFullname =
+                            std::move(osObjectFullnameNoLeadingSlash);
                         desc.poArray = oIter->second;
                         desc.poAttrs = &child;
                         aoRegularArrays.emplace_back(std::move(desc));

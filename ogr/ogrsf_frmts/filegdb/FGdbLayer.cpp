@@ -798,7 +798,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
 
             if (fieldType == "esriFieldTypeGeometry")
             {
-                m_strShapeFieldName = fieldName;
+                m_strShapeFieldName = std::move(fieldName);
                 m_pFeatureDefn->GetGeomFieldDefn(0)->SetNullable(bNullable);
 
                 continue;  // finish here for special field - don't add as OGR
@@ -903,7 +903,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
             m_pFeatureDefn->AddFieldDefn(&fieldTemplate);
 
             m_vOGRFieldToESRIField.push_back(StringToWString(fieldName));
-            m_vOGRFieldToESRIFieldType.push_back(fieldType);
+            m_vOGRFieldToESRIFieldType.push_back(std::move(fieldType));
             if (ogrType == OFTBinary)
                 m_apoByteArrays.push_back(new ByteArray());
         }
@@ -975,7 +975,7 @@ void FGdbLayer::ResetReading()
         return;
 
 #ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
-    const std::wstring wstrSubFieldBackup(m_wstrSubfields);
+    std::wstring wstrSubFieldBackup(m_wstrSubfields);
     if (!m_apoByteArrays.empty())
     {
         m_bWorkaroundCrashOnCDFWithBinaryField = CPLTestBool(CPLGetConfigOption(
@@ -1020,7 +1020,7 @@ void FGdbLayer::ResetReading()
 
 #ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
     if (!m_apoByteArrays.empty() && m_bWorkaroundCrashOnCDFWithBinaryField)
-        m_wstrSubfields = wstrSubFieldBackup;
+        m_wstrSubfields = std::move(wstrSubFieldBackup);
 #endif
 
     m_bFilterDirty = false;

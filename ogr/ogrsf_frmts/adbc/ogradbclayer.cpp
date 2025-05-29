@@ -269,21 +269,21 @@ static void ParseGeoParquetColumn(
             std::string("\"")
                 .append(OGRDuplicateCharacter(osBBOXColumn, '"'))
                 .append("\".\"");
-        geomColBBOX.osXMin = std::string(osPrefix)
-                                 .append(OGRDuplicateCharacter(osXMin, '"'))
-                                 .append("\"");
-        geomColBBOX.osYMin = std::string(osPrefix)
-                                 .append(OGRDuplicateCharacter(osYMin, '"'))
-                                 .append("\"");
-        geomColBBOX.osXMax = std::string(osPrefix)
-                                 .append(OGRDuplicateCharacter(osXMax, '"'))
-                                 .append("\"");
-        geomColBBOX.osYMax = std::string(osPrefix)
-                                 .append(OGRDuplicateCharacter(osYMax, '"'))
-                                 .append("\"");
+
+        const auto BuildColName = [&osPrefix](const std::string &s)
+        {
+            return std::string(osPrefix)
+                .append(OGRDuplicateCharacter(s, '"'))
+                .append("\"");
+        };
+
+        geomColBBOX.osXMin = BuildColName(osXMin);
+        geomColBBOX.osYMin = BuildColName(osYMin);
+        geomColBBOX.osXMax = BuildColName(osXMax);
+        geomColBBOX.osYMax = BuildColName(osYMax);
         oMapGeomColumnToCoveringBBOXColumn[oColumn.GetName()] =
             std::move(geomColBBOX);
-        oSetCoveringBBoxColumn.insert(osBBOXColumn);
+        oSetCoveringBBoxColumn.insert(std::move(osBBOXColumn));
     }
 }
 

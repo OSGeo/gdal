@@ -1028,7 +1028,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords(VSILFILE *fpIn)
         if (aosAlreadyHandled.find(osBlockName) != aosAlreadyHandled.end())
             continue;
 
-        aosAlreadyHandled.insert(osBlockName);
+        aosAlreadyHandled.insert(std::move(osBlockName));
 
         /* --------------------------------------------------------------------
          */
@@ -1189,7 +1189,7 @@ void OGRDXFWriterDS::ScanForEntities(const char *pszFilename,
                 CPLDebug("DXF", "Encountered entity '%s' multiple times.",
                          osEntity.c_str());
             else
-                aosUsedEntities.insert(osEntity);
+                aosUsedEntities.insert(std::move(osEntity));
         }
 
         if (nCode == 0 && EQUAL(szLineBuf, "SECTION"))

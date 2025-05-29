@@ -1967,9 +1967,9 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     {
         for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
         {
-            CPLString key(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-            key.toupper();
-            m_oSetUCFieldName.insert(key);
+            m_oSetUCFieldName.insert(
+                CPLString(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef())
+                    .toupper());
         }
     }
 
@@ -2127,7 +2127,7 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 
     if (iNewField != -1)
     {
-        m_oSetUCFieldName.insert(osNewFieldNameUC);
+        m_oSetUCFieldName.insert(std::move(osNewFieldNameUC));
 
         whileUnsealing(m_poFeatureDefn)->AddFieldDefn(&oModFieldDefn);
 

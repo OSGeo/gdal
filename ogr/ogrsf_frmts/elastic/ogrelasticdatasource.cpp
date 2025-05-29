@@ -1092,10 +1092,9 @@ OGRLayer *OGRElasticDataSource::ExecuteSQL(const char *pszSQLCommand,
                                                ->GetFieldDefn(nFieldIndex)
                                                ->GetNameRef();
 
-                OGRESSortDesc oSortDesc(
+                aoSortColumns.emplace_back(
                     pszFieldName,
                     CPL_TO_BOOL(psSelectInfo->order_defs[i].ascending_flag));
-                aoSortColumns.push_back(oSortDesc);
             }
 
             if (i == psSelectInfo->order_specs)

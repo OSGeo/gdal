@@ -296,7 +296,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     CPLString osRet(osURL);
     // Cf https://datatracker.ietf.org/doc/html/rfc3986#section-5.4
     // Partial implementation for usual cases...
-    const std::string osRequestURLBase =
+    std::string osRequestURLBase =
         CPLGetPathSafe(CleanURL(osRequestURL).c_str());
     if (!osURL.empty() && osURL[0] == '/')
         osRet = m_osServerBaseURL + osURL;
@@ -305,7 +305,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     else if (osURL.size() > 3 && osURL[0] == '.' && osURL[1] == '.' &&
              osURL[2] == '/')
     {
-        std::string osModifiedRequestURL(osRequestURLBase);
+        std::string osModifiedRequestURL(std::move(osRequestURLBase));
         while (osRet.size() > 3 && osRet[0] == '.' && osRet[1] == '.' &&
                osRet[2] == '/')
         {
@@ -714,11 +714,11 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
             }
             else
             {
-                const auto osCRS = oCRS.ToString();
+                std::string osCRS = oCRS.ToString();
                 if (oSetCRS.find(osCRS) == oSetCRS.end())
                 {
                     oSetCRS.insert(osCRS);
-                    oCRSList.push_back(osCRS);
+                    oCRSList.push_back(std::move(osCRS));
                 }
             }
         }
@@ -796,12 +796,12 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
 
     // storageCRS is in the "OGC API - Features - Part 2: Coordinate Reference
     // Systems" extension
-    const std::string osStorageCRS = oCollection.GetString("storageCrs");
+    std::string osStorageCRS = oCollection.GetString("storageCrs");
     const double dfStorageCrsCoordinateEpoch =
         oCollection.GetDouble("storageCrsCoordinateEpoch");
     if (osActiveCRS.empty() || osActiveCRS == osStorageCRS)
     {
-        osActiveCRS = osStorageCRS;
+        osActiveCRS = std::move(osStorageCRS);
         dfCoordinateEpoch = dfStorageCrsCoordinateEpoch;
     }
 
@@ -2605,14 +2605,14 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
         {
             char *pszEscapedFieldName =
                 CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
-            const CPLString osEscapedFieldName(pszEscapedFieldName);
+            CPLString osEscapedFieldName(pszEscapedFieldName);
             CPLFree(pszEscapedFieldName);
 
             if (poNode->papoSubExpr[1]->field_type == SWQ_STRING)
             {
                 char *pszEscapedValue = CPLEscapeString(
                     poNode->papoSubExpr[1]->string_value, -1, CPLES_URL);
-                CPLString osRet(osEscapedFieldName);
+                CPLString osRet(std::move(osEscapedFieldName));
                 osRet += "=";
                 osRet += pszEscapedValue;
                 CPLFree(pszEscapedValue);
@@ -2620,7 +2620,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
             }
             if (poNode->papoSubExpr[1]->field_type == SWQ_INTEGER)
             {
-                CPLString osRet(osEscapedFieldName);
+                CPLString osRet(std::move(osEscapedFieldName));
                 osRet += "=";
                 osRet +=
                     CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);

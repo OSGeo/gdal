@@ -218,8 +218,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLXMLNode *psBody = CPLGetXMLNode(psRoot, "=mapml.body");
     if (psBody == nullptr)
         return nullptr;
-    const CPLString osDefaultLayerName(
-        CPLGetBasenameSafe(poOpenInfo->pszFilename));
+    CPLString osDefaultLayerName(CPLGetBasenameSafe(poOpenInfo->pszFilename));
     std::set<std::string> oSetLayerNames;
     for (auto psNode = psBody->psChild; psNode; psNode = psNode->psNext)
     {
@@ -235,7 +234,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
     if (oSetLayerNames.empty())
         return nullptr;
     auto poDS = new OGRMapMLReaderDataset();
-    poDS->m_osDefaultLayerName = osDefaultLayerName;
+    poDS->m_osDefaultLayerName = std::move(osDefaultLayerName);
     poDS->m_oRootCloser = std::move(oRootCloser);
     for (const auto &layerName : oSetLayerNames)
     {

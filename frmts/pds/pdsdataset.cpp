@@ -591,7 +591,7 @@ void PDSDataset::ParseSRS()
     if (bProjectionSet)
     {
         // Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
-        const CPLString proj_target_name = map_proj_name + " " + target_name;
+        CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name);  // set ProjCS keyword
 
         // The geographic/geocentric name will be the same basic name as the
@@ -600,8 +600,8 @@ void PDSDataset::ParseSRS()
 
         // The datum and sphere names will be the same basic name aas the planet
         const CPLString datum_name = "D_" + target_name;
-        // Might not be IAU defined so don't add.
-        CPLString sphere_name = target_name;  // + "_IAU_IAG");
+
+        CPLString sphere_name = std::move(target_name);
 
         // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening;

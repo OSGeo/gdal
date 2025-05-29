@@ -3792,7 +3792,7 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
                     bStop = true;
                     break;
                 }
-                aosEtags[iChunk] = osEtag;
+                aosEtags[iChunk] = std::move(osEtag);
             }
 
             if (bRunInThread)
@@ -4290,16 +4290,16 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 const auto entry = VSIGetNextDirEntry(poTargetDir.get());
                 if (!entry)
                     break;
-                const auto osDstName =
+                auto osDstName =
                     NormalizeDirSeparatorForDstFilename(entry->pszName);
                 if (VSI_ISDIR(entry->nMode))
                 {
-                    oSetTargetSubdirs.insert(osDstName);
+                    oSetTargetSubdirs.insert(std::move(osDstName));
                 }
                 else
                 {
                     oMapExistingTargetFiles.insert(
-                        std::pair<std::string, VSIDIREntry>(osDstName, *entry));
+                        std::make_pair(std::move(osDstName), *entry));
                 }
             }
             poTargetDir.reset();
@@ -4329,9 +4329,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 if (oSetTargetSubdirs.find(osDstName) ==
                     oSetTargetSubdirs.end())
                 {
-                    const std::string osTargetSubdir(CPLFormFilenameSafe(
+                    std::string osTargetSubdir(CPLFormFilenameSafe(
                         osTargetDir.c_str(), osDstName.c_str(), nullptr));
-                    aoSetDirsToCreate.insert(osTargetSubdir);
+                    aoSetDirsToCreate.insert(std::move(osTargetSubdir));
                 }
             }
             else
@@ -4688,17 +4688,16 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         if (poS3HandleHelper == nullptr)
                             return false;
 
-                        const auto osUploadID =
+                        MultiPartDef def;
+                        def.osUploadID =
                             poTargetFSMultipartHandler->InitiateMultipartUpload(
                                 osTarget, poS3HandleHelper.get(),
                                 oRetryParameters,
                                 aosObjectCreationOptions.List());
-                        if (osUploadID.empty())
+                        if (def.osUploadID.empty())
                         {
                             return false;
                         }
-                        MultiPartDef def;
-                        def.osUploadID = osUploadID;
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
                         def.nTotalSize = chunk.nTotalSize;
@@ -4865,7 +4864,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                      ? 0 /* shouldn't happen */
                                      : static_cast<int>(chunk.nStartOffset /
                                                         queue->nMaxChunkSize));
-                        const std::string osEtag =
+                        std::string osEtag =
                             queue->poTargetFSMultipartHandler->UploadPart(
                                 osSubTarget, nPartNumber,
                                 iter->second.osUploadID, chunk.nStartOffset,
@@ -4880,7 +4879,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                 std::max(nPartNumber,
                                          static_cast<int>(
                                              iter->second.aosEtags.size())));
-                            iter->second.aosEtags[nPartNumber - 1] = osEtag;
+                            iter->second.aosEtags[nPartNumber - 1] =
+                                std::move(osEtag);
                             bSuccess = true;
                         }
                     }

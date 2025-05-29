@@ -1273,11 +1273,11 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                 {
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
-                    const std::string osDirNameNew =
+                    std::string osDirNameNew =
                         CPLGetPathSafe(osDirName.c_str());
                     if (!osDirNameNew.empty() && osDirNameNew != osDirName)
                     {
-                        osDirName = osDirNameNew;
+                        osDirName = std::move(osDirNameNew);
                         continue;
                     }
                 }

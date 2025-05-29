@@ -1327,7 +1327,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
     const bool bBandInterleave =
         EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
-    const std::shared_ptr<GDALDimension> poBandDim(
+    std::shared_ptr<GDALDimension> poBandDim(
         (bSingleArray && nBandsIn > 1)
             ? poRG->CreateDimension("Band", std::string(), std::string(),
                                     nBandsIn)
@@ -1343,7 +1343,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                                                               poDS->m_poDimY,
                                                               poDS->m_poDimX}
                 : std::vector<std::shared_ptr<GDALDimension>>{
-                      poDS->m_poDimY, poDS->m_poDimX, poBandDim});
+                      poDS->m_poDimY, poDS->m_poDimX, std::move(poBandDim)});
         poDS->m_poSingleArray = poRG->CreateMDArray(
             osNonNullArrayName.c_str(), apoDims,
             GDALExtendedDataType::Create(eType), papszOptions);

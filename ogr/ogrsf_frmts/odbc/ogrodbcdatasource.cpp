@@ -129,8 +129,7 @@ int OGRODBCDataSource::OpenMDB(GDALOpenInfo *poOpenInfo)
 
                 osLayerName += pszTableName;
 
-                const CPLString osLCTableName(CPLString(osLayerName).tolower());
-                m_aosAllLCTableNames.insert(osLCTableName);
+                m_aosAllLCTableNames.insert(CPLString(osLayerName).tolower());
 
                 aosTableNames.emplace_back(osLayerName);
             }

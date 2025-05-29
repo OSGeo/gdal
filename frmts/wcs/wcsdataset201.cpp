@@ -107,10 +107,7 @@ static void ParseParameters(CPLXMLNode *service,
         }
         else
         {
-            std::vector<std::string> kv2;
-            kv2.push_back(kv[0]);
-            kv2.push_back(kv[1]);
-            others.push_back(kv2);
+            others.push_back(std::vector<std::string>{kv[0], kv[1]});
         }
     }
     // fallback to service values, if any
@@ -432,14 +429,8 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid, const std::string &subtype,
         if (offset.size() < 2)
         {
             // error or not?
-            std::vector<double> x;
-            x.push_back(1);
-            x.push_back(0);
-            std::vector<double> y;
-            y.push_back(0);
-            y.push_back(1);
-            offset.push_back(x);
-            offset.push_back(y);
+            offset.push_back(std::vector<double>{1, 0});  // x
+            offset.push_back(std::vector<double>{0, 1});  // y
         }
         // if axis_order_swap
         // the offset order should be swapped
@@ -756,7 +747,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage,
                     *metadata, (key + "INTERVAL").c_str(), interval.c_str());
             }
 
-            nodata_array.push_back(nodata);
+            nodata_array.push_back(std::move(nodata));
             fields += 1;
         }
 
@@ -1057,8 +1048,7 @@ bool WCSDataset201::ExtractGridInfo()
         int domain_index = IndexOf(axes[i], domain);
         if (domain_index != -1)
         {
-            std::vector<double> trim = Flist(params, 0, 2);
-            domain_trim.push_back(trim);
+            domain_trim.push_back(Flist(params, 0, 2));
             continue;
         }
         // size == 1 => sliced

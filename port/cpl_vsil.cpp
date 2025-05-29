@@ -2625,11 +2625,10 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
         if (!entry)
             break;
 
-        const CPLString osFilename(osDirnameWithoutEndSlash + SEP +
-                                   entry->pszName);
+        CPLString osFilename(osDirnameWithoutEndSlash + SEP + entry->pszName);
         if ((entry->nMode & S_IFDIR))
         {
-            aosDirs.push_back(osFilename);
+            aosDirs.push_back(std::move(osFilename));
         }
         else
         {

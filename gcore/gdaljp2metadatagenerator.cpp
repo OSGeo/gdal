@@ -214,13 +214,13 @@ GDALGMLJP2Expr *GDALGMLJP2Expr::Build(const char *pszOriStr,
                 if (nParenthesisIndent < 0)
                 {
                     pszStr++;
-                    GDALGMLJP2Expr *poExpr = new GDALGMLJP2Expr();
-                    poExpr->eType = GDALGMLJP2ExprType::GDALGMLJP2Expr_XPATH;
-                    poExpr->osValue = l_osValue;
 #if DEBUG_VERBOSE
                     CPLDebug("GMLJP2", "XPath expression '%s'",
                              l_osValue.c_str());
 #endif
+                    GDALGMLJP2Expr *poExpr = new GDALGMLJP2Expr();
+                    poExpr->eType = GDALGMLJP2ExprType::GDALGMLJP2Expr_XPATH;
+                    poExpr->osValue = std::move(l_osValue);
                     return poExpr;
                 }
                 l_osValue += *pszStr;

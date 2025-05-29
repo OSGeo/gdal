@@ -3257,8 +3257,8 @@ char **GDALDataset::GetFileList()
     VSIStatBufL sStat;
 
     GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
-    const GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
-                                                              std::string());
+    GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
+                                                        std::string());
     auto &aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
     if (cpl::contains(aosDatasetList, datasetCtxt))
         return nullptr;
@@ -3302,7 +3302,7 @@ char **GDALDataset::GetFileList()
     /* -------------------------------------------------------------------- */
     if (oOvManager.HaveMaskFile())
     {
-        auto iter = aosDatasetList.insert(datasetCtxt).first;
+        auto iter = aosDatasetList.insert(std::move(datasetCtxt)).first;
         for (const char *pszFile :
              CPLStringList(oOvManager.poMaskDS->GetFileList()))
         {

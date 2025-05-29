@@ -525,14 +525,13 @@ ParseStorageConnectionString(const std::string &osStorageConnectionString,
         osStorageAccount.clear();
         osStorageKey.clear();
 
-        const std::string osBlobEndpoint =
-            RemoveTrailingSlash(AzureCSGetParameter(osStorageConnectionString,
-                                                    "BlobEndpoint", false));
+        std::string osBlobEndpoint = RemoveTrailingSlash(AzureCSGetParameter(
+            osStorageConnectionString, "BlobEndpoint", false));
         osSAS = AzureCSGetParameter(osStorageConnectionString,
                                     "SharedAccessSignature", false);
         if (!osBlobEndpoint.empty() && !osSAS.empty())
         {
-            osEndpoint = osBlobEndpoint;
+            osEndpoint = std::move(osBlobEndpoint);
             return true;
         }
 

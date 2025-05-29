@@ -31,7 +31,7 @@ KEARasterAttributeTable::KEARasterAttributeTable(
             // column
             continue;
         }
-        m_aoFields.push_back(sKEAField);
+        m_aoFields.push_back(std::move(sKEAField));
     }
     m_poKEATable = poKEATable;
     m_poBand = poBand;
@@ -939,8 +939,7 @@ CPLErr KEARasterAttributeTable::CreateColumn(const char *pszFieldName,
         }
 
         // assume we can just grab this now
-        kealib::KEAATTField sKEAField = m_poKEATable->getField(pszFieldName);
-        m_aoFields.push_back(sKEAField);
+        m_aoFields.push_back(m_poKEATable->getField(pszFieldName));
     }
     catch (kealib::KEAException &e)
     {

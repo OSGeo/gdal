@@ -5311,7 +5311,7 @@ std::string NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 {
     char *pszUnitsToWrite = nullptr;
     poSRS->exportToCF1(nullptr, nullptr, &pszUnitsToWrite, nullptr);
-    const std::string osRet = pszUnitsToWrite ? pszUnitsToWrite : std::string();
+    std::string osRet = pszUnitsToWrite ? pszUnitsToWrite : std::string();
     CPLFree(pszUnitsToWrite);
     return osRet;
 }

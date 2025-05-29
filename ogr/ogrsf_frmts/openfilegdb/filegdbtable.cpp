@@ -1040,7 +1040,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        const std::string osName(ReadUTF16String(pabyIter, nCarCount));
+        std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -1049,7 +1049,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        const std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
+        std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -1195,8 +1195,8 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
             }
 
             auto poField = std::make_unique<FileGDBField>(this);
-            poField->m_osName = osName;
-            poField->m_osAlias = osAlias;
+            poField->m_osName = std::move(osName);
+            poField->m_osAlias = std::move(osAlias);
             poField->m_eType = eType;
             poField->m_bNullable = (flags & FileGDBField::MASK_NULLABLE) != 0;
             poField->m_bRequired = (flags & FileGDBField::MASK_REQUIRED) != 0;
@@ -2556,8 +2556,7 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     2 * nIdxNameCharCount,
                                 VSIFree(pabyIdx));
-        const std::string osIndexName(
-            ReadUTF16String(pabyCur, nIdxNameCharCount));
+        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCharCount));
         pabyCur += 2 * nIdxNameCharCount;
 
         // 4 "magic fields"
@@ -2626,7 +2625,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt16);
 
         auto poIndex = std::make_unique<FileGDBIndex>();
-        poIndex->m_osIndexName = osIndexName;
+        poIndex->m_osIndexName = std::string(osIndexName);
         poIndex->m_osExpression = osExpression;
 
         if (m_iObjectIdField < 0 ||

@@ -1774,7 +1774,7 @@ static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
                 oField.osGermanName = CPLGetXMLValue(psField, "name_de", "");
                 oField.osType = CPLGetXMLValue(psField, "type", "");
                 oField.nWidth = atoi(CPLGetXMLValue(psField, "width", "0"));
-                poTable->aosFields.push_back(oField);
+                poTable->aosFields.push_back(std::move(oField));
             }
         }
     }

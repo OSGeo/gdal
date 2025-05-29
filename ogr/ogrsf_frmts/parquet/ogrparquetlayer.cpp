@@ -567,7 +567,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
             if (ParseGeometryColumnCovering(iter.second, osBBOXColumn, osXMin,
                                             osYMin, osXMax, osYMax))
             {
-                oSetBBOXColumns.insert(osBBOXColumn);
+                oSetBBOXColumns.insert(std::move(osBBOXColumn));
             }
         }
     }
@@ -768,7 +768,8 @@ void OGRParquetLayer::EstablishFeatureDefn()
                         anParquetCols.push_back(iterParquetCols.second);
                     }
                 }
-                m_anMapGeomFieldIndexToParquetColumns.push_back(anParquetCols);
+                m_anMapGeomFieldIndexToParquetColumns.push_back(
+                    std::move(anParquetCols));
                 ++iParquetCol;
             }
             else
@@ -966,7 +967,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
     {
         const auto dictionaryType =
             std::static_pointer_cast<arrow::DictionaryType>(field->type());
-        const auto indexType = dictionaryType->index_type();
+        auto indexType = dictionaryType->index_type();
         if (dictionaryType->value_type()->id() == arrow::Type::STRING &&
             IsIntegerArrowType(indexType->id()))
         {
@@ -977,7 +978,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
                                            m_poFeatureDefn->GetFieldCount());
                 oField.SetDomainName(osDomainName);
             }
-            type = indexType;
+            type = std::move(indexType);
         }
         else
         {
@@ -1025,7 +1026,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
                                     oMapFieldNameToGDALSchemaFieldDefn);
         if (bTypeOK)
         {
-            m_apoArrowDataTypes.push_back(type);
+            m_apoArrowDataTypes.push_back(std::move(type));
             m_anMapFieldIndexToParquetColumn.push_back(
                 bParquetColValid ? iParquetCol : -1);
         }
@@ -2402,13 +2403,13 @@ template <> struct GetStats<parquet::ByteArrayStatistics>
                 auto castStats =
                     static_cast<parquet::ByteArrayStatistics *>(colStats.get());
                 const auto rowGroupValRaw = castStats->min();
-                const std::string rowGroupVal(
+                std::string rowGroupVal(
                     reinterpret_cast<const char *>(rowGroupValRaw.ptr),
                     rowGroupValRaw.len);
                 if (i == 0 || rowGroupVal < v)
                 {
                     bFound = true;
-                    v = rowGroupVal;
+                    v = std::move(rowGroupVal);
                 }
             }
         }
@@ -2434,13 +2435,13 @@ template <> struct GetStats<parquet::ByteArrayStatistics>
                 auto castStats =
                     static_cast<parquet::ByteArrayStatistics *>(colStats.get());
                 const auto rowGroupValRaw = castStats->max();
-                const std::string rowGroupVal(
+                std::string rowGroupVal(
                     reinterpret_cast<const char *>(rowGroupValRaw.ptr),
                     rowGroupValRaw.len);
                 if (i == 0 || rowGroupVal > v)
                 {
                     bFound = true;
-                    v = rowGroupVal;
+                    v = std::move(rowGroupVal);
                 }
             }
             else

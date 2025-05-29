@@ -527,9 +527,8 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
     else if (IsS2Prefixed(pszJustFilename, "_MSIL1C_") &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
-        CPLString osSAFE(osBasename);
+        CPLString osSAFE(CPLGetBasenameSafe(pszJustFilename));
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
         // has .SAFE.zip extension, but other products have just a .zip
         // extension. So for the subdir in the zip only add .SAFE when needed
@@ -545,9 +544,8 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
     else if (IsS2Prefixed(pszJustFilename, "_MSIL2A_") &&
              EQUAL(CPLGetExtensionSafe(pszJustFilename).c_str(), "zip"))
     {
-        const CPLString osBasename(CPLGetBasenameSafe(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
-        CPLString osSAFE(osBasename);
+        CPLString osSAFE(CPLGetBasenameSafe(pszJustFilename));
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
         // has .SAFE.zip extension, but other products have just a .zip
         // extension. So for the subdir in the zip only add .SAFE when needed
@@ -1080,7 +1078,7 @@ static bool SENTINEL2GetGranuleList(
             osGranuleMTDPath += pszGranuleId;
             osGranuleMTDPath += chSeparator;
             osGranuleMTDPath += osGranuleMTD;
-            osList.push_back(osGranuleMTDPath);
+            osList.push_back(std::move(osGranuleMTDPath));
         }
     }
 
@@ -1337,7 +1335,8 @@ static bool SENTINEL2GetResolutionSet(
         CPLString osName = psBandDesc->pszBandName + 1; /* skip B character */
         if (atoi(osName) < 10)
             osName = "0" + osName;
-        oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
+        oMapResolutionsToBands[psBandDesc->nResolution].insert(
+            std::move(osName));
     }
     if (oSetResolutions.empty())
     {
@@ -1878,7 +1877,7 @@ static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
             if (VSIStatExL(osTile, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
             {
                 oMapResolutionsToBands[sBandDesc.nResolution].insert(
-                    osBandName);
+                    std::move(osBandName));
                 oSetResolutions.insert(sBandDesc.nResolution);
             }
         }
@@ -2424,6 +2423,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
     const std::string osDatastripSubdirFull = std::string(osDatastripRoot)
                                                   .append(achSeparator)
                                                   .append(osDatastripSubdir);
+    CPL_IGNORE_RET_VAL(osDatastripRoot);
     const std::string osXMLDatastrip =
         std::string(osDatastripSubdirFull)
             .append(achSeparator)
@@ -2645,6 +2645,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
                                         .append(achSeparator)
                                         .append(pszGeolocVRT)
                                         .append(".vrt");
+    CPL_IGNORE_RET_VAL(osDatastripSubdirFull);
     auto poGeolocDS = std::unique_ptr<GDALDataset>(
         GDALDataset::Open(osGeolocVRT.c_str(), GDAL_OF_RASTER));
     if (poGeolocDS)
@@ -2743,7 +2744,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
                 osDirname + chSeparator +
                 CPLGetDirnameSafe(CPLGetDirnameSafe(pszImageFile).c_str()) +
                 chSeparator + "MTD_TL.xml";
-            osList.push_back(oDesc);
+            osList.push_back(std::move(oDesc));
         }
     }
 
@@ -2850,7 +2851,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
             }
             oDesc.osMTDTLPath.resize(oDesc.osMTDTLPath.size() - 9);
             oDesc.osMTDTLPath = oDesc.osMTDTLPath + chSeparator + "MTD_TL.xml";
-            osList.push_back(oDesc);
+            osList.push_back(std::move(oDesc));
         }
     }
 
@@ -2914,7 +2915,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
             CPLString osName = sBandDesc.pszBandName + 1; /* skip B character */
             if (atoi(osName) < 10)
                 osName = "0" + osName;
-            oMapResolutionsToBands[sBandDesc.nResolution].insert(osName);
+            oMapResolutionsToBands[sBandDesc.nResolution].insert(
+                std::move(osName));
         }
         if (eLevel == SENTINEL2_L2A)
         {
@@ -3621,7 +3623,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
                 psBandDesc->pszBandName + 1; /* skip B character */
             if (atoi(osName) < 10)
                 osName = "0" + osName;
-            oSetBands.insert(osName);
+            oSetBands.insert(std::move(osName));
         }
         if (oSetBands.empty())
         {
@@ -3969,7 +3971,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
             oGranuleInfo.dfMaxY = dfULY;
             oGranuleInfo.nWidth = nWidth / (nSubDSPrecision / nResolution);
             oGranuleInfo.nHeight = nHeight / (nSubDSPrecision / nResolution);
-            aosGranuleInfoList.push_back(oGranuleInfo);
+            aosGranuleInfoList.push_back(std::move(oGranuleInfo));
         }
     }
     if (dfMinX > dfMaxX)

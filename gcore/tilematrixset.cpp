@@ -49,7 +49,7 @@ std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
             {
                 std::string id(aosList[i] + strlen("tms_"),
                                nLen - (strlen("tms_") + strlen(".json")));
-                set.insert(id);
+                set.insert(std::move(id));
             }
         }
         for (const std::string &id : set)
@@ -316,7 +316,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
 
             else if (j.GetType() == CPLJSONObject::Type::Object)
             {
-                const std::string osURI = j.GetString("uri");
+                std::string osURI = j.GetString("uri");
                 if (!osURI.empty())
                     return osURI;
 
@@ -325,13 +325,13 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
                 const auto jWKT = j.GetObj("wkt");
                 if (jWKT.GetType() == CPLJSONObject::Type::String)
                 {
-                    const std::string osWKT = jWKT.ToString();
+                    std::string osWKT = jWKT.ToString();
                     if (!osWKT.empty())
                         return osWKT;
                 }
                 else if (jWKT.GetType() == CPLJSONObject::Type::Object)
                 {
-                    const std::string osWKT = jWKT.ToString();
+                    std::string osWKT = jWKT.ToString();
                     if (!osWKT.empty())
                         return osWKT;
                 }

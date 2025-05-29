@@ -411,7 +411,7 @@ int OGREDIGEODataSource::ReadSCD()
                             osRID.c_str(), osNameRID.c_str(), osKND.c_str(),
                             (int)aosAttrRID.size());*/
 
-                    aoObjList.push_back(objDesc);
+                    aoObjList.push_back(std::move(objDesc));
                 }
             }
             else if (osRTY == "ATT")
@@ -1236,7 +1236,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString &osFEA,
                 nIter++;
             }
 
-            aoXYList.push_back(aoXY);
+            aoXYList.push_back(std::move(aoXY));
         }
     }
 

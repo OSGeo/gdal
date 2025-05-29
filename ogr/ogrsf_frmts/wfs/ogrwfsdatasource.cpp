@@ -2369,9 +2369,8 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
                                                ->GetFieldDefn(nFieldIndex)
                                                ->GetNameRef();
 
-                OGRWFSSortDesc oSortDesc(
+                aoSortColumns.emplace_back(
                     pszFieldName, psSelectInfo->order_defs[i].ascending_flag);
-                aoSortColumns.push_back(oSortDesc);
             }
 
             if (i == psSelectInfo->order_specs)

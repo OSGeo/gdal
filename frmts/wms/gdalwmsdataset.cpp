@@ -700,7 +700,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     {
         if (m_oSRS.IsEmpty())
         {
-            const auto oSRS = m_mini_driver->GetSpatialRef();
+            const auto &oSRS = m_mini_driver->GetSpatialRef();
             if (!oSRS.IsEmpty())
             {
                 m_oSRS = oSRS;

@@ -826,7 +826,7 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
 {
     if (m_poKeyValueMetadata)
     {
-        const std::string osGeoMetadata = GetGeoMetadata();
+        std::string osGeoMetadata = GetGeoMetadata();
         auto poTmpSchema = m_poSchema;
         if (!osGeoMetadata.empty())
         {
@@ -839,7 +839,7 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             auto kvMetadata = poTmpSchema->metadata()
                                   ? poTmpSchema->metadata()->Copy()
                                   : std::make_shared<arrow::KeyValueMetadata>();
-            kvMetadata->Append("geo", osGeoMetadata);
+            kvMetadata->Append("geo", std::move(osGeoMetadata));
             poTmpSchema = poTmpSchema->WithMetadata(kvMetadata);
         }
 
@@ -853,12 +853,12 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
                 // The serialized schema is not UTF-8, which is required for
                 // Thrift
                 const std::string schema_as_string = (*status)->ToString();
-                const std::string schema_base64 =
+                std::string schema_base64 =
                     ::arrow::util::base64_encode(schema_as_string);
                 static const std::string kArrowSchemaKey = "ARROW:schema";
                 const_cast<arrow::KeyValueMetadata *>(
                     m_poKeyValueMetadata.get())
-                    ->Append(kArrowSchemaKey, schema_base64);
+                    ->Append(kArrowSchemaKey, std::move(schema_base64));
             }
         }
 

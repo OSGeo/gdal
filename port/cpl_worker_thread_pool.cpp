@@ -586,13 +586,13 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
     }
 
     // coverity[uninit_member,copy_constructor_call]
-    const auto lambda = [this, task]
+    const auto lambda = [this, capturedTask = std::move(task)]
     {
-        task();
+        capturedTask();
         DeclareJobFinished();
     };
     // cppcheck-suppress knownConditionTrueFalse
-    return m_poPool->SubmitJob(lambda);
+    return m_poPool->SubmitJob(std::move(lambda));
 }
 
 /************************************************************************/

@@ -1191,13 +1191,13 @@ std::string CPCIDSKFile::GetUniqueEDBFilename()
         //trigger call to AccessDB()
         poChannel->GetBlockWidth();
 
-        const std::string oFilename = poExt->GetExternalFilename();
+        std::string osFilename = poExt->GetExternalFilename();
 
         if(oEDBName.size() == 0)
         {
-            oEDBName = oFilename;
+            oEDBName = std::move(osFilename);
         }
-        else if(oEDBName != oFilename)
+        else if(oEDBName != osFilename)
         {
             bAllSameFile = false;
             break;
@@ -1316,7 +1316,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
     new_file.filename = filename;
     new_file.writable = writable;
 
-    file_list.push_back( new_file );
+    file_list.push_back( std::move(new_file) );
 
     *io_handle_pp = &(file_list.back().io_handle);
     *io_mutex_pp  = &(file_list.back().io_mutex);

@@ -1577,8 +1577,11 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
             {
                 std::unique_ptr<OGRSpatialReference,
                                 OGRSpatialReferenceReleaser>
-                    poCachedSRS(new OGRSpatialReference(oSRS));
-                poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poCachedSRS;
+                poCachedSRS.reset(oSRS.Clone());
+                if (poCachedSRS)
+                    poCachedSRS->SetAxisMappingStrategy(
+                        OAMS_TRADITIONAL_GIS_ORDER);
                 AddSRIDToCache(nSRSId, std::move(poCachedSRS));
             }
             return nSRSId;

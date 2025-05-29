@@ -1331,7 +1331,7 @@ retry:
                              "with GET request instead of HEAD since the URL "
                              "might be valid only for GET");
                     bRetryWithGet = true;
-                    osURL = osEffectiveURL;
+                    osURL = std::move(osEffectiveURL);
                     CPLFree(sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncHeaderData.pBuffer);
                     curl_easy_cleanup(hCurlHandle);
@@ -5019,9 +5019,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    const std::string osURL(VSICurlGetURLFromFilename(
-        pszDirname, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir, nullptr,
-        nullptr, nullptr));
+    std::string osURL(VSICurlGetURLFromFilename(pszDirname, nullptr, nullptr,
+                                                nullptr, &bListDir, &bEmptyDir,
+                                                nullptr, nullptr, nullptr));
     if (bEmptyDir)
     {
         *pbGotFileList = true;
@@ -5240,7 +5240,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     else if (STARTS_WITH(osURL.c_str(), "http://") ||
              STARTS_WITH(osURL.c_str(), "https://"))
     {
-        std::string osDirname(osURL);
+        std::string osDirname(std::move(osURL));
         osDirname += '/';
 
         CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);

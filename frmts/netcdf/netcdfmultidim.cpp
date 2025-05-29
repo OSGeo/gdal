@@ -1959,7 +1959,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
     std::shared_ptr<GDALMDArray> candidateIndexingVariable;
     for (const auto &arrayName : arrayNames)
     {
-        const auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
+        auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
         const auto poArrayNC =
             std::dynamic_pointer_cast<netCDFVariable>(poArray);
         if (!poArrayNC)
@@ -1979,7 +1979,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                 // variable, provided it is the only such variable.
                 if (!candidateIndexingVariable)
                 {
-                    candidateIndexingVariable = poArray;
+                    candidateIndexingVariable = std::move(poArray);
                 }
                 else
                 {

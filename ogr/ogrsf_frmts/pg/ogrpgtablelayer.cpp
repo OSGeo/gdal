@@ -2443,7 +2443,7 @@ OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
             osCreateTable += osConstraints;
 
             if (!osCommentON.empty())
-                m_aosDeferredCommentOnColumns.push_back(osCommentON);
+                m_aosDeferredCommentOnColumns.push_back(std::move(osCommentON));
         }
     }
     else

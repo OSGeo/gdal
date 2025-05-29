@@ -705,7 +705,7 @@ OGRErr OGREditableLayer::DeleteField(int iField)
     {
         m_poEditableFeatureDefn->DeleteFieldDefn(iField);
         m_bStructureModified = true;
-        m_oSetDeletedFields.insert(osDeletedField);
+        m_oSetDeletedFields.insert(std::move(osDeletedField));
     }
     return eErr;
 }

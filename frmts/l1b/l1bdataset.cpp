@@ -1044,6 +1044,7 @@ void L1BDataset::FetchMetadata()
             .append("/")
             .append(CPLGetFilename(GetDescription()))
             .append("_metadata.csv");
+    CPL_IGNORE_RET_VAL(osDir);
     VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {
@@ -1153,6 +1154,7 @@ void L1BDataset::FetchMetadataNOAA15()
             .append("/")
             .append(CPLGetFilename(GetDescription()))
             .append("_metadata.csv");
+    CPL_IGNORE_RET_VAL(osDir);
     VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {

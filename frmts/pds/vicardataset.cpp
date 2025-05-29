@@ -2064,7 +2064,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
 
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    const CPLString target_name = GetKeyword("MAP.TARGET_NAME");
+    CPLString target_name = GetKeyword("MAP.TARGET_NAME");
 
     /**********   Grab MAP_PROJECTION_TYPE *****/
     const CPLString map_proj_name = GetKeyword("MAP.MAP_PROJECTION_TYPE");
@@ -2220,8 +2220,8 @@ void VICARDataset::ReadProjectionFromMapGroup()
 
         // The datum and sphere names will be the same basic name aas the planet
         const CPLString datum_name = "D_" + target_name;
-        CPLString sphere_name = target_name;  // + "_IAU_IAG");  //Might not be
-                                              // IAU defined so don't add
+
+        CPLString sphere_name = std::move(target_name);
 
         // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening = 0.0;

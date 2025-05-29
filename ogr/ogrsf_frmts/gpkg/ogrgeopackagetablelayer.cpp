@@ -3323,7 +3323,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     /* Only work with fields that are set */
     /* Do not stick values into SQL, use placeholder and bind values later
      */
-    const std::string osUpdateStatementSQL = FeatureGenerateUpdateSQL(
+    std::string osUpdateStatementSQL = FeatureGenerateUpdateSQL(
         poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
         nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx);
     if (osUpdateStatementSQL.empty())
@@ -3343,7 +3343,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
         {
             return OGRERR_FAILURE;
         }
-        m_osUpdateStatementSQL = osUpdateStatementSQL;
+        m_osUpdateStatementSQL = std::move(osUpdateStatementSQL);
     }
 
     /* Bind values onto the statement now */
@@ -5102,14 +5102,14 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
     const char *pszT = m_pszTableName;
     const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    const CPLString osRTreeName(
+    CPLString osRTreeName(
         CPLString("rtree_").append(pszT).append("_").append(pszC));
     const std::map<CPLString, CPLString> &oMap =
         m_poDS->GetNameTypeMapFromSQliteMaster();
     if (cpl::contains(oMap, CPLString(osRTreeName).toupper()))
     {
         m_bHasSpatialIndex = true;
-        m_osRTreeName = osRTreeName;
+        m_osRTreeName = std::move(osRTreeName);
         m_osFIDForRTree = m_pszFidColumn;
     }
 

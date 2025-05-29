@@ -1241,7 +1241,7 @@ GDALGeoPackageDataset::GetUnknownExtensionsTableSpecific()
                 oDesc.osDefinition = pszDefinition;
                 oDesc.osScope = pszScope;
                 m_oMapTableToExtensions[CPLString(pszTableName).toupper()]
-                    .push_back(oDesc);
+                    .push_back(std::move(oDesc));
             }
         }
     }
@@ -1690,16 +1690,17 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                 // "table_name (geom_col_name)"
                 // The way we handle that might change in the future (e.g
                 // could be a single layer with multiple geometry columns)
-                const std::string osLayerNameWithGeomColName =
+                std::string osLayerNameWithGeomColName =
                     pszGeomColName ? std::string(pszTableName) + " (" +
                                          pszGeomColName + ')'
                                    : std::string(pszTableName);
                 if (cpl::contains(oExistingLayers, osLayerNameWithGeomColName))
                     continue;
                 oExistingLayers.insert(osLayerNameWithGeomColName);
-                const std::string osLayerName = bTableHasSeveralGeomColumns
-                                                    ? osLayerNameWithGeomColName
-                                                    : std::string(pszTableName);
+                const std::string osLayerName =
+                    bTableHasSeveralGeomColumns
+                        ? std::move(osLayerNameWithGeomColName)
+                        : std::string(pszTableName);
                 auto poLayer = std::make_unique<OGRGeoPackageTableLayer>(
                     this, osLayerName.c_str());
                 bool bHasZ = pszZ && atoi(pszZ) > 0;
@@ -9101,7 +9102,7 @@ static CPLString GPKG_GDAL_GetMemFileFromBlob(sqlite3_value **argv)
     int nBytes = sqlite3_value_bytes(argv[0]);
     const GByte *pabyBLOB =
         reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
-    const CPLString osMemFileName(
+    CPLString osMemFileName(
         VSIMemGenerateHiddenFilename("GPKG_GDAL_GetMemFileFromBlob"));
     VSILFILE *fp = VSIFileFromMemBuffer(
         osMemFileName.c_str(), const_cast<GByte *>(pabyBLOB), nBytes, FALSE);

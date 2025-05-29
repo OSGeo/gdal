@@ -730,7 +730,6 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                               pow(2.0, (maxzoom - zoom)));
     }
 
-    std::string tmpFileName;
     std::vector<std::string> fileVector;
     int nRet;
 
@@ -740,11 +739,12 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     if (isKmz)
     {
-        tmpFileName = CPLFormFilenameSafe(outDir, "doc.kml", nullptr);
+        std::string tmpFileName =
+            CPLFormFilenameSafe(outDir, "doc.kml", nullptr);
         nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south,
                                east, west, static_cast<int>(tilexsize),
                                pszOverlayName, pszOverlayDescription);
-        fileVector.push_back(tmpFileName);
+        fileVector.push_back(std::move(tmpFileName));
     }
     else
     {

@@ -1769,7 +1769,7 @@ bool GMLASWriter::WriteFieldRegular(
     {
         // Particular case for <a foo="bar" xsi:nil="true"/>
         VSIFPrintfL(m_fpXML.get(), " xsi:nil=\"true\">");
-        aoCurComponents = aoFieldComponents;
+        aoCurComponents = std::move(aoFieldComponents);
         bCurIsRegularField = true;
         return true;
     }

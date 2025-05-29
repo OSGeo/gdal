@@ -330,12 +330,12 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         // Only try to read .csvt from files that have an extension
         if (!CPLGetExtensionSafe(pszFilename).empty())
         {
-            const std::string osCSVTFilename =
+            std::string osCSVTFilename =
                 CPLResetExtensionSafe(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
-                m_osCSVTFilename = osCSVTFilename;
+                m_osCSVTFilename = std::move(osCSVTFilename);
                 VSIRewindL(fpCSVT);
                 papszFieldTypes =
                     CSVReadParseLine3L(fpCSVT, m_nMaxLineSize, ",",

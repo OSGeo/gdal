@@ -210,7 +210,7 @@ OGRWAsPDataSource::ICreateLayer(const char *pszName,
     CPLString sFirstField, sSecondField, sGeomField;
 
     const char *pszFields = CSLFetchNameValue(papszOptions, "WASP_FIELDS");
-    const CPLString sFields(pszFields ? pszFields : "");
+    CPLString sFields(pszFields ? pszFields : "");
     if (!sFields.empty())
     {
         /* parse the comma separated list of fields */
@@ -222,7 +222,7 @@ OGRWAsPDataSource::ICreateLayer(const char *pszName,
         }
         else
         {
-            sFirstField = sFields;
+            sFirstField = std::move(sFields);
         }
     }
 

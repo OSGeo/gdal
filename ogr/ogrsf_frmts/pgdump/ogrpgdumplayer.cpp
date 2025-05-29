@@ -1927,7 +1927,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                 m_pszSqlTableName, m_osSpatialIndexType.c_str(),
                 OGRPGDumpEscapeColumnName(poGeomField->GetNameRef()).c_str());
 
-            m_aosSpatialIndexCreationCommands.push_back(osCommand);
+            m_aosSpatialIndexCreationCommands.push_back(std::move(osCommand));
         }
     }
 
