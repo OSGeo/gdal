@@ -4702,6 +4702,36 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddProgressArg()
 }
 
 /************************************************************************/
+/*                    ProgressWithErrorIfFailed                         */
+/************************************************************************/
+
+namespace
+{
+struct ProgressWithErrorIfFailed
+{
+    GDALProgressFunc pfnProgress = nullptr;
+    void *pProgressData = nullptr;
+
+    static int CPL_STDCALL ProgressFunc(double dfPct, const char *pszMsg,
+                                        void *userData)
+    {
+        ProgressWithErrorIfFailed *self =
+            static_cast<ProgressWithErrorIfFailed *>(userData);
+        if (!self->pfnProgress(dfPct, pszMsg, self->pProgressData))
+        {
+            if (CPLGetLastErrorType() != CE_Failure)
+            {
+                CPLError(CE_Failure, CPLE_UserInterrupt,
+                         "Processing interrupted by user");
+            }
+            return false;
+        }
+        return true;
+    }
+};
+}  // namespace
+
+/************************************************************************/
 /*                       GDALAlgorithm::Run()                           */
 /************************************************************************/
 
@@ -4753,7 +4783,18 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
         }
     }
 
-    return RunImpl(pfnProgress, pProgressData);
+    if (pfnProgress)
+    {
+        ProgressWithErrorIfFailed sProgressWithErrorIfFailed;
+        sProgressWithErrorIfFailed.pfnProgress = pfnProgress;
+        sProgressWithErrorIfFailed.pProgressData = pProgressData;
+        return RunImpl(ProgressWithErrorIfFailed::ProgressFunc,
+                       &sProgressWithErrorIfFailed);
+    }
+    else
+    {
+        return RunImpl(nullptr, nullptr);
+    }
 }
 
 /************************************************************************/
