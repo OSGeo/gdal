@@ -920,7 +920,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             const char *pszFeatureCount = oResultFeatureCount->GetValue(0, 0);
             if (pszFeatureCount)
             {
-                m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+                m_nTotalFeatureCount =
+                    std::max<GIntBig>(0, CPLAtoGIntBig(pszFeatureCount));
             }
         }
     }
@@ -2646,7 +2647,26 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if (m_nTotalFeatureCount >= 0)
-        m_nTotalFeatureCount++;
+    {
+        if (m_nTotalFeatureCount < std::numeric_limits<int64_t>::max())
+        {
+            m_nTotalFeatureCount++;
+        }
+        else
+        {
+            if (m_poDS->m_bHasGPKGOGRContents)
+            {
+                char *pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_ogr_contents SET feature_count = null "
+                    "WHERE lower(table_name) = lower('%q')",
+                    m_pszTableName);
+                CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDS->hDB, pszSQL, nullptr,
+                                                nullptr, nullptr));
+                sqlite3_free(pszSQL);
+            }
+            m_nTotalFeatureCount = -1;
+        }
+    }
 #endif
 
     m_bContentChanged = true;
@@ -4018,7 +4038,8 @@ GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
             const char *pszFeatureCount = oResult->GetValue(0, 0);
             if (pszFeatureCount)
             {
-                m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+                m_nTotalFeatureCount =
+                    std::max<GIntBig>(0, CPLAtoGIntBig(pszFeatureCount));
             }
         }
     }
