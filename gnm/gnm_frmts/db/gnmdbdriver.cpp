@@ -43,7 +43,8 @@ static int GNMDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 
     // TODO: do we need to open datasource end check tables/layer exist?
 
-    return TRUE;
+    auto poDriver = GetGDALDriverManager()->GetDriverByName("PostgreSQL");
+    return poDriver && !poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME");
 }
 
 static GDALDataset *GNMDBDriverOpen(GDALOpenInfo *poOpenInfo)
