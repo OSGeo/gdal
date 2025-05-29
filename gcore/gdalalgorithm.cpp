@@ -4409,7 +4409,8 @@ struct ProgressWithErrorIfFailed
     GDALProgressFunc pfnProgress = nullptr;
     void *pProgressData = nullptr;
 
-    static int ProgressFunc(double dfPct, const char *pszMsg, void *userData)
+    static int CPL_STDCALL ProgressFunc(double dfPct, const char *pszMsg,
+                                        void *userData)
     {
         ProgressWithErrorIfFailed *self =
             static_cast<ProgressWithErrorIfFailed *>(userData);
