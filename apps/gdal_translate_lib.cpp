@@ -996,10 +996,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      Verify source window dimensions.                                */
     /* -------------------------------------------------------------------- */
     else if (psOptions->srcWin.dfXOff <= -1 || psOptions->srcWin.dfYOff <= -1 ||
-             psOptions->srcWin.dfXOff + psOptions->srcWin.dfXSize >=
-                 poSrcDS->GetRasterXSize() + 1 ||
-             psOptions->srcWin.dfYOff + psOptions->srcWin.dfYSize >=
-                 poSrcDS->GetRasterYSize() + 1)
+             psOptions->srcWin.dfXOff + psOptions->srcWin.dfXSize - 1 >=
+                 poSrcDS->GetRasterXSize() ||
+             psOptions->srcWin.dfYOff + psOptions->srcWin.dfYSize - 1 >=
+                 poSrcDS->GetRasterYSize())
     {
         const bool bCompletelyOutside =
             psOptions->srcWin.dfXOff + psOptions->srcWin.dfXSize <= 0 ||
