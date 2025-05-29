@@ -70,3 +70,13 @@ def test_pnm_write_non_standard_extension(nbands):
         gdal.GetDriverByName("PNM").Create("foo.foo", 1, 1, nbands)
     assert gdal.GetLastErrorType() != 0
     gdal.Unlink("foo.foo")
+
+
+@gdaltest.disable_exceptions()
+def test_pnm_read_int_max():
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("data/pnm/int_max.pgm")
+    if ds is None:
+        pytest.skip("not enough memory")
+    ds.GetRasterBand(1).Checksum()
