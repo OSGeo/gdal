@@ -4259,6 +4259,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
                 for (const auto &processingMode : processingModes)
                 {
                     CPLStringList aosArgvTmp{aosArgv};
+                    CPL_IGNORE_RET_VAL(aosArgv);
                     aosArgvTmp.InsertString(0, processingMode.c_str());
                     try
                     {

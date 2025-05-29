@@ -1339,7 +1339,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     {
         const std::vector<std::shared_ptr<GDALDimension>> apoDims(
             bBandInterleave
-                ? std::vector<std::shared_ptr<GDALDimension>>{poBandDim,
+                ? std::vector<std::shared_ptr<GDALDimension>>{std::move(
+                                                                  poBandDim),
                                                               poDS->m_poDimY,
                                                               poDS->m_poDimX}
                 : std::vector<std::shared_ptr<GDALDimension>>{

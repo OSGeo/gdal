@@ -762,24 +762,22 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
         poNode->nSubExprCount == 2)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        const auto sRight =
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
             return cp::and_(std::move(sLeft), std::move(sRight));
-        if (sLeft.is_valid())
+        else if (sLeft.is_valid())
             return sLeft;
-        if (sRight.is_valid())
+        else if (sRight.is_valid())
             return sRight;
     }
 
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        const auto sRight =
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
             return cp::or_(std::move(sLeft), std::move(sRight));
@@ -927,8 +925,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
              poNode->papoSubExpr[1]->field_type == SWQ_STRING)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (sLeft.is_valid())
         {
             if (cp::GetFunctionRegistry()
@@ -937,7 +934,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
             {
                 // match_like is only available is Arrow built against RE2.
                 return cp::call(
-                    "match_like", {sLeft},
+                    "match_like", {std::move(sLeft)},
                     cp::MatchSubstringOptions(
                         poNode->papoSubExpr[1]->string_value,
                         /* ignore_case=*/poNode->nOperation == SWQ_ILIKE));
@@ -948,10 +945,9 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1)
     {
-        const auto expr =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (expr.is_valid())
-            return cp::is_null(expr);
+            return cp::is_null(std::move(expr));
     }
 
     bFullyTranslated = false;

@@ -2600,8 +2600,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         osMetadataFile = pszMetadataFile;
     }
 
-    const CPLString osTileExtension(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
+    CPLString osTileExtension(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                   "TILE_EXTENSION", "pbf"));
     bool bJsonField =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
@@ -2894,7 +2894,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_bClip =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "CLIP", poDS->m_bClip);
-    poDS->m_osTileExtension = osTileExtension;
+    poDS->m_osTileExtension = std::move(osTileExtension);
     poDS->m_osMetadataMemFilename = std::move(osMetadataMemFilename);
     for (int i = 0; i < oVectorLayers.Size(); i++)
     {

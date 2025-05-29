@@ -3102,7 +3102,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oFieldNil.SetType(GMLAS_FT_BOOLEAN, "boolean");
                             oFieldNil.SetMinOccurs(0);
                             oFieldNil.SetMaxOccurs(1);
-                            aoFields.push_back(oFieldNil);
+                            aoFields.push_back(std::move(oFieldNil));
                         }
                     }
                     oField.SetXPath(osElementXPath);
@@ -3144,7 +3144,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     oField.SetXPath(osElementXPath);
                     oField.SetDocumentation(GetAnnotationDoc(poElt));
 
-                    aoFields.push_back(oField);
+                    aoFields.push_back(std::move(oField));
                 }
 
                 // Is it an element that we already visited ? (cycle)
@@ -3298,7 +3298,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oFieldNil.SetType(GMLAS_FT_BOOLEAN, "boolean");
                                 oFieldNil.SetMinOccurs(0);
                                 oFieldNil.SetMaxOccurs(1);
-                                aoFields.push_back(oFieldNil);
+                                aoFields.push_back(std::move(oFieldNil));
                             }
 
                             // e.g importing
@@ -3354,7 +3354,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oField.SetMinOccurs(0);
                                 oField.SetNotNullable(false);
                             }
-                            aoFields.push_back(oField);
+                            aoFields.push_back(std::move(oField));
                         }
 
                         aoNestedClasses = oNestedClass.GetNestedClasses();

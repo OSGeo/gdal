@@ -3681,9 +3681,8 @@ void GMLASReader::CreateFieldsForURLSpecificRule(
                 osFieldXPath));
         if (poLayer->GetOGRFieldIndexFromXPath(osRawContentXPath) < 0)
         {
-            const CPLString osOGRFieldName(
+            CPLString osRawContentFieldname(
                 poLayer->GetLayerDefn()->GetFieldDefn(nFieldIdx)->GetNameRef());
-            CPLString osRawContentFieldname(osOGRFieldName);
             size_t nPos = osRawContentFieldname.find("_href");
             if (nPos != std::string::npos)
                 osRawContentFieldname.resize(nPos);

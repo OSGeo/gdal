@@ -1221,8 +1221,8 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 poField = poRasterField;
             }
 
-            poField->m_osName = osName;
-            poField->m_osAlias = osAlias;
+            poField->m_osName = std::move(osName);
+            poField->m_osAlias = std::move(osAlias);
             poField->m_eType = eType;
             if (eType == FGFT_GEOMETRY)
                 m_iGeomField = static_cast<int>(m_apoFields.size());
@@ -2625,7 +2625,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt16);
 
         auto poIndex = std::make_unique<FileGDBIndex>();
-        poIndex->m_osIndexName = std::string(osIndexName);
+        poIndex->m_osIndexName = std::move(osIndexName);
         poIndex->m_osExpression = osExpression;
 
         if (m_iObjectIdField < 0 ||

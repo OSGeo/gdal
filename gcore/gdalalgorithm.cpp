@@ -951,11 +951,11 @@ bool GDALAlgorithmArg::RunValidationActions()
     if (GetType() == GAAT_STRING && !GetChoices().empty())
     {
         auto &val = Get<std::string>();
-        const std::string validVal = ValidateChoice(val);
+        std::string validVal = ValidateChoice(val);
         if (validVal.empty())
             ret = false;
         else
-            val = validVal;
+            val = std::move(validVal);
     }
     else if (GetType() == GAAT_STRING_LIST && !GetChoices().empty())
     {

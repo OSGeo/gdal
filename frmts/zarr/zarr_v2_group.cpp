@@ -351,7 +351,7 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
                 {
                     const auto nLastSlashPos =
                         osObjectFullnameNoLeadingSlash.rfind('/');
-                    const auto osArrayName =
+                    const std::string osArrayName =
                         (nLastSlashPos == std::string::npos)
                             ? osObjectFullnameNoLeadingSlash
                             : osObjectFullnameNoLeadingSlash.substr(

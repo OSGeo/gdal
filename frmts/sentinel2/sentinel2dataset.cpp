@@ -517,6 +517,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
         osMTD[14] = 'A';
         osMTD[15] = 'F';
         CPLString osSAFE(CPLString(osBasename) + ".SAFE");
+        CPL_IGNORE_RET_VAL(osBasename);
         osFilename = osFilename + "/" + osSAFE + "/" + osMTD + ".xml";
         if (strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0)
             osFilename = "/vsizip/" + osFilename;
@@ -3545,7 +3546,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
             CPLString osName = sBandDesc.pszBandName + 1; /* skip B character */
             if (atoi(osName) < 10)
                 osName = "0" + osName;
-            oMapResolutionsToBands[sBandDesc.nResolution].insert(osName);
+            oMapResolutionsToBands[sBandDesc.nResolution].insert(
+                std::move(osName));
         }
         if (eLevel == SENTINEL2_L2A)
         {

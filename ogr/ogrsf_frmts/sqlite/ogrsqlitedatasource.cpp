@@ -4668,9 +4668,9 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
         if (nSRSId != m_nUndefinedSRID)
         {
-            auto poSRSClone = std::unique_ptr<OGRSpatialReference,
-                                              OGRSpatialReferenceReleaser>(
-                new OGRSpatialReference(oSRS));
+            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+                poSRSClone;
+            poSRSClone.reset(oSRS.Clone());
             AddSRIDToCache(nSRSId, std::move(poSRSClone));
         }
 

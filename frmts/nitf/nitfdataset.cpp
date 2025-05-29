@@ -3523,7 +3523,7 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
                 break;
         }
 
-        aosRSetFilenames.push_back(osTarget);
+        aosRSetFilenames.push_back(std::move(osTarget));
     }
 
     if (aosRSetFilenames.empty())

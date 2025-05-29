@@ -2511,7 +2511,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
             m_iLatField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
             f.m_osDataType = "ASCII_Real";
-            m_aoFields.push_back(f);
+            m_aoFields.push_back(std::move(f));
         }
         {
             OGRFieldDefn oFieldDefn(
@@ -2521,7 +2521,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
             m_iLongField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
             f.m_osDataType = "ASCII_Real";
-            m_aoFields.push_back(f);
+            m_aoFields.push_back(std::move(f));
         }
         if (eGType == wkbPoint25D)
         {

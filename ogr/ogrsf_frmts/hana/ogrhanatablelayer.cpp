@@ -201,9 +201,9 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         }
     }
     else if (EQUAL(typeName.c_str(), "REAL"))
-        return {typeName, QGRHanaDataTypes::Real, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::Real, 0, 0};
     else if (EQUAL(typeName.c_str(), "DOUBLE"))
-        return {typeName, QGRHanaDataTypes::Double, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::Double, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARCHAR"))
     {
         switch (typeSize.size())
@@ -233,13 +233,13 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         }
     }
     else if (EQUAL(typeName.c_str(), "NCLOB"))
-        return {typeName, QGRHanaDataTypes::WLongVarChar, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::WLongVarChar, 0, 0};
     else if (EQUAL(typeName.c_str(), "DATE"))
-        return {typeName, QGRHanaDataTypes::Date, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::Date, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIME"))
-        return {typeName, QGRHanaDataTypes::Time, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::Time, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIMESTAMP"))
-        return {typeName, QGRHanaDataTypes::Timestamp, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::Timestamp, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARBINARY"))
     {
         switch (typeSize.size())
@@ -255,7 +255,7 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         }
     }
     else if (EQUAL(typeName.c_str(), "BLOB"))
-        return {typeName, QGRHanaDataTypes::LongVarBinary, 0, 0};
+        return {std::move(typeName), QGRHanaDataTypes::LongVarBinary, 0, 0};
     else if (EQUAL(typeName.c_str(), "REAL_VECTOR"))
     {
         switch (typeSize.size())

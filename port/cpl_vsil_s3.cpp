@@ -4477,7 +4477,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         if (poS3HandleHelper == nullptr)
                             return false;
 
-                        const auto osUploadID =
+                        std::string osUploadID =
                             poTargetFSMultipartHandler->InitiateMultipartUpload(
                                 osSubTarget, poS3HandleHelper.get(),
                                 oRetryParameters,
@@ -4487,7 +4487,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                             return false;
                         }
                         MultiPartDef def;
-                        def.osUploadID = osUploadID;
+                        def.osUploadID = std::move(osUploadID);
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
                         def.nTotalSize = chunk.nTotalSize;

@@ -703,11 +703,11 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
                 {
                     for (const auto &oGlobalCRS : oGlobalCRSList)
                     {
-                        const auto osCRS = oGlobalCRS.ToString();
+                        std::string osCRS = oGlobalCRS.ToString();
                         if (oSetCRS.find(osCRS) == oSetCRS.end())
                         {
                             oSetCRS.insert(osCRS);
-                            oCRSList.push_back(osCRS);
+                            oCRSList.push_back(std::move(osCRS));
                         }
                     }
                 }
