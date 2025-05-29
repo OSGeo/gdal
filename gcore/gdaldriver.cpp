@@ -3043,6 +3043,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
     auto poDM = GetGDALDriverManager();
     const int nDriverCount = poDM->GetDriverCount(true);
     GDALDriver *poMissingPluginDriver = nullptr;
+    std::string osMatchingPrefix;
     for (int i = 0; i < nDriverCount; i++)
     {
         GDALDriver *poDriver = poDM->GetDriver(i, true);
@@ -3083,6 +3084,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
                 {
                     if (poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME"))
                     {
+                        osMatchingPrefix = pszPrefix;
                         poMissingPluginDriver = poDriver;
                         aosMissingDriverNames.AddString(
                             poDriver->GetDescription());
@@ -3143,8 +3145,11 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
             if (bEmitWarning)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Several drivers matching %s extension. Using %s",
-                         osExt.c_str(), aosDriverNames[0]);
+                         "Several drivers matching %s %s. Using %s",
+                         osMatchingPrefix.empty() ? osExt.c_str()
+                                                  : osMatchingPrefix.c_str(),
+                         osMatchingPrefix.empty() ? "extension" : "prefix",
+                         aosDriverNames[0]);
             }
             const std::string osDrvName = aosDriverNames[0];
             aosDriverNames.Clear();
@@ -3156,9 +3161,12 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
         aosMissingDriverNames.size() == 1 && poMissingPluginDriver)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "No installed driver matching %s extension, but %s driver is "
+                 "No installed driver matching %s %s, but %s driver is "
                  "known. However plugin %s",
-                 osExt.c_str(), poMissingPluginDriver->GetDescription(),
+                 osMatchingPrefix.empty() ? osExt.c_str()
+                                          : osMatchingPrefix.c_str(),
+                 osMatchingPrefix.empty() ? "extension" : "prefix",
+                 poMissingPluginDriver->GetDescription(),
                  GDALGetMessageAboutMissingPluginDriver(poMissingPluginDriver)
                      .c_str());
     }
