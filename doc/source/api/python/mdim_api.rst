@@ -5,30 +5,60 @@
 
 .. _python_mdim_api:
 
+.. py:currentmodule:: osgeo.gdal
+
 Multi-dimensional array API
 ===========================
 
-.. autoclass:: osgeo.gdal.Group
+See :ref:`multidim_raster_data_model` and :ref:`multidimensional_api_tut` for
+examples of working with the Multi-dimensional array API.
+
+
+.. contents:: API Classes
+   :local:
+   :depth: 2
+
+-----------------------------
+Group
+-----------------------------
+
+.. autoclass:: Group
     :members:
     :undoc-members:
     :exclude-members: thisown
 
-.. autoclass:: osgeo.gdal.Dimension
+-----------------------------
+Dimension
+-----------------------------
+
+.. autoclass:: Dimension
     :members:
     :undoc-members:
     :exclude-members: thisown
 
-.. autoclass:: osgeo.gdal.MDArray
+-----------------------------
+MDArray
+-----------------------------
+
+.. autoclass:: MDArray
     :members:
     :undoc-members:
     :exclude-members: thisown
 
-.. autoclass:: osgeo.gdal.Attribute
+-----------------------------
+Attribute
+-----------------------------
+
+.. autoclass:: Attribute
     :members:
     :undoc-members:
     :exclude-members: thisown
 
-.. autoclass:: osgeo.gdal.ExtendedDataType
+-----------------------------
+ExtendedDataType
+-----------------------------
+
+.. autoclass:: ExtendedDataType
     :members:
     :undoc-members:
     :exclude-members: thisown
