@@ -1,4 +1,4 @@
-# ve!/usr/bin/env pytest
+#!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 #
@@ -4508,3 +4508,64 @@ def test_gdalwarp_lib_invalid_srcnodata(tmp_vsimem):
 
     with pytest.raises(RuntimeError, match="Error parsing srcnodata"):
         gdal.Warp(tmp_vsimem / "out.tif", "../gcore/data/byte.tif", srcNodata="bad")
+
+
+###############################################################################
+
+
+def test_gdalwarp_lib_int_max_sized_raster(tmp_vsimem):
+
+    content = """<VRTDataset rasterXSize="2147483647" rasterYSize="2147483647">
+  <VRTRasterBand dataType="Byte" band="1" />
+</VRTDataset>"""
+
+    with pytest.raises(Exception, match="Too large output raster size"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            content,
+            transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+            xRes=0.5,
+            yRes=0.5,
+        )
+
+    with pytest.raises(Exception, match="Too large output raster size"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            content,
+            transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+            xRes=0.5,
+            yRes=0.5,
+            outputBounds=[0, 0, 4e9, 4e9],
+        )
+
+    with pytest.raises(Exception, match="Too large output raster size"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            content,
+            transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+            outputBounds=[0, 0, 4e9, 4e9],
+        )
+
+    content = """<VRTDataset rasterXSize="1" rasterYSize="2147483647">
+  <VRTRasterBand dataType="Byte" band="1" />
+</VRTDataset>"""
+
+    with pytest.raises(Exception, match="Too large output raster size"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            content,
+            transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+            width=2147483647,
+        )
+
+    content = """<VRTDataset rasterXSize="2147483647" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1" />
+</VRTDataset>"""
+
+    with pytest.raises(Exception, match="Too large output raster size"):
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            content,
+            transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+            height=2147483647,
+        )
