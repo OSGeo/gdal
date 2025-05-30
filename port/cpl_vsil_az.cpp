@@ -418,6 +418,8 @@ bool VSIDIRAz::IssueListDir()
     if (response_code != 200)
     {
         CPLDebug("AZURE", "%s", requestHelper.sWriteFuncData.pBuffer);
+        poHandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                          nullptr, true);
     }
     else
     {
@@ -641,6 +643,8 @@ class VSIAzureHandle final : public VSICurlHandle
     virtual struct curl_slist *
     GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders) override;
+    bool CanRestartOnError(const char *, const char *, bool) override;
+
     virtual bool IsDirectoryFromExists(const char *pszVerb,
                                        int response_code) override;
 
@@ -2517,6 +2521,17 @@ VSIAzureHandle::GetCurlHeaders(const std::string &osVerb,
                                const struct curl_slist *psExistingHeaders)
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
+
+/************************************************************************/
+/*                          CanRestartOnError()                         */
+/************************************************************************/
+
+bool VSIAzureHandle::CanRestartOnError(const char *pszErrorMsg,
+                                       const char *pszHeaders, bool bSetError)
+{
+    return m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
+                                               bSetError);
 }
 
 /************************************************************************/

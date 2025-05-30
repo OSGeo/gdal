@@ -191,7 +191,7 @@ bool VSIOSSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                                      "OSS_ACCESS_KEY_ID", ""));
         if (osAccessKeyId.empty())
         {
-            VSIError(VSIE_AWSInvalidCredentials,
+            VSIError(VSIE_InvalidCredentials,
                      "OSS_ACCESS_KEY_ID configuration option not defined");
             return false;
         }
@@ -199,7 +199,7 @@ bool VSIOSSHandleHelper::GetConfiguration(const std::string &osPathForOption,
         return true;
     }
 
-    VSIError(VSIE_AWSInvalidCredentials,
+    VSIError(VSIE_InvalidCredentials,
              "OSS_SECRET_ACCESS_KEY configuration option not defined");
     return false;
 }
@@ -287,7 +287,8 @@ bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "Invalid OSS response: %s",
+                     pszErrorMsg);
         }
         return false;
     }
@@ -297,8 +298,8 @@ bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed OSS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -309,8 +310,8 @@ bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
         CPLDestroyXMLNode(psTree);
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed OSS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -339,27 +340,27 @@ bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
 
         if (pszMessage == nullptr)
         {
-            VSIError(VSIE_AWSError, "%s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszErrorMsg);
         }
         else if (EQUAL(pszCode, "AccessDenied"))
         {
-            VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);
+            VSIError(VSIE_AccessDenied, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchBucket"))
         {
-            VSIError(VSIE_AWSBucketNotFound, "%s", pszMessage);
+            VSIError(VSIE_BucketNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchKey"))
         {
-            VSIError(VSIE_AWSObjectNotFound, "%s", pszMessage);
+            VSIError(VSIE_ObjectNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "SignatureDoesNotMatch"))
         {
-            VSIError(VSIE_AWSSignatureDoesNotMatch, "%s", pszMessage);
+            VSIError(VSIE_SignatureDoesNotMatch, "%s", pszMessage);
         }
         else
         {
-            VSIError(VSIE_AWSError, "%s", pszMessage);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszMessage);
         }
     }
 

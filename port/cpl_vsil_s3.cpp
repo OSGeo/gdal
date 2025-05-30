@@ -514,7 +514,7 @@ bool VSIDIRS3::IssueListDir()
             if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                 poHandleHelper->CanRestartOnError(
                     requestHelper.sWriteFuncData.pBuffer,
-                    requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                    requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 // nothing to do
             }
@@ -947,7 +947,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -1094,7 +1094,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::UploadPart(
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -1267,7 +1267,7 @@ bool VSIMultipartWriteHandle::DoSinglePartPUT()
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      m_poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -1404,7 +1404,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::CompleteMultipart(
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -1487,7 +1487,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortMultipart(
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -1615,7 +1615,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
                 else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                          poHandleHelper->CanRestartOnError(
                              requestHelper.sWriteFuncData.pBuffer,
-                             requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                             requestHelper.sWriteFuncHeaderData.pBuffer, true))
                 {
                     bRetry = true;
                 }
@@ -2241,7 +2241,7 @@ std::set<std::string> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -2364,7 +2364,7 @@ char **VSIS3FSHandler::GetFileMetadata(const char *pszFilename,
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -2558,7 +2558,7 @@ bool VSIS3FSHandler::SetFileMetadata(const char *pszFilename,
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -3069,7 +3069,7 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }
@@ -3170,7 +3170,7 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
             else if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                      poS3HandleHelper->CanRestartOnError(
                          requestHelper.sWriteFuncData.pBuffer,
-                         requestHelper.sWriteFuncHeaderData.pBuffer, false))
+                         requestHelper.sWriteFuncHeaderData.pBuffer, true))
             {
                 bRetry = true;
             }

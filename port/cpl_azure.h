@@ -81,6 +81,9 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const override;
 
+    bool CanRestartOnError(const char *, const char *pszHeaders,
+                           bool bSetError) override;
+
     const std::string &GetURL() const override
     {
         return m_osURL;

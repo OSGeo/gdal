@@ -72,3 +72,13 @@ def test_gdalalg_vsi_delete_dir_recursive(tmp_path):
     assert alg.Run()
 
     assert gdal.VSIStatL(tmp_path / "subdir") is None
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_delete_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["filename"] = "/vsioss/i_do_not/exist.bin"
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()

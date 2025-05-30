@@ -12,8 +12,9 @@
 
 #include "gdalalg_vsi_sync.h"
 
-#include "cpl_vsi.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 
 //! @cond Doxygen_Suppress
 
@@ -72,11 +73,23 @@ bool GDALVSISyncAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                  pfnProgress, pProgressData, nullptr))
     {
         VSIStatBufL sStat;
-        if (VSIStatExL(m_source.c_str(), &sStat,
-                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) != 0)
+        VSIErrorReset();
+        const auto nOldErrorNum = VSIGetLastErrorNo();
+        if (VSIStatL(m_source.c_str(), &sStat) != 0)
         {
-            ReportError(CE_Failure, CPLE_FileIO, "%s does not exist",
-                        m_source.c_str());
+            if (nOldErrorNum != VSIGetLastErrorNo())
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' cannot be accessed. %s: %s", m_source.c_str(),
+                            VSIErrorNumToString(VSIGetLastErrorNo()),
+                            VSIGetLastErrorMsg());
+            }
+            else
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' does not exist or cannot be accessed",
+                            m_source.c_str());
+            }
         }
         else
         {
