@@ -182,6 +182,13 @@ The following layer creation options are supported:
       DROP TABLE from being emitted. Set to IF_EXISTS
       in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)
 
+-  .. config:: OGR_PG_SKIP_CONFLICTS
+      :choices: YES, NO
+      :default: NO
+
+      If set to "YES" (not the default), conflicts when inserting features
+      will be skipped (only applies when PG_USE_COPY is off).
+
 -  .. lco:: SRID
 
       Set the SRID of the geometry. Defaults to -1, unless a SRS

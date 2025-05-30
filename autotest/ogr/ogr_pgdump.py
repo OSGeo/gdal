@@ -1618,3 +1618,61 @@ def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
     gdal.VSIFCloseL(f)
     assert '"ae"' in sql
     assert '"be"' in sql
+
+
+###############################################################################
+# Test ignored conflicts
+
+
+def test_ogr_pgdump_skip_conflicts(tmp_path):
+    with gdal.config_option("OGR_PG_SKIP_CONFLICTS", "YES"):
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(tmp_path / "tpoly.sql")
+
+        ######################################################
+        # Create Layer
+        lyr = ds.CreateLayer("tpoly", options=["DIM=3", "POSTGIS_VERSION=1.5"])
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
+
+        ######################################################
+        # Setup Schema
+        ogrtest.quick_create_layer_def(
+            lyr,
+            [
+                ("AREA", ogr.OFTReal),
+                ("EAS_ID", ogr.OFTInteger),
+                ("PRFEDEA", ogr.OFTString),
+                ("SHORTNAME", ogr.OFTString, 8),
+            ],
+        )
+
+        ######################################################
+        # Copy in poly.shp
+
+        dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+
+        shp_ds = ogr.Open("data/poly.shp")
+        shp_lyr = shp_ds.GetLayer(0)
+        feat = shp_lyr.GetNextFeature()
+
+        while feat is not None:
+
+            dst_feat.SetFrom(feat)
+            lyr.CreateFeature(dst_feat)
+
+            feat = shp_lyr.GetNextFeature()
+
+        ds.Close()
+
+        with open(tmp_path / "tpoly.sql") as f:
+            sql = f.read()
+
+        # print(sql)
+
+        def check_and_remove(needle):
+            nonlocal sql
+            assert needle in sql, sql
+            sql = sql[sql.find(needle) + len(needle) :]
+
+        check_and_remove(
+            """INSERT INTO "public"."tpoly" ("wkb_geometry", "area", "eas_id", "prfedea") VALUES ('01030000800100000014000000000000602F491D41000000207F2D52410000000000000000000000C028471D41000000E0922D52410000000000000000000000007C461D4100000060AE2D5241000000000000000000000080C9471D4100000020B62D52410000000000000000000000209C4C1D41000000E0D82D52410000000000000000000000608D4C1D41000000A0DD2D52410000000000000000000000207F4E1D41000000A0EA2D5241000000000000000000000020294F1D4100000080CA2D5241000000000000000000000000B4511D41000000E0552D52410000000000000000000000C016521D4100000080452D52410000000000000000000000E0174E1D41000000202E2D5241000000000000000000000020414D1D41000000E04C2D52410000000000000000000000E04B4D1D41000000605E2D5241000000000000000000000040634D1D41000000E0742D52410000000000000000000000A0EF4C1D41000000E08D2D52410000000000000000000000E04E4C1D41000000E0A12D52410000000000000000000000E0B04B1D4100000060B82D5241000000000000000000000080974A1D4100000080AE2D5241000000000000000000000080CF491D4100000080952D52410000000000000000000000602F491D41000000207F2D52410000000000000000', 215229.266, 168, '35043411') ON CONFLICT DO NOTHING;"""
+        )

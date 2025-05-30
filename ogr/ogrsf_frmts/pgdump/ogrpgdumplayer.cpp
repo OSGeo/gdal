@@ -47,7 +47,9 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource *poDSIn,
           OGRPGDumpEscapeColumnName(pszTableName).c_str()))),
       m_pszFIDColumn(pszFIDColumnIn ? CPLStrdup(pszFIDColumnIn) : nullptr),
       m_poFeatureDefn(new OGRFeatureDefn(pszTableName)), m_poDS(poDSIn),
-      m_bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)), m_bCreateTable(bCreateTableIn)
+      m_bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)), m_bCreateTable(bCreateTableIn),
+      bSkipConflicts(
+          CPLTestBool(CPLGetConfigOption("OGR_PG_SKIP_CONFLICTS", "FALSE")))
 {
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -436,6 +438,9 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     }
 
     osCommand += ")";
+
+    if (bSkipConflicts)
+        osCommand += " ON CONFLICT DO NOTHING";
 
     if (bEmptyInsert)
         osCommand.Printf("INSERT INTO %s DEFAULT VALUES", m_pszSqlTableName);

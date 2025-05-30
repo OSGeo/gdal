@@ -121,6 +121,7 @@ class OGRPGDumpLayer final : public OGRLayer
     bool m_bCopyStatementWithFID = true;
     bool m_bNeedToUpdateSequence = false;
     bool m_bGeomColumnPositionImmediate = true;
+    int bSkipConflicts = false;
     std::vector<std::string> m_aosDeferredGeomFieldCreationCommands{};
     std::vector<std::string> m_aosDeferrentNonGeomFieldCreationCommands{};
     std::vector<std::string> m_aosSpatialIndexCreationCommands{};
