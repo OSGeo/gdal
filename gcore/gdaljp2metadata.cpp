@@ -2304,7 +2304,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     {
                         GMLJP2V2StyleDesc oDesc;
                         oDesc.osFile = json_object_get_string(poStyle);
-                        aoStyles.push_back(oDesc);
+                        aoStyles.push_back(std::move(oDesc));
                     }
                 }
             }
