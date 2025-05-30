@@ -5535,25 +5535,36 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Check free space (only for big, non sparse, uncompressed)       */
+    /*      Check free space (only for big, non sparse)                     */
     /* -------------------------------------------------------------------- */
-    if (l_nCompression == COMPRESSION_NONE && dfUncompressedImageSize >= 1e9 &&
+    const double dfLikelyFloorOfFinalSize =
+        l_nCompression == COMPRESSION_NONE
+            ? dfUncompressedImageSize
+            :
+            /* For compressed, we target 1% as the most optimistic reduction factor! */
+            0.01 * dfUncompressedImageSize;
+    if (dfLikelyFloorOfFinalSize >= 1e9 &&
         !CPLFetchBool(papszParamList, "SPARSE_OK", false) &&
         osOriFilename != "/vsistdout/" &&
         osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")))
     {
-        GIntBig nFreeDiskSpace =
+        const GIntBig nFreeDiskSpace =
             VSIGetDiskFreeSpace(CPLGetDirnameSafe(pszFilename).c_str());
-        if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfUncompressedImageSize)
+        if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfLikelyFloorOfFinalSize)
         {
-            ReportError(pszFilename, CE_Failure, CPLE_FileIO,
-                        "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                        "whereas " CPL_FRMT_GIB " are at least necessary. "
-                        "You can disable this check by defining the "
-                        "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
-                        nFreeDiskSpace,
-                        static_cast<GIntBig>(dfUncompressedImageSize));
+            ReportError(
+                pszFilename, CE_Failure, CPLE_FileIO,
+                "Free disk space available is %s, "
+                "whereas %s are %s necessary. "
+                "You can disable this check by defining the "
+                "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
+                CPLFormatReadableFileSize(static_cast<uint64_t>(nFreeDiskSpace))
+                    .c_str(),
+                CPLFormatReadableFileSize(dfLikelyFloorOfFinalSize).c_str(),
+                l_nCompression == COMPRESSION_NONE
+                    ? "at least"
+                    : "likely at least (probably more)");
             return nullptr;
         }
     }
