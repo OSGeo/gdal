@@ -780,7 +780,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_PG_ENABLE_METADATA", // from ogrpgdatasource.cpp, ogrpgtablelayer.cpp
    "OGR_PG_JSON_TYPE", // from ogrpgdumplayer.cpp
    "OGR_PG_RETRIEVE_FID", // from ogrpgtablelayer.cpp
-   "OGR_PG_SKIP_CONFLICTS", // from ogrpgtablelayer.cpp
+   "OGR_PG_SKIP_CONFLICTS", // from ogrpgdumplayer.cpp, ogrpgtablelayer.cpp
    "OGR_PG_STRING_TYPE", // from ogrpgdumplayer.cpp
    "OGR_PG_UUID_TYPE", // from ogrpgdumplayer.cpp
    "OGR_PMTILES_ITERATOR_THRESHOLD", // from ogrpmtilestileiterator.cpp
