@@ -35,6 +35,11 @@
 
 #include "cpl_aws.h"
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 #ifndef HAVE_CURL
 
 void VSIInstallS3FileHandler(void)
@@ -703,6 +708,12 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
     bool SupportsMultipartAbort() const override
     {
         return true;
+    }
+
+    GIntBig GetDiskFreeSpace(const char * /* pszDirname */) override
+    {
+        // There is no limit per bucket, but a 5 TiB limit per object.
+        return static_cast<GIntBig>(5) * 1024 * 1024 * 1024 * 1024;
     }
 };
 
