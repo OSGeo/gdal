@@ -1,0 +1,33 @@
+{
+    "type" : "FeatureCollection",
+             "name" : "squares",
+                      "crs"
+        : {
+            "type" : "name",
+            "properties" : {"name" : "urn:ogc:def:crs:OGC:1.3:CRS84"}
+        },
+          "features" : [
+              {
+                  "type" : "Feature",
+                  "properties" : {"name" : null},
+                  "geometry" : {
+                      "type" : "Polygon",
+                      "coordinates" : [[
+                          [ 0.0, 0.0 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ],
+                          [ 1.0, 0.0 ], [ 0.0, 0.0 ]
+                      ]]
+                  }
+              },
+              {
+                  "type" : "Feature",
+                  "properties" : {"name" : null},
+                  "geometry" : {
+                      "type" : "Polygon",
+                      "coordinates" : [[
+                          [ 1.0, 0.0 ], [ 1.0, 1.0 ], [ 2.0, 1.0 ],
+                          [ 2.0, 0.0 ], [ 1.0, 0.0 ]
+                      ]]
+                  }
+              }
+          ]
+}
