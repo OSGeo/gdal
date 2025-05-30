@@ -25,6 +25,7 @@
 #include <string.h>
 #include <string>
 #include <cctype>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -926,40 +927,60 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
     const unsigned int nAttrDims =
         H5Sget_simple_extent_dims(hAttrSpace, nSize, nullptr);
 
-    unsigned int nAttrElmts = 1;
+    size_t nAttrElmts = 1;
     for (hsize_t i = 0; i < nAttrDims; i++)
     {
-        nAttrElmts *= static_cast<int>(nSize[i]);
+        if (nSize[i] > std::numeric_limits<size_t>::max() / nAttrElmts)
+        {
+            H5Sclose(hAttrSpace);
+            H5Tclose(hAttrNativeType);
+            H5Tclose(hAttrTypeID);
+            H5Aclose(hAttrID);
+            return 0;
+        }
+        nAttrElmts *= static_cast<size_t>(nSize[i]);
     }
 
     if (H5Tget_class(hAttrNativeType) == H5T_STRING)
     {
         if (H5Tis_variable_str(hAttrNativeType))
         {
-            char **papszStrings =
-                static_cast<char **>(CPLMalloc(nAttrElmts * sizeof(char *)));
-
-            // Read the values.
-            H5Aread(hAttrID, hAttrNativeType, papszStrings);
-
-            // Concatenate all values as one string separated by a space.
-            psContext->m_osValue = papszStrings[0] ? papszStrings[0] : "{NULL}";
-            for (hsize_t i = 1; i < nAttrElmts; i++)
+            char **papszStrings = static_cast<char **>(
+                VSI_MALLOC2_VERBOSE(nAttrElmts, sizeof(char *)));
+            if (papszStrings)
             {
-                psContext->m_osValue += " ";
-                psContext->m_osValue +=
-                    papszStrings[i] ? papszStrings[i] : "{NULL}";
-            }
+                // Read the values.
+                H5Aread(hAttrID, hAttrNativeType, papszStrings);
 
-            H5Dvlen_reclaim(hAttrNativeType, hAttrSpace, H5P_DEFAULT,
-                            papszStrings);
-            CPLFree(papszStrings);
+                // Concatenate all values as one string separated by a space.
+                psContext->m_osValue =
+                    papszStrings[0] ? papszStrings[0] : "{NULL}";
+                for (hsize_t i = 1; i < nAttrElmts; i++)
+                {
+                    psContext->m_osValue += " ";
+                    psContext->m_osValue +=
+                        papszStrings[i] ? papszStrings[i] : "{NULL}";
+                }
+
+                H5Dvlen_reclaim(hAttrNativeType, hAttrSpace, H5P_DEFAULT,
+                                papszStrings);
+                CPLFree(papszStrings);
+            }
         }
         else
         {
             const hsize_t nAttrSize = H5Aget_storage_size(hAttrID);
-            psContext->m_osValue.resize(static_cast<size_t>(nAttrSize));
-            H5Aread(hAttrID, hAttrNativeType, &psContext->m_osValue[0]);
+            if (nAttrSize <= static_cast<hsize_t>(INT_MAX))
+            {
+                try
+                {
+                    psContext->m_osValue.resize(static_cast<size_t>(nAttrSize));
+                    H5Aread(hAttrID, hAttrNativeType, &psContext->m_osValue[0]);
+                }
+                catch (const std::exception &)
+                {
+                }
+            }
         }
     }
     else
@@ -971,12 +992,13 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
 
         if (nAttrElmts > 0)
         {
-            buf = CPLMalloc(nAttrElmts * H5Tget_size(hAttrNativeType));
-            H5Aread(hAttrID, hAttrNativeType, buf);
+            buf = VSI_MALLOC2_VERBOSE(nAttrElmts, H5Tget_size(hAttrNativeType));
+            if (buf)
+                H5Aread(hAttrID, hAttrNativeType, buf);
         }
         const bool bIsSCHAR = H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType) > 0;
         const bool bIsUCHAR = H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType) > 0;
-        if ((bIsSCHAR || bIsUCHAR) &&
+        if (buf && (bIsSCHAR || bIsUCHAR) &&
             CPLTestBool(CPLGetConfigOption("GDAL_HDF5_CHAR_AS_STRING", "NO")))
         {
             // Compatibility mode with ancient GDAL versions where we consider
@@ -993,7 +1015,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (bIsSCHAR)
+        else if (buf && bIsSCHAR)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1010,7 +1032,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (bIsUCHAR)
+        else if (buf && bIsUCHAR)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1027,7 +1049,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1043,7 +1065,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1060,7 +1082,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_INT, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_INT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1076,7 +1098,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_UINT, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_UINT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1093,7 +1115,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_INT64, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_INT64, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1110,7 +1132,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_UINT64, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_UINT64, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1127,7 +1149,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_LONG, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_LONG, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1143,7 +1165,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1161,7 +1183,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
             }
         }
 #ifdef HDF5_HAVE_FLOAT16
-        else if (H5Tequal(H5T_NATIVE_FLOAT16, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_FLOAT16, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1182,7 +1204,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
             }
         }
 #endif
-        else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1199,7 +1221,7 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
-        else if (H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType) > 0)
+        else if (buf && H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
@@ -1399,6 +1421,19 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
     else if (poRootGroup->nType == H5G_DATASET && bSUBDATASET)
     {
         CreateMetadata(m_hHDF5, poRootGroup, H5G_DATASET, true, m_aosMetadata);
+
+        for (int i = 0; i < poRootGroup->nRank; ++i)
+        {
+            if (poRootGroup->paDims[i] >
+                static_cast<hsize_t>(std::numeric_limits<int>::max()))
+            {
+                CPLDebug("HDF5",
+                         "Not reporting %s as subdataset as at least one of "
+                         "its dimension size exceeds INT_MAX!",
+                         poRootGroup->pszUnderscorePath);
+                return CE_None;
+            }
+        }
 
         CPLString osStr;
         switch (poRootGroup->nRank)
@@ -1688,21 +1723,30 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char *pszAttrFullPath,
             else
             {
                 // Get the amount of elements.
-                unsigned int nAttrElmts = 1;
+                int nAttrElmts = 1;
                 for (hsize_t i = 0; i < nAttrDims; i++)
                 {
+                    if (nSize[i] >
+                        static_cast<hsize_t>(std::numeric_limits<int>::max() /
+                                             nAttrElmts))
+                    {
+                        nAttrElmts = 0;
+                        break;
+                    }
                     // For multidimensional attributes
-                    nAttrElmts *= static_cast<unsigned int>(nSize[i]);
+                    nAttrElmts *= static_cast<int>(nSize[i]);
                 }
 
                 if (nLen != nullptr)
                     *nLen = nAttrElmts;
 
                 *pdfValues = static_cast<double *>(
-                    CPLMalloc(nAttrElmts * sizeof(double)));
+                    nAttrElmts ? VSI_MALLOC2_VERBOSE(nAttrElmts, sizeof(double))
+                               : nullptr);
 
                 // Read the attribute contents
-                if (H5Aread(hAttrID, hAttrNativeType, *pdfValues) < 0)
+                if (nAttrElmts == 0 ||
+                    H5Aread(hAttrID, hAttrNativeType, *pdfValues) < 0)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
                              "Attribute %s could not be opened",
