@@ -3897,3 +3897,62 @@ void CPLUnlockFileEx(CPLLockFileHandle hLockFileHandle)
         delete hLockFileHandle;
     }
 }
+
+/************************************************************************/
+/*                       CPLFormatReadableFileSize()                    */
+/************************************************************************/
+
+template <class T>
+static std::string CPLFormatReadableFileSizeInternal(T nSizeInBytes)
+{
+    constexpr T ONE_MEGA_BYTE = 1000 * 1000;
+    constexpr T ONE_GIGA_BYTE = 1000 * ONE_MEGA_BYTE;
+    constexpr T ONE_TERA_BYTE = 1000 * ONE_GIGA_BYTE;
+    constexpr T ONE_PETA_BYTE = 1000 * ONE_TERA_BYTE;
+    constexpr T ONE_HEXA_BYTE = 1000 * ONE_PETA_BYTE;
+
+    if (nSizeInBytes > ONE_HEXA_BYTE)
+        return CPLSPrintf("%.02f HB", static_cast<double>(nSizeInBytes) /
+                                          static_cast<double>(ONE_HEXA_BYTE));
+
+    if (nSizeInBytes > ONE_PETA_BYTE)
+        return CPLSPrintf("%.02f PB", static_cast<double>(nSizeInBytes) /
+                                          static_cast<double>(ONE_PETA_BYTE));
+
+    if (nSizeInBytes > ONE_TERA_BYTE)
+        return CPLSPrintf("%.02f TB", static_cast<double>(nSizeInBytes) /
+                                          static_cast<double>(ONE_TERA_BYTE));
+
+    if (nSizeInBytes > ONE_GIGA_BYTE)
+        return CPLSPrintf("%.02f GB", static_cast<double>(nSizeInBytes) /
+                                          static_cast<double>(ONE_GIGA_BYTE));
+
+    if (nSizeInBytes > ONE_MEGA_BYTE)
+        return CPLSPrintf("%.02f MB", static_cast<double>(nSizeInBytes) /
+                                          static_cast<double>(ONE_MEGA_BYTE));
+
+    return CPLSPrintf("%03d,%03d bytes", static_cast<int>(nSizeInBytes) / 1000,
+                      static_cast<int>(nSizeInBytes) % 1000);
+}
+
+/** Return a file size in a human readable way.
+ *
+ * e.g 1200000 -> "1.20 MB"
+ *
+ * @since 3.12
+ */
+std::string CPLFormatReadableFileSize(uint64_t nSizeInBytes)
+{
+    return CPLFormatReadableFileSizeInternal(nSizeInBytes);
+}
+
+/** Return a file size in a human readable way.
+ *
+ * e.g 1200000 -> "1.20 MB"
+ *
+ * @since 3.12
+ */
+std::string CPLFormatReadableFileSize(double dfSizeInBytes)
+{
+    return CPLFormatReadableFileSizeInternal(dfSizeInBytes);
+}

@@ -26,6 +26,11 @@
 
 #include "cpl_azure.h"
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 // #define DEBUG_VERBOSE 1
 
 #ifndef HAVE_CURL
@@ -626,6 +631,12 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         // 1 GiB is the maximum reasonable value on a 32-bit machine
         return 1024;
 #endif
+    }
+
+    GIntBig GetDiskFreeSpace(const char * /* pszDirname */) override
+    {
+        return static_cast<GIntBig>(GetMaximumPartCount()) *
+               GetMaximumPartSizeInMiB() * 1024 * 1024;
     }
 };
 

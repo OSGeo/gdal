@@ -5919,4 +5919,16 @@ TEST_F(test_cpl, CPLLockFileEx)
     CPLUnlockFileEx(nullptr);
 }
 
+TEST_F(test_cpl, CPLFormatReadableFileSize)
+{
+    EXPECT_STREQ(CPLFormatReadableFileSize(1.23e18).c_str(), "1.23 HB");
+    EXPECT_STREQ(CPLFormatReadableFileSize(1.23e15).c_str(), "1.23 PB");
+    EXPECT_STREQ(CPLFormatReadableFileSize(1.23e12).c_str(), "1.23 TB");
+    EXPECT_STREQ(CPLFormatReadableFileSize(1.23e9).c_str(), "1.23 GB");
+    EXPECT_STREQ(CPLFormatReadableFileSize(1.23e6).c_str(), "1.23 MB");
+    EXPECT_STREQ(
+        CPLFormatReadableFileSize(static_cast<uint64_t>(123456)).c_str(),
+        "123,456 bytes");
+}
+
 }  // namespace
