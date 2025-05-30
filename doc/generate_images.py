@@ -29,6 +29,38 @@ def print_cell_values(ax, data):
             )
 
 
+def test_gdal_raster_footprint(tmp_path):
+    fortune_fname = DATA_DIR / "fortune.tif"
+    output_fname = tmp_path / "out.shp"
+
+    with gdal.Open(fortune_fname) as ds:
+        fortune = ds.ReadAsMaskedArray()
+        xmin, dx, _, ymax, _, dy = ds.GetGeoTransform()
+        nx = ds.RasterXSize
+        ny = ds.RasterYSize
+        extent = [xmin, xmin + nx * dx, ymax + dy * ny, ymax]
+
+        plt, (ax, ax2) = pyplot.subplots(
+            1, 2, figsize=(12, 5), sharex=True, sharey=True
+        )
+        ax.set_axis_off()
+        ax2.set_axis_off()
+
+        ax.imshow(fortune, extent=extent)
+
+        alg = gdal.Run("raster footprint", input=fortune_fname, output=output_fname)
+        alg.Finalize()
+
+        out_gdf = gpd.read_file(output_fname)
+        out_gdf.plot(ax=ax2, aspect="equal")
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_footprint.png",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 def test_gdal_raster_reclassify():
     nodata = -999
     data_raw = np.arange(9, dtype=np.int16).reshape(3, 3)
