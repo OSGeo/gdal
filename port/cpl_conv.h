@@ -137,6 +137,14 @@ int CPL_DLL CPLPrintTime(char *, int, const char *, const struct tm *,
                          const char *);
 int CPL_DLL CPLPrintPointer(char *, void *, int);
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    std::string CPL_DLL CPLFormatReadableFileSize(uint64_t nSizeInBytes);
+    std::string CPL_DLL CPLFormatReadableFileSize(double dfSizeInBytes);
+}
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
 /* -------------------------------------------------------------------- */
