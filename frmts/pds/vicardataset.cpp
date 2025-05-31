@@ -1558,8 +1558,7 @@ void VICARDataset::WriteLabel()
     // Figure out label size, round it to the next multiple of RECSIZE
     constexpr size_t MAX_LOG10_LBLSIZE = 10;
     size_t nLabelSize = strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE + osLabel.size();
-    nLabelSize =
-        (nLabelSize + m_nRecordSize - 1) / m_nRecordSize * m_nRecordSize;
+    nLabelSize = DIV_ROUND_UP(nLabelSize, m_nRecordSize) * m_nRecordSize;
     std::string osLabelSize(
         CPLSPrintf("LBLSIZE=%d", static_cast<int>(nLabelSize)));
     while (osLabelSize.size() < strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE)

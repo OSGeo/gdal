@@ -1340,8 +1340,8 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
     CPLString osGroupStream;
     std::vector<GDALPDFObjectNum> anImageIds;
 
-    const int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
-    const int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
+    const int nXBlocks = DIV_ROUND_UP(nWidth, nBlockXSize);
+    const int nYBlocks = DIV_ROUND_UP(nHeight, nBlockYSize);
     int nBlockXOff, nBlockYOff;
     for (nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff++)
     {

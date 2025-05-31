@@ -3750,8 +3750,8 @@ bool BAGDataset::GetMeanSupergridsResolution(double &dfResX, double &dfResY)
     int nValidSuperGrids = 0;
     std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nChunkXSize) *
                                           nChunkYSize);
-    const int county = (m_nLowResHeight + nChunkYSize - 1) / nChunkYSize;
-    const int countx = (m_nLowResWidth + nChunkXSize - 1) / nChunkXSize;
+    const int county = DIV_ROUND_UP(m_nLowResHeight, nChunkYSize);
+    const int countx = DIV_ROUND_UP(m_nLowResWidth, nChunkXSize);
     for (int y = 0; y < county; y++)
     {
         const int nReqCountY =
@@ -5655,9 +5655,9 @@ bool BAGCreator::CreateElevationOrUncertainty(
             break;
 
         const int nYBlocks =
-            static_cast<int>((nYSize + nBlockYSize - 1) / nBlockYSize);
+            static_cast<int>(DIV_ROUND_UP(nYSize, nBlockYSize));
         const int nXBlocks =
-            static_cast<int>((nXSize + nBlockXSize - 1) / nBlockXSize);
+            static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
         std::vector<float> afValues(static_cast<size_t>(nBlockYSize) *
                                     nBlockXSize);
         ret = true;

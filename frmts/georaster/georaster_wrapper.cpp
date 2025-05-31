@@ -845,13 +845,11 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
                              sInterleaving.c_str());
     }
 
-    nTotalColumnBlocks =
-        (int)((nRasterColumns + nColumnBlockSize - 1) / nColumnBlockSize);
+    nTotalColumnBlocks = (int)DIV_ROUND_UP(nRasterColumns, nColumnBlockSize);
 
-    nTotalRowBlocks = (int)((nRasterRows + nRowBlockSize - 1) / nRowBlockSize);
+    nTotalRowBlocks = (int)DIV_ROUND_UP(nRasterRows, nRowBlockSize);
 
-    nTotalBandBlocks =
-        (int)((nRasterBands + nBandBlockSize - 1) / nBandBlockSize);
+    nTotalBandBlocks = (int)DIV_ROUND_UP(nRasterBands, nBandBlockSize);
 
     //  -------------------------------------------------------------------
     //  Create Georaster Table if needed

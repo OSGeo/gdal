@@ -143,7 +143,7 @@ MFFTiledBand::~MFFTiledBand()
 CPLErr MFFTiledBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    const int nTilesPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    const int nTilesPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
     const int nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
 

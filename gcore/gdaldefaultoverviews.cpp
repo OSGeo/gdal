@@ -476,7 +476,7 @@ GDALRasterBand *GDALDefaultOverviews::GetOverview(int nBand, int iOverview)
 int GDALOvLevelAdjust(int nOvLevel, int nXSize)
 
 {
-    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    int nOXSize = DIV_ROUND_UP(nXSize, nOvLevel);
 
     return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
 }

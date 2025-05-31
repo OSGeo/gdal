@@ -9207,8 +9207,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     poDS->nBlockXSize = nXSize;
     poDS->nBlockYSize = 1;
     poDS->nBlocksPerBand =
-        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
-        * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
+        DIV_ROUND_UP((nYSize, poDS->nBlockYSize))
+        * DIV_ROUND_UP((nXSize, poDS->nBlockXSize));
         */
 
     // process options.

@@ -2216,9 +2216,9 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     poDS->sHeader.nTileHeight = nBlockYSize;
 
     poDS->nXTiles = poDS->sHeader.nXTiles =
-        (nXSize + poDS->sHeader.nTileWidth - 1) / poDS->sHeader.nTileWidth;
+        DIV_ROUND_UP(nXSize, poDS->sHeader.nTileWidth);
     poDS->nYTiles = poDS->sHeader.nYTiles =
-        (nYSize + poDS->sHeader.nTileHeight - 1) / poDS->sHeader.nTileHeight;
+        DIV_ROUND_UP(nYSize, poDS->sHeader.nTileHeight);
     poDS->sHeader.nLastTileHeight = nYSize % poDS->sHeader.nTileHeight;
     if (!poDS->sHeader.nLastTileHeight)
         poDS->sHeader.nLastTileHeight = poDS->sHeader.nTileHeight;
@@ -2569,8 +2569,8 @@ CPLErr RMFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     for (int n = 0; n != nOverviews; ++n)
     {
         int nOvLevel = panOverviewList[n];
-        const int nOXSize = (GetRasterXSize() + nOvLevel - 1) / nOvLevel;
-        const int nOYSize = (GetRasterYSize() + nOvLevel - 1) / nOvLevel;
+        const int nOXSize = DIV_ROUND_UP(GetRasterXSize(), nOvLevel);
+        const int nOYSize = DIV_ROUND_UP(GetRasterYSize(), nOvLevel);
         CPLDebug("RMF", "\tCreate overview #%d size %d x %d", nOvLevel, nOXSize,
                  nOYSize);
 

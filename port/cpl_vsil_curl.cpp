@@ -1166,9 +1166,8 @@ retry:
             1024, std::min(10 * 1024 * 1024,
                            atoi(CPLGetConfigOption(
                                "GDAL_INGESTED_BYTES_AT_OPEN", "1024"))));
-        nRoundedBufSize =
-            ((nBufSize + knDOWNLOAD_CHUNK_SIZE - 1) / knDOWNLOAD_CHUNK_SIZE) *
-            knDOWNLOAD_CHUNK_SIZE;
+        nRoundedBufSize = cpl::div_round_up(nBufSize, knDOWNLOAD_CHUNK_SIZE) *
+                          knDOWNLOAD_CHUNK_SIZE;
 
         // so it gets included in Azure signature
         osRange = CPLSPrintf("Range: bytes=0-%d", nRoundedBufSize - 1);

@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <algorithm>
 
+#include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
@@ -1321,7 +1322,7 @@ int VSICryptFileHandle::Truncate(vsi_l_offset nNewSize)
         return -1;
     if (poBaseHandle->Truncate(
             poHeader->nHeaderSize +
-            ((nNewSize + poHeader->nSectorSize - 1) / poHeader->nSectorSize) *
+            cpl::div_round_up(nNewSize, poHeader->nSectorSize) *
                 poHeader->nSectorSize) != 0)
         return -1;
     bUpdateHeader = true;

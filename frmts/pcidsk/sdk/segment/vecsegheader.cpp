@@ -363,7 +363,7 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
 /* -------------------------------------------------------------------- */
     if( new_base + new_size > header_blocks * block_page_size )
     {
-        GrowHeader( (new_base+new_size+block_page_size-1) / block_page_size
+        GrowHeader(DIV_ROUND_UP(new_base+new_size, block_page_size)
                     - header_blocks );
     }
 

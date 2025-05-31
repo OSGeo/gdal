@@ -1101,8 +1101,8 @@ void GDALTiledVirtualMem::DoIO(GDALRWFlag eRWFlag, size_t nOffset, void *pPage,
                                size_t nBytes) const
 {
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
-    const int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
-    const int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
+    const int nTilesPerRow = DIV_ROUND_UP(nXSize, nTileXSize);
+    const int nTilesPerCol = DIV_ROUND_UP(nYSize, nTileYSize);
     size_t nPageSize =
         static_cast<size_t>(nTileXSize) * nTileYSize * nDataTypeSize;
     if (eTileOrganization != GTO_BSQ)
@@ -1248,8 +1248,8 @@ static CPLVirtualMem *GDALGetTiledVirtualMem(
         return nullptr;
 
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
-    int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
-    int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
+    int nTilesPerRow = DIV_ROUND_UP(nXSize, nTileXSize);
+    int nTilesPerCol = DIV_ROUND_UP(nYSize, nTileYSize);
     GUIntBig nReqMem = static_cast<GUIntBig>(nTilesPerRow) * nTilesPerCol *
                        nTileXSize * nTileYSize * nBandCount * nDataTypeSize;
 #if SIZEOF_SIZE_T == 4

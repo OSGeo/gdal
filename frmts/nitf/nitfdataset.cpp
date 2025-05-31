@@ -6897,8 +6897,8 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
         nNPPBV = 256;
     }
 
-    const int nNBPR = (nXSize + nNPPBH - 1) / nNPPBH;
-    const int nNBPC = (nYSize + nNPPBV - 1) / nNPPBV;
+    const int nNBPR = DIV_ROUND_UP(nXSize, nNPPBH);
+    const int nNBPC = DIV_ROUND_UP(nYSize, nNPPBV);
 
     /* -------------------------------------------------------------------- */
     /*  Creates APP6 NITF application segment (required by MIL-STD-188-198) */

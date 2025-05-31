@@ -127,7 +127,7 @@ void CExternalChannel::AccessDB() const
         if( block_height > height )
             block_height = height;
 
-        blocks_per_row = (GetWidth() + block_width - 1) / block_width;
+        blocks_per_row = DIV_ROUND_UP(GetWidth(), block_width);
     }
 }
 

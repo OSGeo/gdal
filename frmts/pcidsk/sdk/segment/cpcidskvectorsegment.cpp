@@ -915,7 +915,7 @@ void CPCIDSKVectorSegment::PopulateShapeIdMap()
 /* -------------------------------------------------------------------- */
 /*      Load all outstanding pages.                                     */
 /* -------------------------------------------------------------------- */
-    int shapeid_pages = (total_shape_count+shapeid_page_size-1) / shapeid_page_size;
+    int shapeid_pages = DIV_ROUND_UP(total_shape_count, shapeid_page_size);
 
     while( shapeid_pages_certainly_mapped+1 < shapeid_pages )
     {

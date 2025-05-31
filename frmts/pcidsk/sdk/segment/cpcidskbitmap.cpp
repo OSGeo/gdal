@@ -135,8 +135,7 @@ int CPCIDSKBitmap::GetBlockCount() const
     if( !loaded )
         Load();
 
-    return ((width + block_width - 1) / block_width)
-        * ((height + block_height - 1) / block_height);
+    return DIV_ROUND_UP(width, block_width) * DIV_ROUND_UP(height, block_height);
 }
 
 /************************************************************************/
