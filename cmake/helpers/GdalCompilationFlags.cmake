@@ -204,6 +204,7 @@ add_definitions(-DGDAL_COMPILATION)
 if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
   add_definitions(-DNOMINMAX)
+  add_compile_options(/MP)
 endif ()
 
 if (MINGW)
