@@ -187,6 +187,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
         CPLFetchBool(papszOptions, "CREATE_SCHEMA", true);
     const char *pszDropTable =
         CSLFetchNameValueDef(papszOptions, "DROP_TABLE", "IF_EXISTS");
+    const bool bSkipConflicts =
+        CPLFetchBool(papszOptions, "SKIP_CONFLICTS", false);
     int nGeometryTypeFlags = 0;
 
     if (OGR_GT_HasZ(eType))
@@ -611,7 +613,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     auto poLayer = std::make_unique<OGRPGDumpLayer>(
         this, osSchema.c_str(), osTable.c_str(),
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
-        bWriteAsHex, bCreateTable);
+        bWriteAsHex, bCreateTable, bSkipConflicts);
     poLayer->SetLaunderFlag(bLaunder);
     poLayer->SetUTF8ToASCIIFlag(bUTF8ToASCII);
     poLayer->SetPrecisionFlag(CPLFetchBool(papszOptions, "PRECISION", true));

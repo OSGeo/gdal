@@ -119,6 +119,8 @@ void RegisterOGRPGDump()
         "to write EWKT geometries instead of HEX geometry' default='NO'/>"
         "  <Option name='CREATE_TABLE' type='boolean' description='Whether to "
         "explicitly recreate the table if necessary' default='YES'/>"
+        "  <Option name='SKIP_CONFLICTS' type='boolean' description='Whether "
+        "to ignore conflicts when inserting features' default='NO'/>"
         "  <Option name='DROP_TABLE' type='string-select' description='Whether "
         "to explicitly destroy tables before recreating them' default='YES'>"
         "    <Value>YES</Value>"
