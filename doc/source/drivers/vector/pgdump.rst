@@ -185,6 +185,7 @@ The following layer creation options are supported:
 -  .. lco:: SKIP_CONFLICTS
       :choices: ON, OFF
       :default: OFF
+      :since: 3.12
 
       Description Set to "ON" to ignore conflicts when inserting features
       (only applies when PG_USE_COPY is off).

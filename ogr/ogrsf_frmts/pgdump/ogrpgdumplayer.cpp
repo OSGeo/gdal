@@ -40,7 +40,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource *poDSIn,
                                const char *pszSchemaNameIn,
                                const char *pszTableName,
                                const char *pszFIDColumnIn, int bWriteAsHexIn,
-                               int bCreateTableIn, int bSkipConflictsIn)
+                               int bCreateTableIn, bool bSkipConflictsIn)
     : m_pszSchemaName(CPLStrdup(pszSchemaNameIn)),
       m_pszSqlTableName(CPLStrdup(CPLString().Printf(
           "%s.%s", OGRPGDumpEscapeColumnName(m_pszSchemaName).c_str(),
