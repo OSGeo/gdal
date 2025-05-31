@@ -984,7 +984,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "SEPARATOR=%s not understood, use one of COMMA, "
-                 "SEMICOLON, TAB, SPACE or PIPE",
+                 "SEMICOLON, TAB, SPACE or PIPE.",
                  pszDelimiter);
     }
 
@@ -1121,11 +1121,13 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             chDelimiter = '\t';
         else if (EQUAL(pszDelimiter, "SPACE"))
             chDelimiter = ' ';
+        else if (EQUAL(pszDelimiter, "PIPE"))
+            chDelimiter = '|';
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "SEPARATOR=%s not understood, use one of "
-                     "COMMA, SEMICOLON, SPACE or TAB.",
+                     "SEPARATOR=%s not understood, use one of COMMA, "
+                     "SEMICOLON, TAB, SPACE or PIPE.",
                      pszDelimiter);
         }
     }

@@ -472,7 +472,7 @@ The following layer creation options are supported:
       This option also creates .prj file which stores coordinate system information.
 
 -  .. lco:: SEPARATOR
-      :choices: COMMA, SEMICOLON, TAB, SPACE
+      :choices: COMMA, SEMICOLON, TAB, SPACE, PIPE
       :default: COMMA
 
       Field separator character.
