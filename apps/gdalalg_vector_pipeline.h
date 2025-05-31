@@ -19,6 +19,7 @@
 #include "ogrsf_frmts.h"
 #include "ogrlayerwithtranslatefeature.h"
 
+#include <functional>
 #include <map>
 #include <vector>
 
@@ -277,9 +278,11 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     GDALVectorNonStreamingAlgorithmDataset();
     ~GDALVectorNonStreamingAlgorithmDataset();
 
-    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
+    virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer,
+                         std::function<bool(double)> *progressFunc) = 0;
 
-    bool AddProcessedLayer(OGRLayer &srcLayer);
+    bool AddProcessedLayer(OGRLayer &srcLayer,
+                           std::function<bool(double)> *progressFunc);
     void AddPassThroughLayer(OGRLayer &oLayer);
     int GetLayerCount() final override;
     OGRLayer *GetLayer(int idx) final override;
