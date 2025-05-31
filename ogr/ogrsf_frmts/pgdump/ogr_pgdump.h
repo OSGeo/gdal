@@ -107,6 +107,7 @@ class OGRPGDumpLayer final : public OGRLayer
     bool m_bCopyActive = false;
     bool m_bFIDColumnInCopyFields = false;
     int m_bCreateTable = false;
+    int m_bSkipConflicts = false;
     int m_nUnknownSRSId = -1;
     int m_nForcedSRSId = -1;
     int m_nForcedGeometryTypeFlags = -2;
@@ -121,7 +122,6 @@ class OGRPGDumpLayer final : public OGRLayer
     bool m_bCopyStatementWithFID = true;
     bool m_bNeedToUpdateSequence = false;
     bool m_bGeomColumnPositionImmediate = true;
-    int bSkipConflicts = false;
     std::vector<std::string> m_aosDeferredGeomFieldCreationCommands{};
     std::vector<std::string> m_aosDeferrentNonGeomFieldCreationCommands{};
     std::vector<std::string> m_aosSpatialIndexCreationCommands{};
@@ -140,7 +140,7 @@ class OGRPGDumpLayer final : public OGRLayer
   public:
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
                    const char *pszLayerName, const char *pszFIDColumn,
-                   int bWriteAsHexIn, int bCreateTable);
+                   int bWriteAsHexIn, int bCreateTable, int bSkipConflicts);
     virtual ~OGRPGDumpLayer();
 
     virtual OGRFeatureDefn *GetLayerDefn() override

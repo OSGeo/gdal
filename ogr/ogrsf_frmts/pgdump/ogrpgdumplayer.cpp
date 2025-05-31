@@ -40,7 +40,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource *poDSIn,
                                const char *pszSchemaNameIn,
                                const char *pszTableName,
                                const char *pszFIDColumnIn, int bWriteAsHexIn,
-                               int bCreateTableIn)
+                               int bCreateTableIn, int bSkipConflictsIn)
     : m_pszSchemaName(CPLStrdup(pszSchemaNameIn)),
       m_pszSqlTableName(CPLStrdup(CPLString().Printf(
           "%s.%s", OGRPGDumpEscapeColumnName(m_pszSchemaName).c_str(),
@@ -48,8 +48,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource *poDSIn,
       m_pszFIDColumn(pszFIDColumnIn ? CPLStrdup(pszFIDColumnIn) : nullptr),
       m_poFeatureDefn(new OGRFeatureDefn(pszTableName)), m_poDS(poDSIn),
       m_bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)), m_bCreateTable(bCreateTableIn),
-      bSkipConflicts(
-          CPLTestBool(CPLGetConfigOption("OGR_PG_SKIP_CONFLICTS", "FALSE")))
+      m_bSkipConflicts(bSkipConflictsIn)
 {
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -439,7 +438,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
 
     osCommand += ")";
 
-    if (bSkipConflicts)
+    if (m_bSkipConflicts)
         osCommand += " ON CONFLICT DO NOTHING";
 
     if (bEmptyInsert)
