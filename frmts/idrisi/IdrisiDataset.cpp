@@ -2293,7 +2293,7 @@ GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
  * indicates the unit of the image bounds.
  *
  * The georeference files are generally located in the product installation
- * folder $IDRISIDIR\Georef, but they are first looked for in the same
+ * folder $IDRISIDIR\\Georef, but they are first looked for in the same
  * folder as the data file.
  *
  * If a Reference system names can be recognized by a name convention

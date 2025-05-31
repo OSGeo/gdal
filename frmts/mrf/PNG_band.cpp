@@ -57,9 +57,18 @@
 #include <cassert>
 #include <algorithm>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
+
 CPL_C_START
 #include <png.h>
 CPL_C_END
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 NAMESPACE_MRF_START
 

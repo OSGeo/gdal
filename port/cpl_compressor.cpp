@@ -15,6 +15,12 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"  // CPLZLibInflate()
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
+
 #ifdef HAVE_BLOSC
 #include <blosc.h>
 #endif
@@ -26,14 +32,7 @@
 #endif
 
 #ifdef HAVE_LZMA
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
 #include <lzma.h>
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
 #endif
 
 #ifdef HAVE_ZSTD
@@ -42,6 +41,10 @@
 
 #ifdef HAVE_LZ4
 #include <lz4.h>
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #include <limits>

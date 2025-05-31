@@ -124,6 +124,11 @@ else ()
   detect_and_set_cxx_warning_flag(implicit-fallthrough)
   detect_and_set_cxx_warning_flag(weak-vtables)
 
+  # Not sure about the minimum version, but clang 12 complains about \file, @cond Doxygen_Suppress, etc.
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 18.0.0)
+      detect_and_set_cxx_warning_flag(documentation-unknown-command)
+  endif()
+
   check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
   if (HAVE_FLAG_NO_OPERATOR_NAMES)
     set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -fno-operator-names)

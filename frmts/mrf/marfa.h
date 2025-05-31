@@ -68,8 +68,16 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+
 #if defined(ZSTD_SUPPORT)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
 #include <zstd.h>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 #define NAMESPACE_MRF_START                                                    \
