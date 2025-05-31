@@ -799,7 +799,7 @@ class PNG_Codec
     {
     }
 
-    virtual ~PNG_Codec()
+    ~PNG_Codec()
     {
         CPLFree(PNGColors);
         CPLFree(PNGAlpha);
@@ -917,19 +917,8 @@ class Raw_Band final : public MRFRasterBand
     {
     }
 
-    virtual ~Raw_Band()
-    {
-    }
-
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override
-    {
-        if (src.size > dst.size)
-            return CE_Failure;
-        memcpy(dst.buffer, src.buffer, src.size);
-        dst.size = src.size;
-        return CE_None;
-    }
+    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
 
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override
     {
@@ -1025,10 +1014,7 @@ class MRFLRasterBand final : public GDALPamRasterBand
         nRasterYSize = b->GetYSize();
     }
 
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override
-    {
-        return pBand->IReadBlock(xblk, yblk, buffer);
-    }
+    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override
     {

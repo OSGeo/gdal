@@ -45,6 +45,8 @@
 
 #define DIGIT_ZERO '0'
 
+IOGRCSVLayer::~IOGRCSVLayer() = default;
+
 /************************************************************************/
 /*                            OGRCSVLayer()                             */
 /*                                                                      */

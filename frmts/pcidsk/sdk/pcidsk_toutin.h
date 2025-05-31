@@ -22,7 +22,7 @@ namespace PCIDSK {
     public:
 
         // Virtual destructor
-        virtual ~PCIDSKToutinSegment() {}
+        virtual ~PCIDSKToutinSegment();
 
         virtual SRITInfo_t GetInfo() const =0;
         virtual void SetInfo(const SRITInfo_t& poInfo) =0;

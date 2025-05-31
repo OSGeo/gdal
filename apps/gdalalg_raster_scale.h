@@ -58,6 +58,8 @@ class GDALRasterScaleAlgorithmStandalone final : public GDALRasterScaleAlgorithm
         : GDALRasterScaleAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterScaleAlgorithmStandalone() override;
 };
 
 //! @endcond

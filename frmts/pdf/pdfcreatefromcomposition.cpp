@@ -27,6 +27,11 @@
 #include "embedded_resources.h"
 #endif
 
+GDALPDFComposerWriter::Action::~Action() = default;
+GDALPDFComposerWriter::GotoPageAction::~GotoPageAction() = default;
+GDALPDFComposerWriter::SetLayerStateAction::~SetLayerStateAction() = default;
+GDALPDFComposerWriter::JavascriptAction::~JavascriptAction() = default;
+
 /************************************************************************/
 /*                         GDALPDFComposerWriter()                      */
 /************************************************************************/

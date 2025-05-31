@@ -385,9 +385,7 @@ class TABMAPObjHdr
     {
     }
 
-    virtual ~TABMAPObjHdr()
-    {
-    }
+    virtual ~TABMAPObjHdr();
 
     static TABMAPObjHdr *NewObj(TABGeomType nNewObjType, GInt32 nId = 0);
     static TABMAPObjHdr *ReadNextObj(TABMAPObjectBlock *poObjBlock,
@@ -418,18 +416,14 @@ class TABMAPObjHdrWithCoord : public TABMAPObjHdr
     /* Eventually this class may have methods to help maintaining refs to
      * coord. blocks when splitting object blocks.
      */
+
+    ~TABMAPObjHdrWithCoord() override;
 };
 
 class TABMAPObjNone final : public TABMAPObjHdr
 {
   public:
-    TABMAPObjNone()
-    {
-    }
-
-    virtual ~TABMAPObjNone()
-    {
-    }
+    TABMAPObjNone() = default;
 
     virtual int WriteObj(TABMAPObjectBlock *) override
     {
@@ -437,10 +431,7 @@ class TABMAPObjNone final : public TABMAPObjHdr
     }
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override
-    {
-        return 0;
-    }
+    virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjPoint : public TABMAPObjHdr

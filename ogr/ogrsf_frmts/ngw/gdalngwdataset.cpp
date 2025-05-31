@@ -25,10 +25,7 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit NGWWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -37,11 +34,13 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    virtual ~NGWWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+NGWWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 static const char *FormGDALTMSConnectionString(const std::string &osUrl,
                                                const std::string &osResourceId,

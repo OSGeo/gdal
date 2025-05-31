@@ -51,6 +51,8 @@ class GDALRasterSetTypeAlgorithmStandalone final
         : GDALRasterSetTypeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterSetTypeAlgorithmStandalone() override;
 };
 
 //! @endcond

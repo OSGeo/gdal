@@ -122,6 +122,7 @@ else ()
   detect_and_set_cxx_warning_flag(string-conversion)
   detect_and_set_cxx_warning_flag(deprecated-copy-dtor)
   detect_and_set_cxx_warning_flag(implicit-fallthrough)
+  detect_and_set_cxx_warning_flag(weak-vtables)
 
   check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
   if (HAVE_FLAG_NO_OPERATOR_NAMES)

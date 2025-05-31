@@ -51,6 +51,8 @@ class GDALRasterColorMergeAlgorithmStandalone final
         : GDALRasterColorMergeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterColorMergeAlgorithmStandalone() override;
 };
 
 //! @endcond

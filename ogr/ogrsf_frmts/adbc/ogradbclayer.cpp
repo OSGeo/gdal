@@ -23,6 +23,11 @@
 
 #define ADBC_CALL(func, ...) m_poDS->m_driver.func(__VA_ARGS__)
 
+OGRArrowArrayToOGRFeatureAdapterLayer::~OGRArrowArrayToOGRFeatureAdapterLayer()
+{
+    m_poLayerDefn->Release();
+}
+
 /************************************************************************/
 /*                        GetGeometryTypeFromString()                   */
 /************************************************************************/

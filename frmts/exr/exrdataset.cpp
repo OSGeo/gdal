@@ -412,11 +412,13 @@ class GDALEXRIOStreamException final : public std::exception
     {
     }
 
-    const char *what() const noexcept override
-    {
-        return m_msg.c_str();
-    }
+    const char *what() const noexcept override;
 };
+
+const char *GDALEXRIOStreamException::what() const noexcept
+{
+    return m_msg.c_str();
+}
 
 #if OPENEXR_VERSION_MAJOR < 3
 typedef Int64 IoInt64Type;

@@ -140,13 +140,7 @@ class OGRPGFeatureDefn CPL_NON_FINAL : public OGRFeatureDefn
         SetGeomType(wkbNone);
     }
 
-    virtual void UnsetLayer()
-    {
-        const int nGeomFieldCount = GetGeomFieldCount();
-        for (int i = 0; i < nGeomFieldCount; i++)
-            cpl::down_cast<OGRPGGeomFieldDefn *>(apoGeomFieldDefn[i].get())
-                ->UnsetLayer();
-    }
+    virtual void UnsetLayer();
 
     OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) override
     {

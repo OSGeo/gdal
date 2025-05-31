@@ -22,7 +22,7 @@ namespace PCIDSK {
     public:
 
         // Virtual destructor
-        virtual ~PCIDSKEphemerisSegment() {}
+        virtual ~PCIDSKEphemerisSegment();
 
         virtual const EphemerisSeg_t& GetEphemeris() const=0;
         virtual void SetEphemeris(const EphemerisSeg_t& oEph) =0;

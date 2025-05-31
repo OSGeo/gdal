@@ -20,7 +20,14 @@
 #include <deque>
 #include <numeric>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
 #include "flatbuffers/flatbuffers.h"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 namespace FlatGeobuf
 {

@@ -22,6 +22,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKPolySegment::~PCIDSKPolySegment() = default;
+
 CPCIDSKPolyModelSegment::CPCIDSKPolyModelSegment(PCIDSKFile *fileIn,
                                                  int segmentIn,
                                                  const char *segment_pointer) :

@@ -184,4 +184,7 @@ bool GDALRasterColorMapAlgorithm::RunStep(
     }
 }
 
+GDALRasterColorMapAlgorithmStandalone::
+    ~GDALRasterColorMapAlgorithmStandalone() = default;
+
 //! @endcond

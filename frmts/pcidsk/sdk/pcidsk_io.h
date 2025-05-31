@@ -27,7 +27,7 @@ namespace PCIDSK
     class IOInterfaces
     {
     public:
-        virtual ~IOInterfaces() {}
+        virtual ~IOInterfaces();
         virtual void   *Open( const std::string& filename, std::string access ) const = 0;
         virtual uint64  Seek( void *io_handle, uint64 offset, int whence ) const = 0;
         virtual uint64  Tell( void *io_handle ) const = 0;

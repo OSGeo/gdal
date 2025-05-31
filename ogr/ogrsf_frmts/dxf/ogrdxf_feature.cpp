@@ -24,6 +24,8 @@ OGRDXFFeature::OGRDXFFeature(OGRFeatureDefn *poFeatureDefn)
 {
 }
 
+OGRDXFFeature::~OGRDXFFeature() = default;
+
 /************************************************************************/
 /*                          CloneDXFFeature()                           */
 /*                                                                      */

@@ -544,7 +544,10 @@ class KmlSuperOverlayDummyDataset final : public GDALDataset
 {
   public:
     KmlSuperOverlayDummyDataset() = default;
+    ~KmlSuperOverlayDummyDataset() override;
 };
+
+KmlSuperOverlayDummyDataset::~KmlSuperOverlayDummyDataset() = default;
 
 static GDALDataset *
 KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
@@ -2465,9 +2468,13 @@ class KmlSingleOverlayRasterDataset final : public VRTDataset
     {
     }
 
+    ~KmlSingleOverlayRasterDataset() override;
+
     static GDALDataset *Open(const char *pszFilename,
                              const CPLString &osFilename, CPLXMLNode *psRoot);
 };
+
+KmlSingleOverlayRasterDataset::~KmlSingleOverlayRasterDataset() = default;
 
 /************************************************************************/
 /*                                Open()                                */

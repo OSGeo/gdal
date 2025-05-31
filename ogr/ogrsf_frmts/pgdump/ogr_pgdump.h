@@ -76,6 +76,8 @@ class OGRPGDumpGeomFieldDefn final : public OGRGeomFieldDefn
     {
     }
 
+    ~OGRPGDumpGeomFieldDefn() override;
+
     int m_nSRSId;
     int m_nGeometryTypeFlags;
 };

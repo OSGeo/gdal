@@ -33,7 +33,7 @@ struct CPL_DLL GDALSubdatasetInfo
      */
     GDALSubdatasetInfo(const std::string &fileName);
 
-    virtual ~GDALSubdatasetInfo() = default;
+    virtual ~GDALSubdatasetInfo();
 
     /**
  * @brief Returns the unquoted and unescaped path component of the complete file descriptor

@@ -59,6 +59,8 @@ class GDALRasterColorMapAlgorithmStandalone final
         : GDALRasterColorMapAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterColorMapAlgorithmStandalone() override;
 };
 
 //! @endcond

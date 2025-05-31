@@ -159,11 +159,7 @@ class RPFTOCSubDataset final : public VRTDataset
         poDriver = GDALDriver::FromHandle(GDALGetDriverByName("RPFTOC"));
     }
 
-    virtual ~RPFTOCSubDataset()
-    {
-        CSLDestroy(papszFileList);
-        CPLFree(cachedTileData);
-    }
+    ~RPFTOCSubDataset() override;
 
     virtual char **GetFileList() override
     {
@@ -201,6 +197,12 @@ class RPFTOCSubDataset final : public VRTDataset
         const char *openInformationName, const char *pszTOCFileName, int nEntry,
         const RPFTocEntry *entry, int isRGBA, char **papszMetadataRPFTOCFile);
 };
+
+RPFTOCSubDataset::~RPFTOCSubDataset()
+{
+    CSLDestroy(papszFileList);
+    CPLFree(cachedTileData);
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -242,10 +244,7 @@ class RPFTOCProxyRasterDataSet final : public GDALProxyPoolDataset
         return noDataValue;
     }
 
-    GDALDataset *RefUnderlyingDataset() const override
-    {
-        return GDALProxyPoolDataset::RefUnderlyingDataset();
-    }
+    GDALDataset *RefUnderlyingDataset() const override;
 
     void UnrefUnderlyingDataset(GDALDataset *poUnderlyingDataset) const override
     {
@@ -269,6 +268,11 @@ class RPFTOCProxyRasterDataSet final : public GDALProxyPoolDataset
         return subdataset;
     }
 };
+
+GDALDataset *RPFTOCProxyRasterDataSet::RefUnderlyingDataset() const
+{
+    return GDALProxyPoolDataset::RefUnderlyingDataset();
+}
 
 /************************************************************************/
 /* ==================================================================== */

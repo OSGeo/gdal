@@ -180,6 +180,11 @@ template <> inline double byteSwap(double v)
 
 namespace LIBERTIFF_NS
 {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /** Interface to read from a file. */
 class FileReader
 {
@@ -194,6 +199,10 @@ class FileReader
      */
     virtual size_t read(uint64_t offset, size_t count, void *buffer) const = 0;
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 }  // namespace LIBERTIFF_NS
 
 namespace LIBERTIFF_NS

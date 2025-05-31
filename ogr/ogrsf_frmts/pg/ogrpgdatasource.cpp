@@ -2942,10 +2942,7 @@ class OGRPGMemLayerWrapper final : public OGRLayer
         poMemLayer = poMemDS->GetLayer(0);
     }
 
-    virtual ~OGRPGMemLayerWrapper()
-    {
-        delete poMemDS;
-    }
+    ~OGRPGMemLayerWrapper() override;
 
     virtual void ResetReading() override
     {
@@ -2967,6 +2964,11 @@ class OGRPGMemLayerWrapper final : public OGRLayer
         return FALSE;
     }
 };
+
+OGRPGMemLayerWrapper::~OGRPGMemLayerWrapper()
+{
+    delete poMemDS;
+}
 
 /************************************************************************/
 /*                           GetMetadataItem()                          */

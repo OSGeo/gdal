@@ -418,6 +418,10 @@ void VSIS3HandleHelper::RebuildURL()
     m_osURL += GetQueryString(false);
 }
 
+IVSIS3LikeHandleHelper::IVSIS3LikeHandleHelper() = default;
+
+IVSIS3LikeHandleHelper::~IVSIS3LikeHandleHelper() = default;
+
 /************************************************************************/
 /*                        GetBucketAndObjectKey()                       */
 /************************************************************************/

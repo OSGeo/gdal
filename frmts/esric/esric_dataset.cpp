@@ -157,20 +157,13 @@ class ECDataset final : public GDALDataset
   public:
     ECDataset();
 
-    virtual ~ECDataset()
-    {
-    }
-
     CPLErr GetGeoTransform(double *gt) override
     {
         memcpy(gt, GeoTransform, sizeof(GeoTransform));
         return CE_None;
     }
 
-    virtual const OGRSpatialReference *GetSpatialRef() const override
-    {
-        return &oSRS;
-    }
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo,
@@ -199,6 +192,11 @@ class ECDataset final : public GDALDataset
     OGREnvelope m_sInitialExtent{};
     OGREnvelope m_sFullExtent{};
 };
+
+const OGRSpatialReference *ECDataset::GetSpatialRef() const
+{
+    return &oSRS;
+}
 
 class ECBand final : public GDALRasterBand
 {
@@ -541,10 +539,7 @@ class ESRICProxyRasterBand final : public GDALProxyRasterBand
     GDALRasterBand *m_poUnderlyingBand = nullptr;
 
   protected:
-    GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return m_poUnderlyingBand;
-    }
+    GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit ESRICProxyRasterBand(GDALRasterBand *poUnderlyingBand)
@@ -558,6 +553,12 @@ class ESRICProxyRasterBand final : public GDALProxyRasterBand
     }
 };
 
+GDALRasterBand *
+ESRICProxyRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return m_poUnderlyingBand;
+}
+
 class ESRICProxyDataset final : public GDALProxyDataset
 {
   private:
@@ -568,10 +569,7 @@ class ESRICProxyDataset final : public GDALProxyDataset
     CPLStringList m_aosFileList{};
 
   protected:
-    GDALDataset *RefUnderlyingDataset() const override
-    {
-        return m_poUnderlyingDS.get();
-    }
+    GDALDataset *RefUnderlyingDataset() const override;
 
   public:
     ESRICProxyDataset(GDALDataset *poSrcDS, GDALDataset *poUnderlyingDS,
@@ -596,6 +594,11 @@ class ESRICProxyDataset final : public GDALProxyDataset
         return CSLDuplicate(m_aosFileList.List());
     }
 };
+
+GDALDataset *ESRICProxyDataset::RefUnderlyingDataset() const
+{
+    return m_poUnderlyingDS.get();
+}
 
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
 {

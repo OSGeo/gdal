@@ -65,6 +65,8 @@ class GDALRasterEditAlgorithmStandalone final : public GDALRasterEditAlgorithm
         : GDALRasterEditAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterEditAlgorithmStandalone() override;
 };
 
 //! @endcond

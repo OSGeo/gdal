@@ -3328,7 +3328,11 @@ class VSIZipEntryFileOffset final : public VSIArchiveEntryFileOffset
         m_file_pos.pos_in_zip_directory = file_pos.pos_in_zip_directory;
         m_file_pos.num_of_file = file_pos.num_of_file;
     }
+
+    ~VSIZipEntryFileOffset() override;
 };
+
+VSIZipEntryFileOffset::~VSIZipEntryFileOffset() = default;
 
 /************************************************************************/
 /* ==================================================================== */

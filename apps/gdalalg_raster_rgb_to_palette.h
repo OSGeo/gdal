@@ -52,6 +52,8 @@ class GDALRasterRGBToPaletteAlgorithmStandalone final
         : GDALRasterRGBToPaletteAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterRGBToPaletteAlgorithmStandalone() override;
 };
 
 //! @endcond

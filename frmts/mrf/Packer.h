@@ -31,9 +31,7 @@ typedef struct storage_manager
 class Packer
 {
   public:
-    virtual ~Packer()
-    {
-    }
+    virtual ~Packer();
 
     virtual int load(storage_manager *src, storage_manager *dst)
     {

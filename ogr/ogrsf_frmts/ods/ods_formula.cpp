@@ -17,6 +17,8 @@
 #include "cpl_conv.h"
 #include "ods_formula.h"
 
+IODSCellEvaluator::~IODSCellEvaluator() = default;
+
 namespace
 {
 #include "ods_formula_parser.hpp"

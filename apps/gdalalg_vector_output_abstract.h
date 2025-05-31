@@ -33,6 +33,8 @@ class CPL_DLL
     {
     }
 
+    ~GDALVectorOutputAbstractAlgorithm() override;
+
     void AddAllOutputArgs();
 
     struct SetupOutputDatasetRet

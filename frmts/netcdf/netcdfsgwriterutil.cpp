@@ -514,14 +514,15 @@ static std::string sgwe_msg_builder(const char *layer_name,
 // Exception related definitions
 SGWriter_Exception_NCWriteFailure::SGWriter_Exception_NCWriteFailure(
     const char *layer_name, const char *failure_name, const char *failure_type)
-    : msg(sgwe_msg_builder(layer_name, failure_name, failure_type,
+    : SGWriter_Exception(
+          sgwe_msg_builder(layer_name, failure_name, failure_type,
                            "could not be written to (write failure)."))
 {
 }
 
 SGWriter_Exception_NCInqFailure::SGWriter_Exception_NCInqFailure(
     const char *layer_name, const char *failure_name, const char *failure_type)
-    : msg(sgwe_msg_builder(
+    : SGWriter_Exception(sgwe_msg_builder(
           layer_name, failure_name, failure_type,
           "could not be read from (property inquiry failure)."))
 {
@@ -529,7 +530,7 @@ SGWriter_Exception_NCInqFailure::SGWriter_Exception_NCInqFailure(
 
 SGWriter_Exception_NCDefFailure::SGWriter_Exception_NCDefFailure(
     const char *layer_name, const char *failure_name, const char *failure_type)
-    : msg(sgwe_msg_builder(
+    : SGWriter_Exception(sgwe_msg_builder(
           layer_name, failure_name, failure_type,
           "could not be defined in the dataset (definition failure)."))
 {
@@ -1159,4 +1160,7 @@ int write_Geometry_Container(
 
     return write_var_id;
 }
+
+OGR_SGFS_Transaction::~OGR_SGFS_Transaction() = default;
+
 }  // namespace nccfdriver

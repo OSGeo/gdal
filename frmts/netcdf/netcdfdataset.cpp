@@ -10207,15 +10207,7 @@ class GDALnetCDFDriver final : public GDALDriver
     GDALnetCDFDriver() = default;
 
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
-        {
-            InitializeDCAPVirtualIO();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -10243,6 +10235,17 @@ class GDALnetCDFDriver final : public GDALDriver
         }
     }
 };
+
+const char *GDALnetCDFDriver::GetMetadataItem(const char *pszName,
+                                              const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
+    {
+        InitializeDCAPVirtualIO();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 void GDALRegister_netCDF()
 

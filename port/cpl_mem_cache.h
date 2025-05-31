@@ -62,6 +62,11 @@ class NullLock
     }
 };
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /**
  * error raised when a key not in cache is passed to get()
  */
@@ -72,6 +77,10 @@ class KeyNotFound : public std::invalid_argument
     {
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 template <typename K, typename V> struct KeyValuePair
 {

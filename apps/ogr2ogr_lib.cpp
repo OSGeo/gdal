@@ -1207,15 +1207,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
         return hTransformArg != nullptr;
     }
 
-    virtual ~GCPCoordTransformation()
-    {
-        if (hTransformArg != nullptr)
-        {
-            GDALDestroyTransformer(hTransformArg);
-        }
-        if (poSRS)
-            poSRS->Dereference();
-    }
+    ~GCPCoordTransformation() override;
 
     virtual const OGRSpatialReference *GetSourceCS() const override
     {
@@ -1256,6 +1248,16 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
     }
 };
 
+GCPCoordTransformation::~GCPCoordTransformation()
+{
+    if (hTransformArg != nullptr)
+    {
+        GDALDestroyTransformer(hTransformArg);
+    }
+    if (poSRS)
+        poSRS->Dereference();
+}
+
 /************************************************************************/
 /*                            CompositeCT                               */
 /************************************************************************/
@@ -1286,13 +1288,7 @@ class CompositeCT : public OGRCoordinateTransformation
     {
     }
 
-    virtual ~CompositeCT()
-    {
-        if (bOwnCT1)
-            delete poCT1;
-        if (bOwnCT2)
-            delete poCT2;
-    }
+    ~CompositeCT() override;
 
     OGRCoordinateTransformation *Clone() const override
     {
@@ -1390,6 +1386,14 @@ class CompositeCT : public OGRCoordinateTransformation
     }
 };
 
+CompositeCT::~CompositeCT()
+{
+    if (bOwnCT1)
+        delete poCT1;
+    if (bOwnCT2)
+        delete poCT2;
+}
+
 /************************************************************************/
 /*                    AxisMappingCoordinateTransformation               */
 /************************************************************************/
@@ -1434,7 +1438,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         }
     }
 
-    ~AxisMappingCoordinateTransformation() override = default;
+    ~AxisMappingCoordinateTransformation() override;
 
     virtual OGRCoordinateTransformation *Clone() const override
     {
@@ -1483,6 +1487,9 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return new AxisMappingCoordinateTransformation(bSwapXY);
     }
 };
+
+AxisMappingCoordinateTransformation::~AxisMappingCoordinateTransformation() =
+    default;
 
 /************************************************************************/
 /*                        ApplySpatialFilter()                          */

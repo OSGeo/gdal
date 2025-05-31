@@ -357,7 +357,11 @@ class GDALVSISOZIPCreateAlgorithm final : public GDALVSISOZIPCreateBaseAlgorithm
         : GDALVSISOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, false)
     {
     }
+
+    ~GDALVSISOZIPCreateAlgorithm() override;
 };
+
+GDALVSISOZIPCreateAlgorithm::~GDALVSISOZIPCreateAlgorithm() = default;
 
 /************************************************************************/
 /*                  GDALVSISOZIPOptimizeAlgorithm                       */
@@ -376,7 +380,11 @@ class GDALVSISOZIPOptimizeAlgorithm final
         : GDALVSISOZIPCreateBaseAlgorithm(NAME, DESCRIPTION, HELP_URL, true)
     {
     }
+
+    ~GDALVSISOZIPOptimizeAlgorithm() override;
 };
+
+GDALVSISOZIPOptimizeAlgorithm::~GDALVSISOZIPOptimizeAlgorithm() = default;
 
 /************************************************************************/
 /*                      GDALVSISOZIPListAlgorithm                       */
@@ -849,6 +857,18 @@ GDALVSISOZIPAlgorithm::GDALVSISOZIPAlgorithm()
     RegisterSubAlgorithm<GDALVSISOZIPOptimizeAlgorithm>();
     RegisterSubAlgorithm<GDALVSISOZIPListAlgorithm>();
     RegisterSubAlgorithm<GDALVSISOZIPValidateAlgorithm>();
+}
+
+/************************************************************************/
+/*               GDALVSISOZIPAlgorithm::RunImpl()                       */
+/************************************************************************/
+
+bool GDALVSISOZIPAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "sozip\" program.");
+    return false;
 }
 
 //! @endcond

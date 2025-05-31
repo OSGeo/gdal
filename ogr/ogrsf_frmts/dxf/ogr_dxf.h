@@ -150,10 +150,7 @@ class OGRDXFInsertTransformer final : public OGRCoordinateTransformation
         return oResult;
     }
 
-    OGRCoordinateTransformation *Clone() const override
-    {
-        return new OGRDXFInsertTransformer(*this);
-    }
+    OGRCoordinateTransformation *Clone() const override;
 
     const OGRSpatialReference *GetSourceCS() const override
     {
@@ -390,6 +387,7 @@ class OGRDXFFeature final : public OGRFeature
 
   public:
     explicit OGRDXFFeature(OGRFeatureDefn *poFeatureDefn);
+    ~OGRDXFFeature() override;
 
     OGRDXFFeature *CloneDXFFeature();
 

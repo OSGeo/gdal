@@ -3192,6 +3192,8 @@ GDALAttribute::GDALAttribute(CPL_UNUSED const std::string &osParentName,
 {
 }
 
+GDALAttribute::~GDALAttribute() = default;
+
 //! @endcond
 
 /************************************************************************/
@@ -7663,13 +7665,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
         SetBand(1, new GDALMDArrayResampledDatasetRasterBand(this));
     }
 
-    ~GDALMDArrayResampledDataset()
-    {
-        if (!m_osFilenameLong.empty())
-            VSIUnlink(m_osFilenameLong.c_str());
-        if (!m_osFilenameLat.empty())
-            VSIUnlink(m_osFilenameLat.c_str());
-    }
+    ~GDALMDArrayResampledDataset() override;
 
     CPLErr GetGeoTransform(double *padfGeoTransform) override
     {
@@ -7715,6 +7711,14 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
         SetMetadata(aosGeoLoc.List(), "GEOLOCATION");
     }
 };
+
+GDALMDArrayResampledDataset::~GDALMDArrayResampledDataset()
+{
+    if (!m_osFilenameLong.empty())
+        VSIUnlink(m_osFilenameLong.c_str());
+    if (!m_osFilenameLat.empty())
+        VSIUnlink(m_osFilenameLat.c_str());
+}
 
 /************************************************************************/
 /*                   GDALMDArrayResampledDatasetRasterBand()            */
@@ -8666,10 +8670,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
            size_t iYDim, const std::shared_ptr<GDALGroup> &poRootGroup,
            CSLConstList papszOptions);
 
-    ~GDALDatasetFromArray()
-    {
-        GDALDatasetFromArray::Close();
-    }
+    ~GDALDatasetFromArray() override;
 
     CPLErr Close() override
     {
@@ -8733,6 +8734,11 @@ class GDALDatasetFromArray final : public GDALPamDataset
         return m_oMDD.GetMetadataItem(pszName, pszDomain);
     }
 };
+
+GDALDatasetFromArray::~GDALDatasetFromArray()
+{
+    GDALDatasetFromArray::Close();
+}
 
 /************************************************************************/
 /*                      GDALRasterBandFromArray()                       */

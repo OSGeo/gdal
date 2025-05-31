@@ -3537,6 +3537,10 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     //! @endcond
 
   public:
+    //! @cond Doxygen_Suppress
+    ~GDALAttribute();
+    //! @endcond
+
     std::vector<GUInt64> GetDimensionsSize() const;
 
     GDALRawResult ReadAsRaw() const;

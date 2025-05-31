@@ -1183,7 +1183,7 @@ class ZarrV3Codec CPL_NON_FINAL
     ZarrV3Codec(const std::string &osName);
 
   public:
-    virtual ~ZarrV3Codec() = 0;
+    virtual ~ZarrV3Codec();
 
     enum class IOType
     {

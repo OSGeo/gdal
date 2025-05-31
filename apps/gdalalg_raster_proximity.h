@@ -58,6 +58,8 @@ class GDALRasterProximityAlgorithmStandalone final
         : GDALRasterProximityAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterProximityAlgorithmStandalone() override;
 };
 
 //! @endcond

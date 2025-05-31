@@ -315,15 +315,7 @@ class OGRFeatherDriver final : public GDALDriver
 
   public:
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, GDAL_DS_LAYER_CREATIONOPTIONLIST))
-        {
-            InitMetadata();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -332,6 +324,17 @@ class OGRFeatherDriver final : public GDALDriver
         return GDALDriver::GetMetadata(pszDomain);
     }
 };
+
+const char *OGRFeatherDriver::GetMetadataItem(const char *pszName,
+                                              const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DS_LAYER_CREATIONOPTIONLIST))
+    {
+        InitMetadata();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 void OGRFeatherDriver::InitMetadata()
 {

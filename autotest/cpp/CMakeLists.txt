@@ -1,6 +1,5 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
-
 find_package(GTest 1.10.0)
 if(GTest_FOUND)
   option(USE_EXTERNAL_GTEST "Compile against external GTest" ON)

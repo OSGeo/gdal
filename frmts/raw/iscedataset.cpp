@@ -87,6 +87,8 @@ class ISCERasterBand final : public RawRasterBand
     ISCERasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                    vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType, int bNativeOrder);
+
+    ~ISCERasterBand() override;
 };
 
 /************************************************************************/
@@ -839,6 +841,8 @@ ISCERasterBand::ISCERasterBand(GDALDataset *poDSIn, int nBandIn,
                     RawRasterBand::OwnFP::NO)
 {
 }
+
+ISCERasterBand::~ISCERasterBand() = default;
 
 /************************************************************************/
 /*                         GDALRegister_ISCE()                          */

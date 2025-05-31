@@ -41,6 +41,8 @@ class OGRAmigoCloudGeomFieldDefn final : public OGRGeomFieldDefn
         : OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
     {
     }
+
+    ~OGRAmigoCloudGeomFieldDefn() override;
 };
 
 class OGRAmigoCloudFID

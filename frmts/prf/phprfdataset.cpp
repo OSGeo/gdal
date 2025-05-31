@@ -40,17 +40,7 @@ class PhPrfBand final : public VRTSourcedRasterBand
         osOverview.push_back(ov);
     }
 
-    int GetOverviewCount() override
-    {
-        if (!osOverview.empty())
-        {
-            return static_cast<int>(osOverview.size());
-        }
-        else
-        {
-            return VRTSourcedRasterBand::GetOverviewCount();
-        }
-    }
+    int GetOverviewCount() override;
 
     GDALRasterBand *GetOverview(int i) override
     {
@@ -66,6 +56,18 @@ class PhPrfBand final : public VRTSourcedRasterBand
     }
 };
 
+int PhPrfBand::GetOverviewCount()
+{
+    if (!osOverview.empty())
+    {
+        return static_cast<int>(osOverview.size());
+    }
+    else
+    {
+        return VRTSourcedRasterBand::GetOverviewCount();
+    }
+}
+
 class PhPrfDataset final : public VRTDataset
 {
     std::vector<GDALDataset *> osSubTiles;
@@ -73,7 +75,7 @@ class PhPrfDataset final : public VRTDataset
   public:
     PhPrfDataset(GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount,
                  GDALDataType eType, const char *pszName);
-    ~PhPrfDataset();
+    ~PhPrfDataset() override;
     bool AddTile(const char *pszPartName, GDALAccess eAccess, int nWidth,
                  int nHeight, int nOffsetX, int nOffsetY, int nScale);
     int CloseDependentDatasets() override;

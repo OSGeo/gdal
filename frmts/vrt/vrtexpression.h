@@ -26,7 +26,7 @@ namespace gdal
 class MathExpression
 {
   public:
-    virtual ~MathExpression() = default;
+    virtual ~MathExpression();
 
     /**
      * Create a MathExpression using a specified dialect.

@@ -5096,10 +5096,7 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual ~CutlineTransformer()
-    {
-        GDALDestroyTransformer(hSrcImageTransformer);
-    }
+    virtual ~CutlineTransformer() override;
 
     virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
@@ -5122,6 +5119,11 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 };
+
+CutlineTransformer::~CutlineTransformer()
+{
+    GDALDestroyTransformer(hSrcImageTransformer);
+}
 
 static double GetMaximumSegmentLength(OGRGeometry *poGeom)
 {

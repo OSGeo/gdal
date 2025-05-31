@@ -7171,15 +7171,7 @@ class NITFDriver final : public GDALDriver
 
   public:
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
-        {
-            InitCreationOptionList();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -7188,6 +7180,21 @@ class NITFDriver final : public GDALDriver
         return GDALDriver::GetMetadata(pszDomain);
     }
 };
+
+/************************************************************************/
+/*                     NITFDriver::GetMetadataItem()                    */
+/************************************************************************/
+
+const char *NITFDriver::GetMetadataItem(const char *pszName,
+                                        const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
+    {
+        InitCreationOptionList();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 /************************************************************************/
 /*                         InitCreationOptionList()                     */

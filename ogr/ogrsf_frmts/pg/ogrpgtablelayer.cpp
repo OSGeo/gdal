@@ -28,6 +28,14 @@
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."
 
+void OGRPGFeatureDefn::UnsetLayer()
+{
+    const int nGeomFieldCount = GetGeomFieldCount();
+    for (int i = 0; i < nGeomFieldCount; i++)
+        cpl::down_cast<OGRPGGeomFieldDefn *>(apoGeomFieldDefn[i].get())
+            ->UnsetLayer();
+}
+
 /************************************************************************/
 /*                        OGRPGTableFeatureDefn                         */
 /************************************************************************/
@@ -49,11 +57,7 @@ class OGRPGTableFeatureDefn final : public OGRPGFeatureDefn
     {
     }
 
-    virtual void UnsetLayer() override
-    {
-        poLayer = nullptr;
-        OGRPGFeatureDefn::UnsetLayer();
-    }
+    virtual void UnsetLayer() override;
 
     virtual int GetFieldCount() const override
     {
@@ -107,6 +111,12 @@ class OGRPGTableFeatureDefn final : public OGRPGFeatureDefn
         return OGRPGFeatureDefn::GetGeomFieldIndex(pszName);
     }
 };
+
+void OGRPGTableFeatureDefn::UnsetLayer()
+{
+    poLayer = nullptr;
+    OGRPGFeatureDefn::UnsetLayer();
+}
 
 /************************************************************************/
 /*                           SolveFields()                              */

@@ -1162,6 +1162,12 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
 }
 
 /************************************************************************/
+/*                   ~GDALInConstructionAlgorithmArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg::~GDALInConstructionAlgorithmArg() = default;
+
+/************************************************************************/
 /*              GDALInConstructionAlgorithmArg::AddAlias()              */
 /************************************************************************/
 
@@ -5793,6 +5799,19 @@ void GDALAlgorithm::ExtractLastOptionAndValue(std::vector<std::string> &args,
         }
     }
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                 GDALContainerAlgorithm::RunImpl()                    */
+/************************************************************************/
+
+bool GDALContainerAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    return false;
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                        GDALAlgorithmRelease()                        */

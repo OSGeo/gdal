@@ -1304,10 +1304,7 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit PDSWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -1316,11 +1313,13 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    ~PDSWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+PDSWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 /************************************************************************/
 /*                       ParseCompressedImage()                         */

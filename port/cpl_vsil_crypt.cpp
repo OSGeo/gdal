@@ -2098,18 +2098,11 @@ void VSIInstallCryptFileHandler(void)
 class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
 {
   public:
-    VSIDummyCryptFilesystemHandler()
-    {
-    }
+    VSIDummyCryptFilesystemHandler() = default;
 
     VSIVirtualHandle *Open(const char * /* pszFilename */,
                            const char * /* pszAccess */, bool /* bSetError */,
-                           CSLConstList /* papszOptions */) override
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "%s support not available in this build", VSICRYPT_PREFIX);
-        return nullptr;
-    }
+                           CSLConstList /* papszOptions */) override;
 
     int Stat(const char * /* pszFilename */, VSIStatBufL * /*pStatBuf */,
              int /* nFlags */) override
@@ -2119,6 +2112,15 @@ class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
         return -1;
     }
 };
+
+VSIVirtualHandle *VSIDummyCryptFilesystemHandler::Open(
+    const char * /* pszFilename */, const char * /* pszAccess */,
+    bool /* bSetError */, CSLConstList /* papszOptions */)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "%s support not available in this build", VSICRYPT_PREFIX);
+    return nullptr;
+}
 
 void VSIInstallCryptFileHandler(void)
 {

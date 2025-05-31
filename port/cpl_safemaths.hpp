@@ -33,6 +33,11 @@
 
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 template <typename T> struct CPLSafeInt
 {
     const T val;
@@ -62,6 +67,10 @@ class CPLSafeIntOverflowDivisionByZero : public CPLSafeIntOverflow
     {
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 /** Convenience functions to build a CPLSafeInt */
 inline CPLSafeInt<int> CPLSM(int x)

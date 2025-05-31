@@ -45,6 +45,12 @@
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
+OGRSQLiteGeomFieldDefn::~OGRSQLiteGeomFieldDefn() = default;
+
+OGRSQLiteFeatureDefn::~OGRSQLiteFeatureDefn() = default;
+
+IOGRSQLiteGetSpatialWhere::~IOGRSQLiteGetSpatialWhere() = default;
+
 /************************************************************************/
 /*                           OGRSQLiteLayer()                           */
 /************************************************************************/

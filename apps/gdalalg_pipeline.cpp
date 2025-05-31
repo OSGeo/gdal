@@ -52,13 +52,15 @@ class GDALPipelineAlgorithm final
     std::string m_format{};
     GDALArgDatasetValue m_dataset{};
 
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "pipeline\" program.");
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
+
+bool GDALPipelineAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "pipeline\" program.");
+    return false;
+}
 
 GDAL_STATIC_REGISTER_ALG(GDALPipelineAlgorithm);

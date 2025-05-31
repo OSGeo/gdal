@@ -260,52 +260,54 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 
     // GDALSubdatasetInfo interface
   private:
-    void parseFileName() override
-    {
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "GPKG:"))
-        {
-            return;
-        }
-
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
-
-        if (iPartsCount == 3 || iPartsCount == 4)
-        {
-
-            m_driverPrefixComponent = aosParts[0];
-
-            int subdatasetIndex{2};
-            const bool hasDriveLetter{
-                strlen(aosParts[1]) == 1 &&
-                std::isalpha(static_cast<unsigned char>(aosParts[1][0]))};
-
-            // Check for drive letter
-            if (iPartsCount == 4)
-            {
-                // Invalid
-                if (!hasDriveLetter)
-                {
-                    return;
-                }
-                m_pathComponent = aosParts[1];
-                m_pathComponent.append(":");
-                m_pathComponent.append(aosParts[2]);
-                subdatasetIndex++;
-            }
-            else  // count is 3
-            {
-                if (hasDriveLetter)
-                {
-                    return;
-                }
-                m_pathComponent = aosParts[1];
-            }
-
-            m_subdatasetComponent = aosParts[subdatasetIndex];
-        }
-    }
+    void parseFileName() override;
 };
+
+void OGRGeoPackageDriverSubdatasetInfo::parseFileName()
+{
+    if (!STARTS_WITH_CI(m_fileName.c_str(), "GPKG:"))
+    {
+        return;
+    }
+
+    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    const int iPartsCount{CSLCount(aosParts)};
+
+    if (iPartsCount == 3 || iPartsCount == 4)
+    {
+
+        m_driverPrefixComponent = aosParts[0];
+
+        int subdatasetIndex{2};
+        const bool hasDriveLetter{
+            strlen(aosParts[1]) == 1 &&
+            std::isalpha(static_cast<unsigned char>(aosParts[1][0]))};
+
+        // Check for drive letter
+        if (iPartsCount == 4)
+        {
+            // Invalid
+            if (!hasDriveLetter)
+            {
+                return;
+            }
+            m_pathComponent = aosParts[1];
+            m_pathComponent.append(":");
+            m_pathComponent.append(aosParts[2]);
+            subdatasetIndex++;
+        }
+        else  // count is 3
+        {
+            if (hasDriveLetter)
+            {
+                return;
+            }
+            m_pathComponent = aosParts[1];
+        }
+
+        m_subdatasetComponent = aosParts[subdatasetIndex];
+    }
+}
 
 static GDALSubdatasetInfo *
 OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
@@ -425,15 +427,7 @@ class GDALGPKGDriver final : public GDALDriver
     GDALGPKGDriver() = default;
 
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
-        {
-            InitializeCreationOptionList();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -442,6 +436,17 @@ class GDALGPKGDriver final : public GDALDriver
         return GDALDriver::GetMetadata(pszDomain);
     }
 };
+
+const char *GDALGPKGDriver::GetMetadataItem(const char *pszName,
+                                            const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
+    {
+        InitializeCreationOptionList();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 #define COMPRESSION_OPTIONS                                                    \
     "  <Option name='TILE_FORMAT' type='string-select' scope='raster' "        \
@@ -606,24 +611,26 @@ class OGRGeoPackageRepackAlgorithm final : public GDALAlgorithm
     }
 
   protected:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        auto poDS =
-            dynamic_cast<GDALGeoPackageDataset *>(m_dataset.GetDatasetRef());
-        if (!poDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined, "%s is not a GeoPackage",
-                        m_dataset.GetName().c_str());
-            return false;
-        }
-        CPLErrorReset();
-        delete poDS->ExecuteSQL("VACUUM", nullptr, nullptr);
-        return CPLGetLastErrorType() == CE_None;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 
   private:
     GDALArgDatasetValue m_dataset{};
 };
+
+bool OGRGeoPackageRepackAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS =
+        dynamic_cast<GDALGeoPackageDataset *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a GeoPackage",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+    CPLErrorReset();
+    delete poDS->ExecuteSQL("VACUUM", nullptr, nullptr);
+    return CPLGetLastErrorType() == CE_None;
+}
 
 /************************************************************************/
 /*               OGRGeoPackageDriverInstantiateAlgorithm()              */

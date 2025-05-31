@@ -69,7 +69,11 @@ class VSITarEntryFileOffset final : public VSIArchiveEntryFileOffset
     {
     }
 #endif
+
+    ~VSITarEntryFileOffset() override;
 };
+
+VSITarEntryFileOffset::~VSITarEntryFileOffset() = default;
 
 /************************************************************************/
 /* ==================================================================== */

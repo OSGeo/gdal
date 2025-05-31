@@ -204,13 +204,9 @@ namespace grib
 class InventoryWrapper
 {
   public:
-    InventoryWrapper()
-    {
-    }
+    InventoryWrapper() = default;
 
-    virtual ~InventoryWrapper()
-    {
-    }
+    virtual ~InventoryWrapper();
 
     // Modifying the contents pointed to by the return is allowed.
     inventoryType *get(int i) const

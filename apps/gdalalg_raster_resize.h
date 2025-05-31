@@ -51,6 +51,8 @@ class GDALRasterResizeAlgorithmStandalone final
         : GDALRasterResizeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterResizeAlgorithmStandalone() override;
 };
 
 //! @endcond

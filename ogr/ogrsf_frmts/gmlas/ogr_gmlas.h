@@ -51,9 +51,7 @@ GDALDataset *OGRGMLASDriverCreateCopy(const char *pszFilename,
 class IGMLASInputSourceClosing
 {
   public:
-    virtual ~IGMLASInputSourceClosing()
-    {
-    }
+    virtual ~IGMLASInputSourceClosing();
 
     virtual void notifyClosing(const CPLString &osFilename) = 0;
 };

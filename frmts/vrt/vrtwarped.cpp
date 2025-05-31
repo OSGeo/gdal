@@ -646,7 +646,7 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
 
     GDALWarpCoordRescaler(const GDALWarpCoordRescaler &) = default;
 
-    virtual ~GDALWarpCoordRescaler() = default;
+    ~GDALWarpCoordRescaler() override;
 
     virtual const OGRSpatialReference *GetSourceCS() const override
     {
@@ -681,6 +681,8 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
         return nullptr;
     }
 };
+
+GDALWarpCoordRescaler::~GDALWarpCoordRescaler() = default;
 
 /************************************************************************/
 /*                        RescaleDstGeoTransform()                      */

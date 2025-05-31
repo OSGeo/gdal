@@ -393,6 +393,7 @@ class OCAD_EXTERN CADHatch : public CADGeometry
 {
 public:
     CADHatch();
+    ~CADHatch() override;
 };
 
 /**

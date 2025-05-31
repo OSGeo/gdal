@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+IGMLASInputSourceClosing::~IGMLASInputSourceClosing() = default;
+
 /************************************************************************/
 /*                        GMLASBinInputStream                           */
 /************************************************************************/

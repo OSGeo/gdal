@@ -1195,6 +1195,8 @@ GRIBRasterBand::~GRIBRasterBand()
     UncacheData();
 }
 
+gdal::grib::InventoryWrapper::~InventoryWrapper() = default;
+
 /************************************************************************/
 /*                           InventoryWrapperGrib                       */
 /************************************************************************/
@@ -1207,17 +1209,19 @@ class InventoryWrapperGrib : public gdal::grib::InventoryWrapper
                                  &num_messages_);
     }
 
-    ~InventoryWrapperGrib() override
-    {
-        if (inv_ == nullptr)
-            return;
-        for (uInt4 i = 0; i < inv_len_; i++)
-        {
-            GRIB2InventoryFree(inv_ + i);
-        }
-        free(inv_);
-    }
+    ~InventoryWrapperGrib() override;
 };
+
+InventoryWrapperGrib::~InventoryWrapperGrib()
+{
+    if (inv_ == nullptr)
+        return;
+    for (uInt4 i = 0; i < inv_len_; i++)
+    {
+        GRIB2InventoryFree(inv_ + i);
+    }
+    free(inv_);
+}
 
 /************************************************************************/
 /*                           InventoryWrapperSidecar                    */
@@ -1318,17 +1322,19 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         result_ = inv_len_;
     }
 
-    ~InventoryWrapperSidecar() override
-    {
-        if (inv_ == nullptr)
-            return;
-
-        for (unsigned i = 0; i < inv_len_; i++)
-            VSIFree(inv_[i].longFstLevel);
-
-        VSIFree(inv_);
-    }
+    ~InventoryWrapperSidecar() override;
 };
+
+InventoryWrapperSidecar::~InventoryWrapperSidecar()
+{
+    if (inv_ == nullptr)
+        return;
+
+    for (unsigned i = 0; i < inv_len_; i++)
+        VSIFree(inv_[i].longFstLevel);
+
+    VSIFree(inv_);
+}
 
 /************************************************************************/
 /* ==================================================================== */

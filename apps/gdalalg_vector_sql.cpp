@@ -375,4 +375,6 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return true;
 }
 
+GDALVectorSQLAlgorithmStandalone::~GDALVectorSQLAlgorithmStandalone() = default;
+
 //! @endcond

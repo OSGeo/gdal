@@ -16,7 +16,14 @@
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
 #include "feature_generated.h"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 namespace ogr_flatgeobuf
 {

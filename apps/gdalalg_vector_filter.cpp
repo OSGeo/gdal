@@ -97,4 +97,7 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return ret;
 }
 
+GDALVectorFilterAlgorithmStandalone::~GDALVectorFilterAlgorithmStandalone() =
+    default;
+
 //! @endcond

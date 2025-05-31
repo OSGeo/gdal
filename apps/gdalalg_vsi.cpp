@@ -42,13 +42,15 @@ class GDALVSIAlgorithm final : public GDALAlgorithm
     }
 
   private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "vsi\" program.");
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
+
+bool GDALVSIAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "vsi\" program.");
+    return false;
+}
 
 GDAL_STATIC_REGISTER_ALG(GDALVSIAlgorithm);
