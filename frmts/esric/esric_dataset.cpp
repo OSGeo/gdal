@@ -20,6 +20,7 @@
 #include "cpl_json.h"
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
+#include "cpl_vsi_virtual.h"
 
 using namespace std;
 
@@ -114,38 +115,24 @@ static inline GUInt32 u32lat(void *data)
 
 struct Bundle
 {
-    Bundle() : fh(nullptr), isV2(true), isTpkx(false)
-    {
-    }
-
-    ~Bundle()
-    {
-        if (fh)
-            VSIFCloseL(fh);
-        fh = nullptr;
-    }
-
     void Init(const char *filename)
     {
-        if (fh)
-            VSIFCloseL(fh);
         name = filename;
-        fh = VSIFOpenL(name.c_str(), "rb");
+        fh.reset(VSIFOpenL(name.c_str(), "rb"));
         if (nullptr == fh)
             return;
         GByte header[64] = {0};
         // Check a few header locations, then read the index
-        VSIFReadL(header, 1, 64, fh);
+        fh->Read(header, 1, 64);
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
             (!isTpkx &&
              BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
-            index.size() != VSIFReadL(index.data(), 8, index.size(), fh))
+            index.size() != fh->Read(index.data(), 8, index.size()))
         {
-            VSIFCloseL(fh);
-            fh = nullptr;
+            fh.reset();
         }
 
 #if !CPL_IS_LSB
@@ -155,11 +142,11 @@ struct Bundle
 #endif
     }
 
-    std::vector<GUInt64> index;
-    VSILFILE *fh;
-    bool isV2;
-    bool isTpkx;
-    CPLString name;
+    std::vector<GUInt64> index{};
+    VSIVirtualHandleUniquePtr fh{};
+    bool isV2 = false;
+    bool isTpkx = false;
+    CPLString name{};
     const size_t BSZ = 128;
 };
 
@@ -875,8 +862,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     }
     auto &fbuffer = parent->filebuffer;
     fbuffer.resize(size_t(size));
-    VSIFSeekL(bundle.fh, offset, SEEK_SET);
-    if (size != VSIFReadL(fbuffer.data(), size_t(1), size_t(size), bundle.fh))
+    bundle.fh->Seek(offset, SEEK_SET);
+    if (size != bundle.fh->Read(fbuffer.data(), size_t(1), size_t(size)))
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Error reading tile, reading " CPL_FRMT_GUIB

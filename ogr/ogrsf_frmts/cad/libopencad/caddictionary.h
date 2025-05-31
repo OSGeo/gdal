@@ -25,7 +25,6 @@ class OCAD_EXTERN CADDictionaryRecord
 {
 public:
     CADDictionaryRecord();
-    virtual ~CADDictionaryRecord(){}
 
     CADObject::ObjectType getType() const;
 
@@ -40,7 +39,6 @@ class OCAD_EXTERN CADXRecord : public CADDictionaryRecord
 {
 public:
     CADXRecord();
-    virtual ~CADXRecord(){}
 
     const std::string getRecordData() const;
     void              setRecordData( const std::string& data );
@@ -57,7 +55,6 @@ class OCAD_EXTERN CADDictionary : public CADDictionaryRecord
 {
 public:
     CADDictionary();
-    virtual ~CADDictionary();
 
     size_t getRecordsCount();
     void   addRecord( CADDictionaryItem );

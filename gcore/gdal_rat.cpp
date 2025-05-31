@@ -1197,12 +1197,7 @@ void CPL_STDCALL GDALRATDumpReadable(GDALRasterAttributeTableH hRAT, FILE *fp)
 
 //! Construct empty table.
 
-GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable()
-    : bLinearBinning(false), dfRow0Min(-0.5), dfBinSize(1.0),
-      eTableType(GRTT_THEMATIC), bColumnsAnalysed(false), nMinCol(-1),
-      nMaxCol(-1), nRowCount(0)
-{
-}
+GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable() = default;
 
 /************************************************************************/
 /*                   GDALCreateRasterAttributeTable()                   */

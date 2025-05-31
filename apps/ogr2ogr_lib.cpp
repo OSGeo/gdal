@@ -1403,6 +1403,15 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
     {
     }
 
+    AxisMappingCoordinateTransformation(
+        const AxisMappingCoordinateTransformation &) = default;
+    AxisMappingCoordinateTransformation &
+    operator=(const AxisMappingCoordinateTransformation &) = delete;
+    AxisMappingCoordinateTransformation(
+        AxisMappingCoordinateTransformation &&) = delete;
+    AxisMappingCoordinateTransformation &
+    operator=(AxisMappingCoordinateTransformation &&) = delete;
+
   public:
     AxisMappingCoordinateTransformation(const std::vector<int> &mappingIn,
                                         const std::vector<int> &mappingOut)
@@ -1425,9 +1434,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         }
     }
 
-    ~AxisMappingCoordinateTransformation() override
-    {
-    }
+    ~AxisMappingCoordinateTransformation() override = default;
 
     virtual OGRCoordinateTransformation *Clone() const override
     {

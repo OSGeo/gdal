@@ -120,6 +120,7 @@ else ()
   detect_and_set_cxx_warning_flag(suggest-override)
   # clang specific only. Avoids that foo("bar") goes to foo(bool) instead of foo(const std::string&)
   detect_and_set_cxx_warning_flag(string-conversion)
+  detect_and_set_cxx_warning_flag(deprecated-copy-dtor)
 
   check_cxx_compiler_flag(-fno-operator-names HAVE_FLAG_NO_OPERATOR_NAMES)
   if (HAVE_FLAG_NO_OPERATOR_NAMES)

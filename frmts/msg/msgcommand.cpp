@@ -38,10 +38,6 @@ MSGCommand::MSGCommand()
         channel[i] = 0;
 }
 
-MSGCommand::~MSGCommand()
-{
-}
-
 std::string MSGCommand::sTrimSpaces(std::string const &str)
 {
     std::string::size_type iStart = 0;

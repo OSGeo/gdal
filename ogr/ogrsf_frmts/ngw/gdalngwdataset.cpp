@@ -647,7 +647,7 @@ bool OGRNGWDataset::FillResources(const CPLStringList &aosHTTPOptions,
             OGRNGWCodedFieldDomain oDomain(oChild);
             if (oDomain.GetID() > 0)
             {
-                moDomains[oDomain.GetID()] = oDomain;
+                moDomains[oDomain.GetID()] = std::move(oDomain);
             }
         }
     }
@@ -1765,7 +1765,7 @@ bool OGRNGWDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 
@@ -1827,7 +1827,7 @@ bool OGRNGWDataset::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 

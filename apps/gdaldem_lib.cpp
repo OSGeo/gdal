@@ -183,7 +183,12 @@ struct GDALDEMProcessingOptions
 
 struct AlgorithmParameters
 {
+    AlgorithmParameters() = default;
     virtual ~AlgorithmParameters() = default;
+    AlgorithmParameters(const AlgorithmParameters &) = default;
+    AlgorithmParameters &operator=(const AlgorithmParameters &) = delete;
+    AlgorithmParameters(AlgorithmParameters &&) = delete;
+    AlgorithmParameters &operator=(AlgorithmParameters &&) = delete;
 
     virtual std::unique_ptr<AlgorithmParameters>
     CreateScaledParameters(double dfXRatio, double dfYRatio) = 0;
