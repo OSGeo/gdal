@@ -152,9 +152,27 @@ def test_gdal_completion(gdal_path):
     assert "pipeline" in out
 
     out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info -").split(" ")
-    assert "-f" in out
+    assert "-f" not in out
+    assert "--of" not in out
+    assert "--format" not in out
+    assert "--output-format" in out
+
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --").split(" ")
+    assert "-f" not in out
+    assert "--of" not in out
+    assert "--format" not in out
+    assert "--output-format" in out
+
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --o").split(
+        " "
+    )
     assert "--of" in out
     assert "--output-format" in out
+
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --form").split(
+        " "
+    )
+    assert out == ["--format"]
 
     out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --of").split(
         " "
@@ -451,7 +469,7 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         f"{gdal_path} completion gdal {subcommand} pipeline read foo ! write -"
     ).split(" ")
     assert "--output" in out
-    assert "--co" in out
+    assert "--creation-option" in out
 
     if subcommand == "raster":
         out = gdaltest.runexternal(
