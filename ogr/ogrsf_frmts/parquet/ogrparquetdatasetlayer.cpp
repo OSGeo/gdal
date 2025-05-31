@@ -889,6 +889,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
                             nVal, arrow::TimeUnit::MILLI));
                     }
                 }
+                break;
             }
 
             default:
