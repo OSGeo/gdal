@@ -130,6 +130,8 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     bool bEmptyStringNull;
 
+    bool m_bWriteHeader = true;
+
     StringQuoting m_eStringQuoting = StringQuoting::IF_AMBIGUOUS;
 
     char **GetNextLineTokens();
@@ -237,6 +239,11 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
                           const char *pszGeomCol = nullptr);
     void SetCreateCSVT(bool bCreateCSVT);
     void SetWriteBOM(bool bWriteBOM);
+
+    void SetWriteHeader(bool b)
+    {
+        m_bWriteHeader = b;
+    }
 
     void SetStringQuoting(StringQuoting eVal)
     {

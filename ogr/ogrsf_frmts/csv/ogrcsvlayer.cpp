@@ -1981,13 +1981,33 @@ OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
 
 OGRErr OGRCSVLayer::WriteHeader()
 {
-    if (!bNew)
-        return OGRERR_NONE;
+    CPLAssert(bNew);
 
     // Write field names if we haven't written them yet.
     // Write .csvt file if needed.
     bNew = false;
     bHasFieldNames = true;
+
+    const auto CreateCSV = [this]()
+    {
+        if (STARTS_WITH(pszFilename, "/vsistdout/") ||
+            STARTS_WITH(pszFilename, "/vsizip/"))
+            fpCSV = VSIFOpenL(pszFilename, "wb");
+        else
+            fpCSV = VSIFOpenL(pszFilename, "w+b");
+
+        if (fpCSV == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
+                     pszFilename, VSIStrerror(errno));
+            return OGRERR_FAILURE;
+        }
+        return OGRERR_NONE;
+    };
+
+    if (!m_bWriteHeader)
+        return CreateCSV();
+
     bool bOK = true;
 
     for (int iFile = 0; iFile < (bCreateCSVT ? 2 : 1); iFile++)
@@ -2007,19 +2027,8 @@ OGRErr OGRCSVLayer::WriteHeader()
         }
         else
         {
-            if (STARTS_WITH(pszFilename, "/vsistdout/") ||
-                STARTS_WITH(pszFilename, "/vsizip/"))
-                fpCSV = VSIFOpenL(pszFilename, "wb");
-            else
-                fpCSV = VSIFOpenL(pszFilename, "w+b");
-
-            if (fpCSV == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Failed to create %s:\n%s", pszFilename,
-                         VSIStrerror(errno));
+            if (CreateCSV() != OGRERR_NONE)
                 return OGRERR_FAILURE;
-            }
         }
 
         if (bWriteBOM && fpCSV)

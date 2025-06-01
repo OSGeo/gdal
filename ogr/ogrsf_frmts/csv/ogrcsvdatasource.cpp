@@ -1255,6 +1255,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             poSrcGeomFieldDefn->GetCoordinatePrecision());
     }
 
+    poCSVLayer->SetWriteHeader(CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "HEADER",
+        CSLFetchNameValueDef(papszOptions, "HEADERS", "YES"))));
+
     if (osFilename != "/vsistdout/")
         m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(
             poCSVLayer.release(), nullptr));
