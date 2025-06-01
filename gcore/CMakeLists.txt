@@ -4,6 +4,7 @@ add_library(
   gdal_adbc.cpp
   gdalalgorithm.cpp
   gdalalgorithmregistry.cpp
+  gdalcomputedrasterband.cpp
   gdalopeninfo.cpp
   gdaldriver.cpp
   gdaldrivermanager.cpp

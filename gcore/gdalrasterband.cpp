@@ -10193,3 +10193,256 @@ CPLErr GDALRasterBand::SplitRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                         ThrowIfNotSameDimensions()                   */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/* static */
+void GDALRasterBand::ThrowIfNotSameDimensions(const GDALRasterBand &first,
+                                              const GDALRasterBand &second)
+{
+    if (first.GetXSize() != second.GetXSize() ||
+        first.GetYSize() != second.GetYSize())
+    {
+        throw std::runtime_error("Both bands do not have the same dimensions");
+    }
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                           operator+()                                */
+/************************************************************************/
+
+/** Add this band with another one.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator+(const GDALRasterBand &other) const
+{
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_ADD,
+                                  *this, other);
+}
+
+/************************************************************************/
+/*                           operator+()                                */
+/************************************************************************/
+
+/** Add this band with a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator+(double constant) const
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_ADD,
+                                  *this, constant);
+}
+
+/************************************************************************/
+/*                           operator+()                                */
+/************************************************************************/
+
+/** Add a band with a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator+(double constant, const GDALRasterBand &other)
+{
+    return other + constant;
+}
+
+/************************************************************************/
+/*                           operator-()                                */
+/************************************************************************/
+
+/** Subtract this band with another one.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator-(const GDALRasterBand &other) const
+{
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_SUBTRACT, *this, other);
+}
+
+/************************************************************************/
+/*                           operator-()                                */
+/************************************************************************/
+
+/** Subtract this band with a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator-(double constant) const
+{
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_SUBTRACT, *this, constant);
+}
+
+/************************************************************************/
+/*                           operator-()                                */
+/************************************************************************/
+
+/** Subtract a constant with a band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator-(double constant, const GDALRasterBand &other)
+{
+    return other * (-1.0) + constant;
+}
+
+/************************************************************************/
+/*                           operator*()                                */
+/************************************************************************/
+
+/** Multiply this band with another one.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator*(const GDALRasterBand &other) const
+{
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_MULTIPLY, *this, other);
+}
+
+/************************************************************************/
+/*                           operator*()                                */
+/************************************************************************/
+
+/** Multiply this band by a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator*(double constant) const
+{
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_MULTIPLY, *this, constant);
+}
+
+/************************************************************************/
+/*                           operator*()                                */
+/************************************************************************/
+
+/** Multiply a band with a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator*(double constant, const GDALRasterBand &other)
+{
+    return other * constant;
+}
+
+/************************************************************************/
+/*                           operator/()                                */
+/************************************************************************/
+
+/** Divide this band with another one.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator/(const GDALRasterBand &other) const
+{
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_DIVIDE,
+                                  *this, other);
+}
+
+/************************************************************************/
+/*                           operator/()                                */
+/************************************************************************/
+
+/** Divide this band by a constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator/(double constant) const
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_DIVIDE,
+                                  *this, constant);
+}
+
+/************************************************************************/
+/*                           operator/()                                */
+/************************************************************************/
+
+/** Divide a constant by a band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
+{
+    // FIXME Horrible workaround !
+    // cppcheck-suppress duplicateExpression
+    return ((other / other) / other) * constant;
+}
+
+/************************************************************************/
+/*                       GDALRasterBand::AsType()                       */
+/************************************************************************/
+
+/** Cast this band to another type.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::AsType(GDALDataType dt) const
+{
+    if (dt == GDT_Unknown)
+    {
+        throw std::runtime_error("AsType(GDT_Unknown) is not supported");
+    }
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_CAST,
+                                  *this, dt);
+}

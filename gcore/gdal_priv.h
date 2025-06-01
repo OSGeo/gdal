@@ -54,6 +54,7 @@ class GDALAlgorithm;
 
 #include <stdarg.h>
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -1587,6 +1588,8 @@ constexpr GDALSuggestedBlockAccessPattern GSBAP_BOTTOM_TO_TOP = 3;
  * combined with above values). */
 constexpr GDALSuggestedBlockAccessPattern GSBAP_LARGEST_CHUNK_POSSIBLE = 0x100;
 
+class GDALComputedRasterBand;
+
 /** A single raster band (or channel). */
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
@@ -1630,10 +1633,15 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int nBlockReads = 0;
     int bForceCachedIO = 0;
 
+    friend class GDALComputedRasterBand;
+    friend class GDALComputedDataset;
+
     class GDALRasterBandOwnedOrNot
     {
       public:
         GDALRasterBandOwnedOrNot() = default;
+
+        GDALRasterBandOwnedOrNot(GDALRasterBandOwnedOrNot &&) = default;
 
         void reset()
         {
@@ -1768,6 +1776,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALRasterBand();
     explicit GDALRasterBand(int bForceCachedIO);
 
+    //! @cond Doxygen_Suppress
+    GDALRasterBand(GDALRasterBand &&) = default;
+    //! @endcond
+
     ~GDALRasterBand() override;
 
     int GetXSize() const;
@@ -1834,6 +1846,32 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     //! @endcond
 #endif
+
+    GDALComputedRasterBand
+    operator+(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator+(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator+(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator-(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator-(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator-(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator*(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator*(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator*(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator/(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator/(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator/(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand AsType(GDALDataType) const CPL_WARN_UNUSED_RESULT;
 
     CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
                      void *pImage) CPL_WARN_UNUSED_RESULT;
@@ -1975,6 +2013,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                      ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
 #endif
 
+    //! @cond Doxygen_Suppress
+    static void ThrowIfNotSameDimensions(const GDALRasterBand &first,
+                                         const GDALRasterBand &second);
+
+    //! @endcond
+
     /** Convert a GDALRasterBand* to a GDALRasterBandH.
      * @since GDAL 2.3
      */
@@ -2060,6 +2104,111 @@ GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<float>)
 GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<double>)
 
 //! @endcond
+
+/* ******************************************************************** */
+/*                       GDALComputedRasterBand                         */
+/* ******************************************************************** */
+
+/** Class represented the result of an operation on one or two input bands.
+ *
+ * Such class is instantiated only by operators on GDALRasterBand.
+ * The resulting band is lazy evaluated.
+ *
+ * @since 3.12
+ */
+class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
+{
+  public:
+    /** Destructor */
+    ~GDALComputedRasterBand() override;
+
+    //! @cond Doxygen_Suppress
+    enum class Operation
+    {
+        OP_ADD,
+        OP_SUBTRACT,
+        OP_MULTIPLY,
+        OP_DIVIDE,
+        OP_MIN,
+        OP_MAX,
+        OP_CAST,
+    };
+
+    // Semi-public for gdal::min(), gdal::max()
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+                           const GDALRasterBand &secondBand);
+
+    GDALComputedRasterBand(GDALComputedRasterBand &&) = default;
+    //! @endcond
+
+  protected:
+    friend class GDALRasterBand;
+
+    //! @cond Doxygen_Suppress
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+                           double constant);
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+                           GDALDataType dt);
+
+    //! @endcond
+
+    CPLErr IReadBlock(int, int, void *) override;
+
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+
+  private:
+    friend class GDALComputedDataset;
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_poOwningDS{};
+
+    GDALComputedRasterBand(const GDALComputedRasterBand &, bool);
+    GDALComputedRasterBand(const GDALComputedRasterBand &) = delete;
+    GDALComputedRasterBand &operator=(const GDALComputedRasterBand &) = delete;
+    GDALComputedRasterBand &operator=(GDALComputedRasterBand &&) = delete;
+};
+
+namespace gdal
+{
+using std::max;
+using std::min;
+
+/** Return a band whose each pixel value is the minimum of the corresponding
+ * pixel values in the input bands.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+inline GDALComputedRasterBand min(const GDALRasterBand &first,
+                                  const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
+                                  first, second);
+}
+
+/** Return a band whose each pixel value is the maximum of the corresponding
+ * pixel values in the input bands.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if both bands do not have the same dimensions.
+ */
+inline GDALComputedRasterBand max(const GDALRasterBand &first,
+                                  const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
+                                  first, second);
+}
+}  // namespace gdal
 
 //! @cond Doxygen_Suppress
 /* ******************************************************************** */

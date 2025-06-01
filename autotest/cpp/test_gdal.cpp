@@ -5530,4 +5530,79 @@ TEST_F(test_gdal, GDALColorTable_from_qml_paletted)
     }
 }
 
+TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
+{
+    auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
+    if (!poMemDrv)
+    {
+        GTEST_SKIP() << "MEM driver missing";
+    }
+    constexpr int WIDTH = 1;
+    constexpr int HEIGHT = 2;
+    auto poDS = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
+        poMemDrv->Create("", WIDTH, HEIGHT, 3, GDT_Float64, nullptr));
+    std::array<double, 6> adfGT = {1, 2, 3, 4, 5, 6};
+    poDS->SetGeoTransform(adfGT.data());
+    OGRSpatialReference *poSRS = new OGRSpatialReference();
+    poSRS->SetFromUserInput("WGS84");
+    poDS->SetSpatialRef(poSRS);
+    poSRS->Release();
+    auto &firstBand = *(poDS->GetRasterBand(1));
+    auto &secondBand = *(poDS->GetRasterBand(2));
+    auto &thirdBand = *(poDS->GetRasterBand(3));
+    constexpr double FIRST = 1.5;
+    firstBand.Fill(FIRST);
+    constexpr double SECOND = 2.5;
+    secondBand.Fill(SECOND);
+    constexpr double THIRD = 3.5;
+    thirdBand.Fill(THIRD);
+
+    {
+        auto poOtherDS =
+            std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
+                poMemDrv->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand + (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+    }
+
+    {
+        const auto Calc = [](const auto &a, const auto &b, const auto &c)
+        {
+            return (0.5 + 2 / gdal::min(c, gdal::max(a, b)) + 3 * a * 2 -
+                    a * (1 - b) / c - 2 * a - 3 + 4) /
+                   3;
+        };
+
+        auto formula = Calc(firstBand, secondBand, thirdBand);
+        constexpr double expectedVal = Calc(FIRST, SECOND, THIRD);
+
+        EXPECT_EQ(formula.GetXSize(), WIDTH);
+        EXPECT_EQ(formula.GetYSize(), HEIGHT);
+        EXPECT_EQ(formula.GetRasterDataType(), GDT_Float64);
+
+        std::array<double, 6> gotGT;
+        EXPECT_EQ(formula.GetDataset()->GetGeoTransform(gotGT.data()), CE_None);
+        EXPECT_TRUE(gotGT == adfGT);
+
+        const OGRSpatialReference *poGotSRS =
+            formula.GetDataset()->GetSpatialRef();
+        EXPECT_EQ(poGotSRS, poDS->GetSpatialRef());
+
+        std::vector<double> adfResults(WIDTH);
+        EXPECT_EQ(formula.ReadBlock(0, 0, adfResults.data()), CE_None);
+        EXPECT_NEAR(adfResults[0], expectedVal, 1e-14);
+
+        double adfMinMax[2] = {0};
+        EXPECT_EQ(formula.ComputeRasterMinMax(false, adfMinMax), CE_None);
+        EXPECT_NEAR(adfMinMax[0], expectedVal, 1e-14);
+        EXPECT_NEAR(adfMinMax[1], expectedVal, 1e-14);
+    }
+
+    EXPECT_EQ(firstBand.AsType(GDT_Byte).GetRasterDataType(), GDT_Byte);
+    EXPECT_THROW(
+        CPL_IGNORE_RET_VAL(firstBand.AsType(GDT_Unknown).GetRasterDataType()),
+        std::runtime_error);
+}
+
 }  // namespace
