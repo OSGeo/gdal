@@ -56,19 +56,9 @@ OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
                          VSILFILE *fp, int nMaxLineSize,
                          const char *pszFilenameIn, int bNewIn,
                          int bInWriteModeIn, char chDelimiterIn)
-    : m_poDS(poDS), poFeatureDefn(nullptr), fpCSV(fp),
-      m_nMaxLineSize(nMaxLineSize), bHasFieldNames(false),
+    : m_poDS(poDS), fpCSV(fp), m_nMaxLineSize(nMaxLineSize),
       bNew(CPL_TO_BOOL(bNewIn)), bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
-      bUseCRLF(false), bNeedRewindBeforeRead(false),
-      eGeometryFormat(OGR_CSV_GEOM_NONE), pszFilename(CPLStrdup(pszFilenameIn)),
-      bCreateCSVT(false), bWriteBOM(false), nCSVFieldCount(0),
-      panGeomFieldIndex(nullptr), bFirstFeatureAppendedDuringSession(true),
-      bHiddenWKTColumn(false), iNfdcLongitudeS(-1), iNfdcLatitudeS(-1),
-      bHonourStrings(true), iLongitudeField(-1), iLatitudeField(-1),
-      iZField(-1), bIsEurostatTSV(false), nEurostatDims(0),
-      nTotalFeatures(bNewIn ? 0 : -1), bWarningBadTypeOrWidth(false),
-      bKeepSourceColumns(false), bKeepGeomColumns(true), bMergeDelimiter(false),
-      bEmptyStringNull(false)
+      pszFilename(CPLStrdup(pszFilenameIn)), nTotalFeatures(bNewIn ? 0 : -1)
 {
     szDelimiter[0] = chDelimiterIn;
     szDelimiter[1] = 0;
@@ -787,7 +777,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 OGRSpatialReference *poSRS = new OGRSpatialReference();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
-                        (const char *)pabyRet,
+                        reinterpret_cast<const char *>(pabyRet),
                         OGRSpatialReference::
                             SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
                     OGRERR_NONE)
