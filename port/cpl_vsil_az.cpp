@@ -423,8 +423,8 @@ bool VSIDIRAz::IssueListDir()
     if (response_code != 200)
     {
         CPLDebug("AZURE", "%s", requestHelper.sWriteFuncData.pBuffer);
-        poHandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
-                                          nullptr, true);
+        CPL_IGNORE_RET_VAL(poHandleHelper->CanRestartOnError(
+            requestHelper.sWriteFuncData.pBuffer, nullptr, true));
     }
     else
     {

@@ -5141,7 +5141,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
 
-    if (EQUAL(pszResampling, "NONE"))
+    if (EQUAL(pszResampling, "NONE") || nBands == 0 || nOverviews == 0)
         return CE_None;
 
     // Sanity checks.
@@ -5238,7 +5238,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
     const GDALDataType eWrkDataType =
         GDALGetOvrWorkDataType(pszResampling, eDataType);
-    const int nWrkDataTypeSize = GDALGetDataTypeSizeBytes(eWrkDataType);
+    const int nWrkDataTypeSize =
+        std::max(1, GDALGetDataTypeSizeBytes(eWrkDataType));
 
     const bool bIsMask = papoSrcBands[0]->IsMaskBand();
 
@@ -5390,9 +5391,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     nFullResXChunk + static_cast<int64_t>(RADIUS_TO_DIAMETER) *
                                          nKernelRadius * nOvrFactor));
 
-            if (static_cast<GIntBig>(nFullResXChunkQueried) *
-                    nFullResYChunkQueried >
-                nChunkMaxSize / (nBands * nWrkDataTypeSize))
+            if (nBands > nChunkMaxSize / nFullResXChunkQueried /
+                             nFullResYChunkQueried / nWrkDataTypeSize)
             {
                 break;
             }
@@ -5414,9 +5414,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         // temporary dataset, and copy that temporary dataset over the target
         // overview bands (to avoid issues with lossy compression)
         const bool bOverflowFullResXChunkYChunkQueried =
-            nFullResXChunkQueried > std::numeric_limits<int64_t>::max() /
-                                        nFullResYChunkQueried / nBands /
-                                        nWrkDataTypeSize;
+            nBands > std::numeric_limits<int64_t>::max() /
+                         nFullResXChunkQueried / nFullResYChunkQueried /
+                         nWrkDataTypeSize;
 
         const auto nMemRequirement =
             bOverflowFullResXChunkYChunkQueried
@@ -5449,10 +5449,11 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         if (bOverflowFullResXChunkYChunkQueried ||
             nMemRequirement > nChunkMaxSizeForTempFile)
         {
-            const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+            const auto nDTSize =
+                std::max(1, GDALGetDataTypeSizeBytes(eDataType));
             const bool bTmpDSMemRequirementOverflow =
-                nDTSize > std::numeric_limits<int64_t>::max() / nDstWidth /
-                              nDstHeight / nBands;
+                nBands > std::numeric_limits<int64_t>::max() / nDstWidth /
+                             nDstHeight / nDTSize;
             const auto nTmpDSMemRequirement =
                 bTmpDSMemRequirementOverflow
                     ? 0

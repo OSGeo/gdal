@@ -1337,13 +1337,17 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         pszArrayName ? std::string(pszArrayName) : CPLGetBasenameSafe(pszName);
     if (poBandDim)
     {
-        auto apoDims =
-            bBandInterleave
-                ? std::vector<std::shared_ptr<GDALDimension>>{poBandDim,
-                                                              poDS->m_poDimY,
-                                                              poDS->m_poDimX}
-                : std::vector<std::shared_ptr<GDALDimension>>{
-                      poDS->m_poDimY, poDS->m_poDimX, poBandDim};
+        std::vector < std::shared_ptr<GDALDimension> apoDims;
+        if (bBandInterleave)
+        {
+            apoDims = std::vector<std::shared_ptr<GDALDimension>>{
+                poBandDim, poDS->m_poDimY, poDS->m_poDimX};
+        }
+        else
+        {
+            apoDims = std::vector<std::shared_ptr<GDALDimension>>{
+                poDS->m_poDimY, poDS->m_poDimX, poBandDim};
+        }
         CPL_IGNORE_RET_VAL(poBandDim);
         poDS->m_poSingleArray = poRG->CreateMDArray(
             osNonNullArrayName.c_str(), apoDims,
