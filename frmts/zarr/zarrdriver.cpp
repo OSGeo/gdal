@@ -1337,7 +1337,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         pszArrayName ? std::string(pszArrayName) : CPLGetBasenameSafe(pszName);
     if (poBandDim)
     {
-        std::vector < std::shared_ptr<GDALDimension> apoDims;
+        std::vector<std::shared_ptr<GDALDimension>> apoDims;
         if (bBandInterleave)
         {
             apoDims = std::vector<std::shared_ptr<GDALDimension>>{
