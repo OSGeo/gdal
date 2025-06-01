@@ -5414,10 +5414,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         // temporary dataset, and copy that temporary dataset over the target
         // overview bands (to avoid issues with lossy compression)
         const bool bOverflowFullResXChunkYChunkQueried =
-            nFullResYChunkQueried > INT_MAX / (nBands * nWrkDataTypeSize) ||
-            nFullResXChunkQueried >
-                std::numeric_limits<int64_t>::max() /
-                    (nFullResYChunkQueried * nBands * nWrkDataTypeSize);
+            nFullResXChunkQueried > std::numeric_limits<int64_t>::max() /
+                                        nFullResYChunkQueried / nBands /
+                                        nWrkDataTypeSize;
 
         const auto nMemRequirement =
             bOverflowFullResXChunkYChunkQueried
@@ -5452,9 +5451,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         {
             const auto nDTSize = GDALGetDataTypeSizeBytes(eDataType);
             const bool bTmpDSMemRequirementOverflow =
-                nDTSize * nBands >
-                std::numeric_limits<int64_t>::max() /
-                    (static_cast<int64_t>(nDstWidth) * nDstHeight);
+                nDTSize > std::numeric_limits<int64_t>::max() / nDstWidth /
+                              nDstHeight / nBands;
             const auto nTmpDSMemRequirement =
                 bTmpDSMemRequirementOverflow
                     ? 0
@@ -5464,8 +5462,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             // make sure that one band buffer doesn't overflow size_t
             const bool bChunkSizeOverflow =
                 static_cast<size_t>(nDTSize) >
-                std::numeric_limits<size_t>::max() /
-                    (static_cast<uint64_t>(nDstWidth) * nDstHeight);
+                std::numeric_limits<size_t>::max() / nDstWidth / nDstHeight;
             const size_t nChunkSize =
                 bChunkSizeOverflow
                     ? 0
