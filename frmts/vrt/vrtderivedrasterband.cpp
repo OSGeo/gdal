@@ -353,6 +353,7 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction(
  *         metadata string. If no pixel function has been registered
  *         for pszFuncNameIn, nullptr will be returned.
  */
+/* static */
 const std::pair<VRTDerivedRasterBand::PixelFunc, std::string> *
 VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
 {
@@ -368,6 +369,24 @@ VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
         return nullptr;
 
     return &(oIter->second);
+}
+
+/************************************************************************/
+/*                        GetPixelFunctionNames()                       */
+/************************************************************************/
+
+/**
+ * Return the list of available pixel function names.
+ */
+/* static */
+std::vector<std::string> VRTDerivedRasterBand::GetPixelFunctionNames()
+{
+    std::vector<std::string> res;
+    for (const auto &iter : GetGlobalMapPixelFunction())
+    {
+        res.push_back(iter.first);
+    }
+    return res;
 }
 
 /************************************************************************/

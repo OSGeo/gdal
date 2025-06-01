@@ -3434,7 +3434,8 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
         if (pszName && currentValue == pszName &&
-            EQUAL(psChild->pszValue, "Option"))
+            (strcmp(psChild->pszValue, "Option") == 0 ||
+             strcmp(psChild->pszValue, "Argument") == 0))
         {
             const char *pszType = CPLGetXMLValue(psChild, "type", "");
             const char *pszMin = CPLGetXMLValue(psChild, "min", nullptr);
@@ -3508,7 +3509,8 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
-        if (pszName && EQUAL(psChild->pszValue, "Option"))
+        if (pszName && (strcmp(psChild->pszValue, "Option") == 0 ||
+                        strcmp(psChild->pszValue, "Argument") == 0))
         {
             const char *pszScope = CPLGetXMLValue(psChild, "scope", nullptr);
             if (!pszScope ||
