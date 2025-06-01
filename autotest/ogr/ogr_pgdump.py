@@ -1618,3 +1618,40 @@ def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
     gdal.VSIFCloseL(f)
     assert '"ae"' in sql
     assert '"be"' in sql
+
+
+###############################################################################
+# Test SKIP_CONFLICTS
+
+
+def test_ogr_pgdump_skip_conflicts(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        tmp_vsimem / "test_ogr_pgdump_skip_conflicts.sql"
+    )
+
+    with gdal.quiet_errors():
+        lyr = ds.CreateLayer(
+            "skip_conflicts",
+            geom_type=ogr.wkbPoint,
+            options=["SKIP_CONFLICTS=YES"],
+        )
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "foo"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_ogr_pgdump_skip_conflicts.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove(") ON CONFLICT DO NOTHING;")
