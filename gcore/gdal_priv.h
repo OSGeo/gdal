@@ -2134,23 +2134,37 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_CAST,
     };
 
-    // Semi-public for gdal::min(), gdal::max()
-    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
-                           const GDALRasterBand &secondBand);
-
-    GDALComputedRasterBand(GDALComputedRasterBand &&) = default;
-    //! @endcond
-
-  protected:
-    friend class GDALRasterBand;
-
-    //! @cond Doxygen_Suppress
     GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
                            double constant);
     GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
                            GDALDataType dt);
 
+    // Semi-public for gdal::min(), gdal::max()
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+                           const GDALRasterBand &secondBand);
+
+    GDALComputedRasterBand(GDALComputedRasterBand &&) = default;
+
     //! @endcond
+
+    /** Convert a GDALComputedRasterBand* to a GDALComputedRasterBandH.
+     */
+    static inline GDALComputedRasterBandH
+    ToHandle(GDALComputedRasterBand *poBand)
+    {
+        return static_cast<GDALComputedRasterBandH>(poBand);
+    }
+
+    /** Convert a GDALComputedRasterBandH to a GDALComputedRasterBand*.
+     */
+    static inline GDALComputedRasterBand *
+    FromHandle(GDALComputedRasterBandH hBand)
+    {
+        return static_cast<GDALComputedRasterBand *>(hBand);
+    }
+
+  protected:
+    friend class GDALRasterBand;
 
     CPLErr IReadBlock(int, int, void *) override;
 
