@@ -2280,6 +2280,14 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 
 %pythonprepend CreateCopy %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    if len(args) >= 2 and isinstance(args[1], Band):
+        ds = args[1].GetDataset()
+        if ds:
+            args = [arg for arg in args]
+            args[1] = ds
+            args = tuple(args)
+
 %}
 
 %pythonprepend Delete %{
