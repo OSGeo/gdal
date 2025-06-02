@@ -51,15 +51,30 @@ class GDALComputedDataset final : public GDALDataset
 
     CPLErr GetGeoTransform(double *padfGeoTransform) override
     {
-        auto poRefDS = m_poFirstBand->GetDataset();
-        return poRefDS ? poRefDS->GetGeoTransform(padfGeoTransform)
-                       : CE_Failure;
+        return m_oVRTDS.GetGeoTransform(padfGeoTransform);
     }
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
-        auto poRefDS = m_poFirstBand->GetDataset();
-        return poRefDS ? poRefDS->GetSpatialRef() : nullptr;
+        return m_oVRTDS.GetSpatialRef();
+    }
+
+    char **GetMetadata(const char *pszDomain) override
+    {
+        return m_oVRTDS.GetMetadata(pszDomain);
+    }
+
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain) override
+    {
+        return m_oVRTDS.GetMetadataItem(pszName, pszDomain);
+    }
+
+    void *GetInternalHandle(const char *pszHandleName) override
+    {
+        if (pszHandleName && EQUAL(pszHandleName, "VRT_DATASET"))
+            return &m_oVRTDS;
+        return nullptr;
     }
 };
 
@@ -85,6 +100,19 @@ GDALComputedDataset::GDALComputedDataset(const GDALComputedDataset &other)
                     const_cast<GDALComputedDataset &>(other).GetRasterBand(1))),
             true));
 
+    double adfGT[6];
+    if (const_cast<VRTDataset &>(other.m_oVRTDS).GetGeoTransform(adfGT) ==
+        CE_None)
+    {
+        m_oVRTDS.SetGeoTransform(adfGT);
+    }
+
+    if (const auto *poSRS =
+            const_cast<VRTDataset &>(other.m_oVRTDS).GetSpatialRef())
+    {
+        m_oVRTDS.SetSpatialRef(poSRS);
+    }
+
     m_oVRTDS.AddBand(other.m_oVRTDS.GetRasterBand(1)->GetRasterDataType(),
                      m_aosOptions.List());
 
@@ -105,6 +133,21 @@ GDALComputedDataset::GDALComputedDataset(
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
+
+    if (auto poSrcDS = m_poFirstBand->GetDataset())
+    {
+        double adfGT[6];
+        if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
+        {
+            m_oVRTDS.SetGeoTransform(adfGT);
+        }
+
+        if (const auto *poSRS = poSrcDS->GetSpatialRef())
+        {
+            m_oVRTDS.SetSpatialRef(poSRS);
+        }
+    }
+
     if (op == GDALComputedRasterBand::Operation::OP_CAST)
     {
 #ifdef DEBUG

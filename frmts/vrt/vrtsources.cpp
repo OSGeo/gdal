@@ -506,7 +506,36 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
     }
     else
     {
-        AddSourceFilenameNode(pszVRTPath, psSrc);
+        bool bDone = false;
+        if (m_osSrcDSName.empty() && m_poRasterBand)
+        {
+            auto poSrcDS = m_poRasterBand->GetDataset();
+            if (poSrcDS)
+            {
+                VRTDataset *poSrcVRTDS = nullptr;
+                // For GDALComputedDataset
+                void *pHandle = poSrcDS->GetInternalHandle("VRT_DATASET");
+                if (pHandle && poSrcDS->GetInternalHandle(nullptr) == nullptr)
+                {
+                    poSrcVRTDS = static_cast<VRTDataset *>(pHandle);
+                }
+                else
+                {
+                    poSrcVRTDS = dynamic_cast<VRTDataset *>(poSrcDS);
+                }
+                if (poSrcVRTDS)
+                {
+                    poSrcVRTDS->UnsetPreservedRelativeFilenames();
+                    CPLAddXMLChild(psSrc,
+                                   poSrcVRTDS->SerializeToXML(pszVRTPath));
+                    bDone = true;
+                }
+            }
+        }
+        if (!bDone)
+        {
+            AddSourceFilenameNode(pszVRTPath, psSrc);
+        }
     }
 
     GDALSerializeOpenOptionsToXML(psSrc, m_aosOpenOptionsOri.List());
