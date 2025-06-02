@@ -64,6 +64,7 @@ typedef void GDALRasterBandShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterAttributeTableShadow;
 #endif
+typedef void GDALComputedRasterBandShadow;
 
 // Declaration from memmultidim.h
 std::shared_ptr<GDALMDArray> CPL_DLL MEMGroupCreateMDArray(GDALGroup* poGroup,

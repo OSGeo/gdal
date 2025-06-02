@@ -720,6 +720,96 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
       GDALEnablePixelTypeSignedByteWarning(self, b);
   }
 
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject Add;
+  GDALComputedRasterBandShadow* Add(GDALRasterBandShadow* other)
+  {
+      return GDALRasterBandAddBand(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
+  %newobject AddDouble;
+  GDALComputedRasterBandShadow* AddDouble(double constant)
+  {
+      return GDALRasterBandAddDouble(self, constant);
+  }
+
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject Sub;
+  GDALComputedRasterBandShadow* Sub(GDALRasterBandShadow* other)
+  {
+      return GDALRasterBandSubBand(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
+  %newobject SubDouble;
+  GDALComputedRasterBandShadow* SubDouble(double constant)
+  {
+      return GDALRasterBandSubDouble(self, constant);
+  }
+
+  %newobject SubDoubleToBand;
+  GDALComputedRasterBandShadow* SubDoubleToBand(double constant)
+  {
+      return GDALRasterBandSubDoubleToBand(constant, self);
+  }
+
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject Mul;
+  GDALComputedRasterBandShadow* Mul(GDALRasterBandShadow* other)
+  {
+      return GDALRasterBandMulBand(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
+  %newobject MulDouble;
+  GDALComputedRasterBandShadow* MulDouble(double constant)
+  {
+      return GDALRasterBandMulDouble(self, constant);
+  }
+
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject Div;
+  GDALComputedRasterBandShadow* Div(GDALRasterBandShadow* other)
+  {
+      return GDALRasterBandDivBand(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
+  %newobject DivDouble;
+  GDALComputedRasterBandShadow* DivDouble(double constant)
+  {
+      return GDALRasterBandDivDouble(self, constant);
+  }
+
+  %newobject DivDoubleByBand;
+  GDALComputedRasterBandShadow* DivDoubleByBand(double constant)
+  {
+      return GDALRasterBandDivDoubleByBand(constant, self);
+  }
+
+  %newobject AsType;
+  GDALComputedRasterBandShadow* AsType(GDALDataType dt)
+  {
+      return GDALRasterBandAsDataType(self, dt);
+  }
+
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject MaximumOfTwoBands;
+  GDALComputedRasterBandShadow* MaximumOfTwoBands(GDALRasterBandShadow* other)
+  {
+     return GDALMaximumOfTwoBands(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
+  %apply Pointer NONNULL {GDALRasterBandShadow* other};
+  %newobject MinimumOfTwoBands;
+  GDALComputedRasterBandShadow* MinimumOfTwoBands(GDALRasterBandShadow* other)
+  {
+     return GDALMinimumOfTwoBands(self, other);
+  }
+  %clear GDALRasterBandShadow* other;
+
 } /* %extend */
 
 };
@@ -735,3 +825,25 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandYSize( h );
 }
 %}
+
+/************************************************************************
+ *
+ * Define the extensions for ComputedBand (GDALComputedRasterBandShadow)
+ *
+*************************************************************************/
+
+%rename (ComputedBand) GDALComputedRasterBandShadow;
+
+class GDALComputedRasterBandShadow : public GDALRasterBandShadow {
+private:
+  GDALComputedRasterBandShadow();
+public:
+%extend {
+
+  ~GDALComputedRasterBandShadow() {
+      GDALComputedRasterBandRelease(self);
+  }
+
+} /* %extend */
+
+};

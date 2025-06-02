@@ -62,6 +62,7 @@ typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
+typedef void GDALComputedRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALSubdatasetInfoShadow;

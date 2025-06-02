@@ -549,6 +549,148 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %pythoncode %{
 
+  def _add_parent_references(self, parents):
+      if not hasattr(self, '_parent_references'):
+          self._parent_references = set()
+      for parent in parents:
+          if hasattr(parent, '_parent_references'):
+              for parent_of_parent in parent._parent_references:
+                  if parent_of_parent not in self._parent_references:
+                      parent_of_parent._add_child_ref(self)
+                      self._parent_references.add(parent_of_parent)
+          elif hasattr(parent, "_parent_ds"):
+              parent_ds = parent._parent_ds()
+              if parent_ds and parent_ds not in self._parent_references:
+                  parent_ds._add_child_ref(self)
+                  self._parent_references.add(parent_ds)
+      return self
+
+  @staticmethod
+  def _get_as_band_if_possible(o):
+        if hasattr(o, "shape"):
+            from osgeo import gdal_array
+            ds = gdal_array.OpenArray(o)
+            if ds.RasterCount != 1:
+                raise ValueError("numpy array must hold a single band")
+            band = ds.GetRasterBand(1)
+            band._hard_ref_to_parent = ds
+            return band
+        else:
+            return o
+
+  def __add__(self, other):
+      """Add this raster band to a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.Add(other)._add_parent_references([self, other])
+      else:
+          return self.AddDouble(other)._add_parent_references([self])
+
+  def __radd__(self, other):
+      """Add a constant to this raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return self.__add__(other)
+
+  def __sub__(self, other):
+      """Subtract this raster band with a raster band, a numpy array or constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.Sub(other)._add_parent_references([self, other])
+      else:
+          return self.SubDouble(other)._add_parent_references([self])
+
+  def __rsub__(self, other):
+      """Subtract a constant with a raster band
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      return self.SubDoubleToBand(other)._add_parent_references([self])
+
+  def __mul__(self, other):
+      """Multiply this raster band with a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.Mul(other)._add_parent_references([self, other])
+      else:
+          return self.MulDouble(other)._add_parent_references([self])
+
+  def __rmul__(self, other):
+      """Multiply a constant with this raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return self.__mul__(other)
+
+  def __truediv__(self, other):
+      """Divide this raster band by a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.Div(other)._add_parent_references([self, other])
+      else:
+          return self.DivDouble(other)._add_parent_references([self])
+
+  def __rtruediv__(self, other):
+      """Divide a constant by a raster band
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      return self.DivDoubleByBand(other)._add_parent_references([self])
+
+  def astype(self, dt):
+      """Cast this band to the specified data type
+
+         The data type can be one of the constant of the GDAL ``GDT_`` enumeration
+         or a numpy dtype.
+
+         The resulting band is lazily evaluated.
+      """
+      if not isinstance(dt, int):
+          try:
+              from osgeo import gdal_array
+              dt = gdal_array.NumericTypeCodeToGDALTypeCode(dt)
+          except Exception:
+              raise ValueError( "Invalid dt value")
+
+      return self.AsType(dt)._add_parent_references([self])
+
+  @staticmethod
+  def minimum(band1, band2):
+      """Return a band whose each pixel value is the minimum of the corresponding
+         pixel values in the input bands.
+
+         The resulting band is lazily evaluated.
+      """
+      band1 = Band._get_as_band_if_possible(band1)
+      band2 = Band._get_as_band_if_possible(band2)
+      return band1.MinimumOfTwoBands(band2)._add_parent_references([band1, band2])
+
+  @staticmethod
+  def maximum(band1, band2):
+      """Return a band whose each pixel value is the maximum of the corresponding
+         pixel values in the input bands.
+
+         The resulting band is lazily evaluated.
+      """
+      band1 = Band._get_as_band_if_possible(band1)
+      band2 = Band._get_as_band_if_possible(band2)
+      return band1.MaximumOfTwoBands(band2)._add_parent_references([band1, band2])
+
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,
                  buf_pixel_space=None, buf_line_space=None,

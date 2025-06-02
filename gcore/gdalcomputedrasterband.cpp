@@ -327,6 +327,19 @@ GDALComputedRasterBand::~GDALComputedRasterBand()
 }
 
 /************************************************************************/
+/*                    GDALComputedRasterBandRelease()                   */
+/************************************************************************/
+
+/** Release a GDALComputedRasterBandH
+ *
+ * @since 3.12
+ */
+void GDALComputedRasterBandRelease(GDALComputedRasterBandH hBand)
+{
+    delete GDALComputedRasterBand::FromHandle(hBand);
+}
+
+/************************************************************************/
 /*                           IReadBlock()                               */
 /************************************************************************/
 
