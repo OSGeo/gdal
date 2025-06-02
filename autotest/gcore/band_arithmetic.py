@@ -298,3 +298,16 @@ def test_band_arithmetic_maximum_error():
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
         gdal.Band.maximum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+
+def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):
+
+    with gdal.Open("data/rgbsmall.tif") as ds:
+        R = ds.GetRasterBand(1)
+        G = ds.GetRasterBand(2)
+        B = ds.GetRasterBand(3)
+        greylevel = (0.299 * R + 0.587 * G + 0.114 * B).astype(gdal.GDT_Byte)
+        gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "out.vrt", greylevel)
+
+    ds = gdal.Open(tmp_vsimem / "out.vrt")
+    assert ds.GetRasterBand(1).Checksum() == 21466

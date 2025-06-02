@@ -5587,7 +5587,15 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
 
         const OGRSpatialReference *poGotSRS =
             formula.GetDataset()->GetSpatialRef();
-        EXPECT_EQ(poGotSRS, poDS->GetSpatialRef());
+        EXPECT_NE(poGotSRS, nullptr);
+        EXPECT_TRUE(poGotSRS->IsSame(poDS->GetSpatialRef()));
+
+        EXPECT_NE(formula.GetDataset()->GetInternalHandle("VRT_DATASET"),
+                  nullptr);
+        EXPECT_EQ(formula.GetDataset()->GetInternalHandle("invalid"), nullptr);
+
+        EXPECT_EQ(formula.GetDataset()->GetMetadataItem("foo"), nullptr);
+        EXPECT_NE(formula.GetDataset()->GetMetadata("xml:VRT"), nullptr);
 
         std::vector<double> adfResults(WIDTH);
         EXPECT_EQ(formula.ReadBlock(0, 0, adfResults.data()), CE_None);
