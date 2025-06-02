@@ -1476,3 +1476,43 @@ def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
 
     f = None
     ds = None
+
+
+###############################################################################
+# test reading DBF record in SHP file. An error has been detected about the
+# translated decimal figures: zero instead of two
+
+
+def test_ogr_miramon_SHP_decimal_figures(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out/MonumentalTrees.pnt")
+    src_ds = gdal.OpenEx(
+        "data/miramon_inputs/MonumentalTrees.shp",
+        gdal.OF_VECTOR,
+    )
+    gdal.VectorTranslate(
+        out_filename,
+        src_ds,
+        format="MiraMonVector",
+    )
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 2
+    assert lyr.GetGeomType() == ogr.wkbPoint
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 0
+    assert f.GetField("CALCUL") == 90.00
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 1
+    assert f.GetField("CALCUL") == 91.50
+
+    f = None
+    ds = None
