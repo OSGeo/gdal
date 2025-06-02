@@ -1400,10 +1400,12 @@ void GTiffDataset::ScanDirectories()
 /*                         GetInternalHandle()                          */
 /************************************************************************/
 
-void *GTiffDataset::GetInternalHandle(const char * /* pszHandleName */)
+void *GTiffDataset::GetInternalHandle(const char *pszHandleName)
 
 {
-    return m_hTIFF;
+    if (pszHandleName && EQUAL(pszHandleName, "TIFF_HANDLE"))
+        return m_hTIFF;
+    return nullptr;
 }
 
 /************************************************************************/
