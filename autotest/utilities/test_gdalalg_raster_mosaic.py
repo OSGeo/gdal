@@ -512,3 +512,13 @@ def test_gdalalg_raster_mosaic_pixel_function_arg_complete():
         f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg"
     )
     assert out == "propagateNoData="
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg propagateNoData="
+    ).split(" ")
+    assert out == ["NO", "YES"]
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg propagateNoData=YES"
+    )
+    assert out == ""

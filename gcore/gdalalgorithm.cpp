@@ -3429,11 +3429,21 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
     CPLXMLTreeCloser poTree(CPLParseXMLString(pszXML));
     if (!poTree)
         return false;
+
+    std::string typedOptionName = currentValue;
+    const auto posEqual = typedOptionName.find('=');
+    std::string typedValue;
+    if (posEqual != 0 && posEqual != std::string::npos)
+    {
+        typedValue = currentValue.substr(posEqual + 1);
+        typedOptionName.resize(posEqual);
+    }
+
     for (const CPLXMLNode *psChild = poTree.get()->psChild; psChild;
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
-        if (pszName && currentValue == pszName &&
+        if (pszName && typedOptionName == pszName &&
             (strcmp(psChild->pszValue, "Option") == 0 ||
              strcmp(psChild->pszValue, "Argument") == 0))
         {
@@ -3453,6 +3463,11 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
             }
             else if (EQUAL(pszType, "boolean"))
             {
+                if (typedValue == "YES" || typedValue == "NO")
+                {
+                    oRet.push_back(currentValue);
+                    return true;
+                }
                 oRet.push_back("NO");
                 oRet.push_back("YES");
             }
