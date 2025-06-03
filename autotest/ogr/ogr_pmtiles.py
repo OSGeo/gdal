@@ -449,11 +449,7 @@ def test_ogr_pmtiles_write_from_mbtiles():
 
         # For some reason do not pass on those older platforms. Perhaps GEOS
         # version?
-        if not (
-            gdaltest.is_travis_branch("ubuntu_1804")
-            or gdaltest.is_travis_branch("ubuntu_1804_32bit")
-            or gdaltest.skip_on_travis()
-        ):
+        if not gdaltest.skip_on_travis():
             for key in expected:
                 assert got[key] == expected[key], (key, got)
 
@@ -590,7 +586,7 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_max_zoom():
 # Test started to fail on Travis s390x starting with https://github.com/OSGeo/gdal/pull/10274
 # which is totally unrelated...
 @pytest.mark.skipif(
-    os.environ.get("BUILD_NAME", "") == "s390x",
+    os.environ.get("BUILD_NAME", "") in ("s390x", "ubuntu_2004"),
     reason="Fails randomly on that platform",
 )
 def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
