@@ -12,6 +12,10 @@ Programs
 Starting with GDAL 3.11, parts of the GDAL utilities are available from a new
 single :program:`gdal` program that accepts commands and subcommands.
 
+As an introduction, you can follow the webinar given on June 3, 2025 about the
+GDAL Command Line Interface Modernization as a `PDF slide deck <https://download.osgeo.org/gdal/presentations/GDAL%20CLI%20Modernization.pdf>`__
+or the `recording of the video <https://www.youtube.com/watch?v=ZKdrYm3TiBU>`__.
+
 .. warning::
 
     The :program:`gdal` command is provisionally provided as an alternative
