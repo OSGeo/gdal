@@ -14,6 +14,8 @@ or anywhere in GDAL API or command line utilities where a raster input dataset
 is expected. GDALG files are conceptually close to :ref:`VRT (Virtual) files <raster.vrt>`,
 although the implementation is substantially different.
 
+.. note:: GDALG is the contraction of GDAL and ALGorithm.
+
 In-process stream execution
 ---------------------------
 

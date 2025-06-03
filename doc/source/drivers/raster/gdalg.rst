@@ -10,6 +10,8 @@ GDALG: GDAL Streamed Algorithm
 
 .. built_in_by_default::
 
+.. note:: GDALG is the contraction of GDAL and ALGorithm.
+
 This is a read-only driver that reads a JSON file containing an invocation
 of the :ref:`gdal command line interface <gdal_program>`, that results in a
 on-the-fly / streamed raster dataset when used as an input
