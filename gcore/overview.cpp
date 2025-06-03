@@ -989,15 +989,14 @@ inline __m128 FIXUP_LANES(__m128 x)
 
 #endif
 
-template <class T>
 static int NOINLINE
 QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
-                       const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                       T *CPL_RESTRICT pDstScanline)
+                       const float *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                       float *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on Float32 by
     // processing by group of RMS_FLOAT_ELTS output pixels.
-    const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+    const float *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
     const auto minus_zero = set1_ps(-0.0f);
@@ -1009,14 +1008,11 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
          iDstPixel += RMS_FLOAT_ELTS)
     {
         // Load 2*RMS_FLOAT_ELTS Float32 from each line
-        auto firstLineLo =
-            loadu_ps(reinterpret_cast<float const *>(pSrcScanlineShifted));
-        auto firstLineHi = loadu_ps(reinterpret_cast<float const *>(
-            pSrcScanlineShifted + RMS_FLOAT_ELTS));
-        auto secondLineLo = loadu_ps(
-            reinterpret_cast<float const *>(pSrcScanlineShifted + nChunkXSize));
-        auto secondLineHi = loadu_ps(reinterpret_cast<float const *>(
-            pSrcScanlineShifted + RMS_FLOAT_ELTS + nChunkXSize));
+        auto firstLineLo = loadu_ps(pSrcScanlineShifted);
+        auto firstLineHi = loadu_ps(pSrcScanlineShifted + RMS_FLOAT_ELTS);
+        auto secondLineLo = loadu_ps(pSrcScanlineShifted + nChunkXSize);
+        auto secondLineHi =
+            loadu_ps(pSrcScanlineShifted + RMS_FLOAT_ELTS + nChunkXSize);
 
         // Take the absolute value
         firstLineLo = andnot_ps(minus_zero, firstLineLo);
@@ -1068,8 +1064,7 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
 
         rms = FIXUP_LANES(rms);
 
-        // coverity[incompatible_cast]
-        storeu_ps(reinterpret_cast<float *>(&pDstScanline[iDstPixel]), rms);
+        storeu_ps(&pDstScanline[iDstPixel], rms);
         pSrcScanlineShifted += RMS_FLOAT_ELTS * 2;
     }
 
@@ -1083,14 +1078,13 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
 /*                        AverageFloatSSE2()                            */
 /************************************************************************/
 
-template <class T>
 static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
-                            const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                            T *CPL_RESTRICT pDstScanline)
+                            const float *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                            float *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on Float32 by
     // processing by group of 4 output pixels.
-    const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+    const float *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
     const auto zeroDot25 = _mm_set1_ps(0.25f);
@@ -1098,14 +1092,12 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
     for (; iDstPixel < nDstXWidth - 3; iDstPixel += 4)
     {
         // Load 8 Float32 from each line
-        const auto firstLineLo =
-            _mm_loadu_ps(reinterpret_cast<float const *>(pSrcScanlineShifted));
-        const auto firstLineHi = _mm_loadu_ps(
-            reinterpret_cast<float const *>(pSrcScanlineShifted + 4));
-        const auto secondLineLo = _mm_loadu_ps(
-            reinterpret_cast<float const *>(pSrcScanlineShifted + nChunkXSize));
-        const auto secondLineHi = _mm_loadu_ps(reinterpret_cast<float const *>(
-            pSrcScanlineShifted + 4 + nChunkXSize));
+        const auto firstLineLo = _mm_loadu_ps(pSrcScanlineShifted);
+        const auto firstLineHi = _mm_loadu_ps(pSrcScanlineShifted + 4);
+        const auto secondLineLo =
+            _mm_loadu_ps(pSrcScanlineShifted + nChunkXSize);
+        const auto secondLineHi =
+            _mm_loadu_ps(pSrcScanlineShifted + 4 + nChunkXSize);
 
         // Vertical addition
         const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
@@ -1120,9 +1112,7 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
 
         const auto average = _mm_mul_ps(sum, zeroDot25);
 
-        // coverity[incompatible_cast]
-        _mm_storeu_ps(reinterpret_cast<float *>(&pDstScanline[iDstPixel]),
-                      average);
+        _mm_storeu_ps(&pDstScanline[iDstPixel], average);
         pSrcScanlineShifted += 8;
     }
 
@@ -1303,7 +1293,8 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
                 pabyChunkNodataMask == nullptr)
             {
-                if (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16)
+                if constexpr (eWrkDataType == GDT_Byte ||
+                              eWrkDataType == GDT_UInt16)
                 {
                     // Optimized case : no nodata, overview by a factor of 2 and
                     // regular x and y src spacing.
@@ -1313,30 +1304,36 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
-                    if (bQuadraticMean && eWrkDataType == GDT_Byte)
+                    if constexpr (eWrkDataType == GDT_Byte)
                     {
-                        iDstPixel = QuadraticMeanByteSSE2OrAVX2(
-                            nDstXWidth, nChunkXSize, pSrcScanlineShifted,
-                            pDstScanline);
+                        if (bQuadraticMean)
+                        {
+                            iDstPixel = QuadraticMeanByteSSE2OrAVX2(
+                                nDstXWidth, nChunkXSize, pSrcScanlineShifted,
+                                pDstScanline);
+                        }
+                        else
+                        {
+                            iDstPixel = AverageByteSSE2OrAVX2(
+                                nDstXWidth, nChunkXSize, pSrcScanlineShifted,
+                                pDstScanline);
+                        }
                     }
-                    else if (bQuadraticMean /* && eWrkDataType == GDT_UInt16 */)
+                    else
                     {
-                        iDstPixel = QuadraticMeanUInt16SSE2(
-                            nDstXWidth, nChunkXSize, pSrcScanlineShifted,
-                            pDstScanline);
-                    }
-                    else if (/* !bQuadraticMean && */ eWrkDataType == GDT_Byte)
-                    {
-                        iDstPixel = AverageByteSSE2OrAVX2(
-                            nDstXWidth, nChunkXSize, pSrcScanlineShifted,
-                            pDstScanline);
-                    }
-                    else /* if( !bQuadraticMean && eWrkDataType == GDT_UInt16 )
-                          */
-                    {
-                        iDstPixel = AverageUInt16SSE2(nDstXWidth, nChunkXSize,
-                                                      pSrcScanlineShifted,
-                                                      pDstScanline);
+                        static_assert(eWrkDataType == GDT_UInt16);
+                        if (bQuadraticMean)
+                        {
+                            iDstPixel = QuadraticMeanUInt16SSE2(
+                                nDstXWidth, nChunkXSize, pSrcScanlineShifted,
+                                pDstScanline);
+                        }
+                        else
+                        {
+                            iDstPixel = AverageUInt16SSE2(
+                                nDstXWidth, nChunkXSize, pSrcScanlineShifted,
+                                pDstScanline);
+                        }
                     }
 #endif
                     for (; iDstPixel < nDstXWidth; ++iDstPixel)
@@ -1372,16 +1369,17 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                 }
                 else
                 {
-                    CPLAssert(eWrkDataType == GDT_Float32 ||
-                              eWrkDataType == GDT_Float64);
+                    static_assert(eWrkDataType == GDT_Float32 ||
+                                  eWrkDataType == GDT_Float64);
                     const T *pSrcScanlineShifted =
                         pChunk + pasSrcX[0].nLeftXOffShifted +
                         static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
-                    if (eWrkDataType == GDT_Float32)
+                    if constexpr (eWrkDataType == GDT_Float32)
                     {
+                        static_assert(std::is_same_v<T, float>);
                         if (bQuadraticMean)
                         {
                             iDstPixel = QuadraticMeanFloatSSE2(
@@ -1621,7 +1619,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             continue;
                         }
                     }
-                    if (eWrkDataType == GDT_Byte)
+                    if constexpr (eWrkDataType == GDT_Byte)
                     {
                         T nVal;
                         if (bQuadraticMean)
@@ -1634,7 +1632,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
                     }
-                    else if (eWrkDataType == GDT_UInt16)
+                    else if constexpr (eWrkDataType == GDT_UInt16)
                     {
                         T nVal;
                         if (bQuadraticMean)
