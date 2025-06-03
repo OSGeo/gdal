@@ -4910,6 +4910,24 @@ TEST_F(test_gdal, ReadRaster)
         EXPECT_EQ(res, expected_res);
     }
 
+    // Test GFloat16
+    {
+        std::vector<GFloat16> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<GFloat16>{-cpl::NumericLimits<GFloat16>::infinity(),
+                                  static_cast<GFloat16>(-1.0f),
+                                  static_cast<GFloat16>(1.0f),
+                                  static_cast<GFloat16>(128.0f),
+                                  static_cast<GFloat16>(32768.0f),
+                                  cpl::NumericLimits<GFloat16>::infinity()};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), static_cast<GFloat16>(0.0f));
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
     // Test float
     {
         std::vector<float> res;

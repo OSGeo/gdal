@@ -13,6 +13,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_float.h"
 #include "gdal_priv.h"
 
 #include <climits>
@@ -541,6 +542,7 @@ DEFINE_GetGDTFromCppType(uint32_t, GDT_UInt32);
 DEFINE_GetGDTFromCppType(int32_t, GDT_Int32);
 DEFINE_GetGDTFromCppType(uint64_t, GDT_UInt64);
 DEFINE_GetGDTFromCppType(int64_t, GDT_Int64);
+DEFINE_GetGDTFromCppType(GFloat16, GDT_Float16);
 DEFINE_GetGDTFromCppType(float, GDT_Float32);
 DEFINE_GetGDTFromCppType(double, GDT_Float64);
 // Not allowed by C++ standard
@@ -760,6 +762,7 @@ INSTANTIATE_READ_RASTER(uint32_t)
 INSTANTIATE_READ_RASTER(int32_t)
 INSTANTIATE_READ_RASTER(uint64_t)
 INSTANTIATE_READ_RASTER(int64_t)
+INSTANTIATE_READ_RASTER(GFloat16)
 INSTANTIATE_READ_RASTER(float)
 INSTANTIATE_READ_RASTER(double)
 // Not allowed by C++ standard
@@ -974,6 +977,7 @@ INSTANTIATE_READ_RASTER_VECTOR(uint32_t)
 INSTANTIATE_READ_RASTER_VECTOR(int32_t)
 INSTANTIATE_READ_RASTER_VECTOR(uint64_t)
 INSTANTIATE_READ_RASTER_VECTOR(int64_t)
+INSTANTIATE_READ_RASTER_VECTOR(GFloat16)
 INSTANTIATE_READ_RASTER_VECTOR(float)
 INSTANTIATE_READ_RASTER_VECTOR(double)
 // Not allowed by C++ standard
