@@ -15,7 +15,7 @@
             <map-input name="z" type="zoom" value="11" min="11" max="11" ></map-input>
             <map-input name="x" type="location" axis="column" units="tilematrix" min="354" max="354" ></map-input>
             <map-input name="y" type="location" axis="row" units="tilematrix" min="818" max="818" ></map-input>
-            <map-link tref="http://example.com/test_gdalalg_raster_tile_basic_None_None_{z}/{x}/{y}.png" rel="tile" ></map-link>
+            <map-input tref="http://example.com/test_gdalalg_raster_tile_basic_None_None_{z}/{x}/{y}.png" rel="tile" ></map-input>
             <!--<map-link tref="http://localhost:8080/myservice/wmts?layer=MYLAYER&amp;style=&amp;tilematrixset=OSMTILE&amp;service=WMTS&amp;request=GetTile&amp;version=1.0.0&amp;tilematrix={z}&amp;TileCol={x}&amp;TileRow={y}&amp;format=image/png" rel="tile" ></map-link>-->
             <!--
             <map-input name="i" type="location" axis="i" units="tile" ></map-input>

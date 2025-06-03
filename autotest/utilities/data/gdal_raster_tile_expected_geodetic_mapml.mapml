@@ -15,7 +15,7 @@
             <map-input name="z" type="zoom" value="0" min="0" max="0" ></map-input>
             <map-input name="x" type="location" axis="column" units="tilematrix" min="0" max="1" ></map-input>
             <map-input name="y" type="location" axis="row" units="tilematrix" min="0" max="0" ></map-input>
-            <map-link tref="./{z}/{x}/{y}.png" rel="tile" ></map-link>
+            <map-input tref="./{z}/{x}/{y}.png" rel="tile" ></map-input>
             <!--<map-link tref="http://localhost:8080/myservice/wmts?layer=MYLAYER&amp;style=&amp;tilematrixset=WGS84&amp;service=WMTS&amp;request=GetTile&amp;version=1.0.0&amp;tilematrix={z}&amp;TileCol={x}&amp;TileRow={y}&amp;format=image/png" rel="tile" ></map-link>-->
             <!--
             <map-input name="i" type="location" axis="i" units="tile" ></map-input>
