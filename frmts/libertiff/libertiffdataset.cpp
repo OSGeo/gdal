@@ -342,7 +342,6 @@ class LIBERTIFFBand final : public GDALPamRasterBand
             CPLDebug("LIBERTIFF", "GetLockedBlockRef() called");
         }
         std::lock_guard oLock(m_oMutexBlockCache);
-        // coverity[sleep]
         return GDALRasterBand::GetLockedBlockRef(nXBlockOff, nYBlockOff,
                                                  bJustInitialize);
     }
