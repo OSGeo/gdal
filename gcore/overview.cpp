@@ -402,13 +402,21 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define add_epi16 _mm256_add_epi16
 #define sub_epi16 _mm256_sub_epi16
 #define packus_epi16 _mm256_packus_epi16
+
 /* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
 /* to get the lower 128-bit bits of what would be a true 256-bit vector register
  */
+
+inline __m256i FIXUP_LANES(__m256i x)
+{
+    return _mm256_permute4x64_epi64(x, _MM_SHUFFLE(3, 1, 2, 0));
+}
+
 #define store_lo(x, y)                                                         \
     _mm_storeu_si128(reinterpret_cast<__m128i *>(x),                           \
-                     _mm256_extracti128_si256(                                 \
-                         _mm256_permute4x64_epi64((y), 0 | (2 << 2)), 0))
+                     _mm256_extracti128_si256(FIXUP_LANES(y), 0))
+#define storeu_int(x, y)                                                       \
+    _mm256_storeu_si256(reinterpret_cast<__m256i *>(x), FIXUP_LANES(y))
 #define hadd_epi16 _mm256_hadd_epi16
 #define zeroupper() _mm256_zeroupper()
 #else
@@ -436,6 +444,7 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define sub_epi16 _mm_sub_epi16
 #define packus_epi16 _mm_packus_epi16
 #define store_lo(x, y) _mm_storel_epi64(reinterpret_cast<__m128i *>(x), (y))
+#define storeu_int(x, y) _mm_storeu_si128(reinterpret_cast<__m128i *>(x), (y))
 #define hadd_epi16 sse2_hadd_epi16
 #define zeroupper() (void)0
 #endif
@@ -554,39 +563,71 @@ AverageByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
                       T *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on Byte by
-    // processing by group of 8 output pixels.
+    // processing by group of 16 output pixels for SSE2, or 32 for AVX2
 
     const auto zero = setzero();
     const auto two16 = set1_epi16(2);
     const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
+    for (; iDstPixel < nDstXWidth - (2 * DEST_ELTS - 1);
+         iDstPixel += 2 * DEST_ELTS)
     {
-        // Load 2 * DEST_ELTS bytes from each line
-        const auto firstLine = loadu_int(pSrcScanlineShifted);
-        const auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
-        // Extend those Bytes as UInt16s
-        const auto firstLineLo = unpacklo_epi8(firstLine, zero);
-        const auto firstLineHi = unpackhi_epi8(firstLine, zero);
-        const auto secondLineLo = unpacklo_epi8(secondLine, zero);
-        const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+        decltype(setzero()) average0;
+        {
+            // Load 2 * DEST_ELTS bytes from each line
+            const auto firstLine = loadu_int(pSrcScanlineShifted);
+            const auto secondLine =
+                loadu_int(pSrcScanlineShifted + nChunkXSize);
+            // Extend those Bytes as UInt16s
+            const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+            const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+            const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+            const auto secondLineHi = unpackhi_epi8(secondLine, zero);
 
-        // Vertical addition
-        const auto sumLo = add_epi16(firstLineLo, secondLineLo);
-        const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+            // Vertical addition
+            const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+            const auto sumHi = add_epi16(firstLineHi, secondLineHi);
 
-        // Horizontal addition of adjacent pairs, and recombine low and high
-        // parts
-        const auto sum = hadd_epi16(sumLo, sumHi);
+            // Horizontal addition of adjacent pairs, and recombine low and high
+            // parts
+            const auto sum = hadd_epi16(sumLo, sumHi);
 
-        // average = (sum + 2) / 4
-        auto average = srli_epi16(add_epi16(sum, two16), 2);
+            // average = (sum + 2) / 4
+            average0 = srli_epi16(add_epi16(sum, two16), 2);
+
+            pSrcScanlineShifted += 2 * DEST_ELTS;
+        }
+
+        decltype(setzero()) average1;
+        {
+            // Load 2 * DEST_ELTS bytes from each line
+            const auto firstLine = loadu_int(pSrcScanlineShifted);
+            const auto secondLine =
+                loadu_int(pSrcScanlineShifted + nChunkXSize);
+            // Extend those Bytes as UInt16s
+            const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+            const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+            const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+            const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+            // Vertical addition
+            const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+            const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+
+            // Horizontal addition of adjacent pairs, and recombine low and high
+            // parts
+            const auto sum = hadd_epi16(sumLo, sumHi);
+
+            // average = (sum + 2) / 4
+            average1 = srli_epi16(add_epi16(sum, two16), 2);
+
+            pSrcScanlineShifted += 2 * DEST_ELTS;
+        }
 
         // Pack each 16 bit average value to 8 bits
-        average = packus_epi16(average, average /* could be anything */);
-        store_lo(&pDstScanline[iDstPixel], average);
-        pSrcScanlineShifted += 2 * DEST_ELTS;
+        const auto average = packus_epi16(average0, average1);
+        storeu_int(&pDstScanline[iDstPixel], average);
     }
     zeroupper();
 
