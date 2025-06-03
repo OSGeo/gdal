@@ -903,7 +903,7 @@ def test_rasterio_13(dt):
     elif dt == gdal.GDT_UInt32:
         x = (1 << 32) - 1
     elif dt == gdal.GDT_Int64:
-        x = (1 << 63) - 1
+        x = (1 << 63) - 1024
     elif dt == gdal.GDT_UInt64:
         x = (1 << 64) - 2048
     elif dt == gdal.GDT_Float32:

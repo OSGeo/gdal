@@ -3188,14 +3188,16 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         // cppcheck-suppress unreadVariable
         fDstMin = static_cast<Twork>(std::numeric_limits<uint64_t>::min());
         // cppcheck-suppress unreadVariable
-        fDstMax = static_cast<Twork>(std::numeric_limits<uint64_t>::max());
+        // (1 << 64) - 2048: largest uint64 value a double can hold
+        fDstMax = static_cast<Twork>(18446744073709549568ULL);
     }
     else if (dstDataType == GDT_Int64)
     {
         // cppcheck-suppress unreadVariable
         fDstMin = static_cast<Twork>(std::numeric_limits<int64_t>::min());
         // cppcheck-suppress unreadVariable
-        fDstMax = static_cast<Twork>(std::numeric_limits<int64_t>::max());
+        // (1 << 63) - 1024: largest int64 that a double can hold
+        fDstMax = static_cast<Twork>(9223372036854774784LL);
     }
 
     auto replaceValIfNodata = [bHasNoData, isIntegerDT, fDstMin, fDstMax,
