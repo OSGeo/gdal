@@ -951,26 +951,10 @@ CPLErr GDALRasterBand::ReadRaster(std::vector<T> &vData, double dfXOff,
 
     GDALRasterBand *pThis = const_cast<GDALRasterBand *>(this);
 
-    const bool bCallLeaveReadWrite =
-        CPL_TO_BOOL(pThis->EnterReadWrite(GF_Read));
-
-    CPLErr eErr;
-    // coverity[identical_branches]
-    if (bForceCachedIO)
-        eErr = pThis->GDALRasterBand::IRasterIO(
-            GF_Read, nXOff, nYOff, nXSize, nYSize, vData.data(),
-            static_cast<int>(nBufXSize), static_cast<int>(nBufYSize), eBufType,
-            nPixelSpace, nLineSpace, &sExtraArg);
-    else
-        eErr = pThis->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                vData.data(), static_cast<int>(nBufXSize),
-                                static_cast<int>(nBufYSize), eBufType,
-                                nPixelSpace, nLineSpace, &sExtraArg);
-
-    if (bCallLeaveReadWrite)
-        pThis->LeaveReadWrite();
-
-    return eErr;
+    return pThis->RasterIOInternal(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                   vData.data(), static_cast<int>(nBufXSize),
+                                   static_cast<int>(nBufYSize), eBufType,
+                                   nPixelSpace, nLineSpace, &sExtraArg);
 }
 
 //! @cond Doxygen_Suppress
