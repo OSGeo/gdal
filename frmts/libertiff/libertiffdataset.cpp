@@ -1244,7 +1244,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             curStrileIdx =
                 nBlockYOff + DIV_ROUND_UP(m_image->height(),
                                           m_image->rowsPerStripSanitized()) *
-                                 iBandTIFFFirst;
+                                 static_cast<uint64_t>(iBandTIFFFirst);
         else
             curStrileIdx = nBlockYOff;
     }
