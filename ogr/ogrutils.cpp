@@ -2049,8 +2049,8 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
     /* -------------------------------------------------------------------- */
     /*      Get the geometry type.                                          */
     /* -------------------------------------------------------------------- */
-    bool bIs3D = false;
-    bool bIsMeasured = false;
+    bool bIsOldStyle3D = false;
+    bool bIsOldStyleMeasured = false;
     int iRawType = 0;
 
     memcpy(&iRawType, pabyData + 1, 4);
@@ -2063,14 +2063,14 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
     if (0x40000000 & iRawType)
     {
         iRawType &= ~0x40000000;
-        bIsMeasured = true;
+        bIsOldStyleMeasured = true;
     }
     // Old-style OGC z-bit is flipped? Tests also Z bit in PostGIS WKB.
     if (wkb25DBitInternalUse & iRawType)
     {
         // Clean off top 3 bytes.
         iRawType &= 0x000000FF;
-        bIs3D = true;
+        bIsOldStyle3D = true;
     }
 
     // ISO SQL/MM Part3 draft -> Deprecated.
@@ -2163,7 +2163,7 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
     {
         // Clean off top 3 bytes.
         iRawType &= 0x000000FF;
-        bIs3D = true;
+        bIsOldStyle3D = true;
     }
 
     if (eWkbVariant == wkbVariantPostGIS1)
@@ -2176,18 +2176,6 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
             iRawType = wkbMultiSurface;
     }
 
-    // Below additions cannot occur due to clearing higher bits previously
-    if (bIs3D)
-    {
-        // coverity[overflow_const]
-        iRawType += 1000;
-    }
-    if (bIsMeasured)
-    {
-        // coverity[overflow_const]
-        iRawType += 2000;
-    }
-
     // ISO SQL/MM style types are between 1-17, 1001-1017, 2001-2017, and
     // 3001-3017.
     if (!((iRawType > 0 && iRawType <= 17) ||
@@ -2198,6 +2186,15 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported WKB type %d",
                  iRawType);
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
+
+    if (bIsOldStyle3D)
+    {
+        iRawType += 1000;
+    }
+    if (bIsOldStyleMeasured)
+    {
+        iRawType += 2000;
     }
 
     // Convert to OGRwkbGeometryType value.
