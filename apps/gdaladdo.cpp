@@ -20,6 +20,7 @@
 #include "gdalargumentparser.h"
 
 #include <algorithm>
+#include <limits>
 
 /************************************************************************/
 /*                        GDALAddoErrorHandler()                        */
@@ -224,7 +225,8 @@ static bool PartialRefreshFromSourceTimestamp(
 
     std::vector<GTISourceDesc> regions;
 
-    double dfTotalPixels = 0;
+    // Smallest positive double to avoid Coverity Scan complaining about divide_by_zero
+    double dfTotalPixels = std::numeric_limits<double>::min();
 
     if (dynamic_cast<VRTDataset *>(poDS))
     {
@@ -338,7 +340,7 @@ static bool PartialRefreshFromSourceTimestamp(
             {
                 printf("Refresh from source %s.\n", region.osFilename.c_str());
             }
-            double dfNextCurPixels =
+            const double dfNextCurPixels =
                 dfCurPixels +
                 static_cast<double>(region.nDstXSize) * region.nDstYSize;
             void *pScaledProgress = GDALCreateScaledProgress(
@@ -407,7 +409,8 @@ static bool PartialRefreshFromSourceExtent(
 
     std::vector<Region> regions;
 
-    double dfTotalPixels = 0;
+    // Smallest positive double to avoid Coverity Scan complaining about divide_by_zero
+    double dfTotalPixels = std::numeric_limits<double>::min();
     for (int i = 0; i < aosSources.size(); ++i)
     {
         auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
@@ -479,9 +482,8 @@ static bool PartialRefreshFromSourceExtent(
         {
             printf("Refresh from source %s.\n", region.osFileName.c_str());
         }
-        double dfNextCurPixels =
+        const double dfNextCurPixels =
             dfCurPixels + static_cast<double>(region.nXSize) * region.nYSize;
-        // coverity[divide_by_zero]
         void *pScaledProgress = GDALCreateScaledProgress(
             dfCurPixels / dfTotalPixels, dfNextCurPixels / dfTotalPixels,
             pfnProgress, pProgressArg);
