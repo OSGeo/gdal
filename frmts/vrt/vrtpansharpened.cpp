@@ -119,12 +119,11 @@ VRTPansharpenedDataset::VRTPansharpenedDataset(int nXSize, int nYSize,
     : VRTDataset(nXSize, nYSize,
                  nBlockXSize > 0 ? nBlockXSize : std::min(nXSize, 512),
                  nBlockYSize > 0 ? nBlockYSize : std::min(nYSize, 512)),
-      m_poPansharpener(nullptr), m_poMainDataset(nullptr),
-      m_bLoadingOtherBands(FALSE), m_pabyLastBufferBandRasterIO(nullptr),
-      m_nLastBandRasterIOXOff(0), m_nLastBandRasterIOYOff(0),
-      m_nLastBandRasterIOXSize(0), m_nLastBandRasterIOYSize(0),
-      m_eLastBandRasterIODataType(GDT_Unknown), m_eGTAdjustment(GTAdjust_Union),
-      m_bNoDataDisabled(FALSE)
+      m_poMainDataset(nullptr), m_bLoadingOtherBands(FALSE),
+      m_pabyLastBufferBandRasterIO(nullptr), m_nLastBandRasterIOXOff(0),
+      m_nLastBandRasterIOYOff(0), m_nLastBandRasterIOXSize(0),
+      m_nLastBandRasterIOYSize(0), m_eLastBandRasterIODataType(GDT_Unknown),
+      m_eGTAdjustment(GTAdjust_Union), m_bNoDataDisabled(FALSE)
 {
     eAccess = GA_Update;
     m_poMainDataset = this;
@@ -148,11 +147,6 @@ VRTPansharpenedDataset::~VRTPansharpenedDataset()
 
 int VRTPansharpenedDataset::CloseDependentDatasets()
 {
-    if (m_poMainDataset == nullptr)
-        return FALSE;
-
-    VRTPansharpenedDataset *poMainDatasetLocal = m_poMainDataset;
-    m_poMainDataset = nullptr;
     int bHasDroppedRef = VRTDataset::CloseDependentDatasets();
 
     /* -------------------------------------------------------------------- */
@@ -173,8 +167,7 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
     {
         // Delete the pansharper object before closing the dataset
         // because it may have warped the bands into an intermediate VRT
-        delete m_poPansharpener;
-        m_poPansharpener = nullptr;
+        m_poPansharpener.reset();
 
         // Close in reverse order (VRT firsts and real datasets after)
         for (int i = static_cast<int>(m_apoDatasetsToReleaseRef.size()) - 1;
@@ -184,23 +177,6 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
             m_apoDatasetsToReleaseRef[i].reset();
         }
         m_apoDatasetsToReleaseRef.clear();
-    }
-
-    if (poMainDatasetLocal != this)
-    {
-        // To avoid killing us
-        for (size_t i = 0; i < poMainDatasetLocal->m_apoOverviewDatasets.size();
-             i++)
-        {
-            if (poMainDatasetLocal->m_apoOverviewDatasets[i].get() == this)
-            {
-                // coverity[leaked_storage]
-                CPL_IGNORE_RET_VAL(
-                    poMainDatasetLocal->m_apoOverviewDatasets[i].release());
-                break;
-            }
-        }
-        bHasDroppedRef |= poMainDatasetLocal->CloseDependentDatasets();
     }
 
     return bHasDroppedRef;
@@ -216,7 +192,7 @@ char **VRTPansharpenedDataset::GetFileList()
 
     if (m_poPansharpener != nullptr)
     {
-        GDALPansharpenOptions *psOptions = m_poPansharpener->GetOptions();
+        const GDALPansharpenOptions *psOptions = m_poPansharpener->GetOptions();
         if (psOptions != nullptr)
         {
             std::set<CPLString> oSetNames;
@@ -269,7 +245,9 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                                        GDALRasterBandH *pahInputSpectralBandsIn)
 {
     CPLErr eErr;
-    GDALPansharpenOptions *psPanOptions;
+    std::unique_ptr<GDALPansharpenOptions,
+                    decltype(&GDALDestroyPansharpenOptions)>
+        psPanOptions(nullptr, GDALDestroyPansharpenOptions);
 
     /* -------------------------------------------------------------------- */
     /*      Initialize blocksize before calling sub-init so that the        */
@@ -1117,7 +1095,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     /* -------------------------------------------------------------------- */
     /*      Instantiate poPansharpener                                      */
     /* -------------------------------------------------------------------- */
-    psPanOptions = GDALCreatePansharpenOptions();
+    psPanOptions.reset(GDALCreatePansharpenOptions());
     psPanOptions->ePansharpenAlg = GDAL_PSH_WEIGHTED_BROVEY;
     psPanOptions->eResampleAlg = eResampleAlg;
     psPanOptions->nBitDepth = nBitDepth;
@@ -1152,14 +1130,13 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     if (nBands == psPanOptions->nOutPansharpenedBands)
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
-    m_poPansharpener = new GDALPansharpenOperation();
-    eErr = m_poPansharpener->Initialize(psPanOptions);
+    m_poPansharpener = std::make_unique<GDALPansharpenOperation>();
+    eErr = m_poPansharpener->Initialize(psPanOptions.get());
     if (eErr != CE_None)
     {
         // Delete the pansharper object before closing the dataset
         // because it may have warped the bands into an intermediate VRT
-        delete m_poPansharpener;
-        m_poPansharpener = nullptr;
+        m_poPansharpener.reset();
 
         // Close in reverse order (VRT firsts and real datasets after)
         for (int i = static_cast<int>(m_apoDatasetsToReleaseRef.size()) - 1;
@@ -1169,7 +1146,6 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         }
         m_apoDatasetsToReleaseRef.clear();
     }
-    GDALDestroyPansharpenOptions(psPanOptions);
 
     return eErr;
 
@@ -1215,7 +1191,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
     /* -------------------------------------------------------------------- */
     if (m_poPansharpener == nullptr)
         return psTree;
-    GDALPansharpenOptions *psOptions = m_poPansharpener->GetOptions();
+    const GDALPansharpenOptions *psOptions = m_poPansharpener->GetOptions();
     if (psOptions == nullptr)
         return psTree;
 
@@ -1620,7 +1596,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO(
     if (nDataTypeSize > 0 && nXSize == nBufXSize && nYSize == nBufYSize &&
         nDataTypeSize == nPixelSpace && nLineSpace == nPixelSpace * nBufXSize)
     {
-        GDALPansharpenOptions *psOptions =
+        const GDALPansharpenOptions *psOptions =
             poGDS->m_poPansharpener->GetOptions();
 
         // Have we already done this request for another band ?
@@ -1749,7 +1725,7 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
     if (poGDS->m_poPansharpener != nullptr &&
         poGDS->m_apoOverviewDatasets.empty() && poGDS->m_poMainDataset == poGDS)
     {
-        GDALPansharpenOptions *psOptions =
+        const GDALPansharpenOptions *psOptions =
             poGDS->m_poPansharpener->GetOptions();
 
         GDALRasterBand *poPanBand =
@@ -1810,8 +1786,10 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     poOvrDS->SetBand(i + 1, poBand);
                 }
 
-                GDALPansharpenOptions *psPanOvrOptions =
-                    GDALClonePansharpenOptions(psOptions);
+                std::unique_ptr<GDALPansharpenOptions,
+                                decltype(&GDALDestroyPansharpenOptions)>
+                    psPanOvrOptions(GDALClonePansharpenOptions(psOptions),
+                                    GDALDestroyPansharpenOptions);
                 psPanOvrOptions->hPanchroBand = poPanOvrBand;
                 for (int i = 0; i < psOptions->nInputSpectralBands; i++)
                 {
@@ -1826,7 +1804,6 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                                  "GDALCreateOverviewDataset(poSpectralBand->"
                                  "GetDataset(), %d, true) failed",
                                  j);
-                        GDALDestroyPansharpenOptions(psPanOvrOptions);
                         return 0;
                     }
                     psPanOvrOptions->pahInputSpectralBands[i] =
@@ -1835,16 +1812,15 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     poOvrDS->m_apoDatasetsToReleaseRef.push_back(
                         std::move(poSpectralOvrDS));
                 }
-                poOvrDS->m_poPansharpener = new GDALPansharpenOperation();
-                if (poOvrDS->m_poPansharpener->Initialize(psPanOvrOptions) !=
-                    CE_None)
+                poOvrDS->m_poPansharpener =
+                    std::make_unique<GDALPansharpenOperation>();
+                if (poOvrDS->m_poPansharpener->Initialize(
+                        psPanOvrOptions.get()) != CE_None)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Unable to initialize pansharpener.");
-                    GDALDestroyPansharpenOptions(psPanOvrOptions);
                     return 0;
                 }
-                GDALDestroyPansharpenOptions(psPanOvrOptions);
 
                 poOvrDS->m_poMainDataset = poGDS;
                 poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL",
