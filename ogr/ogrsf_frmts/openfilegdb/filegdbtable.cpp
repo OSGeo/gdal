@@ -3649,7 +3649,7 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     {
         returnError();
     }
-    const int nMaxSize = static_cast<int>(nMaxSize64);
+    const int nMaxSize = static_cast<int>(nMaxSize64 & INT_MAX);
     // coverity[overflow_sink]
     GByte *pabyExtShapeBuffer =
         static_cast<GByte *>(VSI_MALLOC_VERBOSE(nMaxSize));
