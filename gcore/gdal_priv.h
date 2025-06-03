@@ -1565,6 +1565,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPL_INTERNAL CPLErr UnreferenceBlock(GDALRasterBlock *poBlock);
     CPL_INTERNAL void IncDirtyBlocks(int nInc);
 
+    CPL_INTERNAL CPLErr RasterIOInternal(
+        GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+        void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+        GSpacing nPixelSpace, GSpacing nLineSpace,
+        GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
+
   protected:
     //! @cond Doxygen_Suppress
     GDALDataset *poDS = nullptr;

@@ -426,6 +426,20 @@ CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return CE_Failure;
     }
 
+    return RasterIOInternal(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                            nBufXSize, nBufYSize, eBufType, nPixelSpace,
+                            nLineSpace, psExtraArg);
+}
+
+/************************************************************************/
+/*                         RasterIOInternal()                           */
+/************************************************************************/
+
+CPLErr GDALRasterBand::RasterIOInternal(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+{
     /* -------------------------------------------------------------------- */
     /*      Call the format specific function.                              */
     /* -------------------------------------------------------------------- */
@@ -723,25 +737,10 @@ CPLErr GDALRasterBand::ReadRaster(T *pData, size_t nArrayEltCount,
 
     GDALRasterBand *pThis = const_cast<GDALRasterBand *>(this);
 
-    const bool bCallLeaveReadWrite =
-        CPL_TO_BOOL(pThis->EnterReadWrite(GF_Read));
-    CPLErr eErr;
-    // coverity[identical_branches]
-    if (bForceCachedIO)
-        eErr = pThis->GDALRasterBand::IRasterIO(
-            GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
-            static_cast<int>(nBufXSize), static_cast<int>(nBufYSize), eBufType,
-            nPixelSpace, nLineSpace, &sExtraArg);
-    else
-        eErr = pThis->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
-                                static_cast<int>(nBufXSize),
-                                static_cast<int>(nBufYSize), eBufType,
-                                nPixelSpace, nLineSpace, &sExtraArg);
-
-    if (bCallLeaveReadWrite)
-        pThis->LeaveReadWrite();
-
-    return eErr;
+    return pThis->RasterIOInternal(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
+                                   static_cast<int>(nBufXSize),
+                                   static_cast<int>(nBufYSize), eBufType,
+                                   nPixelSpace, nLineSpace, &sExtraArg);
 }
 
 //! @cond Doxygen_Suppress
