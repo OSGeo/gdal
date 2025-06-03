@@ -536,7 +536,7 @@ class VRTPansharpenedDataset final : public VRTDataset
 {
     friend class VRTPansharpenedRasterBand;
 
-    GDALPansharpenOperation *m_poPansharpener;
+    std::unique_ptr<GDALPansharpenOperation> m_poPansharpener{};
     VRTPansharpenedDataset *m_poMainDataset;
     std::vector<std::unique_ptr<VRTPansharpenedDataset>>
         m_apoOverviewDatasets{};
@@ -594,7 +594,7 @@ class VRTPansharpenedDataset final : public VRTDataset
 
     GDALPansharpenOperation *GetPansharpener()
     {
-        return m_poPansharpener;
+        return m_poPansharpener.get();
     }
 };
 
