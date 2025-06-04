@@ -963,6 +963,17 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
 /*                      QuadraticMeanFloatSSE2()                        */
 /************************************************************************/
 
+#ifdef __SSE3__
+#define sse2_hadd_ps _mm_hadd_ps
+#else
+inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
+{
+    auto aEven_bEven = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2, 0, 2, 0));
+    auto aOdd_bOdd = _mm_shuffle_ps(a, b, _MM_SHUFFLE(3, 1, 3, 1));
+    return _mm_add_ps(aEven_bEven, aOdd_bOdd);  // (aEven + aOdd, bEven + bOdd)
+}
+#endif
+
 #ifdef __AVX2__
 #define RMS_FLOAT_ELTS 8
 #define set1_ps _mm256_set1_ps
@@ -988,17 +999,6 @@ inline __m256 SQUARE_PS(__m256 x)
 }
 
 #else
-
-#ifdef __SSE3__
-#define sse2_hadd_ps _mm_hadd_ps
-#else
-inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
-{
-    auto aEven_bEven = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2, 0, 2, 0));
-    auto aOdd_bOdd = _mm_shuffle_ps(a, b, _MM_SHUFFLE(3, 1, 3, 1));
-    return _mm_add_ps(aEven_bEven, aOdd_bOdd);  // (aEven + aOdd, bEven + bOdd)
-}
-#endif
 
 #define RMS_FLOAT_ELTS 4
 #define set1_ps _mm_set1_ps
@@ -1145,11 +1145,7 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
         const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
 
         // Horizontal addition
-        const auto A =
-            _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
-        const auto B =
-            _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
-        const auto sum = _mm_add_ps(A, B);
+        const auto sum = sse2_hadd_ps(sumLo, sumHi);
 
         const auto average = _mm_mul_ps(sum, zeroDot25);
 
