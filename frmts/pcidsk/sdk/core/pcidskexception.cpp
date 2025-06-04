@@ -92,10 +92,7 @@ PCIDSKException::PCIDSKException( const char *fmt, ... )
  * Destructor.
  */
 
-PCIDSKException::~PCIDSKException() throw()
-
-{
-}
+PCIDSKException::~PCIDSKException() = default;
 
 /************************************************************************/
 /*                              vPrintf()                               */

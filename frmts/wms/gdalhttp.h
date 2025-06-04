@@ -26,6 +26,10 @@ struct WMSHTTPRequest
     }
 
     ~WMSHTTPRequest();
+    WMSHTTPRequest(const WMSHTTPRequest &) = delete;
+    WMSHTTPRequest &operator=(const WMSHTTPRequest &) = delete;
+    WMSHTTPRequest(WMSHTTPRequest &&) = delete;
+    WMSHTTPRequest &operator=(WMSHTTPRequest &&) = delete;
 
     /* Input */
     CPLString URL;

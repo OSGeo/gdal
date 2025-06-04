@@ -181,4 +181,7 @@ bool GDALVectorMakeValidAlgorithm::RunStep(
 #endif
 }
 
+GDALVectorMakeValidAlgorithmStandalone::
+    ~GDALVectorMakeValidAlgorithmStandalone() = default;
+
 //! @endcond

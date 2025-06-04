@@ -33,6 +33,8 @@ class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
                                                const std::string &helpURL,
                                                const std::string &method);
 
+    ~GDALVectorGridDataMetricsAbstractAlgorithm() override;
+
     std::string GetGridAlgorithm() const override;
 
   private:
@@ -57,6 +59,8 @@ class GDALVectorGridMinimumAlgorithm final
                                                      HELP_URL, "minimum")
     {
     }
+
+    ~GDALVectorGridMinimumAlgorithm() override;
 };
 
 /************************************************************************/
@@ -77,6 +81,8 @@ class GDALVectorGridMaximumAlgorithm final
                                                      HELP_URL, "maximum")
     {
     }
+
+    ~GDALVectorGridMaximumAlgorithm() override;
 };
 
 /************************************************************************/
@@ -97,6 +103,8 @@ class GDALVectorGridRangeAlgorithm final
                                                      HELP_URL, "range")
     {
     }
+
+    ~GDALVectorGridRangeAlgorithm() override;
 };
 
 /************************************************************************/
@@ -117,6 +125,8 @@ class GDALVectorGridCountAlgorithm final
                                                      HELP_URL, "count")
     {
     }
+
+    ~GDALVectorGridCountAlgorithm() override;
 };
 
 /************************************************************************/
@@ -138,6 +148,8 @@ class GDALVectorGridAverageDistanceAlgorithm final
               NAME, DESCRIPTION, HELP_URL, "average_distance")
     {
     }
+
+    ~GDALVectorGridAverageDistanceAlgorithm() override;
 };
 
 /************************************************************************/
@@ -158,6 +170,8 @@ class GDALVectorGridAverageDistancePointsAlgorithm final
               NAME, DESCRIPTION, HELP_URL, "average_distance_pts")
     {
     }
+
+    ~GDALVectorGridAverageDistancePointsAlgorithm() override;
 };
 
 //! @endcond

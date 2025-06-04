@@ -60,6 +60,8 @@ class GDALRasterViewshedAlgorithmStandalone final
         : GDALRasterViewshedAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterViewshedAlgorithmStandalone() override;
 };
 
 //! @endcond

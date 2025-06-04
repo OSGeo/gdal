@@ -75,4 +75,6 @@ bool GDALRasterTPIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterTPIAlgorithmStandalone::~GDALRasterTPIAlgorithmStandalone() = default;
+
 //! @endcond

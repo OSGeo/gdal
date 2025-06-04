@@ -29,6 +29,7 @@ add_library(
   core/pcidskexception.cpp
   core/pcidskinterfaces.cpp
   core/pcidskopen.cpp
+  core/pcidsk_mutex.cpp
   segment/cpcidsk_array.cpp
   segment/cpcidsk_tex.cpp
   segment/cpcidskbinarysegment.cpp

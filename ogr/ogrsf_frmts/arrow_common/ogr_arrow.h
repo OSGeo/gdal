@@ -21,6 +21,11 @@
 
 #include "ogr_include_arrow.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 enum class OGRArrowGeomEncoding
 {
     WKB,
@@ -540,5 +545,9 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
 
     bool FlushFeatures();
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif  // OGR_ARROW_H

@@ -25,7 +25,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_ARRAY
     {
     public:
-        virtual ~PCIDSK_ARRAY() {}
+        virtual ~PCIDSK_ARRAY();
 
         //ARRAY functions
         virtual unsigned char GetDimensionCount() const =0;

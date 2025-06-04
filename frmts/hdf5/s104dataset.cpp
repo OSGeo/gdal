@@ -35,8 +35,12 @@ class S104Dataset final : public S100BaseDataset
     {
     }
 
+    ~S104Dataset() override;
+
     static GDALDataset *Open(GDALOpenInfo *);
 };
+
+S104Dataset::~S104Dataset() = default;
 
 /************************************************************************/
 /*                            S104RasterBand                            */
@@ -60,10 +64,7 @@ class S104RasterBand final : public GDALProxyRasterBand
     }
 
     GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override
-    {
-        return m_poUnderlyingBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override;
 
     const char *GetUnitType() override
     {
@@ -75,6 +76,12 @@ class S104RasterBand final : public GDALProxyRasterBand
         return m_poRAT.get();
     }
 };
+
+GDALRasterBand *
+S104RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return m_poUnderlyingBand;
+}
 
 /************************************************************************/
 /*                                Open()                                */

@@ -2804,10 +2804,11 @@ void GMLASWriter::PrintLine(VSILFILE *fp, const char *fmt, ...)
 class GMLASFakeDataset final : public GDALDataset
 {
   public:
-    GMLASFakeDataset()
-    {
-    }
+    GMLASFakeDataset() = default;
+    ~GMLASFakeDataset() override;
 };
+
+GMLASFakeDataset::~GMLASFakeDataset() = default;
 
 /************************************************************************/
 /*                        OGRGMLASDriverCreateCopy()                    */

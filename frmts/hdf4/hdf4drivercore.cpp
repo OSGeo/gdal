@@ -44,66 +44,66 @@ struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
 
     // GDALSubdatasetInfo interface
   private:
-    void parseFileName() override
+    void parseFileName() override;
+};
+
+void HDF4DriverSubdatasetInfo::parseFileName()
+{
+
+    if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF4_SDS:") &&
+        !STARTS_WITH_CI(m_fileName.c_str(), "HDF4_EOS:"))
+    {
+        return;
+    }
+
+    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    const int iPartsCount{CSLCount(aosParts)};
+
+    if (iPartsCount >= 3)
     {
 
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF4_SDS:") &&
-            !STARTS_WITH_CI(m_fileName.c_str(), "HDF4_EOS:"))
+        // prefix + mode
+        m_driverPrefixComponent = aosParts[0];
+        m_driverPrefixComponent.append(":");
+        m_driverPrefixComponent.append(aosParts[1]);
+
+        int subdatasetIndex{3};
+
+        if (iPartsCount >= 4)
         {
-            return;
+            const bool hasDriveLetter{
+                (strlen(aosParts[3]) > 1 &&
+                 (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
+                ((strlen(aosParts[2]) == 2 &&
+                  std::isalpha(static_cast<unsigned char>(aosParts[2][1]))) ||
+                 (strlen(aosParts[2]) == 1 &&
+                  std::isalpha(static_cast<unsigned char>(aosParts[2][0]))))};
+            m_pathComponent = aosParts[2];
+
+            const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=
+                                   std::string::npos};
+
+            if (hasDriveLetter || hasProtocol)
+            {
+                m_pathComponent.append(":");
+                m_pathComponent.append(aosParts[3]);
+                subdatasetIndex++;
+            }
         }
 
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
-
-        if (iPartsCount >= 3)
+        if (iPartsCount > subdatasetIndex)
         {
+            m_subdatasetComponent = aosParts[subdatasetIndex];
 
-            // prefix + mode
-            m_driverPrefixComponent = aosParts[0];
-            m_driverPrefixComponent.append(":");
-            m_driverPrefixComponent.append(aosParts[1]);
-
-            int subdatasetIndex{3};
-
-            if (iPartsCount >= 4)
+            // Append any remaining part
+            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
             {
-                const bool hasDriveLetter{
-                    (strlen(aosParts[3]) > 1 &&
-                     (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
-                    ((strlen(aosParts[2]) == 2 &&
-                      std::isalpha(
-                          static_cast<unsigned char>(aosParts[2][1]))) ||
-                     (strlen(aosParts[2]) == 1 &&
-                      std::isalpha(
-                          static_cast<unsigned char>(aosParts[2][0]))))};
-                m_pathComponent = aosParts[2];
-
-                const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=
-                                       std::string::npos};
-
-                if (hasDriveLetter || hasProtocol)
-                {
-                    m_pathComponent.append(":");
-                    m_pathComponent.append(aosParts[3]);
-                    subdatasetIndex++;
-                }
-            }
-
-            if (iPartsCount > subdatasetIndex)
-            {
-                m_subdatasetComponent = aosParts[subdatasetIndex];
-
-                // Append any remaining part
-                for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
-                {
-                    m_subdatasetComponent.append(":");
-                    m_subdatasetComponent.append(aosParts[i]);
-                }
+                m_subdatasetComponent.append(":");
+                m_subdatasetComponent.append(aosParts[i]);
             }
         }
     }
-};
+}
 
 static GDALSubdatasetInfo *HDF4DriverGetSubdatasetInfo(const char *pszFileName)
 {

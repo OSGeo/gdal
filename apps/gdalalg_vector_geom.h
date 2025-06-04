@@ -61,6 +61,8 @@ class GDALVectorGeomAlgorithmStandalone final : public GDALVectorGeomAlgorithm
         : GDALVectorGeomAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorGeomAlgorithmStandalone() override;
 };
 
 /************************************************************************/

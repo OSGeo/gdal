@@ -304,7 +304,11 @@ struct VSILibArchiveEntryFileOffset : public VSIArchiveEntryFileOffset
         : m_osFilename(osFilename)
     {
     }
+
+    ~VSILibArchiveEntryFileOffset() override;
 };
+
+VSILibArchiveEntryFileOffset::~VSILibArchiveEntryFileOffset() = default;
 
 /************************************************************************/
 /*                          GetFileOffset()                             */

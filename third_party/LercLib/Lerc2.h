@@ -72,7 +72,7 @@ class Lerc2
 public:
   Lerc2();
   Lerc2(int nDim, int nCols, int nRows, const Byte* pMaskBits = nullptr);    // valid / invalid bits as byte array
-  virtual ~Lerc2()  {}
+  ~Lerc2()  {}
 
   bool SetEncoderToOldVersion(int version);    // call this to encode compatible to an old decoder
 

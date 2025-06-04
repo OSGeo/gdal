@@ -53,6 +53,8 @@ class GDALRasterRoughnessAlgorithmStandalone final
         : GDALRasterRoughnessAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterRoughnessAlgorithmStandalone() override;
 };
 
 //! @endcond

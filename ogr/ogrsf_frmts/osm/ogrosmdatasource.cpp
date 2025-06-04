@@ -4363,15 +4363,17 @@ class OGROSMResultLayerDecorator final : public OGRLayerDecorator
     {
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
-    {
-        /* When we run GetFeatureCount() with SQLite SQL dialect, */
-        /* the OSM dataset will be re-opened. Make sure that it is */
-        /* re-opened with the same interest layers */
-        AddInterestLayersForDSName(osDSName, osInterestLayers);
-        return OGRLayerDecorator::GetFeatureCount(bForce);
-    }
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 };
+
+GIntBig OGROSMResultLayerDecorator::GetFeatureCount(int bForce)
+{
+    /* When we run GetFeatureCount() with SQLite SQL dialect, */
+    /* the OSM dataset will be re-opened. Make sure that it is */
+    /* re-opened with the same interest layers */
+    AddInterestLayersForDSName(osDSName, osInterestLayers);
+    return OGRLayerDecorator::GetFeatureCount(bForce);
+}
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */

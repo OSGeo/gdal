@@ -51,6 +51,8 @@ class GDALVectorFilterAlgorithmStandalone final
         : GDALVectorFilterAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorFilterAlgorithmStandalone() override;
 };
 
 //! @endcond

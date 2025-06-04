@@ -71,6 +71,8 @@ class GDALRasterReprojectAlgorithmStandalone final
         : GDALRasterReprojectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterReprojectAlgorithmStandalone() override;
 };
 
 /************************************************************************/

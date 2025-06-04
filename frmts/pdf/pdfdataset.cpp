@@ -115,14 +115,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         bEnableBitmap = bFlag;
     }
 
-    virtual void startPage(int pageNum, GfxState *state, XRef *xrefIn) override
-    {
-        SplashOutputDev::startPage(pageNum, state, xrefIn);
-        SplashBitmap *poBitmap = getBitmap();
-        memset(poBitmap->getDataPtr(), 255,
-               static_cast<size_t>(poBitmap->getRowSize()) *
-                   poBitmap->getHeight());
-    }
+    virtual void startPage(int pageNum, GfxState *state, XRef *xrefIn) override;
 
     virtual void stroke(GfxState *state) override
     {
@@ -259,6 +252,14 @@ class GDALPDFOutputDev : public SplashOutputDev
             str->close();
     }
 };
+
+void GDALPDFOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefIn)
+{
+    SplashOutputDev::startPage(pageNum, state, xrefIn);
+    SplashBitmap *poBitmap = getBitmap();
+    memset(poBitmap->getDataPtr(), 255,
+           static_cast<size_t>(poBitmap->getRowSize()) * poBitmap->getHeight());
+}
 
 #endif  // ~ HAVE_POPPLER
 
@@ -7738,47 +7739,49 @@ class GDALPDFListLayersAlgorithm final : public GDALAlgorithm
     }
 
   protected:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        auto poDS = dynamic_cast<PDFDataset *>(m_dataset.GetDatasetRef());
-        if (!poDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined, "%s is not a PDF",
-                        m_dataset.GetName().c_str());
-            return false;
-        }
-        if (m_format == "json")
-        {
-            CPLJSonStreamingWriter oWriter(nullptr, nullptr);
-            oWriter.StartArray();
-            for (const auto &[key, value] : cpl::IterateNameValue(
-                     const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
-            {
-                CPL_IGNORE_RET_VAL(key);
-                oWriter.Add(value);
-            }
-            oWriter.EndArray();
-            m_output = oWriter.GetString();
-            m_output += '\n';
-        }
-        else
-        {
-            for (const auto &[key, value] : cpl::IterateNameValue(
-                     const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
-            {
-                CPL_IGNORE_RET_VAL(key);
-                m_output += value;
-                m_output += '\n';
-            }
-        }
-        return true;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 
   private:
     GDALArgDatasetValue m_dataset{};
     std::string m_format = "json";
     std::string m_output{};
 };
+
+bool GDALPDFListLayersAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS = dynamic_cast<PDFDataset *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a PDF",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+    if (m_format == "json")
+    {
+        CPLJSonStreamingWriter oWriter(nullptr, nullptr);
+        oWriter.StartArray();
+        for (const auto &[key, value] : cpl::IterateNameValue(
+                 const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
+        {
+            CPL_IGNORE_RET_VAL(key);
+            oWriter.Add(value);
+        }
+        oWriter.EndArray();
+        m_output = oWriter.GetString();
+        m_output += '\n';
+    }
+    else
+    {
+        for (const auto &[key, value] : cpl::IterateNameValue(
+                 const_cast<CSLConstList>(poDS->GetMetadata("LAYERS"))))
+        {
+            CPL_IGNORE_RET_VAL(key);
+            m_output += value;
+            m_output += '\n';
+        }
+    }
+    return true;
+}
 
 /************************************************************************/
 /*                    GDALPDFInstantiateAlgorithm()                     */

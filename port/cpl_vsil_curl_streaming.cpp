@@ -1742,23 +1742,26 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
   public:
     IVSIS3LikeStreamingFSHandler() = default;
 
-    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override
-    {
-        if (STARTS_WITH(pszDirname, GetFSPrefix()))
-        {
-            return VSIReadDirEx(
-                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
-                    .c_str(),
-                nMaxFiles);
-        }
-        return nullptr;
-    }
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
     const char *GetOptions() override
     {
         return VSIGetFileSystemOptions(GetNonStreamingPrefix().c_str());
     }
 };
+
+char **IVSIS3LikeStreamingFSHandler::ReadDirEx(const char *pszDirname,
+                                               int nMaxFiles)
+{
+    if (STARTS_WITH(pszDirname, GetFSPrefix()))
+    {
+        return VSIReadDirEx(
+            (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
+                .c_str(),
+            nMaxFiles);
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */

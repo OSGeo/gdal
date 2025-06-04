@@ -40,7 +40,7 @@ NAMESPACE_LERC_START
     BitMask() = default;
     BitMask(int nCols, int nRows) { SetSize(nCols, nRows); }
     BitMask(const BitMask& src);
-    virtual ~BitMask()                        { Clear(); }
+    ~BitMask()                        { Clear(); }
 
     BitMask& operator= (const BitMask& src);
 

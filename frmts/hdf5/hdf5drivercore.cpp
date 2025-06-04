@@ -158,64 +158,66 @@ struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
 
     // GDALSubdatasetInfo interface
   private:
-    void parseFileName() override
+    void parseFileName() override;
+};
+
+void HDF5DriverSubdatasetInfo::parseFileName()
+{
+
+    if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF5:"))
+    {
+        return;
+    }
+
+    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    const int iPartsCount{CSLCount(aosParts)};
+
+    if (iPartsCount >= 3)
     {
 
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF5:"))
+        m_driverPrefixComponent = aosParts[0];
+
+        std::string part1{aosParts[1]};
+        if (!part1.empty() && part1[0] == '"')
         {
-            return;
+            part1 = part1.substr(1);
         }
 
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
+        int subdatasetIndex{2};
+        const bool hasDriveLetter{
+            part1.length() == 1 &&
+            std::isalpha(static_cast<unsigned char>(part1.at(0))) &&
+            (strlen(aosParts[2]) > 1 &&
+             (aosParts[2][0] == '\\' ||
+              (aosParts[2][0] == '/' && aosParts[2][1] != '/')))};
 
-        if (iPartsCount >= 3)
+        const bool hasProtocol{part1 == "/vsicurl/http" ||
+                               part1 == "/vsicurl/https" ||
+                               part1 == "/vsicurl_streaming/http" ||
+                               part1 == "/vsicurl_streaming/https"};
+
+        m_pathComponent = aosParts[1];
+
+        if (hasDriveLetter || hasProtocol)
         {
+            m_pathComponent.append(":");
+            m_pathComponent.append(aosParts[2]);
+            subdatasetIndex++;
+        }
 
-            m_driverPrefixComponent = aosParts[0];
+        if (iPartsCount > subdatasetIndex)
+        {
+            m_subdatasetComponent = aosParts[subdatasetIndex];
 
-            std::string part1{aosParts[1]};
-            if (!part1.empty() && part1[0] == '"')
+            // Append any remaining part
+            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
             {
-                part1 = part1.substr(1);
-            }
-
-            int subdatasetIndex{2};
-            const bool hasDriveLetter{
-                part1.length() == 1 &&
-                std::isalpha(static_cast<unsigned char>(part1.at(0))) &&
-                (strlen(aosParts[2]) > 1 &&
-                 (aosParts[2][0] == '\\' ||
-                  (aosParts[2][0] == '/' && aosParts[2][1] != '/')))};
-
-            const bool hasProtocol{part1 == "/vsicurl/http" ||
-                                   part1 == "/vsicurl/https" ||
-                                   part1 == "/vsicurl_streaming/http" ||
-                                   part1 == "/vsicurl_streaming/https"};
-
-            m_pathComponent = aosParts[1];
-
-            if (hasDriveLetter || hasProtocol)
-            {
-                m_pathComponent.append(":");
-                m_pathComponent.append(aosParts[2]);
-                subdatasetIndex++;
-            }
-
-            if (iPartsCount > subdatasetIndex)
-            {
-                m_subdatasetComponent = aosParts[subdatasetIndex];
-
-                // Append any remaining part
-                for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
-                {
-                    m_subdatasetComponent.append(":");
-                    m_subdatasetComponent.append(aosParts[i]);
-                }
+                m_subdatasetComponent.append(":");
+                m_subdatasetComponent.append(aosParts[i]);
             }
         }
     }
-};
+}
 
 static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 {

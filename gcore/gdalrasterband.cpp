@@ -9649,11 +9649,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
-               void *pDstBuffer) const override
-    {
-        return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
-                         bufferDataType, pDstBuffer);
-    }
+               void *pDstBuffer) const override;
 
     bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -9781,10 +9777,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         }
 
         const std::vector<std::shared_ptr<GDALDimension>> &
-        GetDimensions() const override
-        {
-            return m_dims;
-        }
+        GetDimensions() const override;
 
         const GDALExtendedDataType &GetDataType() const override
         {
@@ -9822,6 +9815,21 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         return res;
     }
 };
+
+bool GDALMDArrayFromRasterBand::IRead(
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pDstBuffer) const
+{
+    return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
+                     bufferDataType, pDstBuffer);
+}
+
+const std::vector<std::shared_ptr<GDALDimension>> &
+GDALMDArrayFromRasterBand::MDIAsAttribute::GetDimensions() const
+{
+    return m_dims;
+}
 
 /************************************************************************/
 /*                            ReadWrite()                               */

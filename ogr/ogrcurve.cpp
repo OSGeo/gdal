@@ -488,6 +488,8 @@ void OGRPointIterator::destroy(OGRPointIterator *poIter)
 /*                     OGRSimpleCurve::Iterator                         */
 /************************************************************************/
 
+OGRIteratedPoint::~OGRIteratedPoint() = default;
+
 void OGRIteratedPoint::setX(double xIn)
 {
     OGRPoint::setX(xIn);

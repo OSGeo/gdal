@@ -143,4 +143,7 @@ bool GDALRasterProximityAlgorithm::RunStep(
     return error == CE_None;
 }
 
+GDALRasterProximityAlgorithmStandalone::
+    ~GDALRasterProximityAlgorithmStandalone() = default;
+
 //! @endcond

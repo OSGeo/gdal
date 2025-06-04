@@ -29,6 +29,8 @@ using namespace PCIDSK;
 /* -------------------------------------------------------------------- */
 static const int shapeid_page_size = 1024;
 
+PCIDSKVectorSegment::~PCIDSKVectorSegment() = default;
+
 /************************************************************************/
 /*                        CPCIDSKVectorSegment()                        */
 /************************************************************************/

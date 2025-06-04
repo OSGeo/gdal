@@ -59,6 +59,8 @@ class GDALVectorSimplifyAlgorithmStandalone final
         : GDALVectorSimplifyAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSimplifyAlgorithmStandalone() override;
 };
 
 //! @endcond

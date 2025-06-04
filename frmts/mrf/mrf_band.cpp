@@ -1559,4 +1559,18 @@ GDALRasterBand *MRFRasterBand::GetOverview(int n)
     return GDALPamRasterBand::GetOverview(n);
 }
 
+CPLErr Raw_Band::Decompress(buf_mgr &dst, buf_mgr &src)
+{
+    if (src.size > dst.size)
+        return CE_Failure;
+    memcpy(dst.buffer, src.buffer, src.size);
+    dst.size = src.size;
+    return CE_None;
+}
+
+CPLErr MRFLRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
+{
+    return pBand->IReadBlock(xblk, yblk, buffer);
+}
+
 NAMESPACE_MRF_END

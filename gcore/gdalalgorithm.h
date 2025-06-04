@@ -1896,6 +1896,9 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         m_owner = owner;
     }
 
+    /** Destructor */
+    ~GDALInConstructionAlgorithmArg() override;
+
     /** Add a documented alias for the argument */
     GDALInConstructionAlgorithmArg &AddAlias(const std::string &alias);
 
@@ -3068,10 +3071,7 @@ class CPL_DLL GDALContainerAlgorithm : public GDALAlgorithm
     }
 
   protected:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

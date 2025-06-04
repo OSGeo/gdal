@@ -175,7 +175,7 @@ class GDALFeaturePoint
 };
 
 /**
- * @author Andrew Migal migal.drew@gmail.com
+ * @author Andrew Migal migal.drew at gmail.com
  * @brief Integral image class (summed area table).
  * @details Integral image is a table for fast computing the sum of
  * values in rectangular subarea. In more detail, for 2-dimensional array
@@ -267,7 +267,7 @@ class GDALIntegralImage
 };
 
 /**
- * @author Andrew Migal migal.drew@gmail.com
+ * @author Andrew Migal migal.drew at gmail.com
  * @brief Class for computation and storage of Hessian values in SURF-based
  * algorithm.
  *
@@ -339,7 +339,7 @@ class GDALOctaveLayer
 };
 
 /**
- * @author Andrew Migal migal.drew@gmail.com
+ * @author Andrew Migal migal.drew at gmail.com
  * @brief Class for handling octave layers in SURF-based algorithm.
  * @details Class contains OctaveLayers and provides capability to construct
  * octave space and distinguish feature points. Normally this class is used only
@@ -414,7 +414,7 @@ class GDALOctaveMap
 };
 
 /**
- * @author Andrew Migal migal.drew@gmail.com
+ * @author Andrew Migal migal.drew at gmail.com
  * @brief Class for searching corresponding points on images.
  * @details Provides capability for detection feature points
  * and finding equal points on different images.

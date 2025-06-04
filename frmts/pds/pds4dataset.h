@@ -282,6 +282,7 @@ class PDS4EditableLayer final : public OGREditableLayer
   public:
     explicit PDS4EditableLayer(PDS4FixedWidthTable *poBaseLayer);
     explicit PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer);
+    ~PDS4EditableLayer() override;
 
     void RefreshFileAreaObservational(CPLXMLNode *psFAO)
     {

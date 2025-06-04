@@ -298,29 +298,17 @@ class CPL_DLL GDALRasterAttributeTable
      * @since GDAL 2.4
      */
     virtual void RemoveStatistics() = 0;
+
+  protected:
+    //! @cond Doxygen_Suppress
+    GDALRasterAttributeTable() = default;
+    GDALRasterAttributeTable(const GDALRasterAttributeTable &) = default;
+    GDALRasterAttributeTable &
+    operator=(const GDALRasterAttributeTable &) = default;
+    GDALRasterAttributeTable(GDALRasterAttributeTable &&) = default;
+    GDALRasterAttributeTable &operator=(GDALRasterAttributeTable &&) = default;
+    //! @endcond
 };
-
-/************************************************************************/
-/*                       GDALRasterAttributeField                       */
-/*                                                                      */
-/*      (private)                                                       */
-/************************************************************************/
-//! @cond Doxygen_Suppress
-class GDALRasterAttributeField
-{
-  public:
-    CPLString sName{};
-
-    GDALRATFieldType eType = GFT_Integer;
-
-    GDALRATFieldUsage eUsage = GFU_Generic;
-
-    std::vector<GInt32> anValues{};
-    std::vector<double> adfValues{};
-    std::vector<CPLString> aosValues{};
-};
-
-//! @endcond
 
 /************************************************************************/
 /*                    GDALDefaultRasterAttributeTable                   */
@@ -331,13 +319,26 @@ class GDALRasterAttributeField
 class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 {
   private:
+    struct GDALRasterAttributeField
+    {
+        CPLString sName{};
+
+        GDALRATFieldType eType = GFT_Integer;
+
+        GDALRATFieldUsage eUsage = GFU_Generic;
+
+        std::vector<GInt32> anValues{};
+        std::vector<double> adfValues{};
+        std::vector<CPLString> aosValues{};
+    };
+
     std::vector<GDALRasterAttributeField> aoFields{};
 
     int bLinearBinning = false;  // TODO(schwehr): Can this be a bool?
     double dfRow0Min = -0.5;
     double dfBinSize = 1.0;
 
-    GDALRATTableType eTableType;
+    GDALRATTableType eTableType = GRTT_THEMATIC;
 
     void AnalyseColumns();
     int bColumnsAnalysed = false;  // TODO(schwehr): Can this be a bool?
@@ -351,6 +352,17 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
   public:
     GDALDefaultRasterAttributeTable();
     ~GDALDefaultRasterAttributeTable() override;
+
+    //! @cond Doxygen_Suppress
+    GDALDefaultRasterAttributeTable(const GDALDefaultRasterAttributeTable &) =
+        default;
+    GDALDefaultRasterAttributeTable &
+    operator=(const GDALDefaultRasterAttributeTable &) = default;
+    GDALDefaultRasterAttributeTable(GDALDefaultRasterAttributeTable &&) =
+        default;
+    GDALDefaultRasterAttributeTable &
+    operator=(GDALDefaultRasterAttributeTable &&) = default;
+    //! @endcond
 
     GDALDefaultRasterAttributeTable *Clone() const override;
 

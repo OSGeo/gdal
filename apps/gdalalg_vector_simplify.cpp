@@ -130,4 +130,7 @@ bool GDALVectorSimplifyAlgorithm::RunStep(
 #endif
 }
 
+GDALVectorSimplifyAlgorithmStandalone::
+    ~GDALVectorSimplifyAlgorithmStandalone() = default;
+
 //! @endcond

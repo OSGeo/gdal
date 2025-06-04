@@ -56,6 +56,8 @@ class GDALVectorSwapXYAlgorithmStandalone final
         : GDALVectorSwapXYAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSwapXYAlgorithmStandalone() override;
 };
 
 //! @endcond

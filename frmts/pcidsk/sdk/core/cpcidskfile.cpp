@@ -75,6 +75,12 @@
 
 using namespace PCIDSK;
 
+PCIDSKFile::~PCIDSKFile() = default;
+
+IOInterfaces::~IOInterfaces() = default;
+
+EDBFile::~EDBFile() = default;
+
 /************************************************************************/
 /*                             CPCIDSKFile()                             */
 /************************************************************************/

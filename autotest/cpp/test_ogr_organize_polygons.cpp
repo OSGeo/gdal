@@ -17,6 +17,11 @@
 
 #include <vector>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 static std::unique_ptr<OGRGeometry>
 organizePolygons(std::vector<OGRGeometry *> &polygons,
                  const std::string &method)
@@ -252,3 +257,7 @@ TEST_P(OrganizePolygonsTest, CrossingCCWPolygons)
                 "((5 5, 15 5, 15 15, 5 15, 5 5)))"));
     ASSERT_TRUE(result->Equals(expected.get()));
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

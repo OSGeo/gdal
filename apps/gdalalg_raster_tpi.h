@@ -52,6 +52,8 @@ class GDALRasterTPIAlgorithmStandalone final : public GDALRasterTPIAlgorithm
         : GDALRasterTPIAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterTPIAlgorithmStandalone() override;
 };
 
 //! @endcond

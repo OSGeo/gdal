@@ -298,4 +298,7 @@ bool GDALVectorExplodeCollectionsAlgorithm::RunStep(
     return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 }
 
+GDALVectorExplodeCollectionsAlgorithmStandalone::
+    ~GDALVectorExplodeCollectionsAlgorithmStandalone() = default;
+
 //! @endcond

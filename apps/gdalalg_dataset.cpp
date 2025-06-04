@@ -36,6 +36,8 @@ class GDALDatasetAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALDatasetDeleteAlgorithm>();
     }
 
+    ~GDALDatasetAlgorithm() override;
+
   private:
     bool RunImpl(GDALProgressFunc, void *) override
     {
@@ -45,5 +47,7 @@ class GDALDatasetAlgorithm final : public GDALAlgorithm
         return false;
     }
 };
+
+GDALDatasetAlgorithm::~GDALDatasetAlgorithm() = default;
 
 GDAL_STATIC_REGISTER_ALG(GDALDatasetAlgorithm);

@@ -14,6 +14,11 @@
 
 #include "ogr_dxf.h"
 
+OGRCoordinateTransformation *OGRDXFInsertTransformer::Clone() const
+{
+    return new OGRDXFInsertTransformer(*this);
+}
+
 /************************************************************************/
 /*                         Mathematical helpers                         */
 /************************************************************************/

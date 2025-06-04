@@ -43,6 +43,10 @@
 GDALWMSDataset::StringMap_t GDALWMSDataset::cfg;
 CPLMutex *GDALWMSDataset::cfgmtx = nullptr;
 
+WMSMiniDriver::~WMSMiniDriver() = default;
+WMSMiniDriverFactory::~WMSMiniDriverFactory() = default;
+GDALWMSCacheImpl::~GDALWMSCacheImpl() = default;
+
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
 /************************************************************************/

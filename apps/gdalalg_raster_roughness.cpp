@@ -75,4 +75,7 @@ bool GDALRasterRoughnessAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterRoughnessAlgorithmStandalone::
+    ~GDALRasterRoughnessAlgorithmStandalone() = default;
+
 //! @endcond

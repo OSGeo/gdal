@@ -56,18 +56,7 @@ class GDALVectorSimplifyCoverageOutputDataset
     {
     }
 
-    ~GDALVectorSimplifyCoverageOutputDataset()
-    {
-        if (m_poGeosContext != nullptr)
-        {
-            for (size_t i = 0; i < m_nGeosResultSize; i++)
-            {
-                GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
-            }
-            GEOSFree_r(m_poGeosContext, m_papoGeosResults);
-            finishGEOS_r(m_poGeosContext);
-        }
-    }
+    ~GDALVectorSimplifyCoverageOutputDataset() override;
 
     bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override
     {
@@ -190,6 +179,20 @@ class GDALVectorSimplifyCoverageOutputDataset
     unsigned int m_nGeosResultSize{0};
 };
 
+GDALVectorSimplifyCoverageOutputDataset::
+    ~GDALVectorSimplifyCoverageOutputDataset()
+{
+    if (m_poGeosContext != nullptr)
+    {
+        for (size_t i = 0; i < m_nGeosResultSize; i++)
+        {
+            GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
+        }
+        GEOSFree_r(m_poGeosContext, m_papoGeosResults);
+        finishGEOS_r(m_poGeosContext);
+    }
+}
+
 bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     GDALVectorPipelineStepRunContext &)
 {
@@ -241,5 +244,8 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     return false;
 }
 #endif  // HAVE_GEOS
+
+GDALVectorSimplifyCoverageAlgorithmStandalone::
+    ~GDALVectorSimplifyCoverageAlgorithmStandalone() = default;
 
 //! @endcond

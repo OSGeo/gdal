@@ -53,6 +53,8 @@ class GDALRasterTRIAlgorithmStandalone final : public GDALRasterTRIAlgorithm
         : GDALRasterTRIAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterTRIAlgorithmStandalone() override;
 };
 
 //! @endcond

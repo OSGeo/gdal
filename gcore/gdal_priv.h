@@ -102,6 +102,20 @@ class CPL_DLL GDALMultiDomainMetadata
 
   public:
     GDALMultiDomainMetadata();
+
+    /** Copy constructor */
+    GDALMultiDomainMetadata(const GDALMultiDomainMetadata &) = default;
+
+    /** Copy assignment operator */
+    GDALMultiDomainMetadata &
+    operator=(const GDALMultiDomainMetadata &) = default;
+
+    /** Move constructor */
+    GDALMultiDomainMetadata(GDALMultiDomainMetadata &&) = default;
+
+    /** Move assignment operator */
+    GDALMultiDomainMetadata &operator=(GDALMultiDomainMetadata &&) = default;
+
     ~GDALMultiDomainMetadata();
 
     int XMLInit(const CPLXMLNode *psMetadata, int bMerge);
@@ -149,6 +163,18 @@ class CPL_DLL GDALMajorObject
 
     char **BuildMetadataDomainList(char **papszList, int bCheckNonEmpty,
                                    ...) CPL_NULL_TERMINATED;
+
+    /** Copy constructor */
+    GDALMajorObject(const GDALMajorObject &) = default;
+
+    /** Copy assignment operator */
+    GDALMajorObject &operator=(const GDALMajorObject &) = default;
+
+    /** Move constructor */
+    GDALMajorObject(GDALMajorObject &&) = default;
+
+    /** Move assignment operator */
+    GDALMajorObject &operator=(GDALMajorObject &&) = default;
 
   public:
     GDALMajorObject();
@@ -1398,6 +1424,19 @@ class CPL_DLL GDALColorTable
 
   public:
     explicit GDALColorTable(GDALPaletteInterp = GPI_RGB);
+
+    /** Copy constructor */
+    GDALColorTable(const GDALColorTable &) = default;
+
+    /** Copy assignment operator */
+    GDALColorTable &operator=(const GDALColorTable &) = default;
+
+    /** Move constructor */
+    GDALColorTable(GDALColorTable &&) = default;
+
+    /** Move assignment operator */
+    GDALColorTable &operator=(GDALColorTable &&) = default;
+
     ~GDALColorTable();
 
     GDALColorTable *Clone() const;
@@ -3504,6 +3543,10 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     //! @endcond
 
   public:
+    //! @cond Doxygen_Suppress
+    ~GDALAttribute();
+    //! @endcond
+
     std::vector<GUInt64> GetDimensionsSize() const;
 
     GDALRawResult ReadAsRaw() const;

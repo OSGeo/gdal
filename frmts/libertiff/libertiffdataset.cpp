@@ -71,20 +71,7 @@ struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
         return m_nFileSize;
     }
 
-    size_t read(uint64_t offset, size_t count, void *buffer) const override
-    {
-        if (m_bHasPread && m_bPReadAllowed)
-        {
-            return m_fp->PRead(buffer, count, offset);
-        }
-        else
-        {
-            std::lock_guard oLock(m_oMutex);
-            return m_fp->Seek(offset, SEEK_SET) == 0
-                       ? m_fp->Read(buffer, 1, count)
-                       : 0;
-        }
-    }
+    size_t read(uint64_t offset, size_t count, void *buffer) const override;
 
     void setPReadAllowed() const
     {
@@ -93,6 +80,21 @@ struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
 
     CPL_DISALLOW_COPY_ASSIGN(LIBERTIFFDatasetFileReader)
 };
+
+size_t LIBERTIFFDatasetFileReader::read(uint64_t offset, size_t count,
+                                        void *buffer) const
+{
+    if (m_bHasPread && m_bPReadAllowed)
+    {
+        return m_fp->PRead(buffer, count, offset);
+    }
+    else
+    {
+        std::lock_guard oLock(m_oMutex);
+        return m_fp->Seek(offset, SEEK_SET) == 0 ? m_fp->Read(buffer, 1, count)
+                                                 : 0;
+    }
+}
 
 /************************************************************************/
 /*                         LIBERTIFFDataset                             */

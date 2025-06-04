@@ -58,10 +58,6 @@ CADDictionary::CADDictionary()
     objType = CADObject::DICTIONARY;
 }
 
-CADDictionary::~CADDictionary()
-{
-}
-
 size_t CADDictionary::getRecordsCount()
 {
     return astXRecords.size();

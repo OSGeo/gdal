@@ -123,4 +123,7 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterResizeAlgorithmStandalone::~GDALRasterResizeAlgorithmStandalone() =
+    default;
+
 //! @endcond

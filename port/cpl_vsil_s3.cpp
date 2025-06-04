@@ -97,6 +97,12 @@ void VSIDIRS3Like::clear()
 }
 
 /************************************************************************/
+/*                     ~VSIDIRWithMissingDirSynthesis()                 */
+/************************************************************************/
+
+VSIDIRWithMissingDirSynthesis::~VSIDIRWithMissingDirSynthesis() = default;
+
+/************************************************************************/
 /*                      SynthetizeMissingDirectories()                  */
 /************************************************************************/
 
@@ -720,6 +726,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 /************************************************************************/
 /*                            VSIS3Handle                               */
 /************************************************************************/
+
+IVSIS3LikeHandle::~IVSIS3LikeHandle() = default;
 
 class VSIS3Handle final : public IVSIS3LikeHandle
 {

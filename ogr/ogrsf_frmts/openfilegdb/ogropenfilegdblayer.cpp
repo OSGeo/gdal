@@ -39,6 +39,10 @@
 #include "ogr_swq.h"
 #include "filegdb_coordprec_read.h"
 
+OGROpenFileGDBGeomFieldDefn::~OGROpenFileGDBGeomFieldDefn() = default;
+
+OGROpenFileGDBFeatureDefn::~OGROpenFileGDBFeatureDefn() = default;
+
 /************************************************************************/
 /*                      OGROpenFileGDBLayer()                           */
 /************************************************************************/

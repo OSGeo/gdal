@@ -2108,7 +2108,7 @@ class VRTAttribute final : public GDALAttribute
 class VRTMDArraySource
 {
   public:
-    virtual ~VRTMDArraySource() = default;
+    virtual ~VRTMDArraySource();
 
     virtual bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,

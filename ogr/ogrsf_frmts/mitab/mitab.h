@@ -968,9 +968,7 @@ class ITABFeaturePen
   public:
     ITABFeaturePen();
 
-    virtual ~ITABFeaturePen()
-    {
-    }
+    virtual ~ITABFeaturePen();
 
     int GetPenDefIndex() const
     {
@@ -1030,9 +1028,7 @@ class ITABFeatureBrush
   public:
     ITABFeatureBrush();
 
-    virtual ~ITABFeatureBrush()
-    {
-    }
+    virtual ~ITABFeatureBrush();
 
     int GetBrushDefIndex() const
     {
@@ -1104,9 +1100,7 @@ class ITABFeatureFont
   public:
     ITABFeatureFont();
 
-    virtual ~ITABFeatureFont()
-    {
-    }
+    virtual ~ITABFeatureFont();
 
     int GetFontDefIndex() const
     {

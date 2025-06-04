@@ -282,4 +282,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(
     return poOutDS != nullptr;
 }
 
+GDALRasterViewshedAlgorithmStandalone::
+    ~GDALRasterViewshedAlgorithmStandalone() = default;
+
 //! @endcond

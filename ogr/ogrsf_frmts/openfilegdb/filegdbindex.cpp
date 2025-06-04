@@ -37,6 +37,8 @@
 namespace OpenFileGDB
 {
 
+FileGDBIndex::~FileGDBIndex() = default;
+
 /************************************************************************/
 /*                    GetFieldNameFromExpression()                      */
 /************************************************************************/
@@ -2386,6 +2388,8 @@ bool FileGDBIndexIterator::GetMinMaxSumCount(double &dfMin, double &dfMax,
     return true;
 }
 
+FileGDBSpatialIndexIterator::~FileGDBSpatialIndexIterator() = default;
+
 /************************************************************************/
 /*                    FileGDBSpatialIndexIteratorImpl                   */
 /************************************************************************/
@@ -2429,7 +2433,7 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
 };
 
 /************************************************************************/
-/*                      FileGDBSpatialIndexIteratorImpl()                   */
+/*                      FileGDBSpatialIndexIteratorImpl()               */
 /************************************************************************/
 
 FileGDBSpatialIndexIteratorImpl::FileGDBSpatialIndexIteratorImpl(

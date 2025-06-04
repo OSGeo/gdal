@@ -53,6 +53,8 @@ class GDALVectorSelectAlgorithmStandalone final
         : GDALVectorSelectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSelectAlgorithmStandalone() override;
 };
 
 //! @endcond

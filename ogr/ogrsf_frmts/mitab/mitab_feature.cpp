@@ -8398,6 +8398,12 @@ ITABFeaturePen::ITABFeaturePen()
 }
 
 /**********************************************************************
+ *                   ITABFeaturePen::~ITABFeaturePen()
+ **********************************************************************/
+
+ITABFeaturePen::~ITABFeaturePen() = default;
+
+/**********************************************************************
  *                   ITABFeaturePen::GetPenWidthPixel()
  *                   ITABFeaturePen::SetPenWidthPixel()
  *                   ITABFeaturePen::GetPenWidthPoint()
@@ -8839,6 +8845,12 @@ ITABFeatureBrush::ITABFeatureBrush()
 }
 
 /**********************************************************************
+ *                   ITABFeatureBrush::~ITABFeatureBrush()
+ **********************************************************************/
+
+ITABFeatureBrush::~ITABFeatureBrush() = default;
+
+/**********************************************************************
  *                   ITABFeatureBrush::GetBrushStyleString()
  *
  *  Return a Brush() string. All representations info for the Brush are here.
@@ -9056,6 +9068,12 @@ ITABFeatureFont::ITABFeatureFont()
     : m_nFontDefIndex(-1), m_sFontDef(MITABcsDefaultFont)
 {
 }
+
+/**********************************************************************
+ *                   ITABFeatureFont::~ITABFeatureFont()
+ **********************************************************************/
+
+ITABFeatureFont::~ITABFeatureFont() = default;
 
 /**********************************************************************
  *                   ITABFeatureFont::SetFontName()

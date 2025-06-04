@@ -2732,6 +2732,8 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer)
 {
 }
 
+PDS4EditableLayer::~PDS4EditableLayer() = default;
+
 /************************************************************************/
 /*                           GetBaseLayer()                             */
 /************************************************************************/

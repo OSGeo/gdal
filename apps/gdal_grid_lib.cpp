@@ -274,24 +274,25 @@ class GDALGridGeometryVisitor final : public OGRDefaultConstGeometryVisitor
 
     using OGRDefaultConstGeometryVisitor::visit;
 
-    void visit(const OGRPoint *p) override
-    {
-        if (poClipSrc && !p->Within(poClipSrc))
-            return;
-
-        if (iBurnField < 0 && std::isnan(p->getZ()))
-            return;
-
-        adfX.push_back(p->getX());
-        adfY.push_back(p->getY());
-        if (iBurnField < 0)
-            adfZ.push_back((p->getZ() + dfIncreaseBurnValue) *
-                           dfMultiplyBurnValue);
-        else
-            adfZ.push_back((dfBurnValue + dfIncreaseBurnValue) *
-                           dfMultiplyBurnValue);
-    }
+    void visit(const OGRPoint *p) override;
 };
+
+void GDALGridGeometryVisitor::visit(const OGRPoint *p)
+{
+    if (poClipSrc && !p->Within(poClipSrc))
+        return;
+
+    if (iBurnField < 0 && std::isnan(p->getZ()))
+        return;
+
+    adfX.push_back(p->getX());
+    adfY.push_back(p->getY());
+    if (iBurnField < 0)
+        adfZ.push_back((p->getZ() + dfIncreaseBurnValue) * dfMultiplyBurnValue);
+    else
+        adfZ.push_back((dfBurnValue + dfIncreaseBurnValue) *
+                       dfMultiplyBurnValue);
+}
 
 /************************************************************************/
 /*                            ProcessLayer()                            */

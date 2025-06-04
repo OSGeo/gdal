@@ -55,7 +55,7 @@ class CPL_DLL OGRWKBPointUpdater
 {
   public:
     OGRWKBPointUpdater();
-    virtual ~OGRWKBPointUpdater() = default;
+    virtual ~OGRWKBPointUpdater();
 
     /** Update method */
     virtual bool update(bool bNeedSwap, void *x, void *y, void *z, void *m) = 0;

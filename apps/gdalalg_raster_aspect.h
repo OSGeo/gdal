@@ -55,6 +55,8 @@ class GDALRasterAspectAlgorithmStandalone final
         : GDALRasterAspectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterAspectAlgorithmStandalone() override;
 };
 
 //! @endcond

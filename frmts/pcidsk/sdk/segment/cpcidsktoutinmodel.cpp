@@ -23,6 +23,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKToutinSegment::~PCIDSKToutinSegment() = default;
+
 CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn,
                                                    int segmentIn,
                                                    const char *segment_pointer) :

@@ -13,7 +13,15 @@
 #ifndef FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
 #define FLATGEOBUF_GEOMETRYREADER_H_INCLUDED
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
 #include "feature_generated.h"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #include "ogr_p.h"
 
 namespace ogr_flatgeobuf

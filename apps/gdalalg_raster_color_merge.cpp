@@ -797,4 +797,7 @@ bool GDALRasterColorMergeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return true;
 }
 
+GDALRasterColorMergeAlgorithmStandalone::
+    ~GDALRasterColorMergeAlgorithmStandalone() = default;
+
 //! @endcond

@@ -47,7 +47,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSKFile
     {
     public:
-        virtual ~PCIDSKFile() {}
+        virtual ~PCIDSKFile();
 
         virtual PCIDSKInterfaces *GetInterfaces() = 0;
 

@@ -216,9 +216,7 @@ class FileGDBGeomField : public FileGDBField
                      double dfYOrigin, double dfXYScale, double dfXYTolerance,
                      const std::vector<double> &adfSpatialIndexGridResolution);
 
-    virtual ~FileGDBGeomField()
-    {
-    }
+    virtual ~FileGDBGeomField();
 
     const std::string &GetWKT() const
     {
@@ -372,9 +370,7 @@ class FileGDBRasterField : public FileGDBGeomField
     {
     }
 
-    virtual ~FileGDBRasterField()
-    {
-    }
+    virtual ~FileGDBRasterField();
 
     const std::string &GetRasterColumnName() const
     {
@@ -398,13 +394,9 @@ class FileGDBIndex
     std::string m_osExpression{};
 
   public:
-    FileGDBIndex()
-    {
-    }
+    FileGDBIndex() = default;
 
-    virtual ~FileGDBIndex()
-    {
-    }
+    ~FileGDBIndex();
 
     const std::string &GetIndexName() const
     {
@@ -832,6 +824,8 @@ class FileGDBSpatialIndexIterator : virtual public FileGDBIterator
   public:
     virtual bool SetEnvelope(const OGREnvelope &sFilterEnvelope) = 0;
 
+    ~FileGDBSpatialIndexIterator() override;
+
     static FileGDBSpatialIndexIterator *
     Build(FileGDBTable *poParent, const OGREnvelope &sFilterEnvelope);
 };
@@ -843,9 +837,7 @@ class FileGDBSpatialIndexIterator : virtual public FileGDBIterator
 class FileGDBOGRGeometryConverter
 {
   public:
-    virtual ~FileGDBOGRGeometryConverter()
-    {
-    }
+    virtual ~FileGDBOGRGeometryConverter();
 
     virtual OGRGeometry *GetAsGeometry(const OGRField *psField) = 0;
 

@@ -33,7 +33,7 @@ struct CPL_DLL GDALSubdatasetInfo
      */
     GDALSubdatasetInfo(const std::string &fileName);
 
-    virtual ~GDALSubdatasetInfo() = default;
+    virtual ~GDALSubdatasetInfo();
 
     /**
  * @brief Returns the unquoted and unescaped path component of the complete file descriptor
@@ -82,9 +82,9 @@ struct CPL_DLL GDALSubdatasetInfo
 
     //! The original unparsed complete file name passed to the constructor (e.g. GPKG:/path/to/file.gpkg:layer_name)
     std::string m_fileName;
-    //! The unmodified path component of the file name (e.g. "\"C:\path\to\file.gpkg\"", "/path/to/file.gpkg")
+    //! The unmodified path component of the file name (e.g. "\"C:\\path\\to\\file.gpkg\"", "/path/to/file.gpkg")
     std::string m_pathComponent;
-    //! The unquoted and unescaped path component of the file name (e.g. "C:\path\to\file.gpkg", "/path/to/file.gpkg")
+    //! The unquoted and unescaped path component of the file name (e.g. "C:\\path\\to\\file.gpkg", "/path/to/file.gpkg")
     std::string m_cleanedPathComponent;
     //! The subdataset component (e.g. layer_name)
     std::string m_subdatasetComponent;

@@ -72,10 +72,7 @@ struct OGRSpatialReference::Private
         Listener(const Listener &) = delete;
         Listener &operator=(const Listener &) = delete;
 
-        void notifyChange(OGR_SRSNode *) override
-        {
-            m_poObj->nodesChanged();
-        }
+        void notifyChange(OGR_SRSNode *) override;
     };
 
     OGRSpatialReference *m_poSelf = nullptr;
@@ -194,6 +191,11 @@ struct OGRSpatialReference::Private
         return OptionalLockGuard(this);
     }
 };
+
+void OGRSpatialReference::Private::Listener::notifyChange(OGR_SRSNode *)
+{
+    m_poObj->nodesChanged();
+}
 
 #define TAKE_OPTIONAL_LOCK()                                                   \
     auto lock = d->GetOptionalLockGuard();                                     \

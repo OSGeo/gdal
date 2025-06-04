@@ -48,22 +48,23 @@ class GDALMdimAlgorithm final : public GDALAlgorithm
     std::string m_output{};
     bool m_drivers = false;
 
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        if (m_drivers)
-        {
-            m_output = GDALPrintDriverList(GDAL_OF_MULTIDIM_RASTER, true);
-            return true;
-        }
-        else
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "The Run() method should not be called directly on the \"gdal "
-                "mdim\" program.");
-            return false;
-        }
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
+
+bool GDALMdimAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    if (m_drivers)
+    {
+        m_output = GDALPrintDriverList(GDAL_OF_MULTIDIM_RASTER, true);
+        return true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The Run() method should not be called directly on the \"gdal "
+                 "mdim\" program.");
+        return false;
+    }
+}
 
 GDAL_STATIC_REGISTER_ALG(GDALMdimAlgorithm);

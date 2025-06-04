@@ -51,7 +51,7 @@ class IOGRCSVLayer CPL_NON_FINAL
 {
   public:
     IOGRCSVLayer() = default;
-    virtual ~IOGRCSVLayer() = default;
+    virtual ~IOGRCSVLayer();
 
     virtual OGRLayer *GetLayer() = 0;
 

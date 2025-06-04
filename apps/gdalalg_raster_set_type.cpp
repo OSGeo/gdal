@@ -64,4 +64,7 @@ bool GDALRasterSetTypeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterSetTypeAlgorithmStandalone::~GDALRasterSetTypeAlgorithmStandalone() =
+    default;
+
 //! @endcond

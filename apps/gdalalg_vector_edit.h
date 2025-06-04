@@ -55,6 +55,8 @@ class GDALVectorEditAlgorithmStandalone final : public GDALVectorEditAlgorithm
         : GDALVectorEditAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorEditAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -60,6 +60,8 @@ class GDALVectorMakeValidAlgorithmStandalone final
         : GDALVectorMakeValidAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorMakeValidAlgorithmStandalone() override;
 };
 
 //! @endcond

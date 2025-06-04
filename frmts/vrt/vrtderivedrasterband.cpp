@@ -158,14 +158,16 @@ class VRTDerivedRasterBandPrivateData
 
     VRTDerivedRasterBandPrivateData() = default;
 
-    virtual ~VRTDerivedRasterBandPrivateData()
-    {
-        if (m_poGDALCreateNumpyArray)
-            Py_DecRef(m_poGDALCreateNumpyArray);
-        if (m_poUserFunction)
-            Py_DecRef(m_poUserFunction);
-    }
+    ~VRTDerivedRasterBandPrivateData();
 };
+
+VRTDerivedRasterBandPrivateData::~VRTDerivedRasterBandPrivateData()
+{
+    if (m_poGDALCreateNumpyArray)
+        Py_DecRef(m_poGDALCreateNumpyArray);
+    if (m_poUserFunction)
+        Py_DecRef(m_poUserFunction);
+}
 
 /************************************************************************/
 /* ==================================================================== */

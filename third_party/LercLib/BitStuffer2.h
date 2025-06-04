@@ -39,7 +39,7 @@ class BitStuffer2
 {
 public:
   BitStuffer2()           {}
-  virtual ~BitStuffer2()  {}
+  ~BitStuffer2()          {}
 
   // dst buffer is already allocated. byte ptr is moved like a file pointer.
   bool EncodeSimple(Byte** ppByte, const std::vector<unsigned int>& dataVec, int lerc2Version) const;

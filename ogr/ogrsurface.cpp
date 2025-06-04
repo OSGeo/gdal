@@ -69,8 +69,6 @@
  */
 
 /**
- * \fn OGRErr OGRSurface::PointOnSurface( OGRPoint * poPoint ) const;
- *
  * \brief This method relates to the SFCOM
  * ISurface::get_PointOnSurface() method.
  *
@@ -80,6 +78,10 @@
  *
  * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  */
+OGRErr OGRSurface::PointOnSurface(OGRPoint *poPoint) const
+{
+    return PointOnSurfaceInternal(poPoint);
+}
 
 /************************************************************************/
 /*                           get_Length()                               */
