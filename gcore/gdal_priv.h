@@ -3256,6 +3256,10 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     OpenMDArrayFromFullname(const std::string &osFullName,
                             CSLConstList papszOptions = nullptr) const;
 
+    std::shared_ptr<GDALAttribute>
+    OpenAttributeFromFullname(const std::string &osFullName,
+                              CSLConstList papszOptions = nullptr) const;
+
     std::shared_ptr<GDALMDArray>
     ResolveMDArray(const std::string &osName, const std::string &osStartingPath,
                    CSLConstList papszOptions = nullptr) const;
