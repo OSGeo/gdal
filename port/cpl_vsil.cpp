@@ -761,7 +761,7 @@ int *VSIUnlinkBatch(CSLConstList papszFiles)
  * function is only used to rename files that remain in the same directory.
  *
  * This function only works if the new path is located on the same VSI
- * virtual file system than the old path. I not, use VSIMove() instead.
+ * virtual file system than the old path. If not, use VSIMove() instead.
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory or cloud object storage.
