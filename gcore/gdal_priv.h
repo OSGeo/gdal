@@ -4695,6 +4695,9 @@ void GDALNullifyProxyPoolSingleton();
 void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
 GIntBig GDALGetResponsiblePIDForCurrentThread();
 
+// Only to be used by GDALDestroyDriverManager()
+void GDALDestroyThreadLocalDatasetCacheForCurrentThread();
+
 CPLString GDALFindAssociatedFile(const char *pszBasename, const char *pszExt,
                                  CSLConstList papszSiblingFiles, int nFlags);
 

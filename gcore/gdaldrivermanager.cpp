@@ -147,6 +147,9 @@ void GDALDatasetPoolForceDestroy();
 GDALDriverManager::~GDALDriverManager()
 
 {
+    // To be called before we destroy hDMMutex, since it checks *GDALGetphDMMutex()
+    GDALDestroyThreadLocalDatasetCacheForCurrentThread();
+
     /* -------------------------------------------------------------------- */
     /*      Cleanup any open datasets.                                      */
     /* -------------------------------------------------------------------- */

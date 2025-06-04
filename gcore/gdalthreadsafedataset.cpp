@@ -161,6 +161,14 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
 
     static GDALDataset *Create(GDALDataset *poPrototypeDS, int nScopeFlags);
 
+    static void ResetCacheForCurrentThread()
+    {
+        if (bGlobalCacheValid)
+        {
+            GDALThreadSafeDataset::tl_poCache.reset();
+        }
+    }
+
     /* All below public methods override GDALDataset methods, and instead of
      * forwarding to a thread-local dataset, they act on the prototype dataset,
      * because they return a non-trivial type, that could be invalidated
@@ -489,6 +497,15 @@ GDALThreadLocalDatasetCache::~GDALThreadLocalDatasetCache()
                  kv.value->GetDescription(), kv.value.get(), m_nThreadID);
     };
     m_oCache.cwalk(lambda);
+}
+
+/************************************************************************/
+/*           GDALDestroyThreadLocalDatasetCacheForCurrentThread()       */
+/************************************************************************/
+
+void GDALDestroyThreadLocalDatasetCacheForCurrentThread()
+{
+    GDALThreadSafeDataset::ResetCacheForCurrentThread();
 }
 
 /************************************************************************/
