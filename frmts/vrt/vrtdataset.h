@@ -1213,6 +1213,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     static const std::pair<PixelFunc, std::string> *
     GetPixelFunction(const char *pszFuncNameIn);
 
+    static std::vector<std::string> GetPixelFunctionNames();
+
     void SetPixelFunctionName(const char *pszFuncNameIn);
     void AddPixelFunctionArgument(const char *pszArg, const char *pszValue);
     void SetSkipNonContributingSources(bool bSkip);
