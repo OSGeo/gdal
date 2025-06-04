@@ -14,6 +14,7 @@
 #include "cpl_float.h"
 #include "gdal.h"
 
+#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <limits>
@@ -29,12 +30,21 @@ template <class OutType, class ConstantType>
 void AssertRes(GDALDataType intype, ConstantType inval, GDALDataType outtype,
                ConstantType expected_outval, OutType outval, int numLine)
 {
-    EXPECT_NEAR((double)outval, (double)expected_outval, 1.0)
-        << "Test failed at line " << numLine
-        << " (intype=" << GDALGetDataTypeName(intype)
-        << ",inval=" << (double)inval
-        << ",outtype=" << GDALGetDataTypeName(outtype) << ",got "
-        << (double)outval << " expected  " << expected_outval;
+    if (static_cast<double>(expected_outval) == static_cast<double>(outval) ||
+        (std::isnan(static_cast<double>(expected_outval)) &&
+         std::isnan(static_cast<double>(outval))))
+    {
+        // ok
+    }
+    else
+    {
+        EXPECT_NEAR((double)outval, (double)expected_outval, 1.0)
+            << "Test failed at line " << numLine
+            << " (intype=" << GDALGetDataTypeName(intype)
+            << ",inval=" << (double)inval
+            << ",outtype=" << GDALGetDataTypeName(outtype) << ",got "
+            << (double)outval << " expected  " << expected_outval;
+    }
 }
 
 #define MY_EXPECT(intype, inval, outtype, expected_outval, outval)             \
@@ -522,6 +532,16 @@ TEST_F(TestCopyWords, GDT_UInt64)
     FROM_R(GDT_UInt64, nVal, GDT_CFloat64, nVal);
 }
 
+TEST_F(TestCopyWords, GDT_Float64)
+{
+    FROM_R_F(GDT_Float64, std::numeric_limits<double>::max(), GDT_Float32,
+             std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float64, -std::numeric_limits<double>::max(), GDT_Float32,
+             -std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float64, std::numeric_limits<double>::quiet_NaN(), GDT_Float32,
+             std::numeric_limits<double>::quiet_NaN());
+}
+
 TEST_F(TestCopyWords, GDT_Float16only)
 {
     GDALDataType intype = GDT_Float16;
@@ -586,6 +606,20 @@ TEST_F(TestCopyWords, GDT_Float16only)
     FROM_R(intype, -33000, GDT_CFloat32, -32992);
     FROM_R(intype, 33000, GDT_CFloat64, 32992);
     FROM_R(intype, -33000, GDT_CFloat64, -32992);
+
+    FROM_R_F(GDT_Float32, std::numeric_limits<float>::max(), GDT_Float16,
+             std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float32, -std::numeric_limits<float>::max(), GDT_Float16,
+             -std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float32, std::numeric_limits<float>::quiet_NaN(), GDT_Float16,
+             std::numeric_limits<double>::quiet_NaN());
+
+    FROM_R_F(GDT_Float64, std::numeric_limits<double>::max(), GDT_Float16,
+             std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float64, -std::numeric_limits<double>::max(), GDT_Float16,
+             -std::numeric_limits<double>::infinity());
+    FROM_R_F(GDT_Float64, std::numeric_limits<double>::quiet_NaN(), GDT_Float16,
+             std::numeric_limits<double>::quiet_NaN());
 
     // Float16 to Int64
     {

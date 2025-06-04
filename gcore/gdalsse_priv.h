@@ -62,11 +62,15 @@ static inline __m128i GDALCopyInt64ToXMM(const void *ptr)
 #endif
 }
 
+#ifndef GDALCopyXMMToInt16_defined
+#define GDALCopyXMMToInt16_defined
+
 static inline void GDALCopyXMMToInt16(const __m128i xmm, void *pDest)
 {
     GInt16 i = static_cast<GInt16>(_mm_extract_epi16(xmm, 0));
     memcpy(pDest, &i, 2);
 }
+#endif
 
 class XMMReg4Int;
 
