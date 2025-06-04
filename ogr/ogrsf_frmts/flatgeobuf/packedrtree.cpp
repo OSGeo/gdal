@@ -210,6 +210,11 @@ void PackedRTree::init(const uint16_t nodeSize)
     _nodeItems = new NodeItem[static_cast<size_t>(_numNodes)];
 }
 
+template <class T, class U> inline T div_round_up(T a, U b)
+{
+    return a / b + (((a % b) == 0) ? 0 : 1);
+}
+
 std::vector<std::pair<uint64_t, uint64_t>>
 PackedRTree::generateLevelBounds(const uint64_t numItems,
                                  const uint16_t nodeSize)
@@ -229,7 +234,7 @@ PackedRTree::generateLevelBounds(const uint64_t numItems,
     levelNumNodes.push_back(n);
     do
     {
-        n = (n + nodeSize - 1) / nodeSize;
+        n = div_round_up(n, nodeSize);
         numNodes += n;
         levelNumNodes.push_back(n);
     } while (n != 1);
@@ -422,7 +427,7 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
     uint64_t numNodes = n;
     do
     {
-        n = (n + nodeSizeMin - 1) / nodeSizeMin;
+        n = div_round_up(n, nodeSizeMin);
         numNodes += n;
     } while (n != 1);
     return numNodes * sizeof(NodeItem);

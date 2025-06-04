@@ -1016,8 +1016,8 @@ INSTANTIATE_READ_RASTER_VECTOR(std::complex<double>)
      int nXBlockSize, nYBlockSize;
 
      poBand->GetBlockSize( &nXBlockSize, &nYBlockSize );
-     int nXBlocks = (poBand->GetXSize() + nXBlockSize - 1) / nXBlockSize;
-     int nYBlocks = (poBand->GetYSize() + nYBlockSize - 1) / nYBlockSize;
+     int nXBlocks = DIV_ROUND_UP(poBand->GetXSize(), nXBlockSize);
+     int nYBlocks = DIV_ROUND_UP(poBand->GetYSize(), nYBlockSize);
 
      GByte *pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize);
 
