@@ -26,6 +26,7 @@
 #include "ogr_core.h"
 
 #include <limits>
+#include <string_view>
 
 class OGRGeometry;
 class OGRFieldDefn;
@@ -142,13 +143,15 @@ int CPL_DLL
 OGRGetISO8601DateTime(const OGRField *psField, const OGRISO8601Format &sFormat,
                       char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
 char CPL_DLL *OGRGetXML_UTF8_EscapedString(const char *pszString);
-bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
+
+#ifdef GDAL_COMPILATION
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMZ(std::string_view sInput,
                                             OGRField *psField);
-bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ(const char *pszInput, size_t nLen,
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ(std::string_view sInput,
                                               OGRField *psField);
-bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(const char *pszInput,
-                                                 size_t nLen,
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(std::string_view sInput,
                                                  OGRField *psField);
+#endif
 
 int OGRCompareDate(const OGRField *psFirstTuple,
                    const OGRField *psSecondTuple); /* used by ogr_gensql.cpp and

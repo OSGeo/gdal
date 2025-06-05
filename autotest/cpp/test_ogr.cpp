@@ -2624,9 +2624,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2638,9 +2636,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2654,17 +2650,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
         char szInput[] = "2023-07-11T17:2";
         OGRField sField;
         // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
 }
 
@@ -2673,9 +2665,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2687,9 +2677,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2703,17 +2691,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
         char szInput[] = "2023-07-11T17:27:3";
         OGRField sField;
         // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
 }
 
@@ -2722,9 +2706,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123Z";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2736,9 +2718,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2752,17 +2732,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
         char szInput[] = "2023-07-11T17:27:34.12";
         OGRField sField;
         // coverity[overrun-buffer-val]
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
 }
 
