@@ -127,6 +127,8 @@ void GDALRasterPipelineStepAlgorithm::AddInputArgs(
                                              : GDAL_OF_RASTER,
                     /* positionalAndRequired = */ !hiddenForCLI,
                     m_constructorOptions.inputDatasetHelpMsg.c_str())
+                    .SetMinCount(1)
+                    .SetMaxCount(1)
                     .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
                     .SetHiddenForCLI(hiddenForCLI);
     if (!m_constructorOptions.inputDatasetAlias.empty())
@@ -219,7 +221,9 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         else if (readAlg.Run())
         {
-            m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
+            m_inputDataset.clear();
+            m_inputDataset.resize(1);
+            m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
             m_outputDataset.Set(nullptr);
 
             std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
@@ -250,7 +254,9 @@ bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 else
                 {
                     writeAlg.m_outputVRTCompatible = m_outputVRTCompatible;
-                    writeAlg.m_inputDataset.Set(
+                    writeAlg.m_inputDataset.clear();
+                    writeAlg.m_inputDataset.resize(1);
+                    writeAlg.m_inputDataset[0].Set(
                         m_outputDataset.GetDatasetRef());
                     if (pfnProgress)
                     {
@@ -648,7 +654,8 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
     // argument of the "write" step, in case they point to the same dataset.
     auto inputArg = steps.front().alg->GetArg(GDAL_ARG_NAME_INPUT);
     if (inputArg && inputArg->IsExplicitlySet() &&
-        inputArg->GetType() == GAAT_DATASET)
+        inputArg->GetType() == GAAT_DATASET_LIST &&
+        inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
         steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
     }

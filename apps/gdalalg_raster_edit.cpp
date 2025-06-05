@@ -240,7 +240,8 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
     }
     else
     {
-        CPLAssert(m_inputDataset.GetDatasetRef());
+        const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+        CPLAssert(poSrcDS);
         CPLAssert(m_outputDataset.GetName().empty());
         CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -249,8 +250,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
         aosOptions.push_back("VRT");
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
         auto poRetDS = GDALDataset::FromHandle(
             GDALTranslate("", hSrcDS, psOptions, nullptr));
         GDALTranslateOptionsFree(psOptions);

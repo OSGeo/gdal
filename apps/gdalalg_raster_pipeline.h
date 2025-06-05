@@ -150,7 +150,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     const ConstructorOptions m_constructorOptions;
 
     // Input arguments
-    GDALArgDatasetValue m_inputDataset{};
+    std::vector<GDALArgDatasetValue> m_inputDataset{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
     std::vector<std::string> m_inputLayerNames{};
@@ -238,7 +238,8 @@ class GDALRasterPipelineAlgorithm final
 
     GDALDataset *GetDatasetRef()
     {
-        return m_inputDataset.GetDatasetRef();
+        return m_inputDataset.size() == 1 ? m_inputDataset[0].GetDatasetRef()
+                                          : nullptr;
     }
 
   protected:
