@@ -2414,9 +2414,11 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     // Compute shift between GDAL origin and TileMatrixSet origin
     const double dfShiftXPixels =
         (m_adfGeoTransform[0] - m_dfTMSMinX) / m_adfGeoTransform[1];
-    if (dfShiftXPixels / nTileWidth <= INT_MIN ||
-        dfShiftXPixels / nTileWidth > INT_MAX)
+    if (!(dfShiftXPixels / nTileWidth >= INT_MIN &&
+          dfShiftXPixels / nTileWidth < INT_MAX))
+    {
         return false;
+    }
     const int64_t nShiftXPixels =
         static_cast<int64_t>(floor(0.5 + dfShiftXPixels));
     m_nShiftXTiles = static_cast<int>(nShiftXPixels / nTileWidth);
@@ -2428,9 +2430,11 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
 
     const double dfShiftYPixels =
         (m_adfGeoTransform[3] - m_dfTMSMaxY) / m_adfGeoTransform[5];
-    if (dfShiftYPixels / nTileHeight <= INT_MIN ||
-        dfShiftYPixels / nTileHeight > INT_MAX)
+    if (!(dfShiftYPixels / nTileHeight >= INT_MIN &&
+          dfShiftYPixels / nTileHeight < INT_MAX))
+    {
         return false;
+    }
     const int64_t nShiftYPixels =
         static_cast<int64_t>(floor(0.5 + dfShiftYPixels));
     m_nShiftYTiles = static_cast<int>(nShiftYPixels / nTileHeight);
