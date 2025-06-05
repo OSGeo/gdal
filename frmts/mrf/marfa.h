@@ -1000,6 +1000,8 @@ class QB3_Band final : public MRFRasterBand
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+
+    std::vector<size_t> coreband;
 };
 #endif
 
