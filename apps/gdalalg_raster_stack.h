@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_STACK_INCLUDED
 #define GDALALG_RASTER_STACK_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalalg_raster_mosaic_stack_common.h"
 
 //! @cond Doxygen_Suppress
 
@@ -22,7 +22,7 @@
 /************************************************************************/
 
 class GDALRasterStackAlgorithm /* non final */
-    : public GDALRasterPipelineStepAlgorithm
+    : public GDALRasterMosaicStackCommonAlgorithm
 {
   public:
     static constexpr const char *NAME = "stack";
@@ -33,20 +33,8 @@ class GDALRasterStackAlgorithm /* non final */
 
     explicit GDALRasterStackAlgorithm(bool bStandalone = false);
 
-    static ConstructorOptions GetConstructorOptions(bool standaloneStep);
-
   private:
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::string m_resolution{};
-    std::vector<double> m_bbox{};
-    bool m_targetAlignedPixels = false;
-    std::vector<double> m_srcNoData{};
-    std::vector<double> m_dstNoData{};
-    std::vector<int> m_bands{};
-    bool m_hideNoData = false;
-    bool m_writeAbsolutePaths = false;
 };
 
 /************************************************************************/

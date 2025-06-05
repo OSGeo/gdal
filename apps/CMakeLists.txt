@@ -36,6 +36,7 @@ add_library(
   gdalalg_raster_hillshade.cpp
   gdalalg_raster_index.cpp
   gdalalg_raster_mosaic.cpp
+  gdalalg_raster_mosaic_stack_common.cpp
   gdalalg_raster_pipeline.cpp
   gdalalg_raster_pixel_info.cpp
   gdalalg_raster_polygonize.cpp

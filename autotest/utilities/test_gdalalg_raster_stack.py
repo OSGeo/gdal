@@ -21,6 +21,14 @@ def stack():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["stack"]
 
 
+def test_gdalalg_raster_stack_at_filename_error(stack):
+
+    stack["input"] = ["@i_do_not_exist"]
+    stack["output-format"] = "stream"
+    with pytest.raises(Exception, match="stack: Cannot open i_do_not_exist"):
+        stack.Run()
+
+
 def test_gdalalg_raster_stack_resolution_common(stack):
 
     # resolution = 3
