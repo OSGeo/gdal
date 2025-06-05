@@ -32,6 +32,7 @@
 #include "gdalalg_raster_set_type.h"
 #include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
+#include "gdalalg_raster_stack.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
@@ -131,7 +132,8 @@ void GDALRasterPipelineStepAlgorithm::AddInputArgs(
                            m_constructorOptions.inputDatasetHelpMsg.c_str())
             .SetMinCount(1)
             .SetMaxCount((GetName() == GDALRasterPipelineAlgorithm::NAME ||
-                          GetName() == GDALRasterMosaicAlgorithm::NAME)
+                          GetName() == GDALRasterMosaicAlgorithm::NAME ||
+                          GetName() == GDALRasterStackAlgorithm::NAME)
                              ? INT_MAX
                              : 1)
             .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
@@ -377,6 +379,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     m_stepRegistry.Register<GDALRasterSetTypeAlgorithm>();
     m_stepRegistry.Register<GDALRasterSieveAlgorithm>();
     m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
+    m_stepRegistry.Register<GDALRasterStackAlgorithm>();
     m_stepRegistry.Register<GDALRasterTPIAlgorithm>();
     m_stepRegistry.Register<GDALRasterTRIAlgorithm>();
     m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
@@ -571,17 +574,21 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
     }
 
     if (steps.front().alg->GetName() != GDALRasterReadAlgorithm::NAME &&
-        steps.front().alg->GetName() != GDALRasterMosaicAlgorithm::NAME)
+        steps.front().alg->GetName() != GDALRasterMosaicAlgorithm::NAME &&
+        steps.front().alg->GetName() != GDALRasterStackAlgorithm::NAME)
     {
-        ReportError(
-            CE_Failure, CPLE_AppDefined, "First step should be '%s' or '%s'",
-            GDALRasterReadAlgorithm::NAME, GDALRasterMosaicAlgorithm::NAME);
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "First step should be '%s', '%s' or '%s'",
+                    GDALRasterReadAlgorithm::NAME,
+                    GDALRasterMosaicAlgorithm::NAME,
+                    GDALRasterStackAlgorithm::NAME);
         return false;
     }
     for (size_t i = 1; i < steps.size() - 1; ++i)
     {
         if (steps[i].alg->GetName() == GDALRasterReadAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALRasterMosaicAlgorithm::NAME)
+            steps[i].alg->GetName() == GDALRasterMosaicAlgorithm::NAME ||
+            steps[i].alg->GetName() == GDALRasterStackAlgorithm::NAME)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Only first step can be '%s'",
@@ -718,7 +725,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     if (shortUsage)
         return ret;
 
-    ret += "\n<PIPELINE> is of the form: read|mosaic [READ-OPTIONS] "
+    ret += "\n<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] "
            "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
@@ -755,10 +762,18 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
+    {
+        const auto name = GDALRasterStackAlgorithm::NAME;
+        ret += '\n';
+        auto alg = GetStepAlg(name);
+        alg->SetCallPath({name});
+        ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+    }
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         if (name != GDALRasterReadAlgorithm::NAME &&
             name != GDALRasterMosaicAlgorithm::NAME &&
+            name != GDALRasterStackAlgorithm::NAME &&
             name != GDALRasterWriteAlgorithm::NAME)
         {
             auto alg = GetStepAlg(name);
