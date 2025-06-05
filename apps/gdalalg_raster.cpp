@@ -97,7 +97,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReclassifyAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterMosaicAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterMosaicAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPansharpenAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPolygonizeAlgorithm>();
         RegisterSubAlgorithm<GDALRasterResizeAlgorithmStandalone>();

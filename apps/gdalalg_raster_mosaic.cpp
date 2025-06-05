@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_mosaic.h"
+#include "gdalalg_raster_write.h"
 
 #include "cpl_conv.h"
 #include "cpl_vsi_virtual.h"
@@ -26,29 +27,39 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()    */
+/*           GDALRasterMosaicAlgorithm::GetConstructorOptions()         */
 /************************************************************************/
 
-GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+/* static */ GDALRasterMosaicAlgorithm::ConstructorOptions
+GDALRasterMosaicAlgorithm::GetConstructorOptions(bool standaloneStep)
 {
-    m_supportsStreamedOutput = true;
+    ConstructorOptions opts;
+    opts.SetStandaloneStep(standaloneStep);
+    opts.SetAutoOpenInputDatasets(false);
+    opts.SetInputDatasetHelpMsg(
+        _("Input raster datasets (or specify a @<filename> to point to a "
+          "file containing filenames)"));
+    opts.SetAddDefaultArguments(false);
+    return opts;
+}
 
-    AddProgressArg();
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
-                       /* bGDALGAllowed = */ true);
-    AddArg(GDAL_ARG_NAME_INPUT, 'i',
-           _("Input raster datasets (or specify a @<filename> to point to a "
-             "file containing filenames)"),
-           &m_inputDatasets, GDAL_OF_RASTER)
-        .SetPositional()
-        .SetMinCount(1)
-        .SetAutoOpenDataset(false)
-        .SetMetaVar("INPUTS");
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
+/************************************************************************/
+/*        GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()        */
+/************************************************************************/
+
+GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm(bool bStandalone)
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      GetConstructorOptions(bStandalone))
+{
+    AddInputArgs(/* openForMixedRasterVector = */ false,
+                 /* hiddenForCLI = */ false);
+    if (bStandalone)
+    {
+        AddProgressArg();
+        AddOutputArgs(false);
+    }
+
     AddBandArg(&m_bands);
-    AddOverwriteArg(&m_overwrite);
     AddAbsolutePathArg(
         &m_writeAbsolutePaths,
         _("Whether the path to the input datasets should be stored as an "
@@ -167,11 +178,10 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALRasterMosaicAlgorithm::RunImpl()               */
+/*                   GDALRasterMosaicAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                        void *pProgressData)
+bool GDALRasterMosaicAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -179,7 +189,7 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLStringList aosInputDatasetNames;
     bool foundByRef = false;
     bool foundByName = false;
-    for (auto &ds : m_inputDatasets)
+    for (auto &ds : m_inputDataset)
     {
         if (ds.GetDatasetRef())
         {
@@ -208,7 +218,8 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             else if (ds.GetName().find_first_of("*?[") != std::string::npos)
             {
                 CPLStringList aosMatches(VSIGlob(ds.GetName().c_str(), nullptr,
-                                                 pfnProgress, pProgressData));
+                                                 ctxt.m_pfnProgress,
+                                                 ctxt.m_pProgressData));
                 for (const char *pszStr : aosMatches)
                 {
                     aosInputDatasetNames.push_back(pszStr);
@@ -234,12 +245,6 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     "or all by name");
         return false;
     }
-
-    const bool bVRTOutput =
-        m_outputDataset.GetName().empty() || EQUAL(m_format.c_str(), "VRT") ||
-        EQUAL(m_format.c_str(), "stream") ||
-        EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
-              "VRT");
 
     CPLStringList aosOptions;
     aosOptions.push_back("-strict");
@@ -297,14 +302,6 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         aosOptions.push_back(s);
     }
-    if (bVRTOutput)
-    {
-        for (const auto &co : m_creationOptions)
-        {
-            aosOptions.push_back("-co");
-            aosOptions.push_back(co);
-        }
-    }
     for (const int b : m_bands)
     {
         aosOptions.push_back("-b");
@@ -335,69 +332,87 @@ bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.push_back(arg);
     }
 
+    bool bOK = false;
     GDALBuildVRTOptions *psOptions =
         GDALBuildVRTOptionsNew(aosOptions.List(), nullptr);
-    if (!psOptions)
+    if (psOptions)
     {
-        return false;
-    }
-
-    if (bVRTOutput)
-    {
-        GDALBuildVRTOptionsSetProgress(psOptions, pfnProgress, pProgressData);
-    }
-
-    auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALBuildVRT(EQUAL(m_format.c_str(), "stream") ? ""
-                     : bVRTOutput ? m_outputDataset.GetName().c_str()
-                                  : "",
-                     foundByName ? aosInputDatasetNames.size()
-                                 : static_cast<int>(m_inputDatasets.size()),
-                     ahInputDatasets.empty() ? nullptr : ahInputDatasets.data(),
-                     aosInputDatasetNames.List(), psOptions, nullptr)));
-    GDALBuildVRTOptionsFree(psOptions);
-    bool bOK = poOutDS != nullptr;
-    if (bOK)
-    {
-        if (bVRTOutput)
+        auto poOutDS =
+            std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALBuildVRT(
+                "",
+                foundByName ? aosInputDatasetNames.size()
+                            : static_cast<int>(m_inputDataset.size()),
+                ahInputDatasets.empty() ? nullptr : ahInputDatasets.data(),
+                aosInputDatasetNames.List(), psOptions, nullptr)));
+        GDALBuildVRTOptionsFree(psOptions);
+        bOK = poOutDS != nullptr;
+        if (bOK)
         {
             m_outputDataset.Set(std::move(poOutDS));
         }
-        else
-        {
-            CPLStringList aosTranslateOptions;
-            if (!m_format.empty())
-            {
-                aosTranslateOptions.AddString("-of");
-                aosTranslateOptions.AddString(m_format.c_str());
-            }
-            for (const auto &co : m_creationOptions)
-            {
-                aosTranslateOptions.AddString("-co");
-                aosTranslateOptions.AddString(co.c_str());
-            }
-
-            GDALTranslateOptions *psTranslateOptions =
-                GDALTranslateOptionsNew(aosTranslateOptions.List(), nullptr);
-            GDALTranslateOptionsSetProgress(psTranslateOptions, pfnProgress,
-                                            pProgressData);
-
-            auto poFinalDS =
-                std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-                    GDALTranslate(m_outputDataset.GetName().c_str(),
-                                  GDALDataset::ToHandle(poOutDS.get()),
-                                  psTranslateOptions, nullptr)));
-            GDALTranslateOptionsFree(psTranslateOptions);
-
-            bOK = poFinalDS != nullptr;
-            if (bOK)
-            {
-                m_outputDataset.Set(std::move(poFinalDS));
-            }
-        }
     }
-
     return bOK;
 }
+
+/************************************************************************/
+/*                GDALRasterMosaicAlgorithm::RunImpl()                  */
+/************************************************************************/
+
+bool GDALRasterMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
+{
+    if (m_standaloneStep)
+    {
+        GDALRasterWriteAlgorithm writeAlg;
+        for (auto &arg : writeAlg.GetArgs())
+        {
+            auto stepArg = GetArg(arg->GetName());
+            if (stepArg && stepArg->IsExplicitlySet())
+            {
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*stepArg);
+            }
+        }
+
+        // Already checked by GDALAlgorithm::Run()
+        CPLAssert(!m_executionForStreamOutput ||
+                  EQUAL(m_format.c_str(), "stream"));
+
+        m_standaloneStep = false;
+        bool ret = Run(pfnProgress, pProgressData);
+        m_standaloneStep = true;
+        if (ret)
+        {
+            if (m_format == "stream")
+            {
+                ret = true;
+            }
+            else
+            {
+                writeAlg.m_inputDataset.clear();
+                writeAlg.m_inputDataset.resize(1);
+                writeAlg.m_inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+                if (writeAlg.Run(pfnProgress, pProgressData))
+                {
+                    m_outputDataset.Set(
+                        writeAlg.m_outputDataset.GetDatasetRef());
+                    ret = true;
+                }
+            }
+        }
+
+        return ret;
+    }
+    else
+    {
+        GDALRasterPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunStep(stepCtxt);
+    }
+}
+
+GDALRasterMosaicAlgorithmStandalone::~GDALRasterMosaicAlgorithmStandalone() =
+    default;
 
 //! @endcond
