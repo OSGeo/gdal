@@ -154,12 +154,7 @@ GDALWarpKernel.
 /*                         GDALWarpOperation()                          */
 /************************************************************************/
 
-GDALWarpOperation::GDALWarpOperation()
-    : psOptions(nullptr), hIOMutex(nullptr), hWarpMutex(nullptr),
-      nChunkListCount(0), nChunkListMax(0), pasChunkList(nullptr),
-      bReportTimings(FALSE), nLastTimeReported(0), psThreadData(nullptr)
-{
-}
+GDALWarpOperation::GDALWarpOperation() = default;
 
 /************************************************************************/
 /*                         ~GDALWarpOperation()                         */

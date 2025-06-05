@@ -519,7 +519,7 @@ class CPL_DLL GDALWarpOperation final
     CPL_DISALLOW_COPY_ASSIGN(GDALWarpOperation)
 
   private:
-    GDALWarpOptions *psOptions;
+    GDALWarpOptions *psOptions = nullptr;
     GDALTransformerArgUniquePtr m_psOwnedTransformerArg{nullptr};
 
     void WipeOptions();
@@ -541,17 +541,17 @@ class CPL_DLL GDALWarpOperation final
     static CPLErr CreateKernelMask(GDALWarpKernel *, int iBand,
                                    const char *pszType);
 
-    CPLMutex *hIOMutex;
-    CPLMutex *hWarpMutex;
+    CPLMutex *hIOMutex = nullptr;
+    CPLMutex *hWarpMutex = nullptr;
 
-    int nChunkListCount;
-    int nChunkListMax;
-    GDALWarpChunk *pasChunkList;
+    int nChunkListCount = 0;
+    int nChunkListMax = 0;
+    GDALWarpChunk *pasChunkList = nullptr;
 
-    int bReportTimings;
-    unsigned long nLastTimeReported;
+    bool bReportTimings = false;
+    unsigned long nLastTimeReported = 0;
 
-    void *psThreadData;
+    void *psThreadData = nullptr;
 
     // Coordinates a few special points in target image space, to determine
     // if ComputeSourceWindow() must use a grid based sampling.
