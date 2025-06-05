@@ -225,6 +225,11 @@ class OGROAPIFLayer final : public OGRLayer
     GetSupportedSRSList(int iGeomField) override;
     OGRErr SetActiveSRS(int iGeomField,
                         const OGRSpatialReference *poSRS) override;
+
+    void SetTotalItemCount(GIntBig nCount)
+    {
+        m_nTotalFeatureCount = nCount;
+    }
 };
 
 /************************************************************************/
@@ -840,6 +845,11 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
     {
         poLayer->SetItemAssets(oItemAssets);
     }
+
+    // LDProxy extension (https://github.com/opengeospatial/ogcapi-features/issues/261#issuecomment-1271010859)
+    const auto nItemCount = oCollection.GetLong("itemCount", -1);
+    if (nItemCount >= 0)
+        poLayer->SetTotalItemCount(nItemCount);
 
     auto oJSONStr = oCollection.Format(CPLJSONObject::PrettyFormat::Pretty);
     char *apszMetadata[2] = {&oJSONStr[0], nullptr};
@@ -2381,6 +2391,10 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
         m_poDS->m_osDateTime.empty())
     {
+        if (m_nTotalFeatureCount >= 0)
+        {
+            return m_nTotalFeatureCount;
+        }
         GetLayerDefn();
         if (m_nTotalFeatureCount >= 0)
         {
