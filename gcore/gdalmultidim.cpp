@@ -6980,6 +6980,13 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
+    if (bufferDataType.GetClass() != GEDTC_NUMERIC)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: only reading to a numeric data type is supported",
+                 __func__);
+        return false;
+    }
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
     std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
@@ -7046,9 +7053,8 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         GByte abyOne[16];  // 16 is sizeof GDT_CFloat64
         CPLAssert(nBufferDTSize <= 16);
         const GByte flag = 1;
-        // Coverity misses that m_dt is of type Byte
-        // coverity[overrun-buffer-val]
-        GDALExtendedDataType::CopyValue(&flag, m_dt, abyOne, bufferDataType);
+        GDALCopyWords64(&flag, GDT_Byte, 0, abyOne,
+                        bufferDataType.GetNumericDataType(), 0, 1);
 
     lbl_next_depth:
         if (dimIdx == nDimsMinus1)
@@ -7378,10 +7384,8 @@ void GDALMDArrayMask::ReadInternal(
     CPLAssert(nBufferDTSize <= 16);
     for (GByte flag = 0; flag <= 1; flag++)
     {
-        // Coverity misses that m_dt is of type Byte
-        // coverity[overrun-buffer-val]
-        GDALExtendedDataType::CopyValue(&flag, m_dt, abyZeroOrOne[flag],
-                                        bufferDataType);
+        GDALCopyWords64(&flag, m_dt.GetNumericDataType(), 0, abyZeroOrOne[flag],
+                        bufferDataType.GetNumericDataType(), 0, 1);
     }
 
 lbl_next_depth:
