@@ -353,37 +353,19 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         auto &step = m_steps[i];
         if (i > 0)
         {
-            if constexpr (std::is_same_v<decltype(step->m_inputDataset),
-                                         GDALArgDatasetValue>)
+            if (!step->m_inputDataset.empty() &&
+                step->m_inputDataset[0].GetDatasetRef())
             {
-                if (step->m_inputDataset.GetDatasetRef())
-                {
-                    // Shouldn't happen
-                    StepAlgorithm::ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Step nr %d (%s) has already an input dataset",
-                        static_cast<int>(i), step->GetName().c_str());
-                    return false;
-                }
-                step->m_inputDataset.Set(poCurDS);
+                // Shouldn't happen
+                StepAlgorithm::ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Step nr %d (%s) has already an input dataset",
+                    static_cast<int>(i), step->GetName().c_str());
+                return false;
             }
-            else if constexpr (std::is_same_v<decltype(step->m_inputDataset),
-                                              std::vector<GDALArgDatasetValue>>)
-            {
-                if (!step->m_inputDataset.empty() &&
-                    step->m_inputDataset[0].GetDatasetRef())
-                {
-                    // Shouldn't happen
-                    StepAlgorithm::ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Step nr %d (%s) has already an input dataset",
-                        static_cast<int>(i), step->GetName().c_str());
-                    return false;
-                }
-                step->m_inputDataset.clear();
-                step->m_inputDataset.resize(1);
-                step->m_inputDataset[0].Set(poCurDS);
-            }
+            step->m_inputDataset.clear();
+            step->m_inputDataset.resize(1);
+            step->m_inputDataset[0].Set(poCurDS);
         }
         if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef())
         {
