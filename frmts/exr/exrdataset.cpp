@@ -59,6 +59,12 @@ class GDALEXRDataset final : public GDALPamDataset
     double m_adfGT[6] = {0, 1, 0, 0, 0, 1};
     bool m_bHasGT = false;
 
+    void AddOverview(std::unique_ptr<GDALEXRDataset> poOvrDS)
+    {
+        m_apoOvrDS.push_back(std::move(poOvrDS));
+        m_apoOvrDS.back()->m_poParent = this;
+    }
+
   public:
     GDALEXRDataset() = default;
     ~GDALEXRDataset();
@@ -720,22 +726,20 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                         break;
                     }
                     auto poOvrDS = std::make_unique<GDALEXRDataset>();
-                    // coverity[escape]
-                    poOvrDS->m_poParent = poDS.get();
                     poOvrDS->m_iLevel = iLevel;
                     poOvrDS->nRasterXSize = nOvrWidth;
                     poOvrDS->nRasterYSize = nOvrHeight;
-                    poDS->m_apoOvrDS.push_back(std::move(poOvrDS));
                     i = 0;
                     for (auto iter = channels.begin(); iter != channels.end();
                          ++iter, ++i)
                     {
                         const Channel &channel = iter.channel();
-                        auto poBand = new GDALEXRRasterBand(
-                            poDS->m_apoOvrDS.back().get(), i + 1, iter.name(),
-                            channel.type, nBlockXSize, nBlockYSize);
-                        poDS->m_apoOvrDS.back()->SetBand(i + 1, poBand);
+                        auto poBand = std::make_unique<GDALEXRRasterBand>(
+                            poOvrDS.get(), i + 1, iter.name(), channel.type,
+                            nBlockXSize, nBlockYSize);
+                        poOvrDS->SetBand(i + 1, std::move(poBand));
                     }
+                    poDS->AddOverview(std::move(poOvrDS));
                 }
             }
 
