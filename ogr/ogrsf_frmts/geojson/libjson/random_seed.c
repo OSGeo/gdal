@@ -306,6 +306,8 @@ static int get_cryptgenrandom_seed(int *seed)
 /* get_time_seed */
 
 #ifndef HAVE_ARC4RANDOM
+#include <limits.h>
+#include <stdint.h>
 #include <time.h>
 
 static int get_time_seed(void)
