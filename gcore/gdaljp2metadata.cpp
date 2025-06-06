@@ -232,9 +232,9 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                     // Some GML data contains \0 instead of \n.
                     // See http://trac.osgeo.org/gdal/ticket/5760
                     // TODO(schwehr): Explain the numbers in the next line.
-                    if (pszXML != nullptr && nXMLLength < 100 * 1024 * 1024)
+                    if (pszXML != nullptr && nXMLLength > 0 &&
+                        nXMLLength < 100 * 1024 * 1024)
                     {
-                        // coverity[tainted_data].
                         for (GIntBig i = nXMLLength - 1; i >= 0; --i)
                         {
                             if (pszXML[i] == '\0')
@@ -242,7 +242,6 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                             else
                                 break;
                         }
-                        // coverity[tainted_data]
                         GIntBig i = 0;  // Used after for.
                         for (; i < nXMLLength; ++i)
                         {
@@ -260,7 +259,6 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                                     "GMLJP2",
                                     "GMLJP2 data contains nul characters "
                                     "inside content. Replacing them by \\n");
-                                // coverity[tainted_data]
                                 for (GIntBig j = 0; j < nXMLLength; ++j)
                                 {
                                     if (pszXML[j] == '\0')

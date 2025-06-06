@@ -85,7 +85,7 @@ void CPLMD5Update(struct CPLMD5Context *context, const void *buf, size_t len)
     // Update bitcount
     GUInt32 t = context->bits[0];
     // Clear top 3 bits before left shifting to avoid Coverity Scan warning
-    // about 0xffffffffU overflowing during the shit.
+    // about 0xffffffffU overflowing during the shift.
     const GUInt32 lenShifted = static_cast<GUInt32>(len & 0x1fffffffU) << 3U;
     context->bits[0] = (t + lenShifted) & 0xffffffff;
     if (context->bits[0] < t)

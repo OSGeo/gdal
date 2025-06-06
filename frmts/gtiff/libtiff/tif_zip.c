@@ -128,7 +128,15 @@ static int ZIPSetupDecode(TIFF *tif)
     }
 }
 
-#define TIFF_MIN(a, b) (((a) < (b)) ? (a) : (b))
+static inline uint64_t TIFF_MIN_UINT64(uint64_t a, uint64_t b)
+{
+    return a < b ? a : b;
+}
+
+static inline uInt TIFF_CLAMP_UINT64_TO_INT32_MAX(uint64_t v)
+{
+    return (uInt)TIFF_MIN_UINT64(v, INT32_MAX);
+}
 
 /*
  * Setup state for decoding a strip.
@@ -151,8 +159,7 @@ static int ZIPPreDecode(TIFF *tif, uint16_t s)
          we need to simplify this code to reflect a ZLib that is likely updated
          to deal with 8byte memory sizes, though this code will respond
          appropriately even before we simplify it */
-    sp->stream.avail_in =
-        (uInt)TIFF_MIN((uint64_t)tif->tif_rawcc, UINT32_MAX / 2);
+    sp->stream.avail_in = TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawcc);
     if (inflateReset(&sp->stream) == Z_OK)
     {
         sp->read_error = 0;
@@ -268,9 +275,8 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     do
     {
         int state;
-        uInt avail_in_before =
-            (uInt)TIFF_MIN((uint64_t)tif->tif_rawcc, UINT32_MAX / 2);
-        uInt avail_out_before = (uInt)TIFF_MIN((uint64_t)occ, UINT32_MAX / 2);
+        uInt avail_in_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawcc);
+        uInt avail_out_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(occ);
         sp->stream.avail_in = avail_in_before;
         sp->stream.avail_out = avail_out_before;
         state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
@@ -479,7 +485,7 @@ static int ZIPEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
          appropriately even before we simplify it */
     do
     {
-        uInt avail_in_before = (uInt)TIFF_MIN((uint64_t)cc, UINT32_MAX / 2);
+        uInt avail_in_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(cc);
         sp->stream.avail_in = avail_in_before;
         if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK)
         {
@@ -493,7 +499,7 @@ static int ZIPEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
                 return 0;
             sp->stream.next_out = tif->tif_rawdata;
             sp->stream.avail_out =
-                (uInt)TIFF_MIN((uint64_t)tif->tif_rawdatasize, UINT32_MAX / 2);
+                TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawdatasize);
         }
         cc -= (avail_in_before - sp->stream.avail_in);
     } while (cc > 0);

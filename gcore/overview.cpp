@@ -4594,14 +4594,15 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                nMaxChunkYSizeQueried * nWidth;
     };
 
-    // Only configurable for debug / testing
     const char *pszChunkYSize =
         CPLGetConfigOption("GDAL_OVR_CHUNKYSIZE", nullptr);
+#ifndef __COVERITY__
+    // Only configurable for debug / testing
     if (pszChunkYSize)
     {
-        // coverity[tainted_data]
         nFullResYChunk = atoi(pszChunkYSize);
     }
+#endif
 
     // Only configurable for debug / testing
     const int nChunkMaxSize =
@@ -4669,11 +4670,6 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         void *pDstBuffer = nullptr;
         GDALDataType eDstBufferDataType = GDT_Unknown;
 
-        // Synchronization
-        bool bFinished = false;
-        std::mutex mutex{};
-        std::condition_variable cv{};
-
         void SetSrcMaskBufferHolder(
             const std::shared_ptr<PointerHolder> &oSrcMaskBufferHolderIn)
         {
@@ -4685,6 +4681,34 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         {
             oSrcBufferHolder = oSrcBufferHolderIn;
         }
+
+        void NotifyFinished()
+        {
+            std::lock_guard guard(mutex);
+            bFinished = true;
+            cv.notify_one();
+        }
+
+        bool IsFinished()
+        {
+            std::lock_guard guard(mutex);
+            return bFinished;
+        }
+
+        void WaitFinished()
+        {
+            std::unique_lock oGuard(mutex);
+            while (!bFinished)
+            {
+                cv.wait(oGuard);
+            }
+        }
+
+      private:
+        // Synchronization
+        bool bFinished = false;
+        std::mutex mutex{};
+        std::condition_variable cv{};
     };
 
     // Thread function to resample
@@ -4713,11 +4737,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         poJob->oDstBufferHolder =
             std::make_unique<PointerHolder>(poJob->pDstBuffer);
 
-        {
-            std::lock_guard<std::mutex> guard(poJob->mutex);
-            poJob->bFinished = true;
-            poJob->cv.notify_one();
-        }
+        poJob->NotifyFinished();
     };
 
     // Function to write resample data to target band
@@ -4735,14 +4755,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         [WriteJobData](std::list<std::unique_ptr<OvrJob>> &jobList)
     {
         auto poOldestJob = jobList.front().get();
-        {
-            std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
-            // coverity[missing_lock:FALSE]
-            while (!poOldestJob->bFinished)
-            {
-                poOldestJob->cv.wait(oGuard);
-            }
-        }
+        poOldestJob->WaitFinished();
         CPLErr l_eErr = poOldestJob->eErr;
         if (l_eErr == CE_None)
         {
@@ -4803,13 +4816,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         while (eErr == CE_None && !jobList.empty())
         {
             auto poOldestJob = jobList.front().get();
-            {
-                std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
-                if (!poOldestJob->bFinished)
-                {
-                    break;
-                }
-            }
+            if (!poOldestJob->IsFinished())
+                break;
             eErr = poOldestJob->eErr;
             if (eErr == CE_None)
             {
@@ -5859,6 +5867,29 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             void *pDstBuffer = nullptr;
             GDALDataType eDstBufferDataType = GDT_Unknown;
 
+            void NotifyFinished()
+            {
+                std::lock_guard guard(mutex);
+                bFinished = true;
+                cv.notify_one();
+            }
+
+            bool IsFinished()
+            {
+                std::lock_guard guard(mutex);
+                return bFinished;
+            }
+
+            void WaitFinished()
+            {
+                std::unique_lock oGuard(mutex);
+                while (!bFinished)
+                {
+                    cv.wait(oGuard);
+                }
+            }
+
+          private:
             // Synchronization
             bool bFinished = false;
             std::mutex mutex{};
@@ -5876,11 +5907,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
             poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
 
-            {
-                std::lock_guard<std::mutex> guard(poJob->mutex);
-                poJob->bFinished = true;
-                poJob->cv.notify_one();
-            }
+            poJob->NotifyFinished();
         };
 
         // Function to write resample data to target band
@@ -5900,14 +5927,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             [WriteJobData](std::list<std::unique_ptr<OvrJob>> &jobList)
         {
             auto poOldestJob = jobList.front().get();
-            {
-                std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
-                // coverity[missing_lock:FALSE]
-                while (!poOldestJob->bFinished)
-                {
-                    poOldestJob->cv.wait(oGuard);
-                }
-            }
+            poOldestJob->WaitFinished();
             CPLErr l_eErr = poOldestJob->eErr;
             if (l_eErr == CE_None)
             {
@@ -6011,13 +6031,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 while (eErr == CE_None && !jobList.empty())
                 {
                     auto poOldestJob = jobList.front().get();
-                    {
-                        std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
-                        if (!poOldestJob->bFinished)
-                        {
-                            break;
-                        }
-                    }
+                    if (!poOldestJob->IsFinished())
+                        break;
                     eErr = poOldestJob->eErr;
                     if (eErr == CE_None)
                     {

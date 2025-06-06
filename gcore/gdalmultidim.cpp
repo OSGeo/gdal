@@ -1959,6 +1959,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     }
     for (size_t i = 0; i < dims.size(); i++)
     {
+        assert(count);
         if (count[i] == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "count[%u] = 0 is invalid",
@@ -2013,6 +2014,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     }
     for (size_t i = 0; i < dims.size(); i++)
     {
+        assert(arrayStartIdx);
         if (arrayStartIdx[i] >= dims[i]->GetSize())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -12276,7 +12278,6 @@ int GDALMDArrayRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
     }
     VALIDATE_POINTER1(bufferDataType, __func__, FALSE);
     VALIDATE_POINTER1(pDstBuffer, __func__, FALSE);
-    // coverity[var_deref_model]
     return hArray->m_poImpl->Read(arrayStartIdx, count, arrayStep, bufferStride,
                                   *(bufferDataType->m_poImpl), pDstBuffer,
                                   pDstBufferAllocStart, nDstBufferAllocSize);
@@ -12308,7 +12309,6 @@ int GDALMDArrayWrite(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
     }
     VALIDATE_POINTER1(bufferDataType, __func__, FALSE);
     VALIDATE_POINTER1(pSrcBuffer, __func__, FALSE);
-    // coverity[var_deref_model]
     return hArray->m_poImpl->Write(arrayStartIdx, count, arrayStep,
                                    bufferStride, *(bufferDataType->m_poImpl),
                                    pSrcBuffer, pSrcBufferAllocStart,
@@ -12349,7 +12349,6 @@ int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
                             const size_t *count, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hArray, __func__, FALSE);
-    // coverity[var_deref_model]
     return hArray->m_poImpl->AdviseRead(arrayStartIdx, count, papszOptions);
 }
 

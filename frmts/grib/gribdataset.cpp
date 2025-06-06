@@ -17,6 +17,7 @@
 #include "gribdataset.h"
 #include "gribdrivercore.h"
 
+#include <cassert>
 #include <cerrno>
 #include <cmath>
 #include <cstddef>
@@ -1535,11 +1536,13 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Create band objects.
-    for (uInt4 i = 0; i < pInventories->length(); ++i)
+    const uInt4 nCount = std::min(pInventories->length(), 65536U);
+    for (uInt4 i = 0; i < nCount; ++i)
     {
         inventoryType *psInv = pInventories->get(i);
         GRIBRasterBand *gribBand = nullptr;
-        uInt4 bandNr = i + 1;
+        const uInt4 bandNr = i + 1;
+        assert(bandNr <= 65536);
 
         if (bandNr == 1)
         {
