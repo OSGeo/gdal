@@ -367,7 +367,7 @@ def test_numpy_rw_13():
     ds.GetRasterBand(1).WriteArray(ar)
 
     # Try reading into unsupported array type
-    ar = numpy.empty([1, 2], dtype=numpy.dtype('S1'))
+    ar = numpy.empty([1, 2], dtype=numpy.dtype("S1"))
     with pytest.raises(
         Exception, match="array does not have " "corresponding GDAL data type"
     ):
@@ -435,7 +435,7 @@ def test_numpy_rw_13():
     for i in range(3):
         ds.GetRasterBand(i + 1).WriteArray(ar[i])
 
-    ar = numpy.empty([3, 1, 2], dtype=numpy.dtype('S1'))
+    ar = numpy.empty([3, 1, 2], dtype=numpy.dtype("S1"))
     with pytest.raises(
         Exception, match="array does not have " "corresponding GDAL data type"
     ):
@@ -659,7 +659,7 @@ def test_numpy_rw_16():
     assert ds is None
 
     # Unsupported data type
-    array = numpy.empty([1, 1], numpy.dtype('S1'))
+    array = numpy.empty([1, 1], numpy.dtype("S1"))
     with gdal.quiet_errors():
         ds = gdal_array.OpenArray(array)
     assert ds is None
