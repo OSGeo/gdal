@@ -312,8 +312,7 @@ static int get_time_seed(void)
 {
 	DEBUG_SEED("get_time_seed");
 
-	/* coverity[store_truncates_time_t] */
-	return (unsigned)time(NULL) * 433494437;
+	return (int)(((uint64_t)(time(NULL) & UINT_MAX) * 433494437) & INT_MAX);
 }
 #endif
 
