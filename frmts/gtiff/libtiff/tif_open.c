@@ -109,7 +109,7 @@ void TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts,
     opts->max_cumulated_mem_alloc = max_cumulated_mem_alloc;
 }
 
-/** Whether a warning should be emitted when encoutering a unknown tag.
+/** Whether a warning should be emitted when encountering a unknown tag.
  * Default is FALSE since libtiff 4.7.1
  */
 void TIFFOpenOptionsSetWarnAboutUnknownTags(TIFFOpenOptions *opts,
