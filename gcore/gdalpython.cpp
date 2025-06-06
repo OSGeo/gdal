@@ -168,8 +168,8 @@ static bool LoadPythonAPI()
 {
     static int nInit = -1;
     if (nInit >= 0)
-        return nInit == true;
-    nInit = 0;
+        return nInit == TRUE;
+    nInit = FALSE;
 
 #ifdef LOAD_NOCHECK_WITH_NAME
     static LibraryHandle libHandle = nullptr;
