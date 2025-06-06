@@ -58,6 +58,7 @@ class OCAD_EXTERN CADDictionary : public CADDictionaryRecord
 {
 public:
     CADDictionary();
+    ~CADDictionary() override;
     CADDictionary(const CADDictionary&) = default;
     CADDictionary(CADDictionary&&)=default;
 
