@@ -1725,7 +1725,9 @@ class XMMReg4Double
   public:
     XMMReg2Double low, high;
 
-    XMMReg4Double() = default;
+    XMMReg4Double() : low(XMMReg2Double()), high(XMMReg2Double())
+    {
+    }
 
     XMMReg4Double(const XMMReg4Double &other) : low(other.low), high(other.high)
     {
