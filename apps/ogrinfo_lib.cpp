@@ -2197,10 +2197,11 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
     argParser->add_argument("-json")
         .flag()
         .action(
-            [psOptions](const std::string &)
+            [psOptions, psOptionsForBinary](const std::string &)
             {
                 psOptions->eFormat = FORMAT_JSON;
-                psOptions->bAllLayers = true;
+                if (psOptionsForBinary)
+                    psOptions->bAllLayers = true;
                 psOptions->bSummaryOnly = true;
             })
         .help(_("Display the output in json format."));
