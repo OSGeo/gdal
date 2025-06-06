@@ -42,12 +42,17 @@ class OCAD_EXTERN CADXRecord : public CADDictionaryRecord
 {
 public:
     CADXRecord();
+    ~CADXRecord() override;
+    CADXRecord(const CADXRecord&) = default;
+    CADXRecord(CADXRecord&&)=default;
 
     const std::string getRecordData() const;
     void              setRecordData( const std::string& data );
 
 private:
     std::string sRecordData;
+    CADXRecord& operator=(const CADXRecord&) =delete;
+    CADXRecord& operator=(CADXRecord&&)= delete;
 };
 
 /*

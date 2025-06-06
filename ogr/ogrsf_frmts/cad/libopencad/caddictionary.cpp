@@ -41,6 +41,8 @@ CADXRecord::CADXRecord()
     objType = CADObject::XRECORD;
 }
 
+CADXRecord::~CADXRecord() = default;
+
 const string CADXRecord::getRecordData() const
 {
     return sRecordData;
