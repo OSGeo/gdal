@@ -361,13 +361,15 @@ GDALDataset::~GDALDataset()
         if (m_poPrivate->hMutex != nullptr)
             CPLDestroyMutex(m_poPrivate->hMutex);
 
-        // coverity[missing_lock]
+#if defined(__COVERITY__) || defined(DEBUG)
+        // Not needed since at destruction there is no risk of concurrent use.
+        std::lock_guard oLock(m_poPrivate->m_oMutexWKT);
+#endif
         CPLFree(m_poPrivate->m_pszWKTCached);
         if (m_poPrivate->m_poSRSCached)
         {
             m_poPrivate->m_poSRSCached->Release();
         }
-        // coverity[missing_lock]
         CPLFree(m_poPrivate->m_pszWKTGCPCached);
         if (m_poPrivate->m_poSRSGCPCached)
         {
