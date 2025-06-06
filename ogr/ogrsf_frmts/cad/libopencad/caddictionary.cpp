@@ -60,6 +60,8 @@ CADDictionary::CADDictionary()
     objType = CADObject::DICTIONARY;
 }
 
+CADDictionary::~CADDictionary() = default;
+
 size_t CADDictionary::getRecordsCount()
 {
     return astXRecords.size();
