@@ -756,18 +756,7 @@ class ZarrDriver final : public GDALDriver
 
   public:
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, "COMPRESSORS") ||
-            EQUAL(pszName, "BLOSC_COMPRESSORS") ||
-            EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) ||
-            EQUAL(pszName, GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST))
-        {
-            InitMetadata();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -776,6 +765,19 @@ class ZarrDriver final : public GDALDriver
         return GDALDriver::GetMetadata(pszDomain);
     }
 };
+
+const char *ZarrDriver::GetMetadataItem(const char *pszName,
+                                        const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, "COMPRESSORS") || EQUAL(pszName, "BLOSC_COMPRESSORS") ||
+        EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) ||
+        EQUAL(pszName, GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST))
+    {
+        InitMetadata();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 void ZarrDriver::InitMetadata()
 {

@@ -1249,7 +1249,6 @@ GTiff
 GTO
 gtrnctr
 gtype
-Guildlines
 Gusev
 gusevmihs
 gxt
@@ -2627,12 +2626,14 @@ psExtent
 psExtraArg
 psField
 psGCP
+psNewOptions
 psNewSibling
 psNext
 psOlderSibling
 psOlderSiblings
 psOptions
 psOptionsIn
+psOwnedTransformerArg
 psql
 pSrcBuffer
 pSrcBufferAllocStart
@@ -2689,6 +2690,7 @@ pszTmpFieldValue
 pszValue
 pszXMLMetadata
 ptr
+pTransformerArg
 pTranslationTable
 pugixml
 Pulkovo

@@ -34,6 +34,8 @@
 #include "sqlite3.h"
 #include "ogr_swq.h"
 
+IOGRSQLiteSelectLayer::~IOGRSQLiteSelectLayer() = default;
+
 /************************************************************************/
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
 /************************************************************************/

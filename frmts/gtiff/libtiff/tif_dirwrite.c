@@ -566,7 +566,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         if (isimage)
         {
             /*-- Step 1: Process named tags for an image with FIELD bits
-             *           assocciated. --*/
+             *           associated. --*/
             if (TIFFFieldSet(tif, FIELD_IMAGEDIMENSIONS))
             {
                 if (!TIFFWriteDirectoryTagShortLong(tif, &ndir, dir,

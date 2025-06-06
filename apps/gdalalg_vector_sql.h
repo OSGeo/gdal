@@ -53,6 +53,8 @@ class GDALVectorSQLAlgorithmStandalone final : public GDALVectorSQLAlgorithm
         : GDALVectorSQLAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSQLAlgorithmStandalone() override;
 };
 
 //! @endcond

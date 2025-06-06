@@ -121,4 +121,7 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(
     return true;
 }
 
+GDALVectorGeomAlgorithmStandalone::~GDALVectorGeomAlgorithmStandalone() =
+    default;
+
 //! @endcond

@@ -27,7 +27,7 @@ namespace PCIDSK
     class EDBFile
     {
     public:
-        virtual ~EDBFile() {}
+        virtual ~EDBFile();
         virtual int Close() const = 0;
 
         virtual int GetWidth() const = 0;

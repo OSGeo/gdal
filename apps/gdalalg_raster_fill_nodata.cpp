@@ -128,4 +128,7 @@ bool GDALRasterFillNodataAlgorithm::RunStep(
     return retVal == CE_None;
 }
 
+GDALRasterFillNodataAlgorithmStandalone::
+    ~GDALRasterFillNodataAlgorithmStandalone() = default;
+
 //! @endcond

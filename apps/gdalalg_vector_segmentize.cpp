@@ -98,4 +98,7 @@ GDALVectorSegmentizeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
                                                                 m_opts);
 }
 
+GDALVectorSegmentizeAlgorithmStandalone::
+    ~GDALVectorSegmentizeAlgorithmStandalone() = default;
+
 //! @endcond

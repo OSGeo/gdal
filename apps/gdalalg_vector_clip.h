@@ -50,6 +50,8 @@ class GDALVectorClipAlgorithmStandalone final : public GDALVectorClipAlgorithm
         : GDALVectorClipAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorClipAlgorithmStandalone() override;
 };
 
 //! @endcond

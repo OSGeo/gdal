@@ -40,10 +40,10 @@ class HKVRasterBand final : public RawRasterBand
                   unsigned int nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
 
-    ~HKVRasterBand() override
-    {
-    }
+    ~HKVRasterBand() override;
 };
+
+HKVRasterBand::~HKVRasterBand() = default;
 
 /************************************************************************/
 /*                      HKV Spheroids                                   */

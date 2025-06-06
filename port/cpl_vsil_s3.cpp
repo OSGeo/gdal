@@ -97,6 +97,12 @@ void VSIDIRS3Like::clear()
 }
 
 /************************************************************************/
+/*                     ~VSIDIRWithMissingDirSynthesis()                 */
+/************************************************************************/
+
+VSIDIRWithMissingDirSynthesis::~VSIDIRWithMissingDirSynthesis() = default;
+
+/************************************************************************/
 /*                      SynthetizeMissingDirectories()                  */
 /************************************************************************/
 
@@ -721,6 +727,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 /*                            VSIS3Handle                               */
 /************************************************************************/
 
+IVSIS3LikeHandle::~IVSIS3LikeHandle() = default;
+
 class VSIS3Handle final : public IVSIS3LikeHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3Handle)
@@ -785,8 +793,6 @@ VSIMultipartWriteHandle::VSIMultipartWriteHandle(
 size_t IVSIS3LikeFSHandlerWithMultipartUpload::GetUploadChunkSizeInBytes(
     const char *pszFilename, const char *pszSpecifiedValInBytes)
 {
-    size_t nChunkSize = 0;
-
     const char *pszChunkSizeBytes =
         pszSpecifiedValInBytes ? pszSpecifiedValInBytes :
                                // For testing only !
@@ -801,8 +807,8 @@ size_t IVSIS3LikeFSHandlerWithMultipartUpload::GetUploadChunkSizeInBytes(
         const auto nChunkSizeInt = CPLAtoGIntBig(pszChunkSizeBytes);
         if (nChunkSizeInt <= 0)
         {
-            nChunkSize =
-                static_cast<size_t>(GetDefaultPartSizeInMiB()) * MIB_CONSTANT;
+            return static_cast<size_t>(GetDefaultPartSizeInMiB()) *
+                   MIB_CONSTANT;
         }
         else if (nChunkSizeInt >
                  static_cast<int64_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT)
@@ -810,11 +816,11 @@ size_t IVSIS3LikeFSHandlerWithMultipartUpload::GetUploadChunkSizeInBytes(
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Specified chunk size too large. Clamping to %d MiB",
                      GetMaximumPartSizeInMiB());
-            nChunkSize =
-                static_cast<size_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT;
+            return static_cast<size_t>(GetMaximumPartSizeInMiB()) *
+                   MIB_CONSTANT;
         }
         else
-            nChunkSize = static_cast<size_t>(nChunkSizeInt);
+            return static_cast<size_t>(nChunkSizeInt);
     }
     else
     {
@@ -826,20 +832,19 @@ size_t IVSIS3LikeFSHandlerWithMultipartUpload::GetUploadChunkSizeInBytes(
                 .c_str(),
             CPLSPrintf("%d", GetDefaultPartSizeInMiB())));
         if (nChunkSizeMiB <= 0)
-            nChunkSize = 0;
+            return static_cast<size_t>(GetDefaultPartSizeInMiB()) *
+                   MIB_CONSTANT;
         else if (nChunkSizeMiB > GetMaximumPartSizeInMiB())
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Specified chunk size too large. Clamping to %d MiB",
                      GetMaximumPartSizeInMiB());
-            nChunkSize =
-                static_cast<size_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT;
+            return static_cast<size_t>(GetMaximumPartSizeInMiB()) *
+                   MIB_CONSTANT;
         }
         else
-            nChunkSize = static_cast<size_t>(nChunkSizeMiB) * MIB_CONSTANT;
+            return static_cast<size_t>(nChunkSizeMiB) * MIB_CONSTANT;
     }
-
-    return nChunkSize;
 }
 
 /************************************************************************/
@@ -3531,7 +3536,8 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
     }
 
     const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
-    size_t nChunkSize = GetUploadChunkSizeInBytes(pszTarget, pszChunkSize);
+    size_t nChunkSize =
+        std::max<size_t>(1, GetUploadChunkSizeInBytes(pszTarget, pszChunkSize));
 
     VSIStatBufL sStatBuf;
     if (VSIStatL(pszSource, &sStatBuf) != 0)
@@ -3624,8 +3630,8 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
             return -1;
         }
 
-        const auto nChunkCountLarge =
-            (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+        const auto nChunkCountLarge = cpl::div_round_up(
+            static_cast<uint64_t>(sStatBuf.st_size), nChunkSize);
         if (nChunkCountLarge != static_cast<size_t>(oEtags.Size()))
         {
             CPLError(
@@ -3642,14 +3648,14 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
     else
     {
         // Compute the number of chunks
-        auto nChunkCountLarge =
-            (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+        auto nChunkCountLarge = cpl::div_round_up(
+            static_cast<uint64_t>(sStatBuf.st_size), nChunkSize);
         if (nChunkCountLarge > static_cast<size_t>(GetMaximumPartCount()))
         {
             // Re-adjust the chunk size if needed
             const int nWishedChunkCount = GetMaximumPartCount() / 10;
             const uint64_t nMinChunkSizeLarge =
-                (sStatBuf.st_size + nWishedChunkCount - 1) / nWishedChunkCount;
+                cpl::div_round_up(sStatBuf.st_size, nWishedChunkCount);
             if (pszChunkSize)
             {
                 CPLError(
@@ -3666,7 +3672,7 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
                 return -1;
             }
             nChunkSize = static_cast<size_t>(nMinChunkSizeLarge);
-            nChunkCountLarge = (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+            nChunkCountLarge = cpl::div_round_up(sStatBuf.st_size, nChunkSize);
         }
         nChunkCount = static_cast<int>(nChunkCountLarge);
         aosEtags.resize(nChunkCount);
@@ -3814,8 +3820,8 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
             else
             {
                 if (pProgressFunc &&
-                    !pProgressFunc(double(iChunk) / nChunkCount, osMsg.c_str(),
-                                   pProgressData))
+                    !pProgressFunc(double(iChunk) / std::max(1, nChunkCount),
+                                   osMsg.c_str(), pProgressData))
                 {
                     // Lock taken only to make static analyzer happy...
                     std::lock_guard oLock(oMutex);
@@ -4351,7 +4357,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 const vsi_l_offset nChunksLarge =
                     nMaxChunkSize == 0
                         ? 1
-                        : (entry->nSize + nMaxChunkSize - 1) / nMaxChunkSize;
+                        : cpl::div_round_up(entry->nSize, nMaxChunkSize);
                 if (nChunksLarge >
                     1000)  // must also be below knMAX_PART_NUMBER for upload
                 {
@@ -4500,7 +4506,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         MultiPartDef def;
                         def.osUploadID = std::move(osUploadID);
                         def.nExpectedCount = static_cast<int>(
-                            (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
+                            cpl::div_round_up(chunk.nTotalSize, chunk.nSize));
                         def.nTotalSize = chunk.nTotalSize;
                         oMapMultiPartDefs[osSubTarget] = std::move(def);
                     }
@@ -4655,7 +4661,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         const vsi_l_offset nChunksLarge =
             nMaxChunkSize == 0
                 ? 1
-                : (sSource.st_size + nMaxChunkSize - 1) / nMaxChunkSize;
+                : cpl::div_round_up(sSource.st_size, nMaxChunkSize);
         if (nChunksLarge >
             1000)  // must also be below knMAX_PART_NUMBER for upload
         {
@@ -4710,7 +4716,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                             return false;
                         }
                         def.nExpectedCount = static_cast<int>(
-                            (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
+                            cpl::div_round_up(chunk.nTotalSize, chunk.nSize));
                         def.nTotalSize = chunk.nTotalSize;
                         oMapMultiPartDefs[osTarget] = std::move(def);
                     }

@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_json.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -583,18 +584,16 @@ TileMatrixSet::createRaster(int width, int height, int tileSize,
     {
         TileMatrix tm;
         tm.mId = CPLSPrintf("%d", i);
-        tm.mResX = dfResXFull * (1 << (zoomLevelCount - 1 - i));
-        tm.mResY = dfResYFull * (1 << (zoomLevelCount - 1 - i));
+        const int iRev = zoomLevelCount - 1 - i;
+        tm.mResX = dfResXFull * (1 << iRev);
+        tm.mResY = dfResYFull * (1 << iRev);
         tm.mScaleDenominator = tm.mResX / 0.28e-3;
         tm.mTopLeftX = poTMS->mBbox.mLowerCornerX;
         tm.mTopLeftY = poTMS->mBbox.mUpperCornerY;
         tm.mTileWidth = tileSize;
         tm.mTileHeight = tileSize;
-        tm.mMatrixWidth = std::max(
-            1, ((width >> (zoomLevelCount - 1 - i)) + tileSize - 1) / tileSize);
-        tm.mMatrixHeight =
-            std::max(1, ((height >> (zoomLevelCount - 1 - i)) + tileSize - 1) /
-                            tileSize);
+        tm.mMatrixWidth = std::max(1, DIV_ROUND_UP(width >> iRev, tileSize));
+        tm.mMatrixHeight = std::max(1, DIV_ROUND_UP(height >> iRev, tileSize));
         poTMS->mTileMatrixList.emplace_back(std::move(tm));
     }
     return poTMS;

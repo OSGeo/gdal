@@ -33,6 +33,8 @@
 // Dictionary) similar to test case of https://github.com/OSGeo/gdal/issues/8372
 // like with "ogr2ogr poly.pdf poly.shp -dsco STREAM_COMPRESS=NONE -limit 1"
 
+GDALFakePDFDataset::~GDALFakePDFDataset() = default;
+
 /************************************************************************/
 /*                        GDALPDFBaseWriter()                           */
 /************************************************************************/
@@ -4135,11 +4137,13 @@ class GDALPDFClippingDataset final : public GDALDataset
         return CE_None;
     }
 
-    virtual const OGRSpatialReference *GetSpatialRef() const override
-    {
-        return poSrcDS->GetSpatialRef();
-    }
+    const OGRSpatialReference *GetSpatialRef() const override;
 };
+
+const OGRSpatialReference *GDALPDFClippingDataset::GetSpatialRef() const
+{
+    return poSrcDS->GetSpatialRef();
+}
 
 /************************************************************************/
 /*                          GDALPDFCreateCopy()                         */

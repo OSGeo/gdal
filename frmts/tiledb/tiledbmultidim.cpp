@@ -195,3 +195,21 @@ TileDBDataset::CreateMultiDimensional(const char *pszFilename,
     poDS->SetDescription(pszFilename);
     return poDS;
 }
+
+/************************************************************************/
+/*                 TileDBDimension::GetIndexingVariable()               */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> TileDBDimension::GetIndexingVariable() const
+{
+    return m_poIndexingVariable;
+}
+
+/************************************************************************/
+/*                 TileDBMultiDimDataset::GetRootGroup()                */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> TileDBMultiDimDataset::GetRootGroup() const
+{
+    return m_poRG;
+}

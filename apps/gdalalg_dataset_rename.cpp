@@ -23,4 +23,6 @@ GDALDatasetRenameAlgorithm::GDALDatasetRenameAlgorithm()
 {
 }
 
+GDALDatasetRenameAlgorithm::~GDALDatasetRenameAlgorithm() = default;
+
 //! @endcond

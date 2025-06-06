@@ -25,6 +25,8 @@ CADDictionaryRecord::CADDictionaryRecord() :
 {
 }
 
+CADDictionaryRecord::~CADDictionaryRecord() = default;
+
 CADObject::ObjectType CADDictionaryRecord::getType() const
 {
     return objType;
@@ -56,10 +58,6 @@ void CADXRecord::setRecordData( const string& data )
 CADDictionary::CADDictionary()
 {
     objType = CADObject::DICTIONARY;
-}
-
-CADDictionary::~CADDictionary()
-{
 }
 
 size_t CADDictionary::getRecordsCount()

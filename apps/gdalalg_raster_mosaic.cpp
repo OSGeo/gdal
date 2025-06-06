@@ -17,6 +17,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_utils.h"
+#include "vrtdataset.h"
 
 //! @cond Doxygen_Suppress
 
@@ -107,15 +108,62 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm()
              "raster have "
              "none."),
            &m_addAlpha);
+
+    const auto pixelFunctionNames =
+        VRTDerivedRasterBand::GetPixelFunctionNames();
     AddArg("pixel-function", 0,
            _("Specify a pixel function to calculate output value from "
              "overlapping inputs"),
-           &m_pixelFunction);
-    AddArg("pixel-function-arg", 0,
-           _("Specify argument(s) to pass to the pixel function"),
-           &m_pixelFunctionArgs)
-        .SetMetaVar("<NAME>=<VALUE>")
-        .SetRepeatedArgAllowed(true);
+           &m_pixelFunction)
+        .SetChoices(pixelFunctionNames);
+
+    auto &pixelFunctionArgArg =
+        AddArg("pixel-function-arg", 0,
+               _("Specify argument(s) to pass to the pixel function"),
+               &m_pixelFunctionArgs)
+            .SetMetaVar("<NAME>=<VALUE>")
+            .SetRepeatedArgAllowed(true);
+    pixelFunctionArgArg.AddValidationAction(
+        [this, &pixelFunctionArgArg]()
+        { return ParseAndValidateKeyValue(pixelFunctionArgArg); });
+
+    pixelFunctionArgArg.SetAutoCompleteFunction(
+        [this](const std::string &currentValue)
+        {
+            std::vector<std::string> ret;
+
+            if (!m_pixelFunction.empty())
+            {
+                const auto *pair = VRTDerivedRasterBand::GetPixelFunction(
+                    m_pixelFunction.c_str());
+                if (!pair)
+                {
+                    ret.push_back("**");
+                    // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
+                    ret.push_back(std::string("\xC2\xA0"
+                                              "Invalid pixel function name"));
+                }
+                else if (pair->second.find("Argument name=") ==
+                         std::string::npos)
+                {
+                    ret.push_back("**");
+                    // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
+                    ret.push_back(
+                        std::string(
+                            "\xC2\xA0"
+                            "No pixel function arguments for pixel function '")
+                            .append(m_pixelFunction)
+                            .append("'"));
+                }
+                else
+                {
+                    AddOptionsSuggestions(pair->second.c_str(), 0, currentValue,
+                                          ret);
+                }
+            }
+
+            return ret;
+        });
 }
 
 /************************************************************************/

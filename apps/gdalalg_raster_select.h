@@ -51,6 +51,8 @@ class GDALRasterSelectAlgorithmStandalone final
         : GDALRasterSelectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterSelectAlgorithmStandalone() override;
 };
 
 //! @endcond

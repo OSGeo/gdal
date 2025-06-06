@@ -23,6 +23,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKEphemerisSegment::~PCIDSKEphemerisSegment() = default;
+
 namespace
 {
     /**

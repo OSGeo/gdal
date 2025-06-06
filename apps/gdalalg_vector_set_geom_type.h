@@ -79,6 +79,8 @@ class GDALVectorSetGeomTypeAlgorithmStandalone final
         : GDALVectorSetGeomTypeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSetGeomTypeAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -149,7 +149,7 @@ class CPL_DLL IOGRGeometryVisitor
 {
   public:
     /** Destructor/ */
-    virtual ~IOGRGeometryVisitor() = default;
+    virtual ~IOGRGeometryVisitor();
 
     /** Visit OGRPoint. */
     virtual void visit(OGRPoint *) = 0;
@@ -225,7 +225,7 @@ class CPL_DLL IOGRConstGeometryVisitor
 {
   public:
     /** Destructor/ */
-    virtual ~IOGRConstGeometryVisitor() = default;
+    virtual ~IOGRConstGeometryVisitor();
 
     /** Visit OGRPoint. */
     virtual void visit(const OGRPoint *) = 0;
@@ -1496,6 +1496,9 @@ class CPL_DLL OGRIteratedPoint : public OGRPoint
      * @param mIn m
      */
     void setM(double mIn);
+
+    /** Destructor */
+    ~OGRIteratedPoint() override;
 };
 
 /************************************************************************/
@@ -2433,10 +2436,7 @@ class CPL_DLL OGRSurface : public OGRGeometry
     virtual double get_GeodesicLength(
         const OGRSpatialReference *poSRSOverride = nullptr) const = 0;
 
-    virtual OGRErr PointOnSurface(OGRPoint *poPoint) const
-    {
-        return PointOnSurfaceInternal(poPoint);
-    }
+    virtual OGRErr PointOnSurface(OGRPoint *poPoint) const;
 
     virtual OGRSurface *clone() const override = 0;
 

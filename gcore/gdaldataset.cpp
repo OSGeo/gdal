@@ -361,13 +361,15 @@ GDALDataset::~GDALDataset()
         if (m_poPrivate->hMutex != nullptr)
             CPLDestroyMutex(m_poPrivate->hMutex);
 
-        // coverity[missing_lock]
+#if defined(__COVERITY__) || defined(DEBUG)
+        // Not needed since at destruction there is no risk of concurrent use.
+        std::lock_guard oLock(m_poPrivate->m_oMutexWKT);
+#endif
         CPLFree(m_poPrivate->m_pszWKTCached);
         if (m_poPrivate->m_poSRSCached)
         {
             m_poPrivate->m_poSRSCached->Release();
         }
-        // coverity[missing_lock]
         CPLFree(m_poPrivate->m_pszWKTGCPCached);
         if (m_poPrivate->m_poSRSGCPCached)
         {
@@ -4057,37 +4059,33 @@ retry:
 
     if (nOpenFlags & GDAL_OF_VERBOSE_ERROR)
     {
+        if (nDriverCount == 0)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
+        }
+        else if (poMissingPluginDriver)
+        {
+            std::string osMsg("`");
+            osMsg += pszFilename;
+            osMsg += "' not recognized as being in a supported file format. "
+                     "It could have been recognized by driver ";
+            osMsg += poMissingPluginDriver->GetDescription();
+            osMsg += ", but plugin ";
+            osMsg +=
+                GDALGetMessageAboutMissingPluginDriver(poMissingPluginDriver);
+
+            CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
+        }
         // Check to see if there was a filesystem error, and report it if so.
         // If not, return a more generic error.
-        if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
+        else if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
         {
-            if (nDriverCount == 0)
+            if (oOpenInfo.bStatOK)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
-            }
-            else if (oOpenInfo.bStatOK)
-            {
-                if (!poMissingPluginDriver)
-                {
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as being in a supported file "
-                             "format.",
-                             pszFilename);
-                }
-                else
-                {
-                    std::string osMsg("`");
-                    osMsg += pszFilename;
-                    osMsg +=
-                        "' not recognized as being in a supported file format. "
-                        "It could have been recognized by driver ";
-                    osMsg += poMissingPluginDriver->GetDescription();
-                    osMsg += ", but plugin ";
-                    osMsg += GDALGetMessageAboutMissingPluginDriver(
-                        poMissingPluginDriver);
-
-                    CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
-                }
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "`%s' not recognized as being in a supported file "
+                         "format.",
+                         pszFilename);
             }
             else
             {
@@ -8428,12 +8426,13 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 #ifdef DEBUG_EXTRA
         m_poPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()] = nCount;
 #endif
+#ifndef __COVERITY__
         for (int i = 0; i < nCount + 1; i++)
         {
             // The mutex is recursive
-            // coverity[double_unlock]
             CPLReleaseMutex(m_poPrivate->hMutex);
         }
+#endif
     }
 }
 
@@ -8469,12 +8468,13 @@ void GDALDataset::ReacquireReadWriteLock()
 #endif
         if (nCount == 0)
             CPLReleaseMutex(m_poPrivate->hMutex);
+#ifndef __COVERITY__
         for (int i = 0; i < nCount - 1; i++)
         {
             // The mutex is recursive
-            // coverity[double_lock]
             CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
         }
+#endif
     }
 }
 

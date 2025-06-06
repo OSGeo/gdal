@@ -253,7 +253,7 @@ public:
     return GDALGroupGetDataTypeCount(self);
   }
 
-%newobject GetType;
+%newobject GetDataType;
   GDALExtendedDataTypeHS* GetDataType(size_t idx) {
     if (idx >= GDALGroupGetDataTypeCount(self))
     {

@@ -37,6 +37,7 @@ class GDALDatasetRenameAlgorithm final
     }
 
     GDALDatasetRenameAlgorithm();
+    ~GDALDatasetRenameAlgorithm() override;
 };
 
 //! @endcond

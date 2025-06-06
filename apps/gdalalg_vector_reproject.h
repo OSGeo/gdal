@@ -52,6 +52,8 @@ class GDALVectorReprojectAlgorithmStandalone final
         : GDALVectorReprojectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorReprojectAlgorithmStandalone() override;
 };
 
 //! @endcond

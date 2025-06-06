@@ -136,7 +136,11 @@ class OGRNGWCodedFieldDomain
   public:
     explicit OGRNGWCodedFieldDomain() = default;
     explicit OGRNGWCodedFieldDomain(const CPLJSONObject &oResourceJsonObject);
-    virtual ~OGRNGWCodedFieldDomain() = default;
+    OGRNGWCodedFieldDomain(const OGRNGWCodedFieldDomain &) = default;
+    OGRNGWCodedFieldDomain &operator=(const OGRNGWCodedFieldDomain &) = default;
+    OGRNGWCodedFieldDomain(OGRNGWCodedFieldDomain &&) = default;
+    OGRNGWCodedFieldDomain &operator=(OGRNGWCodedFieldDomain &&) = default;
+
     const OGRFieldDomain *ToFieldDomain(OGRFieldType eFieldType) const;
     GIntBig GetID() const;
     std::string GetDomainsNames() const;

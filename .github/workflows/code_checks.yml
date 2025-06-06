@@ -128,6 +128,9 @@ jobs:
       - name: Detect missing includes
         run: ./scripts/detect_missing_include.sh
 
+      - name: Detect (a+b-1)/b
+        run: ./scripts/detect_a_plus_b_minus_1_div_b.sh
+
       # Helps detecting updates of internal libjson-c where replacement
       # of strtod() -> CPLStrtod() is missing. The later function is not
       # locale sensitive. An alternative would be to make sure that HAVE_USELOCALE

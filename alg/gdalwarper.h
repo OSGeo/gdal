@@ -499,15 +499,28 @@ void GWKThreadsEnd(void *psThreadDataIn);
 /*! @cond Doxygen_Suppress */
 typedef struct _GDALWarpChunk GDALWarpChunk;
 
+struct GDALTransformerUniquePtrReleaser
+{
+    void operator()(void *p)
+    {
+        GDALDestroyTransformer(p);
+    }
+};
+
 /*! @endcond */
 
-class CPL_DLL GDALWarpOperation
+/** Unique pointer for the argument of a GDALTransformerFunc */
+using GDALTransformerArgUniquePtr =
+    std::unique_ptr<void, GDALTransformerUniquePtrReleaser>;
+
+class CPL_DLL GDALWarpOperation final
 {
 
     CPL_DISALLOW_COPY_ASSIGN(GDALWarpOperation)
 
   private:
-    GDALWarpOptions *psOptions;
+    GDALWarpOptions *psOptions = nullptr;
+    GDALTransformerArgUniquePtr m_psOwnedTransformerArg{nullptr};
 
     void WipeOptions();
     int ValidateOptions();
@@ -528,17 +541,17 @@ class CPL_DLL GDALWarpOperation
     static CPLErr CreateKernelMask(GDALWarpKernel *, int iBand,
                                    const char *pszType);
 
-    CPLMutex *hIOMutex;
-    CPLMutex *hWarpMutex;
+    CPLMutex *hIOMutex = nullptr;
+    CPLMutex *hWarpMutex = nullptr;
 
-    int nChunkListCount;
-    int nChunkListMax;
-    GDALWarpChunk *pasChunkList;
+    int nChunkListCount = 0;
+    int nChunkListMax = 0;
+    GDALWarpChunk *pasChunkList = nullptr;
 
-    int bReportTimings;
-    unsigned long nLastTimeReported;
+    bool bReportTimings = false;
+    unsigned long nLastTimeReported = 0;
 
-    void *psThreadData;
+    void *psThreadData = nullptr;
 
     // Coordinates a few special points in target image space, to determine
     // if ComputeSourceWindow() must use a grid based sampling.
@@ -555,9 +568,12 @@ class CPL_DLL GDALWarpOperation
 
   public:
     GDALWarpOperation();
-    virtual ~GDALWarpOperation();
+    ~GDALWarpOperation();
 
-    CPLErr Initialize(const GDALWarpOptions *psNewOptions);
+    CPLErr Initialize(const GDALWarpOptions *psNewOptions,
+                      GDALTransformerFunc pfnTransformer = nullptr,
+                      GDALTransformerArgUniquePtr psOwnedTransformerArg =
+                          GDALTransformerArgUniquePtr{nullptr});
     void *CreateDestinationBuffer(int nDstXSize, int nDstYSize,
                                   int *pbWasInitialized = nullptr);
     CPLErr InitializeDestinationBuffer(void *pDstBuffer, int nDstXSize,

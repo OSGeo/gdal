@@ -44,7 +44,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_BPCT
     {
     public:
-        virtual ~PCIDSK_BPCT() {}
+        virtual ~PCIDSK_BPCT();
 
 /**
 \brief Read a PCT Segment (SEG_BPCT).

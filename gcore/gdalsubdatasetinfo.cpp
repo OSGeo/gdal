@@ -88,6 +88,8 @@ GDALSubdatasetInfo::GDALSubdatasetInfo(const std::string &fileName)
 {
 }
 
+GDALSubdatasetInfo::~GDALSubdatasetInfo() = default;
+
 std::string GDALSubdatasetInfo::GetPathComponent() const
 {
     init();

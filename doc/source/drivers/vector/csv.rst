@@ -483,6 +483,13 @@ The following layer creation options are supported:
 
       Write a UTF-8 Byte Order Mark (BOM) at the start of the file.
 
+-  .. lco:: HEADER
+      :choices: YES, NO
+      :default: YES
+      :since: 3.12
+
+      Whether to write a header line with the field names.
+
 -  .. lco:: GEOMETRY_NAME
       :since: 2.1
       :default: WKT

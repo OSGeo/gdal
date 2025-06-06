@@ -3108,10 +3108,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->nScaleFactor = nScaleFactor;
     poDS->SetScaleNumAndDenom();
-    poDS->nRasterXSize =
-        (poDS->sDInfo.image_width + nScaleFactor - 1) / nScaleFactor;
-    poDS->nRasterYSize =
-        (poDS->sDInfo.image_height + nScaleFactor - 1) / nScaleFactor;
+    poDS->nRasterXSize = DIV_ROUND_UP(poDS->sDInfo.image_width, nScaleFactor);
+    poDS->nRasterYSize = DIV_ROUND_UP(poDS->sDInfo.image_height, nScaleFactor);
 
     poDS->sDInfo.out_color_space = poDS->sDInfo.jpeg_color_space;
     poDS->eGDALColorSpace = poDS->sDInfo.jpeg_color_space;

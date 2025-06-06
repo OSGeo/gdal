@@ -1941,3 +1941,21 @@ GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
         std::move(poDSNew), osVATTableName, std::move(poVatLayer));
     return m_poRAT.get();
 }
+
+/************************************************************************/
+/*               GDALOpenFileGDBRasterAttributeTable::Clone()           */
+/************************************************************************/
+
+GDALRasterAttributeTable *GDALOpenFileGDBRasterAttributeTable::Clone() const
+{
+    auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
+    GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
+    bool bRetryFileGDBUnused = false;
+    if (!poDS->Open(&oOpenInfo, bRetryFileGDBUnused))
+        return nullptr;
+    auto poVatLayer = poDS->BuildLayerFromName(m_osVATTableName.c_str());
+    if (!poVatLayer)
+        return nullptr;
+    return new GDALOpenFileGDBRasterAttributeTable(
+        std::move(poDS), m_osVATTableName, std::move(poVatLayer));
+}

@@ -71,11 +71,13 @@ class OSMParsingException : public std::exception
     {
     }
 
-    const char *what() const noexcept override
-    {
-        return m_osMessage.c_str();
-    }
+    const char *what() const noexcept override;
 };
+
+const char *OSMParsingException::what() const noexcept
+{
+    return m_osMessage.c_str();
+}
 
 #define THROW_OSM_PARSING_EXCEPTION throw OSMParsingException(__LINE__)
 

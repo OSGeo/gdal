@@ -262,4 +262,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     }
 }
 
+GDALRasterClipAlgorithmStandalone::~GDALRasterClipAlgorithmStandalone() =
+    default;
+
 //! @endcond

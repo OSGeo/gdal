@@ -32,6 +32,8 @@ static CPLString OGRPGDumpEscapeStringWithUserData(
     return OGRPGDumpEscapeString(pszStrValue, nMaxLength, pszFieldName);
 }
 
+OGRPGDumpGeomFieldDefn::~OGRPGDumpGeomFieldDefn() = default;
+
 /************************************************************************/
 /*                        OGRPGDumpLayer()                              */
 /************************************************************************/

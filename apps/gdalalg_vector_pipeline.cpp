@@ -974,6 +974,15 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
 }
 
 /************************************************************************/
+/*            GDALVectorPipelinePassthroughLayer::GetLayerDefn()        */
+/************************************************************************/
+
+OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn()
+{
+    return m_srcLayer.GetLayerDefn();
+}
+
+/************************************************************************/
 /*                 GDALVectorNonStreamingAlgorithmDataset()             */
 /************************************************************************/
 

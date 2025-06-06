@@ -19,7 +19,6 @@ class MSGCommand
 {
   public:
     MSGCommand();
-    virtual ~MSGCommand();
 
     std::string parse(std::string const &command_line);
     std::string sFileName(int iSatellite, int iSequence, int iStrip);

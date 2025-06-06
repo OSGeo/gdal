@@ -63,17 +63,6 @@
 #define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
 #endif
 
-struct TransformerUniquePtrReleaser
-{
-    void operator()(void *p)
-    {
-        GDALDestroyTransformer(p);
-    }
-};
-
-using TransformerUniquePtr =
-    std::unique_ptr<void, TransformerUniquePtrReleaser>;
-
 /************************************************************************/
 /*                        GDALWarpAppOptions                            */
 /************************************************************************/
@@ -265,7 +254,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, TransformerUniquePtr &hTransformArg,
+    GDALDataType eDT, GDALTransformerArgUniquePtr &hTransformArg,
     bool bSetColorInterpretation, GDALWarpAppOptions *psOptions);
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
@@ -1147,7 +1136,7 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
 static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
                                GDALWarpAppOptions *psOptions,
-                               TransformerUniquePtr &hUniqueTransformArg)
+                               GDALTransformerArgUniquePtr &hUniqueTransformArg)
 {
     const auto SetDstSRS = [psOptions](const std::string &osTargetSRS)
     {
@@ -1251,11 +1240,11 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 /*                      GDALWarpIndirect()                              */
 /************************************************************************/
 
-static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
-                                   int nSrcCount, GDALDatasetH *pahSrcDS,
-                                   TransformerUniquePtr hUniqueTransformArg,
-                                   GDALWarpAppOptions *psOptions,
-                                   int *pbUsageError);
+static GDALDatasetH
+GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+               GDALDatasetH *pahSrcDS,
+               GDALTransformerArgUniquePtr hUniqueTransformArg,
+               GDALWarpAppOptions *psOptions, int *pbUsageError);
 
 static int CPL_STDCALL myScaledProgress(double dfProgress, const char *,
                                         void *pProgressData)
@@ -1336,7 +1325,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     double dfStartPctCreateCopy = 0.0;
     if (hTmpDS == nullptr)
     {
-        TransformerUniquePtr hUniqueTransformArg;
+        GDALTransformerArgUniquePtr hUniqueTransformArg;
 #ifdef HAVE_TIFF
         // Special processing for COG output. As some of its options do
         // on-the-fly reprojection, take them into account now, and remove them
@@ -1730,11 +1719,10 @@ static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
 /*                            CreateOutput()                            */
 /************************************************************************/
 
-static GDALDatasetH CreateOutput(const char *pszDest, int nSrcCount,
-                                 GDALDatasetH *pahSrcDS,
-                                 GDALWarpAppOptions *psOptions,
-                                 const bool bInitDestSetByUser,
-                                 TransformerUniquePtr &hUniqueTransformArg)
+static GDALDatasetH
+CreateOutput(const char *pszDest, int nSrcCount, GDALDatasetH *pahSrcDS,
+             GDALWarpAppOptions *psOptions, const bool bInitDestSetByUser,
+             GDALTransformerArgUniquePtr &hUniqueTransformArg)
 {
     if (nSrcCount == 1 && !psOptions->bDisableSrcAlpha)
     {
@@ -2449,11 +2437,11 @@ static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*                           GDALWarpDirect()                           */
 /************************************************************************/
 
-static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
-                                   int nSrcCount, GDALDatasetH *pahSrcDS,
-                                   TransformerUniquePtr hUniqueTransformArg,
-                                   GDALWarpAppOptions *psOptions,
-                                   int *pbUsageError)
+static GDALDatasetH
+GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+               GDALDatasetH *pahSrcDS,
+               GDALTransformerArgUniquePtr hUniqueTransformArg,
+               GDALWarpAppOptions *psOptions, int *pbUsageError)
 {
     CPLErrorReset();
     if (pszDest == nullptr && hDstDS == nullptr)
@@ -2731,7 +2719,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      destination coordinate system. */
         /* --------------------------------------------------------------------
          */
-        TransformerUniquePtr hTransformArg;
+        GDALTransformerArgUniquePtr hTransformArg;
         if (hUniqueTransformArg)
             hTransformArg = std::move(hUniqueTransformArg);
         else
@@ -3171,8 +3159,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             GDALApproxTransformerOwnsSubtransformer(hTransformArg.get(), TRUE);
         }
 
-        psWO->pfnTransformer = pfnTransformer;
-
         /* --------------------------------------------------------------------
          */
         /*      If we have a cutline, transform it into the source */
@@ -3208,6 +3194,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
             // In case of success, hDstDS has become the owner of hTransformArg
             // so we need to release it
+            psWO->pfnTransformer = pfnTransformer;
             psWO->pTransformerArg = hTransformArg.release();
             CPLErr eErr = GDALInitializeWarpedVRT(hDstDS, psWO.get());
             if (eErr != CE_None)
@@ -3246,10 +3233,9 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /* --------------------------------------------------------------------
          */
         GDALWarpOperation oWO;
-        // coverity[escape]
-        psWO->pTransformerArg = hTransformArg.get();
 
-        if (oWO.Initialize(psWO.get()) == CE_None)
+        if (oWO.Initialize(psWO.get(), pfnTransformer,
+                           std::move(hTransformArg)) == CE_None)
         {
             CPLErr eErr;
             if (psOptions->bMulti)
@@ -3520,7 +3506,7 @@ error:
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, TransformerUniquePtr &hUniqueTransformArg,
+    GDALDataType eDT, GDALTransformerArgUniquePtr &hUniqueTransformArg,
     bool bSetColorInterpretation, GDALWarpAppOptions *psOptions)
 
 {
@@ -3905,7 +3891,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         /*      destination coordinate system. */
         /* --------------------------------------------------------------------
          */
-        TransformerUniquePtr hTransformArg;
+        GDALTransformerArgUniquePtr hTransformArg;
         if (hUniqueTransformArg)
             hTransformArg = std::move(hUniqueTransformArg);
         else
@@ -5096,10 +5082,7 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual ~CutlineTransformer()
-    {
-        GDALDestroyTransformer(hSrcImageTransformer);
-    }
+    virtual ~CutlineTransformer() override;
 
     virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
@@ -5122,6 +5105,11 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 };
+
+CutlineTransformer::~CutlineTransformer()
+{
+    GDALDestroyTransformer(hSrcImageTransformer);
+}
 
 static double GetMaximumSegmentLength(OGRGeometry *poGeom)
 {

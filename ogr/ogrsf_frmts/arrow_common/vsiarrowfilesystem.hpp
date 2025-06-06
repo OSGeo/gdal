@@ -23,6 +23,11 @@
 #include <vector>
 #include <utility>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /************************************************************************/
 /*                         VSIArrowFileSystem                           */
 /************************************************************************/
@@ -270,5 +275,9 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
         return arrow::Status::IOError("OpenAppendStream() unimplemented");
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif  // VSIARROWFILESYSTEM_HPP_INCLUDED

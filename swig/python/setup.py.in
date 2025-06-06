@@ -346,6 +346,12 @@ class gdal_ext(build_ext):
         else:
             ext.extra_compile_args.append("-DSWIG_PYTHON_SILENT_MEMLEAK")
 
+        # Add -isysroot on osx if used in cmake
+        if '@CMAKE_OSX_SYSROOT@':
+            ext.extra_compile_args.extend(['-isysroot', '@CMAKE_OSX_SYSROOT@'])
+            ext.extra_link_args.extend(['-isysroot', '@CMAKE_OSX_SYSROOT@'])
+
+
         return build_ext.build_extension(self, ext)
 
 

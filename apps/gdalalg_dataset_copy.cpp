@@ -120,12 +120,14 @@ bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*      GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()      */
+/*      GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()            */
 /************************************************************************/
 
 GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()
     : GDALDatasetCopyRenameCommonAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
 }
+
+GDALDatasetCopyAlgorithm::~GDALDatasetCopyAlgorithm() = default;
 
 //! @endcond

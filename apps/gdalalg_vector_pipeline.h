@@ -242,10 +242,7 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     {
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
-    {
-        return m_srcLayer.GetLayerDefn();
-    }
+    OGRFeatureDefn *GetLayerDefn() override;
 
     int TestCapability(const char *pszCap) override
     {

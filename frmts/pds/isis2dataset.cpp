@@ -2,17 +2,17 @@
  *
  * Project:  ISIS Version 2 Driver
  * Purpose:  Implementation of ISIS2Dataset
- * Author:   Trent Hare (thare@usgs.gov),
- *           Robert Soricone (rsoricone@usgs.gov)
- *           Ludovic Mercier (ludovic.mercier@gmail.com)
- *           Frank Warmerdam (warmerdam@pobox.com)
+ * Author:   Trent Hare (thare at usgs.gov),
+ *           Robert Soricone (rsoricone at usgs.gov)
+ *           Ludovic Mercier (ludovic.mercier at gmail.com)
+ *           Frank Warmerdam (warmerdam at pobox.com)
  *
  * NOTE: Original code authored by Trent and Robert and placed in the public
  * domain as per US government policy.  I have (within my rights) appropriated
  * it and placed it under the following license.  This is not intended to
  * diminish Trent and Roberts contribution.
  ******************************************************************************
- * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2006, Frank Warmerdam <warmerdam at pobox.com>
  * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT

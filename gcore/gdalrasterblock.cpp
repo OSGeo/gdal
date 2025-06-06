@@ -256,7 +256,6 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                      nCacheMax / (1024 * 1024));
         });
 
-    // coverity[overflow_sink]
     return nCacheMax;
 }
 

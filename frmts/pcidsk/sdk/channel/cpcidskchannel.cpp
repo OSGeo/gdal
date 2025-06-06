@@ -25,6 +25,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKChannel::~PCIDSKChannel() = default;
+
 /************************************************************************/
 /*                           CPCIDSKChannel()                           */
 /************************************************************************/
@@ -192,8 +194,8 @@ int CPCIDSKChannel::GetBlockCount() const
     // computation of the values for tiled layers.  At some point it would
     // be good to cache the block count as this computation is a bit expensive
 
-    int x_block_count = (GetWidth() + GetBlockWidth() - 1) / GetBlockWidth();
-    int y_block_count = (GetHeight() + GetBlockHeight() - 1) / GetBlockHeight();
+    int x_block_count = DIV_ROUND_UP(GetWidth(), GetBlockWidth());
+    int y_block_count = DIV_ROUND_UP(GetHeight(), GetBlockHeight());
 
     return x_block_count * y_block_count;
 }

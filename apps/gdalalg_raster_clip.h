@@ -53,6 +53,8 @@ class GDALRasterClipAlgorithmStandalone final : public GDALRasterClipAlgorithm
         : GDALRasterClipAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterClipAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -63,10 +63,7 @@ class MAPWrapperRasterBand final : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit MAPWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -80,6 +77,12 @@ class MAPWrapperRasterBand final : public GDALProxyRasterBand
     {
     }
 };
+
+GDALRasterBand *
+MAPWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 /************************************************************************/
 /* ==================================================================== */

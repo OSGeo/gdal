@@ -488,6 +488,13 @@ extern "C++"
         CPLAssert(f == nullptr || dynamic_cast<To>(f) != nullptr);
         return static_cast<To>(f);
     }
+
+    /** Computes ceil(a/b) where a and b are integers */
+    template <class T, class U> inline T div_round_up(T a, U b)
+    {
+        return a / b + (((a % b) == 0) ? 0 : 1);
+    }
+
     }  // namespace cpl
 }  // extern "C++"
 

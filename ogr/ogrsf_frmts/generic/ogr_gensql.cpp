@@ -39,8 +39,12 @@ class OGRGenSQLGeomFieldDefn final : public OGRGeomFieldDefn
         SetSpatialRef(poGeomFieldDefn->GetSpatialRef());
     }
 
+    ~OGRGenSQLGeomFieldDefn() override;
+
     int bForceGeomType;
 };
+
+OGRGenSQLGeomFieldDefn::~OGRGenSQLGeomFieldDefn() = default;
 
 /************************************************************************/
 /*               OGRGenSQLResultsLayerHasSpecialField()                 */

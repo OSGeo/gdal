@@ -80,4 +80,6 @@ bool GDALRasterTRIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterTRIAlgorithmStandalone::~GDALRasterTRIAlgorithmStandalone() = default;
+
 //! @endcond

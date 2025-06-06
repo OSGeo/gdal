@@ -40,8 +40,10 @@
 class OGRCSVEditableLayerSynchronizer final
     : public IOGREditableLayerSynchronizer
 {
-    OGRCSVLayer *m_poCSVLayer;
-    char **m_papszOpenOptions;
+    OGRCSVLayer *m_poCSVLayer = nullptr;
+    char **m_papszOpenOptions = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRCSVEditableLayerSynchronizer)
 
   public:
     OGRCSVEditableLayerSynchronizer(OGRCSVLayer *poCSVLayer,
@@ -300,7 +302,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 
 class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 {
-    std::set<CPLString> m_oSetFields;
+    std::set<CPLString> m_oSetFields{};
 
   public:
     OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer, CSLConstList papszOpenOptions);
@@ -1254,6 +1256,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         poGeomFieldDefn->SetCoordinatePrecision(
             poSrcGeomFieldDefn->GetCoordinatePrecision());
     }
+
+    poCSVLayer->SetWriteHeader(CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "HEADER",
+        CSLFetchNameValueDef(papszOptions, "HEADERS", "YES"))));
 
     if (osFilename != "/vsistdout/")
         m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(

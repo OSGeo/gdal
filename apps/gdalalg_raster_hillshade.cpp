@@ -194,4 +194,7 @@ bool GDALRasterHillshadeAlgorithm::RunStep(
     return bOK;
 }
 
+GDALRasterHillshadeAlgorithmStandalone::
+    ~GDALRasterHillshadeAlgorithmStandalone() = default;
+
 //! @endcond

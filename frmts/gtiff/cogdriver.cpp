@@ -476,10 +476,8 @@ static bool COGGetWarpingCharacteristics(
         {
             nTLTileX = (nTLTileX / nAccDivisor) * nAccDivisor;
             nTLTileY = (nTLTileY / nAccDivisor) * nAccDivisor;
-            nBRTileY =
-                ((nBRTileY + nAccDivisor - 1) / nAccDivisor) * nAccDivisor;
-            nBRTileX =
-                ((nBRTileX + nAccDivisor - 1) / nAccDivisor) * nAccDivisor;
+            nBRTileY = DIV_ROUND_UP(nBRTileY, nAccDivisor) * nAccDivisor;
+            nBRTileX = DIV_ROUND_UP(nBRTileX, nAccDivisor) * nAccDivisor;
         }
 
         if (nTLTileX < 0 || nTLTileY < 0 ||
@@ -1424,15 +1422,7 @@ class GDALCOGDriver final : public GDALDriver
     GDALCOGDriver();
 
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        std::lock_guard oLock(m_oMutex);
-        if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
-        {
-            InitializeCreationOptionList();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
@@ -1452,6 +1442,17 @@ GDALCOGDriver::GDALCOGDriver()
                                               bHasZSTD, bHasJPEG, bHasWebP,
                                               bHasLERC, true /* bForCOG */);
     gbHasLZW = bHasLZW;
+}
+
+const char *GDALCOGDriver::GetMetadataItem(const char *pszName,
+                                           const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
+    {
+        InitializeCreationOptionList();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
 }
 
 void GDALCOGDriver::InitializeCreationOptionList()

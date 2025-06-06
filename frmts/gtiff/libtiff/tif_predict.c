@@ -367,7 +367,7 @@ static int horAcc8(TIFF *tif, uint8_t *cp0, tmsize_t cc)
         if (stride == 1)
         {
             uint32_t acc = cp[0];
-            tmsize_t i = 1;
+            tmsize_t i = stride;
             for (; i < cc - 3; i += 4)
             {
                 cp[i + 0] = (uint8_t)((acc += cp[i + 0]) & 0xff);
@@ -537,7 +537,7 @@ static int fpAcc(TIFF *tif, uint8_t *cp0, tmsize_t cc)
     uint32_t bps = tif->tif_dir.td_bitspersample / 8;
     tmsize_t wc = cc / bps;
     tmsize_t count = cc;
-    uint8_t *cp = (uint8_t *)cp0;
+    uint8_t *cp = cp0;
     uint8_t *tmp;
 
     if (cc % (bps * stride) != 0)
@@ -556,7 +556,7 @@ static int fpAcc(TIFF *tif, uint8_t *cp0, tmsize_t cc)
 #define OP                                                                     \
     do                                                                         \
     {                                                                          \
-        cp[1] = (unsigned char)((cp[1] + cp[0]) & 0xff);                       \
+        cp[1] = (uint8_t)((cp[1] + cp[0]) & 0xff);                             \
         ++cp;                                                                  \
     } while (0)
         for (; count > 8; count -= 8)
@@ -580,8 +580,7 @@ static int fpAcc(TIFF *tif, uint8_t *cp0, tmsize_t cc)
     {
         while (count > stride)
         {
-            REPEAT4(stride,
-                    cp[stride] = (unsigned char)((cp[stride] + cp[0]) & 0xff);
+            REPEAT4(stride, cp[stride] = (uint8_t)((cp[stride] + cp[0]) & 0xff);
                     cp++)
             count -= stride;
         }
@@ -600,13 +599,13 @@ static int fpAcc(TIFF *tif, uint8_t *cp0, tmsize_t cc)
             /* Interlace 4*16 byte values */
 
             __m128i xmm0 =
-                _mm_loadu_si128((__m128i const *)(tmp + count + 3 * wc));
+                _mm_loadu_si128((const __m128i *)(tmp + count + 3 * wc));
             __m128i xmm1 =
-                _mm_loadu_si128((__m128i const *)(tmp + count + 2 * wc));
+                _mm_loadu_si128((const __m128i *)(tmp + count + 2 * wc));
             __m128i xmm2 =
-                _mm_loadu_si128((__m128i const *)(tmp + count + 1 * wc));
+                _mm_loadu_si128((const __m128i *)(tmp + count + 1 * wc));
             __m128i xmm3 =
-                _mm_loadu_si128((__m128i const *)(tmp + count + 0 * wc));
+                _mm_loadu_si128((const __m128i *)(tmp + count + 0 * wc));
             /* (xmm0_0, xmm1_0, xmm0_1, xmm1_1, xmm0_2, xmm1_2, ...) */
             __m128i tmp0 = _mm_unpacklo_epi8(xmm0, xmm1);
             /* (xmm0_8, xmm1_8, xmm0_9, xmm1_9, xmm0_10, xmm1_10, ...) */

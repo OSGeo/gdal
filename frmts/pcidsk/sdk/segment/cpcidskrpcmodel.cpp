@@ -22,6 +22,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKRPCSegment::~PCIDSKRPCSegment() = default;
+
 CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn,const char *segment_pointer) :
     CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo),
     loaded_(false),mbModified(false),mbEmpty(false)

@@ -48,6 +48,7 @@ class GDALFakePDFDataset final : public GDALDataset
 {
   public:
     GDALFakePDFDataset() = default;
+    ~GDALFakePDFDataset() override;
 };
 
 /************************************************************************/

@@ -402,13 +402,21 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define add_epi16 _mm256_add_epi16
 #define sub_epi16 _mm256_sub_epi16
 #define packus_epi16 _mm256_packus_epi16
+
 /* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
 /* to get the lower 128-bit bits of what would be a true 256-bit vector register
  */
+
+inline __m256i FIXUP_LANES(__m256i x)
+{
+    return _mm256_permute4x64_epi64(x, _MM_SHUFFLE(3, 1, 2, 0));
+}
+
 #define store_lo(x, y)                                                         \
     _mm_storeu_si128(reinterpret_cast<__m128i *>(x),                           \
-                     _mm256_extracti128_si256(                                 \
-                         _mm256_permute4x64_epi64((y), 0 | (2 << 2)), 0))
+                     _mm256_extracti128_si256(FIXUP_LANES(y), 0))
+#define storeu_int(x, y)                                                       \
+    _mm256_storeu_si256(reinterpret_cast<__m256i *>(x), FIXUP_LANES(y))
 #define hadd_epi16 _mm256_hadd_epi16
 #define zeroupper() _mm256_zeroupper()
 #else
@@ -436,6 +444,7 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define sub_epi16 _mm_sub_epi16
 #define packus_epi16 _mm_packus_epi16
 #define store_lo(x, y) _mm_storel_epi64(reinterpret_cast<__m128i *>(x), (y))
+#define storeu_int(x, y) _mm_storeu_si128(reinterpret_cast<__m128i *>(x), (y))
 #define hadd_epi16 sse2_hadd_epi16
 #define zeroupper() (void)0
 #endif
@@ -554,39 +563,71 @@ AverageByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
                       T *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on Byte by
-    // processing by group of 8 output pixels.
+    // processing by group of 16 output pixels for SSE2, or 32 for AVX2
 
     const auto zero = setzero();
     const auto two16 = set1_epi16(2);
     const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
+    for (; iDstPixel < nDstXWidth - (2 * DEST_ELTS - 1);
+         iDstPixel += 2 * DEST_ELTS)
     {
-        // Load 2 * DEST_ELTS bytes from each line
-        const auto firstLine = loadu_int(pSrcScanlineShifted);
-        const auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
-        // Extend those Bytes as UInt16s
-        const auto firstLineLo = unpacklo_epi8(firstLine, zero);
-        const auto firstLineHi = unpackhi_epi8(firstLine, zero);
-        const auto secondLineLo = unpacklo_epi8(secondLine, zero);
-        const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+        decltype(setzero()) average0;
+        {
+            // Load 2 * DEST_ELTS bytes from each line
+            const auto firstLine = loadu_int(pSrcScanlineShifted);
+            const auto secondLine =
+                loadu_int(pSrcScanlineShifted + nChunkXSize);
+            // Extend those Bytes as UInt16s
+            const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+            const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+            const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+            const auto secondLineHi = unpackhi_epi8(secondLine, zero);
 
-        // Vertical addition
-        const auto sumLo = add_epi16(firstLineLo, secondLineLo);
-        const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+            // Vertical addition
+            const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+            const auto sumHi = add_epi16(firstLineHi, secondLineHi);
 
-        // Horizontal addition of adjacent pairs, and recombine low and high
-        // parts
-        const auto sum = hadd_epi16(sumLo, sumHi);
+            // Horizontal addition of adjacent pairs, and recombine low and high
+            // parts
+            const auto sum = hadd_epi16(sumLo, sumHi);
 
-        // average = (sum + 2) / 4
-        auto average = srli_epi16(add_epi16(sum, two16), 2);
+            // average = (sum + 2) / 4
+            average0 = srli_epi16(add_epi16(sum, two16), 2);
+
+            pSrcScanlineShifted += 2 * DEST_ELTS;
+        }
+
+        decltype(setzero()) average1;
+        {
+            // Load 2 * DEST_ELTS bytes from each line
+            const auto firstLine = loadu_int(pSrcScanlineShifted);
+            const auto secondLine =
+                loadu_int(pSrcScanlineShifted + nChunkXSize);
+            // Extend those Bytes as UInt16s
+            const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+            const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+            const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+            const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+            // Vertical addition
+            const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+            const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+
+            // Horizontal addition of adjacent pairs, and recombine low and high
+            // parts
+            const auto sum = hadd_epi16(sumLo, sumHi);
+
+            // average = (sum + 2) / 4
+            average1 = srli_epi16(add_epi16(sum, two16), 2);
+
+            pSrcScanlineShifted += 2 * DEST_ELTS;
+        }
 
         // Pack each 16 bit average value to 8 bits
-        average = packus_epi16(average, average /* could be anything */);
-        store_lo(&pDstScanline[iDstPixel], average);
-        pSrcScanlineShifted += 2 * DEST_ELTS;
+        const auto average = packus_epi16(average0, average1);
+        storeu_int(&pDstScanline[iDstPixel], average);
     }
     zeroupper();
 
@@ -922,6 +963,17 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
 /*                      QuadraticMeanFloatSSE2()                        */
 /************************************************************************/
 
+#ifdef __SSE3__
+#define sse2_hadd_ps _mm_hadd_ps
+#else
+inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
+{
+    auto aEven_bEven = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2, 0, 2, 0));
+    auto aOdd_bOdd = _mm_shuffle_ps(a, b, _MM_SHUFFLE(3, 1, 3, 1));
+    return _mm_add_ps(aEven_bEven, aOdd_bOdd);  // (aEven + aOdd, bEven + bOdd)
+}
+#endif
+
 #ifdef __AVX2__
 #define RMS_FLOAT_ELTS 8
 #define set1_ps _mm256_set1_ps
@@ -947,17 +999,6 @@ inline __m256 SQUARE_PS(__m256 x)
 }
 
 #else
-
-#ifdef __SSE3__
-#define sse2_hadd_ps _mm_hadd_ps
-#else
-inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
-{
-    auto aEven_bEven = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2, 0, 2, 0));
-    auto aOdd_bOdd = _mm_shuffle_ps(a, b, _MM_SHUFFLE(3, 1, 3, 1));
-    return _mm_add_ps(aEven_bEven, aOdd_bOdd);  // (aEven + aOdd, bEven + bOdd)
-}
-#endif
 
 #define RMS_FLOAT_ELTS 4
 #define set1_ps _mm_set1_ps
@@ -1104,11 +1145,7 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
         const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
 
         // Horizontal addition
-        const auto A =
-            _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
-        const auto B =
-            _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
-        const auto sum = _mm_add_ps(A, B);
+        const auto sum = sse2_hadd_ps(sumLo, sumHi);
 
         const auto average = _mm_mul_ps(sum, zeroDot25);
 
@@ -4557,14 +4594,15 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                nMaxChunkYSizeQueried * nWidth;
     };
 
-    // Only configurable for debug / testing
     const char *pszChunkYSize =
         CPLGetConfigOption("GDAL_OVR_CHUNKYSIZE", nullptr);
+#ifndef __COVERITY__
+    // Only configurable for debug / testing
     if (pszChunkYSize)
     {
-        // coverity[tainted_data]
         nFullResYChunk = atoi(pszChunkYSize);
     }
+#endif
 
     // Only configurable for debug / testing
     const int nChunkMaxSize =
@@ -4632,11 +4670,6 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         void *pDstBuffer = nullptr;
         GDALDataType eDstBufferDataType = GDT_Unknown;
 
-        // Synchronization
-        bool bFinished = false;
-        std::mutex mutex{};
-        std::condition_variable cv{};
-
         void SetSrcMaskBufferHolder(
             const std::shared_ptr<PointerHolder> &oSrcMaskBufferHolderIn)
         {
@@ -4648,6 +4681,34 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         {
             oSrcBufferHolder = oSrcBufferHolderIn;
         }
+
+        void NotifyFinished()
+        {
+            std::lock_guard guard(mutex);
+            bFinished = true;
+            cv.notify_one();
+        }
+
+        bool IsFinished()
+        {
+            std::lock_guard guard(mutex);
+            return bFinished;
+        }
+
+        void WaitFinished()
+        {
+            std::unique_lock oGuard(mutex);
+            while (!bFinished)
+            {
+                cv.wait(oGuard);
+            }
+        }
+
+      private:
+        // Synchronization
+        bool bFinished = false;
+        std::mutex mutex{};
+        std::condition_variable cv{};
     };
 
     // Thread function to resample
@@ -4676,11 +4737,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         poJob->oDstBufferHolder =
             std::make_unique<PointerHolder>(poJob->pDstBuffer);
 
-        {
-            std::lock_guard<std::mutex> guard(poJob->mutex);
-            poJob->bFinished = true;
-            poJob->cv.notify_one();
-        }
+        poJob->NotifyFinished();
     };
 
     // Function to write resample data to target band
@@ -4698,14 +4755,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         [WriteJobData](std::list<std::unique_ptr<OvrJob>> &jobList)
     {
         auto poOldestJob = jobList.front().get();
-        {
-            std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
-            // coverity[missing_lock:FALSE]
-            while (!poOldestJob->bFinished)
-            {
-                poOldestJob->cv.wait(oGuard);
-            }
-        }
+        poOldestJob->WaitFinished();
         CPLErr l_eErr = poOldestJob->eErr;
         if (l_eErr == CE_None)
         {
@@ -4766,13 +4816,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         while (eErr == CE_None && !jobList.empty())
         {
             auto poOldestJob = jobList.front().get();
-            {
-                std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
-                if (!poOldestJob->bFinished)
-                {
-                    break;
-                }
-            }
+            if (!poOldestJob->IsFinished())
+                break;
             eErr = poOldestJob->eErr;
             if (eErr == CE_None)
             {
@@ -5822,6 +5867,29 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             void *pDstBuffer = nullptr;
             GDALDataType eDstBufferDataType = GDT_Unknown;
 
+            void NotifyFinished()
+            {
+                std::lock_guard guard(mutex);
+                bFinished = true;
+                cv.notify_one();
+            }
+
+            bool IsFinished()
+            {
+                std::lock_guard guard(mutex);
+                return bFinished;
+            }
+
+            void WaitFinished()
+            {
+                std::unique_lock oGuard(mutex);
+                while (!bFinished)
+                {
+                    cv.wait(oGuard);
+                }
+            }
+
+          private:
             // Synchronization
             bool bFinished = false;
             std::mutex mutex{};
@@ -5839,11 +5907,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
             poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
 
-            {
-                std::lock_guard<std::mutex> guard(poJob->mutex);
-                poJob->bFinished = true;
-                poJob->cv.notify_one();
-            }
+            poJob->NotifyFinished();
         };
 
         // Function to write resample data to target band
@@ -5863,14 +5927,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             [WriteJobData](std::list<std::unique_ptr<OvrJob>> &jobList)
         {
             auto poOldestJob = jobList.front().get();
-            {
-                std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
-                // coverity[missing_lock:FALSE]
-                while (!poOldestJob->bFinished)
-                {
-                    poOldestJob->cv.wait(oGuard);
-                }
-            }
+            poOldestJob->WaitFinished();
             CPLErr l_eErr = poOldestJob->eErr;
             if (l_eErr == CE_None)
             {
@@ -5974,13 +6031,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 while (eErr == CE_None && !jobList.empty())
                 {
                     auto poOldestJob = jobList.front().get();
-                    {
-                        std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
-                        if (!poOldestJob->bFinished)
-                        {
-                            break;
-                        }
-                    }
+                    if (!poOldestJob->IsFinished())
+                        break;
                     eErr = poOldestJob->eErr;
                     if (eErr == CE_None)
                     {

@@ -62,6 +62,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 #if defined(HAVE_SPATIALITE) && !defined(SPATIALITE_DLOPEN)

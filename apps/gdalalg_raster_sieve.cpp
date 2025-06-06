@@ -102,4 +102,7 @@ bool GDALRasterSieveAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
     return err == CE_None;
 }
 
+GDALRasterSieveAlgorithmStandalone::~GDALRasterSieveAlgorithmStandalone() =
+    default;
+
 //! @endcond

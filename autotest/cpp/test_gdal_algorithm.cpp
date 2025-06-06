@@ -26,6 +26,11 @@
 #include <algorithm>
 #include <limits>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 namespace test_gdal_algorithm
 {
 
@@ -4832,3 +4837,7 @@ TEST_F(test_gdal_algorithm, AddOverwriteLayerArg_without_update)
 }
 
 }  // namespace test_gdal_algorithm
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

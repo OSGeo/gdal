@@ -98,10 +98,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
     {
     }
 
-    ~OGRWFSWrappedResultLayer()
-    {
-        delete poDS;
-    }
+    ~OGRWFSWrappedResultLayer() override;
 
     virtual void ResetReading() override
     {
@@ -138,6 +135,11 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         return poLayer->TestCapability(pszCap);
     }
 };
+
+OGRWFSWrappedResultLayer::~OGRWFSWrappedResultLayer()
+{
+    delete poDS;
+}
 
 /************************************************************************/
 /*                          OGRWFSDataSource()                          */

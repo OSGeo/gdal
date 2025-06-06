@@ -13,6 +13,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_float.h"
 #include "gdal_priv.h"
 
 #include <climits>
@@ -541,6 +542,7 @@ DEFINE_GetGDTFromCppType(uint32_t, GDT_UInt32);
 DEFINE_GetGDTFromCppType(int32_t, GDT_Int32);
 DEFINE_GetGDTFromCppType(uint64_t, GDT_UInt64);
 DEFINE_GetGDTFromCppType(int64_t, GDT_Int64);
+DEFINE_GetGDTFromCppType(GFloat16, GDT_Float16);
 DEFINE_GetGDTFromCppType(float, GDT_Float32);
 DEFINE_GetGDTFromCppType(double, GDT_Float64);
 // Not allowed by C++ standard
@@ -760,6 +762,7 @@ INSTANTIATE_READ_RASTER(uint32_t)
 INSTANTIATE_READ_RASTER(int32_t)
 INSTANTIATE_READ_RASTER(uint64_t)
 INSTANTIATE_READ_RASTER(int64_t)
+INSTANTIATE_READ_RASTER(GFloat16)
 INSTANTIATE_READ_RASTER(float)
 INSTANTIATE_READ_RASTER(double)
 // Not allowed by C++ standard
@@ -974,6 +977,7 @@ INSTANTIATE_READ_RASTER_VECTOR(uint32_t)
 INSTANTIATE_READ_RASTER_VECTOR(int32_t)
 INSTANTIATE_READ_RASTER_VECTOR(uint64_t)
 INSTANTIATE_READ_RASTER_VECTOR(int64_t)
+INSTANTIATE_READ_RASTER_VECTOR(GFloat16)
 INSTANTIATE_READ_RASTER_VECTOR(float)
 INSTANTIATE_READ_RASTER_VECTOR(double)
 // Not allowed by C++ standard
@@ -1016,8 +1020,8 @@ INSTANTIATE_READ_RASTER_VECTOR(std::complex<double>)
      int nXBlockSize, nYBlockSize;
 
      poBand->GetBlockSize( &nXBlockSize, &nYBlockSize );
-     int nXBlocks = (poBand->GetXSize() + nXBlockSize - 1) / nXBlockSize;
-     int nYBlocks = (poBand->GetYSize() + nYBlockSize - 1) / nYBlockSize;
+     int nXBlocks = DIV_ROUND_UP(poBand->GetXSize(), nXBlockSize);
+     int nYBlocks = DIV_ROUND_UP(poBand->GetYSize(), nYBlockSize);
 
      GByte *pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize);
 
@@ -9649,11 +9653,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
-               void *pDstBuffer) const override
-    {
-        return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
-                         bufferDataType, pDstBuffer);
-    }
+               void *pDstBuffer) const override;
 
     bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -9781,10 +9781,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         }
 
         const std::vector<std::shared_ptr<GDALDimension>> &
-        GetDimensions() const override
-        {
-            return m_dims;
-        }
+        GetDimensions() const override;
 
         const GDALExtendedDataType &GetDataType() const override
         {
@@ -9822,6 +9819,21 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         return res;
     }
 };
+
+bool GDALMDArrayFromRasterBand::IRead(
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pDstBuffer) const
+{
+    return ReadWrite(GF_Read, arrayStartIdx, count, arrayStep, bufferStride,
+                     bufferDataType, pDstBuffer);
+}
+
+const std::vector<std::shared_ptr<GDALDimension>> &
+GDALMDArrayFromRasterBand::MDIAsAttribute::GetDimensions() const
+{
+    return m_dims;
+}
 
 /************************************************************************/
 /*                            ReadWrite()                               */

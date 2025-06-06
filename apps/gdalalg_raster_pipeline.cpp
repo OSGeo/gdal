@@ -772,7 +772,17 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::
 }
 
 /************************************************************************/
-/*                     MustCreateOnDiskTempDataset()                        */
+/*                    IsNativelyStreamingCompatible()                   */
+/************************************************************************/
+
+bool GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    IsNativelyStreamingCompatible() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                     MustCreateOnDiskTempDataset()                    */
 /************************************************************************/
 
 static bool MustCreateOnDiskTempDataset(int nWidth, int nHeight, int nBands,

@@ -24,10 +24,7 @@ class CADWrapperRasterBand : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /* bForceOpen */) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /* bForceOpen */) const override;
 
   public:
     explicit CADWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -41,6 +38,12 @@ class CADWrapperRasterBand : public GDALProxyRasterBand
     {
     }
 };
+
+GDALRasterBand *
+CADWrapperRasterBand::RefUnderlyingRasterBand(bool /* bForceOpen */) const
+{
+    return poBaseBand;
+}
 
 GDALCADDataset::GDALCADDataset()
     : poCADFile(nullptr), papoLayers(nullptr), nLayers(0), poRasterDS(nullptr),

@@ -60,6 +60,8 @@ class GDALVectorConcatAlgorithmStandalone final
         : GDALVectorConcatAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorConcatAlgorithmStandalone() override;
 };
 
 //! @endcond

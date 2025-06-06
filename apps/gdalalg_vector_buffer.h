@@ -63,6 +63,8 @@ class GDALVectorBufferAlgorithmStandalone final
         : GDALVectorBufferAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorBufferAlgorithmStandalone() override;
 };
 
 //! @endcond

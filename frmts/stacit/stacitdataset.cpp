@@ -71,6 +71,7 @@ class STACITDataset final : public VRTDataset
 
   public:
     STACITDataset();
+    ~STACITDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
@@ -85,6 +86,8 @@ STACITDataset::STACITDataset() : VRTDataset(0, 0)
     poDriver = nullptr;  // cancel what the VRTDataset did
     SetWritable(false);
 }
+
+STACITDataset::~STACITDataset() = default;
 
 /************************************************************************/
 /*                             Identify()                               */

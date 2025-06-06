@@ -74,12 +74,15 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
         }
 
         // Use independent band compression when by default band 1 is core band
-        if ((3 == bands || 4 == bands) &&
+        if (coreband.empty() && (3 == bands || 4 == bands) &&
             EQUAL(poMRFDS->GetPhotometricInterpretation(), "MULTISPECTRAL"))
         {
             size_t corebands[] = {0, 1, 2, 3};  // Identity, no core bands
             qb3_set_encoder_coreband(pQB3, bands, corebands);
         }
+
+        if (!coreband.empty())
+            qb3_set_encoder_coreband(pQB3, bands, coreband.data());
 
         // Quality of 90 and above trigger the better encoding
         qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
@@ -184,16 +187,50 @@ QB3_Band::QB3_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
         return;
     }
 
-    if (image.dt != GDT_Byte && image.dt != GDT_Int16 &&
-        image.dt != GDT_UInt16 && image.dt != GDT_Int32 &&
-        image.dt != GDT_UInt32 && image.dt != GDT_Int64 &&
-        image.dt != GDT_UInt64)
+    if (!GDALDataTypeIsInteger(image.dt) || GDALDataTypeIsComplex(image.dt))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Data type not supported by QB3 compression");
         return;
     }
 
+    // Pick up the band map. Comma separated list of bands
+    // Either identity (core) or derived from a core band.
+    // Missing entries are assumed to be identity.
+    std::string setting(GetOptionValue("QB3_BAND_MAP", ""));
+    if (image.pagesize.c != 1 && !setting.empty())
+    {
+        auto tokens =
+            CSLTokenizeString2(setting.c_str(), ",", CSLT_ALLOWEMPTYTOKENS);
+        coreband.resize(image.pagesize.c);
+        for (int i = 0; i < image.pagesize.c; i++)
+        {
+            coreband[i] = i;
+            if (tokens && tokens[i] && strlen(tokens[i]) > 0 &&
+                std::isdigit(tokens[i][0]))
+            {
+                auto c = atoi(tokens[i]);
+                if (c < 0 || c >= image.pagesize.c)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Invalid band %d in QB3_BAND_MAP", c);
+                    continue;
+                }
+                coreband[i] = c;
+            }
+        }
+        CSLDestroy(tokens);
+        // Second pass to check that bands are either core or derived
+        for (int i = 0; i < image.pagesize.c; i++)
+        {
+            const auto c = coreband[i];
+            if (c == static_cast<size_t>(i) || c == coreband[c])
+                continue;  // Core band or derived from core band
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Band %d in QB3_BAND_MAP is not a core band", i);
+            coreband[i] = i;  // Reset to identity
+        }
+    }
     // Should use qb3_max_encoded_size();
 
     // Enlarge the page buffer, QB3 may expand data.

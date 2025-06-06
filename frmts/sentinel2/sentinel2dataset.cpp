@@ -173,7 +173,10 @@ class SENTINEL2DatasetContainer final : public GDALPamDataset
 {
   public:
     SENTINEL2DatasetContainer() = default;
+    ~SENTINEL2DatasetContainer() override;
 };
+
+SENTINEL2DatasetContainer::~SENTINEL2DatasetContainer() = default;
 
 class SENTINEL2Dataset final : public VRTDataset
 {

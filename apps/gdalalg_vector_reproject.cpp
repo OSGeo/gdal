@@ -124,4 +124,7 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return ret;
 }
 
+GDALVectorReprojectAlgorithmStandalone::
+    ~GDALVectorReprojectAlgorithmStandalone() = default;
+
 //! @endcond

@@ -61,6 +61,8 @@ class GDALRasterFillNodataAlgorithmStandalone final
         : GDALRasterFillNodataAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterFillNodataAlgorithmStandalone() override;
 };
 
 //! @endcond

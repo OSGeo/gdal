@@ -75,6 +75,7 @@
 
 #include "avc.h"
 
+#include <cassert>
 #include <ctype.h> /* toupper() */
 
 /**********************************************************************
@@ -978,23 +979,41 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
          *------------------------------------------------------------*/
         GInt16 *pValue;
 
-        if (psInfo->iCurItem < 3)
-            pValue = psTxt->anJust2 + psInfo->iCurItem * 7;
-        else
-            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
-
-        if (psInfo->iCurItem == 2 || psInfo->iCurItem == 5)
+        if (psInfo->iCurItem == 0 || psInfo->iCurItem == 1)
         {
+            pValue = psTxt->anJust2 + psInfo->iCurItem * 7;
+            snprintf(psInfo->pszBuf, psInfo->nBufSize,
+                     "%10d%10d%10d%10d%10d%10d%10d", pValue[0], pValue[1],
+                     pValue[2], pValue[3], pValue[4], pValue[5], pValue[6]);
+        }
+        else if (psInfo->iCurItem == 2)
+        {
+            pValue = psTxt->anJust2 + psInfo->iCurItem * 7;
             snprintf(psInfo->pszBuf, psInfo->nBufSize,
                      "%10d%10d%10d%10d%10d%10d", pValue[0], pValue[1],
                      pValue[2], pValue[3], pValue[4], pValue[5]);
         }
-        else
+        else if (psInfo->iCurItem == 3)
         {
-            /* coverity[overrun-local] */
+            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
             snprintf(psInfo->pszBuf, psInfo->nBufSize,
                      "%10d%10d%10d%10d%10d%10d%10d", pValue[0], pValue[1],
                      pValue[2], pValue[3], pValue[4], pValue[5], pValue[6]);
+        }
+        else if (psInfo->iCurItem == 4)
+        {
+            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
+            snprintf(psInfo->pszBuf, psInfo->nBufSize,
+                     "%10d%10d%10d%10d%10d%10d%10d", pValue[0], pValue[1],
+                     pValue[2], pValue[3], pValue[4], pValue[5], pValue[6]);
+        }
+        else
+        {
+            assert(psInfo->iCurItem == 5);
+            pValue = psTxt->anJust1 + (psInfo->iCurItem - 3) * 7;
+            snprintf(psInfo->pszBuf, psInfo->nBufSize,
+                     "%10d%10d%10d%10d%10d%10d", pValue[0], pValue[1],
+                     pValue[2], pValue[3], pValue[4], pValue[5]);
         }
 
         psInfo->iCurItem++;

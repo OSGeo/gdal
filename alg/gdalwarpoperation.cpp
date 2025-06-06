@@ -154,12 +154,7 @@ GDALWarpKernel.
 /*                         GDALWarpOperation()                          */
 /************************************************************************/
 
-GDALWarpOperation::GDALWarpOperation()
-    : psOptions(nullptr), hIOMutex(nullptr), hWarpMutex(nullptr),
-      nChunkListCount(0), nChunkListMax(0), pasChunkList(nullptr),
-      bReportTimings(FALSE), nLastTimeReported(0), psThreadData(nullptr)
-{
-}
+GDALWarpOperation::GDALWarpOperation() = default;
 
 /************************************************************************/
 /*                         ~GDALWarpOperation()                         */
@@ -537,11 +532,20 @@ static void SetTieStrategy(GDALWarpOptions *psOptions, CPLErr *peErr)
  *
  * @param psNewOptions input set of warp options.  These are copied and may
  * be destroyed after this call by the application.
+ * @param pfnTransformer Transformer function that this GDALWarpOperation must use
+ * and own, or NULL. When pfnTransformer is not NULL, this implies that
+ * psNewOptions->pfnTransformer is NULL
+ * @param psOwnedTransformerArg Transformer argument that this GDALWarpOperation
+ * must use, and own, or NULL. When psOwnedTransformerArg is set, this implies that
+ * psNewOptions->pTransformerArg is NULL
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
+CPLErr
+GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions,
+                              GDALTransformerFunc pfnTransformer,
+                              GDALTransformerArgUniquePtr psOwnedTransformerArg)
 
 {
     /* -------------------------------------------------------------------- */
@@ -553,6 +557,19 @@ CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
     CPLErr eErr = CE_None;
 
     psOptions = GDALCloneWarpOptions(psNewOptions);
+
+    if (psOptions->pfnTransformer)
+    {
+        CPLAssert(pfnTransformer == nullptr);
+        CPLAssert(psOwnedTransformerArg.get() == nullptr);
+    }
+    else
+    {
+        m_psOwnedTransformerArg = std::move(psOwnedTransformerArg);
+        psOptions->pfnTransformer = pfnTransformer;
+        psOptions->pTransformerArg = m_psOwnedTransformerArg.get();
+    }
+
     psOptions->papszWarpOptions =
         CSLSetNameValue(psOptions->papszWarpOptions, "EXTRA_ELTS",
                         CPLSPrintf("%d", WARP_EXTRA_ELTS));

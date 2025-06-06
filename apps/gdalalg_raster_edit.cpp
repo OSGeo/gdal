@@ -419,4 +419,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
     return poDS != nullptr;
 }
 
+GDALRasterEditAlgorithmStandalone::~GDALRasterEditAlgorithmStandalone() =
+    default;
+
 //! @endcond

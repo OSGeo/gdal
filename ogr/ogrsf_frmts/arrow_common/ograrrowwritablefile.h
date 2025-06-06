@@ -19,6 +19,11 @@
 #include "arrow/io/file.h"
 #include "arrow/io/interfaces.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /************************************************************************/
 /*                        OGRArrowWritableFile                          */
 /************************************************************************/
@@ -73,5 +78,9 @@ class OGRArrowWritableFile final : public arrow::io::OutputStream
         return Write(data->data(), data->size());
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif  // OGR_ARROW_WRITABLE_FILE_H

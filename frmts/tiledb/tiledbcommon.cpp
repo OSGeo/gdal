@@ -13,6 +13,8 @@
 #include "tiledbheaders.h"
 #include "tiledbdrivercore.h"
 
+TileDBDataset::~TileDBDataset() = default;
+
 /************************************************************************/
 /*                      VSI_to_tiledb_uri()                             */
 /************************************************************************/

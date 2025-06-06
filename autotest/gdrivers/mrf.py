@@ -80,6 +80,12 @@ mrf_tests = (
     ("small_world.tif", 30111, [30111], ["COMPRESS=ZSTD", "INTERLEAVE=PIXEL"]),
     ("small_world.tif", 30111, [30111], ["COMPRESS=QB3"]),
     ("small_world.tif", 30111, [30111], ["COMPRESS=QB3", "INTERLEAVE=PIXEL"]),
+    (
+        "small_world.tif",
+        30111,
+        [30111],
+        ["COMPRESS=QB3", "INTERLEAVE=PIXEL", "OPTIONS=QB3_BAND_MAP:2,2,"],
+    ),
     ("small_world.tif", 30111, [30111], ["COMPRESS=QB3", "QUALITY=99"]),
     ("small_world.tif", 30111, [30111], ["COMPRESS=LERC", "INTERLEAVE=PIXEL"]),
     (

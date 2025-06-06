@@ -67,8 +67,8 @@ class IVSIS3LikeHandleHelper
     std::string GetQueryString(bool bAddEmptyValueAfterEqual) const;
 
   public:
-    IVSIS3LikeHandleHelper() = default;
-    virtual ~IVSIS3LikeHandleHelper() = default;
+    IVSIS3LikeHandleHelper();
+    virtual ~IVSIS3LikeHandleHelper();
 
     void ResetQueryParameters();
     void AddQueryParameter(const std::string &osKey,

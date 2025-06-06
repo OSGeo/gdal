@@ -266,4 +266,7 @@ bool GDALVectorClipAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return ret;
 }
 
+GDALVectorClipAlgorithmStandalone::~GDALVectorClipAlgorithmStandalone() =
+    default;
+
 //! @endcond

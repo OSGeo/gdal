@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_overview_add.h"
 
 #include "cpl_string.h"
@@ -20,6 +21,14 @@
 #ifndef _
 #define _(x) (x)
 #endif
+
+bool GDALRasterOverviewAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "raster overview\" program.");
+    return false;
+}
 
 /************************************************************************/
 /*                    GDALRasterOverviewAlgorithmAdd()                  */

@@ -309,7 +309,7 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
  * HISTORY
  *  11/2002 Arthur Taylor (MDL/RSIS): Created.
  *  12/2002 (TK,AC,TB,&MS): Code Review.
- *   6/2003 Matthew T. Kallio (matt@wunderground.com):
+ *   6/2003 Matthew T. Kallio (matt at wunderground.com):
  *          "wmo" dimension increased to WMO_HEADER_LEN + 1 (for '\0' char)
  *   8/2003 AAT: Removed dependence on offset and fileLen.
  *

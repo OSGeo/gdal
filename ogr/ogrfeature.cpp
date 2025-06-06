@@ -8722,6 +8722,24 @@ OGRFeature::FieldValue::operator CSLConstList() const
             ->GetFieldAsStringList(GetIndex()));
 }
 
+OGRRangeFieldDomain *OGRRangeFieldDomain::Clone() const
+{
+    auto poDomain = new OGRRangeFieldDomain(
+        m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_sMin,
+        m_bMinIsInclusive, m_sMax, m_bMaxIsInclusive);
+    poDomain->SetMergePolicy(m_eMergePolicy);
+    poDomain->SetSplitPolicy(m_eSplitPolicy);
+    return poDomain;
+}
+
+OGRGlobFieldDomain *OGRGlobFieldDomain::Clone() const
+{
+    auto poDomain = new OGRGlobFieldDomain(
+        m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_osGlob);
+    poDomain->SetMergePolicy(m_eMergePolicy);
+    poDomain->SetSplitPolicy(m_eSplitPolicy);
+    return poDomain;
+}
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif

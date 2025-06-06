@@ -45,10 +45,14 @@ class GDALConvertAlgorithm
                             "or 'gdal vector convert --help'";
     }
 
+    ~GDALConvertAlgorithm() override;
+
   private:
     std::string m_format{};
     GDALArgDatasetValue m_inputDataset{};
     GDALArgDatasetValue m_outputDataset{};
 };
+
+GDALConvertAlgorithm::~GDALConvertAlgorithm() = default;
 
 GDAL_STATIC_REGISTER_ALG(GDALConvertAlgorithm);

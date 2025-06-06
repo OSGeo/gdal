@@ -137,7 +137,6 @@ class OGRSOSISimpleDataType
   public:
     OGRSOSISimpleDataType();
     OGRSOSISimpleDataType(const char *pszName, OGRFieldType nType);
-    ~OGRSOSISimpleDataType();
 
     void setType(const char *pszName, OGRFieldType nType);
 
@@ -158,6 +157,7 @@ class OGRSOSIDataType
     int nElementCount = 0;
 
     OGRSOSIDataType &operator=(const OGRSOSIDataType &) = delete;
+    OGRSOSIDataType &operator=(OGRSOSIDataType &&) = delete;
 
   public:
     explicit OGRSOSIDataType(int nSize);

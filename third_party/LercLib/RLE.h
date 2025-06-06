@@ -43,7 +43,7 @@ class RLE
 {
 public:
   RLE() : m_minNumEven(5) {}
-  virtual ~RLE() {}
+  ~RLE() {}
 
   size_t computeNumBytesRLE(const Byte* arr, size_t numBytes) const;
 

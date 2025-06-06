@@ -63,6 +63,8 @@ class GDALVectorExplodeCollectionsAlgorithmStandalone final
         : GDALVectorExplodeCollectionsAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorExplodeCollectionsAlgorithmStandalone() override;
 };
 
 //! @endcond

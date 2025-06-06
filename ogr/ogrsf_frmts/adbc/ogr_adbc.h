@@ -39,10 +39,7 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
         m_poLayerDefn->Reference();
     }
 
-    ~OGRArrowArrayToOGRFeatureAdapterLayer()
-    {
-        m_poLayerDefn->Release();
-    }
+    ~OGRArrowArrayToOGRFeatureAdapterLayer() override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {

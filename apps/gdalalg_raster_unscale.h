@@ -51,6 +51,8 @@ class GDALRasterUnscaleAlgorithmStandalone final
         : GDALRasterUnscaleAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterUnscaleAlgorithmStandalone() override;
 };
 
 //! @endcond

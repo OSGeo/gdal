@@ -86,11 +86,13 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
 
     struct Action
     {
-        virtual ~Action() = default;
+        virtual ~Action();
     };
 
     struct GotoPageAction final : public Action
     {
+        ~GotoPageAction() override;
+
         GDALPDFObjectNum m_nPageDestId{};
         double m_dfX1 = 0;
         double m_dfX2 = 0;
@@ -100,12 +102,16 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
 
     struct SetLayerStateAction final : public Action
     {
+        ~SetLayerStateAction() override;
+
         std::set<GDALPDFObjectNum> m_anONLayers{};
         std::set<GDALPDFObjectNum> m_anOFFLayers{};
     };
 
     struct JavascriptAction final : public Action
     {
+        ~JavascriptAction() override;
+
         CPLString m_osScript{};
     };
 

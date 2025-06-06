@@ -27,6 +27,11 @@
 
 #include <limits>
 
+namespace gdal
+{
+MathExpression::~MathExpression() = default;
+}
+
 template <typename T>
 inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
 {

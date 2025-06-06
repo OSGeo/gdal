@@ -61,6 +61,8 @@ class GDALRasterPansharpenAlgorithmStandalone final
         : GDALRasterPansharpenAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterPansharpenAlgorithmStandalone() override;
 };
 
 //! @endcond

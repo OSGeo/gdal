@@ -102,4 +102,7 @@ GDALVectorSwapXYAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
     return std::make_unique<GDALVectorSwapXYAlgorithmLayer>(srcLayer, m_opts);
 }
 
+GDALVectorSwapXYAlgorithmStandalone::~GDALVectorSwapXYAlgorithmStandalone() =
+    default;
+
 //! @endcond

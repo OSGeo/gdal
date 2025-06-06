@@ -66,4 +66,15 @@ std::string GDALVectorGridDataMetricsAbstractAlgorithm::GetGridAlgorithm() const
     return ret;
 }
 
+GDALVectorGridDataMetricsAbstractAlgorithm::
+    ~GDALVectorGridDataMetricsAbstractAlgorithm() = default;
+GDALVectorGridMinimumAlgorithm::~GDALVectorGridMinimumAlgorithm() = default;
+GDALVectorGridMaximumAlgorithm::~GDALVectorGridMaximumAlgorithm() = default;
+GDALVectorGridRangeAlgorithm::~GDALVectorGridRangeAlgorithm() = default;
+GDALVectorGridCountAlgorithm::~GDALVectorGridCountAlgorithm() = default;
+GDALVectorGridAverageDistanceAlgorithm::
+    ~GDALVectorGridAverageDistanceAlgorithm() = default;
+GDALVectorGridAverageDistancePointsAlgorithm::
+    ~GDALVectorGridAverageDistancePointsAlgorithm() = default;
+
 //! @endcond

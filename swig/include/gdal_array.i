@@ -2098,8 +2098,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     else
     {
-        npy_intp nTilesPerRow = static_cast<npy_intp>((nBufXSize + nTileXSize - 1) / nTileXSize);
-        npy_intp nTilesPerCol = static_cast<npy_intp>((nBufYSize + nTileYSize - 1) / nTileYSize);
+        npy_intp nTilesPerRow = static_cast<npy_intp>(DIV_ROUND_UP(nBufXSize, nTileXSize));
+        npy_intp nTilesPerCol = static_cast<npy_intp>(DIV_ROUND_UP(nBufYSize, nTileYSize));
         npy_intp shape[5], stride[5];
         if( nBandCount == 1 )
         {

@@ -29,7 +29,17 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
+
 #include "png.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include <csetjmp>
 

@@ -3557,25 +3557,26 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
         if (bufferDataType.GetClass() != GEDTC_STRING)
             return false;
-        GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
+        char **ppszDstBuffer = static_cast<char **>(pDstBuffer);
         size_t array_idx[2] = {static_cast<size_t>(arrayStartIdx[0]), 0};
         size_t array_count[2] = {1, m_nTextLength};
         std::string osTmp(m_nTextLength, 0);
         const char *pszTmp = osTmp.c_str();
-        for (size_t i = 0; i < count[0]; i++)
+        bool ret = true;
+        for (size_t i = 0; ret && i < count[0]; i++)
         {
-            int ret =
+            int ncErr =
                 nc_get_vara(m_gid, m_varid, array_idx, array_count, &osTmp[0]);
-            NCDF_ERR(ret);
-            if (ret != NC_NOERR)
-                return false;
-            // coverity[use_after_free]
-            GDALExtendedDataType::CopyValue(&pszTmp, GetDataType(),
-                                            pabyDstBuffer, GetDataType());
-            array_idx[0] = static_cast<size_t>(array_idx[0] + arrayStep[0]);
-            pabyDstBuffer += bufferStride[0] * sizeof(char *);
+            NCDF_ERR(ncErr);
+            ret = ncErr == NC_NOERR;
+            if (ret)
+            {
+                *ppszDstBuffer = CPLStrdup(pszTmp);
+                array_idx[0] = static_cast<size_t>(array_idx[0] + arrayStep[0]);
+                ppszDstBuffer += bufferStride[0];
+            }
         }
-        return true;
+        return ret;
     }
 
     if (m_poCachedArray)
