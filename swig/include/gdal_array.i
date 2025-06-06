@@ -2390,7 +2390,7 @@ np_class_to_gdal_code = { v : k for k, v in codes.items() }
 # the opposite that is an exact match (ticket 1518)
 np_class_to_gdal_code[numpy.complex64] = gdalconst.GDT_CFloat32
 # also recognize numpy bool arrays
-np_class_to_gdal_code[numpy.bool] = gdalconst.GDT_Byte
+np_class_to_gdal_code[numpy.bool_] = gdalconst.GDT_Byte
 np_dtype_to_gdal_code = { numpy.dtype(k) : v for k, v in np_class_to_gdal_code.items() }
 
 def OpenArray(array, prototype_ds=None, interleave='band'):
