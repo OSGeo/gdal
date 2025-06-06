@@ -108,7 +108,7 @@ The following dataset creation options are supported:
 Links
 -----
 
--  `MapML.js documentation <https://maps4html.org/web-map-doc/`_
+-  `MapML.js documentation <https://maps4html.org/web-map-doc/>`_
 -  `MapML specification <https://maps4html.org/MapML/spec>`_
 -  `MapML schemas <https://github.com/Maps4HTML/MapML/tree/gh-pages/schema>`_
 -  :ref:`gdal2tiles` mapml output
