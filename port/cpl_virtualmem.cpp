@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <ucontext.h>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_config.h"
