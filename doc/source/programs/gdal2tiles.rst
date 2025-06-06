@@ -242,7 +242,6 @@ MapML support is new to GDAL 3.2. When --webviewer=mapml is specified,
 The following profiles are supported:
 
 - mercator: mapped to OSMTILE MapML tiling scheme
-- lambert conformal conic: mapped to CBMTILE tiling scheme
 - geodetic: mapped to WGS84 MapML tiling scheme
 - APSTILE: from the tms_MapML_APSTILE.json data file
 
