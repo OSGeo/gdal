@@ -25,6 +25,8 @@ CADDictionaryRecord::CADDictionaryRecord() :
 {
 }
 
+CADDictionaryRecord::~CADDictionaryRecord() = default;
+
 CADObject::ObjectType CADDictionaryRecord::getType() const
 {
     return objType;

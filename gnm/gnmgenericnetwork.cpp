@@ -476,7 +476,7 @@ CPLErr GNMGenericNetwork::CreateRule(const char *pszRuleStr)
         }
     }
 
-    m_asRules.push_back(oRule);
+    m_asRules.push_back(std::move(oRule));
     m_bIsRulesChanged = true;
 
     return CE_None;
