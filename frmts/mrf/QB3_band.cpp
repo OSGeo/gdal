@@ -224,7 +224,7 @@ QB3_Band::QB3_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
         for (int i = 0; i < image.pagesize.c; i++)
         {
             const auto c = coreband[i];
-            if (c == i || c == coreband[c])
+            if (c == static_cast<size_t>(i) || c == coreband[c])
                 continue;  // Core band or derived from core band
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Band %d in QB3_BAND_MAP is not a core band", i);
