@@ -771,7 +771,6 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                 }
             }
 
-            /* coverity[overrun-buffer-arg] */
             EXIFPrintData(szTemp, poTIFFDirEntry->tdir_type,
                           poTIFFDirEntry->tdir_count, data);
         }

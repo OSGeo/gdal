@@ -3150,9 +3150,10 @@ int CPL_STDCALL GDALGCPsToGeoTransform(int nGCPCount, const GDAL_GCP *pasGCPs,
             CPLGetConfigOption("GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK", "NO"));
         if (!bApproxOK)
         {
-            // coverity[tainted_data]
-            dfPixelThreshold = CPLAtof(CPLGetConfigOption(
-                "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD", "0.25"));
+            dfPixelThreshold = std::clamp(
+                CPLAtof(CPLGetConfigOption(
+                    "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD", "0.25")),
+                0.0, std::numeric_limits<double>::max());
         }
     }
 
@@ -4743,8 +4744,7 @@ int GDALCheckBandCount(int nBands, int bIsZeroAllowed)
     }
     const char *pszMaxBandCount =
         CPLGetConfigOption("GDAL_MAX_BAND_COUNT", "65536");
-    /* coverity[tainted_data] */
-    int nMaxBands = atoi(pszMaxBandCount);
+    int nMaxBands = std::clamp(atoi(pszMaxBandCount), 0, INT_MAX - 1);
     if (nBands > nMaxBands)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
