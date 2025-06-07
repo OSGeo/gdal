@@ -1445,6 +1445,13 @@ char **GTiffDataset::GetFileList()
         papszFileList = CSLAddString(papszFileList, m_pszXMLFilename);
     }
 
+    const std::string osVATDBF = std::string(m_pszFilename) + ".vat.dbf";
+    VSIStatBufL sStat;
+    if (VSIStatL(osVATDBF.c_str(), &sStat) == 0)
+    {
+        papszFileList = CSLAddString(papszFileList, osVATDBF.c_str());
+    }
+
     return papszFileList;
 }
 

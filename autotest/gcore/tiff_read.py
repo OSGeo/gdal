@@ -5561,6 +5561,8 @@ def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
             assert rat
             assert rat.GetColumnCount() == 9
 
+            assert "data/gtiff/testrat.tif.vat.dbf" in ds.GetFileList()
+
 
 ###############################################################################
 # Test reading absent ArcGIS .tif.vat.dbf auxiliary file
