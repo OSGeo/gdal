@@ -905,22 +905,22 @@ CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
     /* We need to quote and escape string fields. */
     osCommand += '\'';
 
-    int nSrcLen = static_cast<int>(strlen(pszStrValue));
-    const int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
-
-    if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
+    size_t nBytesLen = strlen(pszStrValue);
+    if (nMaxLength > 0 &&
+        CPLStrlenUTF8Ex(pszStrValue) > static_cast<size_t>(nMaxLength))
     {
         CPLDebug("PG", "Truncated %s field value, it was too long.",
                  pszFieldName);
 
-        int iUTF8Char = 0;
-        for (int iChar = 0; iChar < nSrcLen; iChar++)
+        size_t iUTF8Char = 0;
+        for (size_t iChar = 0; pszStrValue[iChar]; iChar++)
         {
-            if ((((unsigned char *)pszStrValue)[iChar] & 0xc0) != 0x80)
+            if ((reinterpret_cast<const unsigned char *>(pszStrValue)[iChar] &
+                 0xc0) != 0x80)
             {
-                if (iUTF8Char == nMaxLength)
+                if (iUTF8Char == static_cast<size_t>(nMaxLength))
                 {
-                    nSrcLen = iChar;
+                    nBytesLen = iChar;
                     break;
                 }
                 iUTF8Char++;
@@ -928,7 +928,7 @@ CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
         }
     }
 
-    for (int i = 0; i < nSrcLen; i++)
+    for (size_t i = 0; i < nBytesLen; i++)
     {
         if (pszStrValue[i] == '\'')
         {
@@ -1600,12 +1600,28 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn)
 
 std::string OGRPGCommonGenerateShortEnoughIdentifier(const char *pszIdentifier)
 {
-    if (strlen(pszIdentifier) <= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+    if (CPLStrlenUTF8Ex(pszIdentifier) <=
+        static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
         return pszIdentifier;
 
+    // Truncate string by making sure we don't cut in the
+    // middle of a UTF-8 multibyte character
+    // Continuation bytes of such characters are of the form
+    // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+    // and the start of a multi-byte is 11xxxxxx
+    std::string osRet;
     constexpr int FIRST_8_CHARS_OF_MD5 = 8;
-    std::string osRet(pszIdentifier,
-                      OGR_PG_NAMEDATALEN - 1 - 1 - FIRST_8_CHARS_OF_MD5);
+    int iUTF8Char = 0;
+    for (size_t i = 0; pszIdentifier[i]; ++i)
+    {
+        if ((pszIdentifier[i] & 0xc0) != 0x80)
+        {
+            ++iUTF8Char;
+            if (iUTF8Char == OGR_PG_NAMEDATALEN - 1 - FIRST_8_CHARS_OF_MD5)
+                break;
+        }
+        osRet += pszIdentifier[i];
+    }
     osRet += '_';
     osRet += std::string(CPLMD5String(pszIdentifier), FIRST_8_CHARS_OF_MD5);
     return osRet;
@@ -1627,8 +1643,8 @@ std::string OGRPGCommonGenerateSpatialIndexName(const char *pszTableName,
     // Nominal case: use full table and geometry field name
     for (const char *pszSuffix : {"_geom_idx", "_idx"})
     {
-        if (strlen(pszTableName) + 1 + strlen(pszGeomFieldName) +
-                strlen(pszSuffix) <=
+        if (CPLStrlenUTF8Ex(pszTableName) + 1 +
+                CPLStrlenUTF8Ex(pszGeomFieldName) + strlen(pszSuffix) <=
             static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
         {
             std::string osRet(pszTableName);
@@ -1641,7 +1657,7 @@ std::string OGRPGCommonGenerateSpatialIndexName(const char *pszTableName,
 
     // Slightly degraded case: use table name and geometry field index
     const std::string osGeomFieldIdx(CPLSPrintf("%d", nGeomFieldIdx));
-    if (strlen(pszTableName) + 1 + osGeomFieldIdx.size() +
+    if (CPLStrlenUTF8Ex(pszTableName) + 1 + osGeomFieldIdx.size() +
             strlen("_geom_idx") <=
         static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
     {
@@ -1660,7 +1676,19 @@ std::string OGRPGCommonGenerateSpatialIndexName(const char *pszTableName,
     osSuffix += '_';
     osSuffix += osGeomFieldIdx;
     osSuffix += "_geom_idx";
-    std::string osRet(pszTableName, OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
+
+    std::string osRet;
+    size_t iUTF8Char = 0;
+    for (size_t i = 0; pszTableName[i]; ++i)
+    {
+        if ((pszTableName[i] & 0xc0) != 0x80)
+        {
+            ++iUTF8Char;
+            if (iUTF8Char == OGR_PG_NAMEDATALEN - osSuffix.size())
+                break;
+        }
+        osRet += pszTableName[i];
+    }
     osRet += osSuffix;
     return osRet;
 }

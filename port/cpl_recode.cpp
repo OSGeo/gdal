@@ -1168,10 +1168,46 @@ void CPLClearRecodeWarningFlags()
 int CPLStrlenUTF8(const char *pszUTF8Str)
 {
     int nCharacterCount = 0;
-    for (int i = 0; pszUTF8Str[i] != '\0'; ++i)
+    for (size_t i = 0; pszUTF8Str[i] != '\0'; ++i)
     {
         if ((pszUTF8Str[i] & 0xc0) != 0x80)
+        {
+            if (nCharacterCount == INT_MAX)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "CPLStrlenUTF8(): nCharacterCount > INT_MAX. Use "
+                         "CPLStrlenUTF8Ex() instead");
+                break;
+            }
             ++nCharacterCount;
+        }
+    }
+    return nCharacterCount;
+}
+
+/************************************************************************/
+/*                         CPLStrlenUTF8Ex()                            */
+/************************************************************************/
+
+/**
+ * Return the number of UTF-8 characters of a nul-terminated string.
+ *
+ * This is different from strlen() which returns the number of bytes.
+ *
+ * @param pszUTF8Str a nul-terminated UTF-8 string
+ *
+ * @return the number of UTF-8 characters.
+ */
+
+size_t CPLStrlenUTF8Ex(const char *pszUTF8Str)
+{
+    size_t nCharacterCount = 0;
+    for (size_t i = 0; pszUTF8Str[i] != '\0'; ++i)
+    {
+        if ((pszUTF8Str[i] & 0xc0) != 0x80)
+        {
+            ++nCharacterCount;
+        }
     }
     return nCharacterCount;
 }

@@ -1828,8 +1828,8 @@ CPLString OGRPGEscapeColumnName(const char *pszColumnName)
 /************************************************************************/
 
 CPLString OGRPGEscapeString(void *hPGConnIn, const char *pszStrValue,
-                            int nMaxLength, const char *pszTableName,
-                            const char *pszFieldName)
+                            int /* nMaxWidth */, const char * /*pszTableName*/,
+                            const char * /*pszFieldName*/)
 {
     PGconn *hPGConn = reinterpret_cast<PGconn *>(hPGConnIn);
     CPLString osCommand;
@@ -1837,30 +1837,7 @@ CPLString OGRPGEscapeString(void *hPGConnIn, const char *pszStrValue,
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-    int nSrcLen = static_cast<int>(strlen(pszStrValue));
-    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
-
-    if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
-    {
-        CPLDebug("PG", "Truncated %s.%s field value '%s' to %d characters.",
-                 pszTableName, pszFieldName, pszStrValue, nMaxLength);
-
-        int iUTF8Char = 0;
-        for (int iChar = 0; iChar < nSrcLen; iChar++)
-        {
-            if (((reinterpret_cast<const unsigned char *>(pszStrValue))[iChar] &
-                 0xc0) != 0x80)
-            {
-                if (iUTF8Char == nMaxLength)
-                {
-                    nSrcLen = iChar;
-                    break;
-                }
-                iUTF8Char++;
-            }
-        }
-    }
-
+    const size_t nSrcLen = strlen(pszStrValue);
     char *pszDestStr = static_cast<char *>(CPLMalloc(2 * nSrcLen + 1));
 
     int nError = 0;
