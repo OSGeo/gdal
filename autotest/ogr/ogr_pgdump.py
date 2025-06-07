@@ -1,4 +1,5 @@
 #!/usr/bin/env pytest
+# -*- coding: utf-8 -*-
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
@@ -1509,6 +1510,22 @@ def test_ogr_pgdump_CREATE_TABLE_NO(tmp_vsimem):
             "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_bb4afe1c",
             "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_bb4af_pk",
             "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_2c8a17fc_0_geom_idx",
+        ),
+        (
+            False,
+            "test_" + ("é" * 64) + "_long_name",
+            "wkb_geometry",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_aba056f0",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_aba05_pk",
+            "test_éééééééééééééééééééééééééééééééééééééé_f883ade2_0_geom_idx",
+        ),
+        (
+            True,
+            "TEST_" + ("é" * 64) + "_long_name",
+            "wkb_geometry",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_d8582e33",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_d8582_pk",
+            "test_éééééééééééééééééééééééééééééééééééééé_6573ce0d_0_geom_idx",
         ),
     ],
 )

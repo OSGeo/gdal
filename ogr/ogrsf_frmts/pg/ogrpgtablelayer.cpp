@@ -1837,21 +1837,20 @@ CPLString OGRPGEscapeString(void *hPGConnIn, const char *pszStrValue,
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-    int nSrcLen = static_cast<int>(strlen(pszStrValue));
-    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
-
-    if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
+    size_t nSrcLen = strlen(pszStrValue);
+    if (nMaxLength > 0 &&
+        CPLStrlenUTF8Ex(pszStrValue) > static_cast<size_t>(nMaxLength))
     {
         CPLDebug("PG", "Truncated %s.%s field value '%s' to %d characters.",
                  pszTableName, pszFieldName, pszStrValue, nMaxLength);
 
-        int iUTF8Char = 0;
-        for (int iChar = 0; iChar < nSrcLen; iChar++)
+        size_t iUTF8Char = 0;
+        for (size_t iChar = 0; pszStrValue[iChar]; iChar++)
         {
-            if (((reinterpret_cast<const unsigned char *>(pszStrValue))[iChar] &
+            if ((reinterpret_cast<const unsigned char *>(pszStrValue)[iChar] &
                  0xc0) != 0x80)
             {
-                if (iUTF8Char == nMaxLength)
+                if (iUTF8Char == static_cast<size_t>(nMaxLength))
                 {
                     nSrcLen = iChar;
                     break;
