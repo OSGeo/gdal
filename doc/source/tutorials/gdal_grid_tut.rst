@@ -22,7 +22,7 @@ regular grid for further processing and combining with other grids.
     .. image:: ../../images/grid/gridding.png
         :alt:   Scattered data gridding
 
-This problem can be solved using data interpolation or approximation
+This problem can be solved using data :term:`interpolation` or approximation
 algorithms. But you are not limited by interpolation here. Sometimes you don't
 need to interpolate your data but rather compute some statistics or data
 metrics over the region. Statistics are valuable themselves or could be used for
@@ -64,7 +64,7 @@ where:
 - :math:`p` is a weighting power,
 - :math:`n` is a number of points in `Search Ellipse`_.
 
-The smoothing parameter :math:`s` is used as an additive term in the Euclidean distance calculation:
+The smoothing parameter :math:`s` is used as an additive term in the :term:`Euclidean distance` calculation:
 
 .. math::
 
