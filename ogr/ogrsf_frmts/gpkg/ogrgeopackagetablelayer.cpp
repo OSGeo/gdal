@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cmath>
 #include <limits>
 
@@ -471,22 +472,24 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                 }
                             }
 
-                            if (CPLStrlenUTF8(pszVal) > poFieldDefn->GetWidth())
+                            if (CPLStrlenUTF8Ex(pszVal) >
+                                static_cast<size_t>(poFieldDefn->GetWidth()))
                             {
-                                CPLError(
-                                    CE_Warning, CPLE_AppDefined,
-                                    "Value of field '%s' has %d characters, "
-                                    "whereas maximum allowed is %d.%s",
-                                    poFeatureDefn->GetFieldDefn(iField)
-                                        ->GetNameRef(),
-                                    CPLStrlenUTF8(pszVal),
-                                    poFieldDefn->GetWidth(),
-                                    m_bTruncateFields
-                                        ? " Value will be truncated."
-                                        : "");
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Value of field '%s' has %" PRIu64
+                                         " characters, "
+                                         "whereas maximum allowed is %d.%s",
+                                         poFeatureDefn->GetFieldDefn(iField)
+                                             ->GetNameRef(),
+                                         static_cast<uint64_t>(
+                                             CPLStrlenUTF8Ex(pszVal)),
+                                         poFieldDefn->GetWidth(),
+                                         m_bTruncateFields
+                                             ? " Value will be truncated."
+                                             : "");
                                 if (m_bTruncateFields)
                                 {
-                                    int countUTF8Chars = 0;
+                                    size_t countUTF8Chars = 0;
                                     nValLengthBytes = 0;
                                     while (pszVal[nValLengthBytes])
                                     {
@@ -497,8 +500,11 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                             // character just beyond the maximum
                                             // accepted
                                             if (countUTF8Chars ==
-                                                poFieldDefn->GetWidth())
+                                                static_cast<size_t>(
+                                                    poFieldDefn->GetWidth()))
+                                            {
                                                 break;
+                                            }
                                             countUTF8Chars++;
                                         }
                                         nValLengthBytes++;
