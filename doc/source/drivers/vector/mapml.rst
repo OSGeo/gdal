@@ -70,10 +70,6 @@ The following dataset creation options are supported:
 
       To override the CRS.
 
--  .. dsco:: EXTENT_ACTION
-
-      Value of ``extent@action`` attribute.
-
 -  .. dsco:: EXTENT_XMIN
 
       Override extent xmin value.
@@ -90,38 +86,6 @@ The following dataset creation options are supported:
 
       Override extent ymax value.
 
--  .. dsco:: EXTENT_XMIN_MIN
-
-      Min value for extent.xmin value.
-
--  .. dsco:: EXTENT_XMIN_MAX
-
-      Max value for extent.xmin value.
-
--  .. dsco:: EXTENT_YMIN_MIN
-
-      Min value for extent.ymin value.
-
--  .. dsco:: EXTENT_YMIN_MAX
-
-      Max value for extent.ymin value.
-
--  .. dsco:: EXTENT_XMAX_MIN
-
-      Min value for extent.xmax value.
-
--  .. dsco:: EXTENT_XMAX_MAX
-
-      Max value for extent.xmax value.
-
--  .. dsco:: EXTENT_YMAX_MIN
-
-      Min value for extent.ymax value.
-
--  .. dsco:: EXTENT_YMAX_MAX
-
-      Max value for extent.ymax value.
-
 -  .. dsco:: EXTENT_ZOOM
       :choices: <integer>
 
@@ -137,18 +101,14 @@ The following dataset creation options are supported:
 
       Max value for extent.zoom.
 
--  .. dsco:: EXTENT_EXTRA
-      :choices: <filename>
+-  .. dsco:: HEAD_LINKS
 
-      Filename of inline XML content for extra content to insert in extent element.
-
--  .. dsco:: BODY_LINKS
-
-      Inline XML content for extra content to insert as link elements in the body. For example '<link type="foo" href="bar" /><link type="baz" href="baw" />'
+      Inline XML content for extra content to insert as link elements in the map-head. For example '<link rel="license" href="bar" title="foo" /><link type="baz" href="baw" />'
 
 Links
 -----
 
+-  `MapML.js documentation <https://maps4html.org/web-map-doc/>`_
 -  `MapML specification <https://maps4html.org/MapML/spec>`_
 -  `MapML schemas <https://github.com/Maps4HTML/MapML/tree/gh-pages/schema>`_
 -  :ref:`gdal2tiles` mapml output

@@ -119,7 +119,6 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     const char *m_pszFormatCoordTuple = nullptr;
 
     // not to be destroyed
-    CPLXMLNode *m_psExtent = nullptr;
     CPLXMLNode *m_psLastChild = nullptr;
 
   public:
@@ -200,7 +199,7 @@ int OGRMapMLReaderDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     return poOpenInfo->pabyHeader != nullptr &&
            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  "<mapml>") != nullptr;
+                  "<mapml-") != nullptr;
 }
 
 /************************************************************************/
@@ -215,7 +214,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLXMLTreeCloser oRootCloser(psRoot);
     if (psRoot == nullptr)
         return nullptr;
-    CPLXMLNode *psBody = CPLGetXMLNode(psRoot, "=mapml.body");
+    CPLXMLNode *psBody = CPLGetXMLNode(psRoot, "=mapml-.map-body");
     if (psBody == nullptr)
         return nullptr;
     CPLString osDefaultLayerName(CPLGetBasenameSafe(poOpenInfo->pszFilename));
@@ -223,7 +222,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
     for (auto psNode = psBody->psChild; psNode; psNode = psNode->psNext)
     {
         if (psNode->eType != CXT_Element ||
-            strcmp(psNode->pszValue, "feature") != 0)
+            strcmp(psNode->pszValue, "map-feature") != 0)
         {
             continue;
         }
@@ -265,10 +264,31 @@ OGRMapMLReaderLayer::OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS,
     m_poFeatureDefn->Reference();
     SetDescription(pszLayerName);
 
-    m_psBody = CPLGetXMLNode(poDS->m_oRootCloser.get(), "=mapml.body");
+    m_psBody = CPLGetXMLNode(poDS->m_oRootCloser.get(), "=mapml-.map-body");
     m_psCurNode = m_psBody->psChild;
 
-    const char *pszUnits = CPLGetXMLValue(m_psBody, "extent.units", nullptr);
+    // get projection info from map-head/map-meta element
+    const char *pszUnits = nullptr;
+    CPLXMLNode *psHead =
+        CPLGetXMLNode(poDS->m_oRootCloser.get(), "=mapml-.map-head");
+    if (psHead)
+    {
+        for (CPLXMLNode *psMeta = psHead->psChild; psMeta;
+             psMeta = psMeta->psNext)
+        {
+            if (psMeta->eType == CXT_Element &&
+                strcmp(psMeta->pszValue, "map-meta") == 0)
+            {
+                const char *pszName = CPLGetXMLValue(psMeta, "name", nullptr);
+                if (pszName && strcmp(pszName, "projection") == 0)
+                {
+                    pszUnits = CPLGetXMLValue(psMeta, "content", nullptr);
+                    break;
+                }
+            }
+        }
+    }
+
     if (pszUnits)
     {
         for (const auto &knownCRS : asKnownCRS)
@@ -292,31 +312,31 @@ OGRMapMLReaderLayer::OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS,
     while (m_psCurNode != nullptr)
     {
         if (m_psCurNode->eType == CXT_Element &&
-            strcmp(m_psCurNode->pszValue, "feature") == 0 &&
+            strcmp(m_psCurNode->pszValue, "map-feature") == 0 &&
             strcmp(CPLGetXMLValue(m_psCurNode, "class",
                                   m_poDS->m_osDefaultLayerName.c_str()),
                    m_poFeatureDefn->GetName()) == 0)
         {
             const CPLXMLNode *psGeometry =
-                CPLGetXMLNode(m_psCurNode, "geometry");
+                CPLGetXMLNode(m_psCurNode, "map-geometry");
             if (!bMixed && psGeometry && psGeometry->psChild &&
                 psGeometry->psChild->eType == CXT_Element)
             {
                 OGRwkbGeometryType eGType = wkbUnknown;
                 const char *pszType = psGeometry->psChild->pszValue;
-                if (EQUAL(pszType, "point"))
+                if (EQUAL(pszType, "map-point"))
                     eGType = wkbPoint;
-                else if (EQUAL(pszType, "linestring"))
+                else if (EQUAL(pszType, "map-linestring"))
                     eGType = wkbLineString;
-                else if (EQUAL(pszType, "polygon"))
+                else if (EQUAL(pszType, "map-polygon"))
                     eGType = wkbPolygon;
-                else if (EQUAL(pszType, "multipoint"))
+                else if (EQUAL(pszType, "map-multipoint"))
                     eGType = wkbMultiPoint;
-                else if (EQUAL(pszType, "multilinestring"))
+                else if (EQUAL(pszType, "map-multilinestring"))
                     eGType = wkbMultiLineString;
-                else if (EQUAL(pszType, "multipolygon"))
+                else if (EQUAL(pszType, "map-multipolygon"))
                     eGType = wkbMultiPolygon;
-                else if (EQUAL(pszType, "geometrycollection"))
+                else if (EQUAL(pszType, "map-geometrycollection"))
                     eGType = wkbGeometryCollection;
                 if (eLayerGType == wkbUnknown)
                     eLayerGType = eGType;
@@ -328,7 +348,7 @@ OGRMapMLReaderLayer::OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS,
             }
 
             const CPLXMLNode *psTBody =
-                CPLGetXMLNode(m_psCurNode, "properties.div.table.tbody");
+                CPLGetXMLNode(m_psCurNode, "map-properties.div.table.tbody");
             if (psTBody)
             {
                 for (const CPLXMLNode *psCur = psTBody->psChild; psCur;
@@ -471,10 +491,10 @@ void OGRMapMLReaderLayer::ResetReading()
 
 static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
 {
-    if (EQUAL(psElement->pszValue, "point"))
+    if (EQUAL(psElement->pszValue, "map-point"))
     {
         const char *pszCoordinates =
-            CPLGetXMLValue(psElement, "coordinates", nullptr);
+            CPLGetXMLValue(psElement, "map-coordinates", nullptr);
         if (pszCoordinates)
         {
             const CPLStringList aosTokens(
@@ -487,10 +507,10 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         }
     }
 
-    if (EQUAL(psElement->pszValue, "linestring"))
+    if (EQUAL(psElement->pszValue, "map-linestring"))
     {
         const char *pszCoordinates =
-            CPLGetXMLValue(psElement, "coordinates", nullptr);
+            CPLGetXMLValue(psElement, "map-coordinates", nullptr);
         if (pszCoordinates)
         {
             const CPLStringList aosTokens(
@@ -510,15 +530,15 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         }
     }
 
-    if (EQUAL(psElement->pszValue, "polygon"))
+    if (EQUAL(psElement->pszValue, "map-polygon"))
     {
         OGRPolygon *poPolygon = new OGRPolygon();
         for (const CPLXMLNode *psCur = psElement->psChild; psCur;
              psCur = psCur->psNext)
         {
             if (psCur->eType == CXT_Element &&
-                strcmp(psCur->pszValue, "coordinates") == 0 && psCur->psChild &&
-                psCur->psChild->eType == CXT_Text)
+                strcmp(psCur->pszValue, "map-coordinates") == 0 &&
+                psCur->psChild && psCur->psChild->eType == CXT_Text)
             {
                 const CPLStringList aosTokens(
                     CSLTokenizeString2(psCur->psChild->pszValue, " ", 0));
@@ -539,10 +559,10 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         return poPolygon;
     }
 
-    if (EQUAL(psElement->pszValue, "multipoint"))
+    if (EQUAL(psElement->pszValue, "map-multipoint"))
     {
         const char *pszCoordinates =
-            CPLGetXMLValue(psElement, "coordinates", nullptr);
+            CPLGetXMLValue(psElement, "map-coordinates", nullptr);
         if (pszCoordinates)
         {
             const CPLStringList aosTokens(
@@ -562,15 +582,15 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         }
     }
 
-    if (EQUAL(psElement->pszValue, "multilinestring"))
+    if (EQUAL(psElement->pszValue, "map-multilinestring"))
     {
         OGRMultiLineString *poMLS = new OGRMultiLineString();
         for (const CPLXMLNode *psCur = psElement->psChild; psCur;
              psCur = psCur->psNext)
         {
             if (psCur->eType == CXT_Element &&
-                strcmp(psCur->pszValue, "coordinates") == 0 && psCur->psChild &&
-                psCur->psChild->eType == CXT_Text)
+                strcmp(psCur->pszValue, "map-coordinates") == 0 &&
+                psCur->psChild && psCur->psChild->eType == CXT_Text)
             {
                 const CPLStringList aosTokens(
                     CSLTokenizeString2(psCur->psChild->pszValue, " ", 0));
@@ -591,14 +611,14 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         return poMLS;
     }
 
-    if (EQUAL(psElement->pszValue, "multipolygon"))
+    if (EQUAL(psElement->pszValue, "map-multipolygon"))
     {
         OGRMultiPolygon *poMLP = new OGRMultiPolygon();
         for (const CPLXMLNode *psCur = psElement->psChild; psCur;
              psCur = psCur->psNext)
         {
             if (psCur->eType == CXT_Element &&
-                EQUAL(psCur->pszValue, "polygon"))
+                EQUAL(psCur->pszValue, "map-polygon"))
             {
                 OGRGeometry *poSubGeom = ParseGeometry(psCur);
                 if (poSubGeom)
@@ -608,14 +628,14 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
         return poMLP;
     }
 
-    if (EQUAL(psElement->pszValue, "geometrycollection"))
+    if (EQUAL(psElement->pszValue, "map-geometrycollection"))
     {
         OGRGeometryCollection *poGC = new OGRGeometryCollection();
         for (const CPLXMLNode *psCur = psElement->psChild; psCur;
              psCur = psCur->psNext)
         {
             if (psCur->eType == CXT_Element &&
-                !EQUAL(psCur->pszValue, "geometrycollection"))
+                !EQUAL(psCur->pszValue, "map-geometrycollection"))
             {
                 OGRGeometry *poSubGeom = ParseGeometry(psCur);
                 if (poSubGeom)
@@ -637,7 +657,7 @@ OGRFeature *OGRMapMLReaderLayer::GetNextRawFeature()
     while (m_psCurNode != nullptr)
     {
         if (m_psCurNode->eType == CXT_Element &&
-            strcmp(m_psCurNode->pszValue, "feature") == 0 &&
+            strcmp(m_psCurNode->pszValue, "map-feature") == 0 &&
             strcmp(CPLGetXMLValue(m_psCurNode, "class",
                                   m_poDS->m_osDefaultLayerName.c_str()),
                    m_poFeatureDefn->GetName()) == 0)
@@ -661,7 +681,7 @@ OGRFeature *OGRMapMLReaderLayer::GetNextRawFeature()
     }
     m_nFID++;
 
-    const CPLXMLNode *psGeometry = CPLGetXMLNode(m_psCurNode, "geometry");
+    const CPLXMLNode *psGeometry = CPLGetXMLNode(m_psCurNode, "map-geometry");
     if (psGeometry && psGeometry->psChild &&
         psGeometry->psChild->eType == CXT_Element)
     {
@@ -674,7 +694,7 @@ OGRFeature *OGRMapMLReaderLayer::GetNextRawFeature()
     }
 
     const CPLXMLNode *psTBody =
-        CPLGetXMLNode(m_psCurNode, "properties.div.table.tbody");
+        CPLGetXMLNode(m_psCurNode, "map-properties.div.table.tbody");
     if (psTBody)
     {
         for (const CPLXMLNode *psCur = psTBody->psChild; psCur;
@@ -720,126 +740,116 @@ OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
 {
     if (m_fpOut)
     {
-        if (!m_osExtentUnits.empty())
-            CPLAddXMLAttributeAndValue(m_psExtent, "units", m_osExtentUnits);
-
-        const auto addMinMax = [](CPLXMLNode *psNode, const char *pszRadix,
-                                  const CPLStringList &aosList)
+        // Add map-meta elements to map-head
+        CPLXMLNode *psHead = CPLGetXMLNode(m_psRoot, "map-head");
+        if (psHead && !m_osExtentUnits.empty())
         {
-            const char *pszValue =
-                aosList.FetchNameValue((CPLString(pszRadix) + "_MIN").c_str());
-            if (pszValue)
+            // Add projection meta element
+            CPLXMLNode *psProjectionMeta =
+                CPLCreateXMLNode(psHead, CXT_Element, "map-meta");
+            CPLAddXMLAttributeAndValue(psProjectionMeta, "name", "projection");
+            CPLAddXMLAttributeAndValue(psProjectionMeta, "content",
+                                       m_osExtentUnits);
+            // Force end tag by adding empty text content
+            CPLCreateXMLNode(psProjectionMeta, CXT_Text, "");
+
+            // Add coordinate system meta element
+            const char *pszCS = m_oSRS.IsProjected() ? "pcrs" : "gcrs";
+            CPLXMLNode *psCSMeta =
+                CPLCreateXMLNode(psHead, CXT_Element, "map-meta");
+            CPLAddXMLAttributeAndValue(psCSMeta, "name", "cs");
+            CPLAddXMLAttributeAndValue(psCSMeta, "content", pszCS);
+            // Force end tag by adding empty text content
+            CPLCreateXMLNode(psCSMeta, CXT_Text, "");
+
+            // Add extent meta element
+            const char *pszXAxis =
+                m_oSRS.IsProjected() ? "easting" : "longitude";
+            const char *pszYAxis =
+                m_oSRS.IsProjected() ? "northing" : "latitude";
+
+            CPLString osExtentContent;
+            osExtentContent.Printf(
+                "top-left-%s=%s, top-left-%s=%s, bottom-right-%s=%s, "
+                "bottom-right-%s=%s",
+                pszXAxis,
+                m_sExtent.IsInit()
+                    ? CPLSPrintf("%.2f", m_sExtent.MinX)
+                    : m_aosOptions.FetchNameValueDef("EXTENT_XMIN", "0"),
+                pszYAxis,
+                m_sExtent.IsInit()
+                    ? CPLSPrintf("%.2f", m_sExtent.MaxY)
+                    : m_aosOptions.FetchNameValueDef("EXTENT_YMAX", "0"),
+                pszXAxis,
+                m_sExtent.IsInit()
+                    ? CPLSPrintf("%.2f", m_sExtent.MaxX)
+                    : m_aosOptions.FetchNameValueDef("EXTENT_XMAX", "0"),
+                pszYAxis,
+                m_sExtent.IsInit()
+                    ? CPLSPrintf("%.2f", m_sExtent.MinY)
+                    : m_aosOptions.FetchNameValueDef("EXTENT_YMIN", "0"));
+            CPLXMLNode *psExtentMeta =
+                CPLCreateXMLNode(psHead, CXT_Element, "map-meta");
+            CPLAddXMLAttributeAndValue(psExtentMeta, "name", "extent");
+            CPLAddXMLAttributeAndValue(psExtentMeta, "content",
+                                       osExtentContent);
+            CPLCreateXMLNode(psExtentMeta, CXT_Text, "");  // Force end tag
+
+            // Add zoom meta element if zoom options provided
+            if (CSLFetchNameValue(m_aosOptions, "EXTENT_ZOOM") ||
+                CSLFetchNameValue(m_aosOptions, "EXTENT_ZOOM_MIN") ||
+                CSLFetchNameValue(m_aosOptions, "EXTENT_ZOOM_MAX"))
             {
-                CPLAddXMLAttributeAndValue(psNode, "min", pszValue);
+                CPLString osZoomContent;
+                osZoomContent.Printf(
+                    "min=%s,max=%s,value=%s",
+                    m_aosOptions.FetchNameValueDef("EXTENT_ZOOM_MIN", "0"),
+                    m_aosOptions.FetchNameValueDef("EXTENT_ZOOM_MAX", "22"),
+                    m_aosOptions.FetchNameValueDef("EXTENT_ZOOM", "3"));
+
+                CPLXMLNode *psZoomMeta =
+                    CPLCreateXMLNode(psHead, CXT_Element, "map-meta");
+                CPLAddXMLAttributeAndValue(psZoomMeta, "name", "zoom");
+                CPLAddXMLAttributeAndValue(psZoomMeta, "content",
+                                           osZoomContent);
+                CPLCreateXMLNode(psZoomMeta, CXT_Text, "");  // Force end tag
             }
-            pszValue =
-                aosList.FetchNameValue((CPLString(pszRadix) + "_MAX").c_str());
-            if (pszValue)
+
+            const char *pszHeadLinks =
+                CSLFetchNameValue(m_aosOptions, "HEAD_LINKS");
+            if (pszHeadLinks)
             {
-                CPLAddXMLAttributeAndValue(psNode, "max", pszValue);
-            }
-        };
-
-        if (m_sExtent.IsInit())
-        {
-            const char *pszUnits = m_oSRS.IsProjected() ? "pcrs" : "gcrs";
-            const char *pszXAxis = m_oSRS.IsProjected() ? "x" : "longitude";
-            const char *pszYAxis = m_oSRS.IsProjected() ? "y" : "latitude";
-
-            CPLXMLNode *psXmin =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psXmin, "name", "xmin");
-            CPLAddXMLAttributeAndValue(psXmin, "type", "location");
-            CPLAddXMLAttributeAndValue(psXmin, "units", pszUnits);
-            CPLAddXMLAttributeAndValue(psXmin, "axis", pszXAxis);
-            CPLAddXMLAttributeAndValue(psXmin, "position", "top-left");
-            CPLAddXMLAttributeAndValue(
-                psXmin, "value",
-                m_aosOptions.FetchNameValueDef(
-                    "EXTENT_XMIN", CPLSPrintf("%.8f", m_sExtent.MinX)));
-            addMinMax(psXmin, "EXTENT_XMIN", m_aosOptions);
-
-            CPLXMLNode *psYmin =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psYmin, "name", "ymin");
-            CPLAddXMLAttributeAndValue(psYmin, "type", "location");
-            CPLAddXMLAttributeAndValue(psYmin, "units", pszUnits);
-            CPLAddXMLAttributeAndValue(psYmin, "axis", pszYAxis);
-            CPLAddXMLAttributeAndValue(psYmin, "position", "bottom-right");
-            CPLAddXMLAttributeAndValue(
-                psYmin, "value",
-                m_aosOptions.FetchNameValueDef(
-                    "EXTENT_YMIN", CPLSPrintf("%.8f", m_sExtent.MinY)));
-            addMinMax(psYmin, "EXTENT_YMIN", m_aosOptions);
-
-            CPLXMLNode *psXmax =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psXmax, "name", "xmax");
-            CPLAddXMLAttributeAndValue(psXmax, "type", "location");
-            CPLAddXMLAttributeAndValue(psXmax, "units", pszUnits);
-            CPLAddXMLAttributeAndValue(psXmax, "axis", pszXAxis);
-            CPLAddXMLAttributeAndValue(psXmax, "position", "bottom-right");
-            CPLAddXMLAttributeAndValue(
-                psXmax, "value",
-                m_aosOptions.FetchNameValueDef(
-                    "EXTENT_XMAX", CPLSPrintf("%.8f", m_sExtent.MaxX)));
-            addMinMax(psXmax, "EXTENT_XMAX", m_aosOptions);
-
-            CPLXMLNode *psYmax =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psYmax, "name", "ymax");
-            CPLAddXMLAttributeAndValue(psYmax, "type", "location");
-            CPLAddXMLAttributeAndValue(psYmax, "units", pszUnits);
-            CPLAddXMLAttributeAndValue(psYmax, "axis", pszYAxis);
-            CPLAddXMLAttributeAndValue(psYmax, "position", "top-left");
-            CPLAddXMLAttributeAndValue(
-                psYmax, "value",
-                m_aosOptions.FetchNameValueDef(
-                    "EXTENT_YMAX", CPLSPrintf("%.8f", m_sExtent.MaxY)));
-            addMinMax(psYmax, "EXTENT_YMAX", m_aosOptions);
-        }
-
-        if (!m_osExtentUnits.empty())
-        {
-            CPLXMLNode *psInput =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psInput, "name", "projection");
-            CPLAddXMLAttributeAndValue(psInput, "type", "hidden");
-            CPLAddXMLAttributeAndValue(psInput, "value", m_osExtentUnits);
-        }
-
-        const char *pszZoom = m_aosOptions.FetchNameValue("EXTENT_ZOOM");
-        if (pszZoom)
-        {
-            CPLXMLNode *psInput =
-                CPLCreateXMLNode(m_psExtent, CXT_Element, "input");
-            CPLAddXMLAttributeAndValue(psInput, "name", "zoom");
-            CPLAddXMLAttributeAndValue(psInput, "type", "zoom");
-            CPLAddXMLAttributeAndValue(psInput, "value", pszZoom);
-            addMinMax(psInput, "EXTENT_ZOOM", m_aosOptions);
-        }
-
-        const char *pszExtentExtra =
-            m_aosOptions.FetchNameValue("EXTENT_EXTRA");
-        if (pszExtentExtra)
-        {
-            CPLXMLNode *psExtra = pszExtentExtra[0] == '<'
-                                      ? CPLParseXMLString(pszExtentExtra)
-                                      : CPLParseXMLFile(pszExtentExtra);
-            if (psExtra)
-            {
-                CPLXMLNode *psLastChild = m_psExtent->psChild;
-                if (psLastChild == nullptr)
-                    m_psExtent->psChild = psExtra;
-                else
+                CPLXMLNode *psLinks = CPLParseXMLString(pszHeadLinks);
+                if (psLinks)
                 {
-                    while (psLastChild->psNext)
-                        psLastChild = psLastChild->psNext;
-                    psLastChild->psNext = psExtra;
+                    // Force closing tags by adding empty text content to map-link element
+                    CPLXMLNode *psCurrent = psLinks;
+                    while (psCurrent)
+                    {
+                        if (psCurrent->eType == CXT_Element &&
+                            strcmp(psCurrent->pszValue, "map-link") == 0)
+                        {
+                            // Add empty text content to force end tag
+                            CPLCreateXMLNode(psCurrent, CXT_Text, "");
+                        }
+                        psCurrent = psCurrent->psNext;
+                    }
+
+                    // Add links as children of map-head, after all content
+                    if (psHead->psChild == nullptr)
+                    {
+                        psHead->psChild = psLinks;
+                    }
+                    else
+                    {
+                        CPLXMLNode *psLastChild = psHead->psChild;
+                        while (psLastChild->psNext)
+                            psLastChild = psLastChild->psNext;
+                        psLastChild->psNext = psLinks;
+                    }
                 }
             }
         }
-
         char *pszDoc = CPLSerializeXMLTree(m_psRoot);
         const size_t nSize = strlen(pszDoc);
         if (VSIFWriteL(pszDoc, 1, nSize, m_fpOut) != nSize)
@@ -876,8 +886,11 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
     }
     auto poDS = new OGRMapMLWriterDataset(fpOut);
 
-    poDS->m_psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "mapml");
-    CPLXMLNode *psHead = CPLCreateXMLNode(poDS->m_psRoot, CXT_Element, "head");
+    poDS->m_psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "mapml-");
+    CPLAddXMLAttributeAndValue(poDS->m_psRoot, "xmlns",
+                               "http://www.w3.org/1999/xhtml");
+    CPLXMLNode *psHead =
+        CPLCreateXMLNode(poDS->m_psRoot, CXT_Element, "map-head");
 
     const char *pszHead = CSLFetchNameValue(papszOptions, "HEAD");
     if (pszHead)
@@ -887,7 +900,7 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
         if (psHeadUser)
         {
             if (psHeadUser->eType == CXT_Element &&
-                strcmp(psHeadUser->pszValue, "head") == 0)
+                strcmp(psHeadUser->pszValue, "map-head") == 0)
             {
                 psHead->psChild = psHeadUser->psChild;
                 psHeadUser->psChild = nullptr;
@@ -926,27 +939,9 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
         poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    CPLXMLNode *psBody = CPLCreateXMLNode(poDS->m_psRoot, CXT_Element, "body");
-    poDS->m_psExtent = CPLCreateXMLNode(psBody, CXT_Element, "extent");
-    const char *pszExtentAction =
-        CSLFetchNameValue(papszOptions, "EXTENT_ACTION");
-    if (pszExtentAction)
-        CPLAddXMLAttributeAndValue(poDS->m_psExtent, "action", pszExtentAction);
-
-    poDS->m_psLastChild = poDS->m_psExtent;
-
-    const char *pszBodyLinks = CSLFetchNameValue(papszOptions, "BODY_LINKS");
-    if (pszBodyLinks)
-    {
-        CPLXMLNode *psLinks = CPLParseXMLString(pszBodyLinks);
-        if (psLinks)
-        {
-            poDS->m_psExtent->psNext = psLinks;
-            poDS->m_psLastChild = psLinks;
-            while (poDS->m_psLastChild->psNext)
-                poDS->m_psLastChild = poDS->m_psLastChild->psNext;
-        }
-    }
+    CPLXMLNode *psBody =
+        CPLCreateXMLNode(poDS->m_psRoot, CXT_Element, "map-body");
+    poDS->m_psLastChild = psBody;
 
     poDS->m_aosOptions = CSLDuplicate(papszOptions);
 
@@ -1037,8 +1032,20 @@ OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
 
 void OGRMapMLWriterDataset::AddFeature(CPLXMLNode *psNode)
 {
-    m_psLastChild->psNext = psNode;
-    m_psLastChild = psNode;
+    // Add features as children of map-body (m_psLastChild points to map-body)
+    if (m_psLastChild->psChild == nullptr)
+    {
+        // First child of map-body
+        m_psLastChild->psChild = psNode;
+    }
+    else
+    {
+        // Find last child of map-body and add as sibling
+        CPLXMLNode *psLastChild = m_psLastChild->psChild;
+        while (psLastChild->psNext)
+            psLastChild = psLastChild->psNext;
+        psLastChild->psNext = psNode;
+    }
 }
 
 /************************************************************************/
@@ -1093,7 +1100,7 @@ void OGRMapMLWriterLayer::writeLineStringCoordinates(CPLXMLNode *psContainer,
                                                      const OGRLineString *poLS)
 {
     CPLXMLNode *psCoordinates =
-        CPLCreateXMLNode(psContainer, CXT_Element, "coordinates");
+        CPLCreateXMLNode(psContainer, CXT_Element, "map-coordinates");
     std::string osCoordinates;
     for (int i = 0; i < poLS->getNumPoints(); i++)
     {
@@ -1113,7 +1120,7 @@ void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
                                        const OGRPolygon *poPoly)
 {
     CPLXMLNode *psPolygon =
-        CPLCreateXMLNode(psContainer, CXT_Element, "polygon");
+        CPLCreateXMLNode(psContainer, CXT_Element, "map-polygon");
     bool bFirstRing = true;
     for (const auto poRing : *poPoly)
     {
@@ -1122,7 +1129,7 @@ void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
             (!bFirstRing && !CPL_TO_BOOL(poRing->isClockwise()));
         bFirstRing = false;
         CPLXMLNode *psCoordinates =
-            CPLCreateXMLNode(psPolygon, CXT_Element, "coordinates");
+            CPLCreateXMLNode(psPolygon, CXT_Element, "map-coordinates");
         std::string osCoordinates;
         const int nPointCount = poRing->getNumPoints();
         for (int i = 0; i < nPointCount; i++)
@@ -1151,9 +1158,9 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
         {
             const OGRPoint *poPoint = poGeom->toPoint();
             CPLXMLNode *psPoint =
-                CPLCreateXMLNode(psContainer, CXT_Element, "point");
+                CPLCreateXMLNode(psContainer, CXT_Element, "map-point");
             CPLXMLNode *psCoordinates =
-                CPLCreateXMLNode(psPoint, CXT_Element, "coordinates");
+                CPLCreateXMLNode(psPoint, CXT_Element, "map-coordinates");
             CPLCreateXMLNode(psCoordinates, CXT_Text,
                              CPLSPrintf(m_poDS->m_pszFormatCoordTuple,
                                         poPoint->getX(), poPoint->getY()));
@@ -1164,7 +1171,7 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
         {
             const OGRLineString *poLS = poGeom->toLineString();
             CPLXMLNode *psLS =
-                CPLCreateXMLNode(psContainer, CXT_Element, "linestring");
+                CPLCreateXMLNode(psContainer, CXT_Element, "map-linestring");
             writeLineStringCoordinates(psLS, poLS);
             break;
         }
@@ -1180,9 +1187,9 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
         {
             const OGRMultiPoint *poMP = poGeom->toMultiPoint();
             CPLXMLNode *psMultiPoint =
-                CPLCreateXMLNode(psContainer, CXT_Element, "multipoint");
+                CPLCreateXMLNode(psContainer, CXT_Element, "map-multipoint");
             CPLXMLNode *psCoordinates =
-                CPLCreateXMLNode(psMultiPoint, CXT_Element, "coordinates");
+                CPLCreateXMLNode(psMultiPoint, CXT_Element, "map-coordinates");
             std::string osCoordinates;
             for (const auto poPoint : *poMP)
             {
@@ -1202,8 +1209,8 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
         case wkbMultiLineString:
         {
             const OGRMultiLineString *poMLS = poGeom->toMultiLineString();
-            CPLXMLNode *psMultiLineString =
-                CPLCreateXMLNode(psContainer, CXT_Element, "multilinestring");
+            CPLXMLNode *psMultiLineString = CPLCreateXMLNode(
+                psContainer, CXT_Element, "map-multilinestring");
             for (const auto poLS : *poMLS)
             {
                 if (!poLS->IsEmpty())
@@ -1218,7 +1225,7 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
         {
             const OGRMultiPolygon *poMLP = poGeom->toMultiPolygon();
             CPLXMLNode *psMultiPolygon =
-                CPLCreateXMLNode(psContainer, CXT_Element, "multipolygon");
+                CPLCreateXMLNode(psContainer, CXT_Element, "map-multipolygon");
             for (const auto poPoly : *poMLP)
             {
                 if (!poPoly->IsEmpty())
@@ -1236,7 +1243,7 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
                 bInGeometryCollection
                     ? psContainer
                     : CPLCreateXMLNode(psContainer, CXT_Element,
-                                       "geometrycollection");
+                                       "map-geometrycollection");
             for (const auto poSubGeom : *poGC)
             {
                 if (!poSubGeom->IsEmpty())
@@ -1258,7 +1265,8 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
 
 OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
 {
-    CPLXMLNode *psFeature = CPLCreateXMLNode(nullptr, CXT_Element, "feature");
+    CPLXMLNode *psFeature =
+        CPLCreateXMLNode(nullptr, CXT_Element, "map-feature");
     GIntBig nFID = poFeature->GetFID();
     if (nFID < 0)
     {
@@ -1274,7 +1282,7 @@ OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
     if (nFieldCount > 0)
     {
         CPLXMLNode *psProperties =
-            CPLCreateXMLNode(psFeature, CXT_Element, "properties");
+            CPLCreateXMLNode(psFeature, CXT_Element, "map-properties");
         CPLXMLNode *psDiv = CPLCreateXMLNode(psProperties, CXT_Element, "div");
         CPLAddXMLAttributeAndValue(psDiv, "class", "table-container");
         CPLAddXMLAttributeAndValue(psDiv, "aria-labelledby",
@@ -1332,7 +1340,7 @@ OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
         if (poGeomClone->transform(m_poCT.get()) == OGRERR_NONE)
         {
             CPLXMLNode *psGeometry =
-                CPLCreateXMLNode(nullptr, CXT_Element, "geometry");
+                CPLCreateXMLNode(nullptr, CXT_Element, "map-geometry");
             writeGeometry(psGeometry, poGeomClone, false);
             if (psGeometry->psChild == nullptr)
             {
@@ -1399,8 +1407,6 @@ void RegisterOGRMapML()
         "    <Value>CBMTILE</Value>"
         "    <Value>APSTILE</Value>"
         "  </Option>"
-        "  <Option name='EXTENT_ACTION' type='string' description='Value of "
-        "extent@action attribute'/>"
         "  <Option name='EXTENT_XMIN' type='float' description='Override "
         "extent xmin value'/>"
         "  <Option name='EXTENT_YMIN' type='float' description='Override "
@@ -1409,32 +1415,7 @@ void RegisterOGRMapML()
         "extent xmax value'/>"
         "  <Option name='EXTENT_YMAX' type='float' description='Override "
         "extent ymax value'/>"
-        "  <Option name='EXTENT_XMIN_MIN' type='float' description='Min value "
-        "for extent.xmin value'/>"
-        "  <Option name='EXTENT_XMIN_MAX' type='float' description='Max value "
-        "for extent.xmin value'/>"
-        "  <Option name='EXTENT_YMIN_MIN' type='float' description='Min value "
-        "for extent.ymin value'/>"
-        "  <Option name='EXTENT_YMIN_MAX' type='float' description='Max value "
-        "for extent.ymin value'/>"
-        "  <Option name='EXTENT_XMAX_MIN' type='float' description='Min value "
-        "for extent.xmax value'/>"
-        "  <Option name='EXTENT_XMAX_MAX' type='float' description='Max value "
-        "for extent.xmax value'/>"
-        "  <Option name='EXTENT_YMAX_MIN' type='float' description='Min value "
-        "for extent.ymax value'/>"
-        "  <Option name='EXTENT_YMAX_MAX' type='float' description='Max value "
-        "for extent.ymax value'/>"
-        "  <Option name='EXTENT_ZOOM' type='int' description='Value of "
-        "extent.zoom'/>"
-        "  <Option name='EXTENT_ZOOM_MIN' type='int' description='Min value "
-        "for extent.zoom'/>"
-        "  <Option name='EXTENT_ZOOM_MAX' type='int' description='Max value "
-        "for extent.zoom'/>"
-        "  <Option name='EXTENT_EXTRA' type='string' "
-        "description='Filename of inline XML content for extra content to "
-        "insert in extent element'/>"
-        "  <Option name='BODY_LINKS' type='string' "
+        "  <Option name='HEAD_LINKS' type='string' "
         "description='Inline XML content for extra content to insert as link "
         "elements in the body'/>"
         "</CreationOptionList>");

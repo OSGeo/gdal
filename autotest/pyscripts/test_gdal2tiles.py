@@ -516,18 +516,21 @@ def test_gdal2tiles_py_mapml(script_path, tmp_path):
 
     mapml = open(f"{output_folder}/mapml.mapml", "rb").read().decode("utf-8")
     # print(mapml)
-    assert '<extent units="APSTILE">' in mapml
-    assert '<input name="z" type="zoom" value="18" min="16" max="18" />' in mapml
+    assert '<map-extent units="APSTILE"' in mapml
     assert (
-        '<input name="x" type="location" axis="column" units="tilematrix" min="122496" max="122496" />'
+        '<map-input name="z" type="zoom" value="18" min="16" max="18" ></map-input>'
         in mapml
     )
     assert (
-        '<input name="y" type="location" axis="row" units="tilematrix" min="139647" max="139647" />'
+        '<map-input name="x" type="location" axis="column" units="tilematrix" min="122496" max="122496" ></map-input>'
         in mapml
     )
     assert (
-        '<link tref="https://foo/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" />'
+        '<map-input name="y" type="location" axis="row" units="tilematrix" min="139647" max="139647" ></map-input>'
+        in mapml
+    )
+    assert (
+        '<map-link tref="https://foo/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" ></map-link>'
         in mapml
     )
 
