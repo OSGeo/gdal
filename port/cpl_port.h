@@ -965,7 +965,9 @@ extern "C++"
 
 #endif /* __cplusplus */
 
-#if !defined(DOXYGEN_SKIP) && !defined(CPL_WARN_DEPRECATED)
+#ifdef CPL_DISABLE_WARN_DEPRECATED
+#define CPL_WARN_DEPRECATED(x)
+#elif !defined(DOXYGEN_SKIP) && !defined(CPL_WARN_DEPRECATED)
 #if defined(__has_extension)
 #if __has_extension(attribute_deprecated_with_message)
 /* Clang extension */
