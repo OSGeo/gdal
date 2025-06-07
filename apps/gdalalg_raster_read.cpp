@@ -36,11 +36,12 @@ GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
 
 bool GDALRasterReadAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+    m_outputDataset.Set(poSrcDS);
 
     return true;
 }

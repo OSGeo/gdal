@@ -188,7 +188,8 @@ CPLErr VRTSimpleSource::FlushCache(bool bAtClosing)
 
 void VRTSimpleSource::UnsetPreservedRelativeFilenames()
 {
-    if (!STARTS_WITH(m_osSourceFileNameOri.c_str(), "http://") &&
+    if (m_bRelativeToVRTOri &&
+        !STARTS_WITH(m_osSourceFileNameOri.c_str(), "http://") &&
         !STARTS_WITH(m_osSourceFileNameOri.c_str(), "https://"))
     {
         m_bRelativeToVRTOri = -1;

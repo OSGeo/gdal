@@ -760,7 +760,7 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 bool GDALRasterColorMergeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     auto poGrayScaleDS = m_grayScaleDataset.GetDatasetRef();

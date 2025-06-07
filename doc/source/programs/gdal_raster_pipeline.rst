@@ -18,8 +18,8 @@ Synopsis
 .. program-output:: gdal raster pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (quotation mark) character.
-The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read`` and ``write``,
+The first step must be ``read``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -27,6 +27,18 @@ Potential steps are:
 * read
 
 .. program-output:: gdal raster pipeline --help-doc=read
+
+* mosaic
+
+.. program-output:: gdal raster pipeline --help-doc=mosaic
+
+Details for options can be found in :ref:`gdal_raster_mosaic`.
+
+* stack
+
+.. program-output:: gdal raster pipeline --help-doc=stack
+
+Details for options can be found in :ref:`gdal_raster_stack`.
 
 * aspect
 

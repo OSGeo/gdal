@@ -33,6 +33,11 @@ of the command line or put in a text file (one filename per line) for very long 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used, even on files located
 on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 
+Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
+
+Options
++++++++
+
 The following options are available:
 
 .. include:: gdal_options/of_raster_create_copy.rst
@@ -112,13 +117,10 @@ The following options are available:
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
 
-GDALG output (on-the-fly / streamed dataset)
---------------------------------------------
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
 
-This program supports serializing the command line as a JSON file using the ``GDALG`` output format.
-The resulting file can then be opened as a raster dataset using the
-:ref:`raster.gdalg` driver, and apply the specified pipeline in a on-the-fly /
-streamed way.
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

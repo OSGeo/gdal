@@ -49,7 +49,8 @@ GDALRasterTRIAlgorithm::GDALRasterTRIAlgorithm(bool standaloneStep)
 
 bool GDALRasterTRIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -66,10 +67,9 @@ bool GDALRasterTRIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     GDALDEMProcessingOptions *psOptions =
         GDALDEMProcessingOptionsNew(aosOptions.List(), nullptr);
 
-    auto poOutDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALDEMProcessing(
-            "", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()), "TRI",
-            nullptr, psOptions, nullptr)));
+    auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+        GDALDEMProcessing("", GDALDataset::ToHandle(poSrcDS), "TRI", nullptr,
+                          psOptions, nullptr)));
     GDALDEMProcessingOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
