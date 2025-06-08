@@ -1404,10 +1404,10 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
     WriteUInt32(m_fp, static_cast<GUInt32>(5 + nBufferSize * m_nYSize));
     WriteByte(m_fp, 7);  // section number
     void *pData = CPLMalloc(nBufferSize);
-    // coverity[divide_by_zero]
+    const int nDenominator = std::max(1, m_poSrcDS->GetRasterCount());
     void *pScaledProgressData = GDALCreateScaledProgress(
-        static_cast<double>(m_nBand - 1) / m_poSrcDS->GetRasterCount(),
-        static_cast<double>(m_nBand) / m_poSrcDS->GetRasterCount(), pfnProgress,
+        static_cast<double>(m_nBand - 1) / nDenominator,
+        static_cast<double>(m_nBand) / nDenominator, pfnProgress,
         pProgressData);
     for (int i = 0; i < m_nYSize; i++)
     {
