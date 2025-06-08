@@ -12,6 +12,7 @@
 #include "gdal_pam.h"
 
 #include <algorithm>
+#include <cassert>
 #include <vector>
 
 extern "C" void CPL_DLL GDALRegister_TGA();
@@ -677,8 +678,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
         sHeader.eImageType == RLE_GRAYSCALE ||
         sHeader.eImageType == RLE_TRUE_COLOR)
     {
-        // nHeight is a GUInt16, so well bounded...
-        // coverity[tainted_data]
+        assert(nHeight <= 65535);
         poDS->m_aoScanlineState.resize(nHeight);
         poDS->m_aoScanlineState[0].nOffset = poDS->m_nImageDataOffset;
     }
