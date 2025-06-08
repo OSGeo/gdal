@@ -71,7 +71,9 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         nLastCount = nCurCount;
 
         value3 = value;
-        value.getSpatialReference();  // avoid Coverity Scan warning
+        // avoid Coverity Scan warning about above assignment being better
+        // replaced with a move.
+        EXPECT_NE(value.getSpatialReference(), nullptr);
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
     ASSERT_EQ(1, poSRS->GetReferenceCount());
@@ -330,7 +332,8 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
         *mp_as_gc = gc;
-        gc.getSpatialReference();  // avoid Coverity Scan warning
+        // avoid Coverity Scan warning
+        EXPECT_EQ(gc.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRGeometryCollection::operator=(): trying to "
@@ -364,7 +367,8 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
         *poly_as_cp = cp;
-        cp.getSpatialReference();  // avoid Coverity Scan warning
+        // avoid Coverity Scan warning
+        EXPECT_EQ(cp.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
