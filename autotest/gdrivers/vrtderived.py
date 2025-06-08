@@ -1621,11 +1621,11 @@ def test_vrt_pixelfn_sum_optimization(tmp_vsimem, src_type, dst_type, transfer_t
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    width = 17
+    width = 64 + 3
     height = 2
 
-    ar1 = np.array([np.arange(width), np.arange(width) + 50])
-    ar2 = np.array([np.arange(width) + 20, np.arange(width) + 70])
+    ar1 = np.array([np.arange(width), np.arange(width) + 10])
+    ar2 = np.array([np.arange(width) + 5, np.arange(width) + 15])
     if (
         src_type.startswith("Float")
         and dst_type.startswith("Float")

@@ -25,6 +25,7 @@
 
 #include "gdal_priv_templates.hpp"
 
+#include <algorithm>
 #include <limits>
 
 namespace gdal
@@ -610,6 +611,89 @@ static void OptimizedSumToDouble_SSE2(double dfK, void *pOutBuffer,
     }
 }
 
+/************************************************************************/
+/*                       OptimizedSumSameType_SSE2()                    */
+/************************************************************************/
+
+template <typename T, typename Tsigned, typename Tacc, class SSEWrapper>
+static void OptimizedSumSameType_SSE2(double dfK, void *pOutBuffer,
+                                      int nLineSpace, int nXSize, int nYSize,
+                                      int nSources,
+                                      const void *const *papoSources)
+{
+    static_assert(std::numeric_limits<T>::is_integer);
+    static_assert(!std::numeric_limits<T>::is_signed);
+    static_assert(std::numeric_limits<Tsigned>::is_integer);
+    static_assert(std::numeric_limits<Tsigned>::is_signed);
+    static_assert(sizeof(T) == sizeof(Tsigned));
+    const T nK = static_cast<T>(dfK);
+    Tsigned nKSigned;
+    memcpy(&nKSigned, &nK, sizeof(T));
+    const __m128i valInit = SSEWrapper::Set1(nKSigned);
+    constexpr int VALUES_PER_REG =
+        static_cast<int>(sizeof(valInit) / sizeof(T));
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        T *CPL_RESTRICT const pDest =
+            reinterpret_cast<T *>(static_cast<GByte *>(pOutBuffer) +
+                                  static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+        int iCol = 0;
+        for (; iCol < nXSize - (4 * VALUES_PER_REG - 1);
+             iCol += 4 * VALUES_PER_REG)
+        {
+            __m128i reg0 = valInit;
+            __m128i reg1 = valInit;
+            __m128i reg2 = valInit;
+            __m128i reg3 = valInit;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                reg0 = SSEWrapper::AddSaturate(
+                    reg0,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol)));
+                reg1 = SSEWrapper::AddSaturate(
+                    reg1,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + VALUES_PER_REG)));
+                reg2 = SSEWrapper::AddSaturate(
+                    reg2,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + 2 * VALUES_PER_REG)));
+                reg3 = SSEWrapper::AddSaturate(
+                    reg3,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + 3 * VALUES_PER_REG)));
+            }
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDest + iCol), reg0);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + VALUES_PER_REG),
+                reg1);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + 2 * VALUES_PER_REG),
+                reg2);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + 3 * VALUES_PER_REG),
+                reg3);
+        }
+        for (; iCol < nXSize; ++iCol)
+        {
+            Tacc nAcc = nK;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                nAcc = std::min<Tacc>(
+                    nAcc + static_cast<const T * CPL_RESTRICT>(
+                               papoSources[iSrc])[iOffsetLine + iCol],
+                    std::numeric_limits<T>::max());
+            }
+            pDest[iCol] = static_cast<T>(nAcc);
+        }
+    }
+}
 #endif  // USE_SSE2
 
 /************************************************************************/
@@ -985,7 +1069,63 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         bool bGeneralCase = true;
         if (dfNoData == 0 && !bPropagateNoData)
         {
-            if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
+#ifdef USE_SSE2
+            if (eBufType == GDT_Byte && nPixelSpace == sizeof(uint8_t) &&
+                eSrcType == GDT_Byte &&
+                dfK >= std::numeric_limits<uint8_t>::min() &&
+                dfK <= std::numeric_limits<uint8_t>::max() &&
+                static_cast<int>(dfK) == dfK)
+            {
+                bGeneralCase = false;
+
+                struct SSEWrapper
+                {
+                    inline static __m128i Set1(int8_t x)
+                    {
+                        return _mm_set1_epi8(x);
+                    }
+
+                    inline static __m128i AddSaturate(__m128i x, __m128i y)
+                    {
+                        return _mm_adds_epu8(x, y);
+                    }
+                };
+
+                OptimizedSumSameType_SSE2<uint8_t, int8_t, uint32_t,
+                                          SSEWrapper>(dfK, pData, nLineSpace,
+                                                      nXSize, nYSize, nSources,
+                                                      papoSources);
+            }
+            else if (eBufType == GDT_UInt16 &&
+                     nPixelSpace == sizeof(uint16_t) &&
+                     eSrcType == GDT_UInt16 &&
+                     dfK >= std::numeric_limits<uint16_t>::min() &&
+                     dfK <= std::numeric_limits<uint16_t>::max() &&
+                     static_cast<int>(dfK) == dfK)
+            {
+                bGeneralCase = false;
+
+                struct SSEWrapper
+                {
+                    inline static __m128i Set1(int16_t x)
+                    {
+                        return _mm_set1_epi16(x);
+                    }
+
+                    inline static __m128i AddSaturate(__m128i x, __m128i y)
+                    {
+                        return _mm_adds_epu16(x, y);
+                    }
+                };
+
+                OptimizedSumSameType_SSE2<uint16_t, int16_t, uint32_t,
+                                          SSEWrapper>(dfK, pData, nLineSpace,
+                                                      nXSize, nYSize, nSources,
+                                                      papoSources);
+            }
+            else
+#endif
+                if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
             {
                 bGeneralCase = !OptimizedSumPackedOutput<float>(
                     eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
