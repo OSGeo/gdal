@@ -451,8 +451,12 @@ char **GDALEEDABaseDataset::GetBaseHTTPOptions()
 /* Add a small amount of random jitter to avoid cyclic server stampedes */
 static double EEDABackoffFactor(double base)
 {
-    // coverity[dont_call]
-    return base + rand() * 0.5 / RAND_MAX;
+    // We don't need cryptographic quality randomness...
+    return base
+#ifndef __COVERITY__
+           + rand() * 0.5 / RAND_MAX
+#endif
+        ;
 }
 
 /************************************************************************/

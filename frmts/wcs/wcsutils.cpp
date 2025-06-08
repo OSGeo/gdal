@@ -645,8 +645,11 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
         {
             if (filename.at(i) == 'X')
             {
-                // coverity[dont_call]
+#ifndef __COVERITY__
                 filename.replace(i, 1, 1, chars[rand() % (sizeof(chars) - 1)]);
+#else
+                filename.replace(i, 1, 1, chars[i % (sizeof(chars) - 1)]);
+#endif
             }
         }
         // replace X with random character from a-zA-Z

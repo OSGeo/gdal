@@ -774,8 +774,13 @@ Bundle &ECDataset::GetBundle(const char *fname)
         }
     }
     // No empties, eject one
-    // coverity[dont_call]
-    Bundle &bundle = bundles[rand() % bundles.size()];
+    Bundle &bundle = bundles[
+#ifndef __COVERITY__
+        rand() % bundles.size()
+#else
+        0
+#endif
+    ];
     bundle.Init(fname);
     return bundle;
 }

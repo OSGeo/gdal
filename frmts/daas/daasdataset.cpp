@@ -387,8 +387,11 @@ char **GDALDAASDataset::GetHTTPOptions()
 static double DAASBackoffFactor(double base)
 {
     // We don't need cryptographic quality randomness...
-    // coverity[dont_call]
-    return base + rand() * 0.5 / RAND_MAX;
+    return base
+#ifndef __COVERITY__
+           + rand() * 0.5 / RAND_MAX
+#endif
+        ;
 }
 
 /************************************************************************/

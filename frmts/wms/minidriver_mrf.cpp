@@ -141,8 +141,11 @@ void *SectorCache::data(size_t address)
         // thrashing
         do
         {
-            // coverity[dont_call]
+#ifndef __COVERITY__
             target = &(store[rand() % n]);
+#else
+            target = &(store[0]);
+#endif
         } while (target == last_used);
     }
 
