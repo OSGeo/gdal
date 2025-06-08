@@ -137,32 +137,34 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal)
 // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataReal
 TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal_with_band)
 {
+    const auto lambda = [](GDALDataset *poDS)
+    {
+        std::unique_ptr<GDALWarpOptions, decltype(&GDALDestroyWarpOptions)>
+            psOptions(GDALCreateWarpOptions(), GDALDestroyWarpOptions);
+        psOptions->hSrcDS = GDALDataset::ToHandle(poDS);
+        psOptions->nBandCount = 1;
+        psOptions->panSrcBands =
+            static_cast<int *>(CPLMalloc(psOptions->nBandCount * sizeof(int)));
+        psOptions->panSrcBands[0] = 1;
+        psOptions->padfSrcNoDataReal =
+            static_cast<double *>(CPLMalloc(sizeof(double)));
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        GDALWarpResolveWorkingDataType(psOptions.get());
+        EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
+
+        psOptions->padfSrcNoDataReal[0] = -1.0;
+        GDALWarpResolveWorkingDataType(psOptions.get());
+        EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 2.0;
+        GDALWarpResolveWorkingDataType(psOptions.get());
+        EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
+    };
+
     GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
                                   ->Create("", 1, 1, 1, GDT_Byte, nullptr));
-    GDALWarpOptions *psOptions = GDALCreateWarpOptions();
-    // False-positive: hSrcDS is no longer used after GDALDestroyWarpOptions()
-    // coverity[escape]
-    psOptions->hSrcDS = GDALDataset::ToHandle(poDS.get());
-    psOptions->nBandCount = 1;
-    psOptions->panSrcBands =
-        static_cast<int *>(CPLMalloc(psOptions->nBandCount * sizeof(int)));
-    psOptions->panSrcBands[0] = 1;
-    psOptions->padfSrcNoDataReal =
-        static_cast<double *>(CPLMalloc(sizeof(double)));
-    psOptions->padfSrcNoDataReal[0] = 0.0;
-    GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
-
-    psOptions->padfSrcNoDataReal[0] = -1.0;
-    GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
-
-    psOptions->eWorkingDataType = GDT_Unknown;
-    psOptions->padfSrcNoDataReal[0] = 2.0;
-    GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Byte);
-
-    GDALDestroyWarpOptions(psOptions);
+    lambda(poDS.get());
 }
 
 // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataImag

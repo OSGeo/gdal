@@ -70,8 +70,8 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
-        // coverity[copy_assignment_call]
         value3 = value;
+        value.getSpatialReference();  // avoid Coverity Scan warning
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
     ASSERT_EQ(1, poSRS->GetReferenceCount());
@@ -329,8 +329,8 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *mp_as_gc = gc;
+        gc.getSpatialReference();  // avoid Coverity Scan warning
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRGeometryCollection::operator=(): trying to "
@@ -363,8 +363,8 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *poly_as_cp = cp;
+        cp.getSpatialReference();  // avoid Coverity Scan warning
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
@@ -1543,8 +1543,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
-        // coverity[copy_constructor_call]
         GDALDataset::Layers::Iterator newIter(srcIter);
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -1553,8 +1553,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
         GDALDataset::Layers::Iterator newIter;
-        // coverity[copy_assignent_call]
         newIter = srcIter;
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -2649,7 +2649,6 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
         // Invalid
         char szInput[] = "2023-07-11T17:2";
         OGRField sField;
-        // coverity[overrun-buffer-val]
         EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
     {
@@ -2690,7 +2689,6 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:3";
         OGRField sField;
-        // coverity[overrun-buffer-val]
         EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
     {
@@ -2731,7 +2729,6 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:34.12";
         OGRField sField;
-        // coverity[overrun-buffer-val]
         EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
     {

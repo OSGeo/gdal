@@ -1300,6 +1300,7 @@ TEST_F(test_gdal, GDALDataset_GetBands)
 
 TEST_F(test_gdal, GDALExtendedDataType)
 {
+#ifndef __COVERITY__
     // non-null string to string
     {
         const char *srcPtr = "foo";
@@ -1311,11 +1312,11 @@ TEST_F(test_gdal, GDALExtendedDataType)
         // Coverity isn't smart enough to figure out that GetClass() of
         // CreateString() is GEDTC_STRING and then takes the wrong path
         // in CopyValue() and makes wrong assumptions.
-        // coverity[string_null]
         EXPECT_STREQ(dstPtr, srcPtr);
-        // coverity[incorrect_free]
         CPLFree(dstPtr);
     }
+#endif
+
     // null string to string
     {
         const char *srcPtr = nullptr;

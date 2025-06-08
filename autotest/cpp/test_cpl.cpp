@@ -716,8 +716,8 @@ TEST_F(test_cpl, CPLStringList_NameValue)
     {
         CPLStringList oTemp;
         oTemp.AddString("test");
-        // coverity[copy_assignment_call]
         oCopy = oTemp;
+        oTemp.AddString("avoid_coverity_scan_warning");
     }
     EXPECT_STREQ(oCopy[0], "test");
 
@@ -2774,12 +2774,12 @@ TEST_F(test_cpl, CPLJSONDocument)
         CPLJSONObject oObj2(oObj);
         ASSERT_TRUE(oObj2.ToBool());
         // Assignment operator
-        // coverity[copy_assignment_call]
         oDocument2 = oDocument;
+        oDocument.GetRoot();  // avoid Coverity Scan warning
         auto &oDocument2Ref(oDocument2);
         oDocument2 = oDocument2Ref;
-        // coverity[copy_assignment_call]
         oObj2 = oObj;
+        oObj.GetType();  // avoid Coverity Scan warning
         auto &oObj2Ref(oObj2);
         oObj2 = oObj2Ref;
         CPLJSONObject oObj3(std::move(oObj2));
@@ -4729,6 +4729,22 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
         std::condition_variable cv{};
         bool you_can_leave = false;
         int threadStarted = 0;
+
+        void notifyYouCanLeave()
+        {
+            std::lock_guard<std::mutex> guard(mutex);
+            you_can_leave = true;
+            cv.notify_one();
+        }
+
+        void waitYouCanLeave()
+        {
+            std::unique_lock<std::mutex> guard(mutex);
+            while (!you_can_leave)
+            {
+                cv.wait(guard);
+            }
+        }
     };
 
     Context ctxt;
@@ -4780,12 +4796,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
                 // make sure that job 0 run in the other thread
                 // takes sufficiently long that job 2 has been submitted
                 // before it completes
-                std::unique_lock<std::mutex> guard(psData2->psCtxt->mutex);
-                // coverity[missing_lock:FALSE]
-                while (!psData2->psCtxt->you_can_leave)
-                {
-                    psData2->psCtxt->cv.wait(guard);
-                }
+                psData2->psCtxt->waitYouCanLeave();
             }
             else if (iJob == 100 + 1 || iJob == 100 + 2)
             {
@@ -4804,9 +4815,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
         poQueue->SubmitJob(lambda2, &d2);
         if (psData->iJob == 0)
         {
-            std::lock_guard<std::mutex> guard(psData->psCtxt->mutex);
-            psData->psCtxt->you_can_leave = true;
-            psData->psCtxt->cv.notify_one();
+            psData->psCtxt->notifyYouCanLeave();
         }
     };
     {
