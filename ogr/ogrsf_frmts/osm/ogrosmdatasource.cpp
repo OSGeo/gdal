@@ -1466,7 +1466,7 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
     if (pnTags)
         *pnTags = nTags;
 
-    // TODO: Some additional safety checks.
+    assert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
     for (unsigned int iTag = 0; iTag < nTags; iTag++)
     {
         const int nK = ReadVarInt32(&pabyPtr);
@@ -2629,7 +2629,6 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int nBlobSize = sqlite3_column_bytes(m_pahSelectWayStmt[0], 1);
             const void *blob = sqlite3_column_blob(m_pahSelectWayStmt[0], 1);
 
-            // coverity[tainted_data]
             UncompressWay(nBlobSize, static_cast<const GByte *>(blob), nullptr,
                           m_asLonLatCache, &nTags, pasTags, &sInfo);
             CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
