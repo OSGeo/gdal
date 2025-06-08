@@ -115,7 +115,6 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
         arrow::dataset::PartitioningOrFactory(std::move(partitioningFactory));
 
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
-    // coverity[copy_constructor_call]
     PARQUET_ASSIGN_OR_THROW(
         factory, arrow::dataset::ParquetDatasetFactory::Make(
                      osFSFilename + '/' + pszMetadataFile, fs,
@@ -144,7 +143,6 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     const auto fileInfo = fs->GetFileInfo(osFSFilename);
     if (fileInfo->IsFile())
     {
-        // coverity[copy_constructor_call]
         PARQUET_ASSIGN_OR_THROW(
             factory, arrow::dataset::FileSystemDatasetFactory::Make(
                          fs, {std::move(osFSFilename)},
@@ -162,7 +160,6 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
         selector.base_dir = std::move(osFSFilename);
         selector.recursive = true;
 
-        // coverity[copy_constructor_call]
         PARQUET_ASSIGN_OR_THROW(
             factory, arrow::dataset::FileSystemDatasetFactory::Make(
                          fs, std::move(selector),

@@ -262,7 +262,7 @@ bool OGRParquetWriterLayer::CopyTmpGpkgLayerToFinalFile()
 
             // nCellCount shouldn't be over 51 normally, but even 65535
             // would be fine...
-            // coverity[tainted_data]
+            assert(nCellCount <= 65535);
             for (int i = 0; i < nCellCount; ++i)
             {
                 int64_t nNode;
