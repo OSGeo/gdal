@@ -186,18 +186,15 @@ bool OGRSQLiteBaseDataSource::InitSpatialite()
 
 void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
+    // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
+    // is not re-entrant due to the use of xmlCleanupParser()
+    // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
+    static std::mutex oCleanupMutex;
+    std::lock_guard oLock(oCleanupMutex);
+
     if (hSpatialiteCtxt != nullptr)
     {
-        auto ctxt = hSpatialiteCtxt;
-        {
-            // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
-            // is not re-entrant due to the use of xmlCleanupParser()
-            // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
-            static std::mutex oCleanupMutex;
-            std::lock_guard oLock(oCleanupMutex);
-            pfn_spatialite_cleanup_ex(ctxt);
-        }
-        // coverity[thread1_overwrites_value_in_field]
+        pfn_spatialite_cleanup_ex(hSpatialiteCtxt);
         hSpatialiteCtxt = nullptr;
     }
 }
