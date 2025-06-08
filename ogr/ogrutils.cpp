@@ -1083,7 +1083,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
     /* -------------------------------------------------------------------- */
     /*      Do we have a date?                                              */
     /* -------------------------------------------------------------------- */
-    while (*pszInput == ' ')
+    for (int i = 0; i < 256 && *pszInput == ' '; ++i)
         ++pszInput;
 
     bool bGotSomething = false;
@@ -1115,7 +1115,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
 
         if (*pszInput == '-')
             ++pszInput;
-        while (*pszInput >= '0' && *pszInput <= '9')
+        for (int i = 0; i < 5 && *pszInput >= '0' && *pszInput <= '9'; ++i)
             ++pszInput;
         if (*pszInput != '-' && *pszInput != '/')
             return FALSE;
@@ -1189,7 +1189,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
     /* -------------------------------------------------------------------- */
     /*      Do we have a time?                                              */
     /* -------------------------------------------------------------------- */
-    while (*pszInput == ' ')
+    for (int i = 0; i < 256 && *pszInput == ' '; ++i)
         ++pszInput;
     if (*pszInput == 'T')
     {
