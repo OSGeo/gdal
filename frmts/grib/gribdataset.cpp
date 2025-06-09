@@ -2345,6 +2345,7 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     {
         inventoryType *psInv = pInventories->get(i);
         uInt4 bandNr = i + 1;
+        assert(bandNr <= 65536);
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
         // does not return the offset to the real start of the message
@@ -2411,7 +2412,6 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
 
-            // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if (psInv->GribVersion == 2)
                 gribBand.FindPDSTemplateGRIB2();

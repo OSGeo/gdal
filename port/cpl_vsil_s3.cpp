@@ -4533,6 +4533,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             // Proceed to file copy
             bool ret = true;
             uint64_t nAccSize = 0;
+            const uint64_t nTotalSizeDenom = std::max<uint64_t>(1, nTotalSize);
             for (const size_t iChunk : anIndexToCopy)
             {
                 const auto &chunk = aoChunksToCopy[iChunk];
@@ -4542,11 +4543,10 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                         chunk.osSrcFilename.c_str(), nullptr));
                 const std::string osSubTarget(CPLFormFilenameSafe(
                     osTargetDir.c_str(), chunk.osDstFilename.c_str(), nullptr));
-                // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
-                    double(nAccSize) / nTotalSize,
-                    double(nAccSize + chunk.nSize) / nTotalSize, pProgressFunc,
-                    pProgressData);
+                    double(nAccSize) / nTotalSizeDenom,
+                    double(nAccSize + chunk.nSize) / nTotalSizeDenom,
+                    pProgressFunc, pProgressData);
                 ret =
                     CopyFile(osSubSource.c_str(), osSubTarget.c_str(), nullptr,
                              chunk.nSize, aosObjectCreationOptions.List(),
@@ -4959,14 +4959,14 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         }
         if (pProgressFunc)
         {
+            const uint64_t nTotalSizeDenom = std::max<uint64_t>(1, nTotalSize);
             while (!sJobQueue.stop)
             {
                 CPLSleep(0.1);
                 sJobQueue.sMutex.lock();
                 const auto nTotalCopied = sJobQueue.nTotalCopied;
                 sJobQueue.sMutex.unlock();
-                // coverity[divide_by_zero]
-                if (!pProgressFunc(double(nTotalCopied) / nTotalSize, "",
+                if (!pProgressFunc(double(nTotalCopied) / nTotalSizeDenom, "",
                                    pProgressData))
                 {
                     sJobQueue.ret = false;

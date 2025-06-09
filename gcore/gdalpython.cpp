@@ -186,6 +186,8 @@ static bool LoadPythonAPI()
     }
     else
     {
+        if (libHandle)
+            dlclose(libHandle);
         libHandle = nullptr;
     }
 

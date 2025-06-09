@@ -2912,7 +2912,6 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
                                      CPLString(osDriverName).tolower()};
     if (!singleton.HasDeclaredSubAlgorithm(path))
     {
-        // coverity[copy_constructor_call]
         auto lambda = [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
         {
             auto poDriver =
@@ -2936,7 +2935,6 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
 
     path.insert(path.end(), aosPath.begin(), aosPath.end());
 
-    // coverity[copy_constructor_call]
     auto lambda = [osDriverName, aosPath]() -> std::unique_ptr<GDALAlgorithm>
     {
         auto poDriver =
@@ -2948,6 +2946,8 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
     };
 
     singleton.DeclareAlgorithm(path, std::move(lambda));
+
+    CPL_IGNORE_RET_VAL(osDriverName);
 }
 
 //! @endcond

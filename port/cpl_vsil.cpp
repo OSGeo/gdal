@@ -2238,6 +2238,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                 }
             }
             int iFile = 0;
+            const int nDenom = std::max(1, nFileCount);
             for (auto iter = papszSrcFiles; iter && *iter; ++iter, ++iFile)
             {
                 if (strcmp(*iter, ".") == 0 || strcmp(*iter, "..") == 0)
@@ -2248,9 +2249,8 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                     osSourceWithoutSlash.c_str(), *iter, nullptr));
                 const std::string osSubTarget(
                     CPLFormFilenameSafe(osTargetDir.c_str(), *iter, nullptr));
-                // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
-                    double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
+                    double(iFile) / nDenom, double(iFile + 1) / nDenom,
                     pProgressFunc, pProgressData);
                 ret = Sync((osSubSource + SOURCE_SEP).c_str(),
                            osSubTarget.c_str(), aosChildOptions.List(),

@@ -3561,12 +3561,12 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         size_t array_idx[2] = {static_cast<size_t>(arrayStartIdx[0]), 0};
         size_t array_count[2] = {1, m_nTextLength};
         std::string osTmp(m_nTextLength, 0);
-        const char *pszTmp = osTmp.c_str();
+        char *pszTmp = &osTmp[0];
         bool ret = true;
         for (size_t i = 0; ret && i < count[0]; i++)
         {
             int ncErr =
-                nc_get_vara(m_gid, m_varid, array_idx, array_count, &osTmp[0]);
+                nc_get_vara(m_gid, m_varid, array_idx, array_count, pszTmp);
             NCDF_ERR(ncErr);
             ret = ncErr == NC_NOERR;
             if (ret)

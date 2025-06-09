@@ -1971,6 +1971,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     if (bufferStride == nullptr)
     {
         GPtrDiff_t stride = 1;
+        assert(dims.empty() || count != nullptr);
         // To compute strides we must proceed from the fastest varying dimension
         // (the last one), and then reverse the result
         for (size_t i = dims.size(); i != 0;)
