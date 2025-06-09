@@ -42,10 +42,7 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
            _("List all features (beware of RAM consumption on large layers)"),
            &m_listFeatures)
         .SetMutualExclusionGroup("summary-features");
-    AddArg("summary", 0,
-           _("List the layer names and the geometry type (when possibile "
-             "without scanning the whole dataset)"),
-           &m_summaryOnly)
+    AddArg("summary", 0, _("List the layer names"), &m_summaryOnly)
         .SetMutualExclusionGroup("summary-features");
     AddArg("sql", 0,
            _("Execute the indicated SQL statement and return the result"),
