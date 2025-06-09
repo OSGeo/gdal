@@ -1750,6 +1750,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                GSpacing nLineSpace,
                                GDALRasterIOExtraArg *psExtraArg, int *pbTried);
 
+    CPLErr SplitRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                         int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                         GDALDataType eBufType, GSpacing nPixelSpace,
+                         GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+        CPL_WARN_UNUSED_RESULT;
+
     int InitBlockInfo();
 
     void AddBlockToFreeList(GDALRasterBlock *);

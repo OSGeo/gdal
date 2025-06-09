@@ -10096,3 +10096,99 @@ CPLErr GDALRasterInterpolateAtGeolocation(GDALRasterBandH hBand,
         dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS),
         eInterpolation, pdfRealValue, pdfImagValue, papszTransformerOptions);
 }
+
+/************************************************************************/
+/*                    GDALRasterBand::SplitRasterIO()                   */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+/** Implements IRasterIO() by dividing the request in 2.
+ *
+ * Should only be called when nBufXSize == nXSize && nBufYSize == nYSize
+ *
+ * Return CE_Warning if the split could not be done, CE_None in case of
+ * success and CE_Failure in case of error.
+ *
+ * @since 3.12
+ */
+CPLErr GDALRasterBand::SplitRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                     [[maybe_unused]] int nXSize,
+                                     [[maybe_unused]] int nYSize, void *pData,
+                                     int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType,
+                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALRasterIOExtraArg *psExtraArg)
+{
+    CPLAssert(nBufXSize == nXSize && nBufYSize == nYSize);
+
+    GByte *pabyData = static_cast<GByte *>(pData);
+    if ((nBufXSize == nRasterXSize || nBufYSize >= nBufXSize) && nBufYSize >= 2)
+    {
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        const int nHalfHeight = nBufYSize / 2;
+
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData = GDALCreateScaledProgress(
+            0, 0.5, psExtraArg->pfnProgress, psExtraArg->pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff, nBufXSize, nHalfHeight,
+                                pabyData, nBufXSize, nHalfHeight, eBufType,
+                                nPixelSpace, nLineSpace, &sArg);
+        GDALDestroyScaledProgress(sArg.pProgressData);
+
+        if (eErr == CE_None)
+        {
+            sArg.pfnProgress = GDALScaledProgress;
+            sArg.pProgressData = GDALCreateScaledProgress(
+                0.5, 1, psExtraArg->pfnProgress, psExtraArg->pProgressData);
+            if (sArg.pProgressData == nullptr)
+                sArg.pfnProgress = nullptr;
+            eErr = IRasterIO(eRWFlag, nXOff, nYOff + nHalfHeight, nBufXSize,
+                             nBufYSize - nHalfHeight,
+                             pabyData + nHalfHeight * nLineSpace, nBufXSize,
+                             nBufYSize - nHalfHeight, eBufType, nPixelSpace,
+                             nLineSpace, &sArg);
+            GDALDestroyScaledProgress(sArg.pProgressData);
+        }
+        return eErr;
+    }
+    else if (nBufXSize >= 2)
+    {
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        const int nHalfWidth = nBufXSize / 2;
+
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData = GDALCreateScaledProgress(
+            0, 0.5, psExtraArg->pfnProgress, psExtraArg->pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff, nHalfWidth, nBufYSize,
+                                pabyData, nHalfWidth, nBufYSize, eBufType,
+                                nPixelSpace, nLineSpace, &sArg);
+        GDALDestroyScaledProgress(sArg.pProgressData);
+
+        if (eErr == CE_None)
+        {
+            sArg.pfnProgress = GDALScaledProgress;
+            sArg.pProgressData = GDALCreateScaledProgress(
+                0.5, 1, psExtraArg->pfnProgress, psExtraArg->pProgressData);
+            if (sArg.pProgressData == nullptr)
+                sArg.pfnProgress = nullptr;
+            eErr = IRasterIO(eRWFlag, nXOff + nHalfWidth, nYOff,
+                             nBufXSize - nHalfWidth, nBufYSize,
+                             pabyData + nHalfWidth * nPixelSpace,
+                             nBufXSize - nHalfWidth, nBufYSize, eBufType,
+                             nPixelSpace, nLineSpace, &sArg);
+            GDALDestroyScaledProgress(sArg.pProgressData);
+        }
+        return eErr;
+    }
+
+    return CE_Warning;
+}
+
+//! @endcond
