@@ -172,6 +172,13 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL
     add_compile_options("-fno-finite-math-only")
   endif ()
 
+  check_cxx_compiler_flag(-fno-fast-math HAVE_FLAG_NO_FAST_MATH)
+  if (HAVE_FLAG_NO_FAST_MATH)
+    # Intel CXX compiler, based on clang, defaults to -ffast-math, which breaks
+    # for example DBL_MAX - -DBL_MAX in VRT pixel function mean()
+    add_compile_options("-fno-fast-math")
+  endif ()
+
   set(TEST_LINK_STDCPP_SOURCE_CODE
       "#include <string>
     int main(){
