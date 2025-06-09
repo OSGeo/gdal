@@ -2395,6 +2395,199 @@ static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 } /* MinOrMaxPixelFunc */
 
+#ifdef USE_SSE2
+
+template <class T, class SSEWrapper>
+static void OptimizedMinOrMaxSSE2(const void *const *papoSources, int nSources,
+                                  void *pData, int nXSize, int nYSize,
+                                  int nLineSpace)
+{
+    assert(nSources >= 1);
+    constexpr int VALUES_PER_REG =
+        static_cast<int>(sizeof(typename SSEWrapper::Vec) / sizeof(T));
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        T *CPL_RESTRICT pDest =
+            reinterpret_cast<T *>(static_cast<GByte *>(pData) +
+                                  static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+        int iCol = 0;
+        for (; iCol < nXSize - (2 * VALUES_PER_REG - 1);
+             iCol += 2 * VALUES_PER_REG)
+        {
+            auto reg0 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol);
+            auto reg1 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol + VALUES_PER_REG);
+            for (int iSrc = 1; iSrc < nSources; ++iSrc)
+            {
+                reg0 = SSEWrapper::MinOrMax(
+                    reg0, SSEWrapper::LoadU(static_cast<const T * CPL_RESTRICT>(
+                                                papoSources[iSrc]) +
+                                            iOffsetLine + iCol));
+                reg1 = SSEWrapper::MinOrMax(
+                    reg1,
+                    SSEWrapper::LoadU(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + VALUES_PER_REG));
+            }
+            SSEWrapper::StoreU(pDest + iCol, reg0);
+            SSEWrapper::StoreU(pDest + iCol + VALUES_PER_REG, reg1);
+        }
+        for (; iCol < nXSize; ++iCol)
+        {
+            T v = static_cast<const T * CPL_RESTRICT>(
+                papoSources[0])[iOffsetLine + iCol];
+            for (int iSrc = 1; iSrc < nSources; ++iSrc)
+            {
+                v = SSEWrapper::MinOrMax(
+                    v, static_cast<const T * CPL_RESTRICT>(
+                           papoSources[iSrc])[iOffsetLine + iCol]);
+            }
+            pDest[iCol] = v;
+        }
+    }
+}
+
+// clang-format off
+namespace
+{
+struct SSEWrapperMinByte
+{
+    using T = uint8_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epu8(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxByte
+{
+    using T = uint8_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epu8(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinUInt16
+{
+    using T = uint16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epu16(x, y); }
+#else
+    static inline Vec MinOrMax(Vec x, Vec y) { return
+        _mm_add_epi16(
+           _mm_min_epi16(
+             _mm_add_epi16(x, _mm_set1_epi16(-32768)),
+             _mm_add_epi16(y, _mm_set1_epi16(-32768))),
+           _mm_set1_epi16(-32768)); }
+#endif
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxUInt16
+{
+    using T = uint16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epu16(x, y); }
+#else
+    static inline Vec MinOrMax(Vec x, Vec y) { return
+        _mm_add_epi16(
+           _mm_max_epi16(
+             _mm_add_epi16(x, _mm_set1_epi16(-32768)),
+             _mm_add_epi16(y, _mm_set1_epi16(-32768))),
+           _mm_set1_epi16(-32768)); }
+#endif
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinInt16
+{
+    using T = int16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epi16(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxInt16
+{
+    using T = int16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epi16(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinFloat
+{
+    using T = float;
+    typedef __m128 Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_ps(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxFloat
+{
+    using T = float;
+    typedef __m128 Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_ps(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinDouble
+{
+    using T = double;
+    typedef __m128d Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_pd(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxDouble
+{
+    using T = double;
+    typedef __m128d Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_pd(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+}  // namespace
+
+// clang-format on
+
+#endif  // USE_SSE2
+
 static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize, GDALDataType eSrcType,
                            GDALDataType eBufType, int nPixelSpace,
@@ -2408,6 +2601,44 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x >= resVal);
         }
     };
+
+#ifdef USE_SSE2
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
+    {
+        if (eSrcType == GDT_Byte)
+        {
+            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMinByte>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_UInt16)
+        {
+            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMinUInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Int16)
+        {
+            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMinInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float32)
+        {
+            OptimizedMinOrMaxSSE2<float, SSEWrapperMinFloat>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float64)
+        {
+            OptimizedMinOrMaxSSE2<double, SSEWrapperMinDouble>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+    }
+#endif
 
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,
@@ -2427,6 +2658,44 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x <= resVal);
         }
     };
+
+#ifdef USE_SSE2
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
+    {
+        if (eSrcType == GDT_Byte)
+        {
+            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMaxByte>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_UInt16)
+        {
+            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMaxUInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Int16)
+        {
+            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMaxInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float32)
+        {
+            OptimizedMinOrMaxSSE2<float, SSEWrapperMaxFloat>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float64)
+        {
+            OptimizedMinOrMaxSSE2<double, SSEWrapperMaxDouble>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+    }
+#endif
 
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,

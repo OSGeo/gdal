@@ -1914,6 +1914,34 @@ def test_vrt_pixelfn_mean_float64_image():
     assert result == src_array
 
 
+@pytest.mark.parametrize("dt", ["Byte", "UInt16", "Int16", "Float32", "Float64"])
+@pytest.mark.parametrize("function", ["min", "max"])
+def test_vrt_pixelfn_min_max_image(dt, function):
+
+    if function == "min":
+        insert1 = "<ComplexSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand><ScaleOffset>255</ScaleOffset><ScaleRatio>0</ScaleRatio></ComplexSource>"
+        insert2 = ""
+    else:
+        insert1 = ""
+        insert2 = "<ComplexSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand><ScaleOffset>0</ScaleOffset><ScaleRatio>0</ScaleRatio></ComplexSource>"
+
+    xml = f"""
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="{dt}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>{function}</PixelFunctionType>
+        <SourceTransferType>{dt}</SourceTransferType>
+        {insert1}
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        {insert2}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GetDataTypeByName(dt))
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
 @pytest.mark.parametrize(
     "src_type",
     [
