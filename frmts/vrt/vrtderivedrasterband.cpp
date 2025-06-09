@@ -992,6 +992,24 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         return CE_Failure;
     }
 
+    if constexpr (sizeof(GSpacing) > sizeof(int))
+    {
+        if (nLineSpace > INT_MAX)
+        {
+            if (nBufYSize == 1)
+            {
+                nLineSpace = 0;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "VRTDerivedRasterBand::IRasterIO(): nLineSpace > "
+                         "INT_MAX not supported");
+                return CE_Failure;
+            }
+        }
+    }
+
     const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     GDALDataType eSrcType = eSourceTransferType;
     if (eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount)
