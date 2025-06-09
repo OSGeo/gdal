@@ -1032,32 +1032,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
     /* -------------------------------------------------------------------- */
-    /*      Initialize the buffer to some background value. Use the         */
-    /*      nodata value if available.                                      */
-    /* -------------------------------------------------------------------- */
-    if (SkipBufferInitialization())
-    {
-        // Do nothing
-    }
-    else if (nPixelSpace == nBufTypeSize &&
-             (!m_bNoDataValueSet || m_dfNoDataValue == 0))
-    {
-        memset(pData, 0,
-               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
-    }
-    else if (m_bNoDataValueSet)
-    {
-        double dfWriteValue = m_dfNoDataValue;
-
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
-                            static_cast<GByte *>(pData) + nLineSpace * iLine,
-                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
     /*      Do we have overviews that would be appropriate to satisfy       */
     /*      this request?                                                   */
     /* -------------------------------------------------------------------- */
@@ -1111,6 +1085,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 
     std::vector<void *> apBuffers(nSources);
     std::vector<int> anMapBufferIdxToSourceIdx(nSources);
+    bool bSkipOutputBufferInitialization = nSources > 0;
     for (int iSource = 0; iSource < nSources; iSource++)
     {
         if (m_poPrivate->m_bSkipNonContributingSources &&
@@ -1138,6 +1113,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 }
 
                 // Skip non contributing source
+                bSkipOutputBufferInitialization = false;
                 continue;
             }
         }
@@ -1155,7 +1131,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         bool bBufferInit = true;
-        if (papoSources[iSource]->GetType() == VRTSimpleSource::GetTypeStatic())
+        if (papoSources[iSource]->IsSimpleSource())
         {
             const auto poSS =
                 static_cast<VRTSimpleSource *>(papoSources[iSource]);
@@ -1170,8 +1146,18 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 poSS->m_dfDstXOff + poSS->m_dfDstXSize == nRasterXSize &&
                 poSS->m_dfDstYOff + poSS->m_dfDstYSize == nRasterYSize)
             {
-                bBufferInit = false;
+                if (papoSources[iSource]->GetType() ==
+                    VRTSimpleSource::GetTypeStatic())
+                    bBufferInit = false;
             }
+            else
+            {
+                bSkipOutputBufferInitialization = false;
+            }
+        }
+        else
+        {
+            bSkipOutputBufferInitialization = false;
         }
         if (bBufferInit)
         {
@@ -1198,6 +1184,32 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
 
         ++nBufferCount;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Initialize the buffer to some background value. Use the         */
+    /*      nodata value if available.                                      */
+    /* -------------------------------------------------------------------- */
+    if (bSkipOutputBufferInitialization)
+    {
+        // Do nothing
+    }
+    else if (nPixelSpace == nBufTypeSize &&
+             (!m_bNoDataValueSet || m_dfNoDataValue == 0))
+    {
+        memset(pData, 0,
+               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
+    }
+    else if (m_bNoDataValueSet)
+    {
+        double dfWriteValue = m_dfNoDataValue;
+
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
+                            static_cast<GByte *>(pData) + nLineSpace * iLine,
+                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
     }
 
     // No contributing sources and SkipNonContributingSources mode ?
