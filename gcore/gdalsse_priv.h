@@ -77,7 +77,10 @@ class XMMReg4Float
   public:
     __m128 xmm;
 
-    XMMReg4Float() : xmm(_mm_undefined_ps())
+    XMMReg4Float()
+#if !defined(_MSC_VER)
+        : xmm(_mm_undefined_ps())
+#endif
     {
     }
 
@@ -425,7 +428,10 @@ class XMMReg4Int
   public:
     __m128i xmm;
 
-    XMMReg4Int() : xmm(_mm_undefined_si128())
+    XMMReg4Int()
+#if !defined(_MSC_VER)
+        : xmm(_mm_undefined_si128())
+#endif
     {
     }
 
@@ -525,7 +531,10 @@ class XMMReg8Byte
   public:
     __m128i xmm;
 
-    XMMReg8Byte() : xmm(_mm_undefined_si128())
+    XMMReg8Byte()
+#if !defined(_MSC_VER)
+        : xmm(_mm_undefined_si128())
+#endif
     {
     }
 
@@ -606,7 +615,10 @@ class XMMReg2Double
   public:
     __m128d xmm;
 
-    XMMReg2Double() : xmm(_mm_undefined_pd())
+    XMMReg2Double()
+#if !defined(_MSC_VER)
+        : xmm(_mm_undefined_pd())
+#endif
     {
     }
 
