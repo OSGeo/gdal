@@ -40,7 +40,13 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     AddArg("features", 0,
            _("List all features (beware of RAM consumption on large layers)"),
-           &m_listFeatures);
+           &m_listFeatures)
+        .SetMutualExclusionGroup("summary-features");
+    AddArg("summary", 0,
+           _("List the layer names and the geometry type (when possibile "
+             "without scanning the whole dataset)"),
+           &m_summaryOnly)
+        .SetMutualExclusionGroup("summary-features");
     AddArg("sql", 0,
            _("Execute the indicated SQL statement and return the result"),
            &m_sql)
@@ -90,16 +96,17 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     {
         aosOptions.AddString("-json");
     }
-    else
+
+    if (m_summaryOnly)
     {
-        aosOptions.AddString("-al");
-        if (!m_listFeatures)
-            aosOptions.AddString("-so");
+        aosOptions.AddString("-summary");
+        aosOptions.AddString("--quiet");
     }
-    if (m_listFeatures)
+    else if (m_listFeatures)
     {
         aosOptions.AddString("-features");
     }
+
     if (!m_sql.empty())
     {
         aosOptions.AddString("-sql");
@@ -124,6 +131,11 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     aosOptions.AddString("dummy");
     for (const std::string &name : m_layerNames)
         aosOptions.AddString(name.c_str());
+
+    if (m_layerNames.empty())
+    {
+        aosOptions.AddString("-al");
+    }
 
     GDALVectorInfoOptions *psInfo =
         GDALVectorInfoOptionsNew(aosOptions.List(), nullptr);

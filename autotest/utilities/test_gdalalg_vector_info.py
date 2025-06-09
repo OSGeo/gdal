@@ -96,6 +96,27 @@ def test_gdalalg_vector_info_where(cond, featureCount):
     assert j["layers"][0]["featureCount"] == featureCount
 
 
+def test_gdalalg_vector_info_summary():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--summary", "data/path.shp"])
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert "features" not in j["layers"][0]
+    assert "featureCount" not in j["layers"][0]
+
+    with pytest.raises(RuntimeError, match="mutually exclusive with"):
+        info = get_info_alg()
+        info.ParseRunAndFinalize(["--summary", "--features", "data/poly.shp"])
+
+    # To check that featureCount is normally present unless --summary is used
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["data/path.shp"])
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert "features" not in j["layers"][0]
+    assert "featureCount" in j["layers"][0]
+
+
 @pytest.mark.require_driver("SQLite")
 def test_gdalalg_vector_info_dialect():
     info = get_info_alg()
