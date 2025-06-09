@@ -1275,7 +1275,6 @@ def test_jpeg_flir_png():
     assert ds.GetMetadataDomainList() == [
         "IMAGE_STRUCTURE",
         "FLIR",
-        "",
         "SUBDATASETS",
         "DERIVED_SUBDATASETS",
     ]
@@ -1330,6 +1329,7 @@ def test_jpeg_flir_png():
         "RawValueRangeMax": "61986",
         "RawValueRangeMin": "7630",
         "ReflectedApparentTemperature": "20.000000 C",
+        "RelativeHumidity": "50.000000 %",
         "UnderflowColor": "41 110 240",
     }
     subds = ds.GetSubDatasets()
