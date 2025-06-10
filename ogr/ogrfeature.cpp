@@ -7230,7 +7230,7 @@ int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
-                    "Field %s.%s has a %" PRIu64 " UTF-8 characters whereas "
+                    "Field %s.%s has %" PRIu64 " UTF-8 characters whereas "
                     "a maximum of %d is allowed",
                     poDefn->GetName(), poDefn->GetFieldDefn(i)->GetNameRef(),
                     static_cast<uint64_t>(CPLStrlenUTF8Ex(GetFieldAsString(i))),
