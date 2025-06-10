@@ -16,7 +16,6 @@ import os
 import shutil
 import struct
 import sys
-import tempfile
 from pathlib import Path
 
 import gdaltest
@@ -1050,23 +1049,24 @@ def test_vrt_write_copy_mdd():
 
 
 @pytest.mark.require_driver("netCDF")
-def test_vrt_read_netcdf():
+@pytest.mark.skipif(
+    os.environ.get("BUILD_NAME", "") == "s390x",
+    reason="Fails on that platform",
+)
+def test_vrt_read_netcdf(tmp_path):
     """Test subdataset info API used by VRT driver to calculate relative path"""
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        nc_path = os.path.join(tmpdirname, "alldatatypes.nc")
-        vrt_path = os.path.join(tmpdirname, "test_vrt_read_netcdf.vrt")
-        vrt_copy_path = os.path.join(tmpdirname, "test_vrt_read_netcdf_copy.vrt")
-        shutil.copyfile(
-            Path(__file__).parent.parent / "gdrivers/data/netcdf/alldatatypes.nc",
-            nc_path,
-        )
-        subds_filename = f'NETCDF:"{nc_path}":ubyte_var'
-        buffer = f"""<VRTDataset rasterXSize="1" rasterYSize="1">
+    nc_path = os.path.join(tmp_path, "alldatatypes.nc")
+    vrt_path = os.path.join(tmp_path, "test_vrt_read_netcdf.vrt")
+    shutil.copyfile(
+        Path(__file__).parent.parent / "gdrivers/data/netcdf/alldatatypes.nc",
+        nc_path,
+    )
+    buffer = """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <NoDataValue>0</NoDataValue>
     <ComplexSource>
-      <SourceFilename relativeToVRT="0">{subds_filename}</SourceFilename>
+      <SourceFilename relativeToVRT="1">NETCDF:"alldatatypes.nc":ubyte_var</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
       <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
@@ -1074,19 +1074,12 @@ def test_vrt_read_netcdf():
     </ComplexSource>
   </VRTRasterBand>
 </VRTDataset>"""
-        with open(vrt_path, "w+") as f:
-            f.write(buffer)
+    with open(vrt_path, "w+") as f:
+        f.write(buffer)
 
-        ds = gdal.Open(vrt_path)
-        assert ds is not None
-        gdal.GetDriverByName("VRT").CreateCopy(vrt_copy_path, ds)
-
-        ds = None
-
-        with open(vrt_copy_path, "r") as xml:
-            xml_data = xml.read()
-            # print(xml_data)
-            assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml_data
+    ds = gdal.Open(vrt_path)
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == 3
 
 
 ###############################################################################

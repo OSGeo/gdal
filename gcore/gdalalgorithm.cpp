@@ -4104,37 +4104,57 @@ bool GDALAlgorithm::ValidateBandArg() const
     const auto bandArg = GetArg(GDAL_ARG_NAME_BAND);
     const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
     if (bandArg && bandArg->IsExplicitlySet() && inputDatasetArg &&
-        inputDatasetArg->IsExplicitlySet() &&
-        inputDatasetArg->GetType() == GAAT_DATASET &&
+        (inputDatasetArg->GetType() == GAAT_DATASET ||
+         inputDatasetArg->GetType() == GAAT_DATASET_LIST) &&
         (inputDatasetArg->GetDatasetType() & GDAL_OF_RASTER) != 0)
     {
-        auto poDS = inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
-        if (poDS)
+        const auto CheckBand = [this](const GDALDataset *poDS, int nBand)
         {
-            const auto CheckBand = [this, poDS](int nBand)
+            if (nBand > poDS->GetRasterCount())
             {
-                if (nBand > poDS->GetRasterCount())
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Value of 'band' should be greater or equal than "
-                        "1 and less or equal than %d.",
-                        poDS->GetRasterCount());
-                    return false;
-                }
-                return true;
-            };
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Value of 'band' should be greater or equal than "
+                            "1 and less or equal than %d.",
+                            poDS->GetRasterCount());
+                return false;
+            }
+            return true;
+        };
 
+        const auto ValidateForOneDataset =
+            [&bandArg, &CheckBand](const GDALDataset *poDS)
+        {
+            bool l_ret = true;
             if (bandArg->GetType() == GAAT_INTEGER)
             {
-                ret = CheckBand(bandArg->Get<int>());
+                l_ret = CheckBand(poDS, bandArg->Get<int>());
             }
             else if (bandArg->GetType() == GAAT_INTEGER_LIST)
             {
                 for (int nBand : bandArg->Get<std::vector<int>>())
                 {
-                    ret = ret && CheckBand(nBand);
+                    l_ret = l_ret && CheckBand(poDS, nBand);
                 }
+            }
+            return l_ret;
+        };
+
+        if (inputDatasetArg->GetType() == GAAT_DATASET)
+        {
+            auto poDS =
+                inputDatasetArg->Get<GDALArgDatasetValue>().GetDatasetRef();
+            if (poDS && !ValidateForOneDataset(poDS))
+                ret = false;
+        }
+        else
+        {
+            CPLAssert(inputDatasetArg->GetType() == GAAT_DATASET_LIST);
+            for (auto &datasetValue :
+                 inputDatasetArg->Get<std::vector<GDALArgDatasetValue>>())
+            {
+                auto poDS = datasetValue.GetDatasetRef();
+                if (poDS && !ValidateForOneDataset(poDS))
+                    ret = false;
             }
         }
     }

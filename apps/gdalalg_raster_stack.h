@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_STACK_INCLUDED
 #define GDALALG_RASTER_STACK_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_mosaic_stack_common.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                     GDALRasterStackAlgorithm                        */
 /************************************************************************/
 
-class GDALRasterStackAlgorithm final : public GDALAlgorithm
+class GDALRasterStackAlgorithm /* non final */
+    : public GDALRasterMosaicStackCommonAlgorithm
 {
   public:
     static constexpr const char *NAME = "stack";
@@ -30,24 +31,30 @@ class GDALRasterStackAlgorithm final : public GDALAlgorithm
         "(VRT) or materialized.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_stack.html";
 
-    explicit GDALRasterStackAlgorithm();
+    explicit GDALRasterStackAlgorithm(bool bStandalone = false);
+
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+};
 
-    std::vector<GDALArgDatasetValue> m_inputDatasets{};
-    std::string m_format{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
-    std::string m_resolution{};
-    std::vector<double> m_bbox{};
-    bool m_targetAlignedPixels = false;
-    std::vector<double> m_srcNoData{};
-    std::vector<double> m_dstNoData{};
-    std::vector<int> m_bands{};
-    bool m_hideNoData = false;
-    bool m_writeAbsolutePaths = false;
+/************************************************************************/
+/*                   GDALRasterStackAlgorithmStandalone                 */
+/************************************************************************/
+
+class GDALRasterStackAlgorithmStandalone final : public GDALRasterStackAlgorithm
+{
+  public:
+    GDALRasterStackAlgorithmStandalone()
+        : GDALRasterStackAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterStackAlgorithmStandalone() override;
 };
 
 //! @endcond

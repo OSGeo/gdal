@@ -37,12 +37,13 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (m_format == "stream")
     {
-        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        m_outputDataset.Set(poSrcDS);
         return true;
     }
 
@@ -72,7 +73,7 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
     const std::string osLastErrorMsg = CPLGetLastErrorMsg();
     const auto nLastErrorCounter = CPLGetErrorCounter();
 
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+    GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
     auto poRetDS = GDALDataset::FromHandle(GDALTranslate(
         m_outputDataset.GetName().c_str(), hSrcDS, psOptions, nullptr));
     GDALTranslateOptionsFree(psOptions);

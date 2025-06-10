@@ -77,6 +77,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     {
         bool standaloneStep = false;
         bool addDefaultArguments = true;
+        bool autoOpenInputDatasets = true;
         std::string inputDatasetHelpMsg{};
         std::string inputDatasetAlias{};
         std::string inputDatasetMetaVar = "INPUT";
@@ -117,6 +118,12 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             outputDatasetHelpMsg = s;
             return *this;
         }
+
+        inline ConstructorOptions &SetAutoOpenInputDatasets(bool b)
+        {
+            autoOpenInputDatasets = b;
+            return *this;
+        }
     };
 
     GDALRasterPipelineStepAlgorithm(const std::string &name,
@@ -126,6 +133,12 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     friend class GDALRasterPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
+    friend class GDALRasterMosaicStackCommonAlgorithm;
+
+    virtual bool CanBeFirstStep() const
+    {
+        return false;
+    }
 
     virtual bool IsNativelyStreamingCompatible() const
     {
@@ -150,7 +163,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     const ConstructorOptions m_constructorOptions;
 
     // Input arguments
-    GDALArgDatasetValue m_inputDataset{};
+    std::vector<GDALArgDatasetValue> m_inputDataset{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
     std::vector<std::string> m_inputLayerNames{};
@@ -238,7 +251,8 @@ class GDALRasterPipelineAlgorithm final
 
     GDALDataset *GetDatasetRef()
     {
-        return m_inputDataset.GetDatasetRef();
+        return m_inputDataset.size() == 1 ? m_inputDataset[0].GetDatasetRef()
+                                          : nullptr;
     }
 
   protected:
