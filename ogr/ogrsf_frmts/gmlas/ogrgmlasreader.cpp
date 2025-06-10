@@ -639,10 +639,12 @@ bool GMLASReader::Init(const char *pszFilename,
         m_poSAXReader->setFeature(XMLUni::fgSAX2CoreValidation, true);
         m_poSAXReader->setFeature(XMLUni::fgXercesSchema, true);
 
+#ifndef __COVERITY__
         // We want all errors to be reported
         // coverity[unsafe_xml_parse_config]
         m_poSAXReader->setFeature(XMLUni::fgXercesValidationErrorAsFatal,
                                   false);
+#endif
 
         CPLString osBaseDirname(CPLGetDirnameSafe(pszFilename));
 

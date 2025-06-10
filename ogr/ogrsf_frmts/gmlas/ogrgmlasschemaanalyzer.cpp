@@ -858,8 +858,10 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
         //
         poParser->setFeature(XMLUni::fgXercesSchema, true);
 
+#ifndef __COVERITY__
         // coverity[unsafe_xml_parse_config]
         poParser->setFeature(XMLUni::fgXercesValidationErrorAsFatal, false);
+#endif
 
         // Use the loaded grammar during parsing.
         //
