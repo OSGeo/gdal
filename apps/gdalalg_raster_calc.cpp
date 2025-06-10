@@ -749,20 +749,20 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
         .SetPackedValuesAllowed(false)
         .SetMinCount(1)
         .SetAutoCompleteFunction(
-            [this](const std::string &)
+            [this](const std::string &currentValue)
             {
+                std::vector<std::string> ret;
                 if (m_dialect == "builtin")
                 {
-                    return VRTDerivedRasterBand::GetPixelFunctionNames();
+                    if (currentValue.find('(') == std::string::npos)
+                        return VRTDerivedRasterBand::GetPixelFunctionNames();
                 }
-                return std::vector<std::string>();
+                return ret;
             });
 
     AddArg("dialect", 0, _("Expression dialect"), &m_dialect)
         .SetDefault(m_dialect)
         .SetChoices("muparser", "builtin");
-
-    AddPixelFunctionArgsArg(&m_pixelFunctionArgs);
 
     // This is a hidden option only used by test_gdalalg_raster_calc_expression_rewriting()
     // for now
@@ -775,13 +775,24 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
     AddValidationAction(
         [this]()
         {
-            if (m_dialect != "builtin" && !m_pixelFunctionArgs.empty())
+            if (m_dialect == "builtin")
             {
-                ReportError(
-                    CE_Failure, CPLE_NotSupported,
-                    "--pixel-function-arg cannot be use with --dialect=%s",
-                    m_dialect.c_str());
-                return false;
+                if (m_inputDataset.size() > 1)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_IllegalArg,
+                        "--dialect=builtin is only compatible with a single "
+                        "(generally multi-band) input dataset");
+                    return false;
+                }
+                if (m_expr.size() != 1)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_IllegalArg,
+                        "--dialect=builtin is only compatible with a single "
+                        "--calc value");
+                    return false;
+                }
             }
 
             GDALPipelineStepRunContext ctxt;
@@ -824,19 +835,81 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    if (m_dialect == "builtin" && inputFilenames.size() > 1)
+    std::vector<std::string> pixelFunctionArgs;
+    if (m_dialect == "builtin")
     {
-        ReportError(CE_Failure, CPLE_IllegalArg,
-                    "--dialect=builtin is only compatible with a single "
-                    "(generally multi-band) input dataset");
-        return false;
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(m_expr[0].c_str(), "()",
+                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+        const char *pszFunction = aosTokens[0];
+        const auto *pair = VRTDerivedRasterBand::GetPixelFunction(pszFunction);
+        if (!pair)
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "'%s' is a unknown builtin function", pszFunction);
+            return false;
+        }
+        if (aosTokens.size() == 2)
+        {
+            std::vector<std::string> validArguments;
+            AddOptionsSuggestions(pair->second.c_str(), 0, std::string(),
+                                  validArguments);
+            for (std::string &s : validArguments)
+            {
+                if (!s.empty() && s.back() == '=')
+                    s.pop_back();
+            }
+
+            const CPLStringList aosTokensArgs(CSLTokenizeString2(
+                aosTokens[1], ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            for (const auto &[key, value] :
+                 cpl::IterateNameValue(aosTokensArgs))
+            {
+                if (std::find(validArguments.begin(), validArguments.end(),
+                              key) == validArguments.end())
+                {
+                    if (validArguments.empty())
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'%s' is a unrecognized argument for builtin "
+                            "function '%s'. It does not accept any argument",
+                            key, pszFunction);
+                    }
+                    else
+                    {
+                        std::string validArgumentsStr;
+                        for (const std::string &s : validArguments)
+                        {
+                            if (!validArgumentsStr.empty())
+                                validArgumentsStr += ", ";
+                            validArgumentsStr += '\'';
+                            validArgumentsStr += s;
+                            validArgumentsStr += '\'';
+                        }
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'%s' is a unrecognized argument for builtin "
+                            "function '%s'. Only %s %s supported",
+                            key, pszFunction,
+                            validArguments.size() == 1 ? "is" : "are",
+                            validArgumentsStr.c_str());
+                    }
+                    return false;
+                }
+                CPL_IGNORE_RET_VAL(value);
+            }
+            pixelFunctionArgs = aosTokensArgs;
+        }
+        m_expr.clear();
+        m_expr.push_back(pszFunction);
+    }
+    else
+    {
+        pixelFunctionArgs.resize(m_expr.size());
     }
 
     int maxSourceBands = 0;
-    std::vector<std::string> pixelFunctionArgs(m_pixelFunctionArgs);
-    if (pixelFunctionArgs.empty())
-        pixelFunctionArgs.resize(m_expr.size());
-
     auto vrt =
         GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_dialect,
                                  pixelFunctionArgs, options, maxSourceBands);

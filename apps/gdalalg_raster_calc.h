@@ -41,7 +41,6 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
 
     std::vector<std::string> m_expr{};
     std::string m_dialect{"muparser"};
-    std::vector<std::string> m_pixelFunctionArgs{};
     std::string m_type{};
     bool m_NoCheckSRS{false};
     bool m_NoCheckExtent{false};

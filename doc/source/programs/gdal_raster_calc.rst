@@ -72,6 +72,8 @@ The following options are available:
     Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
     (such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
     ``builtin``, to compute a single band from all bands of a single input dataset.
+    Arguments to functions are passed within parentheses, like ``sum(k=1)``,
+    ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
 
 .. option:: --dialect muparser|builtin
 
@@ -79,15 +81,6 @@ The following options are available:
 
     Specify the expression engine used to interpret the value of :option:`--calc`.
     The default is ``muparser``.
-
-.. option:: --pixel-function-arg
-
-    .. versionadded:: 3.12
-
-    Specify an argument to be provided to a pixel function, in the format
-    ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
-    option.
-    Only taken into account when :option:`--dialect` is set to ``builtin``.
 
 .. option:: --no-check-extent
 

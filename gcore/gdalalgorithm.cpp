@@ -4788,23 +4788,6 @@ GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
             {
                 pixelFunction = pixelFunctionArg->Get<std::string>();
             }
-            else
-            {
-                const auto calcArg = GetArg("calc");
-                const auto dialectArg = GetArg("dialect");
-                if (dialectArg && dialectArg->GetType() == GAAT_STRING &&
-                    calcArg && calcArg->GetType() == GAAT_STRING_LIST)
-                {
-                    const auto &dialect = dialectArg->Get<std::string>();
-                    if (dialect == "builtin")
-                    {
-                        const auto &v =
-                            calcArg->Get<std::vector<std::string>>();
-                        if (v.size() == 1)
-                            pixelFunction = v[0];
-                    }
-                }
-            }
 
             std::vector<std::string> ret;
 
