@@ -551,14 +551,16 @@ def test_gdalalg_raster_calc_gdalg_json(calc, tmp_vsimem):
 
     outfile = tmp_vsimem / "out.gdalg.json"
 
-    calc["input"] = "../gcore/data/byte.tif"
+    calc["input"] = "../gcore/data/rgbsmall.tif"
     calc["output"] = outfile
     calc["calc"] = "X"
     assert calc.Run()
     assert calc.Finalize()
 
     with gdal.Open(outfile) as ds:
-        assert ds.GetRasterBand(1).Checksum() == 4672
+        assert ds.GetRasterBand(1).Checksum() == 21212
+        assert ds.GetRasterBand(2).Checksum() == 21053
+        assert ds.GetRasterBand(3).Checksum() == 21349
 
 
 @pytest.mark.parametrize(

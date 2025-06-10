@@ -731,7 +731,8 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 std::string osFilename =
                     VSIMemGenerateHiddenFilename("tmp.tif");
                 auto poDS = std::unique_ptr<GDALDataset>(poGTIFFDrv->Create(
-                    osFilename.c_str(), 1, 1, 1, GDT_Byte, nullptr));
+                    osFilename.c_str(), 1, 1, vrt->GetRasterCount(), GDT_Byte,
+                    nullptr));
                 if (poDS)
                     osTmpFilename = std::move(osFilename);
             }
