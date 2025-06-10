@@ -214,8 +214,8 @@ OM, SOM). Contact me if you have troubles with proper projection
             oDict.Add("DecodeParms", &((new GDALPDFDictionaryRW())
             else if (EQUAL(pszDatum, "HEN")) /* HERAT North, Afghanistan */
     else if (EQUAL(pszMnemonic, "SOM"))
- * Author:   Trent Hare (thare@usgs.gov),
  * Author:   Trent Hare (thare@usgs.gov)
+ * Author:   Trent Hare (thare at usgs.gov),
             PLACE(achTSH + 0, TE, "TE");
             nTreIndex--;
     for (psIter = psTreNode->psChild; psIter != NULL && *pbError == FALSE;

@@ -9519,7 +9519,7 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                                      GEDTC_NUMERIC)
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Data type of %s attribue is not numeric",
+                                     "Data type of %s attribute is not numeric",
                                      poAttribute->GetFullName().c_str());
                             return nullptr;
                         }
