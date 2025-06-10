@@ -36,7 +36,7 @@ class GDALRasterCalcAlgorithm : public GDALAlgorithm
     std::vector<std::string> m_inputs{};
     GDALArgDatasetValue m_dataset{};
     std::vector<std::string> m_expr{};
-    std::string m_pixelFunction{};
+    std::string m_dialect{"muparser"};
     std::vector<std::string> m_pixelFunctionArgs{};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
