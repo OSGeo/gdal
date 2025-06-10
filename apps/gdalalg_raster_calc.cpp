@@ -641,6 +641,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
 
     AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input raster datasets"), &m_inputs)
         .SetPositional()
+        .SetRequired()
         .SetMinCount(1)
         .SetAutoOpenDataset(false)
         .SetMetaVar("INPUTS");
