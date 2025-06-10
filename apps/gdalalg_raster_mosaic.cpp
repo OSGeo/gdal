@@ -36,8 +36,8 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm(bool bStandalone)
              "raster have "
              "none."),
            &m_addAlpha);
-    auto &pixelFunctionArg = AddPixelFunctionNameArg(&m_pixelFunction);
-    AddPixelFunctionArgsArg(pixelFunctionArg, &m_pixelFunctionArgs);
+    AddPixelFunctionNameArg(&m_pixelFunction);
+    AddPixelFunctionArgsArg(&m_pixelFunctionArgs);
 }
 
 /************************************************************************/

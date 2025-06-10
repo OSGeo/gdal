@@ -4764,8 +4764,7 @@ GDALAlgorithm::AddPixelFunctionNameArg(std::string *pValue,
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddPixelFunctionArgsArg(const GDALAlgorithmArg &pixelFunctionArg,
-                                       std::vector<std::string> *pValue,
+GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
                                        const char *helpMessage)
 {
     auto &pixelFunctionArgArg =
@@ -4781,10 +4780,32 @@ GDALAlgorithm::AddPixelFunctionArgsArg(const GDALAlgorithmArg &pixelFunctionArg,
         { return ParseAndValidateKeyValue(pixelFunctionArgArg); });
 
     pixelFunctionArgArg.SetAutoCompleteFunction(
-        [this, &pixelFunctionArg](const std::string &currentValue)
+        [this](const std::string &currentValue)
         {
-            const std::string &pixelFunction =
-                pixelFunctionArg.Get<std::string>();
+            std::string pixelFunction;
+            const auto pixelFunctionArg = GetArg("pixel-function");
+            if (pixelFunctionArg && pixelFunctionArg->GetType() == GAAT_STRING)
+            {
+                pixelFunction = pixelFunctionArg->Get<std::string>();
+            }
+            else
+            {
+                const auto calcArg = GetArg("calc");
+                const auto dialectArg = GetArg("dialect");
+                if (dialectArg && dialectArg->GetType() == GAAT_STRING &&
+                    calcArg && calcArg->GetType() == GAAT_STRING_LIST)
+                {
+                    const auto &dialect = dialectArg->Get<std::string>();
+                    if (dialect == "builtin")
+                    {
+                        const auto &v =
+                            calcArg->Get<std::vector<std::string>>();
+                        if (v.size() == 1)
+                            pixelFunction = v[0];
+                    }
+                }
+            }
+
             std::vector<std::string> ret;
 
             if (!pixelFunction.empty())

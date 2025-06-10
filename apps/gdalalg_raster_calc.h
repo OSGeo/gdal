@@ -40,7 +40,7 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_expr{};
-    std::string m_pixelFunction{};
+    std::string m_dialect{"muparser"};
     std::vector<std::string> m_pixelFunctionArgs{};
     std::string m_type{};
     bool m_NoCheckSRS{false};

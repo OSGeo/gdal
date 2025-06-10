@@ -31,8 +31,8 @@ will be referenced in the calculation, e.g. ``A=my_data.tif``. (If a single data
 used, it will be referred to with the variable ``X`` in formulas.)
 
 Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
-(such a ``sum``, ``mean``, ``min``, ``max``) to compute a single band from all
-bands of a single input dataset.
+(such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
+``builtin``, to compute a single band from all bands of a single input dataset.
 
 The inputs should have the same spatial reference system and should cover the same spatial extent but are not required to have the same
 spatial resolution. The spatial extent check can be disabled with :option:`--no-check-extent`,
@@ -69,18 +69,16 @@ The following options are available:
 
     Input rasters will be converted to 64-bit floating point numbers before performing calculations.
 
-.. option:: --pixel-function
+    Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
+    (such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
+    ``builtin``, to compute a single band from all bands of a single input dataset.
+
+.. option:: --dialect muparser|builtin
 
     .. versionadded:: 3.12
 
-    Specify a function name to calculate a single band from all the input bands of
-    the input dataset. For pixel function where source order matters, the
-    first band is used as the first source, the second band as the second source,
-    etc.
-    For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
-
-    This option is mutually exclusive with :option:`--calc`, and one of them
-    must be specified.
+    Specify the expression engine used to interpret the value of :option:`--calc`.
+    The default is ``muparser``.
 
 .. option:: --pixel-function-arg
 
@@ -89,6 +87,7 @@ The following options are available:
     Specify an argument to be provided to a pixel function, in the format
     ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
     option.
+    Only taken into account when :option:`--dialect` is set to ``builtin``.
 
 .. option:: --no-check-extent
 
@@ -139,4 +138,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster calc -i input.tif -o result.tif --pixel-function mean
+       gdal raster calc -i input.tif -o result.tif --calc=mean --dialect=builtin

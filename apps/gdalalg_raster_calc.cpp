@@ -19,6 +19,7 @@
 #include "cpl_vsi_virtual.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
+#include "vrtdataset.h"
 
 #include <algorithm>
 #include <array>
@@ -283,7 +284,7 @@ static bool IsSumAllSources(const std::string &expression,
  * @param nXOut Number of columns in VRT dataset
  * @param nYOut Number of rows in VRT dataset
  * @param expression Expression for which band(s) should be added
- * @param pixelFunction Pixel function name. Mutually exclusive with expressions
+ * @param dialect Expression dialect
  * @param pixelFunctionArguments Pixel function arguments.
  * @param sources Mapping of source names to DSNs
  * @param sourceProps Mapping of source names to properties
@@ -293,7 +294,7 @@ static bool IsSumAllSources(const std::string &expression,
 static bool
 CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                      GDALDataType bandType, const std::string &expression,
-                     const std::string &pixelFunction,
+                     const std::string &dialect,
                      const std::vector<std::string> &pixelFunctionArguments,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps,
@@ -320,8 +321,9 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
         {
             pszDataType = GDALGetDataTypeName(bandType);
         }
-        else if (pixelFunction == "min" || pixelFunction == "max" ||
-                 pixelFunction == "mean")
+        else if (dialect == "builtin" &&
+                 (expression == "min" || expression == "max" ||
+                  expression == "mean"))
         {
             GDALDataType eDT = GDT_Unknown;
             bool firstSource = true;
@@ -353,7 +355,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
             CPLAssert(it != sourceProps.end());
             const auto &props = it->second;
 
-            if (!expression.empty())
+            if (dialect != "builtin")
             {
                 const int nDefaultInBand = std::min(props.nBands, nOutBand);
 
@@ -390,7 +392,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
             for (int nInBand = 1; nInBand <= props.nBands; nInBand++)
             {
                 CPLString inBandVariable;
-                if (!expression.empty())
+                if (dialect != "builtin")
                 {
                     inBandVariable.Printf("%s[%d]", source_name.c_str(),
                                           nInBand);
@@ -453,10 +455,9 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
         CPLXMLNode *pixelFunctionType =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
-        if (!pixelFunction.empty())
+        if (dialect == "builtin")
         {
-            CPLCreateXMLNode(pixelFunctionType, CXT_Text,
-                             pixelFunction.c_str());
+            CPLCreateXMLNode(pixelFunctionType, CXT_Text, expression.c_str());
             if (!pixelFunctionArguments.empty())
             {
                 CPLXMLNode *arguments = CPLCreateXMLNode(
@@ -610,7 +611,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
  *
  * @param inputs A list of sources, expressed as NAME=DSN
  * @param expressions A list of expressions to be evaluated
- * @param pixelFunction Pixel function name. Mutually exclusive with expressions
+ * @param dialect Expression dialect
  * @param pixelFunctionArguments Pixel function arguments.
  * @param options flags controlling which checks should be performed on the inputs
  * @param[out] maxSourceBands Maximum number of bands in source dataset(s)
@@ -621,7 +622,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
 static std::unique_ptr<GDALDataset>
 GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
                          const std::vector<std::string> &expressions,
-                         const std::string &pixelFunction,
+                         const std::string &dialect,
                          const std::vector<std::string> &pixelFunctionArguments,
                          const GDALCalcOptions &options, int &maxSourceBands,
                          const std::string &fakeSourceFilename = std::string())
@@ -686,27 +687,14 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         }
     }
 
-    if (!pixelFunction.empty())
+    for (const auto &origExpression : expressions)
     {
         if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, options.dstType,
-                                  std::string(), pixelFunction,
+                                  origExpression, dialect,
                                   pixelFunctionArguments, sources, sourceProps,
                                   fakeSourceFilename))
         {
             return nullptr;
-        }
-    }
-    else
-    {
-        for (const auto &origExpression : expressions)
-        {
-            if (!CreateDerivedBandXML(root.get(), out.nX, out.nY,
-                                      options.dstType, origExpression,
-                                      pixelFunction, pixelFunctionArguments,
-                                      sources, sourceProps, fakeSourceFilename))
-            {
-                return nullptr;
-            }
         }
     }
 
@@ -757,13 +745,24 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
            &m_NoCheckExtent);
 
     AddArg("calc", 0, _("Expression(s) to evaluate"), &m_expr)
+        .SetRequired()
         .SetPackedValuesAllowed(false)
         .SetMinCount(1)
-        .SetMutualExclusionGroup("calc-pixel-function");
-    auto &pixelFunctionArg =
-        AddPixelFunctionNameArg(&m_pixelFunction)
-            .SetMutualExclusionGroup("calc-pixel-function");
-    AddPixelFunctionArgsArg(pixelFunctionArg, &m_pixelFunctionArgs);
+        .SetAutoCompleteFunction(
+            [this](const std::string &)
+            {
+                if (m_dialect == "builtin")
+                {
+                    return VRTDerivedRasterBand::GetPixelFunctionNames();
+                }
+                return std::vector<std::string>();
+            });
+
+    AddArg("dialect", 0, _("Expression dialect"), &m_dialect)
+        .SetDefault(m_dialect)
+        .SetChoices("muparser", "builtin");
+
+    AddPixelFunctionArgsArg(&m_pixelFunctionArgs);
 
     // This is a hidden option only used by test_gdalalg_raster_calc_expression_rewriting()
     // for now
@@ -776,11 +775,12 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
     AddValidationAction(
         [this]()
         {
-            if (m_expr.empty() && m_pixelFunction.empty())
+            if (m_dialect != "builtin" && !m_pixelFunctionArgs.empty())
             {
                 ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Either --calc or --pixel-function must be specified.");
+                    CE_Failure, CPLE_NotSupported,
+                    "--pixel-function-arg cannot be use with --dialect=%s",
+                    m_dialect.c_str());
                 return false;
             }
 
@@ -824,18 +824,22 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    if (!m_pixelFunction.empty() && inputFilenames.size() > 1)
+    if (m_dialect == "builtin" && inputFilenames.size() > 1)
     {
         ReportError(CE_Failure, CPLE_IllegalArg,
-                    "--pixel-function is only compatible with a single "
+                    "--dialect=builtin is only compatible with a single "
                     "(generally multi-band) input dataset");
         return false;
     }
 
     int maxSourceBands = 0;
+    std::vector<std::string> pixelFunctionArgs(m_pixelFunctionArgs);
+    if (pixelFunctionArgs.empty())
+        pixelFunctionArgs.resize(m_expr.size());
+
     auto vrt =
-        GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_pixelFunction,
-                                 m_pixelFunctionArgs, options, maxSourceBands);
+        GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_dialect,
+                                 pixelFunctionArgs, options, maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -873,9 +877,8 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (!osTmpFilename.empty())
             {
                 auto fakeVRT = GDALCalcCreateVRTDerived(
-                    inputFilenames, m_expr, m_pixelFunction,
-                    m_pixelFunctionArgs, options, maxSourceBands,
-                    osTmpFilename);
+                    inputFilenames, m_expr, m_dialect, pixelFunctionArgs,
+                    options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
                                       1, GDT_Byte, vrt->GetRasterCount(),

@@ -604,12 +604,13 @@ def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
     assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240
 
 
-def test_gdalalg_raster_calc_pixel_function(calc):
+def test_gdalalg_raster_calc_dialect_builtin(calc):
 
     calc["input"] = "../gcore/data/rgbsmall.tif"
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["pixel-function"] = "mean"
+    calc["calc"] = "mean"
+    calc["dialect"] = "builtin"
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
@@ -617,13 +618,14 @@ def test_gdalalg_raster_calc_pixel_function(calc):
     assert ds.GetRasterBand(1).Checksum() == 21559
 
 
-def test_gdalalg_raster_calc_pixel_function_args(calc):
+def test_gdalalg_raster_calc_pixel_function_arg(calc):
 
     calc["input"] = "../gcore/data/byte.tif"
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["pixel-function"] = "sum"
+    calc["calc"] = "sum"
     calc["pixel-function-arg"] = "k=1"
+    calc["dialect"] = "builtin"
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
@@ -631,25 +633,51 @@ def test_gdalalg_raster_calc_pixel_function_args(calc):
     assert ds.GetRasterBand(1).Checksum() == 4455
 
 
-def test_gdalalg_raster_calc_pixel_function_or_calc_required(calc):
+def test_gdalalg_raster_calc_pixel_function_arg_not_compatible_muparser(calc):
 
-    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["input"] = "../gcore/data/byte.tif"
     calc["output-format"] = "stream"
     calc["output"] = ""
+    calc["calc"] = "X"
+    calc["pixel-function-arg"] = "k=1"
     with pytest.raises(
-        Exception, match="Either --calc or --pixel-function must be specified"
+        Exception,
+        match="--pixel-function-arg cannot be use with --dialect=muparser",
     ):
         calc.Run()
 
 
-def test_gdalalg_raster_calc_pixel_function_single_ds_input(calc):
+def test_gdalalg_raster_calc_builtin_with_multiple_inputs(calc):
 
     calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/rgbsmall.tif"]
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["pixel-function"] = "mean"
+    calc["calc"] = "mean"
+    calc["dialect"] = "builtin"
     with pytest.raises(
         Exception,
-        match=r"--pixel-function is only compatible with a single \(generally multi-band\) input dataset",
+        match=r"--dialect=builtin is only compatible with a single \(generally multi-band\) input dataset",
     ):
         calc.Run()
+
+
+def test_gdalalg_raster_calc_complete():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster calc --calc")
+    assert "mean" not in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster calc --dialect=builtin --calc"
+    )
+    assert "mean" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster calc --dialect=builtin --calc=mean --pixel-function-arg"
+    )
+    assert out == "propagateNoData="

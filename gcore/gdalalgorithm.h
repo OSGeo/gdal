@@ -2890,8 +2890,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Add an argument for pixel function arguments */
     GDALInConstructionAlgorithmArg &
-    AddPixelFunctionArgsArg(const GDALAlgorithmArg &pixelFunctionArg,
-                            std::vector<std::string> *pValue,
+    AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
                             const char *helpMessage = nullptr);
 
     /** Add \--progress argument. */
