@@ -33,6 +33,11 @@ class GDALRasterStackAlgorithm /* non final */
 
     explicit GDALRasterStackAlgorithm(bool bStandalone = false);
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 };

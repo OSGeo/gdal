@@ -31,6 +31,11 @@ class GDALVectorReadAlgorithm final : public GDALVectorPipelineStepAlgorithm
 
     GDALVectorReadAlgorithm();
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 };

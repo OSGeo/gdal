@@ -106,6 +106,11 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
 
+    virtual bool CanBeFirstStep() const
+    {
+        return false;
+    }
+
     virtual bool IsNativelyStreamingCompatible() const
     {
         return true;

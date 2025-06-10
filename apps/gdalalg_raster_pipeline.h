@@ -135,6 +135,11 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
     friend class GDALRasterMosaicStackCommonAlgorithm;
 
+    virtual bool CanBeFirstStep() const
+    {
+        return false;
+    }
+
     virtual bool IsNativelyStreamingCompatible() const
     {
         return true;

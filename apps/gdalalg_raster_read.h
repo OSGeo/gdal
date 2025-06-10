@@ -31,6 +31,11 @@ class GDALRasterReadAlgorithm final : public GDALRasterPipelineStepAlgorithm
 
     GDALRasterReadAlgorithm();
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 };

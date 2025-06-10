@@ -72,16 +72,66 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
     virtual GDALArgDatasetValue &GetOutputDataset() = 0;
 
     std::string m_pipeline{};
-
-    std::unique_ptr<StepAlgorithm> GetStepAlg(const std::string &name) const;
-
     GDALAlgorithmRegistry m_stepRegistry{};
     std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
     std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
+    std::unique_ptr<StepAlgorithm> GetStepAlg(const std::string &name) const;
+
+    bool CheckFirstStep(const std::vector<StepAlgorithm *> &steps) const;
+
   private:
     bool RunStep(typename StepAlgorithm::StepRunContext &ctxt) override;
 };
+
+/************************************************************************/
+/*            GDALAbstractPipelineAlgorithm::CheckFirstStep()           */
+/************************************************************************/
+
+template <class StepAlgorithm>
+bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::CheckFirstStep(
+    const std::vector<StepAlgorithm *> &steps) const
+{
+    if (!steps.front()->CanBeFirstStep())
+    {
+        std::vector<std::string> firstStepNames{"read"};
+        for (const auto &stepName : m_stepRegistry.GetNames())
+        {
+            auto alg = GetStepAlg(stepName);
+            if (alg && alg->CanBeFirstStep() && stepName != "read")
+            {
+                firstStepNames.push_back(stepName);
+            }
+        }
+
+        std::string msg = "First step should be ";
+        for (size_t i = 0; i < firstStepNames.size(); ++i)
+        {
+            if (i == firstStepNames.size() - 1)
+                msg += " or ";
+            else if (i > 0)
+                msg += ", ";
+            msg += '\'';
+            msg += firstStepNames[i];
+            msg += '\'';
+        }
+
+        StepAlgorithm::ReportError(CE_Failure, CPLE_AppDefined, "%s",
+                                   msg.c_str());
+        return false;
+    }
+    for (size_t i = 1; i < steps.size() - 1; ++i)
+    {
+        if (steps[i]->CanBeFirstStep())
+        {
+            StepAlgorithm::ReportError(CE_Failure, CPLE_AppDefined,
+                                       "Only first step can be '%s'",
+                                       steps[i]->GetName().c_str());
+            return false;
+        }
+    }
+    return true;
+}
 
 /************************************************************************/
 /*              GDALAbstractPipelineAlgorithm::GetStepAlg()             */

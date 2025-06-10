@@ -32,6 +32,11 @@ class GDALRasterMosaicAlgorithm /* non final */
 
     explicit GDALRasterMosaicAlgorithm(bool bStandalone = false);
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
 

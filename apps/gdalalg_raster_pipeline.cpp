@@ -573,29 +573,12 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         return false;
     }
 
-    if (steps.front().alg->GetName() != GDALRasterReadAlgorithm::NAME &&
-        steps.front().alg->GetName() != GDALRasterMosaicAlgorithm::NAME &&
-        steps.front().alg->GetName() != GDALRasterStackAlgorithm::NAME)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "First step should be '%s', '%s' or '%s'",
-                    GDALRasterReadAlgorithm::NAME,
-                    GDALRasterMosaicAlgorithm::NAME,
-                    GDALRasterStackAlgorithm::NAME);
+    std::vector<GDALRasterPipelineStepAlgorithm *> stepAlgs;
+    for (const auto &step : steps)
+        stepAlgs.push_back(step.alg.get());
+    if (!CheckFirstStep(stepAlgs))
         return false;
-    }
-    for (size_t i = 1; i < steps.size() - 1; ++i)
-    {
-        if (steps[i].alg->GetName() == GDALRasterReadAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALRasterMosaicAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALRasterStackAlgorithm::NAME)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only first step can be '%s'",
-                        steps[i].alg->GetName().c_str());
-            return false;
-        }
-    }
+
     if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME)
     {
         if (helpRequested)

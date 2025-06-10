@@ -33,6 +33,11 @@ class GDALVectorConcatAlgorithm /* non final */
 
     explicit GDALVectorConcatAlgorithm(bool bStandalone = false);
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
