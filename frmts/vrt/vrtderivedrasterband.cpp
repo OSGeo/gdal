@@ -155,8 +155,21 @@ class VRTDerivedRasterBandPrivateData
     std::vector<std::pair<CPLString, CPLString>> m_oFunctionArgs{};
     bool m_bSkipNonContributingSourcesSpecified = false;
     bool m_bSkipNonContributingSources = false;
+    GIntBig m_nAllowedRAMUsage = 0;
 
-    VRTDerivedRasterBandPrivateData() = default;
+    VRTDerivedRasterBandPrivateData()
+        : m_nAllowedRAMUsage(CPLGetUsablePhysicalRAM() / 10 * 4)
+    {
+        // Use only up to 40% of RAM to acquire source bands and generate the
+        // output buffer.
+        // Only for tests now
+        const char *pszMAX_RAM = "VRT_DERIVED_DATASET_ALLOWED_RAM_USAGE";
+        if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
+        {
+            CPL_IGNORE_RET_VAL(
+                CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
+        }
+    }
 
     ~VRTDerivedRasterBandPrivateData();
 };
@@ -1048,6 +1061,21 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             eSrcType = eBufType;
     }
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
+
+    // If acquiring the region of interest in a single time is going
+    // to consume too much RAM, split in halves, and that recursively
+    // until we get below m_nAllowedRAMUsage.
+    if (m_poPrivate->m_nAllowedRAMUsage > 0 && nSources > 0 &&
+        nSrcTypeSize > 0 && nBufXSize == nXSize && nBufYSize == nYSize &&
+        static_cast<GIntBig>(nBufXSize) * nBufYSize >
+            m_poPrivate->m_nAllowedRAMUsage / (nSources * nSrcTypeSize))
+    {
+        CPLErr eErr = SplitRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nPixelSpace, nLineSpace, psExtraArg);
+        if (eErr != CE_Warning)
+            return eErr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Do we have overviews that would be appropriate to satisfy       */

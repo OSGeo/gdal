@@ -1690,3 +1690,38 @@ def test_vrt_pixelfn_sum_optimization(tmp_vsimem, src_type, dst_type, transfer_t
         np.testing.assert_array_equal(dst, np.ones((height, width)) * constant)
     else:
         np.testing.assert_array_equal(dst, constant_res + ar1 + ar2)
+
+
+def test_vrt_split_in_halves(tmp_vsimem):
+
+    width = 1000
+    height = 500
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src1.tif", width, height, 1, gdal.GDT_Byte
+    ) as src:
+        src.WriteRaster(0, 0, width, height, b"\x01" * (width * height))
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src2.tif", width, height, 1, gdal.GDT_Byte
+    ) as src:
+        src.WriteRaster(0, 0, width, height, b"\x02" * (width * height))
+
+    xml = f"""
+    <VRTDataset rasterXSize="{width}" rasterYSize="{height}">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>sum</PixelFunctionType>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src1.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src2.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with gdal.config_option("VRT_DERIVED_DATASET_ALLOWED_RAM_USAGE", "1000"):
+        got = gdal.Open(xml).ReadRaster()
+        assert got == b"\x03" * (width * height)
