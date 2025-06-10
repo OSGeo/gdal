@@ -42,7 +42,8 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
            _("List all features (beware of RAM consumption on large layers)"),
            &m_listFeatures)
         .SetMutualExclusionGroup("summary-features");
-    AddArg("summary", 0, _("List the layer names"), &m_summaryOnly)
+    AddArg("summary", 0, _("List the layer names and the geometry type"),
+           &m_summaryOnly)
         .SetMutualExclusionGroup("summary-features");
     AddArg("sql", 0,
            _("Execute the indicated SQL statement and return the result"),
@@ -89,6 +90,9 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     CPLAssert(m_dataset.GetDatasetRef());
 
     CPLStringList aosOptions;
+
+    aosOptions.AddString("--cli");
+
     if (m_format == "json")
     {
         aosOptions.AddString("-json");
@@ -97,7 +101,6 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     if (m_summaryOnly)
     {
         aosOptions.AddString("-summary");
-        aosOptions.AddString("--quiet");
     }
     else if (m_listFeatures)
     {
@@ -136,6 +139,7 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     GDALVectorInfoOptions *psInfo =
         GDALVectorInfoOptionsNew(aosOptions.List(), nullptr);
+
     char *ret = GDALVectorInfo(GDALDataset::ToHandle(m_dataset.GetDatasetRef()),
                                psInfo);
     GDALVectorInfoOptionsFree(psInfo);

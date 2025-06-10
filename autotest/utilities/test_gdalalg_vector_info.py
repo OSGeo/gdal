@@ -103,6 +103,7 @@ def test_gdalalg_vector_info_summary():
     j = json.loads(output_string)
     assert "features" not in j["layers"][0]
     assert "featureCount" not in j["layers"][0]
+    assert "geometryFields" not in j["layers"][0]
 
     with pytest.raises(RuntimeError, match="mutually exclusive with"):
         info = get_info_alg()
@@ -114,7 +115,17 @@ def test_gdalalg_vector_info_summary():
     output_string = info["output-string"]
     j = json.loads(output_string)
     assert "features" not in j["layers"][0]
-    assert "featureCount" in j["layers"][0]
+    assert "features" not in j["layers"][0]
+    assert "geometryFields" in j["layers"][0]
+
+    # Test text output
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--summary", "--format=text", "data/path.shp"])
+    output_string = info["output-string"]
+    assert (
+        output_string
+        == "INFO: Open of `data/path.shp'\n      using driver `ESRI Shapefile' successful.\n1: path (Line String)\n"
+    )
 
 
 @pytest.mark.require_driver("SQLite")
