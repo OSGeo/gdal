@@ -2905,7 +2905,14 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
     if (m_abyRawThermalImage.size() > 4 &&
         memcmp(m_abyRawThermalImage.data(), "\x89PNG", 4) == 0)
     {
-        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str());
+        // FLIR 16-bit PNG have a wrong endianness.
+        // Cf https://exiftool.org/TagNames/FLIR.html: "Note that most FLIR
+        // cameras using the PNG format seem to write the 16-bit raw image data
+        // in the wrong byte order."
+        const char *const apszPNGOpenOptions[] = {
+            "@BYTE_ORDER_LITTLE_ENDIAN=YES", nullptr};
+        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
+                                         nullptr, apszPNGOpenOptions, nullptr);
         if (poRawDS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid raw thermal image");
