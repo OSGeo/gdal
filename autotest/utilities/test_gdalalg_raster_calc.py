@@ -602,3 +602,54 @@ def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
 
     assert calc["output"].GetDataset().RasterCount == 1
     assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240
+
+
+def test_gdalalg_raster_calc_pixel_function(calc):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["pixel-function"] = "mean"
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).Checksum() == 21559
+
+
+def test_gdalalg_raster_calc_pixel_function_args(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["pixel-function"] = "sum"
+    calc["pixel-function-arg"] = "k=1"
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+    assert ds.GetRasterBand(1).Checksum() == 4455
+
+
+def test_gdalalg_raster_calc_pixel_function_or_calc_required(calc):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    with pytest.raises(
+        Exception, match="Either --calc or --pixel-function must be specified"
+    ):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_pixel_function_single_ds_input(calc):
+
+    calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/rgbsmall.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["pixel-function"] = "mean"
+    with pytest.raises(
+        Exception,
+        match=r"--pixel-function is only compatible with a single \(generally multi-band\) input dataset",
+    ):
+        calc.Run()
