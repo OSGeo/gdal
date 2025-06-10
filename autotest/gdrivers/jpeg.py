@@ -1342,6 +1342,17 @@ def test_jpeg_flir_png():
 
 
 ###############################################################################
+# Open JPEG image with FLIR metadata and raw thermal image as PNG 16 bit
+
+
+def test_jpeg_flir_png_16_bit():
+
+    ds = gdal.Open('JPEG:"data/jpeg/flir/FLIR_16bit.jpg":FLIR_RAW_THERMAL_IMAGE')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (65280, 65280)
+
+
+###############################################################################
 # Open JPEG image with FLIR metadata and raw thermal image as raw
 
 
