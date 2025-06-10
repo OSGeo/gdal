@@ -163,6 +163,8 @@ class TileDBDataset : public GDALPamDataset
     std::unique_ptr<tiledb::Context> m_ctx;
 
   public:
+    ~TileDBDataset() override;
+
     static CPLErr AddFilter(tiledb::Context &ctx,
                             tiledb::FilterList &filterList,
                             const char *pszFilterName, const int level);

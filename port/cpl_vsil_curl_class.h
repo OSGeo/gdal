@@ -809,9 +809,7 @@ class IVSIS3LikeHandle : public VSICurlHandle
     {
     }
 
-    ~IVSIS3LikeHandle() override
-    {
-    }
+    ~IVSIS3LikeHandle() override;
 };
 
 /************************************************************************/
@@ -1017,6 +1015,8 @@ struct VSIDIRWithMissingDirSynthesis : public VSIDIR
     std::vector<std::unique_ptr<VSIDIREntry>> aoEntries{};
 
   protected:
+    ~VSIDIRWithMissingDirSynthesis() override;
+
     std::vector<std::string> m_aosSubpathsStack{};
 
     void SynthetizeMissingDirectories(const std::string &osCurSubdir,

@@ -109,7 +109,7 @@ class TileDBAttributeHolder
                     uint32_t value_num, const void *value);
 
   public:
-    virtual ~TileDBAttributeHolder() = 0;
+    virtual ~TileDBAttributeHolder();
 
     virtual bool IIsWritable() const = 0;
     virtual const std::string &IGetFullName() const = 0;
@@ -562,10 +562,7 @@ class TileDBDimension final : public GDALDimension
     {
     }
 
-    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override
-    {
-        return m_poIndexingVariable;
-    }
+    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
 
     void SetIndexingVariableOneTime(
         const std::shared_ptr<GDALMDArray> &poIndexingVariable)
@@ -617,10 +614,7 @@ class TileDBMultiDimDataset final : public GDALDataset
     {
     }
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override
-    {
-        return m_poRG;
-    }
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
 };
 
 #endif  // TILEDBMULTIDIM_H_INCLUDED

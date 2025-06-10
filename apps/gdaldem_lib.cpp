@@ -183,11 +183,18 @@ struct GDALDEMProcessingOptions
 
 struct AlgorithmParameters
 {
-    virtual ~AlgorithmParameters() = default;
+    AlgorithmParameters() = default;
+    virtual ~AlgorithmParameters();
+    AlgorithmParameters(const AlgorithmParameters &) = default;
+    AlgorithmParameters &operator=(const AlgorithmParameters &) = delete;
+    AlgorithmParameters(AlgorithmParameters &&) = delete;
+    AlgorithmParameters &operator=(AlgorithmParameters &&) = delete;
 
     virtual std::unique_ptr<AlgorithmParameters>
     CreateScaledParameters(double dfXRatio, double dfYRatio) = 0;
 };
+
+AlgorithmParameters::~AlgorithmParameters() = default;
 
 /************************************************************************/
 /*                          ComputeVal()                                */
@@ -819,19 +826,22 @@ struct GDALHillshadeAlgData final : public AlgorithmParameters
     double z_factor = 0;
 
     std::unique_ptr<AlgorithmParameters>
-    CreateScaledParameters(double dfXRatio, double dfYRatio) override
-    {
-        auto newData = std::make_unique<GDALHillshadeAlgData>(*this);
-        newData->inv_ewres_xscale /= dfXRatio;
-        newData->inv_nsres_yscale /= dfYRatio;
-
-        newData->square_z_mul_square_inv_res /= dfXRatio * dfXRatio;
-        newData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
-        newData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
-
-        return newData;
-    }
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override;
 };
+
+std::unique_ptr<AlgorithmParameters>
+GDALHillshadeAlgData::CreateScaledParameters(double dfXRatio, double dfYRatio)
+{
+    auto newData = std::make_unique<GDALHillshadeAlgData>(*this);
+    newData->inv_ewres_xscale /= dfXRatio;
+    newData->inv_nsres_yscale /= dfYRatio;
+
+    newData->square_z_mul_square_inv_res /= dfXRatio * dfXRatio;
+    newData->cos_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
+    newData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res /= dfXRatio;
+
+    return newData;
+}
 
 /* Unoptimized formulas are :
     x = psData->z*((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
@@ -1210,15 +1220,19 @@ struct GDALHillshadeMultiDirectionalAlgData final : public AlgorithmParameters
     double cos225_az_mul_cos_alt_mul_z_mul_127 = 0;
 
     std::unique_ptr<AlgorithmParameters>
-    CreateScaledParameters(double dfXRatio, double dfYRatio) override
-    {
-        auto newData =
-            std::make_unique<GDALHillshadeMultiDirectionalAlgData>(*this);
-        newData->inv_ewres_xscale /= dfXRatio;
-        newData->inv_nsres_yscale /= dfYRatio;
-        return newData;
-    }
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override;
 };
+
+std::unique_ptr<AlgorithmParameters>
+GDALHillshadeMultiDirectionalAlgData::CreateScaledParameters(double dfXRatio,
+                                                             double dfYRatio)
+{
+    auto newData =
+        std::make_unique<GDALHillshadeMultiDirectionalAlgData>(*this);
+    newData->inv_ewres_xscale /= dfXRatio;
+    newData->inv_nsres_yscale /= dfYRatio;
+    return newData;
+}
 
 template <class T, GradientAlg alg>
 static float GDALHillshadeMultiDirectionalAlg(const T *afWin,
@@ -1315,14 +1329,17 @@ struct GDALSlopeAlgData final : public AlgorithmParameters
     int slopeFormat = 0;
 
     std::unique_ptr<AlgorithmParameters>
-    CreateScaledParameters(double dfXRatio, double dfYRatio) override
-    {
-        auto newData = std::make_unique<GDALSlopeAlgData>(*this);
-        newData->ewres_xscale *= dfXRatio;
-        newData->nsres_yscale *= dfYRatio;
-        return newData;
-    }
+    CreateScaledParameters(double dfXRatio, double dfYRatio) override;
 };
+
+std::unique_ptr<AlgorithmParameters>
+GDALSlopeAlgData::CreateScaledParameters(double dfXRatio, double dfYRatio)
+{
+    auto newData = std::make_unique<GDALSlopeAlgData>(*this);
+    newData->ewres_xscale *= dfXRatio;
+    newData->nsres_yscale *= dfYRatio;
+    return newData;
+}
 
 template <class T>
 static float GDALSlopeHornAlg(const T *afWin, float /*fDstNoDataValue*/,
@@ -1384,12 +1401,15 @@ struct GDALAspectAlgData final : public AlgorithmParameters
 {
     bool bAngleAsAzimuth = false;
 
-    std::unique_ptr<AlgorithmParameters> CreateScaledParameters(double,
-                                                                double) override
-    {
-        return std::make_unique<GDALAspectAlgData>(*this);
-    }
+    std::unique_ptr<AlgorithmParameters>
+    CreateScaledParameters(double, double) override;
 };
+
+std::unique_ptr<AlgorithmParameters>
+GDALAspectAlgData::CreateScaledParameters(double, double)
+{
+    return std::make_unique<GDALAspectAlgData>(*this);
+}
 
 template <class T>
 static float GDALAspectAlg(const T *afWin, float fDstNoDataValue,
@@ -4185,9 +4205,9 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     auto argParser =
         GDALDEMAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
 
-    auto tryHandleArgv = [&]()
+    auto tryHandleArgv = [&](const CPLStringList &args)
     {
-        argParser->parse_args_without_binary_name(aosArgv);
+        argParser->parse_args_without_binary_name(args);
         // Validate the parsed options
 
         if (psOptions->nBand <= 0)
@@ -4251,19 +4271,19 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
         {
             try
             {
-                tryHandleArgv();
+                tryHandleArgv(aosArgv);
             }
             catch (std::exception &)
             {
-                CPLStringList aosArgvCopy{aosArgv};
                 bool bSuccess = false;
                 for (const auto &processingMode : processingModes)
                 {
-                    aosArgv = aosArgvCopy;
-                    aosArgv.InsertString(0, processingMode.c_str());
+                    CPLStringList aosArgvTmp{aosArgv};
+                    CPL_IGNORE_RET_VAL(aosArgv);
+                    aosArgvTmp.InsertString(0, processingMode.c_str());
                     try
                     {
-                        tryHandleArgv();
+                        tryHandleArgv(aosArgvTmp);
                         bSuccess = true;
                         break;
                     }
@@ -4290,7 +4310,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
         }
         else
         {
-            tryHandleArgv();
+            tryHandleArgv(aosArgv);
         }
     }
     catch (const std::exception &err)

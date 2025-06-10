@@ -69,11 +69,11 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
         if (poTMS && !poTMS->hasVariableMatrixWidth() &&
             oSRS_TMS.SetFromUserInput(poTMS->crs().c_str()) == OGRERR_NONE)
         {
-            const std::string identifier = scheme == "GoogleMapsCompatible"
-                                               ? "WebMercatorQuad"
-                                               : poTMS->identifier();
+            std::string identifier = scheme == "GoogleMapsCompatible"
+                                         ? "WebMercatorQuad"
+                                         : poTMS->identifier();
             m_mapTileMatrixIdentifierToScheme[identifier] = scheme;
-            tilingSchemes.push_back(identifier);
+            tilingSchemes.push_back(std::move(identifier));
         }
     }
     AddArg("tiling-scheme", 0, _("Tiling scheme"), &m_tilingScheme)

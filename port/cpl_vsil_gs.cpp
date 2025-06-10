@@ -26,6 +26,11 @@
 
 #include "cpl_google_cloud.h"
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 #ifndef HAVE_CURL
 
 void VSIInstallGSFileHandler(void)
@@ -84,6 +89,12 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
     VSIVirtualHandleUniquePtr
     CreateWriteHandle(const char *pszFilename,
                       CSLConstList papszOptions) override;
+
+    GIntBig GetDiskFreeSpace(const char * /* pszDirname */) override
+    {
+        // There is no limit per bucket, but a 5 TiB limit per object.
+        return static_cast<GIntBig>(5) * 1024 * 1024 * 1024 * 1024;
+    }
 
   public:
     explicit VSIGSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)

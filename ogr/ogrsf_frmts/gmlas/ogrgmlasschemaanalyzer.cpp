@@ -899,7 +899,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
             // namespace URI initially
             if (osURI.empty())
                 aoXSDs[i].first = osGrammarURI;
-            aoNamespaces.push_back(osGrammarURI);
+            aoNamespaces.push_back(std::move(osGrammarURI));
         }
     }
 
@@ -1110,7 +1110,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
                 XSComplexTypeDefinition *poCT = IsEltCompatibleOfFC(poEltDecl);
                 if (!poEltDecl->getAbstract() && poCT != nullptr)
                 {
-                    const CPLString osXPath(
+                    CPLString osXPath(
                         MakeXPath(transcode(poEltDecl->getNamespace()),
                                   transcode(poEltDecl->getName())));
                     if (!IsIgnoredXPath(osXPath))
@@ -1138,7 +1138,8 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
                             {
                                 m_oSetEltsForTopClass.insert(poEltDecl);
                                 oVectorEltsForTopClass.push_back(poEltDecl);
-                                aoSetXPathEltsForTopClass.insert(osXPath);
+                                aoSetXPathEltsForTopClass.insert(
+                                    std::move(osXPath));
                             }
                         }
                         else
@@ -1272,14 +1273,14 @@ static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
             break;
         poTypeDef = poNewTypeDef;
     }
-    const CPLString osDoc2 = GetAnnotationDoc(list);
+    CPLString osDoc2 = GetAnnotationDoc(list);
     if (!osDoc.empty() && !osDoc2.empty())
     {
         osDoc += "\n";
         osDoc += osDoc2;
     }
     else if (!osDoc2.empty())
-        osDoc = osDoc2;
+        osDoc = std::move(osDoc2);
     return osDoc;
 }
 
@@ -1368,7 +1369,7 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
         if (!LaunderFieldNames(oClass))
             return false;
 
-        m_aoClasses.push_back(oClass);
+        m_aoClasses.push_back(std::move(oClass));
         return true;
     }
     return false;
@@ -1936,7 +1937,7 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
                 BuildJunctionTableXPath(osElementXPath, osSubEltXPath));
             oJunctionTable.SetParentXPath(oClass.GetXPath());
             oJunctionTable.SetChildXPath(osSubEltXPath);
-            m_aoClasses.push_back(oJunctionTable);
+            m_aoClasses.push_back(std::move(oJunctionTable));
 
             // Add an abstract field
             GMLASField oField;
@@ -2068,7 +2069,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             XSTypeDefinition *poTypeDef = poElt->getTypeDefinition();
             const CPLString osEltName(transcode(poElt->getName()));
             const CPLString osEltNS(transcode(poElt->getNamespace()));
-            const CPLString osXPath(MakeXPath(osEltNS, osEltName));
+            CPLString osXPath(MakeXPath(osEltNS, osEltName));
             const CPLString osFullXPath(osParentXPath + "/" + osXPath);
 
 #ifdef DEBUG_SUPER_VERBOSE
@@ -2245,7 +2246,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 #endif
                                 m_oSetEltsForTopClass.insert(poElt);
                                 oVectorEltsForTopClass.push_back(poElt);
-                                aoSetXPathEltsForTopClass.insert(osXPath);
+                                aoSetXPathEltsForTopClass.insert(
+                                    std::move(osXPath));
                             }
                         }
                     }
@@ -3020,7 +3022,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         }
                     }
 
-                    aoFields.push_back(oField);
+                    aoFields.push_back(std::move(oField));
                 }
 
                 // Deal with anyAttributes (or any element that also imply it)
@@ -3042,7 +3044,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     oField.SetDocumentation(
                         GetAnnotationDoc(poAttrWildcard->getAnnotation()));
 
-                    aoFields.push_back(oField);
+                    aoFields.push_back(std::move(oField));
                 }
 
                 XSSimpleTypeDefinition *poST = poEltCT->getSimpleType();
@@ -3100,7 +3102,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oFieldNil.SetType(GMLAS_FT_BOOLEAN, "boolean");
                             oFieldNil.SetMinOccurs(0);
                             oFieldNil.SetMaxOccurs(1);
-                            aoFields.push_back(oFieldNil);
+                            aoFields.push_back(std::move(oFieldNil));
                         }
                     }
                     oField.SetXPath(osElementXPath);
@@ -3142,7 +3144,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     oField.SetXPath(osElementXPath);
                     oField.SetDocumentation(GetAnnotationDoc(poElt));
 
-                    aoFields.push_back(oField);
+                    aoFields.push_back(std::move(oField));
                 }
 
                 // Is it an element that we already visited ? (cycle)
@@ -3257,7 +3259,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                       "boolean");
                                     oFieldNil.SetMinOccurs(0);
                                     oFieldNil.SetMaxOccurs(1);
-                                    aoFields.push_back(oFieldNil);
+                                    aoFields.push_back(std::move(oFieldNil));
                                 }
 
                                 GMLASField oField;
@@ -3276,7 +3278,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                     GMLASField::
                                         PATH_TO_CHILD_ELEMENT_WITH_LINK);
                                 oField.SetRelatedClassXPath(osTargetElement);
-                                aoFields.push_back(oField);
+                                aoFields.push_back(std::move(oField));
                             }
                         }
                         else if (poTargetElt != nullptr &&
@@ -3296,7 +3298,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oFieldNil.SetType(GMLAS_FT_BOOLEAN, "boolean");
                                 oFieldNil.SetMinOccurs(0);
                                 oFieldNil.SetMaxOccurs(1);
-                                aoFields.push_back(oFieldNil);
+                                aoFields.push_back(std::move(oFieldNil));
                             }
 
                             // e.g importing
@@ -3352,7 +3354,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oField.SetMinOccurs(0);
                                 oField.SetNotNullable(false);
                             }
-                            aoFields.push_back(oField);
+                            aoFields.push_back(std::move(oField));
                         }
 
                         aoNestedClasses = oNestedClass.GetNestedClasses();

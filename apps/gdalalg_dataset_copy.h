@@ -56,6 +56,7 @@ class GDALDatasetCopyAlgorithm final
     }
 
     GDALDatasetCopyAlgorithm();
+    ~GDALDatasetCopyAlgorithm() override;
 };
 
 //! @endcond

@@ -1312,8 +1312,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
         if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
         {
             ++i;
-            const std::string s = papszArgv[i];
-            psOptions->osNoData = s;
+            psOptions->osNoData = papszArgv[i];
             psOptions->bCreateOutput = true;
         }
 

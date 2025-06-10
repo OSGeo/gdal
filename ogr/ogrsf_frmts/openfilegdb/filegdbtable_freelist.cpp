@@ -270,6 +270,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
     }
+    assert(iSlot + 1 < static_cast<int>(CPL_ARRAYSIZE(anHoleSizes)));
     assert(iSlot < 100);
 
     // Read the last page index of the identified slot

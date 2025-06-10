@@ -51,8 +51,21 @@
 GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
     const std::string &name, const std::string &description,
     const std::string &helpURL, bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          name, description, helpURL,
+          ConstructorOptions().SetStandaloneStep(standaloneStep))
+{
+}
+
+/************************************************************************/
+/*  GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm()  */
+/************************************************************************/
+
+GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL, const ConstructorOptions &options)
     : GDALAlgorithm(name, description, helpURL),
-      m_standaloneStep(standaloneStep)
+      m_standaloneStep(options.standaloneStep), m_constructorOptions(options)
 {
     if (m_standaloneStep)
     {
@@ -105,15 +118,30 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
         .SetHiddenForCLI(hiddenForCLI);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
-                        /* positionalAndRequired = */ !hiddenForCLI)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+    auto &outputDatasetArg =
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
+                            /* positionalAndRequired = */ false)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+    if (!hiddenForCLI)
+        outputDatasetArg.SetPositional();
+    if (!hiddenForCLI && m_constructorOptions.outputDatasetRequired)
+        outputDatasetArg.SetRequired();
+    if (!m_constructorOptions.outputDatasetMutualExclusionGroup.empty())
+    {
+        outputDatasetArg.SetMutualExclusionGroup(
+            m_constructorOptions.outputDatasetMutualExclusionGroup);
+    }
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
     AddLayerCreationOptionsArg(&m_layerCreationOptions)
         .SetHiddenForCLI(hiddenForCLI);
     AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-    AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
+    auto &updateArg = AddUpdateArg(&m_update).SetHiddenForCLI(hiddenForCLI);
+    if (!m_constructorOptions.updateMutualExclusionGroup.empty())
+    {
+        updateArg.SetMutualExclusionGroup(
+            m_constructorOptions.updateMutualExclusionGroup);
+    }
     AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
     AddAppendLayerArg(&m_appendLayer).SetHiddenForCLI(hiddenForCLI);
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
@@ -165,10 +193,14 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         bool ret = false;
         if (readAlg.Run())
         {
+            const bool bOutputSpecified =
+                GetArg(GDAL_ARG_NAME_OUTPUT)->IsExplicitlySet();
+
             m_inputDataset.clear();
             m_inputDataset.resize(1);
             m_inputDataset[0].Set(readAlg.m_outputDataset.GetDatasetRef());
-            m_outputDataset.Set(nullptr);
+            if (bOutputSpecified)
+                m_outputDataset.Set(nullptr);
 
             std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
                 pScaledData(nullptr, GDALDestroyScaledProgress);
@@ -191,7 +223,7 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 stepCtxt.m_poNextUsableStep = &writeAlg;
             if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
-                if (bIsStreaming || bCanHandleNextStep)
+                if (bIsStreaming || bCanHandleNextStep || !bOutputSpecified)
                 {
                     ret = true;
                 }
@@ -420,7 +452,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
-            curStep.alg->SetCallPath({algName});
+            curStep.alg->SetCallPath({std::move(algName)});
         }
         else
         {
@@ -448,10 +480,10 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
                 continue;
             }
 #endif
-            std::string value = arg;
 
 // #define GDAL_PIPELINE_NATURAL_LANGUAGE
 #ifdef GDAL_PIPELINE_NATURAL_LANGUAGE
+            std::string &value = arg;
             // gdal vector pipeline "read [from] poly.gpkg, reproject [from EPSG:4326] to EPSG:32632 and write to out.gpkg with overwriting"
             if (value == "and")
             {
@@ -494,7 +526,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 #endif
 
             {
-                curStep.args.push_back(value);
+                curStep.args.push_back(arg);
             }
         }
     }
@@ -939,6 +971,15 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
         *ppoBelongingLayer = m_belongingLayer;
     m_idxInPendingFeatures = 1;
     return poFeature;
+}
+
+/************************************************************************/
+/*            GDALVectorPipelinePassthroughLayer::GetLayerDefn()        */
+/************************************************************************/
+
+OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn()
+{
+    return m_srcLayer.GetLayerDefn();
 }
 
 /************************************************************************/

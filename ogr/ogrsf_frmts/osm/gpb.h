@@ -24,6 +24,11 @@
 #define CHECK_OOB 1
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 class GPBException : public std::exception
 {
     std::string m_osMessage;
@@ -39,6 +44,10 @@ class GPBException : public std::exception
         return m_osMessage.c_str();
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #define THROW_GPB_EXCEPTION throw GPBException(__LINE__)
 

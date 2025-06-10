@@ -544,7 +544,10 @@ class KmlSuperOverlayDummyDataset final : public GDALDataset
 {
   public:
     KmlSuperOverlayDummyDataset() = default;
+    ~KmlSuperOverlayDummyDataset() override;
 };
+
+KmlSuperOverlayDummyDataset::~KmlSuperOverlayDummyDataset() = default;
 
 static GDALDataset *
 KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
@@ -730,7 +733,6 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                               pow(2.0, (maxzoom - zoom)));
     }
 
-    std::string tmpFileName;
     std::vector<std::string> fileVector;
     int nRet;
 
@@ -740,11 +742,12 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     if (isKmz)
     {
-        tmpFileName = CPLFormFilenameSafe(outDir, "doc.kml", nullptr);
+        std::string tmpFileName =
+            CPLFormFilenameSafe(outDir, "doc.kml", nullptr);
         nRet = GenerateRootKml(tmpFileName.c_str(), pszFilename, north, south,
                                east, west, static_cast<int>(tilexsize),
                                pszOverlayName, pszOverlayDescription);
-        fileVector.push_back(tmpFileName);
+        fileVector.push_back(std::move(tmpFileName));
     }
     else
     {
@@ -2465,9 +2468,13 @@ class KmlSingleOverlayRasterDataset final : public VRTDataset
     {
     }
 
+    ~KmlSingleOverlayRasterDataset() override;
+
     static GDALDataset *Open(const char *pszFilename,
                              const CPLString &osFilename, CPLXMLNode *psRoot);
 };
+
+KmlSingleOverlayRasterDataset::~KmlSingleOverlayRasterDataset() = default;
 
 /************************************************************************/
 /*                                Open()                                */

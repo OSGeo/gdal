@@ -14,6 +14,8 @@
 #include "ogr_p.h"
 #include "ogrlibjsonutils.h"
 
+OGRAmigoCloudGeomFieldDefn::~OGRAmigoCloudGeomFieldDefn() = default;
+
 /************************************************************************/
 /*                         OGRAmigoCloudLayer()                            */
 /************************************************************************/

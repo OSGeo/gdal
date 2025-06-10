@@ -135,10 +135,7 @@ class ECRGTOCSubDataset final : public VRTDataset
         poDriver = GDALDriver::FromHandle(GDALGetDriverByName("ECRGTOC"));
     }
 
-    ~ECRGTOCSubDataset()
-    {
-        CSLDestroy(papszFileList);
-    }
+    ~ECRGTOCSubDataset() override;
 
     virtual char **GetFileList() override
     {
@@ -152,6 +149,11 @@ class ECRGTOCSubDataset final : public VRTDataset
           double dfGlobalMinY, double dfGlobalMaxX, double dfGlobalMaxY,
           double dfGlobalPixelXSize, double dfGlobalPixelYSize);
 };
+
+ECRGTOCSubDataset::~ECRGTOCSubDataset()
+{
+    CSLDestroy(papszFileList);
+}
 
 /************************************************************************/
 /*                           LaunderString()                            */

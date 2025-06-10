@@ -1,6 +1,5 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
-
 find_package(GTest 1.10.0)
 if(GTest_FOUND)
   option(USE_EXTERNAL_GTEST "Compile against external GTest" ON)
@@ -116,6 +115,7 @@ gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 target_compile_definitions(gdal_unit_test PRIVATE ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS)
+target_compile_definitions(gdal_unit_test PRIVATE CPL_DISABLE_WARN_DEPRECATED)
 target_include_directories(
   gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (GDAL_USE_SQLITE3)

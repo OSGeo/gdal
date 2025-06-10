@@ -84,4 +84,7 @@ bool GDALRasterUnscaleAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterUnscaleAlgorithmStandalone::~GDALRasterUnscaleAlgorithmStandalone() =
+    default;
+
 //! @endcond

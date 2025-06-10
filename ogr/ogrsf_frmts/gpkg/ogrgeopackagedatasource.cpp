@@ -1241,7 +1241,7 @@ GDALGeoPackageDataset::GetUnknownExtensionsTableSpecific()
                 oDesc.osDefinition = pszDefinition;
                 oDesc.osScope = pszScope;
                 m_oMapTableToExtensions[CPLString(pszTableName).toupper()]
-                    .push_back(oDesc);
+                    .push_back(std::move(oDesc));
             }
         }
     }
@@ -1690,16 +1690,17 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                 // "table_name (geom_col_name)"
                 // The way we handle that might change in the future (e.g
                 // could be a single layer with multiple geometry columns)
-                const std::string osLayerNameWithGeomColName =
+                std::string osLayerNameWithGeomColName =
                     pszGeomColName ? std::string(pszTableName) + " (" +
                                          pszGeomColName + ')'
                                    : std::string(pszTableName);
                 if (cpl::contains(oExistingLayers, osLayerNameWithGeomColName))
                     continue;
                 oExistingLayers.insert(osLayerNameWithGeomColName);
-                const std::string osLayerName = bTableHasSeveralGeomColumns
-                                                    ? osLayerNameWithGeomColName
-                                                    : std::string(pszTableName);
+                const std::string osLayerName =
+                    bTableHasSeveralGeomColumns
+                        ? std::move(osLayerNameWithGeomColName)
+                        : std::string(pszTableName);
                 auto poLayer = std::make_unique<OGRGeoPackageTableLayer>(
                     this, osLayerName.c_str());
                 bool bHasZ = pszZ && atoi(pszZ) > 0;
@@ -2413,9 +2414,11 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     // Compute shift between GDAL origin and TileMatrixSet origin
     const double dfShiftXPixels =
         (m_adfGeoTransform[0] - m_dfTMSMinX) / m_adfGeoTransform[1];
-    if (dfShiftXPixels / nTileWidth <= INT_MIN ||
-        dfShiftXPixels / nTileWidth > INT_MAX)
+    if (!(dfShiftXPixels / nTileWidth >= INT_MIN &&
+          dfShiftXPixels / nTileWidth < INT_MAX))
+    {
         return false;
+    }
     const int64_t nShiftXPixels =
         static_cast<int64_t>(floor(0.5 + dfShiftXPixels));
     m_nShiftXTiles = static_cast<int>(nShiftXPixels / nTileWidth);
@@ -2427,9 +2430,11 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
 
     const double dfShiftYPixels =
         (m_adfGeoTransform[3] - m_dfTMSMaxY) / m_adfGeoTransform[5];
-    if (dfShiftYPixels / nTileHeight <= INT_MIN ||
-        dfShiftYPixels / nTileHeight > INT_MAX)
+    if (!(dfShiftYPixels / nTileHeight >= INT_MIN &&
+          dfShiftYPixels / nTileHeight < INT_MAX))
+    {
         return false;
+    }
     const int64_t nShiftYPixels =
         static_cast<int64_t>(floor(0.5 + dfShiftYPixels));
     m_nShiftYTiles = static_cast<int>(nShiftYPixels / nTileHeight);
@@ -3702,9 +3707,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     fabs(m_adfGeoTransform[5]) * nOvFactor;
                 int nTileWidth, nTileHeight;
                 GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-                int nTileMatrixWidth = (nOvXSize + nTileWidth - 1) / nTileWidth;
-                int nTileMatrixHeight =
-                    (nOvYSize + nTileHeight - 1) / nTileHeight;
+                int nTileMatrixWidth = DIV_ROUND_UP(nOvXSize, nTileWidth);
+                int nTileMatrixHeight = DIV_ROUND_UP(nOvYSize, nTileHeight);
                 pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_tile_matrix "
                     "(table_name,zoom_level,matrix_width,matrix_height,tile_"
@@ -9101,7 +9105,7 @@ static CPLString GPKG_GDAL_GetMemFileFromBlob(sqlite3_value **argv)
     int nBytes = sqlite3_value_bytes(argv[0]);
     const GByte *pabyBLOB =
         reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
-    const CPLString osMemFileName(
+    CPLString osMemFileName(
         VSIMemGenerateHiddenFilename("GPKG_GDAL_GetMemFileFromBlob"));
     VSILFILE *fp = VSIFileFromMemBuffer(
         osMemFileName.c_str(), const_cast<GByte *>(pabyBLOB), nBytes, FALSE);

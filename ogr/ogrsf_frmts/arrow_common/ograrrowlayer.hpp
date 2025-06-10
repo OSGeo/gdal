@@ -30,6 +30,11 @@
 
 #define SWQ_ISNOTNULL (-SWQ_ISNULL)
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /************************************************************************/
 /*                         OGRArrowLayer()                              */
 /************************************************************************/
@@ -636,7 +641,7 @@ inline void OGRArrowLayer::CreateFieldFromSchema(
     {
         const auto dictionaryType =
             std::static_pointer_cast<arrow::DictionaryType>(field->type());
-        const auto indexType = dictionaryType->index_type();
+        auto indexType = dictionaryType->index_type();
         if (dictionaryType->value_type()->id() == arrow::Type::STRING &&
             IsIntegerArrowType(indexType->id()))
         {
@@ -644,7 +649,7 @@ inline void OGRArrowLayer::CreateFieldFromSchema(
             m_poArrowDS->RegisterDomainName(osDomainName,
                                             m_poFeatureDefn->GetFieldCount());
             oField.SetDomainName(osDomainName);
-            type = indexType;
+            type = std::move(indexType);
         }
         else
         {
@@ -6168,5 +6173,9 @@ inline int OGRArrowLayer::TestCapability(const char *pszCap)
 
     return false;
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif /* OGARROWLAYER_HPP_INCLUDED */

@@ -224,8 +224,7 @@ OGRLayer *OGRProxiedLayer::GetUnderlyingLayer()
     {
         //  If the open fails, poUnderlyingLayer will still be a nullptr
         // and the user will be warned by the open call.
-        // coverity[check_return]
-        OpenUnderlyingLayer();
+        CPL_IGNORE_RET_VAL(OpenUnderlyingLayer());
     }
     return poUnderlyingLayer;
 }

@@ -57,7 +57,18 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
         .SetRemoveSQLCommentsEnabled();
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddArg(GDAL_ARG_NAME_UPDATE, 0, _("Open the dataset in update mode"),
-           &m_update);
+           &m_update)
+        .AddAction(
+            [this]()
+            {
+                if (m_update)
+                {
+                    ReportError(CE_Warning, CPLE_AppDefined,
+                                "Option 'update' is deprecated since GDAL 3.12 "
+                                "and will be removed in GDAL 3.13. Use 'gdal "
+                                "vector sql --update' instead.");
+                }
+            });
     AddOutputStringArg(&m_output);
     AddArg("stdout", 0,
            _("Directly output on stdout (format=text mode only). If enabled, "

@@ -3176,12 +3176,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             // If we already have a 1x1 overview and this new one would result
             // in it too, then don't create it.
             if (poODS->GetRasterXSize() == 1 && poODS->GetRasterYSize() == 1 &&
-                (GetRasterXSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1 &&
-                (GetRasterYSize() + panOverviewList[i] - 1) /
-                        panOverviewList[i] ==
-                    1)
+                DIV_ROUND_UP(GetRasterXSize(), panOverviewList[i]) == 1 &&
+                DIV_ROUND_UP(GetRasterYSize(), panOverviewList[i]) == 1)
             {
                 abRequireNewOverview[i] = false;
                 break;
@@ -3209,10 +3205,10 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 m_bWriteKnownIncompatibleEdition = true;
             }
 
-            const int nOXSize = (GetRasterXSize() + panOverviewList[i] - 1) /
-                                panOverviewList[i];
-            const int nOYSize = (GetRasterYSize() + panOverviewList[i] - 1) /
-                                panOverviewList[i];
+            const int nOXSize =
+                DIV_ROUND_UP(GetRasterXSize(), panOverviewList[i]);
+            const int nOYSize =
+                DIV_ROUND_UP(GetRasterYSize(), panOverviewList[i]);
 
             const toff_t nOverviewOffset = GTIFFWriteDirectory(
                 m_hTIFF, FILETYPE_REDUCEDIMAGE, nOXSize, nOYSize,
@@ -5539,25 +5535,36 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Check free space (only for big, non sparse, uncompressed)       */
+    /*      Check free space (only for big, non sparse)                     */
     /* -------------------------------------------------------------------- */
-    if (l_nCompression == COMPRESSION_NONE && dfUncompressedImageSize >= 1e9 &&
+    const double dfLikelyFloorOfFinalSize =
+        l_nCompression == COMPRESSION_NONE
+            ? dfUncompressedImageSize
+            :
+            /* For compressed, we target 1% as the most optimistic reduction factor! */
+            0.01 * dfUncompressedImageSize;
+    if (dfLikelyFloorOfFinalSize >= 1e9 &&
         !CPLFetchBool(papszParamList, "SPARSE_OK", false) &&
         osOriFilename != "/vsistdout/" &&
         osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")))
     {
-        GIntBig nFreeDiskSpace =
+        const GIntBig nFreeDiskSpace =
             VSIGetDiskFreeSpace(CPLGetDirnameSafe(pszFilename).c_str());
-        if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfUncompressedImageSize)
+        if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfLikelyFloorOfFinalSize)
         {
-            ReportError(pszFilename, CE_Failure, CPLE_FileIO,
-                        "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                        "whereas " CPL_FRMT_GIB " are at least necessary. "
-                        "You can disable this check by defining the "
-                        "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
-                        nFreeDiskSpace,
-                        static_cast<GIntBig>(dfUncompressedImageSize));
+            ReportError(
+                pszFilename, CE_Failure, CPLE_FileIO,
+                "Free disk space available is %s, "
+                "whereas %s are %s necessary. "
+                "You can disable this check by defining the "
+                "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
+                CPLFormatReadableFileSize(static_cast<uint64_t>(nFreeDiskSpace))
+                    .c_str(),
+                CPLFormatReadableFileSize(dfLikelyFloorOfFinalSize).c_str(),
+                l_nCompression == COMPRESSION_NONE
+                    ? "at least"
+                    : "likely at least (probably more)");
             return nullptr;
         }
     }

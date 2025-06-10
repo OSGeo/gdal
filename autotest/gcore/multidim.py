@@ -652,7 +652,19 @@ def test_multidim_asclassicsubdataset_band_metadata():
         ar.AsClassicDataset(2, 1, rg, ["BAND_METADATA=false"])
 
     band_metadata = [{"item_name": "name"}]
-    with pytest.raises(Exception, match=r"BAND_METADATA\[0\]\[\"array\"\] is missing"):
+    with pytest.raises(
+        Exception,
+        match=r"BAND_METADATA\[0\]\[\"array\"\] or BAND_METADATA\[0\]\[\"attribute\"\] is missing",
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = [{"array": "foo", "attribute": "bar"}]
+    with pytest.raises(
+        Exception,
+        match=r"BAND_METADATA\[0\]\[\"array\"\] and BAND_METADATA\[0\]\[\"attribute\"\] are mutually exclusive",
+    ):
         ds = ar.AsClassicDataset(
             2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
         )
@@ -723,7 +735,7 @@ def test_multidim_asclassicsubdataset_band_metadata():
         )
 
     band_metadata = [{"array": "/aux_var", "item_name": "AUX_VAR", "item_value": "%f"}]
-    with pytest.raises(Exception, match="Data type of other array is not numeric"):
+    with pytest.raises(Exception, match="Data type of aux_var array is not numeric"):
         ds = ar.AsClassicDataset(
             2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
         )
@@ -796,6 +808,126 @@ def test_multidim_asclassicsubdataset_band_metadata():
         "AUX_VAR": "bar",
     }
 
+    band_metadata = [{"attribute": "foo", "item_name": "name"}]
+    with pytest.raises(Exception, match="Attribute foo cannot be found"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = [{"attribute": "/foo", "item_name": "name"}]
+    with pytest.raises(Exception, match="Attribute /foo cannot be found"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    ar.CreateAttribute(
+        "2D_attr", [2, 3], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = [{"attribute": "2D_attr", "item_name": "name"}]
+    with pytest.raises(Exception, match="Attribute 2D_attr is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = [{"attribute": "/ar/2D_attr", "item_name": "name"}]
+    with pytest.raises(Exception, match="Attribute /ar/2D_attr is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    rg.CreateAttribute(
+        "2D_attr_on_rg", [2, 3], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = [{"attribute": "/2D_attr_on_rg", "item_name": "name"}]
+    with pytest.raises(Exception, match="Attribute /2D_attr_on_rg is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    subg = rg.CreateGroup("subgroup")
+    subg.CreateAttribute(
+        "2D_attr_on_subg", [2, 3], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = [{"attribute": "/subgroup/2D_attr_on_subg", "item_name": "name"}]
+    with pytest.raises(
+        Exception, match="Attribute /subgroup/2D_attr_on_subg is not a 1D array"
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    ar.CreateAttribute(
+        "non_matching_attr", [100], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = [{"attribute": "non_matching_attr", "item_name": "name"}]
+    with pytest.raises(
+        Exception,
+        match="No dimension of ar has the same size as attribute non_matching_attr",
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    dimOther2 = rg.CreateDimension("other2", None, None, 2)
+    ar2 = rg.CreateMDArray(
+        "ar2",
+        [dimOther2, dimOther, dimY, dimX],
+        gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    )
+    ar2.CreateAttribute(
+        "attr", [dimOther.GetSize()], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    units = ar2.CreateAttribute("units", [], gdal.ExtendedDataType.CreateString())
+    units.Write("my_units")
+    band_metadata = [{"attribute": "attr", "item_name": "name"}]
+    with pytest.raises(
+        Exception,
+        match="Several dimensions of ar2 have the same size as attribute attr. Cannot infer which one to bind to!",
+    ):
+        ds = ar2.AsClassicDataset(
+            3, 2, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    attr = ar.CreateAttribute(
+        "attr", [dimOther.GetSize()], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    attr.Write([123, 456])
+
+    band_metadata = [
+        {
+            "attribute": "attr",
+            "item_name": "val_attr",
+            "item_value": "%.0f ${/ar2/units}",
+        }
+    ]
+    ds = ar.AsClassicDataset(2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)])
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "DIM_other_INDEX": "0",
+        "DIM_other_VALUE": "10.5",
+        "val_attr": "123 my_units",
+    }
+    assert ds.GetRasterBand(2).GetMetadata() == {
+        "DIM_other_INDEX": "1",
+        "DIM_other_VALUE": "20",
+        "val_attr": "456 my_units",
+    }
+
+    band_metadata = [
+        {
+            "attribute": "attr",
+            "item_name": "name",
+            "item_value": "%.0f ${/i/do/not/exist}",
+        }
+    ]
+    with pytest.raises(Exception, match="/i/do/not/exist is not an attribute"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_METADATA=" + json.dumps(band_metadata)]
+        )
+
 
 @gdaltest.enable_exceptions()
 def test_multidim_asclassicsubdataset_band_imagery_metadata():
@@ -850,7 +982,16 @@ def test_multidim_asclassicsubdataset_band_imagery_metadata():
     band_metadata = {"CENTRAL_WAVELENGTH_UM": {}}
     with pytest.raises(
         Exception,
-        match=r'BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["array"\] is missing',
+        match=r'BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["array"\] or BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["attribute"\] is missing',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "foo", "attribute": "bar"}}
+    with pytest.raises(
+        Exception,
+        match=r'BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["array"\] and BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["attribute"\] are mutually exclusive',
     ):
         ds = ar.AsClassicDataset(
             2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
@@ -924,6 +1065,85 @@ def test_multidim_asclassicsubdataset_band_imagery_metadata():
     assert ds.GetRasterBand(2).GetMetadata("IMAGERY") == {
         "CENTRAL_WAVELENGTH_UM": "0.02",
         "FWHM_UM": "4.5",
+    }
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "i_do_not_exist"}}
+    with pytest.raises(Exception, match="Attribute i_do_not_exist cannot be found"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "/i/do/not/exist"}}
+    with pytest.raises(Exception, match="Attribute /i/do/not/exist cannot be found"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    ar.CreateAttribute(
+        "2D_attr", [2, 3], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "2D_attr"}}
+    with pytest.raises(Exception, match="Attribute 2D_attr is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "/ar/2D_attr"}}
+    with pytest.raises(Exception, match="Attribute /ar/2D_attr is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    ar.CreateAttribute(
+        "non_matching_attr", [100], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "non_matching_attr"}}
+    with pytest.raises(
+        Exception,
+        match="No dimension of ar has the same size as attribute non_matching_attr",
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    dimOther2 = rg.CreateDimension("other2", None, None, 2)
+    ar2 = rg.CreateMDArray(
+        "ar2",
+        [dimOther2, dimOther, dimY, dimX],
+        gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    )
+    ar2.CreateAttribute(
+        "attr", [dimOther.GetSize()], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    units = ar2.CreateAttribute("units", [], gdal.ExtendedDataType.CreateString())
+    units.Write("micrometer")
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"attribute": "attr"}}
+    with pytest.raises(
+        Exception,
+        match="Several dimensions of ar2 have the same size as attribute attr. Cannot infer which one to bind to!",
+    ):
+        ds = ar2.AsClassicDataset(
+            3, 2, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    attr = ar.CreateAttribute(
+        "attr", [dimOther.GetSize()], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    attr.Write([123, 456])
+    band_metadata = {
+        "CENTRAL_WAVELENGTH_UM": {"attribute": "attr", "unit": "${/ar2/units}"}
+    }
+    ds = ar.AsClassicDataset(
+        2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+    )
+    assert ds.GetRasterBand(1).GetMetadata("IMAGERY") == {
+        "CENTRAL_WAVELENGTH_UM": "123",
+    }
+    assert ds.GetRasterBand(2).GetMetadata("IMAGERY") == {
+        "CENTRAL_WAVELENGTH_UM": "456",
     }
 
 

@@ -182,7 +182,7 @@ static void AddInterestLayersForDSName(const CPLString &osDSName,
     oDSToBeOpened.nPID = CPLGetPID();
     oDSToBeOpened.osDSName = osDSName;
     oDSToBeOpened.osInterestLayers = osInterestLayers;
-    oListDSToBeOpened.push_back(oDSToBeOpened);
+    oListDSToBeOpened.push_back(std::move(oDSToBeOpened));
 }
 
 /************************************************************************/
@@ -1466,7 +1466,7 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
     if (pnTags)
         *pnTags = nTags;
 
-    // TODO: Some additional safety checks.
+    assert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
     for (unsigned int iTag = 0; iTag < nTags; iTag++)
     {
         const int nK = ReadVarInt32(&pabyPtr);
@@ -2629,7 +2629,6 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int nBlobSize = sqlite3_column_bytes(m_pahSelectWayStmt[0], 1);
             const void *blob = sqlite3_column_blob(m_pahSelectWayStmt[0], 1);
 
-            // coverity[tainted_data]
             UncompressWay(nBlobSize, static_cast<const GByte *>(blob), nullptr,
                           m_asLonLatCache, &nTags, pasTags, &sInfo);
             CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
@@ -4363,15 +4362,17 @@ class OGROSMResultLayerDecorator final : public OGRLayerDecorator
     {
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
-    {
-        /* When we run GetFeatureCount() with SQLite SQL dialect, */
-        /* the OSM dataset will be re-opened. Make sure that it is */
-        /* re-opened with the same interest layers */
-        AddInterestLayersForDSName(osDSName, osInterestLayers);
-        return OGRLayerDecorator::GetFeatureCount(bForce);
-    }
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 };
+
+GIntBig OGROSMResultLayerDecorator::GetFeatureCount(int bForce)
+{
+    /* When we run GetFeatureCount() with SQLite SQL dialect, */
+    /* the OSM dataset will be re-opened. Make sure that it is */
+    /* re-opened with the same interest layers */
+    AddInterestLayersForDSName(osDSName, osInterestLayers);
+    return OGRLayerDecorator::GetFeatureCount(bForce);
+}
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */

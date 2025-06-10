@@ -1093,7 +1093,7 @@ OGRFeature *OGRPLScenesDataV1Layer::GetNextRawFeature()
                                  "in configuration",
                                  osPrefixedJSonFieldName.c_str());
                         m_oSetUnregisteredFields.insert(
-                            osPrefixedJSonFieldName);
+                            std::move(osPrefixedJSonFieldName));
                     }
                 }
             }

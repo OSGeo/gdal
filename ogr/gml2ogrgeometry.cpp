@@ -725,7 +725,7 @@ GML2OGRGeometry_AddToCompositeCurve(OGRCompoundCurve *poCC,
     if (poGeom == nullptr || !OGR_GT_IsCurve(poGeom->getGeometryType()))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "CompositeCurve: Got %.500s geometry as Member instead of a "
+                 "CompositeCurve: Got %s geometry as Member instead of a "
                  "curve.",
                  poGeom ? poGeom->getGeometryName() : "NULL");
         return false;
@@ -803,7 +803,7 @@ static bool GML2OGRGeometry_AddToMultiSurface(
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Got %.500s geometry as %s.",
+        CPLError(CE_Failure, CPLE_AppDefined, "Got %s geometry as %s.",
                  poGeom->getGeometryName(), pszMemberElement);
         return false;
     }
@@ -890,6 +890,28 @@ OGRGeometry *GML2OGRGeometry_XMLNode(const CPLXMLNode *psNode,
         .release();
 }
 
+static void ReportError(const char *pszId, CPLErr eErr, const char *fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(3, 4);
+
+static void ReportError(const char *pszId, CPLErr eErr, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    if (pszId)
+    {
+        std::string osMsg("GML geometry id='");
+        osMsg += pszId;
+        osMsg += "': ";
+        osMsg += CPLString().vPrintf(fmt, ap);
+        CPLError(eErr, CPLE_AppDefined, "%s", osMsg.c_str());
+    }
+    else
+    {
+        CPLErrorV(eErr, CPLE_AppDefined, fmt, ap);
+    }
+    va_end(ap);
+}
+
 static std::unique_ptr<OGRGeometry>
 GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                                  int nPseudoBoolGetSecondaryGeometryOption,
@@ -930,39 +952,9 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
     bool bGetSecondaryGeometry =
         bIgnoreGSG ? false : CPL_TO_BOOL(nPseudoBoolGetSecondaryGeometryOption);
 
-    const auto ReportError = [pszId](CPLErr eErr, const char *fmt, va_list ap)
-    {
-        if (pszId)
-        {
-            std::string osMsg("GML geometry id='");
-            osMsg += pszId;
-            osMsg += "': ";
-            osMsg += CPLString().Printf(fmt, ap);
-            CPLError(eErr, CPLE_AppDefined, "%s", osMsg.c_str());
-        }
-        else
-        {
-            CPLErrorV(eErr, CPLE_AppDefined, fmt, ap);
-        }
-    };
+#define ReportFailure(...) ReportError(pszId, CE_Failure, __VA_ARGS__)
 
-    const auto ReportFailure = [ReportError](const char *fmt, ...)
-    {
-        va_list ap;
-        // cppcheck-suppress va_start_wrongParameter
-        va_start(ap, fmt);
-        ReportError(CE_Failure, fmt, ap);
-        va_end(ap);
-    };
-
-    const auto ReportWarning = [ReportError](const char *fmt, ...)
-    {
-        va_list ap;
-        // cppcheck-suppress va_start_wrongParameter
-        va_start(ap, fmt);
-        ReportError(CE_Warning, fmt, ap);
-        va_end(ap);
-    };
+#define ReportWarning(...) ReportError(pszId, CE_Warning, __VA_ARGS__)
 
     // Arbitrary value, but certainly large enough for reasonable usages.
     if (nRecLevel == 32)
@@ -1009,7 +1001,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
 
         if (!OGR_GT_IsCurve(poGeom->getGeometryType()))
         {
-            ReportFailure("%s: Got %.500s geometry as outerBoundaryIs.",
+            ReportFailure("%s: Got %s geometry as outerBoundaryIs.",
                           pszBaseGeometry, poGeom->getGeometryName());
             return nullptr;
         }
@@ -1070,7 +1062,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
 
                 if (!OGR_GT_IsCurve(poGeomInterior->getGeometryType()))
                 {
-                    ReportFailure("%s: Got %.500s geometry as innerBoundaryIs.",
+                    ReportFailure("%s: Got %s geometry as innerBoundaryIs.",
                                   pszBaseGeometry,
                                   poGeomInterior->getGeometryName());
                     return nullptr;
@@ -1158,7 +1150,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
 
         if (!OGR_GT_IsCurve(poGeom->getGeometryType()))
         {
-            ReportFailure("%s: Got %.500s geometry as outerBoundaryIs.",
+            ReportFailure("%s: Got %s geometry as outerBoundaryIs.",
                           pszBaseGeometry, poGeom->getGeometryName());
             return nullptr;
         }
@@ -2232,7 +2224,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                                 if (!EQUAL(poRing->getGeometryName(),
                                            "LINEARRING"))
                                 {
-                                    ReportFailure("%s: Got %.500s geometry as "
+                                    ReportFailure("%s: Got %s geometry as "
                                                   "innerBoundaryIs instead of "
                                                   "LINEARRING.",
                                                   pszBaseGeometry,
@@ -2355,7 +2347,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                         wkbFlatten(poPointMember->getGeometryType()) !=
                             wkbPoint)
                     {
-                        ReportFailure("MultiPoint: Got %.500s geometry as "
+                        ReportFailure("MultiPoint: Got %s geometry as "
                                       "pointMember instead of POINT",
                                       poPointMember
                                           ? poPointMember->getGeometryName()
@@ -2394,7 +2386,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                         }
                         else
                         {
-                            ReportFailure("Got %.500s geometry as pointMember "
+                            ReportFailure("Got %s geometry as pointMember "
                                           "instead of POINT.",
                                           poGeom->getGeometryName());
                             return nullptr;
@@ -2432,10 +2424,9 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                 if (poGeom == nullptr ||
                     wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
                 {
-                    ReportFailure(
-                        "MultiLineString: Got %.500s geometry as Member "
-                        "instead of LINESTRING.",
-                        poGeom ? poGeom->getGeometryName() : "NULL");
+                    ReportFailure("MultiLineString: Got %s geometry as Member "
+                                  "instead of LINESTRING.",
+                                  poGeom ? poGeom->getGeometryName() : "NULL");
                     return nullptr;
                 }
 
@@ -2470,10 +2461,10 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                     if (poGeom == nullptr ||
                         !OGR_GT_IsCurve(poGeom->getGeometryType()))
                     {
-                        ReportFailure(
-                            "MultiCurve: Got %.500s geometry as Member "
-                            "instead of a curve.",
-                            poGeom ? poGeom->getGeometryName() : "NULL");
+                        ReportFailure("MultiCurve: Got %s geometry as Member "
+                                      "instead of a curve.",
+                                      poGeom ? poGeom->getGeometryName()
+                                             : "NULL");
                         return nullptr;
                     }
 
@@ -2501,7 +2492,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                         if (poGeom == nullptr ||
                             !OGR_GT_IsCurve(poGeom->getGeometryType()))
                         {
-                            ReportFailure("MultiCurve: Got %.500s geometry as "
+                            ReportFailure("MultiCurve: Got %s geometry as "
                                           "Member instead of a curve.",
                                           poGeom ? poGeom->getGeometryName()
                                                  : "NULL");
@@ -2610,7 +2601,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
         if (poGeom == nullptr || !OGR_GT_IsCurve(poGeom->getGeometryType()))
         {
             ReportFailure(
-                "Curve: Got %.500s geometry as Member instead of segments.",
+                "Curve: Got %s geometry as Member instead of segments.",
                 poGeom ? poGeom->getGeometryName() : "NULL");
             return nullptr;
         }
@@ -2651,7 +2642,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                 if (poGeom == nullptr ||
                     !OGR_GT_IsCurve(poGeom->getGeometryType()))
                 {
-                    ReportFailure("segments: Got %.500s geometry as Member "
+                    ReportFailure("segments: Got %s geometry as Member "
                                   "instead of curve.",
                                   poGeom ? poGeom->getGeometryName() : "NULL");
                     return nullptr;
@@ -2846,7 +2837,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                 wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
             {
                 // ReportFailure(
-                //           "Got %.500s geometry as Member instead of POINT.",
+                //           "Got %s geometry as Member instead of POINT.",
                 //           poGeom ? poGeom->getGeometryName() : "NULL" );
                 goto nonode;
             }
@@ -2894,7 +2885,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                 wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
             {
                 // ReportFailure(
-                //           "Got %.500s geometry as Member instead of POINT.",
+                //           "Got %s geometry as Member instead of POINT.",
                 //           poGeom ? poGeom->getGeometryName() : "NULL" );
                 goto nonode;
             }
@@ -2946,11 +2937,10 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
             wkbFlatten(poLineStringBeforeCast->getGeometryType()) !=
                 wkbLineString)
         {
-            ReportFailure(
-                "Got %.500s geometry as Member instead of LINESTRING.",
-                poLineStringBeforeCast
-                    ? poLineStringBeforeCast->getGeometryName()
-                    : "NULL");
+            ReportFailure("Got %s geometry as Member instead of LINESTRING.",
+                          poLineStringBeforeCast
+                              ? poLineStringBeforeCast->getGeometryName()
+                              : "NULL");
             return nullptr;
         }
         auto poLineString = std::unique_ptr<OGRLineString>(
@@ -3039,10 +3029,10 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
                 }
                 else
                 {
-                    ReportFailure(
-                        "Got %.500s geometry as Member instead of %s.",
-                        poGeom->getGeometryName(),
-                        bGetSecondaryGeometry ? "MULTIPOINT" : "LINESTRING");
+                    ReportFailure("Got %s geometry as Member instead of %s.",
+                                  poGeom->getGeometryName(),
+                                  bGetSecondaryGeometry ? "MULTIPOINT"
+                                                        : "LINESTRING");
                     return nullptr;
                 }
             }
@@ -3816,7 +3806,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
         return nullptr;
     }
 
-    ReportFailure("Unrecognized geometry type <%.500s>.", pszBaseGeometry);
+    ReportFailure("Unrecognized geometry type <%s>.", pszBaseGeometry);
 
     return nullptr;
 }

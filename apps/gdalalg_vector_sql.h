@@ -33,11 +33,13 @@ class GDALVectorSQLAlgorithm /* non final */
     explicit GDALVectorSQLAlgorithm(bool standaloneStep = false);
 
   private:
+    static ConstructorOptions GetConstructorOptions(bool standaloneStep);
     bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_sql{};
     std::vector<std::string> m_outputLayer{};
     std::string m_dialect{};
+    bool m_quiet = false;
 };
 
 /************************************************************************/
@@ -51,6 +53,8 @@ class GDALVectorSQLAlgorithmStandalone final : public GDALVectorSQLAlgorithm
         : GDALVectorSQLAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSQLAlgorithmStandalone() override;
 };
 
 //! @endcond

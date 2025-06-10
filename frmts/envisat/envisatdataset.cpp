@@ -428,8 +428,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         return;
 
     int nTPPerColumn = nNumDSR;
-    int nTPPerLine =
-        (GetRasterXSize() + nSamplesPerTiePoint - 1) / nSamplesPerTiePoint;
+    int nTPPerLine = DIV_ROUND_UP(GetRasterXSize(), nSamplesPerTiePoint);
 
     /* -------------------------------------------------------------------- */
     /*      Find a measurement type dataset to use as a reference raster    */

@@ -23,6 +23,11 @@
 #include <atomic>
 #include <cinttypes>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /************************************************************************/
 /*                        OGRArrowRandomAccessFile                      */
 /************************************************************************/
@@ -207,5 +212,9 @@ class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile
         return m_nSize;
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif  // OGR_ARROW_RANDOM_ACCESS_FILE_H

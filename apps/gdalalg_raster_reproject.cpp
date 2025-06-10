@@ -358,4 +358,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(
     return bOK;
 }
 
+GDALRasterReprojectAlgorithmStandalone::
+    ~GDALRasterReprojectAlgorithmStandalone() = default;
+
 //! @endcond

@@ -183,10 +183,7 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
         const std::string &name, const std::string &description,
         const std::string &helpURL, bool standaloneStep);
 
-    bool IsNativelyStreamingCompatible() const override
-    {
-        return false;
-    }
+    bool IsNativelyStreamingCompatible() const override;
 
     std::unique_ptr<GDALDataset>
     CreateTemporaryDataset(int nWidth, int nHeight, int nBands,

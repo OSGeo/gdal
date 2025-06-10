@@ -280,12 +280,14 @@ class OGRElasticAggregationLayer final
     CPLJSONObject m_oAggregatedFieldsRequest{};
     std::vector<std::unique_ptr<OGRFeature>> m_apoCachedFeatures{};
 
-    explicit OGRElasticAggregationLayer(OGRElasticDataSource *poDS);
     std::string BuildRequest();
     void IssueAggregationRequest();
     OGRFeature *GetNextRawFeature();
 
   public:
+    // Do not use directly. Use Build() static method instead
+    explicit OGRElasticAggregationLayer(OGRElasticDataSource *poDS);
+
     ~OGRElasticAggregationLayer() override;
 
     OGRFeatureDefn *GetLayerDefn() override

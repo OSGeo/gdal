@@ -55,6 +55,8 @@ class GDALRasterSlopeAlgorithmStandalone final : public GDALRasterSlopeAlgorithm
         : GDALRasterSlopeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterSlopeAlgorithmStandalone() override;
 };
 
 //! @endcond

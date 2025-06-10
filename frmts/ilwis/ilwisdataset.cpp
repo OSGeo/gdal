@@ -1485,9 +1485,8 @@ CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
 
     const std::string domName =
         ReadElement("BaseMap", "Domain", pszFileName.c_str());
-    const std::string osBaseName =
-        std::string(CPLGetBasenameSafe(domName.c_str()));
-    const std::string osPath = std::string(CPLGetPathSafe(pszFileName.c_str()));
+    std::string osBaseName = CPLGetBasenameSafe(domName.c_str());
+    const std::string osPath = CPLGetPathSafe(pszFileName.c_str());
 
     // Check against all "system-domains"
     if (EQUAL(osBaseName.c_str(),
@@ -1513,7 +1512,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
         eDataType = GDT_Byte;
         if (EQUAL(osBaseName.c_str(), "image") ||
             EQUAL(osBaseName.c_str(), "colorcmp"))
-            psInfo.stDomain = osBaseName;
+            psInfo.stDomain = std::move(osBaseName);
     }
     else if (EQUAL(osBaseName.c_str(), "color") ||
              EQUAL(osBaseName.c_str(), "none") ||
@@ -1528,7 +1527,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
     {
         // No match found. Assume it is a self-created domain. Read its type and
         // decide the GDAL type.
-        std::string osDomainFileName =
+        const std::string osDomainFileName =
             CPLFormFilenameSafe(osPath.c_str(), osBaseName.c_str(), "dom");
         std::string domType =
             ReadElement("Domain", "Type", osDomainFileName.c_str());

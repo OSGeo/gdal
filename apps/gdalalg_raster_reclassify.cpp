@@ -185,4 +185,7 @@ bool GDALRasterReclassifyAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return m_outputDataset.GetDatasetRef() != nullptr;
 }
 
+GDALRasterReclassifyAlgorithmStandalone::
+    ~GDALRasterReclassifyAlgorithmStandalone() = default;
+
 //! @endcond

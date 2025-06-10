@@ -191,7 +191,7 @@ public:
         WIPEOUT              = 0x72  // 114
     };
 
-    virtual ~CADObject(){}
+    virtual ~CADObject();
 
     ObjectType getType() const;
     long       getSize() const;
@@ -298,7 +298,7 @@ class CADEntityObject CPL_NON_FINAL: public CADObject
 public:
     explicit CADEntityObject(ObjectType typeIn): CADObject(typeIn) {}
 
-    virtual ~CADEntityObject(){}
+    ~CADEntityObject() override;
     struct CADCommonED  stCed;
     struct CADCommonEHD stChed;
 };
@@ -310,7 +310,8 @@ class CADTextObject final: public CADEntityObject
 {
 public:
     CADTextObject();
-    virtual ~CADTextObject(){}
+    ~CADTextObject() override;
+
     unsigned char DataFlags;
     double        dfElevation;
     CADVector     vertInsetionPoint;
@@ -336,7 +337,8 @@ class CADAttribObject CPL_NON_FINAL: public CADEntityObject
 {
 public:
     explicit CADAttribObject( ObjectType typeIn = ATTRIB );
-    virtual ~CADAttribObject(){}
+    ~CADAttribObject() override;
+
     unsigned char DataFlags;
     double        dfElevation;
     CADVector     vertInsetionPoint;
@@ -367,7 +369,7 @@ class CADAttdefObject final: public CADAttribObject
 {
 public:
     CADAttdefObject();
-    virtual ~CADAttdefObject(){}
+    ~CADAttdefObject() override;
     std::string sPrompt;
 };
 
@@ -378,7 +380,7 @@ class CADBlockObject final: public CADEntityObject
 {
 public:
     CADBlockObject();
-    virtual ~CADBlockObject(){}
+    ~CADBlockObject() override;
     std::string sBlockName;
 };
 
@@ -390,7 +392,7 @@ class CADEndblkObject final: public CADEntityObject
 {
 public:
     CADEndblkObject();
-    virtual ~CADEndblkObject(){}
+    ~CADEndblkObject() override;
     // it actually has nothing more than CED and CEHD.
 };
 
@@ -402,7 +404,7 @@ class CADSeqendObject final: public CADEntityObject
 {
 public:
     CADSeqendObject();
-    virtual ~CADSeqendObject(){}
+    ~CADSeqendObject() override;
     // it actually has nothing more than CED and CEHD.
 };
 
@@ -413,7 +415,7 @@ class CADInsertObject final: public CADEntityObject
 {
 public:
     explicit CADInsertObject( ObjectType typeIn = INSERT );
-    virtual ~CADInsertObject(){}
+    ~CADInsertObject() override;
     CADVector vertInsertionPoint;
     CADVector vertScales;
     double    dfRotation;
@@ -433,7 +435,7 @@ class CADMInsertObject final: public CADEntityObject
 {
 public:
     CADMInsertObject();
-    virtual ~CADMInsertObject(){}
+    ~CADMInsertObject() override;
     CADVector vertInsertionPoint;
     CADVector vertScales;
     double    dfRotation;
@@ -458,7 +460,7 @@ class CADVertex2DObject final: public CADEntityObject
 {
 public:
     CADVertex2DObject();
-    virtual ~CADVertex2DObject(){}
+    ~CADVertex2DObject() override;
     CADVector vertPosition; // Z must be taken from 2d polyline elevation.
     double    dfStartWidth;
     double    dfEndWidth;
@@ -480,7 +482,7 @@ class CADVertex3DObject final: public CADEntityObject
 {
 public:
     CADVertex3DObject();
-    virtual ~CADVertex3DObject(){}
+    ~CADVertex3DObject() override;
     CADVector vertPosition;
 };
 
@@ -491,7 +493,7 @@ class CADVertexMeshObject final: public CADEntityObject
 {
 public:
     CADVertexMeshObject();
-    virtual ~CADVertexMeshObject(){}
+    ~CADVertexMeshObject() override;
     CADVector vertPosition;
 };
 
@@ -502,7 +504,7 @@ class CADVertexPFaceObject final: public CADEntityObject
 {
 public:
     CADVertexPFaceObject();
-    virtual ~CADVertexPFaceObject(){}
+    ~CADVertexPFaceObject() override;
     CADVector vertPosition;
 };
 
@@ -513,7 +515,7 @@ class CADVertexPFaceFaceObject final: public CADEntityObject
 {
 public:
     CADVertexPFaceFaceObject();
-    virtual ~CADVertexPFaceFaceObject(){}
+    ~CADVertexPFaceFaceObject() override;
     // TODO: check DXF ref to get info what does it mean.
     short iVertexIndex1;
     short iVertexIndex2;
@@ -528,7 +530,7 @@ class CADPolyline2DObject final: public CADEntityObject
 {
 public:
     CADPolyline2DObject();
-    virtual ~CADPolyline2DObject(){}
+    ~CADPolyline2DObject() override;
     short     dFlags;
     short     dCurveNSmoothSurfType;
     double    dfStartWidth;
@@ -551,7 +553,7 @@ class CADPolyline3DObject final: public CADEntityObject
 {
 public:
     CADPolyline3DObject();
-    virtual ~CADPolyline3DObject(){}
+    ~CADPolyline3DObject() override;
     unsigned char SplinedFlags;
     unsigned char ClosedFlags;
 
@@ -569,7 +571,7 @@ class CADArcObject final: public CADEntityObject
 {
 public:
     CADArcObject();
-    virtual ~CADArcObject(){}
+    ~CADArcObject() override;
     CADVector vertPosition;
     double    dfRadius;
     double    dfThickness;
@@ -585,7 +587,7 @@ class CADCircleObject final: public CADEntityObject
 {
 public:
     CADCircleObject();
-    virtual ~CADCircleObject(){}
+    ~CADCircleObject() override;
     CADVector vertPosition;
     double    dfRadius;
     double    dfThickness;
@@ -599,7 +601,7 @@ class CADLineObject final: public CADEntityObject
 {
 public:
     CADLineObject();
-    virtual ~CADLineObject(){}
+    ~CADLineObject() override;
     CADVector vertStart;
     CADVector vertEnd;
     double    dfThickness;
@@ -612,7 +614,7 @@ public:
 class CADBaseControlObject CPL_NON_FINAL: public CADObject
 {
 public:
-    virtual ~CADBaseControlObject(){}
+    ~CADBaseControlObject() override;
     long           nObjectSizeInBits;
     CADHandle      hObjectHandle;
     CADEedArray    aEED;
@@ -630,7 +632,7 @@ class CADBlockControlObject final: public CADBaseControlObject
 {
 public:
     CADBlockControlObject();
-    virtual ~CADBlockControlObject(){}
+    ~CADBlockControlObject() override;
     long           nNumEntries; // doesn't count MODELSPACE and PAPERSPACE
     CADHandle      hNull;
     CADHandle      hXDictionary;
@@ -644,7 +646,7 @@ class CADBlockHeaderObject final: public CADBaseControlObject
 {
 public:
     CADBlockHeaderObject();
-    virtual ~CADBlockHeaderObject(){}
+    ~CADBlockHeaderObject() override;
     std::string           sEntryName;
     bool                  b64Flag;
     short                 dXRefIndex;
@@ -682,7 +684,7 @@ class CADLayerControlObject final: public CADBaseControlObject
 {
 public:
     CADLayerControlObject();
-    virtual ~CADLayerControlObject(){}
+    ~CADLayerControlObject() override;
 
     long           nNumEntries; // counts layer "0"
     CADHandle      hNull;
@@ -697,7 +699,7 @@ class CADLayerObject final: public CADBaseControlObject
 {
 public:
     CADLayerObject();
-    virtual ~CADLayerObject(){}
+    ~CADLayerObject() override;
 
     std::string sLayerName;
     bool        b64Flag;
@@ -728,7 +730,7 @@ class CADLineTypeControlObject final: public CADBaseControlObject
 {
 public:
     CADLineTypeControlObject();
-    virtual ~CADLineTypeControlObject(){}
+    ~CADLineTypeControlObject() override;
 
     long           nNumEntries; // doesn't count BYBLOCK / BYLAYER.
     CADHandle      hNull;
@@ -754,7 +756,7 @@ class CADLineTypeObject final: public CADBaseControlObject
 {
 public:
     CADLineTypeObject();
-    virtual ~CADLineTypeObject(){}
+    ~CADLineTypeObject() override;
 
     std::string           sEntryName;
     bool                  b64Flag;
@@ -780,7 +782,7 @@ class CADPointObject final: public CADEntityObject
 {
 public:
     CADPointObject();
-    virtual ~CADPointObject(){}
+    ~CADPointObject() override;
 
     CADVector vertPosition;
     double    dfThickness;
@@ -795,7 +797,7 @@ class CADSolidObject final: public CADEntityObject
 {
 public:
     CADSolidObject();
-    virtual ~CADSolidObject(){}
+    ~CADSolidObject() override;
 
     double            dfThickness;
     double            dfElevation;
@@ -810,7 +812,7 @@ class CADEllipseObject final: public CADEntityObject
 {
 public:
     CADEllipseObject();
-    virtual ~CADEllipseObject(){}
+    ~CADEllipseObject() override;
 
     CADVector vertPosition;
     CADVector vectSMAxis;
@@ -827,7 +829,7 @@ class CADRayObject final: public CADEntityObject
 {
 public:
     CADRayObject();
-    virtual ~CADRayObject(){}
+    ~CADRayObject() override;
 
     CADVector vertPosition;
     CADVector vectVector;
@@ -840,7 +842,7 @@ class CADXLineObject final: public CADEntityObject
 {
 public:
     CADXLineObject();
-    virtual ~CADXLineObject(){}
+    ~CADXLineObject() override;
 
     CADVector vertPosition;
     CADVector vectVector;
@@ -853,7 +855,7 @@ class CADDictionaryObject final: public CADBaseControlObject
 {
 public:
     CADDictionaryObject();
-    virtual ~CADDictionaryObject(){}
+    ~CADDictionaryObject() override;
 
     long          nNumItems;
     short         dCloningFlag;
@@ -874,7 +876,7 @@ class CADLWPolylineObject final: public CADEntityObject
 {
 public:
     CADLWPolylineObject();
-    virtual ~CADLWPolylineObject(){}
+    ~CADLWPolylineObject() override;
 
     bool                         bClosed;
     double                       dfConstWidth;
@@ -894,7 +896,7 @@ class CADSplineObject final: public CADEntityObject
 {
 public:
     CADSplineObject();
-    virtual ~CADSplineObject(){}
+    ~CADSplineObject() override;
 
     long dScenario;
     long dSplineFlags; // 2013+
@@ -978,7 +980,7 @@ class CADDimensionObject CPL_NON_FINAL: public CADEntityObject
 {
 public:
     explicit CADDimensionObject( ObjectType typeIn ) : CADEntityObject(typeIn) {}
-    virtual ~CADDimensionObject(){}
+    ~CADDimensionObject() override;
     CADCommonDimensionData cdd;
     CADVector              vert10pt;
     CADHandle              hDimstyle;
@@ -992,7 +994,7 @@ class CADDimensionOrdinateObject final: public CADDimensionObject
 {
 public:
     CADDimensionOrdinateObject();
-    virtual ~CADDimensionOrdinateObject(){}
+    ~CADDimensionOrdinateObject() override;
     CADVector     vert13pt, vert14pt;
     unsigned char Flags2;
 };
@@ -1004,7 +1006,7 @@ class CADDimensionLinearObject final: public CADDimensionObject
 {
 public:
     CADDimensionLinearObject();
-    virtual ~CADDimensionLinearObject(){}
+    ~CADDimensionLinearObject() override;
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -1018,7 +1020,7 @@ class CADDimensionAlignedObject final: public CADDimensionObject
 {
 public:
     CADDimensionAlignedObject();
-    virtual ~CADDimensionAlignedObject(){}
+    ~CADDimensionAlignedObject() override;
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -1031,7 +1033,7 @@ class CADDimensionAngular3PtObject CPL_NON_FINAL: public CADDimensionObject
 {
 public:
     explicit CADDimensionAngular3PtObject(ObjectType typeIn = DIMENSION_ANG_3PT);
-    virtual ~CADDimensionAngular3PtObject(){}
+    ~CADDimensionAngular3PtObject() override;
     CADVector vert13pt, vert14pt;
     CADVector vert15pt;
 };
@@ -1043,7 +1045,7 @@ class CADDimensionAngular2LnObject final: public CADDimensionAngular3PtObject
 {
 public:
     CADDimensionAngular2LnObject();
-    virtual ~CADDimensionAngular2LnObject(){}
+    ~CADDimensionAngular2LnObject() override;
 
     CADVector vert16pt;
 };
@@ -1055,7 +1057,7 @@ class CADDimensionRadiusObject CPL_NON_FINAL: public CADDimensionObject
 {
 public:
     explicit CADDimensionRadiusObject(ObjectType typeIn = DIMENSION_RADIUS);
-    virtual ~CADDimensionRadiusObject(){}
+    ~CADDimensionRadiusObject() override;
 
     CADVector vert15pt;
     double    dfLeaderLen;
@@ -1068,7 +1070,7 @@ class CADDimensionDiameterObject final: public CADDimensionRadiusObject
 {
 public:
     CADDimensionDiameterObject();
-    virtual ~CADDimensionDiameterObject(){}
+    ~CADDimensionDiameterObject() override;
 };
 
 /**
@@ -1078,7 +1080,7 @@ class CADImageObject final: public CADEntityObject
 {
 public:
     CADImageObject();
-    virtual ~CADImageObject(){}
+    ~CADImageObject() override;
 
     long      dClassVersion;
     CADVector vertInsertion;
@@ -1113,7 +1115,7 @@ class CADImageDefReactorObject CPL_NON_FINAL: public CADBaseControlObject
 {
 public:
     explicit CADImageDefReactorObject(ObjectType typeIn = IMAGEDEFREACTOR);
-    virtual ~CADImageDefReactorObject(){}
+    ~CADImageDefReactorObject() override;
 
     long              dClassVersion;
     CADHandle         hParentHandle;
@@ -1128,7 +1130,7 @@ class CADImageDefObject final: public CADImageDefReactorObject
 {
 public:
     CADImageDefObject();
-    virtual ~CADImageDefObject(){}
+    ~CADImageDefObject() override;
 
     double        dfXImageSizeInPx;
     double        dfYImageSizeInPx;
@@ -1146,7 +1148,7 @@ class CADMTextObject final: public CADEntityObject
 {
 public:
     CADMTextObject();
-    virtual ~CADMTextObject(){}
+    ~CADMTextObject() override;
 
     CADVector vertInsertionPoint;
     CADVector vectExtrusion;
@@ -1197,7 +1199,7 @@ class CADMLineObject final: public CADEntityObject
 {
 public:
     CADMLineObject();
-    virtual ~CADMLineObject(){}
+    ~CADMLineObject() override;
 
     double        dfScale;
     unsigned char dJust;
@@ -1219,7 +1221,7 @@ class CAD3DFaceObject final: public CADEntityObject
 {
 public:
     CAD3DFaceObject();
-    virtual ~CAD3DFaceObject(){}
+    ~CAD3DFaceObject() override;
 
     bool              bHasNoFlagInd; // 2000+
     bool              bZZero;
@@ -1234,7 +1236,7 @@ class CADPolylinePFaceObject final: public CADEntityObject
 {
 public:
     CADPolylinePFaceObject();
-    virtual ~CADPolylinePFaceObject(){}
+    ~CADPolylinePFaceObject() override;
 
     short             nNumVertices;
     short             nNumFaces;
@@ -1259,7 +1261,7 @@ public:
     } _gradient_color;
 
     CADHatchObject();
-    virtual ~CADHatchObject(){}
+    ~CADHatchObject() override;
 
     long                    dIsGradientFill; // 2004+
     long                    dReserved;
@@ -1295,7 +1297,7 @@ class CADXRecordObject final: public CADBaseControlObject
 {
 public:
     CADXRecordObject();
-    virtual ~CADXRecordObject(){}
+    ~CADXRecordObject() override;
 
     long                                nNumDataBytes;
     std::vector<char>                   abyDataBytes;

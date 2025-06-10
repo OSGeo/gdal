@@ -1300,6 +1300,7 @@ TEST_F(test_gdal, GDALDataset_GetBands)
 
 TEST_F(test_gdal, GDALExtendedDataType)
 {
+#ifndef __COVERITY__
     // non-null string to string
     {
         const char *srcPtr = "foo";
@@ -1311,11 +1312,11 @@ TEST_F(test_gdal, GDALExtendedDataType)
         // Coverity isn't smart enough to figure out that GetClass() of
         // CreateString() is GEDTC_STRING and then takes the wrong path
         // in CopyValue() and makes wrong assumptions.
-        // coverity[string_null]
         EXPECT_STREQ(dstPtr, srcPtr);
-        // coverity[incorrect_free]
         CPLFree(dstPtr);
     }
+#endif
+
     // null string to string
     {
         const char *srcPtr = nullptr;
@@ -4906,6 +4907,24 @@ TEST_F(test_gdal, ReadRaster)
         EXPECT_EQ(res, expected_res);
 
         std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test GFloat16
+    {
+        std::vector<GFloat16> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<GFloat16>{-cpl::NumericLimits<GFloat16>::infinity(),
+                                  static_cast<GFloat16>(-1.0f),
+                                  static_cast<GFloat16>(1.0f),
+                                  static_cast<GFloat16>(128.0f),
+                                  static_cast<GFloat16>(32768.0f),
+                                  cpl::NumericLimits<GFloat16>::infinity()};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), static_cast<GFloat16>(0.0f));
         EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
         EXPECT_EQ(res, expected_res);
     }

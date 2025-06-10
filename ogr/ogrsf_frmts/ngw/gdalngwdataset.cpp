@@ -25,10 +25,7 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit NGWWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -37,11 +34,13 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    virtual ~NGWWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+NGWWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 static const char *FormGDALTMSConnectionString(const std::string &osUrl,
                                                const std::string &osResourceId,
@@ -647,7 +646,7 @@ bool OGRNGWDataset::FillResources(const CPLStringList &aosHTTPOptions,
             OGRNGWCodedFieldDomain oDomain(oChild);
             if (oDomain.GetID() > 0)
             {
-                moDomains[oDomain.GetID()] = oDomain;
+                moDomains[oDomain.GetID()] = std::move(oDomain);
             }
         }
     }
@@ -1765,7 +1764,7 @@ bool OGRNGWDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 
@@ -1827,7 +1826,7 @@ bool OGRNGWDataset::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 

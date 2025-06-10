@@ -230,8 +230,6 @@ static int LZWSetupDecode(TIFF *tif)
         } while (code--);
         /*
          * Zero-out the unused entries  */
-        /* Silence false positive */
-        /* coverity[overrun-buffer-arg] */
         memset(&sp->dec_codetab[CODE_CLEAR], 0,
                (CODE_FIRST - CODE_CLEAR) * sizeof(code_t));
     }

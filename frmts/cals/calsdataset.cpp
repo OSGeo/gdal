@@ -71,10 +71,7 @@ class CALSRasterBand final : public GDALPamRasterBand
         eDataType = GDT_Byte;
     }
 
-    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override
-    {
-        return poUnderlyingBand->ReadBlock(nBlockXOff, nBlockYOff, pData);
-    }
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -113,6 +110,11 @@ class CALSRasterBand final : public GDALPamRasterBand
         return pszRet;
     }
 };
+
+CPLErr CALSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
+{
+    return poUnderlyingBand->ReadBlock(nBlockXOff, nBlockYOff, pData);
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -158,23 +160,30 @@ class CALSWrapperSrcBand final : public GDALPamRasterBand
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace,
-                     GDALRasterIOExtraArg *psExtraArg) override
-    {
-        const CPLErr eErr = poSrcDS->GetRasterBand(1)->RasterIO(
-            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-            eBufType, nPixelSpace, nLineSpace, psExtraArg);
-        if (bInvertValues)
-        {
-            for (int j = 0; j < nBufYSize; j++)
-            {
-                for (int i = 0; i < nBufXSize; i++)
-                    ((GByte *)pData)[j * nLineSpace + i * nPixelSpace] =
-                        1 - ((GByte *)pData)[j * nLineSpace + i * nPixelSpace];
-            }
-        }
-        return eErr;
-    }
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
+
+CPLErr CALSWrapperSrcBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                     int nXSize, int nYSize, void *pData,
+                                     int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType,
+                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALRasterIOExtraArg *psExtraArg)
+{
+    const CPLErr eErr = poSrcDS->GetRasterBand(1)->RasterIO(
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nPixelSpace, nLineSpace, psExtraArg);
+    if (bInvertValues)
+    {
+        for (int j = 0; j < nBufYSize; j++)
+        {
+            for (int i = 0; i < nBufXSize; i++)
+                ((GByte *)pData)[j * nLineSpace + i * nPixelSpace] =
+                    1 - ((GByte *)pData)[j * nLineSpace + i * nPixelSpace];
+        }
+    }
+    return eErr;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -192,7 +201,11 @@ class CALSWrapperSrcDataset final : public GDALPamDataset
         SetBand(1, new CALSWrapperSrcBand(poSrcDS));
         SetMetadataItem("TIFFTAG_DOCUMENTNAME", pszPadding);
     }
+
+    ~CALSWrapperSrcDataset() override;
 };
+
+CALSWrapperSrcDataset::~CALSWrapperSrcDataset() = default;
 
 /************************************************************************/
 /* ==================================================================== */

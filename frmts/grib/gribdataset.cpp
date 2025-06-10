@@ -17,6 +17,7 @@
 #include "gribdataset.h"
 #include "gribdrivercore.h"
 
+#include <cassert>
 #include <cerrno>
 #include <cmath>
 #include <cstddef>
@@ -1195,6 +1196,8 @@ GRIBRasterBand::~GRIBRasterBand()
     UncacheData();
 }
 
+gdal::grib::InventoryWrapper::~InventoryWrapper() = default;
+
 /************************************************************************/
 /*                           InventoryWrapperGrib                       */
 /************************************************************************/
@@ -1207,17 +1210,19 @@ class InventoryWrapperGrib : public gdal::grib::InventoryWrapper
                                  &num_messages_);
     }
 
-    ~InventoryWrapperGrib() override
-    {
-        if (inv_ == nullptr)
-            return;
-        for (uInt4 i = 0; i < inv_len_; i++)
-        {
-            GRIB2InventoryFree(inv_ + i);
-        }
-        free(inv_);
-    }
+    ~InventoryWrapperGrib() override;
 };
+
+InventoryWrapperGrib::~InventoryWrapperGrib()
+{
+    if (inv_ == nullptr)
+        return;
+    for (uInt4 i = 0; i < inv_len_; i++)
+    {
+        GRIB2InventoryFree(inv_ + i);
+    }
+    free(inv_);
+}
 
 /************************************************************************/
 /*                           InventoryWrapperSidecar                    */
@@ -1318,17 +1323,19 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         result_ = inv_len_;
     }
 
-    ~InventoryWrapperSidecar() override
-    {
-        if (inv_ == nullptr)
-            return;
-
-        for (unsigned i = 0; i < inv_len_; i++)
-            VSIFree(inv_[i].longFstLevel);
-
-        VSIFree(inv_);
-    }
+    ~InventoryWrapperSidecar() override;
 };
+
+InventoryWrapperSidecar::~InventoryWrapperSidecar()
+{
+    if (inv_ == nullptr)
+        return;
+
+    for (unsigned i = 0; i < inv_len_; i++)
+        VSIFree(inv_[i].longFstLevel);
+
+    VSIFree(inv_);
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1529,11 +1536,13 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Create band objects.
-    for (uInt4 i = 0; i < pInventories->length(); ++i)
+    const uInt4 nCount = std::min(pInventories->length(), 65536U);
+    for (uInt4 i = 0; i < nCount; ++i)
     {
         inventoryType *psInv = pInventories->get(i);
         GRIBRasterBand *gribBand = nullptr;
-        uInt4 bandNr = i + 1;
+        const uInt4 bandNr = i + 1;
+        assert(bandNr <= 65536);
 
         if (bandNr == 1)
         {
@@ -2336,6 +2345,7 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     {
         inventoryType *psInv = pInventories->get(i);
         uInt4 bandNr = i + 1;
+        assert(bandNr <= 65536);
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
         // does not return the offset to the real start of the message
@@ -2402,7 +2412,6 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
 
-            // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if (psInv->GribVersion == 2)
                 gribBand.FindPDSTemplateGRIB2();

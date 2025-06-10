@@ -464,7 +464,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (name == "amigo_id")
         {
-            amigo_id_value = value;
+            amigo_id_value = std::move(value);
             continue;
         }
         if (!poFeature->IsFieldSet(i))

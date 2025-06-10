@@ -680,7 +680,7 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
     auto arrayContext(serializer.MakeArrayContext());
     for (const auto &dim : dims)
     {
-        const std::string osFullname(dim->GetFullName());
+        std::string osFullname(dim->GetFullName());
         if (alreadyDumpedDimensions.find(osFullname) !=
             alreadyDumpedDimensions.end())
         {
@@ -727,7 +727,7 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
             {
                 std::set<std::string> alreadyDumpedDimensionsLocal(
                     alreadyDumpedDimensions);
-                alreadyDumpedDimensionsLocal.insert(osFullname);
+                alreadyDumpedDimensionsLocal.insert(std::move(osFullname));
 
                 auto indexingVariableContext(serializer.MakeObjectContext());
                 serializer.AddObjKey(poIndexingVariable->GetName());

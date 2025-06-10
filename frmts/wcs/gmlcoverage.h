@@ -2,7 +2,7 @@
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WCS.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Frank Warmerdam, warmerdam at pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam

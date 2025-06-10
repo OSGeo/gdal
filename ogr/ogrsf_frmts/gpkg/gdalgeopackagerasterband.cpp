@@ -1239,7 +1239,7 @@ int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
         std::swap(iDBRowMin, iDBRowMax);
 
     char *pszSQL = sqlite3_mprintf(
-        "SELECT tile_row, tile_column FROM \"%w\" "
+        "SELECT tile_column, tile_row FROM \"%w\" "
         "WHERE zoom_level = %d AND "
         "(tile_row BETWEEN %d AND %d) AND "
         "(tile_column BETWEEN %d AND %d)"
@@ -1265,12 +1265,13 @@ int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
     }
     sqlite3_free(pszSQL);
     rc = sqlite3_step(hStmt);
-    std::set<std::pair<int, int>> oSetTiles;  // (row, col)
+    std::set<std::pair<int, int>> oSetTiles;  // (col, row)
     while (rc == SQLITE_ROW)
     {
-        oSetTiles.insert(std::pair(
-            m_poTPD->GetRowFromIntoTopConvention(sqlite3_column_int(hStmt, 0)),
-            sqlite3_column_int(hStmt, 1)));
+        const int iCol = sqlite3_column_int(hStmt, 0);
+        const int iRow =
+            m_poTPD->GetRowFromIntoTopConvention(sqlite3_column_int(hStmt, 1));
+        oSetTiles.insert(std::pair(iCol, iRow));
         rc = sqlite3_step(hStmt);
     }
     sqlite3_finalize(hStmt);
@@ -1303,8 +1304,7 @@ int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
         {
             for (int iX = iColMin; iX <= iColMax; ++iX)
             {
-                // coverity[swapped_arguments]
-                if (oSetTiles.find(std::pair(iY, iX)) == oSetTiles.end())
+                if (oSetTiles.find(std::pair(iX, iY)) == oSetTiles.end())
                 {
                     nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
                 }

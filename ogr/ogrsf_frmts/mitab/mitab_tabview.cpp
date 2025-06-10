@@ -18,6 +18,7 @@
 #include "cpl_port.h"
 #include "mitab.h"
 
+#include <cassert>
 #include <cctype>
 #include <cstddef>
 #include <cstdio>
@@ -365,7 +366,8 @@ int TABView::OpenForWrite(const char *pszFname)
         m_papszTABFnames = CSLAppendPrintf(m_papszTABFnames, "%s%s%d.tab",
                                            pszPath, pszBasename, iFile + 1);
 #ifndef _WIN32
-        /* coverity[var_deref_op] */
+        assert(m_papszTABFnames);
+        assert(m_papszTABFnames[iFile]);
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
 

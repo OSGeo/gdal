@@ -70,8 +70,10 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
-        // coverity[copy_assignment_call]
         value3 = value;
+        // avoid Coverity Scan warning about above assignment being better
+        // replaced with a move.
+        EXPECT_NE(value.getSpatialReference(), nullptr);
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
     ASSERT_EQ(1, poSRS->GetReferenceCount());
@@ -329,8 +331,9 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *mp_as_gc = gc;
+        // avoid Coverity Scan warning
+        EXPECT_EQ(gc.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRGeometryCollection::operator=(): trying to "
@@ -363,8 +366,9 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *poly_as_cp = cp;
+        // avoid Coverity Scan warning
+        EXPECT_EQ(cp.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
@@ -1543,8 +1547,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
-        // coverity[copy_constructor_call]
         GDALDataset::Layers::Iterator newIter(srcIter);
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -1553,8 +1557,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
         GDALDataset::Layers::Iterator newIter;
-        // coverity[copy_assignent_call]
         newIter = srcIter;
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -2567,7 +2571,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
             {
                 entryLocal.error = pszError;
             }
-            queryLogLocal->push_back(entryLocal);
+            queryLogLocal->push_back(std::move(entryLocal));
         },
         &queryLog);
 
@@ -2624,9 +2628,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2638,9 +2640,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2653,18 +2653,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
         // Invalid
         char szInput[] = "2023-07-11T17:2";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
 }
 
@@ -2673,9 +2668,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2687,9 +2680,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2702,18 +2693,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:3";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
 }
 
@@ -2722,9 +2708,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123Z";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2736,9 +2720,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2751,18 +2733,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:34.12";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
 }
 

@@ -481,7 +481,7 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
-            curStep.alg->SetCallPath({algName});
+            curStep.alg->SetCallPath({std::move(algName)});
         }
         else
         {
@@ -772,7 +772,17 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::
 }
 
 /************************************************************************/
-/*                     MustCreateOnDiskTempDataset()                        */
+/*                    IsNativelyStreamingCompatible()                   */
+/************************************************************************/
+
+bool GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    IsNativelyStreamingCompatible() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                     MustCreateOnDiskTempDataset()                    */
 /************************************************************************/
 
 static bool MustCreateOnDiskTempDataset(int nWidth, int nHeight, int nBands,

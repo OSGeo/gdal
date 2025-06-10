@@ -15,6 +15,7 @@
 #include "blockdir/asciitiledir.h"
 #include "blockdir/binarytiledir.h"
 #include "core/mutexholder.h"
+#include "core/pcidsk_utils.h"
 #include "pcidsk_types.h"
 #include "pcidsk_exception.h"
 #include <cstdlib>
@@ -161,8 +162,8 @@ bool BlockTileLayer::IsCorrupted(void) const
  */
 uint32 BlockTileLayer::GetTileCount(void) const
 {
-    return (uint32) (((static_cast<uint64>(GetXSize()) + GetTileXSize() - 1) / GetTileXSize()) *
-                     ((static_cast<uint64>(GetYSize()) + GetTileYSize() - 1) / GetTileYSize()));
+    return DIV_ROUND_UP(GetXSize(), GetTileXSize()) *
+           DIV_ROUND_UP(GetYSize(), GetTileYSize());
 }
 
 /************************************************************************/
@@ -176,7 +177,7 @@ uint32 BlockTileLayer::GetTileCount(void) const
  */
 uint32 BlockTileLayer::GetTilePerRow(void) const
 {
-    return (uint32) (static_cast<uint64>(GetXSize()) + GetTileXSize() - 1) / GetTileXSize();
+    return DIV_ROUND_UP(GetXSize(), GetTileXSize());
 }
 
 /************************************************************************/
@@ -190,7 +191,7 @@ uint32 BlockTileLayer::GetTilePerRow(void) const
  */
 uint32 BlockTileLayer::GetTilePerCol(void) const
 {
-    return (uint32) (static_cast<uint64>(GetYSize()) + GetTileYSize() - 1) / GetTileYSize();
+    return DIV_ROUND_UP(GetYSize(), GetTileYSize());
 }
 
 /************************************************************************/

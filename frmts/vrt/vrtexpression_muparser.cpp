@@ -229,7 +229,7 @@ void MuParserExpression::RegisterVector(std::string_view osVariable,
         osElementsList += osElementVarName;
     }
 
-    m_pImpl->m_oSubstitutions[std::string(osVariable)] = osElementsList;
+    m_pImpl->m_oSubstitutions[osVectorVarName] = std::move(osElementsList);
 }
 
 CPLErr MuParserExpression::Evaluate()

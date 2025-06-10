@@ -2224,3 +2224,13 @@ def test_ogr_sql_max_expr_depth_other():
         pass
     with pytest.raises(Exception, match="Maximum expression depth reached"):
         ds.ExecuteSQL("SELECT SUBSTR('a', " + "+".join(["1"] * 127) + ") FROM test")
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr_sql_union_layer_feature_count_add_overflow():
+
+    with gdal.OpenEx("data/gpkg/huge_feature_count.gpkg") as ds:
+        with ds.ExecuteSQL(
+            "select * from test union all select * from test2", dialect="OGRSQL"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == 0

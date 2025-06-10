@@ -137,6 +137,14 @@ int CPL_DLL CPLPrintTime(char *, int, const char *, const struct tm *,
                          const char *);
 int CPL_DLL CPLPrintPointer(char *, void *, int);
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    std::string CPL_DLL CPLFormatReadableFileSize(uint64_t nSizeInBytes);
+    std::string CPL_DLL CPLFormatReadableFileSize(double dfSizeInBytes);
+}
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
 /* -------------------------------------------------------------------- */
@@ -480,6 +488,13 @@ extern "C++"
         CPLAssert(f == nullptr || dynamic_cast<To>(f) != nullptr);
         return static_cast<To>(f);
     }
+
+    /** Computes ceil(a/b) where a and b are integers */
+    template <class T, class U> inline T div_round_up(T a, U b)
+    {
+        return a / b + (((a % b) == 0) ? 0 : 1);
+    }
+
     }  // namespace cpl
 }  // extern "C++"
 

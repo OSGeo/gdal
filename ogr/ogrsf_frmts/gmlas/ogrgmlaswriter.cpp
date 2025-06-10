@@ -1769,7 +1769,7 @@ bool GMLASWriter::WriteFieldRegular(
     {
         // Particular case for <a foo="bar" xsi:nil="true"/>
         VSIFPrintfL(m_fpXML.get(), " xsi:nil=\"true\">");
-        aoCurComponents = aoFieldComponents;
+        aoCurComponents = std::move(aoFieldComponents);
         bCurIsRegularField = true;
         return true;
     }
@@ -2804,10 +2804,11 @@ void GMLASWriter::PrintLine(VSILFILE *fp, const char *fmt, ...)
 class GMLASFakeDataset final : public GDALDataset
 {
   public:
-    GMLASFakeDataset()
-    {
-    }
+    GMLASFakeDataset() = default;
+    ~GMLASFakeDataset() override;
 };
+
+GMLASFakeDataset::~GMLASFakeDataset() = default;
 
 /************************************************************************/
 /*                        OGRGMLASDriverCreateCopy()                    */

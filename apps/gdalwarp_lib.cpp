@@ -63,17 +63,6 @@
 #define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
 #endif
 
-struct TransformerUniquePtrReleaser
-{
-    void operator()(void *p)
-    {
-        GDALDestroyTransformer(p);
-    }
-};
-
-using TransformerUniquePtr =
-    std::unique_ptr<void, TransformerUniquePtrReleaser>;
-
 /************************************************************************/
 /*                        GDALWarpAppOptions                            */
 /************************************************************************/
@@ -265,7 +254,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, TransformerUniquePtr &hTransformArg,
+    GDALDataType eDT, GDALTransformerArgUniquePtr &hTransformArg,
     bool bSetColorInterpretation, GDALWarpAppOptions *psOptions);
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
@@ -1147,7 +1136,7 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
 static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
                                GDALWarpAppOptions *psOptions,
-                               TransformerUniquePtr &hUniqueTransformArg)
+                               GDALTransformerArgUniquePtr &hUniqueTransformArg)
 {
     const auto SetDstSRS = [psOptions](const std::string &osTargetSRS)
     {
@@ -1251,11 +1240,11 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 /*                      GDALWarpIndirect()                              */
 /************************************************************************/
 
-static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
-                                   int nSrcCount, GDALDatasetH *pahSrcDS,
-                                   TransformerUniquePtr hUniqueTransformArg,
-                                   GDALWarpAppOptions *psOptions,
-                                   int *pbUsageError);
+static GDALDatasetH
+GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+               GDALDatasetH *pahSrcDS,
+               GDALTransformerArgUniquePtr hUniqueTransformArg,
+               GDALWarpAppOptions *psOptions, int *pbUsageError);
 
 static int CPL_STDCALL myScaledProgress(double dfProgress, const char *,
                                         void *pProgressData)
@@ -1336,7 +1325,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     double dfStartPctCreateCopy = 0.0;
     if (hTmpDS == nullptr)
     {
-        TransformerUniquePtr hUniqueTransformArg;
+        GDALTransformerArgUniquePtr hUniqueTransformArg;
 #ifdef HAVE_TIFF
         // Special processing for COG output. As some of its options do
         // on-the-fly reprojection, take them into account now, and remove them
@@ -1444,12 +1433,11 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     {
         if (psOptions->osFormat.empty())
         {
-            const std::string osFormat = GetOutputDriverForRaster(pszDest);
-            if (osFormat.empty())
+            psOptions->osFormat = GetOutputDriverForRaster(pszDest);
+            if (psOptions->osFormat.empty())
             {
                 return nullptr;
             }
-            psOptions->osFormat = osFormat;
         }
 
         auto hDriver = GDALGetDriverByName(psOptions->osFormat.c_str());
@@ -1731,11 +1719,10 @@ static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
 /*                            CreateOutput()                            */
 /************************************************************************/
 
-static GDALDatasetH CreateOutput(const char *pszDest, int nSrcCount,
-                                 GDALDatasetH *pahSrcDS,
-                                 GDALWarpAppOptions *psOptions,
-                                 const bool bInitDestSetByUser,
-                                 TransformerUniquePtr &hUniqueTransformArg)
+static GDALDatasetH
+CreateOutput(const char *pszDest, int nSrcCount, GDALDatasetH *pahSrcDS,
+             GDALWarpAppOptions *psOptions, const bool bInitDestSetByUser,
+             GDALTransformerArgUniquePtr &hUniqueTransformArg)
 {
     if (nSrcCount == 1 && !psOptions->bDisableSrcAlpha)
     {
@@ -2450,11 +2437,11 @@ static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*                           GDALWarpDirect()                           */
 /************************************************************************/
 
-static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
-                                   int nSrcCount, GDALDatasetH *pahSrcDS,
-                                   TransformerUniquePtr hUniqueTransformArg,
-                                   GDALWarpAppOptions *psOptions,
-                                   int *pbUsageError)
+static GDALDatasetH
+GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
+               GDALDatasetH *pahSrcDS,
+               GDALTransformerArgUniquePtr hUniqueTransformArg,
+               GDALWarpAppOptions *psOptions, int *pbUsageError)
 {
     CPLErrorReset();
     if (pszDest == nullptr && hDstDS == nullptr)
@@ -2732,7 +2719,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      destination coordinate system. */
         /* --------------------------------------------------------------------
          */
-        TransformerUniquePtr hTransformArg;
+        GDALTransformerArgUniquePtr hTransformArg;
         if (hUniqueTransformArg)
             hTransformArg = std::move(hUniqueTransformArg);
         else
@@ -3172,8 +3159,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             GDALApproxTransformerOwnsSubtransformer(hTransformArg.get(), TRUE);
         }
 
-        psWO->pfnTransformer = pfnTransformer;
-
         /* --------------------------------------------------------------------
          */
         /*      If we have a cutline, transform it into the source */
@@ -3209,6 +3194,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
             // In case of success, hDstDS has become the owner of hTransformArg
             // so we need to release it
+            psWO->pfnTransformer = pfnTransformer;
             psWO->pTransformerArg = hTransformArg.release();
             CPLErr eErr = GDALInitializeWarpedVRT(hDstDS, psWO.get());
             if (eErr != CE_None)
@@ -3247,10 +3233,9 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /* --------------------------------------------------------------------
          */
         GDALWarpOperation oWO;
-        // coverity[escape]
-        psWO->pTransformerArg = hTransformArg.get();
 
-        if (oWO.Initialize(psWO.get()) == CE_None)
+        if (oWO.Initialize(psWO.get(), pfnTransformer,
+                           std::move(hTransformArg)) == CE_None)
         {
             CPLErr eErr;
             if (psOptions->bMulti)
@@ -3521,13 +3506,12 @@ error:
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, TransformerUniquePtr &hUniqueTransformArg,
+    GDALDataType eDT, GDALTransformerArgUniquePtr &hUniqueTransformArg,
     bool bSetColorInterpretation, GDALWarpAppOptions *psOptions)
 
 {
     GDALDriverH hDriver;
     GDALDatasetH hDstDS;
-    GDALColorTableH hCT = nullptr;
     GDALRasterAttributeTableH hRAT = nullptr;
     double dfWrkMinX = 0, dfWrkMaxX = 0, dfWrkMinY = 0, dfWrkMaxY = 0;
     double dfWrkResX = 0, dfWrkResY = 0;
@@ -3711,6 +3695,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         CPLPopErrorHandler();
     }
     std::set<std::string> oSetExistingDestFilesFoundInSource;
+    std::unique_ptr<GDALColorTable> poCT;
 
     for (int iSrc = 0; iSrc < nSrcCount; iSrc++)
     {
@@ -3725,8 +3710,6 @@ static GDALDatasetH GDALWarpCreateOutput(
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Input file %s has no raster bands.",
                      GDALGetDescription(hSrcDS));
-            if (hCT != nullptr)
-                GDALDestroyColorTable(hCT);
             return nullptr;
         }
 
@@ -3827,10 +3810,11 @@ static GDALDatasetH GDALWarpCreateOutput(
          */
         if (iSrc == 0)
         {
-            hCT = GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1));
+            auto hCT = GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1));
             if (hCT != nullptr)
             {
-                hCT = GDALCloneColorTable(hCT);
+                poCT.reset(
+                    GDALColorTable::FromHandle(GDALCloneColorTable(hCT)));
                 if (!psOptions->bQuiet)
                     printf("Copying color table from %s to new file.\n",
                            GDALGetDescription(hSrcDS));
@@ -3907,7 +3891,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         /*      destination coordinate system. */
         /* --------------------------------------------------------------------
          */
-        TransformerUniquePtr hTransformArg;
+        GDALTransformerArgUniquePtr hTransformArg;
         if (hUniqueTransformArg)
             hTransformArg = std::move(hUniqueTransformArg);
         else
@@ -3916,8 +3900,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                 hSrcDS, nullptr, aoTOList.List()));
             if (hTransformArg == nullptr)
             {
-                if (hCT != nullptr)
-                    GDALDestroyColorTable(hCT);
                 return nullptr;
             }
         }
@@ -4186,8 +4168,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                     adfThisGeoTransform, &nThisPixels, &nThisLines, adfExtent,
                     nOptions) != CE_None)
             {
-                if (hCT != nullptr)
-                    GDALDestroyColorTable(hCT);
                 return nullptr;
             }
 
@@ -4268,8 +4248,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                                                   nullptr);
                     if (eErr != CE_None)
                     {
-                        if (hCT != nullptr)
-                            GDALDestroyColorTable(hCT);
                         return nullptr;
                     }
                 }
@@ -4392,8 +4370,6 @@ static GDALDatasetH GDALWarpCreateOutput(
     if (nDstBandCount == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "No usable source images.");
-        if (hCT != nullptr)
-            GDALDestroyColorTable(hCT);
         return nullptr;
     }
 
@@ -4405,6 +4381,20 @@ static GDALDatasetH GDALWarpCreateOutput(
     int nPixels = 0;
     int nLines = 0;
 
+    const auto ComputePixelsFromResAndExtent = [psOptions]()
+    {
+        return std::max(1.0,
+                        std::round((psOptions->dfMaxX - psOptions->dfMinX) /
+                                   psOptions->dfXRes));
+    };
+
+    const auto ComputeLinesFromResAndExtent = [psOptions]()
+    {
+        return std::max(
+            1.0, std::round(std::fabs(psOptions->dfMaxY - psOptions->dfMinY) /
+                            psOptions->dfYRes));
+    };
+
     if (bNeedsSuggestedWarpOutput)
     {
         adfDstGeoTransform[0] = dfWrkMinX;
@@ -4414,8 +4404,15 @@ static GDALDatasetH GDALWarpCreateOutput(
         adfDstGeoTransform[4] = 0.0;
         adfDstGeoTransform[5] = -1 * dfWrkResY;
 
-        nPixels = static_cast<int>((dfWrkMaxX - dfWrkMinX) / dfWrkResX + 0.5);
-        nLines = static_cast<int>((dfWrkMaxY - dfWrkMinY) / dfWrkResY + 0.5);
+        const double dfPixels = (dfWrkMaxX - dfWrkMinX) / dfWrkResX;
+        const double dfLines = (dfWrkMaxY - dfWrkMinY) / dfWrkResY;
+        // guaranteed by GDALSuggestedWarpOutput2() behavior
+        CPLAssert(std::round(dfPixels) <= INT_MAX);
+        CPLAssert(std::round(dfLines) <= INT_MAX);
+        nPixels =
+            static_cast<int>(std::min<double>(std::round(dfPixels), INT_MAX));
+        nLines =
+            static_cast<int>(std::min<double>(std::round(dfLines), INT_MAX));
     }
 
     /* -------------------------------------------------------------------- */
@@ -4477,32 +4474,37 @@ static GDALDatasetH GDALWarpCreateOutput(
 
         const auto UpdateGeoTransformandAndPixelLines = [&]()
         {
-            nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
-                                        (psOptions->dfXRes / 2.0)) /
-                                       psOptions->dfXRes);
-            if (nPixels == 0)
-                nPixels = 1;
-            nLines = static_cast<int>(
-                (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
-                 (psOptions->dfYRes / 2.0)) /
-                psOptions->dfYRes);
-            if (nLines == 0)
-                nLines = 1;
+            const double dfPixels = ComputePixelsFromResAndExtent();
+            const double dfLines = ComputeLinesFromResAndExtent();
+            if (dfPixels > INT_MAX || dfLines > INT_MAX)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too large output raster size: %f x %f", dfPixels,
+                         dfLines);
+                return false;
+            }
+
+            nPixels = static_cast<int>(dfPixels);
+            nLines = static_cast<int>(dfLines);
             adfDstGeoTransform[0] = psOptions->dfMinX;
             adfDstGeoTransform[3] = psOptions->dfMaxY;
             adfDstGeoTransform[1] = psOptions->dfXRes;
             adfDstGeoTransform[5] = (psOptions->dfMaxY > psOptions->dfMinY)
                                         ? -psOptions->dfYRes
                                         : psOptions->dfYRes;
+            return true;
         };
 
-        if (bDetectBlankBorders && nSrcCount == 1 && hUniqueTransformArg)
+        if (bDetectBlankBorders && nSrcCount == 1 && hUniqueTransformArg &&
+            // to avoid too large memory allocations
+            std::max(nPixels, nLines) < 100 * 1000 * 1000)
         {
             // Try to detect if the edge of the raster would be blank
             // Cf https://github.com/OSGeo/gdal/issues/7905
             while (nPixels > 1 || nLines > 1)
             {
-                UpdateGeoTransformandAndPixelLines();
+                if (!UpdateGeoTransformandAndPixelLines())
+                    return nullptr;
 
                 GDALSetGenImgProjTransformerDstGeoTransform(
                     hUniqueTransformArg.get(), adfDstGeoTransform);
@@ -4631,7 +4633,8 @@ static GDALDatasetH GDALWarpCreateOutput(
             }
         }
 
-        UpdateGeoTransformandAndPixelLines();
+        if (!UpdateGeoTransformandAndPixelLines())
+            return nullptr;
     }
 
     else if (psOptions->nForcePixels != 0 && psOptions->nForceLines != 0)
@@ -4682,10 +4685,14 @@ static GDALDatasetH GDALWarpCreateOutput(
                                     : psOptions->dfYRes;
 
         nPixels = psOptions->nForcePixels;
-        nLines =
-            static_cast<int>((std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
-                              (psOptions->dfYRes / 2.0)) /
-                             psOptions->dfYRes);
+        const double dfLines = ComputeLinesFromResAndExtent();
+        if (dfLines > INT_MAX)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large output raster size: %d x %f", nPixels, dfLines);
+            return nullptr;
+        }
+        nLines = static_cast<int>(dfLines);
     }
 
     else if (psOptions->nForceLines != 0)
@@ -4708,10 +4715,15 @@ static GDALDatasetH GDALWarpCreateOutput(
         adfDstGeoTransform[1] = psOptions->dfXRes;
         adfDstGeoTransform[5] = -psOptions->dfYRes;
 
-        nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
-                                    (psOptions->dfXRes / 2.0)) /
-                                   psOptions->dfXRes);
+        const double dfPixels = ComputePixelsFromResAndExtent();
         nLines = psOptions->nForceLines;
+        if (dfPixels > INT_MAX)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large output raster size: %f x %d", dfPixels, nLines);
+            return nullptr;
+        }
+        nPixels = static_cast<int>(dfPixels);
     }
 
     else if (psOptions->dfMinX != 0.0 || psOptions->dfMinY != 0.0 ||
@@ -4720,13 +4732,18 @@ static GDALDatasetH GDALWarpCreateOutput(
         psOptions->dfXRes = adfDstGeoTransform[1];
         psOptions->dfYRes = fabs(adfDstGeoTransform[5]);
 
-        nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
-                                    (psOptions->dfXRes / 2.0)) /
-                                   psOptions->dfXRes);
-        nLines =
-            static_cast<int>((std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
-                              (psOptions->dfYRes / 2.0)) /
-                             psOptions->dfYRes);
+        const double dfPixels = ComputePixelsFromResAndExtent();
+        const double dfLines = ComputeLinesFromResAndExtent();
+        if (dfPixels > INT_MAX || dfLines > INT_MAX)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large output raster size: %f x %f", dfPixels,
+                     dfLines);
+            return nullptr;
+        }
+
+        nPixels = static_cast<int>(dfPixels);
+        nLines = static_cast<int>(dfLines);
 
         psOptions->dfXRes = (psOptions->dfMaxX - psOptions->dfMinX) / nPixels;
         psOptions->dfYRes = (psOptions->dfMaxY - psOptions->dfMinY) / nLines;
@@ -4785,8 +4802,6 @@ static GDALDatasetH GDALWarpCreateOutput(
 
     if (hDstDS == nullptr)
     {
-        if (hCT != nullptr)
-            GDALDestroyColorTable(hCT);
         return nullptr;
     }
 
@@ -4830,8 +4845,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                                           &oTargetSRS)) == CE_Failure ||
             GDALSetGeoTransform(hDstDS, adfDstGeoTransform) == CE_Failure)
         {
-            if (hCT != nullptr)
-                GDALDestroyColorTable(hCT);
             GDALClose(hDstDS);
             return nullptr;
         }
@@ -4995,10 +5008,10 @@ static GDALDatasetH GDALWarpCreateOutput(
     /* -------------------------------------------------------------------- */
     /*      Copy the color table, if required.                              */
     /* -------------------------------------------------------------------- */
-    if (hCT != nullptr)
+    if (poCT)
     {
-        GDALSetRasterColorTable(GDALGetRasterBand(hDstDS, 1), hCT);
-        GDALDestroyColorTable(hCT);
+        GDALSetRasterColorTable(GDALGetRasterBand(hDstDS, 1),
+                                GDALColorTable::ToHandle(poCT.get()));
     }
 
     /* -------------------------------------------------------------------- */
@@ -5069,10 +5082,7 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual ~CutlineTransformer()
-    {
-        GDALDestroyTransformer(hSrcImageTransformer);
-    }
+    virtual ~CutlineTransformer() override;
 
     virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
@@ -5095,6 +5105,11 @@ class CutlineTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 };
+
+CutlineTransformer::~CutlineTransformer()
+{
+    GDALDestroyTransformer(hSrcImageTransformer);
+}
 
 static double GetMaximumSegmentLength(OGRGeometry *poGeom)
 {

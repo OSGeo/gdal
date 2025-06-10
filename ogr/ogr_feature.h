@@ -1184,11 +1184,20 @@ class CPL_DLL OGRFeature
     const FieldValue operator[](int iField) const;
     FieldValue operator[](int iField);
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
     /** Exception raised by operator[](const char*) when a field is not found.
      */
     class FieldNotFoundException : public std::exception
     {
     };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
     const FieldValue operator[](const char *pszFieldName) const;
     FieldValue operator[](const char *pszFieldName);
@@ -1662,7 +1671,7 @@ class CPL_DLL OGRFieldDomain
      *
      * This is the same as the C function OGR_FldDomain_Destroy().
      */
-    virtual ~OGRFieldDomain() = 0;
+    virtual ~OGRFieldDomain();
 
     /** Clone.
      *
@@ -1862,15 +1871,7 @@ class CPL_DLL OGRRangeFieldDomain final : public OGRFieldDomain
                         const OGRField &sMin, bool bMinIsInclusive,
                         const OGRField &sMax, bool bMaxIsInclusive);
 
-    OGRRangeFieldDomain *Clone() const override
-    {
-        auto poDomain = new OGRRangeFieldDomain(
-            m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_sMin,
-            m_bMinIsInclusive, m_sMax, m_bMaxIsInclusive);
-        poDomain->SetMergePolicy(m_eMergePolicy);
-        poDomain->SetSplitPolicy(m_eSplitPolicy);
-        return poDomain;
-    }
+    OGRRangeFieldDomain *Clone() const override;
 
     /** Get the minimum value.
      *
@@ -1939,14 +1940,7 @@ class CPL_DLL OGRGlobFieldDomain final : public OGRFieldDomain
                        OGRFieldType eFieldType, OGRFieldSubType eFieldSubType,
                        const std::string &osBlob);
 
-    OGRGlobFieldDomain *Clone() const override
-    {
-        auto poDomain = new OGRGlobFieldDomain(
-            m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_osGlob);
-        poDomain->SetMergePolicy(m_eMergePolicy);
-        poDomain->SetSplitPolicy(m_eSplitPolicy);
-        return poDomain;
-    }
+    OGRGlobFieldDomain *Clone() const override;
 
     /** Get the glob expression.
      *

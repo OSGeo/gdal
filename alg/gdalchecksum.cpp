@@ -151,7 +151,6 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                              "Checksum value could not be computed due to I/O "
                              "read error.");
                     nChecksum = -1;
-                    iYBlock = nYBlocks;
                     break;
                 }
                 const size_t xIters =
@@ -176,6 +175,9 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                     nChecksum &= 0xffff;
                 }
             }
+
+            if (nChecksum < 0)
+                break;
         }
 
         CPLFree(padfLineData);
@@ -285,7 +287,6 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                              "Checksum value could not be computed due to I/O "
                              "read error.");
                     nChecksum = -1;
-                    iYBlock = nYBlocks;
                     break;
                 }
                 const size_t xIters =
@@ -310,6 +311,9 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                     nChecksum &= 0xffff;
                 }
             }
+
+            if (nChecksum < 0)
+                break;
         }
 
         CPLFree(panChunkData);

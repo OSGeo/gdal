@@ -493,6 +493,12 @@ bool BAGRasterBand::Initialize(hid_t hDatasetIDIn, const char *pszName)
 
         H5Sget_simple_extent_dims(m_hDataspace, dims, maxdims);
 
+        if (dims[0] > INT_MAX || dims[1] > INT_MAX)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "At least one dimension size exceeds INT_MAX !");
+            return false;
+        }
         nRasterXSize = static_cast<int>(dims[1]);
         nRasterYSize = static_cast<int>(dims[0]);
     }
@@ -3744,8 +3750,8 @@ bool BAGDataset::GetMeanSupergridsResolution(double &dfResX, double &dfResY)
     int nValidSuperGrids = 0;
     std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nChunkXSize) *
                                           nChunkYSize);
-    const int county = (m_nLowResHeight + nChunkYSize - 1) / nChunkYSize;
-    const int countx = (m_nLowResWidth + nChunkXSize - 1) / nChunkXSize;
+    const int county = DIV_ROUND_UP(m_nLowResHeight, nChunkYSize);
+    const int countx = DIV_ROUND_UP(m_nLowResWidth, nChunkXSize);
     for (int y = 0; y < county; y++)
     {
         const int nReqCountY =
@@ -5649,9 +5655,9 @@ bool BAGCreator::CreateElevationOrUncertainty(
             break;
 
         const int nYBlocks =
-            static_cast<int>((nYSize + nBlockYSize - 1) / nBlockYSize);
+            static_cast<int>(DIV_ROUND_UP(nYSize, nBlockYSize));
         const int nXBlocks =
-            static_cast<int>((nXSize + nBlockXSize - 1) / nBlockXSize);
+            static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
         std::vector<float> afValues(static_cast<size_t>(nBlockYSize) *
                                     nBlockXSize);
         ret = true;
@@ -5739,8 +5745,8 @@ bool BAGCreator::CreateElevationOrUncertainty(
                     H5Sclose(hMemSpace);
 
                     if (!pfnProgress(
-                            static_cast<double>(iY * nXBlocks + iX + 1) /
-                                (nXBlocks * nYBlocks),
+                            (static_cast<double>(iY) * nXBlocks + iX + 1) /
+                                (static_cast<double>(nXBlocks) * nYBlocks),
                             "", pProgressData))
                     {
                         ret = false;

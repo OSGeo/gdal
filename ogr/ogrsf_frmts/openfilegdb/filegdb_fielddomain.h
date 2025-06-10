@@ -471,7 +471,7 @@ inline std::string BuildXMLFieldDomainDef(const OGRFieldDomain *poDomain,
     }
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());
-    const std::string osXML(pszXML);
+    std::string osXML(pszXML);
     CPLFree(pszXML);
     return osXML;
 }

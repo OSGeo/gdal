@@ -990,3 +990,9 @@ const char *SWQFieldTypeToString(swq_field_type field_type)
             return "unknown";
     }
 }
+
+//! @cond Doxygen_Suppress
+
+swq_custom_func_registrar::~swq_custom_func_registrar() = default;
+
+//! @endcond

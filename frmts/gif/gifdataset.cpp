@@ -79,6 +79,7 @@ class GIFDataset final : public GIFAbstractDataset
 
   public:
     GIFDataset();
+    ~GIFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -88,6 +89,8 @@ class GIFDataset final : public GIFAbstractDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
+
+GIFDataset::~GIFDataset() = default;
 
 /************************************************************************/
 /* ==================================================================== */

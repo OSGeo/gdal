@@ -1275,7 +1275,6 @@ def test_jpeg_flir_png():
     assert ds.GetMetadataDomainList() == [
         "IMAGE_STRUCTURE",
         "FLIR",
-        "",
         "SUBDATASETS",
         "DERIVED_SUBDATASETS",
     ]
@@ -1330,6 +1329,7 @@ def test_jpeg_flir_png():
         "RawValueRangeMax": "61986",
         "RawValueRangeMin": "7630",
         "ReflectedApparentTemperature": "20.000000 C",
+        "RelativeHumidity": "50.000000 %",
         "UnderflowColor": "41 110 240",
     }
     subds = ds.GetSubDatasets()
@@ -1339,6 +1339,17 @@ def test_jpeg_flir_png():
     assert ds is not None
     assert ds.RasterCount == 3
     assert ds.GetRasterBand(1).Checksum() == 761
+
+
+###############################################################################
+# Open JPEG image with FLIR metadata and raw thermal image as PNG 16 bit
+
+
+def test_jpeg_flir_png_16_bit():
+
+    ds = gdal.Open('JPEG:"data/jpeg/flir/FLIR_16bit.jpg":FLIR_RAW_THERMAL_IMAGE')
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (65280, 65280)
 
 
 ###############################################################################

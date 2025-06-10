@@ -40,8 +40,10 @@
 class OGRCSVEditableLayerSynchronizer final
     : public IOGREditableLayerSynchronizer
 {
-    OGRCSVLayer *m_poCSVLayer;
-    char **m_papszOpenOptions;
+    OGRCSVLayer *m_poCSVLayer = nullptr;
+    char **m_papszOpenOptions = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRCSVEditableLayerSynchronizer)
 
   public:
     OGRCSVEditableLayerSynchronizer(OGRCSVLayer *poCSVLayer,
@@ -300,7 +302,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 
 class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 {
-    std::set<CPLString> m_oSetFields;
+    std::set<CPLString> m_oSetFields{};
 
   public:
     OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer, CSLConstList papszOpenOptions);
@@ -476,7 +478,7 @@ OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
 
 CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 {
-    const CPLString osExt = CPLGetExtensionSafe(osFilename);
+    CPLString osExt = CPLGetExtensionSafe(osFilename);
     if (STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz"))
     {
         if (osFilename.size() > 7 &&
@@ -984,7 +986,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "SEPARATOR=%s not understood, use one of COMMA, "
-                 "SEMICOLON, TAB, SPACE or PIPE",
+                 "SEMICOLON, TAB, SPACE or PIPE.",
                  pszDelimiter);
     }
 
@@ -1121,11 +1123,13 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             chDelimiter = '\t';
         else if (EQUAL(pszDelimiter, "SPACE"))
             chDelimiter = ' ';
+        else if (EQUAL(pszDelimiter, "PIPE"))
+            chDelimiter = '|';
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "SEPARATOR=%s not understood, use one of "
-                     "COMMA, SEMICOLON, SPACE or TAB.",
+                     "SEPARATOR=%s not understood, use one of COMMA, "
+                     "SEMICOLON, TAB, SPACE or PIPE.",
                      pszDelimiter);
         }
     }
@@ -1252,6 +1256,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         poGeomFieldDefn->SetCoordinatePrecision(
             poSrcGeomFieldDefn->GetCoordinatePrecision());
     }
+
+    poCSVLayer->SetWriteHeader(CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "HEADER",
+        CSLFetchNameValueDef(papszOptions, "HEADERS", "YES"))));
 
     if (osFilename != "/vsistdout/")
         m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(

@@ -317,9 +317,7 @@ class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
     {
     }
 
-    ~OGROpenFileGDBGeomFieldDefn()
-    {
-    }
+    ~OGROpenFileGDBGeomFieldDefn() override;
 
     void UnsetLayer()
     {
@@ -366,9 +364,7 @@ class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
     {
     }
 
-    ~OGROpenFileGDBFeatureDefn()
-    {
-    }
+    ~OGROpenFileGDBFeatureDefn() override;
 
     void UnsetLayer()
     {
@@ -722,19 +718,7 @@ class GDALOpenFileGDBRasterAttributeTable final
     {
     }
 
-    GDALRasterAttributeTable *Clone() const override
-    {
-        auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
-        GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
-        bool bRetryFileGDBUnused = false;
-        if (!poDS->Open(&oOpenInfo, bRetryFileGDBUnused))
-            return nullptr;
-        auto poVatLayer = poDS->BuildLayerFromName(m_osVATTableName.c_str());
-        if (!poVatLayer)
-            return nullptr;
-        return new GDALOpenFileGDBRasterAttributeTable(
-            std::move(poDS), m_osVATTableName, std::move(poVatLayer));
-    }
+    GDALRasterAttributeTable *Clone() const override;
 
     int GetColumnCount() const override
     {

@@ -688,7 +688,8 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         if (fRelativeHumidity > 2)
             fRelativeHumidity /= 100.0f;  // Sometimes expressed in percentage
         SetMetadataItem("RelativeHumidity",
-                        CPLSPrintf("%f %%", 100.0f * fRelativeHumidity));
+                        CPLSPrintf("%f %%", 100.0f * fRelativeHumidity),
+                        "FLIR");
         SetMetadataItem("PlanckR1",
                         CPLSPrintf("%.8g", ReadFloat32(nRecOffset + 88)),
                         "FLIR");
@@ -2682,7 +2683,7 @@ CPLErr JPGDatasetCommon::IRasterIO(
         (nXSize == nRasterXSize) && (nYSize == nBufYSize) &&
         (nYSize == nRasterYSize) && (eBufType == GDT_Byte) &&
         (GetDataPrecision() != 12) && (pData != nullptr) &&
-        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
+        IsAllBands(nBandCount, panBandMap) &&
         // These color spaces need to be transformed to RGB.
         GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK)
     {
@@ -2904,7 +2905,14 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
     if (m_abyRawThermalImage.size() > 4 &&
         memcmp(m_abyRawThermalImage.data(), "\x89PNG", 4) == 0)
     {
-        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str());
+        // FLIR 16-bit PNG have a wrong endianness.
+        // Cf https://exiftool.org/TagNames/FLIR.html: "Note that most FLIR
+        // cameras using the PNG format seem to write the 16-bit raw image data
+        // in the wrong byte order."
+        const char *const apszPNGOpenOptions[] = {
+            "@BYTE_ORDER_LITTLE_ENDIAN=YES", nullptr};
+        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
+                                         nullptr, apszPNGOpenOptions, nullptr);
         if (poRawDS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid raw thermal image");
@@ -3108,10 +3116,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->nScaleFactor = nScaleFactor;
     poDS->SetScaleNumAndDenom();
-    poDS->nRasterXSize =
-        (poDS->sDInfo.image_width + nScaleFactor - 1) / nScaleFactor;
-    poDS->nRasterYSize =
-        (poDS->sDInfo.image_height + nScaleFactor - 1) / nScaleFactor;
+    poDS->nRasterXSize = DIV_ROUND_UP(poDS->sDInfo.image_width, nScaleFactor);
+    poDS->nRasterYSize = DIV_ROUND_UP(poDS->sDInfo.image_height, nScaleFactor);
 
     poDS->sDInfo.out_color_space = poDS->sDInfo.jpeg_color_space;
     poDS->eGDALColorSpace = poDS->sDInfo.jpeg_color_space;

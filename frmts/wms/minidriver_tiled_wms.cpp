@@ -390,13 +390,14 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         for (int i = 0, n = CSLCount(substs); i < n && substs; i++)
             m_parent_dataset->SetMetadataItem("Change", substs[i], nullptr);
 
-        const CPLString GTS(CPLGetXMLValue(config, "Configuration", ""));
+        const char *pszConfiguration =
+            CPLGetXMLValue(config, "Configuration", nullptr);
         CPLString decodedGTS;
 
-        if (GTS.size() != 0)
+        if (pszConfiguration)
         {  // Probably XML encoded because it is XML itself
-            decodedGTS =
-                GTS;  // The copy will be replaced by the decoded result
+            // The copy will be replaced by the decoded result
+            decodedGTS = pszConfiguration;
             WMSUtilDecode(decodedGTS,
                           CPLGetXMLValue(config, "Configuration.encoding", ""));
         }

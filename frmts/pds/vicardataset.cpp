@@ -1558,8 +1558,7 @@ void VICARDataset::WriteLabel()
     // Figure out label size, round it to the next multiple of RECSIZE
     constexpr size_t MAX_LOG10_LBLSIZE = 10;
     size_t nLabelSize = strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE + osLabel.size();
-    nLabelSize =
-        (nLabelSize + m_nRecordSize - 1) / m_nRecordSize * m_nRecordSize;
+    nLabelSize = DIV_ROUND_UP(nLabelSize, m_nRecordSize) * m_nRecordSize;
     std::string osLabelSize(
         CPLSPrintf("LBLSIZE=%d", static_cast<int>(nLabelSize)));
     while (osLabelSize.size() < strlen("LBLSIZE=") + MAX_LOG10_LBLSIZE)
@@ -2064,7 +2063,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
 
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    const CPLString target_name = GetKeyword("MAP.TARGET_NAME");
+    CPLString target_name = GetKeyword("MAP.TARGET_NAME");
 
     /**********   Grab MAP_PROJECTION_TYPE *****/
     const CPLString map_proj_name = GetKeyword("MAP.MAP_PROJECTION_TYPE");
@@ -2220,8 +2219,8 @@ void VICARDataset::ReadProjectionFromMapGroup()
 
         // The datum and sphere names will be the same basic name aas the planet
         const CPLString datum_name = "D_" + target_name;
-        CPLString sphere_name = target_name;  // + "_IAU_IAG");  //Might not be
-                                              // IAU defined so don't add
+
+        CPLString sphere_name = std::move(target_name);
 
         // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening = 0.0;

@@ -951,22 +951,22 @@ bool GDALAlgorithmArg::RunValidationActions()
     if (GetType() == GAAT_STRING && !GetChoices().empty())
     {
         auto &val = Get<std::string>();
-        const std::string validVal = ValidateChoice(val);
+        std::string validVal = ValidateChoice(val);
         if (validVal.empty())
             ret = false;
         else
-            val = validVal;
+            val = std::move(validVal);
     }
     else if (GetType() == GAAT_STRING_LIST && !GetChoices().empty())
     {
         auto &values = Get<std::vector<std::string>>();
         for (std::string &val : values)
         {
-            const std::string validVal = ValidateChoice(val);
+            std::string validVal = ValidateChoice(val);
             if (validVal.empty())
                 ret = false;
             else
-                val = validVal;
+                val = std::move(validVal);
         }
     }
 
@@ -1160,6 +1160,12 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
     serializedArg = std::move(ret);
     return true;
 }
+
+/************************************************************************/
+/*                   ~GDALInConstructionAlgorithmArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg::~GDALInConstructionAlgorithmArg() = default;
 
 /************************************************************************/
 /*              GDALInConstructionAlgorithmArg::AddAlias()              */
@@ -1416,7 +1422,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                 {
                     // If there is a single match, remove the name from the suggestion.
                     oRet.clear();
-                    oRet.push_back(osCode);
+                    oRet.push_back(std::move(osCode));
                 }
             }
             if (currentValue.empty() || oRet.empty())
@@ -2298,7 +2304,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
             else if (onlyInputSpecifiedInUpdateAndOutputNotRequired)
             {
-                assignToOutputArg = true;
+                if (updateArg->GetMutualExclusionGroup().empty() ||
+                    outputArg->GetMutualExclusionGroup().empty() ||
+                    updateArg->GetMutualExclusionGroup() !=
+                        outputArg->GetMutualExclusionGroup())
+                {
+                    assignToOutputArg = true;
+                }
                 flags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
             }
         }
@@ -2392,7 +2404,13 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     else if (onlyInputSpecifiedInUpdateAndOutputNotRequired &&
              val.GetDatasetRef())
     {
-        outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
+        if (updateArg->GetMutualExclusionGroup().empty() ||
+            outputArg->GetMutualExclusionGroup().empty() ||
+            updateArg->GetMutualExclusionGroup() !=
+                outputArg->GetMutualExclusionGroup())
+        {
+            outputArg->Get<GDALArgDatasetValue>().Set(val.GetDatasetRef());
+        }
     }
 
     // Deal with overwriting the output dataset
@@ -3417,12 +3435,23 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
     CPLXMLTreeCloser poTree(CPLParseXMLString(pszXML));
     if (!poTree)
         return false;
+
+    std::string typedOptionName = currentValue;
+    const auto posEqual = typedOptionName.find('=');
+    std::string typedValue;
+    if (posEqual != 0 && posEqual != std::string::npos)
+    {
+        typedValue = currentValue.substr(posEqual + 1);
+        typedOptionName.resize(posEqual);
+    }
+
     for (const CPLXMLNode *psChild = poTree.get()->psChild; psChild;
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
-        if (pszName && currentValue == pszName &&
-            EQUAL(psChild->pszValue, "Option"))
+        if (pszName && typedOptionName == pszName &&
+            (strcmp(psChild->pszValue, "Option") == 0 ||
+             strcmp(psChild->pszValue, "Argument") == 0))
         {
             const char *pszType = CPLGetXMLValue(psChild, "type", "");
             const char *pszMin = CPLGetXMLValue(psChild, "min", nullptr);
@@ -3440,6 +3469,11 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
             }
             else if (EQUAL(pszType, "boolean"))
             {
+                if (typedValue == "YES" || typedValue == "NO")
+                {
+                    oRet.push_back(currentValue);
+                    return true;
+                }
                 oRet.push_back("NO");
                 oRet.push_back("YES");
             }
@@ -3496,7 +3530,8 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
          psChild = psChild->psNext)
     {
         const char *pszName = CPLGetXMLValue(psChild, "name", nullptr);
-        if (pszName && EQUAL(psChild->pszValue, "Option"))
+        if (pszName && (strcmp(psChild->pszValue, "Option") == 0 ||
+                        strcmp(psChild->pszValue, "Argument") == 0))
         {
             const char *pszScope = CPLGetXMLValue(psChild, "scope", nullptr);
             if (!pszScope ||
@@ -5608,6 +5643,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
     if (option.empty() && !args.empty() && !args.back().empty() &&
         args.back()[0] == '-')
     {
+        const auto &lastArg = args.back();
         // List available options
         for (const auto &arg : GetArgs())
         {
@@ -5621,15 +5657,24 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             }
             if (!arg->GetShortName().empty())
             {
-                ret.push_back(std::string("-").append(arg->GetShortName()));
+                std::string str = std::string("-").append(arg->GetShortName());
+                if (lastArg == str)
+                    ret.push_back(std::move(str));
             }
-            for (const std::string &alias : arg->GetAliases())
+            if (lastArg != "-" && lastArg != "--")
             {
-                ret.push_back(std::string("--").append(alias));
+                for (const std::string &alias : arg->GetAliases())
+                {
+                    std::string str = std::string("--").append(alias);
+                    if (cpl::starts_with(str, lastArg))
+                        ret.push_back(std::move(str));
+                }
             }
             if (!arg->GetName().empty())
             {
-                ret.push_back(std::string("--").append(arg->GetName()));
+                std::string str = std::string("--").append(arg->GetName());
+                if (cpl::starts_with(str, lastArg))
+                    ret.push_back(std::move(str));
             }
         }
     }
@@ -5781,6 +5826,19 @@ void GDALAlgorithm::ExtractLastOptionAndValue(std::vector<std::string> &args,
         }
     }
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                 GDALContainerAlgorithm::RunImpl()                    */
+/************************************************************************/
+
+bool GDALContainerAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    return false;
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                        GDALAlgorithmRelease()                        */

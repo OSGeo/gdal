@@ -660,7 +660,7 @@ CPLErr EHdrDataset::RewriteHDR()
 {
     const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osName = CPLGetBasenameSafe(GetDescription());
-    const CPLString osHDRFilename =
+    CPLString osHDRFilename =
         CPLFormCIFilenameSafe(osPath, osName, osHeaderExt);
 
     // Write .hdr file.
@@ -827,8 +827,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
 
     const CPLString osPath = CPLGetPathSafe(pszFilename);
     const CPLString osName = CPLGetBasenameSafe(pszFilename);
-    const CPLString osREPFilename =
-        CPLFormCIFilenameSafe(osPath, osName, "rep");
+    CPLString osREPFilename = CPLFormCIFilenameSafe(osPath, osName, "rep");
 
     VSIStatBufL sStatBuf;
     if (VSIStatExL(osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0)
@@ -1363,7 +1362,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // info in the .hdr file itself.
     if (fp == nullptr && bHasInternalProjection)
     {
-        osPrjFilename = osHDRFilename;
+        osPrjFilename = std::move(osHDRFilename);
         fp = VSIFOpenL(osPrjFilename.c_str(), "r");
     }
 

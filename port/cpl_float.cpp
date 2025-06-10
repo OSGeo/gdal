@@ -445,9 +445,11 @@ double CPLGreatestCommonDivisor(double a, double b)
 
     const auto common_num = std::gcd(num_a, num_b);
 
-    // coverity[divide_by_zero]
+    // Add std::numeric_limits<double>::min() to avoid Coverity Scan warning
+    // about div by zero
     const auto common = sign * static_cast<double>(common_num) /
-                        static_cast<double>(common_denom);
+                        (static_cast<double>(common_denom) +
+                         std::numeric_limits<double>::min());
 
     const auto disaggregation_factor = std::max(a / common, b / common);
     if (disaggregation_factor > 10000)

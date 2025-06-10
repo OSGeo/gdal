@@ -21,6 +21,9 @@
 #define _(x) (x)
 #endif
 
+GDALVectorOutputAbstractAlgorithm::~GDALVectorOutputAbstractAlgorithm() =
+    default;
+
 /************************************************************************/
 /*      GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()           */
 /************************************************************************/

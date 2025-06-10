@@ -102,7 +102,7 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
                 oCADLayer.setId( aLayers.size() + 1 );
                 oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
 
-                aLayers.push_back( oCADLayer );
+                aLayers.push_back( std::move(oCADLayer) );
             }
             else
             {
@@ -148,7 +148,7 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
             delete pCADEntityObject;
             DebugMsg( "Entity object is null\n" );
             break;
-        } 
+        }
         else if ( dCurrentEntHandle == dLastEntHandle )
         {
             FillLayer( spEntityObj.get() );

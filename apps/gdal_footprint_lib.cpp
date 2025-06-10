@@ -292,85 +292,91 @@ class GDALFootprintMaskBand final : public GDALRasterBand
     }
 
   protected:
-    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override
-    {
-        int nWindowXSize;
-        int nWindowYSize;
-        m_poSrcBand->GetActualBlockSize(nBlockXOff, nBlockYOff, &nWindowXSize,
-                                        &nWindowYSize);
-        GDALRasterIOExtraArg sExtraArg;
-        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-        return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
-                         nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
-                         pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
-                         nBlockXSize, &sExtraArg);
-    }
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace,
-                     GDALRasterIOExtraArg *psExtraArg) override
-    {
-        if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-            eBufType == GDT_Byte && nPixelSpace == 1)
-        {
-            // Request when band seen as the mask band for GDALPolygonize()
-
-            if (m_poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize, eBufType,
-                                      nPixelSpace, nLineSpace,
-                                      psExtraArg) != CE_None)
-            {
-                return CE_Failure;
-            }
-            GByte *pabyData = static_cast<GByte *>(pData);
-            for (int iY = 0; iY < nYSize; ++iY)
-            {
-                for (int iX = 0; iX < nXSize; ++iX)
-                {
-                    if (pabyData[iX])
-                        pabyData[iX] = 1;
-                }
-                pabyData += nLineSpace;
-            }
-
-            return CE_None;
-        }
-
-        if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-            eBufType == GDT_Int64 &&
-            nPixelSpace == static_cast<int>(sizeof(int64_t)) &&
-            (nLineSpace % nPixelSpace) == 0)
-        {
-            // Request when band seen as the value band for GDALPolygonize()
-
-            if (m_poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize, eBufType,
-                                      nPixelSpace, nLineSpace,
-                                      psExtraArg) != CE_None)
-            {
-                return CE_Failure;
-            }
-            int64_t *panData = static_cast<int64_t *>(pData);
-            for (int iY = 0; iY < nYSize; ++iY)
-            {
-                for (int iX = 0; iX < nXSize; ++iX)
-                {
-                    if (panData[iX])
-                        panData[iX] = 1;
-                }
-                panData += (nLineSpace / nPixelSpace);
-            }
-
-            return CE_None;
-        }
-
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg);
-    }
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
+
+CPLErr GDALFootprintMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                         void *pData)
+{
+    int nWindowXSize;
+    int nWindowYSize;
+    m_poSrcBand->GetActualBlockSize(nBlockXOff, nBlockYOff, &nWindowXSize,
+                                    &nWindowYSize);
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
+                     nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
+                     pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
+                     nBlockXSize, &sExtraArg);
+}
+
+CPLErr GDALFootprintMaskBand::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+{
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        eBufType == GDT_Byte && nPixelSpace == 1)
+    {
+        // Request when band seen as the mask band for GDALPolygonize()
+
+        if (m_poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nPixelSpace,
+                                  nLineSpace, psExtraArg) != CE_None)
+        {
+            return CE_Failure;
+        }
+        GByte *pabyData = static_cast<GByte *>(pData);
+        for (int iY = 0; iY < nYSize; ++iY)
+        {
+            for (int iX = 0; iX < nXSize; ++iX)
+            {
+                if (pabyData[iX])
+                    pabyData[iX] = 1;
+            }
+            pabyData += nLineSpace;
+        }
+
+        return CE_None;
+    }
+
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        eBufType == GDT_Int64 &&
+        nPixelSpace == static_cast<int>(sizeof(int64_t)) &&
+        (nLineSpace % nPixelSpace) == 0)
+    {
+        // Request when band seen as the value band for GDALPolygonize()
+
+        if (m_poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nPixelSpace,
+                                  nLineSpace, psExtraArg) != CE_None)
+        {
+            return CE_Failure;
+        }
+        int64_t *panData = static_cast<int64_t *>(pData);
+        for (int iY = 0; iY < nYSize; ++iY)
+        {
+            for (int iX = 0; iX < nXSize; ++iX)
+            {
+                if (panData[iX])
+                    panData[iX] = 1;
+            }
+            panData += (nLineSpace / nPixelSpace);
+        }
+
+        return CE_None;
+    }
+
+    return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
+}
 
 /************************************************************************/
 /*                   GDALFootprintCombinedMaskBand                      */
@@ -395,141 +401,147 @@ class GDALFootprintCombinedMaskBand final : public GDALRasterBand
     }
 
   protected:
-    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override
-    {
-        int nWindowXSize;
-        int nWindowYSize;
-        m_apoSrcBands[0]->GetActualBlockSize(nBlockXOff, nBlockYOff,
-                                             &nWindowXSize, &nWindowYSize);
-        GDALRasterIOExtraArg sExtraArg;
-        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-        return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
-                         nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
-                         pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
-                         nBlockXSize, &sExtraArg);
-    }
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace,
-                     GDALRasterIOExtraArg *psExtraArg) override
-    {
-        if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-            eBufType == GDT_Byte && nPixelSpace == 1)
-        {
-            // Request when band seen as the mask band for GDALPolygonize()
-            {
-                GByte *pabyData = static_cast<GByte *>(pData);
-                for (int iY = 0; iY < nYSize; ++iY)
-                {
-                    memset(pabyData, m_bUnion ? 0 : 1, nXSize);
-                    pabyData += nLineSpace;
-                }
-            }
-
-            std::vector<GByte> abyTmp(static_cast<size_t>(nXSize) * nYSize);
-            for (auto poBand : m_apoSrcBands)
-            {
-                if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                     abyTmp.data(), nBufXSize, nBufYSize,
-                                     GDT_Byte, 1, nXSize,
-                                     psExtraArg) != CE_None)
-                {
-                    return CE_Failure;
-                }
-                GByte *pabyData = static_cast<GByte *>(pData);
-                size_t iTmp = 0;
-                for (int iY = 0; iY < nYSize; ++iY)
-                {
-                    if (m_bUnion)
-                    {
-                        for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
-                        {
-                            if (abyTmp[iTmp])
-                                pabyData[iX] = 1;
-                        }
-                    }
-                    else
-                    {
-                        for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
-                        {
-                            if (abyTmp[iTmp] == 0)
-                                pabyData[iX] = 0;
-                        }
-                    }
-                    pabyData += nLineSpace;
-                }
-            }
-
-            return CE_None;
-        }
-
-        if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-            eBufType == GDT_Int64 &&
-            nPixelSpace == static_cast<int>(sizeof(int64_t)) &&
-            (nLineSpace % nPixelSpace) == 0)
-        {
-            // Request when band seen as the value band for GDALPolygonize()
-            {
-                int64_t *panData = static_cast<int64_t *>(pData);
-                for (int iY = 0; iY < nYSize; ++iY)
-                {
-                    if (m_bUnion)
-                    {
-                        memset(panData, 0, nXSize * sizeof(int64_t));
-                    }
-                    else
-                    {
-                        int64_t nOne = 1;
-                        GDALCopyWords(&nOne, GDT_Int64, 0, panData, GDT_Int64,
-                                      sizeof(int64_t), nXSize);
-                    }
-                    panData += (nLineSpace / nPixelSpace);
-                }
-            }
-
-            std::vector<GByte> abyTmp(static_cast<size_t>(nXSize) * nYSize);
-            for (auto poBand : m_apoSrcBands)
-            {
-                if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                     abyTmp.data(), nBufXSize, nBufYSize,
-                                     GDT_Byte, 1, nXSize,
-                                     psExtraArg) != CE_None)
-                {
-                    return CE_Failure;
-                }
-                size_t iTmp = 0;
-                int64_t *panData = static_cast<int64_t *>(pData);
-                for (int iY = 0; iY < nYSize; ++iY)
-                {
-                    if (m_bUnion)
-                    {
-                        for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
-                        {
-                            if (abyTmp[iTmp])
-                                panData[iX] = 1;
-                        }
-                    }
-                    else
-                    {
-                        for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
-                        {
-                            if (abyTmp[iTmp] == 0)
-                                panData[iX] = 0;
-                        }
-                    }
-                    panData += (nLineSpace / nPixelSpace);
-                }
-            }
-            return CE_None;
-        }
-
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg);
-    }
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
+
+CPLErr GDALFootprintCombinedMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                                 void *pData)
+{
+    int nWindowXSize;
+    int nWindowYSize;
+    m_apoSrcBands[0]->GetActualBlockSize(nBlockXOff, nBlockYOff, &nWindowXSize,
+                                         &nWindowYSize);
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
+                     nBlockYOff * nBlockYSize, nWindowXSize, nWindowYSize,
+                     pData, nWindowXSize, nWindowYSize, GDT_Byte, 1,
+                     nBlockXSize, &sExtraArg);
+}
+
+CPLErr GDALFootprintCombinedMaskBand::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+{
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        eBufType == GDT_Byte && nPixelSpace == 1)
+    {
+        // Request when band seen as the mask band for GDALPolygonize()
+        {
+            GByte *pabyData = static_cast<GByte *>(pData);
+            for (int iY = 0; iY < nYSize; ++iY)
+            {
+                memset(pabyData, m_bUnion ? 0 : 1, nXSize);
+                pabyData += nLineSpace;
+            }
+        }
+
+        std::vector<GByte> abyTmp(static_cast<size_t>(nXSize) * nYSize);
+        for (auto poBand : m_apoSrcBands)
+        {
+            if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_Byte,
+                                 1, nXSize, psExtraArg) != CE_None)
+            {
+                return CE_Failure;
+            }
+            GByte *pabyData = static_cast<GByte *>(pData);
+            size_t iTmp = 0;
+            for (int iY = 0; iY < nYSize; ++iY)
+            {
+                if (m_bUnion)
+                {
+                    for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
+                    {
+                        if (abyTmp[iTmp])
+                            pabyData[iX] = 1;
+                    }
+                }
+                else
+                {
+                    for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
+                    {
+                        if (abyTmp[iTmp] == 0)
+                            pabyData[iX] = 0;
+                    }
+                }
+                pabyData += nLineSpace;
+            }
+        }
+
+        return CE_None;
+    }
+
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        eBufType == GDT_Int64 &&
+        nPixelSpace == static_cast<int>(sizeof(int64_t)) &&
+        (nLineSpace % nPixelSpace) == 0)
+    {
+        // Request when band seen as the value band for GDALPolygonize()
+        {
+            int64_t *panData = static_cast<int64_t *>(pData);
+            for (int iY = 0; iY < nYSize; ++iY)
+            {
+                if (m_bUnion)
+                {
+                    memset(panData, 0, nXSize * sizeof(int64_t));
+                }
+                else
+                {
+                    int64_t nOne = 1;
+                    GDALCopyWords(&nOne, GDT_Int64, 0, panData, GDT_Int64,
+                                  sizeof(int64_t), nXSize);
+                }
+                panData += (nLineSpace / nPixelSpace);
+            }
+        }
+
+        std::vector<GByte> abyTmp(static_cast<size_t>(nXSize) * nYSize);
+        for (auto poBand : m_apoSrcBands)
+        {
+            if (poBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                 abyTmp.data(), nBufXSize, nBufYSize, GDT_Byte,
+                                 1, nXSize, psExtraArg) != CE_None)
+            {
+                return CE_Failure;
+            }
+            size_t iTmp = 0;
+            int64_t *panData = static_cast<int64_t *>(pData);
+            for (int iY = 0; iY < nYSize; ++iY)
+            {
+                if (m_bUnion)
+                {
+                    for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
+                    {
+                        if (abyTmp[iTmp])
+                            panData[iX] = 1;
+                    }
+                }
+                else
+                {
+                    for (int iX = 0; iX < nXSize; ++iX, ++iTmp)
+                    {
+                        if (abyTmp[iTmp] == 0)
+                            panData[iX] = 0;
+                    }
+                }
+                panData += (nLineSpace / nPixelSpace);
+            }
+        }
+        return CE_None;
+    }
+
+    return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
+}
 
 /************************************************************************/
 /*                    GetOutputLayerAndUpdateDstDS()                    */
@@ -694,10 +706,7 @@ class GeoTransformCoordinateTransformation final
     {
     }
 
-    const OGRSpatialReference *GetSourceCS() const override
-    {
-        return nullptr;
-    }
+    const OGRSpatialReference *GetSourceCS() const override;
 
     const OGRSpatialReference *GetTargetCS() const override
     {
@@ -732,6 +741,12 @@ class GeoTransformCoordinateTransformation final
         return TRUE;
     }
 };
+
+const OGRSpatialReference *
+GeoTransformCoordinateTransformation::GetSourceCS() const
+{
+    return nullptr;
+}
 
 /************************************************************************/
 /*                             CountPoints()                            */

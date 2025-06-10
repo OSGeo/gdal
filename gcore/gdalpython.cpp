@@ -163,29 +163,22 @@ typedef HMODULE LibraryHandle;
 /*                          LoadPythonAPI()                             */
 /************************************************************************/
 
-#if defined(LOAD_NOCHECK_WITH_NAME) && defined(HAVE_DLFCN_H) && !defined(_WIN32)
-static LibraryHandle libHandleStatic = nullptr;
-#endif
-
 /** Load the subset of the Python C API that we need */
 static bool LoadPythonAPI()
 {
-    static bool bInit = false;
-    if (bInit)
-        return true;
+    static int nInit = -1;
+    if (nInit >= 0)
+        return nInit == TRUE;
+    nInit = FALSE;
 
 #ifdef LOAD_NOCHECK_WITH_NAME
-    // The static here is just to avoid Coverity warning about resource leak.
-    LibraryHandle libHandle = nullptr;
-
+    static LibraryHandle libHandle = nullptr;
     const char *pszPythonSO = CPLGetConfigOption("PYTHONSO", nullptr);
 #if defined(HAVE_DLFCN_H) && !defined(_WIN32)
 
     // First try in the current process in case the python symbols would
     // be already loaded
-    (void)libHandle;
     libHandle = dlopen(nullptr, RTLD_LAZY);
-    libHandleStatic = libHandle;
     if (libHandle != nullptr &&
         dlsym(libHandle, "Py_SetProgramName") != nullptr)
     {
@@ -193,6 +186,8 @@ static bool LoadPythonAPI()
     }
     else
     {
+        if (libHandle)
+            dlclose(libHandle);
         libHandle = nullptr;
     }
 
@@ -795,11 +790,12 @@ static bool LoadPythonAPI()
 #else   // LOAD_NOCHECK_WITH_NAME
     CPLError(CE_Failure, CPLE_AppDefined,
              "This platform doesn't support dynamic loading of "
-             "libraries") return false;
+             "libraries");
+    return false;
 #endif  // LOAD_NOCHECK_WITH_NAME
 
-    bInit = true;
-    return bInit;
+    nInit = true;
+    return true;
 }
 
 //! @cond Doxygen_Suppress

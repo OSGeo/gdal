@@ -344,17 +344,17 @@ struct GDALTileIndexTileIterator
                 }
 
                 VSIStatBufL sStatBuf;
-                const std::string osCurName = papszSrcDSNames[iCurSrc++];
-                if (VSIStatL(osCurName.c_str(), &sStatBuf) == 0 &&
+                const char *pszCurName = papszSrcDSNames[iCurSrc++];
+                if (VSIStatL(pszCurName, &sStatBuf) == 0 &&
                     VSI_ISDIR(sStatBuf.st_mode))
                 {
                     auto poSrcDS = std::unique_ptr<GDALDataset>(
-                        GDALDataset::Open(osCurName.c_str(), GDAL_OF_RASTER,
-                                          nullptr, nullptr, nullptr));
+                        GDALDataset::Open(pszCurName, GDAL_OF_RASTER, nullptr,
+                                          nullptr, nullptr));
                     if (poSrcDS)
-                        return osCurName;
+                        return pszCurName;
 
-                    osCurDir = osCurName;
+                    osCurDir = pszCurName;
                     psDir = VSIOpenDir(
                         osCurDir.c_str(),
                         /*nDepth=*/psOptions->bRecursive ? -1 : 0, nullptr);
@@ -367,7 +367,7 @@ struct GDALTileIndexTileIterator
                 }
                 else
                 {
-                    return osCurName;
+                    return pszCurName;
                 }
             }
 
@@ -397,7 +397,7 @@ struct GDALTileIndexTileIterator
                     continue;
             }
 
-            const std::string osFilename = CPLFormFilenameSafe(
+            std::string osFilename = CPLFormFilenameSafe(
                 osCurDir.c_str(), psEntry->pszName, nullptr);
             if (VSI_ISDIR(psEntry->nMode))
             {
@@ -405,7 +405,9 @@ struct GDALTileIndexTileIterator
                     GDALDataset::Open(osFilename.c_str(), GDAL_OF_RASTER,
                                       nullptr, nullptr, nullptr));
                 if (poSrcDS)
+                {
                     return osFilename;
+                }
                 continue;
             }
 
@@ -1409,7 +1411,7 @@ GDALTileIndexOptionsNew(char **papszArgv,
 
                 const GDALTileIndexRasterMetadata oMD{type, fetchMd->at(i + 1),
                                                       fetchMd->at(i)};
-                psOptions->aoFetchMD.push_back(oMD);
+                psOptions->aoFetchMD.push_back(std::move(oMD));
             }
         }
 

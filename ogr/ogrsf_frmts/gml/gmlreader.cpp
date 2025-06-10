@@ -1102,8 +1102,11 @@ void GMLReader::SetFeaturePropertyDirectly(const char *pszElement,
         auto poClassProperty = poClass->GetProperty(iProperty);
         if (poClassProperty)
         {
-            poClassProperty->AnalysePropertyValue(
-                poFeature->GetProperty(iProperty), m_bSetWidthFlag);
+            const GMLProperty *poProp = poFeature->GetProperty(iProperty);
+            if (poProp)
+            {
+                poClassProperty->AnalysePropertyValue(poProp, m_bSetWidthFlag);
+            }
         }
         else
         {

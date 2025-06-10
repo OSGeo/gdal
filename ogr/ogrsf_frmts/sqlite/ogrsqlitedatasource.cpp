@@ -62,6 +62,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 #if defined(HAVE_SPATIALITE) && !defined(SPATIALITE_DLOPEN)
@@ -185,18 +186,15 @@ bool OGRSQLiteBaseDataSource::InitSpatialite()
 
 void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
+    // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
+    // is not re-entrant due to the use of xmlCleanupParser()
+    // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
+    static std::mutex oCleanupMutex;
+    std::lock_guard oLock(oCleanupMutex);
+
     if (hSpatialiteCtxt != nullptr)
     {
-        auto ctxt = hSpatialiteCtxt;
-        {
-            // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
-            // is not re-entrant due to the use of xmlCleanupParser()
-            // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
-            static std::mutex oCleanupMutex;
-            std::lock_guard oLock(oCleanupMutex);
-            pfn_spatialite_cleanup_ex(ctxt);
-        }
-        // coverity[thread1_overwrites_value_in_field]
+        pfn_spatialite_cleanup_ex(hSpatialiteCtxt);
         hSpatialiteCtxt = nullptr;
     }
 }
@@ -4562,9 +4560,13 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
                 {
                     std::unique_ptr<OGRSpatialReference,
                                     OGRSpatialReferenceReleaser>
-                        poCachedSRS(new OGRSpatialReference(oSRS));
-                    poCachedSRS->SetAxisMappingStrategy(
-                        OAMS_TRADITIONAL_GIS_ORDER);
+                        poCachedSRS;
+                    poCachedSRS.reset(oSRS.Clone());
+                    if (poCachedSRS)
+                    {
+                        poCachedSRS->SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                    }
                     AddSRIDToCache(nSRSId, std::move(poCachedSRS));
                 }
 
@@ -4664,9 +4666,9 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
         if (nSRSId != m_nUndefinedSRID)
         {
-            auto poSRSClone = std::unique_ptr<OGRSpatialReference,
-                                              OGRSpatialReferenceReleaser>(
-                new OGRSpatialReference(oSRS));
+            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+                poSRSClone;
+            poSRSClone.reset(oSRS.Clone());
             AddSRIDToCache(nSRSId, std::move(poSRSClone));
         }
 

@@ -66,10 +66,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
         }
     }
 
-    virtual int GetCleanThreadRunTimeout() override
-    {
-        return m_nCleanThreadRunTimeout;
-    }
+    virtual int GetCleanThreadRunTimeout() override;
 
     virtual CPLErr Insert(const char *pszKey,
                           const CPLString &osFileName) override
@@ -200,6 +197,11 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
     long m_nMaxSize;
     int m_nCleanThreadRunTimeout;
 };
+
+int GDALWMSFileCache::GetCleanThreadRunTimeout()
+{
+    return m_nCleanThreadRunTimeout;
+}
 
 //------------------------------------------------------------------------------
 // GDALWMSCache

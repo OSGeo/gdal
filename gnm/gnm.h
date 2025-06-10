@@ -653,10 +653,6 @@ typedef enum
 
 class CPL_DLL GNMRule
 {
-    // to hopefully please Coverity Scan which complains about missing
-    // move assignment operator for performance reasons
-    GNMRule &operator==(GNMRule &&) = delete;
-
   public:
     /** Constructor */
     GNMRule();
@@ -664,13 +660,22 @@ class CPL_DLL GNMRule
     explicit GNMRule(const std::string &oRule);
     /** Constructor */
     explicit GNMRule(const char *pszRule);
-    /** Constructor */
-    GNMRule(const GNMRule &oRule);
+
+    /** Copy constructor */
+    GNMRule(const GNMRule &) = default;
+
+    /** Move constructor */
+    GNMRule(GNMRule &&) = default;
 
     /** Assignment operator */
     GNMRule &operator=(const GNMRule &) = default;
 
+    /** Move assignment operator */
+    GNMRule &operator=(GNMRule &&) = default;
+
+    /** Destructor */
     virtual ~GNMRule();
+
     /**
      * @brief  This function indicate if rule string was parsed successfully
      * @return true if rule is valid

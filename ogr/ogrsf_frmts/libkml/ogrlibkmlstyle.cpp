@@ -1008,7 +1008,7 @@ void styletable2kml(OGRStyleTable *poOgrStyleTable, KmlFactory *poKmlFactory,
         {
             CPLString osName(pszStyleName);
             osName.resize(strlen(pszStyleName) - strlen("_normal"));
-            aoSetNormalStyles.insert(osName);
+            aoSetNormalStyles.insert(std::move(osName));
         }
         else if (strlen(pszStyleName) > strlen("_highlight") &&
                  EQUAL(pszStyleName + strlen(pszStyleName) -
@@ -1017,7 +1017,7 @@ void styletable2kml(OGRStyleTable *poOgrStyleTable, KmlFactory *poKmlFactory,
         {
             CPLString osName(pszStyleName);
             osName.resize(strlen(pszStyleName) - strlen("_highlight"));
-            aoSetHighlightStyles.insert(osName);
+            aoSetHighlightStyles.insert(std::move(osName));
         }
     }
 

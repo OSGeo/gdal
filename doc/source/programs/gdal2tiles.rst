@@ -245,7 +245,7 @@ The following profiles are supported:
 - geodetic: mapped to WGS84 MapML tiling scheme
 - APSTILE: from the tms_MapML_APSTILE.json data file
 
-The generated MapML file in the output directory is ``mapml.mapl``
+The generated MapML file in the output directory is ``mapml.mapml``
 
 Available options are:
 

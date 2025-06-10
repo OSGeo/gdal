@@ -2560,6 +2560,7 @@ struct _GDALGridJob
     GDALDataType eType;
 
     int *pnCounter;
+    int nCounterSingleThreaded;
     volatile int *pbStop;
     CPLCond *hCond;
     CPLMutex *hCondMutex;
@@ -2591,8 +2592,7 @@ static int GDALGridProgressMultiThread(GDALGridJob *psJob)
 // Return TRUE if the computation must be interrupted.
 static int GDALGridProgressMonoThread(GDALGridJob *psJob)
 {
-    // coverity[missing_lock]
-    const int nCounter = ++(*psJob->pnCounter);
+    const int nCounter = ++(psJob->nCounterSingleThreaded);
     if (!psJob->pfnRealProgress(nCounter / static_cast<double>(psJob->nYSize),
                                 "", psJob->pRealProgressArg))
     {
@@ -3509,6 +3509,7 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
     sJob.eType = eType;
     sJob.pfnRealProgress = pfnProgress;
     sJob.pRealProgressArg = pProgressArg;
+    sJob.nCounterSingleThreaded = 0;
     sJob.pnCounter = &nCounter;
     sJob.pbStop = &bStop;
     sJob.hCond = nullptr;

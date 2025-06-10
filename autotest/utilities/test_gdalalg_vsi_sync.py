@@ -49,3 +49,14 @@ def test_gdalalg_vsi_sync_error(tmp_vsimem, tmp_path):
     alg["destination"] = tmp_path / "i_do" / "not" / "exist" / "dest.bin"
     with pytest.raises(Exception, match="Cannot create"):
         alg.Run()
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_sync_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["source"] = "/vsioss/i_do_not/exist.bin"
+        alg["destination"] = "/vsimem/"
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()

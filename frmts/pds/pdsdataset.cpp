@@ -2,15 +2,15 @@
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of PDSDataset
- * Author:   Trent Hare (thare@usgs.gov),
- *           Robert Soricone (rsoricone@usgs.gov)
+ * Author:   Trent Hare (thare at usgs.gov),
+ *           Robert Soricone (rsoricone at usgs.gov)
  *
  * NOTE: Original code authored by Trent and Robert and placed in the public
  * domain as per US government policy.  I have (within my rights) appropriated
  * it and placed it under the following license.  This is not intended to
  * diminish Trent and Roberts contribution.
  ******************************************************************************
- * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2007, Frank Warmerdam <warmerdam at pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
@@ -591,7 +591,7 @@ void PDSDataset::ParseSRS()
     if (bProjectionSet)
     {
         // Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
-        const CPLString proj_target_name = map_proj_name + " " + target_name;
+        CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name);  // set ProjCS keyword
 
         // The geographic/geocentric name will be the same basic name as the
@@ -600,8 +600,8 @@ void PDSDataset::ParseSRS()
 
         // The datum and sphere names will be the same basic name aas the planet
         const CPLString datum_name = "D_" + target_name;
-        // Might not be IAU defined so don't add.
-        CPLString sphere_name = target_name;  // + "_IAU_IAG");
+
+        CPLString sphere_name = std::move(target_name);
 
         // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening;
@@ -1304,10 +1304,7 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit PDSWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -1316,11 +1313,13 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    ~PDSWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+PDSWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 /************************************************************************/
 /*                       ParseCompressedImage()                         */

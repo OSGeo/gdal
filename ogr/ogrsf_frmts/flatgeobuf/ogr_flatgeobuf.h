@@ -17,9 +17,18 @@
 #include "ogr_p.h"
 #include "ogreditablelayer.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 #include "header_generated.h"
 #include "feature_generated.h"
 #include "packedrtree.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include <deque>
 #include <limits>

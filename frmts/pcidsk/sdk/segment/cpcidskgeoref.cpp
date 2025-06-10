@@ -26,6 +26,8 @@ static double PAK2PCI( double deg, int function );
 #  define ABS(x)        ((x<0) ? (-1*(x)) : x)
 #endif
 
+PCIDSKGeoref::~PCIDSKGeoref() = default;
+
 /************************************************************************/
 /*                           CPCIDSKGeoref()                            */
 /************************************************************************/

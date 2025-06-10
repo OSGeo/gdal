@@ -75,7 +75,7 @@ bool GMLRegistry::Parse()
             GMLRegistryNamespace oNameSpace;
             if (oNameSpace.Parse(osRegistryPath, psIter))
             {
-                aoNamespaces.push_back(oNameSpace);
+                aoNamespaces.push_back(std::move(oNameSpace));
             }
         }
         psIter = psIter->psNext;
@@ -112,7 +112,7 @@ bool GMLRegistryNamespace::Parse(const char *pszRegistryFilename,
             GMLRegistryFeatureType oFeatureType;
             if (oFeatureType.Parse(pszRegistryFilename, psIter))
             {
-                aoFeatureTypes.push_back(oFeatureType);
+                aoFeatureTypes.push_back(std::move(oFeatureType));
             }
         }
         psIter = psIter->psNext;

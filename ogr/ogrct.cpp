@@ -930,6 +930,12 @@ bool OGRProjCTDifferentOperationsUsed(OGRCoordinateTransformation *poCT)
 //! @endcond
 
 /************************************************************************/
+/*                    ~OGRCoordinateTransformation()                    */
+/************************************************************************/
+
+OGRCoordinateTransformation::~OGRCoordinateTransformation() = default;
+
+/************************************************************************/
 /*                 OCTDestroyCoordinateTransformation()                 */
 /************************************************************************/
 

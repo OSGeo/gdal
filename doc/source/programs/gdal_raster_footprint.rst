@@ -25,10 +25,13 @@ a raster file, taking into account nodata values (or more generally the mask
 band attached to the raster bands), and generating polygons/multipolygons
 corresponding to areas where pixels are valid, and write to an output vector file.
 
-.. TODO: uncomment when available
-.. The :program:`gdal raster clean-collar` utility may be run as a pre-processing
-.. step to generate proper mask bands.
+The :program:`gdal raster clean-collar` utility may be run as a pre-processing
+step to generate proper mask bands.
 
+.. figure:: ../../images/programs/gdal_raster_footprint.png
+
+Example footprint calculated with default options of :program:`gdal raster footprint`.
+ 
 The following options are available:
 
 .. include:: gdal_options/of_vector.rst

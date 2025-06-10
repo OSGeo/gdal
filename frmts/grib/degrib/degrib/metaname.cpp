@@ -64,7 +64,7 @@ static std::string GetGRIB2_CSVFilename(const char* pszFilename)
     const char* pszGribTableDirectory = CPLGetConfigOption("GRIB_RESOURCE_DIR", nullptr);
     if( pszGribTableDirectory )
     {
-        const std::string osFullFilename = CPLFormFilenameSafe(pszGribTableDirectory, pszFilename, nullptr);
+        std::string osFullFilename = CPLFormFilenameSafe(pszGribTableDirectory, pszFilename, nullptr);
         VSIStatBufL sStat;
         if( VSIStatL(osFullFilename.c_str(), &sStat) == 0 )
             return osFullFilename;
@@ -318,7 +318,7 @@ static std::string GetGrib2LocalTable4_2FileName(int center,
     const std::string osFilename = GetGRIB2_CSVFilename("grib2_table_4_2_local_index.csv");
     if( osFilename.empty() )
     {
-        return osFilename;
+        return std::string();
     }
     int iCenter = CSVGetFileFieldId(osFilename.c_str(),"center_code");
     int iSubCenter = CSVGetFileFieldId(osFilename.c_str(),"subcenter_code");

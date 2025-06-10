@@ -1,7 +1,7 @@
 .. _rfc-3:
 
 ================================
-RFC 3: GDAL Committer Guildlines
+RFC 3: GDAL Committer Guidelines
 ================================
 
 Author: Frank Warmerdam

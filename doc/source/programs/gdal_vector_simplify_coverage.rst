@@ -76,7 +76,7 @@ Advanced options
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 
-.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
 Examples
 --------

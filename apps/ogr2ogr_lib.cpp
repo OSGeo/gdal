@@ -1207,15 +1207,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
         return hTransformArg != nullptr;
     }
 
-    virtual ~GCPCoordTransformation()
-    {
-        if (hTransformArg != nullptr)
-        {
-            GDALDestroyTransformer(hTransformArg);
-        }
-        if (poSRS)
-            poSRS->Dereference();
-    }
+    ~GCPCoordTransformation() override;
 
     virtual const OGRSpatialReference *GetSourceCS() const override
     {
@@ -1256,6 +1248,16 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
     }
 };
 
+GCPCoordTransformation::~GCPCoordTransformation()
+{
+    if (hTransformArg != nullptr)
+    {
+        GDALDestroyTransformer(hTransformArg);
+    }
+    if (poSRS)
+        poSRS->Dereference();
+}
+
 /************************************************************************/
 /*                            CompositeCT                               */
 /************************************************************************/
@@ -1286,13 +1288,7 @@ class CompositeCT : public OGRCoordinateTransformation
     {
     }
 
-    virtual ~CompositeCT()
-    {
-        if (bOwnCT1)
-            delete poCT1;
-        if (bOwnCT2)
-            delete poCT2;
-    }
+    ~CompositeCT() override;
 
     OGRCoordinateTransformation *Clone() const override
     {
@@ -1390,6 +1386,14 @@ class CompositeCT : public OGRCoordinateTransformation
     }
 };
 
+CompositeCT::~CompositeCT()
+{
+    if (bOwnCT1)
+        delete poCT1;
+    if (bOwnCT2)
+        delete poCT2;
+}
+
 /************************************************************************/
 /*                    AxisMappingCoordinateTransformation               */
 /************************************************************************/
@@ -1402,6 +1406,15 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         : bSwapXY(bSwapXYIn)
     {
     }
+
+    AxisMappingCoordinateTransformation(
+        const AxisMappingCoordinateTransformation &) = default;
+    AxisMappingCoordinateTransformation &
+    operator=(const AxisMappingCoordinateTransformation &) = delete;
+    AxisMappingCoordinateTransformation(
+        AxisMappingCoordinateTransformation &&) = delete;
+    AxisMappingCoordinateTransformation &
+    operator=(AxisMappingCoordinateTransformation &&) = delete;
 
   public:
     AxisMappingCoordinateTransformation(const std::vector<int> &mappingIn,
@@ -1425,9 +1438,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         }
     }
 
-    ~AxisMappingCoordinateTransformation() override
-    {
-    }
+    ~AxisMappingCoordinateTransformation() override;
 
     virtual OGRCoordinateTransformation *Clone() const override
     {
@@ -1476,6 +1487,9 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return new AxisMappingCoordinateTransformation(bSwapXY);
     }
 };
+
+AxisMappingCoordinateTransformation::~AxisMappingCoordinateTransformation() =
+    default;
 
 /************************************************************************/
 /*                        ApplySpatialFilter()                          */
@@ -2432,9 +2446,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         bUpdate = true;
     }
 
-    const CPLString osDateLineOffset =
-        CPLOPrintf("%g", psOptions->dfDateLineOffset);
-
     if (psOptions->bPreserveFID && psOptions->bExplodeCollections)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2679,6 +2690,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     std::vector<std::string> aoDrivers;
     if (poODS == nullptr && psOptions->osFormat.empty())
     {
+        const auto nErrorCount = CPLGetErrorCounter();
         aoDrivers = CPLStringList(GDALGetOutputDriversForDatasetName(
             pszDest, GDAL_OF_VECTOR, /* bSingleMatch = */ true,
             /* bWarn = */ true));
@@ -2691,6 +2703,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 bUpdate = true;
             }
+        }
+        else if (aoDrivers.empty() && CPLGetErrorCounter() > nErrorCount &&
+                 CPLGetLastErrorType() == CE_Failure)
+        {
+            return nullptr;
         }
     }
 
@@ -3093,7 +3110,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_poODS = poODS;
     oTranslator.m_bTransform = psOptions->bTransform;
     oTranslator.m_bWrapDateline = psOptions->bWrapDateline;
-    oTranslator.m_osDateLineOffset = osDateLineOffset;
+    oTranslator.m_osDateLineOffset =
+        CPLOPrintf("%g", psOptions->dfDateLineOffset);
     oTranslator.m_poOutputSRS = oOutputSRSHolder.get();
     oTranslator.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oTranslator.m_poUserSourceSRS = poSourceSRS;
@@ -3644,7 +3662,18 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     if (psOptions->nLimit >= 0)
                         anLayerCountFeatures[iLayer] = std::min(
                             anLayerCountFeatures[iLayer], psOptions->nLimit);
-                    nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    if (anLayerCountFeatures[iLayer] >= 0 &&
+                        anLayerCountFeatures[iLayer] <=
+                            std::numeric_limits<GIntBig>::max() -
+                                nCountLayersFeatures)
+                    {
+                        nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    }
+                    else
+                    {
+                        nCountLayersFeatures = 0;
+                        psOptions->bDisplayProgress = false;
+                    }
                 }
             }
         }
@@ -3713,9 +3742,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                             1.0 / nCountLayersFeatures,
                         psOptions->pfnProgress, psOptions->pProgressData);
                 }
-            }
 
-            nAccCountFeatures += anLayerCountFeatures[iLayer];
+                nAccCountFeatures += anLayerCountFeatures[iLayer];
+            }
 
             auto psInfo = oSetup.Setup(poPassedLayer,
                                        psOptions->osNewLayerName.empty()

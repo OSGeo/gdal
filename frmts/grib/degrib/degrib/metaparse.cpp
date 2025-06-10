@@ -420,7 +420,7 @@ static int ParseSect1 (sInt4 *is1, sInt4 ns1, grib_MetaData *meta)
  *   5/2003 AAT: Stopped messing around with the way buffer and data[i]
  *          were allocated.  It was confusing the free routine.
  *   5/2003 AAT: Added maxLen to Wx structure.
- *   6/2003 AAT: Revisited after Matt (matt@wunderground.com) informed me of
+ *   6/2003 AAT: Revisited after Matt (matt at wunderground.com) informed me of
  *          memory problems.
  *          1) I had a memory leak caused by a buffer+= buffLen
  *          2) buffLen could have increased out of bounds of buffer.

@@ -470,6 +470,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
             else if (n == 0)
                 return FALSE;
             pabyData += n;
+            assert(n <= nRemain);
             nRemain -= static_cast<int>(n);
             break;
         }
@@ -510,6 +511,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
                     return FALSE;
             }
             pabyData += n;
+            assert(n <= nRemain);
             nRemain -= static_cast<int>(n);
             break;
         }

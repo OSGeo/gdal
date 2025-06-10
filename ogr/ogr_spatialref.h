@@ -771,9 +771,7 @@ struct CPL_DLL OGRSpatialReferenceReleaser
 class CPL_DLL OGRCoordinateTransformation
 {
   public:
-    virtual ~OGRCoordinateTransformation()
-    {
-    }
+    virtual ~OGRCoordinateTransformation();
 
     static void DestroyCT(OGRCoordinateTransformation *poCT);
 
@@ -968,6 +966,17 @@ class CPL_DLL OGRCoordinateTransformation
      * @since GDAL 3.3
      */
     virtual OGRCoordinateTransformation *GetInverse() const = 0;
+
+  protected:
+    /*! @cond Doxygen_Suppress */
+    OGRCoordinateTransformation() = default;
+    OGRCoordinateTransformation(const OGRCoordinateTransformation &) = default;
+    OGRCoordinateTransformation &
+    operator=(const OGRCoordinateTransformation &) = default;
+    OGRCoordinateTransformation(OGRCoordinateTransformation &&) = default;
+    OGRCoordinateTransformation &
+    operator=(OGRCoordinateTransformation &&) = default;
+    /*! @endcond */
 };
 
 OGRCoordinateTransformation CPL_DLL *

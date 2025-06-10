@@ -155,17 +155,32 @@ class VRTDerivedRasterBandPrivateData
     std::vector<std::pair<CPLString, CPLString>> m_oFunctionArgs{};
     bool m_bSkipNonContributingSourcesSpecified = false;
     bool m_bSkipNonContributingSources = false;
+    GIntBig m_nAllowedRAMUsage = 0;
 
-    VRTDerivedRasterBandPrivateData() = default;
-
-    virtual ~VRTDerivedRasterBandPrivateData()
+    VRTDerivedRasterBandPrivateData()
+        : m_nAllowedRAMUsage(CPLGetUsablePhysicalRAM() / 10 * 4)
     {
-        if (m_poGDALCreateNumpyArray)
-            Py_DecRef(m_poGDALCreateNumpyArray);
-        if (m_poUserFunction)
-            Py_DecRef(m_poUserFunction);
+        // Use only up to 40% of RAM to acquire source bands and generate the
+        // output buffer.
+        // Only for tests now
+        const char *pszMAX_RAM = "VRT_DERIVED_DATASET_ALLOWED_RAM_USAGE";
+        if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
+        {
+            CPL_IGNORE_RET_VAL(
+                CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
+        }
     }
+
+    ~VRTDerivedRasterBandPrivateData();
 };
+
+VRTDerivedRasterBandPrivateData::~VRTDerivedRasterBandPrivateData()
+{
+    if (m_poGDALCreateNumpyArray)
+        Py_DecRef(m_poGDALCreateNumpyArray);
+    if (m_poUserFunction)
+        Py_DecRef(m_poUserFunction);
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -353,6 +368,7 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction(
  *         metadata string. If no pixel function has been registered
  *         for pszFuncNameIn, nullptr will be returned.
  */
+/* static */
 const std::pair<VRTDerivedRasterBand::PixelFunc, std::string> *
 VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
 {
@@ -368,6 +384,24 @@ VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
         return nullptr;
 
     return &(oIter->second);
+}
+
+/************************************************************************/
+/*                        GetPixelFunctionNames()                       */
+/************************************************************************/
+
+/**
+ * Return the list of available pixel function names.
+ */
+/* static */
+std::vector<std::string> VRTDerivedRasterBand::GetPixelFunctionNames()
+{
+    std::vector<std::string> res;
+    for (const auto &iter : GetGlobalMapPixelFunction())
+    {
+        res.push_back(iter.first);
+    }
+    return res;
 }
 
 /************************************************************************/
@@ -971,6 +1005,24 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         return CE_Failure;
     }
 
+    if constexpr (sizeof(GSpacing) > sizeof(int))
+    {
+        if (nLineSpace > INT_MAX)
+        {
+            if (nBufYSize == 1)
+            {
+                nLineSpace = 0;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "VRTDerivedRasterBand::IRasterIO(): nLineSpace > "
+                         "INT_MAX not supported");
+                return CE_Failure;
+            }
+        }
+    }
+
     const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     GDALDataType eSrcType = eSourceTransferType;
     if (eSrcType == GDT_Unknown || eSrcType >= GDT_TypeCount)
@@ -1010,30 +1062,19 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     }
     const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
 
-    /* -------------------------------------------------------------------- */
-    /*      Initialize the buffer to some background value. Use the         */
-    /*      nodata value if available.                                      */
-    /* -------------------------------------------------------------------- */
-    if (SkipBufferInitialization())
+    // If acquiring the region of interest in a single time is going
+    // to consume too much RAM, split in halves, and that recursively
+    // until we get below m_nAllowedRAMUsage.
+    if (m_poPrivate->m_nAllowedRAMUsage > 0 && nSources > 0 &&
+        nSrcTypeSize > 0 && nBufXSize == nXSize && nBufYSize == nYSize &&
+        static_cast<GIntBig>(nBufXSize) * nBufYSize >
+            m_poPrivate->m_nAllowedRAMUsage / (nSources * nSrcTypeSize))
     {
-        // Do nothing
-    }
-    else if (nPixelSpace == nBufTypeSize &&
-             (!m_bNoDataValueSet || m_dfNoDataValue == 0))
-    {
-        memset(pData, 0,
-               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
-    }
-    else if (m_bNoDataValueSet)
-    {
-        double dfWriteValue = m_dfNoDataValue;
-
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
-                            static_cast<GByte *>(pData) + nLineSpace * iLine,
-                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
+        CPLErr eErr = SplitRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nPixelSpace, nLineSpace, psExtraArg);
+        if (eErr != CE_Warning)
+            return eErr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1088,8 +1129,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     const int nExtBufYSize = nBufYSize + 2 * nBufferRadius;
     int nBufferCount = 0;
 
-    std::vector<void *> apBuffers(nSources);
+    std::vector<std::unique_ptr<void, VSIFreeReleaser>> apBuffers(nSources);
     std::vector<int> anMapBufferIdxToSourceIdx(nSources);
+    bool bSkipOutputBufferInitialization = nSources > 0;
     for (int iSource = 0; iSource < nSources; iSource++)
     {
         if (m_poPrivate->m_bSkipNonContributingSources &&
@@ -1109,32 +1151,25 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             {
                 if (bError)
                 {
-                    for (int i = 0; i < nBufferCount; i++)
-                    {
-                        VSIFree(apBuffers[i]);
-                    }
                     return CE_Failure;
                 }
 
                 // Skip non contributing source
+                bSkipOutputBufferInitialization = false;
                 continue;
             }
         }
 
         anMapBufferIdxToSourceIdx[nBufferCount] = iSource;
-        apBuffers[nBufferCount] =
-            VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
+        apBuffers[nBufferCount].reset(
+            VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize));
         if (apBuffers[nBufferCount] == nullptr)
         {
-            for (int i = 0; i < nBufferCount; i++)
-            {
-                VSIFree(apBuffers[i]);
-            }
             return CE_Failure;
         }
 
         bool bBufferInit = true;
-        if (papoSources[iSource]->GetType() == VRTSimpleSource::GetTypeStatic())
+        if (papoSources[iSource]->IsSimpleSource())
         {
             const auto poSS =
                 static_cast<VRTSimpleSource *>(papoSources[iSource]);
@@ -1149,8 +1184,18 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 poSS->m_dfDstXOff + poSS->m_dfDstXSize == nRasterXSize &&
                 poSS->m_dfDstYOff + poSS->m_dfDstYSize == nRasterYSize)
             {
-                bBufferInit = false;
+                if (papoSources[iSource]->GetType() ==
+                    VRTSimpleSource::GetTypeStatic())
+                    bBufferInit = false;
             }
+            else
+            {
+                bSkipOutputBufferInitialization = false;
+            }
+        }
+        else
+        {
+            bSkipOutputBufferInitialization = false;
         }
         if (bBufferInit)
         {
@@ -1162,21 +1207,47 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             /* ------------------------------------------------------------ */
             if (!m_bNoDataValueSet || m_dfNoDataValue == 0)
             {
-                memset(apBuffers[nBufferCount], 0,
+                memset(apBuffers[nBufferCount].get(), 0,
                        static_cast<size_t>(nSrcTypeSize) * nExtBufXSize *
                            nExtBufYSize);
             }
             else
             {
-                GDALCopyWords64(&m_dfNoDataValue, GDT_Float64, 0,
-                                static_cast<GByte *>(apBuffers[nBufferCount]),
-                                eSrcType, nSrcTypeSize,
-                                static_cast<GPtrDiff_t>(nExtBufXSize) *
-                                    nExtBufYSize);
+                GDALCopyWords64(
+                    &m_dfNoDataValue, GDT_Float64, 0,
+                    static_cast<GByte *>(apBuffers[nBufferCount].get()),
+                    eSrcType, nSrcTypeSize,
+                    static_cast<GPtrDiff_t>(nExtBufXSize) * nExtBufYSize);
             }
         }
 
         ++nBufferCount;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Initialize the buffer to some background value. Use the         */
+    /*      nodata value if available.                                      */
+    /* -------------------------------------------------------------------- */
+    if (bSkipOutputBufferInitialization)
+    {
+        // Do nothing
+    }
+    else if (nPixelSpace == nBufTypeSize &&
+             (!m_bNoDataValueSet || m_dfNoDataValue == 0))
+    {
+        memset(pData, 0,
+               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
+    }
+    else if (m_bNoDataValueSet)
+    {
+        double dfWriteValue = m_dfNoDataValue;
+
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
+                            static_cast<GByte *>(pData) + nLineSpace * iLine,
+                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
     }
 
     // No contributing sources and SkipNonContributingSources mode ?
@@ -1260,7 +1331,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     for (int iBuffer = 0; iBuffer < nBufferCount && eErr == CE_None; iBuffer++)
     {
         const int iSource = anMapBufferIdxToSourceIdx[iBuffer];
-        GByte *pabyBuffer = static_cast<GByte *>(apBuffers[iBuffer]);
+        GByte *pabyBuffer = static_cast<GByte *>(apBuffers[iBuffer].get());
         eErr = static_cast<VRTSource *>(papoSources[iSource])
                    ->RasterIO(
                        eSrcType, nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
@@ -1345,8 +1416,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     // Apply pixel function.
     if (eErr == CE_None && EQUAL(m_poPrivate->m_osLanguage, "Python"))
     {
-        eErr = CE_Failure;
-
         // numpy doesn't have native cint16/cint32/cfloat16
         if (eSrcType == GDT_CInt16 || eSrcType == GDT_CInt32 ||
             eSrcType == GDT_CFloat16)
@@ -1354,7 +1423,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             CPLError(CE_Failure, CPLE_AppDefined,
                      "CInt16/CInt32/CFloat16 data type not supported for "
                      "SourceTransferType");
-            goto end;
+            return CE_Failure;
         }
         if (eDataType == GDT_CInt16 || eDataType == GDT_CInt32 ||
             eDataType == GDT_CFloat16)
@@ -1362,24 +1431,24 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "CInt16/CInt32/CFloat16 data type not supported for data type");
-            goto end;
+            return CE_Failure;
         }
 
         if (!InitializePython())
-            goto end;
+            return CE_Failure;
 
-        GByte *pabyTmpBuffer = nullptr;
+        std::unique_ptr<GByte, VSIFreeReleaser> pabyTmpBuffer;
         // Do we need a temporary buffer or can we use directly the output
         // buffer ?
         if (nBufferRadius != 0 || eDataType != eBufType ||
             nPixelSpace != nBufTypeSize ||
             nLineSpace != static_cast<GSpacing>(nBufTypeSize) * nBufXSize)
         {
-            pabyTmpBuffer = static_cast<GByte *>(VSI_CALLOC_VERBOSE(
+            pabyTmpBuffer.reset(static_cast<GByte *>(VSI_CALLOC_VERBOSE(
                 static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
-                GDALGetDataTypeSizeBytes(eDataType)));
+                GDALGetDataTypeSizeBytes(eDataType))));
             if (!pabyTmpBuffer)
-                goto end;
+                return CE_Failure;
         }
 
         {
@@ -1391,21 +1460,20 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             GIL_Holder oHolder(bUseExclusiveLock);
 
             // Prepare target numpy array
-            PyObject *poPyDstArray =
-                GDALCreateNumpyArray(m_poPrivate->m_poGDALCreateNumpyArray,
-                                     pabyTmpBuffer ? pabyTmpBuffer : pData,
-                                     eDataType, nExtBufYSize, nExtBufXSize);
+            PyObject *poPyDstArray = GDALCreateNumpyArray(
+                m_poPrivate->m_poGDALCreateNumpyArray,
+                pabyTmpBuffer ? pabyTmpBuffer.get() : pData, eDataType,
+                nExtBufYSize, nExtBufXSize);
             if (!poPyDstArray)
             {
-                VSIFree(pabyTmpBuffer);
-                goto end;
+                return CE_Failure;
             }
 
             // Wrap source buffers as input numpy arrays
             PyObject *pyArgInputArray = PyTuple_New(nBufferCount);
             for (int i = 0; i < nBufferCount; i++)
             {
-                GByte *pabyBuffer = static_cast<GByte *>(apBuffers[i]);
+                GByte *pabyBuffer = static_cast<GByte *>(apBuffers[i].get());
                 PyObject *poPySrcArray = GDALCreateNumpyArray(
                     m_poPrivate->m_poGDALCreateNumpyArray, pabyBuffer, eSrcType,
                     nExtBufYSize, nExtBufXSize);
@@ -1462,11 +1530,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 
             if (ErrOccurredEmitCPLError())
             {
-                // do nothing
-            }
-            else
-            {
-                eErr = CE_None;
+                eErr = CE_Failure;
             }
             if (pRetValue)
                 Py_DecRef(pRetValue);
@@ -1481,14 +1545,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                     (static_cast<size_t>(iY + nBufferRadius) * nExtBufXSize +
                      nBufferRadius) *
                     GDALGetDataTypeSizeBytes(eDataType);
-                GDALCopyWords64(pabyTmpBuffer + nSrcOffset, eDataType,
+                GDALCopyWords64(pabyTmpBuffer.get() + nSrcOffset, eDataType,
                                 GDALGetDataTypeSizeBytes(eDataType),
                                 static_cast<GByte *>(pData) + iY * nLineSpace,
                                 eBufType, static_cast<int>(nPixelSpace),
                                 nBufXSize);
             }
-
-            VSIFree(pabyTmpBuffer);
         }
     }
     else if (eErr == CE_None && poPixelFunc != nullptr)
@@ -1505,16 +1567,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             aosArgs.SetNameValue(pszKey, pszValue);
         }
 
+        static_assert(sizeof(apBuffers[0]) == sizeof(void *));
         eErr = (poPixelFunc->first)(
-            apBuffers.data(), nBufferCount, pData, nBufXSize, nBufYSize,
-            eSrcType, eBufType, static_cast<int>(nPixelSpace),
-            static_cast<int>(nLineSpace), aosArgs.List());
-    }
-end:
-    // Release buffers.
-    for (int iBuffer = 0; iBuffer < nBufferCount; iBuffer++)
-    {
-        VSIFree(apBuffers[iBuffer]);
+            // We cast vector<unique_ptr<void>>.data() as void**. This is OK
+            // given above static_assert
+            reinterpret_cast<void **>(apBuffers.data()), nBufferCount, pData,
+            nBufXSize, nBufYSize, eSrcType, eBufType,
+            static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace),
+            aosArgs.List());
     }
 
     return eErr;

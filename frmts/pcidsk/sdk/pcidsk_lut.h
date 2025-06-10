@@ -25,7 +25,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_LUT
     {
     public:
-        virtual ~PCIDSK_LUT() {}
+        virtual ~PCIDSK_LUT();
 
 /**
 \brief Read a LUT Segment (SEG_LUT).

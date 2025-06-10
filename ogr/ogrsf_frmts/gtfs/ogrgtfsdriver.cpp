@@ -605,7 +605,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(pszGTFSFilename, "GTFS:"))
         pszGTFSFilename += strlen("GTFS:");
 
-    const std::string osBaseDir(
+    std::string osBaseDir(
         (!STARTS_WITH(pszGTFSFilename, "/vsizip/") &&
          EQUAL(CPLGetExtensionSafe(pszGTFSFilename).c_str(), "zip"))
             ? std::string("/vsizip/{").append(pszGTFSFilename).append("}")
@@ -663,6 +663,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
         auto poCSVDataset = std::unique_ptr<GDALDataset>(GDALDataset::Open(
             std::string(osBaseDir).append("/").append(osShapesFilename).c_str(),
             GDAL_OF_VERBOSE_ERROR | GDAL_OF_VECTOR, apszCSVDriver));
+        CPL_IGNORE_RET_VAL(osBaseDir);
         if (poCSVDataset)
         {
             auto poUnderlyingLayer = poCSVDataset->GetLayer(0);

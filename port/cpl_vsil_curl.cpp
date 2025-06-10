@@ -1166,9 +1166,8 @@ retry:
             1024, std::min(10 * 1024 * 1024,
                            atoi(CPLGetConfigOption(
                                "GDAL_INGESTED_BYTES_AT_OPEN", "1024"))));
-        nRoundedBufSize =
-            ((nBufSize + knDOWNLOAD_CHUNK_SIZE - 1) / knDOWNLOAD_CHUNK_SIZE) *
-            knDOWNLOAD_CHUNK_SIZE;
+        nRoundedBufSize = cpl::div_round_up(nBufSize, knDOWNLOAD_CHUNK_SIZE) *
+                          knDOWNLOAD_CHUNK_SIZE;
 
         // so it gets included in Azure signature
         osRange = CPLSPrintf("Range: bytes=0-%d", nRoundedBufSize - 1);
@@ -1331,7 +1330,7 @@ retry:
                              "with GET request instead of HEAD since the URL "
                              "might be valid only for GET");
                     bRetryWithGet = true;
-                    osURL = osEffectiveURL;
+                    osURL = std::move(osEffectiveURL);
                     CPLFree(sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncHeaderData.pBuffer);
                     curl_easy_cleanup(hCurlHandle);
@@ -1538,16 +1537,24 @@ retry:
                 goto retry;
             }
 
-            if (UseLimitRangeGetInsteadOfHead() &&
-                sWriteFuncData.pBuffer != nullptr &&
-                CanRestartOnError(sWriteFuncData.pBuffer,
-                                  sWriteFuncHeaderData.pBuffer, bSetError))
+            if (sWriteFuncData.pBuffer != nullptr)
             {
-                oFileProp.bHasComputedFileSize = false;
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(sWriteFuncHeaderData.pBuffer);
-                curl_easy_cleanup(hCurlHandle);
-                return GetFileSizeOrHeaders(bSetError, bGetHeaders);
+                if (UseLimitRangeGetInsteadOfHead() &&
+                    CanRestartOnError(sWriteFuncData.pBuffer,
+                                      sWriteFuncHeaderData.pBuffer, bSetError))
+                {
+                    oFileProp.bHasComputedFileSize = false;
+                    CPLFree(sWriteFuncData.pBuffer);
+                    CPLFree(sWriteFuncHeaderData.pBuffer);
+                    curl_easy_cleanup(hCurlHandle);
+                    return GetFileSizeOrHeaders(bSetError, bGetHeaders);
+                }
+                else
+                {
+                    CPL_IGNORE_RET_VAL(CanRestartOnError(
+                        sWriteFuncData.pBuffer, sWriteFuncHeaderData.pBuffer,
+                        bSetError));
+                }
             }
 
             // If there was no VSI error thrown in the process,
@@ -2067,7 +2074,7 @@ retry:
             CanRestartOnError(
                 reinterpret_cast<const char *>(sWriteFuncData.pBuffer),
                 reinterpret_cast<const char *>(sWriteFuncHeaderData.pBuffer),
-                false))
+                true))
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -3405,8 +3412,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
              static_cast<unsigned>(m_aoAdviseReadRanges.size()));
 #endif
 
-    // coverity[uninit_member,copy_constructor_call]
-    const auto task = [this, aosHTTPOptions](const std::string &osURL)
+    const auto task = [this, aosHTTPOptions = std::move(aosHTTPOptions)](
+                          const std::string &osURL)
     {
         if (!m_hCurlMultiHandleForAdviseRead)
             m_hCurlMultiHandleForAdviseRead = VSICURLMultiInit();
@@ -5019,9 +5026,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    const std::string osURL(VSICurlGetURLFromFilename(
-        pszDirname, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir, nullptr,
-        nullptr, nullptr));
+    std::string osURL(VSICurlGetURLFromFilename(pszDirname, nullptr, nullptr,
+                                                nullptr, &bListDir, &bEmptyDir,
+                                                nullptr, nullptr, nullptr));
     if (bEmptyDir)
     {
         *pbGotFileList = true;
@@ -5240,7 +5247,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     else if (STARTS_WITH(osURL.c_str(), "http://") ||
              STARTS_WITH(osURL.c_str(), "https://"))
     {
-        std::string osDirname(osURL);
+        std::string osDirname(std::move(osURL));
         osDirname += '/';
 
         CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
@@ -5430,7 +5437,7 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
          CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))))
     {
-        pStatBuf->st_size = poHandle->GetFileSize(false);
+        pStatBuf->st_size = poHandle->GetFileSize(true);
     }
 
     const int nRet =

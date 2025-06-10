@@ -270,3 +270,13 @@ Vector commands
     ==>
 
     gdal vector concat --mode=stack *.shp merged.gpkg
+
+* Modify in-place a GeoPackage dataset by running a SQL command.
+
+.. code-block::
+
+    ogrinfo my.gpkg -sql "DELETE FROM countries WHERE pop > 1e6"
+
+    ==>
+
+    gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"

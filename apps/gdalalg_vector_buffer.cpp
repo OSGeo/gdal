@@ -164,4 +164,7 @@ bool GDALVectorBufferAlgorithm::RunStep(GDALVectorPipelineStepRunContext &ctxt)
 #endif
 }
 
+GDALVectorBufferAlgorithmStandalone::~GDALVectorBufferAlgorithmStandalone() =
+    default;
+
 //! @endcond

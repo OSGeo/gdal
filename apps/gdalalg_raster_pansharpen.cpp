@@ -232,4 +232,7 @@ bool GDALRasterPansharpenAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterPansharpenAlgorithmStandalone::
+    ~GDALRasterPansharpenAlgorithmStandalone() = default;
+
 //! @endcond

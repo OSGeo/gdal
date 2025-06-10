@@ -83,6 +83,15 @@ namespace PCIDSK
     void                DefaultDebug( const char * );
     void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
 
+/************************************************************************/
+/*                           DIV_ROUND_UP()                             */
+/************************************************************************/
+
+template <class T, class U> inline T DIV_ROUND_UP(T a, U b)
+{
+    return static_cast<T>(a / b + (((a % b) == 0) ? 0 : 1));
+}
+
 } // end namespace PCIDSK
 
 #endif // INCLUDE_CORE_PCIDSK_UTILS_H

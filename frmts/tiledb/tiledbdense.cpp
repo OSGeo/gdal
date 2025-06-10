@@ -2971,10 +2971,8 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
     std::vector<bool> abRequireNewOverview(nOverviews, true);
     for (int i = 0; i < nOverviews; ++i)
     {
-        const int nOXSize =
-            (GetRasterXSize() + panOverviewList[i] - 1) / panOverviewList[i];
-        const int nOYSize =
-            (GetRasterYSize() + panOverviewList[i] - 1) / panOverviewList[i];
+        const int nOXSize = DIV_ROUND_UP(GetRasterXSize(), panOverviewList[i]);
+        const int nOYSize = DIV_ROUND_UP(GetRasterYSize(), panOverviewList[i]);
 
         for (const auto &poODS : m_apoOverviewDS)
         {

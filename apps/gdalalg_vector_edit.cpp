@@ -249,4 +249,7 @@ bool GDALVectorEditAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return ret;
 }
 
+GDALVectorEditAlgorithmStandalone::~GDALVectorEditAlgorithmStandalone() =
+    default;
+
 //! @endcond

@@ -34,7 +34,7 @@ namespace PCIDSK {
         virtual void ClearGCPs(void) = 0;
 
         //! Virtual Destructor
-        virtual ~PCIDSKGCPSegment(void) {}
+        virtual ~PCIDSKGCPSegment(void);
     };
 } // end namespace PCIDSK
 

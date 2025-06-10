@@ -157,9 +157,7 @@ class WMSMiniDriver
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    virtual ~WMSMiniDriver()
-    {
-    }
+    virtual ~WMSMiniDriver();
 
   public:
     // MiniDriver specific initialization from XML, required
@@ -194,7 +192,7 @@ class WMSMiniDriver
     {
     }
 
-    virtual OGRSpatialReference GetSpatialRef()
+    virtual const OGRSpatialReference &GetSpatialRef() const
     {
         return m_oSRS;
     }
@@ -217,9 +215,7 @@ class WMSMiniDriverFactory
     {
     }
 
-    virtual ~WMSMiniDriverFactory()
-    {
-    }
+    virtual ~WMSMiniDriverFactory();
 
   public:
     virtual WMSMiniDriver *New() const = 0;
@@ -252,9 +248,7 @@ class GDALWMSCacheImpl
     {
     }
 
-    virtual ~GDALWMSCacheImpl()
-    {
-    }
+    virtual ~GDALWMSCacheImpl();
 
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) = 0;
     virtual enum GDALWMSCacheItemStatus

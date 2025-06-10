@@ -925,10 +925,12 @@ int DDFSubfieldDefn::FormatIntValue(char *pachData, int nBytesAvailable,
         {
             case NotBinary:
             {
-                char chFillChar = '0'; /* ASCII zero intended */
-                memset(pachData, chFillChar, nSize);
-                memcpy(pachData + nSize - strlen(szWork), szWork,
-                       strlen(szWork));
+                constexpr char chFillChar = '0'; /* ASCII zero intended */
+                const int nZeroFillCount =
+                    nSize - static_cast<int>(strlen(szWork));
+                for (int i = 0; i < nZeroFillCount; ++i)
+                    pachData[i] = chFillChar;
+                memcpy(pachData + nZeroFillCount, szWork, strlen(szWork));
                 break;
             }
 
@@ -1012,10 +1014,11 @@ int DDFSubfieldDefn::FormatFloatValue(char *pachData, int nBytesAvailable,
     {
         if (GetBinaryFormat() == NotBinary)
         {
-            const char chFillZeroASCII = '0'; /* ASCII zero intended */
-            /* coverity[bad_memset] */
-            memset(pachData, chFillZeroASCII, nSize);
-            memcpy(pachData + nSize - strlen(szWork), szWork, strlen(szWork));
+            constexpr char chFillChar = '0'; /* ASCII zero intended */
+            const int nZeroFillCount = nSize - static_cast<int>(strlen(szWork));
+            for (int i = 0; i < nZeroFillCount; ++i)
+                pachData[i] = chFillChar;
+            memcpy(pachData + nZeroFillCount, szWork, strlen(szWork));
         }
         else
         {

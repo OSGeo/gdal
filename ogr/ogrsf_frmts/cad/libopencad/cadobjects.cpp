@@ -24,6 +24,9 @@
 //------------------------------------------------------------------------------
 #define EPSILON std::numeric_limits<double>::epsilon() * 16
 
+CADObject::~CADObject() = default;
+CADEntityObject::~CADEntityObject() = default;
+
 CADVector::CADVector( double x, double y ) :
     X( x ),
     Y( y ),
@@ -140,6 +143,8 @@ CADTextObject::CADTextObject() :
 {
 }
 
+CADTextObject::~CADTextObject() = default;
+
 //------------------------------------------------------------------------------
 // CADAttribObject
 //------------------------------------------------------------------------------
@@ -163,6 +168,8 @@ CADAttribObject::CADAttribObject(ObjectType typeIn) :
 {
 }
 
+CADAttribObject::~CADAttribObject() = default;
+
 //------------------------------------------------------------------------------
 // CADAttdef
 //------------------------------------------------------------------------------
@@ -172,6 +179,7 @@ CADAttdefObject::CADAttdefObject() :
 {
 }
 
+CADAttdefObject::~CADAttdefObject() = default;
 
 //------------------------------------------------------------------------------
 // CADBlockObject
@@ -182,6 +190,8 @@ CADBlockObject::CADBlockObject() :
 {
 }
 
+CADBlockObject::~CADBlockObject() = default;
+
 //------------------------------------------------------------------------------
 // CADEndblkObject
 //------------------------------------------------------------------------------
@@ -191,6 +201,9 @@ CADEndblkObject::CADEndblkObject() :
 {
 }
 
+CADEndblkObject::~CADEndblkObject() = default;
+
+
 //------------------------------------------------------------------------------
 // CADSeqendObject
 //------------------------------------------------------------------------------
@@ -199,6 +212,9 @@ CADSeqendObject::CADSeqendObject() :
     CADEntityObject(SEQEND)
 {
 }
+
+CADSeqendObject::~CADSeqendObject() = default;
+
 
 //------------------------------------------------------------------------------
 // CADInsertObject
@@ -211,6 +227,8 @@ CADInsertObject::CADInsertObject(ObjectType typeIn) :
     nObjectsOwned( 0 )
 {
 }
+
+CADInsertObject::~CADInsertObject() = default;
 
 //------------------------------------------------------------------------------
 // CADMInsertObject
@@ -228,6 +246,8 @@ CADMInsertObject::CADMInsertObject() :
 {
 }
 
+CADMInsertObject::~CADMInsertObject() = default;
+
 //------------------------------------------------------------------------------
 // CADVertex2DObject
 //------------------------------------------------------------------------------
@@ -242,6 +262,8 @@ CADVertex2DObject::CADVertex2DObject() :
 {
 }
 
+CADVertex2DObject::~CADVertex2DObject() = default;
+
 //------------------------------------------------------------------------------
 // CADVertex3DObject
 //------------------------------------------------------------------------------
@@ -250,6 +272,8 @@ CADVertex3DObject::CADVertex3DObject() :
     CADEntityObject(VERTEX3D)
 {
 }
+
+CADVertex3DObject::~CADVertex3DObject() = default;
 
 //------------------------------------------------------------------------------
 // CADVertexMeshObject
@@ -260,6 +284,8 @@ CADVertexMeshObject::CADVertexMeshObject() :
 {
 }
 
+CADVertexMeshObject::~CADVertexMeshObject() = default;
+
 //------------------------------------------------------------------------------
 // CADVertexPFaceObject
 //------------------------------------------------------------------------------
@@ -268,6 +294,8 @@ CADVertexPFaceObject::CADVertexPFaceObject() :
     CADEntityObject(VERTEX_PFACE)
 {
 }
+
+CADVertexPFaceObject::~CADVertexPFaceObject() = default;
 
 //------------------------------------------------------------------------------
 // CADVertexPFaceFaceObject
@@ -281,6 +309,8 @@ CADVertexPFaceFaceObject::CADVertexPFaceFaceObject() :
     iVertexIndex4( 0 )
 {
 }
+
+CADVertexPFaceFaceObject::~CADVertexPFaceFaceObject() = default;
 
 //------------------------------------------------------------------------------
 // CADPolyline2DObject
@@ -298,6 +328,8 @@ CADPolyline2DObject::CADPolyline2DObject() :
 {
 }
 
+CADPolyline2DObject::~CADPolyline2DObject() = default;
+
 //------------------------------------------------------------------------------
 // CADPolyline3DObject
 //------------------------------------------------------------------------------
@@ -309,6 +341,8 @@ CADPolyline3DObject::CADPolyline3DObject() :
     nObjectsOwned( 0 )
 {
 }
+
+CADPolyline3DObject::~CADPolyline3DObject() = default;
 
 //------------------------------------------------------------------------------
 // CADArcObject
@@ -323,6 +357,8 @@ CADArcObject::CADArcObject() :
 {
 }
 
+CADArcObject::~CADArcObject() = default;
+
 //------------------------------------------------------------------------------
 // CADCircleObject
 //------------------------------------------------------------------------------
@@ -334,6 +370,8 @@ CADCircleObject::CADCircleObject() :
 {
 }
 
+CADCircleObject::~CADCircleObject() = default;
+
 //------------------------------------------------------------------------------
 // CADLineObject
 //------------------------------------------------------------------------------
@@ -343,6 +381,8 @@ CADLineObject::CADLineObject() :
     dfThickness( 0.0 )
 {
 }
+
+CADLineObject::~CADLineObject() = default;
 
 //------------------------------------------------------------------------------
 // CADBaseControlObject
@@ -356,6 +396,8 @@ CADBaseControlObject::CADBaseControlObject(ObjectType typeIn) :
 {
 }
 
+CADBaseControlObject::~CADBaseControlObject() = default;
+
 //------------------------------------------------------------------------------
 // CADBlockControlObject
 //------------------------------------------------------------------------------
@@ -365,6 +407,8 @@ CADBlockControlObject::CADBlockControlObject() :
     nNumEntries( 0 )
 {
 }
+
+CADBlockControlObject::~CADBlockControlObject() = default;
 
 //------------------------------------------------------------------------------
 // CADBlockHeaderObject
@@ -388,6 +432,8 @@ CADBlockHeaderObject::CADBlockHeaderObject() :
 {
 }
 
+CADBlockHeaderObject::~CADBlockHeaderObject() = default;
+
 //------------------------------------------------------------------------------
 // CADLayerControlObject
 //------------------------------------------------------------------------------
@@ -397,6 +443,8 @@ CADLayerControlObject::CADLayerControlObject() :
     nNumEntries( 0 )
 {
 }
+
+CADLayerControlObject::~CADLayerControlObject() = default;
 
 //------------------------------------------------------------------------------
 // CADLayerObject
@@ -417,6 +465,8 @@ CADLayerObject::CADLayerObject() :
 {
 }
 
+CADLayerObject::~CADLayerObject() = default;
+
 //------------------------------------------------------------------------------
 // CADLineTypeControlObject
 //------------------------------------------------------------------------------
@@ -426,6 +476,8 @@ CADLineTypeControlObject::CADLineTypeControlObject() :
     nNumEntries( 0 )
 {
 }
+
+CADLineTypeControlObject::~CADLineTypeControlObject() = default;
 
 //------------------------------------------------------------------------------
 // CADLineTypeObject
@@ -442,6 +494,8 @@ CADLineTypeObject::CADLineTypeObject() :
 {
 }
 
+CADLineTypeObject::~CADLineTypeObject() = default;
+
 //------------------------------------------------------------------------------
 // CADPointObject
 //------------------------------------------------------------------------------
@@ -452,6 +506,8 @@ CADPointObject::CADPointObject() :
     dfXAxisAng( 0.0 )
 {
 }
+
+CADPointObject::~CADPointObject() = default;
 
 //------------------------------------------------------------------------------
 // CADSolidObject
@@ -465,6 +521,8 @@ CADSolidObject::CADSolidObject() :
     avertCorners.reserve( 4 );
 }
 
+CADSolidObject::~CADSolidObject() = default;
+
 //------------------------------------------------------------------------------
 // CADEllipseObject
 //------------------------------------------------------------------------------
@@ -477,6 +535,8 @@ CADEllipseObject::CADEllipseObject() :
 {
 }
 
+CADEllipseObject::~CADEllipseObject() = default;
+
 //------------------------------------------------------------------------------
 // CADRayObject
 //------------------------------------------------------------------------------
@@ -486,6 +546,8 @@ CADRayObject::CADRayObject() :
 {
 }
 
+CADRayObject::~CADRayObject() = default;
+
 //------------------------------------------------------------------------------
 // CADXLineObject
 //------------------------------------------------------------------------------
@@ -494,6 +556,8 @@ CADXLineObject::CADXLineObject() :
     CADEntityObject(XLINE)
 {
 }
+
+CADXLineObject::~CADXLineObject() = default;
 
 //------------------------------------------------------------------------------
 // CADDictionaryObject
@@ -507,6 +571,8 @@ CADDictionaryObject::CADDictionaryObject() :
 {
 }
 
+CADDictionaryObject::~CADDictionaryObject() = default;
+
 //------------------------------------------------------------------------------
 // CADLWPolylineObject
 //------------------------------------------------------------------------------
@@ -519,6 +585,8 @@ CADLWPolylineObject::CADLWPolylineObject() :
     dfThickness( 0.0 )
 {
 }
+
+CADLWPolylineObject::~CADLWPolylineObject() = default;
 
 //------------------------------------------------------------------------------
 // CADSplineObject
@@ -542,6 +610,8 @@ CADSplineObject::CADSplineObject() :
     bWeight( false )
 {
 }
+
+CADSplineObject::~CADSplineObject() = default;
 
 //------------------------------------------------------------------------------
 
@@ -704,6 +774,12 @@ void CADObject::setCRC( unsigned short value )
 }
 
 //------------------------------------------------------------------------------
+// CADDimensionObject
+//------------------------------------------------------------------------------
+
+CADDimensionObject::~CADDimensionObject() = default;
+
+//------------------------------------------------------------------------------
 // CADDimensionOrdinateObject
 //------------------------------------------------------------------------------
 
@@ -712,6 +788,8 @@ CADDimensionOrdinateObject::CADDimensionOrdinateObject() :
     Flags2( 0 )
 {
 }
+
+CADDimensionOrdinateObject::~CADDimensionOrdinateObject() = default;
 
 //------------------------------------------------------------------------------
 // CADDimensionLinearObject
@@ -724,6 +802,8 @@ CADDimensionLinearObject::CADDimensionLinearObject() :
 {
 }
 
+CADDimensionLinearObject::~CADDimensionLinearObject() = default;
+
 //------------------------------------------------------------------------------
 // CADDimensionAlignedObject
 //------------------------------------------------------------------------------
@@ -734,6 +814,8 @@ CADDimensionAlignedObject::CADDimensionAlignedObject() :
 {
 }
 
+CADDimensionAlignedObject::~CADDimensionAlignedObject() = default;
+
 //------------------------------------------------------------------------------
 // CADDimensionAngular3PtObject
 //------------------------------------------------------------------------------
@@ -743,6 +825,8 @@ CADDimensionAngular3PtObject::CADDimensionAngular3PtObject(ObjectType typeIn) :
 {
 }
 
+CADDimensionAngular3PtObject::~CADDimensionAngular3PtObject() = default;
+
 //------------------------------------------------------------------------------
 // CADDimensionAngular2LnObject
 //------------------------------------------------------------------------------
@@ -751,6 +835,8 @@ CADDimensionAngular2LnObject::CADDimensionAngular2LnObject() :
     CADDimensionAngular3PtObject(DIMENSION_ANG_2LN)
 {
 }
+
+CADDimensionAngular2LnObject::~CADDimensionAngular2LnObject() = default;
 
 //------------------------------------------------------------------------------
 // CADDimensionRadiusObject
@@ -762,6 +848,8 @@ CADDimensionRadiusObject::CADDimensionRadiusObject(ObjectType typeIn) :
 {
 }
 
+CADDimensionRadiusObject::~CADDimensionRadiusObject() = default;
+
 //------------------------------------------------------------------------------
 // CADDimensionDiameterObject
 //------------------------------------------------------------------------------
@@ -770,6 +858,8 @@ CADDimensionDiameterObject::CADDimensionDiameterObject() :
     CADDimensionRadiusObject(DIMENSION_DIAMETER)
 {
 }
+
+CADDimensionDiameterObject::~CADDimensionDiameterObject() = default;
 
 //------------------------------------------------------------------------------
 // CADImageObject
@@ -791,6 +881,8 @@ CADImageObject::CADImageObject() :
 {
 }
 
+CADImageObject::~CADImageObject() = default;
+
 //------------------------------------------------------------------------------
 // CADImageDefObject
 //------------------------------------------------------------------------------
@@ -806,6 +898,8 @@ CADImageDefObject::CADImageDefObject() :
 {
 }
 
+CADImageDefObject::~CADImageDefObject() = default;
+
 //------------------------------------------------------------------------------
 // CADImageDefReactorObject
 //------------------------------------------------------------------------------
@@ -815,6 +909,8 @@ CADImageDefReactorObject::CADImageDefReactorObject(ObjectType typeIn) :
     dClassVersion( 0 )
 {
 }
+
+CADImageDefReactorObject::~CADImageDefReactorObject() = default;
 
 //------------------------------------------------------------------------------
 // CADMTextObject
@@ -838,6 +934,8 @@ CADMTextObject::CADMTextObject() :
 {
 }
 
+CADMTextObject::~CADMTextObject() = default;
+
 //------------------------------------------------------------------------------
 // CADMLineObject
 //------------------------------------------------------------------------------
@@ -852,6 +950,8 @@ CADMLineObject::CADMLineObject() :
 {
 }
 
+CADMLineObject::~CADMLineObject() = default;
+
 //------------------------------------------------------------------------------
 // CAD3DFaceObject
 //------------------------------------------------------------------------------
@@ -863,6 +963,8 @@ CAD3DFaceObject::CAD3DFaceObject() :
     dInvisFlags( 0 )
 {
 }
+
+CAD3DFaceObject::~CAD3DFaceObject() = default;
 
 //------------------------------------------------------------------------------
 // CADPolylinePFaceObject
@@ -876,6 +978,8 @@ CADPolylinePFaceObject::CADPolylinePFaceObject() :
 {
 }
 
+CADPolylinePFaceObject::~CADPolylinePFaceObject() = default;
+
 //------------------------------------------------------------------------------
 // CADXRecordObject
 //------------------------------------------------------------------------------
@@ -886,3 +990,5 @@ CADXRecordObject::CADXRecordObject() :
     dCloningFlag( 0 )
 {
 }
+
+CADXRecordObject::~CADXRecordObject() = default;

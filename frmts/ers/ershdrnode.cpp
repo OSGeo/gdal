@@ -412,11 +412,11 @@ ERSHdrNode *ERSHdrNode::FindNode(const char *pszPath)
 
 {
     std::string osPathFirst, osPathRest;
-    const std::string osPath = pszPath;
-    size_t iDot = osPath.find_first_of('.');
+    std::string osPath = pszPath;
+    const size_t iDot = osPath.find('.');
     if (iDot == std::string::npos)
     {
-        osPathFirst = osPath;
+        osPathFirst = std::move(osPath);
     }
     else
     {

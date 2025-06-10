@@ -729,7 +729,7 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
     /* -------------------------------------------------------------------- */
     if (poDS == nullptr)
     {
-        const std::string osTempFilename =
+        std::string osTempFilename =
             CPLString().Printf("/tmp/%p_wcs.dat", this);
         VSILFILE *fpTemp = VSIFOpenL(osTempFilename.c_str(), "wb");
         if (fpTemp == nullptr)
@@ -752,10 +752,11 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
             {
                 VSIFCloseL(fpTemp);
                 VSIUnlink(osResultFilename.c_str());
-                osResultFilename = osTempFilename;
+                osResultFilename = std::move(osTempFilename);
 
-                poDS = (GDALDataset *)GDALOpen(osResultFilename.c_str(),
-                                               GA_ReadOnly);
+                poDS =
+                    GDALDataset::Open(osResultFilename.c_str(),
+                                      GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
             }
         }
     }

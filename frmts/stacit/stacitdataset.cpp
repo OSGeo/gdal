@@ -71,6 +71,7 @@ class STACITDataset final : public VRTDataset
 
   public:
     STACITDataset();
+    ~STACITDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
@@ -85,6 +86,8 @@ STACITDataset::STACITDataset() : VRTDataset(0, 0)
     poDriver = nullptr;  // cancel what the VRTDataset did
     SetWritable(false);
 }
+
+STACITDataset::~STACITDataset() = default;
 
 /************************************************************************/
 /*                             Identify()                               */
@@ -210,7 +213,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
 
     const auto osAssetName = jAsset.GetName();
 
-    const auto osHref = jAsset["href"].ToString();
+    std::string osHref = jAsset["href"].ToString();
     if (osHref.empty())
     {
         CPLError(CE_Warning, CPLE_AppDefined, "Missing href on asset %s",
@@ -276,7 +279,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     }
 
     AssetItem item;
-    item.osFilename = osHref;
+    item.osFilename = std::move(osHref);
     item.osDateTime = oProperties["datetime"].ToString();
 
     // Figure out item bounds and width/height
@@ -417,7 +420,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     auto &assets = asset.assets[osProjUserString];
 
     // Add item
-    assets.assets.emplace_back(item);
+    assets.assets.emplace_back(std::move(item));
 }
 
 /************************************************************************/

@@ -594,7 +594,7 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
         if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
         {
             const std::string osPath(oSubDSInfo->GetPathComponent());
-            const std::string osRet =
+            std::string osRet =
                 CPLIsFilenameRelative(osPath.c_str())
                     ? oSubDSInfo->ModifyPathComponent(
                           CPLProjectRelativeFilenameSafe(
@@ -605,9 +605,8 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
             return osRet;
         }
 
-        const std::string osRelativeMadeAbsolute =
-            CPLProjectRelativeFilenameSafe(CPLGetPathSafe(pszVRTName).c_str(),
-                                           pszTileName);
+        std::string osRelativeMadeAbsolute = CPLProjectRelativeFilenameSafe(
+            CPLGetPathSafe(pszVRTName).c_str(), pszTileName);
         VSIStatBufL sStat;
         if (VSIStatL(osRelativeMadeAbsolute.c_str(), &sStat) == 0)
             return osRelativeMadeAbsolute;
@@ -1929,15 +1928,15 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                             if (eInterp != GCI_Undefined)
                                 aeColorInterp[i] = eInterp;
 
-                            const auto osName = oObj.GetString("name");
-                            aosDescriptions[i] = osName;
+                            aosDescriptions[i] = oObj.GetString("name");
 
-                            const auto osDescription =
+                            std::string osDescription =
                                 oObj.GetString("description");
                             if (!osDescription.empty())
                             {
                                 if (aosDescriptions[i].empty())
-                                    aosDescriptions[i] = osDescription;
+                                    aosDescriptions[i] =
+                                        std::move(osDescription);
                                 else
                                     aosDescriptions[i]
                                         .append(" (")
@@ -3354,7 +3353,7 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 
         const char *pszTileName =
             poFeature->GetFieldAsString(m_nLocationFieldIndex);
-        const std::string osTileName(
+        std::string osTileName(
             GetAbsoluteFileName(pszTileName, GetDescription()));
         VSIStatBufL sStatSource;
         if (VSIStatL(osTileName.c_str(), &sStatSource) != 0 ||
@@ -3365,7 +3364,7 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 
         constexpr double EPS = 1e-8;
         GTISourceDesc oSourceDesc;
-        oSourceDesc.osFilename = osTileName;
+        oSourceDesc.osFilename = std::move(osTileName);
         oSourceDesc.nDstXOff = static_cast<int>(dfXOff + EPS);
         oSourceDesc.nDstYOff = static_cast<int>(dfYOff + EPS);
         oSourceDesc.nDstXSize = static_cast<int>(dfXSize + 0.5);

@@ -22,9 +22,8 @@
 
 #include "cpl_virtualmem.h"
 
+#include <algorithm>
 #include <cassert>
-// TODO(schwehr): Should ucontext.h be included?
-// #include <ucontext.h>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_config.h"
@@ -125,7 +124,7 @@ struct CPLVirtualMem
                              (pagesize))
 #define ALIGN_UP(p, pagesize)                                                  \
     reinterpret_cast<void *>(                                                  \
-        (reinterpret_cast<GUIntptr_t>(p) + (pagesize)-1) / (pagesize) *        \
+        cpl::div_round_up(reinterpret_cast<GUIntptr_t>(p), (pagesize)) *       \
         (pagesize))
 
 #define DEFAULT_PAGE_SIZE (256 * 256)
@@ -2124,7 +2123,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
 size_t CPLGetPageSize(void)
 {
 #if defined(HAVE_MMAP) || defined(HAVE_VIRTUAL_MEM_VMA)
-    return static_cast<size_t>(sysconf(_SC_PAGESIZE));
+    return static_cast<size_t>(std::max(0L, sysconf(_SC_PAGESIZE)));
 #else
     return 0;
 #endif

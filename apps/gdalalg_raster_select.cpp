@@ -118,4 +118,7 @@ bool GDALRasterSelectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterSelectAlgorithmStandalone::~GDALRasterSelectAlgorithmStandalone() =
+    default;
+
 //! @endcond

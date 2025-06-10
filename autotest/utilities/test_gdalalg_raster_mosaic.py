@@ -465,13 +465,60 @@ def test_gdalalg_raster_mosaic_pixel_function(pixfn, args):
 
 def test_gdalalg_raster_mosaic_pixel_function_invalid():
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
-    src_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    alg = get_mosaic_alg()
+    with pytest.raises(
+        RuntimeError,
+        match="Invalid value 'does_not_exist' for string argument 'pixel-function'",
+    ):
+        alg["pixel-function"] = "does_not_exist"
+
+
+def test_gdalalg_raster_mosaic_pixel_function_arg_invalid():
 
     alg = get_mosaic_alg()
-    alg["input"] = src_ds
-    alg["output"] = ""
-    alg["pixel-function"] = "does_not_exist"
+    with pytest.raises(
+        RuntimeError,
+        match="Invalid value for argument 'pixel-function-arg'. <KEY>=<VALUE> expected",
+    ):
+        alg["pixel-function-arg"] = "key_without_value"
 
-    with pytest.raises(RuntimeError, match="not a registered pixel function"):
-        alg.Run()
+
+def test_gdalalg_raster_mosaic_pixel_function_arg_complete():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function-arg"
+    )
+    assert (
+        "Specify argument(s) to pass to the pixel function".replace(" ", "\\ ") in out
+    )
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=invalid --pixel-function-arg"
+    )
+    assert "Invalid pixel function name".replace(" ", "\\ ") in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=scale --pixel-function-arg"
+    )
+    assert "No pixel function arguments for pixel function".replace(" ", "\\ ") in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg"
+    )
+    assert out == "propagateNoData="
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg propagateNoData="
+    ).split(" ")
+    assert out == ["NO", "YES"]
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg propagateNoData=YES"
+    )
+    assert out == ""

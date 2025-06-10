@@ -52,6 +52,8 @@ class GDALRasterSieveAlgorithmStandalone final : public GDALRasterSieveAlgorithm
         : GDALRasterSieveAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterSieveAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -991,11 +991,14 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
     if (GetFullName() ==
             "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values" &&
         m_dt.GetClass() == GEDTC_COMPOUND &&
-        m_dt.GetSize() == 2 * sizeof(float) &&
-        m_dt.GetComponents().size() == 2 &&
+        (m_dt.GetComponents().size() == 1 ||
+         m_dt.GetComponents().size() == 2) &&
+        m_dt.GetSize() == m_dt.GetComponents().size() * sizeof(float) &&
         m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
             GDT_Float32 &&
-        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+        (m_dt.GetComponents().size() == 1 ||
+         m_dt.GetComponents()[1]->GetType().GetNumericDataType() ==
+             GDT_Float32))
     {
         m_abyNoData.resize(m_dt.GetSize());
         float afNoData[2] = {1e6f, 1e6f};
@@ -1016,7 +1019,8 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
                             .GetComponents()[3]
                             ->GetName() == "fillValue" &&
                     poGroupFArray->GetDimensionCount() == 1 &&
-                    poGroupFArray->GetDimensions()[0]->GetSize() == 2)
+                    poGroupFArray->GetDimensions()[0]->GetSize() ==
+                        m_dt.GetComponents().size())
                 {
                     auto poFillValue =
                         poGroupFArray->GetView("[\"fillValue\"]");
@@ -1033,14 +1037,21 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
                                           anArrayStep, anBufferStride,
                                           GDALExtendedDataType::CreateString(),
                                           &pszVal0);
-                        poFillValue->Read(anArrayStartIdx1, anCount,
-                                          anArrayStep, anBufferStride,
-                                          GDALExtendedDataType::CreateString(),
-                                          &pszVal1);
-                        if (pszVal0 && pszVal1)
+                        if (poGroupFArray->GetDimensions()[0]->GetSize() == 2)
+                        {
+                            poFillValue->Read(
+                                anArrayStartIdx1, anCount, anArrayStep,
+                                anBufferStride,
+                                GDALExtendedDataType::CreateString(), &pszVal1);
+                        }
+                        if (pszVal0)
                         {
                             afNoData[0] = static_cast<float>(CPLAtof(pszVal0));
-                            afNoData[1] = static_cast<float>(CPLAtof(pszVal1));
+                            if (pszVal1)
+                            {
+                                afNoData[1] =
+                                    static_cast<float>(CPLAtof(pszVal1));
+                            }
                         }
                         CPLFree(pszVal0);
                         CPLFree(pszVal1);
@@ -1657,8 +1668,8 @@ HDF5Array::GetCoordinateVariables() const
                                     "Geolocation Fields"));
                 if (poLongitude && poLatitude)
                 {
-                    ret.push_back(poLongitude);
-                    ret.push_back(poLatitude);
+                    ret.push_back(std::move(poLongitude));
+                    ret.push_back(std::move(poLatitude));
                 }
             }
         }

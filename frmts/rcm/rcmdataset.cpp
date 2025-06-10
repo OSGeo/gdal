@@ -1659,13 +1659,13 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /* --------------------------------------------------------------------
                  */
 
-                const CPLString oNoiseLevelPath = CPLFormFilenameSafe(
+                CPLString oNoiseLevelPath = CPLFormFilenameSafe(
                     CPLFormFilenameSafe(osPath, CALIBRATION_FOLDER, nullptr)
                         .c_str(),
                     pszNoiseLevelFile, nullptr);
                 if (IsValidXMLFile(oNoiseLevelPath))
                 {
-                    osNoiseLevelsValues = oNoiseLevelPath;
+                    osNoiseLevelsValues = std::move(oNoiseLevelPath);
                 }
             }
         }

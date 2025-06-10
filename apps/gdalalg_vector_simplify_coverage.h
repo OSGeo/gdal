@@ -62,6 +62,8 @@ class GDALVectorSimplifyCoverageAlgorithmStandalone final
         : GDALVectorSimplifyCoverageAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSimplifyCoverageAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -29,7 +29,17 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
+
 #include "png.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #include <csetjmp>
 
@@ -991,20 +1001,6 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
 #endif  // ENABLE_WHOLE_IMAGE_OPTIMIZATION
 
 /************************************************************************/
-/*                            IsFullBandMap()                           */
-/************************************************************************/
-
-static int IsFullBandMap(const int *panBandMap, int nBands)
-{
-    for (int i = 0; i < nBands; i++)
-    {
-        if (panBandMap[i] != i + 1)
-            return FALSE;
-    }
-    return TRUE;
-}
-
-/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -1028,7 +1024,7 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
         (eBufType == GDT_Byte) &&
         (eBufType == GetRasterBand(1)->GetRasterDataType()) &&
-        (pData != nullptr) && IsFullBandMap(panBandMap, nBands))
+        (pData != nullptr) && IsAllBands(nBands, panBandMap))
     {
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
         // Below should work without SSE2, but the lack of optimized
@@ -1406,8 +1402,13 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
     bool bRet = safe_png_read_image(hPNG, png_rows, sSetJmpContext);
 
     // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+    if (bRet && nBitDepth == 16
 #ifdef CPL_LSB
-    if (bRet && nBitDepth == 16)
+        && !m_bByteOrderIsLittleEndian
+#else
+        && m_bByteOrderIsLittleEndian
+#endif
+    )
     {
         for (int i = 0; i < GetRasterYSize(); i++)
         {
@@ -1418,7 +1419,6 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
             }
         }
     }
-#endif
 
     CPLFree(png_rows);
     CPLFree(dummy_row);
@@ -1496,10 +1496,16 @@ CPLErr PNGDataset::LoadScanline(int nLine)
     nBufferLines = 1;
 
     // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+    if (nBitDepth == 16
 #ifdef CPL_LSB
-    if (nBitDepth == 16)
-        GDALSwapWords(row, 2, GetRasterXSize() * GetRasterCount(), 2);
+        && !m_bByteOrderIsLittleEndian
+#else
+        && m_bByteOrderIsLittleEndian
 #endif
+    )
+    {
+        GDALSwapWords(row, 2, GetRasterXSize() * GetRasterCount(), 2);
+    }
 
     return CE_None;
 }
@@ -1976,6 +1982,10 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
 
     // Open overviews.
     poDS->oOvManager.Initialize(poDS, poOpenInfo);
+
+    // Used by JPEG FLIR
+    poDS->m_bByteOrderIsLittleEndian = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "BYTE_ORDER_LITTLE_ENDIAN", "NO"));
 
     return poDS;
 }

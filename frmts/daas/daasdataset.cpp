@@ -387,8 +387,11 @@ char **GDALDAASDataset::GetHTTPOptions()
 static double DAASBackoffFactor(double base)
 {
     // We don't need cryptographic quality randomness...
-    // coverity[dont_call]
-    return base + rand() * 0.5 / RAND_MAX;
+    return base
+#ifndef __COVERITY__
+           + rand() * 0.5 / RAND_MAX
+#endif
+        ;
 }
 
 /************************************************************************/
@@ -468,7 +471,7 @@ bool GDALDAASDataset::GetAuthorization()
     const CPLString osAPIKey =
         CSLFetchNameValueDef(m_papszOpenOptions, "API_KEY",
                              CPLGetConfigOption("GDAL_DAAS_API_KEY", ""));
-    const CPLString osAuthorization =
+    std::string osAuthorization =
         CSLFetchNameValueDef(m_papszOpenOptions, "ACCESS_TOKEN",
                              CPLGetConfigOption("GDAL_DAAS_ACCESS_TOKEN", ""));
     m_osXForwardUser = CSLFetchNameValueDef(
@@ -485,7 +488,7 @@ bool GDALDAASDataset::GetAuthorization()
                 "GDAL_DAAS_ACCESS_TOKEN defined. Only the later taken into "
                 "account");
         }
-        m_osAccessToken = osAuthorization;
+        m_osAccessToken = std::move(osAuthorization);
         return true;
     }
 
@@ -890,7 +893,7 @@ bool GDALDAASDataset::GetImageMetadata()
                 }
                 else
                 {
-                    m_aoBandDesc.push_back(oDesc);
+                    m_aoBandDesc.push_back(std::move(oDesc));
                 }
             }
             else

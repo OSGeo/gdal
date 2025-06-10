@@ -57,6 +57,8 @@ class GDALVectorSegmentizeAlgorithmStandalone final
         : GDALVectorSegmentizeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorSegmentizeAlgorithmStandalone() override;
 };
 
 //! @endcond

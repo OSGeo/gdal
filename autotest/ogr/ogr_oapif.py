@@ -881,6 +881,33 @@ def test_ogr_oapif_limit_from_numberMatched():
         assert lyr.GetFeatureCount() == 1234
         assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
 
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        assert lyr.GetFeatureCount() == 1234
+
+
+###############################################################################
+
+
+def test_ogr_oapif_feature_count_from_ldproxy_itemCount():
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        """{ "collections" : [ {
+                    "id": "foo",
+                    "itemCount": 1234
+                 }] }""",
+    )
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.GetFeatureCount() == 1234
+
 
 ###############################################################################
 

@@ -51,6 +51,8 @@ class GDALRasterReclassifyAlgorithmStandalone final
         : GDALRasterReclassifyAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterReclassifyAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -3556,6 +3556,20 @@ def test_ogr_csv_32_bit_integer_invalid_value(tmp_vsimem):
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_ogr_csv_do_not_write_header(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.csv"
+    gdal.VectorTranslate(filename, "data/poly.shp", layerCreationOptions=["HEADER=NO"])
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "field_1"
+        assert lyr.GetFeatureCount() == 10
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:

@@ -587,12 +587,12 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         if (poSrcCRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                         {
                             oFeat.SetField(nSourceCRSFieldIdx, pszProj4);
-                            CPLFree(pszProj4);
                         }
                         else
                         {
                             oFeat.SetField(nSourceCRSFieldIdx, osWKT.c_str());
                         }
+                        CPLFree(pszProj4);
                     }
                 }
                 else if (m_sourceCrsFormat == "WKT")
@@ -615,8 +615,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     if (poSrcCRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                     {
                         oFeat.SetField(nSourceCRSFieldIdx, pszProj4);
-                        CPLFree(pszProj4);
                     }
+                    CPLFree(pszProj4);
                 }
                 else
                 {

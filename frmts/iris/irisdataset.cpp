@@ -19,6 +19,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 
 static double DEG2RAD = M_PI / 180.0;
@@ -1135,7 +1136,7 @@ GDALDataset *IRISDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
-    // coverity[tainted_data]
+    assert(nNumBands <= INT_MAX - 1);
     for (int iBandNum = 1; iBandNum <= nNumBands; iBandNum++)
     {
         poDS->SetBand(iBandNum, new IRISRasterBand(poDS, iBandNum));

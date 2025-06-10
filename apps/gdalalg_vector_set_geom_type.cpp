@@ -286,4 +286,7 @@ bool GDALVectorSetGeomTypeAlgorithm::RunStep(
     return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);
 }
 
+GDALVectorSetGeomTypeAlgorithmStandalone::
+    ~GDALVectorSetGeomTypeAlgorithmStandalone() = default;
+
 //! @endcond

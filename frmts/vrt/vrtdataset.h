@@ -536,7 +536,7 @@ class VRTPansharpenedDataset final : public VRTDataset
 {
     friend class VRTPansharpenedRasterBand;
 
-    GDALPansharpenOperation *m_poPansharpener;
+    std::unique_ptr<GDALPansharpenOperation> m_poPansharpener{};
     VRTPansharpenedDataset *m_poMainDataset;
     std::vector<std::unique_ptr<VRTPansharpenedDataset>>
         m_apoOverviewDatasets{};
@@ -594,7 +594,7 @@ class VRTPansharpenedDataset final : public VRTDataset
 
     GDALPansharpenOperation *GetPansharpener()
     {
-        return m_poPansharpener;
+        return m_poPansharpener.get();
     }
 };
 
@@ -1212,6 +1212,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
 
     static const std::pair<PixelFunc, std::string> *
     GetPixelFunction(const char *pszFuncNameIn);
+
+    static std::vector<std::string> GetPixelFunctionNames();
 
     void SetPixelFunctionName(const char *pszFuncNameIn);
     void AddPixelFunctionArgument(const char *pszArg, const char *pszValue);
@@ -2108,7 +2110,7 @@ class VRTAttribute final : public GDALAttribute
 class VRTMDArraySource
 {
   public:
-    virtual ~VRTMDArraySource() = default;
+    virtual ~VRTMDArraySource();
 
     virtual bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,

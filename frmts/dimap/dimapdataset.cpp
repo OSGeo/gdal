@@ -1181,7 +1181,7 @@ int DIMAPDataset::ReadImageInformation2()
                         {
                             return false;
                         }
-                        const CPLString osTileFilename(
+                        std::string osTileFilename(
                             CPLFormCIFilenameSafe(osPath, pszHref, nullptr));
                         if ((nRow == 1 && nCol == 1 && nPart == 0) ||
                             osImageDSFilename.empty())
@@ -1191,7 +1191,7 @@ int DIMAPDataset::ReadImageInformation2()
                             nImageDSCol = nCol;
                         }
                         oMapTileIdxToName[TileIdx(nRow, nCol, nPart)] =
-                            osTileFilename;
+                            std::move(osTileFilename);
                     }
                 }
             }

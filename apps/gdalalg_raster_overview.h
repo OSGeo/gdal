@@ -44,13 +44,7 @@ class GDALRasterOverviewAlgorithm final : public GDALAlgorithm
     }
 
   private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "raster overview\" program.");
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

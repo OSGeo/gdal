@@ -689,10 +689,7 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
     {
         const CPLString osCachePath(
             CPLFormFilenameSafe(osCachePathRoot, "plmosaic_cache", nullptr));
-        const CPLString osMosaicPath(
-            CPLFormFilenameSafe(osCachePath, osMosaic, nullptr));
-
-        return osMosaicPath;
+        return CPLFormFilenameSafe(osCachePath, osMosaic, nullptr);
     }
     return "";
 }

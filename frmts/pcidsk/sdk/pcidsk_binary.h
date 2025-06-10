@@ -22,7 +22,7 @@ namespace PCIDSK {
             unsigned int nBufSize) = 0;
 
         // Virtual destructor
-        virtual ~PCIDSKBinarySegment() {}
+        virtual ~PCIDSKBinarySegment();
     };
 }
 

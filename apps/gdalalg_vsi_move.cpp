@@ -13,6 +13,7 @@
 #include "gdalalg_vsi_move.h"
 
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 
 //! @cond Doxygen_Suppress
 
@@ -58,13 +59,24 @@ bool GDALVSIMoveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 pProgressData) != 0)
     {
         VSIStatBufL statBufSrc;
-        const bool srcExists =
-            VSIStatExL(m_source.c_str(), &statBufSrc,
-                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+        VSIErrorReset();
+        const auto nOldErrorNum = VSIGetLastErrorNo();
+        const bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
         if (!srcExists)
         {
-            ReportError(CE_Failure, CPLE_FileIO, "%s does not exist",
-                        m_source.c_str());
+            if (nOldErrorNum != VSIGetLastErrorNo())
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' cannot be accessed. %s: %s", m_source.c_str(),
+                            VSIErrorNumToString(VSIGetLastErrorNo()),
+                            VSIGetLastErrorMsg());
+            }
+            else
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' does not exist or cannot be accessed",
+                            m_source.c_str());
+            }
         }
         else
         {

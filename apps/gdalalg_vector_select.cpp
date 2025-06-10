@@ -328,4 +328,7 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
     return true;
 }
 
+GDALVectorSelectAlgorithmStandalone::~GDALVectorSelectAlgorithmStandalone() =
+    default;
+
 //! @endcond

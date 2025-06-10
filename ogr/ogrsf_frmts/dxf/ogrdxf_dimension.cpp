@@ -203,7 +203,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
     const int nUnitsPrecision = atoi(oDimStyleProperties["DIMDEC"]);
     const bool bTextSupposedlyCentered =
         atoi(oDimStyleProperties["DIMTAD"]) == 0;
-    const CPLString osTextColor = oDimStyleProperties["DIMCLRT"];
+    CPLString osTextColor = oDimStyleProperties["DIMCLRT"];
 
     /*************************************************************************
 
@@ -418,7 +418,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    poLabelFeature->oStyleProperties["Color"] = osTextColor;
+    poLabelFeature->oStyleProperties["Color"] = std::move(osTextColor);
     osStyle += ",c:";
     osStyle += poLabelFeature->GetColor(poDS, poFeature);
 

@@ -141,7 +141,7 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
             if (ParseGeometryColumnCovering(iter.second, osBBOXColumn, osXMin,
                                             osYMin, osXMax, osYMax))
             {
-                oSetBBOXColumns.insert(osBBOXColumn);
+                oSetBBOXColumns.insert(std::move(osBBOXColumn));
             }
         }
     }
@@ -762,36 +762,33 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
         poNode->nSubExprCount == 2)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        const auto sRight =
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
-            return cp::and_(sLeft, sRight);
-        if (sLeft.is_valid())
+            return cp::and_(std::move(sLeft), std::move(sRight));
+        else if (sLeft.is_valid())
             return sLeft;
-        if (sRight.is_valid())
+        else if (sRight.is_valid())
             return sRight;
     }
 
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        const auto sRight =
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
-            return cp::or_(sLeft, sRight);
+            return cp::or_(std::move(sLeft), std::move(sRight));
     }
 
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1)
     {
-        const auto expr =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (expr.is_valid())
-            return cp::not_(expr);
+            return cp::not_(std::move(expr));
     }
 
     else if (poNode->eNodeType == SNT_COLUMN)
@@ -892,6 +889,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
                             nVal, arrow::TimeUnit::MILLI));
                     }
                 }
+                break;
             }
 
             default:
@@ -902,24 +900,23 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2 &&
              IsComparisonOp(poNode->nOperation))
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        const auto sRight =
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
         {
             if (poNode->nOperation == SWQ_EQ)
-                return cp::equal(sLeft, sRight);
+                return cp::equal(std::move(sLeft), std::move(sRight));
             if (poNode->nOperation == SWQ_LT)
-                return cp::less(sLeft, sRight);
+                return cp::less(std::move(sLeft), std::move(sRight));
             if (poNode->nOperation == SWQ_LE)
-                return cp::less_equal(sLeft, sRight);
+                return cp::less_equal(std::move(sLeft), std::move(sRight));
             if (poNode->nOperation == SWQ_GT)
-                return cp::greater(sLeft, sRight);
+                return cp::greater(std::move(sLeft), std::move(sRight));
             if (poNode->nOperation == SWQ_GE)
-                return cp::greater_equal(sLeft, sRight);
+                return cp::greater_equal(std::move(sLeft), std::move(sRight));
             if (poNode->nOperation == SWQ_NE)
-                return cp::not_equal(sLeft, sRight);
+                return cp::not_equal(std::move(sLeft), std::move(sRight));
         }
     }
 
@@ -929,8 +926,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
              poNode->papoSubExpr[1]->field_type == SWQ_STRING)
     {
-        const auto sLeft =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (sLeft.is_valid())
         {
             if (cp::GetFunctionRegistry()
@@ -939,7 +935,7 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
             {
                 // match_like is only available is Arrow built against RE2.
                 return cp::call(
-                    "match_like", {sLeft},
+                    "match_like", {std::move(sLeft)},
                     cp::MatchSubstringOptions(
                         poNode->papoSubExpr[1]->string_value,
                         /* ignore_case=*/poNode->nOperation == SWQ_ILIKE));
@@ -950,10 +946,9 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1)
     {
-        const auto expr =
-            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (expr.is_valid())
-            return cp::is_null(expr);
+            return cp::is_null(std::move(expr));
     }
 
     bFullyTranslated = false;

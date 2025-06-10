@@ -90,4 +90,7 @@ bool GDALRasterAspectAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
     return bRet;
 }
 
+GDALRasterAspectAlgorithmStandalone::~GDALRasterAspectAlgorithmStandalone() =
+    default;
+
 //! @endcond

@@ -207,4 +207,7 @@ bool GDALRasterRGBToPaletteAlgorithm::RunStep(
     return bOK;
 }
 
+GDALRasterRGBToPaletteAlgorithmStandalone::
+    ~GDALRasterRGBToPaletteAlgorithmStandalone() = default;
+
 //! @endcond

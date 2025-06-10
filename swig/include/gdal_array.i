@@ -2098,8 +2098,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     else
     {
-        npy_intp nTilesPerRow = static_cast<npy_intp>((nBufXSize + nTileXSize - 1) / nTileXSize);
-        npy_intp nTilesPerCol = static_cast<npy_intp>((nBufYSize + nTileYSize - 1) / nTileYSize);
+        npy_intp nTilesPerRow = static_cast<npy_intp>(DIV_ROUND_UP(nBufXSize, nTileXSize));
+        npy_intp nTilesPerCol = static_cast<npy_intp>(DIV_ROUND_UP(nBufYSize, nTileYSize));
         npy_intp shape[5], stride[5];
         if( nBandCount == 1 )
         {
@@ -2389,6 +2389,8 @@ np_class_to_gdal_code = { v : k for k, v in codes.items() }
 # since several things map to complex64 we must carefully select
 # the opposite that is an exact match (ticket 1518)
 np_class_to_gdal_code[numpy.complex64] = gdalconst.GDT_CFloat32
+# also recognize numpy bool arrays
+np_class_to_gdal_code[numpy.bool_] = gdalconst.GDT_Byte
 np_dtype_to_gdal_code = { numpy.dtype(k) : v for k, v in np_class_to_gdal_code.items() }
 
 def OpenArray(array, prototype_ds=None, interleave='band'):

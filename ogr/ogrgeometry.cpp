@@ -8886,3 +8886,15 @@ bool OGRGeometry::hasEmptyParts() const
 void OGRGeometry::removeEmptyParts()
 {
 }
+
+/************************************************************************/
+/*                      ~IOGRGeometryVisitor()                          */
+/************************************************************************/
+
+IOGRGeometryVisitor::~IOGRGeometryVisitor() = default;
+
+/************************************************************************/
+/*                    ~IOGRConstGeometryVisitor()                       */
+/************************************************************************/
+
+IOGRConstGeometryVisitor::~IOGRConstGeometryVisitor() = default;

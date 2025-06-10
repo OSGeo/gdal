@@ -89,7 +89,7 @@ namespace PCIDSK {
         // TODO: Setting/getting detailed projection params (just GCTP params?)
 
         // Virtual destructor
-        virtual ~PCIDSKRPCSegment() {}
+        virtual ~PCIDSKRPCSegment();
     };
 }
 

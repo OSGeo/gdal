@@ -10,13 +10,9 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 # Alpine based
 
 Alpine version:
+* 3.22 for GDAL 3.12
 * 3.21 for GDAL 3.11
 * 3.20 for GDAL 3.10
-* 3.19 for GDAL 3.9
-* 3.18 for GDAL 3.8
-* 3.17 for GDAL 3.7
-* 3.16 for GDAL 3.6
-* 3.15 for GDAL 3.5
 
 ## Small: `ghcr.io/osgeo/gdal:alpine-small-latest`
 

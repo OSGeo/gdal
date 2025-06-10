@@ -54,7 +54,7 @@ void URLPrepare(CPLString &url)
 
 CPLString BufferToVSIFile(GByte *buffer, size_t size)
 {
-    const CPLString file_name(VSIMemGenerateHiddenFilename("wmsresult.dat"));
+    CPLString file_name(VSIMemGenerateHiddenFilename("wmsresult.dat"));
     VSILFILE *f = VSIFileFromMemBuffer(file_name.c_str(), buffer, size, false);
     if (f == nullptr)
         return CPLString();

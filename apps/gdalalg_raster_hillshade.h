@@ -62,6 +62,8 @@ class GDALRasterHillshadeAlgorithmStandalone final
         : GDALRasterHillshadeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterHillshadeAlgorithmStandalone() override;
 };
 
 //! @endcond

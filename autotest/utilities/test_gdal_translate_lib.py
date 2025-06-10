@@ -1589,3 +1589,15 @@ def test_gdal_translate_lib_raster_uint16_ct_0_255_range():
     assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     assert out_ds.GetRasterBand(2).DataType == gdal.GDT_Byte
     assert out_ds.GetRasterBand(3).DataType == gdal.GDT_Byte
+
+
+###############################################################################
+
+
+def test_gdal_translate_lib_int_max_sized_raster(tmp_vsimem):
+
+    content = """<VRTDataset rasterXSize="2147483647" rasterYSize="2147483647">
+  <VRTRasterBand dataType="Byte" band="1" />
+</VRTDataset>"""
+    with pytest.raises(Exception):
+        gdal.Translate(tmp_vsimem / "out.tif", content)

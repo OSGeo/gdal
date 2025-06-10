@@ -645,8 +645,11 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
         {
             if (filename.at(i) == 'X')
             {
-                // coverity[dont_call]
+#ifndef __COVERITY__
                 filename.replace(i, 1, 1, chars[rand() % (sizeof(chars) - 1)]);
+#else
+                filename.replace(i, 1, 1, chars[i % (sizeof(chars) - 1)]);
+#endif
             }
         }
         // replace X with random character from a-zA-Z
@@ -969,14 +972,14 @@ std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
     {
         lows.push_back(atoi(array[i].c_str()));
     }
-    envelope.push_back(lows);
+    envelope.push_back(std::move(lows));
     array = Split(CPLGetXMLValue(node, "high", ""), " ", swap_the_first_two);
     std::vector<int> highs;
     for (unsigned int i = 0; i < array.size(); ++i)
     {
         highs.push_back(atoi(array[i].c_str()));
     }
-    envelope.push_back(highs);
+    envelope.push_back(std::move(highs));
     return envelope;
 }
 

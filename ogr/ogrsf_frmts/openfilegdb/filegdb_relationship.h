@@ -532,7 +532,7 @@ BuildXMLRelationshipDef(const GDALRelationship *poRelationship, int iDsid,
     CPLCreateXMLElementAndValue(psRoot, "ReplicaTracked", "false");
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());
-    const std::string osXML(pszXML);
+    std::string osXML(pszXML);
     CPLFree(pszXML);
     return osXML;
 }
@@ -596,7 +596,7 @@ BuildXMLRelationshipItemInfo(const GDALRelationship *poRelationship,
     CPLCreateXMLElementAndValue(psRoot, "propValues", "");
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());
-    const std::string osXML(pszXML);
+    std::string osXML(pszXML);
     CPLFree(pszXML);
     return osXML;
 }
@@ -625,7 +625,7 @@ BuildXMLRelationshipDocumentation(const GDALRelationship * /*poRelationship*/,
     CPLCreateXMLNode(psDataProperties, CXT_Element, "lineage");
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());
-    const std::string osXML(pszXML);
+    std::string osXML(pszXML);
     CPLFree(pszXML);
     return osXML;
 }

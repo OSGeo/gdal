@@ -34,11 +34,7 @@ class GDALRasterAttributeTableFromMDArrays final
         const std::vector<GDALRATFieldUsage> &aeUsages);
 
     //
-    GDALRasterAttributeTable *Clone() const override
-    {
-        return new GDALRasterAttributeTableFromMDArrays(
-            m_eTableType, m_apoArrays, m_aeUsages);
-    }
+    GDALRasterAttributeTable *Clone() const override;
 
     //
     int GetColumnCount() const override
@@ -322,6 +318,13 @@ class GDALRasterAttributeTableFromMDArrays final
         return m_eTableType;
     }
 };
+
+//
+GDALRasterAttributeTable *GDALRasterAttributeTableFromMDArrays::Clone() const
+{
+    return new GDALRasterAttributeTableFromMDArrays(m_eTableType, m_apoArrays,
+                                                    m_aeUsages);
+}
 
 /************************************************************************/
 /*               GDALRasterAttributeTableFromMDArrays()                 */

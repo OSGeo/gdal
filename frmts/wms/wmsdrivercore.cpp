@@ -116,35 +116,37 @@ struct WMSDriverSubdatasetInfo : public GDALSubdatasetInfo
 
     // GDALSubdatasetInfo interface
   private:
-    void parseFileName() override
-    {
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "WMS:"))
-        {
-            return;
-        }
-
-        const CPLString osLayers = CPLURLGetValue(m_fileName.c_str(), "LAYERS");
-
-        if (!osLayers.empty())
-        {
-            m_subdatasetComponent = "LAYERS=" + osLayers;
-            m_driverPrefixComponent = "WMS";
-
-            m_pathComponent = m_fileName;
-            m_pathComponent.erase(m_pathComponent.find(m_subdatasetComponent),
-                                  m_subdatasetComponent.length());
-            m_pathComponent.erase(0, 4);
-            const std::size_t nDoubleAndPos = m_pathComponent.find("&&");
-            if (nDoubleAndPos != std::string::npos)
-            {
-                m_pathComponent.erase(nDoubleAndPos, 1);
-            }
-            // Reconstruct URL with LAYERS at the end or ModifyPathComponent will fail
-            m_fileName = m_driverPrefixComponent + ":" + m_pathComponent + "&" +
-                         m_subdatasetComponent;
-        }
-    }
+    void parseFileName() override;
 };
+
+void WMSDriverSubdatasetInfo::parseFileName()
+{
+    if (!STARTS_WITH_CI(m_fileName.c_str(), "WMS:"))
+    {
+        return;
+    }
+
+    const CPLString osLayers = CPLURLGetValue(m_fileName.c_str(), "LAYERS");
+
+    if (!osLayers.empty())
+    {
+        m_subdatasetComponent = "LAYERS=" + osLayers;
+        m_driverPrefixComponent = "WMS";
+
+        m_pathComponent = m_fileName;
+        m_pathComponent.erase(m_pathComponent.find(m_subdatasetComponent),
+                              m_subdatasetComponent.length());
+        m_pathComponent.erase(0, 4);
+        const std::size_t nDoubleAndPos = m_pathComponent.find("&&");
+        if (nDoubleAndPos != std::string::npos)
+        {
+            m_pathComponent.erase(nDoubleAndPos, 1);
+        }
+        // Reconstruct URL with LAYERS at the end or ModifyPathComponent will fail
+        m_fileName = m_driverPrefixComponent + ":" + m_pathComponent + "&" +
+                     m_subdatasetComponent;
+    }
+}
 
 static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
 {

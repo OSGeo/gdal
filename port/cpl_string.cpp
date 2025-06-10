@@ -1815,10 +1815,12 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
                 {
                     case 'G':
                     case 'g':
-                        value *= 1024;  // fall-through
+                        value *= 1024;
+                        [[fallthrough]];
                     case 'M':
                     case 'm':
-                        value *= 1024;  // fall-through
+                        value *= 1024;
+                        [[fallthrough]];
                     case 'K':
                     case 'k':
                         value *= 1024;

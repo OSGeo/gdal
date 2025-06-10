@@ -62,7 +62,7 @@ will be called at the exit of the context manager.
 .. code-block:: python
 
     with gdal.Run("raster reproject", input=src_ds, output_format="MEM",
-                  dst_crs="EPSG:4326"}) as alg:
+                  dst_crs="EPSG:4326") as alg:
         values = alg.Output().ReadAsArray()
 
 
@@ -124,7 +124,7 @@ Raster commands examples
 
         gdal.UseExceptions()
         with gdal.Run("raster", "reproject", input=src_ds, output_format="MEM",
-                      dst_crs="EPSG:4326"}) as alg:
+                      dst_crs="EPSG:4326") as alg:
             values = alg.Output().ReadAsArray()
 
 
@@ -140,7 +140,7 @@ Vector commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        alg = gdal.Run("raster", "info", input="poly.gpkg"})
+        alg = gdal.Run("vector", "info", input="poly.gpkg")
         info_as_dict = alg.Output()
 
 
@@ -152,4 +152,4 @@ Vector commands examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        gdal.Run("raster", "convert", input="in.shp", output="out.gpkg", overwrite=True)
+        gdal.Run("vector", "convert", input="in.shp", output="out.gpkg", overwrite=True)

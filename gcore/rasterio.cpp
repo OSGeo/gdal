@@ -1296,8 +1296,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
             return CE_Failure;
         }
 
-        int nTotalBlocks = ((nBufXSize + nDstBlockXSize - 1) / nDstBlockXSize) *
-                           ((nBufYSize + nDstBlockYSize - 1) / nDstBlockYSize);
+        const int nTotalBlocks = DIV_ROUND_UP(nBufXSize, nDstBlockXSize) *
+                                 DIV_ROUND_UP(nBufYSize, nDstBlockYSize);
         int nBlocksDone = 0;
 
         int nDstYOff;
@@ -1764,8 +1764,8 @@ CPLErr GDALDataset::RasterIOResampled(
             return CE_Failure;
         }
 
-        int nTotalBlocks = ((nBufXSize + nDstBlockXSize - 1) / nDstBlockXSize) *
-                           ((nBufYSize + nDstBlockYSize - 1) / nDstBlockYSize);
+        const int nTotalBlocks = DIV_ROUND_UP(nBufXSize, nDstBlockXSize) *
+                                 DIV_ROUND_UP(nBufYSize, nDstBlockYSize);
         int nBlocksDone = 0;
 
         int nDstYOff;

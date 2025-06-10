@@ -506,6 +506,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         oGuard.unlock();
         // coverity[wait_not_in_locked_loop]
         psWorkerThread->m_cv.wait(oGuardThisThread);
+        // coverity[lock_order]
         oGuard.lock();
     }
 }
@@ -585,13 +586,13 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
     }
 
     // coverity[uninit_member,copy_constructor_call]
-    const auto lambda = [this, task]
+    const auto lambda = [this, capturedTask = std::move(task)]
     {
-        task();
+        capturedTask();
         DeclareJobFinished();
     };
     // cppcheck-suppress knownConditionTrueFalse
-    return m_poPool->SubmitJob(lambda);
+    return m_poPool->SubmitJob(std::move(lambda));
 }
 
 /************************************************************************/

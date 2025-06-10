@@ -119,8 +119,9 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
     char *pszSafeName = bUTF8ToASCII ? CPLUTF8ForceToASCII(pszSrcName, '_')
                                      : CPLStrdup(pszSrcName);
 
-    int i = 0;  // needed after loop
-    for (; i < OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0'; i++)
+    size_t i = 0;  // needed after loop
+    int iUTF8Char = 0;
+    for (; pszSafeName[i] != '\0'; i++)
     {
         if (static_cast<unsigned char>(pszSafeName[i]) <= 127)
         {
@@ -132,21 +133,44 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
                 pszSafeName[i] = '_';
             }
         }
+
+        // Truncate string by making sure we don't cut in the
+        // middle of a UTF-8 multibyte character
+        // Continuation bytes of such characters are of the form
+        // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+        // and the start of a multi-byte is 11xxxxxx
+        if ((pszSafeName[i] & 0xc0) != 0x80)
+        {
+            ++iUTF8Char;
+            if (iUTF8Char == OGR_PG_NAMEDATALEN)
+                break;
+        }
     }
 
-    if (i == OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0')
+    if (iUTF8Char == OGR_PG_NAMEDATALEN && pszSafeName[i] != '\0')
     {
         constexpr int FIRST_8_CHARS_OF_MD5 = 8;
-        pszSafeName[i - FIRST_8_CHARS_OF_MD5 - 1] = '_';
-        memcpy(pszSafeName + i - FIRST_8_CHARS_OF_MD5, CPLMD5String(pszSrcName),
+        iUTF8Char = 0;
+        for (i = 0; pszSafeName[i]; ++i)
+        {
+            if ((pszSafeName[i] & 0xc0) != 0x80)
+            {
+                ++iUTF8Char;
+                if (iUTF8Char == OGR_PG_NAMEDATALEN - FIRST_8_CHARS_OF_MD5 - 1)
+                    break;
+            }
+        }
+        pszSafeName[i] = '_';
+        memcpy(pszSafeName + i + 1, CPLMD5String(pszSrcName),
                FIRST_8_CHARS_OF_MD5);
+        i += FIRST_8_CHARS_OF_MD5 + 1;
     }
 
     pszSafeName[i] = '\0';
 
     if (strcmp(pszSrcName, pszSafeName) != 0)
     {
-        if (CPLStrlenUTF8(pszSafeName) < CPLStrlenUTF8(pszSrcName))
+        if (CPLStrlenUTF8Ex(pszSafeName) < CPLStrlenUTF8Ex(pszSrcName))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "%s identifier truncated to %s", pszSrcName, pszSafeName);
@@ -187,6 +211,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
         CPLFetchBool(papszOptions, "CREATE_SCHEMA", true);
     const char *pszDropTable =
         CSLFetchNameValueDef(papszOptions, "DROP_TABLE", "IF_EXISTS");
+    const bool bSkipConflicts =
+        CPLFetchBool(papszOptions, "SKIP_CONFLICTS", false);
     int nGeometryTypeFlags = 0;
 
     if (OGR_GT_HasZ(eType))
@@ -493,10 +519,21 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     if (bCreateTable && !osFIDColumnName.empty())
     {
         std::string osConstraintName(osTable);
-        if (osConstraintName.size() + strlen("_pk") >
+        if (CPLStrlenUTF8Ex(osTable.c_str()) + strlen("_pk") >
             static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
         {
-            osConstraintName.resize(OGR_PG_NAMEDATALEN - 1 - strlen("_pk"));
+            osConstraintName.clear();
+            size_t iUTF8Char = 0;
+            for (size_t i = 0; i < osTable.size(); ++i)
+            {
+                if ((osTable[i] & 0xc0) != 0x80)
+                {
+                    ++iUTF8Char;
+                    if (iUTF8Char == OGR_PG_NAMEDATALEN - strlen("_pk"))
+                        break;
+                }
+                osConstraintName += osTable[i];
+            }
         }
         osConstraintName += "_pk";
         osCommand.Printf(
@@ -599,7 +636,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
                          OGRPGDumpEscapeColumnName(osIndexName.c_str()).c_str(),
                          pszSchemaEscaped, pszTableEscaped, pszSpatialIndexType,
                          OGRPGDumpEscapeColumnName(pszGFldName).c_str());
-        aosSpatialIndexCreationCommands.push_back(osCommand);
+        aosSpatialIndexCreationCommands.push_back(std::move(osCommand));
     }
 
     /* -------------------------------------------------------------------- */
@@ -611,7 +648,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     auto poLayer = std::make_unique<OGRPGDumpLayer>(
         this, osSchema.c_str(), osTable.c_str(),
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
-        bWriteAsHex, bCreateTable);
+        bWriteAsHex, bCreateTable, bSkipConflicts);
     poLayer->SetLaunderFlag(bLaunder);
     poLayer->SetUTF8ToASCIIFlag(bUTF8ToASCII);
     poLayer->SetPrecisionFlag(CPLFetchBool(papszOptions, "PRECISION", true));
