@@ -264,7 +264,12 @@ char CPL_DLL *CPLForceToASCII(const char *pabyData, int nLen,
                               char chReplacementChar) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *CPLUTF8ForceToASCII(const char *pszStr, char chReplacementChar)
     CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
+int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str)
+    /*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use CPLStrlenUTF8Ex() instead")
+    /*! @endcond */
+    ;
+size_t CPL_DLL CPLStrlenUTF8Ex(const char *pszUTF8Str);
 int CPL_DLL CPLCanRecode(const char *pszTestStr, const char *pszSrcEncoding,
                          const char *pszDstEncoding) CPL_WARN_UNUSED_RESULT;
 CPL_C_END

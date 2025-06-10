@@ -5940,4 +5940,22 @@ TEST_F(test_cpl, CPLFormatReadableFileSize)
         "123,456 bytes");
 }
 
+TEST_F(test_cpl, CPLStrlenUTF8)
+{
+    EXPECT_EQ(CPLStrlenUTF8("a"), 1);
+    EXPECT_EQ(CPLStrlenUTF8("a"
+                            "\xC3\xA9"
+                            "b"),
+              3);
+}
+
+TEST_F(test_cpl, CPLStrlenUTF8Ex)
+{
+    EXPECT_EQ(CPLStrlenUTF8Ex("a"), 1);
+    EXPECT_EQ(CPLStrlenUTF8Ex("a"
+                              "\xC3\xA9"
+                              "b"),
+              3);
+}
+
 }  // namespace
