@@ -811,47 +811,6 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
     const int nGeomFieldCount =
         psOptions->bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
 
-    if (bIsSummaryCli)
-    {
-        // Collect geometry types
-        std::set<std::string> geomFieldTypes;
-        for (int iGeom = 0; iGeom < nGeomFieldCount; iGeom++)
-        {
-            const OGRGeomFieldDefn *poGFldDefn =
-                poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-            geomFieldTypes.emplace(OGRToOGCGeomType(poGFldDefn->GetType(),
-                                                    /*bCamelCase=*/true,
-                                                    /*bAddZm=*/true,
-                                                    /*bSpaceBeforeZM=*/false));
-        }
-
-        if (bJson)
-        {
-            CPLJSONArray oGeometryFields;
-            oLayer.Add("geometryType", oGeometryFields);
-            for (const auto &geomType : geomFieldTypes)
-            {
-                oGeometryFields.Add(geomType);
-            }
-        }
-        else
-        {
-            Concat(osRet, psOptions->bStdoutOutput, "\n");
-            // Join with comma and space
-            std::string osGeomTypes;
-            for (auto it = geomFieldTypes.begin(); it != geomFieldTypes.end();
-                 ++it)
-            {
-                if (it != geomFieldTypes.begin())
-                    osGeomTypes += ", ";
-                osGeomTypes += *it;
-            }
-            Concat(osRet, psOptions->bStdoutOutput, "%s (%s)\n",
-                   poLayer->GetName(), osGeomTypes.c_str());
-        }
-        return;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Set filters if provided.                                        */
     /* -------------------------------------------------------------------- */
