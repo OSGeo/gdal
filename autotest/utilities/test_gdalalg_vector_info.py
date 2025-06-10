@@ -132,7 +132,6 @@ def test_gdalalg_vector_info_summary():
 def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem):
 
     sqlite_multi = tmp_vsimem / "multi_geometry.db"
-    sqlite_multi = "/tmp/multi_geometry.db"
     # Create a temporary gpkg with multiple geometry types
     ds = gdal.VectorTranslate(
         sqlite_multi,
