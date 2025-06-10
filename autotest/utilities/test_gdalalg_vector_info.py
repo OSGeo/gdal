@@ -134,14 +134,20 @@ def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem):
     sqlite_multi = tmp_vsimem / "multi_geometry.db"
     sqlite_multi = "/tmp/multi_geometry.db"
     # Create a temporary gpkg with multiple geometry types
-    gdal.VectorTranslate(
+    ds = gdal.VectorTranslate(
         sqlite_multi,
         "data/path.shp",
         format="SQLite",
         SQLStatement="select geometry as geom, st_centroid(geometry) as center, geometry as geom3, st_buffer(geometry,1) as geom4 from path",
         SQLDialect="SQLite",
     )
-
+    # Exec sql to alter center and geom4
+    ds.ExecuteSQL(
+        "UPDATE geometry_columns SET geometry_type = 1 where f_geometry_column = 'center'"
+    )
+    ds.ExecuteSQL(
+        "UPDATE geometry_columns SET geometry_type = 3 where f_geometry_column = 'geom4'"
+    )
     # Check that the layer has multiple geometry types
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--summary", sqlite_multi])

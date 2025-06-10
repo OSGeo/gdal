@@ -160,8 +160,7 @@ static bool OGRGetDateTimeFieldType(const char *pszValue,
 
 static int OGRIsBinaryGeomCol(sqlite3_stmt *hStmt, int iCol,
                               CPL_UNUSED OGRFieldDefn &oField,
-                              OGRSQLiteGeomFormat &eGeomFormat,
-                              OGRwkbGeometryType *peGeometryType)
+                              OGRSQLiteGeomFormat &eGeomFormat)
 {
     OGRGeometry *poGeometry = nullptr;
     const int nBytes = sqlite3_column_bytes(hStmt, iCol);
@@ -188,10 +187,6 @@ static int OGRIsBinaryGeomCol(sqlite3_stmt *hStmt, int iCol,
              nBytes == nBytesConsumed)
     {
         eGeomFormat = OSGF_FGF;
-    }
-    if (peGeometryType)
-    {
-        *peGeometryType = poGeometry ? poGeometry->getGeometryType() : wkbNone;
     }
     CPLPopErrorHandler();
     CPLErrorReset();
@@ -542,16 +537,13 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 const int nBytes = sqlite3_column_bytes(hStmtIn, iCol);
                 if (nBytes > 0)
                 {
-                    OGRwkbGeometryType eGeometryType;
                     OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
-                    if (OGRIsBinaryGeomCol(hStmtIn, iCol, oField, eGeomFormat,
-                                           &eGeometryType))
+                    if (OGRIsBinaryGeomCol(hStmtIn, iCol, oField, eGeomFormat))
                     {
                         auto poGeomFieldDefn =
                             std::make_unique<OGRSQLiteGeomFieldDefn>(
                                 pszFieldName, iCol);
                         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
-                        poGeomFieldDefn->SetType(eGeometryType);
                         m_poFeatureDefn->AddGeomFieldDefn(
                             std::move(poGeomFieldDefn));
                         continue;
@@ -642,14 +634,12 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
         {
             const int nBytes = sqlite3_column_bytes(hStmtIn, iCol);
             OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
-            OGRwkbGeometryType eGeometryType;
-            if (nBytes > 0 && OGRIsBinaryGeomCol(hStmtIn, iCol, oField,
-                                                 eGeomFormat, &eGeometryType))
+            if (nBytes > 0 &&
+                OGRIsBinaryGeomCol(hStmtIn, iCol, oField, eGeomFormat))
             {
                 auto poGeomFieldDefn = std::make_unique<OGRSQLiteGeomFieldDefn>(
                     pszFieldName, iCol);
                 poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
-                poGeomFieldDefn->SetType(eGeometryType);
                 m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
                 continue;
             }
