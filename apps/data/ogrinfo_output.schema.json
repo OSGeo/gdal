@@ -91,10 +91,7 @@
         }
       },
       "required": [
-        "name",
-        "metadata",
-        "geometryFields",
-        "fields"
+        "name"
       ],
       "additionalProperties": false
     },
