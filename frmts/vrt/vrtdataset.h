@@ -136,13 +136,16 @@ class CPL_DLL VRTSource
 #endif
         struct NoInitByte
         {
+#ifdef __COVERITY__
+            GByte value = 0;
+#else
             GByte value;
+#endif
 
             // cppcheck-suppress uninitMemberVar
             NoInitByte()
             {
                 // do nothing
-                /* coverity[uninit_member] */
             }
 
             inline operator GByte() const
@@ -627,13 +630,16 @@ class VRTProcessedDataset final : public VRTDataset
 #endif
     struct NoInitByte
     {
+#ifdef __COVERITY__
+        GByte value = 0;
+#else
         GByte value;
+#endif
 
         // cppcheck-suppress uninitMemberVar
         NoInitByte()
         {
             // do nothing
-            /* coverity[uninit_member] */
         }
 
         inline operator GByte() const
