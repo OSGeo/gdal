@@ -5846,6 +5846,8 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
             break
         lyr.WriteArrowBatch(schema, array, ["FID=OGC_FID"])
 
+    del stream
+
     f = lyr.GetNextFeature()
     assert f["string"] == "foo"
     assert f["int"] == 123
@@ -5891,6 +5893,8 @@ def test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR(tmp_vsimem):
             lyr.WriteArrowBatch(
                 schema, array, ["FID=OGC_FID", "IF_FID_NOT_PRESERVED=ERROR"]
             )
+
+    del stream
 
 
 ###############################################################################
