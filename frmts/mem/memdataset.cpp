@@ -488,10 +488,11 @@ CPLErr MEMRasterBand::CreateMaskBand(int nFlagsIn)
         return CE_Failure;
 
     nMaskFlags = nFlagsIn;
-    auto poMemMaskBand = new MEMRasterBand(pabyMaskData, GDT_Byte, nRasterXSize,
-                                           nRasterYSize, /* bOwnData= */ true);
+    auto poMemMaskBand = std::unique_ptr<MEMRasterBand>(
+        new MEMRasterBand(pabyMaskData, GDT_Byte, nRasterXSize, nRasterYSize,
+                          /* bOwnData= */ true));
     poMemMaskBand->m_bIsMask = true;
-    poMask.reset(poMemMaskBand, true);
+    poMask.reset(std::move(poMemMaskBand));
     if ((nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != nullptr)
     {
         for (int i = 2; i <= poMemDS->GetRasterCount(); ++i)
@@ -500,7 +501,7 @@ CPLErr MEMRasterBand::CreateMaskBand(int nFlagsIn)
                 cpl::down_cast<MEMRasterBand *>(poMemDS->GetRasterBand(i));
             poOtherBand->InvalidateMaskBand();
             poOtherBand->nMaskFlags = nFlagsIn;
-            poOtherBand->poMask.reset(poMask.get(), false);
+            poOtherBand->poMask.resetNotOwned(poMask.get());
         }
     }
     return CE_None;
@@ -994,7 +995,7 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             // Make the mask band to be its own mask, similarly to what is
             // done for alpha bands in GDALRegenerateOverviews() (#5640)
             poMaskBand->InvalidateMaskBand();
-            poMaskBand->poMask.reset(poMaskBand, false);
+            poMaskBand->poMask.resetNotOwned(poMaskBand);
             poMaskBand->nMaskFlags = 0;
             eErr = GDALRegenerateOverviewsEx(
                 GDALRasterBand::ToHandle(poMaskBand), nNewOverviews,
@@ -1125,11 +1126,12 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                     poSrcMEMBand->poMask.get());
                 if (poSrcMaskBand)
                 {
-                    auto poMaskBand = new MEMRasterBand(
-                        poSrcMaskBand->pabyData, GDT_Byte, nRasterXSize,
-                        nRasterYSize, /* bOwnData = */ false);
+                    auto poMaskBand =
+                        std::unique_ptr<MEMRasterBand>(new MEMRasterBand(
+                            poSrcMaskBand->pabyData, GDT_Byte, nRasterXSize,
+                            nRasterYSize, /* bOwnData = */ false));
                     poMaskBand->m_bIsMask = true;
-                    poNewBand->poMask.reset(poMaskBand, true);
+                    poNewBand->poMask.reset(std::move(poMaskBand));
                     poNewBand->nMaskFlags = poSrcMaskBand->nMaskFlags;
                 }
             }

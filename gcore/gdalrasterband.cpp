@@ -8297,7 +8297,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     /* -------------------------------------------------------------------- */
     if (poDS != nullptr && poDS->oOvManager.HaveMaskFile())
     {
-        poMask.reset(poDS->oOvManager.GetMaskBand(nBand), false);
+        poMask.resetNotOwned(poDS->oOvManager.GetMaskBand(nBand));
         if (poMask != nullptr)
         {
             nMaskFlags = poDS->oOvManager.GetMaskFlags(nBand);
@@ -8341,7 +8341,8 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                     nMaskFlags = GMF_NODATA | GMF_PER_DATASET;
                     try
                     {
-                        poMask.reset(new GDALNoDataValuesMaskBand(poDS), true);
+                        poMask.reset(
+                            std::make_unique<GDALNoDataValuesMaskBand>(poDS));
                     }
                     catch (const std::bad_alloc &)
                     {
@@ -8380,7 +8381,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         nMaskFlags = GMF_NODATA;
         try
         {
-            poMask.reset(new GDALNoDataMaskBand(this), true);
+            poMask.reset(std::make_unique<GDALNoDataMaskBand>(this));
         }
         catch (const std::bad_alloc &)
         {
@@ -8400,7 +8401,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-            poMask.reset(poDS->GetRasterBand(2), false);
+            poMask.resetNotOwned(poDS->GetRasterBand(2));
             return poMask.get();
         }
         else if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_UInt16)
@@ -8408,8 +8409,8 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             try
             {
-                poMask.reset(new GDALRescaledAlphaBand(poDS->GetRasterBand(2)),
-                             true);
+                poMask.reset(std::make_unique<GDALRescaledAlphaBand>(
+                    poDS->GetRasterBand(2)));
             }
             catch (const std::bad_alloc &)
             {
@@ -8428,7 +8429,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-            poMask.reset(poDS->GetRasterBand(4), false);
+            poMask.resetNotOwned(poDS->GetRasterBand(4));
             return poMask.get();
         }
         else if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_UInt16)
@@ -8436,8 +8437,8 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             try
             {
-                poMask.reset(new GDALRescaledAlphaBand(poDS->GetRasterBand(4)),
-                             true);
+                poMask.reset(std::make_unique<GDALRescaledAlphaBand>(
+                    poDS->GetRasterBand(4)));
             }
             catch (const std::bad_alloc &)
             {
@@ -8454,7 +8455,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     nMaskFlags = GMF_ALL_VALID;
     try
     {
-        poMask.reset(new GDALAllValidMaskBand(this), true);
+        poMask.reset(std::make_unique<GDALAllValidMaskBand>(this));
     }
     catch (const std::bad_alloc &)
     {

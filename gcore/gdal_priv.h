@@ -1633,15 +1633,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     class GDALRasterBandOwnedOrNot
     {
       public:
-        GDALRasterBandOwnedOrNot()
-        {
-        }
-
-        GDALRasterBandOwnedOrNot(GDALRasterBand *poBand, bool bOwned)
-            : m_poBandOwned(bOwned ? poBand : nullptr),
-              m_poBandRef(bOwned ? nullptr : poBand)
-        {
-        }
+        GDALRasterBandOwnedOrNot() = default;
 
         void reset()
         {
@@ -1649,10 +1641,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
             m_poBandRef = nullptr;
         }
 
-        void reset(GDALRasterBand *poBand, bool bOwned)
+        void resetNotOwned(GDALRasterBand *poBand)
         {
-            m_poBandOwned.reset(bOwned ? poBand : nullptr);
-            m_poBandRef = bOwned ? nullptr : poBand;
+            m_poBandOwned.reset();
+            m_poBandRef = poBand;
         }
 
         void reset(std::unique_ptr<GDALRasterBand> poBand)
