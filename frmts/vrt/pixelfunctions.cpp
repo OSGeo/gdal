@@ -2314,6 +2314,15 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     const char *pszSourceNames = CSLFetchNameValue(papszArgs, "source_names");
     const CPLStringList aosSourceNames(
         CSLTokenizeString2(pszSourceNames, "|", 0));
+    if (aosSourceNames.size() != nSources)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The source_names variable passed to ExprPixelFunc() has %d "
+                 "values, whereas %d were expected. An invalid variable name "
+                 "has likely been used",
+                 aosSourceNames.size(), nSources);
+        return CE_Failure;
+    }
 
     std::vector<double> adfValuesForPixel(nSources);
 

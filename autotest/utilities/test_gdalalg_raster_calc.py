@@ -587,7 +587,7 @@ def test_gdalalg_raster_calc_invalid_formula(calc, tmp_vsimem, output_format, ex
         calc["output-format"] = output_format
         calc["output"] = tmp_vsimem / "out"
     calc["calc"] = "invalid"
-    with pytest.raises(Exception, match="Invalid variable name"):
+    with pytest.raises(Exception, match="invalid variable name"):
         calc.Run()
 
 
