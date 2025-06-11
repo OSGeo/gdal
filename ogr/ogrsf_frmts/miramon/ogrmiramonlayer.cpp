@@ -2510,10 +2510,24 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 }
 
                 char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
-                MM_SprintfDoubleSignifFigures(
-                    szChain, sizeof(szChain),
-                    phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
-                    padfRLValues[nIRecord]);
+                if (phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals > 0 &&
+                    phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals < MAX_RELIABLE_SF_DOUBLE)
+                {
+                    CPLsnprintf(szChain, sizeof(szChain), "%.*f",
+                                phMiraMonLayer->pLayerDB->pFields[iField]
+                                    .nNumberOfDecimals,
+                                padfRLValues[nIRecord]);
+                }
+                else
+                {
+                    MM_SprintfDoubleSignifFigures(
+                        szChain, sizeof(szChain),
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals,
+                        padfRLValues[nIRecord]);
+                }
 
                 if (MM_SecureCopyStringFieldValue(
                         &hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
