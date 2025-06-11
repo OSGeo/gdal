@@ -1147,7 +1147,10 @@ bool OGRSimpleCurve::setPoints(int nPointsIn, const OGRRawPoint *paoPointsIn,
         return false;
 
     if (nPointsIn)
-        memcpy(paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
+    {
+        const void *pUnaligned = paoPointsIn;
+        memcpy(paoPoints, pUnaligned, sizeof(OGRRawPoint) * nPointsIn);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Check 2D/3D.                                                    */
@@ -1362,7 +1365,8 @@ void OGRSimpleCurve::getPoints(OGRRawPoint *paoPointsOut,
     if (!paoPointsOut || nPointCount == 0)
         return;
 
-    memcpy(paoPointsOut, paoPoints, sizeof(OGRRawPoint) * nPointCount);
+    void *pUnaligned = paoPointsOut;
+    memcpy(pUnaligned, paoPoints, sizeof(OGRRawPoint) * nPointCount);
 
     /* -------------------------------------------------------------------- */
     /*      Check 2D/3D.                                                    */
