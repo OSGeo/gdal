@@ -696,16 +696,21 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         m_outputBandDataTypeValue = eCurrentDT;
     }
 
-    if (nBands != 0 &&
-        (nBands != nOutputBandCount ||
-         (m_outputBandDataTypeProvenance == ValueProvenance::FROM_LAST_STEP &&
-          m_outputBandDataTypeValue != papoBands[0]->GetRasterDataType())))
+    const auto ClearBands = [this]()
     {
         for (int i = 0; i < nBands; ++i)
             delete papoBands[i];
         CPLFree(papoBands);
         papoBands = nullptr;
         nBands = 0;
+    };
+
+    if (nBands != 0 &&
+        (nBands != nOutputBandCount ||
+         (m_outputBandDataTypeProvenance == ValueProvenance::FROM_LAST_STEP &&
+          m_outputBandDataTypeValue != papoBands[0]->GetRasterDataType())))
+    {
+        ClearBands();
     }
 
     const auto GetOutputBandType = [this, eCurrentDT](GDALDataType eSourceDT)
@@ -735,11 +740,27 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     else if (m_outputBandCountProvenance != ValueProvenance::FROM_VRTRASTERBAND)
     {
         const GDALDataType eOutputBandType = GetOutputBandType(eInDT);
-        for (int i = 0; i < nOutputBandCount; ++i)
+
+        bool bClearAndSetBands = true;
+        if (nBands == nOutputBandCount)
         {
-            auto poBand =
-                new VRTProcessedRasterBand(this, i + 1, eOutputBandType);
-            SetBand(i + 1, poBand);
+            bClearAndSetBands = false;
+            for (int i = 0; i < nBands; ++i)
+            {
+                bClearAndSetBands =
+                    bClearAndSetBands ||
+                    !dynamic_cast<VRTProcessedRasterBand *>(papoBands[i]) ||
+                    papoBands[i]->GetRasterDataType() != eOutputBandType;
+            }
+        }
+        if (bClearAndSetBands)
+        {
+            ClearBands();
+            for (int i = 0; i < nOutputBandCount; ++i)
+            {
+                SetBand(i + 1, std::make_unique<VRTProcessedRasterBand>(
+                                   this, i + 1, eOutputBandType));
+            }
         }
     }
 
