@@ -589,3 +589,16 @@ def test_gdalalg_raster_calc_invalid_formula(calc, tmp_vsimem, output_format, ex
     calc["calc"] = "invalid"
     with pytest.raises(Exception, match="Invalid variable name"):
         calc.Run()
+
+
+def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = "streamed"
+    calc["calc"] = "sum(X[1], X[2], X[3])"
+
+    assert calc.Run()
+
+    assert calc["output"].GetDataset().RasterCount == 1
+    assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240

@@ -535,6 +535,7 @@ static bool ReadFileLists(std::vector<std::string> &inputs)
  * @param inputs A list of sources, expressed as NAME=DSN
  * @param expressions A list of expressions to be evaluated
  * @param options flags controlling which checks should be performed on the inputs
+ * @param[out] maxSourceBands Maximum number of bands in source dataset(s)
  * @param fakeSourceFilename If not empty, used instead of real input filenames.
  *
  * @return a newly created VRTDataset, or nullptr on error
@@ -542,7 +543,7 @@ static bool ReadFileLists(std::vector<std::string> &inputs)
 static std::unique_ptr<GDALDataset>
 GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
                          const std::vector<std::string> &expressions,
-                         const GDALCalcOptions &options,
+                         const GDALCalcOptions &options, int &maxSourceBands,
                          const std::string &fakeSourceFilename = std::string())
 {
     if (inputs.empty())
@@ -583,6 +584,8 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 
     CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
 
+    maxSourceBands = 0;
+
     // Collect properties of the different sources, and verity them for
     // consistency.
     std::map<std::string, SourceProperties> sourceProps;
@@ -592,6 +595,7 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         auto props = UpdateSourceProperties(out, dsn, options);
         if (props.has_value())
         {
+            maxSourceBands = std::max(maxSourceBands, props->nBands);
             sourceProps[source_name] = std::move(props.value());
         }
         else
@@ -702,7 +706,9 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    auto vrt = GDALCalcCreateVRTDerived(m_inputs, m_expr, options);
+    int maxSourceBands = 0;
+    auto vrt =
+        GDALCalcCreateVRTDerived(m_inputs, m_expr, options, maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -731,16 +737,16 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             {
                 std::string osFilename =
                     VSIMemGenerateHiddenFilename("tmp.tif");
-                auto poDS = std::unique_ptr<GDALDataset>(poGTIFFDrv->Create(
-                    osFilename.c_str(), 1, 1, vrt->GetRasterCount(), GDT_Byte,
-                    nullptr));
+                auto poDS = std::unique_ptr<GDALDataset>(
+                    poGTIFFDrv->Create(osFilename.c_str(), 1, 1, maxSourceBands,
+                                       GDT_Byte, nullptr));
                 if (poDS)
                     osTmpFilename = std::move(osFilename);
             }
             if (!osTmpFilename.empty())
             {
-                auto fakeVRT = GDALCalcCreateVRTDerived(m_inputs, m_expr,
-                                                        options, osTmpFilename);
+                auto fakeVRT = GDALCalcCreateVRTDerived(
+                    m_inputs, m_expr, options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
                                       1, GDT_Byte, vrt->GetRasterCount(),
