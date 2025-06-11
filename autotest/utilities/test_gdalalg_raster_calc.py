@@ -604,6 +604,31 @@ def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
     assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240
 
 
+def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(20)
+        ds.GetRasterBand(2).Fill(200)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "sum(A)-sum(B)"
+    calc["flatten"] = True
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+    expected_val = (10 + 100) - (20 + 200)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
+        expected_val,
+        expected_val,
+    )
+
+
 def test_gdalalg_raster_calc_dialect_builtin(calc):
 
     calc["input"] = "../gcore/data/rgbsmall.tif"
@@ -611,6 +636,7 @@ def test_gdalalg_raster_calc_dialect_builtin(calc):
     calc["output"] = ""
     calc["calc"] = "mean"
     calc["dialect"] = "builtin"
+    calc["flatten"] = True
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
@@ -632,18 +658,27 @@ def test_gdalalg_raster_calc_pixel_function_arg(calc):
     assert ds.GetRasterBand(1).Checksum() == 4455
 
 
-def test_gdalalg_raster_calc_builtin_with_multiple_inputs(calc):
+def test_gdalalg_raster_calc_builtin_with_multiple_inputs(calc, tmp_vsimem):
 
-    calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/rgbsmall.tif"]
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(20)
+        ds.GetRasterBand(2).Fill(200)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
     calc["output-format"] = "stream"
     calc["output"] = ""
     calc["calc"] = "mean"
     calc["dialect"] = "builtin"
-    with pytest.raises(
-        Exception,
-        match=r"--dialect=builtin is only compatible with a single \(generally multi-band\) input dataset",
-    ):
-        calc.Run()
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (15, 15)
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (150, 150)
 
 
 def test_gdalalg_raster_calc_builtin_with_multiple_formula(calc):
@@ -651,13 +686,13 @@ def test_gdalalg_raster_calc_builtin_with_multiple_formula(calc):
     calc["input"] = "../gcore/data/byte.tif"
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["calc"] = ["mean", "max"]
+    calc["calc"] = ["mean", "sum(k=1)"]
     calc["dialect"] = "builtin"
-    with pytest.raises(
-        Exception,
-        match=r"--dialect=builtin is only compatible with a single --calc value",
-    ):
-        calc.Run()
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (74, 255)
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (75, 256)
 
 
 def test_gdalalg_raster_calc_complete():

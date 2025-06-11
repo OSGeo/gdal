@@ -32,7 +32,7 @@ used, it will be referred to with the variable ``X`` in formulas.)
 
 Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
 (such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
-``builtin``, to compute a single band from all bands of a single input dataset.
+``builtin``.
 
 The inputs should have the same spatial reference system and should cover the same spatial extent but are not required to have the same
 spatial resolution. The spatial extent check can be disabled with :option:`--no-check-extent`,
@@ -63,6 +63,7 @@ The following options are available:
 
     For example, if inputs ``A`` and ``B`` each have three bands, and input ``C`` has a single band, then the argument
     ``--calc "A + B + C"`` is equivalent to ``--calc "A[1] + B[1] + C[1]" --calc "A[2] + B[2] + C[2]" --calc "A[3] + B[3] + C[3]"``.
+    Note that this substitution works a bit differently when :option:`--flatten` is used.
 
     Multiple calculations may be specified; output band(s) will be produced for each expression in the order they
     are provided.
@@ -71,7 +72,7 @@ The following options are available:
 
     Starting with GDAL 3.12, it is also possible to use a :ref:`VRT C++ pixel function <builtin_pixel_functions>`
     (such a ``sum``, ``mean``, ``min``, ``max``) by specifying :option:`--dialect` to
-    ``builtin``, to compute a single band from all bands of a single input dataset.
+    ``builtin``.
     Arguments to functions are passed within parentheses, like ``sum(k=1)``,
     ``min(propagateNoData=true)`` or ``interpolate_linear(t0=1,dt=1,t=10)``.
 
@@ -81,6 +82,22 @@ The following options are available:
 
     Specify the expression engine used to interpret the value of :option:`--calc`.
     The default is ``muparser``.
+
+.. option:: --flatten
+
+    .. versionadded:: 3.12
+
+    Generate a single band output raster per expression, even if input datasets are multiband.
+
+    For the default muparser dialect, using the name of an input raster (let's say A)
+    is equivalent to ``A[1],A[2],...,A[n]``. Such syntax works with the
+    ``min``, ``max``, ``sum`` and ``avg`` muparser functions.
+
+    For example, let's consider 2 rasters A and B with 3bands each, then
+    ``--flatten --calc "avg(A)-avg(B)"`` is equivalent to ``--calc "avg(A[1],A[2],A[3])-avg(B[1],B[2],B[3])"``
+
+    And ``--flatten --dialect=builtin --calc mean`` will compute a single band
+    with the average of all 4 input bands.
 
 .. option:: --no-check-extent
 
@@ -108,6 +125,14 @@ Examples
 
        gdal raster calc -i "A=file1.tif" -i "B=file2.tif" -i "C=file3.tif" --calc "A+B+C" -o out.tif
 
+.. example::
+   :title: Per-dataset average of all bands of each dataset
+   :id: simple-avg
+
+   .. code-block:: bash
+
+       gdal raster calc -i "A=file1.tif" -i "B=file2.tif" -i "C=file3.tif" --flatten --calc "avg(A)" --calc "avg(B)" --calc "avg(C)" -o out.tif
+
 
 .. example::
    :title: Per-band maximum of three files
@@ -127,8 +152,8 @@ Examples
 
 
 .. example::
-   :title: Compute the mean of all bands of the input dataset
+   :title: Compute the average (as a single band) of all bands of two input datasets
 
    .. code-block:: bash
 
-       gdal raster calc -i input.tif -o result.tif --calc=mean --dialect=builtin
+       gdal raster calc -i A=input1.tif -i B=input2.tif -o result.tif --flatten --calc=mean --dialect=builtin
