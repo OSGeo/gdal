@@ -196,6 +196,12 @@ static bool DownsamplingIntegerXFactor(
     return true;
 }
 
+template <class A, class B>
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW inline auto CPLUnsanitizedMul(A a, B b)
+{
+    return a * b;
+}
+
 /************************************************************************/
 /*                             IRasterIO()                              */
 /*                                                                      */
@@ -435,8 +441,9 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nXSpan = INT_MAX;
                 const int nXRight = nXSpan;
                 nXSpan = (nXSpan < nXSpanEnd ? nXSpan : nXSpanEnd) - iSrcX;
+
                 const size_t nXSpanSize =
-                    nXSpan * static_cast<size_t>(nPixelSpace);
+                    CPLUnsanitizedMul(nXSpan, static_cast<size_t>(nPixelSpace));
 
                 bool bJustInitialize =
                     eRWFlag == GF_Write && nYOff <= nLBlockY * nBlockYSize &&
