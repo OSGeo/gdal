@@ -401,6 +401,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_nodata_to_alpha",
+        "gdal-raster-nodata-to-alpha",
+        "Replace nodata value(s) with an alpha band",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_overview_add",
         "gdal-raster-overview-add",
         "Add overviews to a raster dataset",

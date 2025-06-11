@@ -21,6 +21,7 @@
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
 #include "gdalalg_raster_mosaic.h"
+#include "gdalalg_raster_nodata_to_alpha.h"
 #include "gdalalg_raster_pansharpen.h"
 #include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
@@ -179,6 +180,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     { return std::make_unique<GDALRasterEditAlgorithm>(); };
     registry.Register(algInfo);
 
+    registry.Register<GDALRasterNoDataToAlphaAlgorithm>();
     registry.Register<GDALRasterFillNodataAlgorithm>();
     registry.Register<GDALRasterHillshadeAlgorithm>();
     registry.Register<GDALRasterMosaicAlgorithm>();
