@@ -37,6 +37,7 @@ class GDALRasterCalcAlgorithm : public GDALAlgorithm
     GDALArgDatasetValue m_dataset{};
     std::vector<std::string> m_expr{};
     std::string m_dialect{"muparser"};
+    bool m_flatten{false};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
     std::string m_type{};

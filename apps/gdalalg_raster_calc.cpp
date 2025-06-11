@@ -99,6 +99,46 @@ static std::string SetBandIndices(const std::string &origExpression,
     return expression;
 }
 
+/**
+ *  Replace X by X[1],X[2],...X[n]
+ */
+static std::string
+SetBandIndicesFlattenedExpression(const std::string &origExpression,
+                                  const std::string &variable, int nBands)
+{
+    std::string expression = origExpression;
+
+    std::string::size_type seekPos = 0;
+    auto pos = expression.find(variable, seekPos);
+    while (pos != std::string::npos)
+    {
+        auto end = pos + variable.size();
+
+        if (MatchIsCompleteVariableNameWithNoIndex(expression, pos, end))
+        {
+            std::string newExpr = expression.substr(0, pos);
+            for (int i = 1; i <= nBands; ++i)
+            {
+                if (i > 1)
+                    newExpr += ',';
+                newExpr += variable;
+                newExpr += '[';
+                newExpr += std::to_string(i);
+                newExpr += ']';
+            }
+            const size_t oldExprSize = expression.size();
+            newExpr += expression.substr(end);
+            expression = std::move(newExpr);
+            end += expression.size() - oldExprSize;
+        }
+
+        seekPos = end;
+        pos = expression.find(variable, seekPos);
+    }
+
+    return expression;
+}
+
 struct SourceProperties
 {
     int nBands{0};
@@ -284,6 +324,8 @@ static bool IsSumAllSources(const std::string &expression,
  * @param nYOut Number of rows in VRT dataset
  * @param expression Expression for which band(s) should be added
  * @param dialect Expression dialect
+ * @param flatten Generate a single band output raster per expression, even if
+ *                input datasets are multiband.
  * @param pixelFunctionArguments Pixel function arguments.
  * @param sources Mapping of source names to DSNs
  * @param sourceProps Mapping of source names to properties
@@ -293,7 +335,7 @@ static bool IsSumAllSources(const std::string &expression,
 static bool
 CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                      GDALDataType bandType, const std::string &expression,
-                     const std::string &dialect,
+                     const std::string &dialect, bool flatten,
                      const std::vector<std::string> &pixelFunctionArguments,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps,
@@ -354,18 +396,25 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
             CPLAssert(it != sourceProps.end());
             const auto &props = it->second;
 
-            if (dialect != "builtin")
+            if (!flatten)
             {
-                const int nDefaultInBand = std::min(props.nBands, nOutBand);
-
-                CPLString expressionBandVariable;
-                expressionBandVariable.Printf("%s[%d]", source_name.c_str(),
-                                              nDefaultInBand);
-
                 bool expressionUsesAllBands = false;
-                bandExpression =
-                    SetBandIndices(bandExpression, source_name, nDefaultInBand,
-                                   expressionUsesAllBands);
+                if (dialect == "builtin")
+                {
+                    expressionUsesAllBands = true;
+                }
+                else
+                {
+                    const int nDefaultInBand = std::min(props.nBands, nOutBand);
+
+                    CPLString expressionBandVariable;
+                    expressionBandVariable.Printf("%s[%d]", source_name.c_str(),
+                                                  nDefaultInBand);
+
+                    bandExpression =
+                        SetBandIndices(bandExpression, source_name,
+                                       nDefaultInBand, expressionUsesAllBands);
+                }
 
                 if (expressionUsesAllBands)
                 {
@@ -385,18 +434,28 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                     }
                 }
             }
+            else if (dialect != "builtin")
+            {
+                bandExpression = SetBandIndicesFlattenedExpression(
+                    bandExpression, source_name, props.nBands);
+            }
 
             // Create a <SimpleSource> for each input band that is used in
             // the expression.
             for (int nInBand = 1; nInBand <= props.nBands; nInBand++)
             {
                 CPLString inBandVariable;
-                if (dialect != "builtin")
+                if (dialect == "builtin")
+                {
+                    if (!flatten && nInBand != nOutBand)
+                        continue;
+                }
+                else
                 {
                     inBandVariable.Printf("%s[%d]", source_name.c_str(),
                                           nInBand);
-                    if (bandExpression.find(inBandVariable) ==
-                        std::string::npos)
+                    if (!flatten && bandExpression.find(inBandVariable) ==
+                                        std::string::npos)
                     {
                         continue;
                     }
@@ -609,6 +668,8 @@ static bool ReadFileLists(std::vector<std::string> &inputs)
  * @param inputs A list of sources, expressed as NAME=DSN
  * @param expressions A list of expressions to be evaluated
  * @param dialect Expression dialect
+ * @param flatten Generate a single band output raster per expression, even if
+ *                input datasets are multiband.
  * @param pixelFunctionArguments Pixel function arguments.
  * @param options flags controlling which checks should be performed on the inputs
  * @param[out] maxSourceBands Maximum number of bands in source dataset(s)
@@ -616,13 +677,13 @@ static bool ReadFileLists(std::vector<std::string> &inputs)
  *
  * @return a newly created VRTDataset, or nullptr on error
  */
-static std::unique_ptr<GDALDataset>
-GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
-                         const std::vector<std::string> &expressions,
-                         const std::string &dialect,
-                         const std::vector<std::string> &pixelFunctionArguments,
-                         const GDALCalcOptions &options, int &maxSourceBands,
-                         const std::string &fakeSourceFilename = std::string())
+static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
+    const std::vector<std::string> &inputs,
+    const std::vector<std::string> &expressions, const std::string &dialect,
+    bool flatten,
+    const std::vector<std::vector<std::string>> &pixelFunctionArguments,
+    const GDALCalcOptions &options, int &maxSourceBands,
+    const std::string &fakeSourceFilename = std::string())
 {
     if (inputs.empty())
     {
@@ -684,15 +745,17 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
         }
     }
 
+    size_t iExpr = 0;
     for (const auto &origExpression : expressions)
     {
         if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, options.dstType,
-                                  origExpression, dialect,
-                                  pixelFunctionArguments, sources, sourceProps,
-                                  fakeSourceFilename))
+                                  origExpression, dialect, flatten,
+                                  pixelFunctionArguments[iExpr], sources,
+                                  sourceProps, fakeSourceFilename))
         {
             return nullptr;
         }
+        ++iExpr;
     }
 
     //CPLDebug("VRT", "%s", CPLSerializeXMLTree(root.get()));
@@ -764,6 +827,11 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
         .SetDefault(m_dialect)
         .SetChoices("muparser", "builtin");
 
+    AddArg("flatten", 0,
+           _("Generate a single band output raster per expression, even if "
+             "input datasets are multiband"),
+           &m_flatten);
+
     // This is a hidden option only used by test_gdalalg_raster_calc_expression_rewriting()
     // for now
     AddArg("no-check-expression", 0,
@@ -775,26 +843,6 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     AddValidationAction(
         [this]()
         {
-            if (m_dialect == "builtin")
-            {
-                if (m_inputs.size() > 1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_IllegalArg,
-                        "--dialect=builtin is only compatible with a single "
-                        "(generally multi-band) input dataset");
-                    return false;
-                }
-                if (m_expr.size() != 1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_IllegalArg,
-                        "--dialect=builtin is only compatible with a single "
-                        "--calc value");
-                    return false;
-                }
-            }
-
             return m_noCheckExpression || !IsGDALGOutput() ||
                    RunImpl(nullptr, nullptr);
         });
@@ -822,80 +870,89 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    std::vector<std::string> pixelFunctionArgs;
+    std::vector<std::vector<std::string>> pixelFunctionArgs;
     if (m_dialect == "builtin")
     {
-        const CPLStringList aosTokens(
-            CSLTokenizeString2(m_expr[0].c_str(), "()",
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
-        const char *pszFunction = aosTokens[0];
-        const auto *pair = VRTDerivedRasterBand::GetPixelFunction(pszFunction);
-        if (!pair)
+        for (std::string &expr : m_expr)
         {
-            ReportError(CE_Failure, CPLE_NotSupported,
-                        "'%s' is a unknown builtin function", pszFunction);
-            return false;
-        }
-        if (aosTokens.size() == 2)
-        {
-            std::vector<std::string> validArguments;
-            AddOptionsSuggestions(pair->second.c_str(), 0, std::string(),
-                                  validArguments);
-            for (std::string &s : validArguments)
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(expr.c_str(), "()",
+                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            const char *pszFunction = aosTokens[0];
+            const auto *pair =
+                VRTDerivedRasterBand::GetPixelFunction(pszFunction);
+            if (!pair)
             {
-                if (!s.empty() && s.back() == '=')
-                    s.pop_back();
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "'%s' is a unknown builtin function", pszFunction);
+                return false;
             }
-
-            const CPLStringList aosTokensArgs(CSLTokenizeString2(
-                aosTokens[1], ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
-            for (const auto &[key, value] :
-                 cpl::IterateNameValue(aosTokensArgs))
+            if (aosTokens.size() == 2)
             {
-                if (std::find(validArguments.begin(), validArguments.end(),
-                              key) == validArguments.end())
+                std::vector<std::string> validArguments;
+                AddOptionsSuggestions(pair->second.c_str(), 0, std::string(),
+                                      validArguments);
+                for (std::string &s : validArguments)
                 {
-                    if (validArguments.empty())
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "'%s' is a unrecognized argument for builtin "
-                            "function '%s'. It does not accept any argument",
-                            key, pszFunction);
-                    }
-                    else
-                    {
-                        std::string validArgumentsStr;
-                        for (const std::string &s : validArguments)
-                        {
-                            if (!validArgumentsStr.empty())
-                                validArgumentsStr += ", ";
-                            validArgumentsStr += '\'';
-                            validArgumentsStr += s;
-                            validArgumentsStr += '\'';
-                        }
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "'%s' is a unrecognized argument for builtin "
-                            "function '%s'. Only %s %s supported",
-                            key, pszFunction,
-                            validArguments.size() == 1 ? "is" : "are",
-                            validArgumentsStr.c_str());
-                    }
-                    return false;
+                    if (!s.empty() && s.back() == '=')
+                        s.pop_back();
                 }
-                CPL_IGNORE_RET_VAL(value);
+
+                const CPLStringList aosTokensArgs(CSLTokenizeString2(
+                    aosTokens[1], ",",
+                    CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+                for (const auto &[key, value] :
+                     cpl::IterateNameValue(aosTokensArgs))
+                {
+                    if (std::find(validArguments.begin(), validArguments.end(),
+                                  key) == validArguments.end())
+                    {
+                        if (validArguments.empty())
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "'%s' is a unrecognized argument for builtin "
+                                "function '%s'. It does not accept any "
+                                "argument",
+                                key, pszFunction);
+                        }
+                        else
+                        {
+                            std::string validArgumentsStr;
+                            for (const std::string &s : validArguments)
+                            {
+                                if (!validArgumentsStr.empty())
+                                    validArgumentsStr += ", ";
+                                validArgumentsStr += '\'';
+                                validArgumentsStr += s;
+                                validArgumentsStr += '\'';
+                            }
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "'%s' is a unrecognized argument for builtin "
+                                "function '%s'. Only %s %s supported",
+                                key, pszFunction,
+                                validArguments.size() == 1 ? "is" : "are",
+                                validArgumentsStr.c_str());
+                        }
+                        return false;
+                    }
+                    CPL_IGNORE_RET_VAL(value);
+                }
+                pixelFunctionArgs.emplace_back(aosTokensArgs);
             }
-            pixelFunctionArgs = aosTokensArgs;
+            else
+            {
+                pixelFunctionArgs.push_back(std::vector<std::string>());
+            }
+            expr = pszFunction;
         }
-        m_expr.clear();
-        m_expr.push_back(pszFunction);
     }
 
     int maxSourceBands = 0;
     auto vrt =
-        GDALCalcCreateVRTDerived(m_inputs, m_expr, m_dialect, pixelFunctionArgs,
-                                 options, maxSourceBands);
+        GDALCalcCreateVRTDerived(m_inputs, m_expr, m_dialect, m_flatten,
+                                 pixelFunctionArgs, options, maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -933,8 +990,8 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             if (!osTmpFilename.empty())
             {
                 auto fakeVRT = GDALCalcCreateVRTDerived(
-                    m_inputs, m_expr, m_dialect, pixelFunctionArgs, options,
-                    maxSourceBands, osTmpFilename);
+                    m_inputs, m_expr, m_dialect, m_flatten, pixelFunctionArgs,
+                    options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
                                       1, GDT_Byte, vrt->GetRasterCount(),
