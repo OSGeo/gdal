@@ -728,13 +728,16 @@ OGRErr OGRSpatialReference::importFromCF1(CSLConstList papszKeyValues,
         const double dfNorthPoleGridLong = FetchDoubleParam(
             papszKeyValues, CF_PP_NORTH_POLE_GRID_LONGITUDE, 0.0);
 
+        if (!bGotGeogCS)
+            SetWellKnownGeogCS("WGS84");
+
         bRotatedPole = true;
         SetDerivedGeogCRSWithPoleRotationNetCDFCFConvention(
             "Rotated_pole", dfGridNorthPoleLat, dfGridNorthPoleLong,
             dfNorthPoleGridLong);
     }
 
-    if (IsProjected())
+    if (IsProjected() && !bRotatedPole)
     {
         const char *pszProjectedCRSName =
             CSLFetchNameValue(papszKeyValues, CF_PROJECTED_CRS_NAME);
@@ -748,7 +751,7 @@ OGRErr OGRSpatialReference::importFromCF1(CSLConstList papszKeyValues,
         SetAngularUnits(SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
         SetAuthority("GEOGCS|UNIT", "EPSG", 9122);
     }
-    else if (pszUnits != nullptr && !EQUAL(pszUnits, ""))
+    else if (pszUnits != nullptr && !EQUAL(pszUnits, "") && !bRotatedPole)
     {
         if (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "metre") ||
             EQUAL(pszUnits, "meter"))
