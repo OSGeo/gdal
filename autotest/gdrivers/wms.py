@@ -882,16 +882,15 @@ def test_wms_data_via_mrf():
     # This is a LERC1 format tile service, DEM in floating point, it can be read as any type
     # The returned no data value can also be set on read, which affects the checksum
     testlist = [
-        # Second checksum is on graviton2
-        ("Byte", 0, (29551,)),  # Same as the default type, NDV not defined
-        ("Float32", 0, (56058,)),  # float, default NDV
-        ("Float32", 32768.32, (33927,)),  # float, Forced NDV
+        ("Byte", 0, 10253),  # Same as the default type, NDV not defined
+        ("Float32", 0, 56058),  # float, default NDV
+        ("Float32", 32768.32, 33927),  # float, Forced NDV
     ]
 
     for dt, ndv, expected_cs in testlist:
         ds = gdal.Open(dstemplate.format(url=url, dt=dt, ndv=ndv))
         assert (
-            ds.GetRasterBand(1).Checksum() in expected_cs
+            ds.GetRasterBand(1).Checksum() == expected_cs
         ), "datatype {} and ndv {}".format(dt, ndv)
         ds = None
 
