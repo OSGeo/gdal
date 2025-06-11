@@ -56,7 +56,7 @@ The following options are available:
     must either have the same the number of bands, or a single band.
 
     For example, if inputs ``A`` and ``B`` each have three bands, and input ``C`` has a single band, then the argument
-    ``--calc "A + B + C"`` is equivalent to ``--calc "A[1] + B[1] + C[1]" --calc "A[2] + B[2] + C[1]" --calc "A[3] + B[3] + C[1]"``.
+    ``--calc "A + B + C"`` is equivalent to ``--calc "A[1] + B[1] + C[1]" --calc "A[2] + B[2] + C[2]" --calc "A[3] + B[3] + C[3]"``.
 
     Multiple calculations may be specified; output band(s) will be produced for each expression in the order they
     are provided.
