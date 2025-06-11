@@ -1575,6 +1575,12 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
 @pytest.mark.parametrize(
     "pixelfn,values,nodata_value,pixelfn_args,expected",
     [
+        ("argmax", [3, 7, 9, 2], 7, {}, 3),
+        ("argmax", [3, 7, 9], 7, {"propagateNoData": True}, 7),
+        ("argmax", [7, 7, 7], 7, {}, 7),
+        ("argmin", [3, 1, 7], 7, {}, 2),
+        ("argmin", [3, 1, 7], 7, {"propagateNoData": True}, 7),
+        ("argmin", [7, 7, 7], 7, {}, 7),
         ("dB", [7], 7, {}, 7),
         ("diff", [3, 7], 7, {}, 7),
         ("diff", [7, 3], 7, {}, 7),
@@ -1617,6 +1623,9 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("min", [3, 7, 9], 7, {}, 3),
         ("min", [3, 7, 9], 7, {"k": 5}, 3),
         ("min", [3, 7, 9], 7, {"k": 2}, 2),
+        ("min", [7, 7, 7], 7, {"k": 2}, 2),
+        ("min", [7, 7, 7], 7, {"k": 2, "propagateNoData": True}, 7),
+        ("min", [7, 7, 7], 7, {}, 7),
         ("min", [3, float("nan"), 9], 7, {}, 3),
         ("min", [3, float("nan"), 9], 7, {"propagateNoData": True}, 7),  # should be 3?
         ("min", [3, 7, 9], 7, {"propagateNoData": True}, 7),
