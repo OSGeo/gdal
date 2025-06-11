@@ -1406,8 +1406,13 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
     bool bRet = safe_png_read_image(hPNG, png_rows, sSetJmpContext);
 
     // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+    if (bRet && nBitDepth == 16
 #ifdef CPL_LSB
-    if (bRet && nBitDepth == 16)
+        && !m_bByteOrderIsLittleEndian
+#else
+        && m_bByteOrderIsLittleEndian
+#endif
+    )
     {
         for (int i = 0; i < GetRasterYSize(); i++)
         {
@@ -1418,7 +1423,6 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
             }
         }
     }
-#endif
 
     CPLFree(png_rows);
     CPLFree(dummy_row);
@@ -1496,10 +1500,16 @@ CPLErr PNGDataset::LoadScanline(int nLine)
     nBufferLines = 1;
 
     // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+    if (nBitDepth == 16
 #ifdef CPL_LSB
-    if (nBitDepth == 16)
-        GDALSwapWords(row, 2, GetRasterXSize() * GetRasterCount(), 2);
+        && !m_bByteOrderIsLittleEndian
+#else
+        && m_bByteOrderIsLittleEndian
 #endif
+    )
+    {
+        GDALSwapWords(row, 2, GetRasterXSize() * GetRasterCount(), 2);
+    }
 
     return CE_None;
 }
@@ -1976,6 +1986,10 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
 
     // Open overviews.
     poDS->oOvManager.Initialize(poDS, poOpenInfo);
+
+    // Used by JPEG FLIR
+    poDS->m_bByteOrderIsLittleEndian = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "BYTE_ORDER_LITTLE_ENDIAN", "NO"));
 
     return poDS;
 }
