@@ -1723,6 +1723,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         }
     }
 
+    if (CSLFetchNameValue(papszMetadata, "NODATA_VALUES") &&
+        !(bAllBandsInOrder &&
+          psOptions->nBandCount == poSrcDS->GetRasterCount()))
+    {
+        papszMetadata =
+            CSLSetNameValue(papszMetadata, "NODATA_VALUES", nullptr);
+    }
+
     poVDS->SetMetadata(papszMetadata);
     CSLDestroy(papszMetadata);
     AttachMetadata(GDALDataset::ToHandle(poVDS), psOptions->aosMetadataOptions);
