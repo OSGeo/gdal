@@ -3921,20 +3921,23 @@ GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddNodataDataTypeArg()                */
+/*                    GDALAlgorithm::AddNodataArg()                     */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
-GDALAlgorithm::AddNodataDataTypeArg(std::string *pValue, bool noneAllowed,
-                                    const std::string &optionName,
-                                    const char *helpMessage)
+GDALAlgorithm::AddNodataArg(std::string *pValue, bool noneAllowed,
+                            const std::string &optionName,
+                            const char *helpMessage)
 {
-    auto &arg =
-        AddArg(optionName, 0,
-               MsgOrDefault(helpMessage,
-                            _("Assign a specified nodata value to output bands "
-                              "('none', numeric value, 'nan', 'inf', '-inf')")),
-               pValue);
+    auto &arg = AddArg(
+        optionName, 0,
+        MsgOrDefault(helpMessage,
+                     noneAllowed
+                         ? _("Assign a specified nodata value to output bands "
+                             "('none', numeric value, 'nan', 'inf', '-inf')")
+                         : _("Assign a specified nodata value to output bands "
+                             "(numeric value, 'nan', 'inf', '-inf')")),
+        pValue);
     arg.AddValidationAction(
         [this, pValue, noneAllowed, optionName]()
         {
@@ -3945,9 +3948,10 @@ GDALAlgorithm::AddNodataDataTypeArg(std::string *pValue, bool noneAllowed,
                 if (endptr != pValue->c_str() + pValue->size())
                 {
                     ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Value of '%s' should be 'none', a "
+                                "Value of '%s' should be %sa "
                                 "numeric value, 'nan', 'inf' or '-inf'",
-                                optionName.c_str());
+                                optionName.c_str(),
+                                noneAllowed ? "'none', " : "");
                     return false;
                 }
             }

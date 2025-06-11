@@ -67,7 +67,7 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 
     AddBBOXArg(&m_bbox);
 
-    AddNodataDataTypeArg(&m_nodata, /* noneAllowed = */ true);
+    AddNodataArg(&m_nodata, /* noneAllowed = */ true);
 
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),

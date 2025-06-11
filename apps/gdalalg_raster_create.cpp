@@ -58,7 +58,7 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()
         .SetMinValueIncluded(0);
     AddOutputDataTypeArg(&m_type).SetDefault(m_type);
 
-    AddNodataDataTypeArg(&m_nodata, /* noneAllowed = */ true);
+    AddNodataArg(&m_nodata, /* noneAllowed = */ true);
 
     AddArg("burn", 0, _("Burn value"), &m_burnValues);
     AddArg("crs", 0, _("Set CRS"), &m_crs)
