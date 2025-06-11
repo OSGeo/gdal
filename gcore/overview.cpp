@@ -3253,11 +3253,16 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             fClamped = fDstMax;
         if (isIntegerDT)
         {
-            if (bNoDataValueInt64Valid &&
-                nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)))
+            if (bNoDataValueInt64Valid)
             {
-                // Do not use the nodata value
-                return static_cast<Twork>(dfReplacementVal);
+                const double fClampedRounded = std::round(fClamped);
+                if (fClampedRounded >= fDstMin && fClampedRounded <= fDstMax &&
+                    nNodataValueInt64 ==
+                        static_cast<GInt64>(std::round(fClamped)))
+                {
+                    // Do not use the nodata value
+                    return static_cast<Twork>(dfReplacementVal);
+                }
             }
         }
         else if (dfNoDataValue == fClamped)
