@@ -13,6 +13,9 @@
 #include "ogr_vdv.h"
 #include "cpl_conv.h"
 #include "cpl_time.h"
+
+#include "memdataset.h"
+
 #include <map>
 
 #ifdef EMBED_RESOURCE_FILES
@@ -163,11 +166,6 @@ void OGRIDFDataSource::Parse()
 {
     m_bHasParsed = true;
 
-    GDALDriver *poMEMDriver =
-        reinterpret_cast<GDALDriver *>(GDALGetDriverByName("MEMORY"));
-    if (poMEMDriver == nullptr)
-        return;
-
     VSIStatBufL sStatBuf;
     bool bGPKG = false;
     vsi_l_offset nFileSize = 0;
@@ -230,7 +228,7 @@ void OGRIDFDataSource::Parse()
     if (m_poTmpDS == nullptr)
     {
         bIsMEMLayer = true;
-        m_poTmpDS = poMEMDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+        m_poTmpDS = MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr);
     }
 
     m_poTmpDS->StartTransaction();
