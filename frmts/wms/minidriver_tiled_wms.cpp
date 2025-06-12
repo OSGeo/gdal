@@ -206,7 +206,7 @@ static int FindBbox(CPLString in)
     size_t pos = in.ifind("&bbox=");
     if (pos == std::string::npos)
         return -1;
-    return (int)pos + 6;
+    return static_cast<int>(pos) + 6;
 }
 
 /************************************************************************/

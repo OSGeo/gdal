@@ -490,7 +490,7 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
 static void WriteRightJustified(VSIVirtualHandleUniquePtr &fp,
                                 const char *pszValue, int nWidth)
 {
-    int nLen = (int)strlen(pszValue);
+    int nLen = static_cast<int>(strlen(pszValue));
     CPLAssert(nLen <= nWidth);
     for (int i = 0; i < nWidth - nLen; i++)
         fp->Write(" ", 1, 1);

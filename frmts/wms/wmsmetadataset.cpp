@@ -18,9 +18,7 @@ int VersionStringToInt(const char *version);
 /*                          GDALWMSMetaDataset()                        */
 /************************************************************************/
 
-GDALWMSMetaDataset::GDALWMSMetaDataset() : papszSubDatasets(nullptr)
-{
-}
+GDALWMSMetaDataset::GDALWMSMetaDataset() = default;
 
 /************************************************************************/
 /*                         ~GDALWMSMetaDataset()                        */
@@ -105,7 +103,8 @@ GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLXMLNode *psXML = CPLParseXMLString((const char *)psResult->pabyData);
+    CPLXMLNode *psXML =
+        CPLParseXMLString(reinterpret_cast<const char *>(psResult->pabyData));
     if (psXML == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
@@ -171,7 +170,8 @@ GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLXMLNode *psXML = CPLParseXMLString((const char *)psResult->pabyData);
+    CPLXMLNode *psXML =
+        CPLParseXMLString(reinterpret_cast<const char *>(psResult->pabyData));
     if (psXML == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",

@@ -30,29 +30,31 @@
 
 class DIMAPDataset final : public GDALPamDataset
 {
-    CPLXMLNode *psProduct;
+    CPLXMLNode *psProduct{};
 
-    CPLXMLNode *psProductDim;    // DIMAP2, DIM_<product_id>.XML
-    CPLXMLNode *psProductStrip;  // DIMAP2, STRIP_<product_id>.XML
-    CPLString osRPCFilename;     // DIMAP2, RPC_<product_id>.XML
+    CPLXMLNode *psProductDim{};    // DIMAP2, DIM_<product_id>.XML
+    CPLXMLNode *psProductStrip{};  // DIMAP2, STRIP_<product_id>.XML
+    CPLString osRPCFilename{};     // DIMAP2, RPC_<product_id>.XML
 
-    VRTDataset *poVRTDS;
+    VRTDataset *poVRTDS{};
 
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    int nGCPCount{};
+    GDAL_GCP *pasGCPList{};
 
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
 
-    int bHaveGeoTransform;
+    int bHaveGeoTransform{};
     double adfGeoTransform[6];
 
-    CPLString osMDFilename;
-    CPLString osImageDSFilename;
-    CPLString osDIMAPFilename;
-    int nProductVersion;
+    CPLString osMDFilename{};
+    CPLString osImageDSFilename{};
+    CPLString osDIMAPFilename{};
+    int nProductVersion = 1;
 
-    char **papszXMLDimapMetadata;
+    char **papszXMLDimapMetadata{};
+
+    CPL_DISALLOW_COPY_ASSIGN(DIMAPDataset)
 
   protected:
     int CloseDependentDatasets() override;
@@ -101,10 +103,6 @@ class DIMAPDataset final : public GDALPamDataset
 /************************************************************************/
 
 DIMAPDataset::DIMAPDataset()
-    : psProduct(nullptr), psProductDim(nullptr), psProductStrip(nullptr),
-      poVRTDS(nullptr), nGCPCount(0), pasGCPList(nullptr),
-      bHaveGeoTransform(FALSE), nProductVersion(1),
-      papszXMLDimapMetadata(nullptr)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -251,6 +249,8 @@ class DIMAPRasterBand final : public GDALPamRasterBand
     friend class DIMAPDataset;
 
     VRTSourcedRasterBand *poVRTBand;
+
+    CPL_DISALLOW_COPY_ASSIGN(DIMAPRasterBand)
 
   public:
     DIMAPRasterBand(DIMAPDataset *, int, VRTSourcedRasterBand *);

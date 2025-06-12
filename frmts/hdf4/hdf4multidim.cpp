@@ -37,8 +37,8 @@ class HDF4SharedResources
 {
     friend class ::HDF4Dataset;
     int32 m_hSD = -1;
-    std::string m_osFilename;
-    CPLStringList m_aosOpenOptions;
+    std::string m_osFilename{};
+    CPLStringList m_aosOpenOptions{};
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
   public:

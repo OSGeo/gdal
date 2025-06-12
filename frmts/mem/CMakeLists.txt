@@ -1,7 +1,7 @@
 add_gdal_driver(
   TARGET gdal_MEM
   SOURCES memdataset.cpp memdataset.h ogrmemlayer.cpp
-  BUILTIN STRONG_CXX_WFLAGS)
+  BUILTIN)
 gdal_standard_includes(gdal_MEM)
 
 include(TargetPublicHeader)

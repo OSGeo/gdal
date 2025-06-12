@@ -21,7 +21,6 @@ add_gdal_driver(TARGET ogr_Parquet
                 CORE_SOURCES
                         ogrparquetdrivercore.cpp
                 PLUGIN_CAPABLE
-                STRONG_CXX_WFLAGS
                 NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_Parquet)

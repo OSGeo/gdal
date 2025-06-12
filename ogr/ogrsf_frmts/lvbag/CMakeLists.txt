@@ -1,5 +1,8 @@
 add_gdal_driver(TARGET ogr_LVBAG SOURCES ogrlvbagdatasource.cpp ogrlvbagdriver.cpp ogrlvbaglayer.cpp PLUGIN_CAPABLE
-                                         NO_DEPS)
+  NO_DEPS
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_LVBAG)
 target_include_directories(ogr_LVBAG PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 

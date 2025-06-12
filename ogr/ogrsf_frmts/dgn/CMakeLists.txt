@@ -8,8 +8,10 @@ add_gdal_driver(
           ogrdgndriver.cpp
           ogrdgnlayer.cpp
           ogrdgndatasource.cpp
-          PLUGIN_CAPABLE
-          NO_DEPS)
+  PLUGIN_CAPABLE
+  NO_DEPS
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_DGN)
 
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)

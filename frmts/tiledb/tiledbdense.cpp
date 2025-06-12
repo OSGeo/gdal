@@ -38,6 +38,8 @@ class TileDBRasterBand final : public GDALPamRasterBand
     double m_dfNoData = 0;
     bool m_bNoDataSet = false;
 
+    CPL_DISALLOW_COPY_ASSIGN(TileDBRasterBand)
+
   public:
     TileDBRasterBand(TileDBRasterDataset *, int,
                      const std::string &osAttr = TILEDB_VALUES);

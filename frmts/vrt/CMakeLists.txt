@@ -21,7 +21,7 @@ add_gdal_driver(
           vrtmultidim.cpp
           vrtreclassifier.h
           vrtreclassifier.cpp
-          STRONG_CXX_WFLAGS)
+)
 gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)

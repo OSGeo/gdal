@@ -205,6 +205,8 @@ class OGCAPITiledLayerFeatureDefn final : public OGRFeatureDefn
 {
     OGCAPITiledLayer *m_poLayer = nullptr;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGCAPITiledLayerFeatureDefn)
+
   public:
     OGCAPITiledLayerFeatureDefn(OGCAPITiledLayer *poLayer, const char *pszName)
         : OGRFeatureDefn(pszName), m_poLayer(poLayer)
@@ -258,6 +260,8 @@ class OGCAPITiledLayer final
     GDALDataset *OpenTile(int nX, int nY, bool &bEmptyContent);
     void FinalizeFeatureDefnWithLayer(OGRLayer *poUnderlyingLayer);
     OGRFeature *BuildFeature(OGRFeature *poSrcFeature, int nX, int nY);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGCAPITiledLayer)
 
   protected:
     friend class OGCAPITiledLayerFeatureDefn;
@@ -702,7 +706,7 @@ int OGCAPIDataset::FigureBands(const std::string &osContentType,
             OpenTile(osImageURL, 0, 0, 0, bEmptyContent, GDAL_OF_RASTER);
 
         // Return the bands from the image, if we didn't get an image then assume 3.
-        result = dataset ? (int)dataset->GetBands().size() : 3;
+        result = dataset ? static_cast<int>(dataset->GetBands().size()) : 3;
     }
 
     return result;

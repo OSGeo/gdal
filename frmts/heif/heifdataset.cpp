@@ -526,12 +526,19 @@ static bool GetPropertyData(heif_context *m_hCtxt, heif_item_id item_id,
 
 void GDALHEIFDataset::processProperties()
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
     constexpr heif_item_property_type TIEP_4CC =
         (heif_item_property_type)heif_fourcc('t', 'i', 'e', 'p');
     constexpr heif_item_property_type MTXF_4CC =
         (heif_item_property_type)heif_fourcc('m', 't', 'x', 'f');
     constexpr heif_item_property_type MCRS_4CC =
         (heif_item_property_type)heif_fourcc('m', 'c', 'r', 's');
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     constexpr int MAX_PROPERTIES_REQUIRED = 50;
     heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
     heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);

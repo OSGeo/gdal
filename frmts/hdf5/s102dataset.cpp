@@ -58,6 +58,8 @@ class S102RasterBand : public GDALProxyRasterBand
     double m_dfMinimum = std::numeric_limits<double>::quiet_NaN();
     double m_dfMaximum = std::numeric_limits<double>::quiet_NaN();
 
+    CPL_DISALLOW_COPY_ASSIGN(S102RasterBand)
+
   public:
     explicit S102RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
         : m_poDS(std::move(poDSIn)),
@@ -107,6 +109,8 @@ class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
     std::unique_ptr<GDALDataset> m_poDS{};
     GDALRasterBand *m_poUnderlyingBand = nullptr;
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
+
+    CPL_DISALLOW_COPY_ASSIGN(S102GeoreferencedMetadataRasterBand)
 
   public:
     explicit S102GeoreferencedMetadataRasterBand(

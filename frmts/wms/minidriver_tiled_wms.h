@@ -32,7 +32,7 @@ class WMSMiniDriver_TiledWMS : public WMSMiniDriver
   protected:
     double Scale(const char *request) const;
     CPLString GetLowestScale(CPLStringList &list, int i) const;
-    GDALWMSDataWindow m_data_window;
+    GDALWMSDataWindow m_data_window{};
     CPLStringList m_requests{};
     int m_bsx = 0;
     int m_bsy = 0;

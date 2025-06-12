@@ -63,6 +63,8 @@ class XYZDataset final : public GDALPamDataset
     static int IdentifyEx(GDALOpenInfo *, int &, int &nCommentLineCount,
                           int &nXIndex, int &nYIndex, int &nZIndex);
 
+    CPL_DISALLOW_COPY_ASSIGN(XYZDataset)
+
   public:
     XYZDataset();
     virtual ~XYZDataset();

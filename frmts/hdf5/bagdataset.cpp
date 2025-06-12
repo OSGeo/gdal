@@ -145,9 +145,9 @@ class BAGDataset final : public GDALPamDataset
     hid_t m_hVarresMetadataDataType = -1;
     hid_t m_hVarresMetadataDataspace = -1;
     hid_t m_hVarresMetadataNative = -1;
-    std::map<int, BAGRefinementGrid> m_oMapRefinemendGrids;
+    std::map<int, BAGRefinementGrid> m_oMapRefinemendGrids{};
 
-    CPLStringList m_aosSubdatasets;
+    CPLStringList m_aosSubdatasets{};
 
     hid_t m_hVarresRefinements = -1;
     hid_t m_hVarresRefinementsDataType = -1;
@@ -157,7 +157,7 @@ class BAGDataset final : public GDALPamDataset
 
     unsigned m_nSuperGridRefinementStartIndex = 0;
 
-    lru11::Cache<unsigned, std::vector<float>> m_oCacheRefinementValues;
+    lru11::Cache<unsigned, std::vector<float>> m_oCacheRefinementValues{};
     const float *GetRefinementValues(unsigned nRefinementIndex);
 
     bool GetMeanSupergridsResolution(double &dfResX, double &dfResY);
@@ -181,6 +181,8 @@ class BAGDataset final : public GDALPamDataset
     {
         return m_poSharedResources->m_hHDF5;
     }
+
+    CPL_DISALLOW_COPY_ASSIGN(BAGDataset)
 
   public:
     BAGDataset();
@@ -3526,6 +3528,8 @@ class BAGTrackingListLayer final
     int m_nIdx = 0;
 
     OGRFeature *GetNextRawFeature();
+
+    CPL_DISALLOW_COPY_ASSIGN(BAGTrackingListLayer)
 
   public:
     explicit BAGTrackingListLayer(const std::shared_ptr<GDALMDArray> &poArray);

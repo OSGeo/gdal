@@ -102,7 +102,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     int iBandDim;
     int i4Dim;
     int nBandCount;
-    char **papszLocalMetadata;
+    char **papszLocalMetadata{};
     uint8 aiPaletteData[N_COLOR_ENTRIES][3];  // XXX: Static array for now
     char szName[HDF4_SDS_MAXNAMELEN];
     char *pszSubdatasetName;
@@ -137,6 +137,8 @@ class HDF4ImageDataset final : public HDF4Dataset
     static long USGSMnemonicToCode(const char *);
     static void ReadCoordinates(const char *, double *, double *);
 
+    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageDataset)
+
   public:
     HDF4ImageDataset();
     virtual ~HDF4ImageDataset();
@@ -165,15 +167,17 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 {
     friend class HDF4ImageDataset;
 
-    bool bNoDataSet;
-    double dfNoDataValue;
+    bool bNoDataSet{false};
+    double dfNoDataValue{-9999.0};
 
-    bool bHaveScale;
-    bool bHaveOffset;
-    double dfScale;
-    double dfOffset;
+    bool bHaveScale{false};
+    bool bHaveOffset{false};
+    double dfScale{1.0};
+    double dfOffset{0.0};
 
-    CPLString osUnitType;
+    CPLString osUnitType{};
+
+    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageRasterBand)
 
   public:
     HDF4ImageRasterBand(HDF4ImageDataset *, int, GDALDataType);
@@ -199,8 +203,6 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 
 HDF4ImageRasterBand::HDF4ImageRasterBand(HDF4ImageDataset *poDSIn, int nBandIn,
                                          GDALDataType eType)
-    : bNoDataSet(false), dfNoDataValue(-9999.0), bHaveScale(false),
-      bHaveOffset(false), dfScale(1.0), dfOffset(0.0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -577,7 +579,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             aiEdges[poGDS->iXDim] = nBlockXSize;
 
             if ((SDwritedata(l_iSDS, aiStart, nullptr, aiEdges,
-                             (VOIDP)pImage)) < 0)
+                             static_cast<VOIDP>(pImage))) < 0)
                 eErr = CE_Failure;
 
             SDendaccess(l_iSDS);
@@ -594,7 +596,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             aiEdges[poGDS->iXDim] = nBlockXSize;
 
             if ((SDwritedata(l_iSDS, aiStart, nullptr, aiEdges,
-                             (VOIDP)pImage)) < 0)
+                             static_cast<VOIDP>(pImage))) < 0)
                 eErr = CE_Failure;
 
             SDendaccess(l_iSDS);
@@ -755,7 +757,6 @@ HDF4ImageDataset::HDF4ImageDataset()
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(aiDimSizes, 0, sizeof(aiDimSizes));
-    papszLocalMetadata = nullptr;
     memset(aiPaletteData, 0, sizeof(aiPaletteData));
     memset(szName, 0, sizeof(szName));
     adfGeoTransform[0] = 0.0;
@@ -1795,10 +1796,10 @@ void HDF4ImageDataset::GetGridAttrs(int32 hGD)
 
             if (l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8)
             {
-                reinterpret_cast<char *>(pData)[nValues] = '\0';
+                static_cast<char *>(pData)[nValues] = '\0';
                 papszLocalMetadata =
                     CSLAddNameValue(papszLocalMetadata, papszAttributes[i],
-                                    (const char *)pData);
+                                    static_cast<const char *>(pData));
             }
             else
             {
@@ -2248,7 +2249,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
             nLatCount = nXPoints * nYPoints;
             pLat = CPLMalloc(nLatCount * iDataSize);
             if (SWreadfield(hSW, papszGeolocations[i], nullptr, nullptr,
-                            nullptr, (VOIDP)pLat) < 0)
+                            nullptr, static_cast<VOIDP>(pLat)) < 0)
             {
                 CPLDebug("HDF4Image", "Can't read geolocation field %s",
                          papszGeolocations[i]);
@@ -2262,7 +2263,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
             nLongCount = nXPoints * nYPoints;
             pLong = CPLMalloc(nLongCount * iDataSize);
             if (SWreadfield(hSW, papszGeolocations[i], nullptr, nullptr,
-                            nullptr, (VOIDP)pLong) < 0)
+                            nullptr, static_cast<VOIDP>(pLong)) < 0)
             {
                 CPLDebug("HDF4Image", "Can't read geolocation field %s",
                          papszGeolocations[i]);
@@ -2302,7 +2303,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
         pLatticeX = CPLMalloc(nLatCount * iLatticeDataSize);
         if (SWreadfield(hSW, pszLatticePoint, iStart, nullptr, iEdges,
-                        (VOIDP)pLatticeX) < 0)
+                        static_cast<VOIDP>(pLatticeX)) < 0)
         {
             CPLDebug("HDF4Image", "Can't read lattice field");
             CPLFree(pLatticeX);
@@ -2314,7 +2315,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
         pLatticeY = CPLMalloc(nLatCount * iLatticeDataSize);
         if (SWreadfield(hSW, pszLatticePoint, iStart, nullptr, iEdges,
-                        (VOIDP)pLatticeY) < 0)
+                        static_cast<VOIDP>(pLatticeY)) < 0)
         {
             CPLDebug("HDF4Image", "Can't read lattice field");
             CPLFree(pLatticeY);

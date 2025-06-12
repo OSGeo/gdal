@@ -19,7 +19,10 @@ add_gdal_driver(TARGET gdal_MrSID
                 SOURCES mrsidstream.h mrsidstream.cpp mrsiddataset.cpp
                 CORE_SOURCES mrsiddrivercore.cpp
                 PLUGIN_CAPABLE_IF "NOT GDAL_USE_GEOTIFF_INTERNAL OR NOT GDAL_HIDE_INTERNAL_SYMBOLS"
-                NO_SHARED_SYMBOL_WITH_CORE)
+  NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 
 if(TARGET gdal_MrSID_core)
     target_include_directories(gdal_MrSID_core PRIVATE $<TARGET_PROPERTY:MRSID::MRSID,INTERFACE_INCLUDE_DIRECTORIES>)

@@ -48,16 +48,16 @@ class WMSMiniDriver_WMS : public WMSMiniDriver
                   const char *pszRequest);
 
   protected:
-    CPLString m_version;
-    int m_iversion;
-    CPLString m_layers;
-    CPLString m_styles;
-    CPLString m_srs;
-    CPLString m_crs;
-    CPLString m_image_format;
-    CPLString m_info_format;
-    CPLString m_bbox_order;
-    CPLString m_transparent;
+    CPLString m_version{};
+    int m_iversion{};
+    CPLString m_layers{};
+    CPLString m_styles{};
+    CPLString m_srs{};
+    CPLString m_crs{};
+    CPLString m_image_format{};
+    CPLString m_info_format{};
+    CPLString m_bbox_order{};
+    CPLString m_transparent{};
 };
 
 #endif /* MINIDRIVER_WMS_H_INCLUDED */

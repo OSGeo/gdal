@@ -401,8 +401,8 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
             struct DimensionMap
             {
-                std::string osGeoDimName;
-                std::string osDataDimName;
+                std::string osGeoDimName{};
+                std::string osDataDimName{};
                 int nOffset = 0;
                 int nIncrement = 1;
             };
