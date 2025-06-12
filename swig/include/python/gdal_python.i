@@ -1770,13 +1770,38 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     ...     print(lyr.GetFeatureCount())
     """
 
-    sql_lyr = $action(self, statement, spatialFilter, dialect)
+    class MyHandler:
+        def __init__(self):
+            self.errors = []
+
+        def callback(self, err_type, err_no, err_msg):
+            self.errors.append([err_type, err_no, err_msg])
+
+    my_error_handler = MyHandler()
+    if GetUseExceptions():
+        with ExceptionMgr(useExceptions=False):
+            PushErrorHandler(my_error_handler.callback)
+            sql_lyr = $action(self, statement, spatialFilter, dialect)
+            PopErrorHandler()
+    else:
+        sql_lyr = $action(self, statement, spatialFilter, dialect)
     if sql_lyr:
         import weakref
         sql_lyr._to_release = True
         sql_lyr._dataset_weak_ref = weakref.ref(self)
         if keep_ref_on_ds:
             sql_lyr._dataset_strong_ref = self
+
+    if my_error_handler.errors and my_error_handler.errors[-1][0] == CE_Failure:
+        if sql_lyr:
+            self.ReleaseResultSet(sql_lyr)
+        raise RuntimeError(my_error_handler.errors[-1][2])
+
+    elif my_error_handler.errors:
+        for err_type, err_no, err_msg in my_error_handler.errors:
+            if err_type == CE_Warning:
+                Error(err_type, err_no, err_msg)
+
     return sql_lyr
 %}
 
