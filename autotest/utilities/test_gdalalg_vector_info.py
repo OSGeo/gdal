@@ -24,7 +24,7 @@ def spatialite_version():
 
     version = None
 
-    with gdal.quiet_errors():
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
         ds = gdal.GetDriverByName("SQLite").CreateDataSource(
             "/vsimem/foo.db", options=["SPATIALITE=YES"]
         )
