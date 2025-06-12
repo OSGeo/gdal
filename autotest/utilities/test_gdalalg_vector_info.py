@@ -19,6 +19,34 @@ import pytest
 from osgeo import gdal
 
 
+@pytest.fixture(scope="module")
+def spatialite_version():
+
+    version = None
+
+    with gdal.quiet_errors():
+        ds = gdal.GetDriverByName("SQLite").CreateDataSource(
+            "/vsimem/foo.db", options=["SPATIALITE=YES"]
+        )
+
+        if ds is not None:
+            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+            feat = sql_lyr.GetNextFeature()
+            version = feat.GetFieldAsString(0)
+            ds.ReleaseResultSet(sql_lyr)
+        ds = None
+        gdal.Unlink("/vsimem/foo.db")
+
+    return version
+
+
+@pytest.fixture()
+def require_spatialite(spatialite_version):
+
+    if spatialite_version is None:
+        pytest.skip("SpatiaLite not available")
+
+
 def get_info_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
 
@@ -129,7 +157,7 @@ def test_gdalalg_vector_info_summary():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem):
+def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem, require_spatialite):
 
     sqlite_multi = tmp_vsimem / "multi_geometry.db"
     # Create a temporary gpkg with multiple geometry types
