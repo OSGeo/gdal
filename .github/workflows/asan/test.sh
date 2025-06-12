@@ -11,6 +11,7 @@ export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../autotest/asan_suppressions.txt
 export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../autotest/lsan_suppressions.txt
+export UBSAN_OPTIONS=print_stacktrace=1,suppressions=$PWD/../autotest/ubsan_suppressions.txt
 export PYTHONMALLOC=malloc
 
 gdalinfo autotest/gcore/data/byte.tif
