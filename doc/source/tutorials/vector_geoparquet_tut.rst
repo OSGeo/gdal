@@ -1,7 +1,7 @@
 .. _geoparquet_tut:
 
 ================================================================================
-Downloading Geoparquet Data from Overture Maps
+Downloading GeoParquet Data from Overture Maps
 ================================================================================
 
 .. contents::
