@@ -132,8 +132,11 @@ If the configuration option is not provided, an error will occur:
 .. code-block:: console
 
     $ gdal vsi list "/vsis3/overturemaps-us-west-2/release/"
-    Warning 1: HTTP response code on https://overturemaps-us-west-2.s3-us-west-2.amazonaws.com/release/: 403
-    ERROR 3: list: '/vsis3/overturemaps-us-west-2/release/' does not exist
+    ERROR 3: list: '/vsis3/overturemaps-us-west-2/release/' cannot be accessed. InvalidCredentials: No valid AWS credentials found.
+    For authenticated requests, you need to set AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID or other configuration options,
+    or create a /home/even/.aws/credentials file.
+    Consult https://gdal.org/en/stable/user/virtual_file_systems.html#vsis3-aws-s3-files for more details.
+    For unauthenticated requests on public resources, set the AWS_NO_SIGN_REQUEST configuration option to YES.
 
 To avoid including the ``--config AWS_NO_SIGN_REQUEST=YES`` option in every command, you can set an environment variable instead:
 
