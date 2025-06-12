@@ -3889,7 +3889,11 @@ int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     }
 
     if (!sHelper.m_bIncludeFID)
+    {
+        if (out_array->release)
+            out_array->release(out_array);
         return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
 
     m_bLastGetNextArrowArrayUsedOptimizedCodePath = true;
     int nCount = 0;
