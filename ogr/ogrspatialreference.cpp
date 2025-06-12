@@ -45,6 +45,8 @@
 #include "proj_experimental.h"
 #include "proj_constants.h"
 
+bool GDALThreadLocalDatasetCacheIsInDestruction();
+
 // Exists since 8.0.1
 #ifndef PROJ_AT_LEAST_VERSION
 #define PROJ_COMPUTE_VERSION(maj, min, patch)                                  \
@@ -235,7 +237,17 @@ OGRSpatialReference::Private::~Private()
     // In case we destroy the object not in the thread that created it,
     // we need to reassign the PROJ context. Having the context bundled inside
     // PJ* deeply sucks...
-    auto ctxt = getPROJContext();
+    PJ_CONTEXT *pj_context_to_destroy = nullptr;
+    PJ_CONTEXT *ctxt;
+    if (GDALThreadLocalDatasetCacheIsInDestruction())
+    {
+        pj_context_to_destroy = proj_context_create();
+        ctxt = pj_context_to_destroy;
+    }
+    else
+    {
+        ctxt = getPROJContext();
+    }
 
     proj_assign_context(m_pj_crs, ctxt);
     proj_destroy(m_pj_crs);
@@ -257,6 +269,7 @@ OGRSpatialReference::Private::~Private()
 
     delete m_poRootBackup;
     delete m_poRoot;
+    proj_context_destroy(pj_context_to_destroy);
 }
 
 void OGRSpatialReference::Private::clear()
