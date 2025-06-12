@@ -959,14 +959,14 @@ void swq_expr_node::ReplaceInByOrRecurse()
     }
 
     nOperation = SWQ_OR;
-    swq_expr_node *poExprLeft = papoSubExpr[0]->Clone();
+    swq_expr_node *poExprLeft = papoSubExpr[0];
     for (int i = 1; i < nSubExprCount; ++i)
     {
         papoSubExpr[i - 1] = new swq_expr_node(SWQ_EQ);
-        papoSubExpr[i - 1]->PushSubExpression(poExprLeft->Clone());
+        papoSubExpr[i - 1]->PushSubExpression(i == 1 ? poExprLeft
+                                                     : poExprLeft->Clone());
         papoSubExpr[i - 1]->PushSubExpression(papoSubExpr[i]);
     }
-    delete poExprLeft;
     --nSubExprCount;
 
     RebalanceAndOr();
