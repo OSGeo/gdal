@@ -225,6 +225,10 @@ def test_ogr_virtualogr_2(require_auto_load_extension):
 
 
 def test_ogr_virtualogr_3(require_auto_load_extension):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("leaks memory on CI but not locally")
+
     # Find path of libgdal
     libgdal_name = gdaltest.find_lib("gdal")
     if libgdal_name is None:
