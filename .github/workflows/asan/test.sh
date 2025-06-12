@@ -64,6 +64,12 @@ if grep -P '===.*\d+ failed' ./test-output.txt > /dev/null ; then
 elif grep '==ABORTING' ./test-output.txt; then
     echo 'Tests crashed'
     exit 1
+elif grep 'UndefinedBehaviorSanitizer' ./test-output.txt; then
+    echo 'UndefinedBehavior detected'
+    exit 1
+elif grep 'ERROR: LeakSanitizer' ./test-output.txt; then
+    echo 'Memory leak detected'
+    exit 1
 else
     echo 'Tests passed'
 fi
