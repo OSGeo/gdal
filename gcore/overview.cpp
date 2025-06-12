@@ -3256,7 +3256,11 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             if (bNoDataValueInt64Valid)
             {
                 const double fClampedRounded = std::round(fClamped);
-                if (fClampedRounded >= fDstMin && fClampedRounded <= fDstMax &&
+                if (fClampedRounded >=
+                        static_cast<Twork>(
+                            std::numeric_limits<int64_t>::min()) &&
+                    fClampedRounded <=
+                        static_cast<Twork>(9223372036854774784LL) &&
                     nNodataValueInt64 ==
                         static_cast<GInt64>(std::round(fClamped)))
                 {
