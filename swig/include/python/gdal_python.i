@@ -1781,8 +1781,10 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     if GetUseExceptions():
         with ExceptionMgr(useExceptions=False):
             PushErrorHandler(my_error_handler.callback)
-            sql_lyr = $action(self, statement, spatialFilter, dialect)
-            PopErrorHandler()
+            try:
+                sql_lyr = $action(self, statement, spatialFilter, dialect)
+            finally:
+                PopErrorHandler()
     else:
         sql_lyr = $action(self, statement, spatialFilter, dialect)
     if sql_lyr:
