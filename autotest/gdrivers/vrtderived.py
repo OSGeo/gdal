@@ -1516,6 +1516,8 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("inv", [float("nan")], float("nan"), {}, float("nan")),
         ("log10", [7], 7, {}, 7),
         ("max", [3, 7, 9], 7, {}, 9),
+        ("max", [3, 7, 9], 7, {"k": 10}, 10),
+        ("max", [3, 7, 9], 7, {"k": 5}, 9),
         ("max", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("mean", [3, 7, 9], 7, {}, (3 + 9) / 2),
         ("mean", [7, 7, 7], 7, {}, 7),
@@ -1525,6 +1527,8 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("median", [7, 7, 7], 7, {}, 7),
         ("median", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("min", [3, 7, 9], 7, {}, 3),
+        ("min", [3, 7, 9], 7, {"k": 5}, 3),
+        ("min", [3, 7, 9], 7, {"k": 2}, 2),
         ("min", [3, float("nan"), 9], 7, {}, 3),
         ("min", [3, float("nan"), 9], 7, {"propagateNoData": True}, 7),  # should be 3?
         ("min", [3, 7, 9], 7, {"propagateNoData": True}, 7),

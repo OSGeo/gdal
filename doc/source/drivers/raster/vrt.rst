@@ -1215,7 +1215,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **expression**
      - 1
      - ``expression``
-       
+
        ``dialect`` (optional)
      - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
        or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
@@ -1281,7 +1281,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
 
-       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       value of the derived band (set with ``<NoDataValue>``), the result will be the
 
        NoData value.
    * - **interpolate_linear**
@@ -1293,7 +1293,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
 
-       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       value of the derived band (set with ``<NoDataValue>``), the result will be the
 
        NoData value.
    * - **inv**
@@ -1317,9 +1317,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **max**
-     - >= 2
+     - >= 1
      - ``propagateNoData`` (optional, default=false)
-     - (GDAL >= 3.8) Maximum of 2 or more raster bands.
+
+       ``k``: constant (optional)
+     - (GDAL >= 3.8) Maximum of raster band(s) and an optional constant
 
        If the optional ``propagateNoData`` parameter is set to ``true``, then
 
@@ -1347,9 +1349,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        the output value. Otherwise, NoData pixels will be ignored.
    * - **min**
-     - >= 2
+     - >= 1
      - ``propagateNoData`` (optional, default=false)
-     - (GDAL >= 3.8) Minimum of 2 or more raster bands.
+
+       ``k``: constant (optional)
+     - (GDAL >= 3.8) Minimum of raster band(s) and an optional constant
 
        If the optional ``propagateNoData`` parameter is set to ``true``, then
 
@@ -1380,7 +1384,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        If the optional ``k`` parameter is provided then the result is
 
        multiplied by the scalar ``k``.
-       
+
        Starting with GDAL 3.12, if ``propagateNoData`` is true, any input pixel
 
        equal to the derived band's NoData value (set with ``<NoDataValue>``)
