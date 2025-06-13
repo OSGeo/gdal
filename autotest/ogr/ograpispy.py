@@ -36,6 +36,9 @@ def module_disable_exceptions():
 
 def test_ograpispy_1(tmp_path):
 
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("leaks memory")
+
     fname = str(tmp_path / "ograpispy_1.py")
 
     os.environ["OGR_API_SPY_FILE"] = fname
@@ -68,6 +71,9 @@ def test_ograpispy_1(tmp_path):
 
 
 def test_ograpispy_2(tmp_path):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("leaks memory")
 
     os.environ["OGR_API_SPY_FILE"] = str(tmp_path / "ograpispy_1.py")
     test_py_scripts.run_py_script("data", "testograpispy", "")
