@@ -55,6 +55,13 @@
         "name": {
           "type": "string"
         },
+        "geometryType": {
+          "$comment": "Geometry type(s) as a string, e.g. 'Point', 'Line String', 'Polygon', etc. If the layer has multiple geometry types, they are separated by commas. This property is optional and is only present in summary mode when the 'geometryFields' property is omitted.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "metadata": {
           "$ref": "#/definitions/metadata"
         },
@@ -84,10 +91,7 @@
         }
       },
       "required": [
-        "name",
-        "metadata",
-        "geometryFields",
-        "fields"
+        "name"
       ],
       "additionalProperties": false
     },
