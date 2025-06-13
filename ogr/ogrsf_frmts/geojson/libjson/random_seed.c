@@ -223,16 +223,15 @@ static int get_dev_random_seed(int *seed)
 {
 	DEBUG_SEED("get_dev_random_seed");
 
-	struct stat buf;
-	if (stat(dev_random_file, &buf))
-		return -1;
-	if ((buf.st_mode & S_IFCHR) == 0)
-		return -1;
-
-	/* coverity[toctou] */
 	int fd = open(dev_random_file, O_RDONLY);
 	if (fd < 0)
 	{
+		struct stat buf;
+		if (stat(dev_random_file, &buf))
+			return -1;
+		if ((buf.st_mode & S_IFCHR) == 0)
+			return -1;
+
 		fprintf(stderr, "error opening %s: %s", dev_random_file, strerror(errno));
 		return -1;
 	}
