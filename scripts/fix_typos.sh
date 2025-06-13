@@ -71,6 +71,7 @@ EXCLUDED_FILES="$EXCLUDED_FILES,WFSServersList.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sosi/*" # norwegian
 EXCLUDED_FILES="$EXCLUDED_FILES,*/ci/travis/csa_part_1/*,*/ci/travis/csa_part_2/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/internal_libqhull/*,*/zlib/*,*/libjpeg/*,*/libjpeg12/*,*/libpng/*,*/libcsf/*,*/degrib/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,*third_party/libdivide/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
 EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/Copyright.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sqlite_rtree_bulk_load/*"
