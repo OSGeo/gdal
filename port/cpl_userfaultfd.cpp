@@ -13,6 +13,7 @@
 
 #ifdef ENABLE_UFFD
 
+#include <algorithm>
 #include <cstdlib>
 #include <cinttypes>
 #include <cstring>
@@ -459,7 +460,7 @@ cpl_uffd_context *CPLCreateUserFaultMapping(const char *pszFilename,
     ctx->page_limit = get_page_limit();
     ctx->pages_used = 0;
     ctx->file_size = static_cast<size_t>(statbuf.st_size);
-    ctx->page_size = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+    ctx->page_size = static_cast<size_t>(std::max(1L, sysconf(_SC_PAGESIZE)));
     ctx->vma_size = static_cast<size_t>(
         ((static_cast<vsi_l_offset>(statbuf.st_size) / ctx->page_size) + 1) *
         ctx->page_size);
