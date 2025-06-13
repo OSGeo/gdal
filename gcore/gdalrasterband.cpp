@@ -10206,7 +10206,7 @@ void GDALRasterBand::ThrowIfNotSameDimensions(const GDALRasterBand &first,
     if (first.GetXSize() != second.GetXSize() ||
         first.GetYSize() != second.GetYSize())
     {
-        throw std::runtime_error("Both bands do not have the same dimensions");
+        throw std::runtime_error("Bands do not have the same dimensions");
     }
 }
 
@@ -10730,67 +10730,87 @@ GDALComputedRasterBandH GDALRasterBandAsDataType(GDALRasterBandH hBand,
 }
 
 /************************************************************************/
-/*                       GDALMaximumOfTwoBands()                        */
+/*                         GetBandVector()                              */
+/************************************************************************/
+
+static std::vector<const GDALRasterBand *>
+GetBandVector(size_t nBandCount, GDALRasterBandH *pahBands)
+{
+    std::vector<const GDALRasterBand *> bands;
+    for (size_t i = 0; i < nBandCount; ++i)
+    {
+        if (i > 0)
+        {
+            GDALRasterBand::ThrowIfNotSameDimensions(
+                *(GDALRasterBand::FromHandle(pahBands[0])),
+                *(GDALRasterBand::FromHandle(pahBands[i])));
+        }
+        bands.push_back(GDALRasterBand::FromHandle(pahBands[i]));
+    }
+    return bands;
+}
+
+/************************************************************************/
+/*                       GDALOperationOnNBands()                        */
+/************************************************************************/
+
+static GDALComputedRasterBandH
+GDALOperationOnNBands(GDALComputedRasterBand::Operation op, size_t nBandCount,
+                      GDALRasterBandH *pahBands)
+{
+    VALIDATE_POINTER1(pahBands, __func__, nullptr);
+    if (nBandCount == 0)
+        return nullptr;
+
+    std::vector<const GDALRasterBand *> bands;
+    try
+    {
+        bands = GetBandVector(nBandCount, pahBands);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return GDALRasterBand::ToHandle(new GDALComputedRasterBand(op, bands));
+}
+
+/************************************************************************/
+/*                       GDALMaximumOfNBands()                          */
 /************************************************************************/
 
 /** Return a band whose each pixel value is the maximum of the corresponding
  * pixel values in the input bands.
  *
- * The resulting band is lazy evaluated. A reference is taken on both input
+ * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
  *
  * @since 3.12
  * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
  */
-GDALComputedRasterBandH GDALMaximumOfTwoBands(GDALRasterBandH hBand1,
-                                              GDALRasterBandH hBand2)
+GDALComputedRasterBandH GDALMaximumOfNBands(size_t nBandCount,
+                                            GDALRasterBandH *pahBands)
 {
-    VALIDATE_POINTER1(hBand1, __func__, nullptr);
-    VALIDATE_POINTER1(hBand2, __func__, nullptr);
-    auto &firstBand = *(GDALRasterBand::FromHandle(hBand1));
-    auto &secondBand = *(GDALRasterBand::FromHandle(hBand2));
-    try
-    {
-        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
-    }
-    catch (const std::exception &e)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
-        return nullptr;
-    }
-    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
-                                      firstBand, secondBand);
+    return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MAX,
+                                 nBandCount, pahBands);
 }
 
 /************************************************************************/
-/*                       GDALMinimumOfTwoBands()                        */
+/*                       GDALMinimumOfNBands()                          */
 /************************************************************************/
 
 /** Return a band whose each pixel value is the minimum of the corresponding
  * pixel values in the input bands.
  *
- * The resulting band is lazy evaluated. A reference is taken on both input
+ * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
  *
  * @since 3.12
  * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
  */
-GDALComputedRasterBandH GDALMinimumOfTwoBands(GDALRasterBandH hBand1,
-                                              GDALRasterBandH hBand2)
+GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
+                                            GDALRasterBandH *pahBands)
 {
-    VALIDATE_POINTER1(hBand1, __func__, nullptr);
-    VALIDATE_POINTER1(hBand2, __func__, nullptr);
-    auto &firstBand = *(GDALRasterBand::FromHandle(hBand1));
-    auto &secondBand = *(GDALRasterBand::FromHandle(hBand2));
-    try
-    {
-        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
-    }
-    catch (const std::exception &e)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
-        return nullptr;
-    }
-    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
-                                      firstBand, secondBand);
+    return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MIN,
+                                 nBandCount, pahBands);
 }

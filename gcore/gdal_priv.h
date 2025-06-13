@@ -2134,6 +2134,8 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_CAST,
     };
 
+    GDALComputedRasterBand(Operation op,
+                           const std::vector<const GDALRasterBand *>& bands);
     GDALComputedRasterBand(Operation op, double constant,
                            const GDALRasterBand &band);
     GDALComputedRasterBand(Operation op, const GDALRasterBand &band,
@@ -2194,11 +2196,13 @@ using std::min;
 /** Return a band whose each pixel value is the minimum of the corresponding
  * pixel values in the input bands.
  *
- * The resulting band is lazy evaluated. A reference is taken on both input
+ * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
  *
+ * Two or more bands can be passed.
+ *
  * @since 3.12
- * @throw std::runtime_error if both bands do not have the same dimensions.
+ * @throw std::runtime_error if bands do not have the same dimensions.
  */
 inline GDALComputedRasterBand min(const GDALRasterBand &first,
                                   const GDALRasterBand &second)
@@ -2208,14 +2212,43 @@ inline GDALComputedRasterBand min(const GDALRasterBand &first,
                                   first, second);
 }
 
+//! @cond Doxygen_Suppress
+inline GDALComputedRasterBand
+minInternal(std::vector<const GDALRasterBand *> &bands)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
+                                  bands);
+}
+
+template <typename U, typename... V>
+inline GDALComputedRasterBand
+minInternal(std::vector<const GDALRasterBand *> &bands, const U &first,
+            V &&...rest)
+{
+    if (!bands.empty())
+        GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
+    bands.push_back(&first);
+    return minInternal(bands, std::forward<V>(rest)...);
+}
+
+template <typename... Args> inline GDALComputedRasterBand min(Args &&...args)
+{
+    std::vector<const GDALRasterBand *> bands;
+    return minInternal(bands, std::forward<Args>(args)...);
+}
+
+//! @endcond
+
 /** Return a band whose each pixel value is the maximum of the corresponding
  * pixel values in the input bands.
  *
- * The resulting band is lazy evaluated. A reference is taken on both input
+ * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
  *
+ * Two or more bands can be passed.
+ *
  * @since 3.12
- * @throw std::runtime_error if both bands do not have the same dimensions.
+ * @throw std::runtime_error if bands do not have the same dimensions.
  */
 inline GDALComputedRasterBand max(const GDALRasterBand &first,
                                   const GDALRasterBand &second)
@@ -2224,6 +2257,34 @@ inline GDALComputedRasterBand max(const GDALRasterBand &first,
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
                                   first, second);
 }
+
+//! @cond Doxygen_Suppress
+inline GDALComputedRasterBand
+maxInternal(std::vector<const GDALRasterBand *> &bands)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
+                                  bands);
+}
+
+template <typename U, typename... V>
+inline GDALComputedRasterBand
+maxInternal(std::vector<const GDALRasterBand *> &bands, const U &first,
+            V &&...rest)
+{
+    if (!bands.empty())
+        GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
+    bands.push_back(&first);
+    return maxInternal(bands, std::forward<V>(rest)...);
+}
+
+template <typename... Args> inline GDALComputedRasterBand max(Args &&...args)
+{
+    std::vector<const GDALRasterBand *> bands;
+    return maxInternal(bands, std::forward<Args>(args)...);
+}
+
+//! @endcond
+
 }  // namespace gdal
 
 //! @cond Doxygen_Suppress
