@@ -537,12 +537,12 @@ void LIBERTIFFBand::InitMaskBand()
     else if (l_poDS->m_poMaskDS)
     {
         nMaskFlags = GMF_PER_DATASET;
-        poMask.reset(l_poDS->m_poMaskDS->GetRasterBand(1), false);
+        poMask.resetNotOwned(l_poDS->m_poMaskDS->GetRasterBand(1));
     }
     else if (l_poDS->m_poAlphaBand && l_poDS->m_poAlphaBand != this)
     {
         nMaskFlags = GMF_PER_DATASET | GMF_ALPHA;
-        poMask.reset(l_poDS->m_poAlphaBand, false);
+        poMask.resetNotOwned(l_poDS->m_poAlphaBand);
     }
     else
     {

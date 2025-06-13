@@ -255,7 +255,7 @@ class ISISTiledBand final : public GDALPamRasterBand
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double dfNewNoData) override;
 
-    void SetMaskBand(GDALRasterBand *poMaskBand);
+    void SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand);
 };
 
 /************************************************************************/
@@ -299,7 +299,7 @@ class ISIS3RawRasterBand final : public RawRasterBand
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double dfNewNoData) override;
 
-    void SetMaskBand(GDALRasterBand *poMaskBand);
+    void SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand);
 };
 
 /************************************************************************/
@@ -362,7 +362,7 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
         return poMask;
     }
 
-    void SetMaskBand(GDALRasterBand *poMaskBand);
+    void SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand);
 };
 
 /************************************************************************/
@@ -613,9 +613,9 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISISTiledBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void ISISTiledBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -800,9 +800,9 @@ CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISIS3RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void ISIS3RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -887,9 +887,10 @@ ISIS3WrapperRasterBand::ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISIS3WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void ISIS3WrapperRasterBand::SetMaskBand(
+    std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -2373,7 +2374,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             auto poISISBand = std::make_unique<ISIS3WrapperRasterBand>(
                 poDS->m_poExternalDS->GetRasterBand(i + 1));
-            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand.get()));
+            poISISBand->SetMaskBand(
+                std::make_unique<ISISMaskBand>(poISISBand.get()));
             poDS->SetBand(i + 1, std::move(poISISBand));
             poBand = poDS->GetRasterBand(i + 1);
         }
@@ -2386,7 +2388,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 return nullptr;
             }
-            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand.get()));
+            poISISBand->SetMaskBand(
+                std::make_unique<ISISMaskBand>(poISISBand.get()));
             poDS->SetBand(i + 1, std::move(poISISBand));
             poBand = poDS->GetRasterBand(i + 1);
         }
@@ -2400,7 +2403,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 return nullptr;
             }
-            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand.get()));
+            poISISBand->SetMaskBand(
+                std::make_unique<ISISMaskBand>(poISISBand.get()));
             poDS->SetBand(i + 1, std::move(poISISBand));
             poBand = poDS->GetRasterBand(i + 1);
         }

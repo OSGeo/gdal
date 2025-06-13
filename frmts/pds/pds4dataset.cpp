@@ -56,9 +56,10 @@ PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void PDS4WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void PDS4WrapperRasterBand::SetMaskBand(
+    std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -219,9 +220,9 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void PDS4RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void PDS4RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -2055,8 +2056,8 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                      adfConstants.size() >= 2 ||
                      (adfConstants.size() == 1 && !bNoDataSet)))
                 {
-                    poBand->SetMaskBand(
-                        new PDS4MaskBand(poBand.get(), adfConstants));
+                    poBand->SetMaskBand(std::make_unique<PDS4MaskBand>(
+                        poBand.get(), adfConstants));
                 }
 
                 poDS->SetBand(i + 1, std::move(poBand));
