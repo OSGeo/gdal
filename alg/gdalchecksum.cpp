@@ -51,7 +51,9 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
 {
     VALIDATE_POINTER1(hBand, "GDALChecksumImage", 0);
 
-    const static int anPrimes[11] = {7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43};
+    constexpr int LARGEST_MODULO = 43;
+    const static int anPrimes[11] = {
+        7, 11, 13, 17, 19, 23, 29, 31, 37, 41, LARGEST_MODULO};
 
     int nChecksum = 0;
     int iPrime = 0;
@@ -83,6 +85,15 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                 nVal = static_cast<GInt32>(floor(dfVal));
         }
         return nVal;
+    };
+
+    const auto ClampForCoverity = [](int x)
+    {
+#ifdef __COVERITY__
+        return std::max(0, std::min(x, LARGEST_MODULO - 1));
+#else
+        return x;
+#endif
     };
 
     if (bIsFloatingPoint && nXOff == 0 && nYOff == 0)
@@ -168,7 +179,8 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                     for (size_t i = 0; i < xIters; ++i)
                     {
                         const double dfVal = padfLineData[nOffset + i];
-                        nChecksum += IntFromDouble(dfVal) % anPrimes[iPrime++];
+                        nChecksum += ClampForCoverity(IntFromDouble(dfVal) %
+                                                      anPrimes[iPrime++]);
                         if (iPrime > 10)
                             iPrime = 0;
                     }
@@ -211,7 +223,8 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
             for (size_t i = 0; i < nCount; i++)
             {
                 const double dfVal = padfLineData[i];
-                nChecksum += IntFromDouble(dfVal) % anPrimes[iPrime++];
+                nChecksum +=
+                    ClampForCoverity(IntFromDouble(dfVal) % anPrimes[iPrime++]);
                 if (iPrime > 10)
                     iPrime = 0;
 
