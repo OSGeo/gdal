@@ -682,7 +682,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         SetMetadataItem(
             "IRWindowTemperature",
             CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 48)), "FLIR");
-        SetMetadataItem("IRWindowTemperature",
+        SetMetadataItem("IRWindowTransmission",
                         CPLSPrintf("%f", ReadFloat32(nRecOffset + 52)), "FLIR");
         auto fRelativeHumidity = ReadFloat32(nRecOffset + 60);
         if (fRelativeHumidity > 2)
