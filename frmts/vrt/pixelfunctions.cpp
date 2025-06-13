@@ -2347,6 +2347,8 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 
 static const char pszMinMaxFuncMetadataNodata[] =
     "<PixelFunctionArgumentsList>"
+    "   <Argument name='k' description='Optional constant term' type='double' "
+    "default='nan' />"
     "   <Argument type='builtin' value='NoData' optional='true' />"
     "   <Argument name='propagateNoData' description='Whether the output value "
     "should be NoData as as soon as one source is NoData' type='boolean' "
@@ -2354,10 +2356,11 @@ static const char pszMinMaxFuncMetadataNodata[] =
     "</PixelFunctionArgumentsList>";
 
 template <class Comparator>
-static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
-                                int nXSize, int nYSize, GDALDataType eSrcType,
-                                GDALDataType eBufType, int nPixelSpace,
-                                int nLineSpace, CSLConstList papszArgs)
+static CPLErr MinOrMaxPixelFunc(double dfK, void **papoSources, int nSources,
+                                void *pData, int nXSize, int nYSize,
+                                GDALDataType eSrcType, GDALDataType eBufType,
+                                int nPixelSpace, int nLineSpace,
+                                CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (GDALDataTypeIsComplex(eSrcType))
@@ -2399,9 +2402,14 @@ static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
                 }
             }
 
-            if (!bPropagateNoData && std::isnan(dfRes))
+            if (std::isnan(dfRes))
             {
-                dfRes = dfNoData;
+                if (!bPropagateNoData)
+                    dfRes = dfNoData;
+            }
+            else if (!std::isnan(dfK) && Comparator::compare(dfK, dfRes))
+            {
+                dfRes = dfK;
             }
 
             GDALCopyWords(&dfRes, GDT_Float64, 0,
@@ -2623,9 +2631,14 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
         }
     };
 
+    double dfK = std::numeric_limits<double>::quiet_NaN();
+    if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
+        return CE_Failure;
+
 #ifdef USE_SSE2
     const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
-    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+    if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
+        eSrcType == eBufType &&
         nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
     {
         if (eSrcType == GDT_Byte)
@@ -2661,8 +2674,8 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
     }
 #endif
 
-    return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
-                                         nYSize, eSrcType, eBufType,
+    return MinOrMaxPixelFunc<Comparator>(dfK, papoSources, nSources, pData,
+                                         nXSize, nYSize, eSrcType, eBufType,
                                          nPixelSpace, nLineSpace, papszArgs);
 }
 
@@ -2680,9 +2693,14 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
         }
     };
 
+    double dfK = std::numeric_limits<double>::quiet_NaN();
+    if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
+        return CE_Failure;
+
 #ifdef USE_SSE2
     const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
-    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+    if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
+        eSrcType == eBufType &&
         nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
     {
         if (eSrcType == GDT_Byte)
@@ -2718,8 +2736,8 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
     }
 #endif
 
-    return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
-                                         nYSize, eSrcType, eBufType,
+    return MinOrMaxPixelFunc<Comparator>(dfK, papoSources, nSources, pData,
+                                         nXSize, nYSize, eSrcType, eBufType,
                                          nPixelSpace, nLineSpace, papszArgs);
 }
 
