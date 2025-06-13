@@ -12,6 +12,8 @@
 
 #include "dgnlibp.h"
 
+#include <algorithm>
+
 static const unsigned char abyDefaultPCT[256][3] = {
     {255, 255, 255}, {0, 0, 255},     {0, 255, 0},     {255, 0, 0},
     {255, 255, 0},   {255, 0, 255},   {255, 127, 0},   {0, 255, 255},
@@ -953,7 +955,10 @@ int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, const DGNElemCore *psElement,
 
     /* If low order bit of second byte is set, first byte is length */
     if (psElement->attr_data[nOffset + 1] & 0x10)
-        return psElement->attr_data[nOffset + 0] * 2 + 2;
+    {
+        // Useless std::min(), but to please Coverity Scan
+        return std::min(psElement->attr_data[nOffset + 0] * 2 + 2, 255 * 2 + 2);
+    }
 
     /* unknown */
     return 0;
