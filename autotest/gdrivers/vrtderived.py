@@ -14,6 +14,7 @@
 
 import math
 import os
+import sys
 import threading
 
 import gdaltest
@@ -1580,6 +1581,368 @@ def test_vrt_pixelfn_nodata(
 
 
 @pytest.mark.parametrize(
+    "values",
+    [
+        [1],
+        [255],
+        [1, 255],
+        [128, 255],
+        [1, 3, 5],
+        [1, 3, 6, 10, 19, 20, 21],
+        [255] * 128,
+        [255] * 32768,
+    ],
+)
+def test_vrt_pixelfn_mean_byte(tmp_vsimem, values):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 63, 1, len(values), gdal.GDT_Byte
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="63" rasterYSize="1">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    import struct
+
+    assert (
+        gdal.Open(xml).ReadRaster()
+        == struct.pack("B", (sum(values) + len(values) // 2) // len(values)) * 63
+    )
+
+
+def test_vrt_pixelfn_mean_byte_image():
+
+    xml = """
+    <VRTDataset rasterXSize="400" rasterYSize="200">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SimpleSource><SourceFilename>../gdrivers/data/small_world.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/small_world.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster()
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+    xml = """
+    <VRTDataset rasterXSize="400" rasterYSize="200">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SimpleSource><SourceFilename>../gdrivers/data/small_world.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/small_world.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/small_world.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize(
+    "values", [[65535], [65534, 65535], [1, 65534, 65535], [65535] * 32768]
+)
+def test_vrt_pixelfn_mean_uint16(tmp_vsimem, values):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 31, 1, len(values), gdal.GDT_UInt16
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="31" rasterYSize="1">
+      <VRTRasterBand dataType="UInt16" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    import struct
+
+    assert (
+        gdal.Open(xml).ReadRaster()
+        == struct.pack("H", (sum(values) + len(values) // 2) // len(values)) * 31
+    )
+
+
+def test_vrt_pixelfn_mean_uint16_image():
+
+    xml = """
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="UInt16" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SourceTransferType>UInt16</SourceTransferType>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        [32767],
+        [32767, 32766],
+        [-32768, -32766],
+        [-32768, -32767, -32766],
+        [-32768, 2, 32767],
+        [-32768] * 32768,
+    ],
+)
+def test_vrt_pixelfn_mean_int16(tmp_vsimem, values):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 31, 1, len(values), gdal.GDT_Int16
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="31" rasterYSize="1">
+      <VRTRasterBand dataType="Int16" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    import struct
+
+    assert (
+        gdal.Open(xml).ReadRaster()
+        == struct.pack("h", (sum(values) + len(values) // 2) // len(values)) * 31
+    )
+
+
+def test_vrt_pixelfn_mean_int16_image():
+
+    xml = """
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="Int16" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SourceTransferType>Int16</SourceTransferType>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        [12.5],
+        [-12.5, 1],
+        [1.5, 2.5, 3.5],
+        [1.7014118346046923e38, 1.7014118346046923e38],
+        [-1.7014118346046923e38, 1.7014118346046923e38],
+        [float("inf"), float("inf")],
+        [float("inf"), float("nan"), 0],
+        [float("-inf"), float("-inf")],
+        [float("inf"), 1e30, float("inf")],
+        [float("inf"), float("inf"), float("inf")],
+        [float("inf"), float("inf"), 1e30],
+        [float("-inf"), 1e30, float("-inf")],
+        [float("inf"), float("-inf")],
+        [float("inf"), 1e30, float("-inf")],
+        [0, float("nan")],
+        [float("nan"), 0],
+        [0, 0, float("nan")],
+        [float("inf"), float("inf"), float("nan")],
+    ],
+)
+def test_vrt_pixelfn_mean_float32(tmp_vsimem, values):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 31, 1, len(values), gdal.GDT_Float32
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="31" rasterYSize="1">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    import struct
+
+    expected_mean = sum(values) / len(values)
+
+    contiguous_data = gdal.Open(xml).ReadRaster()
+
+    data = gdal.Open(xml).ReadRaster(buf_pixel_space=8)
+    assert len(data) == 8 * (31 - 1) + 4
+    data = b"".join([data[8 * i : 8 * i + 4] for i in range(31)])
+
+    if math.isnan(expected_mean):
+        for x in struct.unpack("f" * 31, contiguous_data):
+            assert math.isnan(x)
+        for x in struct.unpack("f" * 31, data):
+            assert math.isnan(x)
+    else:
+        assert contiguous_data == struct.pack("f", expected_mean) * 31
+        assert data == struct.pack("f", expected_mean) * 31
+
+
+def test_vrt_pixelfn_mean_float32_image():
+
+    xml = """
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SourceTransferType>Float32</SourceTransferType>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float32)
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        [12.5],
+        [-12.5, 1],
+        [1.5, 2.5, 3.5],
+        [sys.float_info.max, sys.float_info.max],
+        [-sys.float_info.max, sys.float_info.max],
+        [
+            sys.float_info.max,
+            sys.float_info.max,
+            -sys.float_info.max,
+            -sys.float_info.max,
+        ],
+        [float("inf"), float("inf")],
+        [float("inf"), float("nan"), 0],
+        [float("-inf"), float("-inf")],
+        [float("inf"), sys.float_info.max, float("inf")],
+        [float("inf"), float("inf"), float("inf")],
+        [float("inf"), float("inf"), sys.float_info.max],
+        [float("-inf"), sys.float_info.max, float("-inf")],
+        [float("inf"), float("-inf")],
+        [float("inf"), sys.float_info.max, float("-inf")],
+        [0, float("nan")],
+        [float("nan"), 0],
+        [0, 0, float("nan")],
+        [float("inf"), float("inf"), float("nan")],
+    ],
+)
+def test_vrt_pixelfn_mean_float64(tmp_vsimem, values):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 31, 1, len(values), gdal.GDT_Float64
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="31" rasterYSize="1">
+      <VRTRasterBand dataType="Float64" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    import struct
+
+    if (
+        len(values) == 2
+        and values[0] == sys.float_info.max
+        and values[1] == sys.float_info.max
+    ):
+        expected_mean = values[0]
+    elif (
+        len(values) == 4
+        and values[0] == sys.float_info.max
+        and values[1] == sys.float_info.max
+        and values[2] == -sys.float_info.max
+        and values[3] == -sys.float_info.max
+    ):
+        expected_mean = 0
+    else:
+        expected_mean = sum(values) / len(values)
+    if math.isnan(expected_mean):
+        for x in struct.unpack("d" * 31, gdal.Open(xml).ReadRaster()):
+            assert math.isnan(x)
+    else:
+        assert gdal.Open(xml).ReadRaster() == struct.pack("d", expected_mean) * 31
+
+
+def test_vrt_pixelfn_mean_float64_image():
+
+    xml = """
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="Float64" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SourceTransferType>Float64</SourceTransferType>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float64)
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize("dt", ["Byte", "UInt16", "Int16", "Float32", "Float64"])
+@pytest.mark.parametrize("function", ["min", "max"])
+def test_vrt_pixelfn_min_max_image(dt, function):
+
+    if function == "min":
+        insert1 = "<ComplexSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand><ScaleOffset>255</ScaleOffset><ScaleRatio>0</ScaleRatio></ComplexSource>"
+        insert2 = ""
+    else:
+        insert1 = ""
+        insert2 = "<ComplexSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand><ScaleOffset>0</ScaleOffset><ScaleRatio>0</ScaleRatio></ComplexSource>"
+
+    xml = f"""
+    <VRTDataset rasterXSize="50" rasterYSize="50">
+      <VRTRasterBand dataType="{dt}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>{function}</PixelFunctionType>
+        <SourceTransferType>{dt}</SourceTransferType>
+        {insert1}
+        <SimpleSource><SourceFilename>../gdrivers/data/rgbsmall.tif</SourceFilename><SourceBand>1</SourceBand></SimpleSource>
+        {insert2}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
+    src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GetDataTypeByName(dt))
+    result = gdal.Open(xml).ReadRaster()
+    assert result == src_array
+
+
+@pytest.mark.parametrize(
     "src_type",
     [
         "Byte",
@@ -1621,11 +1984,11 @@ def test_vrt_pixelfn_sum_optimization(tmp_vsimem, src_type, dst_type, transfer_t
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    width = 17
+    width = 64 + 3
     height = 2
 
-    ar1 = np.array([np.arange(width), np.arange(width) + 50])
-    ar2 = np.array([np.arange(width) + 20, np.arange(width) + 70])
+    ar1 = np.array([np.arange(width), np.arange(width) + 10])
+    ar2 = np.array([np.arange(width) + 5, np.arange(width) + 15])
     if (
         src_type.startswith("Float")
         and dst_type.startswith("Float")

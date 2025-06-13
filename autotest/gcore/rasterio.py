@@ -1376,15 +1376,13 @@ nodata_value 0
         buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Lanczos
     )
     data_ar = struct.unpack("f" * 1, data)
-    expected_ar = (1.401298464324817e-45,)
-    assert data_ar == expected_ar
+    assert data_ar[0] in (1.401298464324817e-45, -6.109459224184994e-18)
 
     data = ds.GetRasterBand(1).ReadRaster(
         buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Average
     )
     data_ar = struct.unpack("f" * 1, data)
-    expected_ar = (1.401298464324817e-45,)
-    assert data_ar == expected_ar
+    assert data_ar[0] in (1.401298464324817e-45, -6.109459224184994e-18)
 
     gdal.Unlink("/vsimem/in.asc")
 

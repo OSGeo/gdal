@@ -1277,8 +1277,6 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
         aosOptions.AddNameValue("subclass", "VRTDerivedRasterBand");
         aosOptions.AddNameValue("PixelFunctionType", osPixelFunction.c_str());
         aosOptions.AddNameValue("SkipNonContributingSources", "1");
-        aosOptions.AddNameValue("SourceTransferType", "Float64");
-
         CPLString osName;
         for (const auto &[pszKey, pszValue] :
              cpl::IterateNameValue(aosPixelFunctionArgs))
@@ -1290,6 +1288,15 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 
     for (int j = 0; j < nSelectedBands; j++)
     {
+        const char *pszSourceTransferType = "Float64";
+        if (osPixelFunction == "mean" || osPixelFunction == "min" ||
+            osPixelFunction == "max")
+        {
+            pszSourceTransferType =
+                GDALGetDataTypeName(asBandProperties[j].dataType);
+        }
+        aosOptions.AddNameValue("SourceTransferType", pszSourceTransferType);
+
         poVRTDS->AddBand(asBandProperties[j].dataType, aosOptions.List());
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(j + 1);
         poBand->SetColorInterpretation(asBandProperties[j].colorInterpretation);

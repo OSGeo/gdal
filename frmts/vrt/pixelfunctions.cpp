@@ -21,10 +21,26 @@
 #if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 #define USE_SSE2
 #include "gdalsse_priv.h"
+
+#if !defined(USE_NEON_OPTIMIZATIONS)
+#define LIBDIVIDE_SSE2
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+#include "../../third_party/libdivide/libdivide.h"
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+#endif
+
 #endif
 
 #include "gdal_priv_templates.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <limits>
 
 namespace gdal
@@ -610,6 +626,89 @@ static void OptimizedSumToDouble_SSE2(double dfK, void *pOutBuffer,
     }
 }
 
+/************************************************************************/
+/*                       OptimizedSumSameType_SSE2()                    */
+/************************************************************************/
+
+template <typename T, typename Tsigned, typename Tacc, class SSEWrapper>
+static void OptimizedSumSameType_SSE2(double dfK, void *pOutBuffer,
+                                      int nLineSpace, int nXSize, int nYSize,
+                                      int nSources,
+                                      const void *const *papoSources)
+{
+    static_assert(std::numeric_limits<T>::is_integer);
+    static_assert(!std::numeric_limits<T>::is_signed);
+    static_assert(std::numeric_limits<Tsigned>::is_integer);
+    static_assert(std::numeric_limits<Tsigned>::is_signed);
+    static_assert(sizeof(T) == sizeof(Tsigned));
+    const T nK = static_cast<T>(dfK);
+    Tsigned nKSigned;
+    memcpy(&nKSigned, &nK, sizeof(T));
+    const __m128i valInit = SSEWrapper::Set1(nKSigned);
+    constexpr int VALUES_PER_REG =
+        static_cast<int>(sizeof(valInit) / sizeof(T));
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        T *CPL_RESTRICT const pDest =
+            reinterpret_cast<T *>(static_cast<GByte *>(pOutBuffer) +
+                                  static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+        int iCol = 0;
+        for (; iCol < nXSize - (4 * VALUES_PER_REG - 1);
+             iCol += 4 * VALUES_PER_REG)
+        {
+            __m128i reg0 = valInit;
+            __m128i reg1 = valInit;
+            __m128i reg2 = valInit;
+            __m128i reg3 = valInit;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                reg0 = SSEWrapper::AddSaturate(
+                    reg0,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol)));
+                reg1 = SSEWrapper::AddSaturate(
+                    reg1,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + VALUES_PER_REG)));
+                reg2 = SSEWrapper::AddSaturate(
+                    reg2,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + 2 * VALUES_PER_REG)));
+                reg3 = SSEWrapper::AddSaturate(
+                    reg3,
+                    _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + 3 * VALUES_PER_REG)));
+            }
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDest + iCol), reg0);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + VALUES_PER_REG),
+                reg1);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + 2 * VALUES_PER_REG),
+                reg2);
+            _mm_storeu_si128(
+                reinterpret_cast<__m128i *>(pDest + iCol + 3 * VALUES_PER_REG),
+                reg3);
+        }
+        for (; iCol < nXSize; ++iCol)
+        {
+            Tacc nAcc = nK;
+            for (int iSrc = 0; iSrc < nSources; ++iSrc)
+            {
+                nAcc = std::min<Tacc>(
+                    nAcc + static_cast<const T * CPL_RESTRICT>(
+                               papoSources[iSrc])[iOffsetLine + iCol],
+                    std::numeric_limits<T>::max());
+            }
+            pDest[iCol] = static_cast<T>(nAcc);
+        }
+    }
+}
 #endif  // USE_SSE2
 
 /************************************************************************/
@@ -985,7 +1084,63 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         bool bGeneralCase = true;
         if (dfNoData == 0 && !bPropagateNoData)
         {
-            if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
+#ifdef USE_SSE2
+            if (eBufType == GDT_Byte && nPixelSpace == sizeof(uint8_t) &&
+                eSrcType == GDT_Byte &&
+                dfK >= std::numeric_limits<uint8_t>::min() &&
+                dfK <= std::numeric_limits<uint8_t>::max() &&
+                static_cast<int>(dfK) == dfK)
+            {
+                bGeneralCase = false;
+
+                struct SSEWrapper
+                {
+                    inline static __m128i Set1(int8_t x)
+                    {
+                        return _mm_set1_epi8(x);
+                    }
+
+                    inline static __m128i AddSaturate(__m128i x, __m128i y)
+                    {
+                        return _mm_adds_epu8(x, y);
+                    }
+                };
+
+                OptimizedSumSameType_SSE2<uint8_t, int8_t, uint32_t,
+                                          SSEWrapper>(dfK, pData, nLineSpace,
+                                                      nXSize, nYSize, nSources,
+                                                      papoSources);
+            }
+            else if (eBufType == GDT_UInt16 &&
+                     nPixelSpace == sizeof(uint16_t) &&
+                     eSrcType == GDT_UInt16 &&
+                     dfK >= std::numeric_limits<uint16_t>::min() &&
+                     dfK <= std::numeric_limits<uint16_t>::max() &&
+                     static_cast<int>(dfK) == dfK)
+            {
+                bGeneralCase = false;
+
+                struct SSEWrapper
+                {
+                    inline static __m128i Set1(int16_t x)
+                    {
+                        return _mm_set1_epi16(x);
+                    }
+
+                    inline static __m128i AddSaturate(__m128i x, __m128i y)
+                    {
+                        return _mm_adds_epu16(x, y);
+                    }
+                };
+
+                OptimizedSumSameType_SSE2<uint16_t, int16_t, uint32_t,
+                                          SSEWrapper>(dfK, pData, nLineSpace,
+                                                      nXSize, nYSize, nSources,
+                                                      papoSources);
+            }
+            else
+#endif
+                if (eBufType == GDT_Float32 && nPixelSpace == sizeof(float))
             {
                 bGeneralCase = !OptimizedSumPackedOutput<float>(
                     eSrcType, dfK, pData, nLineSpace, nXSize, nYSize, nSources,
@@ -2254,6 +2409,199 @@ static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 } /* MinOrMaxPixelFunc */
 
+#ifdef USE_SSE2
+
+template <class T, class SSEWrapper>
+static void OptimizedMinOrMaxSSE2(const void *const *papoSources, int nSources,
+                                  void *pData, int nXSize, int nYSize,
+                                  int nLineSpace)
+{
+    assert(nSources >= 1);
+    constexpr int VALUES_PER_REG =
+        static_cast<int>(sizeof(typename SSEWrapper::Vec) / sizeof(T));
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        T *CPL_RESTRICT pDest =
+            reinterpret_cast<T *>(static_cast<GByte *>(pData) +
+                                  static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+        int iCol = 0;
+        for (; iCol < nXSize - (2 * VALUES_PER_REG - 1);
+             iCol += 2 * VALUES_PER_REG)
+        {
+            auto reg0 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol);
+            auto reg1 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol + VALUES_PER_REG);
+            for (int iSrc = 1; iSrc < nSources; ++iSrc)
+            {
+                reg0 = SSEWrapper::MinOrMax(
+                    reg0, SSEWrapper::LoadU(static_cast<const T * CPL_RESTRICT>(
+                                                papoSources[iSrc]) +
+                                            iOffsetLine + iCol));
+                reg1 = SSEWrapper::MinOrMax(
+                    reg1,
+                    SSEWrapper::LoadU(
+                        static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                        iOffsetLine + iCol + VALUES_PER_REG));
+            }
+            SSEWrapper::StoreU(pDest + iCol, reg0);
+            SSEWrapper::StoreU(pDest + iCol + VALUES_PER_REG, reg1);
+        }
+        for (; iCol < nXSize; ++iCol)
+        {
+            T v = static_cast<const T * CPL_RESTRICT>(
+                papoSources[0])[iOffsetLine + iCol];
+            for (int iSrc = 1; iSrc < nSources; ++iSrc)
+            {
+                v = SSEWrapper::MinOrMax(
+                    v, static_cast<const T * CPL_RESTRICT>(
+                           papoSources[iSrc])[iOffsetLine + iCol]);
+            }
+            pDest[iCol] = v;
+        }
+    }
+}
+
+// clang-format off
+namespace
+{
+struct SSEWrapperMinByte
+{
+    using T = uint8_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epu8(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxByte
+{
+    using T = uint8_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epu8(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinUInt16
+{
+    using T = uint16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epu16(x, y); }
+#else
+    static inline Vec MinOrMax(Vec x, Vec y) { return
+        _mm_add_epi16(
+           _mm_min_epi16(
+             _mm_add_epi16(x, _mm_set1_epi16(-32768)),
+             _mm_add_epi16(y, _mm_set1_epi16(-32768))),
+           _mm_set1_epi16(-32768)); }
+#endif
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxUInt16
+{
+    using T = uint16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epu16(x, y); }
+#else
+    static inline Vec MinOrMax(Vec x, Vec y) { return
+        _mm_add_epi16(
+           _mm_max_epi16(
+             _mm_add_epi16(x, _mm_set1_epi16(-32768)),
+             _mm_add_epi16(y, _mm_set1_epi16(-32768))),
+           _mm_set1_epi16(-32768)); }
+#endif
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinInt16
+{
+    using T = int16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_epi16(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxInt16
+{
+    using T = int16_t;
+    typedef __m128i Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_si128(reinterpret_cast<const Vec*>(x)); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_si128(reinterpret_cast<Vec*>(x), y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_epi16(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinFloat
+{
+    using T = float;
+    typedef __m128 Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_ps(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxFloat
+{
+    using T = float;
+    typedef __m128 Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_ps(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+struct SSEWrapperMinDouble
+{
+    using T = double;
+    typedef __m128d Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_pd(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+};
+
+struct SSEWrapperMaxDouble
+{
+    using T = double;
+    typedef __m128d Vec;
+
+    static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
+    static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_pd(x, y); }
+    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+};
+
+}  // namespace
+
+// clang-format on
+
+#endif  // USE_SSE2
+
 static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize, GDALDataType eSrcType,
                            GDALDataType eBufType, int nPixelSpace,
@@ -2267,6 +2615,44 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x >= resVal);
         }
     };
+
+#ifdef USE_SSE2
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
+    {
+        if (eSrcType == GDT_Byte)
+        {
+            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMinByte>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_UInt16)
+        {
+            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMinUInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Int16)
+        {
+            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMinInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float32)
+        {
+            OptimizedMinOrMaxSSE2<float, SSEWrapperMinFloat>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float64)
+        {
+            OptimizedMinOrMaxSSE2<double, SSEWrapperMinDouble>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+    }
+#endif
 
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,
@@ -2286,6 +2672,44 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x <= resVal);
         }
     };
+
+#ifdef USE_SSE2
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (nSources > 0 && !bHasNoData && eSrcType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
+    {
+        if (eSrcType == GDT_Byte)
+        {
+            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMaxByte>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_UInt16)
+        {
+            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMaxUInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Int16)
+        {
+            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMaxInt16>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float32)
+        {
+            OptimizedMinOrMaxSSE2<float, SSEWrapperMaxFloat>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+        else if (eSrcType == GDT_Float64)
+        {
+            OptimizedMinOrMaxSSE2<double, SSEWrapperMaxDouble>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+    }
+#endif
 
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,
@@ -2492,12 +2916,12 @@ struct MeanKernel
 {
     static constexpr const char *pszName = "mean";
 
-    double dfSum = 0;
+    double dfMean = 0;
     int nValidSources = 0;
 
     void Reset()
     {
-        dfSum = 0;
+        dfMean = 0;
         nValidSources = 0;
     }
 
@@ -2508,8 +2932,34 @@ struct MeanKernel
 
     void ProcessPixel(double dfVal)
     {
-        dfSum += dfVal;
-        nValidSources++;
+        ++nValidSources;
+
+        if (CPL_UNLIKELY(std::isinf(dfVal)))
+        {
+            if (nValidSources == 1)
+            {
+                dfMean = dfVal;
+            }
+            else if (dfVal == -dfMean)
+            {
+                dfMean = std::numeric_limits<double>::quiet_NaN();
+            }
+        }
+        else if (CPL_UNLIKELY(std::isinf(dfMean)))
+        {
+            if (!std::isfinite(dfVal))
+            {
+                dfMean = std::numeric_limits<double>::quiet_NaN();
+            }
+        }
+        else
+        {
+            const double delta = dfVal - dfMean;
+            if (CPL_UNLIKELY(std::isinf(delta)))
+                dfMean += dfVal / nValidSources - dfMean / nValidSources;
+            else
+                dfMean += delta / nValidSources;
+        }
     }
 
     bool HasValue() const
@@ -2519,7 +2969,7 @@ struct MeanKernel
 
     double GetValue() const
     {
-        return dfSum / nValidSources;
+        return dfMean;
     }
 };
 
@@ -2717,14 +3167,229 @@ static const char pszBasicPixelFuncMetadata[] =
     "default='false' />"
     "</PixelFunctionArgumentsList>";
 
-template <typename T>
+#if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
+inline __m128i packus_epi32(__m128i low, __m128i high)
+{
+#if __SSE4_1__
+    return _mm_packus_epi32(low, high);  // Pack uint32 to uint16
+#else
+    low = _mm_add_epi32(low, _mm_set1_epi32(-32768));
+    high = _mm_add_epi32(high, _mm_set1_epi32(-32768));
+    return _mm_sub_epi16(_mm_packs_epi32(low, high), _mm_set1_epi16(-32768));
+#endif
+}
+#endif
+
+#ifdef USE_SSE2
+
+template <class T, class SSEWrapper>
+static void OptimizedMeanFloatSSE2(const void *const *papoSources, int nSources,
+                                   void *pData, int nXSize, int nYSize,
+                                   int nLineSpace)
+{
+    assert(nSources >= 1);
+    constexpr int VALUES_PER_REG =
+        static_cast<int>(sizeof(typename SSEWrapper::Vec) / sizeof(T));
+    const T invSources = static_cast<T>(1.0) / static_cast<T>(nSources);
+    const auto invSourcesSSE = SSEWrapper::Set1(invSources);
+    const auto signMaskSSE = SSEWrapper::Set1(static_cast<T>(-0.0));
+    const auto infSSE = SSEWrapper::Set1(std::numeric_limits<T>::infinity());
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        T *CPL_RESTRICT pDest =
+            reinterpret_cast<T *>(static_cast<GByte *>(pData) +
+                                  static_cast<GSpacing>(nLineSpace) * iLine);
+        const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+        int iCol = 0;
+        for (; iCol < nXSize - (2 * VALUES_PER_REG - 1);
+             iCol += 2 * VALUES_PER_REG)
+        {
+            auto reg0 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol);
+            auto reg1 = SSEWrapper::LoadU(
+                static_cast<const T * CPL_RESTRICT>(papoSources[0]) +
+                iOffsetLine + iCol + VALUES_PER_REG);
+            for (int iSrc = 1; iSrc < nSources; ++iSrc)
+            {
+                const auto inputVal0 = SSEWrapper::LoadU(
+                    static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                    iOffsetLine + iCol);
+                const auto inputVal1 = SSEWrapper::LoadU(
+                    static_cast<const T * CPL_RESTRICT>(papoSources[iSrc]) +
+                    iOffsetLine + iCol + VALUES_PER_REG);
+                reg0 = SSEWrapper::Add(reg0, inputVal0);
+                reg1 = SSEWrapper::Add(reg1, inputVal1);
+            }
+            reg0 = SSEWrapper::Mul(reg0, invSourcesSSE);
+            reg1 = SSEWrapper::Mul(reg1, invSourcesSSE);
+
+            // Detect infinity that could happen when summing huge
+            // values
+            if (SSEWrapper::MoveMask(SSEWrapper::Or(
+                    SSEWrapper::CmpEq(SSEWrapper::AndNot(signMaskSSE, reg0),
+                                      infSSE),
+                    SSEWrapper::CmpEq(SSEWrapper::AndNot(signMaskSSE, reg1),
+                                      infSSE))))
+            {
+                break;
+            }
+
+            SSEWrapper::StoreU(pDest + iCol, reg0);
+            SSEWrapper::StoreU(pDest + iCol + VALUES_PER_REG, reg1);
+        }
+
+        // Use numerically stable mean computation
+        for (; iCol < nXSize; ++iCol)
+        {
+            T mean = static_cast<const T * CPL_RESTRICT>(
+                papoSources[0])[iOffsetLine + iCol];
+            if (nSources >= 2)
+            {
+                T new_val = static_cast<const T * CPL_RESTRICT>(
+                    papoSources[1])[iOffsetLine + iCol];
+                if (CPL_UNLIKELY(std::isinf(new_val)))
+                {
+                    if (new_val == -mean)
+                    {
+                        pDest[iCol] = std::numeric_limits<T>::quiet_NaN();
+                        continue;
+                    }
+                }
+                else if (CPL_UNLIKELY(std::isinf(mean)))
+                {
+                    if (!std::isfinite(new_val))
+                    {
+                        pDest[iCol] = std::numeric_limits<T>::quiet_NaN();
+                        continue;
+                    }
+                }
+                else
+                {
+                    const T delta = new_val - mean;
+                    if (CPL_UNLIKELY(std::isinf(delta)))
+                        mean += new_val * static_cast<T>(0.5) -
+                                mean * static_cast<T>(0.5);
+                    else
+                        mean += delta * static_cast<T>(0.5);
+                }
+
+                for (int iSrc = 2; iSrc < nSources; ++iSrc)
+                {
+                    new_val = static_cast<const T * CPL_RESTRICT>(
+                        papoSources[iSrc])[iOffsetLine + iCol];
+                    if (CPL_UNLIKELY(std::isinf(new_val)))
+                    {
+                        if (new_val == -mean)
+                        {
+                            mean = std::numeric_limits<T>::quiet_NaN();
+                            break;
+                        }
+                    }
+                    else if (CPL_UNLIKELY(std::isinf(mean)))
+                    {
+                        if (!std::isfinite(new_val))
+                        {
+                            mean = std::numeric_limits<T>::quiet_NaN();
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        const T delta = new_val - mean;
+                        if (CPL_UNLIKELY(std::isinf(delta)))
+                            mean += new_val / static_cast<T>(iSrc + 1) -
+                                    mean / static_cast<T>(iSrc + 1);
+                        else
+                            mean += delta / static_cast<T>(iSrc + 1);
+                    }
+                }
+            }
+            pDest[iCol] = mean;
+        }
+    }
+}
+
+// clang-format off
+namespace
+{
+#ifdef __AVX2__
+struct SSEWrapperFloat
+{
+    typedef __m256 Vec;
+
+    static inline Vec Set1(float x) { return _mm256_set1_ps(x); }
+    static inline Vec LoadU(const float *x) { return _mm256_loadu_ps(x); }
+    static inline void StoreU(float *x, Vec y) { _mm256_storeu_ps(x, y); }
+    static inline Vec Add(Vec x, Vec y) { return _mm256_add_ps(x, y); }
+    static inline Vec Mul(Vec x, Vec y) { return _mm256_mul_ps(x, y); }
+    static inline Vec Or(Vec x, Vec y) { return _mm256_or_ps(x, y); }
+    static inline Vec AndNot(Vec x, Vec y) { return _mm256_andnot_ps(x, y); }
+    static inline Vec CmpEq(Vec x, Vec y) { return _mm256_cmp_ps(x, y, _CMP_EQ_OQ); }
+    static inline int MoveMask(Vec x) { return _mm256_movemask_ps(x); }
+};
+
+struct SSEWrapperDouble
+{
+    typedef __m256d Vec;
+
+    static inline Vec Set1(double x) { return _mm256_set1_pd(x); }
+    static inline Vec LoadU(const double *x) { return _mm256_loadu_pd(x); }
+    static inline void StoreU(double *x, Vec y) { _mm256_storeu_pd(x, y); }
+    static inline Vec Add(Vec x, Vec y) { return _mm256_add_pd(x, y); }
+    static inline Vec Mul(Vec x, Vec y) { return _mm256_mul_pd(x, y); }
+    static inline Vec Or(Vec x, Vec y) { return _mm256_or_pd(x, y); }
+    static inline Vec AndNot(Vec x, Vec y) { return _mm256_andnot_pd(x, y); }
+    static inline Vec CmpEq(Vec x, Vec y) { return _mm256_cmp_pd(x, y, _CMP_EQ_OQ); }
+    static inline int MoveMask(Vec x) { return _mm256_movemask_pd(x); }
+};
+
+#else
+
+struct SSEWrapperFloat
+{
+    typedef __m128 Vec;
+
+    static inline Vec Set1(float x) { return _mm_set1_ps(x); }
+    static inline Vec LoadU(const float *x) { return _mm_loadu_ps(x); }
+    static inline void StoreU(float *x, Vec y) { _mm_storeu_ps(x, y); }
+    static inline Vec Add(Vec x, Vec y) { return _mm_add_ps(x, y); }
+    static inline Vec Mul(Vec x, Vec y) { return _mm_mul_ps(x, y); }
+    static inline Vec Or(Vec x, Vec y) { return _mm_or_ps(x, y); }
+    static inline Vec AndNot(Vec x, Vec y) { return _mm_andnot_ps(x, y); }
+    static inline Vec CmpEq(Vec x, Vec y) { return _mm_cmpeq_ps(x, y); }
+    static inline int MoveMask(Vec x) { return _mm_movemask_ps(x); }
+};
+
+struct SSEWrapperDouble
+{
+    typedef __m128d Vec;
+
+    static inline Vec Set1(double x) { return _mm_set1_pd(x); }
+    static inline Vec LoadU(const double *x) { return _mm_loadu_pd(x); }
+    static inline void StoreU(double *x, Vec y) { _mm_storeu_pd(x, y); }
+    static inline Vec Add(Vec x, Vec y) { return _mm_add_pd(x, y); }
+    static inline Vec Mul(Vec x, Vec y) { return _mm_mul_pd(x, y); }
+    static inline Vec Or(Vec x, Vec y) { return _mm_or_pd(x, y); }
+    static inline Vec AndNot(Vec x, Vec y) { return _mm_andnot_pd(x, y); }
+    static inline Vec CmpEq(Vec x, Vec y) { return _mm_cmpeq_pd(x, y); }
+    static inline int MoveMask(Vec x) { return _mm_movemask_pd(x); }
+};
+#endif
+}  // namespace
+
+// clang-format on
+
+#endif  // USE_SSE2
+
+template <typename Kernel>
 static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize, GDALDataType eSrcType,
                              GDALDataType eBufType, int nPixelSpace,
                              int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-    T oKernel;
+    Kernel oKernel;
 
     if (GDALDataTypeIsComplex(eSrcType))
     {
@@ -2745,6 +3410,315 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
     {
         return CE_Failure;
     }
+
+#if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
+    if constexpr (std::is_same_v<Kernel, MeanKernel>)
+    {
+        if (!bHasNoData && eSrcType == GDT_Byte && eBufType == GDT_Byte &&
+            nPixelSpace == 1 &&
+            // We use signed int16 to accumulate
+            nSources <= std::numeric_limits<int16_t>::max() /
+                            std::numeric_limits<uint8_t>::max())
+        {
+            using T = uint8_t;
+            constexpr int VALUES_PER_REG = 16;
+            if (nSources == 2)
+            {
+                for (int iLine = 0; iLine < nYSize; ++iLine)
+                {
+                    T *CPL_RESTRICT pDest = reinterpret_cast<T *>(
+                        static_cast<GByte *>(pData) +
+                        static_cast<GSpacing>(nLineSpace) * iLine);
+                    const size_t iOffsetLine =
+                        static_cast<size_t>(iLine) * nXSize;
+                    int iCol = 0;
+                    for (; iCol < nXSize - (VALUES_PER_REG - 1);
+                         iCol += VALUES_PER_REG)
+                    {
+                        const __m128i inputVal0 =
+                            _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                                static_cast<const T * CPL_RESTRICT>(
+                                    papoSources[0]) +
+                                iOffsetLine + iCol));
+                        const __m128i inputVal1 =
+                            _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                                static_cast<const T * CPL_RESTRICT>(
+                                    papoSources[1]) +
+                                iOffsetLine + iCol));
+                        _mm_storeu_si128(
+                            reinterpret_cast<__m128i *>(pDest + iCol),
+                            _mm_avg_epu8(inputVal0, inputVal1));
+                    }
+                    for (; iCol < nXSize; ++iCol)
+                    {
+                        uint32_t acc = 1 +
+                                       static_cast<const T * CPL_RESTRICT>(
+                                           papoSources[0])[iOffsetLine + iCol] +
+                                       static_cast<const T * CPL_RESTRICT>(
+                                           papoSources[1])[iOffsetLine + iCol];
+                        pDest[iCol] = static_cast<T>(acc / 2);
+                    }
+                }
+            }
+            else
+            {
+                libdivide::divider<uint16_t> fast_d(
+                    static_cast<uint16_t>(nSources));
+                const auto halfConstant =
+                    _mm_set1_epi16(static_cast<int16_t>(nSources / 2));
+                for (int iLine = 0; iLine < nYSize; ++iLine)
+                {
+                    T *CPL_RESTRICT pDest =
+                        static_cast<GByte *>(pData) +
+                        static_cast<GSpacing>(nLineSpace) * iLine;
+                    const size_t iOffsetLine =
+                        static_cast<size_t>(iLine) * nXSize;
+                    int iCol = 0;
+                    for (; iCol < nXSize - (VALUES_PER_REG - 1);
+                         iCol += VALUES_PER_REG)
+                    {
+                        __m128i reg0 = halfConstant;
+                        __m128i reg1 = halfConstant;
+                        for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                        {
+                            const __m128i inputVal = _mm_loadu_si128(
+                                reinterpret_cast<const __m128i *>(
+                                    static_cast<const T * CPL_RESTRICT>(
+                                        papoSources[iSrc]) +
+                                    iOffsetLine + iCol));
+                            reg0 = _mm_add_epi16(
+                                reg0, _mm_unpacklo_epi8(inputVal,
+                                                        _mm_setzero_si128()));
+                            reg1 = _mm_add_epi16(
+                                reg1, _mm_unpackhi_epi8(inputVal,
+                                                        _mm_setzero_si128()));
+                        }
+                        reg0 /= fast_d;
+                        reg1 /= fast_d;
+                        _mm_storeu_si128(
+                            reinterpret_cast<__m128i *>(pDest + iCol),
+                            _mm_packus_epi16(reg0, reg1));
+                    }
+                    for (; iCol < nXSize; ++iCol)
+                    {
+                        uint32_t acc = nSources / 2;
+                        for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                        {
+                            acc += static_cast<const T * CPL_RESTRICT>(
+                                papoSources[iSrc])[iOffsetLine + iCol];
+                        }
+                        pDest[iCol] = static_cast<T>(acc / nSources);
+                    }
+                }
+            }
+            return CE_None;
+        }
+
+        if (!bHasNoData && eSrcType == GDT_Byte && eBufType == GDT_Byte &&
+            nPixelSpace == 1 &&
+            // We use signed int32 to accumulate
+            nSources <= std::numeric_limits<int32_t>::max() /
+                            std::numeric_limits<uint8_t>::max())
+        {
+            using T = uint8_t;
+            constexpr int VALUES_PER_REG = 16;
+            libdivide::divider<uint32_t> fast_d(nSources);
+            const auto halfConstant = _mm_set1_epi32(nSources / 2);
+            for (int iLine = 0; iLine < nYSize; ++iLine)
+            {
+                T *CPL_RESTRICT pDest =
+                    static_cast<GByte *>(pData) +
+                    static_cast<GSpacing>(nLineSpace) * iLine;
+                const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+                int iCol = 0;
+                for (; iCol < nXSize - (VALUES_PER_REG - 1);
+                     iCol += VALUES_PER_REG)
+                {
+                    __m128i reg0 = halfConstant;
+                    __m128i reg1 = halfConstant;
+                    __m128i reg2 = halfConstant;
+                    __m128i reg3 = halfConstant;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        const __m128i inputVal =
+                            _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                                static_cast<const T * CPL_RESTRICT>(
+                                    papoSources[iSrc]) +
+                                iOffsetLine + iCol));
+                        const __m128i low =
+                            _mm_unpacklo_epi8(inputVal, _mm_setzero_si128());
+                        const __m128i high =
+                            _mm_unpackhi_epi8(inputVal, _mm_setzero_si128());
+                        reg0 = _mm_add_epi32(
+                            reg0, _mm_unpacklo_epi16(low, _mm_setzero_si128()));
+                        reg1 = _mm_add_epi32(
+                            reg1, _mm_unpackhi_epi16(low, _mm_setzero_si128()));
+                        reg2 = _mm_add_epi32(
+                            reg2,
+                            _mm_unpacklo_epi16(high, _mm_setzero_si128()));
+                        reg3 = _mm_add_epi32(
+                            reg3,
+                            _mm_unpackhi_epi16(high, _mm_setzero_si128()));
+                    }
+                    reg0 /= fast_d;
+                    reg1 /= fast_d;
+                    reg2 /= fast_d;
+                    reg3 /= fast_d;
+                    _mm_storeu_si128(
+                        reinterpret_cast<__m128i *>(pDest + iCol),
+                        _mm_packus_epi16(packus_epi32(reg0, reg1),
+                                         packus_epi32(reg2, reg3)));
+                }
+                for (; iCol < nXSize; ++iCol)
+                {
+                    uint32_t acc = nSources / 2;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        acc += static_cast<const T * CPL_RESTRICT>(
+                            papoSources[iSrc])[iOffsetLine + iCol];
+                    }
+                    pDest[iCol] = static_cast<T>(acc / nSources);
+                }
+            }
+            return CE_None;
+        }
+
+        if (!bHasNoData && eSrcType == GDT_UInt16 && eBufType == GDT_UInt16 &&
+            nPixelSpace == 2 &&
+            nSources <= std::numeric_limits<int32_t>::max() /
+                            std::numeric_limits<uint16_t>::max())
+        {
+            libdivide::divider<uint32_t> fast_d(nSources);
+            using T = uint16_t;
+            const auto halfConstant = _mm_set1_epi32(nSources / 2);
+            constexpr int VALUES_PER_REG = 8;
+            for (int iLine = 0; iLine < nYSize; ++iLine)
+            {
+                T *CPL_RESTRICT pDest = reinterpret_cast<T *>(
+                    static_cast<GByte *>(pData) +
+                    static_cast<GSpacing>(nLineSpace) * iLine);
+                const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+                int iCol = 0;
+                for (; iCol < nXSize - (VALUES_PER_REG - 1);
+                     iCol += VALUES_PER_REG)
+                {
+                    __m128i reg0 = halfConstant;
+                    __m128i reg1 = halfConstant;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        const __m128i inputVal =
+                            _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                                static_cast<const T * CPL_RESTRICT>(
+                                    papoSources[iSrc]) +
+                                iOffsetLine + iCol));
+                        reg0 = _mm_add_epi32(
+                            reg0,
+                            _mm_unpacklo_epi16(inputVal, _mm_setzero_si128()));
+                        reg1 = _mm_add_epi32(
+                            reg1,
+                            _mm_unpackhi_epi16(inputVal, _mm_setzero_si128()));
+                    }
+                    reg0 /= fast_d;
+                    reg1 /= fast_d;
+                    _mm_storeu_si128(reinterpret_cast<__m128i *>(pDest + iCol),
+                                     packus_epi32(reg0, reg1));
+                }
+                for (; iCol < nXSize; ++iCol)
+                {
+                    uint32_t acc = nSources / 2;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        acc += static_cast<const T * CPL_RESTRICT>(
+                            papoSources[iSrc])[iOffsetLine + iCol];
+                    }
+                    pDest[iCol] = static_cast<T>(acc / nSources);
+                }
+            }
+            return CE_None;
+        }
+
+        if (!bHasNoData && eSrcType == GDT_Int16 && eBufType == GDT_Int16 &&
+            nPixelSpace == 2 &&
+            nSources <= std::numeric_limits<int32_t>::max() /
+                            std::numeric_limits<uint16_t>::max())
+        {
+            libdivide::divider<uint32_t> fast_d(nSources);
+            using T = int16_t;
+            const auto halfConstant = _mm_set1_epi32(nSources / 2);
+            const auto shift = _mm_set1_epi16(std::numeric_limits<T>::min());
+            constexpr int VALUES_PER_REG = 8;
+            for (int iLine = 0; iLine < nYSize; ++iLine)
+            {
+                T *CPL_RESTRICT pDest = reinterpret_cast<T *>(
+                    static_cast<GByte *>(pData) +
+                    static_cast<GSpacing>(nLineSpace) * iLine);
+                const size_t iOffsetLine = static_cast<size_t>(iLine) * nXSize;
+                int iCol = 0;
+                for (; iCol < nXSize - (VALUES_PER_REG - 1);
+                     iCol += VALUES_PER_REG)
+                {
+                    __m128i reg0 = halfConstant;
+                    __m128i reg1 = halfConstant;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        // Shift input values by 32768 to get unsigned values
+                        const __m128i inputVal = _mm_add_epi16(
+                            _mm_loadu_si128(reinterpret_cast<const __m128i *>(
+                                static_cast<const T * CPL_RESTRICT>(
+                                    papoSources[iSrc]) +
+                                iOffsetLine + iCol)),
+                            shift);
+                        reg0 = _mm_add_epi32(
+                            reg0,
+                            _mm_unpacklo_epi16(inputVal, _mm_setzero_si128()));
+                        reg1 = _mm_add_epi32(
+                            reg1,
+                            _mm_unpackhi_epi16(inputVal, _mm_setzero_si128()));
+                    }
+                    reg0 /= fast_d;
+                    reg1 /= fast_d;
+                    _mm_storeu_si128(
+                        reinterpret_cast<__m128i *>(pDest + iCol),
+                        _mm_add_epi16(packus_epi32(reg0, reg1), shift));
+                }
+                for (; iCol < nXSize; ++iCol)
+                {
+                    int32_t acc = (-std::numeric_limits<T>::min()) * nSources +
+                                  nSources / 2;
+                    for (int iSrc = 0; iSrc < nSources; ++iSrc)
+                    {
+                        acc += static_cast<const T * CPL_RESTRICT>(
+                            papoSources[iSrc])[iOffsetLine + iCol];
+                    }
+                    pDest[iCol] = static_cast<T>(acc / nSources +
+                                                 std::numeric_limits<T>::min());
+                }
+            }
+            return CE_None;
+        }
+    }
+#endif  // defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
+
+#if defined(USE_SSE2)
+    if constexpr (std::is_same_v<Kernel, MeanKernel>)
+    {
+        if (!bHasNoData && eSrcType == GDT_Float32 && eBufType == GDT_Float32 &&
+            nPixelSpace == 4 && nSources > 0)
+        {
+            OptimizedMeanFloatSSE2<float, SSEWrapperFloat>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+
+        if (!bHasNoData && eSrcType == GDT_Float64 && eBufType == GDT_Float64 &&
+            nPixelSpace == 8 && nSources > 0)
+        {
+            OptimizedMeanFloatSSE2<double, SSEWrapperDouble>(
+                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+            return CE_None;
+        }
+    }
+#endif  // USE_SSE2
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
