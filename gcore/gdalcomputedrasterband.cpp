@@ -308,6 +308,9 @@ void GDALComputedDataset::AddSources()
         case GDALComputedRasterBand::Operation::OP_MAX:
             ret = "max";
             break;
+        case GDALComputedRasterBand::Operation::OP_MEAN:
+            ret = "mean";
+            break;
         case GDALComputedRasterBand::Operation::OP_CAST:
             break;
     }

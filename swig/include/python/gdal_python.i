@@ -691,6 +691,17 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       band_refs = [band for band in args]
       return Band.MaximumOfNBands(bands)._add_parent_references(band_refs)
 
+  @staticmethod
+  def mean(*args):
+      """Return a band whose each pixel value is the arithmetic mean of the corresponding
+         pixel values in the input bands.
+
+         The resulting band is lazily evaluated.
+      """
+      bands = [Band._get_as_band_if_possible(band) for band in args]
+      band_refs = [band for band in args]
+      return Band.MeanOfNBands(bands)._add_parent_references(band_refs)
+
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,
                  buf_pixel_space=None, buf_line_space=None,

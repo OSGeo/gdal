@@ -2131,6 +2131,7 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_DIVIDE,
         OP_MIN,
         OP_MAX,
+        OP_MEAN,
         OP_CAST,
     };
 
@@ -2281,6 +2282,50 @@ template <typename... Args> inline GDALComputedRasterBand max(Args &&...args)
 {
     std::vector<const GDALRasterBand *> bands;
     return maxInternal(bands, std::forward<Args>(args)...);
+}
+
+/** Return a band whose each pixel value is the arithmetic mean of the
+ * corresponding pixel values in the input bands.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * Two or more bands can be passed.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if bands do not have the same dimensions.
+ */
+inline GDALComputedRasterBand mean(const GDALRasterBand &first,
+                                   const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MEAN,
+                                  first, second);
+}
+
+//! @cond Doxygen_Suppress
+inline GDALComputedRasterBand
+meanInternal(std::vector<const GDALRasterBand *> &bands)
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MEAN,
+                                  bands);
+}
+
+template <typename U, typename... V>
+inline GDALComputedRasterBand
+meanInternal(std::vector<const GDALRasterBand *> &bands, const U &first,
+             V &&...rest)
+{
+    if (!bands.empty())
+        GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
+    bands.push_back(&first);
+    return meanInternal(bands, std::forward<V>(rest)...);
+}
+
+template <typename... Args> inline GDALComputedRasterBand mean(Args &&...args)
+{
+    std::vector<const GDALRasterBand *> bands;
+    return meanInternal(bands, std::forward<Args>(args)...);
 }
 
 //! @endcond

@@ -810,6 +810,14 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
   %clear (int band_count, GDALRasterBandShadow **bands);
 
+  %newobject MeanOfNBands;
+  %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
+  static GDALComputedRasterBandShadow* MeanOfNBands(int band_count, GDALRasterBandShadow** bands)
+  {
+     return GDALMeanOfNBands(band_count, bands);
+  }
+  %clear (int band_count, GDALRasterBandShadow **bands);
+
 
 } /* %extend */
 

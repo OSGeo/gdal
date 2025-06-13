@@ -5576,6 +5576,12 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::max(
                          firstBand, firstBand, (*poOtherDS->GetRasterBand(1)))),
                      std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(
+                         gdal::mean(firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::mean(
+                         firstBand, firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
     }
 
     {
@@ -5629,6 +5635,11 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                   CE_None);
         EXPECT_NEAR(adfMinMax[0], std::max(FIRST, std::max(SECOND, THIRD)),
                     1e-14);
+
+        EXPECT_EQ(gdal::mean(firstBand, thirdBand, secondBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_NEAR(adfMinMax[0], (FIRST + SECOND + THIRD) / 3, 1e-14);
     }
 
     EXPECT_EQ(firstBand.AsType(GDT_Byte).GetRasterDataType(), GDT_Byte);
