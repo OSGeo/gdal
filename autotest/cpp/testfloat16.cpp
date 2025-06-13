@@ -167,11 +167,11 @@ TEST(TestFloat16, math)
             using std::min;
             EXPECT_EQ(min(GFloat16(x), GFloat16(y)), GFloat16(min(x, y)));
             using std::pow;
-            EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(x, y)));
+            EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(i, j)));
             using std::fabs;
             using std::isfinite;
             GFloat16 r1 = GFloat16(pow(GFloat16(x), j));
-            GFloat16 r2 = GFloat16(pow(x, j));
+            GFloat16 r2 = GFloat16(pow(i, j));
             if (!isfinite(r1))
             {
                 EXPECT_EQ(r1, r2);
