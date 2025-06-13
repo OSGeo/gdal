@@ -311,3 +311,16 @@ def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):
 
     ds = gdal.Open(tmp_vsimem / "out.vrt")
     assert ds.GetRasterBand(1).Checksum() == 21466
+
+
+def test_band_arithmetic_mean():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+        R = ds.GetRasterBand(1)
+        R.Fill(2)
+        G = ds.GetRasterBand(2)
+        G.Fill(4)
+        return gdal.Band.mean(R, G)
+
+    res = get()
+    assert res.ComputeRasterMinMax(False) == (3, 3)

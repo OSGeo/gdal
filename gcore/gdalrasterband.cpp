@@ -10814,3 +10814,23 @@ GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
     return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MIN,
                                  nBandCount, pahBands);
 }
+
+/************************************************************************/
+/*                         GDALMeanOfNBands()                           */
+/************************************************************************/
+
+/** Return a band whose each pixel value is the arithmetic mean of the
+ * corresponding pixel values in the input bands.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALMeanOfNBands(size_t nBandCount,
+                                         GDALRasterBandH *pahBands)
+{
+    return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MEAN,
+                                 nBandCount, pahBands);
+}
