@@ -2134,9 +2134,11 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_CAST,
     };
 
-    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+    GDALComputedRasterBand(Operation op, double constant,
+                           const GDALRasterBand &band);
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &band,
                            double constant);
-    GDALComputedRasterBand(Operation op, const GDALRasterBand &firstBand,
+    GDALComputedRasterBand(Operation op, const GDALRasterBand &band,
                            GDALDataType dt);
 
     // Semi-public for gdal::min(), gdal::max()
