@@ -23,10 +23,9 @@ class GDALComputedDataset final : public GDALDataset
 
     const GDALComputedRasterBand::Operation m_op;
     CPLStringList m_aosOptions{};
-    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_firstBandDS{};
-    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_secondBandDS{};
-    GDALRasterBand *m_poFirstBand = nullptr;
-    GDALRasterBand *m_poSecondBand = nullptr;
+    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
+        m_bandDS{};
+    std::vector<GDALRasterBand *> m_poBands{};
     VRTDataset m_oVRTDS;
 
     void AddSources();
@@ -47,6 +46,11 @@ class GDALComputedDataset final : public GDALDataset
                         const GDALRasterBand *firstBand, double *pFirstConstant,
                         const GDALRasterBand *secondBand,
                         double *pSecondConstant);
+
+    GDALComputedDataset(int nXSize, int nYSize, GDALDataType eDT,
+                        int nBlockXSize, int nBlockYSize,
+                        GDALComputedRasterBand::Operation op,
+                        const std::vector<const GDALRasterBand *> &bands);
 
     ~GDALComputedDataset() override;
 
@@ -85,8 +89,7 @@ class GDALComputedDataset final : public GDALDataset
 
 GDALComputedDataset::GDALComputedDataset(const GDALComputedDataset &other)
     : GDALDataset(), m_op(other.m_op), m_aosOptions(other.m_aosOptions),
-      m_firstBandDS(nullptr), m_secondBandDS(nullptr),
-      m_poFirstBand(other.m_poFirstBand), m_poSecondBand(other.m_poSecondBand),
+      m_poBands(other.m_poBands),
       m_oVRTDS(other.GetRasterXSize(), other.GetRasterYSize(),
                other.m_oVRTDS.GetBlockXSize(), other.m_oVRTDS.GetBlockYSize())
 {
@@ -129,17 +132,18 @@ GDALComputedDataset::GDALComputedDataset(
     GDALComputedRasterBand::Operation op, const GDALRasterBand *firstBand,
     double *pFirstConstant, const GDALRasterBand *secondBand,
     double *pSecondConstant)
-    : m_op(op), m_poFirstBand(const_cast<GDALRasterBand *>(firstBand)),
-      m_poSecondBand(const_cast<GDALRasterBand *>(secondBand)),
-      m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
+    : m_op(op), m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
 {
-    CPLAssert(m_poFirstBand != nullptr || m_poSecondBand != nullptr);
+    CPLAssert(firstBand != nullptr || secondBand != nullptr);
+    if (firstBand)
+        m_poBands.push_back(const_cast<GDALRasterBand *>(firstBand));
+    if (secondBand)
+        m_poBands.push_back(const_cast<GDALRasterBand *>(secondBand));
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    if (auto poSrcDS =
-            (m_poFirstBand ? m_poFirstBand : m_poSecondBand)->GetDataset())
+    if (auto poSrcDS = m_poBands.front()->GetDataset())
     {
         double adfGT[6];
         if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
@@ -206,6 +210,43 @@ GDALComputedDataset::GDALComputedDataset(
 }
 
 /************************************************************************/
+/*                        GDALComputedDataset()                         */
+/************************************************************************/
+
+GDALComputedDataset::GDALComputedDataset(
+    int nXSize, int nYSize, GDALDataType eDT, int nBlockXSize, int nBlockYSize,
+    GDALComputedRasterBand::Operation op,
+    const std::vector<const GDALRasterBand *> &bands)
+    : m_op(op), m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
+{
+    for (const GDALRasterBand *poBand : bands)
+        m_poBands.push_back(const_cast<GDALRasterBand *>(poBand));
+
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
+
+    if (auto poSrcDS = m_poBands.front()->GetDataset())
+    {
+        double adfGT[6];
+        if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
+        {
+            m_oVRTDS.SetGeoTransform(adfGT);
+        }
+
+        if (const auto *poSRS = poSrcDS->GetSpatialRef())
+        {
+            m_oVRTDS.SetSpatialRef(poSRS);
+        }
+    }
+
+    m_aosOptions.SetNameValue("subclass", "VRTDerivedRasterBand");
+    m_aosOptions.SetNameValue("PixelFunctionType", OperationToFunctionName(op));
+    m_oVRTDS.AddBand(eDT, m_aosOptions.List());
+
+    AddSources();
+}
+
+/************************************************************************/
 /*                       ~GDALComputedDataset()                         */
 /************************************************************************/
 
@@ -225,30 +266,17 @@ void GDALComputedDataset::AddSources()
     // such as "a + b + c", which is evaluated as "(a + b) + c", and the
     // temporary band/dataset corresponding to a + b will go out of scope
     // quickly.
-    if (m_poFirstBand)
+    for (GDALRasterBand *&band : m_poBands)
     {
-        auto poDS = m_poFirstBand->GetDataset();
+        auto poDS = band->GetDataset();
         if (auto poComputedDS = dynamic_cast<GDALComputedDataset *>(poDS))
         {
             auto poComputedDSNew =
                 std::make_unique<GDALComputedDataset>(*poComputedDS);
-            m_poFirstBand = poComputedDSNew->GetRasterBand(1);
-            m_firstBandDS.reset(poComputedDSNew.release());
+            band = poComputedDSNew->GetRasterBand(1);
+            m_bandDS.emplace_back(poComputedDSNew.release());
         }
-        poSourcedRasterBand->AddSimpleSource(m_poFirstBand);
-    }
-
-    if (m_poSecondBand)
-    {
-        auto poDS = m_poSecondBand->GetDataset();
-        if (auto poComputedDS = dynamic_cast<GDALComputedDataset *>(poDS))
-        {
-            auto poComputedDSNew =
-                std::make_unique<GDALComputedDataset>(*poComputedDS);
-            m_poSecondBand = poComputedDSNew->GetRasterBand(1);
-            m_secondBandDS.reset(poComputedDSNew.release());
-        }
-        poSourcedRasterBand->AddSimpleSource(m_poSecondBand);
+        poSourcedRasterBand->AddSimpleSource(band);
     }
 }
 
@@ -302,6 +330,25 @@ GDALComputedRasterBand::GDALComputedRasterBand(
 }
 
 //! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                       GDALComputedRasterBand()                       */
+/************************************************************************/
+
+GDALComputedRasterBand::GDALComputedRasterBand(
+    Operation op, const std::vector<const GDALRasterBand *>& bands)
+{
+    CPLAssert(!bands.empty());
+    nRasterXSize = bands[0]->GetXSize();
+    nRasterYSize = bands[0]->GetYSize();
+    eDataType = bands[0]->GetRasterDataType();
+    bands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    auto l_poDS = std::make_unique<GDALComputedDataset>(
+        nRasterXSize, nRasterYSize, eDataType, nBlockXSize, nBlockYSize, op,
+        bands);
+    l_poDS->SetBand(1, this);
+    m_poOwningDS.reset(l_poDS.release());
+}
 
 /************************************************************************/
 /*                       GDALComputedRasterBand()                       */

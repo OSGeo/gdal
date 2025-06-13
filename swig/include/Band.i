@@ -794,21 +794,22 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
       return GDALRasterBandAsDataType(self, dt);
   }
 
-  %apply Pointer NONNULL {GDALRasterBandShadow* other};
-  %newobject MaximumOfTwoBands;
-  GDALComputedRasterBandShadow* MaximumOfTwoBands(GDALRasterBandShadow* other)
+  %newobject MaximumOfNBands;
+  %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
+  static GDALComputedRasterBandShadow* MaximumOfNBands(int band_count, GDALRasterBandShadow** bands)
   {
-     return GDALMaximumOfTwoBands(self, other);
+     return GDALMaximumOfNBands(band_count, bands);
   }
-  %clear GDALRasterBandShadow* other;
+  %clear (int band_count, GDALRasterBandShadow **bands);
 
-  %apply Pointer NONNULL {GDALRasterBandShadow* other};
-  %newobject MinimumOfTwoBands;
-  GDALComputedRasterBandShadow* MinimumOfTwoBands(GDALRasterBandShadow* other)
+  %newobject MinimumOfNBands;
+  %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
+  static GDALComputedRasterBandShadow* MinimumOfNBands(int band_count, GDALRasterBandShadow** bands)
   {
-     return GDALMinimumOfTwoBands(self, other);
+     return GDALMinimumOfNBands(band_count, bands);
   }
-  %clear GDALRasterBandShadow* other;
+  %clear (int band_count, GDALRasterBandShadow **bands);
+
 
 } /* %extend */
 

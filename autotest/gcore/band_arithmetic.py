@@ -55,7 +55,7 @@ def test_band_arithmetic_add_constant_to_band():
 def test_band_arithmetic_add_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         ds1.GetRasterBand(1) + ds2.GetRasterBand(1)
 
 
@@ -97,7 +97,7 @@ def test_band_arithmetic_sub_constant_to_band():
 def test_band_arithmetic_sub_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         ds1.GetRasterBand(1) - ds2.GetRasterBand(1)
 
 
@@ -139,7 +139,7 @@ def test_band_arithmetic_mul_constant_to_band():
 def test_band_arithmetic_mul_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         ds1.GetRasterBand(1) * ds2.GetRasterBand(1)
 
 
@@ -181,7 +181,7 @@ def test_band_arithmetic_div_constant_to_band():
 def test_band_arithmetic_div_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         ds1.GetRasterBand(1) / ds2.GetRasterBand(1)
 
 
@@ -276,7 +276,7 @@ def test_band_arithmetic_minimum():
 def test_band_arithmetic_minimum_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.Band.minimum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
 
 
@@ -296,7 +296,7 @@ def test_band_arithmetic_maximum():
 def test_band_arithmetic_maximum_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    with pytest.raises(Exception, match="Both bands do not have the same dimensions"):
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.Band.maximum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
 
 

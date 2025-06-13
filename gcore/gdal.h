@@ -1961,10 +1961,10 @@ GDALComputedRasterBandH CPL_DLL GDALRasterBandDivDoubleByBand(
 GDALComputedRasterBandH CPL_DLL GDALRasterBandAsDataType(
     GDALRasterBandH hBand, GDALDataType eDT) CPL_WARN_UNUSED_RESULT;
 
-GDALComputedRasterBandH CPL_DLL GDALMaximumOfTwoBands(
-    GDALRasterBandH hBand1, GDALRasterBandH hBand2) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALMinimumOfTwoBands(
-    GDALRasterBandH hBand1, GDALRasterBandH hBand2) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALMaximumOfNBands(
+    size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALMinimumOfNBands(
+    size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
 
 /* ==================================================================== */
 /*     GDALAsyncReader                                                  */
