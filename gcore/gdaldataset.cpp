@@ -8412,6 +8412,7 @@ void GDALDataset::TemporarilyDropReadWriteLock()
         return;
     }
 
+#ifndef __COVERITY__
     if (m_poPrivate->hMutex)
     {
 #ifdef DEBUG_VERBOSE
@@ -8426,14 +8427,13 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 #ifdef DEBUG_EXTRA
         m_poPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()] = nCount;
 #endif
-#ifndef __COVERITY__
         for (int i = 0; i < nCount + 1; i++)
         {
             // The mutex is recursive
             CPLReleaseMutex(m_poPrivate->hMutex);
         }
-#endif
     }
+#endif
 }
 
 /************************************************************************/
@@ -8451,6 +8451,7 @@ void GDALDataset::ReacquireReadWriteLock()
         return;
     }
 
+#ifndef __COVERITY__
     if (m_poPrivate->hMutex)
     {
 #ifdef DEBUG_VERBOSE
@@ -8468,14 +8469,13 @@ void GDALDataset::ReacquireReadWriteLock()
 #endif
         if (nCount == 0)
             CPLReleaseMutex(m_poPrivate->hMutex);
-#ifndef __COVERITY__
         for (int i = 0; i < nCount - 1; i++)
         {
             // The mutex is recursive
             CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
         }
-#endif
     }
+#endif
 }
 
 /************************************************************************/
