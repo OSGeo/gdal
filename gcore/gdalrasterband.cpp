@@ -10656,9 +10656,8 @@ GDALComputedRasterBandH GDALRasterBandDivDouble(GDALRasterBandH hBand,
  */
 GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
 {
-    // FIXME Horrible workaround !
-    // cppcheck-suppress duplicateExpression
-    return ((other / other) / other) * constant;
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_DIVIDE,
+                                  constant, other);
 }
 
 /************************************************************************/
@@ -10677,14 +10676,9 @@ GDALComputedRasterBandH GDALRasterBandDivDoubleByBand(double constant,
                                                       GDALRasterBandH hBand)
 {
     VALIDATE_POINTER1(hBand, __func__, nullptr);
-
-    // FIXME Horrible workaround !
-    auto hBandOne = GDALRasterBandDivBand(hBand, hBand);
-    auto hBandOneDivBand = GDALRasterBandDivBand(hBandOne, hBand);
-    GDALComputedRasterBandRelease(hBandOne);
-    auto hRet = GDALRasterBandMulDouble(hBandOneDivBand, constant);
-    GDALComputedRasterBandRelease(hBandOneDivBand);
-    return hRet;
+    return new GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_DIVIDE, constant,
+        *(GDALRasterBand::FromHandle(hBand)));
 }
 
 /************************************************************************/
