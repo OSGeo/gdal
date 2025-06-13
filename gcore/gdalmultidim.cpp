@@ -2016,6 +2016,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     for (size_t i = 0; i < dims.size(); i++)
     {
         assert(arrayStartIdx);
+        assert(count);
         if (arrayStartIdx[i] >= dims[i]->GetSize())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
