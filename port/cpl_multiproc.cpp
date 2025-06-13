@@ -45,7 +45,7 @@
 
 // #define DEBUG_MUTEX
 
-#if defined(DEBUG) &&                                                          \
+#if defined(DEBUG) && !defined(__COVERITY__) &&                                \
     (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
 #ifndef DEBUG_CONTENTION
 #define DEBUG_CONTENTION
@@ -2529,7 +2529,6 @@ void CPLReleaseLock(CPLLock *psLock)
     if (psLock->bDebugPerf && CPLAtomicDec(&(psLock->nCurrentHolders)) == 0)
     {
         const GUIntBig nStopTime = CPLrdtscp();
-        // coverity[missing_lock:FALSE]
         const GIntBig nDiffTime =
             static_cast<GIntBig>(nStopTime - psLock->nStartTime);
         if (nDiffTime > psLock->nMaxDiff)
