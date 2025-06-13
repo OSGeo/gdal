@@ -1333,9 +1333,16 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
                                     !IsNoData(dfDenom, dfNoData)))
                 {
                     // coverity[divide_by_zero]
-                    dfPixVal = dfDenom == 0
-                                   ? std::numeric_limits<double>::infinity()
-                                   : dfNum / dfDenom;
+                    dfPixVal =
+                        dfDenom == 0
+                            ? std::numeric_limits<double>::infinity()
+                            : dfNum /
+#ifdef __COVERITY__
+                                  (dfDenom + std::numeric_limits<double>::min())
+#else
+                                  dfDenom
+#endif
+                        ;
                 }
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
@@ -2148,9 +2155,16 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
             {
                 const double dfDenom = (dfLeftVal + dfRightVal);
                 // coverity[divide_by_zero]
-                dfPixVal = dfDenom == 0
-                               ? std::numeric_limits<double>::infinity()
-                               : (dfLeftVal - dfRightVal) / dfDenom;
+                dfPixVal =
+                    dfDenom == 0
+                        ? std::numeric_limits<double>::infinity()
+                        : (dfLeftVal - dfRightVal) /
+#ifdef __COVERITY__
+                              (dfDenom + std::numeric_limits<double>::min())
+#else
+                              dfDenom
+#endif
+                    ;
             }
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
