@@ -36,7 +36,7 @@ add_gdal_driver(
           gt_overview.cpp
           gt_wkt_srs.cpp
           tifvsi.cpp
-  BUILTIN STRONG_CXX_WFLAGS)
+  BUILTIN)
 gdal_standard_includes(gdal_GTIFF)
 
 if (GDAL_ENABLE_DRIVER_JPEG)

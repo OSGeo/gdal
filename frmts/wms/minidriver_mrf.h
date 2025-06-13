@@ -48,35 +48,35 @@ class SectorCache
 
     struct Sector
     {
-        std::vector<char> range;
-        size_t uid;
+        std::vector<char> range{};
+        size_t uid{};
     };
 
     // N sectors of M bytes each
-    unsigned int n, m;
+    unsigned int n{}, m{};
 
     // Pointer to an pread like function
-    pread_t reader;
-    void *reader_data;
+    pread_t reader{};
+    void *reader_data{};
     // To avoid thrashing
-    Sector *last_used;
-    std::vector<Sector> store;
+    Sector *last_used{};
+    std::vector<Sector> store{};
+
+    CPL_DISALLOW_COPY_ASSIGN(SectorCache)
 };
 
 // Size of an image, also used as a tile or pixel location
 struct ILSize
 {
-    ILSize() : x(0), y(0), z(0), c(0), l(0)
-    {
-    }
+    ILSize() = default;
 
     ILSize(GInt32 _x, GInt32 _y, GInt32 _z = 1, GInt32 _c = 1, GInt32 _l = -1)
         : x(_x), y(_y), z(_z), c(_c), l(_l)
     {
     }
 
-    GInt32 x, y, z, c;
-    GIntBig l;  // Dual use, sometimes it holds the number of pages
+    GInt32 x{}, y{}, z{}, c{};
+    GIntBig l{};  // Dual use, sometimes it holds the number of pages
 };
 
 }  // namespace WMSMiniDriver_MRF_ns
@@ -106,19 +106,21 @@ class WMSMiniDriver_MRF : public WMSMiniDriver
     size_t GetIndexAddress(const GDALWMSTiledImageRequestInfo &tiri) const;
 
     // The path or URL for index
-    CPLString m_idxname;
+    CPLString m_idxname{};
 
     // Which type of remote file this is, one of the types above
-    int m_type;
+    int m_type{};
 
-    VSILFILE *fp;               // If index is a file
-    WMSHTTPRequest *m_request;  // If index is an URL
-    WMSMiniDriver_MRF_ns::SectorCache *index_cache;
+    VSILFILE *fp{};               // If index is a file
+    WMSHTTPRequest *m_request{};  // If index is an URL
+    WMSMiniDriver_MRF_ns::SectorCache *index_cache{};
 
     // Per level index offsets, level 0 being the full resolution
-    std::vector<GUIntBig> offsets;
+    std::vector<GUIntBig> offsets{};
     // Matching pagecounts
-    std::vector<WMSMiniDriver_MRF_ns::ILSize> pages;
+    std::vector<WMSMiniDriver_MRF_ns::ILSize> pages{};
+
+    CPL_DISALLOW_COPY_ASSIGN(WMSMiniDriver_MRF)
 };
 
 #endif /* MINIDRIVER_MRF_H_INCLUDED */

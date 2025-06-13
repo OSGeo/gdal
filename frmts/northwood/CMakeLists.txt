@@ -3,7 +3,7 @@ add_gdal_driver(
   TARGET gdal_northwood
   DEF FRMT_northwood
   SOURCES grddataset.cpp grcdataset.cpp northwood.cpp northwood.h
-  BUILTIN STRONG_CXX_WFLAGS)
+  BUILTIN)
 gdal_standard_includes(gdal_northwood)
 
 if (NOT OGR_ENABLE_DRIVER_TAB OR OGR_ENABLE_DRIVER_TAB_PLUGIN)

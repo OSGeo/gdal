@@ -7,8 +7,11 @@ add_gdal_driver(
           ods_formula_parser.hpp
           ods_formula.h
           ogr_ods.h
-          PLUGIN_CAPABLE
-          NO_DEPS)
+  PLUGIN_CAPABLE
+  NO_DEPS
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_ODS)
 target_include_directories(ogr_ODS PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 add_executable(testparser EXCLUDE_FROM_ALL testparser.cpp)

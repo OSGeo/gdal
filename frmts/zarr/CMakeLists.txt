@@ -18,7 +18,6 @@ add_gdal_driver(
           vsikerchunk_parquet_ref.cpp
   CORE_SOURCES
           zarrdrivercore.cpp
-  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
   NO_DEPS
   NO_SHARED_SYMBOL_WITH_CORE)

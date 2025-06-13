@@ -63,9 +63,9 @@ int VersionStringToInt(const char *version);
 class GDALWMSImageRequestInfo
 {
   public:
-    double m_x0, m_y0;
-    double m_x1, m_y1;
-    int m_sx, m_sy;
+    double m_x0{}, m_y0{};
+    double m_x1{}, m_y1{};
+    int m_sx{}, m_sy{};
 };
 
 class GDALWMSDataWindow
@@ -93,8 +93,8 @@ class GDALWMSDataWindow
 class GDALWMSTiledImageRequestInfo
 {
   public:
-    int m_x, m_y;
-    int m_level;
+    int m_x{}, m_y{};
+    int m_level{};
 };
 
 /************************************************************************/
@@ -127,15 +127,12 @@ class WMSMiniDriverCapabilities
 {
   public:
     // Default capabilities, suitable in most cases
-    WMSMiniDriverCapabilities()
-        : m_has_getinfo(0), m_has_geotransform(1),
-          m_overview_dim_computation_method(OVERVIEW_ROUNDED)
-    {
-    }
+    WMSMiniDriverCapabilities() = default;
 
-    int m_has_getinfo;  // Does it have meaningful implementation
-    int m_has_geotransform;
-    GDALWMSOverviewDimComputationMethod m_overview_dim_computation_method;
+    int m_has_getinfo{0};  // Does it have meaningful implementation
+    int m_has_geotransform{1};
+    GDALWMSOverviewDimComputationMethod m_overview_dim_computation_method{
+        OVERVIEW_ROUNDED};
 };
 
 /* All data returned by mini-driver as pointer should remain valid for
@@ -150,6 +147,8 @@ class WMSMiniDriverCapabilities
 class WMSMiniDriver
 {
     friend class GDALWMSDataset;
+
+    CPL_DISALLOW_COPY_ASSIGN(WMSMiniDriver)
 
   public:
     WMSMiniDriver() : m_parent_dataset(nullptr)
@@ -203,9 +202,9 @@ class WMSMiniDriver
     }
 
   protected:
-    CPLString m_base_url;
-    OGRSpatialReference m_oSRS;
-    GDALWMSDataset *m_parent_dataset;
+    CPLString m_base_url{};
+    OGRSpatialReference m_oSRS{};
+    GDALWMSDataset *m_parent_dataset{};
 };
 
 class WMSMiniDriverFactory
@@ -219,7 +218,7 @@ class WMSMiniDriverFactory
 
   public:
     virtual WMSMiniDriver *New() const = 0;
-    CPLString m_name;
+    CPLString m_name{};
 };
 
 // Interface with the global mini driver manager
@@ -291,6 +290,8 @@ class GDALWMSCache
   private:
     GDALWMSCacheImpl *m_poCache = nullptr;
     CPLJoinableThread *m_hThread = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWMSCache)
 };
 
 /************************************************************************/
@@ -300,6 +301,8 @@ class GDALWMSCache
 class GDALWMSDataset final : public GDALPamDataset
 {
     friend class GDALWMSRasterBand;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWMSDataset)
 
   public:
     GDALWMSDataset();
@@ -468,46 +471,46 @@ class GDALWMSDataset final : public GDALPamDataset
                              GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
-    GDALWMSDataWindow m_data_window;
-    WMSMiniDriver *m_mini_driver;
-    WMSMiniDriverCapabilities m_mini_driver_caps;
-    GDALWMSCache *m_cache;
+    GDALWMSDataWindow m_data_window{};
+    WMSMiniDriver *m_mini_driver{};
+    WMSMiniDriverCapabilities m_mini_driver_caps{};
+    GDALWMSCache *m_cache{};
     OGRSpatialReference m_oSRS{};
-    GDALColorTable *m_poColorTable;
-    std::vector<double> vNoData;
-    std::vector<double> vMin;
-    std::vector<double> vMax;
-    GDALDataType m_data_type;
-    int m_block_size_x;
-    int m_block_size_y;
-    GDALWMSRasterIOHint m_hint;
-    int m_use_advise_read;
-    int m_verify_advise_read;
-    int m_offline_mode;
-    int m_http_max_conn;
-    int m_http_timeout;
-    char **m_http_options;
+    GDALColorTable *m_poColorTable{};
+    std::vector<double> vNoData{};
+    std::vector<double> vMin{};
+    std::vector<double> vMax{};
+    GDALDataType m_data_type{GDT_Unknown};
+    int m_block_size_x{};
+    int m_block_size_y{};
+    GDALWMSRasterIOHint m_hint{};
+    int m_use_advise_read{};
+    int m_verify_advise_read{};
+    int m_offline_mode{};
+    int m_http_max_conn{};
+    int m_http_timeout{};
+    char **m_http_options{};
     // Open Option list for tiles
-    char **m_tileOO;
-    int m_clamp_requests;
-    int m_unsafeSsl;
-    std::set<int> m_http_zeroblock_codes;
-    int m_zeroblock_on_serverexceptions;
-    CPLString m_osUserAgent;
-    CPLString m_osReferer;
-    CPLString m_osUserPwd;
+    char **m_tileOO{};
+    int m_clamp_requests{};
+    int m_unsafeSsl{};
+    std::set<int> m_http_zeroblock_codes{};
+    int m_zeroblock_on_serverexceptions{};
+    CPLString m_osUserAgent{};
+    CPLString m_osReferer{};
+    CPLString m_osUserPwd{};
     std::string m_osAccept{};  // HTTP Accept header
 
-    GDALWMSDataWindow m_default_data_window;
-    int m_default_block_size_x;
-    int m_default_block_size_y;
-    int m_default_tile_count_x;
-    int m_default_tile_count_y;
-    int m_default_overview_count;
+    GDALWMSDataWindow m_default_data_window{};
+    int m_default_block_size_x{};
+    int m_default_block_size_y{};
+    int m_default_tile_count_x{};
+    int m_default_tile_count_y{};
+    int m_default_overview_count{};
 
-    bool m_bNeedsDataWindow;
+    bool m_bNeedsDataWindow{};
 
-    CPLString m_osXML;
+    CPLString m_osXML{};
 
     // Per session cache of server configurations
     typedef std::map<CPLString, CPLString> StringMap_t;
@@ -525,8 +528,10 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
     void ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
                             GDALWMSTiledImageRequestInfo &tiri, int x, int y);
 
-    CPLString osMetadataItem;
-    CPLString osMetadataItemURL;
+    CPLString osMetadataItem{};
+    CPLString osMetadataItemURL{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWMSRasterBand)
 
   public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
@@ -571,15 +576,15 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
     static CPLErr ReportWMSException(const char *file_name);
 
   protected:
-    GDALWMSDataset *m_parent_dataset;
-    double m_scale;
-    std::vector<GDALWMSRasterBand *> m_overviews;
-    int m_overview;
-    GDALColorInterp m_color_interp;
-    int m_nAdviseReadBX0;
-    int m_nAdviseReadBY0;
-    int m_nAdviseReadBX1;
-    int m_nAdviseReadBY1;
+    GDALWMSDataset *m_parent_dataset{};
+    double m_scale{};
+    std::vector<GDALWMSRasterBand *> m_overviews{};
+    int m_overview{};
+    GDALColorInterp m_color_interp{};
+    int m_nAdviseReadBX0{};
+    int m_nAdviseReadBY0{};
+    int m_nAdviseReadBX1{};
+    int m_nAdviseReadBY1{};
 };
 
 #endif /* notdef WMSDRIVER_H_INCLUDED */

@@ -229,7 +229,8 @@ void OGRDGNLayer::ResetReading()
 OGRFeature *OGRDGNLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    if (nFeatureId > INT_MAX || !DGNGotoElement(hDGN, (int)nFeatureId))
+    if (nFeatureId > INT_MAX ||
+        !DGNGotoElement(hDGN, static_cast<int>(nFeatureId)))
         return nullptr;
 
     // We should likely clear the spatial search region as it affects
@@ -783,7 +784,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             if (psText->rotation != 0.0)
                 snprintf(pszOgrFS + strlen(pszOgrFS),
                          nOgrFSLen - strlen(pszOgrFS), ",a:%d",
-                         (int)(psText->rotation + 0.5));
+                         static_cast<int>(psText->rotation + 0.5));
 
             snprintf(pszOgrFS + strlen(pszOgrFS), nOgrFSLen - strlen(pszOgrFS),
                      ")");
@@ -1320,8 +1321,8 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom(OGRFeature *poFeature,
                 CPLFree(papsGroupInner);
             }
             int index = 1;
-            papsGroup = (DGNElemCore **)CPLCalloc(sizeof(void *),
-                                                  dgnElements.size() + 2);
+            papsGroup = static_cast<DGNElemCore **>(
+                CPLCalloc(sizeof(void *), dgnElements.size() + 2));
             for (std::list<DGNElemCore *>::iterator list_iter =
                      dgnElements.begin();
                  list_iter != dgnElements.end(); ++list_iter)

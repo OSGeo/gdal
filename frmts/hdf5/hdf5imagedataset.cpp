@@ -103,6 +103,8 @@ class HDF5ImageDataset final : public HDF5Dataset
 
     CPLErr CreateODIMH5Projection();
 
+    CPL_DISALLOW_COPY_ASSIGN(HDF5ImageDataset)
+
   public:
     HDF5ImageDataset();
     virtual ~HDF5ImageDataset();

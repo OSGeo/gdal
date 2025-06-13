@@ -10,10 +10,13 @@ set(_SOURCES
     netcdfvirtual.cpp
     netcdf_sentinel3_sral_mwr.cpp)
 add_gdal_driver(TARGET gdal_netCDF
-                SOURCES ${_SOURCES}
-                CORE_SOURCES netcdfdrivercore.cpp
-                PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+  SOURCES ${_SOURCES}
+  CORE_SOURCES netcdfdrivercore.cpp
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 unset(_SOURCES)
 
 function(declare_def DEF)

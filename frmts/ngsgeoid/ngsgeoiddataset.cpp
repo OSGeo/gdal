@@ -30,13 +30,15 @@ class NGSGEOIDDataset final : public GDALPamDataset
 {
     friend class NGSGEOIDRasterBand;
 
-    VSILFILE *fp;
+    VSILFILE *fp{};
     double adfGeoTransform[6];
-    int bIsLittleEndian;
+    int bIsLittleEndian{};
     mutable OGRSpatialReference m_oSRS{};
 
     static int GetHeaderInfo(const GByte *pBuffer, double *padfGeoTransform,
                              int *pnRows, int *pnCols, int *pbIsLittleEndian);
+
+    CPL_DISALLOW_COPY_ASSIGN(NGSGEOIDDataset)
 
   public:
     NGSGEOIDDataset();

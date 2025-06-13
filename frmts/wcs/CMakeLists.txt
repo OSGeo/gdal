@@ -13,8 +13,10 @@ add_gdal_driver(
     CORE_SOURCES
             wcsdrivercore.cpp
     PLUGIN_CAPABLE NO_DEPS
-    NO_SHARED_SYMBOL_WITH_CORE)
-
+    NO_SHARED_SYMBOL_WITH_CORE
+    NO_CXX_WFLAGS_EFFCXX
+    NO_WFLAG_OLD_STYLE_CAST
+)
 if(NOT TARGET gdal_WCS)
     return()
 endif()

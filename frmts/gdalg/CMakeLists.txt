@@ -3,7 +3,7 @@ add_gdal_driver(
   PLUGIN_CAPABLE
   NO_DEPS
   SOURCES gdalgdriver.cpp
-  STRONG_CXX_WFLAGS)
+)
 
 gdal_standard_includes(gdal_GDALG)
 

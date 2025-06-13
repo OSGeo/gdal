@@ -79,6 +79,8 @@ class FITSDataset final : public GDALPamDataset
     void WriteFITSInfo();
     void LoadMetadata(GDALMajorObject *poTarget);
 
+    CPL_DISALLOW_COPY_ASSIGN(FITSDataset)
+
   public:
     FITSDataset();  // Others should not call this constructor explicitly
     ~FITSDataset();
@@ -125,6 +127,8 @@ class FITSRasterBand final : public GDALPamRasterBand
     bool m_bHaveOffsetScale = false;
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
+
+    CPL_DISALLOW_COPY_ASSIGN(FITSRasterBand)
 
   protected:
     FITSDataset *m_poFDS = nullptr;
@@ -183,7 +187,7 @@ class FITSLayer final : public OGRLayer,
     LONGLONG m_nCurRow = 1;
     LONGLONG m_nRows = 0;
 
-    std::vector<ColDesc> m_aoColDescs;
+    std::vector<ColDesc> m_aoColDescs{};
 
     CPLStringList m_aosCreationOptions{};
 
@@ -193,6 +197,8 @@ class FITSLayer final : public OGRLayer,
     void SetActiveHDU();
     void RunDeferredFieldCreation(const OGRFeature *poFeature = nullptr);
     bool SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow);
+
+    CPL_DISALLOW_COPY_ASSIGN(FITSLayer)
 
   public:
     FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName);

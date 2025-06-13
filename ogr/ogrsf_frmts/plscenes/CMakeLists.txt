@@ -7,8 +7,10 @@ add_gdal_driver(TARGET ogr_PLSCENES
                 CORE_SOURCES
                     ogrplscenesdrivercore.cpp
                 PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL"
-                NO_SHARED_SYMBOL_WITH_CORE)
-
+                NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 if(NOT TARGET ogr_PLSCENES)
     return()
 endif()

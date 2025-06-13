@@ -510,8 +510,8 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 // in TileDB terminology maps to a TileDB metadata item.
 class TileDBAttribute final : public GDALAttribute
 {
-    std::shared_ptr<GDALAttribute> m_poMemAttribute;
-    std::weak_ptr<TileDBAttributeHolder> m_poParent;
+    std::shared_ptr<GDALAttribute> m_poMemAttribute{};
+    std::weak_ptr<TileDBAttributeHolder> m_poParent{};
 
     TileDBAttribute(const std::string &osParentName, const std::string &osName);
 

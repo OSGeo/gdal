@@ -22,10 +22,7 @@
 /*                    OGRGPSBabelWriteDataSource()                      */
 /************************************************************************/
 
-OGRGPSBabelWriteDataSource::OGRGPSBabelWriteDataSource()
-    : pszGPSBabelDriverName(nullptr), pszFilename(nullptr), poGPXDS(nullptr)
-{
-}
+OGRGPSBabelWriteDataSource::OGRGPSBabelWriteDataSource() = default;
 
 /************************************************************************/
 /*                  ~OGRGPSBabelWriteDataSource()                       */

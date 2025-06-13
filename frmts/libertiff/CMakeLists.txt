@@ -1,7 +1,6 @@
 add_gdal_driver(
   TARGET gdal_LIBERTIFF
   SOURCES libertiffdataset.cpp
-  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE_IF
           "NOT GDAL_USE_LERC_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
   NO_DEPS)

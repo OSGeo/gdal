@@ -3,7 +3,11 @@
 add_gdal_driver(
   TARGET gdal_AIGrid
   SOURCES aigrid.h aigccitt.c aigdataset.cpp aigopen.c gridlib.c
-  BUILTIN)
+  BUILTIN
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
+
 gdal_standard_includes(gdal_AIGrid)
 target_include_directories(gdal_AIGrid PRIVATE $<TARGET_PROPERTY:ogr_AVC,SOURCE_DIR>
                                                $<TARGET_PROPERTY:ogr_Shape,SOURCE_DIR>)

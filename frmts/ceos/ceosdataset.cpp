@@ -29,6 +29,8 @@ class CEOSDataset final : public GDALPamDataset
 
     CEOSImage *psCEOS;
 
+    CPL_DISALLOW_COPY_ASSIGN(CEOSDataset)
+
   public:
     CEOSDataset();
     ~CEOSDataset();

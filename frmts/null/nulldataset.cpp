@@ -25,6 +25,8 @@ class GDALNullDataset final : public GDALDataset
     int m_nLayers;
     OGRLayer **m_papoLayers;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALNullDataset)
+
   public:
     GDALNullDataset();
     virtual ~GDALNullDataset();
@@ -78,6 +80,8 @@ class GDALNullLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSRS = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALNullLayer)
 
   public:
     GDALNullLayer(const char *pszLayerName, const OGRSpatialReference *poSRS,
@@ -288,10 +292,11 @@ GDALDataset *GDALNullDataset::Open(GDALOpenInfo *poOpenInfo)
     GDALDataType eDT = GDT_Byte;
     for (int iType = 1; iType < GDT_TypeCount; iType++)
     {
-        if (GDALGetDataTypeName((GDALDataType)iType) != nullptr &&
-            EQUAL(GDALGetDataTypeName((GDALDataType)iType), pszDTName))
+        if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr &&
+            EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
+                  pszDTName))
         {
-            eDT = (GDALDataType)iType;
+            eDT = static_cast<GDALDataType>(iType);
             break;
         }
     }

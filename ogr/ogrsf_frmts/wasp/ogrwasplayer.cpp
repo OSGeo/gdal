@@ -27,8 +27,9 @@ OGRWAsPLayer::OGRWAsPLayer(GDALDataset *poDS, const char *pszName,
                            VSILFILE *hFileHandle,
                            OGRSpatialReference *poSpatialRef)
     : m_poDS(poDS), bMerge(false), iFeatureCount(0), sName(pszName),
-      hFile(hFileHandle), iFirstFieldIdx(0), iSecondFieldIdx(1),
-      iGeomFieldIdx(0), poLayerDefn(new OGRFeatureDefn(pszName)),
+      hFile(hFileHandle), sFirstField{}, sSecondField{}, sGeomField{},
+      iFirstFieldIdx(0), iSecondFieldIdx(1), iGeomFieldIdx(0),
+      poLayerDefn(new OGRFeatureDefn(pszName)),
       poSpatialReference(poSpatialRef), iOffsetFeatureBegin(VSIFTellL(hFile)),
       eMode(READ_ONLY)
 {

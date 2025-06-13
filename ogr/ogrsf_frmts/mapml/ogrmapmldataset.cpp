@@ -49,7 +49,11 @@ class OGRMapMLReaderDataset final : public GDALPamDataset
     CPLXMLTreeCloser m_oRootCloser{nullptr};
     CPLString m_osDefaultLayerName{};
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRMapMLReaderDataset)
+
   public:
+    OGRMapMLReaderDataset() = default;
+
     int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
@@ -79,6 +83,8 @@ class OGRMapMLReaderLayer final
     GIntBig m_nFID = 1;
 
     OGRFeature *GetNextRawFeature();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRMapMLReaderLayer)
 
   public:
     OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS, const char *pszLayerName);
@@ -121,6 +127,8 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     // not to be destroyed
     CPLXMLNode *m_psLastChild = nullptr;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRMapMLWriterDataset)
+
   public:
     explicit OGRMapMLWriterDataset(VSILFILE *fpOut);
     ~OGRMapMLWriterDataset() override;
@@ -161,6 +169,8 @@ class OGRMapMLWriterLayer final : public OGRLayer
     void writePolygon(CPLXMLNode *psContainer, const OGRPolygon *poPoly);
     void writeGeometry(CPLXMLNode *psContainer, const OGRGeometry *poGeom,
                        bool bInGeometryCollection);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRMapMLWriterLayer)
 
   public:
     OGRMapMLWriterLayer(OGRMapMLWriterDataset *poDS, const char *pszLayerName,

@@ -65,6 +65,8 @@ class GDALEXRDataset final : public GDALPamDataset
         m_apoOvrDS.back()->m_poParent = this;
     }
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRDataset)
+
   public:
     GDALEXRDataset() = default;
     ~GDALEXRDataset();
@@ -92,7 +94,7 @@ class GDALEXRRasterBand final : public GDALPamRasterBand
     friend class GDALEXRDataset;
 
     GDALColorInterp m_eInterp = GCI_Undefined;
-    std::string m_osChannelName;
+    std::string m_osChannelName{};
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -463,6 +465,8 @@ class GDALEXRIOStream final : public IStream, public OStream
 
   private:
     VSILFILE *m_fp;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRIOStream)
 };
 
 bool GDALEXRIOStream::read(char c[/*n*/], int n)
@@ -1446,6 +1450,8 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     Header m_header;
 
     void WriteHeader();
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRWritableDataset)
 
   public:
     GDALEXRWritableDataset(int nXSize, int nYSize) : m_header(nXSize, nYSize)

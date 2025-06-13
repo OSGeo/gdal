@@ -22,7 +22,8 @@ int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
     const char *pszFilename = poOpenInfo->pszFilename;
-    const char *pabyHeader = (const char *)poOpenInfo->pabyHeader;
+    const char *pabyHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if (poOpenInfo->nHeaderBytes == 0 &&
         STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {

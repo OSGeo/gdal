@@ -39,6 +39,8 @@ class WEBPDataset final : public GDALPamDataset
 
     int bHasReadXMPMetadata;
 
+    CPL_DISALLOW_COPY_ASSIGN(WEBPDataset)
+
   public:
     WEBPDataset();
     virtual ~WEBPDataset();

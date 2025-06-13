@@ -1,4 +1,9 @@
-add_gdal_driver(TARGET ogr_VDV SOURCES ogr_vdv.h ogrvdvdatasource.cpp PLUGIN_CAPABLE NO_DEPS)
+add_gdal_driver(TARGET ogr_VDV SOURCES ogr_vdv.h ogrvdvdatasource.cpp
+  PLUGIN_CAPABLE
+  NO_DEPS
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_VDV)
 
 set(GDAL_DATA_FILES

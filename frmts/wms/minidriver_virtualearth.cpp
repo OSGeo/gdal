@@ -75,7 +75,7 @@ CPLErr WMSMiniDriver_VirtualEarth::TiledImageRequest(
         int row = (y & 1);
         int col = (x & 1);
 
-        szTileNumber[z - 1 - i] = (char)('0' + (col | (row << 1)));
+        szTileNumber[z - 1 - i] = static_cast<char>('0' + (col | (row << 1)));
 
         x = x >> 1;
         y = y >> 1;

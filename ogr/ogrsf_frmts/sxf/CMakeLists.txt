@@ -1,5 +1,7 @@
 add_gdal_driver(TARGET ogr_SXF SOURCES ogr_sxf.h ogrsxfdatasource.cpp ogrsxflayer.cpp ogrsxfdriver.cpp PLUGIN_CAPABLE
-                                       NO_DEPS)
+  NO_DEPS
+  NO_WFLAG_OLD_STYLE_CAST
+)
 target_include_directories(ogr_SXF PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 gdal_standard_includes(ogr_SXF)
 

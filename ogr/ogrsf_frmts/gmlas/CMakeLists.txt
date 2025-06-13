@@ -17,7 +17,6 @@ add_gdal_driver(
           xercesc_headers.h
   CORE_SOURCES
           ogrgmlasdrivercore.cpp
-  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL"
   NO_SHARED_SYMBOL_WITH_CORE)
 

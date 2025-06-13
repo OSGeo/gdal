@@ -158,8 +158,12 @@ int LOSLASDataset::Identify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 #endif
 
-    if (!STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 56, "NADGRD") &&
-        !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 56, "GEOGRD"))
+    if (!STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader) +
+                            56,
+                        "NADGRD") &&
+        !STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader) +
+                            56,
+                        "GEOGRD"))
         return FALSE;
 
     return TRUE;

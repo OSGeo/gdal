@@ -17,13 +17,9 @@
 
 #include <algorithm>
 
-WMSMiniDriver_WMS::WMSMiniDriver_WMS() : m_iversion(0)
-{
-}
+WMSMiniDriver_WMS::WMSMiniDriver_WMS() = default;
 
-WMSMiniDriver_WMS::~WMSMiniDriver_WMS()
-{
-}
+WMSMiniDriver_WMS::~WMSMiniDriver_WMS() = default;
 
 static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 {
@@ -156,10 +152,9 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config,
         m_transparent = CPLGetXMLValue(config, "Transparent", "");
         // the transparent flag needs to be "TRUE" or "FALSE" in upper case
         // according to the WMS spec so force upper case
-        for (int i = 0; i < (int)m_transparent.size(); i++)
+        for (char &ch : m_transparent)
         {
-            m_transparent[i] =
-                (char)toupper(static_cast<unsigned char>(m_transparent[i]));
+            ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
         }
     }
 

@@ -541,22 +541,24 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char *pszName,
         if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
             return nullptr;
 
-        iPixel =
-            (int)floor(adfInvGeoTransform[0] + adfInvGeoTransform[1] * dfGeoX +
-                       adfInvGeoTransform[2] * dfGeoY);
-        iLine =
-            (int)floor(adfInvGeoTransform[3] + adfInvGeoTransform[4] * dfGeoX +
-                       adfInvGeoTransform[5] * dfGeoY);
+        iPixel = static_cast<int>(floor(adfInvGeoTransform[0] +
+                                        adfInvGeoTransform[1] * dfGeoX +
+                                        adfInvGeoTransform[2] * dfGeoY));
+        iLine = static_cast<int>(floor(adfInvGeoTransform[3] +
+                                       adfInvGeoTransform[4] * dfGeoX +
+                                       adfInvGeoTransform[5] * dfGeoY));
 
         /* The GetDataset() for the WMS driver is always the main overview
          * level, so rescale */
         /* the values if we are an overview */
         if (m_overview >= 0)
         {
-            iPixel = (int)(1.0 * iPixel * GetXSize() /
-                           m_parent_dataset->GetRasterBand(1)->GetXSize());
-            iLine = (int)(1.0 * iLine * GetYSize() /
-                          m_parent_dataset->GetRasterBand(1)->GetYSize());
+            iPixel = static_cast<int>(
+                1.0 * iPixel * GetXSize() /
+                m_parent_dataset->GetRasterBand(1)->GetXSize());
+            iLine = static_cast<int>(
+                1.0 * iLine * GetYSize() /
+                m_parent_dataset->GetRasterBand(1)->GetYSize());
         }
     }
     else

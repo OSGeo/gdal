@@ -156,7 +156,7 @@ CPLErr AAIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
         char szToken[500] = {'\0'};
         int iTokenChar = 0;
-        while (chNext != '\0' && !isspace((unsigned char)chNext))
+        while (chNext != '\0' && !isspace(static_cast<unsigned char>(chNext)))
         {
             if (iTokenChar == sizeof(szToken) - 2)
             {
@@ -357,15 +357,24 @@ int AAIGDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     // Does this look like an AI grid file?
     if (poOpenInfo->nHeaderBytes < 40 ||
-        !(STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "ncols") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "nrows") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "xllcorner") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "yllcorner") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "xllcenter") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "yllcenter") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "dx") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "dy") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "cellsize")))
+        !(STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "ncols") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "nrows") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "xllcorner") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "yllcorner") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "xllcenter") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "yllcenter") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "dx") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "dy") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "cellsize")))
         return FALSE;
 
     return TRUE;
@@ -380,12 +389,18 @@ int GRASSASCIIDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     // Does this look like a GRASS ASCII grid file?
     if (poOpenInfo->nHeaderBytes < 40 ||
-        !(STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "north:") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "south:") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "east:") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "west:") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "rows:") ||
-          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "cols:")))
+        !(STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "north:") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "south:") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "east:") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "west:") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "rows:") ||
+          STARTS_WITH_CI(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         "cols:")))
         return FALSE;
 
     return TRUE;
@@ -400,22 +415,25 @@ int ISGDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     // Does this look like a ISG grid file?
     if (poOpenInfo->nHeaderBytes < 40 ||
-        !strstr((const char *)poOpenInfo->pabyHeader, "model name"))
+        !strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                "model name"))
     {
         return FALSE;
     }
     for (int i = 0; i < 2; ++i)
     {
-        if (strstr((const char *)poOpenInfo->pabyHeader, "lat min") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "lat max") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "lon min") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "lon max") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "nrows") != nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "ncols") != nullptr)
+        if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "lat min") != nullptr &&
+            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "lat max") != nullptr &&
+            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "lon min") != nullptr &&
+            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "lon max") != nullptr &&
+            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "nrows") != nullptr &&
+            strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                   "ncols") != nullptr)
         {
             return TRUE;
         }
@@ -1073,7 +1091,9 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     }
 
     // Parse the header.
-    if (!poDS->ParseHeader((const char *)poOpenInfo->pabyHeader, pszDataType))
+    if (!poDS->ParseHeader(
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+            pszDataType))
     {
         delete poDS;
         return nullptr;

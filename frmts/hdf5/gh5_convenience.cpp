@@ -134,7 +134,7 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
 
     for (i = 0; i < nAttrDims; i++)
     {
-        nAttrElements *= (int)anSize[i];
+        nAttrElements *= static_cast<int>(anSize[i]);
     }
 
     if (nAttrElements != 1)
@@ -157,19 +157,19 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
 
     // Translate to double.
     if (H5Tequal(H5T_NATIVE_CHAR, hAttrNativeType))
-        dfResult = *((char *)buf);
+        dfResult = *(static_cast<char *>(buf));
     else if (H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType))
-        dfResult = *((signed char *)buf);
+        dfResult = *(static_cast<signed char *>(buf));
     else if (H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType))
-        dfResult = *((unsigned char *)buf);
+        dfResult = *(static_cast<unsigned char *>(buf));
     else if (H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType))
-        dfResult = *((short *)buf);
+        dfResult = *(static_cast<short *>(buf));
     else if (H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType))
-        dfResult = *((unsigned short *)buf);
+        dfResult = *(static_cast<unsigned short *>(buf));
     else if (H5Tequal(H5T_NATIVE_INT, hAttrNativeType))
-        dfResult = *((int *)buf);
+        dfResult = *(static_cast<int *>(buf));
     else if (H5Tequal(H5T_NATIVE_UINT, hAttrNativeType))
-        dfResult = *((unsigned int *)buf);
+        dfResult = *(static_cast<unsigned int *>(buf));
     else if (H5Tequal(H5T_NATIVE_INT64, hAttrNativeType))
     {
         const auto nVal = *static_cast<int64_t *>(buf);
@@ -197,7 +197,7 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
 #ifdef HDF5_HAVE_FLOAT16
     else if (H5Tequal(H5T_NATIVE_FLOAT16, hAttrNativeType))
     {
-        const uint16_t nVal16 = *((uint16_t *)buf);
+        const uint16_t nVal16 = *(static_cast<uint16_t *>(buf));
         const uint32_t nVal32 = CPLHalfToFloat(nVal16);
         float fVal;
         memcpy(&fVal, &nVal32, sizeof(fVal));
@@ -205,9 +205,9 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
     }
 #endif
     else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType))
-        dfResult = *((float *)buf);
+        dfResult = *(static_cast<float *>(buf));
     else if (H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType))
-        dfResult = *((double *)buf);
+        dfResult = *(static_cast<double *>(buf));
     else
     {
         if (bReportError)

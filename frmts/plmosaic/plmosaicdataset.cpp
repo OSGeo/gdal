@@ -32,19 +32,17 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class PLLinkedDataset;
-
-class PLLinkedDataset
+struct PLLinkedDataset
 {
   public:
-    CPLString osKey;
-    GDALDataset *poDS;
-    PLLinkedDataset *psPrev;
-    PLLinkedDataset *psNext;
+    CPLString osKey{};
+    GDALDataset *poDS{};
+    PLLinkedDataset *psPrev{};
+    PLLinkedDataset *psNext{};
 
-    PLLinkedDataset() : poDS(nullptr), psPrev(nullptr), psNext(nullptr)
-    {
-    }
+    PLLinkedDataset() = default;
+
+    CPL_DISALLOW_COPY_ASSIGN(PLLinkedDataset)
 };
 
 class PLMosaicRasterBand;
@@ -53,36 +51,36 @@ class PLMosaicDataset final : public GDALPamDataset
 {
     friend class PLMosaicRasterBand;
 
-    int bMustCleanPersistent;
-    CPLString osCachePathRoot;
-    int bTrustCache;
-    CPLString osBaseURL;
-    CPLString osAPIKey;
-    CPLString osMosaic;
+    int bMustCleanPersistent{};
+    CPLString osCachePathRoot{};
+    int bTrustCache{};
+    CPLString osBaseURL{};
+    CPLString osAPIKey{};
+    CPLString osMosaic{};
     OGRSpatialReference m_oSRS{};
-    int nQuadSize;
-    CPLString osQuadsURL;
-    int bHasGeoTransform;
+    int nQuadSize{};
+    CPLString osQuadsURL{};
+    int bHasGeoTransform{};
     double adfGeoTransform[6];
-    int nZoomLevelMax;
-    int bUseTMSForMain;
-    std::vector<GDALDataset *> apoTMSDS;
+    int nZoomLevelMax{};
+    int bUseTMSForMain{};
+    std::vector<GDALDataset *> apoTMSDS{};
     int nMetaTileXShift = 0;
     int nMetaTileYShift = 0;
     bool bQuadDownload = false;
 
-    int nCacheMaxSize;
-    std::map<CPLString, PLLinkedDataset *> oMapLinkedDatasets;
-    PLLinkedDataset *psHead;
-    PLLinkedDataset *psTail;
+    int nCacheMaxSize{};
+    std::map<CPLString, PLLinkedDataset *> oMapLinkedDatasets{};
+    PLLinkedDataset *psHead{};
+    PLLinkedDataset *psTail{};
     void FlushDatasetsCache();
     CPLString GetMosaicCachePath();
     void CreateMosaicCachePathIfNecessary();
 
-    int nLastMetaTileX;
-    int nLastMetaTileY;
+    int nLastMetaTileX{};
+    int nLastMetaTileY{};
     json_object *poLastItemsInformation = nullptr;
-    CPLString osLastRetGetLocationInfo;
+    CPLString osLastRetGetLocationInfo{};
     const char *GetLocationInfo(int nPixel, int nLine);
 
     char **GetBaseHTTPOptions();
@@ -95,6 +93,8 @@ class PLMosaicDataset final : public GDALPamDataset
     void InsertNewDataset(const CPLString &osKey, GDALDataset *poDS);
     GDALDataset *OpenAndInsertNewDataset(const CPLString &osTmpFilename,
                                          const CPLString &osTilename);
+
+    CPL_DISALLOW_COPY_ASSIGN(PLMosaicDataset)
 
   public:
     PLMosaicDataset();

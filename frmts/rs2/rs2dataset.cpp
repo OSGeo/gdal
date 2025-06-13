@@ -103,6 +103,8 @@ class RS2Dataset final : public GDALPamDataset
 
     char **papszExtraFiles;
 
+    CPL_DISALLOW_COPY_ASSIGN(RS2Dataset)
+
   protected:
     virtual int CloseDependentDatasets() override;
 
@@ -143,6 +145,8 @@ class RS2RasterBand final : public GDALPamRasterBand
     // 2 bands representing I+Q -> one complex band
     // otherwise poBandFile is passed straight through
     bool bIsTwoBandComplex = false;
+
+    CPL_DISALLOW_COPY_ASSIGN(RS2RasterBand)
 
   public:
     RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
@@ -296,6 +300,8 @@ class RS2CalibRasterBand final : public GDALPamRasterBand
     int m_nTableSize;
     float m_nfOffset;
     char *m_pszLUTFile;
+
+    CPL_DISALLOW_COPY_ASSIGN(RS2CalibRasterBand)
 
     void ReadLUT();
 
@@ -649,8 +655,10 @@ int RS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 100)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "/rs2") == nullptr ||
-        strstr((const char *)poOpenInfo->pabyHeader, "<product") == nullptr)
+    if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "/rs2") == nullptr ||
+        strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "<product") == nullptr)
         return FALSE;
 
     return TRUE;

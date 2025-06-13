@@ -18,7 +18,6 @@ add_gdal_driver(
   CORE_SOURCES openjpegdrivercore.cpp
   DEF FRMT_openjpeg PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE
-  STRONG_CXX_WFLAGS
 )
 
 if(TARGET gdal_JP2OpenJPEG_core)

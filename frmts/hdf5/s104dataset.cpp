@@ -54,6 +54,8 @@ class S104RasterBand final : public GDALProxyRasterBand
     std::string m_osUnitType{};
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
+    CPL_DISALLOW_COPY_ASSIGN(S104RasterBand)
+
   public:
     explicit S104RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
         : m_poDS(std::move(poDSIn)),

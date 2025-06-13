@@ -52,8 +52,8 @@ class HDF5EOSParser
     struct GridMetadata
     {
         std::string osGridName{};
-        std::vector<Dimension> aoDimensions;  // all dimensions of the grid
-        std::string osProjection{};           // e.g HE5_GCTP_SNSOID
+        std::vector<Dimension> aoDimensions{};  // all dimensions of the grid
+        std::string osProjection{};             // e.g HE5_GCTP_SNSOID
         int nProjCode = -1;          // GTCP numeric value for osProjection
         std::string osGridOrigin{};  // e.g HE5_HDFE_GD_UL
         std::vector<double>
@@ -97,8 +97,8 @@ class HDF5EOSParser
         int iYDim = -1;
         int iOtherDim = -1;
 
-        std::string osLongitudeSubdataset;
-        std::string osLatitudeSubdataset;
+        std::string osLongitudeSubdataset{};
+        std::string osLatitudeSubdataset{};
         int nLineOffset = 0;
         int nLineStep = 0;
         int nPixelOffset = 0;

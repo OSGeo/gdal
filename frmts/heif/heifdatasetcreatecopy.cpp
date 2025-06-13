@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include <libheif/heif.h>
+#include "include_libheif.h"
 
 #include "cpl_error.h"
 
