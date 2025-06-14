@@ -1963,8 +1963,12 @@ GDALComputedRasterBandH CPL_DLL GDALRasterBandAsDataType(
 
 GDALComputedRasterBandH CPL_DLL GDALMaximumOfNBands(
     size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandMaxConstant(
+    GDALRasterBandH hBand, double dfConstant) CPL_WARN_UNUSED_RESULT;
 GDALComputedRasterBandH CPL_DLL GDALMinimumOfNBands(
     size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandMinConstant(
+    GDALRasterBandH hBand, double dfConstant) CPL_WARN_UNUSED_RESULT;
 GDALComputedRasterBandH CPL_DLL GDALMeanOfNBands(
     size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
 

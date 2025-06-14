@@ -66,6 +66,7 @@ class GDALAlgorithm;
 #if __cplusplus >= 202002L
 #include <span>
 #endif
+#include <type_traits>
 #include <vector>
 
 #include "ogr_core.h"
@@ -2135,8 +2136,9 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_CAST,
     };
 
-    GDALComputedRasterBand(Operation op,
-                           const std::vector<const GDALRasterBand *>& bands);
+    GDALComputedRasterBand(
+        Operation op, const std::vector<const GDALRasterBand *> &bands,
+        double constant = std::numeric_limits<double>::quiet_NaN());
     GDALComputedRasterBand(Operation op, double constant,
                            const GDALRasterBand &band);
     GDALComputedRasterBand(Operation op, const GDALRasterBand &band,
@@ -2195,7 +2197,7 @@ using std::max;
 using std::min;
 
 /** Return a band whose each pixel value is the minimum of the corresponding
- * pixel values in the input bands.
+ * pixel values in the inputs (bands or constants)
  *
  * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
@@ -2214,34 +2216,66 @@ inline GDALComputedRasterBand min(const GDALRasterBand &first,
 }
 
 //! @cond Doxygen_Suppress
-inline GDALComputedRasterBand
-minInternal(std::vector<const GDALRasterBand *> &bands)
+
+namespace detail
+{
+
+template <typename U, typename Enable> struct minDealFirstArg;
+
+template <typename U>
+struct minDealFirstArg<
+    U, typename std::enable_if<std::is_arithmetic<U>::value>::type>
+{
+    inline static void process(std::vector<const GDALRasterBand *> &,
+                               double &constant, const U &first)
+    {
+        if (std::isnan(constant) || static_cast<double>(first) < constant)
+            constant = static_cast<double>(first);
+    }
+};
+
+template <typename U>
+struct minDealFirstArg<
+    U, typename std::enable_if<!std::is_arithmetic<U>::value>::type>
+{
+    inline static void process(std::vector<const GDALRasterBand *> &bands,
+                               double &, const U &first)
+    {
+        if (!bands.empty())
+            GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
+        bands.push_back(&first);
+    }
+};
+
+inline static GDALComputedRasterBand
+minInternal(std::vector<const GDALRasterBand *> &bands, double constant)
 {
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
-                                  bands);
+                                  bands, constant);
 }
 
 template <typename U, typename... V>
-inline GDALComputedRasterBand
-minInternal(std::vector<const GDALRasterBand *> &bands, const U &first,
-            V &&...rest)
+GDALComputedRasterBand minInternal(std::vector<const GDALRasterBand *> &bands,
+                                   double constant, const U &first, V &&...rest)
 {
-    if (!bands.empty())
-        GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
-    bands.push_back(&first);
-    return minInternal(bands, std::forward<V>(rest)...);
+    minDealFirstArg<U, void>::process(bands, constant, first);
+    return minInternal(bands, constant, std::forward<V>(rest)...);
 }
 
-template <typename... Args> inline GDALComputedRasterBand min(Args &&...args)
+}  // namespace detail
+
+template <typename U, typename... V>
+inline GDALComputedRasterBand min(const U &first, V &&...rest)
 {
     std::vector<const GDALRasterBand *> bands;
-    return minInternal(bands, std::forward<Args>(args)...);
+    return detail::minInternal(bands, std::numeric_limits<double>::quiet_NaN(),
+                               first, std::forward<V>(rest)...);
 }
 
 //! @endcond
 
 /** Return a band whose each pixel value is the maximum of the corresponding
- * pixel values in the input bands.
+ * pixel values in the inputs (bands or constants)
  *
  * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
@@ -2260,29 +2294,63 @@ inline GDALComputedRasterBand max(const GDALRasterBand &first,
 }
 
 //! @cond Doxygen_Suppress
-inline GDALComputedRasterBand
-maxInternal(std::vector<const GDALRasterBand *> &bands)
+
+namespace detail
+{
+
+template <typename U, typename Enable> struct maxDealFirstArg;
+
+template <typename U>
+struct maxDealFirstArg<
+    U, typename std::enable_if<std::is_arithmetic<U>::value>::type>
+{
+    inline static void process(std::vector<const GDALRasterBand *> &,
+                               double &constant, const U &first)
+    {
+        if (std::isnan(constant) || static_cast<double>(first) > constant)
+            constant = static_cast<double>(first);
+    }
+};
+
+template <typename U>
+struct maxDealFirstArg<
+    U, typename std::enable_if<!std::is_arithmetic<U>::value>::type>
+{
+    inline static void process(std::vector<const GDALRasterBand *> &bands,
+                               double &, const U &first)
+    {
+        if (!bands.empty())
+            GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
+        bands.push_back(&first);
+    }
+};
+
+inline static GDALComputedRasterBand
+maxInternal(std::vector<const GDALRasterBand *> &bands, double constant)
 {
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
-                                  bands);
+                                  bands, constant);
 }
 
 template <typename U, typename... V>
-inline GDALComputedRasterBand
-maxInternal(std::vector<const GDALRasterBand *> &bands, const U &first,
-            V &&...rest)
+GDALComputedRasterBand maxInternal(std::vector<const GDALRasterBand *> &bands,
+                                   double constant, const U &first, V &&...rest)
 {
-    if (!bands.empty())
-        GDALRasterBand::ThrowIfNotSameDimensions(first, *(bands.front()));
-    bands.push_back(&first);
-    return maxInternal(bands, std::forward<V>(rest)...);
+    maxDealFirstArg<U, void>::process(bands, constant, first);
+    return maxInternal(bands, constant, std::forward<V>(rest)...);
 }
 
-template <typename... Args> inline GDALComputedRasterBand max(Args &&...args)
+}  // namespace detail
+
+template <typename U, typename... V>
+inline GDALComputedRasterBand max(const U &first, V &&...rest)
 {
     std::vector<const GDALRasterBand *> bands;
-    return maxInternal(bands, std::forward<Args>(args)...);
+    return detail::maxInternal(bands, std::numeric_limits<double>::quiet_NaN(),
+                               first, std::forward<V>(rest)...);
 }
+
+//! @endcond
 
 /** Return a band whose each pixel value is the arithmetic mean of the
  * corresponding pixel values in the input bands.

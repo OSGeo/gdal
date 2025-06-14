@@ -802,6 +802,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
   %clear (int band_count, GDALRasterBandShadow **bands);
 
+  %newobject MaxConstant;
+  GDALComputedRasterBandShadow* MaxConstant(double constant)
+  {
+      return GDALRasterBandMaxConstant(self, constant);
+  }
+
   %newobject MinimumOfNBands;
   %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
   static GDALComputedRasterBandShadow* MinimumOfNBands(int band_count, GDALRasterBandShadow** bands)
@@ -809,6 +815,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
      return GDALMinimumOfNBands(band_count, bands);
   }
   %clear (int band_count, GDALRasterBandShadow **bands);
+
+  %newobject MinConstant;
+  GDALComputedRasterBandShadow* MinConstant(double constant)
+  {
+      return GDALRasterBandMinConstant(self, constant);
+  }
 
   %newobject MeanOfNBands;
   %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
