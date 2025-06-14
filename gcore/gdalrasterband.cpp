@@ -10800,6 +10800,28 @@ GDALComputedRasterBandH GDALMaximumOfNBands(size_t nBandCount,
 }
 
 /************************************************************************/
+/*                     GDALRasterBandMaxConstant()                      */
+/************************************************************************/
+
+/** Return a band whose each pixel value is the maximum of the corresponding
+ * pixel values in the input band and the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandMaxConstant(GDALRasterBandH hBand,
+                                                  double dfConstant)
+{
+    return GDALRasterBand::ToHandle(new GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_MAX,
+        std::vector<const GDALRasterBand *>{GDALRasterBand::FromHandle(hBand)},
+        dfConstant));
+}
+
+/************************************************************************/
 /*                       GDALMinimumOfNBands()                          */
 /************************************************************************/
 
@@ -10817,6 +10839,28 @@ GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
 {
     return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MIN,
                                  nBandCount, pahBands);
+}
+
+/************************************************************************/
+/*                     GDALRasterBandMinConstant()                      */
+/************************************************************************/
+
+/** Return a band whose each pixel value is the minimum of the corresponding
+ * pixel values in the input band and the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandMinConstant(GDALRasterBandH hBand,
+                                                  double dfConstant)
+{
+    return GDALRasterBand::ToHandle(new GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_MIN,
+        std::vector<const GDALRasterBand *>{GDALRasterBand::FromHandle(hBand)},
+        dfConstant));
 }
 
 /************************************************************************/

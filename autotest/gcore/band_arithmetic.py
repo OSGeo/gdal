@@ -270,7 +270,36 @@ def test_band_arithmetic_minimum():
         return gdal.Band.minimum(R, G)
 
     res = get()
+    assert res.DataType == gdal.GDT_Byte
     assert res.ComputeRasterMinMax(False) == (2, 2)
+
+
+def test_band_arithmetic_minimum_with_constant():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+        R = ds.GetRasterBand(1)
+        R.Fill(2)
+        G = ds.GetRasterBand(2)
+        G.Fill(4)
+        return gdal.Band.minimum(R, 3, G)
+
+    res = get()
+    assert res.DataType == gdal.GDT_Byte
+    assert res.ComputeRasterMinMax(False) == (2, 2)
+
+
+def test_band_arithmetic_minimum_with_constant_bis():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+        R = ds.GetRasterBand(1)
+        R.Fill(2)
+        G = ds.GetRasterBand(2)
+        G.Fill(4)
+        return gdal.Band.minimum(R, 1.5, G)
+
+    res = get()
+    assert res.DataType == gdal.GDT_Float32
+    assert res.ComputeRasterMinMax(False) == (1.5, 1.5)
 
 
 def test_band_arithmetic_minimum_error():
@@ -278,6 +307,12 @@ def test_band_arithmetic_minimum_error():
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.Band.minimum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+    with pytest.raises(
+        Exception,
+        match=r"At least one argument should be a band \(or convertible to a band\)",
+    ):
+        gdal.Band.minimum()
 
 
 def test_band_arithmetic_maximum():
@@ -290,7 +325,36 @@ def test_band_arithmetic_maximum():
         return gdal.Band.maximum(R, G)
 
     res = get()
+    assert res.DataType == gdal.GDT_Byte
     assert res.ComputeRasterMinMax(False) == (4, 4)
+
+
+def test_band_arithmetic_maximum_with_constant():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+        R = ds.GetRasterBand(1)
+        R.Fill(2)
+        G = ds.GetRasterBand(2)
+        G.Fill(4)
+        return gdal.Band.maximum(R, 3, G)
+
+    res = get()
+    assert res.DataType == gdal.GDT_Byte
+    assert res.ComputeRasterMinMax(False) == (4, 4)
+
+
+def test_band_arithmetic_maximum_with_constant_bis():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+        R = ds.GetRasterBand(1)
+        R.Fill(2)
+        G = ds.GetRasterBand(2)
+        G.Fill(4)
+        return gdal.Band.maximum(R, 4.56789012345, G)
+
+    res = get()
+    assert res.DataType == gdal.GDT_Float64
+    assert res.ComputeRasterMinMax(False) == (4.56789012345, 4.56789012345)
 
 
 def test_band_arithmetic_maximum_error():
@@ -298,6 +362,12 @@ def test_band_arithmetic_maximum_error():
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.Band.maximum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+    with pytest.raises(
+        Exception,
+        match=r"At least one argument should be a band \(or convertible to a band\)",
+    ):
+        gdal.Band.maximum()
 
 
 def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):

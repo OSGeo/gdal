@@ -672,24 +672,50 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
   @staticmethod
   def minimum(*args):
       """Return a band whose each pixel value is the minimum of the corresponding
-         pixel values in the input bands.
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
 
          The resulting band is lazily evaluated.
       """
-      bands = [Band._get_as_band_if_possible(band) for band in args]
-      band_refs = [band for band in args]
-      return Band.MinimumOfNBands(bands)._add_parent_references(band_refs)
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg < constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = Band.MinimumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = res.MinConstant(constant)._add_parent_references([res])
+      return res
 
   @staticmethod
   def maximum(*args):
       """Return a band whose each pixel value is the maximum of the corresponding
-         pixel values in the input bands.
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
 
          The resulting band is lazily evaluated.
       """
-      bands = [Band._get_as_band_if_possible(band) for band in args]
-      band_refs = [band for band in args]
-      return Band.MaximumOfNBands(bands)._add_parent_references(band_refs)
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg > constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = Band.MaximumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = res.MaxConstant(constant)._add_parent_references([res])
+      return res
 
   @staticmethod
   def mean(*args):

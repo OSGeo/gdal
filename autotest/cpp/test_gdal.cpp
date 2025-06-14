@@ -5630,11 +5630,33 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_NEAR(adfMinMax[0], std::min(FIRST, std::min(SECOND, THIRD)),
                     1e-14);
 
+        EXPECT_EQ(gdal::min(thirdBand, firstBand, 2, secondBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_NEAR(adfMinMax[0], std::min(FIRST, std::min(SECOND, THIRD)),
+                    1e-14);
+
+        EXPECT_EQ(gdal::min(thirdBand, firstBand, -1, secondBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], -1);
+
         EXPECT_EQ(gdal::max(firstBand, thirdBand, secondBand)
                       .ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
         EXPECT_NEAR(adfMinMax[0], std::max(FIRST, std::max(SECOND, THIRD)),
                     1e-14);
+
+        EXPECT_EQ(gdal::max(firstBand, thirdBand, -1, secondBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_NEAR(adfMinMax[0], std::max(FIRST, std::max(SECOND, THIRD)),
+                    1e-14);
+
+        EXPECT_EQ(gdal::max(thirdBand, firstBand, 100, secondBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 100);
 
         EXPECT_EQ(gdal::mean(firstBand, thirdBand, secondBand)
                       .ComputeRasterMinMax(false, adfMinMax),
