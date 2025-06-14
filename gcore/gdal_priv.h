@@ -2154,6 +2154,8 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
 
     //! @endcond
 
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+
     /** Convert a GDALComputedRasterBand* to a GDALComputedRasterBandH.
      */
     static inline GDALComputedRasterBandH
@@ -2184,6 +2186,8 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
   private:
     friend class GDALComputedDataset;
     std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_poOwningDS{};
+    bool m_bHasNoData{false};
+    double m_dfNoDataValue{0};
 
     GDALComputedRasterBand(const GDALComputedRasterBand &, bool);
     GDALComputedRasterBand(const GDALComputedRasterBand &) = delete;

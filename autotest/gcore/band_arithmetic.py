@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -28,6 +30,7 @@ def test_band_arithmetic_add():
 
     res = get()
     assert res.ComputeRasterMinMax(False) == (3, 3)
+    assert res.GetNoDataValue() is None
 
 
 def test_band_arithmetic_add_constant():
@@ -407,3 +410,82 @@ def test_band_arithmetic_mean_error():
         match="At least one band should be passed",
     ):
         gdal.Band.mean()
+
+
+def test_band_arithmetic_add_nodata():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+        R = ds.GetRasterBand(1)
+        R.SetNoDataValue(1)
+        R.WriteRaster(0, 0, 2, 1, b"\x01\x02")
+        G = ds.GetRasterBand(2)
+        G.SetNoDataValue(1)
+        G.WriteRaster(0, 0, 2, 1, b"\x03\x04")
+        return R + G
+
+    res = get()
+    assert res.GetNoDataValue() == 1
+    assert res.ReadRaster(buf_type=gdal.GDT_Byte) == b"\x01\x06"
+
+
+def test_band_arithmetic_add_nodata_nan():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2, gdal.GDT_Float32)
+        R = ds.GetRasterBand(1)
+        R.SetNoDataValue(float("nan"))
+        G = ds.GetRasterBand(2)
+        G.SetNoDataValue(float("nan"))
+        return R + G
+
+    res = get()
+    assert math.isnan(res.GetNoDataValue())
+
+
+def test_band_arithmetic_add_nodata_not_all_bands():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+        R = ds.GetRasterBand(1)
+        R.SetNoDataValue(1)
+        G = ds.GetRasterBand(2)
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            "Some sources have a nodata value, and others none. Ignoring nodata",
+        ):
+            return R + G
+
+    res = get()
+    assert res.GetNoDataValue() is None
+
+
+def test_band_arithmetic_add_nodata_not_same_value():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+        R = ds.GetRasterBand(1)
+        R.SetNoDataValue(1)
+        G = ds.GetRasterBand(2)
+        G.SetNoDataValue(2)
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            "Not all sources have the same nodata value. Ignoring nodata",
+        ):
+            return R + G
+
+    res = get()
+    assert res.GetNoDataValue() is None
+
+
+def test_band_arithmetic_add_nodata_not_same_value_nan():
+    def get():
+        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2, gdal.GDT_Float32)
+        R = ds.GetRasterBand(1)
+        R.SetNoDataValue(1)
+        G = ds.GetRasterBand(2)
+        G.SetNoDataValue(float("nan"))
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            "Not all sources have the same nodata value. Ignoring nodata",
+        ):
+            return R + G
+
+    res = get()
+    assert res.GetNoDataValue() is None
