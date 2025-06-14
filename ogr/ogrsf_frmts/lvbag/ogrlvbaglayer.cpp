@@ -62,7 +62,9 @@ OGRLVBAGLayer::~OGRLVBAGLayer()
 void OGRLVBAGLayer::ResetReading()
 {
     if (!TouchLayer())
+    {
         return;
+    }
 
     VSIRewindL(fp);
 
@@ -83,7 +85,9 @@ void OGRLVBAGLayer::ResetReading()
 OGRFeatureDefn *OGRLVBAGLayer::GetLayerDefn()
 {
     if (!TouchLayer())
+    {
         return nullptr;
+    }
 
     if (!bHasReadSchema)
     {
@@ -105,7 +109,9 @@ static inline const char *XMLTagSplit(const char *pszName)
     const char *pszTag = pszName;
     const char *pszSep = strchr(pszTag, ':');
     if (pszSep)
+    {
         pszTag = pszSep + 1;
+    }
 
     return pszTag;
 }
@@ -320,8 +326,10 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
         AddSpatialRef(wkbMultiPolygon);
     }
     else
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Parsing LV BAG extract failed : invalid layer definition");
+    }
 }
 
 /************************************************************************/
@@ -353,7 +361,9 @@ void OGRLVBAGLayer::StopDataCollect()
 void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
 {
     if (nLen && bCollectData)
+    {
         osElementString.append(data, nLen);
+    }
 }
 
 /************************************************************************/
@@ -395,7 +405,9 @@ bool OGRLVBAGLayer::TouchLayer()
 void OGRLVBAGLayer::CloseUnderlyingLayer()
 {
     if (fp)
+    {
         VSIFCloseL(fp);
+    }
     fp = nullptr;
 
     eFileDescriptorsState = FD_CLOSED;
@@ -755,13 +767,17 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
         }
 
         if (!bHasReadSchema)
+        {
             CreateFeatureDefn(osElementString.c_str());
+        }
         bHasReadSchema = true;
 
         // The parser is suspended but never resumed. Stop
         // without resume indicated an error.
         if (bSchemaOnly)
+        {
             XML_StopParser(oParser.get(), XML_TRUE);
+        }
     }
 }
 
@@ -872,7 +888,9 @@ void OGRLVBAGLayer::ParseDocument()
 OGRFeature *OGRLVBAGLayer::GetNextFeature()
 {
     if (!TouchLayer())
+    {
         return nullptr;
+    }
 
     if (!bHasReadSchema)
     {
@@ -898,7 +916,9 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
     bSchemaOnly = false;
 
     if (nNextFID == 0)
+    {
         ConfigureParser();
+    }
 
     if (m_poFeature)
     {
@@ -919,10 +939,14 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 int OGRLVBAGLayer::TestCapability(const char *pszCap)
 {
     if (!TouchLayer())
+    {
         return FALSE;
+    }
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))
+    {
         return TRUE;
+    }
 
     return FALSE;
 }
