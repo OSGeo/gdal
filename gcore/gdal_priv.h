@@ -1872,6 +1872,42 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend GDALComputedRasterBand CPL_DLL
     operator/(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
 
+    GDALComputedRasterBand
+    operator>(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator>(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator>(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator>=(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator>=(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator>=(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator<(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator<(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator<(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator<=(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator<=(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator<=(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator==(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator==(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator==(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator!=(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator!=(double cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator!=(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
     GDALComputedRasterBand AsType(GDALDataType) const CPL_WARN_UNUSED_RESULT;
 
     CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
@@ -2133,6 +2169,12 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_MIN,
         OP_MAX,
         OP_MEAN,
+        OP_GT,
+        OP_GE,
+        OP_LT,
+        OP_LE,
+        OP_EQ,
+        OP_NE,
         OP_CAST,
     };
 

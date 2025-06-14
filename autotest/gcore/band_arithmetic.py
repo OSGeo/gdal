@@ -489,3 +489,119 @@ def test_band_arithmetic_add_nodata_not_same_value_nan():
 
     res = get()
     assert res.GetNoDataValue() is None
+
+
+def test_band_arithmetic_greater():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R > G).ComputeRasterMinMax(False)[0] == 0
+    assert (R > R).ComputeRasterMinMax(False)[0] == 0
+    assert (G > R).ComputeRasterMinMax(False)[0] == 1
+    assert (1 > G).ComputeRasterMinMax(False)[0] == 0
+    assert (R > 1).ComputeRasterMinMax(False)[0] == 0
+    assert (R > 0).ComputeRasterMinMax(False)[0] == 1
+
+
+def test_band_arithmetic_greater_or_equal():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R >= G).ComputeRasterMinMax(False)[0] == 0
+    assert (R >= R).ComputeRasterMinMax(False)[0] == 1
+    assert (G >= R).ComputeRasterMinMax(False)[0] == 1
+    assert (1 >= R).ComputeRasterMinMax(False)[0] == 1
+    assert (0 >= R).ComputeRasterMinMax(False)[0] == 0
+    assert (R >= 1).ComputeRasterMinMax(False)[0] == 1
+    assert (R >= 2).ComputeRasterMinMax(False)[0] == 0
+
+
+def test_band_arithmetic_lesser():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R < G).ComputeRasterMinMax(False)[0] == 1
+    assert (R < R).ComputeRasterMinMax(False)[0] == 0
+    assert (G < R).ComputeRasterMinMax(False)[0] == 0
+    assert (1 < G).ComputeRasterMinMax(False)[0] == 1
+    assert (R < 1).ComputeRasterMinMax(False)[0] == 0
+    assert (R < 2).ComputeRasterMinMax(False)[0] == 1
+
+
+def test_band_arithmetic_lesser_or_equal():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R <= G).ComputeRasterMinMax(False)[0] == 1
+    assert (R >= R).ComputeRasterMinMax(False)[0] == 1
+    assert (G <= R).ComputeRasterMinMax(False)[0] == 0
+    assert (1 <= R).ComputeRasterMinMax(False)[0] == 1
+    assert (2 <= R).ComputeRasterMinMax(False)[0] == 0
+    assert (R <= 1).ComputeRasterMinMax(False)[0] == 1
+    assert (R <= 0).ComputeRasterMinMax(False)[0] == 0
+
+
+def test_band_arithmetic_equal():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R == G).ComputeRasterMinMax(False)[0] == 0
+    assert (R == R).ComputeRasterMinMax(False)[0] == 1
+    assert (1 == R).ComputeRasterMinMax(False)[0] == 1
+    assert (0 == R).ComputeRasterMinMax(False)[0] == 0
+    assert (R == 1).ComputeRasterMinMax(False)[0] == 1
+    assert (R == 0).ComputeRasterMinMax(False)[0] == 0
+
+
+def test_band_arithmetic_not_equal():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    R = ds.GetRasterBand(1)
+    R.Fill(1)
+    G = ds.GetRasterBand(2)
+    G.Fill(2)
+
+    assert (R != G).ComputeRasterMinMax(False)[0] == 1
+    assert (R != R).ComputeRasterMinMax(False)[0] == 0
+    assert (1 != R).ComputeRasterMinMax(False)[0] == 0
+    assert (0 != R).ComputeRasterMinMax(False)[0] == 1
+    assert (R != 1).ComputeRasterMinMax(False)[0] == 0
+    assert (R != 0).ComputeRasterMinMax(False)[0] == 1

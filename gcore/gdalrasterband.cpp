@@ -10242,7 +10242,7 @@ GDALRasterBand::operator+(const GDALRasterBand &other) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandAddBand(GDALRasterBandH hBand,
                                               GDALRasterBandH hOtherBand)
@@ -10291,7 +10291,7 @@ GDALComputedRasterBand GDALRasterBand::operator+(double constant) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandAddDouble(GDALRasterBandH hBand,
                                                 double constant)
@@ -10348,7 +10348,7 @@ GDALRasterBand::operator-(const GDALRasterBand &other) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandSubBand(GDALRasterBandH hBand,
                                               GDALRasterBandH hOtherBand)
@@ -10397,7 +10397,7 @@ GDALComputedRasterBand GDALRasterBand::operator-(double constant) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandSubDouble(GDALRasterBandH hBand,
                                                 double constant)
@@ -10434,7 +10434,7 @@ GDALComputedRasterBand operator-(double constant, const GDALRasterBand &other)
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandSubDoubleToBand(double constant,
                                                       GDALRasterBandH hBand)
@@ -10477,7 +10477,7 @@ GDALRasterBand::operator*(const GDALRasterBand &other) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandMulBand(GDALRasterBandH hBand,
                                               GDALRasterBandH hOtherBand)
@@ -10542,7 +10542,7 @@ GDALComputedRasterBand operator*(double constant, const GDALRasterBand &other)
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandMulDouble(GDALRasterBandH hBand,
                                                 double constant)
@@ -10583,7 +10583,7 @@ GDALRasterBand::operator/(const GDALRasterBand &other) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandDivBand(GDALRasterBandH hBand,
                                               GDALRasterBandH hOtherBand)
@@ -10632,7 +10632,7 @@ GDALComputedRasterBand GDALRasterBand::operator/(double constant) const
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandDivDouble(GDALRasterBandH hBand,
                                                 double constant)
@@ -10670,7 +10670,7 @@ GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandDivDoubleByBand(double constant,
                                                       GDALRasterBandH hBand)
@@ -10679,6 +10679,873 @@ GDALComputedRasterBandH GDALRasterBandDivDoubleByBand(double constant,
     return new GDALComputedRasterBand(
         GDALComputedRasterBand::Operation::OP_DIVIDE, constant,
         *(GDALRasterBand::FromHandle(hBand)));
+}
+
+/************************************************************************/
+/*                          ThrowIfNotMuparser()                        */
+/************************************************************************/
+
+#ifndef HAVE_MUPARSER
+static GDALComputedRasterBand ThrowIfNotMuparser()
+{
+    throw std::runtime_error("Band comparison operators not available on a "
+                             "GDAL build without muparser");
+}
+#endif
+
+/************************************************************************/
+/*                           operator>()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater than the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator>(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GT,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                  GDALRasterBandGreaterThanBand()                     */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater than the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandGreaterThanBand(GDALRasterBandH hBand, GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GT,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator>()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater than the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator>(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GT,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                  GDALRasterBandGreaterThanDouble()                   */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater than the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandGreaterThanDouble(GDALRasterBandH hBand,
+                                                        double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GT,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator>()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is greater than the pixel
+ * value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator>(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GT,
+                                  constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator>=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater or equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator>=(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GE,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                  GDALRasterBandGreaterOrEqualToBand()                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater or equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandGreaterOrEqualToBand(GDALRasterBandH hBand,
+                                   GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GE,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator>=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater or equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator>=(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GE,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                 GDALRasterBandGreaterOrEqualToDouble()               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is greater or equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandGreaterOrEqualToDouble(GDALRasterBandH hBand, double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GE,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator>=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is greater or equal to
+ * the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator>=(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_GE,
+                                  constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser than the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator<(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LT,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                    GDALRasterBandLesserThanBand()                    */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser than the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandLesserThanBand(GDALRasterBandH hBand,
+                                                     GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LT,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser than the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator<(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LT,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                    GDALRasterBandLesserThanDouble()                  */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser than the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandLesserThanDouble(GDALRasterBandH hBand,
+                                                       double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LT,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<()                                */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is lesser than the pixel
+ * value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator<(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LT,
+                                  constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser or equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator<=(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LE,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                  GDALRasterBandLesserOrEqualToBand()                 */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser or equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandLesserOrEqualToBand(GDALRasterBandH hBand,
+                                  GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LE,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser or equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator<=(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LE,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                   GDALRasterBandLesserOrEqualToDouble()              */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is lesser or equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandLesserOrEqualToDouble(GDALRasterBandH hBand, double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant, CPLError(CE_Failure, CPLE_NotSupported,
+                             "Band comparison operators not available on a "
+                             "GDAL build without muparser");
+    return nullptr;
+#else
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LE,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator<=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is lesser or equal to
+ * the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator<=(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_LE,
+                                  constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator==()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator==(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_EQ,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                     GDALRasterBandEqualToBand()                      */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is equal to the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandEqualToBand(GDALRasterBandH hBand,
+                                                  GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_EQ,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator==()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator==(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_EQ,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                       GDALRasterBandEqualToDouble()                  */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is equal to the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandEqualToDouble(GDALRasterBandH hBand,
+                                                    double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant, CPLError(CE_Failure, CPLE_NotSupported,
+                             "Band comparison operators not available on a "
+                             "GDAL build without muparser");
+    return nullptr;
+#else
+
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_EQ,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator==()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is equal to
+ * the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator==(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_EQ,
+                                  constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator!=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is different from the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator!=(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                  *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                    GDALRasterBandNotEqualToBand()                    */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is different from the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on both input
+ * datasets.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandNotEqualToBand(GDALRasterBandH hBand,
+                                                     GDALRasterBandH hOtherBand)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    VALIDATE_POINTER1(hOtherBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+
+    auto &firstBand = *(GDALRasterBand::FromHandle(hBand));
+    auto &secondBand = *(GDALRasterBand::FromHandle(hOtherBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(firstBand, secondBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                      firstBand, secondBand);
+#endif
+}
+
+/************************************************************************/
+/*                           operator!=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is different from the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator!=(double constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                  *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                     GDALRasterBandNotEqualToDouble()                 */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is different from the constant.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH GDALRasterBandNotEqualToDouble(GDALRasterBandH hBand,
+                                                       double constant)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    (void)constant, CPLError(CE_Failure, CPLE_NotSupported,
+                             "Band comparison operators not available on a "
+                             "GDAL build without muparser");
+    return nullptr;
+#else
+
+    auto &band = *(GDALRasterBand::FromHandle(hBand));
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                      band, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator!=()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is different from
+ * the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator!=(double constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                  constant, other);
+#endif
 }
 
 /************************************************************************/
@@ -10712,7 +11579,7 @@ GDALComputedRasterBand GDALRasterBand::AsType(GDALDataType dt) const
  * dataset.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandAsDataType(GDALRasterBandH hBand,
                                                  GDALDataType eDT)
@@ -10790,7 +11657,7 @@ GDALOperationOnNBands(GDALComputedRasterBand::Operation op, size_t nBandCount,
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALMaximumOfNBands(size_t nBandCount,
                                             GDALRasterBandH *pahBands)
@@ -10810,7 +11677,7 @@ GDALComputedRasterBandH GDALMaximumOfNBands(size_t nBandCount,
  * dataset.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandMaxConstant(GDALRasterBandH hBand,
                                                   double dfConstant)
@@ -10832,7 +11699,7 @@ GDALComputedRasterBandH GDALRasterBandMaxConstant(GDALRasterBandH hBand,
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
                                             GDALRasterBandH *pahBands)
@@ -10852,7 +11719,7 @@ GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
  * dataset.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALRasterBandMinConstant(GDALRasterBandH hBand,
                                                   double dfConstant)
@@ -10874,7 +11741,7 @@ GDALComputedRasterBandH GDALRasterBandMinConstant(GDALRasterBandH hBand,
  * datasets.
  *
  * @since 3.12
- * @return a handle to free with  GDALComputedRasterBandRelease(), or nullptr if error.
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
 GDALComputedRasterBandH GDALMeanOfNBands(size_t nBandCount,
                                          GDALRasterBandH *pahBands)

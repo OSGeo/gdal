@@ -578,6 +578,12 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         else:
             return o
 
+  def __key(self):
+      return str(self)
+
+  def __hash__(self):
+      return hash(self.__key())
+
   def __add__(self, other):
       """Add this raster band to a raster band, a numpy array or a constant
 
@@ -651,6 +657,78 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       return self.DivDoubleByBand(other)._add_parent_references([self])
+
+  def __gt__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is greater than the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.GreaterThan(other)._add_parent_references([self, other])
+      else:
+          return self.GreaterThanDouble(other)._add_parent_references([self])
+
+  def __ge__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is greater or equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.GreaterOrEqualTo(other)._add_parent_references([self, other])
+      else:
+          return self.GreaterOrEqualToDouble(other)._add_parent_references([self])
+
+  def __lt__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is lesser than the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.LesserThan(other)._add_parent_references([self, other])
+      else:
+          return self.LesserThanDouble(other)._add_parent_references([self])
+
+  def __le__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is lesser or equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.LesserOrEqualTo(other)._add_parent_references([self, other])
+      else:
+          return self.LesserOrEqualToDouble(other)._add_parent_references([self])
+
+  def __eq__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.EqualTo(other)._add_parent_references([self, other])
+      else:
+          return self.EqualToDouble(other)._add_parent_references([self])
+
+  def __ne__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is not equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return self.NotEqualTo(other)._add_parent_references([self, other])
+      else:
+          return self.NotEqualToDouble(other)._add_parent_references([self])
 
   def astype(self, dt):
       """Cast this band to the specified data type

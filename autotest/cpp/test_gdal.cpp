@@ -5582,6 +5582,26 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::mean(
                          firstBand, firstBand, (*poOtherDS->GetRasterBand(1)))),
                      std::runtime_error);
+#ifdef HAVE_MUPARSER
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand > (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand >= (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand < (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand <= (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand == (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+        EXPECT_THROW(
+            CPL_IGNORE_RET_VAL(firstBand != (*poOtherDS->GetRasterBand(1))),
+            std::runtime_error);
+#endif
     }
 
     {
@@ -5662,6 +5682,146 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                       .ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
         EXPECT_NEAR(adfMinMax[0], (FIRST + SECOND + THIRD) / 3, 1e-14);
+
+#ifdef HAVE_MUPARSER
+        EXPECT_EQ((firstBand > 1.4).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand > 1.4).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand > 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.5 > firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.6 > firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand > firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (secondBand > firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+
+        EXPECT_EQ((firstBand >= 1.5).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand >= 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand >= 1.6).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.4 >= firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.5 >= firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (firstBand >= firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (secondBand >= firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (firstBand >= secondBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+
+        EXPECT_EQ((firstBand < 1.5).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand < 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((firstBand < 1.6).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((1.5 < firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.4 < firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand < firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (firstBand < secondBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+
+        EXPECT_EQ((firstBand <= 1.5).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand <= 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand <= 1.4).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.5 <= firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((1.6 <= firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (firstBand <= firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (secondBand <= firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (firstBand <= secondBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+
+        EXPECT_EQ((firstBand == 1.5).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand == 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((firstBand == 1.6).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.5 == firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((1.4 == firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (firstBand == firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (firstBand == secondBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+
+        EXPECT_EQ((firstBand != 1.5).GetRasterDataType(), GDT_Byte);
+        EXPECT_EQ((firstBand != 1.5).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((firstBand != 1.6).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ((1.5 != firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ((1.4 != firstBand).ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+        EXPECT_EQ(
+            (firstBand != firstBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 0);
+        EXPECT_EQ(
+            (firstBand != secondBand).ComputeRasterMinMax(false, adfMinMax),
+            CE_None);
+        EXPECT_EQ(adfMinMax[0], 1);
+#endif
     }
 
     EXPECT_EQ(firstBand.AsType(GDT_Byte).GetRasterDataType(), GDT_Byte);
