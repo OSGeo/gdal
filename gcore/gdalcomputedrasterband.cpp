@@ -87,6 +87,27 @@ class GDALComputedDataset final : public GDALDataset
 };
 
 /************************************************************************/
+/*                        IsComparisonOperator()                        */
+/************************************************************************/
+
+static bool IsComparisonOperator(GDALComputedRasterBand::Operation op)
+{
+    switch (op)
+    {
+        case GDALComputedRasterBand::Operation::OP_GT:
+        case GDALComputedRasterBand::Operation::OP_GE:
+        case GDALComputedRasterBand::Operation::OP_LT:
+        case GDALComputedRasterBand::Operation::OP_LE:
+        case GDALComputedRasterBand::Operation::OP_EQ:
+        case GDALComputedRasterBand::Operation::OP_NE:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                        GDALComputedDataset()                         */
 /************************************************************************/
 
@@ -170,8 +191,40 @@ GDALComputedDataset::GDALComputedDataset(
     else
     {
         m_aosOptions.SetNameValue("subclass", "VRTDerivedRasterBand");
-        if (op == GDALComputedRasterBand::Operation::OP_SUBTRACT &&
-            pSecondConstant)
+        if (IsComparisonOperator(op))
+        {
+            m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+            if (firstBand && secondBand)
+            {
+                m_aosOptions.SetNameValue(
+                    "_PIXELFN_ARG_expression",
+                    CPLSPrintf(
+                        "source1 %s source2",
+                        GDALComputedDataset::OperationToFunctionName(op)));
+            }
+            else if (firstBand && pSecondConstant)
+            {
+                m_aosOptions.SetNameValue(
+                    "_PIXELFN_ARG_expression",
+                    CPLSPrintf("source1 %s %.17g",
+                               GDALComputedDataset::OperationToFunctionName(op),
+                               *pSecondConstant));
+            }
+            else if (pFirstConstant && secondBand)
+            {
+                m_aosOptions.SetNameValue(
+                    "_PIXELFN_ARG_expression",
+                    CPLSPrintf(
+                        "%.17g %s source1", *pFirstConstant,
+                        GDALComputedDataset::OperationToFunctionName(op)));
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+        else if (op == GDALComputedRasterBand::Operation::OP_SUBTRACT &&
+                 pSecondConstant)
         {
             m_aosOptions.SetNameValue("PixelFunctionType", "sum");
             m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
@@ -281,7 +334,7 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
     // temporary band/dataset corresponding to a + b will go out of scope
     // quickly.
     bool bIsFirstBand = true;
-    bool bFirstBandHasNoData = false;
+    int bFirstBandHasNoData = false;
     double dfFirstNoData = 0;
     for (GDALRasterBand *&band : m_poBands)
     {
@@ -294,6 +347,8 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
             m_bandDS.emplace_back(poComputedDSNew.release());
         }
         poSourcedRasterBand->AddSimpleSource(band);
+        poSourcedRasterBand->papoSources[poSourcedRasterBand->nSources - 1]
+            ->SetName(CPLSPrintf("source%d", poSourcedRasterBand->nSources));
 
         int bHasNoData = false;
         const double dfNoData = band->GetNoDataValue(&bHasNoData);
@@ -366,6 +421,24 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
         case GDALComputedRasterBand::Operation::OP_MEAN:
             ret = "mean";
             break;
+        case GDALComputedRasterBand::Operation::OP_GT:
+            ret = ">";
+            break;
+        case GDALComputedRasterBand::Operation::OP_GE:
+            ret = ">=";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LT:
+            ret = "<";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LE:
+            ret = "<=";
+            break;
+        case GDALComputedRasterBand::Operation::OP_EQ:
+            ret = "==";
+            break;
+        case GDALComputedRasterBand::Operation::OP_NE:
+            ret = "!=";
+            break;
         case GDALComputedRasterBand::Operation::OP_CAST:
             break;
     }
@@ -397,6 +470,9 @@ GDALComputedRasterBand::GDALComputedRasterBand(
     Operation op, const std::vector<const GDALRasterBand *> &bands,
     double constant)
 {
+    CPLAssert(op == Operation::OP_ADD || op == Operation::OP_MIN ||
+              op == Operation::OP_MAX || op == Operation::OP_MEAN);
+
     CPLAssert(!bands.empty());
     nRasterXSize = bands[0]->GetXSize();
     nRasterYSize = bands[0]->GetYSize();
@@ -437,7 +513,10 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
     nRasterYSize = firstBand.GetYSize();
     const auto firstDT = firstBand.GetRasterDataType();
     const auto secondDT = secondBand.GetRasterDataType();
-    if (op == Operation::OP_ADD && firstDT == GDT_Byte && secondDT == GDT_Byte)
+    if (IsComparisonOperator(op))
+        eDataType = GDT_Byte;
+    else if (op == Operation::OP_ADD && firstDT == GDT_Byte &&
+             secondDT == GDT_Byte)
         eDataType = GDT_UInt16;
     else if (firstDT == GDT_Float32 && secondDT == GDT_Float32)
         eDataType = GDT_Float32;
@@ -460,12 +539,14 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
 GDALComputedRasterBand::GDALComputedRasterBand(Operation op, double constant,
                                                const GDALRasterBand &band)
 {
-    CPLAssert(op == Operation::OP_DIVIDE);
+    CPLAssert(op == Operation::OP_DIVIDE || IsComparisonOperator(op));
 
     nRasterXSize = band.GetXSize();
     nRasterYSize = band.GetYSize();
     const auto firstDT = band.GetRasterDataType();
-    if (firstDT == GDT_Float32 && static_cast<float>(constant) == constant)
+    if (IsComparisonOperator(op))
+        eDataType = GDT_Byte;
+    else if (firstDT == GDT_Float32 && static_cast<float>(constant) == constant)
         eDataType = GDT_Float32;
     else
         eDataType = GDT_Float64;
@@ -487,8 +568,11 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
     nRasterXSize = band.GetXSize();
     nRasterYSize = band.GetYSize();
     const auto firstDT = band.GetRasterDataType();
-    if (op == Operation::OP_ADD && firstDT == GDT_Byte && constant >= -128 &&
-        constant <= 127 && std::floor(constant) == constant)
+    if (IsComparisonOperator(op))
+        eDataType = GDT_Byte;
+    else if (op == Operation::OP_ADD && firstDT == GDT_Byte &&
+             constant >= -128 && constant <= 127 &&
+             std::floor(constant) == constant)
         eDataType = GDT_Byte;
     else if (firstDT == GDT_Float32 && static_cast<float>(constant) == constant)
         eDataType = GDT_Float32;
