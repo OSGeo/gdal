@@ -34,6 +34,7 @@ Available sub-commands
 - :ref:`gdal_raster_hillshade`
 - :ref:`gdal_raster_index`
 - :ref:`gdal_raster_mosaic`
+- :ref:`gdal_raster_nodata_to_alpha`
 - :ref:`gdal_raster_overview`
 - :ref:`gdal_raster_pipeline`
 - :ref:`gdal_raster_pixel_info`
