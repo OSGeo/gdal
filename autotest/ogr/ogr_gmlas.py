@@ -3481,6 +3481,7 @@ def test_ogr_gmlas_ossfuzz_70511():
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_curl()
 def test_ogr_gmlas_billion_laugh():
 
     with gdal.quiet_errors(), pytest.raises(Exception, match="File probably corrupted"):
