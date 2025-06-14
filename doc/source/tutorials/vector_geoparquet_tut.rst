@@ -27,8 +27,6 @@ This tutorial assumes Conda is already installed. We'll start by creating a new 
 
     $ conda create --yes --name gdal
     $ conda activate gdal
-    # following may not be required
-    $ conda config --set solver classic
     $ conda install --yes -c conda-forge gdal
     $ conda --version
     conda 24.3.0
