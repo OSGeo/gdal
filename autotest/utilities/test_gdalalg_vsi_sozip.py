@@ -130,6 +130,9 @@ def test_gdalalg_vsi_sozip_create_input_is_directory(tmp_vsimem):
 @pytest.mark.skipif(sys.platform != "linux", reason="not linux")
 def test_gdalalg_vsi_sozip_create_failed_adding(tmp_path):
 
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
+
     alg = gdal.GetGlobalAlgorithmRegistry()["vsi"]["sozip"]["create"]
     input_filename = tmp_path / "cannot_read"
     open(input_filename, "wb").close()
