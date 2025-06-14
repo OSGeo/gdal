@@ -510,6 +510,17 @@ def test_band_arithmetic_greater():
     assert (R > 0).ComputeRasterMinMax(False)[0] == 1
 
 
+def test_band_arithmetic_greater_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) > ds2.GetRasterBand(1)
+
+
 def test_band_arithmetic_greater_or_equal():
 
     if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
@@ -530,6 +541,17 @@ def test_band_arithmetic_greater_or_equal():
     assert (R >= 2).ComputeRasterMinMax(False)[0] == 0
 
 
+def test_band_arithmetic_greater_or_equal_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) >= ds2.GetRasterBand(1)
+
+
 def test_band_arithmetic_lesser():
 
     if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
@@ -547,6 +569,17 @@ def test_band_arithmetic_lesser():
     assert (1 < G).ComputeRasterMinMax(False)[0] == 1
     assert (R < 1).ComputeRasterMinMax(False)[0] == 0
     assert (R < 2).ComputeRasterMinMax(False)[0] == 1
+
+
+def test_band_arithmetic_lesser_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) < ds2.GetRasterBand(1)
 
 
 def test_band_arithmetic_lesser_or_equal():
@@ -569,6 +602,17 @@ def test_band_arithmetic_lesser_or_equal():
     assert (R <= 0).ComputeRasterMinMax(False)[0] == 0
 
 
+def test_band_arithmetic_lesser_or_equal_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) <= ds2.GetRasterBand(1)
+
+
 def test_band_arithmetic_equal():
 
     if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
@@ -588,6 +632,17 @@ def test_band_arithmetic_equal():
     assert (R == 0).ComputeRasterMinMax(False)[0] == 0
 
 
+def test_band_arithmetic_equal_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) == ds2.GetRasterBand(1)
+
+
 def test_band_arithmetic_not_equal():
 
     if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
@@ -605,3 +660,62 @@ def test_band_arithmetic_not_equal():
     assert (0 != R).ComputeRasterMinMax(False)[0] == 1
     assert (R != 1).ComputeRasterMinMax(False)[0] == 0
     assert (R != 0).ComputeRasterMinMax(False)[0] == 1
+
+
+def test_band_arithmetic_not_equal_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        ds1.GetRasterBand(1) != ds2.GetRasterBand(1)
+
+
+def test_band_arithmetic_ternary():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
+    cond = ds.GetRasterBand(1)
+    cond.Fill(1)
+    then = ds.GetRasterBand(2)
+    then.Fill(2)
+    elseBand = ds.GetRasterBand(3)
+    elseBand.Fill(3)
+
+    assert gdal.Band.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.Band.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 2
+
+    assert gdal.Band.where(cond, 10, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.Band.where(cond, 10, elseBand).ComputeRasterMinMax(False)[0] == 10
+
+    assert gdal.Band.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 10
+
+    cond.Fill(0)
+    assert gdal.Band.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.Band.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 3
+
+    assert gdal.Band.where(cond, then, 11).DataType == gdal.GDT_Byte
+    assert gdal.Band.where(cond, then, 11).ComputeRasterMinMax(False)[0] == 11
+
+    assert gdal.Band.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 11
+
+
+def test_band_arithmetic_ternary_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        gdal.Band.where(
+            ds1.GetRasterBand(1), ds1.GetRasterBand(1), ds2.GetRasterBand(1)
+        )
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        gdal.Band.where(
+            ds1.GetRasterBand(1), ds2.GetRasterBand(1), ds1.GetRasterBand(1)
+        )

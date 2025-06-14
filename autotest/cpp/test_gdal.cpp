@@ -5601,6 +5601,12 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(
             CPL_IGNORE_RET_VAL(firstBand != (*poOtherDS->GetRasterBand(1))),
             std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::IfThenElse(
+                         firstBand, firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::IfThenElse(
+                         firstBand, (*poOtherDS->GetRasterBand(1)), firstBand)),
+                     std::runtime_error);
 #endif
     }
 
@@ -5821,6 +5827,43 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
             (firstBand != secondBand).ComputeRasterMinMax(false, adfMinMax),
             CE_None);
         EXPECT_EQ(adfMinMax[0], 1);
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand == 1.5, secondBand, thirdBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], SECOND);
+        EXPECT_EQ(gdal::IfThenElse(firstBand == 1.5, secondBand, thirdBand)
+                      .GetRasterDataType(),
+                  GDALDataTypeUnion(secondBand.GetRasterDataType(),
+                                    thirdBand.GetRasterDataType()));
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand == 1.5, SECOND, THIRD)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], SECOND);
+        EXPECT_EQ(gdal::IfThenElse(firstBand == 1.5, SECOND, THIRD)
+                      .GetRasterDataType(),
+                  GDT_Float32);
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand == 1.5, SECOND, thirdBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], SECOND);
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand != 1.5, secondBand, thirdBand)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], THIRD);
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand != 1.5, secondBand, THIRD)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], THIRD);
+
+        EXPECT_EQ(gdal::IfThenElse(firstBand != 1.5, SECOND, THIRD)
+                      .ComputeRasterMinMax(false, adfMinMax),
+                  CE_None);
+        EXPECT_EQ(adfMinMax[0], THIRD);
 #endif
     }
 

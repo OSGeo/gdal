@@ -877,6 +877,20 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
       return GDALRasterBandNotEqualToDouble(self, constant);
   }
 
+  %apply Pointer NONNULL {GDALRasterBandShadow* condBand};
+  %apply Pointer NONNULL {GDALRasterBandShadow* thenBand};
+  %apply Pointer NONNULL {GDALRasterBandShadow* elseBand};
+  %newobject IfThenElse;
+  static GDALComputedRasterBandShadow* IfThenElse(GDALRasterBandShadow* condBand,
+                                                  GDALRasterBandShadow* thenBand,
+                                                  GDALRasterBandShadow* elseBand)
+  {
+      return GDALRasterBandIfThenElse(condBand, thenBand, elseBand);
+  }
+  %clear GDALRasterBandShadow* condBand;
+  %clear GDALRasterBandShadow* thenBand;
+  %clear GDALRasterBandShadow* elseBand;
+
 
   %newobject AsType;
   GDALComputedRasterBandShadow* AsType(GDALDataType dt)

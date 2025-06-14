@@ -1269,6 +1269,7 @@ hashtable
 hAttr
 Hayford
 hComp
+hCondBand
 hCT
 hCutline
 hdbuserstore
@@ -1287,6 +1288,7 @@ heightfield
 Heightfield
 heightfields
 Helmert
+hElseBand
 Helvetica
 hether
 hFeat
@@ -1351,6 +1353,7 @@ hSrcDS
 hST
 hTarget
 hTargetEDT
+hThenBand
 hThis
 html
 hTransformArg

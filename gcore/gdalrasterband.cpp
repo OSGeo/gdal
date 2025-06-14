@@ -11548,6 +11548,187 @@ GDALComputedRasterBand operator!=(double constant, const GDALRasterBand &other)
 #endif
 }
 
+namespace gdal
+{
+
+/************************************************************************/
+/*                           IfThenElse()                               */
+/************************************************************************/
+
+/** Return a band whose value is thenBand if the corresponding pixel in condBand
+ * is not zero, or the one from elseBand otherwise.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
+                                  const GDALRasterBand &thenBand,
+                                  const GDALRasterBand &elseBand)
+{
+#ifndef HAVE_MUPARSER
+    (void)condBand;
+    (void)thenBand;
+    (void)elseBand;
+    return ThrowIfNotMuparser();
+#else
+    GDALRasterBand::ThrowIfNotSameDimensions(condBand, thenBand);
+    GDALRasterBand::ThrowIfNotSameDimensions(condBand, elseBand);
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_TERNARY,
+        std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
+#endif
+}
+
+/************************************************************************/
+/*                           IfThenElse()                               */
+/************************************************************************/
+
+/** Return a band whose value is thenValue if the corresponding pixel in condBand
+ * is not zero, or the one from elseBand otherwise.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
+                                  double thenValue,
+                                  const GDALRasterBand &elseBand)
+{
+#ifndef HAVE_MUPARSER
+    (void)condBand;
+    (void)thenValue;
+    (void)elseBand;
+    return ThrowIfNotMuparser();
+#else
+    GDALRasterBand::ThrowIfNotSameDimensions(condBand, elseBand);
+    auto thenBand =
+        (condBand * 0)
+            .AsType(GDALDataTypeUnionWithValue(GDT_Unknown, thenValue, false)) +
+        thenValue;
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_TERNARY,
+        std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
+#endif
+}
+
+/************************************************************************/
+/*                           IfThenElse()                               */
+/************************************************************************/
+
+/** Return a band whose value is thenBand if the corresponding pixel in condBand
+ * is not zero, or the one from elseValue otherwise.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
+                                  const GDALRasterBand &thenBand,
+                                  double elseValue)
+{
+#ifndef HAVE_MUPARSER
+    (void)condBand;
+    (void)thenBand;
+    (void)elseValue;
+    return ThrowIfNotMuparser();
+#else
+    GDALRasterBand::ThrowIfNotSameDimensions(condBand, thenBand);
+    auto elseBand =
+        (condBand * 0)
+            .AsType(GDALDataTypeUnionWithValue(GDT_Unknown, elseValue, false)) +
+        elseValue;
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_TERNARY,
+        std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
+#endif
+}
+
+/************************************************************************/
+/*                           IfThenElse()                               */
+/************************************************************************/
+
+/** Return a band whose value is thenValue if the corresponding pixel in condBand
+ * is not zero, or the one from elseValue otherwise.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
+                                  double thenValue, double elseValue)
+{
+#ifndef HAVE_MUPARSER
+    (void)condBand;
+    (void)thenValue;
+    (void)elseValue;
+    return ThrowIfNotMuparser();
+#else
+    auto thenBand =
+        (condBand * 0)
+            .AsType(GDALDataTypeUnionWithValue(GDT_Unknown, thenValue, false)) +
+        thenValue;
+    auto elseBand =
+        (condBand * 0)
+            .AsType(GDALDataTypeUnionWithValue(GDT_Unknown, elseValue, false)) +
+        elseValue;
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_TERNARY,
+        std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
+#endif
+}
+
+}  // namespace gdal
+
+/************************************************************************/
+/*                     GDALRasterBandIfThenElse()                       */
+/************************************************************************/
+
+/** Return a band whose value is hThenBand if the corresponding pixel in hCondBand
+ * is not zero, or the one from hElseBand otherwise.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * datasets.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBandH GDALRasterBandIfThenElse(GDALRasterBandH hCondBand,
+                                                 GDALRasterBandH hThenBand,
+                                                 GDALRasterBandH hElseBand)
+{
+    VALIDATE_POINTER1(hCondBand, __func__, nullptr);
+    VALIDATE_POINTER1(hThenBand, __func__, nullptr);
+    VALIDATE_POINTER1(hElseBand, __func__, nullptr);
+#ifndef HAVE_MUPARSER
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Band comparison operators not available on a GDAL build without "
+             "muparser");
+    return nullptr;
+#else
+
+    auto &condBand = *(GDALRasterBand::FromHandle(hCondBand));
+    auto &thenBand = *(GDALRasterBand::FromHandle(hThenBand));
+    auto &elseBand = *(GDALRasterBand::FromHandle(hElseBand));
+    try
+    {
+        GDALRasterBand::ThrowIfNotSameDimensions(condBand, thenBand);
+        GDALRasterBand::ThrowIfNotSameDimensions(condBand, elseBand);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return nullptr;
+    }
+    return new GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_TERNARY,
+        std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
+#endif
+}
+
 /************************************************************************/
 /*                       GDALRasterBand::AsType()                       */
 /************************************************************************/

@@ -1988,6 +1988,10 @@ GDALComputedRasterBandH CPL_DLL GDALRasterBandNotEqualToBand(
 GDALComputedRasterBandH CPL_DLL GDALRasterBandNotEqualToDouble(
     GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
 
+GDALComputedRasterBandH CPL_DLL
+GDALRasterBandIfThenElse(GDALRasterBandH hCondBand, GDALRasterBandH hThenBand,
+                         GDALRasterBandH hElseBand) CPL_WARN_UNUSED_RESULT;
+
 GDALComputedRasterBandH CPL_DLL GDALRasterBandAsDataType(
     GDALRasterBandH hBand, GDALDataType eDT) CPL_WARN_UNUSED_RESULT;
 

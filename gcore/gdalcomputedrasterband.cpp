@@ -298,13 +298,23 @@ GDALComputedDataset::GDALComputedDataset(
     }
 
     m_aosOptions.SetNameValue("subclass", "VRTDerivedRasterBand");
-    m_aosOptions.SetNameValue("PixelFunctionType", OperationToFunctionName(op));
-    if (!std::isnan(constant))
+    if (op == GDALComputedRasterBand::Operation::OP_TERNARY)
     {
-        m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
-                                  CPLSPrintf("%.17g", constant));
+        m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+        m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                  "source1 ? source2 : source3");
     }
-    m_aosOptions.SetNameValue("_PIXELFN_ARG_propagateNoData", "true");
+    else
+    {
+        m_aosOptions.SetNameValue("PixelFunctionType",
+                                  OperationToFunctionName(op));
+        if (!std::isnan(constant))
+        {
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
+                                      CPLSPrintf("%.17g", constant));
+        }
+        m_aosOptions.SetNameValue("_PIXELFN_ARG_propagateNoData", "true");
+    }
     m_oVRTDS.AddBand(eDT, m_aosOptions.List());
 
     SetBand(1, poBand);
@@ -440,6 +450,7 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
             ret = "!=";
             break;
         case GDALComputedRasterBand::Operation::OP_CAST:
+        case GDALComputedRasterBand::Operation::OP_TERNARY:
             break;
     }
     return ret;
@@ -471,7 +482,8 @@ GDALComputedRasterBand::GDALComputedRasterBand(
     double constant)
 {
     CPLAssert(op == Operation::OP_ADD || op == Operation::OP_MIN ||
-              op == Operation::OP_MAX || op == Operation::OP_MEAN);
+              op == Operation::OP_MAX || op == Operation::OP_MEAN ||
+              op == Operation::OP_TERNARY);
 
     CPLAssert(!bands.empty());
     nRasterXSize = bands[0]->GetXSize();
@@ -481,7 +493,13 @@ GDALComputedRasterBand::GDALComputedRasterBand(
     {
         eDataType = GDALDataTypeUnion(eDataType, bands[i]->GetRasterDataType());
     }
-    if (!std::isnan(constant) && eDataType != GDT_Float64)
+    if (op == Operation::OP_TERNARY)
+    {
+        CPLAssert(bands.size() == 3);
+        eDataType = GDALDataTypeUnion(bands[1]->GetRasterDataType(),
+                                      bands[2]->GetRasterDataType());
+    }
+    else if (!std::isnan(constant) && eDataType != GDT_Float64)
     {
         if (op == Operation::OP_MIN || op == Operation::OP_MAX)
         {

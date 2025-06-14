@@ -748,6 +748,29 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       return self.AsType(dt)._add_parent_references([self])
 
   @staticmethod
+  def where(cond_band, then_band, else_band):
+      """Ternary operator. Return a band whose value is then_band if the
+         corresponding pixel in cond_band is not zero, or the one from else_band
+         otherwise.
+
+         cond_band must be a band or convertible to a band. then_band or else_band
+         can be band, convertible to band or numeric constants.
+
+         The resulting band is lazily evaluated.
+      """
+      cond_band = Band._get_as_band_if_possible(cond_band)
+      then_band = Band._get_as_band_if_possible(then_band)
+      else_band = Band._get_as_band_if_possible(else_band)
+
+      if not isinstance(then_band, Band):
+          then_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, then_band, False)) + then_band
+
+      if not isinstance(else_band, Band):
+          else_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, else_band, False)) + else_band
+
+      return Band.IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
+
+  @staticmethod
   def minimum(*args):
       """Return a band whose each pixel value is the minimum of the corresponding
          pixel values in the input arguments which may be gdal.Band or a numeric constant.

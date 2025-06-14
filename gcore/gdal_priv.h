@@ -2176,6 +2176,7 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_EQ,
         OP_NE,
         OP_CAST,
+        OP_TERNARY,
     };
 
     GDALComputedRasterBand(
@@ -2241,6 +2242,21 @@ namespace gdal
 {
 using std::max;
 using std::min;
+
+GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
+                                          const GDALRasterBand &thenBand,
+                                          const GDALRasterBand &elseBand);
+
+GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
+                                          double thenValue,
+                                          const GDALRasterBand &elseBand);
+
+GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
+                                          const GDALRasterBand &thenBand,
+                                          double elseValue);
+
+GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
+                                          double thenValue, double elseValue);
 
 /** Return a band whose each pixel value is the minimum of the corresponding
  * pixel values in the inputs (bands or constants)
