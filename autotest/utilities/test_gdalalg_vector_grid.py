@@ -533,6 +533,9 @@ def test_gdalalg_vector_grid_overwrite(tmp_vsimem):
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
 def test_gdalalg_vector_grid_overwrite_failed_unlink(tmp_path):
 
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
+
     out_filename = tmp_path / "out.tif"
     with gdal.GetDriverByName("GTiff").Create(out_filename, 1, 1):
         pass
