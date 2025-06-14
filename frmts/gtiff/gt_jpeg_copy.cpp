@@ -199,7 +199,7 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
     {
         bShouldFallbackToNormalCopyIfFail = false;
 
-        TIFF *hTIFF = (TIFF *)poDS->GetInternalHandle(NULL);
+        TIFF *hTIFF = (TIFF *)poDS->GetInternalHandle("TIFF_HANDLE");
         if (TIFFWriteRawStrip(hTIFF, 0, pabyJPEGData, nSize) != nSize)
             eErr = CE_Failure;
 
@@ -860,7 +860,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
     // mechanism that can expose a pseudo one-line-strip whereas the
     // real layout is a single big strip.
 
-    TIFF *hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle(nullptr));
+    TIFF *hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle("TIFF_HANDLE"));
     if (TIFFIsTiled(hTIFF))
     {
         TIFFGetField(hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize));

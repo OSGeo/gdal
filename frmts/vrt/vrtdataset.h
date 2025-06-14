@@ -193,9 +193,14 @@ class CPL_DLL VRTSource
         return false;
     }
 
-    virtual const CPLString &GetName() const
+    const std::string &GetName() const
     {
         return m_osName;
+    }
+
+    void SetName(const std::string &s)
+    {
+        m_osName = s;
     }
 
     /** Returns a string with the VRTSource class type.
@@ -209,7 +214,7 @@ class CPL_DLL VRTSource
     }
 
   protected:
-    CPLString m_osName{};
+    std::string m_osName{};
 };
 
 typedef VRTSource *(*VRTSourceParser)(const CPLXMLNode *, const char *,
@@ -1198,7 +1203,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
 
     VRTDerivedRasterBand(GDALDataset *poDS, int nBand);
     VRTDerivedRasterBand(GDALDataset *poDS, int nBand, GDALDataType eType,
-                         int nXSize, int nYSize);
+                         int nXSize, int nYSize, int nBlockXSizeIn = 0,
+                         int nBlockYSizeIn = 0);
     virtual ~VRTDerivedRasterBand();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,

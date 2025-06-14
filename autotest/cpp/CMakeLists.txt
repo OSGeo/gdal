@@ -132,6 +132,10 @@ endif ()
 if (GDAL_USE_CURL)
   target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_CURL)
 endif ()
+if (GDAL_USE_MUPARSER)
+  target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_MUPARSER)
+endif()
+
 target_compile_definitions(gdal_unit_test PRIVATE "-DPROJ_DB_TMPDIR=\"${CMAKE_CURRENT_BINARY_DIR}/proj_db_tmpdir\"" "-DPROJ_GRIDS_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/../proj_grids\"")
 
 # gtest with lots of assertion can be very slow to build in optimized mode.
