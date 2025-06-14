@@ -80,6 +80,7 @@ jobs:
             travis_branch: fedora_rawhide
             container: fedora_rawhide
             build_script: build.sh
+            test_script: test.sh
             os: ubuntu-22.04
 
           - name: Ubuntu 24.04, gcc
