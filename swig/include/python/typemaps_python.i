@@ -1543,6 +1543,7 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
 
 OPTIONAL_POD(int,i);
 OPTIONAL_POD(GIntBig,L);
+OPTIONAL_POD(double, d);
 
 /*
  * Typedef const char * <- Any object.

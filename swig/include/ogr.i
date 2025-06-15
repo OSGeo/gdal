@@ -4351,6 +4351,58 @@ OGRFieldDomainShadow* CreateCodedFieldDomain( const char *name,
 
 %newobject CreateRangeFieldDomain;
 %apply Pointer NONNULL {const char* name};
+
+#ifdef SWIGPYTHON
+%apply (double *optional_double) {(double*)};
+
+%inline %{
+static
+OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
+                                              const char* description,
+                                              OGRFieldType type,
+                                              OGRFieldSubType subtype,
+                                              double* min,
+                                              bool minIsInclusive,
+                                              double* max,
+                                              bool maxIsInclusive) {
+  OGRField sMin;
+  if (min )
+  {
+      if( type == OFTInteger )
+          sMin.Integer = static_cast<int>(*min);
+      else if( type == OFTInteger64 )
+          sMin.Integer64 = static_cast<GIntBig>(*min);
+      else if( type == OFTReal )
+          sMin.Real = *min;
+      else
+          return NULL;
+  }
+
+  OGRField sMax;
+  if( max )
+  {
+      if( type == OFTInteger )
+          sMax.Integer = static_cast<int>(*max);
+      else if( type == OFTInteger64 )
+          sMax.Integer64 = static_cast<GIntBig>(*max);
+      else if( type == OFTReal )
+          sMax.Real = *max;
+      else
+          return NULL;
+  }
+  return (OGRFieldDomainShadow*) OGR_RangeFldDomain_Create( name,
+                                                            description,
+                                                            type,
+                                                            subtype,
+                                                            min ? &sMin : NULL,
+                                                            minIsInclusive,
+                                                            max ? &sMax : NULL,
+                                                            maxIsInclusive );
+}
+%}
+
+#else
+
 %inline %{
 static
 OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
@@ -4360,7 +4412,7 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
                                               double min,
                                               bool minIsInclusive,
                                               double max,
-                                              double maxIsInclusive) {
+                                              bool maxIsInclusive) {
   OGRField sMin;
   if( type == OFTInteger )
       sMin.Integer = static_cast<int>(min);
@@ -4390,6 +4442,8 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
 }
 %}
 
+#endif
+
 %inline %{
 static
 OGRFieldDomainShadow* CreateRangeFieldDomainDateTime( const char *name,
@@ -4400,14 +4454,14 @@ OGRFieldDomainShadow* CreateRangeFieldDomainDateTime( const char *name,
                                               double maxIsInclusive) {
   OGRField sMin;
   OGRField sMax;
-  if( !OGRParseXMLDateTime(min, &sMin))
+  if( min && !OGRParseXMLDateTime(min, &sMin))
   {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Invalid min: %s",
              min);
     return NULL;
   }
-  if( !OGRParseXMLDateTime(max, &sMax))
+  if( max && !OGRParseXMLDateTime(max, &sMax))
   {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Invalid max: %s",
@@ -4418,9 +4472,9 @@ OGRFieldDomainShadow* CreateRangeFieldDomainDateTime( const char *name,
                                                             description,
                                                             OFTDateTime,
                                                             OFSTNone,
-                                                            &sMin,
+                                                            min ? &sMin : NULL,
                                                             minIsInclusive,
-                                                            &sMax,
+                                                            max ? &sMax : NULL,
                                                             maxIsInclusive );
 }
 %}
