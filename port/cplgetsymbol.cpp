@@ -31,6 +31,9 @@
 
 #include <dlfcn.h>
 
+#include <map>
+#include <mutex>
+
 /************************************************************************/
 /*                            CPLGetSymbol()                            */
 /************************************************************************/
@@ -71,11 +74,26 @@
 void *CPLGetSymbol(const char *pszLibrary, const char *pszSymbolName)
 
 {
-    void *pLibrary = dlopen(pszLibrary, RTLD_LAZY);
-    if (pLibrary == nullptr)
+    static std::mutex mutex;
+    static std::map<std::string, void *> mapLibraryNameToHandle;
+    std::lock_guard oLock(mutex);
+
+    void *pLibrary;
+    const char *pszNonNullLibrary = pszLibrary ? pszLibrary : "";
+    auto oIter = mapLibraryNameToHandle.find(pszNonNullLibrary);
+    if (oIter == mapLibraryNameToHandle.end())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", dlerror());
-        return nullptr;
+        pLibrary = dlopen(pszLibrary, RTLD_LAZY);
+        if (pLibrary == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", dlerror());
+            return nullptr;
+        }
+        mapLibraryNameToHandle[pszNonNullLibrary] = pLibrary;
+    }
+    else
+    {
+        pLibrary = oIter->second;
     }
 
     void *pSymbol = dlsym(pLibrary, pszSymbolName);
@@ -96,12 +114,9 @@ void *CPLGetSymbol(const char *pszLibrary, const char *pszSymbolName)
     if (pSymbol == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", dlerror());
-        // Do not call dlclose here.  misc.py:misc_6() demonstrates the crash.
-        // coverity[leaked_storage]
         return nullptr;
     }
 
-    // coverity[leaked_storage]  It is not safe to call dlclose.
     return (pSymbol);
 }
 
