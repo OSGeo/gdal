@@ -1392,7 +1392,9 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
         [this, noneAllowed, specialValues](const std::string &currentValue)
         {
             bool bIsRaster = false;
-            OGREnvelope sDatasetWGS84Env;
+            OGREnvelope sDatasetLongLatEnv;
+            OGRSpatialReference oDSCRS;
+            const char *pszCelestialBodyName = nullptr;
             if (GetName() == "dst-crs")
             {
                 auto inputArg = m_owner->GetArg(GDAL_ARG_NAME_INPUT);
@@ -1408,26 +1410,67 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                         if (poDS)
                         {
                             bIsRaster = poDS->GetRasterCount() != 0;
-                            poDS->GetExtentWGS84LongLat(&sDatasetWGS84Env);
+                            const OGRSpatialReference *poCRS;
+                            if ((poCRS = poDS->GetSpatialRef()) != nullptr)
+                            {
+                                oDSCRS = *poCRS;
+                            }
+                            else if (poDS->GetLayerCount() >= 1)
+                            {
+                                if (auto poLayer = poDS->GetLayer(0))
+                                {
+                                    if ((poCRS = poLayer->GetSpatialRef()) !=
+                                        nullptr)
+                                        oDSCRS = *poCRS;
+                                }
+                            }
+                            if (!oDSCRS.IsEmpty())
+                            {
+                                pszCelestialBodyName =
+                                    oDSCRS.GetCelestialBodyName();
+
+                                if (!pszCelestialBodyName ||
+                                    !EQUAL(pszCelestialBodyName, "Earth"))
+                                {
+                                    OGRSpatialReference oLongLat;
+                                    oLongLat.CopyGeogCSFrom(&oDSCRS);
+                                    oLongLat.SetAxisMappingStrategy(
+                                        OAMS_TRADITIONAL_GIS_ORDER);
+                                    poDS->GetExtent(&sDatasetLongLatEnv,
+                                                    &oLongLat);
+                                }
+                                else
+                                {
+                                    poDS->GetExtentWGS84LongLat(
+                                        &sDatasetLongLatEnv);
+                                }
+                            }
                         }
                     }
                 }
             }
 
             const auto IsCRSCompatible =
-                [bIsRaster, &sDatasetWGS84Env](const OSRCRSInfo *crsInfo)
+                [bIsRaster, &sDatasetLongLatEnv,
+                 pszCelestialBodyName](const OSRCRSInfo *crsInfo)
             {
-                if (!sDatasetWGS84Env.IsInit())
+                if (!sDatasetLongLatEnv.IsInit())
                     return true;
                 return crsInfo->eType != OSR_CRS_TYPE_VERTICAL &&
                        !(bIsRaster &&
                          crsInfo->eType == OSR_CRS_TYPE_GEOCENTRIC) &&
                        crsInfo->dfWestLongitudeDeg <
                            crsInfo->dfEastLongitudeDeg &&
-                       sDatasetWGS84Env.MinX < crsInfo->dfEastLongitudeDeg &&
-                       sDatasetWGS84Env.MaxX > crsInfo->dfWestLongitudeDeg &&
-                       sDatasetWGS84Env.MinY < crsInfo->dfNorthLatitudeDeg &&
-                       sDatasetWGS84Env.MaxY > crsInfo->dfSouthLatitudeDeg;
+                       sDatasetLongLatEnv.MinX < crsInfo->dfEastLongitudeDeg &&
+                       sDatasetLongLatEnv.MaxX > crsInfo->dfWestLongitudeDeg &&
+                       sDatasetLongLatEnv.MinY < crsInfo->dfNorthLatitudeDeg &&
+                       sDatasetLongLatEnv.MaxY > crsInfo->dfSouthLatitudeDeg &&
+                       ((pszCelestialBodyName &&
+                         crsInfo->pszCelestialBodyName &&
+                         EQUAL(pszCelestialBodyName,
+                               crsInfo->pszCelestialBodyName)) ||
+                        (!pszCelestialBodyName &&
+                         !crsInfo->pszCelestialBodyName));
             };
 
             std::vector<std::string> oRet;
