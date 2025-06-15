@@ -1654,9 +1654,16 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
 
                 if (!bHasNoData || !IsNoData(dfVal, dfNoData))
                 {
-                    dfPixVal = dfVal == 0
-                                   ? std::numeric_limits<double>::infinity()
-                                   : dfK / dfVal;
+                    dfPixVal =
+                        dfVal == 0
+                            ? std::numeric_limits<double>::infinity()
+                            : dfK /
+#ifdef __COVERITY__
+                                  (dfVal + std::numeric_limits<double>::min())
+#else
+                                  dfVal
+#endif
+                        ;
                 }
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,

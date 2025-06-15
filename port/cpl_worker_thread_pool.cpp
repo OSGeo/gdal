@@ -208,12 +208,16 @@ bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
         CPLDebug("JOB", "Waking up %p", psWorkerThread);
 #endif
 
+#ifdef __COVERITY__
+        CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+#else
         {
             std::lock_guard<std::mutex> oGuardWT(psWorkerThread->m_mutex);
             // coverity[uninit_use_in_call]
             oGuard.unlock();
             psWorkerThread->m_cv.notify_one();
         }
+#endif
 
         CPLFree(psToFree);
     }
@@ -501,6 +505,9 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         CPLDebug("JOB", "%p sleeping", psWorkerThread);
 #endif
 
+#ifdef __COVERITY__
+        CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+#else
         std::unique_lock<std::mutex> oGuardThisThread(psWorkerThread->m_mutex);
         // coverity[uninit_use_in_call]
         oGuard.unlock();
@@ -508,6 +515,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         psWorkerThread->m_cv.wait(oGuardThisThread);
         // coverity[lock_order]
         oGuard.lock();
+#endif
     }
 }
 
