@@ -84,8 +84,6 @@ Examples
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
-    Hypsometric
-    hypsometric
     RGB
     RGBA
     HSV
