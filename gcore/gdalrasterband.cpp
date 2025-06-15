@@ -10221,6 +10221,8 @@ void GDALRasterBand::ThrowIfNotSameDimensions(const GDALRasterBand &first,
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
  *
+ * This method is the same as the C function GDALRasterBandAddBand()
+ *
  * @since 3.12
  * @throw std::runtime_error if both bands do not have the same dimensions.
  */
@@ -10240,6 +10242,9 @@ GDALRasterBand::operator+(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator+(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10273,6 +10278,8 @@ GDALComputedRasterBandH GDALRasterBandAddBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandAddDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator+(double constant) const
@@ -10289,6 +10296,9 @@ GDALComputedRasterBand GDALRasterBand::operator+(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator+(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10311,6 +10321,9 @@ GDALComputedRasterBandH GDALRasterBandAddDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandAddDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator+(double constant, const GDALRasterBand &other)
@@ -10326,6 +10339,8 @@ GDALComputedRasterBand operator+(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This method is the same as the C function GDALRasterBandSubBand()
  *
  * @since 3.12
  * @throw std::runtime_error if both bands do not have the same dimensions.
@@ -10346,6 +10361,9 @@ GDALRasterBand::operator-(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator-(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10379,6 +10397,8 @@ GDALComputedRasterBandH GDALRasterBandSubBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandSubDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator-(double constant) const
@@ -10395,6 +10415,9 @@ GDALComputedRasterBand GDALRasterBand::operator-(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator-(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10417,6 +10440,8 @@ GDALComputedRasterBandH GDALRasterBandSubDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandSubDoubleToBand()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator-(double constant, const GDALRasterBand &other)
@@ -10432,6 +10457,9 @@ GDALComputedRasterBand operator-(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * operator-(double, const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10456,6 +10484,8 @@ GDALComputedRasterBandH GDALRasterBandSubDoubleToBand(double constant,
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
  *
+ * This method is the same as the C function GDALRasterBandMulBand()
+ *
  * @since 3.12
  * @throw std::runtime_error if both bands do not have the same dimensions.
  */
@@ -10475,6 +10505,9 @@ GDALRasterBand::operator*(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator*(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10508,6 +10541,8 @@ GDALComputedRasterBandH GDALRasterBandMulBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandMulDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator*(double constant) const
@@ -10525,6 +10560,9 @@ GDALComputedRasterBand GDALRasterBand::operator*(double constant) const
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandMulDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator*(double constant, const GDALRasterBand &other)
@@ -10540,6 +10578,9 @@ GDALComputedRasterBand operator*(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator*(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10562,6 +10603,8 @@ GDALComputedRasterBandH GDALRasterBandMulDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
  *
+ * This method is the same as the C function GDALRasterBandDivBand()
+ *
  * @since 3.12
  * @throw std::runtime_error if both bands do not have the same dimensions.
  */
@@ -10581,6 +10624,9 @@ GDALRasterBand::operator/(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator/(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10614,6 +10660,8 @@ GDALComputedRasterBandH GDALRasterBandDivBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandDivDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator/(double constant) const
@@ -10630,6 +10678,9 @@ GDALComputedRasterBand GDALRasterBand::operator/(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator/(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10652,6 +10703,8 @@ GDALComputedRasterBandH GDALRasterBandDivDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandDivDoubleByBand()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
@@ -10668,6 +10721,9 @@ GDALComputedRasterBand operator/(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * operator/(double, const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10703,6 +10759,8 @@ static GDALComputedRasterBand ThrowIfNotMuparser()
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandGreaterThanBand()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand
@@ -10727,6 +10785,9 @@ GDALRasterBand::operator>(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator>(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10768,6 +10829,8 @@ GDALRasterBandGreaterThanBand(GDALRasterBandH hBand, GDALRasterBandH hOtherBand)
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandGreaterThanDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator>(double constant) const
@@ -10790,6 +10853,9 @@ GDALComputedRasterBand GDALRasterBand::operator>(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator>(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10821,6 +10887,9 @@ GDALComputedRasterBandH GDALRasterBandGreaterThanDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandLesserThanDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator>(double constant, const GDALRasterBand &other)
@@ -10844,6 +10913,8 @@ GDALComputedRasterBand operator>(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This method is the same as the C function GDALRasterBandGreaterOrEqualToBand()
  *
  * @since 3.12
  */
@@ -10869,6 +10940,9 @@ GDALRasterBand::operator>=(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator>=(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10911,6 +10985,8 @@ GDALRasterBandGreaterOrEqualToBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandGreaterOrEqualToDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator>=(double constant) const
@@ -10933,6 +11009,9 @@ GDALComputedRasterBand GDALRasterBand::operator>=(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator>=(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -10964,6 +11043,9 @@ GDALRasterBandGreaterOrEqualToDouble(GDALRasterBandH hBand, double constant)
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandLesserOrEqualToDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator>=(double constant, const GDALRasterBand &other)
@@ -10987,6 +11069,8 @@ GDALComputedRasterBand operator>=(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This method is the same as the C function GDALRasterBandLesserThanBand()
  *
  * @since 3.12
  */
@@ -11012,6 +11096,9 @@ GDALRasterBand::operator<(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator<(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11053,6 +11140,8 @@ GDALComputedRasterBandH GDALRasterBandLesserThanBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandLesserThanDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator<(double constant) const
@@ -11075,6 +11164,9 @@ GDALComputedRasterBand GDALRasterBand::operator<(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator<=(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11106,6 +11198,9 @@ GDALComputedRasterBandH GDALRasterBandLesserThanDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandGreaterThanDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator<(double constant, const GDALRasterBand &other)
@@ -11129,6 +11224,8 @@ GDALComputedRasterBand operator<(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This method is the same as the C function GDALRasterBandLesserOrEqualToBand()
  *
  * @since 3.12
  */
@@ -11154,6 +11251,9 @@ GDALRasterBand::operator<=(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator<=(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11196,6 +11296,8 @@ GDALRasterBandLesserOrEqualToBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandLesserOrEqualToDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator<=(double constant) const
@@ -11218,6 +11320,9 @@ GDALComputedRasterBand GDALRasterBand::operator<=(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator<=(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11248,6 +11353,9 @@ GDALRasterBandLesserOrEqualToDouble(GDALRasterBandH hBand, double constant)
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandGreaterOrEqualToDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator<=(double constant, const GDALRasterBand &other)
@@ -11271,6 +11379,8 @@ GDALComputedRasterBand operator<=(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This method is the same as the C function GDALRasterBandEqualToBand()
  *
  * @since 3.12
  */
@@ -11296,6 +11406,9 @@ GDALRasterBand::operator==(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator==(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11338,6 +11451,8 @@ GDALComputedRasterBandH GDALRasterBandEqualToBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandEqualToDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator==(double constant) const
@@ -11360,6 +11475,9 @@ GDALComputedRasterBand GDALRasterBand::operator==(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator==(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11391,6 +11509,9 @@ GDALComputedRasterBandH GDALRasterBandEqualToDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandEqualToDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator==(double constant, const GDALRasterBand &other)
@@ -11414,6 +11535,8 @@ GDALComputedRasterBand operator==(double constant, const GDALRasterBand &other)
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This method is the same as the C function GDALRasterBandNotEqualToBand()
  *
  * @since 3.12
  */
@@ -11439,6 +11562,9 @@ GDALRasterBand::operator!=(const GDALRasterBand &other) const
  *
  * The resulting band is lazy evaluated. A reference is taken on both input
  * datasets.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator!=(const GDALRasterBand&)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11481,6 +11607,8 @@ GDALComputedRasterBandH GDALRasterBandNotEqualToBand(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandNotEqualToDouble()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::operator!=(double constant) const
@@ -11503,6 +11631,9 @@ GDALComputedRasterBand GDALRasterBand::operator!=(double constant) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method
+ * GDALRasterBand::operator!=(double)
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11534,6 +11665,9 @@ GDALComputedRasterBandH GDALRasterBandNotEqualToDouble(GDALRasterBandH hBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandNotEqualToDouble()
+ * (with constant and band parameters reversed)
+ *
  * @since 3.12
  */
 GDALComputedRasterBand operator!=(double constant, const GDALRasterBand &other)
@@ -11563,6 +11697,8 @@ namespace gdal
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
+ *
+ * This method is the same as the C function GDALRasterBandIfThenElse()
  *
  * @since 3.12
  */
@@ -11595,6 +11731,9 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
+ *
+ * This method is the same as the C function GDALRasterBandIfThenElse(),
+ * with thenBand = (condBand * 0) + thenValue
  *
  * @since 3.12
  */
@@ -11629,6 +11768,9 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
  *
+ * This method is the same as the C function GDALRasterBandIfThenElse(),
+ * with elseBand = (condBand * 0) + elseValue
+
  * @since 3.12
  */
 GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
@@ -11661,6 +11803,9 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
+ *
+ * This method is the same as the C function GDALRasterBandIfThenElse(),
+ * with thenBand = (condBand * 0) + thenValue and elseBand = (condBand * 0) + elseValue
  *
  * @since 3.12
  */
@@ -11700,6 +11845,8 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
+ *
+ * This function is the same as the C++ method gdal::IfThenElse()
  *
  * @since 3.12
  */
@@ -11745,6 +11892,8 @@ GDALComputedRasterBandH GDALRasterBandIfThenElse(GDALRasterBandH hCondBand,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This method is the same as the C function GDALRasterBandAsDataType()
+ *
  * @since 3.12
  */
 GDALComputedRasterBand GDALRasterBand::AsType(GDALDataType dt) const
@@ -11765,6 +11914,8 @@ GDALComputedRasterBand GDALRasterBand::AsType(GDALDataType dt) const
  *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
+ *
+ * This function is the same as the C++ method GDALRasterBand::AsType()
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11844,6 +11995,8 @@ GDALOperationOnNBands(GDALComputedRasterBand::Operation op, size_t nBandCount,
  * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
  *
+ * This function is the same as the C ++ method gdal::max()
+ *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
@@ -11868,6 +12021,8 @@ namespace gdal
  *
  * Two or more bands can be passed.
  *
+ * This method is the same as the C function GDALMaximumOfNBands()
+ *
  * @since 3.12
  * @throw std::runtime_error if bands do not have the same dimensions.
  */
@@ -11890,6 +12045,8 @@ GDALComputedRasterBand max(const GDALRasterBand &first,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This function is the same as the C ++ method gdal::max()
+ *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
@@ -11911,6 +12068,8 @@ GDALComputedRasterBandH GDALRasterBandMaxConstant(GDALRasterBandH hBand,
  *
  * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
+ *
+ * This function is the same as the C ++ method gdal::min()
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -11936,6 +12095,8 @@ namespace gdal
  *
  * Two or more bands can be passed.
  *
+ * This method is the same as the C function GDALMinimumOfNBands()
+ *
  * @since 3.12
  * @throw std::runtime_error if bands do not have the same dimensions.
  */
@@ -11958,6 +12119,8 @@ GDALComputedRasterBand min(const GDALRasterBand &first,
  * The resulting band is lazy evaluated. A reference is taken on the input
  * dataset.
  *
+ * This function is the same as the C ++ method gdal::min()
+ *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
  */
@@ -11979,6 +12142,8 @@ GDALComputedRasterBandH GDALRasterBandMinConstant(GDALRasterBandH hBand,
  *
  * The resulting band is lazy evaluated. A reference is taken on input
  * datasets.
+ *
+ * This function is the same as the C ++ method gdal::mean()
  *
  * @since 3.12
  * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
@@ -12004,6 +12169,8 @@ namespace gdal
  * datasets.
  *
  * Two or more bands can be passed.
+ *
+ * This method is the same as the C function GDALMeanOfNBands()
  *
  * @since 3.12
  * @throw std::runtime_error if bands do not have the same dimensions.
