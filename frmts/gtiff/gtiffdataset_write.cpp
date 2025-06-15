@@ -7968,7 +7968,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             poDstBand->SetCategoryNames(papszCatNames);
     }
 
-    l_hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle(nullptr));
+    l_hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle("TIFF_HANDLE"));
 
     /* -------------------------------------------------------------------- */
     /*      Handle forcing xml:ESRI data to be written to PAM.              */

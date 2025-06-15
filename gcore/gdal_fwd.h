@@ -44,6 +44,9 @@ typedef void *GDALDatasetH;
 /** Opaque type used for the C bindings of the C++ GDALRasterBand class */
 typedef void *GDALRasterBandH;
 
+/** Opaque type used for the C bindings of the C++ GDALComputedRasterBand class */
+typedef void *GDALComputedRasterBandH;
+
 /** Opaque type used for the C bindings of the C++ GDALDriver class */
 typedef void *GDALDriverH;
 

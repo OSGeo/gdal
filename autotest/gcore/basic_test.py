@@ -1033,3 +1033,12 @@ def test_gdal_open_non_accessible_object_on_cloud_storage():
     with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
         with pytest.raises(Exception, match="InvalidCredentials"):
             gdal.Open("/vsioss/i_do_not/exist.bin")
+
+
+def test_basic_test_create_copy_band():
+    mem_driver = gdal.GetDriverByName("MEM")
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).Fill(1)
+
+    out_ds = mem_driver.CreateCopy("", src_ds.GetRasterBand(1))
+    assert out_ds.GetRasterBand(1).Checksum() == 1
