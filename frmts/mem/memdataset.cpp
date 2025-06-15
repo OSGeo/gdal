@@ -3323,7 +3323,7 @@ int MEMDataset::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, ODsCUpdateFieldDomain))
         return TRUE;
 
-    return FALSE;
+    return GDALDataset::TestCapability(pszCap);
 }
 
 /************************************************************************/

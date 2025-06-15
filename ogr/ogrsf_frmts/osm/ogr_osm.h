@@ -588,7 +588,7 @@ class OGROSMDataSource final : public GDALDataset
     int MyResetReading();
     bool ParseNextChunk(int nIdxLayer, GDALProgressFunc pfnProgress,
                         void *pProgressData);
-    OGRErr GetExtent(OGREnvelope *psExtent);
+    OGRErr GetNativeExtent(OGREnvelope *psExtent);
     int IsInterleavedReading();
 
     void NotifyNodes(unsigned int nNodes, const OSMNode *pasNodes);

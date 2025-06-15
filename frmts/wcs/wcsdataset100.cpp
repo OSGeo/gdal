@@ -30,13 +30,14 @@
 using namespace WCSUtils;
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize, CPL_UNUSED int,
-                                             CPL_UNUSED int)
+std::vector<double> WCSDataset100::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int,
+                                                   CPL_UNUSED int)
 {
     std::vector<double> extent;
     // WCS 1.0 extents are the outer edges of outer pixels.

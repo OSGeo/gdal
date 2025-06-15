@@ -310,7 +310,7 @@ CPLErr WCSDataset::GetCoverage(int nXOff, int nYOff, int nXSize, int nYSize,
     /*      Figure out the georeferenced extents.                           */
     /* -------------------------------------------------------------------- */
     std::vector<double> extent =
-        GetExtent(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize);
+        GetNativeExtent(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize);
 
     /* -------------------------------------------------------------------- */
     /*      Build band list if we have the band identifier.                 */

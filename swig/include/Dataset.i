@@ -379,6 +379,45 @@ public:
     return GDALSetGeoTransform( self, argin );
   }
 
+
+#if defined(SWIGCSHARP)
+  %feature( "kwargs" ) GetExtent;
+  CPLErr GetExtent(OGREnvelope* extent, OSRSpatialReferenceShadow* srs = NULL) {
+    return GDALGetExtent(self, extent, srs);
+  }
+#elif defined(SWIGPYTHON)
+  %feature( "kwargs" ) GetExtent;
+  void GetExtent(double argout[4], int* isvalid, OSRSpatialReferenceShadow* srs = NULL) {
+    CPLErr eErr = GDALGetExtent(self, (OGREnvelope*)argout, srs);
+    *isvalid = (eErr == CE_None);
+    return;
+  }
+#else
+  CPLErr GetExtent(double argout[4], OSRSpatialReferenceShadow* srs = NULL) {
+    return GDALGetExtent(self, (OGREnvelope*)argout, srs);
+  }
+#endif
+
+
+#if defined(SWIGCSHARP)
+  %feature( "kwargs" ) GetExtentWGS84LongLat;
+  CPLErr GetExtentWGS84LongLat(OGREnvelope* extent) {
+    return GDALGetExtentWGS84LongLat(self, extent);
+  }
+#elif defined(SWIGPYTHON)
+  %feature( "kwargs" ) GetExtentWGS84LongLat;
+  void GetExtentWGS84LongLat(double argout[4], int* isvalid) {
+    CPLErr eErr = GDALGetExtentWGS84LongLat(self, (OGREnvelope*)argout);
+    *isvalid = (eErr == CE_None);
+    return;
+  }
+#else
+  CPLErr GetExtentWGS84LongLat(double argout[4]) {
+    return GDALGetExtentWGS84LongLat(self, (OGREnvelope*)argout);
+  }
+#endif
+
+
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 #ifndef SWIGCSHARP

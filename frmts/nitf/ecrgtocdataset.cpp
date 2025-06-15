@@ -579,9 +579,9 @@ GDALDataset *ECRGTOCSubDataset::Build(
         double dfMaxY = 0.0;
         double dfPixelXSize = 0.0;
         double dfPixelYSize = 0.0;
-        GetExtent(aosFrameDesc[i].pszName, aosFrameDesc[i].nScale,
-                  aosFrameDesc[i].nZone, dfMinX, dfMaxX, dfMinY, dfMaxY,
-                  dfPixelXSize, dfPixelYSize);
+        ::GetExtent(aosFrameDesc[i].pszName, aosFrameDesc[i].nScale,
+                    aosFrameDesc[i].nZone, dfMinX, dfMaxX, dfMinY, dfMaxY,
+                    dfPixelXSize, dfPixelYSize);
 
         const int nFrameXSize =
             static_cast<int>((dfMaxX - dfMinX) / dfPixelXSize + 0.5);
@@ -843,8 +843,8 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
                     double dfMaxY = 0.0;
                     double dfPixelXSize = 0.0;
                     double dfPixelYSize = 0.0;
-                    GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
-                              dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
+                    ::GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
+                                dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
 
                     nValidFrames++;
 

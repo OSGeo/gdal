@@ -122,14 +122,14 @@ static void ParseParameters(CPLXMLNode *service,
 }
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize,
-                                             CPL_UNUSED int nBufXSize,
-                                             CPL_UNUSED int nBufYSize)
+std::vector<double> WCSDataset201::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int nBufXSize,
+                                                   CPL_UNUSED int nBufYSize)
 {
     std::vector<double> extent;
     // WCS 2.0 extents are the outer edges of outer pixels.

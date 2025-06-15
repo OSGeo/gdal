@@ -30,14 +30,14 @@
 using namespace WCSUtils;
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize,
-                                             CPL_UNUSED int nBufXSize,
-                                             CPL_UNUSED int nBufYSize)
+std::vector<double> WCSDataset110::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int nBufXSize,
+                                                   CPL_UNUSED int nBufYSize)
 {
     std::vector<double> extent;
 

@@ -63,8 +63,9 @@ CPLErr PostGISRasterTileDataset::GetGeoTransform(double *padfTransform)
 /********************************************************
  * \brief Return spatial extent of tile
  ********************************************************/
-void PostGISRasterTileDataset::GetExtent(double *pdfMinX, double *pdfMinY,
-                                         double *pdfMaxX, double *pdfMaxY) const
+void PostGISRasterTileDataset::GetNativeExtent(double *pdfMinX, double *pdfMinY,
+                                               double *pdfMaxX,
+                                               double *pdfMaxY) const
 {
     // FIXME; incorrect in case of non 0 rotation terms
 

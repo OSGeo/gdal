@@ -4230,10 +4230,10 @@ OGRLayer *OGROSMDataSource::GetLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                             GetExtent()                              */
+/*                          GetNativeExtent()                           */
 /************************************************************************/
 
-OGRErr OGROSMDataSource::GetExtent(OGREnvelope *psExtent)
+OGRErr OGROSMDataSource::GetNativeExtent(OGREnvelope *psExtent)
 {
     if (!m_bHasParsedFirstChunk)
     {

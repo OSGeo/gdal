@@ -264,3 +264,17 @@ def test_gdalalg_raster_reproject_both_num_threads_and_warp_option(tmp_vsimem):
                 out_filename,
             ],
         )
+
+
+def test_gdalalg_raster_reproject_complete_dst_crs():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster reproject ../gcore/data/byte.tif --dst-crs=EPSG:"
+    )
+    assert "4326\\ --" in out
+    assert "2193\\ --" not in out  # NZGD2000
