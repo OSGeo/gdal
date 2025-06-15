@@ -1389,8 +1389,47 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
         });
 
     SetAutoCompleteFunction(
-        [noneAllowed, specialValues](const std::string &currentValue)
+        [this, noneAllowed, specialValues](const std::string &currentValue)
         {
+            bool bIsRaster = false;
+            OGREnvelope sDatasetWGS84Env;
+            if (GetName() == "dst-crs")
+            {
+                auto inputArg = m_owner->GetArg(GDAL_ARG_NAME_INPUT);
+                if (inputArg && inputArg->GetType() == GAAT_DATASET_LIST)
+                {
+                    auto &val =
+                        inputArg->Get<std::vector<GDALArgDatasetValue>>();
+                    if (val.size() == 1)
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        auto poDS = std::unique_ptr<GDALDataset>(
+                            GDALDataset::Open(val[0].GetName().c_str()));
+                        if (poDS)
+                        {
+                            bIsRaster = poDS->GetRasterCount() != 0;
+                            poDS->GetExtentWGS84LongLat(&sDatasetWGS84Env);
+                        }
+                    }
+                }
+            }
+
+            const auto IsCRSCompatible =
+                [bIsRaster, &sDatasetWGS84Env](const OSRCRSInfo *crsInfo)
+            {
+                if (!sDatasetWGS84Env.IsInit())
+                    return true;
+                return crsInfo->eType != OSR_CRS_TYPE_VERTICAL &&
+                       !(bIsRaster &&
+                         crsInfo->eType == OSR_CRS_TYPE_GEOCENTRIC) &&
+                       crsInfo->dfWestLongitudeDeg <
+                           crsInfo->dfEastLongitudeDeg &&
+                       sDatasetWGS84Env.MinX < crsInfo->dfEastLongitudeDeg &&
+                       sDatasetWGS84Env.MaxX > crsInfo->dfWestLongitudeDeg &&
+                       sDatasetWGS84Env.MinY < crsInfo->dfNorthLatitudeDeg &&
+                       sDatasetWGS84Env.MaxY > crsInfo->dfSouthLatitudeDeg;
+            };
+
             std::vector<std::string> oRet;
             if (noneAllowed)
                 oRet.push_back("none");
@@ -1408,14 +1447,17 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                 for (int i = 0; i < nCount; ++i)
                 {
                     const auto *entry = (pCRSList.get())[i];
-                    if (aosTokens.size() == 1 ||
-                        STARTS_WITH(entry->pszCode, aosTokens[1]))
+                    if (IsCRSCompatible(entry))
                     {
-                        if (oRet.empty())
-                            osCode = entry->pszCode;
-                        oRet.push_back(std::string(entry->pszCode)
-                                           .append(" -- ")
-                                           .append(entry->pszName));
+                        if (aosTokens.size() == 1 ||
+                            STARTS_WITH(entry->pszCode, aosTokens[1]))
+                        {
+                            if (oRet.empty())
+                                osCode = entry->pszCode;
+                            oRet.push_back(std::string(entry->pszCode)
+                                               .append(" -- ")
+                                               .append(entry->pszName));
+                        }
                     }
                 }
                 if (oRet.size() == 1)
