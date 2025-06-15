@@ -448,6 +448,7 @@ conceptualhelp
 cond
 conda
 Conda
+condBand
 conf
 config
 Config
@@ -783,6 +784,7 @@ Elbor
 ElementPath
 ellps
 elpaso
+elseBand
 emptor
 Enablement
 Encodings
@@ -1391,6 +1393,7 @@ ieee
 ifdef
 ifit
 ifndef
+IfThenElse
 ifv
 igc
 IGeometry
@@ -3236,6 +3239,7 @@ tgz
 th
 thebuffer
 themself
+thenBand
 thescale
 thf
 THH

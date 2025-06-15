@@ -2240,12 +2240,12 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
 
 namespace gdal
 {
-using std::max;
-using std::min;
 
 GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
                                           const GDALRasterBand &thenBand,
                                           const GDALRasterBand &elseBand);
+
+//! @cond Doxygen_Suppress
 
 GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
                                           double thenValue,
@@ -2258,24 +2258,13 @@ GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
 GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
                                           double thenValue, double elseValue);
 
-/** Return a band whose each pixel value is the minimum of the corresponding
- * pixel values in the inputs (bands or constants)
- *
- * The resulting band is lazy evaluated. A reference is taken on input
- * datasets.
- *
- * Two or more bands can be passed.
- *
- * @since 3.12
- * @throw std::runtime_error if bands do not have the same dimensions.
- */
-inline GDALComputedRasterBand min(const GDALRasterBand &first,
-                                  const GDALRasterBand &second)
-{
-    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
-    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
-                                  first, second);
-}
+//! @endcond
+
+using std::max;
+using std::min;
+
+GDALComputedRasterBand CPL_DLL min(const GDALRasterBand &first,
+                                   const GDALRasterBand &second);
 
 //! @cond Doxygen_Suppress
 
@@ -2336,24 +2325,8 @@ inline GDALComputedRasterBand min(const U &first, V &&...rest)
 
 //! @endcond
 
-/** Return a band whose each pixel value is the maximum of the corresponding
- * pixel values in the inputs (bands or constants)
- *
- * The resulting band is lazy evaluated. A reference is taken on input
- * datasets.
- *
- * Two or more bands can be passed.
- *
- * @since 3.12
- * @throw std::runtime_error if bands do not have the same dimensions.
- */
-inline GDALComputedRasterBand max(const GDALRasterBand &first,
-                                  const GDALRasterBand &second)
-{
-    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
-    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
-                                  first, second);
-}
+GDALComputedRasterBand CPL_DLL max(const GDALRasterBand &first,
+                                   const GDALRasterBand &second);
 
 //! @cond Doxygen_Suppress
 
@@ -2414,24 +2387,8 @@ inline GDALComputedRasterBand max(const U &first, V &&...rest)
 
 //! @endcond
 
-/** Return a band whose each pixel value is the arithmetic mean of the
- * corresponding pixel values in the input bands.
- *
- * The resulting band is lazy evaluated. A reference is taken on input
- * datasets.
- *
- * Two or more bands can be passed.
- *
- * @since 3.12
- * @throw std::runtime_error if bands do not have the same dimensions.
- */
-inline GDALComputedRasterBand mean(const GDALRasterBand &first,
-                                   const GDALRasterBand &second)
-{
-    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
-    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MEAN,
-                                  first, second);
-}
+GDALComputedRasterBand CPL_DLL mean(const GDALRasterBand &first,
+                                    const GDALRasterBand &second);
 
 //! @cond Doxygen_Suppress
 inline GDALComputedRasterBand

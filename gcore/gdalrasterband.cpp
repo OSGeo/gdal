@@ -11558,6 +11558,9 @@ namespace gdal
 /** Return a band whose value is thenBand if the corresponding pixel in condBand
  * is not zero, or the one from elseBand otherwise.
  *
+ * Variants of this method exits where thenBand and/or elseBand can be double
+ * values.
+ *
  * The resulting band is lazy evaluated. A reference is taken on the input
  * datasets.
  *
@@ -11580,6 +11583,8 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
         std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
 #endif
 }
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                           IfThenElse()                               */
@@ -11681,6 +11686,8 @@ GDALComputedRasterBand IfThenElse(const GDALRasterBand &condBand,
         std::vector<const GDALRasterBand *>{&condBand, &thenBand, &elseBand});
 #endif
 }
+
+//! @endcond
 
 }  // namespace gdal
 
@@ -11848,6 +11855,32 @@ GDALComputedRasterBandH GDALMaximumOfNBands(size_t nBandCount,
 }
 
 /************************************************************************/
+/*                               gdal::max()                            */
+/************************************************************************/
+
+namespace gdal
+{
+/** Return a band whose each pixel value is the maximum of the corresponding
+ * pixel values in the inputs (bands or constants)
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * Two or more bands can be passed.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if bands do not have the same dimensions.
+ */
+GDALComputedRasterBand max(const GDALRasterBand &first,
+                           const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MAX,
+                                  first, second);
+}
+}  // namespace gdal
+
+/************************************************************************/
 /*                     GDALRasterBandMaxConstant()                      */
 /************************************************************************/
 
@@ -11890,6 +11923,32 @@ GDALComputedRasterBandH GDALMinimumOfNBands(size_t nBandCount,
 }
 
 /************************************************************************/
+/*                               gdal::min()                            */
+/************************************************************************/
+
+namespace gdal
+{
+/** Return a band whose each pixel value is the minimum of the corresponding
+ * pixel values in the inputs (bands or constants)
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * Two or more bands can be passed.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if bands do not have the same dimensions.
+ */
+GDALComputedRasterBand min(const GDALRasterBand &first,
+                           const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MIN,
+                                  first, second);
+}
+}  // namespace gdal
+
+/************************************************************************/
 /*                     GDALRasterBandMinConstant()                      */
 /************************************************************************/
 
@@ -11930,3 +11989,30 @@ GDALComputedRasterBandH GDALMeanOfNBands(size_t nBandCount,
     return GDALOperationOnNBands(GDALComputedRasterBand::Operation::OP_MEAN,
                                  nBandCount, pahBands);
 }
+
+/************************************************************************/
+/*                              gdal::mean()                            */
+/************************************************************************/
+
+namespace gdal
+{
+
+/** Return a band whose each pixel value is the arithmetic mean of the
+ * corresponding pixel values in the input bands.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on input
+ * datasets.
+ *
+ * Two or more bands can be passed.
+ *
+ * @since 3.12
+ * @throw std::runtime_error if bands do not have the same dimensions.
+ */
+GDALComputedRasterBand mean(const GDALRasterBand &first,
+                            const GDALRasterBand &second)
+{
+    GDALRasterBand::ThrowIfNotSameDimensions(first, second);
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_MEAN,
+                                  first, second);
+}
+}  // namespace gdal
