@@ -456,6 +456,16 @@ def test_osr_epsg_area_of_use():
 ###############################################################################
 
 
+def test_osr_epsg_celestial_body_name():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    assert srs.GetCelestialBodyName() == "Earth"
+
+
+###############################################################################
+
+
 def test_osr_GetCRSInfoListFromDatabase():
 
     l = osr.GetCRSInfoListFromDatabase("EPSG")

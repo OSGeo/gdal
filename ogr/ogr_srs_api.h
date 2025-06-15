@@ -496,6 +496,7 @@ OGRSpatialReferenceH CPL_DLL OSRConvertToOtherProjection(
     const char *const *papszOptions);
 
 const char CPL_DLL *OSRGetName(OGRSpatialReferenceH hSRS);
+const char CPL_DLL *OSRGetCelestialBodyName(OGRSpatialReferenceH hSRS);
 
 OGRErr CPL_DLL CPL_STDCALL OSRSetAttrValue(OGRSpatialReferenceH hSRS,
                                            const char *pszNodePath,

@@ -90,6 +90,7 @@ struct OGRSpatialReference::Private
     std::vector<std::string> m_wktImportWarnings{};
     std::vector<std::string> m_wktImportErrors{};
     CPLString m_osAreaName{};
+    CPLString m_celestialBodyName{};
 
     bool m_bIsThreadSafe = false;
     bool m_bNodesChanged = false;
@@ -1427,6 +1428,73 @@ const char *OSRGetName(OGRSpatialReferenceH hSRS)
     VALIDATE_POINTER1(hSRS, "OSRGetName", nullptr);
 
     return ToPointer(hSRS)->GetName();
+}
+
+/************************************************************************/
+/*                       GetCelestialBodyName()                         */
+/************************************************************************/
+
+/**
+ * \brief Return the name of the celestial body of this CRS.
+ *
+ * e.g. "Earth" for an Earth CRS
+ *
+ * The returned value is only short lived and should not be used after other
+ * calls to methods on this object.
+ *
+ * @since GDAL 3.12 and PROJ 8.1
+ */
+
+const char *OGRSpatialReference::GetCelestialBodyName() const
+{
+#if PROJ_AT_LEAST_VERSION(8, 1, 0)
+
+    TAKE_OPTIONAL_LOCK();
+
+    d->refreshProjObj();
+    if (!d->m_pj_crs)
+        return nullptr;
+    d->demoteFromBoundCRS();
+    const char *name =
+        proj_get_celestial_body_name(d->getPROJContext(), d->m_pj_crs);
+    if (name)
+    {
+        d->m_celestialBodyName = name;
+    }
+    d->undoDemoteFromBoundCRS();
+    return d->m_celestialBodyName.c_str();
+#else
+    if (std::fabs(GetSemiMajor(nullptr) - SRS_WGS84_SEMIMAJOR) <=
+        0.05 * SRS_WGS84_SEMIMAJOR)
+        return "Earth";
+    const char *pszAuthName = GetAuthorityName(nullptr);
+    if (pszAuthName && EQUAL(pszAuthName, "EPSG"))
+        return "Earth";
+    return nullptr;
+#endif
+}
+
+/************************************************************************/
+/*                       OSRGetCelestialBodyName()                      */
+/************************************************************************/
+
+/**
+ * \brief Return the name of the celestial body of this CRS.
+ *
+ * e.g. "Earth" for an Earth CRS
+ *
+ * The returned value is only short lived and should not be used after other
+ * calls to methods on this object.
+ *
+ * @since GDAL 3.12 and PROJ 8.1
+ */
+
+const char *OSRGetCelestialBodyName(OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1(hSRS, "GetCelestialBodyName", nullptr);
+
+    return ToPointer(hSRS)->GetCelestialBodyName();
 }
 
 /************************************************************************/

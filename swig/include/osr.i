@@ -318,6 +318,10 @@ public:
     return OSRGetName( self );
   }
 
+  const char* GetCelestialBodyName() {
+    return OSRGetCelestialBodyName( self );
+  }
+
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
 #ifndef SWIGJAVA
   %feature("kwargs") IsSame;

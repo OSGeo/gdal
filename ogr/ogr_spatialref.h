@@ -390,6 +390,8 @@ class CPL_DLL OGRSpatialReference
     int IsSame(const OGRSpatialReference *,
                const char *const *papszOptions) const;
 
+    const char *GetCelestialBodyName() const;
+
     void Clear();
     OGRErr SetLocalCS(const char *);
     OGRErr SetProjCS(const char *);
