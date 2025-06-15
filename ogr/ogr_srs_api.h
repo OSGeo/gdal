@@ -973,6 +973,10 @@ typedef struct
     /** Name of the projection method for a projected CRS. Might be NULL even
      *for projected CRS in some cases. */
     char *pszProjectionMethod;
+    /** Name of the celestial body of the CRS (e.g. "Earth").
+     * @since GDAL 3.12, and filled only if PROJ >= 8.1
+     */
+    char *pszCelestialBodyName;
 } OSRCRSInfo;
 
 /** \brief Structure to describe optional parameters to

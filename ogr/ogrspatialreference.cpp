@@ -12883,6 +12883,17 @@ OSRGetCRSInfoListFromDatabase(const char *pszAuthName,
             projList[i]->projection_method_name
                 ? CPLStrdup(projList[i]->projection_method_name)
                 : nullptr;
+#if PROJ_AT_LEAST_VERSION(8, 1, 0)
+        res[i]->pszCelestialBodyName =
+            projList[i]->celestial_body_name
+                ? CPLStrdup(projList[i]->celestial_body_name)
+                : nullptr;
+#else
+        res[i]->pszCelestialBodyName =
+            res[i]->pszAuthName && EQUAL(res[i]->pszAuthName, "EPSG")
+                ? CPLStrdup("Earth")
+                : nullptr;
+#endif
     }
     res[nResultCount] = nullptr;
     proj_crs_info_list_destroy(projList);
@@ -12909,6 +12920,7 @@ void OSRDestroyCRSInfoList(OSRCRSInfo **list)
             CPLFree(list[i]->pszName);
             CPLFree(list[i]->pszAreaName);
             CPLFree(list[i]->pszProjectionMethod);
+            CPLFree(list[i]->pszCelestialBodyName);
             delete list[i];
         }
         delete[] list;

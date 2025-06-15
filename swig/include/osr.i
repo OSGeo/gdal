@@ -1459,6 +1459,8 @@ struct OSRCRSInfo {
     /** Name of the projection method for a projected CRS. Might be NULL even
      *for projected CRS in some cases. */
     char* projection_method;
+    /** Name of the celestial body of the CRS (e.g. "Earth"). */
+    char* celestial_body_name;
 
   OSRCRSInfo( const char* auth_name,
               const char* code,
@@ -1471,7 +1473,8 @@ struct OSRCRSInfo {
               double east_lon_degree,
               double north_lat_degree,
               const char* area_name,
-              const char* projection_method)
+              const char* projection_method,
+              const char* celestial_body_name)
     {
     OSRCRSInfo *self = (OSRCRSInfo*) CPLMalloc( sizeof( OSRCRSInfo ) );
     self->pszAuthName = auth_name ? CPLStrdup(auth_name) : NULL;
@@ -1486,6 +1489,7 @@ struct OSRCRSInfo {
     self->dfNorthLatitudeDeg = north_lat_degree;
     self->pszAreaName = area_name ? CPLStrdup(area_name) : NULL;
     self->pszProjectionMethod = projection_method ? CPLStrdup(projection_method) : NULL;
+    self->pszCelestialBodyName = celestial_body_name ? CPLStrdup(celestial_body_name) : NULL;
     return self;
   }
 
@@ -1495,6 +1499,7 @@ struct OSRCRSInfo {
     CPLFree( self->pszName );
     CPLFree( self->pszAreaName );
     CPLFree( self->pszProjectionMethod );
+    CPLFree( self->pszCelestialBodyName );
     CPLFree( self );
   }
 } /* extend */
@@ -1549,6 +1554,10 @@ const char* OSRCRSInfo_area_name_get( OSRCRSInfo *crsInfo ) {
 
 const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
   return crsInfo->pszProjectionMethod;
+}
+
+const char* OSRCRSInfo_celestial_body_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszCelestialBodyName;
 }
 
 %}

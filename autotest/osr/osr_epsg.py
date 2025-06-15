@@ -472,6 +472,7 @@ def test_osr_GetCRSInfoListFromDatabase():
             assert record.north_lat_degree == 51.56
             assert "France" in record.area_name
             assert record.projection_method == "Lambert Conic Conformal (2SP)"
+            assert record.celestial_body_name == "Earth"
             found = True
     assert found
 
