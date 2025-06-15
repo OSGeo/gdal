@@ -1760,8 +1760,11 @@ MaxSize
 maxwidth
 maxx
 maxX
+MaxX
+MaxX
 maxy
 maxY
+MaxY
 MaxZ
 mbtiles
 mbtowc
@@ -1808,6 +1811,7 @@ minsize
 minX
 miny
 minY
+MinY
 MinZ
 Mipmaps
 MiraD
@@ -2481,6 +2485,7 @@ pnSrcYSize
 pnt
 pnXSize
 pnYSize
+poCRS
 podaac
 podofo
 PoDoFo

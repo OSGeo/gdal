@@ -347,8 +347,8 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
             }
 
             double dfTileMinX, dfTileMinY, dfTileMaxX, dfTileMaxY;
-            poTile->GetExtent(&dfTileMinX, &dfTileMinY, &dfTileMaxX,
-                              &dfTileMaxY);
+            poTile->GetNativeExtent(&dfTileMinX, &dfTileMinY, &dfTileMaxX,
+                                    &dfTileMaxY);
 
             /**
              * We keep the general max and min values of all the missing
