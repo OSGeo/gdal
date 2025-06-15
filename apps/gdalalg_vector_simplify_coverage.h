@@ -36,6 +36,11 @@ class GDALVectorSimplifyCoverageAlgorithm
 
     explicit GDALVectorSimplifyCoverageAlgorithm(bool standaloneStep = false);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
     struct Options
     {
         double tolerance = 0;
