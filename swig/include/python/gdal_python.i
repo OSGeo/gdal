@@ -591,9 +591,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.Add(other)._add_parent_references([self, other])
+          return _gdal.Band_Add(self, other)._add_parent_references([self, other])
       else:
-          return self.AddDouble(other)._add_parent_references([self])
+          return _gdal.Band_AddDouble(self, other)._add_parent_references([self])
 
   def __radd__(self, other):
       """Add a constant to this raster band
@@ -609,9 +609,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.Sub(other)._add_parent_references([self, other])
+          return _gdal.Band_Sub(self, other)._add_parent_references([self, other])
       else:
-          return self.SubDouble(other)._add_parent_references([self])
+          return _gdal.Band_SubDouble(self, other)._add_parent_references([self])
 
   def __rsub__(self, other):
       """Subtract a constant with a raster band
@@ -619,7 +619,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
          The resulting band is lazily evaluated.
       """
       other = Band._get_as_band_if_possible(other)
-      return self.SubDoubleToBand(other)._add_parent_references([self])
+      return _gdal.Band_SubDoubleToBand(self, other)._add_parent_references([self])
 
   def __mul__(self, other):
       """Multiply this raster band with a raster band, a numpy array or a constant
@@ -628,9 +628,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.Mul(other)._add_parent_references([self, other])
+          return _gdal.Band_Mul(self, other)._add_parent_references([self, other])
       else:
-          return self.MulDouble(other)._add_parent_references([self])
+          return _gdal.Band_MulDouble(self, other)._add_parent_references([self])
 
   def __rmul__(self, other):
       """Multiply a constant with this raster band
@@ -646,9 +646,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.Div(other)._add_parent_references([self, other])
+          return _gdal.Band_Div(self, other)._add_parent_references([self, other])
       else:
-          return self.DivDouble(other)._add_parent_references([self])
+          return _gdal.Band_DivDouble(self, other)._add_parent_references([self])
 
   def __rtruediv__(self, other):
       """Divide a constant by a raster band
@@ -656,7 +656,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
          The resulting band is lazily evaluated.
       """
       other = Band._get_as_band_if_possible(other)
-      return self.DivDoubleByBand(other)._add_parent_references([self])
+      return _gdal.Band_DivDoubleByBand(self, other)._add_parent_references([self])
 
   def __gt__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -666,9 +666,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.GreaterThan(other)._add_parent_references([self, other])
+          return _gdal.Band_GreaterThan(self, other)._add_parent_references([self, other])
       else:
-          return self.GreaterThanDouble(other)._add_parent_references([self])
+          return _gdal.Band_GreaterThanDouble(self, other)._add_parent_references([self])
 
   def __ge__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -678,9 +678,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.GreaterOrEqualTo(other)._add_parent_references([self, other])
+          return _gdal.Band_GreaterOrEqualTo(self, other)._add_parent_references([self, other])
       else:
-          return self.GreaterOrEqualToDouble(other)._add_parent_references([self])
+          return _gdal.Band_GreaterOrEqualToDouble(self, other)._add_parent_references([self])
 
   def __lt__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -690,9 +690,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.LesserThan(other)._add_parent_references([self, other])
+          return _gdal.Band_LesserThan(self, other)._add_parent_references([self, other])
       else:
-          return self.LesserThanDouble(other)._add_parent_references([self])
+          return _gdal.Band_LesserThanDouble(self, other)._add_parent_references([self])
 
   def __le__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -702,9 +702,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.LesserOrEqualTo(other)._add_parent_references([self, other])
+          return _gdal.Band_LesserOrEqualTo(self, other)._add_parent_references([self, other])
       else:
-          return self.LesserOrEqualToDouble(other)._add_parent_references([self])
+          return _gdal.Band_LesserOrEqualToDouble(self, other)._add_parent_references([self])
 
   def __eq__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -714,9 +714,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.EqualTo(other)._add_parent_references([self, other])
+          return _gdal.Band_EqualTo(self, other)._add_parent_references([self, other])
       else:
-          return self.EqualToDouble(other)._add_parent_references([self])
+          return _gdal.Band_EqualToDouble(self, other)._add_parent_references([self])
 
   def __ne__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -726,9 +726,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return self.NotEqualTo(other)._add_parent_references([self, other])
+          return _gdal.Band_NotEqualTo(self, other)._add_parent_references([self, other])
       else:
-          return self.NotEqualToDouble(other)._add_parent_references([self])
+          return _gdal.Band_NotEqualToDouble(self, other)._add_parent_references([self])
 
   def astype(self, dt):
       """Cast this band to the specified data type
@@ -745,7 +745,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
           except Exception:
               raise ValueError( "Invalid dt value")
 
-      return self.AsType(dt)._add_parent_references([self])
+      return _gdal.Band_AsType(self, dt)._add_parent_references([self])
 
   @staticmethod
   def where(cond_band, then_band, else_band):
@@ -768,7 +768,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       if not isinstance(else_band, Band):
           else_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, else_band, False)) + else_band
 
-      return Band.IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
+      return _gdal.Band_IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
 
   @staticmethod
   def minimum(*args):
@@ -789,9 +789,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
               constant = arg
       if not band_args:
           raise RuntimeError("At least one argument should be a band (or convertible to a band)")
-      res = Band.MinimumOfNBands(band_args)._add_parent_references(band_refs)
+      res = _gdal.Band_MinimumOfNBands(band_args)._add_parent_references(band_refs)
       if constant is not None:
-          res = res.MinConstant(constant)._add_parent_references([res])
+          res = _gdal.Band_MinConstant(res, constant)._add_parent_references([res])
       return res
 
   @staticmethod
@@ -813,9 +813,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
               constant = arg
       if not band_args:
           raise RuntimeError("At least one argument should be a band (or convertible to a band)")
-      res = Band.MaximumOfNBands(band_args)._add_parent_references(band_refs)
+      res = _gdal.Band_MaximumOfNBands(band_args)._add_parent_references(band_refs)
       if constant is not None:
-          res = res.MaxConstant(constant)._add_parent_references([res])
+          res = _gdal.Band_MaxConstant(res, constant)._add_parent_references([res])
       return res
 
   @staticmethod
@@ -827,7 +827,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       bands = [Band._get_as_band_if_possible(band) for band in args]
       band_refs = [band for band in args]
-      return Band.MeanOfNBands(bands)._add_parent_references(band_refs)
+      return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
 
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,

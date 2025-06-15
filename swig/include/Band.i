@@ -951,6 +951,40 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
 }
 %}
 
+#if defined(SWIGPYTHON)
+%pythoncode %{
+del Band.Add
+del Band.AddDouble
+del Band.Sub
+del Band.SubDouble
+del Band.SubDoubleToBand
+del Band.Mul
+del Band.MulDouble
+del Band.Div
+del Band.DivDouble
+del Band.DivDoubleByBand
+del Band.GreaterThan
+del Band.GreaterThanDouble
+del Band.LesserThan
+del Band.LesserThanDouble
+del Band.GreaterOrEqualTo
+del Band.GreaterOrEqualToDouble
+del Band.LesserOrEqualTo
+del Band.LesserOrEqualToDouble
+del Band.EqualTo
+del Band.EqualToDouble
+del Band.NotEqualTo
+del Band.NotEqualToDouble
+del Band.AsType
+del Band.MinimumOfNBands
+del Band.MinConstant
+del Band.MaximumOfNBands
+del Band.MaxConstant
+del Band.MeanOfNBands
+del Band.IfThenElse
+%}
+#endif
+
 /************************************************************************
  *
  * Define the extensions for ComputedBand (GDALComputedRasterBandShadow)
