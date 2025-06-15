@@ -35,15 +35,15 @@ evaluated, that is pixel values are computed only when they are requested.
 Other operations are available:
 
 - ternary / if-then-else, with :cpp:func:`gdal::IfThenElse` in C++ and
-  :py:meth:`osgeo.gdal.Band.where` in Python (similar to `NumPy where <https://numpy.org/doc/stable/reference/generated/numpy.where.html>`__)
+  :py:meth:`osgeo.gdal.where` in Python (similar to `NumPy where <https://numpy.org/doc/stable/reference/generated/numpy.where.html>`__)
 - cast to a data type, with :cpp:func:`GDALRasterBand::AsType` in C++ and
   :py:meth:`osgeo.gdal.Band.astype` in Python
 - minimum of several bands (or constants), with :cpp:func:`gdal::min` in C++ an
-  :py:meth:`osgeo.gdal.Band.minimum` in Python
+  :py:meth:`osgeo.gdal.minimum` in Python
 - maximum of several bands (or constants), with :cpp:func:`gdal::max` in C++ and
-  :py:meth:`osgeo.gdal.Band.maximum` in Python
+  :py:meth:`osgeo.gdal.maximum` in Python
 - arithmetic mean of several bands, with :cpp:func:`gdal::mean` in C++ and
-  :py:meth:`osgeo.gdal.Band.mean` in Python
+  :py:meth:`osgeo.gdal.mean` in Python
 
 It is possible to serialize the operation to a :ref:`raster.vrt` file by using
 :cpp:func:`GDALDriver::CreateCopy` on the dataset owing the result band.
@@ -170,6 +170,6 @@ Examples
                A = ds.GetRasterBand(1)
                B = ds.GetRasterBand(2)
                C = ds.GetRasterBand(3)
-               max_minus_min = gdal.Band.maximum(A,B,C) - gdal.Band.minimum(A,B,C)
-               A_normalized = gdal.Band.where(max_minus_min == 0, 1.0, (A - gdal.Band.min(A,B,C)) / max_minus_min)
+               max_minus_min = gdal.maximum(A,B,C) - gdal.minimum(A,B,C)
+               A_normalized = gdal.where(max_minus_min == 0, 1.0, (A - gdal.min(A,B,C)) / max_minus_min)
                gdal.GetDriverByName("VRT").CreateCopy("A_normalized.vrt", A_normalized)

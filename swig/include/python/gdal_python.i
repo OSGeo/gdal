@@ -246,6 +246,93 @@ static void readraster_releasebuffer(CPLErr eErr,
             yield entry
     finally:
         CloseDir(dir)
+
+  def where(cond_band, then_band, else_band):
+      """Ternary operator. Return a band whose value is then_band if the
+         corresponding pixel in cond_band is not zero, or the one from else_band
+         otherwise.
+
+         cond_band must be a band or convertible to a band. then_band or else_band
+         can be band, convertible to band or numeric constants.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      cond_band = Band._get_as_band_if_possible(cond_band)
+      then_band = Band._get_as_band_if_possible(then_band)
+      else_band = Band._get_as_band_if_possible(else_band)
+
+      if not isinstance(then_band, Band):
+          then_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, then_band, False)) + then_band
+
+      if not isinstance(else_band, Band):
+          else_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, else_band, False)) + else_band
+
+      return _gdal.Band_IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
+
+  def minimum(*args):
+      """Return a band whose each pixel value is the minimum of the corresponding
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg < constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = _gdal.Band_MinimumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = _gdal.Band_MinConstant(res, constant)._add_parent_references([res])
+      return res
+
+  def maximum(*args):
+      """Return a band whose each pixel value is the maximum of the corresponding
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg > constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = _gdal.Band_MaximumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = _gdal.Band_MaxConstant(res, constant)._add_parent_references([res])
+      return res
+
+  def mean(*args):
+      """Return a band whose each pixel value is the arithmetic mean of the corresponding
+         pixel values in the input bands.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      bands = [Band._get_as_band_if_possible(band) for band in args]
+      band_refs = [band for band in args]
+      return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
+
 %}
 
 %{
@@ -746,88 +833,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
               raise ValueError( "Invalid dt value")
 
       return _gdal.Band_AsType(self, dt)._add_parent_references([self])
-
-  @staticmethod
-  def where(cond_band, then_band, else_band):
-      """Ternary operator. Return a band whose value is then_band if the
-         corresponding pixel in cond_band is not zero, or the one from else_band
-         otherwise.
-
-         cond_band must be a band or convertible to a band. then_band or else_band
-         can be band, convertible to band or numeric constants.
-
-         The resulting band is lazily evaluated.
-      """
-      cond_band = Band._get_as_band_if_possible(cond_band)
-      then_band = Band._get_as_band_if_possible(then_band)
-      else_band = Band._get_as_band_if_possible(else_band)
-
-      if not isinstance(then_band, Band):
-          then_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, then_band, False)) + then_band
-
-      if not isinstance(else_band, Band):
-          else_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, else_band, False)) + else_band
-
-      return _gdal.Band_IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
-
-  @staticmethod
-  def minimum(*args):
-      """Return a band whose each pixel value is the minimum of the corresponding
-         pixel values in the input arguments which may be gdal.Band or a numeric constant.
-
-         The resulting band is lazily evaluated.
-      """
-      constant = None
-      band_refs = []
-      band_args = []
-      for arg in args:
-          band_arg = Band._get_as_band_if_possible(arg)
-          if isinstance(band_arg, Band):
-              band_args.append(band_arg)
-              band_refs.append(arg)
-          elif constant is None or arg < constant:
-              constant = arg
-      if not band_args:
-          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
-      res = _gdal.Band_MinimumOfNBands(band_args)._add_parent_references(band_refs)
-      if constant is not None:
-          res = _gdal.Band_MinConstant(res, constant)._add_parent_references([res])
-      return res
-
-  @staticmethod
-  def maximum(*args):
-      """Return a band whose each pixel value is the maximum of the corresponding
-         pixel values in the input arguments which may be gdal.Band or a numeric constant.
-
-         The resulting band is lazily evaluated.
-      """
-      constant = None
-      band_refs = []
-      band_args = []
-      for arg in args:
-          band_arg = Band._get_as_band_if_possible(arg)
-          if isinstance(band_arg, Band):
-              band_args.append(band_arg)
-              band_refs.append(arg)
-          elif constant is None or arg > constant:
-              constant = arg
-      if not band_args:
-          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
-      res = _gdal.Band_MaximumOfNBands(band_args)._add_parent_references(band_refs)
-      if constant is not None:
-          res = _gdal.Band_MaxConstant(res, constant)._add_parent_references([res])
-      return res
-
-  @staticmethod
-  def mean(*args):
-      """Return a band whose each pixel value is the arithmetic mean of the corresponding
-         pixel values in the input bands.
-
-         The resulting band is lazily evaluated.
-      """
-      bands = [Band._get_as_band_if_possible(band) for band in args]
-      band_refs = [band for band in args]
-      return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
 
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,

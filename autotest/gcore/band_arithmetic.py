@@ -270,7 +270,7 @@ def test_band_arithmetic_minimum():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.minimum(R, G)
+        return gdal.minimum(R, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Byte
@@ -284,7 +284,7 @@ def test_band_arithmetic_minimum_with_constant():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.minimum(R, 3, G)
+        return gdal.minimum(R, 3, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Byte
@@ -298,7 +298,7 @@ def test_band_arithmetic_minimum_with_constant_bis():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.minimum(R, 1.5, G)
+        return gdal.minimum(R, 1.5, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Float32
@@ -309,13 +309,13 @@ def test_band_arithmetic_minimum_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
-        gdal.Band.minimum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+        gdal.minimum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
 
     with pytest.raises(
         Exception,
         match=r"At least one argument should be a band \(or convertible to a band\)",
     ):
-        gdal.Band.minimum()
+        gdal.minimum()
 
 
 def test_band_arithmetic_maximum():
@@ -325,7 +325,7 @@ def test_band_arithmetic_maximum():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.maximum(R, G)
+        return gdal.maximum(R, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Byte
@@ -339,7 +339,7 @@ def test_band_arithmetic_maximum_with_constant():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.maximum(R, 3, G)
+        return gdal.maximum(R, 3, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Byte
@@ -353,7 +353,7 @@ def test_band_arithmetic_maximum_with_constant_bis():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.maximum(R, 4.56789012345, G)
+        return gdal.maximum(R, 4.56789012345, G)
 
     res = get()
     assert res.DataType == gdal.GDT_Float64
@@ -364,13 +364,13 @@ def test_band_arithmetic_maximum_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
-        gdal.Band.maximum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+        gdal.maximum(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
 
     with pytest.raises(
         Exception,
         match=r"At least one argument should be a band \(or convertible to a band\)",
     ):
-        gdal.Band.maximum()
+        gdal.maximum()
 
 
 def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):
@@ -393,7 +393,7 @@ def test_band_arithmetic_mean():
         R.Fill(2)
         G = ds.GetRasterBand(2)
         G.Fill(4)
-        return gdal.Band.mean(R, G)
+        return gdal.mean(R, G)
 
     res = get()
     assert res.ComputeRasterMinMax(False) == (3, 3)
@@ -403,13 +403,13 @@ def test_band_arithmetic_mean_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
-        gdal.Band.mean(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+        gdal.mean(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
 
     with pytest.raises(
         Exception,
         match="At least one band should be passed",
     ):
-        gdal.Band.mean()
+        gdal.mean()
 
 
 def test_band_arithmetic_add_nodata():
@@ -686,22 +686,22 @@ def test_band_arithmetic_ternary():
     elseBand = ds.GetRasterBand(3)
     elseBand.Fill(3)
 
-    assert gdal.Band.where(cond, then, elseBand).DataType == gdal.GDT_Byte
-    assert gdal.Band.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 2
+    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 2
 
-    assert gdal.Band.where(cond, 10, elseBand).DataType == gdal.GDT_Byte
-    assert gdal.Band.where(cond, 10, elseBand).ComputeRasterMinMax(False)[0] == 10
+    assert gdal.where(cond, 10, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, 10, elseBand).ComputeRasterMinMax(False)[0] == 10
 
-    assert gdal.Band.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 10
+    assert gdal.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 10
 
     cond.Fill(0)
-    assert gdal.Band.where(cond, then, elseBand).DataType == gdal.GDT_Byte
-    assert gdal.Band.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 3
+    assert gdal.where(cond, then, elseBand).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, elseBand).ComputeRasterMinMax(False)[0] == 3
 
-    assert gdal.Band.where(cond, then, 11).DataType == gdal.GDT_Byte
-    assert gdal.Band.where(cond, then, 11).ComputeRasterMinMax(False)[0] == 11
+    assert gdal.where(cond, then, 11).DataType == gdal.GDT_Byte
+    assert gdal.where(cond, then, 11).ComputeRasterMinMax(False)[0] == 11
 
-    assert gdal.Band.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 11
+    assert gdal.where(cond, 10, 11).ComputeRasterMinMax(False)[0] == 11
 
 
 def test_band_arithmetic_ternary_error():
@@ -712,10 +712,6 @@ def test_band_arithmetic_ternary_error():
     ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
-        gdal.Band.where(
-            ds1.GetRasterBand(1), ds1.GetRasterBand(1), ds2.GetRasterBand(1)
-        )
+        gdal.where(ds1.GetRasterBand(1), ds1.GetRasterBand(1), ds2.GetRasterBand(1))
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
-        gdal.Band.where(
-            ds1.GetRasterBand(1), ds2.GetRasterBand(1), ds1.GetRasterBand(1)
-        )
+        gdal.where(ds1.GetRasterBand(1), ds2.GetRasterBand(1), ds1.GetRasterBand(1))
