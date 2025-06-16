@@ -38,7 +38,7 @@ class GDALRasterWriteAlgorithm final : public GDALRasterPipelineStepAlgorithm
 
   private:
     friend class GDALRasterPipelineStepAlgorithm;
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond

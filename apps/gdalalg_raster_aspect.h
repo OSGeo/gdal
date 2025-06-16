@@ -34,7 +34,7 @@ class GDALRasterAspectAlgorithm /* non final */
     explicit GDALRasterAspectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     std::string m_convention = "azimuth";

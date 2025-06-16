@@ -33,7 +33,7 @@ GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()
 /*                  GDALRasterWriteAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterWriteAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;

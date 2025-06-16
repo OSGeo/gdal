@@ -35,7 +35,7 @@ class GDALRasterScaleAlgorithm /* non final */
     explicit GDALRasterScaleAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_type{};
     int m_band = 0;

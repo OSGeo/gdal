@@ -60,7 +60,7 @@ void GDALVectorGeomAlgorithm::WarnIfDeprecated()
 /*                GDALVectorGeomAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorGeomAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorGeomAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "The Run() method should not be called directly on the \"gdal "
@@ -90,8 +90,7 @@ GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
 /*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALVectorGeomAbstractAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &)
+bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

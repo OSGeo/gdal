@@ -37,7 +37,7 @@ class GDALVectorReadAlgorithm final : public GDALVectorPipelineStepAlgorithm
     }
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond

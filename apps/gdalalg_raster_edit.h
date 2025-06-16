@@ -38,7 +38,7 @@ class GDALRasterEditAlgorithm /* non final */
     ~GDALRasterEditAlgorithm() override;
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     std::vector<gdal::GCP> ParseGCPs() const;
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only

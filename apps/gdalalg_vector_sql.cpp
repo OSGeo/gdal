@@ -227,7 +227,7 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
 /*                 GDALVectorSQLAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALVectorSQLAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

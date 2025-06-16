@@ -286,7 +286,7 @@ class GDALVectorSelectAlgorithmLayer final
 /*               GDALVectorSelectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorSelectAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

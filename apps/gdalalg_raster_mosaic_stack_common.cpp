@@ -122,7 +122,7 @@ GDALRasterMosaicStackCommonAlgorithm::GDALRasterMosaicStackCommonAlgorithm(
 /************************************************************************/
 
 bool GDALRasterMosaicStackCommonAlgorithm::GetInputDatasetNames(
-    GDALRasterPipelineStepRunContext &ctxt,
+    GDALPipelineStepRunContext &ctxt,
     std::vector<GDALDatasetH> &ahInputDatasets,
     CPLStringList &aosInputDatasetNames, bool &foundByName)
 {
@@ -310,7 +310,7 @@ bool GDALRasterMosaicStackCommonAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        GDALRasterPipelineStepRunContext stepCtxt;
+        GDALPipelineStepRunContext stepCtxt;
         stepCtxt.m_pfnProgress = pfnProgress;
         stepCtxt.m_pProgressData = pProgressData;
         return RunStep(stepCtxt);

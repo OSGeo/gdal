@@ -94,7 +94,7 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
 /*            GDALRasterPansharpenAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterPansharpenAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterPansharpenAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poPanDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poPanDS);

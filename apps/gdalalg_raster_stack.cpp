@@ -34,7 +34,7 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm(bool bStandalone)
 /*                   GDALRasterStackAlgorithm::RunStep()                */
 /************************************************************************/
 
-bool GDALRasterStackAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterStackAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 

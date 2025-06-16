@@ -69,7 +69,7 @@ GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
 /************************************************************************/
 
 bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
-    GDALRasterPipelineStepAlgorithm *poNextStep) const
+    GDALPipelineStepAlgorithm *poNextStep) const
 {
     return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
            poNextStep->GetOutputFormat() != "stream";
@@ -79,8 +79,7 @@ bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
 /*              GDALRasterHillshadeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterHillshadeAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

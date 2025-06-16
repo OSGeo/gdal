@@ -71,8 +71,7 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm(
 /*                 GDALRasterFillNodataAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALRasterFillNodataAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterFillNodataAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;

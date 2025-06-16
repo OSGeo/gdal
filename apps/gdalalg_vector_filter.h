@@ -32,7 +32,7 @@ class GDALVectorFilterAlgorithm /* non final */
     explicit GDALVectorFilterAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::vector<double> m_bbox{};

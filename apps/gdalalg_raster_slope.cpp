@@ -57,7 +57,7 @@ GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm(bool standaloneStep)
 /*                GDALRasterSlopeAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterSlopeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterSlopeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

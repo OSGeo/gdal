@@ -149,7 +149,7 @@ GDALVectorBufferAlgorithm::CreateAlgLayer([[maybe_unused]] OGRLayer &srcLayer)
 /*                  GDALVectorBufferAlgorithm::RunStep()                */
 /************************************************************************/
 
-bool GDALVectorBufferAlgorithm::RunStep(GDALVectorPipelineStepRunContext &ctxt)
+bool GDALVectorBufferAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
     if (m_opts.m_side == "right")

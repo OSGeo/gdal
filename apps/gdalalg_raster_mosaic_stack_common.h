@@ -36,7 +36,7 @@ class GDALRasterMosaicStackCommonAlgorithm /* non final */
   protected:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    bool GetInputDatasetNames(GDALRasterPipelineStepRunContext &ctxt,
+    bool GetInputDatasetNames(GDALPipelineStepRunContext &ctxt,
                               std::vector<GDALDatasetH> &ahInputDatasets,
                               CPLStringList &aosInputDatasetNames,
                               bool &foundByName);

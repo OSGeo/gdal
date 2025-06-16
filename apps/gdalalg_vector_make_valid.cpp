@@ -156,8 +156,7 @@ GDALVectorMakeValidAlgorithm::CreateAlgLayer(
 /*                  GDALVectorMakeValidAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALVectorMakeValidAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &ctxt)
+bool GDALVectorMakeValidAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
 

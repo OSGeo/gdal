@@ -225,7 +225,7 @@ std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
 /*                GDALRasterEditAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     GDALDataset *poDS = m_dataset.GetDatasetRef();
     if (poDS)

@@ -34,7 +34,7 @@ class GDALRasterColorMergeAlgorithm /* non final*/
         "/programs/gdal_raster_color_merge.html";
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     GDALArgDatasetValue m_grayScaleDataset{};
 };

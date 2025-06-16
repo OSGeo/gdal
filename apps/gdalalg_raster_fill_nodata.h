@@ -35,7 +35,7 @@ class GDALRasterFillNodataAlgorithm /* non final */
         bool standaloneStep = false) noexcept;
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     // The maximum distance (in pixels) that the algorithm will search out for values to interpolate. The default is 100 pixels.
     int m_maxDistance = 100;

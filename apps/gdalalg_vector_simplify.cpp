@@ -117,8 +117,7 @@ GDALVectorSimplifyAlgorithm::CreateAlgLayer([[maybe_unused]] OGRLayer &srcLayer)
 /*                  GDALVectorSimplifyAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALVectorSimplifyAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &ctxt)
+bool GDALVectorSimplifyAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
 #ifdef HAVE_GEOS
     return GDALVectorGeomAbstractAlgorithm::RunStep(ctxt);

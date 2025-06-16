@@ -39,7 +39,7 @@ class GDALRasterStackAlgorithm /* non final */
     }
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 };
 
 /************************************************************************/

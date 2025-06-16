@@ -193,8 +193,7 @@ GDALVectorSimplifyCoverageOutputDataset::
     }
 }
 
-bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &)
+bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto poDstDS =
@@ -234,8 +233,7 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
 
 #else
 
-bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &)
+bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     ReportError(CE_Failure, CPLE_AppDefined,
                 "%s requires GDAL to be built against version 3.12 or later of "

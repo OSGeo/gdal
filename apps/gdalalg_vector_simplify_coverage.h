@@ -43,7 +43,7 @@ class GDALVectorSimplifyCoverageAlgorithm
     };
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
 

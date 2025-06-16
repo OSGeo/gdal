@@ -266,8 +266,7 @@ GDALVectorSetGeomTypeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 /*            GDALVectorSetGeomTypeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorSetGeomTypeAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &ctxt)
+bool GDALVectorSetGeomTypeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     if (!m_opts.m_type.empty())
     {

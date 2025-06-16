@@ -36,7 +36,7 @@ GDALRasterSetTypeAlgorithm::GDALRasterSetTypeAlgorithm(bool standaloneStep)
 /*             GDALRasterSetTypeAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterSetTypeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterSetTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

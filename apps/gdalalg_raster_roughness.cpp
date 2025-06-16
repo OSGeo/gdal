@@ -44,7 +44,7 @@ GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm(bool standaloneStep)
 /*                GDALRasterRoughnessAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterRoughnessAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterRoughnessAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

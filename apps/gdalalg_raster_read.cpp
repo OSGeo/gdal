@@ -34,7 +34,7 @@ GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
 /*                  GDALRasterReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterReadAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterReadAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

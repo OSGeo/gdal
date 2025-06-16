@@ -38,7 +38,7 @@ class GDALRasterMosaicAlgorithm /* non final */
     }
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     bool m_addAlpha = false;
     std::string m_pixelFunction{};

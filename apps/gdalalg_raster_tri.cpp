@@ -47,7 +47,7 @@ GDALRasterTRIAlgorithm::GDALRasterTRIAlgorithm(bool standaloneStep)
 /*                  GDALRasterTRIAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterTRIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterTRIAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

@@ -44,7 +44,7 @@ GDALRasterTPIAlgorithm::GDALRasterTPIAlgorithm(bool standaloneStep)
 /*                  GDALRasterTPIAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterTPIAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterTPIAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

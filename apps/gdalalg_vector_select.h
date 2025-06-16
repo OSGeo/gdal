@@ -33,7 +33,7 @@ class GDALVectorSelectAlgorithm /* non final */
     explicit GDALVectorSelectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::vector<std::string> m_fields{};

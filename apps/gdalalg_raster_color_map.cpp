@@ -48,7 +48,7 @@ GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
 /************************************************************************/
 
 bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
-    GDALRasterPipelineStepAlgorithm *poNextStep) const
+    GDALPipelineStepAlgorithm *poNextStep) const
 {
     return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
            poNextStep->GetOutputFormat() != "stream";
@@ -58,8 +58,7 @@ bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
 /*               GDALRasterColorMapAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterColorMapAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterColorMapAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

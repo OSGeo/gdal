@@ -99,7 +99,7 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm(bool bStandalone)
 /*                   GDALRasterMosaicAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterMosaicAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 

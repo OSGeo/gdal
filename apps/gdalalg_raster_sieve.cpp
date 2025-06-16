@@ -57,7 +57,7 @@ GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm(bool standaloneStep)
 /*                 GDALRasterSieveAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterSieveAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterSieveAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;

@@ -36,7 +36,7 @@ GDALRasterUnscaleAlgorithm::GDALRasterUnscaleAlgorithm(bool standaloneStep)
 /*               GDALRasterUnscaleAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterUnscaleAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterUnscaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

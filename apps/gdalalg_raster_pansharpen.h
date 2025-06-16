@@ -35,7 +35,7 @@ class GDALRasterPansharpenAlgorithm /* non final */
 
   private:
     static ConstructorOptions GetConstructorOptions(bool standaloneStep);
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<GDALArgDatasetValue> m_spectralDatasets{};
     std::string m_resampling = "cubic";
