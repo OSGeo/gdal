@@ -275,6 +275,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_pipeline",
+        "gdal-pipeline",
+        "Execute a pipeline",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster",
         "gdal-raster",
         "Entry point for raster commands",

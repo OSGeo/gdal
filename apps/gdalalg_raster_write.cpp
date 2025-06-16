@@ -26,7 +26,7 @@ GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddOutputArgs(/* hiddenForCLI = */ false);
+    AddRasterOutputArgs(/* hiddenForCLI = */ false);
 }
 
 /************************************************************************/

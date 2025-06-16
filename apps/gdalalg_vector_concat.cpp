@@ -36,11 +36,14 @@
 /************************************************************************/
 
 GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL, bStandalone)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(bStandalone)
+                                          .SetInputDatasetMaxCount(INT_MAX))
 {
     if (!bStandalone)
     {
-        AddInputArgs(/* hiddenForCLI = */ false);
+        AddVectorInputArgs(/* hiddenForCLI = */ false);
     }
 
     AddArg(

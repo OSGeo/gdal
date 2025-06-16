@@ -21,7 +21,7 @@
 /*                      GDALVectorGridLinearAlgorithm                   */
 /************************************************************************/
 
-class GDALVectorGridLinearAlgorithm final
+class GDALVectorGridLinearAlgorithm /* non final */
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
@@ -31,9 +31,25 @@ class GDALVectorGridLinearAlgorithm final
         "interpolation.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
 
-    GDALVectorGridLinearAlgorithm();
+    explicit GDALVectorGridLinearAlgorithm(bool standaloneStep = false);
 
     std::string GetGridAlgorithm() const override;
+};
+
+/************************************************************************/
+/*                GDALVectorGridLinearAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorGridLinearAlgorithmStandalone final
+    : public GDALVectorGridLinearAlgorithm
+{
+  public:
+    GDALVectorGridLinearAlgorithmStandalone()
+        : GDALVectorGridLinearAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridLinearAlgorithmStandalone() override;
 };
 
 //! @endcond

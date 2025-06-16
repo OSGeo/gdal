@@ -12,6 +12,14 @@
 
 .. Index:: gdal vector pipeline
 
+Description
+-----------
+
+:program:`gdal vector pipeline` can be used to process a vector dataset and
+perform various processing steps that accept vector and generate vector.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
@@ -121,12 +129,6 @@ Details for options can be found in :ref:`gdal_vector_swap_xy`.
 * write
 
 .. program-output:: gdal vector pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal vector pipeline` can be used to process a vector dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

@@ -29,7 +29,7 @@ class GDALRasterReadAlgorithm final : public GDALRasterPipelineStepAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pipeline.html";
 
-    GDALRasterReadAlgorithm();
+    explicit GDALRasterReadAlgorithm(bool openForMixedRasterVector = false);
 
     bool CanBeFirstStep() const override
     {

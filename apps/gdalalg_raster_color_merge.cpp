@@ -60,14 +60,14 @@ GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
 
     if (standaloneStep)
     {
-        AddInputArgs(false, false);
+        AddRasterInputArgs(false, false);
         AddGrayscaleDataset();
         AddProgressArg();
-        AddOutputArgs(false);
+        AddRasterOutputArgs(false);
     }
     else
     {
-        AddHiddenInputDatasetArg();
+        AddRasterHiddenInputDatasetArg();
         AddGrayscaleDataset();
     }
 }

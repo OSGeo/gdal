@@ -12,6 +12,14 @@
 
 .. Index:: gdal raster pipeline
 
+Description
+-----------
+
+:program:`gdal raster pipeline` can be used to process a raster dataset and
+perform various processing steps that accept raster and generate raster.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
@@ -175,12 +183,6 @@ Details for options can be found in :ref:`gdal_raster_viewshed`.
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal raster pipeline` can be used to process a raster dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

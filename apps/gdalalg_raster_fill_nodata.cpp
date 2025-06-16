@@ -81,7 +81,7 @@ bool GDALRasterFillNodataAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         GDALCreateScaledProgress(0.0, 0.5, pfnProgress, pProgressData),
         GDALDestroyScaledProgress);
     auto poTmpDS = CreateTemporaryCopy(
-        poSrcDS, m_band, true, pScaledData ? GDALScaledProgress : nullptr,
+        this, poSrcDS, m_band, true, pScaledData ? GDALScaledProgress : nullptr,
         pScaledData.get());
     if (!poTmpDS)
         return false;

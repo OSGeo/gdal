@@ -68,8 +68,8 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
         RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorGridAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorRasterizeAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorRasterizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGeomAlgorithmStandalone>();

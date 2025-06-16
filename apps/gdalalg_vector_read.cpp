@@ -29,7 +29,7 @@ GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddInputArgs(/* hiddenForCLI = */ false);
+    AddVectorInputArgs(/* hiddenForCLI = */ false);
 }
 
 /************************************************************************/

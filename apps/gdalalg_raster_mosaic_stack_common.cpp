@@ -39,6 +39,7 @@ GDALRasterMosaicStackCommonAlgorithm::GetConstructorOptions(bool standaloneStep)
         _("Input raster datasets (or specify a @<filename> to point to a "
           "file containing filenames)"));
     opts.SetAddDefaultArguments(false);
+    opts.SetInputDatasetMaxCount(INT_MAX);
     return opts;
 }
 
@@ -52,12 +53,12 @@ GDALRasterMosaicStackCommonAlgorithm::GDALRasterMosaicStackCommonAlgorithm(
     : GDALRasterPipelineStepAlgorithm(name, description, helpURL,
                                       GetConstructorOptions(bStandalone))
 {
-    AddInputArgs(/* openForMixedRasterVector = */ false,
-                 /* hiddenForCLI = */ false);
+    AddRasterInputArgs(/* openForMixedRasterVector = */ false,
+                       /* hiddenForCLI = */ false);
     if (bStandalone)
     {
         AddProgressArg();
-        AddOutputArgs(false);
+        AddRasterOutputArgs(false);
     }
 
     AddBandArg(&m_bands);

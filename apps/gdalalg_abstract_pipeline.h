@@ -48,12 +48,84 @@ class GDALPipelineStepRunContext
 };
 
 /************************************************************************/
+/*                    GDALAbstractPipelineAlgorithm                     */
+/************************************************************************/
+
+template <class StepAlgorithm>
+class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
+{
+  public:
+    std::vector<std::string> GetAutoComplete(std::vector<std::string> &args,
+                                             bool lastWordIsComplete,
+                                             bool /* showAllOptions*/) override;
+
+    bool Finalize() override;
+
+    std::string GetUsageAsJSON() const override;
+
+    /* cppcheck-suppress functionStatic */
+    void SetDataset(GDALDataset *)
+    {
+    }
+
+  protected:
+    GDALAbstractPipelineAlgorithm(const std::string &name,
+                                  const std::string &description,
+                                  const std::string &helpURL,
+                                  bool standaloneStep)
+        : StepAlgorithm(name, description, helpURL, standaloneStep)
+    {
+    }
+
+    GDALAbstractPipelineAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL,
+        const typename StepAlgorithm::ConstructorOptions &options)
+        : StepAlgorithm(name, description, helpURL, options)
+    {
+    }
+
+    ~GDALAbstractPipelineAlgorithm() override
+    {
+        // Destroy steps in the reverse order they have been constructed,
+        // as a step can create object that depends on the validity of
+        // objects of previous steps, and while cleaning them it needs those
+        // prior objects to be still alive.
+        // Typically for "gdal vector pipeline read ... ! sql ..."
+        for (auto it = std::rbegin(m_steps); it != std::rend(m_steps); it++)
+        {
+            it->reset();
+        }
+    }
+
+    std::string m_pipeline{};
+    GDALAlgorithmRegistry m_stepRegistry{};
+    std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
+    std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
+
+    std::unique_ptr<StepAlgorithm> GetStepAlg(const std::string &name) const;
+
+    bool CheckFirstStep(const std::vector<StepAlgorithm *> &steps) const;
+
+    static constexpr const char *RASTER_SUFFIX = "-raster";
+    static constexpr const char *VECTOR_SUFFIX = "-vector";
+
+  private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+};
+
+/************************************************************************/
 /*                     GDALPipelineStepAlgorithm                        */
 /************************************************************************/
 
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
   public:
+    const std::vector<GDALArgDatasetValue> &GetInputDatasets() const
+    {
+        return m_inputDataset;
+    }
+
     const GDALArgDatasetValue &GetOutputDataset() const
     {
         return m_outputDataset;
@@ -69,6 +141,10 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return m_creationOptions;
     }
 
+    virtual int GetInputType() const = 0;
+
+    virtual int GetOutputType() const = 0;
+
   protected:
     struct ConstructorOptions
     {
@@ -76,12 +152,15 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool addDefaultArguments = true;
         bool autoOpenInputDatasets = true;
         bool outputDatasetRequired = true;
+        bool addInputLayerNameArgument = true;  // only for vector input
+        int inputDatasetMaxCount = 1;
         std::string inputDatasetHelpMsg{};
         std::string inputDatasetAlias{};
         std::string inputDatasetMetaVar = "INPUT";
         std::string outputDatasetHelpMsg{};
         std::string updateMutualExclusionGroup{};
         std::string outputDatasetMutualExclusionGroup{};
+        std::string outputFormatCreateCapability = GDAL_DCAP_CREATECOPY;
 
         inline ConstructorOptions &SetStandaloneStep(bool b)
         {
@@ -92,6 +171,18 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetAddDefaultArguments(bool b)
         {
             addDefaultArguments = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetAddInputLayerNameArgument(bool b)
+        {
+            addInputLayerNameArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetMaxCount(int maxCount)
+        {
+            inputDatasetMaxCount = maxCount;
             return *this;
         }
 
@@ -144,6 +235,13 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             outputDatasetMutualExclusionGroup = s;
             return *this;
         }
+
+        inline ConstructorOptions &
+        SetOutputFormatCreateCapability(const std::string &capability)
+        {
+            outputFormatCreateCapability = capability;
+            return *this;
+        }
     };
 
     GDALPipelineStepAlgorithm(const std::string &name,
@@ -151,14 +249,13 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                               const std::string &helpURL,
                               const ConstructorOptions &);
 
+    friend class GDALPipelineAlgorithm;
+    friend class GDALAbstractPipelineAlgorithm<GDALPipelineStepAlgorithm>;
+
     virtual bool CanBeFirstStep() const
     {
         return false;
     }
-
-    virtual int GetInputType() const = 0;
-
-    virtual int GetOutputType() const = 0;
 
     virtual bool IsNativelyStreamingCompatible() const
     {
@@ -175,6 +272,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_standaloneStep = false;
     const ConstructorOptions m_constructorOptions;
     bool m_outputVRTCompatible = true;
+    std::string m_helpDocCategory{};
 
     // Input arguments
     std::vector<GDALArgDatasetValue> m_inputDataset{};
@@ -188,77 +286,28 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite = false;
     std::string m_outputLayerName{};
+    GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
+
+    // Output arguments (vector specific)
+    std::vector<std::string> m_layerCreationOptions{};
+    bool m_update = false;
+    bool m_overwriteLayer = false;
+    bool m_appendLayer = false;
+
+    void AddRasterInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
+    void AddRasterOutputArgs(bool hiddenForCLI);
+    void AddRasterHiddenInputDatasetArg();
+
+    void AddVectorInputArgs(bool hiddenForCLI);
+    void AddVectorOutputArgs(bool hiddenForCLI,
+                             bool shortNameOutputLayerAllowed);
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
     bool CheckSafeForStreamOutput() override;
-};
 
-/************************************************************************/
-/*                    GDALAbstractPipelineAlgorithm                     */
-/************************************************************************/
-
-template <class StepAlgorithm>
-class GDALAbstractPipelineAlgorithm CPL_NON_FINAL : public StepAlgorithm
-{
-  public:
-    std::vector<std::string> GetAutoComplete(std::vector<std::string> &args,
-                                             bool lastWordIsComplete,
-                                             bool /* showAllOptions*/) override;
-
-    bool Finalize() override;
-
-    std::string GetUsageAsJSON() const override;
-
-    /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *)
-    {
-    }
-
-  protected:
-    GDALAbstractPipelineAlgorithm(const std::string &name,
-                                  const std::string &description,
-                                  const std::string &helpURL,
-                                  bool standaloneStep)
-        : StepAlgorithm(name, description, helpURL, standaloneStep)
-    {
-    }
-
-    GDALAbstractPipelineAlgorithm(
-        const std::string &name, const std::string &description,
-        const std::string &helpURL,
-        const typename StepAlgorithm::ConstructorOptions &options)
-        : StepAlgorithm(name, description, helpURL, options)
-    {
-    }
-
-    ~GDALAbstractPipelineAlgorithm() override
-    {
-        // Destroy steps in the reverse order they have been constructed,
-        // as a step can create object that depends on the validity of
-        // objects of previous steps, and while cleaning them it needs those
-        // prior objects to be still alive.
-        // Typically for "gdal vector pipeline read ... ! sql ..."
-        for (auto it = std::rbegin(m_steps); it != std::rend(m_steps); it++)
-        {
-            it->reset();
-        }
-    }
-
-    virtual GDALArgDatasetValue &GetOutputDataset() = 0;
-
-    std::string m_pipeline{};
-    GDALAlgorithmRegistry m_stepRegistry{};
-    std::vector<std::unique_ptr<StepAlgorithm>> m_steps{};
-    std::unique_ptr<StepAlgorithm> m_stepOnWhichHelpIsRequested{};
-
-    std::unique_ptr<StepAlgorithm> GetStepAlg(const std::string &name) const;
-
-    bool CheckFirstStep(const std::vector<StepAlgorithm *> &steps) const;
-
-  private:
-    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+    CPL_DISALLOW_COPY_ASSIGN(GDALPipelineStepAlgorithm)
 };
 
 /************************************************************************/
@@ -652,9 +701,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     if (ctxt.m_pfnProgress)
         ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
-    if (!GetOutputDataset().GetDatasetRef())
+    if (!StepAlgorithm::m_outputDataset.GetDatasetRef())
     {
-        GetOutputDataset().Set(poCurDS);
+        StepAlgorithm::m_outputDataset.Set(poCurDS);
     }
 
     return true;

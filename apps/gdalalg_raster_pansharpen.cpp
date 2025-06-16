@@ -63,14 +63,14 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
 
     if (standaloneStep)
     {
-        AddInputArgs(false, false);
+        AddRasterInputArgs(false, false);
         AddSpectralDatasetArg();
         AddProgressArg();
-        AddOutputArgs(false);
+        AddRasterOutputArgs(false);
     }
     else
     {
-        AddHiddenInputDatasetArg();
+        AddRasterHiddenInputDatasetArg();
         AddSpectralDatasetArg();
     }
 

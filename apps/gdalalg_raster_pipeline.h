@@ -53,17 +53,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */
         return GDAL_OF_RASTER;
     }
 
-    void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
-    void AddOutputArgs(bool hiddenForCLI);
-    void AddHiddenInputDatasetArg();
-
     void SetOutputVRTCompatible(bool b);
-
-    // Output arguments
-    GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
-
-  private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepAlgorithm)
 };
 
 /************************************************************************/
@@ -80,15 +70,15 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
 
     bool IsNativelyStreamingCompatible() const override;
 
-    std::unique_ptr<GDALDataset>
+    static std::unique_ptr<GDALDataset>
     CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
                            GDALDataType eDT, bool bTiledIfPossible,
                            GDALDataset *poSrcDSForMetadata,
                            bool bCopyMetadata = true);
-    std::unique_ptr<GDALDataset>
-    CreateTemporaryCopy(GDALDataset *poSrcDS, int nSingleBand,
-                        bool bTiledIfPossible, GDALProgressFunc pfnProgress,
-                        void *pProgressData);
+    static std::unique_ptr<GDALDataset>
+    CreateTemporaryCopy(GDALAlgorithm *poAlg, GDALDataset *poSrcDS,
+                        int nSingleBand, bool bTiledIfPossible,
+                        GDALProgressFunc pfnProgress, void *pProgressData);
 };
 
 /************************************************************************/
@@ -131,20 +121,8 @@ class GDALRasterPipelineAlgorithm final
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-    GDALDataset *GetDatasetRef()
-    {
-        return m_inputDataset.size() == 1 ? m_inputDataset[0].GetDatasetRef()
-                                          : nullptr;
-    }
-
-  protected:
-    GDALArgDatasetValue &GetOutputDataset() override
-    {
-        return m_outputDataset;
-    }
-
-  private:
-    std::string m_helpDocCategory{};
+    static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
+                                   bool forMixedPipeline);
 };
 
 //! @endcond

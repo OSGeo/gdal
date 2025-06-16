@@ -58,15 +58,6 @@ class GDALVectorPipelineStepAlgorithm /* non final */
     {
         return GDAL_OF_VECTOR;
     }
-
-    void AddInputArgs(bool hiddenForCLI);
-    void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);
-
-    // Output arguments
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_update = false;
-    bool m_overwriteLayer = false;
-    bool m_appendLayer = false;
 };
 
 /************************************************************************/
@@ -107,14 +98,8 @@ class GDALVectorPipelineAlgorithm final
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-  protected:
-    GDALArgDatasetValue &GetOutputDataset() override
-    {
-        return m_outputDataset;
-    }
-
-  private:
-    std::string m_helpDocCategory{};
+    static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
+                                   bool forMixedPipeline);
 };
 
 /************************************************************************/

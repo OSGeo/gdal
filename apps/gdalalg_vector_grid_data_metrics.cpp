@@ -24,8 +24,9 @@ GDALVectorGridDataMetricsAbstractAlgorithm::
     GDALVectorGridDataMetricsAbstractAlgorithm(const std::string &name,
                                                const std::string &description,
                                                const std::string &helpURL,
-                                               const std::string &method)
-    : GDALVectorGridAbstractAlgorithm(name, description, helpURL),
+                                               const std::string &method,
+                                               bool standalone)
+    : GDALVectorGridAbstractAlgorithm(name, description, helpURL, standalone),
       m_method(method)
 {
     AddRadiusArg();
@@ -76,5 +77,18 @@ GDALVectorGridAverageDistanceAlgorithm::
     ~GDALVectorGridAverageDistanceAlgorithm() = default;
 GDALVectorGridAverageDistancePointsAlgorithm::
     ~GDALVectorGridAverageDistancePointsAlgorithm() = default;
+
+GDALVectorGridMinimumAlgorithmStandalone::
+    ~GDALVectorGridMinimumAlgorithmStandalone() = default;
+GDALVectorGridMaximumAlgorithmStandalone::
+    ~GDALVectorGridMaximumAlgorithmStandalone() = default;
+GDALVectorGridRangeAlgorithmStandalone::
+    ~GDALVectorGridRangeAlgorithmStandalone() = default;
+GDALVectorGridCountAlgorithmStandalone::
+    ~GDALVectorGridCountAlgorithmStandalone() = default;
+GDALVectorGridAverageDistanceAlgorithmStandalone::
+    ~GDALVectorGridAverageDistanceAlgorithmStandalone() = default;
+GDALVectorGridAverageDistancePointsAlgorithmStandalone::
+    ~GDALVectorGridAverageDistancePointsAlgorithmStandalone() = default;
 
 //! @endcond

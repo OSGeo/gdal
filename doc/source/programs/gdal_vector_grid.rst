@@ -29,6 +29,8 @@ configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
 
+Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
+
 Options common to all algorithms
 --------------------------------
 
@@ -519,6 +521,14 @@ in the VRT file in the following way:
     <GeometryField encoding="PointFromColumns" x="field_1" y="field_2" z="field_3"/>
 
 The :ref:`vector.csv` description page contains details on CSV format supported by GDAL.
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
+
 
 Examples
 --------
