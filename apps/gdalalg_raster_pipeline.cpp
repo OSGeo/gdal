@@ -94,6 +94,8 @@ GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
     }
 }
 
+GDALRasterPipelineStepAlgorithm::~GDALRasterPipelineStepAlgorithm() = default;
+
 /************************************************************************/
 /*       GDALRasterPipelineStepAlgorithm::AddHiddenInputDatasetArg()    */
 /************************************************************************/

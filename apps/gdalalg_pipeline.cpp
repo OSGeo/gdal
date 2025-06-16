@@ -22,6 +22,8 @@
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_write.h"
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                     GDALPipelineStepAlgorithm()                      */
 /************************************************************************/
@@ -253,3 +255,5 @@ bool GDALPipelineAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 GDAL_STATIC_REGISTER_ALG(GDALPipelineAlgorithm);
+
+//! @endcond

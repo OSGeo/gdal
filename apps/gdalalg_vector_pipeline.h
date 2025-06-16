@@ -31,6 +31,9 @@
 class GDALVectorPipelineStepAlgorithm /* non final */
     : public GDALPipelineStepAlgorithm
 {
+  public:
+    ~GDALVectorPipelineStepAlgorithm() override;
+
   protected:
     GDALVectorPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,

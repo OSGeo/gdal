@@ -76,6 +76,8 @@ GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
     }
 }
 
+GDALVectorPipelineStepAlgorithm::~GDALVectorPipelineStepAlgorithm() = default;
+
 /************************************************************************/
 /*             GDALVectorPipelineStepAlgorithm::AddInputArgs()          */
 /************************************************************************/
