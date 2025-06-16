@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace
 {
@@ -149,6 +150,20 @@ TEST(TestFloat16, math)
         EXPECT_NEAR(sqrt(GFloat16(x)), sqrt(x), fabs(sqrt(x) / 1024));
     }
 
+    // To avoid Coverity Scan false positive about first value not positive...
+    const auto myPow = [](int a, int b)
+    {
+        double res = 1.0;
+        for (int k = 0; k < std::abs(b); ++k)
+            res *= a;
+        if (b >= 0)
+            return res;
+        else if (a == 0)
+            return std::numeric_limits<double>::infinity();
+        else
+            return 1.0 / res;
+    };
+
     for (int i = -100; i <= +100; ++i)
     {
         for (int j = -100; j <= +100; ++j)
@@ -167,11 +182,12 @@ TEST(TestFloat16, math)
             using std::min;
             EXPECT_EQ(min(GFloat16(x), GFloat16(y)), GFloat16(min(x, y)));
             using std::pow;
-            EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(pow(i, j)));
+            EXPECT_EQ(pow(GFloat16(x), GFloat16(y)), GFloat16(myPow(i, j)))
+                << "i=" << i << ", j=" << j;
             using std::fabs;
             using std::isfinite;
             GFloat16 r1 = GFloat16(pow(GFloat16(x), j));
-            GFloat16 r2 = GFloat16(pow(i, j));
+            GFloat16 r2 = GFloat16(myPow(i, j));
             if (!isfinite(r1))
             {
                 EXPECT_EQ(r1, r2);

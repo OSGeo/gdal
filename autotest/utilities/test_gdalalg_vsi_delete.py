@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import sys
 
 import pytest
@@ -54,6 +55,9 @@ def test_gdalalg_vsi_delete_dir(tmp_path):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="incompatible platform")
 def test_gdalalg_vsi_delete_file_failed():
+
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
 
     alg = get_alg()
     alg["filename"] = "/dev/null"

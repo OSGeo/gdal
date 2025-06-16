@@ -956,8 +956,12 @@ int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, const DGNElemCore *psElement,
     /* If low order bit of second byte is set, first byte is length */
     if (psElement->attr_data[nOffset + 1] & 0x10)
     {
-        // Useless std::min(), but to please Coverity Scan
-        return std::min(psElement->attr_data[nOffset + 0] * 2 + 2, 255 * 2 + 2);
+        // Useless comparison but to please Coverity Scan
+        const int ret = psElement->attr_data[nOffset + 0] * 2 + 2;
+        constexpr int MAX_ALLOWED = 255 * 2 + 2;
+        if (ret < MAX_ALLOWED)
+            return ret;
+        return MAX_ALLOWED;
     }
 
     /* unknown */

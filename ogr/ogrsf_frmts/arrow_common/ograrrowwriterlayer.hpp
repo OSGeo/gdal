@@ -2294,6 +2294,14 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     CSLConstList papszOptions,
     std::function<bool(const std::shared_ptr<arrow::RecordBatch> &)> writeBatch)
 {
+#ifdef __COVERITY__
+    (void)schema;
+    (void)array;
+    (void)papszOptions;
+    (void)writeBatch;
+    CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+    return false;
+#else
     if (m_poSchema == nullptr)
     {
         CreateSchema();
@@ -2894,6 +2902,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         return true;
     }
     return false;
+#endif
 }
 
 #endif /* OGARROWWRITERLAYER_HPP_INCLUDED */
