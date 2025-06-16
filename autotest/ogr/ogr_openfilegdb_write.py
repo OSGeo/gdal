@@ -2394,6 +2394,7 @@ def test_ogr_openfilegdb_write_alter_field_defn(tmp_vsimem):
 # Test writing field domains
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_openfilegdb_write_domains(tmp_vsimem):
 
     dirname = tmp_vsimem / "out.gdb"
@@ -2411,9 +2412,44 @@ def test_ogr_openfilegdb_write_domains(tmp_vsimem):
     fld_defn.SetDomainName("domain")
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    fld_defn = ogr.FieldDefn("foo2", ogr.OFTInteger)
-    fld_defn.SetDomainName("domain")
+    fld_defn = ogr.FieldDefn("int_range", ogr.OFTInteger)
+    fld_defn.SetDomainName("int_range_domain")
+    domain = ogr.CreateRangeFieldDomain(
+        "int_range_domain",
+        "int_range_desc",
+        ogr.OFTInteger,
+        ogr.OFSTNone,
+        1,
+        True,
+        2,
+        True,
+    )
+    assert ds.AddFieldDomain(domain)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    fld_defn = ogr.FieldDefn("real_range", ogr.OFTReal)
+    fld_defn.SetDomainName("real_range_domain")
+    domain = ogr.CreateRangeFieldDomain(
+        "real_range_domain", "desc", ogr.OFTReal, ogr.OFSTNone, 1.5, True, 2.5, True
+    )
+    assert ds.AddFieldDomain(domain)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    domain = ogr.CreateRangeFieldDomain(
+        "int_range_without_bounds",
+        "desc",
+        ogr.OFTInteger,
+        ogr.OFSTNone,
+        None,
+        False,
+        None,
+        False,
+    )
+    with pytest.raises(
+        Exception,
+        match="FileGeoDatabase requires that both minimum and maximum values of a range field domain are set",
+    ):
+        ds.AddFieldDomain(domain)
 
     domain = ogr.CreateRangeFieldDomainDateTime(
         "datetime_range",
@@ -2427,7 +2463,27 @@ def test_ogr_openfilegdb_write_domains(tmp_vsimem):
     ds = None
 
     ds = gdal.OpenEx(dirname)
-    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 4
+
+    domain = ds.GetFieldDomain("int_range_domain")
+    assert domain is not None
+    assert domain.GetName() == "int_range_domain"
+    assert domain.GetDescription() == "int_range_desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTInteger
+    assert domain.GetFieldSubType() == ogr.OFSTNone
+    assert domain.GetMinAsDouble() == 1
+    assert domain.GetMaxAsDouble() == 2
+
+    domain = ds.GetFieldDomain("real_range_domain")
+    assert domain is not None
+    assert domain.GetName() == "real_range_domain"
+    assert domain.GetDescription() == "desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTReal
+    assert domain.GetFieldSubType() == ogr.OFSTNone
+    assert domain.GetMinAsDouble() == 1.5
+    assert domain.GetMaxAsDouble() == 2.5
 
     domain = ds.GetFieldDomain("datetime_range")
     assert domain is not None
@@ -2439,6 +2495,15 @@ def test_ogr_openfilegdb_write_domains(tmp_vsimem):
     assert domain.GetMinAsString() == "2023-07-03T12:13:14"
     assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
 
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 3
     ds = None
 
     ds = ogr.Open(dirname, update=1)
