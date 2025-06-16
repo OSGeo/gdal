@@ -224,9 +224,10 @@ def test_ogr_fielddomain_mem_driver():
         ds.AddFieldDomain(None)
 
     # Duplicate domain
-    assert not ds.AddFieldDomain(
-        ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
-    )
+    with pytest.raises(Exception, match="A domain of identical name already exists"):
+        ds.AddFieldDomain(
+            ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
+        )
 
     assert ds.GetFieldDomainNames() == ["name"]
 

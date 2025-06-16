@@ -982,7 +982,14 @@ OGRErr AbortSQL() {
   %apply Pointer NONNULL {OGRFieldDomainShadow* fieldDomain};
   bool AddFieldDomain(OGRFieldDomainShadow* fieldDomain)
   {
-      return GDALDatasetAddFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
+      char* pszReason = NULL;
+      if( !GDALDatasetAddFieldDomain(self, (OGRFieldDomainH)fieldDomain, &pszReason) )
+      {
+          CPLError(CE_Failure, CPLE_AppDefined, "%s", pszReason);
+          CPLFree(pszReason);
+          return false;
+      }
+      return true;
   }
   %clear OGRFieldDomainShadow* fieldDomain;
 
