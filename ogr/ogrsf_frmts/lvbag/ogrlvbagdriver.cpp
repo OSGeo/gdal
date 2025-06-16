@@ -20,34 +20,50 @@
 static int OGRLVBAGDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (!poOpenInfo->bStatOK)
+    {
         return FALSE;
+    }
     if (poOpenInfo->bIsDirectory)
+    {
         return -1;  // Check later
+    }
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
+    {
         return FALSE;
+    }
 
     auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if (pszPtr[0] != '<')
+    {
         return FALSE;
+    }
 
     if (poOpenInfo->IsSingleAllowedDriver("LVBAG"))
+    {
         return TRUE;
+    }
 
     // Can't handle mutations just yet
     if (strstr(pszPtr,
                "http://www.kadaster.nl/schemas/mutatielevering-generiek/1.0") !=
         nullptr)
+    {
         return FALSE;
+    }
 
     if (strstr(pszPtr,
                "http://www.kadaster.nl/schemas/standlevering-generiek/1.0") ==
         nullptr)
+    {
         return FALSE;
+    }
 
     // Pin the driver to XSD version 'v20200601'
     if (strstr(pszPtr, "http://www.kadaster.nl/schemas/lvbag/"
                        "extract-deelbestand-lvc/v20200601") == nullptr)
+    {
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -59,7 +75,9 @@ static int OGRLVBAGDriverIdentify(GDALOpenInfo *poOpenInfo)
 GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     if (!OGRLVBAGDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
+    {
         return nullptr;
+    }
 
     const char *pszFilename = poOpenInfo->pszFilename;
     auto poDS = std::unique_ptr<OGRLVBAGDataSource>{new OGRLVBAGDataSource{}};
@@ -68,7 +86,9 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
     if (!poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr)
     {
         if (!poDS->Open(pszFilename, poOpenInfo->papszOpenOptions))
+        {
             poDS.reset();
+        }
     }
     else if (poOpenInfo->bIsDirectory && poOpenInfo->fpL == nullptr)
     {
@@ -84,7 +104,9 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
                 CPLFormFilenameSafe(pszFilename, papszNames[i], nullptr);
 
             if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
+            {
                 continue;
+            }
 
             // Give up on /vsi filesystems if after 10 files we haven't found
             // a single BAG file
@@ -94,13 +116,17 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
                 const bool bCheckAllFiles = CPLTestBool(
                     CPLGetConfigOption("OGR_LVBAG_CHECK_ALL_FILES", "NO"));
                 if (!bCheckAllFiles)
+                {
                     break;
+                }
             }
 
             nProbedFileCount++;
             GDALOpenInfo oOpenInfo{oSubFilename, GA_ReadOnly};
-            if (OGRLVBAGDriverIdentify(&oOpenInfo) != TRUE)
+            if (!OGRLVBAGDriverIdentify(&oOpenInfo))
+            {
                 continue;
+            }
 
             if (poDS->Open(oSubFilename, poOpenInfo->papszOpenOptions))
             {
@@ -130,8 +156,10 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
 
 void RegisterOGRLVBAG()
 {
-    if (GDALGetDriverByName("LVBAG") != nullptr)
+    if (GDALGetDriverByName("LVBAG"))
+    {
         return;
+    }
 
     auto poDriver = std::make_unique<GDALDriver>();
 
