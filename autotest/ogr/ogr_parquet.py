@@ -710,7 +710,8 @@ def test_ogr_parquet_write_edge_cases():
     domain = ogr.CreateCodedFieldDomain(
         "name", "desc", ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}
     )
-    assert ds.AddFieldDomain(domain) == False
+    with pytest.raises(Exception, match="Layer must be created"):
+        ds.AddFieldDomain(domain)
     assert ds.GetFieldDomainNames() is None
     assert ds.GetFieldDomain("foo") is None
     ds = None
