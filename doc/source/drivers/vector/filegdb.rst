@@ -28,7 +28,7 @@ Driver capabilities
 Requirements
 ------------
 
-`FileGDB API SDK <http://www.esri.com/apps/products/download/#File_Geodatabase_API_1.3>`__
+`ESRI File Geodatabase API <https://github.com/Esri/file-geodatabase-api>`__
 
 Curve in geometries are supported on reading with GDAL >= 2.2.
 
