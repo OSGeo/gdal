@@ -351,7 +351,7 @@ template <> struct sGDALCopyWord<float, GFloat16>
     static inline void f(const float fValueIn, GFloat16 &hfValueOut)
     {
         // Our custom implementation when std::float16_t is not
-        // available ensures proprer behavior.
+        // available ensures proper behavior.
 #if !defined(HAVE_STD_FLOAT16_T)
         if (fValueIn > cpl::NumericLimits<GFloat16>::max())
         {
@@ -373,7 +373,7 @@ template <> struct sGDALCopyWord<double, GFloat16>
     static inline void f(const double dfValueIn, GFloat16 &hfValueOut)
     {
         // Our custom implementation when std::float16_t is not
-        // available ensures proprer behavior.
+        // available ensures proper behavior.
 #if !defined(HAVE_STD_FLOAT16_T)
         if (dfValueIn > cpl::NumericLimits<GFloat16>::max())
         {
