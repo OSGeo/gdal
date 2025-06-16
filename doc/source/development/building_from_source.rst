@@ -158,6 +158,80 @@ of the cloned GDAL repository.
     . ../scripts/setdevenv.sh
     ninja
 
+
+Building on OpenHarmony
++++++++++++++++++++++++
+
+The minimum requirements to build GDAL are:
+
+Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for information
+on dependencies of optional drivers.
+
+## Source code compilation methods for OpenHarmony
+
+### Prerequisites : Preparing OpenHarmony SDK
+
+OpenHarmony provides SDKs for Linux, Windows, and macOS platforms, enabling cross-compilation across these systems. This guide focuses on Linux-based cross-compilation.
+
+1. Download the SDK for your target platform from the [official release channel](https://gitcode.com/openharmony/docs/blob/master/en/release-notes/OpenHarmony-v5.0.1-release.md#acquiring-source-code-from-mirrors).
+
+2. Extract the SDK package:
+```shell
+owner@ubuntu:$WORKSPACE_DIR$ tar -zxvf ohos-sdk-windows_linux-public.tar.tar.gz
+```
+
+3. Navigate to the SDK's Linux directory and extract all toolchain packages:
+```shell
+owner@ubuntu:$WORKSPACE_DIR$ cd ohos_sdk/linux
+owner@ubuntu:$WORKSPACE_DIR/ohos-sdk/linux$ for i in *.zip;do unzip ${i};done
+owner@ubuntu:$WORKSPACE_DIR/ohos-sdk/linux$ ls
+total 1228400
+85988 -rw-r--r-- 1 wshi wshi  88050148 Nov 20  2024 ets-linux-x64-5.0.1.111-Release.zip          # ArkTS compiler tools
+56396 -rw-r--r-- 1 wshi wshi  57747481 Nov 20  2024 js-linux-x64-5.0.1.111-Release.zip           # JS compiler tools
+888916 -rw-r--r-- 1 wshi wshi 910243125 Nov 20  2024 native-linux-x64-5.0.1.111-Release.zip      # C/C++ cross-compilation tools
+175084 -rw-r--r-- 1 wshi wshi 179281763 Nov 20  2024 previewer-linux-x64-5.0.1.111-Release.zip   # App preview tools
+22008 -rw-r--r-- 1 wshi wshi  22533501 Nov 20  2024 toolchains-linux-x64-5.0.1.111-Release.zip   # Utilities (e.g., signing tool, device connector)
+```
+
+### Compiling The Projects
+
+1. Create a build directory:
+```shell
+owner@ubuntu:$WORKSPACE_DIR$ cd gdal                                 # Navigate to source directory,gdal is Source code to be compiled
+owner@ubuntu:$WORKSPACE_DIR/gdal$ mkdir build && cd build             # Create and enter build directory
+```
+
+2. Configure cross-compilation parameters to generate Makefile (replace `SDKPATH` with your SDK path, SDKPATH=${OHOS_SDK}/linux/native/build-tools/cmake):
+```shell
+owner@ubuntu:$WORKSPACE_DIR/gdal/build$ {SDKPATH}/bin/cmake -DCMAKE_TOOLCHAIN_FILE={SDKPATH}/ohos.toolchain.cmake -DCMAKE_INSTALL_PREFIX={INSTALL_PATH} -DOHOS_ARCH=arm64-v8a
+-DCMAKE_MODULE_PATH=$WORKSPACE_DIR -DPROJ_DIR={PROJ_INSTALL_ARM64} -DCMAKE_PREFIX_PATH={PROJ_INSTALL_ARM64} -DCMAKE_FIND_ROOT_PATH={PROJ_INSTALL_ARM64} ..
+# PROJ_INSTALL_ARM64 is the absolute path after the PROJ library is installed.
+```
+
+    **Notes:** 
+    - Use the CMake executable from the SDK, **NOT** your system's default CMake.
+    - Key parameters:
+	    - `CMAKE_TOOLCHAIN_FILE`: Path to the cross-compilation configuration file in the SDK.
+	    - `CMAKE_INSTALL_PREFIX`: Installation path for compiled outputs.
+	    - `OHOS_ARCH`: Target architecture (`arm64-v8a` for 64-bit, `armeabi-v7a` for 32-bit).
+
+3. Execute compilation:
+```shell
+owner@ubuntu:$WORKSPACE_DIR/gdal/build$ make
+```
+
+4. Verify compiled binaries <a id="check_binary_tag"></a>:
+```shell
+owner@ubuntu:$WORKSPACE_DIR/gdal/build$ file {BINARY}
+{BINARY}: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=c0aaff0b401feef924f074a6cb7d19b5958f74f5, with debug_info, not stripped
+```
+
+5. Install outputs:
+```shell
+owner@ubuntu:$WORKSPACE_DIR/gdal/build$ make install
+```
+
+
 CMake general configure options
 +++++++++++++++++++++++++++++++
 
