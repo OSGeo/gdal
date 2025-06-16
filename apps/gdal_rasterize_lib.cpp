@@ -1044,15 +1044,29 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         hDriver = GDALGetDriverByName(osFormat);
         char **papszDriverMD =
             hDriver ? GDALGetMetadata(hDriver, nullptr) : nullptr;
-        if (hDriver == nullptr ||
-            !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
-                                              "FALSE")) ||
-            !CPLTestBool(
+        if (hDriver == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Output driver `%s' not recognised.", osFormat.c_str());
+            return nullptr;
+        }
+        if (!CPLTestBool(
+                CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE")))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Output driver `%s' is not a raster driver.",
+                     osFormat.c_str());
+            return nullptr;
+        }
+        if (!CPLTestBool(
                 CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE")))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Output driver `%s' not recognised or does not support "
-                     "direct output file creation.",
+                     "Output driver `%s' does not support direct output file "
+                     "creation. "
+                     "To write a file to this format, first write to a "
+                     "different format such as "
+                     "GeoTIFF and then convert the output.",
                      osFormat.c_str());
             return nullptr;
         }
