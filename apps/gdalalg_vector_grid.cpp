@@ -256,7 +256,7 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             if (poFeat)
             {
                 const auto poGeom = poFeat->GetGeometryRef();
-                if (!poGeom->Is3D())
+                if (!poGeom || !poGeom->Is3D())
                 {
                     ReportError(
                         CE_Warning, CPLE_AppDefined,
