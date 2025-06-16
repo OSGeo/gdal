@@ -598,9 +598,18 @@ def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
 
         rasterize = get_rasterize_alg()
         assert rasterize.ParseRunAndFinalize(
-            ["--burn=200,220,240", input_csv, output_tif, "--size=10,11", "--overwrite"]
+            [
+                "--co",
+                "TILED=YES",
+                "--burn=200,220,240",
+                input_csv,
+                output_tif,
+                "--size=10,11",
+                "--overwrite",
+            ]
         )
 
         with gdal.Open(output_tif) as ds:
             assert ds.RasterXSize == 10
             assert ds.RasterYSize == 11
+            assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]

@@ -234,7 +234,7 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     for (const auto &co : m_datasetCreationOptions)
     {
-        aosOptions.AddString("-dsco");
+        aosOptions.AddString("-co");
         aosOptions.AddString(co.c_str());
     }
 
