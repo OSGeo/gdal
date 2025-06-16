@@ -5,7 +5,7 @@
  * Author:   Laixer B.V., info at laixer dot com
  *
  ******************************************************************************
- * Copyright (c) 2021, Laixer B.V. <info at laixer dot com>
+ * Copyright (c) 2020, Laixer B.V. <info at laixer dot com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -27,11 +27,12 @@ constexpr const size_t nDefaultIdentifierSize = 16;
 
 OGRLVBAGLayer::OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
                              char **papszOpenOptions)
-    : OGRAbstractProxiedLayer{poPoolIn}, poFeatureDefn{new OGRFeatureDefn{}},
-      fp{nullptr}, osFilename{pszFilename}, eFileDescriptorsState{FD_CLOSED},
-      oParser{nullptr}, bSchemaOnly{false}, bHasReadSchema{false},
-      bFixInvalidData{
-          CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false)},
+    : OGRAbstractProxiedLayer{poPoolIn},
+      poFeatureDefn{new OGRFeatureDefn{}}, fp{nullptr}, osFilename{pszFilename},
+      eFileDescriptorsState{FD_CLOSED}, oParser{nullptr}, bSchemaOnly{false},
+      bHasReadSchema{false}, bFixInvalidData{CPLFetchBool(
+                                 papszOpenOptions, "AUTOCORRECT_INVALID_DATA",
+                                 false)},
       bLegacyId{CPLFetchBool(papszOpenOptions, "LEGACY_ID", false)},
       nNextFID{0}, nCurrentDepth{0}, nGeometryElementDepth{0},
       nFeatureCollectionDepth{0}, nFeatureElementDepth{0},
