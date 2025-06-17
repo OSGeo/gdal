@@ -67,7 +67,12 @@ typedef enum
     GDT_TypeCount = 17 /* maximum type # + 1 */
 } GDALDataType;
 
-int CPL_DLL CPL_STDCALL GDALGetDataTypeSize(GDALDataType);  // Deprecated.
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSize(GDALDataType)
+    /*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetDataTypeSizeBits() or "
+                        "GDALGetDataTypeSizeBytes() * 8 instead")
+    /*! @endcond */
+    ;
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits(GDALDataType eDataType);
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType);
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex(GDALDataType);
