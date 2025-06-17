@@ -187,6 +187,24 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
     assert calc.Finalize()
 
 
+def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.GetRasterBand(1).Fill(-9)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["output-data-type"] = "Byte"
+    calc["nodata"] = -9
+
+    with pytest.raises(Exception, match="Byte cannot represent NoData value -9"):
+        calc.Run()
+
+
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"
