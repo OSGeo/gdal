@@ -378,16 +378,23 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
         CPLXMLNode *band = CPLCreateXMLNode(root, CXT_Element, "VRTRasterBand");
         CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        const char *pszDataType = nullptr;
-        if (bandType != GDT_Unknown)
+        if (bandType == GDT_Unknown)
         {
-            pszDataType = GDALGetDataTypeName(bandType);
+            bandType = GDT_Float64;
         }
         CPLAddXMLAttributeAndValue(band, "dataType",
-                                   pszDataType ? pszDataType : "Float64");
+                                   GDALGetDataTypeName(bandType));
 
         if (noData.has_value())
         {
+            if (!GDALIsValueExactAs(noData.value(), bandType))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Band output type %s cannot represent NoData value %g",
+                         GDALGetDataTypeName(bandType), noData.value());
+                return false;
+            }
+
             CPLXMLNode *noDataNode =
                 CPLCreateXMLNode(band, CXT_Element, "NoDataValue");
             CPLCreateXMLNode(noDataNode, CXT_Text,
@@ -438,7 +445,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 }
             }
 
-            // Create a <SimpleSource> for each input band that is used in
+            // Create a source for each input band that is used in
             // the expression.
             for (int nInBand = 1; nInBand <= props.nBands; nInBand++)
             {
