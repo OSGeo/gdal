@@ -14,6 +14,8 @@
 import gdaltest
 import pytest
 
+from osgeo import gdal
+
 pytestmark = pytest.mark.require_driver("MFF")
 
 ###############################################################################
@@ -44,3 +46,9 @@ def test_mff_3():
 
     tst = gdaltest.GDALTest("MFF", "mff/bytemff.hdr", 1, 4672)
     tst.testOpen()
+
+
+def test_mff_too_large_tile():
+
+    with pytest.raises(Exception, match="Too large tile"):
+        gdal.Open("data/mff/too_large_tile.hdr")

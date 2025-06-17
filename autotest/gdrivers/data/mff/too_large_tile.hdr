@@ -1,0 +1,9 @@
+IMAGE_FILE_FORMAT=MFF
+IMAGE_LINES=1
+LINE_SAMPLES=1
+NUM_GCPS=1
+GCP1=0,1,2,3
+PROJECTION_NAME=utm
+no_rows=yes
+tile_size_rows=60000
+tile_size_columns=60000
