@@ -12,6 +12,7 @@
 ###############################################################################
 
 import math
+import struct
 
 import gdaltest
 import pytest
@@ -446,32 +447,35 @@ def test_band_arithmetic_add_nodata_not_all_bands():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
         R = ds.GetRasterBand(1)
         R.SetNoDataValue(1)
+        R.WriteRaster(0, 0, 2, 1, b"\x01\x02")
         G = ds.GetRasterBand(2)
-        with gdaltest.error_raised(
-            gdal.CE_Warning,
-            "Some sources have a nodata value, and others none. Ignoring nodata",
-        ):
-            return R + G
+        G.WriteRaster(0, 0, 2, 1, b"\x01\x03")
+        return R + G
 
     res = get()
-    assert res.GetNoDataValue() is None
+    assert math.isnan(res.GetNoDataValue())
+    got_data = struct.unpack("f" * 2, res.ReadRaster())
+    assert math.isnan(got_data[0])
+    assert got_data[1] == 2 + 3
 
 
 def test_band_arithmetic_add_nodata_not_same_value():
     def get():
-        ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+        ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
         R = ds.GetRasterBand(1)
         R.SetNoDataValue(1)
+        R.WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
         G = ds.GetRasterBand(2)
         G.SetNoDataValue(2)
-        with gdaltest.error_raised(
-            gdal.CE_Warning,
-            "Not all sources have the same nodata value. Ignoring nodata",
-        ):
-            return R + G
+        G.WriteRaster(0, 0, 3, 1, b"\x01\x02\x04")
+        return R + G
 
     res = get()
-    assert res.GetNoDataValue() is None
+    assert math.isnan(res.GetNoDataValue())
+    got_data = struct.unpack("f" * 3, res.ReadRaster())
+    assert math.isnan(got_data[0])
+    assert math.isnan(got_data[1])
+    assert got_data[2] == 3 + 4
 
 
 def test_band_arithmetic_add_nodata_not_same_value_nan():
@@ -479,16 +483,17 @@ def test_band_arithmetic_add_nodata_not_same_value_nan():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2, gdal.GDT_Float32)
         R = ds.GetRasterBand(1)
         R.SetNoDataValue(1)
+        R.WriteRaster(0, 0, 2, 1, struct.pack("f" * 2, 1, 2))
         G = ds.GetRasterBand(2)
         G.SetNoDataValue(float("nan"))
-        with gdaltest.error_raised(
-            gdal.CE_Warning,
-            "Not all sources have the same nodata value. Ignoring nodata",
-        ):
-            return R + G
+        G.WriteRaster(0, 0, 2, 1, struct.pack("f" * 2, float("nan"), 3))
+        return R + G
 
     res = get()
-    assert res.GetNoDataValue() is None
+    assert math.isnan(res.GetNoDataValue())
+    got_data = struct.unpack("f" * 2, res.ReadRaster())
+    assert math.isnan(got_data[0])
+    assert got_data[1] == 2 + 3
 
 
 def test_band_arithmetic_greater():

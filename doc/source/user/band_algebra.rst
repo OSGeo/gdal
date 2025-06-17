@@ -48,6 +48,10 @@ Other operations are available:
 It is possible to serialize the operation to a :ref:`raster.vrt` file by using
 :cpp:func:`GDALDriver::CreateCopy` on the dataset owing the result band.
 
+When several bands are combined together, that at least one of them has a nodata
+value but they do not share the same nodata value, not-a-number will be used as
+the nodata value for the result band.
+
 The capability is similar to the one offered by the :ref:`gdal_raster_calc` program.
 
 .. note:: The comparison operators, including the ternary one, require a GDAL build against the muparser library.

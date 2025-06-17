@@ -14,6 +14,7 @@
 #include "vrtdataset.h"
 
 #include <cmath>
+#include <limits>
 
 /************************************************************************/
 /*                        GDALComputedDataset                           */
@@ -30,7 +31,7 @@ class GDALComputedDataset final : public GDALDataset
     std::vector<GDALRasterBand *> m_poBands{};
     VRTDataset m_oVRTDS;
 
-    void AddSources(GDALComputedRasterBand *poBand, bool bWarnAboutNoData);
+    void AddSources(GDALComputedRasterBand *poBand);
 
     static const char *
     OperationToFunctionName(GDALComputedRasterBand::Operation op);
@@ -143,7 +144,7 @@ GDALComputedDataset::GDALComputedDataset(const GDALComputedDataset &other)
     m_oVRTDS.AddBand(other.m_oVRTDS.GetRasterBand(1)->GetRasterDataType(),
                      m_aosOptions.List());
 
-    AddSources(poBand, /* bWarnAboutNoData = */ false);
+    AddSources(poBand);
 }
 
 /************************************************************************/
@@ -264,7 +265,7 @@ GDALComputedDataset::GDALComputedDataset(
 
     SetBand(1, poBand);
 
-    AddSources(poBand, /* bWarnAboutNoData = */ true);
+    AddSources(poBand);
 }
 
 /************************************************************************/
@@ -319,7 +320,7 @@ GDALComputedDataset::GDALComputedDataset(
 
     SetBand(1, poBand);
 
-    AddSources(poBand, /* bWarnAboutNoData = */ true);
+    AddSources(poBand);
 }
 
 /************************************************************************/
@@ -329,23 +330,61 @@ GDALComputedDataset::GDALComputedDataset(
 GDALComputedDataset::~GDALComputedDataset() = default;
 
 /************************************************************************/
+/*                       HaveAllBandsSameNoDataValue()                  */
+/************************************************************************/
+
+static bool HaveAllBandsSameNoDataValue(GDALRasterBand **apoBands,
+                                        size_t nBands, bool &hasAtLeastOneNDV,
+                                        double &singleNDV)
+{
+    hasAtLeastOneNDV = false;
+    singleNDV = 0;
+
+    int bFirstBandHasNoData = false;
+    for (size_t i = 0; i < nBands; ++i)
+    {
+        int bHasNoData = false;
+        const double dfNoData = apoBands[i]->GetNoDataValue(&bHasNoData);
+        if (bHasNoData)
+            hasAtLeastOneNDV = true;
+        if (i == 0)
+        {
+            bFirstBandHasNoData = bHasNoData;
+            singleNDV = dfNoData;
+        }
+        else if (bHasNoData != bFirstBandHasNoData)
+        {
+            return false;
+        }
+        else if (bFirstBandHasNoData &&
+                 !((std::isnan(singleNDV) && std::isnan(dfNoData)) ||
+                   (singleNDV == dfNoData)))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                  GDALComputedDataset::AddSources()                   */
 /************************************************************************/
 
-void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
-                                     bool bWarnAboutNoData)
+void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
 {
     auto poSourcedRasterBand =
         cpl::down_cast<VRTSourcedRasterBand *>(m_oVRTDS.GetRasterBand(1));
+
+    bool hasAtLeastOneNDV = false;
+    double singleNDV = 0;
+    const bool bSameNDV = HaveAllBandsSameNoDataValue(
+        m_poBands.data(), m_poBands.size(), hasAtLeastOneNDV, singleNDV);
 
     // For inputs that are instances of GDALComputedDataset, clone them
     // to make sure we do not depend on temporary instances,
     // such as "a + b + c", which is evaluated as "(a + b) + c", and the
     // temporary band/dataset corresponding to a + b will go out of scope
     // quickly.
-    bool bIsFirstBand = true;
-    int bFirstBandHasNoData = false;
-    double dfFirstNoData = 0;
     for (GDALRasterBand *&band : m_poBands)
     {
         auto poDS = band->GetDataset();
@@ -356,47 +395,33 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand,
             band = poComputedDSNew->GetRasterBand(1);
             m_bandDS.emplace_back(poComputedDSNew.release());
         }
-        poSourcedRasterBand->AddSimpleSource(band);
-        poSourcedRasterBand->papoSources[poSourcedRasterBand->nSources - 1]
-            ->SetName(CPLSPrintf("source%d", poSourcedRasterBand->nSources));
 
         int bHasNoData = false;
         const double dfNoData = band->GetNoDataValue(&bHasNoData);
-        if (bIsFirstBand)
+        if (bHasNoData)
         {
-            bIsFirstBand = false;
-            bFirstBandHasNoData = bHasNoData;
-            dfFirstNoData = dfNoData;
+            poSourcedRasterBand->AddComplexSource(band, -1, -1, -1, -1, -1, -1,
+                                                  -1, -1, 0, 1, dfNoData);
         }
-        else if (bHasNoData != bFirstBandHasNoData)
+        else
         {
-            if (bWarnAboutNoData)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Some sources have a nodata value, and others none. "
-                         "Ignoring nodata");
-            }
-            bFirstBandHasNoData = false;
+            poSourcedRasterBand->AddSimpleSource(band);
         }
-        else if (bFirstBandHasNoData &&
-                 !((std::isnan(dfFirstNoData) && std::isnan(dfNoData)) ||
-                   (dfFirstNoData == dfNoData)))
-        {
-            if (bWarnAboutNoData)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Not all sources have the same nodata value. Ignoring "
-                         "nodata");
-            }
-            bFirstBandHasNoData = false;
-        }
+        poSourcedRasterBand->papoSources[poSourcedRasterBand->nSources - 1]
+            ->SetName(CPLSPrintf("source%d", poSourcedRasterBand->nSources));
     }
-    if (bFirstBandHasNoData)
+    if (hasAtLeastOneNDV)
     {
-        poSourcedRasterBand->SetNoDataValue(dfFirstNoData);
-
         poBand->m_bHasNoData = true;
-        poBand->m_dfNoDataValue = dfFirstNoData;
+        if (bSameNDV)
+        {
+            poBand->m_dfNoDataValue = singleNDV;
+        }
+        else
+        {
+            poBand->m_dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+        }
+        poSourcedRasterBand->SetNoDataValue(poBand->m_dfNoDataValue);
     }
 }
 
@@ -493,7 +518,18 @@ GDALComputedRasterBand::GDALComputedRasterBand(
     {
         eDataType = GDALDataTypeUnion(eDataType, bands[i]->GetRasterDataType());
     }
-    if (op == Operation::OP_TERNARY)
+
+    bool hasAtLeastOneNDV = false;
+    double singleNDV = 0;
+    const bool bSameNDV =
+        HaveAllBandsSameNoDataValue(const_cast<GDALRasterBand **>(bands.data()),
+                                    bands.size(), hasAtLeastOneNDV, singleNDV);
+
+    if (!bSameNDV)
+    {
+        eDataType = eDataType == GDT_Float64 ? GDT_Float64 : GDT_Float32;
+    }
+    else if (op == Operation::OP_TERNARY)
     {
         CPLAssert(bands.size() == 3);
         eDataType = GDALDataTypeUnion(bands[1]->GetRasterDataType(),
@@ -529,9 +565,21 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
 {
     nRasterXSize = firstBand.GetXSize();
     nRasterYSize = firstBand.GetYSize();
+
+    bool hasAtLeastOneNDV = false;
+    double singleNDV = 0;
+    GDALRasterBand *apoBands[] = {const_cast<GDALRasterBand *>(&firstBand),
+                                  const_cast<GDALRasterBand *>(&secondBand)};
+    const bool bSameNDV =
+        HaveAllBandsSameNoDataValue(apoBands, 2, hasAtLeastOneNDV, singleNDV);
+
     const auto firstDT = firstBand.GetRasterDataType();
     const auto secondDT = secondBand.GetRasterDataType();
-    if (IsComparisonOperator(op))
+    if (!bSameNDV)
+        eDataType = (firstDT == GDT_Float64 || secondDT == GDT_Float64)
+                        ? GDT_Float64
+                        : GDT_Float32;
+    else if (IsComparisonOperator(op))
         eDataType = GDT_Byte;
     else if (op == Operation::OP_ADD && firstDT == GDT_Byte &&
              secondDT == GDT_Byte)
