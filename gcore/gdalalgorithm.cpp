@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <limits>
 #include <map>
+#include <string_view>
 
 #ifndef _
 #define _(x) (x)
@@ -1487,6 +1488,8 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                                                            nullptr, &nCount),
                              OSRDestroyCRSInfoList);
                 std::string osCode;
+
+                std::vector<const OSRCRSInfo *> candidates;
                 for (int i = 0; i < nCount; ++i)
                 {
                     const auto *entry = (pCRSList.get())[i];
@@ -1495,19 +1498,82 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                         if (aosTokens.size() == 1 ||
                             STARTS_WITH(entry->pszCode, aosTokens[1]))
                         {
-                            if (oRet.empty())
+                            if (candidates.empty())
                                 osCode = entry->pszCode;
-                            oRet.push_back(std::string(entry->pszCode)
-                                               .append(" -- ")
-                                               .append(entry->pszName));
+                            candidates.push_back(entry);
                         }
                     }
                 }
-                if (oRet.size() == 1)
+                if (candidates.size() == 1)
                 {
-                    // If there is a single match, remove the name from the suggestion.
-                    oRet.clear();
                     oRet.push_back(std::move(osCode));
+                }
+                else
+                {
+                    if (sDatasetLongLatEnv.IsInit())
+                    {
+                        std::sort(
+                            candidates.begin(), candidates.end(),
+                            [](const OSRCRSInfo *a, const OSRCRSInfo *b)
+                            {
+                                const double dfXa =
+                                    a->dfWestLongitudeDeg >
+                                            a->dfEastLongitudeDeg
+                                        ? a->dfWestLongitudeDeg -
+                                              a->dfEastLongitudeDeg
+                                        : (180 - a->dfWestLongitudeDeg) +
+                                              (a->dfEastLongitudeDeg - -180);
+                                const double dfYa = a->dfNorthLatitudeDeg -
+                                                    a->dfSouthLatitudeDeg;
+                                const double dfXb =
+                                    b->dfWestLongitudeDeg >
+                                            b->dfEastLongitudeDeg
+                                        ? b->dfWestLongitudeDeg -
+                                              b->dfEastLongitudeDeg
+                                        : (180 - b->dfWestLongitudeDeg) +
+                                              (b->dfEastLongitudeDeg - -180);
+                                const double dfYb = b->dfNorthLatitudeDeg -
+                                                    b->dfSouthLatitudeDeg;
+                                const double diffArea =
+                                    dfXa * dfYa - dfXb * dfYb;
+                                if (diffArea < 0)
+                                    return true;
+                                if (diffArea == 0)
+                                {
+                                    if (std::string_view(a->pszName) ==
+                                        b->pszName)
+                                    {
+                                        if (a->eType ==
+                                                OSR_CRS_TYPE_GEOGRAPHIC_2D &&
+                                            b->eType !=
+                                                OSR_CRS_TYPE_GEOGRAPHIC_2D)
+                                            return true;
+                                        if (a->eType ==
+                                                OSR_CRS_TYPE_GEOGRAPHIC_3D &&
+                                            b->eType == OSR_CRS_TYPE_GEOCENTRIC)
+                                            return true;
+                                        return false;
+                                    }
+                                    return std::string_view(a->pszCode) <
+                                           b->pszCode;
+                                }
+                                return false;
+                            });
+                    }
+
+                    for (const auto *entry : candidates)
+                    {
+                        std::string val = std::string(entry->pszCode)
+                                              .append(" -- ")
+                                              .append(entry->pszName);
+                        if (entry->eType == OSR_CRS_TYPE_GEOGRAPHIC_2D)
+                            val.append(" (geographic 2D)");
+                        else if (entry->eType == OSR_CRS_TYPE_GEOGRAPHIC_3D)
+                            val.append(" (geographic 3D)");
+                        else if (entry->eType == OSR_CRS_TYPE_GEOCENTRIC)
+                            val.append(" (geocentric)");
+                        oRet.push_back(std::move(val));
+                    }
                 }
             }
             if (currentValue.empty() || oRet.empty())
@@ -5786,6 +5852,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                     ret.push_back(std::move(str));
             }
         }
+        std::sort(ret.begin(), ret.end());
     }
     else if (!option.empty())
     {
@@ -5802,6 +5869,10 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                     CPL_IGNORE_RET_VAL(ParseCommandLineArguments(args));
                 }
                 ret = arg->GetAutoCompleteChoices(value);
+            }
+            else
+            {
+                std::sort(ret.begin(), ret.end());
             }
             if (!ret.empty() && ret.back() == value)
             {
@@ -5825,6 +5896,10 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
             auto subAlg = InstantiateSubAlgorithm(subAlgName);
             if (subAlg && !subAlg->IsHidden())
                 ret.push_back(subAlg->GetName());
+        }
+        if (!ret.empty())
+        {
+            std::sort(ret.begin(), ret.end());
         }
 
         // Try filenames

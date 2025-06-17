@@ -40,7 +40,7 @@ _gdal()
     fi
   done
 }
-complete -o default -F _gdal gdal
+complete -o nosort -F _gdal gdal
 
 _gdal2tiles.py()
 {
