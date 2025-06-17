@@ -369,3 +369,15 @@ def test_gdalalg_pipeline_polygonize():
         pipeline="read ! polygonize ! write",
     ) as alg:
         assert alg.Output().GetLayer(0).GetFeatureCount() == 281
+
+
+def test_gdalalg_pipeline_contour():
+
+    with gdal.Run(
+        "pipeline",
+        input="../gcore/data/byte.tif",
+        output_format="MEM",
+        output="",
+        pipeline="read ! contour --interval 10 ! write",
+    ) as alg:
+        assert alg.Output().GetLayer(0).GetFeatureCount() == 218

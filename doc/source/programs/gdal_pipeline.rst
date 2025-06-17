@@ -33,6 +33,12 @@ For steps that have both *vector* data type as input and output, consult :ref:`g
 
 The following steps accept raster input and generate vector output:
 
+* contour
+
+.. program-output:: gdal pipeline --help-doc=contour
+
+Details for options can be found in :ref:`gdal_raster_contour`.
+
 * footprint
 
 .. program-output:: gdal pipeline --help-doc=footprint

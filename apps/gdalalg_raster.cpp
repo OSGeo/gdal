@@ -102,7 +102,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterPolygonizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterResizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterRoughnessAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterContourAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSetTypeAlgorithmStandalone>();

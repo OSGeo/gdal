@@ -15,7 +15,7 @@
 
 #include <limits>
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -23,7 +23,8 @@
 /*                     GDALRasterContourAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterContourAlgorithm final : public GDALAlgorithm
+class GDALRasterContourAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "contour";
@@ -32,27 +33,34 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_contour.html";
 
-    explicit GDALRasterContourAlgorithm();
+    explicit GDALRasterContourAlgorithm(bool standaloneStep = false);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-
     // gdal_contour specific arguments
-    int m_band = 1;                   // -b
-    std::string m_outputLayerName;    // -nln <name>
-    std::string m_elevAttributeName;  // -a <name>
-    std::string m_amin;               // -amin <value>
-    std::string m_amax;               // -amax <value>
-    bool m_3d = false;                // -3d
-                                      // -inodata (skipped)
+    int m_band = 1;                     // -b
+    std::string m_elevAttributeName{};  // -a <name>
+    std::string m_amin{};               // -amin <value>
+    std::string m_amax{};               // -amax <value>
+    bool m_3d = false;                  // -3d
+                                        // -inodata (skipped)
     double m_sNodata =
         std::numeric_limits<double>::quiet_NaN();  // -snodata <value>
     double m_interval =
@@ -60,11 +68,26 @@ class GDALRasterContourAlgorithm final : public GDALAlgorithm
     double m_offset =
         std::numeric_limits<double>::quiet_NaN();  // -off <offset>
     std::vector<std::string>
-        m_levels;       // -fl <level>[,<level>...] MIN/MAX are also supported
+        m_levels{};     // -fl <level>[,<level>...] MIN/MAX are also supported
     int m_expBase = 0;  // -e <base>
     bool m_polygonize = false;    // -p
     int m_groupTransactions = 0;  // gt <n>
-    bool m_overwrite = false;     // -overwrite
+};
+
+/************************************************************************/
+/*                  GDALRasterContourAlgorithmStandalone                */
+/************************************************************************/
+
+class GDALRasterContourAlgorithmStandalone final
+    : public GDALRasterContourAlgorithm
+{
+  public:
+    GDALRasterContourAlgorithmStandalone()
+        : GDALRasterContourAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterContourAlgorithmStandalone() override;
 };
 
 //! @endcond
