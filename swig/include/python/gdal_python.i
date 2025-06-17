@@ -271,6 +271,8 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       return _gdal.Band_IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
 
+  Where = where
+
   def minimum(*args):
       """Return a band whose each pixel value is the minimum of the corresponding
          pixel values in the input arguments which may be gdal.Band or a numeric constant.
@@ -295,6 +297,8 @@ static void readraster_releasebuffer(CPLErr eErr,
       if constant is not None:
           res = _gdal.Band_MinConstant(res, constant)._add_parent_references([res])
       return res
+
+  Minimum = minimum
 
   def maximum(*args):
       """Return a band whose each pixel value is the maximum of the corresponding
@@ -321,6 +325,8 @@ static void readraster_releasebuffer(CPLErr eErr,
           res = _gdal.Band_MaxConstant(res, constant)._add_parent_references([res])
       return res
 
+  Maximum = maximum
+
   def mean(*args):
       """Return a band whose each pixel value is the arithmetic mean of the corresponding
          pixel values in the input bands.
@@ -333,6 +339,7 @@ static void readraster_releasebuffer(CPLErr eErr,
       band_refs = [band for band in args]
       return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
 
+  Mean = mean
 %}
 
 %{
