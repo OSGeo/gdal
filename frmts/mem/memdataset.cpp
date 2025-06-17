@@ -145,7 +145,7 @@ CPLErr MEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 {
     CPLAssert(nBlockXOff == 0);
 
-    const int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
 
     if (nPixelOffset == nWordSize)
     {
@@ -175,7 +175,7 @@ CPLErr MEMRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void *pImage)
 {
     CPLAssert(nBlockXOff == 0);
-    const int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
 
     if (nPixelOffset == nWordSize)
     {
@@ -263,7 +263,7 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              GSpacing nBandSpaceBuf,
                              GDALRasterIOExtraArg *psExtraArg)
 {
-    const int eBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    const int eBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
 
     // Detect if we have a pixel-interleaved buffer
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount == nBands &&

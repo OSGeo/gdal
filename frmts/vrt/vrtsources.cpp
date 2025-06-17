@@ -3807,7 +3807,7 @@ CPLErr VRTFuncSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
                                GDALRasterIOExtraArg * /* psExtraArg */,
                                WorkingState & /* oWorkingState */)
 {
-    if (nPixelSpace * 8 == GDALGetDataTypeSize(eBufType) &&
+    if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
         nLineSpace == nPixelSpace * nXSize && nBufXSize == nXSize &&
         nBufYSize == nYSize && eBufType == eType)
     {
@@ -3818,8 +3818,9 @@ CPLErr VRTFuncSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "VRTFuncSource::RasterIO() - Irregular request.");
         CPLDebug("VRT", "Irregular request: %d,%d  %d,%d, %d,%d %d,%d %d,%d",
-                 static_cast<int>(nPixelSpace) * 8,
-                 GDALGetDataTypeSize(eBufType), static_cast<int>(nLineSpace),
+                 static_cast<int>(nPixelSpace),
+                 GDALGetDataTypeSizeBytes(eBufType),
+                 static_cast<int>(nLineSpace),
                  static_cast<int>(nPixelSpace) * nXSize, nBufXSize, nXSize,
                  nBufYSize, nYSize, static_cast<int>(eBufType),
                  static_cast<int>(eType));

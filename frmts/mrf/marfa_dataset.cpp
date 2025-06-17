@@ -969,7 +969,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
     // Data Type, use GDAL Names
     image.dt = GDALGetDataTypeByName(
         CPLGetXMLValue(defimage, "DataType", GDALGetDataTypeName(image.dt)));
-    if (image.dt == GDT_Unknown || GDALGetDataTypeSize(image.dt) == 0)
+    if (image.dt == GDT_Unknown || GDALGetDataTypeSizeBytes(image.dt) == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Unsupported type");
         return CE_Failure;

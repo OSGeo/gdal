@@ -2682,7 +2682,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
 
     // Loop over the image, copying image data.
     CPLErr eErr = CE_None;
-    const int nWordSize = GDALGetDataTypeSize(eType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
     GByte *pabyScanline = reinterpret_cast<GByte *>(
         CPLMalloc(cpl::fits_on<int>(nBands * nXSize * nWordSize)));

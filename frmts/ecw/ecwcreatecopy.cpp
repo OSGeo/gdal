@@ -216,9 +216,9 @@ CNCSError GDALECWCompressor::WriteReadLine(UINT32 nNextLine,
             m_nSwathLines = MIN_SWATH_LINES;
     }
 
-    GSpacing nPixelSpace = GDALGetDataTypeSize(eWorkDT) / 8;
-    GSpacing nLineSpace = sFileInfo.nSizeX * nPixelSpace;
-    GSpacing nBandSpace = nLineSpace * m_nSwathLines;
+    const GSpacing nPixelSpace = GDALGetDataTypeSizeBytes(eWorkDT);
+    const GSpacing nLineSpace = sFileInfo.nSizeX * nPixelSpace;
+    const GSpacing nBandSpace = nLineSpace * m_nSwathLines;
 
     if (m_pabySwathBuf == nullptr)
     {
@@ -1698,14 +1698,16 @@ class IRasterIORequest
           nBufYSize(nBufYSizeIn)
     {
         GDALDataType eDataType = poBand->GetRasterDataType();
-        int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
-        pabyData = (GByte *)CPLMalloc(nBufXSize * nBufYSize * nDataTypeSize);
+        const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
+        pabyData = (GByte *)CPLMalloc(static_cast<size_t>(nBufXSize) *
+                                      nBufYSize * nDataTypeSize);
         for (int iY = 0; iY < nBufYSize; iY++)
         {
             GDALCopyWords((GByte *)pData + iY * nLineSpace, eBufType,
                           static_cast<int>(nPixelSpace),
-                          pabyData + iY * nBufXSize * nDataTypeSize, eDataType,
-                          nDataTypeSize, nBufXSize);
+                          pabyData + static_cast<size_t>(iY) * nBufXSize *
+                                         nDataTypeSize,
+                          eDataType, nDataTypeSize, nBufXSize);
         }
     }
 
@@ -1946,7 +1948,7 @@ CPLErr ECWWriteDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 CPLErr ECWWriteDataset::Crystalize()
 
 {
-    int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
 
     CPLErr eErr;
 
@@ -1971,7 +1973,8 @@ CPLErr ECWWriteDataset::Crystalize()
         bCrystalized = TRUE;
 
     nLoadedLine = -1;
-    pabyBILBuffer = (GByte *)CPLMalloc(nWordSize * nBands * nRasterXSize);
+    pabyBILBuffer = (GByte *)CPLMalloc(static_cast<size_t>(nWordSize) * nBands *
+                                       nRasterXSize);
 
     CPLFree(paszBandDescriptions);
 
@@ -1985,7 +1988,7 @@ CPLErr ECWWriteDataset::Crystalize()
 CPLErr ECWWriteDataset::FlushLine()
 
 {
-    int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
     CPLErr eErr;
 
     /* -------------------------------------------------------------------- */
@@ -2008,7 +2011,8 @@ CPLErr ECWWriteDataset::FlushLine()
         void **papOutputLine = (void **)CPLMalloc(sizeof(void *) * nBands);
         for (int i = 0; i < nBands; i++)
             papOutputLine[i] =
-                (void *)(pabyBILBuffer + i * nWordSize * nRasterXSize);
+                (void *)(pabyBILBuffer +
+                         static_cast<size_t>(i) * nWordSize * nRasterXSize);
 
         eErr = oCompressor.ourWriteLineBIL((UINT16)nBands, papOutputLine);
         CPLFree(papOutputLine);
@@ -2021,7 +2025,8 @@ CPLErr ECWWriteDataset::FlushLine()
     /* -------------------------------------------------------------------- */
     /*      Clear the buffer and increment the "current line" indicator.    */
     /* -------------------------------------------------------------------- */
-    memset(pabyBILBuffer, 0, nWordSize * nRasterXSize * nBands);
+    memset(pabyBILBuffer, 0,
+           static_cast<size_t>(nWordSize) * nRasterXSize * nBands);
     nLoadedLine++;
 
     return CE_None;
@@ -2065,7 +2070,7 @@ CPLErr ECWWriteDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     if (eRWFlag == GF_Write && nXOff == 0 && nXSize == nRasterXSize &&
         nBufXSize == nXSize && nBufYSize == nYSize && eBufType == eDataType &&
         (nBandCount == nBands ||
@@ -2153,12 +2158,12 @@ ECWWriteRasterBand::~ECWWriteRasterBand()
 CPLErr ECWWriteRasterBand::IReadBlock(CPL_UNUSED int nBlockX,
                                       CPL_UNUSED int nBlockY, void *pBuffer)
 {
-    int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
 
     // We zero stuff out here, but we can't really read stuff from
     // a write only stream.
 
-    memset(pBuffer, 0, nBlockXSize * nWordSize);
+    memset(pBuffer, 0, static_cast<size_t>(nBlockXSize) * nWordSize);
 
     return CE_None;
 }
@@ -2202,7 +2207,7 @@ CPLErr ECWWriteRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWWriteRasterBand::IWriteBlock(CPL_UNUSED int nBlockX, int nBlockY,
                                        void *pBuffer)
 {
-    int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
     CPLErr eErr;
 
     if (poGDS->bOutOfOrderWriteOccurred)

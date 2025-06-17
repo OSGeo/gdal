@@ -2015,7 +2015,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     if (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
         eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
         eDataType != GDT_UInt32)
@@ -2377,6 +2377,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /*      Work out the precision.                                         */
     /* -------------------------------------------------------------------- */
     int nBits;
+    const int nDTBits = GDALGetDataTypeSizeBits(eDataType);
+
     if (CSLFetchNameValue(papszOptions, "NBITS") != nullptr)
     {
         nBits = atoi(CSLFetchNameValue(papszOptions, "NBITS"));
@@ -2400,21 +2402,20 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             /* Implements "NOTE If the original data do not satisfy this "
                "requirement, they will be converted in a representation using "
                "the next higher power of 2" */
-            nBits = GDALGetDataTypeSize(eDataType);
+            nBits = nDTBits;
         }
     }
     else
     {
-        nBits = GDALGetDataTypeSize(eDataType);
+        nBits = nDTBits;
     }
 
-    if ((GDALGetDataTypeSize(eDataType) == 8 && nBits > 8) ||
-        (GDALGetDataTypeSize(eDataType) == 16 && (nBits <= 8 || nBits > 16)) ||
-        (GDALGetDataTypeSize(eDataType) == 32 && (nBits <= 16 || nBits > 32)))
+    if ((nDTBits == 8 && nBits > 8) ||
+        (nDTBits == 16 && (nBits <= 8 || nBits > 16)) ||
+        (nDTBits == 32 && (nBits <= 16 || nBits > 32)))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "Inconsistent NBITS value with data type. Using %d",
-                 GDALGetDataTypeSize(eDataType));
+                 "Inconsistent NBITS value with data type. Using %d", nDTBits);
     }
 
     /* -------------------------------------------------------------------- */

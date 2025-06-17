@@ -1233,13 +1233,12 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
 
         if (bTilesSameDimension && nBand > 0)
         {
-            GIntBig nMemoryRequiredForTiles =
+            const GIntBig nMemoryRequiredForTiles =
                 static_cast<GIntBig>(PQntuples(poResult)) * nTileWidth *
                 nTileHeight *
-                (GDALGetDataTypeSize(
-                     GetRasterBand(nBand)->GetRasterDataType()) /
-                 8);
-            GIntBig nCacheMax = GDALGetCacheMax64();
+                GDALGetDataTypeSizeBytes(
+                    GetRasterBand(nBand)->GetRasterDataType());
+            const GIntBig nCacheMax = GDALGetCacheMax64();
             if (nBands * nMemoryRequiredForTiles <= nCacheMax)
             {
                 bLoadRasters = true;

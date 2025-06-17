@@ -949,7 +949,7 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
 
     if (CPLFetchBool(papszParamList, "FILL_NODATA", true))
     {
-        const int nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+        const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
         GByte *pabyNoDataBuf =
             reinterpret_cast<GByte *>(VSIMalloc2(nDataTypeSize, nXSize));
         if (pabyNoDataBuf == nullptr)
@@ -960,8 +960,8 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
 
         for (int iCol = 0; iCol < nXSize; iCol++)
         {
-            memcpy(pabyNoDataBuf + iCol * nDataTypeSize, abyNoData,
-                   nDataTypeSize);
+            memcpy(pabyNoDataBuf + static_cast<size_t>(iCol) * nDataTypeSize,
+                   abyNoData, nDataTypeSize);
         }
 
         for (int iRow = 0; iRow < nYSize; iRow++)

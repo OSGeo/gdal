@@ -298,7 +298,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, const buf_mgr &src)
     }
 
     png_set_IHDR(pngp, infop, img.pagesize.x, img.pagesize.y,
-                 GDALGetDataTypeSize(img.dt), png_ctype, PNG_INTERLACE_NONE,
+                 GDALGetDataTypeSizeBits(img.dt), png_ctype, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
     // Optional, force certain filters only.  Makes it somewhat faster but worse

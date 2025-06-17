@@ -1501,7 +1501,7 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         nReqYSize = nRasterYSize - nReqYOff;
 
     //{static int bDone = 0; if (!bDone) printf("(4)\n"); bDone = 1; }
-    const int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     if (IRasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pImage,

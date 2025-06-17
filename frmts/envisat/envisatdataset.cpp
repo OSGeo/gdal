@@ -963,8 +963,8 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
             eDataType = GDT_Byte;
     }
 
-    int nPrefixBytes =
-        dsr_size - ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
+    const int nPrefixBytes =
+        dsr_size - (GDALGetDataTypeSizeBytes(eDataType) * poDS->nRasterXSize);
 
     /* -------------------------------------------------------------------- */
     /*      Fail out if we didn't get non-zero sizes.                       */
@@ -1012,7 +1012,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             auto poBand = RawRasterBand::Create(
                 poDS.get(), iBand + 1, poDS->fpImage, ds_offset + nPrefixBytes,
-                GDALGetDataTypeSize(eDataType) / 8, dsr_size, eDataType,
+                GDALGetDataTypeSizeBytes(eDataType), dsr_size, eDataType,
                 RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
                 RawRasterBand::OwnFP::NO);
             if (!poBand)

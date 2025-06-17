@@ -2331,7 +2331,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     }
     else
     {
-        nBits = GDALGetDataTypeSize(eType);
+        nBits = GDALGetDataTypeSizeBits(eType);
         // Otherwise: we get a "Insufficient implementation precision available
         // for true reversible compression!" error or the data is not actually
         // reversible (on autotest/gcore/data/int32.tif / uint32.tif)

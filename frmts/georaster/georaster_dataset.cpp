@@ -1083,9 +1083,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         }
 
         // There is a limit on how big a compressed block can be.
-        if ((poGRW->nColumnBlockSize * poGRW->nRowBlockSize *
-             poGRW->nBandBlockSize * (GDALGetDataTypeSize(eType) / 8)) >
-            (50 * 1024 * 1024))
+        if ((static_cast<uint64_t>(poGRW->nColumnBlockSize) *
+             poGRW->nRowBlockSize * poGRW->nBandBlockSize *
+             GDALGetDataTypeSizeBytes(eType)) > (50 * 1024 * 1024))
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,
@@ -1099,9 +1099,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (EQUAL(poGRW->sCompressionType.c_str(), "DEFLATE"))
     {
-        if ((poGRW->nColumnBlockSize * poGRW->nRowBlockSize *
-             poGRW->nBandBlockSize * (GDALGetDataTypeSize(eType) / 8)) >
-            (1024 * 1024 * 1024))
+        if ((static_cast<uint64_t>(poGRW->nColumnBlockSize) *
+             poGRW->nRowBlockSize * poGRW->nBandBlockSize *
+             GDALGetDataTypeSizeBytes(eType)) > (1024 * 1024 * 1024))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "For (COMPRESS=%s) each data block must not exceed 1Gb. "
@@ -1593,8 +1593,8 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
 
     CPLErr eErr = CE_None;
 
-    int nPixelSize =
-        GDALGetDataTypeSize(poSrcDS->GetRasterBand(1)->GetRasterDataType()) / 8;
+    const int nPixelSize = GDALGetDataTypeSizeBytes(
+        poSrcDS->GetRasterBand(1)->GetRasterDataType());
 
     if (EQUAL(poDstDS->poGeoRaster->sCompressionType.c_str(), "JPEG-F") &&
         nBlockXSize == nXSize && nBlockYSize == nYSize)

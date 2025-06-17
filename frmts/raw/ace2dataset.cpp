@@ -247,7 +247,7 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
         eDT = GDT_Int16;
     else
         eDT = GDT_Float32;
-    int nWordSize = GDALGetDataTypeSize(eDT) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDT);
 
     VSIStatBufL sStat;
     if (strstr(pszBasename, "_5M"))

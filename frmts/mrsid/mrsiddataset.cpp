@@ -495,7 +495,9 @@ CPLErr MrSIDRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         CPLDebug("MrSID",
                  "IReadBlock() - DSDK - read on updatable file fails.");
-        memset(pImage, 0, nBlockSize * GDALGetDataTypeSize(eDataType) / 8);
+        memset(pImage, 0,
+               static_cast<size_t>(nBlockSize) *
+                   GDALGetDataTypeSizeBytes(eDataType));
         return CE_None;
     }
 #endif /* MRSID_ESDK */
@@ -555,7 +557,7 @@ CPLErr MrSIDRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     memcpy(
         pImage,
         poGDS->poBuffer->myGetTotalBandData(static_cast<lt_uint16>(nBand - 1)),
-        nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8));
+        nBlockSize * GDALGetDataTypeSizeBytes(poGDS->eDataType));
 
     return CE_None;
 }
@@ -931,7 +933,7 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     LTISceneBuffer oLTIBuffer(oPixel, sceneWidth, sceneHeight, nullptr);
 
-    nTmpPixelSize = GDALGetDataTypeSize(eDataType) / 8;
+    nTmpPixelSize = GDALGetDataTypeSizeBytes(eDataType);
 
     /* -------------------------------------------------------------------- */
     /*      Create navigator, and move to the requested scene area.         */

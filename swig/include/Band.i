@@ -84,7 +84,7 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              GIntBig pixel_space, GIntBig line_space,
                              GDALRasterIOExtraArg* psExtraArg )
 {
-    GIntBig min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+    GIntBig min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSizeBytes( buf_type ),
                                                    pixel_space, line_space, FALSE );
     if ( min_buffer_size == 0 )
       return CE_Failure;

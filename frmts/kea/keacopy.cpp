@@ -38,7 +38,7 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
     unsigned int nYSize = pBand->GetYSize();
 
     // allocate some space
-    int nPixelSize = GDALGetDataTypeSize(eGDALType) / 8;
+    const int nPixelSize = GDALGetDataTypeSizeBytes(eGDALType);
     void *pData = VSIMalloc3(nPixelSize, nBlockSize, nBlockSize);
     if (pData == nullptr)
     {
@@ -46,10 +46,10 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
         return false;
     }
     // for progress
-    int nTotalBlocks =
-        static_cast<int>(std::ceil((double)nXSize / (double)nBlockSize) *
-                         std::ceil((double)nYSize / (double)nBlockSize));
-    int nBlocksComplete = 0;
+    const uint64_t nTotalBlocks =
+        static_cast<uint64_t>(DIV_ROUND_UP(nXSize, nBlockSize)) *
+        DIV_ROUND_UP(nYSize, nBlockSize);
+    uint64_t nBlocksComplete = 0;
     double dLastFraction = -1;
     // go through the image
     for (unsigned int nY = 0; nY < nYSize; nY += nBlockSize)

@@ -379,7 +379,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     }
 
     psOptions = GDALClonePansharpenOptions(psOptionsIn);
-    if (psOptions->nBitDepth == GDALGetDataTypeSize(eWorkDataType))
+    if (psOptions->nBitDepth == GDALGetDataTypeSizeBits(eWorkDataType))
         psOptions->nBitDepth = 0;
     if (psOptions->nBitDepth &&
         !(eWorkDataType == GDT_Byte || eWorkDataType == GDT_UInt16 ||

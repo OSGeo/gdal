@@ -380,7 +380,7 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // block cache).
     else if (eRWFlag == GF_Write &&
              // Could be extended to "odd bit" case, but more work
-             m_poGDS->m_nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+             m_poGDS->m_nBitsPerSample == GDALGetDataTypeSizeBits(eDataType) &&
              nXSize == nBufXSize && nYSize == nBufYSize && !HasBlockCache() &&
              !m_poGDS->m_bLoadedBlockDirty &&
              (m_poGDS->nBands == 1 ||

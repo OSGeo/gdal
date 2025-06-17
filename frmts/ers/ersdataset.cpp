@@ -1407,8 +1407,8 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    GUIntBig nSize =
-        nXSize * (GUIntBig)nYSize * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
+    const GUIntBig nSize = static_cast<GUIntBig>(nXSize) * nYSize * nBandsIn *
+                           GDALGetDataTypeSizeBytes(eType);
     GByte byZero = 0;
     if (VSIFSeekL(fpBin, nSize - 1, SEEK_SET) != 0 ||
         VSIFWriteL(&byZero, 1, 1, fpBin) != 1)

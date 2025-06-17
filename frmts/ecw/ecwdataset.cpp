@@ -869,7 +869,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Can we perform direct loads, or must we load into a working     */
     /*      buffer, and transform?                                          */
     /* -------------------------------------------------------------------- */
-    const int nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
+    const int nRawPixelSize = GDALGetDataTypeSizeBytes(poGDS->eRasterDataType);
 
     int bDirect = nPixelSpace == 1 && eBufType == GDT_Byte &&
                   nNewXSize == nBufXSize && nNewYSize == nBufYSize;
@@ -1008,7 +1008,7 @@ CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Default line and pixel spacing if needed.                       */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(eBufType) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(eBufType);
 
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
@@ -1061,8 +1061,8 @@ CPLErr ECWRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nYOff + nYSize > nRasterYSize)
         nYSize = nRasterYSize - nYOff;
 
-    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
-    int nLineSpace = nPixelSpace * nBlockXSize;
+    const GSpacing nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
+    const GSpacing nLineSpace = nPixelSpace * nBlockXSize;
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -1847,7 +1847,8 @@ CPLErr ECWDataset::RunDeferredAdviseRead()
     papCurLineBuf = (void **)CPLMalloc(sizeof(void *) * nWinBandCount);
     for (int iBand = 0; iBand < nWinBandCount; iBand++)
         papCurLineBuf[iBand] =
-            CPLMalloc(nBufXSize * (GDALGetDataTypeSize(eRasterDataType) / 8));
+            CPLMalloc(static_cast<size_t>(nBufXSize) *
+                      GDALGetDataTypeSizeBytes(eRasterDataType));
 
     CPLFree(panBandList);
 
@@ -1877,7 +1878,7 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
     /*      Provide default buffer organization.                            */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(eDT) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(eDT);
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
     if (nBandSpace == 0)
@@ -1977,7 +1978,7 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
             }
 
             GDALCopyWords(papCurLineBuf[iWinBand], eRasterDataType,
-                          GDALGetDataTypeSize(eRasterDataType) / 8,
+                          GDALGetDataTypeSizeBytes(eRasterDataType),
                           pabyData + nBandSpace * iBand + iBufLine * nLineSpace,
                           eDT, (int)nPixelSpace, nBufXSize);
         }
@@ -2070,7 +2071,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (bUseOldBandRasterIOImplementation)
         /* Sanity check. Should not happen */
         return CE_Failure;
-    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(eRasterDataType);
 
     if (nPixelSpace == 0)
     {
@@ -2091,7 +2092,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if ((nBufXSize > nXSize || nBufYSize > nYSize) &&
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
     {
-        int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
+        const int nBufDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         GByte *pabyTemp = (GByte *)VSI_MALLOC3_VERBOSE(
             nXSize, nYSize, nBufDataTypeSize * nBandCount);
         if (pabyTemp == nullptr)
@@ -2194,16 +2195,16 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             sCachedMultiBandIO.pabyData != nullptr)
         {
             int j;
-            int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
             for (j = 0; j < nBufYSize; j++)
             {
-                GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                  (*panBandMap - 1) * nBufXSize * nBufYSize *
-                                      nBufTypeSize +
-                                  j * nBufXSize * nBufTypeSize,
-                              eBufType, nBufTypeSize,
-                              ((GByte *)pData) + j * nLineSpace, eBufType,
-                              (int)nPixelSpace, nBufXSize);
+                GDALCopyWords(
+                    sCachedMultiBandIO.pabyData +
+                        static_cast<size_t>(*panBandMap - 1) * nBufXSize *
+                            nBufYSize * nBufTypeSize +
+                        static_cast<size_t>(j) * nBufXSize * nBufTypeSize,
+                    eBufType, nBufTypeSize, ((GByte *)pData) + j * nLineSpace,
+                    eBufType, (int)nPixelSpace, nBufXSize);
             }
             return CE_None;
         }
@@ -2318,13 +2319,14 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         sCachedMultiBandIO.eBufType = eBufType;
         sCachedMultiBandIO.nBandsTried = 1;
 
-        int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+        const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
 
         if (sCachedMultiBandIO.bEnabled)
         {
-            GByte *pNew = (GByte *)VSIRealloc(sCachedMultiBandIO.pabyData,
-                                              nBufXSize * nBufYSize * nBands *
-                                                  nBufTypeSize);
+            GByte *pNew =
+                (GByte *)VSIRealloc(sCachedMultiBandIO.pabyData,
+                                    static_cast<size_t>(nBufXSize) * nBufYSize *
+                                        nBands * nBufTypeSize);
             if (pNew == nullptr)
                 CPLFree(sCachedMultiBandIO.pabyData);
             sCachedMultiBandIO.pabyData = pNew;
@@ -2366,7 +2368,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             for (j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(
-                    sCachedMultiBandIO.pabyData + j * nBufXSize * nBufTypeSize,
+                    sCachedMultiBandIO.pabyData +
+                        static_cast<size_t>(j) * nBufXSize * nBufTypeSize,
                     eBufType, nBufTypeSize, ((GByte *)pData) + j * nLineSpace,
                     eBufType, (int)nPixelSpace, nBufXSize);
             }
@@ -2468,12 +2471,12 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
     /* -------------------------------------------------------------------- */
     /*      Setup working scanline, and the pointers into it.               */
     /* -------------------------------------------------------------------- */
-    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    const int nDataTypeSizeBytes = GDALGetDataTypeSizeBytes(eRasterDataType);
     bool bDirect =
-        (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace &&
+        (eBufType == eRasterDataType) && nDataTypeSizeBytes == nPixelSpace &&
         nLineSpace == (nPixelSpace * nBufXSize) &&
         nBandSpace ==
-            (static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize);
+            (static_cast<GSpacing>(nDataTypeSizeBytes) * nBufXSize * nBufYSize);
     if (bDirect)
     {
         return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,
@@ -2483,12 +2486,13 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
     CPLDebug("ECW", "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.",
              nBufXSize, nBufYSize);
     CPLErr eErr = CE_None;
-    GByte *pabyBILScanline =
-        (GByte *)CPLMalloc(nBufXSize * nDataTypeSize * nBandCount);
+    GByte *pabyBILScanline = (GByte *)CPLMalloc(
+        static_cast<size_t>(nBufXSize) * nDataTypeSizeBytes * nBandCount);
     GByte **papabyBIL = (GByte **)CPLMalloc(nBandCount * sizeof(void *));
 
     for (i = 0; i < nBandCount; i++)
-        papabyBIL[i] = pabyBILScanline + i * nBufXSize * nDataTypeSize;
+        papabyBIL[i] = pabyBILScanline +
+                       static_cast<size_t>(i) * nBufXSize * nDataTypeSizeBytes;
 
     /* -------------------------------------------------------------------- */
     /*      Read back all the data for the requested view.                  */
@@ -2517,8 +2521,9 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
                 }
             }
 
-            GDALCopyWords(pabyBILScanline + i * nDataTypeSize * nBufXSize,
-                          eRasterDataType, nDataTypeSize,
+            GDALCopyWords(pabyBILScanline + static_cast<size_t>(i) *
+                                                nDataTypeSizeBytes * nBufXSize,
+                          eRasterDataType, nDataTypeSizeBytes,
                           ((GByte *)pData) + nLineSpace * iScanline +
                               nBandSpace * i,
                           eBufType, (int)nPixelSpace, nBufXSize);

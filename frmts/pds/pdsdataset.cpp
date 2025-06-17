@@ -1194,7 +1194,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     /* -------------------------------------------------------------------- */
     /*      Compute the line offset.                                        */
     /* -------------------------------------------------------------------- */
-    const int nItemSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
 
     // Needed for N1349177584_2.LBL from
     // https://trac.osgeo.org/gdal/attachment/ticket/3355/PDS-TestFiles.zip

@@ -447,7 +447,7 @@ void RawRasterBand::DoByteSwap(void *pBuffer, size_t nValues, int nByteSkip,
     {
         if (GDALDataTypeIsComplex(eDataType))
         {
-            const int nWordSize = GDALGetDataTypeSize(eDataType) / 16;
+            const int nWordSize = GDALGetDataTypeSizeBytes(eDataType) / 2;
             GDALSwapWordsEx(pBuffer, nWordSize, nValues, nByteSkip);
             GDALSwapWordsEx(static_cast<GByte *>(pBuffer) + nWordSize,
                             nWordSize, nValues, nByteSkip);
@@ -1314,7 +1314,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     if (GDALDataTypeIsComplex(eDataType))
                     {
                         const int nWordSize =
-                            GDALGetDataTypeSize(eDataType) / 16;
+                            GDALGetDataTypeSizeBytes(eDataType) / 2;
                         GDALSwapWords(pabyData, nWordSize, nXSize,
                                       nPixelOffset);
                         GDALSwapWords(static_cast<GByte *>(pabyData) +
@@ -1359,7 +1359,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     if (GDALDataTypeIsComplex(eDataType))
                     {
                         const int nWordSize =
-                            GDALGetDataTypeSize(eDataType) / 16;
+                            GDALGetDataTypeSizeBytes(eDataType) / 2;
                         GDALSwapWords(pabyData, nWordSize, nXSize,
                                       nPixelOffset);
                         GDALSwapWords(static_cast<GByte *>(pabyData) +

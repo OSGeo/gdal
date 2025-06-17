@@ -152,25 +152,25 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
 static void swab_buff(buf_mgr &src, const ILImage &img)
 {
     size_t i;
-    switch (GDALGetDataTypeSize(img.dt))
+    switch (GDALGetDataTypeSizeBytes(img.dt))
     {
-        case 16:
+        case 2:
         {
-            short int *b = reinterpret_cast<short int *>(src.buffer);
+            uint16_t *b = reinterpret_cast<uint16_t *>(src.buffer);
             for (i = src.size / 2; i; b++, i--)
                 *b = swab16(*b);
             break;
         }
-        case 32:
+        case 4:
         {
-            int *b = reinterpret_cast<int *>(src.buffer);
+            uint32_t *b = reinterpret_cast<uint32_t *>(src.buffer);
             for (i = src.size / 4; i; b++, i--)
                 *b = swab32(*b);
             break;
         }
-        case 64:
+        case 8:
         {
-            long long *b = reinterpret_cast<long long *>(src.buffer);
+            uint64_t *b = reinterpret_cast<uint64_t *>(src.buffer);
             for (i = src.size / 8; i; b++, i--)
                 *b = swab64(*b);
             break;
@@ -683,7 +683,7 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer)
 
         // Page is already in poMRFDS->pbuffer, not empty
         // There are only four cases, since only the data size matters
-        switch (GDALGetDataTypeSize(eDataType) / 8)
+        switch (GDALGetDataTypeSizeBytes(eDataType))
         {
             case 1:
                 CpySI(GByte);
@@ -1382,7 +1382,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                       blockSizeBytes() / sizeof(T), cstride)
 
         // Build the page in tbuffer
-        switch (GDALGetDataTypeSize(eDataType) / 8)
+        switch (GDALGetDataTypeSizeBytes(eDataType))
         {
             case 1:
                 CpySO(GByte);
@@ -1401,7 +1401,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "MRF: Write datatype of %d bytes "
                          "not implemented",
-                         GDALGetDataTypeSize(eDataType) / 8);
+                         GDALGetDataTypeSizeBytes(eDataType));
                 if (poBlock != nullptr)
                 {
                     poBlock->MarkClean();

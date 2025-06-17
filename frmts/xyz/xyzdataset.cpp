@@ -304,7 +304,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         if (!bSuccess)
             dfNoDataValue = 0.0;
         GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, pImage, eDataType,
-                      GDALGetDataTypeSize(eDataType) / 8, nRasterXSize);
+                      GDALGetDataTypeSizeBytes(eDataType), nRasterXSize);
     }
 
     // Only valid if bSameNumberOfValuesPerLine.

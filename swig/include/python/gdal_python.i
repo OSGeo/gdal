@@ -459,7 +459,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
     size_t buf_size = static_cast<size_t>(
         ComputeBandRasterIOSize( nxsize, nysize,
-                                 GDALGetDataTypeSize( ntype ) / 8,
+                                 GDALGetDataTypeSizeBytes( ntype ),
                                  pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
@@ -522,7 +522,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
     GDALDataType ntype = GDALGetRasterDataType(self);
-    int nDataTypeSize = (GDALGetDataTypeSize(ntype) / 8);
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(ntype);
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
 
@@ -1036,7 +1036,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
+    int ntypesize = GDALGetDataTypeSizeBytes( ntype );
     size_t buf_size = static_cast<size_t>(
         ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
                                     band_list ? band_list :
@@ -1503,7 +1503,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         if buf_obj is None:
             from sys import version_info
-            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
+            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * _gdal.GetDataTypeSizeBytes(buf_type))
             if version_info >= (3, 0, 0):
                 buf_obj_ar = [None]
                 exec("buf_obj_ar[0] = b' ' * nRequiredSize")
