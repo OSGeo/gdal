@@ -254,7 +254,7 @@ def test_gdalalg_pipeline_help_doc(gdal_path):
 
     assert "Usage: gdal pipeline [OPTIONS] <PIPELINE>" in out
     assert (
-        "<PIPELINE> is of the form: read|concat|mosaic|stack [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        "<PIPELINE> is of the form: read|calc|concat|mosaic|stack [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
         in out
     )
 
@@ -381,3 +381,17 @@ def test_gdalalg_pipeline_contour():
         pipeline="read ! contour --interval 10 ! write",
     ) as alg:
         assert alg.Output().GetLayer(0).GetFeatureCount() == 218
+
+
+def test_gdalalg_pipeline_calc():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("muparser not available")
+
+    with gdal.Run(
+        "pipeline",
+        output_format="MEM",
+        output="",
+        pipeline="calc ../gcore/data/byte.tif --calc 255-X ! write",
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4563

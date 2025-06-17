@@ -35,6 +35,8 @@ spatial resolution. The spatial extent check can be disabled with :option:`--no-
 in which case the inputs must have the same dimensions. The spatial reference system check can be
 disabled with :option:`--no-check-srs`.
 
+Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
+
 The following options are available:
 
 .. include:: gdal_options/of_raster_create_copy.rst

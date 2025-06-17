@@ -493,12 +493,13 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
     return true;
 }
 
-static bool ReadFileLists(std::vector<std::string> &inputs)
+static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
+                          std::vector<std::string> &inputFilenames)
 {
-    for (std::size_t i = 0; i < inputs.size(); i++)
+    for (const auto &dsVal : inputDS)
     {
-        const auto &input = inputs[i];
-        if (input[0] == '@')
+        const auto &input = dsVal.GetName();
+        if (!input.empty() && input[0] == '@')
         {
             auto f =
                 VSIVirtualHandleUniquePtr(VSIFOpenL(input.c_str() + 1, "r"));
@@ -508,13 +509,14 @@ static bool ReadFileLists(std::vector<std::string> &inputs)
                          input.c_str() + 1);
                 return false;
             }
-            std::vector<std::string> sources;
             while (const char *filename = CPLReadLineL(f.get()))
             {
-                sources.push_back(filename);
+                inputFilenames.push_back(filename);
             }
-            inputs.erase(inputs.begin() + static_cast<int>(i));
-            inputs.insert(inputs.end(), sources.begin(), sources.end());
+        }
+        else
+        {
+            inputFilenames.push_back(input);
         }
     }
 
@@ -636,25 +638,22 @@ GDALCalcCreateVRTDerived(const std::vector<std::string> &inputs,
 /*          GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm()          */
 /************************************************************************/
 
-GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetAddDefaultArguments(false)
+                                          .SetAutoOpenInputDatasets(false)
+                                          .SetInputDatasetMetaVar("INPUTS")
+                                          .SetInputDatasetMaxCount(INT_MAX))
 {
-    m_supportsStreamedOutput = true;
+    AddRasterInputArgs(false, false);
+    if (standaloneStep)
+    {
+        AddProgressArg();
+        AddRasterOutputArgs(false);
+    }
 
-    AddProgressArg();
-
-    AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input raster datasets"), &m_inputs)
-        .SetPositional()
-        .SetRequired()
-        .SetMinCount(1)
-        .SetAutoOpenDataset(false)
-        .SetMetaVar("INPUTS");
-
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
-                       /* bGDALGAllowed = */ true);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
     AddOutputDataTypeArg(&m_type);
 
     AddArg("no-check-srs", 0,
@@ -679,17 +678,29 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm() noexcept
     AddValidationAction(
         [this]()
         {
-            return m_noCheckExpression || !IsGDALGOutput() ||
-                   RunImpl(nullptr, nullptr);
+            GDALPipelineStepRunContext ctxt;
+            return m_noCheckExpression || !IsGDALGOutput() || RunStep(ctxt);
         });
 }
 
 /************************************************************************/
-/*                GDALRasterCalcAlgorithm::RunImpl()                    */
+/*                  GDALRasterCalcAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                       void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*                GDALRasterCalcAlgorithm::RunStep()                    */
+/************************************************************************/
+
+bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -701,14 +712,15 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         options.dstType = GDALGetDataTypeByName(m_type.c_str());
     }
 
-    if (!ReadFileLists(m_inputs))
+    std::vector<std::string> inputFilenames;
+    if (!ReadFileLists(m_inputDataset, inputFilenames))
     {
         return false;
     }
 
     int maxSourceBands = 0;
-    auto vrt =
-        GDALCalcCreateVRTDerived(m_inputs, m_expr, options, maxSourceBands);
+    auto vrt = GDALCalcCreateVRTDerived(inputFilenames, m_expr, options,
+                                        maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -726,7 +738,7 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             m_format == "GDALG" ||
             (m_format.empty() &&
              cpl::ends_with(m_outputDataset.GetName(), ".gdalg.json"));
-        if (m_format == "stream" || bIsVRT || bIsGDALG)
+        if (!m_standaloneStep || m_format == "stream" || bIsVRT || bIsGDALG)
         {
             // Try reading a single pixel to check formulas are valid.
             std::vector<GByte> dummyData(vrt->GetRasterCount());
@@ -745,8 +757,9 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
             if (!osTmpFilename.empty())
             {
-                auto fakeVRT = GDALCalcCreateVRTDerived(
-                    m_inputs, m_expr, options, maxSourceBands, osTmpFilename);
+                auto fakeVRT =
+                    GDALCalcCreateVRTDerived(inputFilenames, m_expr, options,
+                                             maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,
                                       1, GDT_Byte, vrt->GetRasterCount(),
@@ -762,7 +775,7 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    if (m_format == "stream")
+    if (m_format == "stream" || !m_standaloneStep)
     {
         m_outputDataset.Set(std::move(vrt));
         return true;
@@ -782,8 +795,8 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     GDALTranslateOptions *translateOptions =
         GDALTranslateOptionsNew(translateArgs.List(), nullptr);
-    GDALTranslateOptionsSetProgress(translateOptions, pfnProgress,
-                                    pProgressData);
+    GDALTranslateOptionsSetProgress(translateOptions, ctxt.m_pfnProgress,
+                                    ctxt.m_pProgressData);
 
     auto poOutDS =
         std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALTranslate(
@@ -796,5 +809,8 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     return bOK;
 }
+
+GDALRasterCalcAlgorithmStandalone::~GDALRasterCalcAlgorithmStandalone() =
+    default;
 
 //! @endcond

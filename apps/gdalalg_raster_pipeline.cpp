@@ -12,6 +12,7 @@
 
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
+#include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
@@ -155,6 +156,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
     { return std::make_unique<GDALRasterReadAlgorithm>(); };
     registry.Register(algInfo);
+
+    registry.Register<GDALRasterCalcAlgorithm>();
 
     algInfo.m_name = addSuffixIfNeeded(GDALRasterWriteAlgorithm::NAME);
     algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>

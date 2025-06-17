@@ -720,11 +720,20 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
     }
 
     int nLastStepOutputType = GDAL_OF_VECTOR;
-    auto poSrcDS = steps.front().alg->GetInputDatasets()[0].GetDatasetRef();
-    if (poSrcDS)
+    if (steps.front().alg->GetName() !=
+            std::string(GDALRasterReadAlgorithm::NAME) &&
+        steps.front().alg->GetOutputType() == GDAL_OF_RASTER)
     {
-        if (poSrcDS->GetRasterCount() != 0)
-            nLastStepOutputType = GDAL_OF_RASTER;
+        nLastStepOutputType = GDAL_OF_RASTER;
+    }
+    else
+    {
+        auto poSrcDS = steps.front().alg->GetInputDatasets()[0].GetDatasetRef();
+        if (poSrcDS)
+        {
+            if (poSrcDS->GetRasterCount() != 0)
+                nLastStepOutputType = GDAL_OF_RASTER;
+        }
     }
 
     for (size_t i = 1; i < steps.size(); ++i)
@@ -818,9 +827,9 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     if (shortUsage)
         return ret;
 
-    ret +=
-        "\n<PIPELINE> is of the form: read|concat|mosaic|stack [READ-OPTIONS] "
-        "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
+    ret += "\n<PIPELINE> is of the form: read|calc|concat|mosaic|stack "
+           "[READ-OPTIONS] "
+           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
     {

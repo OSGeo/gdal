@@ -686,3 +686,18 @@ def test_gdalalg_raster_pipeline_help():
         f"{gdal_path} raster pipeline read foo.tif ! select --help"
     )
     assert out.startswith("Usage: select [OPTIONS] <BAND>")
+
+
+def test_gdalalg_raster_pipeline_calc():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("muparser not available")
+
+    with gdal.Run(
+        "raster",
+        "pipeline",
+        output_format="MEM",
+        output="",
+        pipeline="calc ../gcore/data/byte.tif --calc 255-X ! write",
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4563
