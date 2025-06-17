@@ -569,7 +569,7 @@ public:
 #ifdef SWIGCSHARP
   OSRSpatialReferenceShadow** FindMatches(char** options, int* nvalues, int** confidence_values)
   {
-       return OSRFindMatches(self, options, nvalues, confidence_values);
+       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
   }
 #endif
 
