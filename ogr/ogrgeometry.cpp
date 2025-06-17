@@ -2480,7 +2480,8 @@ int OGR_G_IsSimple(OGRGeometryH hGeom)
  * FALSE.
  *
  *
- * @return TRUE if the geometry has no points, otherwise FALSE.
+ * @return TRUE if the coordinates of the geometry form a ring, by checking
+ * length and closure (self-intersection is not checked), otherwise FALSE.
  */
 
 OGRBoolean OGRGeometry::IsRing() const
@@ -2525,7 +2526,8 @@ OGRBoolean OGRGeometry::IsRing() const
  *
  * @param hGeom The Geometry to test.
  *
- * @return TRUE if the geometry has no points, otherwise FALSE.
+ * @return TRUE if the coordinates of the geometry form a ring, by checking
+ * length and closure (self-intersection is not checked), otherwise FALSE.
  */
 
 int OGR_G_IsRing(OGRGeometryH hGeom)
