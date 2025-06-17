@@ -3672,7 +3672,8 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
                 return true;
 
-            if (EQUAL(val.c_str(), "GDALG") && arg.IsOutput())
+            if (EQUAL(val.c_str(), "GDALG") &&
+                arg.GetName() == GDAL_ARG_NAME_OUTPUT_FORMAT)
             {
                 if (bGDALGAllowed)
                 {
