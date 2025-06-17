@@ -2744,6 +2744,10 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
 
 static const char pszExprPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
     "   <Argument name='expression' "
     "             description='Expression to be evaluated' "
     "             type='string'></Argument>"
@@ -2773,6 +2777,14 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                  "expression cannot by applied to complex data types");
         return CE_Failure;
     }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
 
     std::unique_ptr<gdal::MathExpression> poExpression;
 
@@ -2885,11 +2897,25 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
+            bool resultIsNoData = false;
+
             for (int iSrc = 0; iSrc < nSources; iSrc++)
             {
                 // cppcheck-suppress unreadVariable
-                adfValuesForPixel[iSrc] =
-                    GetSrcVal(papoSources[iSrc], eSrcType, ii);
+                double dfVal = GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                if (bHasNoData && IsNoData(dfVal, dfNoData))
+                {
+                    if (bPropagateNoData)
+                    {
+                        resultIsNoData = true;
+                        break;
+                    }
+
+                    dfVal = std::numeric_limits<double>::quiet_NaN();
+                }
+
+                adfValuesForPixel[iSrc] = dfVal;
             }
 
             if (includeCenterCoords)
@@ -2901,12 +2927,17 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                                       &dfCenterX, &dfCenterY);
             }
 
-            if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+            if (resultIsNoData)
             {
-                return CE_Failure;
+                padfResults.get()[iCol] = dfNoData;
             }
             else
             {
+                if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+                {
+                    return CE_Failure;
+                }
+
                 padfResults.get()[iCol] = poExpression->Results()[0];
             }
         }
