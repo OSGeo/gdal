@@ -448,7 +448,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 CPLString inBandVariable;
                 if (dialect == "builtin")
                 {
-                    if (!flatten && nInBand != nOutBand)
+                    if (!flatten && props.nBands >= 2 && nInBand != nOutBand)
                         continue;
                 }
                 else

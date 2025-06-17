@@ -710,3 +710,45 @@ def test_gdalalg_raster_calc_complete():
         f"{gdal_path} completion gdal raster calc --dialect=builtin --calc"
     )
     assert "mean" in out
+
+
+def test_gdalalg_raster_calc_sum_builtin_one_band_two_bands(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input_1, 1, 1, 1) as ds:
+        ds.GetRasterBand(1).Fill(1)
+    with gdal.GetDriverByName("GTIff").Create(input_2, 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "sum"
+    calc["dialect"] = "builtin"
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.RasterCount == 2
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (1 + 10, 1 + 10)
+    assert out_ds.GetRasterBand(2).ComputeRasterMinMax(False) == (1 + 100, 1 + 100)
+
+
+def test_gdalalg_raster_calc_sum_builtin_two_bands_three_bands_fail(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    gdal.GetDriverByName("GTiff").Create(input_1, 1, 1, 2)
+    gdal.GetDriverByName("GTIff").Create(input_2, 1, 1, 3)
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "sum"
+    calc["dialect"] = "builtin"
+    with pytest.raises(
+        Exception,
+        match=r"Expression cannot operate on all bands of rasters with incompatible numbers of bands \(source B has 3 bands but expected to have 1 or 2 bands\)",
+    ):
+        calc.Run()
