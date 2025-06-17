@@ -43,9 +43,11 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
     std::string m_dialect{"muparser"};
     bool m_flatten{false};
     std::string m_type{};
-    bool m_NoCheckSRS{false};
-    bool m_NoCheckExtent{false};
+    std::string m_nodata{};
+    bool m_noCheckSRS{false};
+    bool m_noCheckExtent{false};
     bool m_noCheckExpression{false};
+    bool m_propagateNoData{false};
 };
 
 /************************************************************************/
