@@ -631,6 +631,8 @@ OPTIONAL_POD(int, int);
         if (nvalues > 0) {
 	        for(int cx = 0; cx < nvalues; cx++) {
                 objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+                /* SpatialReference will take ownership of the unmanaged memory and will call OSRRelease() when the object is disposed.
+                   Therefore, OSRFreeSRSArray() is not called; only CPLFree() is used to release the array itself. */
                 ret[cx]= (objPtr == IntPtr.Zero) ? null : new SpatialReference(objPtr, true, null);
                 if (confValPtr != IntPtr.Zero) {
                     confidence_values[cx] = System.Runtime.InteropServices.Marshal.ReadInt32(confValPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(Int32)));
