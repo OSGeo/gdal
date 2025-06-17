@@ -52,7 +52,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     assert calc.Run()
 
     with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
-        srcval = src.ReadAsArray().astype("float64")
+        srcval = src.ReadAsMaskedArray().astype("float64")
         expected = np.apply_along_axis(lambda x: 2 + x / (1 + x.sum()), 0, srcval)
 
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
@@ -82,6 +82,50 @@ def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
         assert src.GetGeoTransform() == dst.GetGeoTransform()
         assert src.GetSpatialRef().IsSame(dst.GetSpatialRef())
+
+
+@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+@pytest.mark.parametrize("propagateNoData", (True, False))
+def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_1, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.WriteArray(np.array([[1, 2], [-9, 4]]))
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_2, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.WriteArray(np.array([[1, -999], [3, 4]]))
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["calc"] = "A+B" if dialect == "muparser" else "sum"
+    calc["dialect"] = dialect
+    calc["nodata"] = 255
+    calc["output-format"] = "stream"
+
+    if propagateNoData:
+        calc["propagate-nodata"] = True
+
+    assert calc.Run()
+    assert calc["output"].GetDataset().RasterCount == 1
+
+    result = calc["output"].GetDataset().ReadAsArray()
+
+    if propagateNoData:
+        np.testing.assert_array_equal(result, [[2, 255], [255, 8]])
+    elif dialect == "builtin":
+        np.testing.assert_array_equal(result, [[2, 2], [3, 8]])
+    else:
+        np.testing.assert_array_equal(result, [[2, float("nan")], [float("nan"), 8]])
 
 
 def test_gdalalg_raster_calc_creation_options(calc, tmp_vsimem):

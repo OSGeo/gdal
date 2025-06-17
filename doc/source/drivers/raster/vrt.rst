@@ -1217,11 +1217,24 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - ``expression``
 
        ``dialect`` (optional)
+
+       ``propagateNoData`` (GDAL >= 3.12, optional, default=false)
+
      - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
        or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
 
        The expression is specified using the "expression" argument.
        The dialect may be specified using the "dialect" argument.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be converted to NaN before
+
+       evaluating the expression. The expression can then use the ``isnan``
+       
+       function to test for these pixels and handle them accordingly.
 
        Within the expression, band values can be accessed:
 
