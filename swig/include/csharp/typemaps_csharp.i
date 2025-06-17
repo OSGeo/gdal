@@ -556,6 +556,14 @@ OPTIONAL_POD(int, int);
     }
 %}
 
+%csmethodmodifiers CPLMemDestroy "internal";
+%inline %{
+    void CPLMemDestroy(void *buffer_ptr) {
+       if (buffer_ptr)
+           CPLFree(buffer_ptr);
+    }
+%}
+
 /******************************************************************************
  * ErrorHandler callback support                                              *
  *****************************************************************************/
@@ -598,3 +606,46 @@ OPTIONAL_POD(int, int);
  * GDALGetLayerByName typemaps                                                *
  *****************************************************************************/
 %apply ( const char *utf8_path ) { const char* layer_name };
+
+/******************************************************************************
+ * SpatialReference.FindMatches                                               *
+ *****************************************************************************/
+%apply (int *hasval) {int *nvalues};
+%typemap(imtype, out="IntPtr") OSRSpatialReferenceShadow** FindMatches "SpatialReference[]"
+%typemap(cstype) OSRSpatialReferenceShadow** FindMatches %{SpatialReference[]%}
+%typemap(imtype) int** confidence_values "out IntPtr"
+%typemap(cstype) int** confidence_values %{out int[]%}
+%typemap(csin) int** confidence_values "out confValPtr"
+%typemap(in) (int** confidence_values)
+{
+  /* %typemap(in) (int** confidence_values) */
+  $1 = ($1_ltype)$input;
+}
+%typemap(csout, excode=SWIGEXCODE) OSRSpatialReferenceShadow** FindMatches {
+        /* %typemap(csout) char** FindMatches */
+        IntPtr confValPtr;
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
+        SpatialReference[] ret = new SpatialReference[nvalues];
+        confidence_values = (confValPtr == IntPtr.Zero) ? null : new int[nvalues];
+        if (nvalues > 0) {
+	        for(int cx = 0; cx < nvalues; cx++) {
+                objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+                /* SpatialReference will take ownership of the unmanaged memory and will call OSRRelease() when the object is disposed.
+                   Therefore, OSRFreeSRSArray() is not called; only CPLFree() is used to release the array itself. */
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : new SpatialReference(objPtr, true, null);
+                if (confValPtr != IntPtr.Zero) {
+                    confidence_values[cx] = System.Runtime.InteropServices.Marshal.ReadInt32(confValPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(Int32)));
+                }
+                
+            }
+        }
+        if (cPtr != IntPtr.Zero) {
+            $modulePINVOKE.CPLMemDestroy(cPtr);
+        }
+        if (confValPtr != IntPtr.Zero) {
+            $modulePINVOKE.CPLMemDestroy(confValPtr);
+        }
+        $excode
+        return ret;
+}
