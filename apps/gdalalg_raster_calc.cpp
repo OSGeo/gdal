@@ -321,6 +321,7 @@ static bool IsSumAllSources(const std::string &expression,
  *  of a single expression
  *
  * @param root VRTDataset node to which the band nodes should be added
+ * @param bandType the type of the band(s) to create
  * @param nXOut Number of columns in VRT dataset
  * @param nYOut Number of rows in VRT dataset
  * @param expression Expression for which band(s) should be added
@@ -362,31 +363,6 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
         if (bandType != GDT_Unknown)
         {
             pszDataType = GDALGetDataTypeName(bandType);
-        }
-        else if (dialect == "builtin" &&
-                 (expression == "min" || expression == "max" ||
-                  expression == "mean"))
-        {
-            GDALDataType eDT = GDT_Unknown;
-            bool firstSource = true;
-            for (const auto &[source_name, dsn] : sources)
-            {
-                auto it = sourceProps.find(source_name);
-                CPLAssert(it != sourceProps.end());
-                const auto &props = it->second;
-                if (firstSource)
-                {
-                    eDT = props.eDT;
-                    firstSource = false;
-                }
-                else if (props.eDT == GDT_Unknown || props.eDT != eDT)
-                {
-                    eDT = GDT_Unknown;
-                    break;
-                }
-            }
-            if (eDT != GDT_Unknown)
-                pszDataType = GDALGetDataTypeName(eDT);
         }
         CPLAddXMLAttributeAndValue(band, "dataType",
                                    pszDataType ? pszDataType : "Float64");
@@ -756,7 +732,30 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
     size_t iExpr = 0;
     for (const auto &origExpression : expressions)
     {
-        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, options.dstType,
+        GDALDataType bandType = options.dstType;
+
+        // If output band type has not been specified, set it equal to the
+        // input band type for certain pixel functions, if the inputs have
+        // a consistent band type.
+        if (bandType == GDT_Unknown && dialect == "builtin" &&
+            (origExpression == "min" || origExpression == "max" ||
+             origExpression == "mode"))
+        {
+            for (const auto &[_, props] : sourceProps)
+            {
+                if (bandType == GDT_Unknown)
+                {
+                    bandType = props.eDT;
+                }
+                else if (props.eDT == GDT_Unknown || props.eDT != bandType)
+                {
+                    bandType = GDT_Unknown;
+                    break;
+                }
+            }
+        }
+
+        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, bandType,
                                   origExpression, dialect, flatten,
                                   pixelFunctionArguments[iExpr], sources,
                                   sourceProps, fakeSourceFilename))

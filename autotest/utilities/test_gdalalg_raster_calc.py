@@ -646,19 +646,26 @@ def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem):
     )
 
 
-def test_gdalalg_raster_calc_dialect_builtin(calc):
+@pytest.mark.parametrize("expression", ("min", "max", "mode", "mean", "median"))
+def test_gdalalg_raster_calc_dialect_builtin(calc, expression):
 
     calc["input"] = "../gcore/data/rgbsmall.tif"
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["calc"] = "mean"
+    calc["calc"] = expression
     calc["dialect"] = "builtin"
     calc["flatten"] = True
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert ds.GetRasterBand(1).Checksum() == 21559
+
+    if expression in ("min", "max", "mode"):
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    else:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+
+    if expression == "mean":
+        assert ds.GetRasterBand(1).Checksum() == 21559
 
 
 def test_gdalalg_raster_calc_pixel_function_arg(calc):
@@ -693,7 +700,7 @@ def test_gdalalg_raster_calc_builtin_with_multiple_inputs(calc, tmp_vsimem):
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 2
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (15, 15)
     assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (150, 150)
 
