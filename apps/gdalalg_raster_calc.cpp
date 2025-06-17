@@ -324,39 +324,6 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
     return source;
 }
 
-static bool IsSumAllSources(const std::string &expression,
-                            const std::map<std::string, std::string> &sources)
-{
-    bool ok = false;
-    std::string modExpression;
-    const char *pszSep = "+ ";
-    if (cpl::starts_with(expression, "sum(") && expression.back() == ')')
-    {
-        modExpression = expression.substr(4, expression.size() - 5);
-        pszSep = ", ";
-    }
-    else
-    {
-        modExpression = expression;
-    }
-    const CPLStringList aosTokens(
-        CSLTokenizeString2(modExpression.c_str(), pszSep, 0));
-    if (static_cast<size_t>(aosTokens.size()) == sources.size())
-    {
-        std::set<std::string> foundSources;
-        for (int i = 0; i < aosTokens.size(); ++i)
-        {
-            if (cpl::contains(sources, aosTokens[i]) &&
-                !cpl::contains(foundSources, aosTokens[i]))
-            {
-                foundSources.insert(aosTokens[i]);
-            }
-        }
-        ok = foundSources.size() == sources.size();
-    }
-    return ok;
-}
-
 /** Create XML nodes for one or more derived bands resulting from the evaluation
  *  of a single expression
  *
@@ -383,8 +350,6 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                      const std::map<std::string, SourceProperties> &sourceProps,
                      const std::string &fakeSourceFilename)
 {
-    const bool bIsSumAllSources = IsSumAllSources(expression, sources);
-
     int nOutBands = 1;  // By default, each expression produces a single output
                         // band. When processing the expression below, we may
                         // discover that the expression produces multiple bands,
@@ -537,10 +502,6 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                     CPLAddXMLAttributeAndValue(arguments, key, value);
                 }
             }
-        }
-        else if (bIsSumAllSources)
-        {
-            CPLCreateXMLNode(pixelFunctionType, CXT_Text, "sum");
         }
         else
         {
