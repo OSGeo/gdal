@@ -33,6 +33,8 @@ otherwise it may append to an existing one.
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
 details on the algorithm.
 
+Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
+
 The following options are available:
 
 Standard options
@@ -87,6 +89,14 @@ Advanced options
 .. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/if.rst
+
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
 Examples
 --------

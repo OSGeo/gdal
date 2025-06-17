@@ -26,6 +26,7 @@
 #include "gdalalg_vector_write.h"
 
 #include "gdalalg_raster_footprint.h"
+#include "gdalalg_raster_polygonize.h"
 #include "gdalalg_vector_grid.h"
 #include "gdalalg_vector_rasterize.h"
 
@@ -403,6 +404,7 @@ class GDALPipelineAlgorithm final
         GDALRasterPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
         GDALVectorPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
         m_stepRegistry.Register<GDALRasterFootprintAlgorithm>();
+        m_stepRegistry.Register<GDALRasterPolygonizeAlgorithm>();
         m_stepRegistry.Register<GDALVectorGridAlgorithm>();
         m_stepRegistry.Register<GDALVectorRasterizeAlgorithm>();
     }

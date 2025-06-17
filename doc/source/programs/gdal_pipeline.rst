@@ -39,6 +39,12 @@ The following steps accept raster input and generate vector output:
 
 Details for options can be found in :ref:`gdal_raster_footprint`.
 
+* polygonize
+
+.. program-output:: gdal pipeline --help-doc=polygonize
+
+Details for options can be found in :ref:`gdal_raster_polygonize`.
+
 The following steps accept raster vector and generate raster output:
 
 * grid
