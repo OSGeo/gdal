@@ -418,7 +418,6 @@ inline __m256i FIXUP_LANES(__m256i x)
 #define storeu_int(x, y)                                                       \
     _mm256_storeu_si256(reinterpret_cast<__m256i *>(x), FIXUP_LANES(y))
 #define hadd_epi16 _mm256_hadd_epi16
-#define zeroupper() _mm256_zeroupper()
 #else
 #define DEST_ELTS 8
 #define set1_epi16 _mm_set1_epi16
@@ -446,32 +445,16 @@ inline __m256i FIXUP_LANES(__m256i x)
 #define store_lo(x, y) _mm_storel_epi64(reinterpret_cast<__m128i *>(x), (y))
 #define storeu_int(x, y) _mm_storeu_si128(reinterpret_cast<__m128i *>(x), (y))
 #define hadd_epi16 sse2_hadd_epi16
-#define zeroupper() (void)0
-#endif
-
-#if defined(__GNUC__) && defined(__AVX2__)
-// Disabling inlining works around a bug with gcc 9.3 (Ubuntu 20.04) in
-// -O2 -mavx2 mode in QuadraticMeanFloatSSE2(),
-// where the registry that contains minus_zero is correctly
-// loaded the first time the function is called (looking at the disassembly,
-// one sees it is loaded much earlier than the function), but gets corrupted
-// (zeroed) in following iterations.
-// It appears the bug is due to the explicit zeroupper() call at the end of
-// the function.
-// The bug is at least solved in gcc 10.2.
-// Inlining doesn't bring much here to performance.
-// This is also needed with gcc 9.3 on QuadraticMeanByteSSE2OrAVX2() in
-// -O3 -mavx2 mode
-#define NOINLINE __attribute__((noinline))
-#else
-#define NOINLINE
 #endif
 
 template <class T>
-static int NOINLINE
-QuadraticMeanByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
-                            const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                            T *CPL_RESTRICT pDstScanline)
+static int
+#if defined(__GNUC__)
+    __attribute__((noinline))
+#endif
+    QuadraticMeanByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
+                                const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                T *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on Byte by
     // processing by group of 8 output pixels, so as to use
@@ -546,7 +529,6 @@ QuadraticMeanByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
         store_lo(&pDstScanline[iDstPixel], rms);
         pSrcScanlineShifted += 2 * DEST_ELTS;
     }
-    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
@@ -629,7 +611,6 @@ AverageByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
         const auto average = packus_epi16(average0, average1);
         storeu_int(&pDstScanline[iDstPixel], average);
     }
-    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
@@ -878,8 +859,6 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
         pSrcScanlineShifted += 8;
     }
 
-    zeroupper();
-
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
 }
@@ -1030,10 +1009,13 @@ inline __m128 FIXUP_LANES(__m128 x)
 
 #endif
 
-static int NOINLINE
-QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
-                       const float *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                       float *CPL_RESTRICT pDstScanline)
+static int
+#if defined(__GNUC__)
+    __attribute__((noinline))
+#endif
+    QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
+                           const float *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                           float *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on Float32 by
     // processing by group of RMS_FLOAT_ELTS output pixels.
@@ -1108,8 +1090,6 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
         storeu_ps(&pDstScanline[iDstPixel], rms);
         pSrcScanlineShifted += RMS_FLOAT_ELTS * 2;
     }
-
-    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
