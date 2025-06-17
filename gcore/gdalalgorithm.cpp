@@ -1493,7 +1493,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                 for (int i = 0; i < nCount; ++i)
                 {
                     const auto *entry = (pCRSList.get())[i];
-                    if (IsCRSCompatible(entry))
+                    if (!entry->bDeprecated && IsCRSCompatible(entry))
                     {
                         if (aosTokens.size() == 1 ||
                             STARTS_WITH(entry->pszCode, aosTokens[1]))
