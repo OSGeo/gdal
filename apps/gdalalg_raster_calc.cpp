@@ -551,18 +551,18 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
 static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
                                    std::map<std::string, std::string> &datasets,
-                                   std::string &firstSourceName)
+                                   std::string &firstSourceName,
+                                   bool requireSourceNames)
 {
-    bool isFirst = true;
-
-    for (const auto &input : inputs)
+    for (size_t iInput = 0; iInput < inputs.size(); iInput++)
     {
+        const std::string &input = inputs[iInput];
         std::string name;
 
         const auto pos = input.find('=');
         if (pos == std::string::npos)
         {
-            if (inputs.size() > 1)
+            if (requireSourceNames && inputs.size() > 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Inputs must be named when more than one input is "
@@ -570,6 +570,10 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
                 return false;
             }
             name = "X";
+            if (iInput > 0)
+            {
+                name += std::to_string(iInput);
+            }
         }
         else
         {
@@ -617,10 +621,9 @@ static bool ParseSourceDescriptors(const std::vector<std::string> &inputs,
         }
         datasets[name] = std::move(dsn);
 
-        if (isFirst)
+        if (iInput == 0)
         {
             firstSourceName = std::move(name);
-            isFirst = false;
         }
     }
 
@@ -695,7 +698,9 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
 
     std::map<std::string, std::string> sources;
     std::string firstSource;
-    if (!ParseSourceDescriptors(inputs, sources, firstSource))
+    bool requireSourceNames = dialect != "builtin";
+    if (!ParseSourceDescriptors(inputs, sources, firstSource,
+                                requireSourceNames))
     {
         return nullptr;
     }

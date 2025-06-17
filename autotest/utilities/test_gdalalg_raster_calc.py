@@ -193,6 +193,23 @@ def test_gdalalg_raster_calc_several_inputs_same_name(calc, tmp_vsimem):
         calc.Run()
 
 
+@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+def test_gdalalg_raster_calc_several_inputs_no_name(calc, tmp_vsimem, dialect):
+
+    calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/uint16.tif"]
+    calc["output"] = tmp_vsimem / "out.vrt"
+    calc["calc"] = "sum"
+    calc["dialect"] = dialect
+
+    try:
+        calc.Run()
+    except Exception as e:
+        assert "Inputs must be named" in str(e)
+        assert dialect == "muparser"
+    else:
+        assert dialect == "builtin"
+
+
 @pytest.mark.parametrize(
     "name,expected_error_msg",
     [
