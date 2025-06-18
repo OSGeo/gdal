@@ -12,14 +12,22 @@
 
 .. Index:: gdal raster pipeline
 
+Description
+-----------
+
+:program:`gdal raster pipeline` can be used to process a raster dataset and
+perform various processing steps that accept raster and generate raster.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
 .. program-output:: gdal raster pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read``, ``mosaic``, ``stack`` and ``write``,
+The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``calc``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -27,6 +35,12 @@ Potential steps are:
 * read
 
 .. program-output:: gdal raster pipeline --help-doc=read
+
+* calc
+
+.. program-output:: gdal raster pipeline --help-doc=calc
+
+Details for options can be found in :ref:`gdal_raster_calc`.
 
 * mosaic
 
@@ -175,12 +189,6 @@ Details for options can be found in :ref:`gdal_raster_viewshed`.
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal raster pipeline` can be used to process a raster dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

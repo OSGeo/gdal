@@ -3672,7 +3672,8 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
             if (bStreamAllowed && EQUAL(val.c_str(), "stream"))
                 return true;
 
-            if (EQUAL(val.c_str(), "GDALG") && arg.IsOutput())
+            if (EQUAL(val.c_str(), "GDALG") &&
+                arg.GetName() == GDAL_ARG_NAME_OUTPUT_FORMAT)
             {
                 if (bGDALGAllowed)
                 {
@@ -4106,7 +4107,7 @@ bool GDALAlgorithm::ValidateBandArg() const
 {
     bool ret = true;
     const auto bandArg = GetArg(GDAL_ARG_NAME_BAND);
-    const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
+    const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT, false);
     if (bandArg && bandArg->IsExplicitlySet() && inputDatasetArg &&
         (inputDatasetArg->GetType() == GAAT_DATASET ||
          inputDatasetArg->GetType() == GAAT_DATASET_LIST) &&

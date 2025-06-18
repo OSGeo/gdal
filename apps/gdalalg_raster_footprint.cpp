@@ -27,29 +27,39 @@
 /*      GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()    */
 /************************************************************************/
 
-GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
+    : GDALPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     AddProgressArg();
 
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
+    if (standaloneStep)
+    {
+        AddOpenOptionsArg(&m_openOptions);
+        AddInputFormatsArg(&m_inputFormats)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
 
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
-                       /* bGDALGAllowed = */ false)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+        AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
+                           /* bGDALGAllowed = */ false)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                             {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+        AddCreationOptionsArg(&m_creationOptions);
+        AddLayerCreationOptionsArg(&m_layerCreationOptions);
+        AddUpdateArg(&m_update)
+            .SetHidden();  // needed for correct append execution
+        AddAppendLayerArg(&m_appendLayer);
+        AddOverwriteArg(&m_overwrite);
+    }
+
+    m_outputLayerName = "footprint";
     AddArg("output-layer", 0, _("Output layer name"), &m_outputLayerName)
         .SetDefault(m_outputLayerName);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddUpdateArg(&m_update).SetHidden();  // needed for correct append execution
-    AddAppendLayerArg(&m_append);
-    AddOverwriteArg(&m_overwrite);
 
     AddBandArg(&m_bands);
     AddArg("combine-bands", 0,
@@ -131,30 +141,34 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
     AddValidationAction(
         [this]
         {
-            if (auto poSrcDS = m_inputDataset.GetDatasetRef())
+            if (m_inputDataset.size() == 1)
             {
-                const int nOvrCount =
-                    poSrcDS->GetRasterBand(1)->GetOverviewCount();
-                if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
-                    m_overview >= nOvrCount)
+                if (auto poSrcDS = m_inputDataset[0].GetDatasetRef())
                 {
-                    if (nOvrCount == 0)
+                    const int nOvrCount =
+                        poSrcDS->GetRasterBand(1)->GetOverviewCount();
+                    if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
+                        m_overview >= nOvrCount)
                     {
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "Source dataset has no overviews. "
-                            "Argument 'overview' should not be specified.");
+                        if (nOvrCount == 0)
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "Source dataset has no overviews. "
+                                "Argument 'overview' should not be specified.");
+                        }
+                        else
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "Source dataset has only %d overview levels. "
+                                "'overview' "
+                                "value should be strictly lower than this "
+                                "number.",
+                                nOvrCount);
+                        }
+                        return false;
                     }
-                    else
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "Source dataset has only %d overview levels. "
-                            "'overview' "
-                            "value should be strictly lower than this number.",
-                            nOvrCount);
-                    }
-                    return false;
                 }
             }
             return true;
@@ -168,7 +182,61 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()
 bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                            void *pProgressData)
 {
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*                 GDALRasterFootprintAlgorithm::RunStep()              */
+/************************************************************************/
+
+bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLStringList aosOptions;
+
+    std::string outputFilename;
+    if (m_standaloneStep)
+    {
+        outputFilename = m_outputDataset.GetName();
+        if (!m_format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(m_format.c_str());
+        }
+
+        for (const auto &co : m_creationOptions)
+        {
+            aosOptions.push_back("-dsco");
+            aosOptions.push_back(co.c_str());
+        }
+
+        for (const auto &co : m_layerCreationOptions)
+        {
+            aosOptions.push_back("-lco");
+            aosOptions.push_back(co.c_str());
+        }
+    }
+    else
+    {
+        if (GetGDALDriverManager()->GetDriverByName("GPKG"))
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString("GPKG");
+
+            outputFilename = CPLGenerateTempFilenameSafe("_footprint.gpkg");
+        }
+        else
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString("MEM");
+        }
+    }
+
     for (int band : m_bands)
     {
         aosOptions.push_back("-b");
@@ -212,24 +280,6 @@ bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     {
         aosOptions.push_back("-t_srs");
         aosOptions.push_back(m_dstCrs);
-    }
-
-    if (!m_format.empty())
-    {
-        aosOptions.push_back("-of");
-        aosOptions.push_back(m_format.c_str());
-    }
-
-    for (const auto &co : m_creationOptions)
-    {
-        aosOptions.push_back("-dsco");
-        aosOptions.push_back(co.c_str());
-    }
-
-    for (const auto &co : m_layerCreationOptions)
-    {
-        aosOptions.push_back("-lco");
-        aosOptions.push_back(co.c_str());
     }
 
     if (GetArg("output-layer")->IsExplicitlySet())
@@ -281,24 +331,31 @@ bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                   GDALFootprintOptionsFree};
     if (psOptions)
     {
-        GDALFootprintOptionsSetProgress(psOptions.get(), pfnProgress,
-                                        pProgressData);
+        GDALFootprintOptionsSetProgress(psOptions.get(), ctxt.m_pfnProgress,
+                                        ctxt.m_pProgressData);
 
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
         GDALDatasetH hDstDS =
             GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
-        auto poRetDS = GDALDataset::FromHandle(
-            GDALFootprint(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
-                          psOptions.get(), nullptr));
+        auto poRetDS = GDALDataset::FromHandle(GDALFootprint(
+            outputFilename.c_str(), hDstDS, hSrcDS, psOptions.get(), nullptr));
         bOK = poRetDS != nullptr;
         if (bOK && !hDstDS)
         {
+            if (poRetDS && !m_standaloneStep && !outputFilename.empty())
+            {
+                bOK = poRetDS->FlushCache() == CE_None;
+                VSIUnlink(outputFilename.c_str());
+                poRetDS->MarkSuppressOnClose();
+            }
             m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
         }
     }
 
     return bOK;
 }
+
+GDALRasterFootprintAlgorithmStandalone::
+    ~GDALRasterFootprintAlgorithmStandalone() = default;
 
 //! @endcond

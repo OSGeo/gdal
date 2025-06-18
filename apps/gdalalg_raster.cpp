@@ -78,7 +78,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
 
         RegisterSubAlgorithm<GDALRasterInfoAlgorithm>();
         RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterCalcAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
         RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterColorMergeAlgorithmStandalone>();
@@ -86,7 +86,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCreateAlgorithm>();
         RegisterSubAlgorithm<GDALRasterEditAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterFootprintAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterFootprintAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterHillshadeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterFillNodataAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterIndexAlgorithm>();
@@ -99,10 +99,10 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterMosaicAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPansharpenAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterPolygonizeAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterPolygonizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterResizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterRoughnessAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALRasterContourAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterContourAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterSetTypeAlgorithmStandalone>();

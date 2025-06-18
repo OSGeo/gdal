@@ -16,15 +16,16 @@
 #include <algorithm>
 #include <limits>
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALVectorRasterizeAlgorithm                       */
+/*                     GDALVectorRasterizeAlgorithm                     */
 /************************************************************************/
 
-class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
+class GDALVectorRasterizeAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "rasterize";
@@ -33,10 +34,26 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_rasterize.html";
 
-    GDALVectorRasterizeAlgorithm();
+    explicit GDALVectorRasterizeAlgorithm(bool standaloneStep = false);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
 
     std::vector<int> m_bands{};
     bool m_invert = false;
@@ -49,13 +66,10 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
     std::string m_where{};
     std::string m_sql{};  // mutually exclusive with m_layerName
     std::string m_dialect{};
-    std::vector<std::string> m_inputFormats{};
-    std::string m_outputFormat{};
     double m_nodata = std::numeric_limits<double>::quiet_NaN();
     std::vector<double> m_initValues{};
     std::string m_srs{};
     std::vector<std::string> m_transformerOption{};
-    std::vector<std::string> m_datasetCreationOptions{};
     std::vector<double> m_targetExtent{};
     std::vector<double>
         m_targetResolution{};  // Mutually exclusive with targetSize
@@ -64,11 +78,22 @@ class GDALVectorRasterizeAlgorithm final : public GDALAlgorithm
         m_targetSize{};  // Mutually exclusive with targetResolution
     std::string m_outputType{};
     std::string m_optimization{};  // {AUTO|VECTOR|RASTER}
-    std::vector<std::string> m_openOptions{};
-    GDALArgDatasetValue m_inputDataset{};
-    GDALArgDatasetValue m_outputDataset{};
-    bool m_update{false};
-    bool m_overwrite{false};
+};
+
+/************************************************************************/
+/*               GDALVectorRasterizeAlgorithmStandalone                 */
+/************************************************************************/
+
+class GDALVectorRasterizeAlgorithmStandalone final
+    : public GDALVectorRasterizeAlgorithm
+{
+  public:
+    GDALVectorRasterizeAlgorithmStandalone()
+        : GDALVectorRasterizeAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorRasterizeAlgorithmStandalone() override;
 };
 
 //! @endcond

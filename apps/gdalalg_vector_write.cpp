@@ -30,8 +30,8 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddOutputArgs(/* hiddenForCLI = */ false,
-                  /* shortNameOutputLayerAllowed=*/true);
+    AddVectorOutputArgs(/* hiddenForCLI = */ false,
+                        /* shortNameOutputLayerAllowed=*/true);
 }
 
 /************************************************************************/

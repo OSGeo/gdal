@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_FOOTPRINT_INCLUDED
 #define GDALALG_RASTER_FOOTPRINT_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                   GDALRasterFootprintAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterFootprintAlgorithm final : public GDALAlgorithm
+class GDALRasterFootprintAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "footprint";
@@ -30,23 +31,26 @@ class GDALRasterFootprintAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_footprint.html";
 
-    explicit GDALRasterFootprintAlgorithm();
+    explicit GDALRasterFootprintAlgorithm(bool standaloneStep = false);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-
-    std::string m_format{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    std::string m_outputLayerName = "footprint";
-    bool m_update = false;
-    bool m_append = false;
-    bool m_overwrite = false;
 
     std::vector<int> m_bands{};
     std::string m_combineBands = "union";
@@ -63,6 +67,22 @@ class GDALRasterFootprintAlgorithm final : public GDALAlgorithm
     std::string m_locationField = "location";
     bool m_noLocation = false;
     bool m_writeAbsolutePaths = false;
+};
+
+/************************************************************************/
+/*                 GDALRasterFootprintAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALRasterFootprintAlgorithmStandalone final
+    : public GDALRasterFootprintAlgorithm
+{
+  public:
+    GDALRasterFootprintAlgorithmStandalone()
+        : GDALRasterFootprintAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterFootprintAlgorithmStandalone() override;
 };
 
 //! @endcond

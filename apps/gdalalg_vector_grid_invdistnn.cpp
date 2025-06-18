@@ -24,8 +24,10 @@
 /* GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm() */
 /************************************************************************/
 
-GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm()
-    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridInvdistNNAlgorithm::GDALVectorGridInvdistNNAlgorithm(
+    bool standaloneStep)
+    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     AddArg("power", 0, _("Weighting power"), &m_power).SetDefault(m_power);
     AddArg("smoothing", 0, _("Smoothing parameter"), &m_smoothing)
@@ -61,5 +63,8 @@ std::string GDALVectorGridInvdistNNAlgorithm::GetGridAlgorithm() const
             CPLSPrintf(":max_points_per_quadrant=%d", m_maxPointsPerQuadrant);
     return ret;
 }
+
+GDALVectorGridInvdistNNAlgorithmStandalone::
+    ~GDALVectorGridInvdistNNAlgorithmStandalone() = default;
 
 //! @endcond

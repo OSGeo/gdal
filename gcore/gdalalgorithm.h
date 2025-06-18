@@ -2635,6 +2635,11 @@ class CPL_DLL GDALAlgorithmRegistry
     static bool SaveGDALG(const std::string &filename,
                           const std::string &commandLine);
 
+    //! @cond Doxygen_Suppress
+    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
+    //! @endcond
+
   protected:
     friend class GDALInConstructionAlgorithmArg;
     friend class GDALRasterReprojectUtils;
@@ -2957,11 +2962,6 @@ class CPL_DLL GDALAlgorithmRegistry
     virtual void WarnIfDeprecated()
     {
     }
-
-    //! @cond Doxygen_Suppress
-    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
-                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
-    //! @endcond
 
     /** Return the list of arguments for CLI usage */
     std::pair<std::vector<std::pair<GDALAlgorithmArg *, std::string>>, size_t>
