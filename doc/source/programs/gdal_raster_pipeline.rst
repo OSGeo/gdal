@@ -96,6 +96,12 @@ Details for options can be found in :ref:`gdal_raster_fill_nodata`.
 
 Details for options can be found in :ref:`gdal_raster_hillshade`.
 
+* nodata-to-alpha
+
+.. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
+
+Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
+
 * pansharpen
 
 .. program-output:: gdal raster pipeline --help-doc=pansharpen
