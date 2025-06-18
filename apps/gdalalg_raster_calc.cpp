@@ -503,8 +503,10 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 {
                     CPLXMLNode *srcNoDataNode =
                         CPLCreateXMLNode(source, CXT_Element, "NODATA");
+                    std::string srcNoDataText =
+                        CPLSPrintf("%.17g", srcNoData.value());
                     CPLCreateXMLNode(srcNoDataNode, CXT_Text,
-                                     std::to_string(srcNoData.value()).c_str());
+                                     srcNoDataText.c_str());
 
                     if (autoSelectNoDataValue && !dstNoData.has_value())
                     {
@@ -547,8 +549,9 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
                 CPLXMLNode *noDataNode =
                     CPLCreateXMLNode(band, CXT_Element, "NoDataValue");
-                CPLCreateXMLNode(noDataNode, CXT_Text,
-                                 std::to_string(dstNoData.value()).c_str());
+                CPLString dstNoDataText =
+                    CPLSPrintf("%.17g", dstNoData.value());
+                CPLCreateXMLNode(noDataNode, CXT_Text, dstNoDataText.c_str());
             }
         }
 
