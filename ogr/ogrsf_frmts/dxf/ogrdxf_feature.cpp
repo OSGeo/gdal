@@ -180,6 +180,8 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
     const int C_BYLAYER = 256;
     const int C_BYBLOCK = 0;
     const int C_TRUECOLOR = -100;  // not used in DXF - for our purposes only
+    const int C_BYLAYER_FORCE0 =
+        -101;  // not used in DXF - for our purposes only
 
     /* -------------------------------------------------------------------- */
     /*      MULTILEADER entities store colors by directly outputting        */
@@ -254,20 +256,41 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
         }
         else
         {
-            // If the owning block has no explicit color, assume ByLayer
+            // If the owning block has no explicit color, assume ByLayer,
+            // but take the color from the owning block's layer
             nColor = C_BYLAYER;
+            osLayer = poBlockFeature->GetFieldAsString("Layer");
+
+            // If we regenerate the style string again during
+            // block insertion, treat as ByLayer, but when
+            // not in block insertion, treat as layer 0
+            oStyleProperties["Color"] = std::to_string(C_BYLAYER_FORCE0);
         }
+    }
+
+    // Strange special case: consider the following scenario:
+    //
+    //                             Block  Color    Layer
+    //                             -----  -------  -------
+    //  Drawing contains:  INSERT  BLK1   ByBlock  MYLAYER
+    //     BLK1 contains:  INSERT  BLK2   ByLayer  0
+    //     BLK2 contains:  LINE           ByBlock  0
+    //
+    // When viewing the drawing, the line is displayed in
+    // MYLAYER's layer colour, not black as might be expected.
+    if (nColor == C_BYLAYER_FORCE0)
+    {
+        if (poBlockFeature)
+            osLayer = poBlockFeature->GetFieldAsString("Layer");
+        else
+            osLayer = "0";
+
+        nColor = C_BYLAYER;
     }
 
     // Use layer color?
     if (nColor == C_BYLAYER)
     {
-        if (poBlockFeature)
-        {
-            // Use the block feature's layer instead
-            osLayer = poBlockFeature->GetFieldAsString("Layer");
-        }
-
         const char *pszTrueColor =
             poDS->LookupLayerProperty(osLayer, "TrueColor");
         if (pszTrueColor != nullptr && *pszTrueColor)
@@ -275,10 +298,11 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
             nTrueColor = atoi(pszTrueColor);
             nColor = C_TRUECOLOR;
 
-            if (poBlockFeature)
+            if (poBlockFeature && osLayer != "0")
             {
                 // Use the inherited color if we regenerate the style string
-                // again during block insertion
+                // again during block insertion (except when the entity is
+                // on layer 0)
                 oStyleProperties["TrueColor"] = pszTrueColor;
             }
         }
@@ -289,10 +313,11 @@ OGRDXFFeature::GetColor(OGRDXFDataSource *const poDS,
             {
                 nColor = atoi(pszColor);
 
-                if (poBlockFeature)
+                if (poBlockFeature && osLayer != "0")
                 {
                     // Use the inherited color if we regenerate the style string
-                    // again during block insertion
+                    // again during block insertion (except when the entity is
+                    // on layer 0)
                     oStyleProperties["Color"] = pszColor;
                 }
             }
