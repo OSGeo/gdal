@@ -142,7 +142,7 @@ typedef void OSRCoordinateTransformationShadow;
 #endif
 %}
 
-#ifndef FROM_OGR_I
+#if !defined(SWIGCSHARP) || !defined(FROM_OGR_I)
 typedef int OGRErr;
 #endif
 
