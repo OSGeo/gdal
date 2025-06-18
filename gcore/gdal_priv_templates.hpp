@@ -31,7 +31,7 @@
 #ifdef USE_NEON_OPTIMIZATIONS
 #include "include_sse2neon.h"
 #else
-#include <emmintrin.h>
+#include <immintrin.h>
 #endif
 
 static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
