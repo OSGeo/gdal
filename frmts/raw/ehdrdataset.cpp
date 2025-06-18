@@ -1150,8 +1150,16 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         VSIStatBufL sStatBuf;
         if (VSIStatL(poOpenInfo->pszFilename, &sStatBuf) == 0)
         {
-            const size_t nBytes = static_cast<size_t>(sStatBuf.st_size / nCols /
-                                                      nRows / l_nBands);
+            const vsi_l_offset nBytes =
+                sStatBuf.st_size / nCols / nRows / l_nBands;
+            // Exit now if nBytes value does not make sense to avoid later overflow in below multiplication
+            if (nBytes > 8)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "EHdr driver cannot infer NBITS value");
+                CSLDestroy(papszHDR);
+                return nullptr;
+            }
             if (nBytes > 0 && nBytes != 3)
                 nBits = static_cast<int>(nBytes * 8);
 
