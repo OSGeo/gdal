@@ -22,6 +22,7 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
+#include "vrtdataset.h"
 
 #include <algorithm>
 #include <cassert>
@@ -4886,6 +4887,95 @@ GDALAlgorithm::AddAbsolutePathArg(bool *pValue, const char *helpMessage)
         MsgOrDefault(helpMessage, _("Whether the path to the input dataset "
                                     "should be stored as an absolute path")),
         pValue);
+}
+
+/************************************************************************/
+/*               GDALAlgorithm::AddPixelFunctionNameArg()               */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddPixelFunctionNameArg(std::string *pValue,
+                                       const char *helpMessage)
+{
+
+    const auto pixelFunctionNames =
+        VRTDerivedRasterBand::GetPixelFunctionNames();
+    return AddArg(
+               "pixel-function", 0,
+               MsgOrDefault(
+                   helpMessage,
+                   _("Specify a pixel function to calculate output value from "
+                     "overlapping inputs")),
+               pValue)
+        .SetChoices(pixelFunctionNames);
+}
+
+/************************************************************************/
+/*               GDALAlgorithm::AddPixelFunctionArgsArg()               */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
+                                       const char *helpMessage)
+{
+    auto &pixelFunctionArgArg =
+        AddArg("pixel-function-arg", 0,
+               MsgOrDefault(
+                   helpMessage,
+                   _("Specify argument(s) to pass to the pixel function")),
+               pValue)
+            .SetMetaVar("<NAME>=<VALUE>")
+            .SetRepeatedArgAllowed(true);
+    pixelFunctionArgArg.AddValidationAction(
+        [this, &pixelFunctionArgArg]()
+        { return ParseAndValidateKeyValue(pixelFunctionArgArg); });
+
+    pixelFunctionArgArg.SetAutoCompleteFunction(
+        [this](const std::string &currentValue)
+        {
+            std::string pixelFunction;
+            const auto pixelFunctionArg = GetArg("pixel-function");
+            if (pixelFunctionArg && pixelFunctionArg->GetType() == GAAT_STRING)
+            {
+                pixelFunction = pixelFunctionArg->Get<std::string>();
+            }
+
+            std::vector<std::string> ret;
+
+            if (!pixelFunction.empty())
+            {
+                const auto *pair = VRTDerivedRasterBand::GetPixelFunction(
+                    pixelFunction.c_str());
+                if (!pair)
+                {
+                    ret.push_back("**");
+                    // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
+                    ret.push_back(std::string("\xC2\xA0"
+                                              "Invalid pixel function name"));
+                }
+                else if (pair->second.find("Argument name=") ==
+                         std::string::npos)
+                {
+                    ret.push_back("**");
+                    // Non printable UTF-8 space, to avoid autocompletion to pickup on 'd'
+                    ret.push_back(
+                        std::string(
+                            "\xC2\xA0"
+                            "No pixel function arguments for pixel function '")
+                            .append(pixelFunction)
+                            .append("'"));
+                }
+                else
+                {
+                    AddOptionsSuggestions(pair->second.c_str(), 0, currentValue,
+                                          ret);
+                }
+            }
+
+            return ret;
+        });
+
+    return pixelFunctionArgArg;
 }
 
 /************************************************************************/

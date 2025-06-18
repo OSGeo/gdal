@@ -2883,6 +2883,16 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddAbsolutePathArg(bool *pValue, const char *helpMessage = nullptr);
 
+    /** Add an argument for pixel function name */
+    GDALInConstructionAlgorithmArg &
+    AddPixelFunctionNameArg(std::string *pValue,
+                            const char *helpMessage = nullptr);
+
+    /** Add an argument for pixel function arguments */
+    GDALInConstructionAlgorithmArg &
+    AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
+                            const char *helpMessage = nullptr);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
