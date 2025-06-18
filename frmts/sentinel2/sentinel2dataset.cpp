@@ -3421,7 +3421,8 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                     {
                         GDALDataType eDT =
                             poDS->GetRasterBand(1)->GetRasterDataType();
-                        pszNBits = CPLSPrintf("%d", GDALGetDataTypeSize(eDT));
+                        pszNBits =
+                            CPLSPrintf("%d", GDALGetDataTypeSizeBits(eDT));
                     }
                     *pnBits = atoi(pszNBits);
                 }

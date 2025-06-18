@@ -1753,7 +1753,8 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     if (!dataset->m_isExistingFile && offset > dataset->m_highestOffsetWritten)
     {
         memset(pImage, 0,
-               nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eDataType) / 8);
+               static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                   GDALGetDataTypeSizeBytes(eDataType));
         return CE_None;
     }
 

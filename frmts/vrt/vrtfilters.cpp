@@ -206,8 +206,8 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
 
         for (int i = 1; i < m_nSupportedTypesCount; i++)
         {
-            if (GDALGetDataTypeSize(m_aeSupportedTypes[i]) >
-                GDALGetDataTypeSize(eOperDataType))
+            if (GDALGetDataTypeSizeBytes(m_aeSupportedTypes[i]) >
+                GDALGetDataTypeSizeBytes(eOperDataType))
             {
                 eOperDataType = m_aeSupportedTypes[i];
             }

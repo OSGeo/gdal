@@ -111,32 +111,32 @@ class TestCopyWords : public ::testing::Test
         }
         else
         {
-            *(InType *)(pIn + GDALGetDataTypeSize(intype) / 8) = (InType)inval;
+            *(InType *)(pIn + GDALGetDataTypeSizeBytes(intype)) = (InType)inval;
             /* Test packed offsets */
-            GDALCopyWords(pIn, intype, GDALGetDataTypeSize(intype) / 8, pOut,
-                          outtype, GDALGetDataTypeSize(outtype) / 8, 2);
+            GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
+                          outtype, GDALGetDataTypeSizeBytes(outtype), 2);
 
             MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
             MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSize(outtype) / 8));
+                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
 
-            *(InType *)(pIn + 2 * GDALGetDataTypeSize(intype) / 8) =
+            *(InType *)(pIn + 2 * GDALGetDataTypeSizeBytes(intype)) =
                 (InType)inval;
-            *(InType *)(pIn + 3 * GDALGetDataTypeSize(intype) / 8) =
+            *(InType *)(pIn + 3 * GDALGetDataTypeSizeBytes(intype)) =
                 (InType)inval;
             /* Test packed offsets */
-            GDALCopyWords(pIn, intype, GDALGetDataTypeSize(intype) / 8, pOut,
-                          outtype, GDALGetDataTypeSize(outtype) / 8, 4);
+            GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
+                          outtype, GDALGetDataTypeSizeBytes(outtype), 4);
 
             MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
             MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSize(outtype) / 8));
+                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
             MY_EXPECT(
                 intype, inval, outtype, outval,
-                *(OutType *)(pOut + 2 * GDALGetDataTypeSize(outtype) / 8));
+                *(OutType *)(pOut + 2 * GDALGetDataTypeSizeBytes(outtype)));
             MY_EXPECT(
                 intype, inval, outtype, outval,
-                *(OutType *)(pOut + 3 * GDALGetDataTypeSize(outtype) / 8));
+                *(OutType *)(pOut + 3 * GDALGetDataTypeSizeBytes(outtype)));
         }
     }
 

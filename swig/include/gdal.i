@@ -353,7 +353,9 @@ $1;
 %rename (GetCacheMax) wrapper_GDALGetCacheMax;
 %rename (SetCacheMax) wrapper_GDALSetCacheMax;
 %rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
-%rename (GetDataTypeSize) GDALGetDataTypeSize;
+%rename (GetDataTypeSize) wrapper_GDALGetDataTypeSizeBits;  // deprecated
+%rename (GetDataTypeSizeBits) GDALGetDataTypeSizeBits;
+%rename (GetDataTypeSizeBytes) GDALGetDataTypeSizeBytes;
 %rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 %rename (GetDataTypeName) GDALGetDataTypeName;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
@@ -747,7 +749,16 @@ void wrapper_GDALSetCacheMax(int nBytes)
 }
 #endif
 
-int GDALGetDataTypeSize( GDALDataType eDataType );
+%inline {
+int wrapper_GDALGetDataTypeSizeBits( GDALDataType eDataType )
+{
+    return GDALGetDataTypeSizeBits(eDataType);
+}
+}
+
+int GDALGetDataTypeSizeBits( GDALDataType eDataType );
+
+int GDALGetDataTypeSizeBytes( GDALDataType eDataType );
 
 int GDALDataTypeIsComplex( GDALDataType eDataType );
 

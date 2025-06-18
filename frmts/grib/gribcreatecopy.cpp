@@ -982,7 +982,7 @@ float *GRIB2Section567Writer::GetFloatData()
     // This shouldn't happen for well-behaved drivers, but this can still
     // happen in practice, if some drivers don't completely fill buffers etc.
     if (m_fMax > m_fMin && GDALDataTypeIsInteger(m_eDT) &&
-        ceil(log(m_fMax - m_fMin) / log(2.0)) > GDALGetDataTypeSize(m_eDT))
+        ceil(log(m_fMax - m_fMin) / log(2.0)) > GDALGetDataTypeSizeBits(m_eDT))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Garbage values found when requesting input dataset");
@@ -1029,10 +1029,10 @@ bool GRIB2Section567Writer::WriteSimplePacking()
 
     const int nBitCorrectionForDec =
         static_cast<int>(ceil(m_nDecimalScaleFactor * log(10.0) / log(2.0)));
-    const int nMaxBitsPerElt =
-        std::max(1, std::min(31, (m_nBits > 0) ? m_nBits
-                                               : GDALGetDataTypeSize(m_eDT) +
-                                                     nBitCorrectionForDec));
+    const int nMaxBitsPerElt = std::max(
+        1, std::min(31, (m_nBits > 0) ? m_nBits
+                                      : GDALGetDataTypeSizeBits(m_eDT) +
+                                            nBitCorrectionForDec));
     if (nMaxBitsPerElt > 0 &&
         m_nDataPoints > static_cast<GUInt32>(INT_MAX) / nMaxBitsPerElt)
     {
@@ -1232,10 +1232,10 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
 
     const int nBitCorrectionForDec =
         static_cast<int>(ceil(m_nDecimalScaleFactor * log(10.0) / log(2.0)));
-    const int nMaxBitsPerElt =
-        std::max(1, std::min(31, (m_nBits > 0) ? m_nBits
-                                               : GDALGetDataTypeSize(m_eDT) +
-                                                     nBitCorrectionForDec));
+    const int nMaxBitsPerElt = std::max(
+        1, std::min(31, (m_nBits > 0) ? m_nBits
+                                      : GDALGetDataTypeSizeBits(m_eDT) +
+                                            nBitCorrectionForDec));
     if (nMaxBitsPerElt > 0 &&
         m_nDataPoints > static_cast<GUInt32>(INT_MAX) / nMaxBitsPerElt)
     {
@@ -1380,7 +1380,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {
     GDALDataType eReqDT;
-    if (GDALGetDataTypeSize(m_eDT) <= 2 || m_eDT == GDT_Float32)
+    if (GDALGetDataTypeSizeBytes(m_eDT) <= 2 || m_eDT == GDT_Float32)
         eReqDT = GDT_Float32;
     else
         eReqDT = GDT_Float64;

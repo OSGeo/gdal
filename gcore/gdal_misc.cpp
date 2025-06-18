@@ -663,8 +663,8 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
             return TRUE;
 
         // E.g UInt32 to UInt16
-        const int nFromSize = GDALGetDataTypeSize(eTypeFrom);
-        const int nToSize = GDALGetDataTypeSize(eTypeTo);
+        const int nFromSize = GDALGetDataTypeSizeBits(eTypeFrom);
+        const int nToSize = GDALGetDataTypeSizeBits(eTypeTo);
         if (nFromSize > nToSize)
             return TRUE;
 

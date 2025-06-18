@@ -953,7 +953,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
         }
         const int nBitsPerPixel = heif_image_get_bits_per_pixel(
             poGDS->m_hImage, heif_channel_interleaved);
-        if (nBitsPerPixel != nBands * GDALGetDataTypeSize(eDataType))
+        if (nBitsPerPixel != nBands * GDALGetDataTypeSizeBits(eDataType))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected bits_per_pixel = %d value", nBitsPerPixel);

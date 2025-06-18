@@ -318,7 +318,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
     GIntBig nMemoryRequiredForTiles = 0;
     CPLString osIDsToFetch;
     int nTilesToFetch = 0;
-    int nBandDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nBandDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
 
     // Loop just over the intersecting sources
     for (i = 0; i < nFeatureCount; i++)

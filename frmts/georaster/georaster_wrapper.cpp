@@ -1165,7 +1165,7 @@ void GeoRasterWrapper::PrepareToOverwrite(void)
     if (sscanf(sCellDepth.c_str(), "%dBIT", &nCellSizeBits))
     {
         nGDALCellBytes =
-            GDALGetDataTypeSize(OWGetDataType(sCellDepth.c_str())) / 8;
+            GDALGetDataTypeSizeBytes(OWGetDataType(sCellDepth.c_str()));
     }
     else
     {
@@ -1356,7 +1356,7 @@ void GeoRasterWrapper::GetRasterInfo(void)
     if (sscanf(sCellDepth.c_str(), "%dBIT", &nCellSizeBits))
     {
         nGDALCellBytes =
-            GDALGetDataTypeSize(OWGetDataType(sCellDepth.c_str())) / 8;
+            GDALGetDataTypeSizeBytes(OWGetDataType(sCellDepth.c_str()));
     }
     else
     {

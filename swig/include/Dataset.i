@@ -552,7 +552,7 @@ public:
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
     GIntBig min_buffer_size =
-      ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
+      ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSizeBytes( ntype ),
                                   band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
                                   pixel_space, line_space, band_space, FALSE);
     if (min_buffer_size == 0)
@@ -740,7 +740,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
         }
         else
         {
-            nBandSpace = GDALGetDataTypeSize(eBufType) / 8;
+            nBandSpace = GDALGetDataTypeSizeBytes(eBufType);
             nPixelSpace = nBandSpace * band_list;
         }
         CPLVirtualMem* vmem = GDALDatasetGetVirtualMem( self,

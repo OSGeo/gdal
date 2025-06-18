@@ -1133,7 +1133,7 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
         /*      Translate the data type. */
         /* --------------------------------------------------------------------
          */
-        int nLineSize = nXSize * GDALGetDataTypeSize(eType) / 8;
+        const int nLineSize = nXSize * GDALGetDataTypeSizeBytes(eType);
 
         // Determine the nodata value
         int bHasNoDataValue;
@@ -1766,7 +1766,7 @@ void ILWISRasterBand::FillWithNoData(void *pImage)
             default:  // should there be handling for stByte?
                 break;
         }
-        int iItemSize = GDALGetDataTypeSize(eDataType) / 8;
+        const int iItemSize = GDALGetDataTypeSizeBytes(eDataType);
         for (int i = 1; i < nBlockXSize * nBlockYSize; ++i)
             memcpy(((char *)pImage) + iItemSize * i,
                    (char *)pImage + iItemSize * (i - 1), iItemSize);

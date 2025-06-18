@@ -1682,26 +1682,38 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
 
     // Create the hdr filename.
-    char *const pszHdrFilename =
-        CPLStrdup(CPLResetExtensionSafe(pszFilename, "hdr").c_str());
+    const std::string osHdrFilename = CPLResetExtensionSafe(pszFilename, "hdr");
 
     // Open the file.
-    fp = VSIFOpenL(pszHdrFilename, "wt");
+    fp = VSIFOpenL(osHdrFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszHdrFilename);
-        CPLFree(pszHdrFilename);
+                 "Attempt to create file `%s' failed.", osHdrFilename.c_str());
         return nullptr;
     }
 
     // Decide how many bits the file should have.
-    int nBits = GDALGetDataTypeSize(eType);
-
-    if (CSLFetchNameValue(papszParamList, "NBITS") != nullptr)
-        nBits = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
+    const char *pszNBITS = CSLFetchNameValue(papszParamList, "NBITS");
+    const int nBits =
+        pszNBITS ? atoi(pszNBITS) : GDALGetDataTypeSizeBits(eType);
+    if (nBits <= 0 || nXSize > (static_cast<int64_t>(INT_MAX) * 8 - 7) / nBits)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid NBITS or too large image width");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        return nullptr;
+    }
 
     const int nRowBytes = (nBits * nXSize + 7) / 8;
+
+    if (nRowBytes > INT_MAX / nBandsIn)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large band count and/or image width");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        return nullptr;
+    }
 
     // Check for signed byte.
     const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
@@ -1729,8 +1741,6 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
 
     if (VSIFCloseL(fp) != 0)
         bOK = false;
-
-    CPLFree(pszHdrFilename);
 
     if (!bOK)
         return nullptr;

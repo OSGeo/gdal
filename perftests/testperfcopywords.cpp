@@ -49,9 +49,9 @@ int main(int /* argc */, char * /* argv */[])
 
             for (i = 0; i < 1000; i++)
                 GDALCopyWords(in, (GDALDataType)intype,
-                              GDALGetDataTypeSize((GDALDataType)intype) / 8,
+                              GDALGetDataTypeSizeBytes((GDALDataType)intype),
                               out, (GDALDataType)outtype,
-                              GDALGetDataTypeSize((GDALDataType)outtype) / 8,
+                              GDALGetDataTypeSizeBytes((GDALDataType)outtype),
                               256 * 256);
 
             end = clock();

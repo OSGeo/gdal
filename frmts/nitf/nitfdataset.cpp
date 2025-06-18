@@ -4483,8 +4483,9 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     vsi_l_offset nImageOffset = 0;
     vsi_l_offset nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, nBandsIn,
-                      GDALGetDataTypeSize(eType), pszPVType, papszFullOptions,
-                      &nIMIndex, &nImageCount, &nImageOffset, &nICOffset))
+                      GDALGetDataTypeSizeBits(eType), pszPVType,
+                      papszFullOptions, &nIMIndex, &nImageCount, &nImageOffset,
+                      &nICOffset))
     {
         CSLDestroy(papszTextMD);
         CSLDestroy(papszCgmMD);
@@ -5218,7 +5219,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    int nABPP = GDALGetDataTypeSize(eType);
+    int nABPP = GDALGetDataTypeSizeBits(eType);
     if (const char *pszABPP = CSLFetchNameValue(papszFullOptions, "ABPP"))
     {
         nABPP = atoi(pszABPP);
@@ -5365,8 +5366,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     vsi_l_offset nImageOffset = 0;
     vsi_l_offset nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
-                      GDALGetDataTypeSize(eType), pszPVType, papszFullOptions,
-                      &nIMIndex, &nImageCount, &nImageOffset, &nICOffset))
+                      GDALGetDataTypeSizeBits(eType), pszPVType,
+                      papszFullOptions, &nIMIndex, &nImageCount, &nImageOffset,
+                      &nICOffset))
     {
         CSLDestroy(papszFullOptions);
         CSLDestroy(papszCgmMD);

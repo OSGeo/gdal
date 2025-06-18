@@ -311,8 +311,8 @@ CPLErr COASPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         static_cast<vsi_l_offset>(poDS->GetRasterXSize()) * 8 * nBlockYOff;
 
     VSIFSeekL(this->fp, nByteNum, SEEK_SET);
-    int nReadSize =
-        (GDALGetDataTypeSize(eDataType) / 8) * poDS->GetRasterXSize();
+    const int nReadSize =
+        GDALGetDataTypeSizeBytes(eDataType) * poDS->GetRasterXSize();
     VSIFReadL((char *)pImage, 1, nReadSize, this->fp);
 
 #ifdef CPL_LSB

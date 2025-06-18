@@ -2351,7 +2351,7 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
         pImageNC = static_cast<GByte *>(pImage) +
                    ((static_cast<size_t>(nBlockXSize) * nBlockYSize -
                      edge[nBandXPos] * nYChunkSize) *
-                    (GDALGetDataTypeSize(eDataType) / 8));
+                    GDALGetDataTypeSizeBytes(eDataType));
     }
 
     // Read data according to type.

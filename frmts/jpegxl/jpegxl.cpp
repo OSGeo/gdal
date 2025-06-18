@@ -1486,7 +1486,7 @@ void JPEGXLDataset::GetDecodedImage(void *pabyOutputData,
     }
 
     // Rescale from 8-bits/16-bits
-    if (m_nBits < GDALGetDataTypeSize(eDT))
+    if (m_nBits < GDALGetDataTypeSizeBits(eDT))
     {
         const auto Rescale = [this, eDT](void *pBuffer, int nChannels)
         {
@@ -2188,7 +2188,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const int nBits =
         ((eDT == GDT_Byte || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)
-            : GDALGetDataTypeSize(eDT);
+            : GDALGetDataTypeSizeBits(eDT);
 
     JxlBasicInfo basic_info;
     JxlEncoderInitBasicInfo(&basic_info);

@@ -355,7 +355,7 @@ CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
     if (iLine == nLoadedStokesLine)
         return CE_None;
 
-    const int nDataSize = GDALGetDataTypeSize(GDT_Float32) / 8;
+    constexpr int nDataSize = static_cast<int>(sizeof(float));
 
     /* -------------------------------------------------------------------- */
     /*      allocate working buffers if we don't have them already.         */

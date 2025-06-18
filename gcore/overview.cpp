@@ -3798,7 +3798,7 @@ GDALResampleChunk_Convolution(const GDALOverviewResampleArgs &args,
          args.eOvrDataType == GDT_UInt32))
     {
         int nBits = args.nOvrNBITS;
-        if (nBits == GDALGetDataTypeSize(args.eOvrDataType))
+        if (nBits == GDALGetDataTypeSizeBits(args.eOvrDataType))
             nBits = 0;
         if (nBits > 0 && nBits < 32)
             fMaxVal = static_cast<float>((1U << nBits) - 1);
