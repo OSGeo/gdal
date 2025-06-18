@@ -1609,12 +1609,13 @@ static bool CheckOptions(const char *pszDest, GDALDatasetH hDstDS,
                     psOptions->aosTransformerOptions.FetchNameValue("SRC_SRS"));
                 bOK = true;
             }
-            else
+            else if (nSrcCount)
             {
-                if (nSrcCount && GDALGetProjectionRef(pahSrcDS[0]) &&
-                    GDALGetProjectionRef(pahSrcDS[0])[0])
+                const auto poSrcSRS =
+                    GDALDataset::FromHandle(pahSrcDS[0])->GetSpatialRef();
+                if (poSrcSRS)
                 {
-                    oSRSDS.SetFromUserInput(GDALGetProjectionRef(pahSrcDS[0]));
+                    oSRSDS = *poSrcSRS;
                     bOK = true;
                 }
             }
@@ -1643,23 +1644,22 @@ static bool CheckOptions(const char *pszDest, GDALDatasetH hDstDS,
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
                         dfEastLongitudeDeg, dfNorthLatitudeDeg);
                 }
-                OGRCoordinateTransformation *poCT =
+                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                     OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS,
-                                                      options);
-                if (!(poCT &&
-                      poCT->Transform(1, &psOptions->dfMinX,
-                                      &psOptions->dfMinY) &&
-                      poCT->Transform(1, &psOptions->dfMaxX,
-                                      &psOptions->dfMaxY)))
+                                                      options));
+                constexpr int DENSIFY_PTS = 21;
+                if (!(poCT && poCT->TransformBounds(
+                                  psOptions->dfMinX, psOptions->dfMinY,
+                                  psOptions->dfMaxX, psOptions->dfMaxY,
+                                  &(psOptions->dfMinX), &(psOptions->dfMinY),
+                                  &(psOptions->dfMaxX), &(psOptions->dfMaxY),
+                                  DENSIFY_PTS)))
                 {
-                    OGRCoordinateTransformation::DestroyCT(poCT);
-
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "-te_srs ignored since coordinate transformation "
                              "failed.");
                     return false;
                 }
-                delete poCT;
             }
         }
     }
