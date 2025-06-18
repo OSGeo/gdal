@@ -16,6 +16,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cinttypes>
 #include <vector>
 
 /************************************************************************/
@@ -654,6 +655,13 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
     }
     else
     {
+        constexpr int SIZEOF_CFLOAT32 = 2 * static_cast<int>(sizeof(float));
+        if (nSamples > INT_MAX / SIZEOF_CFLOAT32)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large nBlockXSize");
+            return nullptr;
+        }
+
         CPLAssert(poDS->afpImage.size() == NUMBER_OF_BANDS);
         for (int iBand = 0; iBand < NUMBER_OF_BANDS; iBand++)
         {
@@ -675,7 +683,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
 
             auto poBand = RawRasterBand::Create(
                 poDS.get(), iBand + 1, poDS->afpImage[iBand], 0, 8,
-                8 * nSamples, GDT_CFloat32,
+                SIZEOF_CFLOAT32 * nSamples, GDT_CFloat32,
                 RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
                 RawRasterBand::OwnFP::NO);
             if (!poBand)
@@ -774,7 +782,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
                 else
                     dfgcpLine = nLines;
 
-                dfgcpPixel = nSamples * (ngcp % 4) / 3.0;
+                dfgcpPixel = nSamples * ((ngcp % 4) / 3.0);
 
                 dftemp = dfnear_srd + (dfsample_size * dfgcpPixel);
                 dfgcpX = sqrt(dftemp * dftemp - dfaltitude * dfaltitude);
@@ -1249,24 +1257,35 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                        int nBlockYOff, void *pImage)
 {
     const int nBytesPerSample = 10;
-    CPGDataset *poGDS = reinterpret_cast<CPGDataset *>(poDS);
-    const int offset = nBlockXSize * nBlockYOff * nBytesPerSample;
+    CPGDataset *poGDS = cpl::down_cast<CPGDataset *>(poDS);
+    const vsi_l_offset offset =
+        static_cast<vsi_l_offset>(nBlockXSize) * nBlockYOff * nBytesPerSample;
 
     /* -------------------------------------------------------------------- */
     /*      Load all the pixel data associated with this scanline.          */
     /* -------------------------------------------------------------------- */
+    if (nBytesPerSample > INT_MAX / nBlockXSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too large nBlockXSize");
+        return CE_Failure;
+    }
     const int nBytesToRead = nBytesPerSample * nBlockXSize;
 
-    GByte *pabyRecord = reinterpret_cast<GByte *>(CPLMalloc(nBytesToRead));
+    signed char *pabyRecord =
+        static_cast<signed char *>(VSI_MALLOC_VERBOSE(nBytesToRead));
+    if (!pabyRecord)
+        return CE_Failure;
 
     if (VSIFSeekL(poGDS->afpImage[0], offset, SEEK_SET) != 0 ||
         static_cast<int>(VSIFReadL(pabyRecord, 1, nBytesToRead,
                                    poGDS->afpImage[0])) != nBytesToRead)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading %d bytes of SIRC Convair at offset %d.\n"
+                 "Error reading %d bytes of SIRC Convair at offset %" PRIu64
+                 ".\n"
                  "Reading file %s failed.",
-                 nBytesToRead, offset, poGDS->GetDescription());
+                 nBytesToRead, static_cast<uint64_t>(offset),
+                 poGDS->GetDescription());
         CPLFree(pabyRecord);
         return CE_Failure;
     }
@@ -1275,17 +1294,14 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /*      Initialize our power table if this is our first time through.   */
     /* -------------------------------------------------------------------- */
     static float afPowTable[256];
-    static bool bPowTableInitialized = false;
-
-    if (!bPowTableInitialized)
+    [[maybe_unused]] static bool bPowTableInitialized = []()
     {
-        bPowTableInitialized = true;
-
         for (int i = 0; i < 256; i++)
         {
             afPowTable[i] = static_cast<float>(pow(2.0, i - 128));
         }
-    }
+        return true;
+    }();
 
     /* -------------------------------------------------------------------- */
     /*      Copy the desired band out based on the size of the type, and    */
@@ -1293,44 +1309,45 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /* -------------------------------------------------------------------- */
     for (int iX = 0; iX < nBlockXSize; iX++)
     {
-        unsigned char *pabyGroup = pabyRecord + iX * nBytesPerSample;
-        const signed char *Byte = reinterpret_cast<signed char *>(
-            pabyGroup - 1); /* A ones based alias */
+        /* A ones based alias */
+        const signed char *pabyIn = pabyRecord + iX * nBytesPerSample - 1;
 
         /* coverity[tainted_data] */
-        const double dfScale = sqrt((static_cast<double>(Byte[2]) / 254 + 1.5) *
-                                    afPowTable[Byte[1] + 128]);
+        const float fScale = static_cast<float>(
+            sqrt((static_cast<double>(pabyIn[2]) / 254 + 1.5) *
+                 afPowTable[pabyIn[1] + 128]) /
+            127.0);
 
-        float *pafImage = reinterpret_cast<float *>(pImage);
+        float *pafImage = static_cast<float *>(pImage);
 
         if (nBand == 1)
         {
-            const float fReSHH = static_cast<float>(Byte[3] * dfScale / 127.0);
-            const float fImSHH = static_cast<float>(Byte[4] * dfScale / 127.0);
+            const float fReSHH = static_cast<float>(pabyIn[3] * fScale);
+            const float fImSHH = static_cast<float>(pabyIn[4] * fScale);
 
             pafImage[iX * 2] = fReSHH;
             pafImage[iX * 2 + 1] = fImSHH;
         }
         else if (nBand == 2)
         {
-            const float fReSHV = static_cast<float>(Byte[5] * dfScale / 127.0);
-            const float fImSHV = static_cast<float>(Byte[6] * dfScale / 127.0);
+            const float fReSHV = static_cast<float>(pabyIn[5] * fScale);
+            const float fImSHV = static_cast<float>(pabyIn[6] * fScale);
 
             pafImage[iX * 2] = fReSHV;
             pafImage[iX * 2 + 1] = fImSHV;
         }
         else if (nBand == 3)
         {
-            const float fReSVH = static_cast<float>(Byte[7] * dfScale / 127.0);
-            const float fImSVH = static_cast<float>(Byte[8] * dfScale / 127.0);
+            const float fReSVH = static_cast<float>(pabyIn[7] * fScale);
+            const float fImSVH = static_cast<float>(pabyIn[8] * fScale);
 
             pafImage[iX * 2] = fReSVH;
             pafImage[iX * 2 + 1] = fImSVH;
         }
         else if (nBand == 4)
         {
-            const float fReSVV = static_cast<float>(Byte[9] * dfScale / 127.0);
-            const float fImSVV = static_cast<float>(Byte[10] * dfScale / 127.0);
+            const float fReSVV = static_cast<float>(pabyIn[9] * fScale);
+            const float fImSVV = static_cast<float>(pabyIn[10] * fScale);
 
             pafImage[iX * 2] = fReSVV;
             pafImage[iX * 2 + 1] = fImSVV;
