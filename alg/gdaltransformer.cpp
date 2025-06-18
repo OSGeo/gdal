@@ -1474,8 +1474,8 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
 /*                      GDALComputeAreaOfInterest()                     */
 /************************************************************************/
 
-bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double adfGT[6],
-                               int nXSize, int nYSize,
+bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS,
+                               double adfGT[6], int nXSize, int nYSize,
                                double &dfWestLongitudeDeg,
                                double &dfSouthLatitudeDeg,
                                double &dfEastLongitudeDeg,
@@ -1560,7 +1560,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double adfGT[6],
     return ret;
 }
 
-bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double dfX1,
+bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS, double dfX1,
                                double dfY1, double dfX2, double dfY2,
                                double &dfWestLongitudeDeg,
                                double &dfSouthLatitudeDeg,
