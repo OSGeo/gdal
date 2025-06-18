@@ -205,6 +205,27 @@ def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
         calc.Run()
 
 
+def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(255)
+        ds.GetRasterBand(1).Fill(255)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["propagate-nodata"] = True
+
+    assert calc.Run()
+
+    ds = calc["output"].GetDataset()
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+
+    with pytest.raises(Exception, match="no valid pixels"):
+        ds.GetRasterBand(1).ComputeRasterMinMax(False)
+
+
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"
