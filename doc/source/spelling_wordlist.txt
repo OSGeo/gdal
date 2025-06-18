@@ -448,6 +448,7 @@ conceptualhelp
 cond
 conda
 Conda
+condBand
 conf
 config
 Config
@@ -783,6 +784,7 @@ Elbor
 ElementPath
 ellps
 elpaso
+elseBand
 emptor
 Enablement
 Encodings
@@ -1269,6 +1271,7 @@ hashtable
 hAttr
 Hayford
 hComp
+hCondBand
 hCT
 hCutline
 hdbuserstore
@@ -1287,6 +1290,7 @@ heightfield
 Heightfield
 heightfields
 Helmert
+hElseBand
 Helvetica
 hether
 hFeat
@@ -1351,6 +1355,7 @@ hSrcDS
 hST
 hTarget
 hTargetEDT
+hThenBand
 hThis
 html
 hTransformArg
@@ -1388,6 +1393,7 @@ ieee
 ifdef
 ifit
 ifndef
+IfThenElse
 ifv
 igc
 IGeometry
@@ -3233,6 +3239,7 @@ tgz
 th
 thebuffer
 themself
+thenBand
 thescale
 thf
 THH

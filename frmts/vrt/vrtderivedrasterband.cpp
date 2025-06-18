@@ -205,8 +205,10 @@ VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn)
 
 VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn,
                                            GDALDataType eType, int nXSize,
-                                           int nYSize)
-    : VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize),
+                                           int nYSize, int nBlockXSizeIn,
+                                           int nBlockYSizeIn)
+    : VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize,
+                           nBlockXSizeIn, nBlockYSizeIn),
       m_poPrivate(nullptr), eSourceTransferType(GDT_Unknown)
 {
     m_poPrivate = new VRTDerivedRasterBandPrivateData;

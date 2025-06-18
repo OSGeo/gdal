@@ -1798,6 +1798,16 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
     {
         VRTSourcedRasterBand *poBand = nullptr;
 
+        int nBlockXSizeIn =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "0"));
+        int nBlockYSizeIn =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "0"));
+        if (nBlockXSizeIn == 0 && nBlockYSizeIn == 0)
+        {
+            nBlockXSizeIn = m_nBlockXSize;
+            nBlockYSizeIn = m_nBlockYSize;
+        }
+
         /* ---- Check for our sourced band 'derived' subclass ---- */
         if (pszSubClass != nullptr &&
             EQUAL(pszSubClass, "VRTDerivedRasterBand"))
@@ -1805,9 +1815,9 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
 
             /* We'll need a pointer to the subclass in case we need */
             /* to set the new band's pixel function below. */
-            VRTDerivedRasterBand *poDerivedBand =
-                new VRTDerivedRasterBand(this, GetRasterCount() + 1, eType,
-                                         GetRasterXSize(), GetRasterYSize());
+            VRTDerivedRasterBand *poDerivedBand = new VRTDerivedRasterBand(
+                this, GetRasterCount() + 1, eType, GetRasterXSize(),
+                GetRasterYSize(), nBlockXSizeIn, nBlockYSizeIn);
 
             /* Set the pixel function options it provided. */
             const char *pszFuncName =
@@ -1860,15 +1870,6 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         }
         else
         {
-            int nBlockXSizeIn =
-                atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "0"));
-            int nBlockYSizeIn =
-                atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "0"));
-            if (nBlockXSizeIn == 0 && nBlockYSizeIn == 0)
-            {
-                nBlockXSizeIn = m_nBlockXSize;
-                nBlockYSizeIn = m_nBlockYSize;
-            }
             /* ---- Standard sourced band ---- */
             poBand = new VRTSourcedRasterBand(
                 this, GetRasterCount() + 1, eType, GetRasterXSize(),

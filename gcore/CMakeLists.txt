@@ -4,6 +4,7 @@ add_library(
   gdal_adbc.cpp
   gdalalgorithm.cpp
   gdalalgorithmregistry.cpp
+  gdalcomputedrasterband.cpp
   gdalopeninfo.cpp
   gdaldriver.cpp
   gdaldrivermanager.cpp
@@ -152,6 +153,10 @@ endif ()
 if (ENABLE_PAM)
   target_compile_definitions(gcore PRIVATE -DPAM_ENABLED)
 endif ()
+
+if (GDAL_USE_MUPARSER)
+  target_compile_definitions(gcore PRIVATE -DHAVE_MUPARSER)
+endif()
 
 if (NOT GDAL_ENABLE_DRIVER_DERIVED)
   target_compile_definitions(gcore PRIVATE -DWITHOUT_DERIVED)
