@@ -244,14 +244,10 @@ retStringAndCPLFree* EscapeString(const char* str, int scheme) {
 %clear (int len, unsigned char *bin_string);
 #elif defined(SWIGCSHARP)
 %inline %{
-retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
-    return CPLEscapeString((const char*)bin_string, len, scheme);
-}
-%}
-
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 }
+%}
 #elif defined(SWIGPYTHON)
 
 %feature( "kwargs" ) wrapper_EscapeString;
