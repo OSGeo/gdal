@@ -99,6 +99,45 @@ static std::string SetBandIndices(const std::string &origExpression,
     return expression;
 }
 
+static bool PosIsFunctionArgument(const std::string &expression, size_t pos)
+{
+    // If this position is a function argument, we should be able to
+    // scan backwards for a ( and find only variable names, literals or commas.
+    while (pos != 0)
+    {
+        char c = expression[pos];
+        if (c == '(')
+        {
+            pos--;
+            break;
+        }
+        if (!(isspace(c) || isalnum(c) || c == ',' || c == '.' || c == '[' ||
+              c == ']' || c == '_'))
+        {
+            return false;
+        }
+        pos--;
+    }
+
+    // Now what we've found the (, the preceding character should be part of a
+    // value function name
+    while (pos != 0)
+    {
+        char c = expression[pos];
+        if (isalnum(c) || c == '_')
+        {
+            return true;
+        }
+        if (!isspace(c))
+        {
+            return false;
+        }
+        pos--;
+    }
+
+    return false;
+}
+
 /**
  *  Replace X by X[1],X[2],...X[n]
  */
@@ -114,7 +153,8 @@ SetBandIndicesFlattenedExpression(const std::string &origExpression,
     {
         auto end = pos + variable.size();
 
-        if (MatchIsCompleteVariableNameWithNoIndex(expression, pos, end))
+        if (MatchIsCompleteVariableNameWithNoIndex(expression, pos, end) &&
+            PosIsFunctionArgument(expression, pos))
         {
             std::string newExpr = expression.substr(0, pos);
             for (int i = 1; i <= nBands; ++i)
@@ -373,48 +413,42 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
             CPLAssert(it != sourceProps.end());
             const auto &props = it->second;
 
-            if (!flatten)
+            bool expressionAppliedPerBand = false;
+            if (dialect == "builtin")
             {
-                bool expressionUsesAllBands = false;
-                if (dialect == "builtin")
-                {
-                    expressionUsesAllBands = true;
-                }
-                else
-                {
-                    const int nDefaultInBand = std::min(props.nBands, nOutBand);
-
-                    CPLString expressionBandVariable;
-                    expressionBandVariable.Printf("%s[%d]", source_name.c_str(),
-                                                  nDefaultInBand);
-
-                    bandExpression =
-                        SetBandIndices(bandExpression, source_name,
-                                       nDefaultInBand, expressionUsesAllBands);
-                }
-
-                if (expressionUsesAllBands)
-                {
-                    if (nOutBands <= 1)
-                    {
-                        nOutBands = props.nBands;
-                    }
-                    else if (props.nBands != 1 && props.nBands != nOutBands)
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Expression cannot operate on all bands of "
-                                 "rasters with incompatible numbers of bands "
-                                 "(source %s has %d bands but expected to have "
-                                 "1 or %d bands).",
-                                 source_name.c_str(), props.nBands, nOutBands);
-                        return false;
-                    }
-                }
+                expressionAppliedPerBand = !flatten;
             }
-            else if (dialect != "builtin")
+            else
             {
-                bandExpression = SetBandIndicesFlattenedExpression(
-                    bandExpression, source_name, props.nBands);
+                const int nDefaultInBand = std::min(props.nBands, nOutBand);
+
+                if (flatten)
+                {
+                    bandExpression = SetBandIndicesFlattenedExpression(
+                        bandExpression, source_name, props.nBands);
+                }
+
+                bandExpression =
+                    SetBandIndices(bandExpression, source_name, nDefaultInBand,
+                                   expressionAppliedPerBand);
+            }
+
+            if (expressionAppliedPerBand)
+            {
+                if (nOutBands <= 1)
+                {
+                    nOutBands = props.nBands;
+                }
+                else if (props.nBands != 1 && props.nBands != nOutBands)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Expression cannot operate on all bands of "
+                             "rasters with incompatible numbers of bands "
+                             "(source %s has %d bands but expected to have "
+                             "1 or %d bands).",
+                             source_name.c_str(), props.nBands, nOutBands);
+                    return false;
+                }
             }
 
             // Create a <SimpleSource> for each input band that is used in
@@ -431,8 +465,8 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 {
                     inBandVariable.Printf("%s[%d]", source_name.c_str(),
                                           nInBand);
-                    if (!flatten && bandExpression.find(inBandVariable) ==
-                                        std::string::npos)
+                    if (bandExpression.find(inBandVariable) ==
+                        std::string::npos)
                     {
                         continue;
                     }
