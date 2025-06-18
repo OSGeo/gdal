@@ -496,6 +496,7 @@ OGRSpatialReferenceH CPL_DLL OSRConvertToOtherProjection(
     const char *const *papszOptions);
 
 const char CPL_DLL *OSRGetName(OGRSpatialReferenceH hSRS);
+const char CPL_DLL *OSRGetCelestialBodyName(OGRSpatialReferenceH hSRS);
 
 OGRErr CPL_DLL CPL_STDCALL OSRSetAttrValue(OGRSpatialReferenceH hSRS,
                                            const char *pszNodePath,
@@ -973,6 +974,10 @@ typedef struct
     /** Name of the projection method for a projected CRS. Might be NULL even
      *for projected CRS in some cases. */
     char *pszProjectionMethod;
+    /** Name of the celestial body of the CRS (e.g. "Earth").
+     * @since GDAL 3.12, and filled only if PROJ >= 8.1
+     */
+    char *pszCelestialBodyName;
 } OSRCRSInfo;
 
 /** \brief Structure to describe optional parameters to

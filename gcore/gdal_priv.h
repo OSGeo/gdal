@@ -756,6 +756,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr GetGeoTransform(double *padfTransform);
     virtual CPLErr SetGeoTransform(double *padfTransform);
 
+    virtual CPLErr GetExtent(OGREnvelope *psExtent,
+                             const OGRSpatialReference *poCRS = nullptr) const;
+    virtual CPLErr GetExtentWGS84LongLat(OGREnvelope *psExtent) const;
+
     CPLErr GeolocationToPixelLine(
         double dfGeolocX, double dfGeolocY, const OGRSpatialReference *poSRS,
         double *pdfPixel, double *pdfLine,

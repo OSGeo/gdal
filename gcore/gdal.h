@@ -994,6 +994,18 @@ typedef enum
     "UpdateRelationship" /**< Dataset capability for supporting                \
                             UpdateRelationship()*/
 
+/** Dataset capability if GDALDataset::GetExtent() is fast.
+ *
+ * @since 3.12
+ */
+#define GDsCFastGetExtent "FastGetExtent"
+
+/** Dataset capability if GDALDataset::GetExtentWGS84LongLat() is fast.
+ *
+ * @since 3.12
+ */
+#define GDsCFastGetExtentWGS84LongLat "FastGetExtentWGS84LongLat"
+
 void CPL_DLL CPL_STDCALL GDALAllRegister(void);
 void CPL_DLL GDALRegisterPlugins(void);
 CPLErr CPL_DLL GDALRegisterPlugin(const char *name);
@@ -1314,6 +1326,10 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetProjection(GDALDatasetH, const char *);
 CPLErr CPL_DLL GDALSetSpatialRef(GDALDatasetH, OGRSpatialReferenceH);
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform(GDALDatasetH, double *);
 CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, double *);
+
+CPLErr CPL_DLL GDALGetExtent(GDALDatasetH, OGREnvelope *,
+                             OGRSpatialReferenceH hCRS);
+CPLErr CPL_DLL GDALGetExtentWGS84LongLat(GDALDatasetH, OGREnvelope *);
 
 CPLErr CPL_DLL GDALDatasetGeolocationToPixelLine(
     GDALDatasetH, double dfGeolocX, double dfGeolocY, OGRSpatialReferenceH hSRS,

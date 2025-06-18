@@ -264,3 +264,54 @@ def test_gdalalg_raster_reproject_both_num_threads_and_warp_option(tmp_vsimem):
                 out_filename,
             ],
         )
+
+
+def test_gdalalg_raster_reproject_complete_dst_crs():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster reproject ../gcore/data/byte.tif --dst-crs=EPSG:"
+    )
+    assert "4326\\ --" in out
+    assert "2193\\ --" not in out  # NZGD2000
+
+
+@pytest.mark.require_proj(8, 1)
+def test_gdalalg_raster_reproject_complete_dst_crs_iau_earth():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster reproject ../gcore/data/byte.tif --dst-crs=IAU:"
+    )
+    assert "Earth" in out
+    assert "Mars" not in out
+
+
+@pytest.mark.require_proj(8, 1)
+def test_gdalalg_raster_reproject_complete_dst_crs_iau_mars(tmp_path):
+    import gdaltest
+    import test_cli_utilities
+
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_path / "in.tif", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("IAU:49900")  # Mars sphere
+    ds.SetSpatialRef(srs)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds = None
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster reproject {tmp_path}/in.tif --dst-crs=IAU:"
+    )
+    assert "Earth" not in out
+    assert "Mars" in out

@@ -274,6 +274,8 @@
 %constant char *GDsCAddRelationship    = "AddRelationship";
 %constant char *GDsCDeleteRelationship = "DeleteRelationship";
 %constant char *GDsCUpdateRelationship = "UpdateRelationship";
+%constant char *GDsCFastGetExtent = "FastGetExtent";
+%constant char *GDsCFastGetExtentWGS84LongLat = "FastGetExtentWGS84LongLat";
 
 #else
 
@@ -435,6 +437,8 @@
 #define GDsCAddRelationship    "AddRelationship"
 #define GDsCDeleteRelationship "DeleteRelationship"
 #define GDsCUpdateRelationship "UpdateRelationship"
+#define GDsCFastGetExtent "FastGetExtent"
+#define GDsCFastGetExtentWGS84LongLat "FastGetExtentWGS84LongLat"
 
 #endif
 
