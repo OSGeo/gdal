@@ -13,6 +13,7 @@
 #include "vrtexpression.h"
 #include "cpl_string.h"
 
+#include <cmath>
 #include <limits>
 #include <map>
 #include <optional>
@@ -22,6 +23,11 @@ namespace gdal
 {
 
 /*! @cond Doxygen_Suppress */
+
+static mu::value_type isnan(mu::value_type x)
+{
+    return std::isnan(x);
+}
 
 static std::optional<std::string> Sanitize(const std::string &osVariable)
 {
@@ -109,6 +115,8 @@ class MuParserExpression::Impl
 
         try
         {
+            m_oParser.DefineFun(_T("isnan"), isnan);
+
             std::string tmpExpression(m_osExpression);
 
             for (const auto &[osFrom, osTo] : m_oSubstitutions)

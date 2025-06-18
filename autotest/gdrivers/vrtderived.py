@@ -1211,6 +1211,13 @@ def vrt_expression_xml(tmpdir, expression, dialect, sources):
             id="muparser nan comparison is false in conditional",
         ),
         pytest.param(
+            "isnan(B3) ? B1 : B2",
+            (5, 9, float("nan")),
+            5,
+            ["muparser"],
+            id="muparser isnan",
+        ),
+        pytest.param(
             "if (B1 > 5) B1",
             (1,),
             float("nan"),
