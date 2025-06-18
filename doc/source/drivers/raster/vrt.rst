@@ -1234,6 +1234,9 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
          With muparser, it is expanded into a list of all input bands.
 
+       Starting with GDAL 3.12, the variables ``_CENTER_X_`` and ``_CENTER_Y_`` can be
+       included in the expression to access cell center coordinates.
+
        ExprTk and muparser support a number of built-in functions and control structures.
 
        Refer to the documentation of those libraries for details.
