@@ -2360,7 +2360,14 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     }
 
     kdu_params *poSizeRef = &oSizeParams;
-    poSizeRef->finalize();
+    try
+    {
+        poSizeRef->finalize();
+    }
+    catch (...)
+    {
+        return nullptr;
+    }
 
     // Open output file, and setup codestream.
     if (!pfnProgress(0.0, nullptr, pProgressData))
