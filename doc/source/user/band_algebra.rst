@@ -57,7 +57,12 @@ The capability is similar to the one offered by the :ref:`gdal_raster_calc` prog
 .. note:: The comparison operators, including the ternary one, require a GDAL build against the muparser library.
 
 .. note:: The operations are also available in the C API, for potential bindings
-          to other languages. Cf :cpp:func:`GDALRasterBandAddBand`, :cpp:func:`GDALRasterBandAddDouble`, etc.
+          to other languages. Cf :cpp:func:`GDALRasterBandBinaryOpBand`,
+          :cpp:func:`GDALRasterBandBinaryOpDouble`, :cpp:func:`GDALRasterBandBinaryOpDoubleToBand`,
+          :cpp:func:`GDALRasterBandIfThenElse`, :cpp:func:`GDALRasterBandAsDataType`,
+          :cpp:func:`GDALMaximumOfNBands`, :cpp:func:`GDALRasterBandMaxConstant`,
+          :cpp:func:`GDALMinimumOfNBands`, :cpp:func:`GDALRasterBandMinConstant` and
+          :cpp:func:`GDALMeanOfNBands`
 
 Examples
 --------

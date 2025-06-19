@@ -685,16 +685,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_Add(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_ADD, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_AddDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_ADD, other)._add_parent_references([self])
 
-  def __radd__(self, other):
+  def __radd__(self, constant):
       """Add a constant to this raster band
 
          The resulting band is lazily evaluated.
       """
-      return self.__add__(other)
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_ADD, self)._add_parent_references([self])
 
   def __sub__(self, other):
       """Subtract this raster band with a raster band, a numpy array or constant
@@ -703,17 +703,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_Sub(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_SUB, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_SubDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_SUB, other)._add_parent_references([self])
 
-  def __rsub__(self, other):
+  def __rsub__(self, constant):
       """Subtract a constant with a raster band
 
          The resulting band is lazily evaluated.
       """
-      other = Band._get_as_band_if_possible(other)
-      return _gdal.Band_SubDoubleToBand(self, other)._add_parent_references([self])
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_SUB, self)._add_parent_references([self])
 
   def __mul__(self, other):
       """Multiply this raster band with a raster band, a numpy array or a constant
@@ -722,16 +721,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_Mul(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_MUL, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_MulDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_MUL, other)._add_parent_references([self])
 
-  def __rmul__(self, other):
+  def __rmul__(self, constant):
       """Multiply a constant with this raster band
 
          The resulting band is lazily evaluated.
       """
-      return self.__mul__(other)
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_MUL, self)._add_parent_references([self])
 
   def __truediv__(self, other):
       """Divide this raster band by a raster band, a numpy array or a constant
@@ -740,17 +739,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_Div(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_DIV, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_DivDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_DIV, other)._add_parent_references([self])
 
-  def __rtruediv__(self, other):
+  def __rtruediv__(self, constant):
       """Divide a constant by a raster band
 
          The resulting band is lazily evaluated.
       """
-      other = Band._get_as_band_if_possible(other)
-      return _gdal.Band_DivDoubleByBand(self, other)._add_parent_references([self])
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_DIV, self)._add_parent_references([self])
 
   def __gt__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -760,9 +758,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_GreaterThan(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_GT, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_GreaterThanDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_GT, other)._add_parent_references([self])
 
   def __ge__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -772,9 +770,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_GreaterOrEqualTo(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_GE, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_GreaterOrEqualToDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_GE, other)._add_parent_references([self])
 
   def __lt__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -784,9 +782,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_LesserThan(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_LT, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_LesserThanDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_LT, other)._add_parent_references([self])
 
   def __le__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -796,9 +794,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_LesserOrEqualTo(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_LE, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_LesserOrEqualToDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_LE, other)._add_parent_references([self])
 
   def __eq__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -808,9 +806,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_EqualTo(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_EQ, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_EqualToDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_EQ, other)._add_parent_references([self])
 
   def __ne__(self, other):
       """Return a band whose value is 1 if the pixel value of the left operand
@@ -820,9 +818,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """
       other = Band._get_as_band_if_possible(other)
       if isinstance(other, Band):
-          return _gdal.Band_NotEqualTo(self, other)._add_parent_references([self, other])
+          return _gdal.Band_BinaryOpBand(self, GRABO_NE, other)._add_parent_references([self, other])
       else:
-          return _gdal.Band_NotEqualToDouble(self, other)._add_parent_references([self])
+          return _gdal.Band_BinaryOpDouble(self, GRABO_NE, other)._add_parent_references([self])
 
   def astype(self, dt):
       """Cast this band to the specified data type

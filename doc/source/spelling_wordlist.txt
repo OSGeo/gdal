@@ -1271,6 +1271,7 @@ hashset
 hashtable
 hAttr
 Hayford
+hBand
 hComp
 hCondBand
 hCT
