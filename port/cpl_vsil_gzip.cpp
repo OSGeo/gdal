@@ -3527,7 +3527,8 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
         uint64_t nSOZIPStartData = 0;
     };
 
-    bool GetFileInfo(const char *pszFilename, VSIFileInZipInfo &info);
+    bool GetFileInfo(const char *pszFilename, VSIFileInZipInfo &info,
+                     bool bSetError);
 
   public:
     VSIZipFilesystemHandler() = default;
@@ -4049,11 +4050,13 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 /************************************************************************/
 
 bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
-                                          VSIFileInZipInfo &info)
+                                          VSIFileInZipInfo &info,
+                                          bool bSetError)
 {
 
     CPLString osZipInFileName;
-    char *zipFilename = SplitFilename(pszFilename, osZipInFileName, TRUE);
+    char *zipFilename =
+        SplitFilename(pszFilename, osZipInFileName, true, bSetError);
     if (zipFilename == nullptr)
         return false;
 
@@ -4302,7 +4305,7 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 
 VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
                                                 const char *pszAccess,
-                                                bool /* bSetError */,
+                                                bool bSetError,
                                                 CSLConstList /* papszOptions */)
 {
 
@@ -4319,7 +4322,7 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
     }
 
     VSIFileInZipInfo info;
-    if (!GetFileInfo(pszFilename, info))
+    if (!GetFileInfo(pszFilename, info, bSetError))
         return nullptr;
 
 #ifdef ENABLE_DEFLATE64
@@ -4382,7 +4385,7 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
                                                 CSLConstList /*papszOptions*/)
 {
     VSIFileInZipInfo info;
-    if (!GetFileInfo(pszFilename, info))
+    if (!GetFileInfo(pszFilename, info, true))
         return nullptr;
 
     if (!pszDomain)
@@ -4472,7 +4475,8 @@ int VSIZipFilesystemHandler::Mkdir(const char *pszDirname, long /* nMode */)
 char **VSIZipFilesystemHandler::ReadDirEx(const char *pszDirname, int nMaxFiles)
 {
     CPLString osInArchiveSubDir;
-    char *zipFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
+    char *zipFilename =
+        SplitFilename(pszDirname, osInArchiveSubDir, true, true);
     if (zipFilename == nullptr)
         return nullptr;
 
@@ -4503,7 +4507,8 @@ int VSIZipFilesystemHandler::Stat(const char *pszFilename,
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    char *zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, TRUE);
+    char *zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, true,
+                                      (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
     if (zipFilename == nullptr)
         return -1;
 
@@ -4560,7 +4565,8 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
+    char *zipFilename =
+        SplitFilename(pszFilename, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return nullptr;
     CPLString osZipFilename = zipFilename;
@@ -4685,7 +4691,7 @@ int VSIZipFilesystemHandler::CopyFile(const char *pszSource,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename = SplitFilename(pszTarget, osZipInFileName, FALSE);
+    char *zipFilename = SplitFilename(pszTarget, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return -1;
     CPLString osZipFilename = zipFilename;
