@@ -4569,3 +4569,21 @@ def test_gdalwarp_lib_int_max_sized_raster(tmp_vsimem):
             transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
             height=2147483647,
         )
+
+
+###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/12583
+
+
+def test_gdalwarp_te_srs_check_extent():
+
+    out_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-te 0 -90 6 0 -te_srs EPSG:4326 -t_srs EPSG:32631 -f MEM",
+    )
+    assert out_ds.RasterXSize == 18
+    assert out_ds.RasterYSize == 273
+    assert out_ds.GetGeoTransform() == pytest.approx(
+        (166021, 37108, 0.0, 0.0, 0.0, -36622), abs=1000
+    )
