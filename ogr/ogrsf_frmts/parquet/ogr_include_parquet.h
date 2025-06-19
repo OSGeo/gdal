@@ -54,6 +54,10 @@
 #include "arrow/dataset/scanner.h"
 #endif
 
+#ifdef GDAL_USE_ARROWCOMPUTE
+#include <arrow/compute/api.h>
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
