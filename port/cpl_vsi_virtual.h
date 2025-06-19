@@ -504,7 +504,7 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                         VSIArchiveReader *poReader = nullptr);
     virtual char *SplitFilename(const char *pszFilename,
                                 CPLString &osFileInArchive,
-                                int bCheckMainFileExists);
+                                bool bCheckMainFileExists, bool bSetError);
     virtual VSIArchiveReader *OpenArchiveFile(const char *archiveFilename,
                                               const char *fileInArchiveName);
     virtual int FindFileInArchive(const char *archiveFilename,
