@@ -2770,7 +2770,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                             int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-
     if (GDALDataTypeIsComplex(eSrcType))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2785,8 +2784,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     const bool bPropagateNoData = CPLTestBool(
         CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
-
-    std::unique_ptr<gdal::MathExpression> poExpression;
 
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
 
@@ -2811,7 +2808,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         pszDialect = "muparser";
     }
 
-    poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
 
     // cppcheck-suppress knownConditionTrueFalse
     if (!poExpression)
@@ -2891,6 +2888,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
+            double &dfResult = padfResults.get()[iCol];
             bool resultIsNoData = false;
 
             for (int iSrc = 0; iSrc < nSources; iSrc++)
@@ -2923,7 +2921,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
             if (resultIsNoData)
             {
-                padfResults.get()[iCol] = dfNoData;
+                dfResult = dfNoData;
             }
             else
             {
@@ -2932,7 +2930,12 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     return CE_Failure;
                 }
 
-                padfResults.get()[iCol] = poExpression->Results()[0];
+                dfResult = poExpression->Results()[0];
+
+                if (std::isnan(dfResult) && GDALDataTypeIsInteger(eBufType))
+                {
+                    dfResult = dfNoData;
+                }
             }
         }
 

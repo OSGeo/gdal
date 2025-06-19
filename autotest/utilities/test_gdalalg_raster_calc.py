@@ -128,6 +128,33 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
         np.testing.assert_array_equal(result, [[2, float("nan")], [float("nan"), 8]])
 
 
+@pytest.mark.parametrize("output_type", (gdal.GDT_Int16, gdal.GDT_Float32))
+def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Float32
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.GetRasterBand(1).Fill(-999)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["calc"] = "X + 20"
+    calc["output-format"] = "stream"
+    calc["output-data-type"] = output_type
+
+    assert calc.Run()
+
+    result = calc["output"].GetDataset().ReadAsMaskedArray()
+
+    if output_type == gdal.GDT_Int16:
+        assert np.all(result.mask)
+    else:
+        assert np.isnan(result)
+
+
 def test_gdalalg_raster_calc_creation_options(calc, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"
