@@ -529,7 +529,8 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
 
 VSIVirtualHandle *VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
                                                        const char *pszAccess,
-                                                       bool, CSLConstList)
+                                                       bool bSetError,
+                                                       CSLConstList)
 {
     if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
     {
@@ -540,7 +541,7 @@ VSIVirtualHandle *VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
 
     CPLString osFileInArchive;
     char *pszArchiveFileName =
-        SplitFilename(pszFilename, osFileInArchive, TRUE);
+        SplitFilename(pszFilename, osFileInArchive, true, bSetError);
     if (pszArchiveFileName == nullptr)
         return nullptr;
 

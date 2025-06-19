@@ -555,7 +555,7 @@ VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
 
 VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
                                                 const char *pszAccess,
-                                                bool /* bSetError */,
+                                                bool bSetError,
                                                 CSLConstList /* papszOptions */)
 {
 
@@ -567,7 +567,8 @@ VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
     }
 
     CPLString osTarInFileName;
-    char *tarFilename = SplitFilename(pszFilename, osTarInFileName, TRUE);
+    char *tarFilename =
+        SplitFilename(pszFilename, osTarInFileName, true, bSetError);
     if (tarFilename == nullptr)
         return nullptr;
 
