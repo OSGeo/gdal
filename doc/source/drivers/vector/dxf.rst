@@ -418,7 +418,7 @@ The driver supports the following dataset creation options:
       :since: 3.11
 
       Drawing units for the model space
-      (`$INSUNITS <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8-htm.html>`__ system variable).
+      (`$INSUNITS <https://help.autodesk.com/view/ACD/2018/ENU/?guid=GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8>`__ system variable).
       The default ``AUTO`` mode first check if the written layer has a projected
       CRS, and if so uses is linear units to determine the value of ``$INSUNITS``.
       Otherwise it fallbacks to the value of the header template (``HEADER_VALUE`` mode),
@@ -430,7 +430,7 @@ The driver supports the following dataset creation options:
       :since: 3.11
 
       Whether the current drawing uses imperial or metric hatch pattern and linetype
-      (`$MEASUREMENT <https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-1D074C55-0B63-482E-8A37-A52AC0C7C8FE-htm.html>`__ system variable).
+      (`$MEASUREMENT <https://help.autodesk.com/view/ACD/2018/ENU/?guid=GUID-1D074C55-0B63-482E-8A37-A52AC0C7C8FE>`__ system variable).
       Defaults to the value of the header template, which is ``IMPERIAL``.
 
 
@@ -512,7 +512,7 @@ See also
 List of known issues :source_file:`ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md`
 
 `AutoCAD 2000 DXF
-Reference <http://www.autodesk.com/techpubs/autocad/acad2000/dxf/>`__
+Reference <https://web.archive.org/web/20150923180435/http://www.autodesk.com/techpubs/autocad/acad2000/dxf/>`__
 
 `AutoCAD 2014 DXF
 Reference <http://images.autodesk.com/adsk/files/autocad_2014_pdf_dxf_reference_enu.pdf>`__
