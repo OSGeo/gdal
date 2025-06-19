@@ -26,6 +26,8 @@
 #include <fcntl.h>
 #include <direct.h>
 
+#include <cwchar>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIWin32FilesystemHandler                      */
@@ -1181,28 +1183,58 @@ bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
 std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
     const std::string &osFilename) const
 {
+    constexpr int MAX_ITERS = 4;
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar(osFilename.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
-        wchar_t longPath[MAX_PATH];
-        DWORD result = GetLongPathNameW(pwszFilename, longPath, MAX_PATH);
+        std::wstring longPath;
+        longPath.resize(std::wcslen(pwszFilename) + 256);
+        for (int i = 0; i < MAX_ITERS; ++i)
+        {
+            DWORD result =
+                GetLongPathNameW(pwszFilename, longPath.data(),
+                                 static_cast<DWORD>(longPath.size()));
+            if (result <= longPath.size())
+            {
+                longPath.resize(result);
+                break;
+            }
+            if (result == 0 || i == MAX_ITERS - 1)
+            {
+                CPLFree(pwszFilename);
+                return osFilename;
+            }
+            longPath.resize(longPath.size() * 2);
+        }
         CPLFree(pwszFilename);
-        if (result == 0 || result > MAX_PATH)
-            return osFilename;
-        char *pszTmp = CPLRecodeFromWChar(longPath, CPL_ENC_UCS2, CPL_ENC_UTF8);
+        char *pszTmp =
+            CPLRecodeFromWChar(longPath.data(), CPL_ENC_UCS2, CPL_ENC_UTF8);
         std::string osRet(pszTmp);
         CPLFree(pszTmp);
         return osRet;
     }
     else
     {
-        char longPath[MAX_PATH];
-        DWORD result = GetLongPathNameA(osFilename.c_str(), longPath, MAX_PATH);
-        if (result == 0 || result > MAX_PATH)
-            return osFilename;
-        std::string osRet(longPath);
-        return osRet;
+        std::string longPath;
+        longPath.resize(osFilename.size() + 256);
+        for (int i = 0; i < MAX_ITERS; ++i)
+        {
+            DWORD result =
+                GetLongPathNameA(osFilename.c_str(), longPath.data(),
+                                 static_cast<DWORD>(longPath.size()));
+            if (result <= longPath.size())
+            {
+                longPath.resize(result);
+                break;
+            }
+            if (result == 0 || i == MAX_ITERS - 1)
+            {
+                return osFilename;
+            }
+            longPath.resize(longPath.size() * 2);
+        }
+        return longPath;
     }
 }
 
