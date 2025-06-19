@@ -4,6 +4,8 @@
 Programs
 ================================================================================
 
+.. _programs_gdal:
+
 "gdal" application
 ------------------
 
@@ -303,6 +305,8 @@ Driver specific commands
     - :ref:`gdal_driver_openfilegdb_repack`: Repack in-place a FileGeodabase dataset
     - :ref:`gdal_driver_pdf_list_layers`: Return the list of layers of a PDF file.
 
+
+.. _programs_traditional:
 
 "Traditional" applications
 --------------------------
