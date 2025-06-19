@@ -14,6 +14,7 @@
 #include "shapefil_private.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -687,6 +688,16 @@ DBFHandle SHPAPI_CALL DBFCreateLL(const char *pszFilename,
     SAFile fp = psHooks->FOpen(pszFullname, "wb+", psHooks->pvUserData);
     if (fp == SHPLIB_NULLPTR)
     {
+        const size_t nMessageLen = strlen(pszFullname) + 256;
+        char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
+        if (pszMessage)
+        {
+            snprintf(pszMessage, nMessageLen, "Failed to create file %s: %s",
+                     pszFullname, strerror(errno));
+            psHooks->Error(pszMessage);
+            free(pszMessage);
+        }
+
         free(pszFullname);
         return SHPLIB_NULLPTR;
     }
