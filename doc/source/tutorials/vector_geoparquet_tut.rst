@@ -245,13 +245,13 @@ Let's apply a spatial filter using a bounding box to retrieve data. Because of t
     Other than that, the commands are the same.
 
 Now let's check the output. While you can open the file in a GIS application like QGIS, you can also quickly preview it by "burning"
-the vector data into an image using GDAL.
+the vector data into an image using GDAL using :ref:`rasterize <gdal_vector_rasterize>`. We use the ``init`` option to set a white background,
+and then pass in RGB values as 3 ``burn`` parameters.
 
 .. tabs::
 
    .. code-tab:: console  gdal CLI
 
-        # pass in 3 -burn parameters representing the RGB color values
         $ gdal vector rasterize \
             --burn 170 --burn 74 --burn 68 \
             --size 400,400 \
