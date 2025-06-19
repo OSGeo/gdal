@@ -91,7 +91,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
     vsi_l_offset m_nStride = 0;
     bool m_bError = false;
     bool m_bByteSwapIntegers = false;
-    RawRasterBand::ByteOrder m_eBREALByteOrder;
+    RawRasterBand::ByteOrder m_eBREALByteOrder{};
 
     enum Type
     {
@@ -113,8 +113,10 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
         Type eType;
     };
 
-    std::vector<Field> m_aoFields;
-    std::vector<GByte> m_abyRecord;
+    std::vector<Field> m_aoFields{};
+    std::vector<GByte> m_abyRecord{};
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRVICARBinaryPrefixesLayer)
 
     OGRFeature *GetNextRawFeature();
 
@@ -775,19 +777,19 @@ static void basic_encrypt(int *run, int *old, int *vold, int val,
     if (*run < 4)
     {
         if (abs(*old - *vold) < 4)
-            emit1((unsigned char)(*old - *vold + 3), 3, reg1, bit1ptr,
-                  coded_buffer, coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(*old - *vold + 3), 3, reg1,
+                  bit1ptr, coded_buffer, coded_buffer_pos, coded_buffer_size);
         else
         {
-            emit1((unsigned char)14, 4, reg1, bit1ptr, coded_buffer,
-                  coded_buffer_pos, coded_buffer_size);
-            emit1((unsigned char)(*old), 8, reg1, bit1ptr, coded_buffer,
-                  coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(14), 4, reg1, bit1ptr,
+                  coded_buffer, coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(*old), 8, reg1, bit1ptr,
+                  coded_buffer, coded_buffer_pos, coded_buffer_size);
         }
 
         while (*run > 1)
         {
-            emit1((unsigned char)3, 3, reg1, bit1ptr, coded_buffer,
+            emit1(static_cast<unsigned char>(3), 3, reg1, bit1ptr, coded_buffer,
                   coded_buffer_pos, coded_buffer_size);
             (*run)--;
         }
@@ -797,26 +799,26 @@ static void basic_encrypt(int *run, int *old, int *vold, int val,
     }
     else
     {
-        emit1((unsigned char)15, 4, reg1, bit1ptr, coded_buffer,
+        emit1(static_cast<unsigned char>(15), 4, reg1, bit1ptr, coded_buffer,
               coded_buffer_pos, coded_buffer_size);
         if (*run < 19)
         {
-            emit1((unsigned char)(*run - 4), 4, reg1, bit1ptr, coded_buffer,
-                  coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(*run - 4), 4, reg1, bit1ptr,
+                  coded_buffer, coded_buffer_pos, coded_buffer_size);
         }
         else
         {
-            emit1((unsigned char)15, 4, reg1, bit1ptr, coded_buffer,
-                  coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(15), 4, reg1, bit1ptr,
+                  coded_buffer, coded_buffer_pos, coded_buffer_size);
             if (*run < 274)
             {
-                emit1((char)(*run - 19), 8, reg1, bit1ptr, coded_buffer,
-                      coded_buffer_pos, coded_buffer_size);
+                emit1(static_cast<char>(*run - 19), 8, reg1, bit1ptr,
+                      coded_buffer, coded_buffer_pos, coded_buffer_size);
             }
             else
             {
-                emit1((unsigned char)255, 8, reg1, bit1ptr, coded_buffer,
-                      coded_buffer_pos, coded_buffer_size);
+                emit1(static_cast<unsigned char>(255), 8, reg1, bit1ptr,
+                      coded_buffer, coded_buffer_pos, coded_buffer_size);
 
                 unsigned char part0 =
                     static_cast<unsigned char>((*run - 4) & 0xff);
@@ -834,15 +836,15 @@ static void basic_encrypt(int *run, int *old, int *vold, int val,
         }
         if (abs(*old - *vold) < 4)
         {
-            emit1((unsigned char)(*old - *vold + 3), 3, reg1, bit1ptr,
-                  coded_buffer, coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(*old - *vold + 3), 3, reg1,
+                  bit1ptr, coded_buffer, coded_buffer_pos, coded_buffer_size);
         }
         else
         {
-            emit1((unsigned char)7, 3, reg1, bit1ptr, coded_buffer,
+            emit1(static_cast<unsigned char>(7), 3, reg1, bit1ptr, coded_buffer,
                   coded_buffer_pos, coded_buffer_size);
-            emit1((unsigned char)(*old), 8, reg1, bit1ptr, coded_buffer,
-                  coded_buffer_pos, coded_buffer_size);
+            emit1(static_cast<unsigned char>(*old), 8, reg1, bit1ptr,
+                  coded_buffer, coded_buffer_pos, coded_buffer_size);
         }
         *vold = *old;
         *old = val;

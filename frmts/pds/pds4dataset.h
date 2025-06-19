@@ -19,6 +19,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 
+#include <array>
 #include <vector>
 
 class PDS4Dataset;
@@ -57,6 +58,8 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
         CPLXMLNode *psFAO, const CPLString &osPrefix,
         const char *pszTableEltName, CPLString &osDescription);
     void ParseLineEndingOption(CSLConstList papszOptions);
+
+    CPL_DISALLOW_COPY_ASSIGN(PDS4TableBaseLayer)
 
   public:
     PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
@@ -326,7 +329,7 @@ class PDS4Dataset final : public RawDataset
     GDALDataset *m_poExternalDS = nullptr;  // external dataset (GeoTIFF)
     OGRSpatialReference m_oSRS{};
     bool m_bGotTransform = false;
-    double m_adfGeoTransform[6];
+    std::array<double, 6> m_adfGeoTransform = {0, 1, 0, 0, 0, 1};
     CPLString m_osXMLFilename{};
     CPLString m_osImageFilename{};
     CPLString m_osUnits{};
@@ -372,6 +375,8 @@ class PDS4Dataset final : public RawDataset
                                        const char *const *papszOptions);
 
     CPLErr Close() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(PDS4Dataset)
 
   public:
     PDS4Dataset();
@@ -440,12 +445,12 @@ class PDS4RawRasterBand final : public RawRasterBand
 {
     friend class PDS4Dataset;
 
-    bool m_bHasOffset;
-    bool m_bHasScale;
-    bool m_bHasNoData;
-    double m_dfOffset;
-    double m_dfScale;
-    double m_dfNoData;
+    bool m_bHasOffset{};
+    bool m_bHasScale{};
+    bool m_bHasNoData{};
+    double m_dfOffset{};
+    double m_dfScale{};
+    double m_dfNoData{};
 
   public:
     PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
@@ -496,13 +501,15 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
 {
     friend class PDS4Dataset;
 
-    GDALRasterBand *m_poBaseBand;
-    bool m_bHasOffset;
-    bool m_bHasScale;
-    bool m_bHasNoData;
-    double m_dfOffset;
-    double m_dfScale;
-    double m_dfNoData;
+    GDALRasterBand *m_poBaseBand{};
+    bool m_bHasOffset{};
+    bool m_bHasScale{};
+    bool m_bHasNoData{};
+    double m_dfOffset{};
+    double m_dfScale{};
+    double m_dfNoData{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PDS4WrapperRasterBand)
 
   protected:
     virtual GDALRasterBand *
@@ -565,9 +572,11 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
 
 class PDS4MaskBand final : public GDALRasterBand
 {
-    GDALRasterBand *m_poBaseBand;
-    void *m_pBuffer;
-    std::vector<double> m_adfConstants;
+    GDALRasterBand *m_poBaseBand{};
+    void *m_pBuffer{};
+    std::vector<double> m_adfConstants{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PDS4MaskBand)
 
   public:
     PDS4MaskBand(GDALRasterBand *poBaseBand,
