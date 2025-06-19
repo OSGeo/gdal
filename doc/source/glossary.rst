@@ -112,7 +112,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         Well-Known Text for Coordinate Reference Systems. A text format that defines how to describe coordinate reference
         systems and transformations between them in a standardized way.
-        See the `OGC WKT-CRS standard <https://www.ogc.org/standards/wkt-crs/>__.
+        See the `OGC WKT-CRS standard <https://www.ogc.org/standards/wkt-crs/>`__.
 
     WKB
 
