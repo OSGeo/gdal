@@ -19,6 +19,7 @@
 #include "gdalpython.h"
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <vector>
 #include <utility>
@@ -834,7 +835,7 @@ bool VRTDerivedRasterBand::InitializePython()
 
 CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
     const CPLString &osMetadata,
-    const std::vector<int> &anMapBufferIdxToSourceIdx,
+    const std::vector<int> &anMapBufferIdxToSourceIdx, int nXOff, int nYOff,
     std::vector<std::pair<CPLString, CPLString>> &oAdditionalArgs)
 {
 
@@ -867,13 +868,38 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     CPLString osVal;
                     double dfVal = 0;
 
-                    int success;
+                    int success(FALSE);
                     if (osArgName == "NoData")
                         dfVal = this->GetNoDataValue(&success);
                     else if (osArgName == "scale")
                         dfVal = this->GetScale(&success);
                     else if (osArgName == "offset")
                         dfVal = this->GetOffset(&success);
+                    else if (osArgName == "xoff")
+                    {
+                        dfVal = static_cast<double>(nXOff);
+                        success = true;
+                    }
+                    else if (osArgName == "yoff")
+                    {
+                        dfVal = static_cast<double>(nYOff);
+                        success = true;
+                    }
+                    else if (osArgName == "geotransform")
+                    {
+                        std::array<double, 6> gt;
+                        if (GetDataset()->GetGeoTransform(gt.data()) != CE_None)
+                        {
+                            // Do not fail here because the argument is most
+                            // likely not needed by the pixel function. If it
+                            // is needed, the pixel function can emit the error.
+                            continue;
+                        }
+                        osVal = CPLSPrintf(
+                            "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g", gt[0], gt[1],
+                            gt[2], gt[3], gt[4], gt[5]);
+                        success = true;
+                    }
                     else if (osArgName == "source_names")
                     {
                         for (size_t iBuffer = 0;
@@ -1408,7 +1434,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     if (poPixelFunc != nullptr && !poPixelFunc->second.empty())
     {
         if (GetPixelFunctionArguments(poPixelFunc->second,
-                                      anMapBufferIdxToSourceIdx,
+                                      anMapBufferIdxToSourceIdx, nXOff, nYOff,
                                       oAdditionalArgs) != CE_None)
         {
             eErr = CE_Failure;

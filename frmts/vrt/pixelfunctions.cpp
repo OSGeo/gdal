@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
+#include <array>
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
@@ -2754,6 +2755,9 @@ static const char pszExprPixelFuncMetadata[] =
     "       <Value>muparser</Value>"
     "   </Argument>"
     "   <Argument type='builtin' value='source_names' />"
+    "   <Argument type='builtin' value='xoff' />"
+    "   <Argument type='builtin' value='yoff' />"
+    "   <Argument type='builtin' value='geotransform' />"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
@@ -2803,6 +2807,47 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
+    int nXOff = 0;
+    int nYOff = 0;
+    std::array<double, 6> gt;
+    double dfCenterX = 0;
+    double dfCenterY = 0;
+
+    bool includeCenterCoords = false;
+    if (strstr(pszExpression, "_CENTER_X_") ||
+        strstr(pszExpression, "_CENTER_Y_"))
+    {
+        includeCenterCoords = true;
+
+        const char *pszXOff = CSLFetchNameValue(papszArgs, "xoff");
+        nXOff = std::atoi(pszXOff);
+
+        const char *pszYOff = CSLFetchNameValue(papszArgs, "yoff");
+        nYOff = std::atoi(pszYOff);
+
+        const char *pszGT = CSLFetchNameValue(papszArgs, "geotransform");
+        if (pszGT == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "To use _CENTER_X_ or _CENTER_Y_ in an expression, "
+                     "VRTDataset must have a <GeoTransform> element.");
+            return CE_Failure;
+        }
+
+        CPLStringList aosGeoTransform(
+            CSLTokenizeString2(pszGT, ",", CSLT_HONOURSTRINGS));
+        if (aosGeoTransform.size() != 6)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid GeoTransform argument");
+            return CE_Failure;
+        }
+        for (int i = 0; i < 6; i++)
+        {
+            gt[i] = CPLAtof(aosGeoTransform[i]);
+        }
+    }
+
     {
         int iSource = 0;
         for (const auto &osName : aosSourceNames)
@@ -2810,6 +2855,12 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             poExpression->RegisterVariable(osName,
                                            &adfValuesForPixel[iSource++]);
         }
+    }
+
+    if (includeCenterCoords)
+    {
+        poExpression->RegisterVariable("_CENTER_X_", &dfCenterX);
+        poExpression->RegisterVariable("_CENTER_Y_", &dfCenterY);
     }
 
     if (strstr(pszExpression, "BANDS"))
@@ -2833,6 +2884,15 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                 // cppcheck-suppress unreadVariable
                 adfValuesForPixel[iSrc] =
                     GetSrcVal(papoSources[iSrc], eSrcType, ii);
+            }
+
+            if (includeCenterCoords)
+            {
+                // Add 0.5 to pixel / line to move from pixel corner to cell center
+                GDALApplyGeoTransform(gt.data(),
+                                      static_cast<double>(iCol + nXOff) + 0.5,
+                                      static_cast<double>(iLine + nYOff) + 0.5,
+                                      &dfCenterX, &dfCenterY);
             }
 
             if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
