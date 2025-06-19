@@ -142,7 +142,9 @@ typedef void OSRCoordinateTransformationShadow;
 #endif
 %}
 
+#if !defined(SWIGCSHARP) || !defined(FROM_OGR_I)
 typedef int OGRErr;
+#endif
 
 #if defined(SWIGPYTHON)
 %include osr_python.i
@@ -1296,6 +1298,8 @@ public:
 #endif
 #if SWIGPYTHON
   void _TransformPoint4Double( double inout[4] ) {
+#elif defined(SWIGCSHARP)
+  void TransformPoint4D( double inout[4] ) {
 #else
   void TransformPoint( double inout[4] ) {
 #endif
