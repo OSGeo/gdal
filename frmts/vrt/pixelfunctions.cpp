@@ -2872,6 +2872,11 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         poExpression->RegisterVariable("_CENTER_Y_", &dfCenterY);
     }
 
+    if (bHasNoData)
+    {
+        poExpression->RegisterVariable("NODATA", &dfNoData);
+    }
+
     if (strstr(pszExpression, "BANDS"))
     {
         poExpression->RegisterVector("BANDS", &adfValuesForPixel);
