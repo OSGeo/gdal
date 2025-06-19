@@ -10213,6 +10213,33 @@ void GDALRasterBand::ThrowIfNotSameDimensions(const GDALRasterBand &first,
 //! @endcond
 
 /************************************************************************/
+/*                          GDALRasterBandUnaryOp()                     */
+/************************************************************************/
+
+/** Apply a unary operation on this band.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ * @return a handle to free with GDALComputedRasterBandRelease(), or nullptr if error.
+ */
+GDALComputedRasterBandH
+GDALRasterBandUnaryOp(GDALRasterBandH hBand,
+                      GDALRasterAlgebraUnaryOperation eOp)
+{
+    VALIDATE_POINTER1(hBand, __func__, nullptr);
+    switch (eOp)
+    {
+        case GRAUO_LOGICAL_NOT:
+            break;
+    }
+    return new GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                      *(GDALRasterBand::FromHandle(hBand)),
+                                      true);
+}
+
+/************************************************************************/
 /*            ConvertGDALRasterAlgebraBinaryOperationToCpp()            */
 /************************************************************************/
 
@@ -10242,6 +10269,10 @@ ConvertGDALRasterAlgebraBinaryOperationToCpp(
             return GDALComputedRasterBand::Operation::OP_EQ;
         case GRABO_NE:
             break;
+        case GRABO_LOGICAL_AND:
+            return GDALComputedRasterBand::Operation::OP_LOGICAL_AND;
+        case GRABO_LOGICAL_OR:
+            return GDALComputedRasterBand::Operation::OP_LOGICAL_OR;
     }
     return GDALComputedRasterBand::Operation::OP_NE;
 }
@@ -10378,6 +10409,8 @@ GDALRasterBandBinaryOpDoubleToBand(double constant,
         case GRABO_LE:
         case GRABO_EQ:
         case GRABO_NE:
+        case GRABO_LOGICAL_AND:
+        case GRABO_LOGICAL_OR:
         {
             return new GDALComputedRasterBand(
                 ConvertGDALRasterAlgebraBinaryOperationToCpp(eOp), constant,
@@ -11052,6 +11085,176 @@ GDALComputedRasterBand operator!=(double constant, const GDALRasterBand &other)
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
                                   constant, other);
 #endif
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+
+/************************************************************************/
+/*                           operator&&()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left and right
+ * operands is true.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator&&(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_AND, *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator&&()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is true, as well as the constant
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator&&(bool constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_AND, *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator&&()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is true, as well as
+ * the pixel value of the right operand.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator&&(bool constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_AND, constant, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator||()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left or right
+ * operands is true.
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand
+GDALRasterBand::operator||(const GDALRasterBand &other) const
+{
+#ifndef HAVE_MUPARSER
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    ThrowIfNotSameDimensions(*this, other);
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_OR, *this, other);
+#endif
+}
+
+/************************************************************************/
+/*                           operator||()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the pixel value of the left operand
+ * is true, or if the constant is true
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator||(bool constant) const
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_OR, *this, constant);
+#endif
+}
+
+/************************************************************************/
+/*                           operator||()                               */
+/************************************************************************/
+
+/** Return a band whose value is 1 if the constant is true, or
+ * the pixel value of the right operand is true
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand operator||(bool constant, const GDALRasterBand &other)
+{
+#ifndef HAVE_MUPARSER
+    (void)constant;
+    (void)other;
+    return ThrowIfNotMuparser();
+#else
+    return GDALComputedRasterBand(
+        GDALComputedRasterBand::Operation::OP_LOGICAL_OR, constant, other);
+#endif
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+/************************************************************************/
+/*                            operator!()                               */
+/************************************************************************/
+
+/** Return a band whose value is the logical negation of the pixel value
+ *
+ * The resulting band is lazy evaluated. A reference is taken on the input
+ * dataset.
+ *
+ * @since 3.12
+ */
+GDALComputedRasterBand GDALRasterBand::operator!() const
+{
+    return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_NE,
+                                  *this, true);
 }
 
 namespace gdal

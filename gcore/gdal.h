@@ -1955,6 +1955,17 @@ int CPL_DLL CPL_STDCALL GDALGetDataCoverageStatus(GDALRasterBandH hBand,
 
 void CPL_DLL GDALComputedRasterBandRelease(GDALComputedRasterBandH hBand);
 
+/** Raster algebra unary operation */
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT,
+} GDALRasterAlgebraUnaryOperation;
+
+GDALComputedRasterBandH CPL_DLL GDALRasterBandUnaryOp(
+    GDALRasterBandH hBand,
+    GDALRasterAlgebraUnaryOperation eOp) CPL_WARN_UNUSED_RESULT;
+
 /** Raster algebra binary operation */
 typedef enum
 {
@@ -1977,7 +1988,11 @@ typedef enum
     /** Equality test */
     GRABO_EQ,
     /** Non-equality test */
-    GRABO_NE
+    GRABO_NE,
+    /** Logical and */
+    GRABO_LOGICAL_AND,
+    /** Logical or */
+    GRABO_LOGICAL_OR
 } GDALRasterAlgebraBinaryOperation;
 
 GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpBand(

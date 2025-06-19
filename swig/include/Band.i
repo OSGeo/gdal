@@ -720,6 +720,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
       GDALEnablePixelTypeSignedByteWarning(self, b);
   }
 
+  %newobject UnaryOp;
+  GDALComputedRasterBandShadow* UnaryOp(GDALRasterAlgebraUnaryOperation op)
+  {
+      return GDALRasterBandUnaryOp(self, op);
+  }
+
   %apply Pointer NONNULL {GDALRasterBandShadow* other};
   %newobject BinaryOpBand;
   GDALComputedRasterBandShadow* BinaryOpBand(GDALRasterAlgebraBinaryOperation op, GDALRasterBandShadow* other)
@@ -818,6 +824,7 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
 
 #if defined(SWIGPYTHON)
 %pythoncode %{
+del Band.UnaryOp
 del Band.BinaryOpBand
 del Band.BinaryOpDouble
 del Band.BinaryOpDoubleToBand

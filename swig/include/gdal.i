@@ -269,6 +269,14 @@ typedef enum {
 
 #endif
 
+/*! Raster algebra unary operation */
+%rename (RasterAlgebraUnaryOperation) GDALRasterAlgebraUnaryOperation;
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT = 0
+} GDALRasterAlgebraUnaryOperation;
+
 /*! Raster algebra binary operation */
 %rename (RasterAlgebraBinaryOperation) GDALRasterAlgebraBinaryOperation;
 typedef enum
@@ -292,7 +300,11 @@ typedef enum
     /** Equality test */
     GRABO_EQ = 8,
     /** Non-equality test */
-    GRABO_NE = 9
+    GRABO_NE = 9,
+    /** Logical and */
+    GRABO_LOGICAL_AND = 10,
+    /** Logical or */
+    GRABO_LOGICAL_OR = 11
 } GDALRasterAlgebraBinaryOperation;
 
 #if defined(SWIGPYTHON)

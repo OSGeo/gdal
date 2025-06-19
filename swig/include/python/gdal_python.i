@@ -340,6 +340,54 @@ static void readraster_releasebuffer(CPLErr eErr,
       return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
 
   Mean = mean
+
+
+  def logical_and(x1, x2):
+      """Perform a logical and between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_LOGICAL_AND, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_LOGICAL_AND, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDouble(x2, GRABO_LOGICAL_AND, x1)._add_parent_references([x2])
+
+  LogicalAnd = logical_and
+
+
+  def logical_or(x1, x2):
+      """Perform a logical or between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_LOGICAL_OR, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_LOGICAL_OR, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDouble(x2, GRABO_LOGICAL_OR, x1)._add_parent_references([x2])
+
+  LogicalOr = logical_or
+
+
+  def logical_not(band):
+      """Perform a logical not on a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOGICAL_NOT)._add_parent_references([band])
+
+  LogicalNot = logical_not
+
 %}
 
 %{
