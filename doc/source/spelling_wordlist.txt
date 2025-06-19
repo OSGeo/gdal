@@ -1372,6 +1372,8 @@ Hydrologic
 Hydrological
 hypercubes
 hyperspectral
+hypsometric
+Hypsometric
 iAxis
 iBand
 iChild
