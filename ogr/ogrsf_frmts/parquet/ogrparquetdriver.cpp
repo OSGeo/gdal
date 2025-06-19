@@ -750,4 +750,16 @@ void RegisterOGRParquet()
         }
     }
 #endif
+
+#if defined(GDAL_USE_ARROWDATASET) && defined(GDAL_USE_ARROWCOMPUTE)
+    {
+        auto status = arrow::compute::Initialize();
+        if (!status.ok())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "arrow::compute::Initialize() failed with %s",
+                     status.message().c_str());
+        }
+    }
+#endif
 }
