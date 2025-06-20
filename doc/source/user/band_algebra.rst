@@ -22,6 +22,9 @@ from C++ and Python:
 - lesser of equal to comparison, with ``<=`` operator
 - equal to comparison, with ``==`` operator
 - not equal to comparison, with ``!=`` operator
+- logical and, with ``&&`` operator in C++ and :py:meth:`osgeo.gdal.logical_and` in Python
+- logical or with ``||`` operator in C++ and :py:meth:`osgeo.gdal.logical_or` in Python
+- logical not, with ``!`` operator in C++ and :py:meth:`osgeo.gdal.logical_not` in Python
 
 Left and right operands can be a Band object or a numeric value (at least
 one of them must be a Band object). If two bands are provided they must have
@@ -57,7 +60,13 @@ The capability is similar to the one offered by the :ref:`gdal_raster_calc` prog
 .. note:: The comparison operators, including the ternary one, require a GDAL build against the muparser library.
 
 .. note:: The operations are also available in the C API, for potential bindings
-          to other languages. Cf :cpp:func:`GDALRasterBandAddBand`, :cpp:func:`GDALRasterBandAddDouble`, etc.
+          to other languages. Cf :cpp:func:`GDALRasterBandUnaryOp`,
+          :cpp:func:`GDALRasterBandBinaryOpBand`,
+          :cpp:func:`GDALRasterBandBinaryOpDouble`, :cpp:func:`GDALRasterBandBinaryOpDoubleToBand`,
+          :cpp:func:`GDALRasterBandIfThenElse`, :cpp:func:`GDALRasterBandAsDataType`,
+          :cpp:func:`GDALMaximumOfNBands`, :cpp:func:`GDALRasterBandMaxConstant`,
+          :cpp:func:`GDALMinimumOfNBands`, :cpp:func:`GDALRasterBandMinConstant` and
+          :cpp:func:`GDALMeanOfNBands`
 
 Examples
 --------

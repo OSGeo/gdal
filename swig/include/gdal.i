@@ -269,6 +269,44 @@ typedef enum {
 
 #endif
 
+/*! Raster algebra unary operation */
+%rename (RasterAlgebraUnaryOperation) GDALRasterAlgebraUnaryOperation;
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT = 0
+} GDALRasterAlgebraUnaryOperation;
+
+/*! Raster algebra binary operation */
+%rename (RasterAlgebraBinaryOperation) GDALRasterAlgebraBinaryOperation;
+typedef enum
+{
+    /** Addition */
+    GRABO_ADD = 0,
+    /** Subtraction */
+    GRABO_SUB = 1,
+    /** Multiplication */
+    GRABO_MUL = 2,
+    /** Division */
+    GRABO_DIV = 3,
+    /** Strictly greater than test*/
+    GRABO_GT = 4,
+    /** Greater or equal to test */
+    GRABO_GE = 5,
+    /** Strictly lesser than test */
+    GRABO_LT = 6,
+    /** Lesser or equal to test */
+    GRABO_LE = 7,
+    /** Equality test */
+    GRABO_EQ = 8,
+    /** Non-equality test */
+    GRABO_NE = 9,
+    /** Logical and */
+    GRABO_LOGICAL_AND = 10,
+    /** Logical or */
+    GRABO_LOGICAL_OR = 11
+} GDALRasterAlgebraBinaryOperation;
+
 #if defined(SWIGPYTHON)
 %include "gdal_python.i"
 #elif defined(SWIGCSHARP)

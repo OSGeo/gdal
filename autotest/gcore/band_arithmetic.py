@@ -720,3 +720,102 @@ def test_band_arithmetic_ternary_error():
         gdal.where(ds1.GetRasterBand(1), ds1.GetRasterBand(1), ds2.GetRasterBand(1))
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.where(ds1.GetRasterBand(1), ds2.GetRasterBand(1), ds1.GetRasterBand(1))
+
+
+def test_band_arithmetic_logical_and():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    true_band = ds.GetRasterBand(1)
+    true_band.Fill(True)
+    false_band = ds.GetRasterBand(2)
+    false_band.Fill(False)
+
+    assert gdal.logical_and(true_band, true_band).ComputeRasterMinMax(False)[0] == True
+    assert (
+        gdal.logical_and(true_band, false_band).ComputeRasterMinMax(False)[0] == False
+    )
+    assert (
+        gdal.logical_and(false_band, true_band).ComputeRasterMinMax(False)[0] == False
+    )
+    assert (
+        gdal.logical_and(false_band, false_band).ComputeRasterMinMax(False)[0] == False
+    )
+
+    assert gdal.logical_and(true_band, True).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_and(true_band, False).ComputeRasterMinMax(False)[0] == False
+    assert gdal.logical_and(false_band, True).ComputeRasterMinMax(False)[0] == False
+    assert gdal.logical_and(false_band, False).ComputeRasterMinMax(False)[0] == False
+
+    assert gdal.logical_and(True, true_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_and(True, false_band).ComputeRasterMinMax(False)[0] == False
+    assert gdal.logical_and(False, true_band).ComputeRasterMinMax(False)[0] == False
+    assert gdal.logical_and(False, false_band).ComputeRasterMinMax(False)[0] == False
+
+
+def test_band_arithmetic_logical_and_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        gdal.logical_and(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+
+def test_band_arithmetic_logical_or():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    true_band = ds.GetRasterBand(1)
+    true_band.Fill(True)
+    false_band = ds.GetRasterBand(2)
+    false_band.Fill(False)
+
+    assert gdal.logical_or(true_band, true_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(true_band, false_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(false_band, true_band).ComputeRasterMinMax(False)[0] == True
+    assert (
+        gdal.logical_or(false_band, false_band).ComputeRasterMinMax(False)[0] == False
+    )
+
+    assert gdal.logical_or(true_band, True).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(true_band, False).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(false_band, True).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(false_band, False).ComputeRasterMinMax(False)[0] == False
+
+    assert gdal.logical_or(True, true_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(True, false_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(False, true_band).ComputeRasterMinMax(False)[0] == True
+    assert gdal.logical_or(False, false_band).ComputeRasterMinMax(False)[0] == False
+
+
+def test_band_arithmetic_logical_or_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds1 = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
+    with pytest.raises(Exception, match="Bands do not have the same dimensions"):
+        gdal.logical_or(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+
+def test_band_arithmetic_logical_not():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    true_band = ds.GetRasterBand(1)
+    true_band.Fill(True)
+    false_band = ds.GetRasterBand(2)
+    false_band.Fill(False)
+
+    assert gdal.logical_not(true_band).ComputeRasterMinMax(False)[0] == False
+    assert gdal.logical_not(false_band).ComputeRasterMinMax(False)[0] == True

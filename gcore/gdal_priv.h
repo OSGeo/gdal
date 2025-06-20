@@ -1912,6 +1912,29 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend GDALComputedRasterBand CPL_DLL
     operator!=(double cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+
+    GDALComputedRasterBand
+    operator&&(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator&&(bool cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator&&(bool cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+    GDALComputedRasterBand
+    operator||(const GDALRasterBand &other) const CPL_WARN_UNUSED_RESULT;
+    GDALComputedRasterBand operator||(bool cst) const CPL_WARN_UNUSED_RESULT;
+    friend GDALComputedRasterBand CPL_DLL
+    operator||(bool cst, const GDALRasterBand &other) CPL_WARN_UNUSED_RESULT;
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    GDALComputedRasterBand operator!() const CPL_WARN_UNUSED_RESULT;
+
     GDALComputedRasterBand AsType(GDALDataType) const CPL_WARN_UNUSED_RESULT;
 
     CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
@@ -2179,6 +2202,8 @@ class CPL_DLL GDALComputedRasterBand final : public GDALRasterBand
         OP_LE,
         OP_EQ,
         OP_NE,
+        OP_LOGICAL_AND,
+        OP_LOGICAL_OR,
         OP_CAST,
         OP_TERNARY,
     };

@@ -1955,59 +1955,55 @@ int CPL_DLL CPL_STDCALL GDALGetDataCoverageStatus(GDALRasterBandH hBand,
 
 void CPL_DLL GDALComputedRasterBandRelease(GDALComputedRasterBandH hBand);
 
-GDALComputedRasterBandH CPL_DLL GDALRasterBandAddBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandAddDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
+/** Raster algebra unary operation */
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT,
+} GDALRasterAlgebraUnaryOperation;
 
-GDALComputedRasterBandH CPL_DLL GDALRasterBandSubBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandSubDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandSubDoubleToBand(
-    double constant, GDALRasterBandH hBand) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandUnaryOp(
+    GDALRasterBandH hBand,
+    GDALRasterAlgebraUnaryOperation eOp) CPL_WARN_UNUSED_RESULT;
 
-GDALComputedRasterBandH CPL_DLL GDALRasterBandMulBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandMulDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
+/** Raster algebra binary operation */
+typedef enum
+{
+    /** Addition */
+    GRABO_ADD,
+    /** Subtraction */
+    GRABO_SUB,
+    /** Multiplication */
+    GRABO_MUL,
+    /** Division */
+    GRABO_DIV,
+    /** Strictly greater than test*/
+    GRABO_GT,
+    /** Greater or equal to test */
+    GRABO_GE,
+    /** Strictly lesser than test */
+    GRABO_LT,
+    /** Lesser or equal to test */
+    GRABO_LE,
+    /** Equality test */
+    GRABO_EQ,
+    /** Non-equality test */
+    GRABO_NE,
+    /** Logical and */
+    GRABO_LOGICAL_AND,
+    /** Logical or */
+    GRABO_LOGICAL_OR
+} GDALRasterAlgebraBinaryOperation;
 
-GDALComputedRasterBandH CPL_DLL GDALRasterBandDivBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandDivDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandDivDoubleByBand(
-    double constant, GDALRasterBandH hBand) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandGreaterThanBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandGreaterThanDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandGreaterOrEqualToBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandGreaterOrEqualToDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandLesserThanBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandLesserThanDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandLesserOrEqualToBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandLesserOrEqualToDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandEqualToBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandEqualToDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
-
-GDALComputedRasterBandH CPL_DLL GDALRasterBandNotEqualToBand(
-    GDALRasterBandH hBand, GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
-GDALComputedRasterBandH CPL_DLL GDALRasterBandNotEqualToDouble(
-    GDALRasterBandH hBand, double constant) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpBand(
+    GDALRasterBandH hBand, GDALRasterAlgebraBinaryOperation eOp,
+    GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpDouble(
+    GDALRasterBandH hBand, GDALRasterAlgebraBinaryOperation eOp,
+    double constant) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpDoubleToBand(
+    double constant, GDALRasterAlgebraBinaryOperation eOp,
+    GDALRasterBandH hBand) CPL_WARN_UNUSED_RESULT;
 
 GDALComputedRasterBandH CPL_DLL
 GDALRasterBandIfThenElse(GDALRasterBandH hCondBand, GDALRasterBandH hThenBand,

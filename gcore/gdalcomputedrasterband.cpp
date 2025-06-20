@@ -101,6 +101,8 @@ static bool IsComparisonOperator(GDALComputedRasterBand::Operation op)
         case GDALComputedRasterBand::Operation::OP_LE:
         case GDALComputedRasterBand::Operation::OP_EQ:
         case GDALComputedRasterBand::Operation::OP_NE:
+        case GDALComputedRasterBand::Operation::OP_LOGICAL_AND:
+        case GDALComputedRasterBand::Operation::OP_LOGICAL_OR:
             return true;
         default:
             break;
@@ -473,6 +475,12 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
             break;
         case GDALComputedRasterBand::Operation::OP_NE:
             ret = "!=";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LOGICAL_AND:
+            ret = "&&";
+            break;
+        case GDALComputedRasterBand::Operation::OP_LOGICAL_OR:
+            ret = "||";
             break;
         case GDALComputedRasterBand::Operation::OP_CAST:
         case GDALComputedRasterBand::Operation::OP_TERNARY:
