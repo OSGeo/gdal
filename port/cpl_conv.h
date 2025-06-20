@@ -20,10 +20,7 @@
 #include "cpl_error.h"
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-extern "C++"
-{
 #include <cstdint>
-}
 #endif
 
 /**
