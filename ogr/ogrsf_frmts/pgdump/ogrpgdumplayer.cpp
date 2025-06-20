@@ -611,7 +611,7 @@ void OGRPGCommonAppendCopyRegularFields(
             const int *panItems = poFeature->GetFieldAsIntegerList(i, &nCount);
 
             const size_t nLen = nCount * 13 + 10;
-            pszNeedToFree = (char *)CPLMalloc(nLen);
+            pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
             strcpy(pszNeedToFree, "{");
             for (int j = 0; j < nCount; j++)
             {
@@ -632,7 +632,7 @@ void OGRPGCommonAppendCopyRegularFields(
                 poFeature->GetFieldAsInteger64List(i, &nCount);
 
             const size_t nLen = nCount * 26 + 10;
-            pszNeedToFree = (char *)CPLMalloc(nLen);
+            pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
             strcpy(pszNeedToFree, "{");
             for (int j = 0; j < nCount; j++)
             {
@@ -656,7 +656,7 @@ void OGRPGCommonAppendCopyRegularFields(
                 poFeature->GetFieldAsDoubleList(i, &nCount);
 
             const size_t nLen = nCount * 40 + 10;
-            pszNeedToFree = (char *)CPLMalloc(nLen);
+            pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
             strcpy(pszNeedToFree, "{");
             for (int j = 0; j < nCount; j++)
             {
@@ -766,7 +766,7 @@ OGRErr OGRPGDumpLayer::StartCopy(int bSetFID)
     CPLString osFields = BuildCopyFields(bSetFID);
 
     size_t size = osFields.size() + strlen(m_pszSqlTableName) + 100;
-    char *pszCommand = (char *)CPLMalloc(size);
+    char *pszCommand = static_cast<char *>(CPLMalloc(size));
 
     snprintf(pszCommand, size, "COPY %s (%s) FROM STDIN", m_pszSqlTableName,
              osFields.c_str());
@@ -1035,7 +1035,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
         const int *panItems = poFeature->GetFieldAsIntegerList(i, &nCount);
 
         const size_t nLen = nCount * 13 + 10;
-        char *pszNeedToFree = (char *)CPLMalloc(nLen);
+        char *pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
         strcpy(pszNeedToFree, "'{");
         for (j = 0; j < nCount; j++)
         {
@@ -1060,7 +1060,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
             poFeature->GetFieldAsInteger64List(i, &nCount);
 
         const size_t nLen = nCount * 26 + 10;
-        char *pszNeedToFree = (char *)CPLMalloc(nLen);
+        char *pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
         strcpy(pszNeedToFree, "'{");
         for (j = 0; j < nCount; j++)
         {
@@ -1087,7 +1087,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
         const double *padfItems = poFeature->GetFieldAsDoubleList(i, &nCount);
 
         const size_t nLen = nCount * 40 + 10;
-        char *pszNeedToFree = (char *)CPLMalloc(nLen);
+        char *pszNeedToFree = static_cast<char *>(CPLMalloc(nLen));
         strcpy(pszNeedToFree, "'{");
         for (int j = 0; j < nCount; j++)
         {
@@ -1561,7 +1561,7 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn *poFieldDefn,
                 if (osDefault.find('.') == std::string::npos)
                     osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
                                            nYear, nMonth, nDay, nHour, nMinute,
-                                           (int)(fSecond + 0.5));
+                                           static_cast<int>(fSecond + 0.5f));
                 else
                     osDefault =
                         CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%06.3f'", nYear,
@@ -1889,9 +1889,9 @@ OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     poGeomField->m_nSRSId = nSRSId;
 
     int nGeometryTypeFlags = 0;
-    if (OGR_GT_HasZ((OGRwkbGeometryType)eType))
+    if (OGR_GT_HasZ(static_cast<OGRwkbGeometryType>(eType)))
         nGeometryTypeFlags |= OGRGeometry::OGR_G_3D;
-    if (OGR_GT_HasM((OGRwkbGeometryType)eType))
+    if (OGR_GT_HasM(static_cast<OGRwkbGeometryType>(eType)))
         nGeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
     if (m_nForcedGeometryTypeFlags >= 0)
     {

@@ -125,8 +125,8 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
     {
         if (static_cast<unsigned char>(pszSafeName[i]) <= 127)
         {
-            pszSafeName[i] =
-                (char)CPLTolower(static_cast<unsigned char>(pszSafeName[i]));
+            pszSafeName[i] = static_cast<char>(
+                CPLTolower(static_cast<unsigned char>(pszSafeName[i])));
             if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
                 pszSafeName[i] == '#')
             {
