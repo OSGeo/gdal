@@ -29,6 +29,8 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "rawdataset.h"
 #include "pdsdrivercore.h"
 
+#include <array>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                      ISISDataset     version2                        */
@@ -37,20 +39,20 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 
 class ISIS2Dataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // image data file.
-    CPLString osExternalCube;
+    VSILFILE *fpImage{};  // image data file.
+    CPLString osExternalCube{};
 
-    NASAKeywordHandler oKeywords;
+    NASAKeywordHandler oKeywords{};
 
-    int bGotTransform;
-    double adfGeoTransform[6];
+    bool bGotTransform{};
+    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
 
     OGRSpatialReference m_oSRS{};
 
     int parse_label(const char *file, char *keyword, char *value);
     int strstrip(char instr[], char outstr[], int position);
 
-    CPLString oTempResult;
+    CPLString oTempResult{};
 
     static void CleanString(CPLString &osInput);
 
@@ -59,6 +61,8 @@ class ISIS2Dataset final : public RawDataset
                               const char *pszDefault = "");
 
     CPLErr Close() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(ISIS2Dataset)
 
   public:
     ISIS2Dataset();
@@ -76,15 +80,9 @@ class ISIS2Dataset final : public RawDataset
 /*                            ISIS2Dataset()                            */
 /************************************************************************/
 
-ISIS2Dataset::ISIS2Dataset() : fpImage(nullptr), bGotTransform(FALSE)
+ISIS2Dataset::ISIS2Dataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -154,7 +152,7 @@ CPLErr ISIS2Dataset::GetGeoTransform(double *padfTransform)
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
         return CE_None;
     }
 
@@ -712,11 +710,11 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "cbw",
-                                                poDS->adfGeoTransform);
+                                                poDS->adfGeoTransform.data());
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "wld",
-                                                poDS->adfGeoTransform);
+                                                poDS->adfGeoTransform.data());
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

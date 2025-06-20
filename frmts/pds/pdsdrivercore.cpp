@@ -333,7 +333,8 @@ int ISIS2DriverIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->pabyHeader == nullptr)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "^QUBE") == nullptr)
+    if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "^QUBE") == nullptr)
         return FALSE;
 
     return TRUE;
@@ -363,7 +364,8 @@ void ISIS2DriverSetCommonMetadata(GDALDriver *poDriver)
 int ISIS3DriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL != nullptr && poOpenInfo->pabyHeader != nullptr &&
-        strstr((const char *)poOpenInfo->pabyHeader, "IsisCube") != nullptr)
+        strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "IsisCube") != nullptr)
         return TRUE;
 
     return FALSE;

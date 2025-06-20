@@ -21,18 +21,20 @@
 
 class VICARKeywordHandler
 {
-    char **papszKeywordList;
+    char **papszKeywordList{};
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
+    CPLString osHeaderText{};
+    const char *pszHeaderNext{};
 
-    CPLJSONObject oJSon;
+    CPLJSONObject oJSon{};
 
     void SkipWhite();
     bool ReadName(CPLString &osWord);
     bool ReadValue(CPLString &osWord, bool bInList, bool &bIsString);
     bool ReadPair(CPLString &osName, CPLString &osValue, CPLJSONObject &oCur);
     bool Parse();
+
+    CPL_DISALLOW_COPY_ASSIGN(VICARKeywordHandler)
 
   public:
     VICARKeywordHandler();

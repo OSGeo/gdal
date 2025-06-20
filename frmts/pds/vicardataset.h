@@ -35,7 +35,7 @@ class VICARDataset final : public RawDataset
 
     VSILFILE *fpImage = nullptr;
 
-    VICARKeywordHandler oKeywords;
+    VICARKeywordHandler oKeywords{};
 
     enum CompressMethod
     {
@@ -53,26 +53,26 @@ class VICARDataset final : public RawDataset
     std::vector<GByte> m_abyCodedBuffer{};
     vsi_l_offset m_nLabelSize = 0;
 
-    CPLJSONObject m_oJSonLabel;
-    CPLStringList m_aosVICARMD;
+    CPLJSONObject m_oJSonLabel{};
+    CPLStringList m_aosVICARMD{};
 
     bool m_bGotTransform = false;
     std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
 
-    OGRSpatialReference m_oSRS;
+    OGRSpatialReference m_oSRS{};
 
-    std::unique_ptr<OGRLayer> m_poLayer;
+    std::unique_ptr<OGRLayer> m_poLayer{};
 
     bool m_bGeoRefFormatIsMIPL = true;
 
-    CPLString m_osLatitudeType;        // creation only
-    CPLString m_osLongitudeDirection;  // creation only
-    CPLString m_osTargetName;          // creation only
-    bool m_bIsLabelWritten = true;     // creation only
-    bool m_bUseSrcLabel = true;        // creation only
-    bool m_bUseSrcMap = false;         // creation only
-    bool m_bInitToNodata = false;      // creation only
-    CPLJSONObject m_oSrcJSonLabel;     // creation only
+    CPLString m_osLatitudeType{};        // creation only
+    CPLString m_osLongitudeDirection{};  // creation only
+    CPLString m_osTargetName{};          // creation only
+    bool m_bIsLabelWritten = true;       // creation only
+    bool m_bUseSrcLabel = true;          // creation only
+    bool m_bUseSrcMap = false;           // creation only
+    bool m_bInitToNodata = false;        // creation only
+    CPLJSONObject m_oSrcJSonLabel{};     // creation only
 
     const char *GetKeyword(const char *pszPath, const char *pszDefault = "");
     void WriteLabel();
@@ -93,6 +93,8 @@ class VICARDataset final : public RawDataset
 #endif
 
     CPLErr Close() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(VICARDataset)
 
   public:
     VICARDataset();

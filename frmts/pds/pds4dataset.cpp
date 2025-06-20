@@ -600,7 +600,7 @@ CPLErr PDS4Dataset::GetGeoTransform(double *padfTransform)
 {
     if (m_bGotTransform)
     {
-        memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
+        memcpy(padfTransform, m_adfGeoTransform.data(), sizeof(double) * 6);
         return CE_None;
     }
 
@@ -624,7 +624,7 @@ CPLErr PDS4Dataset::SetGeoTransform(double *padfTransform)
                  "supported");
         return CE_Failure;
     }
-    memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+    memcpy(m_adfGeoTransform.data(), padfTransform, sizeof(double) * 6);
     m_bGotTransform = true;
     if (m_poExternalDS)
         m_poExternalDS->SetGeoTransform(padfTransform);

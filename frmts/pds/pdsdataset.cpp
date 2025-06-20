@@ -34,6 +34,8 @@ constexpr double PDS_NULL3 = -3.4028226550889044521e+38;
 #include "vicardataset.h"
 #include "pdsdrivercore.h"
 
+#include <array>
+
 enum PDSLayout
 {
     PDS_BSQ,
@@ -49,22 +51,22 @@ enum PDSLayout
 
 class PDSDataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // image data file.
-    GDALDataset *poCompressedDS;
+    VSILFILE *fpImage{};  // image data file.
+    GDALDataset *poCompressedDS{};
 
-    NASAKeywordHandler oKeywords;
+    NASAKeywordHandler oKeywords{};
 
-    int bGotTransform;
-    double adfGeoTransform[6];
+    bool bGotTransform{};
+    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
 
     OGRSpatialReference m_oSRS{};
 
-    CPLString osTempResult;
+    CPLString osTempResult{};
 
-    CPLString osExternalCube;
-    CPLString m_osImageFilename;
+    CPLString osExternalCube{};
+    CPLString m_osImageFilename{};
 
-    CPLStringList m_aosPDSMD;
+    CPLStringList m_aosPDSMD{};
 
     void ParseSRS();
     int ParseCompressedImage();
@@ -78,6 +80,8 @@ class PDSDataset final : public RawDataset
                               const char *pszDefault = "");
     const char *GetKeywordUnit(const char *pszPath, int iSubscript,
                                const char *pszDefault = "");
+
+    CPL_DISALLOW_COPY_ASSIGN(PDSDataset)
 
   protected:
     virtual int CloseDependentDatasets() override;
@@ -119,15 +123,8 @@ class PDSDataset final : public RawDataset
 /************************************************************************/
 
 PDSDataset::PDSDataset()
-    : fpImage(nullptr), poCompressedDS(nullptr), bGotTransform(FALSE)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -279,7 +276,7 @@ CPLErr PDSDataset::GetGeoTransform(double *padfTransform)
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
         return CE_None;
     }
 
@@ -736,10 +733,12 @@ void PDSDataset::ParseSRS()
     }
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "psw", adfGeoTransform);
+        bGotTransform =
+            GDALReadWorldFile(pszFilename, "psw", adfGeoTransform.data());
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "wld", adfGeoTransform);
+        bGotTransform =
+            GDALReadWorldFile(pszFilename, "wld", adfGeoTransform.data());
 }
 
 /************************************************************************/
@@ -1300,7 +1299,9 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 /************************************************************************/
 class PDSWrapperRasterBand final : public GDALProxyRasterBand
 {
-    GDALRasterBand *poBaseBand;
+    GDALRasterBand *poBaseBand{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PDSWrapperRasterBand)
 
   protected:
     virtual GDALRasterBand *
