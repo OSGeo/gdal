@@ -23,6 +23,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <vector>
