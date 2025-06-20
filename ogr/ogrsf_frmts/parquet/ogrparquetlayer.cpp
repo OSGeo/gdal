@@ -1052,11 +1052,18 @@ OGRParquetLayer::BuildDomain(const std::string &osDomainName,
 #endif
     const int iParquetCol = m_anMapFieldIndexToParquetColumn[iFieldIndex];
     CPLAssert(iParquetCol >= 0);
-    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     const auto oldBatchSize = m_poArrowReader->properties().batch_size();
     m_poArrowReader->set_batch_size(1);
+#if PARQUET_VERSION_MAJOR >= 21
+    std::unique_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+    auto result = m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol});
+    if (result.ok())
+        poRecordBatchReader = std::move(*result);
+#else
+    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader(
         {0}, {iParquetCol}, &poRecordBatchReader));
+#endif
     if (poRecordBatchReader != nullptr)
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -1087,15 +1094,23 @@ OGRParquetLayer::ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const
     // looking at the WKB geometry type in the first 5 bytes of each geometry.
 
     OGRwkbGeometryType eGeomType = wkbNone;
-    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
 
     std::vector<int> anRowGroups;
     const int nNumGroups = m_poArrowReader->num_row_groups();
     anRowGroups.reserve(nNumGroups);
     for (int i = 0; i < nNumGroups; ++i)
         anRowGroups.push_back(i);
+#if PARQUET_VERSION_MAJOR >= 21
+    std::unique_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+    auto result =
+        m_poArrowReader->GetRecordBatchReader(anRowGroups, {iParquetCol});
+    if (result.ok())
+        poRecordBatchReader = std::move(*result);
+#else
+    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader(
         anRowGroups, {iParquetCol}, &poRecordBatchReader));
+#endif
     if (poRecordBatchReader != nullptr)
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -1127,13 +1142,23 @@ OGRParquetLayer::ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const
 
 OGRFeature *OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
 {
-    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
-
     std::vector<int> anRowGroups;
     const int nNumGroups = m_poArrowReader->num_row_groups();
     anRowGroups.reserve(nNumGroups);
     for (int i = 0; i < nNumGroups; ++i)
         anRowGroups.push_back(i);
+#if PARQUET_VERSION_MAJOR >= 21
+    std::unique_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+    auto result = m_bIgnoredFields
+                      ? m_poArrowReader->GetRecordBatchReader(
+                            anRowGroups, m_anRequestedParquetColumns)
+                      : m_poArrowReader->GetRecordBatchReader(anRowGroups);
+    if (result.ok())
+    {
+        poRecordBatchReader = std::move(*result);
+    }
+#else
+    std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     if (m_bIgnoredFields)
     {
         CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader(
@@ -1144,6 +1169,7 @@ OGRFeature *OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
         CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader(
             anRowGroups, &poRecordBatchReader));
     }
+#endif
     if (poRecordBatchReader != nullptr)
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -1212,33 +1238,54 @@ OGRFeature *OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
             nAccRows + metadata->RowGroup(iGroup)->num_rows();
         if (nFID < nNextAccRows)
         {
-            std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
-            arrow::Status status;
-            if (m_bIgnoredFields)
+#if PARQUET_VERSION_MAJOR >= 21
+            std::unique_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+            auto result = m_bIgnoredFields
+                              ? m_poArrowReader->GetRecordBatchReader(
+                                    {iGroup}, m_anRequestedParquetColumns)
+                              : m_poArrowReader->GetRecordBatchReader({iGroup});
+            if (result.ok())
             {
-                status = m_poArrowReader->GetRecordBatchReader(
-                    {iGroup}, m_anRequestedParquetColumns,
-                    &poRecordBatchReader);
+                poRecordBatchReader = std::move(*result);
             }
             else
             {
-                status = m_poArrowReader->GetRecordBatchReader(
-                    {iGroup}, &poRecordBatchReader);
-            }
-            if (poRecordBatchReader == nullptr)
-            {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "GetRecordBatchReader() failed: %s",
-                         status.message().c_str());
+                         result.status().message().c_str());
                 return nullptr;
             }
+#else
+            std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+            {
+                arrow::Status status;
+                if (m_bIgnoredFields)
+                {
+                    status = m_poArrowReader->GetRecordBatchReader(
+                        {iGroup}, m_anRequestedParquetColumns,
+                        &poRecordBatchReader);
+                }
+                else
+                {
+                    status = m_poArrowReader->GetRecordBatchReader(
+                        {iGroup}, &poRecordBatchReader);
+                }
+                if (poRecordBatchReader == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "GetRecordBatchReader() failed: %s",
+                             status.message().c_str());
+                    return nullptr;
+                }
+            }
+#endif
 
             const int64_t nExpectedIdxInGroup = nFID - nAccRows;
             int64_t nIdxInGroup = 0;
             while (true)
             {
                 std::shared_ptr<arrow::RecordBatch> poBatch;
-                status = poRecordBatchReader->ReadNext(&poBatch);
+                arrow::Status status = poRecordBatchReader->ReadNext(&poBatch);
                 if (!status.ok())
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1314,6 +1361,24 @@ bool OGRParquetLayer::CreateRecordBatchReader(int iStartingRowGroup)
 bool OGRParquetLayer::CreateRecordBatchReader(
     const std::vector<int> &anRowGroups)
 {
+#if PARQUET_VERSION_MAJOR >= 21
+    auto result = m_bIgnoredFields
+                      ? m_poArrowReader->GetRecordBatchReader(
+                            anRowGroups, m_anRequestedParquetColumns)
+                      : m_poArrowReader->GetRecordBatchReader(anRowGroups);
+    if (result.ok())
+    {
+        m_poRecordBatchReader = std::move(*result);
+        return true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetRecordBatchReader() failed: %s",
+                 result.status().message().c_str());
+        return false;
+    }
+#else
     arrow::Status status;
     if (m_bIgnoredFields)
     {
@@ -1332,6 +1397,7 @@ bool OGRParquetLayer::CreateRecordBatchReader(
         return false;
     }
     return true;
+#endif
 }
 
 /************************************************************************/
