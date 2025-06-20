@@ -76,7 +76,7 @@ class LOSLASDataset final : public RawDataset
     LOSLASDataset();
     ~LOSLASDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -285,7 +285,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LOSLASDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr LOSLASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

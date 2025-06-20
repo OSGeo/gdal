@@ -46,7 +46,7 @@ class HF2Dataset final : public GDALPamDataset
     HF2Dataset();
     virtual ~HF2Dataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -675,7 +675,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HF2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr HF2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

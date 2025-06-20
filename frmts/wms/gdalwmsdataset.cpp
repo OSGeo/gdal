@@ -770,7 +770,7 @@ CPLErr GDALWMSDataset::SetSpatialRef(const OGRSpatialReference *)
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
-CPLErr GDALWMSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALWMSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (!(m_mini_driver_caps.m_has_geotransform))
     {

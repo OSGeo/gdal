@@ -40,7 +40,7 @@ class NDFDataset final : public RawDataset
     NDFDataset();
     ~NDFDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -97,7 +97,7 @@ CPLErr NDFDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NDFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

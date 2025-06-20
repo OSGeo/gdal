@@ -64,7 +64,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
                                char **papszParamList);
 
     char **GetFileList() override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;

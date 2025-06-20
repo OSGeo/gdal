@@ -76,7 +76,7 @@ class MFFDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -313,7 +313,7 @@ int MFFDataset::GetGCPCount()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MFFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MFFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

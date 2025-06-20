@@ -1377,7 +1377,7 @@ CPLErr GDALPamDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALPamDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALPamDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (psPam && psPam->bHaveGeoTransform)

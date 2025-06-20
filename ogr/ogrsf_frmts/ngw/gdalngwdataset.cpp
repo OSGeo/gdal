@@ -1476,7 +1476,7 @@ const OGRSpatialReference *OGRNGWDataset::GetSpatialRef() const
 /*
  * GetGeoTransform()
  */
-CPLErr OGRNGWDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr OGRNGWDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (poRasterDS != nullptr)
     {

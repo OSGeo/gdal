@@ -2483,14 +2483,14 @@ CPLErr JPGDataset::Restart()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPGDatasetCommon::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr JPGDatasetCommon::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     CPLErr eErr = GDALPamDataset::GetGeoTransform(gt);
     if (eErr != CE_Failure)
         return eErr;
 
-    LoadWorldFileOrTab();
+    const_cast<JPGDatasetCommon *>(this)->LoadWorldFileOrTab();
 
     if (bGeoTransformValid)
     {

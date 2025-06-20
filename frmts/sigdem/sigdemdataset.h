@@ -76,7 +76,7 @@ class SIGDEMDataset final : public GDALPamDataset
     explicit SIGDEMDataset(const SIGDEMHeader &sHeaderIn);
     ~SIGDEMDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *CreateCopy(const char *pszFilename,

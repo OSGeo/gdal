@@ -1294,7 +1294,7 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr AAIGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr AAIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

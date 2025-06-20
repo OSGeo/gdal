@@ -109,7 +109,7 @@ class FASTDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -164,7 +164,7 @@ FASTDataset::~FASTDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr FASTDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr FASTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

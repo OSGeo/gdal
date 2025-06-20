@@ -301,7 +301,7 @@ class USGSDEMDataset final : public GDALPamDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -844,7 +844,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr USGSDEMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr USGSDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

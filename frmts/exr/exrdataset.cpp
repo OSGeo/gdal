@@ -72,7 +72,7 @@ class GDALEXRDataset final : public GDALPamDataset
     ~GDALEXRDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -397,7 +397,7 @@ const OGRSpatialReference *GDALEXRDataset::GetSpatialRef() const
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr GDALEXRDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALEXRDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
     {
@@ -1467,7 +1467,7 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     CPLErr SetMetadata(char **, const char * = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
@@ -1617,7 +1617,7 @@ const OGRSpatialReference *GDALEXRWritableDataset::GetSpatialRef() const
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr GDALEXRWritableDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALEXRWritableDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
     {

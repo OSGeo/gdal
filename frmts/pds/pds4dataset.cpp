@@ -589,7 +589,7 @@ CPLErr PDS4Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDS4Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PDS4Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_bGotTransform)

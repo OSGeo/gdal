@@ -102,7 +102,7 @@ class NTv2Dataset final : public RawDataset
     NTv2Dataset();
     ~NTv2Dataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -537,7 +537,7 @@ void NTv2Dataset::CaptureMetadataItem(const char *pszItem)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NTv2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NTv2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

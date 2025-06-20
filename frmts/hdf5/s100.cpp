@@ -60,7 +60,7 @@ bool S100BaseDataset::Init()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr S100BaseDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr S100BaseDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_bHasGT)

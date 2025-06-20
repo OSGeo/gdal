@@ -75,7 +75,7 @@ class RRASTERDataset final : public RawDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -799,7 +799,7 @@ char **RRASTERDataset::GetFileList()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RRASTERDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr RRASTERDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGeoTransformValid)
     {

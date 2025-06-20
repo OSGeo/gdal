@@ -1228,7 +1228,7 @@ CPLErr VICARDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VICARDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr VICARDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGotTransform)
     {

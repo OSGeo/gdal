@@ -102,7 +102,7 @@ class NUMPYDataset : public GDALDataset
     const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
-    virtual CPLErr GetGeoTransform( GDALGeoTransform& gt ) override;
+    virtual CPLErr GetGeoTransform( GDALGeoTransform& gt ) const override;
     virtual CPLErr SetGeoTransform( const GDALGeoTransform& gt ) override;
 
     virtual int    GetGCPCount() override;
@@ -193,7 +193,7 @@ CPLErr NUMPYDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NUMPYDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NUMPYDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

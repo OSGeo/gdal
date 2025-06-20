@@ -101,7 +101,7 @@ class ENVIDataset final : public RawDataset
     ~ENVIDataset() override;
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;

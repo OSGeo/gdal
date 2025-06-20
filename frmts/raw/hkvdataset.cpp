@@ -256,7 +256,7 @@ class HKVDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -358,7 +358,7 @@ CPLErr HKVDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HKVDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr HKVDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

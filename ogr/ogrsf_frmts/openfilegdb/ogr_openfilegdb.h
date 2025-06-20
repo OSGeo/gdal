@@ -558,7 +558,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return m_aosSubdatasets;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetMetadata(const char *pszDomain = "") override;

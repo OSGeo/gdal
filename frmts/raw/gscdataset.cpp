@@ -37,7 +37,7 @@ class GSCDataset final : public RawDataset
     GSCDataset() = default;
     ~GSCDataset();
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -83,7 +83,7 @@ CPLErr GSCDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GSCDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GSCDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

@@ -92,7 +92,7 @@ class RPFTOCDataset final : public GDALPamDataset
         nRasterYSize = rasterYSize;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         if (bGotGeoTransform)
         {

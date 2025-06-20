@@ -174,7 +174,7 @@ class ILWISDataset final : public GDALPamDataset
                                int nBands, GDALDataType eType,
                                char **papszParamList);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;

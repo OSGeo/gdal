@@ -59,7 +59,7 @@ class ADRGDataset final : public GDALPamDataset
     ~ADRGDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain = "") override;
@@ -314,7 +314,7 @@ const OGRSpatialReference *ADRGDataset::GetSpatialRef() const
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (papszSubDatasets != nullptr)
         return CE_Failure;

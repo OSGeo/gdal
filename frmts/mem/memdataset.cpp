@@ -593,7 +593,7 @@ CPLErr MEMDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MEMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

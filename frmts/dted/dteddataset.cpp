@@ -41,7 +41,7 @@ class DTEDDataset final : public GDALPamDataset
     ~DTEDDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const char *GetFileName() const
     {
@@ -507,7 +507,7 @@ GDALDataset *DTEDDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr DTEDDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr DTEDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
 

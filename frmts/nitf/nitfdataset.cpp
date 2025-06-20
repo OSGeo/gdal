@@ -2251,7 +2251,7 @@ CPLErr NITFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NITFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NITFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

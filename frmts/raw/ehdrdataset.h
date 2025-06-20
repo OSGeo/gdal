@@ -87,7 +87,7 @@ class EHdrDataset final : public RawDataset
     EHdrDataset();
     ~EHdrDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override

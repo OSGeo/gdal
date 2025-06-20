@@ -102,7 +102,7 @@ class MBTilesDataset final : public GDALPamDataset,
 
     virtual ~MBTilesDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -1012,7 +1012,7 @@ int MBTilesDataset::GetRowFromIntoTopConvention(int nRow)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MBTilesDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MBTilesDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return (m_bGeoTransformValid) ? CE_None : CE_Failure;

@@ -2513,7 +2513,7 @@ const OGRSpatialReference *RCMDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RCMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr RCMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

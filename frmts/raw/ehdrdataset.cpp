@@ -586,7 +586,7 @@ CPLErr EHdrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr EHdrDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr EHdrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

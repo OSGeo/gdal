@@ -1476,7 +1476,7 @@ CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return m_bHasGT ? CE_None : CE_Failure;

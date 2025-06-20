@@ -93,7 +93,7 @@ class FITSDataset final : public GDALPamDataset
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     char **GetMetadata(const char *papszDomain = nullptr) override;
 
@@ -3241,7 +3241,7 @@ CPLErr FITSDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr FITSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr FITSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

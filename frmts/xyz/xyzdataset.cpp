@@ -69,7 +69,7 @@ class XYZDataset final : public GDALPamDataset
     XYZDataset();
     virtual ~XYZDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -1774,7 +1774,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr XYZDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr XYZDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

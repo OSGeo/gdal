@@ -73,7 +73,7 @@ MSGDataset::~MSGDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MSGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

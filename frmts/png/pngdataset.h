@@ -136,7 +136,7 @@ class PNGDataset final : public GDALPamDataset
 
     virtual char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual char **GetMetadataDomainList() override;

@@ -131,7 +131,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual char **GetFileList(void) override;
 

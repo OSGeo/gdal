@@ -1870,7 +1870,7 @@ class GDALColorReliefDataset : public GDALDataset
         return pafSourceBuf != nullptr || panSourceBuf != nullptr;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -1933,7 +1933,7 @@ GDALColorReliefDataset::~GDALColorReliefDataset()
     CPLFree(pafSourceBuf);
 }
 
-CPLErr GDALColorReliefDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALColorReliefDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     return GDALDataset::FromHandle(hSrcDS)->GetGeoTransform(gt);
 }
@@ -2468,7 +2468,7 @@ template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
                apafSourceBuf[2] != nullptr;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -2583,7 +2583,7 @@ template <class T> GDALGeneric3x3Dataset<T>::~GDALGeneric3x3Dataset()
 }
 
 template <class T>
-CPLErr GDALGeneric3x3Dataset<T>::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALGeneric3x3Dataset<T>::GetGeoTransform(GDALGeoTransform &gt) const
 {
     return GDALDataset::FromHandle(hSrcDS)->GetGeoTransform(gt);
 }

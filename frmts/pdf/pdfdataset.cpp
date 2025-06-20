@@ -7260,7 +7260,7 @@ const OGRSpatialReference *PDFDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (GDALPamDataset::GetGeoTransform(gt) == CE_None)

@@ -73,7 +73,7 @@ class ERSDataset final : public RawDataset
     ~ERSDataset() override;
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -507,7 +507,7 @@ void ERSDataset::WriteProjectionInfo(const char *pszProj, const char *pszDatum,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ERSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ERSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

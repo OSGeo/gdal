@@ -1263,7 +1263,7 @@ CPLErr PCIDSK2Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PCIDSK2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PCIDSK2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     PCIDSKGeoref *poGeoref = nullptr;
     try

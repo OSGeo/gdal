@@ -29,7 +29,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     char **m_papszRPC;
     bool m_bPixelIsPoint;
 
-    int m_nGeoTransformGeorefSrcIndex;
+    mutable int m_nGeoTransformGeorefSrcIndex;
     int m_nGCPGeorefSrcIndex;
     int m_nProjectionGeorefSrcIndex;
     int m_nRPCGeorefSrcIndex;
@@ -50,7 +50,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
 
     CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 

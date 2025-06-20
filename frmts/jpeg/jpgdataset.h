@@ -246,7 +246,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

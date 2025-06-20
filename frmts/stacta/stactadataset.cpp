@@ -622,7 +622,7 @@ CPLErr STACTARawDataset::IRasterIO(
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr STACTARawDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr STACTARawDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;
@@ -1376,7 +1376,7 @@ const OGRSpatialReference *STACTADataset::GetSpatialRef() const
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr STACTADataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr STACTADataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return nBands == 0 ? CE_Failure : CE_None;

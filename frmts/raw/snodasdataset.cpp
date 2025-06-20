@@ -46,7 +46,7 @@ class SNODASDataset final : public RawDataset
     SNODASDataset();
     ~SNODASDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -189,7 +189,7 @@ CPLErr SNODASDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr SNODASDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr SNODASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

@@ -1232,10 +1232,10 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PNGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PNGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    LoadWorldFile();
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
 
     if (bGeoTransformValid)
     {

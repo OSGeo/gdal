@@ -410,7 +410,7 @@ class PDFDataset final : public GDALPamDataset
                int nYSize = 0);
     virtual ~PDFDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 

@@ -723,7 +723,7 @@ CPLErr VRTDataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VRTDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr VRTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

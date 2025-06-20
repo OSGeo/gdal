@@ -117,7 +117,7 @@ class RS2Dataset final : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
@@ -1583,7 +1583,7 @@ const OGRSpatialReference *RS2Dataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RS2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr RS2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

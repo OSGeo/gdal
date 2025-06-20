@@ -54,7 +54,7 @@ class LCPDataset final : public RawDataset
 
     char **GetFileList(void) override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -120,7 +120,7 @@ CPLErr LCPDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LCPDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr LCPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     double dfEast = 0.0;
     double dfWest = 0.0;

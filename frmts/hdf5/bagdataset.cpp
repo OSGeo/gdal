@@ -190,7 +190,7 @@ class BAGDataset final : public GDALPamDataset
     BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
     virtual ~BAGDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -4887,7 +4887,7 @@ OGRErr BAGDataset::ParseWKTFromXML(const char *pszISOXML)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BAGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr BAGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_gt[0] != 0.0 || m_gt[3] != 0.0)

@@ -68,7 +68,7 @@ class RCMDataset final : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

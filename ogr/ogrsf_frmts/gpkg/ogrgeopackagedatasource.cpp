@@ -3100,7 +3100,7 @@ CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALGeoPackageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     if (!m_bGeoTransformValid)

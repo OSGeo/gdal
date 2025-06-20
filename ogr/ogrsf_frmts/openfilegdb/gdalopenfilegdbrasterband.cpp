@@ -1068,7 +1068,7 @@ void OGROpenFileGDBDataSource::ReadAuxTable(const std::string &osLayerName)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr OGROpenFileGDBDataSource::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr OGROpenFileGDBDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return m_bHasGeoTransform ? CE_None : CE_Failure;

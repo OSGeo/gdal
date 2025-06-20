@@ -138,7 +138,7 @@ class LANDataset final : public RawDataset
     LANDataset();
     ~LANDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
@@ -610,7 +610,7 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LANDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr LANDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_gt[1] != 0.0 && m_gt[5] != 0.0)

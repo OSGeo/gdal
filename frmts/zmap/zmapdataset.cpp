@@ -47,7 +47,7 @@ class ZMapDataset final : public GDALPamDataset
     ZMapDataset();
     virtual ~ZMapDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -713,7 +713,7 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ZMapDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ZMapDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

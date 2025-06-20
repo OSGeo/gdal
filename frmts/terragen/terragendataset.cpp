@@ -155,7 +155,7 @@ class TerragenDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -870,7 +870,7 @@ CPLErr TerragenDataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr TerragenDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr TerragenDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

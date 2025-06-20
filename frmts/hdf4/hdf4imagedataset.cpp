@@ -148,7 +148,7 @@ class HDF4ImageDataset final : public HDF4Dataset
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
     virtual CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -821,7 +821,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HDF4ImageDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr HDF4ImageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
 

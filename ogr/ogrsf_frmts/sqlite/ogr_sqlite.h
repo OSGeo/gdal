@@ -762,7 +762,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static char *LaunderName(const char *);

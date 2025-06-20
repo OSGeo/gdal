@@ -157,7 +157,7 @@ class ECDataset final : public GDALDataset
   public:
     ECDataset();
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;

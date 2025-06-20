@@ -202,7 +202,7 @@ char **GIFAbstractDataset::GetMetadata(const char *pszDomain)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GIFAbstractDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GIFAbstractDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)

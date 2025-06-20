@@ -44,7 +44,7 @@ class NGSGEOIDDataset final : public GDALPamDataset
     NGSGEOIDDataset();
     virtual ~NGSGEOIDDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -349,7 +349,7 @@ GDALDataset *NGSGEOIDDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NGSGEOIDDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NGSGEOIDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

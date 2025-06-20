@@ -65,7 +65,7 @@ class MSGDataset final : public GDALDataset
         return &m_oSRS;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
   private:
     MSGCommand command;

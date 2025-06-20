@@ -341,7 +341,7 @@ PCRasterDataset::~PCRasterDataset()
   rasters will treat or already treat y coordinates as increasing from south
   to north only.
 */
-CPLErr PCRasterDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PCRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     // x = west + nrCols * cellsize
     gt[0] = d_west;

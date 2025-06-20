@@ -39,7 +39,7 @@ class PNMDataset final : public RawDataset
     PNMDataset() = default;
     ~PNMDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -89,7 +89,7 @@ CPLErr PNMDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PNMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PNMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)

@@ -247,7 +247,7 @@ class GTADataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -912,7 +912,7 @@ CPLErr GTADataset::WriteBlock()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTADataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GTADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bHaveGeoTransform)

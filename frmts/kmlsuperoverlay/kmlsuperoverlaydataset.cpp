@@ -1064,7 +1064,7 @@ const OGRSpatialReference *KmlSuperOverlayReadDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr KmlSuperOverlayReadDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr KmlSuperOverlayReadDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;
@@ -1909,7 +1909,7 @@ class KmlSingleDocRasterDataset final : public GDALDataset
     KmlSingleDocRasterDataset();
     virtual ~KmlSingleDocRasterDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;

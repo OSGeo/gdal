@@ -68,7 +68,7 @@ class GS7BGDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 };
 
@@ -771,10 +771,10 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GS7BGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GS7BGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    GS7BGRasterBand *poGRB =
-        cpl::down_cast<GS7BGRasterBand *>(GetRasterBand(1));
+    const GS7BGRasterBand *poGRB =
+        cpl::down_cast<const GS7BGRasterBand *>(GetRasterBand(1));
 
     if (poGRB == nullptr)
     {

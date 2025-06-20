@@ -52,7 +52,7 @@ class NOAA_B_Dataset final : public RawDataset
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -181,7 +181,7 @@ int NOAA_B_Dataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NOAA_B_Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NOAA_B_Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

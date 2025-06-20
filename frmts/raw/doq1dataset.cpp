@@ -118,7 +118,7 @@ class DOQ1Dataset final : public RawDataset
     DOQ1Dataset();
     ~DOQ1Dataset();
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -178,7 +178,7 @@ CPLErr DOQ1Dataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr DOQ1Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr DOQ1Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt[0] = dfULX;

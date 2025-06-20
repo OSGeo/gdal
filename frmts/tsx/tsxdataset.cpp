@@ -92,7 +92,7 @@ class TSXDataset final : public GDALPamDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -819,7 +819,7 @@ const OGRSpatialReference *TSXDataset::GetSpatialRef() const
 /************************************************************************/
 /*                               GetGeotransform()                      */
 /************************************************************************/
-CPLErr TSXDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr TSXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
 

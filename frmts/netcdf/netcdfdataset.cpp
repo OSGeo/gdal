@@ -6255,7 +6255,7 @@ bool netCDFDataset::AddGridMappingRef()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr netCDFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr netCDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

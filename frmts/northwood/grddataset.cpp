@@ -93,7 +93,7 @@ class NWT_GRDDataset final : public GDALPamDataset
                                    void *pProgressData);
 #endif
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr FlushCache(bool bAtClosing) override;
 
@@ -479,7 +479,7 @@ CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NWT_GRDDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NWT_GRDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
     gt[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);

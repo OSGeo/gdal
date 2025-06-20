@@ -127,7 +127,7 @@ class OGCAPIDataset final : public GDALDataset
     OGCAPIDataset() = default;
     ~OGCAPIDataset();
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     int GetLayerCount() override
@@ -361,7 +361,7 @@ int OGCAPIDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr OGCAPIDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr OGCAPIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

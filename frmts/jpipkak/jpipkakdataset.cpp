@@ -1066,7 +1066,7 @@ const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPIPKAKDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr JPIPKAKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)

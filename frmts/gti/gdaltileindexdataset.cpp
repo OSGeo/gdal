@@ -170,7 +170,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
 
     CPLErr FlushCache(bool bAtClosing) override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -2787,7 +2787,7 @@ GDALRasterBand *GDALTileIndexBand::GetOverview(int iOvr)
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr GDALTileIndexDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALTileIndexDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

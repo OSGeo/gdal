@@ -407,7 +407,7 @@ class IdrisiDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     virtual char **GetFileList(void) override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -1261,7 +1261,7 @@ char **IdrisiDataset::GetFileList()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr IdrisiDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr IdrisiDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (GDALPamDataset::GetGeoTransform(gt) != CE_None)
     {

@@ -204,7 +204,7 @@ class BYNDataset final : public RawDataset
     BYNDataset();
     ~BYNDataset();
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 

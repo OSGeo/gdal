@@ -429,7 +429,7 @@ const std::string GDALCADDataset::GetPrjFilePath() const
     return std::string();
 }
 
-CPLErr GDALCADDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALCADDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

@@ -114,7 +114,7 @@ class PLMosaicDataset final : public GDALPamDataset
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     GDALDataset *GetMetaTile(int tile_x, int tile_y);
 };
@@ -1159,7 +1159,7 @@ const OGRSpatialReference *PLMosaicDataset::GetSpatialRef() const
 /*                            GetGeoTransform()                         */
 /************************************************************************/
 
-CPLErr PLMosaicDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PLMosaicDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return (bHasGeoTransform) ? CE_None : CE_Failure;

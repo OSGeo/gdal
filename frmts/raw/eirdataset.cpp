@@ -48,7 +48,7 @@ class EIRDataset final : public RawDataset
     EIRDataset();
     ~EIRDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetFileList() override;
 
@@ -185,7 +185,7 @@ void EIRDataset::ResetKeyValue(const char *pszKey, const char *pszValue)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr EIRDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr EIRDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

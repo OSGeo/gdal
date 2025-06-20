@@ -42,7 +42,7 @@ class MAPDataset final : public GDALDataset
     virtual ~MAPDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
@@ -417,7 +417,7 @@ const OGRSpatialReference *MAPDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MAPDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MAPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

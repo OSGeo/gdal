@@ -901,7 +901,7 @@ class FakeMaxZoomDataset : public GDALDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;
@@ -1060,7 +1060,7 @@ class MosaicDataset : public GDALDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;

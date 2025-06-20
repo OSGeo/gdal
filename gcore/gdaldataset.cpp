@@ -1383,7 +1383,7 @@ CPLErr CPL_STDCALL GDALSetProjection(GDALDatasetH hDS,
  * @since 3.12
  */
 
-CPLErr GDALDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = GDALGeoTransform();
@@ -1424,7 +1424,7 @@ CPLErr GDALDataset::GetGeoTransform(GDALGeoTransform &gt)
  * @deprecated since 3.12. Use GetGeoTransform(GDALGeoTransform&) instead
  */
 
-CPLErr GDALDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALDataset::GetGeoTransform(double *padfTransform) const
 
 {
     return GetGeoTransform(

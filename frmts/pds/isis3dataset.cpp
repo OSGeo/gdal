@@ -184,7 +184,7 @@ class ISIS3Dataset final : public RawDataset
 
     virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -1396,7 +1396,7 @@ CPLErr ISIS3Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ISIS3Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_bGotTransform)

@@ -528,7 +528,7 @@ void KEADataset::UpdateMetadataList()
 }
 
 // read in the geotransform
-CPLErr KEADataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr KEADataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     try
     {

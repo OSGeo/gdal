@@ -4530,7 +4530,7 @@ CPLErr HFADataset::SetMetadataItem(const char *pszTag, const char *pszValue,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HFADataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr HFADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||

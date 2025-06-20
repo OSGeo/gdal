@@ -44,7 +44,7 @@ class KEADataset final : public GDALDataset
                                    void *pProgressData);
 
     // virtual methods for dealing with transform and projection
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;

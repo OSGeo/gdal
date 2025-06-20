@@ -915,10 +915,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     const char *GetProjectionRef(void) const;
     CPLErr SetProjection(const char *pszProjection);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt);
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt);
 
-    CPLErr GetGeoTransform(double *padfGeoTransform)
+    CPLErr GetGeoTransform(double *padfGeoTransform) const
 #if defined(GDAL_COMPILATION) && !defined(DOXYGEN_XML)
         CPL_WARN_DEPRECATED("Use GetGeoTransform(GDALGeoTransform&) instead")
 #endif

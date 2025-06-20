@@ -78,7 +78,7 @@ class JDEMDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -218,7 +218,7 @@ JDEMDataset::~JDEMDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JDEMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr JDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     const char *psHeader = reinterpret_cast<const char *>(m_abyHeader);

@@ -137,7 +137,7 @@ class GDALDAASDataset final : public GDALDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -304,7 +304,7 @@ int GDALDAASDataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr GDALDAASDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALDAASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return (m_bGotGeoTransform) ? CE_None : CE_Failure;

@@ -3438,7 +3438,7 @@ CPLErr PostGISRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 /********************************************************
  * \brief Get the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PostGISRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
 
     // copy necessary values in supplied buffer

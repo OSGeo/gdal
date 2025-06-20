@@ -2260,7 +2260,7 @@ char **OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr OGRSQLiteDataSource::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr OGRSQLiteDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGeoTransformValid)
     {

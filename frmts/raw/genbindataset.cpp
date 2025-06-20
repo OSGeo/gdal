@@ -49,7 +49,7 @@ class GenBinDataset final : public RawDataset
     GenBinDataset();
     ~GenBinDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -241,7 +241,7 @@ CPLErr GenBinDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GenBinDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GenBinDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

@@ -58,7 +58,7 @@ class GDALComputedDataset final : public GDALDataset
 
     ~GDALComputedDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         return m_oVRTDS.GetGeoTransform(gt);
     }

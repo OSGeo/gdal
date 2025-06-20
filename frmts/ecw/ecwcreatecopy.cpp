@@ -1540,7 +1540,7 @@ class ECWWriteDataset final : public GDALDataset
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -1690,7 +1690,7 @@ const OGRSpatialReference *ECWWriteDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ECWWriteDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ECWWriteDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

@@ -113,7 +113,7 @@ class LIBERTIFFDataset final : public GDALPamDataset
         return m_aoGCPs.empty() && !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return m_geotransformValid ? CE_None : CE_Failure;

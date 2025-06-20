@@ -92,7 +92,7 @@ class ECRGTOCDataset final : public GDALPamDataset
     void AddSubDataset(const char *pszFilename, const char *pszProductTitle,
                        const char *pszDiscId, const char *pszScale);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;

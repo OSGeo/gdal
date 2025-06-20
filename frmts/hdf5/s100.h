@@ -41,7 +41,7 @@ class S100BaseDataset CPL_NON_FINAL : public GDALPamDataset
     bool Init();
 
   public:
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetFileList() override;

@@ -92,7 +92,7 @@ class PDSDataset final : public RawDataset
     PDSDataset();
     virtual ~PDSDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetFileList(void) override;
@@ -271,7 +271,7 @@ const OGRSpatialReference *PDSDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PDSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

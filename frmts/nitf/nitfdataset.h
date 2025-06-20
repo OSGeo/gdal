@@ -147,7 +147,7 @@ class NITFDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;

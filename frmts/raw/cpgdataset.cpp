@@ -82,7 +82,7 @@ class CPGDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetFileList() override;
 
@@ -1197,7 +1197,7 @@ const GDAL_GCP *CPGDataset::GetGCPs()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr CPGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr CPGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

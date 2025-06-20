@@ -39,7 +39,7 @@ class GXFDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -158,7 +158,7 @@ GXFDataset::~GXFDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GXFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GXFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     double dfXOrigin = 0.0;

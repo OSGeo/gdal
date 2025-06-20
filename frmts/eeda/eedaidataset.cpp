@@ -67,7 +67,7 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
     virtual ~GDALEEDAIDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
@@ -1124,7 +1124,7 @@ const OGRSpatialReference *GDALEEDAIDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALEEDAIDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALEEDAIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

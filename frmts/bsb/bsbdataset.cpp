@@ -61,7 +61,7 @@ class BSBDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
 };
 
@@ -195,7 +195,7 @@ BSBDataset::~BSBDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BSBDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr BSBDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

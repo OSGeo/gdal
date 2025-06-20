@@ -92,7 +92,7 @@ class NSIDCbinDataset final : public GDALPamDataset
   public:
     NSIDCbinDataset();
     ~NSIDCbinDataset() override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     static GDALDataset *Open(GDALOpenInfo *);
@@ -412,7 +412,7 @@ const OGRSpatialReference *NSIDCbinDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NSIDCbinDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NSIDCbinDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

@@ -6160,10 +6160,10 @@ const OGRSpatialReference *GTiffDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTiffDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GTiffDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    LoadGeoreferencingAndPamIfNeeded();
+    const_cast<GTiffDataset *>(this)->LoadGeoreferencingAndPamIfNeeded();
 
     gt = m_gt;
 

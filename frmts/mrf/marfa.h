@@ -415,7 +415,7 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual char **GetFileList() override;
@@ -604,7 +604,7 @@ class MRFDataset final : public GDALPamDataset
 
     // GeoTransform support
     GDALGeoTransform m_gt{};
-    int bGeoTransformValid;
+    mutable int bGeoTransformValid;
 
     // CRS
     OGRSpatialReference m_oSRS{};

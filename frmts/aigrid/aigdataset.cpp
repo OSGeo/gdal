@@ -55,7 +55,7 @@ class AIGDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     char **GetFileList(void) override;
 };
@@ -750,7 +750,7 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr AIGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr AIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt[0] = psInfo->dfLLX;

@@ -70,7 +70,7 @@ class GTXDataset final : public RawDataset
 
     ~GTXDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override
@@ -315,7 +315,7 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTXDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GTXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

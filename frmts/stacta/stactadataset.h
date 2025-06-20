@@ -72,7 +72,7 @@ class STACTADataset final : public GDALPamDataset
     ~STACTADataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount,
@@ -170,7 +170,7 @@ class STACTARawDataset final : public GDALDataset
         return &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount,

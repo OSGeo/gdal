@@ -49,7 +49,7 @@ class ROIPACDataset final : public RawDataset
                                char **papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override
@@ -789,7 +789,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return bValidGeoTransform ? CE_None : CE_Failure;

@@ -40,7 +40,7 @@ PostGISRasterTileDataset::~PostGISRasterTileDataset()
 /********************************************************
  * \brief Get the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterTileDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PostGISRasterTileDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

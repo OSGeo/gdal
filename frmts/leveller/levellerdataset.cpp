@@ -286,7 +286,7 @@ class LevellerDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
@@ -1401,7 +1401,7 @@ const OGRSpatialReference *LevellerDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LevellerDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr LevellerDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

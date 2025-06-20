@@ -7720,7 +7720,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
 
     ~GDALMDArrayResampledDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return m_bHasGT ? CE_None : CE_Failure;
@@ -8736,7 +8736,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
         return eErr;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return m_bHasGT ? CE_None : CE_Failure;

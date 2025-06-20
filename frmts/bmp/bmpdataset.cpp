@@ -244,7 +244,7 @@ class BMPDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 };
 
@@ -972,7 +972,7 @@ BMPDataset::~BMPDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (bGeoTransformValid)
     {

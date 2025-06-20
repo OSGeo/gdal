@@ -64,7 +64,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     void *GetInternalHandle(const char *) override;
@@ -292,7 +292,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     // Special behavior for the following methods : they return a pointer

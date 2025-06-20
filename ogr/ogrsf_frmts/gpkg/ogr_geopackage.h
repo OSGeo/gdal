@@ -309,7 +309,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;

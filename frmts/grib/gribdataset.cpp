@@ -1370,7 +1370,7 @@ GRIBDataset::~GRIBDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GRIBDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GRIBDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

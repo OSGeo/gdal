@@ -71,7 +71,7 @@ class DIMAPDataset final : public GDALPamDataset
     ~DIMAPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
@@ -203,7 +203,7 @@ const OGRSpatialReference *DIMAPDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr DIMAPDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr DIMAPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bHaveGeoTransform)

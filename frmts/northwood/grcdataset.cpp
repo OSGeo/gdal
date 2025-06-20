@@ -47,7 +47,7 @@ class NWT_GRCDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -254,7 +254,7 @@ NWT_GRCDataset::~NWT_GRCDataset()
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
-CPLErr NWT_GRCDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr NWT_GRCDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
     gt[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);

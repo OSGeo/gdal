@@ -1105,7 +1105,7 @@ CPLErr ENVIDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ENVIDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ENVIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

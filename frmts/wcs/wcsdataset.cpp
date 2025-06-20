@@ -1602,7 +1602,7 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr WCSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr WCSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

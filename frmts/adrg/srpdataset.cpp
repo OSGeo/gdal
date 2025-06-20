@@ -69,7 +69,7 @@ class SRPDataset final : public GDALPamDataset
     ~SRPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadata(const char *pszDomain = "") override;
 
@@ -376,7 +376,7 @@ const OGRSpatialReference *SRPDataset::GetSpatialRef() const
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (EQUAL(osProduct, "ASRP"))
     {

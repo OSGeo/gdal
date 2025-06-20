@@ -69,7 +69,7 @@ class GDALOverviewDataset final : public GDALDataset
     ~GDALOverviewDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -369,7 +369,7 @@ const OGRSpatialReference *GDALOverviewDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALOverviewDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALOverviewDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (poMainDS->GetGeoTransform(gt) != CE_None)

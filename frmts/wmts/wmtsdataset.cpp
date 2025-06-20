@@ -169,7 +169,7 @@ class WMTSDataset final : public GDALPamDataset
     WMTSDataset();
     virtual ~WMTSDataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain) override;
@@ -496,7 +496,7 @@ CPLErr WMTSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr WMTSDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr WMTSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

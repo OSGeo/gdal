@@ -627,7 +627,7 @@ CPLErr ILWISDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ILWISDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ILWISDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

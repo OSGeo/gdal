@@ -271,7 +271,7 @@ const OGRSpatialReference *GDALGeorefPamDataset::GetSpatialRef() const
 /*      inside our file, unless GDAL_GEOREF_SOURCES is defined.         */
 /************************************************************************/
 
-CPLErr GDALGeorefPamDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALGeorefPamDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     const int nPAMIndex = GetPAMGeorefSrcIndex();

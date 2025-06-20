@@ -176,7 +176,7 @@ D_PROXY_METHOD_WITH_RET(const OGRSpatialReference *, nullptr, GetSpatialRef,
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetSpatialRef,
                         (const OGRSpatialReference *poSRS), (poSRS))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetGeoTransform,
-                        (GDALGeoTransform & gt), (gt))
+                        (GDALGeoTransform & gt) const, (gt))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGeoTransform,
                         (const GDALGeoTransform &gt), (gt))
 

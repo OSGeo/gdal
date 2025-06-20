@@ -82,7 +82,7 @@ class ACE2Dataset final : public GDALPamDataset
         return &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -124,7 +124,7 @@ ACE2Dataset::ACE2Dataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ACE2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ACE2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;

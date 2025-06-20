@@ -107,7 +107,7 @@ class CTGDataset final : public GDALPamDataset
     CTGDataset();
     ~CTGDataset() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -521,7 +521,7 @@ GDALDataset *CTGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr CTGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr CTGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt[0] = static_cast<double>(nNWEasting) - nCellSize / 2;

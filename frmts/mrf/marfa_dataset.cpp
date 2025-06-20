@@ -2536,10 +2536,11 @@ bool MRFDataset::IsSingleTile()
 /*
  *  Returns 0,1,0,0,0,1 even if it was not set
  */
-CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
-    if (GetMetadata("RPC") || GetGCPCount())
+    MRFDataset *nonConstThis = const_cast<MRFDataset *>(this);
+    if (nonConstThis->GetMetadata("RPC") || nonConstThis->GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid)
         return CE_Failure;

@@ -1012,7 +1012,7 @@ CPLErr GDALProxyPoolDataset::SetGeoTransform(const GDALGeoTransform &gt)
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr GDALProxyPoolDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALProxyPoolDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bHasSrcGeoTransform)
     {

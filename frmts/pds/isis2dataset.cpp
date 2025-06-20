@@ -66,7 +66,7 @@ class ISIS2Dataset final : public RawDataset
     ISIS2Dataset();
     virtual ~ISIS2Dataset();
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetFileList() override;
@@ -145,7 +145,7 @@ const OGRSpatialReference *ISIS2Dataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS2Dataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr ISIS2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)

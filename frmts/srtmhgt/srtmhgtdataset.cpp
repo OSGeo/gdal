@@ -48,7 +48,7 @@ class SRTMHGTDataset final : public GDALPamDataset
     virtual ~SRTMHGTDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -251,7 +251,7 @@ SRTMHGTDataset::~SRTMHGTDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr SRTMHGTDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr SRTMHGTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

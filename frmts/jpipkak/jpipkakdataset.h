@@ -244,7 +244,7 @@ class JPIPKAKDataset final : public GDALPamDataset
                        int nBandCount, const int *panBandList) const;
 
     // gdaldataset methods
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

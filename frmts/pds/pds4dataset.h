@@ -386,7 +386,7 @@ class PDS4Dataset final : public RawDataset
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     virtual char **GetFileList() override;
     virtual CPLErr SetMetadata(char **papszMD,

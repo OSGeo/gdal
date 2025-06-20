@@ -1828,7 +1828,7 @@ CPLErr GeoRasterDataset::IRasterIO(
 //                                                            GetGeoTransform()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GeoRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (poGeoRaster->phRPC)
     {
@@ -1841,8 +1841,6 @@ CPLErr GeoRasterDataset::GetGeoTransform(GDALGeoTransform &gt)
     }
 
     gt = m_gt;
-
-    bGeoTransform = true;
 
     return CE_None;
 }

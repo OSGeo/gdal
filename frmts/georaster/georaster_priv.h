@@ -163,7 +163,7 @@ class GeoRasterDataset final : public GDALDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

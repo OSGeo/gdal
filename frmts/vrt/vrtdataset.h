@@ -350,7 +350,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &) const override;
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     virtual CPLErr SetMetadata(char **papszMetadata,

@@ -75,7 +75,7 @@ class SAGADataset final : public GDALPamDataset
 
     virtual char **GetFileList() override;
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 };
 
@@ -694,9 +694,10 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr SAGADataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr SAGADataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand(1));
+    const SAGARasterBand *poGRB =
+        cpl::down_cast<const SAGARasterBand *>(GetRasterBand(1));
 
     if (poGRB == nullptr)
     {

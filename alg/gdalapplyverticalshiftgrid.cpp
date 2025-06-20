@@ -50,7 +50,7 @@ class GDALApplyVSGDataset final : public GDALDataset
 
     virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     bool IsInitOK();
@@ -139,7 +139,7 @@ int GDALApplyVSGDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALApplyVSGDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALApplyVSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     return m_poSrcDataset->GetGeoTransform(gt);
 }

@@ -300,7 +300,7 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     }
 }
 
-CPLErr SIGDEMDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr SIGDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

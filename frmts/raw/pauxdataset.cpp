@@ -59,7 +59,7 @@ class PAuxDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     int GetGCPCount() override;
 
@@ -429,7 +429,7 @@ const GDAL_GCP *PAuxDataset::GetGCPs()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PAuxDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr PAuxDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (CSLFetchNameValue(papszAuxLines, "UpLeftX") == nullptr ||

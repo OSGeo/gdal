@@ -90,7 +90,7 @@ class GDALCADDataset final : public GDALDataset
     int TestCapability(const char *) override;
     virtual char **GetFileList() override;
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;

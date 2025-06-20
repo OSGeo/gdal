@@ -117,7 +117,7 @@ class HDF5ImageDataset final : public HDF5Dataset
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -1727,7 +1727,7 @@ const GDAL_GCP *HDF5ImageDataset::GetGCPs()
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr HDF5ImageDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr HDF5ImageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (bHasGeoTransform)
     {

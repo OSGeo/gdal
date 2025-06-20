@@ -104,7 +104,7 @@ class PCRasterDataset final : public GDALPamDataset
     //----------------------------------------------------------------------------
 
     MAP *map() const;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CSF_CR cellRepresentation() const;
     CSF_VS valueScale() const;
     double defaultNoDataValue() const;

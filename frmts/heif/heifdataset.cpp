@@ -989,7 +989,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALHEIFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr GDALHEIFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     return geoHEIF.GetGeoTransform(gt);
 }

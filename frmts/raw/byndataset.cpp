@@ -362,7 +362,7 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BYNDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr BYNDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     return CE_None;

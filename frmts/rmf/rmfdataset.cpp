@@ -769,7 +769,7 @@ RMFDataset::~RMFDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RMFDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr RMFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
 

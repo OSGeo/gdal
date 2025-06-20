@@ -124,7 +124,7 @@ class RIKDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -635,7 +635,7 @@ RIKDataset::~RIKDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RIKDataset::GetGeoTransform(GDALGeoTransform &gt)
+CPLErr RIKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     gt = m_gt;
