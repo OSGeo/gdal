@@ -19,6 +19,7 @@
 #include "gdal.h"
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
+#include "memdataset.h"
 
 #include <algorithm>
 #include <array>
@@ -1283,8 +1284,8 @@ TEST_F(test_gdal, GDALDataTypeIsConversionLossy)
 // Test GDALDataset::GetBands()
 TEST_F(test_gdal, GDALDataset_GetBands)
 {
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-                                  ->Create("", 1, 1, 3, GDT_Byte, nullptr));
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 1, 1, 3, GDT_Byte, nullptr));
     int nExpectedNumber = 1;
     for (auto &&poBand : poDS->GetBands())
     {
@@ -3318,8 +3319,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
 TEST_F(test_gdal, GetIndexColorTranslationTo)
 {
     GDALDatasetUniquePtr poSrcDS(
-        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-            ->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        MEMDataset::Create("", 1, 1, 1, GDT_Byte, nullptr));
     {
         GDALColorTable oCT;
         {
@@ -3359,8 +3359,7 @@ TEST_F(test_gdal, GetIndexColorTranslationTo)
     }
 
     GDALDatasetUniquePtr poDstDS(
-        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-            ->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        MEMDataset::Create("", 1, 1, 1, GDT_Byte, nullptr));
     {
         GDALColorTable oCT;
         {
@@ -3470,8 +3469,7 @@ template <class T> void TestCachedPixelAccessor()
 {
     constexpr auto eType = GDALCachedPixelAccessorGetDataType<T>::DataType;
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-            ->Create("", 11, 23, 1, eType, nullptr));
+        MEMDataset::Create("", 11, 23, 1, eType, nullptr));
     auto poBand = poDS->GetRasterBand(1);
     GDALCachedPixelAccessor<T, 4> accessor(poBand);
     for (int iY = 0; iY < poBand->GetYSize(); iY++)
@@ -3827,8 +3825,7 @@ TEST_F(test_gdal, GDALDeinterleave4ComponentsUInt16)
 TEST_F(test_gdal, GDALDatasetReportError)
 {
     GDALDatasetUniquePtr poSrcDS(
-        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-            ->Create("", 1, 1, 1, GDT_Byte, nullptr));
+        MEMDataset::Create("", 1, 1, 1, GDT_Byte, nullptr));
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poSrcDS->ReportError("foo", CE_Warning, CPLE_AppDefined, "bar");
@@ -4618,8 +4615,8 @@ TEST_F(test_gdal, gdal_gcp_class)
 
 TEST_F(test_gdal, RasterIO_gdt_unknown)
 {
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-                                  ->Create("", 1, 1, 1, GDT_Float64, nullptr));
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 1, 1, 1, GDT_Float64, nullptr));
     CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
     GByte b = 0;
     GDALRasterIOExtraArg sExtraArg;
@@ -4654,8 +4651,8 @@ TEST_F(test_gdal, CopyWords_gdt_unknown)
 // Test GDALRasterBand::ReadRaster
 TEST_F(test_gdal, ReadRaster)
 {
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-                                  ->Create("", 2, 3, 1, GDT_Float64, nullptr));
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 2, 3, 1, GDT_Float64, nullptr));
     std::array<double, 6> buffer = {
         -1e300, -1,     //////////////////////////////////////////////
         1,      128,    //////////////////////////////////////////////
@@ -5056,8 +5053,8 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation)
 // Test GDALComputeRasterMinMaxLocation
 TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_byte_min_max_optim)
 {
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-                                  ->Create("", 1, 4, 1, GDT_Byte, nullptr));
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 1, 4, 1, GDT_Byte, nullptr));
     std::array<uint8_t, 4> buffer = {
         1,    //////////////////////////////////////////////////////////
         0,    //////////////////////////////////////////////////////////
@@ -5091,8 +5088,8 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_byte_min_max_optim)
 // Test GDALComputeRasterMinMaxLocation
 TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
 {
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-                                  ->Create("", 2, 2, 1, GDT_Byte, nullptr));
+    GDALDatasetUniquePtr poDS(
+        MEMDataset::Create("", 2, 2, 1, GDT_Byte, nullptr));
     std::array<uint8_t, 6> buffer = {
         2, 10,  //////////////////////////////////////////////////////////
         4, 20,  //////////////////////////////////////////////////////////
@@ -5532,15 +5529,10 @@ TEST_F(test_gdal, GDALColorTable_from_qml_paletted)
 
 TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
 {
-    auto poMemDrv = GetGDALDriverManager()->GetDriverByName("MEM");
-    if (!poMemDrv)
-    {
-        GTEST_SKIP() << "MEM driver missing";
-    }
     constexpr int WIDTH = 1;
     constexpr int HEIGHT = 2;
     auto poDS = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
-        poMemDrv->Create("", WIDTH, HEIGHT, 3, GDT_Float64, nullptr));
+        MEMDataset::Create("", WIDTH, HEIGHT, 3, GDT_Float64, nullptr));
     std::array<double, 6> adfGT = {1, 2, 3, 4, 5, 6};
     poDS->SetGeoTransform(adfGT.data());
     OGRSpatialReference *poSRS = new OGRSpatialReference();
@@ -5560,7 +5552,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
     {
         auto poOtherDS =
             std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
-                poMemDrv->Create("", 1, 1, 1, GDT_Byte, nullptr));
+                MEMDataset::Create("", 1, 1, 1, GDT_Byte, nullptr));
         EXPECT_THROW(
             CPL_IGNORE_RET_VAL(firstBand + (*poOtherDS->GetRasterBand(1))),
             std::runtime_error);
@@ -5877,7 +5869,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
     {
         auto poLogicalDS =
             std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
-                poMemDrv->Create("", WIDTH, HEIGHT, 2, GDT_Byte, nullptr));
+                MEMDataset::Create("", WIDTH, HEIGHT, 2, GDT_Byte, nullptr));
         auto &trueBand = *(poLogicalDS->GetRasterBand(1));
         auto &falseBand = *(poLogicalDS->GetRasterBand(2));
         trueBand.Fill(true);
