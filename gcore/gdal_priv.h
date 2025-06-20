@@ -55,7 +55,6 @@ class GDALAlgorithm;
 #include <stdarg.h>
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -502,78 +501,103 @@ class CPL_DLL GCP
 
 /** Class that encapsulates a geotransform matrix.
  *
+ * It contains 6 coefficients expressing an affine transformation from
+ * (column, line) raster space to (X, Y) georeferenced space, such that
+ *
+ * \code{.c}
+ *  X = xorig + column * xscale + line * xrot;
+ *  Y = yorig + column * yrot   + line * yscale;
+ * \endcode
+ *
+ * The default value is the identity transformation.
+ *
  * @since 3.12
  */
 struct GDALGeoTransform
 {
-    /** Array of 6 coefficients expressing an affine transformation from
-     * (column, line) raster space to (X, Y) georeferenced space, such that
-     *
-     * \code{.c}
-     *  X = coeffs[0] + column * coeffs[1] + line  * coeffs[2];
-     *  Y = coeffs[3] + column * coeffs[4] + line  * coeffs[5];
-     * \endcode
-     *
-     * The default value is the identity transformation.
-     */
-    std::array<double, 6> coeffs = {0, 1, 0, 0, 0, 1};
+    // NOTE to GDAL developers: do not reorder those coefficients!
+
+    /** X value of the origin of the raster */
+    double xorig = 0;
+
+    /** X scale factor */
+    double xscale = 1;
+
+    /** X rotation factor */
+    double xrot = 0;
+
+    /** Y value of the origin of the raster */
+    double yorig = 0;
+
+    /** Y rotation factor */
+    double yrot = 0;
+
+    /** Y scale factor */
+    double yscale = 1;
 
     /** Default constructor for an identity geotransformation matrix. */
     inline GDALGeoTransform() = default;
 
     /** Constructor from a array of 6 double */
-    inline explicit GDALGeoTransform(const double coeffsIn[6])
+    inline explicit GDALGeoTransform(const double coeffs[6])
     {
         static_assert(sizeof(GDALGeoTransform) == 6 * sizeof(double));
-        memcpy(coeffs.data(), coeffsIn, sizeof(coeffs));
+        xorig = coeffs[0];
+        xscale = coeffs[1];
+        xrot = coeffs[2];
+        yorig = coeffs[3];
+        yrot = coeffs[4];
+        yscale = coeffs[5];
     }
 
     /** Constructor from 6 double values */
-    inline GDALGeoTransform(double xorig, double xscale, double xrot,
-                            double yorig, double yrot, double yscale)
+    inline GDALGeoTransform(double xorigIn, double xscaleIn, double xrotIn,
+                            double yorigIn, double yrotIn, double yscaleIn)
     {
-        coeffs[0] = xorig;
-        coeffs[1] = xscale;
-        coeffs[2] = xrot;
-        coeffs[3] = yorig;
-        coeffs[4] = yrot;
-        coeffs[5] = yscale;
+        xorig = xorigIn;
+        xscale = xscaleIn;
+        xrot = xrotIn;
+        yorig = yorigIn;
+        yrot = yrotIn;
+        yscale = yscaleIn;
     }
 
     /** Element accessor. idx must be in [0,5] range */
     template <typename T> inline double operator[](T idx) const
     {
-        return coeffs[idx];
+        return *(&xorig + idx);
     }
 
     /** Element accessor. idx must be in [0,5] range */
     template <typename T> inline double &operator[](T idx)
     {
-        return coeffs[idx];
+        return *(&xorig + idx);
     }
 
     /** Equality test operator */
     inline bool operator==(const GDALGeoTransform &other) const
     {
-        return coeffs == other.coeffs;
+        return xorig == other.xorig && xscale == other.xscale &&
+               xrot == other.xrot && yorig == other.yorig &&
+               yrot == other.yrot && yscale == other.yscale;
     }
 
     /** Inequality test operator */
     inline bool operator!=(const GDALGeoTransform &other) const
     {
-        return coeffs != other.coeffs;
+        return !(operator==(other));
     }
 
     /** Cast to const double* */
     inline const double *data() const
     {
-        return coeffs.data();
+        return &xorig;
     }
 
     /** Cast to double* */
     inline double *data()
     {
-        return coeffs.data();
+        return &xorig;
     }
 
     /**
@@ -626,10 +650,10 @@ struct GDALGeoTransform
      */
     inline void Rescale(double dfXRatio, double dfYRatio)
     {
-        coeffs[1] *= dfXRatio;
-        coeffs[2] *= dfYRatio;
-        coeffs[4] *= dfXRatio;
-        coeffs[5] *= dfYRatio;
+        xscale *= dfXRatio;
+        xrot *= dfYRatio;
+        yrot *= dfXRatio;
+        yscale *= dfYRatio;
     }
 };
 
