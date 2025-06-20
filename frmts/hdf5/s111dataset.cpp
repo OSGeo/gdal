@@ -234,8 +234,8 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
     // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poSurfaceCurrent01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
+    poDS->m_bHasGT =
+        S100GetGeoTransform(poSurfaceCurrent01.get(), poDS->m_gt, bNorthUp);
 
     if (osGroup.empty())
     {

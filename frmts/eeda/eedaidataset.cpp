@@ -53,7 +53,7 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
     CPLString m_osPixelEncoding{};
     bool m_bQueryMultipleBands;
     OGRSpatialReference m_oSRS{};
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     std::vector<GDALEEDAIDataset *> m_apoOverviewDS{};
 
     GDALEEDAIDataset(GDALEEDAIDataset *poParentDS, int iOvrLevel);
@@ -67,7 +67,7 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
     virtual ~GDALEEDAIDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
@@ -146,12 +146,6 @@ GDALEEDAIDataset::GDALEEDAIDataset()
       m_bQueryMultipleBands(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -171,14 +165,12 @@ GDALEEDAIDataset::GDALEEDAIDataset(GDALEEDAIDataset *poParentDS, int iOvrLevel)
     m_osBaseURL = poParentDS->m_osBaseURL;
     nRasterXSize = m_poParentDS->nRasterXSize >> iOvrLevel;
     nRasterYSize = m_poParentDS->nRasterYSize >> iOvrLevel;
-    m_adfGeoTransform[0] = m_poParentDS->m_adfGeoTransform[0];
-    m_adfGeoTransform[1] = m_poParentDS->m_adfGeoTransform[1] *
-                           m_poParentDS->nRasterXSize / nRasterXSize;
-    m_adfGeoTransform[2] = m_poParentDS->m_adfGeoTransform[2];
-    m_adfGeoTransform[3] = m_poParentDS->m_adfGeoTransform[3];
-    m_adfGeoTransform[4] = m_poParentDS->m_adfGeoTransform[4];
-    m_adfGeoTransform[5] = m_poParentDS->m_adfGeoTransform[5] *
-                           m_poParentDS->nRasterYSize / nRasterYSize;
+    m_gt[0] = m_poParentDS->m_gt[0];
+    m_gt[1] = m_poParentDS->m_gt[1] * m_poParentDS->nRasterXSize / nRasterXSize;
+    m_gt[2] = m_poParentDS->m_gt[2];
+    m_gt[3] = m_poParentDS->m_gt[3];
+    m_gt[4] = m_poParentDS->m_gt[4];
+    m_gt[5] = m_poParentDS->m_gt[5] * m_poParentDS->nRasterYSize / nRasterYSize;
 }
 
 /************************************************************************/
@@ -552,10 +544,10 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     int nReqYSize = nBlockYSize * nYBlocks;
     if ((nBlockYOff + nYBlocks) * nBlockYSize > nRasterYSize)
         nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-    const double dfX0 = poGDS->m_adfGeoTransform[0] +
-                        nBlockXOff * nBlockXSize * poGDS->m_adfGeoTransform[1];
-    const double dfY0 = poGDS->m_adfGeoTransform[3] +
-                        nBlockYOff * nBlockYSize * poGDS->m_adfGeoTransform[5];
+    const double dfX0 =
+        poGDS->m_gt[0] + nBlockXOff * nBlockXSize * poGDS->m_gt[1];
+    const double dfY0 =
+        poGDS->m_gt[3] + nBlockYOff * nBlockYSize * poGDS->m_gt[5];
 #ifdef DEBUG_VERBOSE
     CPLDebug("EEDAI",
              "nBlockYOff=%d nBlockYOff=%d "
@@ -572,12 +564,12 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     json_object_object_add(
         poAffineTransform, "translateY",
         json_object_new_double_with_significant_figures(dfY0, 18));
-    json_object_object_add(poAffineTransform, "scaleX",
-                           json_object_new_double_with_significant_figures(
-                               poGDS->m_adfGeoTransform[1], 18));
-    json_object_object_add(poAffineTransform, "scaleY",
-                           json_object_new_double_with_significant_figures(
-                               poGDS->m_adfGeoTransform[5], 18));
+    json_object_object_add(
+        poAffineTransform, "scaleX",
+        json_object_new_double_with_significant_figures(poGDS->m_gt[1], 18));
+    json_object_object_add(
+        poAffineTransform, "scaleY",
+        json_object_new_double_with_significant_figures(poGDS->m_gt[5], 18));
     json_object_object_add(
         poAffineTransform, "shearX",
         json_object_new_double_with_significant_figures(0.0, 18));
@@ -1132,9 +1124,9 @@ const OGRSpatialReference *GDALEEDAIDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALEEDAIDataset::GetGeoTransform(double *adfGeoTransform)
+CPLErr GDALEEDAIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(adfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -1295,8 +1287,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                 iIdxFirstBand = i;
                 nRasterXSize = aoBandDesc[i].nWidth;
                 nRasterYSize = aoBandDesc[i].nHeight;
-                memcpy(m_adfGeoTransform, aoBandDesc[i].adfGeoTransform.data(),
-                       6 * sizeof(double));
+                m_gt = aoBandDesc[i].gt;
                 m_oSRS.importFromWkt(aoBandDesc[i].osWKT);
                 int iOvr = 0;
                 while ((nRasterXSize >> iOvr) > 256 ||

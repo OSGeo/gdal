@@ -157,7 +157,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRSpatialReference m_oSRS{};
     bool m_bRecordInsertedInGPKGContent = false;
     bool m_bGeoTransformValid = false;
-    std::array<double, 6> m_adfGeoTransform = {0, 0, 0, 0, 0, 0};
+    GDALGeoTransform m_gt{};
     int m_nSRID = -1;  // Unknown Cartesain
     double m_dfTMSMinX = 0.0;
     double m_dfTMSMaxY = 0.0;
@@ -309,8 +309,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
-    virtual CPLErr SetGeoTransform(double *padfGeoTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,

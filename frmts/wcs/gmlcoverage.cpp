@@ -31,7 +31,7 @@
 /************************************************************************/
 
 CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
-                           double *padfGeoTransform, char **ppszProjection)
+                           GDALGeoTransform &gt, char **ppszProjection)
 
 {
     CPLStripXMLNamespace(psXML, nullptr, TRUE);
@@ -143,18 +143,18 @@ CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
     if (CSLCount(papszOffset1Tokens) >= 2 &&
         CSLCount(papszOffset2Tokens) >= 2 && poOriginGeometry != nullptr)
     {
-        padfGeoTransform[0] = poOriginGeometry->getX();
-        padfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
-        padfGeoTransform[2] = CPLAtof(papszOffset1Tokens[1]);
-        padfGeoTransform[3] = poOriginGeometry->getY();
-        padfGeoTransform[4] = CPLAtof(papszOffset2Tokens[0]);
-        padfGeoTransform[5] = CPLAtof(papszOffset2Tokens[1]);
+        gt[0] = poOriginGeometry->getX();
+        gt[1] = CPLAtof(papszOffset1Tokens[0]);
+        gt[2] = CPLAtof(papszOffset1Tokens[1]);
+        gt[3] = poOriginGeometry->getY();
+        gt[4] = CPLAtof(papszOffset2Tokens[0]);
+        gt[5] = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
-        padfGeoTransform[0] -= padfGeoTransform[1] * 0.5;
-        padfGeoTransform[0] -= padfGeoTransform[2] * 0.5;
-        padfGeoTransform[3] -= padfGeoTransform[4] * 0.5;
-        padfGeoTransform[3] -= padfGeoTransform[5] * 0.5;
+        gt[0] -= gt[1] * 0.5;
+        gt[0] -= gt[2] * 0.5;
+        gt[3] -= gt[4] * 0.5;
+        gt[3] -= gt[5] * 0.5;
 
         bSuccess = true;
     }

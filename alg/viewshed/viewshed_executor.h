@@ -66,7 +66,7 @@ class ViewshedExecutor
     double m_dfZObserver{0};
     std::mutex iMutex{};
     std::mutex oMutex{};
-    std::array<double, 6> m_adfTransform{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     std::array<double, 5> m_testAngle{};
     double m_lowTanPitch{std::numeric_limits<double>::quiet_NaN()};
     double m_highTanPitch{std::numeric_limits<double>::quiet_NaN()};

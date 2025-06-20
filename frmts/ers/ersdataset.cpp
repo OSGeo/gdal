@@ -36,7 +36,7 @@ class ERSDataset final : public RawDataset
     GDALDataset *poDepFile;
 
     int bGotTransform;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
     CPLString osRawFilename;
@@ -73,8 +73,8 @@ class ERSDataset final : public RawDataset
     ~ERSDataset() override;
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
     char **GetFileList(void) override;
@@ -108,12 +108,6 @@ ERSDataset::ERSDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -513,29 +507,29 @@ void ERSDataset::WriteProjectionInfo(const char *pszProj, const char *pszDatum,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ERSDataset::GetGeoTransform(double *padfTransform)
+CPLErr ERSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ERSDataset::SetGeoTransform(double *padfTransform)
+CPLErr ERSDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    if (memcmp(padfTransform, adfGeoTransform, sizeof(double) * 6) == 0)
+    if (m_gt == gt)
         return CE_None;
 
-    if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
+    if (gt[2] != 0 || gt[4] != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Rotated and skewed geotransforms not currently supported for "
@@ -544,18 +538,18 @@ CPLErr ERSDataset::SetGeoTransform(double *padfTransform)
     }
 
     bGotTransform = TRUE;
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     bHDRDirty = TRUE;
 
     poHeader->Set("RasterInfo.CellInfo.Xdimension",
-                  CPLString().Printf("%.15g", fabs(adfGeoTransform[1])));
+                  CPLString().Printf("%.15g", fabs(m_gt[1])));
     poHeader->Set("RasterInfo.CellInfo.Ydimension",
-                  CPLString().Printf("%.15g", fabs(adfGeoTransform[5])));
+                  CPLString().Printf("%.15g", fabs(m_gt[5])));
     poHeader->Set("RasterInfo.RegistrationCoord.Eastings",
-                  CPLString().Printf("%.15g", adfGeoTransform[0]));
+                  CPLString().Printf("%.15g", m_gt[0]));
     poHeader->Set("RasterInfo.RegistrationCoord.Northings",
-                  CPLString().Printf("%.15g", adfGeoTransform[3]));
+                  CPLString().Printf("%.15g", m_gt[3]));
 
     if (CPLAtof(poHeader->Find("RasterInfo.RegistrationCellX", "0")) != 0.0 ||
         CPLAtof(poHeader->Find("RasterInfo.RegistrationCellY", "0")) != 0.0)
@@ -1149,30 +1143,30 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poHeader->Find("RasterInfo.RegistrationCoord.Eastings", nullptr))
     {
         poDS->bGotTransform = TRUE;
-        poDS->adfGeoTransform[0] = CPLAtof(
+        poDS->m_gt[0] = CPLAtof(
             poHeader->Find("RasterInfo.RegistrationCoord.Eastings", ""));
-        poDS->adfGeoTransform[1] =
+        poDS->m_gt[1] =
             CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", "1.0"));
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = CPLAtof(
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = CPLAtof(
             poHeader->Find("RasterInfo.RegistrationCoord.Northings", ""));
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] =
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] =
             -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", "1.0"));
     }
     else if (poHeader->Find("RasterInfo.RegistrationCoord.Latitude", nullptr) &&
              poHeader->Find("RasterInfo.CellInfo.Xdimension", nullptr))
     {
         poDS->bGotTransform = TRUE;
-        poDS->adfGeoTransform[0] = ERSDMS2Dec(
+        poDS->m_gt[0] = ERSDMS2Dec(
             poHeader->Find("RasterInfo.RegistrationCoord.Longitude", ""));
-        poDS->adfGeoTransform[1] =
+        poDS->m_gt[1] =
             CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", ""));
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = ERSDMS2Dec(
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = ERSDMS2Dec(
             poHeader->Find("RasterInfo.RegistrationCoord.Latitude", ""));
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] =
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] =
             -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", ""));
     }
 
@@ -1198,10 +1192,8 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->bGotTransform)
     {
-        poDS->adfGeoTransform[0] -= dfCellX * poDS->adfGeoTransform[1] +
-                                    dfCellY * poDS->adfGeoTransform[2];
-        poDS->adfGeoTransform[3] -= dfCellX * poDS->adfGeoTransform[4] +
-                                    dfCellY * poDS->adfGeoTransform[5];
+        poDS->m_gt[0] -= dfCellX * poDS->m_gt[1] + dfCellY * poDS->m_gt[2];
+        poDS->m_gt[3] -= dfCellX * poDS->m_gt[4] + dfCellY * poDS->m_gt[5];
     }
 
     /* -------------------------------------------------------------------- */

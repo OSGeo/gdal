@@ -2673,13 +2673,12 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 
     // Set the GeoTIFF and GML boxes if georeferencing is available,
     // and this is a JP2 file.
-    double adfGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    GDALGeoTransform gt;
     // cppcheck-suppress knownConditionTrueFalse
     if (bIsJP2 &&
-        ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-          (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-           adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-           adfGeoTransform[4] != 0.0 || std::abs(adfGeoTransform[5]) != 1.0)) ||
+        ((poSrcDS->GetGeoTransform(gt) == CE_None &&
+          (gt[0] != 0.0 || gt[1] != 1.0 || gt[2] != 0.0 || gt[3] != 0.0 ||
+           gt[4] != 0.0 || std::abs(gt[5]) != 1.0)) ||
          poSrcDS->GetGCPCount() > 0 || poSrcDS->GetMetadata("RPC") != nullptr))
     {
         GDALJP2Metadata oJP2MD;
@@ -2692,7 +2691,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         else
         {
             oJP2MD.SetSpatialRef(poSrcDS->GetSpatialRef());
-            oJP2MD.SetGeoTransform(adfGeoTransform);
+            oJP2MD.SetGeoTransform(gt);
         }
 
         oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));

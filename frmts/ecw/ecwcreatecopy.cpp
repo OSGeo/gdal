@@ -79,13 +79,12 @@ class GDALECWCompressor final : public CNCSFile
                       const char *const *papszBandDescriptions,
                       int bRGBColorSpace, GDALDataType eType,
                       const OGRSpatialReference *poSRS,
-                      double *padfGeoTransform, int nGCPCount,
+                      const GDALGeoTransform &gt, int nGCPCount,
                       const GDAL_GCP *pasGCPList, int bIsJPEG2000,
                       int bPixelIsPoint, char **papszRPCMD,
                       GDALDataset *poSrcDS = nullptr);
     CPLErr CloseDown();
 
-    CPLErr PrepareCoverageBox(const char *pszWKT, double *padfGeoTransform);
     CPLErr WriteJP2Box(GDALJP2Box *);
     void WriteXMLBoxes();
     CPLErr ourWriteLineBIL(UINT16 nBands, void **ppOutputLine,
@@ -309,211 +308,6 @@ bool GDALECWCompressor::WriteCancel()
 }
 
 /************************************************************************/
-/*                         PrepareCoverageBox()                         */
-/************************************************************************/
-
-CPLErr GDALECWCompressor::PrepareCoverageBox(
-#ifndef ECW_FW
-    CPL_UNUSED
-#endif
-    const char *pszWKT,
-#ifndef ECW_FW
-    CPL_UNUSED
-#endif
-    double *padfGeoTransform)
-
-{
-#ifndef ECW_FW
-    return CE_Failure;
-#else
-    /* -------------------------------------------------------------------- */
-    /*      Try do determine a PCS or GCS code we can use.                  */
-    /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-    int nEPSGCode = 0;
-    char szSRSName[100];
-
-    if (oSRS.importFromWkt(pszWKT) != OGRERR_NONE)
-        return CE_Failure;
-
-    if (oSRS.IsProjected())
-    {
-        const char *pszAuthName = oSRS.GetAuthorityName("PROJCS");
-
-        if (pszAuthName != nullptr && EQUAL(pszAuthName, "epsg"))
-        {
-            nEPSGCode = atoi(oSRS.GetAuthorityCode("PROJCS"));
-        }
-    }
-    else if (oSRS.IsGeographic())
-    {
-        const char *pszAuthName = oSRS.GetAuthorityName("GEOGCS");
-
-        if (pszAuthName != nullptr && EQUAL(pszAuthName, "epsg"))
-        {
-            nEPSGCode = atoi(oSRS.GetAuthorityCode("GEOGCS"));
-        }
-    }
-
-    if (nEPSGCode != 0)
-        snprintf(szSRSName, sizeof(szSRSName), "urn:ogc:def:crs:EPSG::%d",
-                 nEPSGCode);
-    else
-        strcpy(szSRSName, "gmljp2://xml/CRSDictionary.gml#ogrcrs1");
-
-    /* -------------------------------------------------------------------- */
-    /*      For now we hardcode for a minimal instance format.              */
-    /* -------------------------------------------------------------------- */
-    char szDoc[4000];
-
-    CPLsnprintf(szDoc, sizeof(szDoc),
-                "<gml:FeatureCollection\n"
-                "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
-                "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-                "   xsi:schemaLocation=\"http://www.opengis.net/gml "
-                "http://www.math.ubc.ca/~burggraf/gml/gml4jp2.xsd\">\n"
-                "  <gml:boundedBy>\n"
-                "    <gml:Null>withheld</gml:Null>\n"
-                "  </gml:boundedBy>\n"
-                "  <gml:featureMember>\n"
-                "    <gml:FeatureCollection>\n"
-                "      <gml:featureMember>\n"
-                "        <gml:RectifiedGridCoverage dimension=\"2\" "
-                "gml:id=\"RGC0001\">\n"
-                "          <gml:rectifiedGridDomain>\n"
-                "            <gml:RectifiedGrid dimension=\"2\">\n"
-                "              <gml:limits>\n"
-                "                <gml:GridEnvelope>\n"
-                "                  <gml:low>0 0</gml:low>\n"
-                "                  <gml:high>%d %d</gml:high>\n"
-                "                </gml:GridEnvelope>\n"
-                "              </gml:limits>\n"
-                "              <gml:axisName>x</gml:axisName>\n"
-                "              <gml:axisName>y</gml:axisName>\n"
-                "              <gml:origin>\n"
-                "                <gml:Point gml:id=\"P0001\" srsName=\"%s\">\n"
-                "                  <gml:pos>%.15g %.15g</gml:pos>\n"
-                "                </gml:Point>\n"
-                "              </gml:origin>\n"
-                "              <gml:offsetVector srsName=\"%s\">%.15g "
-                "%.15g</gml:offsetVector>\n"
-                "              <gml:offsetVector srsName=\"%s\">%.15g "
-                "%.15g</gml:offsetVector>\n"
-                "            </gml:RectifiedGrid>\n"
-                "          </gml:rectifiedGridDomain>\n"
-                "          <gml:rangeSet>\n"
-                "            <gml:File>\n"
-                "              "
-                "<gml:fileName>urn:ogc:tc:gmljp2:codestream:0</gml:fileName>\n"
-                "              <gml:fileStructure>Record "
-                "Interleaved</gml:fileStructure>\n"
-                "            </gml:File>\n"
-                "          </gml:rangeSet>\n"
-                "        </gml:RectifiedGridCoverage>\n"
-                "      </gml:featureMember>\n"
-                "    </gml:FeatureCollection>\n"
-                "  </gml:featureMember>\n"
-                "</gml:FeatureCollection>\n",
-                sFileInfo.nSizeX - 1, sFileInfo.nSizeY - 1, szSRSName,
-                padfGeoTransform[0] + padfGeoTransform[1] * 0.5 +
-                    padfGeoTransform[4] * 0.5,
-                padfGeoTransform[3] + padfGeoTransform[2] * 0.5 +
-                    padfGeoTransform[5] * 0.5,
-                szSRSName, padfGeoTransform[1], padfGeoTransform[2], szSRSName,
-                padfGeoTransform[4], padfGeoTransform[5]);
-
-    /* -------------------------------------------------------------------- */
-    /*      If we need a user defined CRSDictionary entry, prepare it       */
-    /*      here.                                                           */
-    /* -------------------------------------------------------------------- */
-    char *pszDictBox = nullptr;
-
-    if (nEPSGCode == 0)
-    {
-        char *pszGMLDef = nullptr;
-
-        if (oSRS.exportToXML(&pszGMLDef, nullptr) == OGRERR_NONE)
-        {
-            pszDictBox = (char *)CPLMalloc(strlen(pszGMLDef) + 4000);
-
-            snprintf(
-                pszDictBox, strlen(pszGMLDef) + 4000,
-                "<gml:Dictionary gml:id=\"CRSU1\" \n"
-                "        xmlns:gml=\"http://www.opengis.net/gml\"\n"
-                "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
-                "        "
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n"
-                "  <gml:dictionaryEntry>\n"
-                "%s\n"
-                "  </gml:dictionaryEntry>\n"
-                "</gml:Dictionary>\n",
-                pszGMLDef);
-        }
-        CPLFree(pszGMLDef);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Setup the various required boxes.                               */
-    /* -------------------------------------------------------------------- */
-    JP2UserBox *poGMLData;
-    CNCSJP2File::CNCSJPXAssocBox *poAssoc;
-    CNCSJP2File::CNCSJPXLabelBox *poLabel;
-
-    poLabel = new CNCSJP2File::CNCSJPXLabelBox();
-    poLabel->SetLabel("gml.data");
-    poLabel->m_bValid = true;
-    m_oGMLAssoc.m_OtherBoxes.push_back(poLabel);
-    m_oGMLAssoc.m_OwnedBoxes.push_back(poLabel);
-
-    poAssoc = new CNCSJP2File::CNCSJPXAssocBox();
-    m_oGMLAssoc.m_OtherBoxes.push_back(poAssoc);
-    m_oGMLAssoc.m_OwnedBoxes.push_back(poAssoc);
-    poAssoc->m_bValid = true;
-
-    poLabel = new CNCSJP2File::CNCSJPXLabelBox();
-    poLabel->SetLabel("gml.root-instance");
-    poLabel->m_bValid = true;
-    poAssoc->m_OtherBoxes.push_back(poLabel);
-    poAssoc->m_OwnedBoxes.push_back(poLabel);
-
-    poGMLData = new JP2UserBox();
-    poGMLData->m_nTBox = 'xml '; /* Is it correct on a big-endian host ? Does
-                                    ECW work on big-endian hosts ;-) */
-    poGMLData->SetData(strlen(szDoc), (unsigned char *)szDoc);
-    poAssoc->m_OtherBoxes.push_back(poGMLData);
-    poAssoc->m_OwnedBoxes.push_back(poGMLData);
-
-    if (pszDictBox != nullptr)
-    {
-        poAssoc = new CNCSJP2File::CNCSJPXAssocBox();
-        m_oGMLAssoc.m_OtherBoxes.push_back(poAssoc);
-        m_oGMLAssoc.m_OwnedBoxes.push_back(poAssoc);
-        poAssoc->m_bValid = true;
-
-        poLabel = new CNCSJP2File::CNCSJPXLabelBox();
-        poLabel->SetLabel("CRSDictionary.gml");
-        poLabel->m_bValid = true;
-        poAssoc->m_OtherBoxes.push_back(poLabel);
-        poAssoc->m_OwnedBoxes.push_back(poLabel);
-
-        poGMLData = new JP2UserBox();
-        poGMLData->m_nTBox = 'xml '; /* Is it correct on a big-endian host ?
-                                        Does ECW work on big-endian hosts ;-) */
-        poGMLData->SetData(strlen(pszDictBox), (unsigned char *)pszDictBox);
-        poAssoc->m_OtherBoxes.push_back(poGMLData);
-        poAssoc->m_OwnedBoxes.push_back(poGMLData);
-
-        CPLFree(pszDictBox);
-    }
-
-    m_oGMLAssoc.m_bValid = true;
-    AddBox(&m_oGMLAssoc);
-
-    return CE_None;
-#endif /* def ECW_FW */
-}
-
-/************************************************************************/
 /*                            WriteJP2Box()                             */
 /************************************************************************/
 
@@ -588,7 +382,7 @@ CPLErr GDALECWCompressor::Initialize(
     const char *pszFilename, char **papszOptions, int nXSize, int nYSize,
     int nBands, const char *const *papszBandDescriptions, int bRGBColorSpace,
     GDALDataType eType, const OGRSpatialReference *poSRS,
-    double *padfGeoTransform, int nGCPCount, const GDAL_GCP *pasGCPList,
+    const GDALGeoTransform &gt, int nGCPCount, const GDAL_GCP *pasGCPList,
     int bIsJPEG2000, int bPixelIsPoint, char **papszRPCMD, GDALDataset *poSrcDS)
 
 {
@@ -924,16 +718,16 @@ CPLErr GDALECWCompressor::Initialize(
     psClient->fCellIncrementY = -1.0;
     psClient->fCWRotationDegrees = 0.0;
 
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotational coefficients ignored, georeferencing of\n"
                  "output ECW file will be incorrect.\n");
     else
     {
-        psClient->fOriginX = padfGeoTransform[0];
-        psClient->fOriginY = padfGeoTransform[3];
-        psClient->fCellIncrementX = padfGeoTransform[1];
-        psClient->fCellIncrementY = padfGeoTransform[5];
+        psClient->fOriginX = gt[0];
+        psClient->fOriginY = gt[3];
+        psClient->fCellIncrementX = gt[1];
+        psClient->fCellIncrementY = gt[5];
     }
 
     /* -------------------------------------------------------------------- */
@@ -986,16 +780,13 @@ CPLErr GDALECWCompressor::Initialize(
     /* -------------------------------------------------------------------- */
     /*      Setup GML and GeoTIFF information.                              */
     /* -------------------------------------------------------------------- */
-    if ((poSRS != nullptr && !poSRS->IsEmpty()) ||
-        !(padfGeoTransform[0] == 0.0 && padfGeoTransform[1] == 1.0 &&
-          padfGeoTransform[2] == 0.0 && padfGeoTransform[3] == 0.0 &&
-          padfGeoTransform[4] == 0.0 && padfGeoTransform[5] == 1.0) ||
+    if ((poSRS != nullptr && !poSRS->IsEmpty()) || gt != GDALGeoTransform() ||
         nGCPCount > 0 || papszRPCMD != nullptr)
     {
         GDALJP2Metadata oJP2MD;
 
         oJP2MD.SetSpatialRef(poSRS);
-        oJP2MD.SetGeoTransform(padfGeoTransform);
+        oJP2MD.SetGeoTransform(gt);
         oJP2MD.SetGCPs(nGCPCount, pasGCPList);
         oJP2MD.bPixelIsPoint = bPixelIsPoint;
         oJP2MD.SetRPCMD(papszRPCMD);
@@ -1317,10 +1108,8 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
-    double adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
-    ;
-
-    poSrcDS->GetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt;
+    poSrcDS->GetGeoTransform(gt);
 
     if (poSrcDS->GetGCPCount() > 0)
         poSRS = poSrcDS->GetGCPSpatialRef();
@@ -1414,12 +1203,11 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     int bPixelIsPoint =
         pszAreaOrPoint != nullptr && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
-    if (oCompressor.Initialize(pszFilename, papszOptions, nXSize, nYSize,
-                               nBands, aosBandDescriptions.List(),
-                               bRGBColorSpace, eType, poSRS, adfGeoTransform,
-                               poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
-                               bIsJPEG2000, bPixelIsPoint,
-                               poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
+    if (oCompressor.Initialize(
+            pszFilename, papszOptions, nXSize, nYSize, nBands,
+            aosBandDescriptions.List(), bRGBColorSpace, eType, poSRS, gt,
+            poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), bIsJPEG2000,
+            bPixelIsPoint, poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
     {
         return nullptr;
     }
@@ -1729,7 +1517,7 @@ class ECWWriteDataset final : public GDALDataset
     char **papszOptions;
 
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     GDALECWCompressor oCompressor;
     int bCrystalized;  // TODO: Spelling.
@@ -1752,8 +1540,8 @@ class ECWWriteDataset final : public GDALDataset
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
@@ -1839,13 +1627,6 @@ ECWWriteDataset::ECWWriteDataset(const char *pszFilenameIn, int nXSize,
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
     // create band objects.
     for (int iBand = 1; iBand <= nBandCount; iBand++)
     {
@@ -1909,10 +1690,10 @@ const OGRSpatialReference *ECWWriteDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ECWWriteDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr ECWWriteDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfGeoTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -1920,10 +1701,10 @@ CPLErr ECWWriteDataset::GetGeoTransform(double *padfGeoTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ECWWriteDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr ECWWriteDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    m_gt = gt;
     return CE_None;
 }
 
@@ -1964,10 +1745,10 @@ CPLErr ECWWriteDataset::Crystalize()
 
     int bRGBColorSpace = ECWIsInputRGBColorSpace(this);
 
-    eErr = oCompressor.Initialize(
-        pszFilename, papszOptions, nRasterXSize, nRasterYSize, nBands,
-        paszBandDescriptions, bRGBColorSpace, eDataType, &m_oSRS,
-        adfGeoTransform, 0, nullptr, bIsJPEG2000, FALSE, nullptr);
+    eErr = oCompressor.Initialize(pszFilename, papszOptions, nRasterXSize,
+                                  nRasterYSize, nBands, paszBandDescriptions,
+                                  bRGBColorSpace, eDataType, &m_oSRS, m_gt, 0,
+                                  nullptr, bIsJPEG2000, FALSE, nullptr);
 
     if (eErr == CE_None)
         bCrystalized = TRUE;

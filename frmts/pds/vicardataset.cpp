@@ -1228,36 +1228,34 @@ CPLErr VICARDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VICARDataset::GetGeoTransform(double *padfTransform)
-
+CPLErr VICARDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGotTransform)
     {
-        memcpy(padfTransform, &m_adfGeoTransform[0], sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VICARDataset::SetGeoTransform(double *padfTransform)
+CPLErr VICARDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     if (eAccess == GA_ReadOnly)
-        return GDALPamDataset::SetGeoTransform(padfTransform);
-    if (padfTransform[1] <= 0.0 || padfTransform[1] != -padfTransform[5] ||
-        padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
+        return GDALPamDataset::SetGeoTransform(gt);
+    if (gt[1] <= 0.0 || gt[1] != -gt[5] || gt[2] != 0.0 || gt[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform with square pixels supported");
         return CE_Failure;
     }
     m_bGotTransform = true;
-    memcpy(&m_adfGeoTransform[0], padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     InvalidateLabel();
     return CE_None;
 }
@@ -1863,24 +1861,20 @@ void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
                 if (m_oSRS.IsProjected())
                 {
                     const double dfLinearUnits = m_oSRS.GetLinearUnits();
-                    const double dfScale = m_adfGeoTransform[1] * dfLinearUnits;
+                    const double dfScale = m_gt[1] * dfLinearUnits;
                     oMap.Add("SAMPLE_PROJECTION_OFFSET",
-                             -m_adfGeoTransform[0] * dfLinearUnits / dfScale -
-                                 0.5);
+                             -m_gt[0] * dfLinearUnits / dfScale - 0.5);
                     oMap.Add("LINE_PROJECTION_OFFSET",
-                             m_adfGeoTransform[3] * dfLinearUnits / dfScale -
-                                 0.5);
+                             m_gt[3] * dfLinearUnits / dfScale - 0.5);
                     oMap.Add("MAP_SCALE", dfScale / 1000.0);
                 }
                 else if (m_oSRS.IsGeographic())
                 {
-                    const double dfScale = m_adfGeoTransform[1] * dfDegToMeter;
+                    const double dfScale = m_gt[1] * dfDegToMeter;
                     oMap.Add("SAMPLE_PROJECTION_OFFSET",
-                             -m_adfGeoTransform[0] * dfDegToMeter / dfScale -
-                                 0.5);
+                             -m_gt[0] * dfDegToMeter / dfScale - 0.5);
                     oMap.Add("LINE_PROJECTION_OFFSET",
-                             m_adfGeoTransform[3] * dfDegToMeter / dfScale -
-                                 0.5);
+                             m_gt[3] * dfDegToMeter / dfScale - 0.5);
                     oMap.Add("MAP_SCALE", dfScale / 1000.0);
                 }
             }
@@ -1926,7 +1920,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
         return;
     poDS->SetSpatialRef(&m_oSRS);
     if (m_bGotTransform)
-        poDS->SetGeoTransform(&m_adfGeoTransform[0]);
+        poDS->SetGeoTransform(m_gt);
     poDS->SetMetadataItem(GDALMD_AREA_OR_POINT,
                           GetMetadataItem(GDALMD_AREA_OR_POINT));
     poDS.reset();
@@ -2298,12 +2292,12 @@ void VICARDataset::ReadProjectionFromMapGroup()
     if (bProjectionSet)
     {
         m_bGotTransform = true;
-        m_adfGeoTransform[0] = dfULXMap;
-        m_adfGeoTransform[1] = dfXDim;
-        m_adfGeoTransform[2] = 0.0;
-        m_adfGeoTransform[3] = dfULYMap;
-        m_adfGeoTransform[4] = 0.0;
-        m_adfGeoTransform[5] = dfYDim;
+        m_gt[0] = dfULXMap;
+        m_gt[1] = dfXDim;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfULYMap;
+        m_gt[4] = 0.0;
+        m_gt[5] = dfYDim;
     }
 }
 
@@ -2457,7 +2451,7 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
         if (poSRS)
             m_oSRS = *poSRS;
 
-        if (poGTiffDS->GetGeoTransform(&m_adfGeoTransform[0]) == CE_None)
+        if (poGTiffDS->GetGeoTransform(m_gt) == CE_None)
         {
             m_bGotTransform = true;
         }
@@ -2622,7 +2616,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!poDS->m_bGotTransform)
         poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, "wld", &poDS->m_adfGeoTransform[0]));
+            poOpenInfo->pszFilename, "wld", poDS->m_gt.data()));
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->m_oJSonLabel = poDS->oKeywords.GetJsonObject();
@@ -3358,13 +3352,10 @@ GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
     if (poDS == nullptr)
         return nullptr;
 
-    double adfGeoTransform[6] = {0.0};
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-         adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None && gt != GDALGeoTransform())
     {
-        poDS->SetGeoTransform(adfGeoTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     auto poSrcSRS = poSrcDS->GetSpatialRef();

@@ -311,20 +311,20 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // we suppose the first tile have the same GeoTransform as others (usually
     // so)
-    double adfGeoTransform[6];
-    if (poTemplateDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (poTemplateDS->GetGeoTransform(gt) == CE_None)
     {
         // According to
         // https://www.digitalglobe.com/sites/default/files/ISD_External.pdf,
         // ulx=originX and is "Easting of the center of the upper left pixel of
         // the image."
-        adfGeoTransform[0] = CPLAtof(CSLFetchNameValueDef(
-                                 papszIMD, "MAP_PROJECTED_PRODUCT.ULX", "0")) -
-                             adfGeoTransform[1] / 2;
-        adfGeoTransform[3] = CPLAtof(CSLFetchNameValueDef(
-                                 papszIMD, "MAP_PROJECTED_PRODUCT.ULY", "0")) -
-                             adfGeoTransform[5] / 2;
-        poDS->SetGeoTransform(adfGeoTransform);
+        gt[0] = CPLAtof(CSLFetchNameValueDef(
+                    papszIMD, "MAP_PROJECTED_PRODUCT.ULX", "0")) -
+                gt[1] / 2;
+        gt[3] = CPLAtof(CSLFetchNameValueDef(
+                    papszIMD, "MAP_PROJECTED_PRODUCT.ULY", "0")) -
+                gt[5] / 2;
+        poDS->SetGeoTransform(gt);
     }
 
     poTemplateBand = nullptr;

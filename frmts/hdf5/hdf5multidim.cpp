@@ -660,9 +660,9 @@ HDF5Group::GetDimensions(CSLConstList) const
         if (poHDF5EOSParser &&
             poHDF5EOSParser->GetGridMetadata(GetName(), oGridMetadata))
         {
-            double adfGT[6] = {0};
-            const bool bHasGT = oGridMetadata.GetGeoTransform(adfGT) &&
-                                adfGT[2] == 0 && adfGT[4] == 0;
+            GDALGeoTransform gt;
+            const bool bHasGT =
+                oGridMetadata.GetGeoTransform(gt) && gt[2] == 0 && gt[4] == 0;
             for (auto &oDim : oGridMetadata.aoDimensions)
             {
                 if (oDim.osName == "XDim" && bHasGT)
@@ -671,8 +671,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                         GetFullName(), oDim.osName, GDAL_DIM_TYPE_HORIZONTAL_X,
                         std::string(), oDim.nSize);
                     auto poIndexingVar = GDALMDArrayRegularlySpaced::Create(
-                        GetFullName(), oDim.osName, poDim,
-                        adfGT[0] + adfGT[1] / 2, adfGT[1], 0);
+                        GetFullName(), oDim.osName, poDim, gt[0] + gt[1] / 2,
+                        gt[1], 0);
                     poDim->SetIndexingVariable(poIndexingVar);
                     m_poXIndexingArray = poIndexingVar;
                     m_poShared->KeepRef(poIndexingVar);
@@ -684,8 +684,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                         GetFullName(), oDim.osName, GDAL_DIM_TYPE_HORIZONTAL_Y,
                         std::string(), oDim.nSize);
                     auto poIndexingVar = GDALMDArrayRegularlySpaced::Create(
-                        GetFullName(), oDim.osName, poDim,
-                        adfGT[3] + adfGT[5] / 2, adfGT[5], 0);
+                        GetFullName(), oDim.osName, poDim, gt[3] + gt[5] / 2,
+                        gt[5], 0);
                     poDim->SetIndexingVariable(poIndexingVar);
                     m_poYIndexingArray = poIndexingVar;
                     m_poShared->KeepRef(poIndexingVar);

@@ -622,9 +622,9 @@ CPLErr STACTARawDataset::IRasterIO(
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr STACTARawDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr STACTARawDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, &m_adfGeoTransform[0], 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -1121,27 +1121,22 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             nRasterXSize = poRawDS->GetRasterXSize();
             nRasterYSize = poRawDS->GetRasterYSize();
             m_oSRS = poRawDS->m_oSRS;
-            memcpy(&m_adfGeoTransform[0], &poRawDS->m_adfGeoTransform[0],
-                   6 * sizeof(double));
+            m_gt = poRawDS->m_gt;
             m_poDS = std::move(poRawDS);
         }
         else
         {
-            const double dfMinX = m_adfGeoTransform[0];
-            const double dfMaxX =
-                m_adfGeoTransform[0] + GetRasterXSize() * m_adfGeoTransform[1];
-            const double dfMaxY = m_adfGeoTransform[3];
-            const double dfMinY =
-                m_adfGeoTransform[3] + GetRasterYSize() * m_adfGeoTransform[5];
+            const double dfMinX = m_gt[0];
+            const double dfMaxX = m_gt[0] + GetRasterXSize() * m_gt[1];
+            const double dfMaxY = m_gt[3];
+            const double dfMinY = m_gt[3] + GetRasterYSize() * m_gt[5];
 
-            const double dfOvrMinX = poRawDS->m_adfGeoTransform[0];
+            const double dfOvrMinX = poRawDS->m_gt[0];
             const double dfOvrMaxX =
-                poRawDS->m_adfGeoTransform[0] +
-                poRawDS->GetRasterXSize() * poRawDS->m_adfGeoTransform[1];
-            const double dfOvrMaxY = poRawDS->m_adfGeoTransform[3];
+                poRawDS->m_gt[0] + poRawDS->GetRasterXSize() * poRawDS->m_gt[1];
+            const double dfOvrMaxY = poRawDS->m_gt[3];
             const double dfOvrMinY =
-                poRawDS->m_adfGeoTransform[3] +
-                poRawDS->GetRasterYSize() * poRawDS->m_adfGeoTransform[5];
+                poRawDS->m_gt[3] + poRawDS->GetRasterYSize() * poRawDS->m_gt[5];
 
             if (fabs(dfMinX - dfOvrMinX) < 1e-10 * fabs(dfMinX) &&
                 fabs(dfMinY - dfOvrMinY) < 1e-10 * fabs(dfMinY) &&
@@ -1359,12 +1354,10 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
         return false;
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_adfGeoTransform[0] =
-        oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
-    m_adfGeoTransform[1] = oTM.mResX;
-    m_adfGeoTransform[3] =
-        oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
-    m_adfGeoTransform[5] = -oTM.mResY;
+    m_gt[0] = oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
+    m_gt[1] = oTM.mResX;
+    m_gt[3] = oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
+    m_gt[5] = -oTM.mResY;
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
     return true;
@@ -1383,9 +1376,9 @@ const OGRSpatialReference *STACTADataset::GetSpatialRef() const
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr STACTADataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr STACTADataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, &m_adfGeoTransform[0], 6 * sizeof(double));
+    gt = m_gt;
     return nBands == 0 ? CE_Failure : CE_None;
 }
 

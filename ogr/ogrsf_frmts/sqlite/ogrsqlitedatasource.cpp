@@ -969,15 +969,7 @@ int OGRSQLiteBaseDataSource::prepareSql(sqlite3 *db, const char *zSql,
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
-OGRSQLiteDataSource::OGRSQLiteDataSource()
-{
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
-}
+OGRSQLiteDataSource::OGRSQLiteDataSource() = default;
 
 /************************************************************************/
 /*                        ~OGRSQLiteDataSource()                        */

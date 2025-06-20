@@ -41,7 +41,7 @@ class DTEDDataset final : public GDALPamDataset
     ~DTEDDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const char *GetFileName() const
     {
@@ -507,7 +507,7 @@ GDALDataset *DTEDDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr DTEDDataset::GetGeoTransform(double *padfTransform)
+CPLErr DTEDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
 
@@ -515,23 +515,23 @@ CPLErr DTEDDataset::GetGeoTransform(double *padfTransform)
         CPLTestBool(CPLGetConfigOption("DTED_APPLY_PIXEL_IS_POINT", "FALSE"));
     if (!bApplyPixelIsPoint)
     {
-        padfTransform[0] = psDTED->dfULCornerX;
-        padfTransform[1] = psDTED->dfPixelSizeX;
-        padfTransform[2] = 0.0;
-        padfTransform[3] = psDTED->dfULCornerY;
-        padfTransform[4] = 0.0;
-        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+        gt[0] = psDTED->dfULCornerX;
+        gt[1] = psDTED->dfPixelSizeX;
+        gt[2] = 0.0;
+        gt[3] = psDTED->dfULCornerY;
+        gt[4] = 0.0;
+        gt[5] = psDTED->dfPixelSizeY * -1;
 
         return CE_None;
     }
     else
     {
-        padfTransform[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
-        padfTransform[1] = psDTED->dfPixelSizeX;
-        padfTransform[2] = 0.0;
-        padfTransform[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY);
-        padfTransform[4] = 0.0;
-        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+        gt[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
+        gt[1] = psDTED->dfPixelSizeX;
+        gt[2] = 0.0;
+        gt[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY);
+        gt[4] = 0.0;
+        gt[5] = psDTED->dfPixelSizeY * -1;
 
         return CE_None;
     }
@@ -721,21 +721,17 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Work out the LL origin.                                         */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
-
-    poSrcDS->GetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt;
+    poSrcDS->GetGeoTransform(gt);
 
     int nLLOriginLat =
-        (int)floor(adfGeoTransform[3] +
-                   poSrcDS->GetRasterYSize() * adfGeoTransform[5] + 0.5);
+        (int)floor(gt[3] + poSrcDS->GetRasterYSize() * gt[5] + 0.5);
 
-    int nLLOriginLong = (int)floor(adfGeoTransform[0] + 0.5);
+    int nLLOriginLong = (int)floor(gt[0] + 0.5);
 
     if (fabs(nLLOriginLat -
-             (adfGeoTransform[3] + (poSrcDS->GetRasterYSize() - 0.5) *
-                                       adfGeoTransform[5])) > 1e-10 ||
-        fabs(nLLOriginLong - (adfGeoTransform[0] + 0.5 * adfGeoTransform[1])) >
-            1e-10)
+             (gt[3] + (poSrcDS->GetRasterYSize() - 0.5) * gt[5])) > 1e-10 ||
+        fabs(nLLOriginLong - (gt[0] + 0.5 * gt[1])) > 1e-10)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The corner coordinates of the source are not properly "

@@ -65,12 +65,12 @@ class MSGDataset final : public GDALDataset
         return &m_oSRS;
     }
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
   private:
     MSGCommand command;
-    double adfGeoTransform[6];  // Calculate and store once as GetGeoTransform
-                                // may be called multiple times
+    GDALGeoTransform m_gt;  // Calculate and store once as GetGeoTransform
+                            // may be called multiple times
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference oLL;
     OGRCoordinateTransformation *poTransform = nullptr;

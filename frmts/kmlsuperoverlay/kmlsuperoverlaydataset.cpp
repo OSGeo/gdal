@@ -659,14 +659,14 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     double east = 0.0;
     double west = 0.0;
 
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
 
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
-        north = adfGeoTransform[3];
-        south = adfGeoTransform[3] + adfGeoTransform[5] * ysize;
-        east = adfGeoTransform[0] + adfGeoTransform[1] * xsize;
-        west = adfGeoTransform[0];
+        north = gt[3];
+        south = gt[3] + gt[5] * ysize;
+        east = gt[0] + gt[1] * xsize;
+        west = gt[0];
     }
 
     std::unique_ptr<OGRCoordinateTransformation> poTransform;
@@ -726,11 +726,10 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     std::vector<double> zoomypixels;
     for (int zoom = 0; zoom < maxzoom + 1; zoom++)
     {
-        zoomxpixels.push_back(adfGeoTransform[1] * pow(2.0, (maxzoom - zoom)));
-        // zoomypixels.push_back(abs(adfGeoTransform[5]) * pow(2.0, (maxzoom -
+        zoomxpixels.push_back(gt[1] * pow(2.0, (maxzoom - zoom)));
+        // zoomypixels.push_back(abs(gt[5]) * pow(2.0, (maxzoom -
         // zoom)));
-        zoomypixels.push_back(fabs(adfGeoTransform[5]) *
-                              pow(2.0, (maxzoom - zoom)));
+        zoomypixels.push_back(fabs(gt[5]) * pow(2.0, (maxzoom - zoom)));
     }
 
     std::vector<std::string> fileVector;
@@ -911,8 +910,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                     fileVector.push_back(childKmlfile);
                 }
 
-                double tmpSouth =
-                    adfGeoTransform[3] + adfGeoTransform[5] * ysize;
+                double tmpSouth = gt[3] + gt[5] * ysize;
                 double zoomxpix = zoomxpixels[zoom];
                 double zoomypix = zoomypixels[zoom];
                 if (zoomxpix == 0)
@@ -938,10 +936,10 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 currentTiles[parentXYKey].push_back(
                     std::make_pair(std::make_pair(ix, iy), hasChildKML));
                 GenerateChildKml(childKmlfile, zoom, ix, iy, zoomxpix, zoomypix,
-                                 dxsize, dysize, tmpSouth, adfGeoTransform[0],
-                                 xsize, ysize, maxzoom, poTransform.get(),
-                                 fileExt, fixAntiMeridian, pszAltitude,
-                                 pszAltitudeMode, childTiles[childXYKey]);
+                                 dxsize, dysize, tmpSouth, gt[0], xsize, ysize,
+                                 maxzoom, poTransform.get(), fileExt,
+                                 fixAntiMeridian, pszAltitude, pszAltitudeMode,
+                                 childTiles[childXYKey]);
 
                 nTileCount++;
                 pfnProgress(1.0 * nTileCount / nTotalTiles, "", pProgressData);
@@ -997,12 +995,6 @@ KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -1072,9 +1064,9 @@ const OGRSpatialReference *KmlSuperOverlayReadDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr KmlSuperOverlayReadDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr KmlSuperOverlayReadDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, adfGeoTransform.data(), 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -1279,19 +1271,15 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
 
     if (nBufXSize > dfXSize || nBufYSize > dfYSize)
     {
-        const double dfRequestXMin =
-            adfGeoTransform[0] + nXOff * adfGeoTransform[1];
-        const double dfRequestXMax =
-            adfGeoTransform[0] + (nXOff + nXSize) * adfGeoTransform[1];
-        const double dfRequestYMin =
-            adfGeoTransform[3] + (nYOff + nYSize) * adfGeoTransform[5];
-        const double dfRequestYMax =
-            adfGeoTransform[3] + nYOff * adfGeoTransform[5];
+        const double dfRequestXMin = m_gt[0] + nXOff * m_gt[1];
+        const double dfRequestXMax = m_gt[0] + (nXOff + nXSize) * m_gt[1];
+        const double dfRequestYMin = m_gt[3] + (nYOff + nYSize) * m_gt[5];
+        const double dfRequestYMax = m_gt[3] + nYOff * m_gt[5];
 
         const CPLXMLNode *psIter = psDocument->psChild;
         std::vector<SubImageDesc> aoImages;
-        const double dfXRes = adfGeoTransform[1] * nFactor;
-        const double dfYRes = -adfGeoTransform[5] * nFactor;
+        const double dfXRes = m_gt[1] * nFactor;
+        const double dfYRes = -m_gt[5] * nFactor;
         double dfNewXRes = dfXRes;
         double dfNewYRes = dfYRes;
 
@@ -1420,14 +1408,12 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                     {
                         int nSubImageXSize = poSubImageDS->GetRasterXSize();
                         int nSubImageYSize = poSubImageDS->GetRasterYSize();
-                        adfExtents[0] = poSubImageDS->adfGeoTransform[0];
-                        adfExtents[1] =
-                            poSubImageDS->adfGeoTransform[3] +
-                            nSubImageYSize * poSubImageDS->adfGeoTransform[5];
-                        adfExtents[2] =
-                            poSubImageDS->adfGeoTransform[0] +
-                            nSubImageXSize * poSubImageDS->adfGeoTransform[1];
-                        adfExtents[3] = poSubImageDS->adfGeoTransform[3];
+                        adfExtents[0] = poSubImageDS->m_gt[0];
+                        adfExtents[1] = poSubImageDS->m_gt[3] +
+                                        nSubImageYSize * poSubImageDS->m_gt[5];
+                        adfExtents[2] = poSubImageDS->m_gt[0] +
+                                        nSubImageXSize * poSubImageDS->m_gt[1];
+                        adfExtents[3] = poSubImageDS->m_gt[3];
 
                         double dfSubXRes =
                             (adfExtents[2] - adfExtents[0]) / nSubImageXSize;
@@ -1487,11 +1473,9 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
             for (const auto &oImage : aoImages)
             {
                 const int nDstXOff = static_cast<int>(
-                    (oImage.adfExtents[0] - adfGeoTransform[0]) / dfNewXRes +
-                    0.5);
+                    (oImage.adfExtents[0] - m_gt[0]) / dfNewXRes + 0.5);
                 const int nDstYOff = static_cast<int>(
-                    (adfGeoTransform[3] - oImage.adfExtents[3]) / dfNewYRes +
-                    0.5);
+                    (m_gt[3] - oImage.adfExtents[3]) / dfNewYRes + 0.5);
                 const int nDstXSize = static_cast<int>(
                     (oImage.adfExtents[2] - oImage.adfExtents[0]) / dfNewXRes +
                     0.5);
@@ -1910,7 +1894,7 @@ class KmlSingleDocRasterDataset final : public GDALDataset
     CPLString osNominalExt{};
     std::unique_ptr<GDALDataset> poCurTileDS{};
     std::array<double, 4> adfGlobalExtents = {0, 0, 0, 0};
-    std::array<double, 6> adfGeoTransform = {0, 0, 0, 0, 0, 0};
+    GDALGeoTransform m_gt{};
     std::vector<std::unique_ptr<KmlSingleDocRasterDataset>> m_apoOverviews{};
     std::vector<KmlSingleDocRasterTilesDesc> aosDescs{};
     int nLevel = 0;
@@ -1925,9 +1909,9 @@ class KmlSingleDocRasterDataset final : public GDALDataset
     KmlSingleDocRasterDataset();
     virtual ~KmlSingleDocRasterDataset();
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(padfGeoTransform, adfGeoTransform.data(), 6 * sizeof(double));
+        gt = m_gt;
         return CE_None;
     }
 
@@ -2080,15 +2064,14 @@ void KmlSingleDocRasterDataset::BuildOverviews()
         poOvrDS->nTileSize = nTileSize;
         poOvrDS->osDirname = osDirname;
         poOvrDS->osNominalExt = oDesc.szExtI;
-        poOvrDS->adfGeoTransform[0] = adfGlobalExtents[0];
-        poOvrDS->adfGeoTransform[1] =
+        poOvrDS->m_gt[0] = adfGlobalExtents[0];
+        poOvrDS->m_gt[1] =
             (adfGlobalExtents[2] - adfGlobalExtents[0]) / poOvrDS->nRasterXSize;
-        poOvrDS->adfGeoTransform[2] = 0.0;
-        poOvrDS->adfGeoTransform[3] = adfGlobalExtents[3];
-        poOvrDS->adfGeoTransform[4] = 0.0;
-        poOvrDS->adfGeoTransform[5] =
-            -(adfGlobalExtents[3] - adfGlobalExtents[1]) /
-            poOvrDS->nRasterXSize;
+        poOvrDS->m_gt[2] = 0.0;
+        poOvrDS->m_gt[3] = adfGlobalExtents[3];
+        poOvrDS->m_gt[4] = 0.0;
+        poOvrDS->m_gt[5] = -(adfGlobalExtents[3] - adfGlobalExtents[1]) /
+                           poOvrDS->nRasterXSize;
         for (int iBand = 1; iBand <= nBands; iBand++)
             poOvrDS->SetBand(iBand,
                              std::make_unique<KmlSingleDocRasterRasterBand>(
@@ -2436,13 +2419,13 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
     poDS->osDirname = std::move(osDirname);
     poDS->osNominalExt = oDesc.szExtI;
     poDS->adfGlobalExtents = adfGlobalExtents;
-    poDS->adfGeoTransform[0] = adfGlobalExtents[0];
-    poDS->adfGeoTransform[1] =
+    poDS->m_gt[0] = adfGlobalExtents[0];
+    poDS->m_gt[1] =
         (adfGlobalExtents[2] - adfGlobalExtents[0]) / poDS->nRasterXSize;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = adfGlobalExtents[3];
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] =
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = adfGlobalExtents[3];
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] =
         -(adfGlobalExtents[3] - adfGlobalExtents[1]) / poDS->nRasterYSize;
     if (nBands == 1 && bHasCT)
         nBands = 4;
@@ -2564,14 +2547,14 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
             poVRTBand->SetColorTable(poCT);
     }
     poImageDS->Dereference();
-    double adfGeoTransform[6] = {
+    GDALGeoTransform gt{
         adfExtents[0],
         (adfExtents[2] - adfExtents[0]) / poImageDS->GetRasterXSize(),
         0,
         adfExtents[3],
         0,
         -(adfExtents[3] - adfExtents[1]) / poImageDS->GetRasterYSize()};
-    poDS->SetGeoTransform(adfGeoTransform);
+    poDS->SetGeoTransform(gt);
     poDS->SetProjection(SRS_WKT_WGS84_LAT_LONG);
     poDS->SetWritable(false);
     poDS->SetDescription(pszFilename);
@@ -2766,12 +2749,10 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
     poDS->nFactor = nFactor;
     poDS->nRasterXSize = nFactor * poDSIcon->GetRasterXSize();
     poDS->nRasterYSize = nFactor * poDSIcon->GetRasterYSize();
-    poDS->adfGeoTransform[0] = adfExtents[0];
-    poDS->adfGeoTransform[1] =
-        (adfExtents[2] - adfExtents[0]) / poDS->nRasterXSize;
-    poDS->adfGeoTransform[3] = adfExtents[3];
-    poDS->adfGeoTransform[5] =
-        -(adfExtents[3] - adfExtents[1]) / poDS->nRasterYSize;
+    poDS->m_gt[0] = adfExtents[0];
+    poDS->m_gt[1] = (adfExtents[2] - adfExtents[0]) / poDS->nRasterXSize;
+    poDS->m_gt[3] = adfExtents[3];
+    poDS->m_gt[5] = -(adfExtents[3] - adfExtents[1]) / poDS->nRasterYSize;
     poDS->nBands = 4;
     for (int i = 0; i < 4; i++)
         poDS->SetBand(i + 1, std::make_unique<KmlSuperOverlayRasterBand>(
@@ -2793,11 +2774,11 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         poOvrDS->nFactor = nFactor;
         poOvrDS->nRasterXSize = nFactor * poDSIcon->GetRasterXSize();
         poOvrDS->nRasterYSize = nFactor * poDSIcon->GetRasterYSize();
-        poOvrDS->adfGeoTransform[0] = adfExtents[0];
-        poOvrDS->adfGeoTransform[1] =
+        poOvrDS->m_gt[0] = adfExtents[0];
+        poOvrDS->m_gt[1] =
             (adfExtents[2] - adfExtents[0]) / poOvrDS->nRasterXSize;
-        poOvrDS->adfGeoTransform[3] = adfExtents[3];
-        poOvrDS->adfGeoTransform[5] =
+        poOvrDS->m_gt[3] = adfExtents[3];
+        poOvrDS->m_gt[5] =
             -(adfExtents[3] - adfExtents[1]) / poOvrDS->nRasterYSize;
         poOvrDS->nBands = 4;
         for (int i = 0; i < 4; i++)

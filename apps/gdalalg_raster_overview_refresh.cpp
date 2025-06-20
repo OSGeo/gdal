@@ -282,14 +282,14 @@ static bool PartialRefreshFromSourceExtent(
     const char *pszResampling, const std::vector<int> &anOvrIndices,
     GDALProgressFunc pfnProgress, void *pProgressArg)
 {
-    double adfGeoTransform[6];
-    if (poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    GDALGeoTransform gt;
+    if (poDS->GetGeoTransform(gt) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Dataset has no geotransform");
         return false;
     }
-    double adfInvGT[6];
-    if (!GDALInvGeoTransform(adfGeoTransform, adfInvGT))
+    GDALGeoTransform invGT;
+    if (!gt.GetInverse(invGT))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return false;
@@ -315,30 +315,24 @@ static bool PartialRefreshFromSourceExtent(
         if (!poSrcDS)
             return false;
 
-        double adfSrcGT[6];
-        if (poSrcDS->GetGeoTransform(adfSrcGT) != CE_None)
+        GDALGeoTransform srcGT;
+        if (poSrcDS->GetGeoTransform(srcGT) != CE_None)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Source dataset has no geotransform");
             return false;
         }
 
-        const double dfULX = adfSrcGT[0];
-        const double dfULY = adfSrcGT[3];
-        const double dfLRX = adfSrcGT[0] +
-                             poSrcDS->GetRasterXSize() * adfSrcGT[1] +
-                             poSrcDS->GetRasterYSize() * adfSrcGT[2];
-        const double dfLRY = adfSrcGT[3] +
-                             poSrcDS->GetRasterXSize() * adfSrcGT[4] +
-                             poSrcDS->GetRasterYSize() * adfSrcGT[5];
-        const double dfX1 =
-            adfInvGT[0] + adfInvGT[1] * dfULX + adfInvGT[2] * dfULY;
-        const double dfY1 =
-            adfInvGT[3] + adfInvGT[4] * dfULX + adfInvGT[5] * dfULY;
-        const double dfX2 =
-            adfInvGT[0] + adfInvGT[1] * dfLRX + adfInvGT[2] * dfLRY;
-        const double dfY2 =
-            adfInvGT[3] + adfInvGT[4] * dfLRX + adfInvGT[5] * dfLRY;
+        const double dfULX = srcGT[0];
+        const double dfULY = srcGT[3];
+        const double dfLRX = srcGT[0] + poSrcDS->GetRasterXSize() * srcGT[1] +
+                             poSrcDS->GetRasterYSize() * srcGT[2];
+        const double dfLRY = srcGT[3] + poSrcDS->GetRasterXSize() * srcGT[4] +
+                             poSrcDS->GetRasterYSize() * srcGT[5];
+        const double dfX1 = invGT[0] + invGT[1] * dfULX + invGT[2] * dfULY;
+        const double dfY1 = invGT[3] + invGT[4] * dfULX + invGT[5] * dfULY;
+        const double dfX2 = invGT[0] + invGT[1] * dfLRX + invGT[2] * dfLRY;
+        const double dfY2 = invGT[3] + invGT[4] * dfLRX + invGT[5] * dfLRY;
         constexpr double EPS = 1e-8;
         const int nXOff =
             static_cast<int>(std::max(0.0, std::min(dfX1, dfX2)) + EPS);
@@ -411,22 +405,22 @@ static bool PartialRefreshFromBBOX(GDALDataset *poDS,
     const double dfLRX = bbox[2];
     const double dfULY = bbox[3];
 
-    double adfGeoTransform[6];
-    if (poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    GDALGeoTransform gt;
+    if (poDS->GetGeoTransform(gt) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Dataset has no geotransform");
         return false;
     }
-    double adfInvGT[6];
-    if (!GDALInvGeoTransform(adfGeoTransform, adfInvGT))
+    GDALGeoTransform invGT;
+    if (!gt.GetInverse(invGT))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return false;
     }
-    const double dfX1 = adfInvGT[0] + adfInvGT[1] * dfULX + adfInvGT[2] * dfULY;
-    const double dfY1 = adfInvGT[3] + adfInvGT[4] * dfULX + adfInvGT[5] * dfULY;
-    const double dfX2 = adfInvGT[0] + adfInvGT[1] * dfLRX + adfInvGT[2] * dfLRY;
-    const double dfY2 = adfInvGT[3] + adfInvGT[4] * dfLRX + adfInvGT[5] * dfLRY;
+    const double dfX1 = invGT[0] + invGT[1] * dfULX + invGT[2] * dfULY;
+    const double dfY1 = invGT[3] + invGT[4] * dfULX + invGT[5] * dfULY;
+    const double dfX2 = invGT[0] + invGT[1] * dfLRX + invGT[2] * dfLRY;
+    const double dfY2 = invGT[3] + invGT[4] * dfLRX + invGT[5] * dfLRY;
     constexpr double EPS = 1e-8;
     const int nXOff =
         static_cast<int>(std::max(0.0, std::min(dfX1, dfX2)) + EPS);

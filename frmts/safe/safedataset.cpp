@@ -1934,20 +1934,6 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr SAFEDataset::GetGeoTransform(double *padfTransform)
-{
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
-
-    if (bHaveGeoTransform)
-        return CE_None;
-
-    return CE_Failure;
-}
-
-/************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
 

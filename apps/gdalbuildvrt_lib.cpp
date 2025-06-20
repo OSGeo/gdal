@@ -74,7 +74,7 @@ struct DatasetProperty
     int isFileOK = FALSE;
     int nRasterXSize = 0;
     int nRasterYSize = 0;
-    double adfGeoTransform[6];
+    GDALGeoTransform gt{};
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     std::vector<GDALDataType> aeBandType{};
@@ -90,16 +90,6 @@ struct DatasetProperty
     int nMaskBlockXSize = 0;
     int nMaskBlockYSize = 0;
     std::vector<int> anOverviewFactors{};
-
-    DatasetProperty()
-    {
-        adfGeoTransform[0] = 0;
-        adfGeoTransform[1] = 0;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = 0;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = 0;
-    }
 };
 
 struct BandProperty
@@ -138,42 +128,40 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
 
     /* Check that the destination bounding box intersects the source bounding
      * box */
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
-            psDP->nRasterXSize * psDP->adfGeoTransform[GEOTRSFRM_WE_RES] <=
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] +
+            psDP->nRasterXSize * psDP->gt[GEOTRSFRM_WE_RES] <=
         minX)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] >= maxX)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] >= maxX)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-            psDP->nRasterYSize * psDP->adfGeoTransform[GEOTRSFRM_NS_RES] >=
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_Y] +
+            psDP->nRasterYSize * psDP->gt[GEOTRSFRM_NS_RES] >=
         maxY)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] <= minY)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_Y] <= minY)
         return FALSE;
 
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] < minX)
     {
-        *pdfSrcXOff = (minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
-                      psDP->adfGeoTransform[GEOTRSFRM_WE_RES];
+        *pdfSrcXOff =
+            (minX - psDP->gt[GEOTRSFRM_TOPLEFT_X]) / psDP->gt[GEOTRSFRM_WE_RES];
         *pdfDstXOff = 0.0;
     }
     else
     {
         *pdfSrcXOff = 0.0;
-        *pdfDstXOff =
-            ((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
+        *pdfDstXOff = ((psDP->gt[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
-    if (maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
+    if (maxY < psDP->gt[GEOTRSFRM_TOPLEFT_Y])
     {
-        *pdfSrcYOff = (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
-                      -psDP->adfGeoTransform[GEOTRSFRM_NS_RES];
+        *pdfSrcYOff = (psDP->gt[GEOTRSFRM_TOPLEFT_Y] - maxY) /
+                      -psDP->gt[GEOTRSFRM_NS_RES];
         *pdfDstYOff = 0.0;
     }
     else
     {
         *pdfSrcYOff = 0.0;
-        *pdfDstYOff =
-            ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+        *pdfDstYOff = ((maxY - psDP->gt[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
 
     *pdfSrcXSize = psDP->nRasterXSize;
@@ -183,11 +171,9 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
     if (*pdfSrcYOff > 0)
         *pdfSrcYSize -= *pdfSrcYOff;
 
-    const double dfSrcToDstXSize =
-        psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res;
+    const double dfSrcToDstXSize = psDP->gt[GEOTRSFRM_WE_RES] / we_res;
     *pdfDstXSize = *pdfSrcXSize * dfSrcToDstXSize;
-    const double dfSrcToDstYSize =
-        psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res;
+    const double dfSrcToDstYSize = psDP->gt[GEOTRSFRM_NS_RES] / ns_res;
     *pdfDstYSize = *pdfSrcYSize * dfSrcToDstYSize;
 
     if (*pdfDstXOff + *pdfDstXSize > nTargetXSize)
@@ -531,8 +517,8 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     }
 
     const char *proj = poDS->GetProjectionRef();
-    double *padfGeoTransform = psDatasetProperties->adfGeoTransform;
-    int bGotGeoTransform = poDS->GetGeoTransform(padfGeoTransform) == CE_None;
+    auto &gt = psDatasetProperties->gt;
+    int bGotGeoTransform = poDS->GetGeoTransform(gt) == CE_None;
     if (bSeparate)
     {
         std::string osProgramName(m_osProgramName);
@@ -583,13 +569,13 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 
     if (bGotGeoTransform)
     {
-        if (padfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
-            padfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
+        if (gt[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
+            gt[GEOTRSFRM_ROTATION_PARAM2] != 0)
         {
             return m_osProgramName +
                    " does not support rotated geo transforms.";
         }
-        if (padfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
+        if (gt[GEOTRSFRM_NS_RES] >= 0)
         {
             return m_osProgramName +
                    " does not support positive NS resolution.";
@@ -604,12 +590,10 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         nRasterYSize = poDS->GetRasterYSize();
     }
 
-    double ds_minX = padfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    double ds_maxY = padfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-    double ds_maxX =
-        ds_minX + GDALGetRasterXSize(hDS) * padfGeoTransform[GEOTRSFRM_WE_RES];
-    double ds_minY =
-        ds_maxY + GDALGetRasterYSize(hDS) * padfGeoTransform[GEOTRSFRM_NS_RES];
+    double ds_minX = gt[GEOTRSFRM_TOPLEFT_X];
+    double ds_maxY = gt[GEOTRSFRM_TOPLEFT_Y];
+    double ds_maxX = ds_minX + GDALGetRasterXSize(hDS) * gt[GEOTRSFRM_WE_RES];
+    double ds_minY = ds_maxY + GDALGetRasterYSize(hDS) * gt[GEOTRSFRM_NS_RES];
 
     int _nBands = GDALGetRasterCount(hDS);
     if (_nBands == 0)
@@ -996,11 +980,11 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     {
         ++nCountValid;
         {
-            const double dfDelta = padfGeoTransform[GEOTRSFRM_WE_RES] - we_res;
+            const double dfDelta = gt[GEOTRSFRM_WE_RES] - we_res;
             we_res += dfDelta / nCountValid;
         }
         {
-            const double dfDelta = padfGeoTransform[GEOTRSFRM_NS_RES] - ns_res;
+            const double dfDelta = gt[GEOTRSFRM_NS_RES] - ns_res;
             ns_res += dfDelta / nCountValid;
         }
     }
@@ -1008,42 +992,39 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     {
         if (bFirst)
         {
-            we_res = padfGeoTransform[GEOTRSFRM_WE_RES];
-            ns_res = padfGeoTransform[GEOTRSFRM_NS_RES];
+            we_res = gt[GEOTRSFRM_WE_RES];
+            ns_res = gt[GEOTRSFRM_NS_RES];
         }
-        else if (we_res != padfGeoTransform[GEOTRSFRM_WE_RES] ||
-                 ns_res != padfGeoTransform[GEOTRSFRM_NS_RES])
+        else if (we_res != gt[GEOTRSFRM_WE_RES] ||
+                 ns_res != gt[GEOTRSFRM_NS_RES])
         {
             return CPLSPrintf("Dataset %s has resolution %f x %f, whereas "
                               "previous sources have resolution %f x %f",
-                              dsFileName, padfGeoTransform[GEOTRSFRM_WE_RES],
-                              padfGeoTransform[GEOTRSFRM_NS_RES], we_res,
-                              ns_res);
+                              dsFileName, gt[GEOTRSFRM_WE_RES],
+                              gt[GEOTRSFRM_NS_RES], we_res, ns_res);
         }
     }
     else if (resolutionStrategy != USER_RESOLUTION)
     {
         if (bFirst)
         {
-            we_res = padfGeoTransform[GEOTRSFRM_WE_RES];
-            ns_res = padfGeoTransform[GEOTRSFRM_NS_RES];
+            we_res = gt[GEOTRSFRM_WE_RES];
+            ns_res = gt[GEOTRSFRM_NS_RES];
         }
         else if (resolutionStrategy == HIGHEST_RESOLUTION)
         {
-            we_res = std::min(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = std::min(we_res, gt[GEOTRSFRM_WE_RES]);
             // ns_res is negative, the highest resolution is the max value.
-            ns_res = std::max(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = std::max(ns_res, gt[GEOTRSFRM_NS_RES]);
         }
         else if (resolutionStrategy == COMMON_RESOLUTION)
         {
-            we_res = CPLGreatestCommonDivisor(
-                we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = CPLGreatestCommonDivisor(we_res, gt[GEOTRSFRM_WE_RES]);
             if (we_res == 0)
             {
                 return "Failed to get common resolution";
             }
-            ns_res = CPLGreatestCommonDivisor(
-                ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = CPLGreatestCommonDivisor(ns_res, gt[GEOTRSFRM_NS_RES]);
             if (ns_res == 0)
             {
                 return "Failed to get common resolution";
@@ -1051,9 +1032,9 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         }
         else
         {
-            we_res = std::max(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = std::max(we_res, gt[GEOTRSFRM_WE_RES]);
             // ns_res is negative, the lowest resolution is the min value.
-            ns_res = std::min(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = std::min(ns_res, gt[GEOTRSFRM_NS_RES]);
         }
     }
 
@@ -1146,7 +1127,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
             GDALProxyPoolDatasetH hProxyDS = GDALProxyPoolDatasetCreate(
                 dsFileName, psDatasetProperties->nRasterXSize,
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
-                pszProjectionRef, psDatasetProperties->adfGeoTransform);
+                pszProjectionRef, psDatasetProperties->gt.data());
             hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
             reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
                 papszOpenOptions);
@@ -1366,9 +1347,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 
         if (bCanCollectOverviewFactors)
         {
-            if (std::abs(psDatasetProperties->adfGeoTransform[1] - we_res) >
+            if (std::abs(psDatasetProperties->gt[1] - we_res) >
                     1e-8 * std::abs(we_res) ||
-                std::abs(psDatasetProperties->adfGeoTransform[5] - ns_res) >
+                std::abs(psDatasetProperties->gt[5] - ns_res) >
                     1e-8 * std::abs(ns_res))
             {
                 bCanCollectOverviewFactors = false;
@@ -1398,7 +1379,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
             GDALProxyPoolDatasetH hProxyDS = GDALProxyPoolDatasetCreate(
                 dsFileName, psDatasetProperties->nRasterXSize,
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
-                pszProjectionRef, psDatasetProperties->adfGeoTransform);
+                pszProjectionRef, psDatasetProperties->gt.data());
             reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
                 papszOpenOptions);
 
@@ -1785,14 +1766,14 @@ std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
 
     if (bHasGeoTransform)
     {
-        double adfGeoTransform[6];
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = minX;
-        adfGeoTransform[GEOTRSFRM_WE_RES] = we_res;
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0;
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
-        adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
-        poDS->SetGeoTransform(adfGeoTransform);
+        GDALGeoTransform gt;
+        gt[GEOTRSFRM_TOPLEFT_X] = minX;
+        gt[GEOTRSFRM_WE_RES] = we_res;
+        gt[GEOTRSFRM_ROTATION_PARAM1] = 0;
+        gt[GEOTRSFRM_TOPLEFT_Y] = maxY;
+        gt[GEOTRSFRM_ROTATION_PARAM2] = 0;
+        gt[GEOTRSFRM_NS_RES] = ns_res;
+        poDS->SetGeoTransform(gt);
     }
 
     if (bSeparate)

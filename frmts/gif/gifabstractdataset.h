@@ -38,7 +38,7 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
     GifFileType *hGifFile;
 
     int bGeoTransformValid;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
@@ -54,7 +54,7 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
     GIFAbstractDataset();
     ~GIFAbstractDataset() override;
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
 

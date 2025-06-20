@@ -138,10 +138,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
         m_oSRS = oJP2Geo.m_oSRS;
         if (!m_oSRS.IsEmpty())
             m_nProjectionGeorefSrcIndex = nIndexUsed;
-        bGeoTransformValid = CPL_TO_BOOL(oJP2Geo.bHaveGeoTransform);
+        bGeoTransformValid = oJP2Geo.m_bHaveGeoTransform;
         if (bGeoTransformValid)
             m_nGeoTransformGeorefSrcIndex = nIndexUsed;
-        memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform, sizeof(double) * 6);
+        m_gt = oJP2Geo.m_gt;
         nGCPCount = oJP2Geo.nGCPCount;
         if (nGCPCount)
             m_nGCPGeorefSrcIndex = nIndexUsed;
@@ -265,10 +265,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
          !bGeoTransformValid))
     {
         bGeoTransformValid |=
-            GDALReadWorldFile2(pszOverrideFilename, nullptr, adfGeoTransform,
+            GDALReadWorldFile2(pszOverrideFilename, nullptr, m_gt,
                                poOpenInfo->GetSiblingFiles(),
                                &pszWldFilename) ||
-            GDALReadWorldFile2(pszOverrideFilename, ".wld", adfGeoTransform,
+            GDALReadWorldFile2(pszOverrideFilename, ".wld", m_gt,
                                poOpenInfo->GetSiblingFiles(), &pszWldFilename);
         if (bGeoTransformValid)
         {
@@ -302,8 +302,8 @@ char **GDALJP2AbstractDataset::GetFileList()
         GDALCanReliablyUseSiblingFileList(pszWldFilename) &&
         CSLFindString(papszFileList, pszWldFilename) == -1)
     {
-        double l_adfGeoTransform[6];
-        GetGeoTransform(l_adfGeoTransform);
+        GDALGeoTransform l_gt;
+        GetGeoTransform(l_gt);
         // GetGeoTransform() can modify m_nGeoTransformGeorefSrcIndex
         // cppcheck-suppress knownConditionTrueFalse
         if (m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex)

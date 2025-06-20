@@ -1087,9 +1087,9 @@ static CPLErr GDALRasterizeGeometriesInternal(
         bNeedToFreeTransformer = true;
 
         char **papszTransformerOptions = nullptr;
-        double adfGeoTransform[6] = {0.0};
-        if (poDS->GetGeoTransform(adfGeoTransform) != CE_None &&
-            poDS->GetGCPCount() == 0 && poDS->GetMetadata("RPC") == nullptr)
+        GDALGeoTransform gt;
+        if (poDS->GetGeoTransform(gt) != CE_None && poDS->GetGCPCount() == 0 &&
+            poDS->GetMetadata("RPC") == nullptr)
         {
             papszTransformerOptions = CSLSetNameValue(
                 papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
@@ -1699,8 +1699,8 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
             if (pszProjection != nullptr)
                 papszTransformerOptions = CSLSetNameValue(
                     papszTransformerOptions, "SRC_SRS", pszProjection);
-            double adfGeoTransform[6] = {};
-            if (poDS->GetGeoTransform(adfGeoTransform) != CE_None &&
+            GDALGeoTransform gt;
+            if (poDS->GetGeoTransform(gt) != CE_None &&
                 poDS->GetGCPCount() == 0 && poDS->GetMetadata("RPC") == nullptr)
             {
                 papszTransformerOptions = CSLSetNameValue(

@@ -650,14 +650,13 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
 
     if (GDALGetGCPCount(hDataset) == 0)
     {
-        double adfGeoTransform[6];
-
         const char *pszProjection = GDALGetProjectionRef(hDataset);
         if (pszProjection != nullptr && strlen(pszProjection) > 0)
             poVDS->SetProjection(pszProjection);
 
-        if (GDALGetGeoTransform(hDataset, adfGeoTransform) == CE_None)
-            poVDS->SetGeoTransform(adfGeoTransform);
+        GDALGeoTransform gt;
+        if (GDALDataset::FromHandle(hDataset)->GetGeoTransform(gt) == CE_None)
+            poVDS->SetGeoTransform(gt);
     }
     else
     {

@@ -5208,46 +5208,38 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 if (dfRotation == 90)
                 {
-                    poDS->m_adfGeoTransform[0] = poDS->m_adfCTM[4];
-                    poDS->m_adfGeoTransform[1] = poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_adfGeoTransform[2] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_adfGeoTransform[3] = poDS->m_adfCTM[5];
-                    poDS->m_adfGeoTransform[4] = poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_adfGeoTransform[5] = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt[0] = poDS->m_adfCTM[4];
+                    poDS->m_gt[1] = poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt[2] = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt[3] = poDS->m_adfCTM[5];
+                    poDS->m_gt[4] = poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt[5] = poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else if (dfRotation == -90 || dfRotation == 270)
                 {
-                    poDS->m_adfGeoTransform[0] =
-                        poDS->m_adfCTM[4] +
-                        poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
-                        poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
-                    poDS->m_adfGeoTransform[1] =
-                        -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_adfGeoTransform[2] =
-                        -poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_adfGeoTransform[3] =
-                        poDS->m_adfCTM[5] +
-                        poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
-                        poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
-                    poDS->m_adfGeoTransform[4] =
-                        -poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_adfGeoTransform[5] =
-                        -poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
+                                    poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
+                                    poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
+                    poDS->m_gt[1] = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt[2] = -poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
+                                    poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
+                                    poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
+                    poDS->m_gt[4] = -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt[5] = -poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else
                 {
-                    poDS->m_adfGeoTransform[0] = poDS->m_adfCTM[4] +
-                                                 poDS->m_adfCTM[2] * dfY2 +
-                                                 poDS->m_adfCTM[0] * dfX1;
-                    poDS->m_adfGeoTransform[1] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_adfGeoTransform[2] =
-                        -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_adfGeoTransform[3] = poDS->m_adfCTM[5] +
-                                                 poDS->m_adfCTM[3] * dfY2 +
-                                                 poDS->m_adfCTM[1] * dfX1;
-                    poDS->m_adfGeoTransform[4] = poDS->m_adfCTM[1] / dfUserUnit;
-                    poDS->m_adfGeoTransform[5] =
-                        -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
+                                    poDS->m_adfCTM[2] * dfY2 +
+                                    poDS->m_adfCTM[0] * dfX1;
+                    poDS->m_gt[1] = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt[2] = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
+                                    poDS->m_adfCTM[3] * dfY2 +
+                                    poDS->m_adfCTM[1] * dfX1;
+                    poDS->m_gt[4] = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt[5] = -poDS->m_adfCTM[3] / dfUserUnit;
                 }
 
                 poDS->m_bGeoTransformValid = true;
@@ -5399,40 +5391,30 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* If pixel size or top left coordinates are very close to an int, round
      * them to the int */
-    double dfEps = (fabs(poDS->m_adfGeoTransform[0]) > 1e5 &&
-                    fabs(poDS->m_adfGeoTransform[3]) > 1e5)
-                       ? 1e-5
-                       : 1e-8;
-    poDS->m_adfGeoTransform[0] =
-        ROUND_IF_CLOSE(poDS->m_adfGeoTransform[0], dfEps);
-    poDS->m_adfGeoTransform[1] = ROUND_IF_CLOSE(poDS->m_adfGeoTransform[1]);
-    poDS->m_adfGeoTransform[3] =
-        ROUND_IF_CLOSE(poDS->m_adfGeoTransform[3], dfEps);
-    poDS->m_adfGeoTransform[5] = ROUND_IF_CLOSE(poDS->m_adfGeoTransform[5]);
+    double dfEps =
+        (fabs(poDS->m_gt[0]) > 1e5 && fabs(poDS->m_gt[3]) > 1e5) ? 1e-5 : 1e-8;
+    poDS->m_gt[0] = ROUND_IF_CLOSE(poDS->m_gt[0], dfEps);
+    poDS->m_gt[1] = ROUND_IF_CLOSE(poDS->m_gt[1]);
+    poDS->m_gt[3] = ROUND_IF_CLOSE(poDS->m_gt[3], dfEps);
+    poDS->m_gt[5] = ROUND_IF_CLOSE(poDS->m_gt[5]);
 
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
         // Attempt to "fix" the loss of precision due to the use of float32 for
         // numbers by pdfium
-        if ((fabs(poDS->m_adfGeoTransform[0]) > 1e5 ||
-             fabs(poDS->m_adfGeoTransform[3]) > 1e5) &&
-            fabs(poDS->m_adfGeoTransform[0] -
-                 std::round(poDS->m_adfGeoTransform[0])) <
-                1e-6 * fabs(poDS->m_adfGeoTransform[0]) &&
-            fabs(poDS->m_adfGeoTransform[1] -
-                 std::round(poDS->m_adfGeoTransform[1])) <
-                1e-3 * fabs(poDS->m_adfGeoTransform[1]) &&
-            fabs(poDS->m_adfGeoTransform[3] -
-                 std::round(poDS->m_adfGeoTransform[3])) <
-                1e-6 * fabs(poDS->m_adfGeoTransform[3]) &&
-            fabs(poDS->m_adfGeoTransform[5] -
-                 std::round(poDS->m_adfGeoTransform[5])) <
-                1e-3 * fabs(poDS->m_adfGeoTransform[5]))
+        if ((fabs(poDS->m_gt[0]) > 1e5 || fabs(poDS->m_gt[3]) > 1e5) &&
+            fabs(poDS->m_gt[0] - std::round(poDS->m_gt[0])) <
+                1e-6 * fabs(poDS->m_gt[0]) &&
+            fabs(poDS->m_gt[1] - std::round(poDS->m_gt[1])) <
+                1e-3 * fabs(poDS->m_gt[1]) &&
+            fabs(poDS->m_gt[3] - std::round(poDS->m_gt[3])) <
+                1e-6 * fabs(poDS->m_gt[3]) &&
+            fabs(poDS->m_gt[5] - std::round(poDS->m_gt[5])) <
+                1e-3 * fabs(poDS->m_gt[5]))
         {
             for (int i = 0; i < 6; i++)
             {
-                poDS->m_adfGeoTransform[i] =
-                    std::round(poDS->m_adfGeoTransform[i]);
+                poDS->m_gt[i] = std::round(poDS->m_gt[i]);
             }
         }
     }
@@ -5465,12 +5447,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                     x = (-dfX1 + poRing->getX(i)) * dfUserUnit;
                     y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
-                double X = poDS->m_adfGeoTransform[0] +
-                           x * poDS->m_adfGeoTransform[1] +
-                           y * poDS->m_adfGeoTransform[2];
-                double Y = poDS->m_adfGeoTransform[3] +
-                           x * poDS->m_adfGeoTransform[4] +
-                           y * poDS->m_adfGeoTransform[5];
+                double X =
+                    poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
+                double Y =
+                    poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
                 poRing->setPoint(i, X, Y);
             }
         }
@@ -7227,13 +7207,13 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     delete poSRSGeog;
     delete poCT;
 
-    if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(),
-                                m_adfGeoTransform.data(), FALSE))
+    if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(), m_gt.data(),
+                                FALSE))
     {
         CPLDebug("PDF",
                  "Could not compute GT with exact match. Try with approximate");
-        if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(),
-                                    m_adfGeoTransform.data(), TRUE))
+        if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(), m_gt.data(),
+                                    TRUE))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not compute GT with approximate match.");
@@ -7245,22 +7225,17 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     // If the non scaling terms of the geotransform are significantly smaller
     // than the pixel size, then nullify them as being just artifacts of
     //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
-    const double dfPixelSize =
-        std::min(fabs(m_adfGeoTransform[1]), fabs(m_adfGeoTransform[5]));
-    const double dfRotationShearTerm =
-        std::max(fabs(m_adfGeoTransform[2]), fabs(m_adfGeoTransform[4]));
+    const double dfPixelSize = std::min(fabs(m_gt[1]), fabs(m_gt[5]));
+    const double dfRotationShearTerm = std::max(fabs(m_gt[2]), fabs(m_gt[4]));
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
         (m_bUseLib.test(PDFLIB_PDFIUM) &&
-         std::min(fabs(m_adfGeoTransform[2]), fabs(m_adfGeoTransform[4])) <
-             1e-5 * dfPixelSize))
+         std::min(fabs(m_gt[2]), fabs(m_gt[4])) < 1e-5 * dfPixelSize))
     {
-        dfLRX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1] +
-                nRasterYSize * m_adfGeoTransform[2];
-        dfLRY = m_adfGeoTransform[3] + nRasterXSize * m_adfGeoTransform[4] +
-                nRasterYSize * m_adfGeoTransform[5];
-        m_adfGeoTransform[1] = (dfLRX - m_adfGeoTransform[0]) / nRasterXSize;
-        m_adfGeoTransform[5] = (dfLRY - m_adfGeoTransform[3]) / nRasterYSize;
-        m_adfGeoTransform[2] = m_adfGeoTransform[4] = 0;
+        dfLRX = m_gt[0] + nRasterXSize * m_gt[1] + nRasterYSize * m_gt[2];
+        dfLRY = m_gt[3] + nRasterXSize * m_gt[4] + nRasterYSize * m_gt[5];
+        m_gt[1] = (dfLRX - m_gt[0]) / nRasterXSize;
+        m_gt[5] = (dfLRY - m_gt[3]) / nRasterYSize;
+        m_gt[2] = m_gt[4] = 0;
     }
 
     return TRUE;
@@ -7285,17 +7260,15 @@ const OGRSpatialReference *PDFDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDFDataset::GetGeoTransform(double *padfTransform)
+CPLErr PDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (GDALPamDataset::GetGeoTransform(padfTransform) == CE_None)
+    if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
     {
         return CE_None;
     }
 
-    std::copy(std::begin(m_adfGeoTransform), std::end(m_adfGeoTransform),
-              padfTransform);
-
+    gt = m_gt;
     return ((m_bGeoTransformValid) ? CE_None : CE_Failure);
 }
 
@@ -7319,13 +7292,12 @@ CPLErr PDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDFDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr PDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (eAccess == GA_ReadOnly)
-        GDALPamDataset::SetGeoTransform(padfGeoTransform);
+        GDALPamDataset::SetGeoTransform(gt);
 
-    std::copy(padfGeoTransform, padfGeoTransform + 6,
-              std::begin(m_adfGeoTransform));
+    m_gt = gt;
     m_bGeoTransformValid = true;
     m_bProjDirty = true;
 

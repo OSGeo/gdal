@@ -390,7 +390,7 @@ class netCDFDataset final : public GDALPamDataset
     bool bWriteGDALHistory = true;
 
     /* projection/GT */
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
     int nXDimID;
     int nYDimID;
@@ -545,7 +545,7 @@ class netCDFDataset final : public GDALPamDataset
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 
-    void SetGeoTransformNoUpdate(double *);
+    void SetGeoTransformNoUpdate(const GDALGeoTransform &gt);
     void SetSpatialRefNoUpdate(const OGRSpatialReference *);
 
   protected:
@@ -563,8 +563,8 @@ class netCDFDataset final : public GDALPamDataset
     static std::string generateLogName();
 
     /* Projection/GT */
-    CPLErr GetGeoTransform(double *) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 

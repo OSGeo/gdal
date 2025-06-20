@@ -941,9 +941,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     /*      Try looking for a .nfw file.                                    */
     /* -------------------------------------------------------------------- */
-    if (psImage &&
-        GDALReadWorldFile2(pszFilename, "nfw", poDS->adfGeoTransform.data(),
-                           poOpenInfo->GetSiblingFiles(), nullptr))
+    if (psImage && GDALReadWorldFile2(pszFilename, "nfw", poDS->m_gt.data(),
+                                      poOpenInfo->GetSiblingFiles(), nullptr))
     {
         int isNorth;
         int zone;
@@ -1128,13 +1127,13 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     poDS->m_oSRS = std::move(oSRS_AEQD);
 
                     poDS->bGotGeoTransform = TRUE;
-                    poDS->adfGeoTransform[0] = dfULX_AEQD;
-                    poDS->adfGeoTransform[1] =
+                    poDS->m_gt[0] = dfULX_AEQD;
+                    poDS->m_gt[1] =
                         (dfURX_AEQD - dfULX_AEQD) / poDS->nRasterXSize;
-                    poDS->adfGeoTransform[2] = 0;
-                    poDS->adfGeoTransform[3] = dfULY_AEQD;
-                    poDS->adfGeoTransform[4] = 0;
-                    poDS->adfGeoTransform[5] =
+                    poDS->m_gt[2] = 0;
+                    poDS->m_gt[3] = dfULY_AEQD;
+                    poDS->m_gt[4] = 0;
+                    poDS->m_gt[5] =
                         (dfLLY_AEQD - dfULY_AEQD) / poDS->nRasterYSize;
                 }
             }
@@ -1247,8 +1246,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         /* nothing */
     }
     else if (poDS->bGotGeoTransform == FALSE && nGCPCount > 0 &&
-             GDALGCPsToGeoTransform(nGCPCount, psGCPs,
-                                    poDS->adfGeoTransform.data(), FALSE))
+             GDALGCPsToGeoTransform(nGCPCount, psGCPs, poDS->m_gt.data(),
+                                    FALSE))
     {
         poDS->bGotGeoTransform = TRUE;
     }
@@ -2180,14 +2179,12 @@ void NITFDataset::CheckGeoSDEInfo()
                  pszMAPLOB + 0);
     }
 
-    adfGeoTransform[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
-    adfGeoTransform[1] =
-        CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] =
-        -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
+    m_gt[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
+    m_gt[1] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
+    m_gt[2] = 0.0;
+    m_gt[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
+    m_gt[4] = 0.0;
+    m_gt[5] = -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
 
     m_oSRS = std::move(oSRS);
 
@@ -2254,45 +2251,37 @@ CPLErr NITFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NITFDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr NITFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfGeoTransform, adfGeoTransform.data(), sizeof(adfGeoTransform));
+    gt = m_gt;
 
     if (bGotGeoTransform)
         return CE_None;
 
-    return GDALPamDataset::GetGeoTransform(padfGeoTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NITFDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr NITFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     bGotGeoTransform = TRUE;
-    /* Valgrind would complain because SetGeoTransform() is called */
-    /* from SetProjection() with adfGeoTransform as argument */
-    if (adfGeoTransform.data() != padfGeoTransform)
-        memcpy(adfGeoTransform.data(), padfGeoTransform,
-               sizeof(adfGeoTransform));
+    m_gt = gt;
 
-    double dfIGEOLOULX = padfGeoTransform[0] + 0.5 * padfGeoTransform[1] +
-                         0.5 * padfGeoTransform[2];
-    double dfIGEOLOULY = padfGeoTransform[3] + 0.5 * padfGeoTransform[4] +
-                         0.5 * padfGeoTransform[5];
-    double dfIGEOLOURX = dfIGEOLOULX + padfGeoTransform[1] * (nRasterXSize - 1);
-    double dfIGEOLOURY = dfIGEOLOULY + padfGeoTransform[4] * (nRasterXSize - 1);
-    double dfIGEOLOLRX = dfIGEOLOULX +
-                         padfGeoTransform[1] * (nRasterXSize - 1) +
-                         padfGeoTransform[2] * (nRasterYSize - 1);
-    double dfIGEOLOLRY = dfIGEOLOULY +
-                         padfGeoTransform[4] * (nRasterXSize - 1) +
-                         padfGeoTransform[5] * (nRasterYSize - 1);
-    double dfIGEOLOLLX = dfIGEOLOULX + padfGeoTransform[2] * (nRasterYSize - 1);
-    double dfIGEOLOLLY = dfIGEOLOULY + padfGeoTransform[5] * (nRasterYSize - 1);
+    double dfIGEOLOULX = m_gt[0] + 0.5 * m_gt[1] + 0.5 * m_gt[2];
+    double dfIGEOLOULY = m_gt[3] + 0.5 * m_gt[4] + 0.5 * m_gt[5];
+    double dfIGEOLOURX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1);
+    double dfIGEOLOURY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1);
+    double dfIGEOLOLRX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1) +
+                         m_gt[2] * (nRasterYSize - 1);
+    double dfIGEOLOLRY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1) +
+                         m_gt[5] * (nRasterYSize - 1);
+    double dfIGEOLOLLX = dfIGEOLOULX + m_gt[2] * (nRasterYSize - 1);
+    double dfIGEOLOLLY = dfIGEOLOULY + m_gt[5] * (nRasterYSize - 1);
 
     if (psImage != nullptr &&
         NITFWriteIGEOLO(psImage, psImage->chICORDS, psImage->nZone, dfIGEOLOULX,
@@ -2300,7 +2289,7 @@ CPLErr NITFDataset::SetGeoTransform(double *padfGeoTransform)
                         dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY))
         return CE_None;
 
-    return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+    return GDALPamDataset::SetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -2465,7 +2454,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_oSRS = *poSRS;
 
     if (bGotGeoTransform)
-        SetGeoTransform(adfGeoTransform.data());
+        SetGeoTransform(m_gt);
 
     return CE_None;
 }
@@ -4823,7 +4812,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     if (pszWKT == nullptr || pszWKT[0] == '\0')
         pszWKT = poSrcDS->GetGCPProjection();
 
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     bool bWriteGeoTransform = false;
     bool bWriteGCPs = false;
     int nZone = 0;
@@ -4872,9 +4861,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         if (bSDE_TRE)
         {
             if (oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 &&
-                poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-                adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 &&
-                adfGeoTransform[5] < 0.0)
+                poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
+                gt[4] == 0.0 && gt[5] < 0.0)
             {
                 /* Override ICORDS to G if necessary */
                 if (pszICORDS != nullptr && EQUAL(pszICORDS, "D"))
@@ -4907,10 +4895,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 // Extra (useless) bytes to avoid CLang 18 erroneous -Wformat-truncation
                 constexpr int MARGIN_FOR_CLANG_18 = 2;
                 char szGEOLOB[48 + 1 + MARGIN_FOR_CLANG_18];
-                const double dfARV = 360.0 / adfGeoTransform[1];
-                const double dfBRV = 360.0 / -adfGeoTransform[5];
-                const double dfLSO = adfGeoTransform[0];
-                const double dfPSO = adfGeoTransform[3];
+                const double dfARV = 360.0 / gt[1];
+                const double dfBRV = 360.0 / -gt[5];
+                const double dfLSO = gt[0];
+                const double dfPSO = gt[3];
                 CPLsnprintf(szGEOLOB, sizeof(szGEOLOB),
                             "%09d%09d%#+015.10f%#+015.10f",
                             static_cast<int>(dfARV + 0.5),
@@ -4988,8 +4976,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             }
         }
 
-        bWriteGeoTransform =
-            (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None);
+        bWriteGeoTransform = (poSrcDS->GetGeoTransform(gt) == CE_None);
         bWriteGCPs = (!bWriteGeoTransform && poSrcDS->GetGCPCount() == 4);
 
         int bNorth;
@@ -5073,18 +5060,16 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 const int nXSize = poSrcDS->GetRasterXSize();
                 const int nYSize = poSrcDS->GetRasterYSize();
 
-                dfIGEOLOULX = adfGeoTransform[0] + 0.5 * adfGeoTransform[1] +
-                              0.5 * adfGeoTransform[2];
-                dfIGEOLOULY = adfGeoTransform[3] + 0.5 * adfGeoTransform[4] +
-                              0.5 * adfGeoTransform[5];
-                dfIGEOLOURX = dfIGEOLOULX + adfGeoTransform[1] * (nXSize - 1);
-                dfIGEOLOURY = dfIGEOLOULY + adfGeoTransform[4] * (nXSize - 1);
-                dfIGEOLOLRX = dfIGEOLOULX + adfGeoTransform[1] * (nXSize - 1) +
-                              adfGeoTransform[2] * (nYSize - 1);
-                dfIGEOLOLRY = dfIGEOLOULY + adfGeoTransform[4] * (nXSize - 1) +
-                              adfGeoTransform[5] * (nYSize - 1);
-                dfIGEOLOLLX = dfIGEOLOULX + adfGeoTransform[2] * (nYSize - 1);
-                dfIGEOLOLLY = dfIGEOLOULY + adfGeoTransform[5] * (nYSize - 1);
+                dfIGEOLOULX = gt[0] + 0.5 * gt[1] + 0.5 * gt[2];
+                dfIGEOLOULY = gt[3] + 0.5 * gt[4] + 0.5 * gt[5];
+                dfIGEOLOURX = dfIGEOLOULX + gt[1] * (nXSize - 1);
+                dfIGEOLOURY = dfIGEOLOULY + gt[4] * (nXSize - 1);
+                dfIGEOLOLRX =
+                    dfIGEOLOULX + gt[1] * (nXSize - 1) + gt[2] * (nYSize - 1);
+                dfIGEOLOLRY =
+                    dfIGEOLOULY + gt[4] * (nXSize - 1) + gt[5] * (nYSize - 1);
+                dfIGEOLOLLX = dfIGEOLOULX + gt[2] * (nYSize - 1);
+                dfIGEOLOLLY = dfIGEOLOULY + gt[5] * (nYSize - 1);
 
                 oSRS_WGS84.SetWellKnownGeogCS("WGS84");
                 oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -5664,7 +5649,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     else if (bWriteGeoTransform)
     {
         poDstDS->psImage->nZone = nZone;
-        poDstDS->SetGeoTransform(adfGeoTransform);
+        poDstDS->SetGeoTransform(gt);
     }
     else if (bWriteGCPs)
     {

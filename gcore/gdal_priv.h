@@ -496,6 +496,168 @@ class CPL_DLL GCP
 } /* namespace gdal */
 
 /* ******************************************************************** */
+/*                             GDALGeoTransform                         */
+/* ******************************************************************** */
+
+/** Class that encapsulates a geotransform matrix.
+ *
+ * It contains 6 coefficients expressing an affine transformation from
+ * (column, line) raster space to (X, Y) georeferenced space, such that
+ *
+ * \code{.c}
+ *  X = xorig + column * xscale + line * xrot;
+ *  Y = yorig + column * yrot   + line * yscale;
+ * \endcode
+ *
+ * The default value is the identity transformation.
+ *
+ * @since 3.12
+ */
+struct GDALGeoTransform
+{
+    // NOTE to GDAL developers: do not reorder those coefficients!
+
+    /** X value of the origin of the raster */
+    double xorig = 0;
+
+    /** X scale factor */
+    double xscale = 1;
+
+    /** X rotation factor */
+    double xrot = 0;
+
+    /** Y value of the origin of the raster */
+    double yorig = 0;
+
+    /** Y rotation factor */
+    double yrot = 0;
+
+    /** Y scale factor */
+    double yscale = 1;
+
+    /** Default constructor for an identity geotransformation matrix. */
+    inline GDALGeoTransform() = default;
+
+    /** Constructor from a array of 6 double */
+    inline explicit GDALGeoTransform(const double coeffs[6])
+    {
+        static_assert(sizeof(GDALGeoTransform) == 6 * sizeof(double));
+        xorig = coeffs[0];
+        xscale = coeffs[1];
+        xrot = coeffs[2];
+        yorig = coeffs[3];
+        yrot = coeffs[4];
+        yscale = coeffs[5];
+    }
+
+    /** Constructor from 6 double values */
+    inline GDALGeoTransform(double xorigIn, double xscaleIn, double xrotIn,
+                            double yorigIn, double yrotIn, double yscaleIn)
+    {
+        xorig = xorigIn;
+        xscale = xscaleIn;
+        xrot = xrotIn;
+        yorig = yorigIn;
+        yrot = yrotIn;
+        yscale = yscaleIn;
+    }
+
+    /** Element accessor. idx must be in [0,5] range */
+    template <typename T> inline double operator[](T idx) const
+    {
+        return *(&xorig + idx);
+    }
+
+    /** Element accessor. idx must be in [0,5] range */
+    template <typename T> inline double &operator[](T idx)
+    {
+        return *(&xorig + idx);
+    }
+
+    /** Equality test operator */
+    inline bool operator==(const GDALGeoTransform &other) const
+    {
+        return xorig == other.xorig && xscale == other.xscale &&
+               xrot == other.xrot && yorig == other.yorig &&
+               yrot == other.yrot && yscale == other.yscale;
+    }
+
+    /** Inequality test operator */
+    inline bool operator!=(const GDALGeoTransform &other) const
+    {
+        return !(operator==(other));
+    }
+
+    /** Cast to const double* */
+    inline const double *data() const
+    {
+        return &xorig;
+    }
+
+    /** Cast to double* */
+    inline double *data()
+    {
+        return &xorig;
+    }
+
+    /**
+     * Apply GeoTransform to x/y coordinate.
+     *
+     * Applies the following computation, converting a (pixel, line) coordinate
+     * into a georeferenced (geo_x, geo_y) location.
+     * \code{.c}
+     *  *pdfGeoX = padfGeoTransform[0] + dfPixel * padfGeoTransform[1]
+     *                                 + dfLine  * padfGeoTransform[2];
+     *  *pdfGeoY = padfGeoTransform[3] + dfPixel * padfGeoTransform[4]
+     *                                 + dfLine  * padfGeoTransform[5];
+     * \endcode
+     *
+     * @param dfPixel Input pixel position.
+     * @param dfLine Input line position.
+     * @param pdfGeoX output location where geo_x (easting/longitude)
+     * location is placed.
+     * @param pdfGeoY output location where geo_y (northing/latitude)
+     * location is placed.
+     */
+
+    inline void Apply(double dfPixel, double dfLine, double *pdfGeoX,
+                      double *pdfGeoY) const
+    {
+        GDALApplyGeoTransform(data(), dfPixel, dfLine, pdfGeoX, pdfGeoY);
+    }
+
+    /**
+     * Invert Geotransform.
+     *
+     * This function will invert a standard 3x2 set of GeoTransform coefficients.
+     * This converts the equation from being pixel to geo to being geo to pixel.
+     *
+     * @param[out] inverse Output geotransform
+     *
+     * @return true on success or false if the equation is uninvertable.
+     */
+    inline bool GetInverse(GDALGeoTransform &inverse) const
+    {
+        return GDALInvGeoTransform(data(), inverse.data()) == TRUE;
+    }
+
+    /** Rescale a geotransform by multiplying its scale and rotation terms by
+     * the provided ratios.
+     *
+     * This is typically used to compute the geotransform matrix of an overview
+     * dataset from the full resolution dataset, where the ratios are the size
+     * of the full resolution dataset divided by the size of the overview.
+     */
+    inline void Rescale(double dfXRatio, double dfYRatio)
+    {
+        xscale *= dfXRatio;
+        xrot *= dfYRatio;
+        yrot *= dfXRatio;
+        yscale *= dfYRatio;
+    }
+};
+
+/* ******************************************************************** */
 /*                             GDALDataset                              */
 /* ******************************************************************** */
 
@@ -753,8 +915,21 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     const char *GetProjectionRef(void) const;
     CPLErr SetProjection(const char *pszProjection);
 
-    virtual CPLErr GetGeoTransform(double *padfTransform);
-    virtual CPLErr SetGeoTransform(double *padfTransform);
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt);
+
+    CPLErr GetGeoTransform(double *padfGeoTransform) const
+#if defined(GDAL_COMPILATION) && !defined(DOXYGEN_XML)
+        CPL_WARN_DEPRECATED("Use GetGeoTransform(GDALGeoTransform&) instead")
+#endif
+            ;
+
+    CPLErr SetGeoTransform(const double *padfGeoTransform)
+#if defined(GDAL_COMPILATION) && !defined(DOXYGEN_XML)
+        CPL_WARN_DEPRECATED(
+            "Use SetGeoTransform(const GDALGeoTransform&) instead")
+#endif
+            ;
 
     virtual CPLErr GetExtent(OGREnvelope *psExtent,
                              const OGRSpatialReference *poCRS = nullptr) const;
@@ -4286,6 +4461,9 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const;
 
     bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
+                           GDALGeoTransform &gt) const;
+
+    bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
                            double adfGeoTransform[6]) const;
 
     bool Cache(CSLConstList papszOptions = nullptr) const;
@@ -5067,6 +5245,11 @@ void CPL_DLL GDALExpandPackedBitsToByteAt0Or255(
 
 CPL_C_END
 
+int CPL_DLL GDALReadWorldFile2(const char *pszBaseFilename,
+                               const char *pszExtension, GDALGeoTransform &gt,
+                               CSLConstList papszSiblingFiles,
+                               char **ppszWorldFileNameOut);
+
 std::unique_ptr<GDALDataset> CPL_DLL
 GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
 
@@ -5217,9 +5400,6 @@ struct GDALColorAssociation
 
 std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
                                                        GDALRasterBand *poBand);
-
-void GDALRescaleGeoTransform(double adfGeoTransform[6], double dfXRatio,
-                             double dfYRatio);
 
 // Macro used so that Identify and driver metadata methods in drivers built
 // as plugin can be duplicated in libgdal core and in the driver under different

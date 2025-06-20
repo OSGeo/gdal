@@ -23,13 +23,6 @@ PostGISRasterTileDataset::PostGISRasterTileDataset(
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
-
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0;
-    adfGeoTransform[GEOTRSFRM_WE_RES] = 1;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0;
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
-    adfGeoTransform[GEOTRSFRM_NS_RES] = 1;
 }
 
 /************************
@@ -47,16 +40,9 @@ PostGISRasterTileDataset::~PostGISRasterTileDataset()
 /********************************************************
  * \brief Get the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterTileDataset::GetGeoTransform(double *padfTransform)
+CPLErr PostGISRasterTileDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    // copy necessary values in supplied buffer
-    padfTransform[0] = adfGeoTransform[0];
-    padfTransform[1] = adfGeoTransform[1];
-    padfTransform[2] = adfGeoTransform[2];
-    padfTransform[3] = adfGeoTransform[3];
-    padfTransform[4] = adfGeoTransform[4];
-    padfTransform[5] = adfGeoTransform[5];
-
+    gt = m_gt;
     return CE_None;
 }
 
@@ -69,16 +55,16 @@ void PostGISRasterTileDataset::GetNativeExtent(double *pdfMinX, double *pdfMinY,
 {
     // FIXME; incorrect in case of non 0 rotation terms
 
-    double dfMinX = adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    double dfMaxY = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
+    double dfMinX = m_gt[GEOTRSFRM_TOPLEFT_X];
+    double dfMaxY = m_gt[GEOTRSFRM_TOPLEFT_Y];
 
-    double dfMaxX = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
-                    nRasterXSize * adfGeoTransform[GEOTRSFRM_WE_RES] +
-                    nRasterYSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
+    double dfMaxX = m_gt[GEOTRSFRM_TOPLEFT_X] +
+                    nRasterXSize * m_gt[GEOTRSFRM_WE_RES] +
+                    nRasterYSize * m_gt[GEOTRSFRM_ROTATION_PARAM1];
 
-    double dfMinY = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                    nRasterXSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-                    nRasterYSize * adfGeoTransform[GEOTRSFRM_NS_RES];
+    double dfMinY = m_gt[GEOTRSFRM_TOPLEFT_Y] +
+                    nRasterXSize * m_gt[GEOTRSFRM_ROTATION_PARAM2] +
+                    nRasterYSize * m_gt[GEOTRSFRM_NS_RES];
 
     // In case yres > 0
     if (dfMinY > dfMaxY)

@@ -29,7 +29,7 @@ class ROIPACDataset final : public RawDataset
 
     char *pszRscFilename;
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     bool bValidGeoTransform;
 
     OGRSpatialReference m_oSRS{};
@@ -49,8 +49,8 @@ class ROIPACDataset final : public RawDataset
                                char **papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -107,12 +107,6 @@ ROIPACDataset::ROIPACDataset()
       bValidGeoTransform(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -393,12 +387,12 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         aosRSC.FetchNameValue("Y_FIRST") != nullptr &&
         aosRSC.FetchNameValue("Y_STEP") != nullptr)
     {
-        poDS->adfGeoTransform[0] = CPLAtof(aosRSC.FetchNameValue("X_FIRST"));
-        poDS->adfGeoTransform[1] = CPLAtof(aosRSC.FetchNameValue("X_STEP"));
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = CPLAtof(aosRSC.FetchNameValue("Y_FIRST"));
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = CPLAtof(aosRSC.FetchNameValue("Y_STEP"));
+        poDS->m_gt[0] = CPLAtof(aosRSC.FetchNameValue("X_FIRST"));
+        poDS->m_gt[1] = CPLAtof(aosRSC.FetchNameValue("X_STEP"));
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = CPLAtof(aosRSC.FetchNameValue("Y_FIRST"));
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = CPLAtof(aosRSC.FetchNameValue("Y_STEP"));
         poDS->bValidGeoTransform = true;
     }
     if (aosRSC.FetchNameValue("PROJECTION") != nullptr)
@@ -735,7 +729,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
     }
     if (bValidGeoTransform)
     {
-        if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
+        if (m_gt[2] != 0 || m_gt[4] != 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "ROI_PAC format do not support geotransform with "
@@ -743,14 +737,10 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
         }
         else
         {
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST",
-                               adfGeoTransform[0]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP",
-                               adfGeoTransform[1]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST",
-                               adfGeoTransform[3]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP",
-                               adfGeoTransform[5]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST", m_gt[0]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP", m_gt[1]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST", m_gt[3]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP", m_gt[5]) > 0;
             bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_OFFSET",
                                band->GetOffset(nullptr)) > 0;
             bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_SCALE",
@@ -799,9 +789,9 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr ROIPACDataset::GetGeoTransform(double *padfTransform)
+CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(adfGeoTransform));
+    gt = m_gt;
     return bValidGeoTransform ? CE_None : CE_Failure;
 }
 
@@ -809,9 +799,9 @@ CPLErr ROIPACDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ROIPACDataset::SetGeoTransform(double *padfTransform)
+CPLErr ROIPACDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(adfGeoTransform));
+    m_gt = gt;
     bValidGeoTransform = true;
     return CE_None;
 }

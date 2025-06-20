@@ -158,7 +158,7 @@ class GTiffDataset final : public GDALPamDataset
     char *m_pszGeorefFilename = nullptr;
     char *m_pszXMLFilename = nullptr;
 
-    double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     double m_dfMaxZError = 0.0;
     double m_dfMaxZErrorOverview = 0.0;
     uint32_t m_anLercAddCompressionAndVersion[2]{0, 0};
@@ -460,8 +460,8 @@ class GTiffDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

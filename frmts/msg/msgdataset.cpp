@@ -57,12 +57,6 @@ MSGDataset::MSGDataset()
 
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -79,10 +73,10 @@ MSGDataset::~MSGDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MSGDataset::GetGeoTransform(double *padfTransform)
+CPLErr MSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -232,12 +226,12 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
                  iCentralPixelVIS_IR +
                  0.5);  // The y scan direction is always south -> north
     }
-    poDS->adfGeoTransform[0] = rMinX;
-    poDS->adfGeoTransform[3] = rMaxY;
-    poDS->adfGeoTransform[1] = rPixelSizeX;
-    poDS->adfGeoTransform[5] = -rPixelSizeY;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[4] = 0.0;
+    poDS->m_gt[0] = rMinX;
+    poDS->m_gt[3] = rMaxY;
+    poDS->m_gt[1] = rPixelSizeX;
+    poDS->m_gt[5] = -rPixelSizeY;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[4] = 0.0;
 
     /* -------------------------------------------------------------------- */
     /*      Set Projection Information                                      */
@@ -830,11 +824,9 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel,
         else  // Channels 1,2,3 and 12 (visual): Reflectance
         {
             double rLon =
-                poGDS->adfGeoTransform[0] +
-                iCol * poGDS->adfGeoTransform[1];  // X, in "geos" meters
+                poGDS->m_gt[0] + iCol * poGDS->m_gt[1];  // X, in "geos" meters
             double rLat =
-                poGDS->adfGeoTransform[3] +
-                iRow * poGDS->adfGeoTransform[5];  // Y, in "geos" meters
+                poGDS->m_gt[3] + iRow * poGDS->m_gt[5];  // Y, in "geos" meters
             if ((poGDS->poTransform != nullptr) &&
                 poGDS->poTransform->Transform(1, &rLon,
                                               &rLat))  // transform it to latlon

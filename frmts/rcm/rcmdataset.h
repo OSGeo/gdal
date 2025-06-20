@@ -42,7 +42,7 @@ class RCMDataset final : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
     char **papszSubDatasets = nullptr;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     bool bHaveGeoTransform = false;
     bool bPerPolarizationScaling = false;
     bool isComplexData = false;
@@ -59,7 +59,7 @@ class RCMDataset final : public GDALPamDataset
     virtual int CloseDependentDatasets() override;
 
   public:
-    RCMDataset();
+    RCMDataset() = default;
     virtual ~RCMDataset();
 
     virtual int GetGCPCount() override;
@@ -68,7 +68,7 @@ class RCMDataset final : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

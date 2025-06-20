@@ -291,7 +291,6 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
     /*      georeferencing.                                                 */
     /* -------------------------------------------------------------------- */
     CPLXMLNode *psCoordinate1Node, *psCoordinate2Node;
-    double adfGeoTransform[6];
 
     /* Coordinate 1 */
     psCoordinate1Node = CPLCreateXMLNode(psDocNode, CXT_Element, "component");
@@ -337,9 +336,10 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
     CPLAddXMLAttributeAndValue(psTmpNode, "name", "size");
     CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-    if (GetGeoTransform(adfGeoTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (GetGeoTransform(gt) == CE_None)
     {
-        if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0)
+        if (gt[2] != 0 || gt[4] != 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "ISCE format do not support geotransform with "
@@ -347,25 +347,25 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
         }
         else
         {
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", adfGeoTransform[0]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[0]);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate1Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "startingValue");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", adfGeoTransform[1]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[1]);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate1Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "delta");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", adfGeoTransform[3]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[3]);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate2Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "startingValue");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", adfGeoTransform[5]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[5]);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate2Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "delta");
@@ -689,18 +689,14 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         aosXmlProps.FetchNameValue("Coordinate2startingValue") != nullptr &&
         aosXmlProps.FetchNameValue("Coordinate2delta") != nullptr)
     {
-        double adfGeoTransform[6];
-        adfGeoTransform[0] =
-            CPLAtof(aosXmlProps.FetchNameValue("Coordinate1startingValue"));
-        adfGeoTransform[1] =
-            CPLAtof(aosXmlProps.FetchNameValue("Coordinate1delta"));
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] =
-            CPLAtof(aosXmlProps.FetchNameValue("Coordinate2startingValue"));
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] =
-            CPLAtof(aosXmlProps.FetchNameValue("Coordinate2delta"));
-        poDS->SetGeoTransform(adfGeoTransform);
+        GDALGeoTransform gt;
+        gt[0] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate1startingValue"));
+        gt[1] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate1delta"));
+        gt[2] = 0.0;
+        gt[3] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate2startingValue"));
+        gt[4] = 0.0;
+        gt[5] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate2delta"));
+        poDS->SetGeoTransform(gt);
 
         /* ISCE format seems not to have a projection field, but uses   */
         /* WGS84.                                                       */

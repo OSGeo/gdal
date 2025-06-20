@@ -64,8 +64,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(double *) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     void *GetInternalHandle(const char *) override;
     GDALDriver *GetDriver() override;
@@ -232,9 +232,9 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     mutable char *pszProjectionRef = nullptr;
     mutable OGRSpatialReference *m_poSRS = nullptr;
     mutable OGRSpatialReference *m_poGCPSRS = nullptr;
-    double adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     bool m_bHasSrcSRS = false;
-    bool bHasSrcGeoTransform = false;
+    bool m_bHasSrcGeoTransform = false;
     char *pszGCPProjection = nullptr;
     int nGCPCount = 0;
     GDAL_GCP *pasGCPList = nullptr;
@@ -261,7 +261,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                          int nRasterXSize, int nRasterYSize,
                          GDALAccess eAccess = GA_ReadOnly, int bShared = FALSE,
                          const char *pszProjectionRef = nullptr,
-                         double *padfGeoTransform = nullptr,
+                         const GDALGeoTransform *pGT = nullptr,
                          const char *pszOwner = nullptr);
 
     static GDALProxyPoolDataset *Create(const char *pszSourceDatasetDescription,
@@ -292,8 +292,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(double *) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     // Special behavior for the following methods : they return a pointer
     // data type, that must be cached by the proxy, so it doesn't become invalid
@@ -451,7 +451,7 @@ typedef struct GDALProxyPoolDatasetHS *GDALProxyPoolDatasetH;
 GDALProxyPoolDatasetH CPL_DLL GDALProxyPoolDatasetCreate(
     const char *pszSourceDatasetDescription, int nRasterXSize, int nRasterYSize,
     GDALAccess eAccess, int bShared, const char *pszProjectionRef,
-    double *padfGeoTransform);
+    const double *padfGeoTransform);
 
 void CPL_DLL
 GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset);

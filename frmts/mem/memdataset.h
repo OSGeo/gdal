@@ -45,7 +45,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     friend class MEMRasterBand;
 
     int bGeoTransformSet;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -88,8 +88,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual void *GetInternalHandle(const char *) override;
 

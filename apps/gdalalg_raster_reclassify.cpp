@@ -118,9 +118,9 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
         poDstBand->AddSimpleSource(poSrcBand);
     }
 
-    std::array<double, 6> gt;
-    if (input.GetGeoTransform(gt.data()) == CE_None)
-        ds->SetGeoTransform(gt.data());
+    GDALGeoTransform gt;
+    if (input.GetGeoTransform(gt) == CE_None)
+        ds->SetGeoTransform(gt);
     ds->SetSpatialRef(input.GetSpatialRef());
 
     return ds;

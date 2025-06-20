@@ -79,7 +79,7 @@ class TSXDataset final : public GDALPamDataset
     OGRSpatialReference m_oGCPSRS{};
 
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     bool bHaveGeoTransform;
 
     eProductType nProduct;
@@ -92,7 +92,7 @@ class TSXDataset final : public GDALPamDataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -219,12 +219,6 @@ TSXDataset::TSXDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -654,8 +648,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (poSrcSRS)
                     poDS->m_oSRS = *poSrcSRS;
 
-                geoTransformErr =
-                    poBandData->GetGeoTransform(poDS->adfGeoTransform);
+                geoTransformErr = poBandData->GetGeoTransform(poDS->m_gt);
             }
         }
     }
@@ -669,12 +662,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->bHaveGeoTransform = FALSE;
         poDS->m_oSRS.Clear();
-        poDS->adfGeoTransform[0] = 0.0;
-        poDS->adfGeoTransform[1] = 1.0;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 1.0;
+        poDS->m_gt = GDALGeoTransform();
     }
 
     CPLFree(pszDataType);
@@ -763,12 +751,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poDS->bHaveGeoTransform = FALSE;
             poDS->m_oSRS.Clear();
-            poDS->adfGeoTransform[0] = 0.0;
-            poDS->adfGeoTransform[1] = 1.0;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = 0.0;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = 1.0;
+            poDS->m_gt = GDALGeoTransform();
         }
     }
     else
@@ -836,9 +819,9 @@ const OGRSpatialReference *TSXDataset::GetSpatialRef() const
 /************************************************************************/
 /*                               GetGeotransform()                      */
 /************************************************************************/
-CPLErr TSXDataset::GetGeoTransform(double *padfTransform)
+CPLErr TSXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     if (bHaveGeoTransform)
         return CE_None;

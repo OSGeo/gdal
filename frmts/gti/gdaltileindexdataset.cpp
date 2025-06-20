@@ -170,7 +170,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
 
     CPLErr FlushCache(bool bAtClosing) override;
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -216,7 +216,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
     std::unique_ptr<OGRLayer> m_poWarpedLayerKeeper{};
 
     //! Geotransform matrix of the tile index
-    std::array<double, 6> m_adfGeoTransform{0, 0, 0, 0, 0, 0};
+    GDALGeoTransform m_gt{};
 
     //! Index of the "location" (or alternate name given by user) field
     //! (within m_poLayer->GetLayerDefn()), that contain source dataset names.
@@ -1456,26 +1456,26 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             CPL_IGNORE_RET_VAL(poTileSRS);
         }
 
-        double adfGeoTransformTile[6];
-        if (poTileDS->GetGeoTransform(adfGeoTransformTile) != CE_None)
+        GDALGeoTransform gtTile;
+        if (poTileDS->GetGeoTransform(gtTile) != CE_None)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find geotransform on %s", pszTileName);
             return false;
         }
-        if (!(adfGeoTransformTile[GT_ROTATION_PARAM1] == 0))
+        if (!(gtTile[GT_ROTATION_PARAM1] == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "3rd value of GeoTransform of %s must be 0", pszTileName);
             return false;
         }
-        if (!(adfGeoTransformTile[GT_ROTATION_PARAM2] == 0))
+        if (!(gtTile[GT_ROTATION_PARAM2] == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "5th value of GeoTransform of %s must be 0", pszTileName);
             return false;
         }
-        if (!(adfGeoTransformTile[GT_NS_RES] < 0))
+        if (!(gtTile[GT_NS_RES] < 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "6th value of GeoTransform of %s must be < 0",
@@ -1483,8 +1483,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             return false;
         }
 
-        const double dfResX = adfGeoTransformTile[GT_WE_RES];
-        const double dfResY = -adfGeoTransformTile[GT_NS_RES];
+        const double dfResX = gtTile[GT_WE_RES];
+        const double dfResY = -gtTile[GT_NS_RES];
 
         OGREnvelope sEnvelope;
         if (m_poLayer->GetExtent(&sEnvelope, /* bForce = */ false) ==
@@ -1517,12 +1517,12 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             return false;
         }
 
-        m_adfGeoTransform[GT_TOPLEFT_X] = sEnvelope.MinX;
-        m_adfGeoTransform[GT_WE_RES] = dfResX;
-        m_adfGeoTransform[GT_ROTATION_PARAM1] = 0;
-        m_adfGeoTransform[GT_TOPLEFT_Y] = sEnvelope.MaxY;
-        m_adfGeoTransform[GT_ROTATION_PARAM2] = 0;
-        m_adfGeoTransform[GT_NS_RES] = -dfResY;
+        m_gt[GT_TOPLEFT_X] = sEnvelope.MinX;
+        m_gt[GT_WE_RES] = dfResX;
+        m_gt[GT_ROTATION_PARAM1] = 0;
+        m_gt[GT_TOPLEFT_Y] = sEnvelope.MaxY;
+        m_gt[GT_ROTATION_PARAM2] = 0;
+        m_gt[GT_NS_RES] = -dfResY;
         nRasterXSize = static_cast<int>(std::ceil(dfXSize));
         nRasterYSize = static_cast<int>(std::ceil(dfYSize));
     }
@@ -1557,21 +1557,21 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         for (int i = 0; i < 6; ++i)
         {
-            m_adfGeoTransform[i] = CPLAtof(aosTokens[i]);
+            m_gt[i] = CPLAtof(aosTokens[i]);
         }
-        if (!(m_adfGeoTransform[GT_ROTATION_PARAM1] == 0))
+        if (!(m_gt[GT_ROTATION_PARAM1] == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "3rd value of %s must be 0",
                      MD_GEOTRANSFORM);
             return false;
         }
-        if (!(m_adfGeoTransform[GT_ROTATION_PARAM2] == 0))
+        if (!(m_gt[GT_ROTATION_PARAM2] == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "5th value of %s must be 0",
                      MD_GEOTRANSFORM);
             return false;
         }
-        if (!(m_adfGeoTransform[GT_NS_RES] < 0))
+        if (!(m_gt[GT_NS_RES] < 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "6th value of %s must be < 0",
                      MD_GEOTRANSFORM);
@@ -1661,12 +1661,12 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             return false;
         }
 
-        m_adfGeoTransform[GT_TOPLEFT_X] = sEnvelope.MinX;
-        m_adfGeoTransform[GT_WE_RES] = dfResX;
-        m_adfGeoTransform[GT_ROTATION_PARAM1] = 0;
-        m_adfGeoTransform[GT_TOPLEFT_Y] = sEnvelope.MaxY;
-        m_adfGeoTransform[GT_ROTATION_PARAM2] = 0;
-        m_adfGeoTransform[GT_NS_RES] = -dfResY;
+        m_gt[GT_TOPLEFT_X] = sEnvelope.MinX;
+        m_gt[GT_WE_RES] = dfResX;
+        m_gt[GT_ROTATION_PARAM1] = 0;
+        m_gt[GT_TOPLEFT_Y] = sEnvelope.MaxY;
+        m_gt[GT_ROTATION_PARAM2] = 0;
+        m_gt[GT_NS_RES] = -dfResY;
         nRasterXSize = static_cast<int>(std::ceil(dfXSize));
         nRasterYSize = static_cast<int>(std::ceil(dfYSize));
     }
@@ -1885,8 +1885,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (dfOvrFactor > 1.0)
     {
-        m_adfGeoTransform[GT_WE_RES] *= dfOvrFactor;
-        m_adfGeoTransform[GT_NS_RES] *= dfOvrFactor;
+        m_gt[GT_WE_RES] *= dfOvrFactor;
+        m_gt[GT_NS_RES] *= dfOvrFactor;
         nRasterXSize = static_cast<int>(std::ceil(nRasterXSize / dfOvrFactor));
         nRasterYSize = static_cast<int>(std::ceil(nRasterYSize / dfOvrFactor));
     }
@@ -2787,9 +2787,9 @@ GDALRasterBand *GDALTileIndexBand::GetOverview(int iOvr)
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr GDALTileIndexDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALTileIndexDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, m_adfGeoTransform.data(), 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -2884,14 +2884,12 @@ int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     if (pdfDataPct != nullptr)
         *pdfDataPct = -1.0;
 
-    const double dfMinX = m_poDS->m_adfGeoTransform[GT_TOPLEFT_X] +
-                          nXOff * m_poDS->m_adfGeoTransform[GT_WE_RES];
-    const double dfMaxX =
-        dfMinX + nXSize * m_poDS->m_adfGeoTransform[GT_WE_RES];
-    const double dfMaxY = m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y] +
-                          nYOff * m_poDS->m_adfGeoTransform[GT_NS_RES];
-    const double dfMinY =
-        dfMaxY + nYSize * m_poDS->m_adfGeoTransform[GT_NS_RES];
+    const double dfMinX =
+        m_poDS->m_gt[GT_TOPLEFT_X] + nXOff * m_poDS->m_gt[GT_WE_RES];
+    const double dfMaxX = dfMinX + nXSize * m_poDS->m_gt[GT_WE_RES];
+    const double dfMaxY =
+        m_poDS->m_gt[GT_TOPLEFT_Y] + nYOff * m_poDS->m_gt[GT_NS_RES];
+    const double dfMinY = dfMaxY + nYSize * m_poDS->m_gt[GT_NS_RES];
     m_poDS->m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
     m_poDS->m_poLayer->ResetReading();
 
@@ -2925,22 +2923,20 @@ int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
         OGREnvelope sSourceEnvelope;
         poGeom->getEnvelope(&sSourceEnvelope);
 
-        const double dfDstXOff =
-            std::max<double>(nXOff, (sSourceEnvelope.MinX -
-                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
-                                        m_poDS->m_adfGeoTransform[GT_WE_RES]);
-        const double dfDstXOff2 = std::min<double>(
-            nXOff + nXSize,
-            (sSourceEnvelope.MaxX - m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
-                m_poDS->m_adfGeoTransform[GT_WE_RES]);
-        const double dfDstYOff =
-            std::max<double>(nYOff, (sSourceEnvelope.MaxY -
-                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
-                                        m_poDS->m_adfGeoTransform[GT_NS_RES]);
-        const double dfDstYOff2 = std::min<double>(
-            nYOff + nYSize,
-            (sSourceEnvelope.MinY - m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
-                m_poDS->m_adfGeoTransform[GT_NS_RES]);
+        const double dfDstXOff = std::max<double>(
+            nXOff, (sSourceEnvelope.MinX - m_poDS->m_gt[GT_TOPLEFT_X]) /
+                       m_poDS->m_gt[GT_WE_RES]);
+        const double dfDstXOff2 =
+            std::min<double>(nXOff + nXSize, (sSourceEnvelope.MaxX -
+                                              m_poDS->m_gt[GT_TOPLEFT_X]) /
+                                                 m_poDS->m_gt[GT_WE_RES]);
+        const double dfDstYOff = std::max<double>(
+            nYOff, (sSourceEnvelope.MaxY - m_poDS->m_gt[GT_TOPLEFT_Y]) /
+                       m_poDS->m_gt[GT_NS_RES]);
+        const double dfDstYOff2 =
+            std::min<double>(nYOff + nYSize, (sSourceEnvelope.MinY -
+                                              m_poDS->m_gt[GT_TOPLEFT_Y]) /
+                                                 m_poDS->m_gt[GT_NS_RES]);
 
         // CPLDebug("GTI", "dfDstXOff=%f, dfDstXOff2=%f, dfDstYOff=%f, dfDstYOff2=%f",
         //         dfDstXOff, dfDstXOff2, dfDstYOff, dfDstXOff2);
@@ -3053,8 +3049,7 @@ const char *GDALTileIndexBand::GetMetadataItem(const char *pszName,
             const double dfGeoY = CPLAtof(pszUnderscore + 1);
 
             double adfInvGeoTransform[6] = {0.0};
-            if (!GDALInvGeoTransform(m_poDS->m_adfGeoTransform.data(),
-                                     adfInvGeoTransform))
+            if (!GDALInvGeoTransform(m_poDS->m_gt.data(), adfInvGeoTransform))
                 return nullptr;
 
             iPixel = static_cast<int>(floor(adfInvGeoTransform[0] +
@@ -3203,51 +3198,51 @@ CPLErr GDALTileIndexBand::SetMetadata(char **papszMD, const char *pszDomain)
 /*                         GetSrcDstWin()                               */
 /************************************************************************/
 
-static bool GetSrcDstWin(const double adfTileGT[6], int nTileXSize,
-                         int nTileYSize, const double adfVRTGT[6],
+static bool GetSrcDstWin(const GDALGeoTransform &tileGT, int nTileXSize,
+                         int nTileYSize, const GDALGeoTransform &vrtGT,
                          int nVRTXSize, int nVRTYSize, double *pdfSrcXOff,
                          double *pdfSrcYOff, double *pdfSrcXSize,
                          double *pdfSrcYSize, double *pdfDstXOff,
                          double *pdfDstYOff, double *pdfDstXSize,
                          double *pdfDstYSize)
 {
-    const double minX = adfVRTGT[GT_TOPLEFT_X];
-    const double we_res = adfVRTGT[GT_WE_RES];
+    const double minX = vrtGT[GT_TOPLEFT_X];
+    const double we_res = vrtGT[GT_WE_RES];
     const double maxX = minX + nVRTXSize * we_res;
-    const double maxY = adfVRTGT[GT_TOPLEFT_Y];
-    const double ns_res = adfVRTGT[GT_NS_RES];
+    const double maxY = vrtGT[GT_TOPLEFT_Y];
+    const double ns_res = vrtGT[GT_NS_RES];
     const double minY = maxY + nVRTYSize * ns_res;
 
     /* Check that the destination bounding box intersects the source bounding
      * box */
-    if (adfTileGT[GT_TOPLEFT_X] + nTileXSize * adfTileGT[GT_WE_RES] <= minX)
+    if (tileGT[GT_TOPLEFT_X] + nTileXSize * tileGT[GT_WE_RES] <= minX)
         return false;
-    if (adfTileGT[GT_TOPLEFT_X] >= maxX)
+    if (tileGT[GT_TOPLEFT_X] >= maxX)
         return false;
-    if (adfTileGT[GT_TOPLEFT_Y] + nTileYSize * adfTileGT[GT_NS_RES] >= maxY)
+    if (tileGT[GT_TOPLEFT_Y] + nTileYSize * tileGT[GT_NS_RES] >= maxY)
         return false;
-    if (adfTileGT[GT_TOPLEFT_Y] <= minY)
+    if (tileGT[GT_TOPLEFT_Y] <= minY)
         return false;
 
-    if (adfTileGT[GT_TOPLEFT_X] < minX)
+    if (tileGT[GT_TOPLEFT_X] < minX)
     {
-        *pdfSrcXOff = (minX - adfTileGT[GT_TOPLEFT_X]) / adfTileGT[GT_WE_RES];
+        *pdfSrcXOff = (minX - tileGT[GT_TOPLEFT_X]) / tileGT[GT_WE_RES];
         *pdfDstXOff = 0.0;
     }
     else
     {
         *pdfSrcXOff = 0.0;
-        *pdfDstXOff = ((adfTileGT[GT_TOPLEFT_X] - minX) / we_res);
+        *pdfDstXOff = ((tileGT[GT_TOPLEFT_X] - minX) / we_res);
     }
-    if (maxY < adfTileGT[GT_TOPLEFT_Y])
+    if (maxY < tileGT[GT_TOPLEFT_Y])
     {
-        *pdfSrcYOff = (adfTileGT[GT_TOPLEFT_Y] - maxY) / -adfTileGT[GT_NS_RES];
+        *pdfSrcYOff = (tileGT[GT_TOPLEFT_Y] - maxY) / -tileGT[GT_NS_RES];
         *pdfDstYOff = 0.0;
     }
     else
     {
         *pdfSrcYOff = 0.0;
-        *pdfDstYOff = ((maxY - adfTileGT[GT_TOPLEFT_Y]) / -ns_res);
+        *pdfDstYOff = ((maxY - tileGT[GT_TOPLEFT_Y]) / -ns_res);
     }
 
     *pdfSrcXSize = nTileXSize;
@@ -3257,9 +3252,9 @@ static bool GetSrcDstWin(const double adfTileGT[6], int nTileXSize,
     if (*pdfSrcYOff > 0)
         *pdfSrcYSize -= *pdfSrcYOff;
 
-    const double dfSrcToDstXSize = adfTileGT[GT_WE_RES] / we_res;
+    const double dfSrcToDstXSize = tileGT[GT_WE_RES] / we_res;
     *pdfDstXSize = *pdfSrcXSize * dfSrcToDstXSize;
-    const double dfSrcToDstYSize = adfTileGT[GT_NS_RES] / ns_res;
+    const double dfSrcToDstYSize = tileGT[GT_NS_RES] / ns_res;
     *pdfDstYSize = *pdfSrcYSize * dfSrcToDstYSize;
 
     if (*pdfDstXOff + *pdfDstXSize > nVRTXSize)
@@ -3321,18 +3316,15 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
         OGREnvelope sEnvelope;
         poGeom->getEnvelope(&sEnvelope);
 
-        double dfXOff = (sEnvelope.MinX - m_adfGeoTransform[GT_TOPLEFT_X]) /
-                        m_adfGeoTransform[GT_WE_RES];
+        double dfXOff = (sEnvelope.MinX - m_gt[GT_TOPLEFT_X]) / m_gt[GT_WE_RES];
         if (dfXOff >= nRasterXSize)
             continue;
 
-        double dfYOff = (sEnvelope.MaxY - m_adfGeoTransform[GT_TOPLEFT_Y]) /
-                        m_adfGeoTransform[GT_NS_RES];
+        double dfYOff = (sEnvelope.MaxY - m_gt[GT_TOPLEFT_Y]) / m_gt[GT_NS_RES];
         if (dfYOff >= nRasterYSize)
             continue;
 
-        double dfXSize =
-            (sEnvelope.MaxX - sEnvelope.MinX) / m_adfGeoTransform[GT_WE_RES];
+        double dfXSize = (sEnvelope.MaxX - sEnvelope.MinX) / m_gt[GT_WE_RES];
         if (dfXOff < 0)
         {
             dfXSize += dfXOff;
@@ -3341,8 +3333,8 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
                 continue;
         }
 
-        double dfYSize = (sEnvelope.MaxY - sEnvelope.MinY) /
-                         std::fabs(m_adfGeoTransform[GT_NS_RES]);
+        double dfYSize =
+            (sEnvelope.MaxY - sEnvelope.MinY) / std::fabs(m_gt[GT_NS_RES]);
         if (dfYOff < 0)
         {
             dfYSize += dfYOff;
@@ -3466,37 +3458,34 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
 
             // Second pass to create a warped source VRT whose
             // extent is aligned on the one of the target VRT
-            double adfWarpDSGeoTransform[6];
-            const auto eErr = poWarpDS->GetGeoTransform(adfWarpDSGeoTransform);
+            GDALGeoTransform warpDSGT;
+            const auto eErr = poWarpDS->GetGeoTransform(warpDSGT);
             CPL_IGNORE_RET_VAL(eErr);
             CPLAssert(eErr == CE_None);
-            const double dfVRTMinX = m_adfGeoTransform[GT_TOPLEFT_X];
-            const double dfVRTResX = m_adfGeoTransform[GT_WE_RES];
-            const double dfVRTMaxY = m_adfGeoTransform[GT_TOPLEFT_Y];
-            const double dfVRTResYAbs = -m_adfGeoTransform[GT_NS_RES];
+            const double dfVRTMinX = m_gt[GT_TOPLEFT_X];
+            const double dfVRTResX = m_gt[GT_WE_RES];
+            const double dfVRTMaxY = m_gt[GT_TOPLEFT_Y];
+            const double dfVRTResYAbs = -m_gt[GT_NS_RES];
             const double dfWarpMinX =
-                std::floor((adfWarpDSGeoTransform[GT_TOPLEFT_X] - dfVRTMinX) /
-                           dfVRTResX) *
+                std::floor((warpDSGT[GT_TOPLEFT_X] - dfVRTMinX) / dfVRTResX) *
                     dfVRTResX +
                 dfVRTMinX;
             const double dfWarpMaxX =
-                std::ceil((adfWarpDSGeoTransform[GT_TOPLEFT_X] +
-                           adfWarpDSGeoTransform[GT_WE_RES] *
-                               poWarpDS->GetRasterXSize() -
+                std::ceil((warpDSGT[GT_TOPLEFT_X] +
+                           warpDSGT[GT_WE_RES] * poWarpDS->GetRasterXSize() -
                            dfVRTMinX) /
                           dfVRTResX) *
                     dfVRTResX +
                 dfVRTMinX;
             const double dfWarpMaxY =
-                dfVRTMaxY -
-                std::floor((dfVRTMaxY - adfWarpDSGeoTransform[GT_TOPLEFT_Y]) /
-                           dfVRTResYAbs) *
-                    dfVRTResYAbs;
+                dfVRTMaxY - std::floor((dfVRTMaxY - warpDSGT[GT_TOPLEFT_Y]) /
+                                       dfVRTResYAbs) *
+                                dfVRTResYAbs;
             const double dfWarpMinY =
                 dfVRTMaxY -
-                std::ceil((dfVRTMaxY - (adfWarpDSGeoTransform[GT_TOPLEFT_Y] +
-                                        adfWarpDSGeoTransform[GT_NS_RES] *
-                                            poWarpDS->GetRasterYSize())) /
+                std::ceil((dfVRTMaxY -
+                           (warpDSGT[GT_TOPLEFT_Y] +
+                            warpDSGT[GT_NS_RES] * poWarpDS->GetRasterYSize())) /
                           dfVRTResYAbs) *
                     dfVRTResYAbs;
 
@@ -3531,8 +3520,8 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
             pMutex->unlock();
     }
 
-    double adfGeoTransformTile[6];
-    if (poTileDS->GetGeoTransform(adfGeoTransformTile) != CE_None)
+    GDALGeoTransform gtTile;
+    if (poTileDS->GetGeoTransform(gtTile) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s lacks geotransform",
                  osTileName.c_str());
@@ -3582,13 +3571,12 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
         poSource = std::move(poComplexSource);
     }
 
-    GetSrcDstWin(adfGeoTransformTile, poTileDS->GetRasterXSize(),
-                 poTileDS->GetRasterYSize(), m_adfGeoTransform.data(),
-                 GetRasterXSize(), GetRasterYSize(), &poSource->m_dfSrcXOff,
-                 &poSource->m_dfSrcYOff, &poSource->m_dfSrcXSize,
-                 &poSource->m_dfSrcYSize, &poSource->m_dfDstXOff,
-                 &poSource->m_dfDstYOff, &poSource->m_dfDstXSize,
-                 &poSource->m_dfDstYSize);
+    GetSrcDstWin(gtTile, poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                 m_gt, GetRasterXSize(), GetRasterYSize(),
+                 &poSource->m_dfSrcXOff, &poSource->m_dfSrcYOff,
+                 &poSource->m_dfSrcXSize, &poSource->m_dfSrcYSize,
+                 &poSource->m_dfDstXOff, &poSource->m_dfDstYOff,
+                 &poSource->m_dfDstXSize, &poSource->m_dfDstYSize);
 
     oSourceDesc.osName = osTileName;
     oSourceDesc.poDS = std::move(poTileDS);
@@ -3630,12 +3618,10 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
                                           double dfXSize, double dfYSize,
                                           bool bMultiThreadAllowed)
 {
-    const double dfMinX =
-        m_adfGeoTransform[GT_TOPLEFT_X] + dfXOff * m_adfGeoTransform[GT_WE_RES];
-    const double dfMaxX = dfMinX + dfXSize * m_adfGeoTransform[GT_WE_RES];
-    const double dfMaxY =
-        m_adfGeoTransform[GT_TOPLEFT_Y] + dfYOff * m_adfGeoTransform[GT_NS_RES];
-    const double dfMinY = dfMaxY + dfYSize * m_adfGeoTransform[GT_NS_RES];
+    const double dfMinX = m_gt[GT_TOPLEFT_X] + dfXOff * m_gt[GT_WE_RES];
+    const double dfMaxX = dfMinX + dfXSize * m_gt[GT_WE_RES];
+    const double dfMaxY = m_gt[GT_TOPLEFT_Y] + dfYOff * m_gt[GT_NS_RES];
+    const double dfMinY = dfMaxY + dfYSize * m_gt[GT_NS_RES];
 
     if (dfMinX == m_dfLastMinXFilter && dfMinY == m_dfLastMinYFilter &&
         dfMaxX == m_dfLastMaxXFilter && dfMaxY == m_dfLastMaxYFilter)
@@ -3722,20 +3708,16 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
 
             CPLRectObj sSourceBounds;
             sSourceBounds.minx =
-                (sEnvelope.MinX - m_adfGeoTransform[GT_TOPLEFT_X]) /
-                m_adfGeoTransform[GT_WE_RES];
+                (sEnvelope.MinX - m_gt[GT_TOPLEFT_X]) / m_gt[GT_WE_RES];
             sSourceBounds.maxx =
-                (sEnvelope.MaxX - m_adfGeoTransform[GT_TOPLEFT_X]) /
-                m_adfGeoTransform[GT_WE_RES];
+                (sEnvelope.MaxX - m_gt[GT_TOPLEFT_X]) / m_gt[GT_WE_RES];
             // Yes use of MaxY to compute miny is intended given that MaxY is
             // in georeferenced space whereas miny is in pixel space.
             sSourceBounds.miny =
-                (sEnvelope.MaxY - m_adfGeoTransform[GT_TOPLEFT_Y]) /
-                m_adfGeoTransform[GT_NS_RES];
+                (sEnvelope.MaxY - m_gt[GT_TOPLEFT_Y]) / m_gt[GT_NS_RES];
             // Same here for maxy vs Miny
             sSourceBounds.maxy =
-                (sEnvelope.MinY - m_adfGeoTransform[GT_TOPLEFT_Y]) /
-                m_adfGeoTransform[GT_NS_RES];
+                (sEnvelope.MinY - m_gt[GT_TOPLEFT_Y]) / m_gt[GT_NS_RES];
 
             // Clamp to global bounds and some epsilon to avoid adjacent tiles
             // to be considered as overlapping
@@ -3794,29 +3776,28 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
 
         // Check consistency of bounding box in tile index vs actual
         // extent of the tile.
-        double adfTileGT[6];
-        if (oSourceDesc.poDS->GetGeoTransform(adfTileGT) == CE_None &&
-            adfTileGT[GT_ROTATION_PARAM1] == 0 &&
-            adfTileGT[GT_ROTATION_PARAM2] == 0)
+        GDALGeoTransform tileGT;
+        if (oSourceDesc.poDS->GetGeoTransform(tileGT) == CE_None &&
+            tileGT[GT_ROTATION_PARAM1] == 0 && tileGT[GT_ROTATION_PARAM2] == 0)
         {
             OGREnvelope sActualTileExtent;
-            sActualTileExtent.MinX = adfTileGT[GT_TOPLEFT_X];
+            sActualTileExtent.MinX = tileGT[GT_TOPLEFT_X];
             sActualTileExtent.MaxX =
                 sActualTileExtent.MinX +
-                oSourceDesc.poDS->GetRasterXSize() * adfTileGT[GT_WE_RES];
-            sActualTileExtent.MaxY = adfTileGT[GT_TOPLEFT_Y];
+                oSourceDesc.poDS->GetRasterXSize() * tileGT[GT_WE_RES];
+            sActualTileExtent.MaxY = tileGT[GT_TOPLEFT_Y];
             sActualTileExtent.MinY =
                 sActualTileExtent.MaxY +
-                oSourceDesc.poDS->GetRasterYSize() * adfTileGT[GT_NS_RES];
+                oSourceDesc.poDS->GetRasterYSize() * tileGT[GT_NS_RES];
             const auto poGeom = poFeature->GetGeometryRef();
             if (poGeom && !poGeom->IsEmpty())
             {
                 OGREnvelope sGeomTileExtent;
                 poGeom->getEnvelope(&sGeomTileExtent);
-                sGeomTileExtent.MinX -= m_adfGeoTransform[GT_WE_RES];
-                sGeomTileExtent.MaxX += m_adfGeoTransform[GT_WE_RES];
-                sGeomTileExtent.MinY -= std::fabs(m_adfGeoTransform[GT_NS_RES]);
-                sGeomTileExtent.MaxY += std::fabs(m_adfGeoTransform[GT_NS_RES]);
+                sGeomTileExtent.MinX -= m_gt[GT_WE_RES];
+                sGeomTileExtent.MaxX += m_gt[GT_WE_RES];
+                sGeomTileExtent.MinY -= std::fabs(m_gt[GT_NS_RES]);
+                sGeomTileExtent.MaxY += std::fabs(m_gt[GT_NS_RES]);
                 if (!sGeomTileExtent.Contains(sActualTileExtent))
                 {
                     if (!sGeomTileExtent.Intersects(sActualTileExtent))

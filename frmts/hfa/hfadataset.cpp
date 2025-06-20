@@ -3050,8 +3050,6 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
 HFADataset::HFADataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -3894,16 +3892,14 @@ CPLErr HFADataset::WriteProjection()
     else
         sMapInfo.proName = const_cast<char *>("Unknown");
 
-    sMapInfo.upperLeftCenter.x = adfGeoTransform[0] + adfGeoTransform[1] * 0.5;
-    sMapInfo.upperLeftCenter.y = adfGeoTransform[3] + adfGeoTransform[5] * 0.5;
+    sMapInfo.upperLeftCenter.x = m_gt[0] + m_gt[1] * 0.5;
+    sMapInfo.upperLeftCenter.y = m_gt[3] + m_gt[5] * 0.5;
 
-    sMapInfo.lowerRightCenter.x =
-        adfGeoTransform[0] + adfGeoTransform[1] * (GetRasterXSize() - 0.5);
-    sMapInfo.lowerRightCenter.y =
-        adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize() - 0.5);
+    sMapInfo.lowerRightCenter.x = m_gt[0] + m_gt[1] * (GetRasterXSize() - 0.5);
+    sMapInfo.lowerRightCenter.y = m_gt[3] + m_gt[5] * (GetRasterYSize() - 0.5);
 
-    sMapInfo.pixelSize.width = std::abs(adfGeoTransform[1]);
-    sMapInfo.pixelSize.height = std::abs(adfGeoTransform[5]);
+    sMapInfo.pixelSize.width = std::abs(m_gt[1]);
+    sMapInfo.pixelSize.height = std::abs(m_gt[5]);
 
     // Handle units.  Try to match up with a known name.
     sMapInfo.units = const_cast<char *>("meters");
@@ -3947,14 +3943,13 @@ CPLErr HFADataset::WriteProjection()
     }
 
     // Write out definitions.
-    if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+    if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
     {
         HFASetMapInfo(hHFA, &sMapInfo);
     }
     else
     {
-        HFASetGeoTransform(hHFA, sMapInfo.proName, sMapInfo.units,
-                           adfGeoTransform);
+        HFASetGeoTransform(hHFA, sMapInfo.proName, sMapInfo.units, m_gt.data());
     }
 
     if (bHaveSRS && sPro.proName != nullptr)
@@ -4377,7 +4372,7 @@ GDALDataset *HFADataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Get geotransform, or if that fails, try to find XForms to
     // build gcps, and metadata.
-    if (!HFAGetGeoTransform(hHFA, poDS->adfGeoTransform))
+    if (!HFAGetGeoTransform(hHFA, poDS->m_gt.data()))
     {
         Efga_Polynomial *pasPolyListForward = nullptr;
         Efga_Polynomial *pasPolyListReverse = nullptr;
@@ -4535,28 +4530,27 @@ CPLErr HFADataset::SetMetadataItem(const char *pszTag, const char *pszValue,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HFADataset::GetGeoTransform(double *padfTransform)
+CPLErr HFADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-        adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-        adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0)
+    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
+        m_gt[4] != 0.0 || m_gt[5] != 1.0)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HFADataset::SetGeoTransform(double *padfTransform)
+CPLErr HFADataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     bGeoDirty = true;
 
     return CE_None;
@@ -5060,14 +5054,13 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
     }
 
     // Copy projection information.
-    double adfGeoTransform[6] = {};
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
+        poDS->SetGeoTransform(gt);
 
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-        poDS->SetGeoTransform(adfGeoTransform);
-
-    const char *pszProj = poSrcDS->GetProjectionRef();
-    if (pszProj != nullptr && strlen(pszProj) > 0)
-        poDS->SetProjection(pszProj);
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    if (poSrcSRS)
+        poDS->SetSpatialRef(poSrcSRS);
 
     // Copy the imagery.
     if (!bCreateAux)

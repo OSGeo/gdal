@@ -454,12 +454,6 @@ static CPLErr GetStoreType(const std::string &pszFileName,
 ILWISDataset::ILWISDataset() : bGeoDirty(FALSE), bNewDataset(FALSE)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -524,19 +518,19 @@ void ILWISDataset::CollectTransformCoef(std::string &osRefname)
 
             if (EQUAL(IsCorner.c_str(), "Yes"))
             {
-                adfGeoTransform[0] = CPLAtof(sMinX.c_str());
-                adfGeoTransform[3] = CPLAtof(sMaxY.c_str());
+                m_gt[0] = CPLAtof(sMinX.c_str());
+                m_gt[3] = CPLAtof(sMaxY.c_str());
             }
             else
             {
-                adfGeoTransform[0] = CPLAtof(sMinX.c_str()) - PixelSizeX / 2.0;
-                adfGeoTransform[3] = CPLAtof(sMaxY.c_str()) + PixelSizeY / 2.0;
+                m_gt[0] = CPLAtof(sMinX.c_str()) - PixelSizeX / 2.0;
+                m_gt[3] = CPLAtof(sMaxY.c_str()) + PixelSizeY / 2.0;
             }
 
-            adfGeoTransform[1] = PixelSizeX;
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = -PixelSizeY;
+            m_gt[1] = PixelSizeX;
+            m_gt[2] = 0.0;
+            m_gt[4] = 0.0;
+            m_gt[5] = -PixelSizeY;
         }
     }
 }
@@ -551,19 +545,18 @@ void ILWISDataset::WriteGeoReference()
 {
     // Check whether we should write out a georeference file.
     // Dataset must be north up.
-    if (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-        adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-        adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0)
+    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
+        m_gt[4] != 0.0 || fabs(m_gt[5]) != 1.0)
     {
-        SetGeoTransform(adfGeoTransform);  // is this needed?
-        if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+        SetGeoTransform(m_gt);  // is this needed?
+        if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
         {
             int nXSize = GetRasterXSize();
             int nYSize = GetRasterYSize();
-            double dLLLat = (adfGeoTransform[3] + nYSize * adfGeoTransform[5]);
-            double dLLLong = (adfGeoTransform[0]);
-            double dURLat = (adfGeoTransform[3]);
-            double dURLong = (adfGeoTransform[0] + nXSize * adfGeoTransform[1]);
+            double dLLLat = (m_gt[3] + nYSize * m_gt[5]);
+            double dLLLong = (m_gt[0]);
+            double dURLat = (m_gt[3]);
+            double dURLong = (m_gt[0] + nXSize * m_gt[1]);
 
             std::string grFileName = CPLResetExtensionSafe(osFileName, "grf");
             WriteElement("Ilwis", "Type", grFileName, "GeoRef");
@@ -634,10 +627,10 @@ CPLErr ILWISDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ILWISDataset::GetGeoTransform(double *padfTransform)
+CPLErr ILWISDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -645,12 +638,12 @@ CPLErr ILWISDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ILWISDataset::SetGeoTransform(double *padfTransform)
+CPLErr ILWISDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memmove(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
-    if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+    if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
         bGeoDirty = TRUE;
 
     return CE_None;
@@ -1097,18 +1090,17 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*  Copy and geo-transform and projection information.                  */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     std::string georef = "none.grf";
 
     // Check whether we should create georeference file.
     // Source dataset must be north up.
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-         adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0))
+    if (poSrcDS->GetGeoTransform(gt) == CE_None &&
+        (gt[0] != 0.0 || gt[1] != 1.0 || gt[2] != 0.0 || gt[3] != 0.0 ||
+         gt[4] != 0.0 || fabs(gt[5]) != 1.0))
     {
-        poDS->SetGeoTransform(adfGeoTransform);
-        if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+        poDS->SetGeoTransform(gt);
+        if (gt[2] == 0.0 && gt[4] == 0.0)
             georef = osBaseName + ".grf";
     }
 

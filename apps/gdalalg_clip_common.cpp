@@ -180,8 +180,8 @@ GDALClipCommon::GetClipGeometry()
         }
         else if (poLikeDS->GetRasterCount() > 0)
         {
-            double adfGT[6];
-            if (poLikeDS->GetGeoTransform(adfGT) != CE_None)
+            GDALGeoTransform gt;
+            if (poLikeDS->GetGeoTransform(gt) != CE_None)
             {
                 return {
                     nullptr,
@@ -191,23 +191,21 @@ GDALClipCommon::GetClipGeometry()
                         poLikeDS->GetDescription())};
             }
             auto poLikeSRS = poLikeDS->GetSpatialRef();
-            const double dfTLX = adfGT[0];
-            const double dfTLY = adfGT[3];
+            const double dfTLX = gt[0];
+            const double dfTLY = gt[3];
 
             double dfTRX = 0;
             double dfTRY = 0;
-            GDALApplyGeoTransform(adfGT, poLikeDS->GetRasterXSize(), 0, &dfTRX,
-                                  &dfTRY);
+            gt.Apply(poLikeDS->GetRasterXSize(), 0, &dfTRX, &dfTRY);
 
             double dfBLX = 0;
             double dfBLY = 0;
-            GDALApplyGeoTransform(adfGT, 0, poLikeDS->GetRasterYSize(), &dfBLX,
-                                  &dfBLY);
+            gt.Apply(0, poLikeDS->GetRasterYSize(), &dfBLX, &dfBLY);
 
             double dfBRX = 0;
             double dfBRY = 0;
-            GDALApplyGeoTransform(adfGT, poLikeDS->GetRasterXSize(),
-                                  poLikeDS->GetRasterYSize(), &dfBRX, &dfBRY);
+            gt.Apply(poLikeDS->GetRasterXSize(), poLikeDS->GetRasterYSize(),
+                     &dfBRX, &dfBRY);
 
             auto poPoly = std::make_unique<OGRPolygon>();
             auto poLR = std::make_unique<OGRLinearRing>();

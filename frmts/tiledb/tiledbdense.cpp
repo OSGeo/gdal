@@ -3051,18 +3051,12 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
 
             // Apply georeferencing from main dataset
             poOvrDS->SetSpatialRef(GetSpatialRef());
-            double adfGeoTransform[6];
-            if (GetGeoTransform(adfGeoTransform) == CE_None)
+            GDALGeoTransform gt;
+            if (GetGeoTransform(gt) == CE_None)
             {
-                adfGeoTransform[1] *=
-                    static_cast<double>(nRasterXSize) / nOXSize;
-                adfGeoTransform[2] *=
-                    static_cast<double>(nRasterXSize) / nOXSize;
-                adfGeoTransform[4] *=
-                    static_cast<double>(nRasterYSize) / nOYSize;
-                adfGeoTransform[5] *=
-                    static_cast<double>(nRasterYSize) / nOYSize;
-                poOvrDS->SetGeoTransform(adfGeoTransform);
+                gt.Rescale(static_cast<double>(nRasterXSize) / nOXSize,
+                           static_cast<double>(nRasterYSize) / nOYSize);
+                poOvrDS->SetGeoTransform(gt);
             }
 
             poOvrDS->DeferredCreate(/* bCreateArray = */ true);

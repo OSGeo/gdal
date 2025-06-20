@@ -329,7 +329,7 @@ class PDS4Dataset final : public RawDataset
     GDALDataset *m_poExternalDS = nullptr;  // external dataset (GeoTIFF)
     OGRSpatialReference m_oSRS{};
     bool m_bGotTransform = false;
-    std::array<double, 6> m_adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     CPLString m_osXMLFilename{};
     CPLString m_osImageFilename{};
     CPLString m_osUnits{};
@@ -386,8 +386,8 @@ class PDS4Dataset final : public RawDataset
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     virtual char **GetFileList() override;
     virtual CPLErr SetMetadata(char **papszMD,
                                const char *pszDomain = "") override;

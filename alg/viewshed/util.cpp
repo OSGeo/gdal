@@ -223,20 +223,15 @@ DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,
     /* copy srs */
     dataset->SetSpatialRef(srcBand.GetDataset()->GetSpatialRef());
 
-    std::array<double, 6> adfSrcTransform;
-    std::array<double, 6> adfDstTransform;
-    srcBand.GetDataset()->GetGeoTransform(adfSrcTransform.data());
-    adfDstTransform[0] = adfSrcTransform[0] +
-                         adfSrcTransform[1] * extent.xStart +
-                         adfSrcTransform[2] * extent.yStart;
-    adfDstTransform[1] = adfSrcTransform[1];
-    adfDstTransform[2] = adfSrcTransform[2];
-    adfDstTransform[3] = adfSrcTransform[3] +
-                         adfSrcTransform[4] * extent.xStart +
-                         adfSrcTransform[5] * extent.yStart;
-    adfDstTransform[4] = adfSrcTransform[4];
-    adfDstTransform[5] = adfSrcTransform[5];
-    dataset->SetGeoTransform(adfDstTransform.data());
+    GDALGeoTransform srcGT, dstGT;
+    srcBand.GetDataset()->GetGeoTransform(srcGT);
+    dstGT[0] = srcGT[0] + srcGT[1] * extent.xStart + srcGT[2] * extent.yStart;
+    dstGT[1] = srcGT[1];
+    dstGT[2] = srcGT[2];
+    dstGT[3] = srcGT[3] + srcGT[4] * extent.xStart + srcGT[5] * extent.yStart;
+    dstGT[4] = srcGT[4];
+    dstGT[5] = srcGT[5];
+    dataset->SetGeoTransform(dstGT);
 
     GDALRasterBand *pBand = dataset->GetRasterBand(1);
     if (!pBand)

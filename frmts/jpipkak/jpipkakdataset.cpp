@@ -354,13 +354,6 @@ CPLErr JPIPKAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*****************************************/
 JPIPKAKDataset::JPIPKAKDataset()
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
     pGlobalMutex = CPLCreateMutex();
     CPLReleaseMutex(pGlobalMutex);
 }
@@ -756,8 +749,7 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
             m_oSRS = oJP2Geo.m_oSRS;
             bGeoTransformValid = TRUE;
 
-            memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
-                   sizeof(double) * 6);
+            m_gt = oJP2Geo.m_gt;
             nGCPCount = oJP2Geo.nGCPCount;
             pasGCPList = oJP2Geo.pasGCPList;
 
@@ -1074,17 +1066,17 @@ const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPIPKAKDataset::GetGeoTransform(double *padfTransform)
+CPLErr JPIPKAKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
 
         return CE_None;
     }
     else
-        return GDALPamDataset::GetGeoTransform(padfTransform);
+        return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/

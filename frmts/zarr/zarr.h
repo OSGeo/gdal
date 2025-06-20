@@ -45,7 +45,7 @@ class ZarrDataset final : public GDALDataset
 
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     CPLStringList m_aosSubdatasets{};
-    std::array<double, 6> m_adfGeoTransform{{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
@@ -84,8 +84,8 @@ class ZarrDataset final : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override
     {

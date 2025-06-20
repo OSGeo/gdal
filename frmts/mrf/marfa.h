@@ -415,8 +415,8 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLErr GetGeoTransform(double *gt) override;
-    virtual CPLErr SetGeoTransform(double *gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual char **GetFileList() override;
 
@@ -603,8 +603,8 @@ class MRFDataset final : public GDALPamDataset
         bdirty;  // Holds bits, to be used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
-    double GeoTransform[6];
-    int bGeoTransformValid;
+    GDALGeoTransform m_gt{};
+    mutable int bGeoTransformValid;
 
     // CRS
     OGRSpatialReference m_oSRS{};

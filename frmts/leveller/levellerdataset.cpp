@@ -232,7 +232,7 @@ class LevellerDataset final : public GDALPamDataset
     char m_szElevUnits[8];
     double m_dElevScale;  // physical-to-logical scaling.
     double m_dElevBase;   // logical offset.
-    double m_adfTransform[6];
+    GDALGeoTransform m_gt{};
     // double            m_dMeasurePerPixel;
     double m_dLogSpan[2];
 
@@ -286,9 +286,9 @@ class LevellerDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -612,7 +612,6 @@ LevellerDataset::LevellerDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(m_szElevUnits, 0, sizeof(m_szElevUnits));
-    memset(m_adfTransform, 0, sizeof(m_adfTransform));
     memset(m_dLogSpan, 0, sizeof(m_dLogSpan));
 }
 
@@ -643,8 +642,8 @@ static double average(double a, double b)
 void LevellerDataset::raw_to_proj(double x, double y, double &xp,
                                   double &yp) const
 {
-    xp = x * m_adfTransform[1] + m_adfTransform[0];
-    yp = y * m_adfTransform[5] + m_adfTransform[3];
+    xp = x * m_gt[1] + m_gt[0];
+    yp = y * m_gt[5] + m_gt[3];
 }
 
 bool LevellerDataset::compute_elev_scaling(const OGRSpatialReference &sr)
@@ -655,7 +654,7 @@ bool LevellerDataset::compute_elev_scaling(const OGRSpatialReference &sr)
     {
         // For projected or local CS, the elev scale is
         // the average ground scale.
-        m_dElevScale = average(m_adfTransform[1], m_adfTransform[5]);
+        m_dElevScale = average(m_gt[1], m_gt[5]);
 
         const double dfLinear = sr.GetLinearUnits();
         const measurement_unit *pu = this->get_uom(dfLinear);
@@ -767,7 +766,7 @@ bool LevellerDataset::write_header()
             write_tag("csclass", LEV_COORDSYS_GEO);
         }
 
-        if (m_adfTransform[2] != 0.0 || m_adfTransform[4] != 0.0)
+        if (m_gt[2] != 0.0 || m_gt[4] != 0.0)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Cannot handle rotated geotransform");
@@ -781,14 +780,14 @@ bool LevellerDataset::write_header()
         // Write north-south digital axis.
         write_tag("coordsys_da0_style", LEV_DA_PIXEL_SIZED);
         write_tag("coordsys_da0_fixedend", 0);
-        write_tag("coordsys_da0_v0", m_adfTransform[3]);
-        write_tag("coordsys_da0_v1", m_adfTransform[5]);
+        write_tag("coordsys_da0_v0", m_gt[3]);
+        write_tag("coordsys_da0_v1", m_gt[5]);
 
         // Write east-west digital axis.
         write_tag("coordsys_da1_style", LEV_DA_PIXEL_SIZED);
         write_tag("coordsys_da1_fixedend", 0);
-        write_tag("coordsys_da1_v0", m_adfTransform[0]);
-        write_tag("coordsys_da1_v1", m_adfTransform[1]);
+        write_tag("coordsys_da1_v0", m_gt[0]);
+        write_tag("coordsys_da1_v1", m_gt[1]);
     }
 
     this->write_tag_start("hf_data",
@@ -801,9 +800,9 @@ bool LevellerDataset::write_header()
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LevellerDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr LevellerDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(m_adfTransform, padfGeoTransform, sizeof(m_adfTransform));
+    m_gt = gt;
 
     return CE_None;
 }
@@ -1244,12 +1243,7 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
     }
 
     // Defaults for raster coordsys.
-    m_adfTransform[0] = 0.0;
-    m_adfTransform[1] = 1.0;
-    m_adfTransform[2] = 0.0;
-    m_adfTransform[3] = 0.0;
-    m_adfTransform[4] = 0.0;
-    m_adfTransform[5] = 1.0;
+    m_gt = GDALGeoTransform();
 
     m_dElevScale = 1.0;
     m_dElevBase = 0.0;
@@ -1300,13 +1294,13 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 
             if (axis_ns.get(*this, file, 0) && axis_ew.get(*this, file, 1))
             {
-                m_adfTransform[0] = axis_ew.origin(nRasterXSize);
-                m_adfTransform[1] = axis_ew.scaling(nRasterXSize);
-                m_adfTransform[2] = 0.0;
+                m_gt[0] = axis_ew.origin(nRasterXSize);
+                m_gt[1] = axis_ew.scaling(nRasterXSize);
+                m_gt[2] = 0.0;
 
-                m_adfTransform[3] = axis_ns.origin(nRasterYSize);
-                m_adfTransform[4] = 0.0;
-                m_adfTransform[5] = axis_ns.scaling(nRasterYSize);
+                m_gt[3] = axis_ns.origin(nRasterYSize);
+                m_gt[4] = 0.0;
+                m_gt[5] = axis_ns.scaling(nRasterYSize);
             }
         }
 
@@ -1373,10 +1367,10 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 
             // Our extents are such that the origin is at the
             // center of the heightfield.
-            m_adfTransform[0] = -0.5 * dWorldscale * (nRasterXSize - 1);
-            m_adfTransform[3] = -0.5 * dWorldscale * (nRasterYSize - 1);
-            m_adfTransform[1] = dWorldscale;
-            m_adfTransform[5] = dWorldscale;
+            m_gt[0] = -0.5 * dWorldscale * (nRasterXSize - 1);
+            m_gt[3] = -0.5 * dWorldscale * (nRasterYSize - 1);
+            m_gt[1] = dWorldscale;
+            m_gt[5] = dWorldscale;
         }
         m_dElevScale = dWorldscale;  // this was 1.0 before because
         // we were converting to real elevs ourselves, but
@@ -1407,10 +1401,10 @@ const OGRSpatialReference *LevellerDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LevellerDataset::GetGeoTransform(double *padfTransform)
+CPLErr LevellerDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, m_adfTransform, sizeof(m_adfTransform));
+    gt = m_gt;
     return CE_None;
 }
 

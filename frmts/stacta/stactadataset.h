@@ -19,7 +19,6 @@
 #include "memdataset.h"
 #include "tilematrixset.hpp"
 
-#include <array>
 #include <map>
 #include <memory>
 #include <vector>
@@ -48,7 +47,7 @@ class STACTADataset final : public GDALPamDataset
     friend class STACTARawDataset;
     friend class STACTARawRasterBand;
 
-    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
     std::unique_ptr<GDALDataset> m_poDS{};
     // Array of overview datasets, that are guaranteed to have the same
@@ -73,7 +72,7 @@ class STACTADataset final : public GDALPamDataset
     ~STACTADataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount,
@@ -154,7 +153,7 @@ class STACTARawDataset final : public GDALDataset
     int m_nMetaTileHeight = 0;
     STACTADataset *m_poMasterDS = nullptr;
 
-    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
   public:
@@ -171,7 +170,7 @@ class STACTARawDataset final : public GDALDataset
         return &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount,

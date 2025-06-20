@@ -144,7 +144,7 @@ class WMTSDataset final : public GDALPamDataset
 
     std::vector<GDALDataset *> apoDatasets{};
     OGRSpatialReference m_oSRS{};
-    std::array<double, 6> adfGT = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
 
     CPLString osLastGetFeatureInfoURL{};
     CPLString osMetadataItemGetFeatureInfo{};
@@ -169,7 +169,7 @@ class WMTSDataset final : public GDALPamDataset
     WMTSDataset();
     virtual ~WMTSDataset();
 
-    virtual CPLErr GetGeoTransform(double *padfGT) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain) override;
@@ -357,9 +357,9 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
         const WMTSTileMatrix &oTM = poGDS->oTMS.aoTM.back();
 
         iPixel += static_cast<int>(
-            std::round((poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize));
+            std::round((poGDS->m_gt[0] - oTM.dfTLX) / oTM.dfPixelSize));
         iLine += static_cast<int>(
-            std::round((oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize));
+            std::round((oTM.dfTLY - poGDS->m_gt[3]) / oTM.dfPixelSize));
 
         CPLString osURL(poGDS->osURLFeatureInfoTemplate);
         osURL = WMTSDataset::Replace(osURL, "{TileMatrixSet}", poGDS->osTMS);
@@ -496,9 +496,9 @@ CPLErr WMTSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr WMTSDataset::GetGeoTransform(double *padfGT)
+CPLErr WMTSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGT, adfGT.data(), 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -2198,28 +2198,28 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 // Align AOI on pixel boundaries with respect to TopLeftCorner
                 // of this tile matrix
-                poDS->adfGT[0] =
+                poDS->m_gt[0] =
                     oTM.dfTLX +
                     floor((sAOI.MinX - oTM.dfTLX) / oTM.dfPixelSize + 1e-10) *
                         oTM.dfPixelSize;
-                poDS->adfGT[1] = oTM.dfPixelSize;
-                poDS->adfGT[2] = 0.0;
-                poDS->adfGT[3] =
+                poDS->m_gt[1] = oTM.dfPixelSize;
+                poDS->m_gt[2] = 0.0;
+                poDS->m_gt[3] =
                     oTM.dfTLY +
                     ceil((sAOI.MaxY - oTM.dfTLY) / oTM.dfPixelSize - 1e-10) *
                         oTM.dfPixelSize;
-                poDS->adfGT[4] = 0.0;
-                poDS->adfGT[5] = -oTM.dfPixelSize;
+                poDS->m_gt[4] = 0.0;
+                poDS->m_gt[5] = -oTM.dfPixelSize;
                 poDS->nRasterXSize =
-                    int(0.5 + (sAOI.MaxX - poDS->adfGT[0]) / oTM.dfPixelSize);
+                    int(0.5 + (sAOI.MaxX - poDS->m_gt[0]) / oTM.dfPixelSize);
                 poDS->nRasterYSize =
-                    int(0.5 + (poDS->adfGT[3] - sAOI.MinY) / oTM.dfPixelSize);
+                    int(0.5 + (poDS->m_gt[3] - sAOI.MinY) / oTM.dfPixelSize);
             }
 
-            const int nRasterXSize = int(
-                0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
-            const int nRasterYSize = int(
-                0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
+            const int nRasterXSize =
+                int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->m_gt[1]);
+            const int nRasterYSize =
+                int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->m_gt[1]);
             if (!poDS->apoDatasets.empty() &&
                 (nRasterXSize < 128 || nRasterYSize < 128))
             {
@@ -2242,12 +2242,12 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             }
 
             // Compute the shift in terms of tiles between AOI and TM origin
-            const int nTileX = static_cast<int>(
-                floor(std::max(sTMExtent.MinX, poDS->adfGT[0]) - oTM.dfTLX +
-                      1e-10) /
-                dfTileWidthUnits);
+            const int nTileX =
+                static_cast<int>(floor(std::max(sTMExtent.MinX, poDS->m_gt[0]) -
+                                       oTM.dfTLX + 1e-10) /
+                                 dfTileWidthUnits);
             const int nTileY = static_cast<int>(
-                floor(oTM.dfTLY - std::min(poDS->adfGT[3], sTMExtent.MaxY) +
+                floor(oTM.dfTLY - std::min(poDS->m_gt[3], sTMExtent.MaxY) +
                       1e-10) /
                 dfTileHeightUnits);
 
@@ -2255,8 +2255,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             // and aligned on tile boundaries at this TM
             double dfULX = oTM.dfTLX + nTileX * dfTileWidthUnits;
             double dfULY = oTM.dfTLY - nTileY * dfTileHeightUnits;
-            double dfLRX = poDS->adfGT[0] + poDS->nRasterXSize * poDS->adfGT[1];
-            double dfLRY = poDS->adfGT[3] + poDS->nRasterYSize * poDS->adfGT[5];
+            double dfLRX = poDS->m_gt[0] + poDS->nRasterXSize * poDS->m_gt[1];
+            double dfLRY = poDS->m_gt[3] + poDS->nRasterYSize * poDS->m_gt[5];
             dfLRX = dfULX + ceil((dfLRX - dfULX) / dfTileWidthUnits - 1e-10) *
                                 dfTileWidthUnits;
             dfLRY = dfULY + floor((dfLRY - dfULY) / dfTileHeightUnits + 1e-10) *
@@ -2354,11 +2354,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
             nSrcXOff = 0;
             nDstXOff = static_cast<int>(
-                std::round((dfULX - poDS->adfGT[0]) / oTM.dfPixelSize));
+                std::round((dfULX - poDS->m_gt[0]) / oTM.dfPixelSize));
 
             nSrcYOff = 0;
             nDstYOff = static_cast<int>(
-                std::round((poDS->adfGT[3] - dfULY) / oTM.dfPixelSize));
+                std::round((poDS->m_gt[3] - dfULY) / oTM.dfPixelSize));
 
             if (bExtendBeyondDateLine)
             {
@@ -2366,7 +2366,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
                 nSrcXOff2 = 0;
                 nDstXOff2 = static_cast<int>(std::round(
-                    (dfDateLineX - poDS->adfGT[0]) / oTM.dfPixelSize));
+                    (dfDateLineX - poDS->m_gt[0]) / oTM.dfPixelSize));
 
                 osStr = CPLSPrintf(
                     WMS_TMS_TEMPLATE, WMTSEscapeXML(osURL).c_str(),
@@ -2457,15 +2457,15 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                            "</InfoFormat>\n";
         poDS->osXML += "  <DataWindow>\n";
         poDS->osXML +=
-            CPLSPrintf("    <UpperLeftX>%.16g</UpperLeftX>\n", poDS->adfGT[0]);
+            CPLSPrintf("    <UpperLeftX>%.16g</UpperLeftX>\n", poDS->m_gt[0]);
         poDS->osXML +=
-            CPLSPrintf("    <UpperLeftY>%.16g</UpperLeftY>\n", poDS->adfGT[3]);
+            CPLSPrintf("    <UpperLeftY>%.16g</UpperLeftY>\n", poDS->m_gt[3]);
         poDS->osXML +=
             CPLSPrintf("    <LowerRightX>%.16g</LowerRightX>\n",
-                       poDS->adfGT[0] + poDS->adfGT[1] * poDS->nRasterXSize);
+                       poDS->m_gt[0] + poDS->m_gt[1] * poDS->nRasterXSize);
         poDS->osXML +=
             CPLSPrintf("    <LowerRightY>%.16g</LowerRightY>\n",
-                       poDS->adfGT[3] + poDS->adfGT[5] * poDS->nRasterYSize);
+                       poDS->m_gt[3] + poDS->m_gt[5] * poDS->nRasterYSize);
         poDS->osXML += "  </DataWindow>\n";
         if (bExtendBeyondDateLine)
             poDS->osXML +=

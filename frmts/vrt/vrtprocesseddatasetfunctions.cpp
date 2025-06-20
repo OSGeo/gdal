@@ -844,8 +844,8 @@ LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
                     nullptr, nullptr, nullptr));
                 if (!poDS)
                     return CE_Failure;
-                double adfAuxGT[6];
-                if (poDS->GetGeoTransform(adfAuxGT) != CE_None)
+                GDALGeoTransform auxGT;
+                if (poDS->GetGeoTransform(auxGT) != CE_None)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "%s lacks a geotransform", osFilename.c_str());
@@ -919,21 +919,20 @@ static bool LoadAuxData(double dfULX, double dfULY, double dfLRX, double dfLRY,
                         const char *pszAuxType, GDALRasterBand *poAuxBand,
                         std::vector<VRTProcessedDataset::NoInitByte> &abyBuffer)
 {
-    double adfAuxGT[6];
-    double adfAuxInvGT[6];
+    GDALGeoTransform auxGT, auxInvGT;
 
     // Compute pixel/line coordinates from the georeferenced extent
     CPL_IGNORE_RET_VAL(poAuxBand->GetDataset()->GetGeoTransform(
-        adfAuxGT));  // return code already tested
-    CPL_IGNORE_RET_VAL(GDALInvGeoTransform(adfAuxGT, adfAuxInvGT));
+        auxGT));  // return code already tested
+    CPL_IGNORE_RET_VAL(auxGT.GetInverse(auxInvGT));
     const double dfULPixel =
-        adfAuxInvGT[0] + adfAuxInvGT[1] * dfULX + adfAuxInvGT[2] * dfULY;
+        auxInvGT[0] + auxInvGT[1] * dfULX + auxInvGT[2] * dfULY;
     const double dfULLine =
-        adfAuxInvGT[3] + adfAuxInvGT[4] * dfULX + adfAuxInvGT[5] * dfULY;
+        auxInvGT[3] + auxInvGT[4] * dfULX + auxInvGT[5] * dfULY;
     const double dfLRPixel =
-        adfAuxInvGT[0] + adfAuxInvGT[1] * dfLRX + adfAuxInvGT[2] * dfLRY;
+        auxInvGT[0] + auxInvGT[1] * dfLRX + auxInvGT[2] * dfLRY;
     const double dfLRLine =
-        adfAuxInvGT[3] + adfAuxInvGT[4] * dfLRX + adfAuxInvGT[5] * dfLRY;
+        auxInvGT[3] + auxInvGT[4] * dfLRX + auxInvGT[5] * dfLRY;
     if (dfULPixel >= dfLRPixel || dfULLine >= dfLRLine)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1273,8 +1272,8 @@ static CPLErr TrimmingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     }
     data->m_poTrimmingBand = data->m_poTrimmingDS->GetRasterBand(1);
 
-    double adfAuxGT[6];
-    if (data->m_poTrimmingDS->GetGeoTransform(adfAuxGT) != CE_None)
+    GDALGeoTransform auxGT;
+    if (data->m_poTrimmingDS->GetGeoTransform(auxGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s lacks a geotransform",
                  osFilename.c_str());

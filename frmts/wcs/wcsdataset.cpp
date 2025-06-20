@@ -40,12 +40,6 @@ WCSDataset::WCSDataset(int version, const char *cache_dir)
       papszHttpOptions(nullptr), nMaxCols(-1), nMaxRows(-1)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 
     apszCoverageOfferingMD[0] = nullptr;
     apszCoverageOfferingMD[1] = nullptr;
@@ -112,19 +106,19 @@ void WCSDataset::SetGeometry(const std::vector<int> &size,
     nRasterXSize = size[0];
     nRasterYSize = size[1];
 
-    adfGeoTransform[0] = origin[0];
-    adfGeoTransform[1] = offsets[0][0];
-    adfGeoTransform[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
-    adfGeoTransform[3] = origin[1];
-    adfGeoTransform[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
-    adfGeoTransform[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
+    m_gt[0] = origin[0];
+    m_gt[1] = offsets[0][0];
+    m_gt[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
+    m_gt[3] = origin[1];
+    m_gt[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
+    m_gt[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
 
     if (!CPLGetXMLBoolean(psService, "OriginAtBoundary"))
     {
-        adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
-        adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
-        adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
-        adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+        m_gt[0] -= m_gt[1] * 0.5;
+        m_gt[0] -= m_gt[2] * 0.5;
+        m_gt[3] -= m_gt[4] * 0.5;
+        m_gt[3] -= m_gt[5] * 0.5;
     }
 }
 
@@ -1608,10 +1602,10 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr WCSDataset::GetGeoTransform(double *padfTransform)
+CPLErr WCSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

@@ -1758,9 +1758,8 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
 
     const bool bWriteGeoJP2 = CPLFetchBool(papszOptions, "WRITE_GEOJP2", true);
-    double adfGeoTransform[6];
-    const bool bHasGeoTransform =
-        poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
+    GDALGeoTransform gt;
+    const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
     const int nGCPCount = poSrcDS->GetGCPCount();
     char **papszRPCMD = poSrcDS->GetMetadata("RPC");
@@ -1772,7 +1771,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         if (poSRS)
             oJP2Metadata.SetSpatialRef(poSRS);
         if (bHasGeoTransform)
-            oJP2Metadata.SetGeoTransform(adfGeoTransform);
+            oJP2Metadata.SetGeoTransform(gt);
         if (nGCPCount)
         {
             const OGRSpatialReference *poSRSGCP = poSrcDS->GetGCPSpatialRef();

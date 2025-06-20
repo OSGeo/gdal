@@ -205,11 +205,11 @@ namespace viewshed
 namespace
 {
 
-bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
-                   double *pRevTransform)
+bool getTransforms(GDALRasterBand &band, GDALGeoTransform &fwdTransform,
+                   GDALGeoTransform &revTransform)
 {
-    band.GetDataset()->GetGeoTransform(pFwdTransform);
-    if (!GDALInvGeoTransform(pFwdTransform, pRevTransform))
+    band.GetDataset()->GetGeoTransform(fwdTransform);
+    if (!fwdTransform.GetInverse(revTransform))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return false;
@@ -290,8 +290,7 @@ Viewshed::~Viewshed() = default;
 /// save the input raster extent.
 ///
 /// @return  false on error, true otherwise
-bool Viewshed::calcExtents(int nX, int nY,
-                           const std::array<double, 6> &adfInvTransform)
+bool Viewshed::calcExtents(int nX, int nY, const GDALGeoTransform &invGT)
 {
     // We start with the assumption that the output size matches the input.
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
@@ -317,23 +316,20 @@ bool Viewshed::calcExtents(int nX, int nY,
         //  Find the distance in the direction of the transformed unit vector in the X and Y
         //  directions and use those factors to determine the limiting values in the raster space.
         int nXStart = static_cast<int>(
-            std::floor(nX - adfInvTransform[1] * oOpts.maxDistance + EPSILON));
+            std::floor(nX - invGT[1] * oOpts.maxDistance + EPSILON));
         int nXStop = static_cast<int>(
-            std::ceil(nX + adfInvTransform[1] * oOpts.maxDistance - EPSILON) +
-            1);
+            std::ceil(nX + invGT[1] * oOpts.maxDistance - EPSILON) + 1);
         //ABELL - These seem to be wrong. The transform of 1 is no transform, so not
         //  sure why we're adding one in the first case. Really, the transformed distance
         // should add EPSILON. Not sure what the change should be for a negative transform,
         // which is what I think is being handled with the 1/0 addition/subtraction.
         int nYStart =
             static_cast<int>(std::floor(
-                nY - std::fabs(adfInvTransform[5]) * oOpts.maxDistance +
-                EPSILON)) -
-            (adfInvTransform[5] > 0 ? 1 : 0);
+                nY - std::fabs(invGT[5]) * oOpts.maxDistance + EPSILON)) -
+            (invGT[5] > 0 ? 1 : 0);
         int nYStop = static_cast<int>(
-            std::ceil(nY + std::fabs(adfInvTransform[5]) * oOpts.maxDistance -
-                      EPSILON) +
-            (adfInvTransform[5] < 0 ? 1 : 0));
+            std::ceil(nY + std::fabs(invGT[5]) * oOpts.maxDistance - EPSILON) +
+            (invGT[5] < 0 ? 1 : 0));
 
         // If the limits are invalid, set the window size to zero to trigger the error below.
         if (nXStart >= oOutExtent.xStop || nXStop < 0 ||
@@ -379,16 +375,13 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 {
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
-    std::array<double, 6> adfFwdTransform;
-    std::array<double, 6> adfInvTransform;
-    if (!getTransforms(*pSrcBand, adfFwdTransform.data(),
-                       adfInvTransform.data()))
+    GDALGeoTransform fwdTransform, invTransform;
+    if (!getTransforms(*pSrcBand, fwdTransform, invTransform))
         return false;
 
     // calculate observer position
     double dfX, dfY;
-    GDALApplyGeoTransform(adfInvTransform.data(), oOpts.observer.x,
-                          oOpts.observer.y, &dfX, &dfY);
+    invTransform.Apply(oOpts.observer.x, oOpts.observer.y, &dfX, &dfY);
     if (!GDALIsValueInRange<int>(dfX))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Observer X value out of range");
@@ -438,7 +431,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     oOpts.endAngle = normalizeAngle(oOpts.endAngle);
 
     // Must calculate extents in order to make the output dataset.
-    if (!calcExtents(nX, nY, adfInvTransform))
+    if (!calcExtents(nX, nY, invTransform))
         return false;
 
     poDstDS = createOutputDataset(*pSrcBand, oOpts, oOutExtent);

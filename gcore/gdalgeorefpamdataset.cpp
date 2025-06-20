@@ -32,12 +32,6 @@ GDALGeorefPamDataset::GDALGeorefPamDataset()
       m_nPixelIsPointGeorefSrcIndex(-1), m_bGotPAMGeorefSrcIndex(false),
       m_nPAMGeorefSrcIndex(0), m_bPAMLoaded(false), m_papszMainMD(nullptr)
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -277,7 +271,7 @@ const OGRSpatialReference *GDALGeorefPamDataset::GetSpatialRef() const
 /*      inside our file, unless GDAL_GEOREF_SOURCES is defined.         */
 /************************************************************************/
 
-CPLErr GDALGeorefPamDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALGeorefPamDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     const int nPAMIndex = GetPAMGeorefSrcIndex();
@@ -285,7 +279,7 @@ CPLErr GDALGeorefPamDataset::GetGeoTransform(double *padfTransform)
         ((bGeoTransformValid && nPAMIndex <= m_nGeoTransformGeorefSrcIndex) ||
          m_nGeoTransformGeorefSrcIndex < 0 || !bGeoTransformValid))
     {
-        if (GDALPamDataset::GetGeoTransform(padfTransform) == CE_None)
+        if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
         {
             m_nGeoTransformGeorefSrcIndex = nPAMIndex;
             return CE_None;
@@ -294,7 +288,7 @@ CPLErr GDALGeorefPamDataset::GetGeoTransform(double *padfTransform)
 
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return (CE_None);
     }
 

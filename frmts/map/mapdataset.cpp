@@ -29,7 +29,7 @@ class MAPDataset final : public GDALDataset
 
     OGRSpatialReference m_oSRS{};
     int bGeoTransformValid{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int nGCPCount{};
     GDAL_GCP *pasGCPList{};
     OGRPolygon *poNeatLine{};
@@ -42,7 +42,7 @@ class MAPDataset final : public GDALDataset
     virtual ~MAPDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
@@ -99,12 +99,6 @@ MAPDataset::MAPDataset()
       pasGCPList(nullptr), poNeatLine(nullptr)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -197,8 +191,8 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     char *pszWKT = nullptr;
     bool bOziFileOK = CPL_TO_BOOL(
-        GDALLoadOziMapFile(poOpenInfo->pszFilename, poDS->adfGeoTransform,
-                           &pszWKT, &poDS->nGCPCount, &poDS->pasGCPList));
+        GDALLoadOziMapFile(poOpenInfo->pszFilename, poDS->m_gt.data(), &pszWKT,
+                           &poDS->nGCPCount, &poDS->pasGCPList));
     if (pszWKT)
     {
         poDS->m_oSRS.importFromWkt(pszWKT);
@@ -339,12 +333,10 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     const double x = CPLAtofM(papszTok[2]);
                     const double y = CPLAtofM(papszTok[3]);
-                    const double X = poDS->adfGeoTransform[0] +
-                                     x * poDS->adfGeoTransform[1] +
-                                     y * poDS->adfGeoTransform[2];
-                    const double Y = poDS->adfGeoTransform[3] +
-                                     x * poDS->adfGeoTransform[4] +
-                                     y * poDS->adfGeoTransform[5];
+                    const double X =
+                        poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
+                    const double Y =
+                        poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
                     poRing->addPoint(X, Y);
                     CPLDebug("CORNER MMPXY", "%f, %f, %f, %f", x, y, X, Y);
                     CSLDestroy(papszTok);
@@ -425,10 +417,10 @@ const OGRSpatialReference *MAPDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MAPDataset::GetGeoTransform(double *padfTransform)
+CPLErr MAPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
+    gt = m_gt;
 
     return (nGCPCount == 0) ? CE_None : CE_Failure;
 }

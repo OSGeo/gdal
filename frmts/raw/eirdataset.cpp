@@ -30,7 +30,7 @@ class EIRDataset final : public RawDataset
 
     VSILFILE *fpImage = nullptr;  // image data file
     bool bGotTransform = false;
-    double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+    GDALGeoTransform m_gt{};
     bool bHDRDirty = false;
     CPLStringList aosHDR{};
     char **papszExtraFiles = nullptr;
@@ -48,7 +48,7 @@ class EIRDataset final : public RawDataset
     EIRDataset();
     ~EIRDataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetFileList() override;
 
@@ -185,16 +185,16 @@ void EIRDataset::ResetKeyValue(const char *pszKey, const char *pszValue)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr EIRDataset::GetGeoTransform(double *padfTransform)
+CPLErr EIRDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -533,11 +533,11 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, nullptr, poDS->adfGeoTransform));
+            poOpenInfo->pszFilename, nullptr, poDS->m_gt.data()));
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, "wld", poDS->adfGeoTransform));
+            poOpenInfo->pszFilename, "wld", poDS->m_gt.data()));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

@@ -25,36 +25,22 @@
 
 class GSCDataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // image data file.
+    VSILFILE *fpImage = nullptr;  // image data file.
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     CPL_DISALLOW_COPY_ASSIGN(GSCDataset)
 
     CPLErr Close() override;
 
   public:
-    GSCDataset();
+    GSCDataset() = default;
     ~GSCDataset();
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
-
-/************************************************************************/
-/*                            GSCDataset()                             */
-/************************************************************************/
-
-GSCDataset::GSCDataset() : fpImage(nullptr)
-{
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-}
 
 /************************************************************************/
 /*                            ~GSCDataset()                             */
@@ -97,10 +83,10 @@ CPLErr GSCDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GSCDataset::GetGeoTransform(double *padfTransform)
+CPLErr GSCDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     return CE_None;
 }
@@ -178,12 +164,12 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
         CPL_LSBPTR32(afHeaderInfo + i);
     }
 
-    poDS->adfGeoTransform[0] = afHeaderInfo[2];
-    poDS->adfGeoTransform[1] = afHeaderInfo[0];
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = afHeaderInfo[5];
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -afHeaderInfo[1];
+    poDS->m_gt[0] = afHeaderInfo[2];
+    poDS->m_gt[1] = afHeaderInfo[0];
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = afHeaderInfo[5];
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -afHeaderInfo[1];
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */

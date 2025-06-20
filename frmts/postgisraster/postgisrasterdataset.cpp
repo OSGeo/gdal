@@ -106,26 +106,26 @@ PostGISRasterDataset::PostGISRasterDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
+    m_gt[GEOTRSFRM_TOPLEFT_X] = 0.0;
+    m_gt[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
+    m_gt[GEOTRSFRM_TOPLEFT_Y] = 0.0;
+    m_gt[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
     // coverity[tainted_data]
-    adfGeoTransform[GEOTRSFRM_WE_RES] =
+    m_gt[GEOTRSFRM_WE_RES] =
         CPLAtof(CPLGetConfigOption("PR_WE_RES", NO_VALID_RES));
     // coverity[tainted_data]
-    adfGeoTransform[GEOTRSFRM_NS_RES] =
+    m_gt[GEOTRSFRM_NS_RES] =
         CPLAtof(CPLGetConfigOption("PR_NS_RES", NO_VALID_RES));
 
     const char *pszTmp = nullptr;
     // We ignore this option if we provided the desired resolution
-    if (CPLIsEqual(adfGeoTransform[GEOTRSFRM_WE_RES], CPLAtof(NO_VALID_RES)) ||
-        CPLIsEqual(adfGeoTransform[GEOTRSFRM_NS_RES], CPLAtof(NO_VALID_RES)))
+    if (CPLIsEqual(m_gt[GEOTRSFRM_WE_RES], CPLAtof(NO_VALID_RES)) ||
+        CPLIsEqual(m_gt[GEOTRSFRM_NS_RES], CPLAtof(NO_VALID_RES)))
     {
 
         // Resolution didn't have a valid value, so, we initiate it
-        adfGeoTransform[GEOTRSFRM_WE_RES] = 0.0;
-        adfGeoTransform[GEOTRSFRM_NS_RES] = 0.0;
+        m_gt[GEOTRSFRM_WE_RES] = 0.0;
+        m_gt[GEOTRSFRM_NS_RES] = 0.0;
 
         pszTmp = CPLGetConfigOption("PR_RESOLUTION_STRATEGY", "AVERAGE_APPROX");
 
@@ -753,28 +753,26 @@ void PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
                                      int *pnDstXOff, int *pnDstYOff,
                                      int *pnDstXSize, int *pnDstYSize)
 {
-    double we_res = this->adfGeoTransform[GEOTRSFRM_WE_RES];
-    double ns_res = this->adfGeoTransform[GEOTRSFRM_NS_RES];
+    double we_res = this->m_gt[GEOTRSFRM_WE_RES];
+    double ns_res = this->m_gt[GEOTRSFRM_NS_RES];
 
-    double adfTileGeoTransform[6];
-    psDP->GetGeoTransform(adfTileGeoTransform);
+    GDALGeoTransform tileGT;
+    psDP->GetGeoTransform(tileGT);
 
-    *pnDstXOff = static_cast<int>(
-        0.5 + (adfTileGeoTransform[GEOTRSFRM_TOPLEFT_X] - xmin) / we_res);
+    *pnDstXOff =
+        static_cast<int>(0.5 + (tileGT[GEOTRSFRM_TOPLEFT_X] - xmin) / we_res);
 
     if (ns_res < 0)
         *pnDstYOff = static_cast<int>(
-            0.5 + (ymax - adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+            0.5 + (ymax - tileGT[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     else
         *pnDstYOff = static_cast<int>(
-            0.5 + (adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y] - ymin) / ns_res);
+            0.5 + (tileGT[GEOTRSFRM_TOPLEFT_Y] - ymin) / ns_res);
 
-    *pnDstXSize = static_cast<int>(
-        0.5 + psDP->GetRasterXSize() * adfTileGeoTransform[GEOTRSFRM_WE_RES] /
-                  we_res);
-    *pnDstYSize = static_cast<int>(
-        0.5 + psDP->GetRasterYSize() * adfTileGeoTransform[GEOTRSFRM_NS_RES] /
-                  ns_res);
+    *pnDstXSize = static_cast<int>(0.5 + psDP->GetRasterXSize() *
+                                             tileGT[GEOTRSFRM_WE_RES] / we_res);
+    *pnDstYSize = static_cast<int>(0.5 + psDP->GetRasterYSize() *
+                                             tileGT[GEOTRSFRM_NS_RES] / ns_res);
 }
 
 /***********************************************************************
@@ -841,10 +839,8 @@ PostGISRasterDataset::GetMatchingSourceRef(double dfUpperLeftX,
     {
         poRTDS = papoSourcesHolders[i];
 
-        if (CPLIsEqual(poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_X],
-                       dfUpperLeftX) &&
-            CPLIsEqual(poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y],
-                       dfUpperLeftY))
+        if (CPLIsEqual(poRTDS->m_gt[GEOTRSFRM_TOPLEFT_X], dfUpperLeftX) &&
+            CPLIsEqual(poRTDS->m_gt[GEOTRSFRM_TOPLEFT_Y], dfUpperLeftY))
         {
 
             return poRTDS;
@@ -1088,16 +1084,16 @@ bool PostGISRasterDataset::LoadOutdbRaster(int &nCurOffset, GDALDataType eDT,
                  nOutdbBandNumber, osPath.c_str());
         return false;
     }
-    double adfGT[6];
-    poDS->GetGeoTransform(adfGT);
+    GDALGeoTransform gt;
+    poDS->GetGeoTransform(gt);
     int nXOff =
-        static_cast<int>(std::round((dfTileUpperLeftX - adfGT[0]) / adfGT[1]));
+        static_cast<int>(std::round((dfTileUpperLeftX - gt[0]) / gt[1]));
     int nYOff =
-        static_cast<int>(std::round((dfTileUpperLeftY - adfGT[3]) / adfGT[5]));
+        static_cast<int>(std::round((dfTileUpperLeftY - gt[3]) / gt[5]));
     int nXOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftX + nTileXSize * dfTileResX - adfGT[0]) / adfGT[1]));
+        (dfTileUpperLeftX + nTileXSize * dfTileResX - gt[0]) / gt[1]));
     int nYOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftY + nTileYSize * dfTileResY - adfGT[3]) / adfGT[5]));
+        (dfTileUpperLeftY + nTileYSize * dfTileResY - gt[3]) / gt[5]));
     int nSrcXSize = nXOff2 - nXOff;
     int nSrcYSize = nYOff2 - nYOff;
     if (nXOff < 0 || nYOff < 0 || nXOff2 > poDS->GetRasterXSize() ||
@@ -1665,35 +1661,35 @@ static void GetTileBoundingBox(const void *hFeature, CPLRectObj *pBounds)
     PostGISRasterTileDataset *poRTD = const_cast<PostGISRasterTileDataset *>(
         reinterpret_cast<const PostGISRasterTileDataset *>(hFeature));
 
-    double adfTileGeoTransform[6];
-    poRTD->GetGeoTransform(adfTileGeoTransform);
+    GDALGeoTransform tileGT;
+    poRTD->GetGeoTransform(tileGT);
 
     int nTileWidth = poRTD->GetRasterXSize();
     int nTileHeight = poRTD->GetRasterYSize();
 
-    pBounds->minx = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    pBounds->maxx = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_X] +
-                    nTileWidth * adfTileGeoTransform[GEOTRSFRM_WE_RES];
+    pBounds->minx = tileGT[GEOTRSFRM_TOPLEFT_X];
+    pBounds->maxx =
+        tileGT[GEOTRSFRM_TOPLEFT_X] + nTileWidth * tileGT[GEOTRSFRM_WE_RES];
 
-    if (adfTileGeoTransform[GEOTRSFRM_NS_RES] >= 0.0)
+    if (tileGT[GEOTRSFRM_NS_RES] >= 0.0)
     {
-        pBounds->miny = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-        pBounds->maxy = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                        nTileHeight * adfTileGeoTransform[GEOTRSFRM_NS_RES];
+        pBounds->miny = tileGT[GEOTRSFRM_TOPLEFT_Y];
+        pBounds->maxy = tileGT[GEOTRSFRM_TOPLEFT_Y] +
+                        nTileHeight * tileGT[GEOTRSFRM_NS_RES];
     }
     else
     {
-        pBounds->maxy = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-        pBounds->miny = adfTileGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                        nTileHeight * adfTileGeoTransform[GEOTRSFRM_NS_RES];
+        pBounds->maxy = tileGT[GEOTRSFRM_TOPLEFT_Y];
+        pBounds->miny = tileGT[GEOTRSFRM_TOPLEFT_Y] +
+                        nTileHeight * tileGT[GEOTRSFRM_NS_RES];
     }
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
              "TileBoundingBox minx=%f miny=%f maxx=%f maxy=%f "
-             "adfTileGeoTransform[GEOTRSFRM_NS_RES]=%f",
+             "tileGT[GEOTRSFRM_NS_RES]=%f",
              pBounds->minx, pBounds->miny, pBounds->maxx, pBounds->maxy,
-             adfTileGeoTransform[GEOTRSFRM_NS_RES]);
+             tileGT[GEOTRSFRM_NS_RES]);
 #endif
 
     return;
@@ -1774,17 +1770,13 @@ PostGISRasterTileDataset *PostGISRasterDataset::BuildRasterTileDataset(
         poRTDS->pszPKID = CPLStrdup(pszPKID);
     }
 
-    poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] =
-        CPLAtof(papszParams[POS_UPPERLEFTX]);
+    poRTDS->m_gt[GEOTRSFRM_TOPLEFT_X] = CPLAtof(papszParams[POS_UPPERLEFTX]);
 
-    poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] =
-        CPLAtof(papszParams[POS_UPPERLEFTY]);
+    poRTDS->m_gt[GEOTRSFRM_TOPLEFT_Y] = CPLAtof(papszParams[POS_UPPERLEFTY]);
 
-    poRTDS->adfGeoTransform[GEOTRSFRM_WE_RES] =
-        CPLAtof(papszParams[POS_SCALEX]);
+    poRTDS->m_gt[GEOTRSFRM_WE_RES] = CPLAtof(papszParams[POS_SCALEX]);
 
-    poRTDS->adfGeoTransform[GEOTRSFRM_NS_RES] =
-        CPLAtof(papszParams[POS_SCALEY]);
+    poRTDS->m_gt[GEOTRSFRM_NS_RES] = CPLAtof(papszParams[POS_SCALEY]);
 
     for (int j = 0; j < nTileBands; j++)
     {
@@ -1805,7 +1797,7 @@ PostGISRasterTileDataset *PostGISRasterDataset::BuildRasterTileDataset(
 
 /********************************************************
  * \brief Updates components GEOTRSFRM_WE_RES and GEOTRSFRM_NS_RES
- *        of dataset adfGeoTransform
+ *        of dataset m_gt
  ********************************************************/
 void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
     double tilePixelSizeX, double tilePixelSizeY)
@@ -1814,14 +1806,14 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
     if (resolutionStrategy == AVERAGE_RESOLUTION ||
         resolutionStrategy == AVERAGE_APPROX_RESOLUTION)
     {
-        adfGeoTransform[GEOTRSFRM_WE_RES] += tilePixelSizeX;
-        adfGeoTransform[GEOTRSFRM_NS_RES] += tilePixelSizeY;
+        m_gt[GEOTRSFRM_WE_RES] += tilePixelSizeX;
+        m_gt[GEOTRSFRM_NS_RES] += tilePixelSizeY;
     }
 
     else if (resolutionStrategy == HIGHEST_RESOLUTION)
     {
-        adfGeoTransform[GEOTRSFRM_WE_RES] =
-            std::min(adfGeoTransform[GEOTRSFRM_WE_RES], tilePixelSizeX);
+        m_gt[GEOTRSFRM_WE_RES] =
+            std::min(m_gt[GEOTRSFRM_WE_RES], tilePixelSizeX);
 
         /**
          * Yes : as ns_res is negative, the highest resolution
@@ -1837,24 +1829,24 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
          * negative.
          **/
         if (tilePixelSizeY < 0.0)
-            adfGeoTransform[GEOTRSFRM_NS_RES] =
-                std::max(adfGeoTransform[GEOTRSFRM_NS_RES], tilePixelSizeY);
+            m_gt[GEOTRSFRM_NS_RES] =
+                std::max(m_gt[GEOTRSFRM_NS_RES], tilePixelSizeY);
         else
-            adfGeoTransform[GEOTRSFRM_NS_RES] =
-                std::min(adfGeoTransform[GEOTRSFRM_NS_RES], tilePixelSizeY);
+            m_gt[GEOTRSFRM_NS_RES] =
+                std::min(m_gt[GEOTRSFRM_NS_RES], tilePixelSizeY);
     }
 
     else if (resolutionStrategy == LOWEST_RESOLUTION)
     {
-        adfGeoTransform[GEOTRSFRM_WE_RES] =
-            std::max(adfGeoTransform[GEOTRSFRM_WE_RES], tilePixelSizeX);
+        m_gt[GEOTRSFRM_WE_RES] =
+            std::max(m_gt[GEOTRSFRM_WE_RES], tilePixelSizeX);
 
         if (tilePixelSizeY < 0.0)
-            adfGeoTransform[GEOTRSFRM_NS_RES] =
-                std::min(adfGeoTransform[GEOTRSFRM_NS_RES], tilePixelSizeY);
+            m_gt[GEOTRSFRM_NS_RES] =
+                std::min(m_gt[GEOTRSFRM_NS_RES], tilePixelSizeY);
         else
-            adfGeoTransform[GEOTRSFRM_NS_RES] =
-                std::max(adfGeoTransform[GEOTRSFRM_NS_RES], tilePixelSizeY);
+            m_gt[GEOTRSFRM_NS_RES] =
+                std::max(m_gt[GEOTRSFRM_NS_RES], tilePixelSizeY);
     }
 }
 
@@ -1937,7 +1929,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
      ******************************************************************/
     int l_nTiles = PQntuples(poResult);
 
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;
+    m_gt[GEOTRSFRM_TOPLEFT_X] = xmin;
 
     int nField = (GetPrimaryKeyRef() != nullptr) ? 1 : 0;
 
@@ -1979,13 +1971,13 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
 
         if (nOverviewFactor == 1 && resolutionStrategy != USER_RESOLUTION)
         {
-            double tilePixelSizeX = poRTDS->adfGeoTransform[GEOTRSFRM_WE_RES];
-            double tilePixelSizeY = poRTDS->adfGeoTransform[GEOTRSFRM_NS_RES];
+            double tilePixelSizeX = poRTDS->m_gt[GEOTRSFRM_WE_RES];
+            double tilePixelSizeY = poRTDS->m_gt[GEOTRSFRM_NS_RES];
 
             if (nValidTiles == 0)
             {
-                adfGeoTransform[GEOTRSFRM_WE_RES] = tilePixelSizeX;
-                adfGeoTransform[GEOTRSFRM_NS_RES] = tilePixelSizeY;
+                m_gt[GEOTRSFRM_WE_RES] = tilePixelSizeX;
+                m_gt[GEOTRSFRM_NS_RES] = tilePixelSizeY;
             }
             else
             {
@@ -2001,45 +1993,42 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
 
     if (nOverviewFactor > 1)
     {
-        adfGeoTransform[GEOTRSFRM_WE_RES] =
-            poParentDS->adfGeoTransform[GEOTRSFRM_WE_RES] * nOverviewFactor;
-        adfGeoTransform[GEOTRSFRM_NS_RES] =
-            poParentDS->adfGeoTransform[GEOTRSFRM_NS_RES] * nOverviewFactor;
+        m_gt[GEOTRSFRM_WE_RES] =
+            poParentDS->m_gt[GEOTRSFRM_WE_RES] * nOverviewFactor;
+        m_gt[GEOTRSFRM_NS_RES] =
+            poParentDS->m_gt[GEOTRSFRM_NS_RES] * nOverviewFactor;
     }
     else if ((resolutionStrategy == AVERAGE_RESOLUTION ||
               resolutionStrategy == AVERAGE_APPROX_RESOLUTION) &&
              l_nTiles > 0)
     {
-        adfGeoTransform[GEOTRSFRM_WE_RES] /= l_nTiles;
-        adfGeoTransform[GEOTRSFRM_NS_RES] /= l_nTiles;
+        m_gt[GEOTRSFRM_WE_RES] /= l_nTiles;
+        m_gt[GEOTRSFRM_NS_RES] /= l_nTiles;
     }
 
     /**
      * Complete the rest of geotransform parameters
      **/
-    if (adfGeoTransform[GEOTRSFRM_NS_RES] >= 0.0)
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymin;
+    if (m_gt[GEOTRSFRM_NS_RES] >= 0.0)
+        m_gt[GEOTRSFRM_TOPLEFT_Y] = ymin;
     else
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymax;
+        m_gt[GEOTRSFRM_TOPLEFT_Y] = ymax;
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
              "PostGISRasterDataset::ConstructOneDatasetFromTiles: "
              "GeoTransform array = (%f, %f, %f, %f, %f, %f)",
-             adfGeoTransform[GEOTRSFRM_TOPLEFT_X],
-             adfGeoTransform[GEOTRSFRM_WE_RES],
-             adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1],
-             adfGeoTransform[GEOTRSFRM_TOPLEFT_Y],
-             adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2],
-             adfGeoTransform[GEOTRSFRM_NS_RES]);
+             m_gt[GEOTRSFRM_TOPLEFT_X], m_gt[GEOTRSFRM_WE_RES],
+             m_gt[GEOTRSFRM_ROTATION_PARAM1], m_gt[GEOTRSFRM_TOPLEFT_Y],
+             m_gt[GEOTRSFRM_ROTATION_PARAM2], m_gt[GEOTRSFRM_NS_RES]);
 #endif
 
     // Calculate the raster size from the geotransform array
-    nRasterXSize = static_cast<int>(
-        fabs(rint((xmax - xmin) / adfGeoTransform[GEOTRSFRM_WE_RES])));
+    nRasterXSize =
+        static_cast<int>(fabs(rint((xmax - xmin) / m_gt[GEOTRSFRM_WE_RES])));
 
-    nRasterYSize = static_cast<int>(
-        fabs(rint((ymax - ymin) / adfGeoTransform[GEOTRSFRM_NS_RES])));
+    nRasterYSize =
+        static_cast<int>(fabs(rint((ymax - ymin) / m_gt[GEOTRSFRM_NS_RES])));
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
@@ -2181,12 +2170,12 @@ GBool PostGISRasterDataset::YieldSubdatasets(
      **/
     nRasterXSize = 0;
     nRasterYSize = 0;
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
-    adfGeoTransform[GEOTRSFRM_WE_RES] = 1.0;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
-    adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
-    adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
-    adfGeoTransform[GEOTRSFRM_NS_RES] = -1.0;
+    m_gt[GEOTRSFRM_TOPLEFT_X] = 0.0;
+    m_gt[GEOTRSFRM_WE_RES] = 1.0;
+    m_gt[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
+    m_gt[GEOTRSFRM_TOPLEFT_Y] = 0.0;
+    m_gt[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
+    m_gt[GEOTRSFRM_NS_RES] = -1.0;
 
     return true;
 }
@@ -2478,15 +2467,13 @@ GBool PostGISRasterDataset::SetRasterProperties(
     double scale_y = CPLAtof(PQgetvalue(poResult, 0, 7));
     if (nOverviewFactor > 1 && poParentDS != nullptr)
     {
-        scale_x =
-            poParentDS->adfGeoTransform[GEOTRSFRM_WE_RES] * nOverviewFactor;
-        scale_y =
-            poParentDS->adfGeoTransform[GEOTRSFRM_NS_RES] * nOverviewFactor;
+        scale_x = poParentDS->m_gt[GEOTRSFRM_WE_RES] * nOverviewFactor;
+        scale_y = poParentDS->m_gt[GEOTRSFRM_NS_RES] * nOverviewFactor;
     }
     else if (resolutionStrategy == USER_RESOLUTION)
     {
-        scale_x = adfGeoTransform[GEOTRSFRM_WE_RES];
-        scale_y = adfGeoTransform[GEOTRSFRM_NS_RES];
+        scale_x = m_gt[GEOTRSFRM_WE_RES];
+        scale_y = m_gt[GEOTRSFRM_NS_RES];
     }
 
     // These fields can only be fetched from raster_columns view
@@ -2583,20 +2570,19 @@ GBool PostGISRasterDataset::SetRasterProperties(
             if (bIsFastPK && nMode == ONE_RASTER_PER_TABLE &&
                 HasSpatialIndex() && scale_x != 0 && scale_y != 0)
             {
-                adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;
-                adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
-                adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] =
-                    (scale_y < 0) ? ymax : ymin;
-                adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
-                adfGeoTransform[GEOTRSFRM_WE_RES] = scale_x;
-                adfGeoTransform[GEOTRSFRM_NS_RES] = scale_y;
+                m_gt[GEOTRSFRM_TOPLEFT_X] = xmin;
+                m_gt[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
+                m_gt[GEOTRSFRM_TOPLEFT_Y] = (scale_y < 0) ? ymax : ymin;
+                m_gt[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
+                m_gt[GEOTRSFRM_WE_RES] = scale_x;
+                m_gt[GEOTRSFRM_NS_RES] = scale_y;
 
                 // Calculate the raster size from the geotransform array
-                nRasterXSize = static_cast<int>(fabs(
-                    rint((xmax - xmin) / adfGeoTransform[GEOTRSFRM_WE_RES])));
+                nRasterXSize = static_cast<int>(
+                    fabs(rint((xmax - xmin) / m_gt[GEOTRSFRM_WE_RES])));
 
-                nRasterYSize = static_cast<int>(fabs(
-                    rint((ymax - ymin) / adfGeoTransform[GEOTRSFRM_NS_RES])));
+                nRasterYSize = static_cast<int>(
+                    fabs(rint((ymax - ymin) / m_gt[GEOTRSFRM_NS_RES])));
 
 #ifdef DEBUG_VERBOSE
                 CPLDebug("PostGIS_Raster",
@@ -3443,36 +3429,27 @@ CPLErr PostGISRasterDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /********************************************************
  * \brief Set the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr PostGISRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (!padfGeoTransform)
-        return CE_Failure;
-
-    memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
-
+    m_gt = gt;
     return CE_None;
 }
 
 /********************************************************
  * \brief Get the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr PostGISRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
 
     // copy necessary values in supplied buffer
-    memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
+    gt = m_gt;
 
     if (nRasterXSize == 0 && nRasterYSize == 0)
         return CE_Failure;
 
     /* To avoid QGIS trying to create a warped VRT for what is really */
     /* an ungeoreferenced dataset */
-    if (CPLIsEqual(padfGeoTransform[0], 0.0) &&
-        CPLIsEqual(padfGeoTransform[1], 1.0) &&
-        CPLIsEqual(padfGeoTransform[2], 0.0) &&
-        CPLIsEqual(padfGeoTransform[3], 0.0) &&
-        CPLIsEqual(padfGeoTransform[4], 0.0) &&
-        CPLIsEqual(padfGeoTransform[5], 1.0))
+    if (m_gt == GDALGeoTransform())
     {
         return CE_Failure;
     }
@@ -4014,29 +3991,25 @@ GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
     int lrx = nXEndOff;
     int lry = nYEndOff;
 
-    double xRes = adfGeoTransform[GEOTRSFRM_WE_RES];
-    double yRes = adfGeoTransform[GEOTRSFRM_NS_RES];
+    double xRes = m_gt[GEOTRSFRM_WE_RES];
+    double yRes = m_gt[GEOTRSFRM_NS_RES];
 
-    adfProjWin[0] = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] + ulx * xRes +
-                    uly * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
-    adfProjWin[1] = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                    ulx * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-                    uly * yRes;
-    adfProjWin[2] = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] + lrx * xRes +
-                    uly * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
-    adfProjWin[3] = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                    lrx * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-                    uly * yRes;
-    adfProjWin[4] = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] + lrx * xRes +
-                    lry * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
-    adfProjWin[5] = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                    lrx * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-                    lry * yRes;
-    adfProjWin[6] = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] + ulx * xRes +
-                    lry * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
-    adfProjWin[7] = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-                    ulx * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-                    lry * yRes;
+    adfProjWin[0] = m_gt[GEOTRSFRM_TOPLEFT_X] + ulx * xRes +
+                    uly * m_gt[GEOTRSFRM_ROTATION_PARAM1];
+    adfProjWin[1] = m_gt[GEOTRSFRM_TOPLEFT_Y] +
+                    ulx * m_gt[GEOTRSFRM_ROTATION_PARAM2] + uly * yRes;
+    adfProjWin[2] = m_gt[GEOTRSFRM_TOPLEFT_X] + lrx * xRes +
+                    uly * m_gt[GEOTRSFRM_ROTATION_PARAM1];
+    adfProjWin[3] = m_gt[GEOTRSFRM_TOPLEFT_Y] +
+                    lrx * m_gt[GEOTRSFRM_ROTATION_PARAM2] + uly * yRes;
+    adfProjWin[4] = m_gt[GEOTRSFRM_TOPLEFT_X] + lrx * xRes +
+                    lry * m_gt[GEOTRSFRM_ROTATION_PARAM1];
+    adfProjWin[5] = m_gt[GEOTRSFRM_TOPLEFT_Y] +
+                    lrx * m_gt[GEOTRSFRM_ROTATION_PARAM2] + lry * yRes;
+    adfProjWin[6] = m_gt[GEOTRSFRM_TOPLEFT_X] + ulx * xRes +
+                    lry * m_gt[GEOTRSFRM_ROTATION_PARAM1];
+    adfProjWin[7] = m_gt[GEOTRSFRM_TOPLEFT_Y] +
+                    ulx * m_gt[GEOTRSFRM_ROTATION_PARAM2] + lry * yRes;
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",

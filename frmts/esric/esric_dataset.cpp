@@ -157,9 +157,9 @@ class ECDataset final : public GDALDataset
   public:
     ECDataset();
 
-    CPLErr GetGeoTransform(double *gt) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(gt, GeoTransform, sizeof(GeoTransform));
+        gt = m_gt;
         return CE_None;
     }
 
@@ -170,7 +170,7 @@ class ECDataset final : public GDALDataset
                              const char *pszDescription);
 
   protected:
-    double GeoTransform[6];
+    GDALGeoTransform m_gt{};
     CPLString dname{};
     int isV2{};  // V2 bundle format
     int BSZ{};   // Bundle size in tiles
@@ -235,8 +235,6 @@ class ECBand final : public GDALRasterBand
 
 ECDataset::ECDataset() : isV2(true), BSZ(128), TSZ(256)
 {
-    double gt[6] = {0, 1, 0, 0, 0, 1};
-    memcpy(GeoTransform, gt, sizeof(gt));
 }
 
 CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
@@ -282,16 +280,15 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
 
         // resolution is the smallest figure
         res = resolutions[0];
-        double gt[6] = {0, 1, 0, 0, 0, 1};
-        gt[0] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
-        gt[3] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
-        gt[1] = res;
-        gt[5] = -res;
-        memcpy(GeoTransform, gt, sizeof(gt));
+        m_gt = GDALGeoTransform();
+        m_gt[0] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.X", "-180"));
+        m_gt[3] = CPLAtof(CPLGetXMLValue(TCI, "TileOrigin.Y", "90"));
+        m_gt[1] = res;
+        m_gt[5] = -res;
 
         // Assume symmetric coverage, check custom end
-        double maxx = -gt[0];
-        double miny = -gt[3];
+        double maxx = -m_gt[0];
+        double miny = -m_gt[3];
         const char *pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
         const char *pszminy = CPLGetXMLValue(TCI, "TileEnd.Y", nullptr);
         if (pszmaxx && pszminy)
@@ -300,8 +297,8 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
             miny = CPLAtof(pszminy);
         }
 
-        double dxsz = (maxx - gt[0]) / res;
-        double dysz = (gt[3] - miny) / res;
+        double dxsz = (maxx - m_gt[0]) / res;
+        double dysz = (m_gt[3] - miny) / res;
         if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
             throw CPLString("Too many levels, resulting raster size exceeds "
                             "the GDAL limit");
@@ -434,19 +431,18 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
 
         // resolution is the smallest figure
         res = resolutions[0];
-        double gt[6] = {0, 1, 0, 0, 0, 1};
-        gt[0] = oRoot.GetDouble("tileInfo/origin/x");
-        gt[3] = oRoot.GetDouble("tileInfo/origin/y");
-        gt[1] = res;
-        gt[5] = -res;
-        memcpy(GeoTransform, gt, sizeof(gt));
+        m_gt = GDALGeoTransform();
+        m_gt[0] = oRoot.GetDouble("tileInfo/origin/x");
+        m_gt[3] = oRoot.GetDouble("tileInfo/origin/y");
+        m_gt[1] = res;
+        m_gt[5] = -res;
 
         // Assume symmetric coverage
-        double maxx = -gt[0];
-        double miny = -gt[3];
+        double maxx = -m_gt[0];
+        double miny = -m_gt[3];
 
-        double dxsz = (maxx - gt[0]) / res;
-        double dysz = (gt[3] - miny) / res;
+        double dxsz = (maxx - m_gt[0]) / res;
+        double dysz = (m_gt[3] - miny) / res;
         if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
             throw CPLString("Too many levels, resulting raster size exceeds "
                             "the GDAL limit");

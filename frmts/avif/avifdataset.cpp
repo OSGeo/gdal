@@ -82,7 +82,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 
 #ifdef AVIF_HAS_OPAQUE_PROPERTIES
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -375,9 +375,9 @@ const OGRSpatialReference *GDALAVIFDataset::GetSpatialRef() const
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
-CPLErr GDALAVIFDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALAVIFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    return geoHEIF.GetGeoTransform(padfTransform);
+    return geoHEIF.GetGeoTransform(gt);
 }
 
 void GDALAVIFDataset::processProperties()

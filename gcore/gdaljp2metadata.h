@@ -167,8 +167,8 @@ class CPL_DLL GDALJP2Metadata
   public:
     char **papszGMLMetadata;
 
-    bool bHaveGeoTransform;
-    double adfGeoTransform[6];
+    bool m_bHaveGeoTransform{};
+    GDALGeoTransform m_gt{};
     bool bPixelIsPoint;
 
     OGRSpatialReference m_oSRS{};
@@ -204,7 +204,7 @@ class CPL_DLL GDALJP2Metadata
 
     // Write oriented.
     void SetSpatialRef(const OGRSpatialReference *poSRS);
-    void SetGeoTransform(double *);
+    void SetGeoTransform(const GDALGeoTransform &gt);
     void SetGCPs(int, const GDAL_GCP *);
     void SetRPCMD(char **papszRPCMDIn);
 

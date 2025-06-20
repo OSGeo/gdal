@@ -4544,7 +4544,7 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_set_geo_transform)
             eAccess = GA_Update;
         }
 
-        CPLErr SetGeoTransform(double *) override
+        CPLErr SetGeoTransform(const GDALGeoTransform &) override
         {
             return CE_Failure;
         }

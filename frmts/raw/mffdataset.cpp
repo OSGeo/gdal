@@ -42,7 +42,7 @@ class MFFDataset final : public RawDataset
 
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     char **m_papszFileList;
 
     void ScanForGCPs();
@@ -76,7 +76,7 @@ class MFFDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -234,12 +234,6 @@ MFFDataset::MFFDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -319,10 +313,9 @@ int MFFDataset::GetGCPCount()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MFFDataset::GetGeoTransform(double *padfTransform)
-
+CPLErr MFFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -579,7 +572,7 @@ void MFFDataset::ScanForProjectionInfo()
     if (EQUAL(pszProjName, "LL"))
     {
         transform_ok = CPL_TO_BOOL(
-            GDALGCPsToGeoTransform(nGCPCount, pasGCPList, adfGeoTransform, 0));
+            GDALGCPsToGeoTransform(nGCPCount, pasGCPList, m_gt.data(), 0));
     }
     else
     {
@@ -614,8 +607,8 @@ void MFFDataset::ScanForProjectionInfo()
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
             }
-            transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(
-                nGCPCount, pasGCPList, adfGeoTransform, 0));
+            transform_ok = CPL_TO_BOOL(
+                GDALGCPsToGeoTransform(nGCPCount, pasGCPList, m_gt.data(), 0));
         }
 
         if (poTransform)
@@ -632,12 +625,7 @@ void MFFDataset::ScanForProjectionInfo()
     {
         /* transform is sufficient in some cases (slant range, standalone gcps)
          */
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = 0.0;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = 1.0;
+        m_gt = GDALGeoTransform();
         m_oSRS.Clear();
     }
 

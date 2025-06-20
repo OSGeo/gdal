@@ -113,10 +113,9 @@ class LIBERTIFFDataset final : public GDALPamDataset
         return m_aoGCPs.empty() && !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(padfGeoTransform, m_geotransform.data(),
-               m_geotransform.size() * sizeof(double));
+        gt = m_gt;
         return m_geotransformValid ? CE_None : CE_Failure;
     }
 
@@ -166,7 +165,7 @@ class LIBERTIFFDataset final : public GDALPamDataset
     std::shared_ptr<int> m_validityPtr = std::make_shared<int>(0);
     OGRSpatialReference m_oSRS{};
     bool m_geotransformValid = false;
-    std::array<double, 6> m_geotransform{1, 0, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     std::vector<gdal::GCP> m_aoGCPs{};
     std::vector<std::unique_ptr<LIBERTIFFDataset>> m_apoOvrDSOwned{};
     std::vector<LIBERTIFFDataset *> m_apoOvrDS{};
@@ -3139,12 +3138,10 @@ void LIBERTIFFDataset::ReadGeoTransform()
             return;
 
         m_geotransformValid = true;
-        m_geotransform[1] = pixelScale[GCP_PIXEL];
-        m_geotransform[5] = -pixelScale[GCP_LINE];
-        m_geotransform[0] =
-            tiepoints[GCP_X] - tiepoints[GCP_PIXEL] * m_geotransform[1];
-        m_geotransform[3] =
-            tiepoints[GCP_Y] - tiepoints[GCP_LINE] * m_geotransform[5];
+        m_gt[1] = pixelScale[GCP_PIXEL];
+        m_gt[5] = -pixelScale[GCP_LINE];
+        m_gt[0] = tiepoints[GCP_X] - tiepoints[GCP_PIXEL] * m_gt[1];
+        m_gt[3] = tiepoints[GCP_Y] - tiepoints[GCP_LINE] * m_gt[5];
     }
     else if (psTagGeoTransMatrix &&
              psTagGeoTransMatrix->type == LIBERTIFF_NS::TagType::Double &&
@@ -3157,12 +3154,12 @@ void LIBERTIFFDataset::ReadGeoTransform()
         if (ok)
         {
             m_geotransformValid = true;
-            m_geotransform[0] = matrix[3];
-            m_geotransform[1] = matrix[0];
-            m_geotransform[2] = matrix[1];
-            m_geotransform[3] = matrix[7];
-            m_geotransform[4] = matrix[4];
-            m_geotransform[5] = matrix[5];
+            m_gt[0] = matrix[3];
+            m_gt[1] = matrix[0];
+            m_gt[2] = matrix[1];
+            m_gt[3] = matrix[7];
+            m_gt[4] = matrix[4];
+            m_gt[5] = matrix[5];
         }
     }
     else if (psTagTiePoints &&
@@ -3210,10 +3207,8 @@ void LIBERTIFFDataset::ReadGeoTransform()
         {
             if (EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT))
             {
-                m_geotransform[0] -=
-                    (m_geotransform[1] * 0.5 + m_geotransform[2] * 0.5);
-                m_geotransform[3] -=
-                    (m_geotransform[4] * 0.5 + m_geotransform[5] * 0.5);
+                m_gt[0] -= (m_gt[1] * 0.5 + m_gt[2] * 0.5);
+                m_gt[3] -= (m_gt[4] * 0.5 + m_gt[5] * 0.5);
             }
         }
     }

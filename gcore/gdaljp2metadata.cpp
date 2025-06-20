@@ -27,6 +27,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <set>
 #include <string>
@@ -73,10 +74,9 @@ constexpr int MAX_JP2GEOTIFF_BOXES = 2;
 
 GDALJP2Metadata::GDALJP2Metadata()
     : nGeoTIFFBoxesCount(0), pasGeoTIFFBoxes(nullptr), nMSIGSize(0),
-      pabyMSIGData(nullptr), papszGMLMetadata(nullptr),
-      bHaveGeoTransform(false), adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
-      bPixelIsPoint(false), nGCPCount(0), pasGCPList(nullptr),
-      papszRPCMD(nullptr), papszMetadata(nullptr), pszXMPMetadata(nullptr),
+      pabyMSIGData(nullptr), papszGMLMetadata(nullptr), bPixelIsPoint(false),
+      nGCPCount(0), pasGCPList(nullptr), papszRPCMD(nullptr),
+      papszMetadata(nullptr), pszXMPMetadata(nullptr),
       pszGDALMultiDomainMetadata(nullptr), pszXMLIPR(nullptr)
 {
 }
@@ -139,13 +139,13 @@ int GDALJP2Metadata::ReadAndParse(const char *pszFilename, int nGEOJP2Index,
     /*      file.                                                           */
     /* -------------------------------------------------------------------- */
     if (nWorldFileIndex >= 0 &&
-        ((bHaveGeoTransform && nWorldFileIndex < nIndexUsed) ||
-         !bHaveGeoTransform))
+        ((m_bHaveGeoTransform && nWorldFileIndex < nIndexUsed) ||
+         !m_bHaveGeoTransform))
     {
-        bHaveGeoTransform = CPL_TO_BOOL(
-            GDALReadWorldFile(pszFilename, nullptr, adfGeoTransform) ||
-            GDALReadWorldFile(pszFilename, ".wld", adfGeoTransform));
-        bRet |= bHaveGeoTransform;
+        m_bHaveGeoTransform =
+            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, nullptr, m_gt.data()) ||
+                        GDALReadWorldFile(pszFilename, ".wld", m_gt.data()));
+        bRet |= m_bHaveGeoTransform;
     }
 
     if (pnIndexUsed)
@@ -187,7 +187,7 @@ int GDALJP2Metadata::ReadAndParse(VSILFILE *fpLL, int nGEOJP2Index,
     /*      Return success either either of projection or geotransform      */
     /*      or gcps.                                                        */
     /* -------------------------------------------------------------------- */
-    return bHaveGeoTransform || nGCPCount > 0 || !m_oSRS.IsEmpty() ||
+    return m_bHaveGeoTransform || nGCPCount > 0 || !m_oSRS.IsEmpty() ||
            papszRPCMD != nullptr;
 }
 
@@ -570,7 +570,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
 
     bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = {false};
     OGRSpatialReferenceH ahSRS[MAX_JP2GEOTIFF_BOXES] = {nullptr};
-    double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
+    std::array<GDALGeoTransform, MAX_JP2GEOTIFF_BOXES> aGT{};
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = {0};
     GDAL_GCP *apasGCPList[MAX_JP2GEOTIFF_BOXES] = {nullptr};
     int abPixelIsPoint[MAX_JP2GEOTIFF_BOXES] = {0};
@@ -584,17 +584,10 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         /*      Convert raw data into projection and geotransform. */
         /* --------------------------------------------------------------------
          */
-        aadfGeoTransform[i][0] = 0;
-        aadfGeoTransform[i][1] = 1;
-        aadfGeoTransform[i][2] = 0;
-        aadfGeoTransform[i][3] = 0;
-        aadfGeoTransform[i][4] = 0;
-        aadfGeoTransform[i][5] = 1;
         if (GTIFWktFromMemBufEx(pasGeoTIFFBoxes[i].nGeoTIFFSize,
                                 pasGeoTIFFBoxes[i].pabyGeoTIFFData, &ahSRS[i],
-                                aadfGeoTransform[i], &anGCPCount[i],
-                                &apasGCPList[i], &abPixelIsPoint[i],
-                                &apapszRPCMD[i]) == CE_None)
+                                aGT[i].data(), &anGCPCount[i], &apasGCPList[i],
+                                &abPixelIsPoint[i], &apapszRPCMD[i]) == CE_None)
         {
             if (ahSRS[i] != nullptr)
                 abValidProjInfo[i] = true;
@@ -621,10 +614,8 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     {
         for (int i = 0; i < nMax; ++i)
         {
-            if (aadfGeoTransform[i][0] != 0 || aadfGeoTransform[i][1] != 1 ||
-                aadfGeoTransform[i][2] != 0 || aadfGeoTransform[i][3] != 0 ||
-                aadfGeoTransform[i][4] != 0 || aadfGeoTransform[i][5] != 1 ||
-                anGCPCount[i] > 0 || apapszRPCMD[i] != nullptr)
+            if (aGT[i] != GDALGeoTransform() || anGCPCount[i] > 0 ||
+                apapszRPCMD[i] != nullptr)
             {
                 iBestIndex = i;
             }
@@ -637,17 +628,15 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         if (ahSRS[iBestIndex])
             m_oSRS = *(OGRSpatialReference::FromHandle(ahSRS[iBestIndex]));
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        memcpy(adfGeoTransform, aadfGeoTransform[iBestIndex],
-               6 * sizeof(double));
+        m_gt = aGT[iBestIndex];
         nGCPCount = anGCPCount[iBestIndex];
         pasGCPList = apasGCPList[iBestIndex];
         bPixelIsPoint = CPL_TO_BOOL(abPixelIsPoint[iBestIndex]);
         papszRPCMD = apapszRPCMD[iBestIndex];
 
-        if (adfGeoTransform[0] != 0 || adfGeoTransform[1] != 1 ||
-            adfGeoTransform[2] != 0 || adfGeoTransform[3] != 0 ||
-            adfGeoTransform[4] != 0 || adfGeoTransform[5] != 1)
-            bHaveGeoTransform = true;
+        if (m_gt[0] != 0 || m_gt[1] != 1 || m_gt[2] != 0 || m_gt[3] != 0 ||
+            m_gt[4] != 0 || m_gt[5] != 1)
+            m_bHaveGeoTransform = true;
 
         if (ahSRS[iBestIndex])
         {
@@ -691,6 +680,8 @@ int GDALJP2Metadata::ParseMSIG()
     if (nMSIGSize < 70)
         return FALSE;
 
+    double adfGeoTransform[6];
+
     /* -------------------------------------------------------------------- */
     /*      Try and extract worldfile parameters and adjust.                */
     /* -------------------------------------------------------------------- */
@@ -715,7 +706,8 @@ int GDALJP2Metadata::ParseMSIG()
     adfGeoTransform[3] -= 0.5 * adfGeoTransform[4];
     adfGeoTransform[3] -= 0.5 * adfGeoTransform[5];
 
-    bHaveGeoTransform = true;
+    m_gt = GDALGeoTransform(adfGeoTransform);
+    m_bHaveGeoTransform = true;
 
     return TRUE;
 }
@@ -959,21 +951,21 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if (CSLCount(papszOffset1Tokens) >= 2 &&
         CSLCount(papszOffset2Tokens) >= 2 && poOriginGeometry != nullptr)
     {
-        adfGeoTransform[0] = poOriginGeometry->getX();
-        adfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
-        adfGeoTransform[2] = CPLAtof(papszOffset2Tokens[0]);
-        adfGeoTransform[3] = poOriginGeometry->getY();
-        adfGeoTransform[4] = CPLAtof(papszOffset1Tokens[1]);
-        adfGeoTransform[5] = CPLAtof(papszOffset2Tokens[1]);
+        m_gt[0] = poOriginGeometry->getX();
+        m_gt[1] = CPLAtof(papszOffset1Tokens[0]);
+        m_gt[2] = CPLAtof(papszOffset2Tokens[0]);
+        m_gt[3] = poOriginGeometry->getY();
+        m_gt[4] = CPLAtof(papszOffset1Tokens[1]);
+        m_gt[5] = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
-        adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
-        adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
-        adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
-        adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+        m_gt[0] -= m_gt[1] * 0.5;
+        m_gt[0] -= m_gt[2] * 0.5;
+        m_gt[3] -= m_gt[4] * 0.5;
+        m_gt[3] -= m_gt[5] * 0.5;
 
         bSuccess = true;
-        bHaveGeoTransform = true;
+        m_bHaveGeoTransform = true;
     }
 
     CSLDestroy(papszOffset1Tokens);
@@ -1112,7 +1104,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         CPLDebug("GMLJP2",
                  "Flipping axis orientation in GMLJP2 coverage description.");
 
-        std::swap(adfGeoTransform[0], adfGeoTransform[3]);
+        std::swap(m_gt[0], m_gt[3]);
 
         int swapWith1Index = 4;
         int swapWith2Index = 5;
@@ -1134,12 +1126,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                      "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER.");
         }
 
-        std::swap(adfGeoTransform[1], adfGeoTransform[swapWith1Index]);
-        std::swap(adfGeoTransform[2], adfGeoTransform[swapWith2Index]);
+        std::swap(m_gt[1], m_gt[swapWith1Index]);
+        std::swap(m_gt[2], m_gt[swapWith2Index]);
 
         /* Found in autotest/gdrivers/data/ll.jp2 */
-        if (adfGeoTransform[1] == 0.0 && adfGeoTransform[2] < 0.0 &&
-            adfGeoTransform[4] > 0.0 && adfGeoTransform[5] == 0.0)
+        if (m_gt[1] == 0.0 && m_gt[2] < 0.0 && m_gt[4] > 0.0 && m_gt[5] == 0.0)
         {
             CPLError(
                 CE_Warning, CPLE_AppDefined,
@@ -1187,10 +1178,11 @@ void GDALJP2Metadata::SetGCPs(int nCount, const GDAL_GCP *pasGCPsIn)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-void GDALJP2Metadata::SetGeoTransform(double *padfGT)
+void GDALJP2Metadata::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(adfGeoTransform, padfGT, sizeof(double) * 6);
+    m_bHaveGeoTransform = true;
+    m_gt = gt;
 }
 
 /************************************************************************/
@@ -1219,9 +1211,9 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     int nGTBufSize = 0;
     unsigned char *pabyGTBuf = nullptr;
 
-    if (GTIFMemBufFromSRS(OGRSpatialReference::ToHandle(&m_oSRS),
-                          adfGeoTransform, nGCPCount, pasGCPList, &nGTBufSize,
-                          &pabyGTBuf, bPixelIsPoint, papszRPCMD) != CE_None)
+    if (GTIFMemBufFromSRS(OGRSpatialReference::ToHandle(&m_oSRS), m_gt.data(),
+                          nGCPCount, pasGCPList, &nGTBufSize, &pabyGTBuf,
+                          bPixelIsPoint, papszRPCMD) != CE_None)
         return nullptr;
 
     if (nGTBufSize == 0)
@@ -1310,15 +1302,13 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     /*      Prepare coverage origin and offset vectors.  Take axis          */
     /*      order into account if needed.                                   */
     /* -------------------------------------------------------------------- */
-    adfOrigin[0] = adfGeoTransform[0] + adfGeoTransform[1] * 0.5 +
-                   adfGeoTransform[4] * 0.5;
-    adfOrigin[1] = adfGeoTransform[3] + adfGeoTransform[2] * 0.5 +
-                   adfGeoTransform[5] * 0.5;
-    adfXVector[0] = adfGeoTransform[1];
-    adfXVector[1] = adfGeoTransform[2];
+    adfOrigin[0] = m_gt[0] + m_gt[1] * 0.5 + m_gt[4] * 0.5;
+    adfOrigin[1] = m_gt[3] + m_gt[2] * 0.5 + m_gt[5] * 0.5;
+    adfXVector[0] = m_gt[1];
+    adfXVector[1] = m_gt[2];
 
-    adfYVector[0] = adfGeoTransform[4];
-    adfYVector[1] = adfGeoTransform[5];
+    adfYVector[0] = m_gt[4];
+    adfYVector[1] = m_gt[5];
 
     if (bNeedAxisFlip && CPLTestBool(CPLGetConfigOption(
                              "GDAL_IGNORE_AXIS_ORIENTATION", "FALSE")))
@@ -1464,16 +1454,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
                  "gmljp2://xml/CRSDictionary.gml#ogrcrs1");
 
     // Compute bounding box
-    double dfX1 = adfGeoTransform[0];
-    double dfX2 = adfGeoTransform[0] + nXSize * adfGeoTransform[1];
-    double dfX3 = adfGeoTransform[0] + nYSize * adfGeoTransform[2];
-    double dfX4 = adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                  nYSize * adfGeoTransform[2];
-    double dfY1 = adfGeoTransform[3];
-    double dfY2 = adfGeoTransform[3] + nXSize * adfGeoTransform[4];
-    double dfY3 = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
-    double dfY4 = adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                  nYSize * adfGeoTransform[5];
+    double dfX1 = m_gt[0];
+    double dfX2 = m_gt[0] + nXSize * m_gt[1];
+    double dfX3 = m_gt[0] + nYSize * m_gt[2];
+    double dfX4 = m_gt[0] + nXSize * m_gt[1] + nYSize * m_gt[2];
+    double dfY1 = m_gt[3];
+    double dfY2 = m_gt[3] + nXSize * m_gt[4];
+    double dfY3 = m_gt[3] + nYSize * m_gt[5];
+    double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
     double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
     double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
     double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));
@@ -2482,16 +2470,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                      "gmljp2://xml/CRSDictionary.gml#ogrcrs1");
 
         // Compute bounding box
-        double dfX1 = adfGeoTransform[0];
-        double dfX2 = adfGeoTransform[0] + nXSize * adfGeoTransform[1];
-        double dfX3 = adfGeoTransform[0] + nYSize * adfGeoTransform[2];
-        double dfX4 = adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                      nYSize * adfGeoTransform[2];
-        double dfY1 = adfGeoTransform[3];
-        double dfY2 = adfGeoTransform[3] + nXSize * adfGeoTransform[4];
-        double dfY3 = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
-        double dfY4 = adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                      nYSize * adfGeoTransform[5];
+        double dfX1 = m_gt[0];
+        double dfX2 = m_gt[0] + nXSize * m_gt[1];
+        double dfX3 = m_gt[0] + nYSize * m_gt[2];
+        double dfX4 = m_gt[0] + nXSize * m_gt[1] + nYSize * m_gt[2];
+        double dfY1 = m_gt[3];
+        double dfY2 = m_gt[3] + nXSize * m_gt[4];
+        double dfY3 = m_gt[3] + nYSize * m_gt[5];
+        double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
         double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
         double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
         double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));

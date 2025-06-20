@@ -185,7 +185,7 @@ class GDALPansharpenOperation
     int bPositiveWeights = TRUE;
     CPLWorkerThreadPool *poThreadPool = nullptr;
     int nKernelRadius = 0;
-    std::array<double, 6> m_adfPanToMSGT = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_panToMSGT{};
 
     static void PansharpenJobThreadFunc(void *pUserData);
     static void PansharpenResampleJobThreadFunc(void *pUserData);

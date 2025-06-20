@@ -75,8 +75,8 @@ class SAGADataset final : public GDALPamDataset
 
     virtual char **GetFileList() override;
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
-    CPLErr SetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 };
 
 /************************************************************************/
@@ -694,42 +694,34 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr SAGADataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr SAGADataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (padfGeoTransform == nullptr)
-        return CE_Failure;
-
-    SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand(1));
+    const SAGARasterBand *poGRB =
+        cpl::down_cast<const SAGARasterBand *>(GetRasterBand(1));
 
     if (poGRB == nullptr)
     {
-        padfGeoTransform[0] = 0;
-        padfGeoTransform[1] = 1;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = 0;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = 1;
+        gt = GDALGeoTransform();
         return CE_Failure;
     }
 
     /* check if we have a PAM GeoTransform stored */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLErr eErr = GDALPamDataset::GetGeoTransform(padfGeoTransform);
+    CPLErr eErr = GDALPamDataset::GetGeoTransform(gt);
     CPLPopErrorHandler();
 
     if (eErr == CE_None)
         return CE_None;
 
-    padfGeoTransform[1] = poGRB->m_Cellsize;
-    padfGeoTransform[5] = poGRB->m_Cellsize * -1.0;
-    padfGeoTransform[0] = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
-    padfGeoTransform[3] = poGRB->m_Ymin +
-                          (nRasterYSize - 1) * poGRB->m_Cellsize +
-                          poGRB->m_Cellsize / 2;
+    gt[1] = poGRB->m_Cellsize;
+    gt[5] = poGRB->m_Cellsize * -1.0;
+    gt[0] = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
+    gt[3] = poGRB->m_Ymin + (nRasterYSize - 1) * poGRB->m_Cellsize +
+            poGRB->m_Cellsize / 2;
 
     /* tilt/rotation is not supported by SAGA grids */
-    padfGeoTransform[4] = 0.0;
-    padfGeoTransform[2] = 0.0;
+    gt[4] = 0.0;
+    gt[2] = 0.0;
 
     return CE_None;
 }
@@ -738,7 +730,7 @@ CPLErr SAGADataset::GetGeoTransform(double *padfGeoTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr SAGADataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
 
     if (eAccess == GA_ReadOnly)
@@ -750,10 +742,10 @@ CPLErr SAGADataset::SetGeoTransform(double *padfGeoTransform)
 
     SAGARasterBand *poGRB = static_cast<SAGARasterBand *>(GetRasterBand(1));
 
-    if (poGRB == nullptr || padfGeoTransform == nullptr)
+    if (poGRB == nullptr)
         return CE_Failure;
 
-    if (padfGeoTransform[1] != padfGeoTransform[5] * -1.0)
+    if (gt[1] != gt[5] * -1.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to set GeoTransform, SAGA binary grids only support "
@@ -761,13 +753,12 @@ CPLErr SAGADataset::SetGeoTransform(double *padfGeoTransform)
         return CE_Failure;
     }
 
-    const double dfMinX = padfGeoTransform[0] + padfGeoTransform[1] / 2;
-    const double dfMinY =
-        padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
+    const double dfMinX = gt[0] + gt[1] / 2;
+    const double dfMinY = gt[5] * (nRasterYSize - 0.5) + gt[3];
 
     poGRB->m_Xmin = dfMinX;
     poGRB->m_Ymin = dfMinY;
-    poGRB->m_Cellsize = padfGeoTransform[1];
+    poGRB->m_Cellsize = gt[1];
     headerDirty = true;
 
     return CE_None;
@@ -1054,10 +1045,9 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    double adfGeoTransform[6];
-
-    poSrcDS->GetGeoTransform(adfGeoTransform);
-    poDstDS->SetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
+        poDstDS->SetGeoTransform(gt);
 
     poDstDS->SetProjection(poSrcDS->GetProjectionRef());
 

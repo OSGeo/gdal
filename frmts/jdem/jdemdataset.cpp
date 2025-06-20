@@ -78,7 +78,7 @@ class JDEMDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -218,7 +218,7 @@ JDEMDataset::~JDEMDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JDEMDataset::GetGeoTransform(double *padfTransform)
+CPLErr JDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     const char *psHeader = reinterpret_cast<const char *>(m_abyHeader);
@@ -228,13 +228,13 @@ CPLErr JDEMDataset::GetGeoTransform(double *padfTransform)
     const double dfURLat = JDEMGetAngle(psHeader + 43);
     const double dfURLong = JDEMGetAngle(psHeader + 50);
 
-    padfTransform[0] = dfLLLong;
-    padfTransform[3] = dfURLat;
-    padfTransform[1] = (dfURLong - dfLLLong) / GetRasterXSize();
-    padfTransform[2] = 0.0;
+    gt[0] = dfLLLong;
+    gt[3] = dfURLat;
+    gt[1] = (dfURLong - dfLLLong) / GetRasterXSize();
+    gt[2] = 0.0;
 
-    padfTransform[4] = 0.0;
-    padfTransform[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
+    gt[4] = 0.0;
+    gt[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
 
     return CE_None;
 }

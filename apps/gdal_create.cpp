@@ -283,17 +283,15 @@ MAIN_START(argc, argv)
         GDALExit(1);
     }
 
-    double adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform gt;
     if (sOptions.bGeoTransform && sOptions.nPixels > 0 && sOptions.nLines > 0)
     {
-        adfGeoTransform[0] = sOptions.dfULX;
-        adfGeoTransform[1] =
-            (sOptions.dfLRX - sOptions.dfULX) / sOptions.nPixels;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = sOptions.dfULY;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] =
-            (sOptions.dfLRY - sOptions.dfULY) / sOptions.nLines;
+        gt[0] = sOptions.dfULX;
+        gt[1] = (sOptions.dfLRX - sOptions.dfULX) / sOptions.nPixels;
+        gt[2] = 0;
+        gt[3] = sOptions.dfULY;
+        gt[4] = 0;
+        gt[5] = (sOptions.dfLRY - sOptions.dfULY) / sOptions.nLines;
     }
 
     std::unique_ptr<GDALDataset> poInputDS;
@@ -326,7 +324,7 @@ MAIN_START(argc, argv)
         if (!(sOptions.bGeoTransform && sOptions.nPixels > 0 &&
               sOptions.nLines > 0))
         {
-            if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            if (poInputDS->GetGeoTransform(gt) == CE_None)
             {
                 sOptions.bGeoTransform = true;
             }
@@ -444,7 +442,7 @@ MAIN_START(argc, argv)
             GDALClose(hDS);
             GDALExit(1);
         }
-        if (GDALSetGeoTransform(hDS, adfGeoTransform) != CE_None)
+        if (GDALDataset::FromHandle(hDS)->SetGeoTransform(gt) != CE_None)
         {
             GDALClose(hDS);
             GDALExit(1);

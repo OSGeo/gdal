@@ -108,7 +108,7 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
 
     OGRSpatialReference oSRS;
 
-    double adfGT[6] = {0};
+    GDALGeoTransform gt;
     bool bGTValid = false;
 
     auto poSrcDS = m_inputDataset.GetDatasetRef();
@@ -142,7 +142,7 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
 
         if (m_bbox.empty())
         {
-            bGTValid = poSrcDS->GetGeoTransform(adfGT) == CE_None;
+            bGTValid = poSrcDS->GetGeoTransform(gt) == CE_None;
         }
 
         if (m_nodata.empty() && m_bandCount > 0)
@@ -238,16 +238,16 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc /* pfnProgress */,
             return false;
         }
         bGTValid = true;
-        adfGT[0] = m_bbox[0];
-        adfGT[1] = (m_bbox[2] - m_bbox[0]) / poRetDS->GetRasterXSize();
-        adfGT[2] = 0;
-        adfGT[3] = m_bbox[3];
-        adfGT[4] = 0;
-        adfGT[5] = -(m_bbox[3] - m_bbox[1]) / poRetDS->GetRasterYSize();
+        gt[0] = m_bbox[0];
+        gt[1] = (m_bbox[2] - m_bbox[0]) / poRetDS->GetRasterXSize();
+        gt[2] = 0;
+        gt[3] = m_bbox[3];
+        gt[4] = 0;
+        gt[5] = -(m_bbox[3] - m_bbox[1]) / poRetDS->GetRasterYSize();
     }
     if (bGTValid)
     {
-        if (poRetDS->SetGeoTransform(adfGT) != CE_None)
+        if (poRetDS->SetGeoTransform(gt) != CE_None)
         {
             ReportError(CE_Failure, CPLE_AppDefined, "Setting extent failed");
             return false;

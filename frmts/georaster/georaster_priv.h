@@ -135,7 +135,7 @@ class GeoRasterDataset final : public GDALDataset
     bool bForcedSRID;
     mutable OGRSpatialReference m_oSRS{};
     char **papszSubdatasets;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     GeoRasterRasterBand *poMaskBand;
     bool bApplyNoDataArray;
     void JP2_Open(GDALAccess eAccess);
@@ -163,8 +163,8 @@ class GeoRasterDataset final : public GDALDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 

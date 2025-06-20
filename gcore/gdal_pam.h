@@ -79,8 +79,8 @@ class GDALDatasetPamInfo
 
     OGRSpatialReference *poSRS = nullptr;
 
-    int bHaveGeoTransform = false;
-    std::array<double, 6> adfGeoTransform{};
+    bool bHaveGeoTransform = false;
+    GDALGeoTransform gt{};
 
     std::vector<gdal::GCP> asGCPs{};
     OGRSpatialReference *poGCP_SRS = nullptr;
@@ -142,8 +142,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    CPLErr GetGeoTransform(double *) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &) override;
     void DeleteGeoTransform();
 
     int GetGCPCount() override;

@@ -190,7 +190,7 @@ class BYNDataset final : public RawDataset
     friend class BYNRasterBand;
 
     VSILFILE *fpImage;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     mutable OGRSpatialReference m_oSRS{};
     BYNHeader hHeader;
 
@@ -204,7 +204,7 @@ class BYNDataset final : public RawDataset
     BYNDataset();
     ~BYNDataset();
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 

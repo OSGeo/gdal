@@ -55,7 +55,7 @@ class AIGDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     char **GetFileList(void) override;
 };
@@ -750,16 +750,16 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr AIGDataset::GetGeoTransform(double *padfTransform)
+CPLErr AIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    padfTransform[0] = psInfo->dfLLX;
-    padfTransform[1] = psInfo->dfCellSizeX;
-    padfTransform[2] = 0;
+    gt[0] = psInfo->dfLLX;
+    gt[1] = psInfo->dfCellSizeX;
+    gt[2] = 0;
 
-    padfTransform[3] = psInfo->dfURY;
-    padfTransform[4] = 0;
-    padfTransform[5] = -psInfo->dfCellSizeY;
+    gt[3] = psInfo->dfURY;
+    gt[4] = 0;
+    gt[5] = -psInfo->dfCellSizeY;
 
     return CE_None;
 }

@@ -213,7 +213,7 @@ struct GDALTranslateOptions
        assigns a geotransform to the output file, ignoring what would have
        been derived from the source file. So this does not cause reprojection to
        the specified SRS. */
-    std::array<double, 6> adfGT{{0, 0, 0, 0, 0, 0}};
+    GDALGeoTransform gt{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     /*! set a nodata value specified in GDALTranslateOptions::osNoData to the
      * output bands */
@@ -268,7 +268,7 @@ struct GDALTranslateOptions
        GDALTranslateOptions::nOXSizePixel (or
        GDALTranslateOptions::dfOXSizePct), GDALTranslateOptions::nOYSizePixel
         (or GDALTranslateOptions::dfOYSizePct), GDALTranslateOptions::adfULLR,
-        and GDALTranslateOptions::adfGT.
+        and GDALTranslateOptions::gt.
      */
     double dfXRes = 0;
     double dfYRes = 0;
@@ -627,9 +627,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = true;
 
-    if (psOptions->adfGT[0] != 0.0 || psOptions->adfGT[1] != 0.0 ||
-        psOptions->adfGT[2] != 0.0 || psOptions->adfGT[3] != 0.0 ||
-        psOptions->adfGT[4] != 0.0 || psOptions->adfGT[5] != 0.0)
+    if (psOptions->gt != GDALGeoTransform(0, 0, 0, 0, 0, 0))
         bGotGeoTransform = true;
 
     GDALDataset *poSrcDS = GDALDataset::FromHandle(hSrcDataset);
@@ -823,18 +821,17 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
         psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
     {
-        double adfGeoTransform[6];
+        GDALGeoTransform gt;
+        poSrcDS->GetGeoTransform(gt);
 
-        poSrcDS->GetGeoTransform(adfGeoTransform);
-
-        if (adfGeoTransform[1] == 0.0 || adfGeoTransform[5] == 0.0)
+        if (gt[1] == 0.0 || gt[5] == 0.0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is "
                      "invalid.");
             return nullptr;
         }
-        if (adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
+        if (gt[2] != 0.0 || gt[4] != 0.0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is\n"
@@ -889,10 +886,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfULX = psOptions->dfULX;
         double dfULY = psOptions->dfULY;
 
-        psOptions->srcWin.dfXOff =
-            (dfULX - adfGeoTransform[0]) / adfGeoTransform[1];
-        psOptions->srcWin.dfYOff =
-            (dfULY - adfGeoTransform[3]) / adfGeoTransform[5];
+        psOptions->srcWin.dfXOff = (dfULX - gt[0]) / gt[1];
+        psOptions->srcWin.dfYOff = (dfULY - gt[3]) / gt[5];
 
         // In case of nearest resampling, round to integer pixels (#6610)
         if (bAlignToInputPixels)
@@ -902,17 +897,15 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->srcWin.dfYOff =
                 std::floor(psOptions->srcWin.dfYOff + 0.001);  // yoff
 
-            dfULX = psOptions->srcWin.dfXOff * adfGeoTransform[1] +
-                    adfGeoTransform[0];
-            dfULY = psOptions->srcWin.dfYOff * adfGeoTransform[5] +
-                    adfGeoTransform[3];
+            dfULX = psOptions->srcWin.dfXOff * gt[1] + gt[0];
+            dfULY = psOptions->srcWin.dfYOff * gt[5] + gt[3];
         }
 
         // Calculate xsize and ysize based on the (possibly snapped) ULX, ULY
         psOptions->srcWin.dfXSize =
-            (psOptions->dfLRX - dfULX) / adfGeoTransform[1];  // xsize
+            (psOptions->dfLRX - dfULX) / gt[1];  // xsize
         psOptions->srcWin.dfYSize =
-            (psOptions->dfLRY - dfULY) / adfGeoTransform[5];  // ysize
+            (psOptions->dfLRY - dfULY) / gt[5];  // ysize
 
         if (bAlignToInputPixels)
         {
@@ -1196,8 +1189,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     int nOYSize = 0;
 
     bool bHasSrcGeoTransform = false;
-    double adfSrcGeoTransform[6] = {};
-    if (poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None)
+    GDALGeoTransform srcGT;
+    if (poSrcDS->GetGeoTransform(srcGT) == CE_None)
         bHasSrcGeoTransform = true;
 
     const bool bOutsizeExplicitlySet =
@@ -1206,7 +1199,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0)
     {
         if (!(bHasSrcGeoTransform && psOptions->asGCPs.empty() &&
-              adfSrcGeoTransform[2] == 0.0 && adfSrcGeoTransform[4] == 0.0))
+              srcGT[2] == 0.0 && srcGT[4] == 0.0))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "The -tr option was used, but there's no geotransform or "
@@ -1214,12 +1207,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                      "rotated.  This configuration is not supported.");
             return nullptr;
         }
-        const double dfOXSize = psOptions->srcWin.dfXSize / psOptions->dfXRes *
-                                    adfSrcGeoTransform[1] +
-                                0.5;
-        const double dfOYSize = psOptions->srcWin.dfYSize / psOptions->dfYRes *
-                                    fabs(adfSrcGeoTransform[5]) +
-                                0.5;
+        const double dfOXSize =
+            psOptions->srcWin.dfXSize / psOptions->dfXRes * srcGT[1] + 0.5;
+        const double dfOYSize =
+            psOptions->srcWin.dfYSize / psOptions->dfYRes * fabs(srcGT[5]) +
+            0.5;
         if (dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
             dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize))
         {
@@ -1466,55 +1458,47 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     bool bHasDstGeoTransform = false;
-    double adfDstGeoTransform[6] = {};
+    GDALGeoTransform dstGT;
 
     if (bGotBounds)
     {
         bHasDstGeoTransform = true;
-        adfDstGeoTransform[0] = psOptions->adfULLR[0];
-        adfDstGeoTransform[1] =
-            (psOptions->adfULLR[2] - psOptions->adfULLR[0]) / nOXSize;
-        adfDstGeoTransform[2] = 0.0;
-        adfDstGeoTransform[3] = psOptions->adfULLR[1];
-        adfDstGeoTransform[4] = 0.0;
-        adfDstGeoTransform[5] =
-            (psOptions->adfULLR[3] - psOptions->adfULLR[1]) / nOYSize;
+        dstGT[0] = psOptions->adfULLR[0];
+        dstGT[1] = (psOptions->adfULLR[2] - psOptions->adfULLR[0]) / nOXSize;
+        dstGT[2] = 0.0;
+        dstGT[3] = psOptions->adfULLR[1];
+        dstGT[4] = 0.0;
+        dstGT[5] = (psOptions->adfULLR[3] - psOptions->adfULLR[1]) / nOYSize;
 
-        poVDS->SetGeoTransform(adfDstGeoTransform);
+        poVDS->SetGeoTransform(dstGT);
     }
 
     else if (bGotGeoTransform)
     {
         bHasDstGeoTransform = true;
-        for (int i = 0; i < 6; i++)
-            adfDstGeoTransform[i] = psOptions->adfGT[i];
-        poVDS->SetGeoTransform(adfDstGeoTransform);
+        poVDS->SetGeoTransform(psOptions->gt);
     }
 
     else if (bHasSrcGeoTransform && psOptions->asGCPs.empty())
     {
         bHasDstGeoTransform = true;
-        memcpy(adfDstGeoTransform, adfSrcGeoTransform, 6 * sizeof(double));
-        adfDstGeoTransform[0] +=
-            psOptions->srcWin.dfXOff * adfDstGeoTransform[1] +
-            psOptions->srcWin.dfYOff * adfDstGeoTransform[2];
-        adfDstGeoTransform[3] +=
-            psOptions->srcWin.dfXOff * adfDstGeoTransform[4] +
-            psOptions->srcWin.dfYOff * adfDstGeoTransform[5];
+        dstGT = srcGT;
+        dstGT[0] += psOptions->srcWin.dfXOff * dstGT[1] +
+                    psOptions->srcWin.dfYOff * dstGT[2];
+        dstGT[3] += psOptions->srcWin.dfXOff * dstGT[4] +
+                    psOptions->srcWin.dfYOff * dstGT[5];
 
         const double dfXRatio = psOptions->srcWin.dfXSize / nOXSize;
         const double dfYRatio = psOptions->srcWin.dfYSize / nOYSize;
-        GDALRescaleGeoTransform(adfDstGeoTransform, dfXRatio, dfYRatio);
+        dstGT.Rescale(dfXRatio, dfYRatio);
 
         if (psOptions->dfXRes != 0.0)
         {
-            adfDstGeoTransform[1] = psOptions->dfXRes;
-            adfDstGeoTransform[5] = (adfDstGeoTransform[5] > 0)
-                                        ? psOptions->dfYRes
-                                        : -psOptions->dfYRes;
+            dstGT[1] = psOptions->dfXRes;
+            dstGT[5] = (dstGT[5] > 0) ? psOptions->dfYRes : -psOptions->dfYRes;
         }
 
-        poVDS->SetGeoTransform(adfDstGeoTransform);
+        poVDS->SetGeoTransform(dstGT);
     }
 
     if (!psOptions->asGCPs.empty())
@@ -1577,10 +1561,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->dfXRes != 0.0 && !psOptions->osResampling.empty() &&
         !EQUALN(psOptions->osResampling.c_str(), "NEAR", 4))
     {
-        dstWin.dfXSize = psOptions->srcWin.dfXSize * adfSrcGeoTransform[1] /
-                         adfDstGeoTransform[1];
-        dstWin.dfYSize = psOptions->srcWin.dfYSize *
-                         fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
+        dstWin.dfXSize = psOptions->srcWin.dfXSize * srcGT[1] / dstGT[1];
+        dstWin.dfYSize = psOptions->srcWin.dfYSize * fabs(srcGT[5] / dstGT[5]);
     }
 
     GDALTranslateOptions::PixelLineWindow srcWinOri(psOptions->srcWin);
@@ -3385,9 +3367,9 @@ GDALTranslateOptionsNew(char **papszArgv,
 
         if (auto adfGT = argParser->present<std::vector<double>>("-a_gt"))
         {
-            CPLAssert(psOptions->adfGT.size() == adfGT->size());
+            CPLAssert(adfGT->size() == 6);
             for (size_t i = 0; i < adfGT->size(); ++i)
-                psOptions->adfGT[i] = (*adfGT)[i];
+                psOptions->gt[i] = (*adfGT)[i];
         }
 
         bool bOutsizeExplicitlySet = false;

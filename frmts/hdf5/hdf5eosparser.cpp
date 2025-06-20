@@ -645,8 +645,7 @@ bool HDF5EOSParser::GetSwathGeolocationFieldMetadata(
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-bool HDF5EOSParser::GridMetadata::GetGeoTransform(
-    double adfGeoTransform[6]) const
+bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (nProjCode >= 0 && osGridOrigin == "HE5_HDFE_GD_UL" &&
         adfUpperLeftPointMeters.size() == 2 &&
@@ -666,31 +665,27 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(
             return false;
         if (nProjCode == 0)  // GEO
         {
-            adfGeoTransform[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
-            adfGeoTransform[1] =
-                (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
-                 CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
-                nRasterXSize;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] =
-                (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
-                 CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
-                nRasterYSize;
+            gt[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
+            gt[1] = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
+                     CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
+                    nRasterXSize;
+            gt[2] = 0;
+            gt[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
+            gt[4] = 0;
+            gt[5] = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
+                     CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
+                    nRasterYSize;
         }
         else
         {
-            adfGeoTransform[0] = adfUpperLeftPointMeters[0];
-            adfGeoTransform[1] =
-                (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
-                nRasterXSize;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = adfUpperLeftPointMeters[1];
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] =
-                (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
-                nRasterYSize;
+            gt[0] = adfUpperLeftPointMeters[0];
+            gt[1] = (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
+                    nRasterXSize;
+            gt[2] = 0;
+            gt[3] = adfUpperLeftPointMeters[1];
+            gt[4] = 0;
+            gt[5] = (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
+                    nRasterYSize;
         }
         return true;
     }

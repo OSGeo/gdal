@@ -54,7 +54,7 @@ class KmlSuperOverlayReadDataset final : public GDALDataset
     CPLXMLNode *psRoot = nullptr;
     CPLXMLNode *psDocument = nullptr;
     std::unique_ptr<GDALDataset> poDSIcon{};
-    std::array<double, 6> adfGeoTransform = {0, 0, 0, 0, 0, 0};
+    GDALGeoTransform m_gt{};
 
     std::vector<std::unique_ptr<KmlSuperOverlayReadDataset>> m_apoOverviewDS{};
     bool bIsOvr = false;
@@ -89,7 +89,7 @@ class KmlSuperOverlayReadDataset final : public GDALDataset
     static int DetectTransparency(int rxsize, int rysize, int rx, int ry,
                                   int dxsize, int dysize, GDALDataset *poSrcDs);
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,

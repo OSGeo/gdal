@@ -26,20 +26,20 @@
 
 class PNMDataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // Image data file.
+    VSILFILE *fpImage = nullptr;  // Image data file.
 
-    bool bGeoTransformValid;
-    double adfGeoTransform[6];
+    bool bGeoTransformValid{};
+    GDALGeoTransform m_gt{};
 
     CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
 
     CPLErr Close() override;
 
   public:
-    PNMDataset();
+    PNMDataset() = default;
     ~PNMDataset() override;
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -47,20 +47,6 @@ class PNMDataset final : public RawDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 };
-
-/************************************************************************/
-/*                            PNMDataset()                             */
-/************************************************************************/
-
-PNMDataset::PNMDataset() : fpImage(nullptr), bGeoTransformValid(false)
-{
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-}
 
 /************************************************************************/
 /*                            ~PNMDataset()                            */
@@ -103,12 +89,12 @@ CPLErr PNMDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PNMDataset::GetGeoTransform(double *padfTransform)
+CPLErr PNMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
@@ -280,8 +266,8 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for world file.                                           */
     /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile(
-        poOpenInfo->pszFilename, ".wld", poDS->adfGeoTransform));
+    poDS->bGeoTransformValid = CPL_TO_BOOL(
+        GDALReadWorldFile(poOpenInfo->pszFilename, ".wld", poDS->m_gt.data()));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

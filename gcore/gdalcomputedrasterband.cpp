@@ -58,9 +58,9 @@ class GDALComputedDataset final : public GDALDataset
 
     ~GDALComputedDataset() override;
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        return m_oVRTDS.GetGeoTransform(padfGeoTransform);
+        return m_oVRTDS.GetGeoTransform(gt);
     }
 
     const OGRSpatialReference *GetSpatialRef() const override
@@ -130,11 +130,10 @@ GDALComputedDataset::GDALComputedDataset(const GDALComputedDataset &other)
         true);
     SetBand(1, poBand);
 
-    double adfGT[6];
-    if (const_cast<VRTDataset &>(other.m_oVRTDS).GetGeoTransform(adfGT) ==
-        CE_None)
+    GDALGeoTransform gt;
+    if (const_cast<VRTDataset &>(other.m_oVRTDS).GetGeoTransform(gt) == CE_None)
     {
-        m_oVRTDS.SetGeoTransform(adfGT);
+        m_oVRTDS.SetGeoTransform(gt);
     }
 
     if (const auto *poSRS =
@@ -171,10 +170,10 @@ GDALComputedDataset::GDALComputedDataset(
 
     if (auto poSrcDS = m_poBands.front()->GetDataset())
     {
-        double adfGT[6];
-        if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
         {
-            m_oVRTDS.SetGeoTransform(adfGT);
+            m_oVRTDS.SetGeoTransform(gt);
         }
 
         if (const auto *poSRS = poSrcDS->GetSpatialRef())
@@ -288,10 +287,10 @@ GDALComputedDataset::GDALComputedDataset(
 
     if (auto poSrcDS = m_poBands.front()->GetDataset())
     {
-        double adfGT[6];
-        if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
         {
-            m_oVRTDS.SetGeoTransform(adfGT);
+            m_oVRTDS.SetGeoTransform(gt);
         }
 
         if (const auto *poSRS = poSrcDS->GetSpatialRef())

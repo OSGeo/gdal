@@ -426,16 +426,16 @@ static void KEACopySpatialInfo(GDALDataset *pDataset,
 {
     kealib::KEAImageSpatialInfo *pSpatialInfo = pImageIO->getSpatialInfo();
 
-    double padfTransform[6];
-    if (pDataset->GetGeoTransform(padfTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (pDataset->GetGeoTransform(gt) == CE_None)
     {
         // convert back from GDAL's array format
-        pSpatialInfo->tlX = padfTransform[0];
-        pSpatialInfo->xRes = padfTransform[1];
-        pSpatialInfo->xRot = padfTransform[2];
-        pSpatialInfo->tlY = padfTransform[3];
-        pSpatialInfo->yRot = padfTransform[4];
-        pSpatialInfo->yRes = padfTransform[5];
+        pSpatialInfo->tlX = gt[0];
+        pSpatialInfo->xRes = gt[1];
+        pSpatialInfo->xRot = gt[2];
+        pSpatialInfo->tlY = gt[3];
+        pSpatialInfo->yRot = gt[4];
+        pSpatialInfo->yRes = gt[5];
     }
 
     const char *pszProjection = pDataset->GetProjectionRef();

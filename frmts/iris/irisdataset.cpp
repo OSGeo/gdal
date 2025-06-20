@@ -50,7 +50,7 @@ class IRISDataset final : public GDALPamDataset
     unsigned char nProjectionCode;
     float fNyquistVelocity;
     mutable OGRSpatialReference m_oSRS{};
-    mutable double adfGeoTransform[6];
+    mutable GDALGeoTransform m_gt{};
     mutable bool bHasLoadedProjection;
     void LoadProjection() const;
     static bool GeodesicCalculation(double fLat, double fLon, double fAngle,
@@ -65,7 +65,7 @@ class IRISDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -437,12 +437,6 @@ IRISDataset::IRISDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), static_cast<GByte>(0));
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -562,12 +556,12 @@ void IRISDataset::LoadProjection() const
         if (poTransform == nullptr || !poTransform->Transform(1, &dfX2, &dfY2))
             CPLError(CE_Failure, CPLE_None, "Transformation Failed");
 
-        adfGeoTransform[0] = dfX - (dfRadarLocX * (dfX2 - dfX));
-        adfGeoTransform[1] = dfX2 - dfX;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfY + (dfRadarLocY * (dfY2 - dfY));
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1 * (dfY2 - dfY);
+        m_gt[0] = dfX - (dfRadarLocX * (dfX2 - dfX));
+        m_gt[1] = dfX2 - dfX;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfY + (dfRadarLocY * (dfY2 - dfY));
+        m_gt[4] = 0.0;
+        m_gt[5] = -1 * (dfY2 - dfY);
 
         delete poTransform;
     }
@@ -578,23 +572,23 @@ void IRISDataset::LoadProjection() const
                          "degree", 0.0174532925199433);
         m_oSRS.SetAE(dfProjRefLat, dfProjRefLon, 0.0, 0.0);
 
-        adfGeoTransform[0] = -1 * (dfRadarLocX * dfScaleX);
-        adfGeoTransform[1] = dfScaleX;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfRadarLocY * dfScaleY;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1 * dfScaleY;
+        m_gt[0] = -1 * (dfRadarLocX * dfScaleX);
+        m_gt[1] = dfScaleX;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfRadarLocY * dfScaleY;
+        m_gt[4] = 0.0;
+        m_gt[5] = -1 * dfScaleY;
         // When the projection is different from Mercator or Azimutal
         // equidistant, we set a standard geotransform.
     }
     else
     {
-        adfGeoTransform[0] = -1 * (dfRadarLocX * dfScaleX);
-        adfGeoTransform[1] = dfScaleX;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfRadarLocY * dfScaleY;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1 * dfScaleY;
+        m_gt[0] = -1 * (dfRadarLocX * dfScaleX);
+        m_gt[1] = dfScaleX;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfRadarLocY * dfScaleY;
+        m_gt[4] = 0.0;
+        m_gt[5] = -1 * dfScaleY;
     }
 }
 
@@ -706,12 +700,12 @@ bool IRISDataset::GeodesicCalculation(double fLat, double fLon, double fAngle,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr IRISDataset::GetGeoTransform(double *padfTransform)
+CPLErr IRISDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (!bHasLoadedProjection)
         LoadProjection();
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

@@ -2809,7 +2809,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     int nXOff = 0;
     int nYOff = 0;
-    std::array<double, 6> gt;
+    GDALGeoTransform gt;
     double dfCenterX = 0;
     double dfCenterY = 0;
 
@@ -2889,10 +2889,9 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             if (includeCenterCoords)
             {
                 // Add 0.5 to pixel / line to move from pixel corner to cell center
-                GDALApplyGeoTransform(gt.data(),
-                                      static_cast<double>(iCol + nXOff) + 0.5,
-                                      static_cast<double>(iLine + nYOff) + 0.5,
-                                      &dfCenterX, &dfCenterY);
+                gt.Apply(static_cast<double>(iCol + nXOff) + 0.5,
+                         static_cast<double>(iLine + nYOff) + 0.5, &dfCenterX,
+                         &dfCenterY);
             }
 
             if (auto eErr = poExpression->Evaluate(); eErr != CE_None)

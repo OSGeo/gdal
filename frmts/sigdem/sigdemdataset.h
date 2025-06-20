@@ -63,7 +63,7 @@ class SIGDEMDataset final : public GDALPamDataset
 
     VSILFILE *fpImage;  // image data file.
 
-    double adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
     SIGDEMHeader sHeader;
@@ -76,7 +76,7 @@ class SIGDEMDataset final : public GDALPamDataset
     explicit SIGDEMDataset(const SIGDEMHeader &sHeaderIn);
     ~SIGDEMDataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *CreateCopy(const char *pszFilename,

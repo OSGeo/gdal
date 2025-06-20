@@ -425,7 +425,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
     std::string m_osRasterLayerName{};
     std::map<int, int> m_oMapGDALBandToGDBBandId{};
     bool m_bHasGeoTransform = false;
-    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     int m_nShiftBlockX =
         0;  // Offset to add to FileGDB col_nbr field to convert from GDAL block numbering to FileGDB one
     int m_nShiftBlockY =
@@ -558,7 +558,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return m_aosSubdatasets;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetMetadata(const char *pszDomain = "") override;

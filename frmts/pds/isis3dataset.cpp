@@ -43,7 +43,6 @@
 #endif
 
 #include <algorithm>
-#include <array>
 #include <map>
 #include <utility>  // pair
 #include <vector>
@@ -131,7 +130,7 @@ class ISIS3Dataset final : public RawDataset
     NASAKeywordHandler m_oKeywords{};
 
     bool m_bGotTransform{};
-    std::array<double, 6> m_adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
 
     bool m_bHasSrcNoData{};  // creation only
     double m_dfSrcNoData{};  // creation only
@@ -185,8 +184,8 @@ class ISIS3Dataset final : public RawDataset
 
     virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
-    virtual CPLErr SetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -1397,38 +1396,37 @@ CPLErr ISIS3Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::GetGeoTransform(double *padfTransform)
+CPLErr ISIS3Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_bGotTransform)
     {
-        memcpy(padfTransform, m_adfGeoTransform.data(), sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetGeoTransform(double *padfTransform)
+CPLErr ISIS3Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     if (eAccess == GA_ReadOnly)
-        return GDALPamDataset::SetGeoTransform(padfTransform);
-    if (padfTransform[1] <= 0.0 || padfTransform[1] != -padfTransform[5] ||
-        padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
+        return GDALPamDataset::SetGeoTransform(gt);
+    if (gt[1] <= 0.0 || gt[1] != -gt[5] || gt[2] != 0.0 || gt[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform with square pixels supported");
         return CE_Failure;
     }
     m_bGotTransform = true;
-    memcpy(m_adfGeoTransform.data(), padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     if (m_poExternalDS)
-        m_poExternalDS->SetGeoTransform(padfTransform);
+        m_poExternalDS->SetGeoTransform(m_gt);
     InvalidateLabel();
     return CE_None;
 }
@@ -2466,18 +2464,18 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         poDS->m_bGotTransform = true;
-        poDS->m_adfGeoTransform[0] = dfULXMap;
-        poDS->m_adfGeoTransform[1] = dfXDim;
-        poDS->m_adfGeoTransform[2] = 0.0;
-        poDS->m_adfGeoTransform[3] = dfULYMap;
-        poDS->m_adfGeoTransform[4] = 0.0;
-        poDS->m_adfGeoTransform[5] = dfYDim;
+        poDS->m_gt[0] = dfULXMap;
+        poDS->m_gt[1] = dfXDim;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = dfULYMap;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = dfYDim;
     }
 
     if (!poDS->m_bGotTransform)
     {
         poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, "cbw", poDS->m_adfGeoTransform.data()));
+            poOpenInfo->pszFilename, "cbw", poDS->m_gt.data()));
         if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
@@ -2488,7 +2486,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poDS->m_bGotTransform)
     {
         poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, "wld", poDS->m_adfGeoTransform.data()));
+            poOpenInfo->pszFilename, "wld", poDS->m_gt.data()));
         if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
@@ -2705,11 +2703,9 @@ void ISIS3Dataset::BuildLabel()
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    adfX[i] = m_adfGeoTransform[0] +
-                              (i % 2) * nRasterXSize * m_adfGeoTransform[1];
-                    adfY[i] = m_adfGeoTransform[3] +
-                              ((i == 0 || i == 3) ? 0 : 1) * nRasterYSize *
-                                  m_adfGeoTransform[5];
+                    adfX[i] = m_gt[0] + (i % 2) * nRasterXSize * m_gt[1];
+                    adfY[i] = m_gt[3] + ((i == 0 || i == 3) ? 0 : 1) *
+                                            nRasterYSize * m_gt[5];
                 }
                 if (oSRS.IsGeographic())
                 {
@@ -2984,10 +2980,10 @@ void ISIS3Dataset::BuildLabel()
         {
             const double dfLinearUnits = oSRS.GetLinearUnits();
             // Maybe we should deal differently with non meter units ?
-            const double dfRes = m_adfGeoTransform[1] * dfLinearUnits;
+            const double dfRes = m_gt[1] * dfLinearUnits;
             const double dfScale = dfDegToMeter / dfRes;
-            oMapping.Add("UpperLeftCornerX", m_adfGeoTransform[0]);
-            oMapping.Add("UpperLeftCornerY", m_adfGeoTransform[3]);
+            oMapping.Add("UpperLeftCornerX", m_gt[0]);
+            oMapping.Add("UpperLeftCornerY", m_gt[3]);
             oMapping.Add("PixelResolution/value", dfRes);
             oMapping.Add("PixelResolution/unit", "meters/pixel");
             oMapping.Add("Scale/value", dfScale);
@@ -2995,12 +2991,10 @@ void ISIS3Dataset::BuildLabel()
         }
         else if (!m_oSRS.IsEmpty() && oSRS.IsGeographic())
         {
-            const double dfScale = 1.0 / m_adfGeoTransform[1];
-            const double dfRes = m_adfGeoTransform[1] * dfDegToMeter;
-            oMapping.Add("UpperLeftCornerX",
-                         m_adfGeoTransform[0] * dfDegToMeter);
-            oMapping.Add("UpperLeftCornerY",
-                         m_adfGeoTransform[3] * dfDegToMeter);
+            const double dfScale = 1.0 / m_gt[1];
+            const double dfRes = m_gt[1] * dfDegToMeter;
+            oMapping.Add("UpperLeftCornerX", m_gt[0] * dfDegToMeter);
+            oMapping.Add("UpperLeftCornerY", m_gt[3] * dfDegToMeter);
             oMapping.Add("PixelResolution/value", dfRes);
             oMapping.Add("PixelResolution/unit", "meters/pixel");
             oMapping.Add("Scale/value", dfScale);
@@ -3008,9 +3002,9 @@ void ISIS3Dataset::BuildLabel()
         }
         else
         {
-            oMapping.Add("UpperLeftCornerX", m_adfGeoTransform[0]);
-            oMapping.Add("UpperLeftCornerY", m_adfGeoTransform[3]);
-            oMapping.Add("PixelResolution", m_adfGeoTransform[1]);
+            oMapping.Add("UpperLeftCornerX", m_gt[0]);
+            oMapping.Add("UpperLeftCornerY", m_gt[3]);
+            oMapping.Add("PixelResolution", m_gt[1]);
         }
     }
 
@@ -4216,13 +4210,10 @@ GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
         return nullptr;
     poDS->m_osFromFilename = poSrcUnderlyingDS->GetDescription();
 
-    double adfGeoTransform[6] = {0.0};
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-         adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None && gt != GDALGeoTransform())
     {
-        poDS->SetGeoTransform(adfGeoTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     auto poSrcSRS = poSrcDS->GetSpatialRef();

@@ -753,19 +753,19 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
     {
         if (!GDALGCPsToGeoTransform(static_cast<int>(aGCPs.size()),
                                     gdal::GCP::c_ptr(aGCPs),
-                                    georeferencing.m_adfGT, TRUE))
+                                    georeferencing.m_gt.data(), TRUE))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not compute geotransform with approximate match.");
             return false;
         }
-        if (std::fabs(georeferencing.m_adfGT[2]) <
-                1e-5 * std::fabs(georeferencing.m_adfGT[1]) &&
-            std::fabs(georeferencing.m_adfGT[4]) <
-                1e-5 * std::fabs(georeferencing.m_adfGT[5]))
+        if (std::fabs(georeferencing.m_gt[2]) <
+                1e-5 * std::fabs(georeferencing.m_gt[1]) &&
+            std::fabs(georeferencing.m_gt[4]) <
+                1e-5 * std::fabs(georeferencing.m_gt[5]))
         {
-            georeferencing.m_adfGT[2] = 0;
-            georeferencing.m_adfGT[4] = 0;
+            georeferencing.m_gt[2] = 0;
+            georeferencing.m_gt[4] = 0;
         }
 
         georeferencing.m_osID = pszId;
@@ -1288,8 +1288,8 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
     double dfClippingMaxX = 0;
     double dfClippingMaxY = 0;
     bool bClip = false;
-    double adfRasterGT[6] = {0, 1, 0, 0, 0, 1};
-    double adfInvGeoreferencingGT[6];  // from georeferenced to PDF coordinates
+    GDALGeoTransform rasterGT;
+    GDALGeoTransform invGT;  // from georeferenced to PDF coordinates
     if (pszGeoreferencingId)
     {
         auto iter =
@@ -1308,13 +1308,13 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
         dfY2 = georeferencing.m_bboxY2;
 
         bClip = true;
-        dfClippingMinX = APPLY_GT_X(georeferencing.m_adfGT, dfX1, dfY1);
-        dfClippingMinY = APPLY_GT_Y(georeferencing.m_adfGT, dfX1, dfY1);
-        dfClippingMaxX = APPLY_GT_X(georeferencing.m_adfGT, dfX2, dfY2);
-        dfClippingMaxY = APPLY_GT_Y(georeferencing.m_adfGT, dfX2, dfY2);
+        dfClippingMinX = APPLY_GT_X(georeferencing.m_gt, dfX1, dfY1);
+        dfClippingMinY = APPLY_GT_Y(georeferencing.m_gt, dfX1, dfY1);
+        dfClippingMaxX = APPLY_GT_X(georeferencing.m_gt, dfX2, dfY2);
+        dfClippingMaxY = APPLY_GT_Y(georeferencing.m_gt, dfX2, dfY2);
 
-        if (poDS->GetGeoTransform(adfRasterGT) != CE_None ||
-            adfRasterGT[2] != 0 || adfRasterGT[4] != 0 || adfRasterGT[5] > 0)
+        if (poDS->GetGeoTransform(rasterGT) != CE_None || rasterGT[2] != 0 ||
+            rasterGT[4] != 0 || rasterGT[5] > 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Raster has no geotransform or a rotated geotransform");
@@ -1330,11 +1330,10 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
             return false;
         }
 
-        CPL_IGNORE_RET_VAL(GDALInvGeoTransform(georeferencing.m_adfGT,
-                                               adfInvGeoreferencingGT));
+        CPL_IGNORE_RET_VAL(georeferencing.m_gt.GetInverse(invGT));
     }
-    const double dfRasterMinX = adfRasterGT[0];
-    const double dfRasterMaxY = adfRasterGT[3];
+    const double dfRasterMinX = rasterGT[0];
+    const double dfRasterMaxY = rasterGT[3];
 
     /* Does the source image has a color table ? */
     const auto nColorTableId = WriteColorTable(poDS.get());
@@ -1369,12 +1368,12 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
             if (bClip)
             {
                 /* Compute extent of block to write */
-                double dfBlockMinX = adfRasterGT[0] + nX * adfRasterGT[1];
+                double dfBlockMinX = rasterGT[0] + nX * rasterGT[1];
                 double dfBlockMaxX =
-                    adfRasterGT[0] + (nX + nReqWidth) * adfRasterGT[1];
+                    rasterGT[0] + (nX + nReqWidth) * rasterGT[1];
                 double dfBlockMinY =
-                    adfRasterGT[3] + (nY + nReqHeight) * adfRasterGT[5];
-                double dfBlockMaxY = adfRasterGT[3] + nY * adfRasterGT[5];
+                    rasterGT[3] + (nY + nReqHeight) * rasterGT[5];
+                double dfBlockMaxY = rasterGT[3] + nY * rasterGT[5];
 
                 // Clip the extent of the block with the extent of the main
                 // raster.
@@ -1394,40 +1393,39 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
                     /* Re-compute (x,y,width,height) subwindow of current raster
                      * from */
                     /* the extent of the clipped block */
-                    nX = static_cast<int>((dfIntersectMinX - dfRasterMinX) /
-                                              adfRasterGT[1] +
-                                          0.5);
+                    nX = static_cast<int>(
+                        (dfIntersectMinX - dfRasterMinX) / rasterGT[1] + 0.5);
                     nY = static_cast<int>((dfRasterMaxY - dfIntersectMaxY) /
-                                              (-adfRasterGT[5]) +
+                                              (-rasterGT[5]) +
                                           0.5);
                     nReqWidth =
                         static_cast<int>((dfIntersectMaxX - dfRasterMinX) /
-                                             adfRasterGT[1] +
+                                             rasterGT[1] +
                                          0.5) -
                         nX;
                     nReqHeight =
                         static_cast<int>((dfRasterMaxY - dfIntersectMinY) /
-                                             (-adfRasterGT[5]) +
+                                             (-rasterGT[5]) +
                                          0.5) -
                         nY;
 
                     if (nReqWidth > 0 && nReqHeight > 0)
                     {
-                        dfBlockMinX = adfRasterGT[0] + nX * adfRasterGT[1];
+                        dfBlockMinX = rasterGT[0] + nX * rasterGT[1];
                         dfBlockMaxX =
-                            adfRasterGT[0] + (nX + nReqWidth) * adfRasterGT[1];
+                            rasterGT[0] + (nX + nReqWidth) * rasterGT[1];
                         dfBlockMinY =
-                            adfRasterGT[3] + (nY + nReqHeight) * adfRasterGT[5];
-                        dfBlockMaxY = adfRasterGT[3] + nY * adfRasterGT[5];
+                            rasterGT[3] + (nY + nReqHeight) * rasterGT[5];
+                        dfBlockMaxY = rasterGT[3] + nY * rasterGT[5];
 
-                        double dfPDFX1 = APPLY_GT_X(adfInvGeoreferencingGT,
-                                                    dfBlockMinX, dfBlockMinY);
-                        double dfPDFY1 = APPLY_GT_Y(adfInvGeoreferencingGT,
-                                                    dfBlockMinX, dfBlockMinY);
-                        double dfPDFX2 = APPLY_GT_X(adfInvGeoreferencingGT,
-                                                    dfBlockMaxX, dfBlockMaxY);
-                        double dfPDFY2 = APPLY_GT_Y(adfInvGeoreferencingGT,
-                                                    dfBlockMaxX, dfBlockMaxY);
+                        double dfPDFX1 =
+                            APPLY_GT_X(invGT, dfBlockMinX, dfBlockMinY);
+                        double dfPDFY1 =
+                            APPLY_GT_Y(invGT, dfBlockMinX, dfBlockMinY);
+                        double dfPDFX2 =
+                            APPLY_GT_X(invGT, dfBlockMaxX, dfBlockMaxY);
+                        double dfPDFY2 =
+                            APPLY_GT_Y(invGT, dfBlockMaxX, dfBlockMaxY);
 
                         dfXPDFOff = dfPDFX1;
                         dfYPDFOff = dfPDFY1;
@@ -1548,10 +1546,10 @@ bool GDALPDFComposerWriter::SetupVectorGeoreferencing(
     const double dfX2 = georeferencing.m_bboxX2;
     const double dfY2 = georeferencing.m_bboxY2;
 
-    dfClippingMinX = APPLY_GT_X(georeferencing.m_adfGT, dfX1, dfY1);
-    dfClippingMinY = APPLY_GT_Y(georeferencing.m_adfGT, dfX1, dfY1);
-    dfClippingMaxX = APPLY_GT_X(georeferencing.m_adfGT, dfX2, dfY2);
-    dfClippingMaxY = APPLY_GT_Y(georeferencing.m_adfGT, dfX2, dfY2);
+    dfClippingMinX = APPLY_GT_X(georeferencing.m_gt, dfX1, dfY1);
+    dfClippingMinY = APPLY_GT_Y(georeferencing.m_gt, dfX1, dfY1);
+    dfClippingMaxX = APPLY_GT_X(georeferencing.m_gt, dfX2, dfY2);
+    dfClippingMaxY = APPLY_GT_Y(georeferencing.m_gt, dfX2, dfY2);
 
     auto poSRS = poLayer->GetSpatialRef();
     if (!poSRS)
@@ -1571,13 +1569,12 @@ bool GDALPDFComposerWriter::SetupVectorGeoreferencing(
                                       dfClippingMaxX, dfClippingMaxY);
     }
 
-    double adfInvGeoreferencingGT[6];  // from georeferenced to PDF coordinates
-    CPL_IGNORE_RET_VAL(GDALInvGeoTransform(
-        const_cast<double *>(georeferencing.m_adfGT), adfInvGeoreferencingGT));
-    adfMatrix[0] = adfInvGeoreferencingGT[0];
-    adfMatrix[1] = adfInvGeoreferencingGT[1];
-    adfMatrix[2] = adfInvGeoreferencingGT[3];
-    adfMatrix[3] = adfInvGeoreferencingGT[5];
+    GDALGeoTransform invGT;  // from georeferenced to PDF coordinates
+    CPL_IGNORE_RET_VAL(georeferencing.m_gt.GetInverse(invGT));
+    adfMatrix[0] = invGT[0];
+    adfMatrix[1] = invGT[1];
+    adfMatrix[2] = invGT[3];
+    adfMatrix[3] = invGT[5];
 
     return true;
 }

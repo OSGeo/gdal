@@ -1232,18 +1232,18 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PNGDataset::GetGeoTransform(double *padfTransform)
+CPLErr PNGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    LoadWorldFile();
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
 
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -2001,12 +2001,12 @@ void PNGDataset::LoadWorldFile()
 
     char *pszWldFilename = nullptr;
     bGeoTransformValid =
-        GDALReadWorldFile2(GetDescription(), nullptr, adfGeoTransform.data(),
+        GDALReadWorldFile2(GetDescription(), nullptr, m_gt,
                            oOvManager.GetSiblingFiles(), &pszWldFilename);
 
     if (!bGeoTransformValid)
         bGeoTransformValid =
-            GDALReadWorldFile2(GetDescription(), ".wld", adfGeoTransform.data(),
+            GDALReadWorldFile2(GetDescription(), ".wld", m_gt,
                                oOvManager.GetSiblingFiles(), &pszWldFilename);
 
     if (pszWldFilename)
@@ -2736,10 +2736,9 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     // Do we need a world file?
     if (CPLFetchBool(papszOptions, "WORLDFILE", false))
     {
-        double adfGeoTransform[6];
-
-        if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-            GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
+            GDALWriteWorldFile(pszFilename, "wld", gt.data());
     }
 
     // Re-open dataset and copy any auxiliary PAM information.
@@ -2921,14 +2920,13 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void *pvData)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PNGDataset::SetGeoTransform(double *padfTransform)
+CPLErr PNGDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     if (m_pszFilename)
     {
-        if (GDALWriteWorldFile(m_pszFilename, "wld", m_adfGeoTransform) ==
-            FALSE)
+        if (GDALWriteWorldFile(m_pszFilename, "wld", m_gt.data()) == FALSE)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Can't write world file.");
             return CE_Failure;

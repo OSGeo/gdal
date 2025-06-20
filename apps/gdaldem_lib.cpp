@@ -1870,7 +1870,7 @@ class GDALColorReliefDataset : public GDALDataset
         return pafSourceBuf != nullptr || panSourceBuf != nullptr;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -1933,9 +1933,9 @@ GDALColorReliefDataset::~GDALColorReliefDataset()
     CPLFree(pafSourceBuf);
 }
 
-CPLErr GDALColorReliefDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALColorReliefDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    return GDALGetGeoTransform(hSrcDS, padfGeoTransform);
+    return GDALDataset::FromHandle(hSrcDS)->GetGeoTransform(gt);
 }
 
 const OGRSpatialReference *GDALColorReliefDataset::GetSpatialRef() const
@@ -2207,14 +2207,13 @@ static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
         bOK &= VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString) > 0;
         VSIFree(pszEscapedString);
     }
-    double adfGT[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    if (GDALGetGeoTransform(hSrcDataset, adfGT) == CE_None)
+    GDALGeoTransform gt;
+    if (GDALDataset::FromHandle(hSrcDataset)->GetGeoTransform(gt) == CE_None)
     {
         bOK &= VSIFPrintfL(fp,
                            "  <GeoTransform> %.16g, %.16g, %.16g, "
                            "%.16g, %.16g, %.16g</GeoTransform>\n",
-                           adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4],
-                           adfGT[5]) > 0;
+                           gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]) > 0;
     }
 
     int nBlockXSize = 0;
@@ -2469,7 +2468,7 @@ template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
                apafSourceBuf[2] != nullptr;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -2584,9 +2583,9 @@ template <class T> GDALGeneric3x3Dataset<T>::~GDALGeneric3x3Dataset()
 }
 
 template <class T>
-CPLErr GDALGeneric3x3Dataset<T>::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALGeneric3x3Dataset<T>::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    return GDALGetGeoTransform(hSrcDS, padfGeoTransform);
+    return GDALDataset::FromHandle(hSrcDS)->GetGeoTransform(gt);
 }
 
 template <class T>
@@ -3679,8 +3678,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         const auto poSrcSRS = poSrcDS->GetSpatialRef();
         if (poSrcSRS && poSrcSRS->IsGeographic())
         {
-            double adfGT[6];
-            if (poSrcDS->GetGeoTransform(adfGT) == CE_None)
+            GDALGeoTransform gt;
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
                 const double dfAngUnits = poSrcSRS->GetAngularUnits();
                 // Rough conversion of angular units to linear units.
@@ -3688,7 +3687,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     dfAngUnits * poSrcSRS->GetSemiMajor() / zunit;
                 // Take the center latitude to compute the xscale.
                 const double dfMeanLat =
-                    (adfGT[3] + nYSize * adfGT[5] / 2) * dfAngUnits;
+                    (gt[3] + nYSize * gt[5] / 2) * dfAngUnits;
                 if (std::fabs(dfMeanLat) / M_PI * 180 > 80)
                 {
                     CPLError(

@@ -86,7 +86,7 @@ class GDALDAASDataset final : public GDALDataset
     CPLString m_osSRSType{};
     CPLString m_osSRSValue{};
     bool m_bGotGeoTransform = false;
-    std::array<double, 6> m_adfGeoTransform{{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     bool m_bRequestInGeoreferencedCoordinates = false;
     GDALDataType m_eDT = GDT_Unknown;
     int m_nActualBitDepth = 0;
@@ -137,7 +137,7 @@ class GDALDAASDataset final : public GDALDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -233,14 +233,10 @@ GDALDAASDataset::GDALDAASDataset(GDALDAASDataset *poParentDS, int iOvrLevel)
 {
     nRasterXSize = m_poParentDS->nRasterXSize >> iOvrLevel;
     nRasterYSize = m_poParentDS->nRasterYSize >> iOvrLevel;
-    m_adfGeoTransform[0] = m_poParentDS->m_adfGeoTransform[0];
-    m_adfGeoTransform[1] = m_poParentDS->m_adfGeoTransform[1] *
-                           m_poParentDS->nRasterXSize / nRasterXSize;
-    m_adfGeoTransform[2] = m_poParentDS->m_adfGeoTransform[2];
-    m_adfGeoTransform[3] = m_poParentDS->m_adfGeoTransform[3];
-    m_adfGeoTransform[4] = m_poParentDS->m_adfGeoTransform[4];
-    m_adfGeoTransform[5] = m_poParentDS->m_adfGeoTransform[5] *
-                           m_poParentDS->nRasterYSize / nRasterYSize;
+    m_gt = m_poParentDS->m_gt;
+    m_gt.Rescale(static_cast<double>(m_poParentDS->nRasterXSize) / nRasterXSize,
+                 static_cast<double>(m_poParentDS->nRasterYSize) /
+                     nRasterYSize);
 
     InstantiateBands();
 
@@ -308,10 +304,9 @@ int GDALDAASDataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr GDALDAASDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALDAASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    std::copy_n(m_adfGeoTransform.begin(), m_adfGeoTransform.size(),
-                padfTransform);
+    gt = m_gt;
     return (m_bGotGeoTransform) ? CE_None : CE_Failure;
 }
 
@@ -842,7 +837,7 @@ bool GDALDAASDataset::GetImageMetadata()
         m_bGotGeoTransform = true;
         for (int i = 0; i < 6; i++)
         {
-            m_adfGeoTransform[i] = oGTArray[i].ToDouble();
+            m_gt[i] = oGTArray[i].ToDouble();
         }
     }
 
@@ -1171,12 +1166,11 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(hTransformArg);
-    double adfGeoTransform[6];
     double adfExtent[4];
     int nXSize, nYSize;
 
     if (GDALSuggestedWarpOutput2(this, psInfo->pfnTransform, hTransformArg,
-                                 adfGeoTransform, &nXSize, &nYSize, adfExtent,
+                                 m_gt.data(), &nXSize, &nYSize, adfExtent,
                                  0) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1188,7 +1182,6 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
 
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
-    std::copy_n(adfGeoTransform, 6, m_adfGeoTransform.begin());
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
     m_osSRSValue = std::move(osTargetEPSGCode);
@@ -2072,14 +2065,12 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     if (poGDS->m_bRequestInGeoreferencedCoordinates)
     {
         double dfULX, dfULY;
-        GDALApplyGeoTransform(poGDS->m_adfGeoTransform.data(), nULX, nULY,
-                              &dfULX, &dfULY);
+        GDALApplyGeoTransform(poGDS->m_gt.data(), nULX, nULY, &dfULX, &dfULY);
         oUL.Add("x", dfULX);
         oUL.Add("y", dfULY);
 
         double dfLRX, dfLRY;
-        GDALApplyGeoTransform(poGDS->m_adfGeoTransform.data(), nLRX, nLRY,
-                              &dfLRX, &dfLRY);
+        GDALApplyGeoTransform(poGDS->m_gt.data(), nLRX, nLRY, &dfLRX, &dfLRY);
         oLR.Add("x", dfLRX);
         oLR.Add("y", dfLRY);
     }
@@ -2112,8 +2103,8 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     CPLJSONObject oStepTargetModel;
     if (poGDS->m_bRequestInGeoreferencedCoordinates)
     {
-        oStepTargetModel.Add("x", poGDS->m_adfGeoTransform[1]);
-        oStepTargetModel.Add("y", fabs(poGDS->m_adfGeoTransform[5]));
+        oStepTargetModel.Add("x", poGDS->m_gt[1]);
+        oStepTargetModel.Add("y", fabs(poGDS->m_gt[5]));
     }
     else
     {
