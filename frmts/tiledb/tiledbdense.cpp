@@ -285,9 +285,12 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         const uint64_t nBandIdx = poGDS->nBandStart + nBand - 1;
         std::vector<uint64_t> oaSubarray = {
-            nBandIdx,        nBandIdx,
-            (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1,
-            (uint64_t)nXOff, (uint64_t)nXOff + nXSize - 1};
+            nBandIdx,
+            nBandIdx,
+            static_cast<uint64_t>(nYOff),
+            static_cast<uint64_t>(nYOff) + nYSize - 1,
+            static_cast<uint64_t>(nXOff),
+            static_cast<uint64_t>(nXOff) + nXSize - 1};
         if (poGDS->eIndexMode == PIXEL)
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
@@ -751,8 +754,10 @@ CPLErr TileDBRasterDataset::IRasterIO(
          nBandSpace == nBufYSize * nLineSpace))
     {
         std::vector<uint64_t> oaSubarray = {
-            (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
-            (uint64_t)nXOff + nXSize - 1};
+            static_cast<uint64_t>(nYOff),
+            static_cast<uint64_t>(nYOff) + nYSize - 1,
+            static_cast<uint64_t>(nXOff),
+            static_cast<uint64_t>(nXOff) + nXSize - 1};
 
         try
         {
@@ -1190,7 +1195,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
                 fbuf.open(psPam->pszPamFilename, std::ios::in);
                 std::istream is(&fbuf);
                 osMetaDoc.resize(nBytes);
-                is.read((char *)osMetaDoc.data(), nBytes);
+                is.read(&osMetaDoc[0], nBytes);
                 fbuf.close();
                 psTree = CPLParseXMLString(osMetaDoc);
             }
@@ -2262,8 +2267,8 @@ bool TileDBRasterDataset::DeferredCreate(bool bCreateArray)
         // this driver enforces that all subdatasets are the same size
         tiledb::Domain domain(*m_ctx);
 
-        uint64_t w = (uint64_t)nBlocksX * nBlockXSize - 1;
-        uint64_t h = (uint64_t)nBlocksY * nBlockYSize - 1;
+        const uint64_t w = static_cast<uint64_t>(nBlocksX) * nBlockXSize - 1;
+        const uint64_t h = static_cast<uint64_t>(nBlocksY) * nBlockYSize - 1;
 
         auto d1 = tiledb::Dimension::create<uint64_t>(*m_ctx, "X", {0, w},
                                                       uint64_t(nBlockXSize));
@@ -2431,8 +2436,10 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                 int bHasNoData = FALSE;
                 const double dfNoData = poBand->GetNoDataValue(&bHasNoData);
 
-                if ((poSubDS->GetRasterXSize() != (int)nSubXSize) ||
-                    (poSubDS->GetRasterYSize() != (int)nSubYSize) ||
+                if ((poSubDS->GetRasterXSize() !=
+                     static_cast<int>(nSubXSize)) ||
+                    (poSubDS->GetRasterYSize() !=
+                     static_cast<int>(nSubYSize)) ||
                     (nBlockXSize != poDstDS->nBlockXSize) ||
                     (nBlockYSize != poDstDS->nBlockYSize))
                 {
