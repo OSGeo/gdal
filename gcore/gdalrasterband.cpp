@@ -9635,18 +9635,15 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
                   std::make_shared<GDALDimensionWeakIndexingVar>(
                       "/", "X", osTypeX, osDirectionX, nXSize)};
 
-        double adfGeoTransform[6];
-        if (m_poDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-            adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0)
+        GDALGeoTransform gt;
+        if (m_poDS->GetGeoTransform(gt) == CE_None && gt[2] == 0 && gt[4] == 0)
         {
-            m_varX = GDALMDArrayRegularlySpaced::Create(
-                "/", "X", m_dims[1], adfGeoTransform[0], adfGeoTransform[1],
-                0.5);
+            m_varX = GDALMDArrayRegularlySpaced::Create("/", "X", m_dims[1],
+                                                        gt[0], gt[1], 0.5);
             m_dims[1]->SetIndexingVariable(m_varX);
 
-            m_varY = GDALMDArrayRegularlySpaced::Create(
-                "/", "Y", m_dims[0], adfGeoTransform[3], adfGeoTransform[5],
-                0.5);
+            m_varY = GDALMDArrayRegularlySpaced::Create("/", "Y", m_dims[0],
+                                                        gt[3], gt[5], 0.5);
             m_dims[0]->SetIndexingVariable(m_varY);
         }
     }

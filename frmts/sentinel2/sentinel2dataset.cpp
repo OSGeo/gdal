@@ -4015,14 +4015,8 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
         CPLDebug("SENTINEL2", "Invalid EPSG code %d", nSubDSEPSGCode);
     }
 
-    double adfGeoTransform[6] = {0};
-    adfGeoTransform[0] = dfMinX;
-    adfGeoTransform[1] = nSubDSPrecision;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = dfMaxY;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = -nSubDSPrecision;
-    poDS->SetGeoTransform(adfGeoTransform);
+    poDS->SetGeoTransform(GDALGeoTransform(dfMinX, nSubDSPrecision, 0, dfMaxY,
+                                           0, -nSubDSPrecision));
     poDS->GDALDataset::SetMetadataItem("COMPRESSION", "JPEG2000",
                                        "IMAGE_STRUCTURE");
     if (bIsPreview || bIsTCI)

@@ -887,8 +887,8 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     }
                     else if (osArgName == "geotransform")
                     {
-                        std::array<double, 6> gt;
-                        if (GetDataset()->GetGeoTransform(gt.data()) != CE_None)
+                        GDALGeoTransform gt;
+                        if (GetDataset()->GetGeoTransform(gt) != CE_None)
                         {
                             // Do not fail here because the argument is most
                             // likely not needed by the pixel function. If it
@@ -1521,19 +1521,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             PyTuple_SetItem(pyArgs, 7, PyLong_FromLong(nRasterYSize));
             PyTuple_SetItem(pyArgs, 8, PyLong_FromLong(nBufferRadius));
 
-            double adfGeoTransform[6];
-            adfGeoTransform[0] = 0;
-            adfGeoTransform[1] = 1;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = 0;
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] = 1;
+            GDALGeoTransform gt;
             if (GetDataset())
-                GetDataset()->GetGeoTransform(adfGeoTransform);
+                GetDataset()->GetGeoTransform(gt);
             PyObject *pyGT = PyTuple_New(6);
             for (int i = 0; i < 6; i++)
-                PyTuple_SetItem(pyGT, i,
-                                PyFloat_FromDouble(adfGeoTransform[i]));
+                PyTuple_SetItem(pyGT, i, PyFloat_FromDouble(gt[i]));
             PyTuple_SetItem(pyArgs, 9, pyGT);
 
             // Prepare kwargs

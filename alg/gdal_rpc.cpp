@@ -1785,7 +1785,8 @@ static bool GDALRPCOpenDEM(GDALRPCTransformInfo *psTransform)
         }
 
         if (psTransform->poDS->GetGeoTransform(
-                psTransform->adfDEMGeoTransform) == CE_None &&
+                *reinterpret_cast<GDALGeoTransform *>(
+                    psTransform->adfDEMGeoTransform)) == CE_None &&
             GDALInvGeoTransform(psTransform->adfDEMGeoTransform,
                                 psTransform->adfDEMReverseGeoTransform))
         {

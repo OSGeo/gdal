@@ -580,7 +580,7 @@ class DatasetWithErrorInFlushCache : public GDALDataset
         return CE_None;
     }
 
-    virtual CPLErr SetGeoTransform(double *) override
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &) override
     {
         return CE_None;
     }

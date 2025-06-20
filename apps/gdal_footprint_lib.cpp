@@ -14,7 +14,6 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
-#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -697,11 +696,10 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
 class GeoTransformCoordinateTransformation final
     : public OGRCoordinateTransformation
 {
-    const std::array<double, 6> m_gt;
+    const GDALGeoTransform &m_gt;
 
   public:
-    explicit GeoTransformCoordinateTransformation(
-        const std::array<double, 6> &gt)
+    explicit GeoTransformCoordinateTransformation(const GDALGeoTransform &gt)
         : m_gt(gt)
     {
     }
@@ -978,21 +976,13 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
     }
 
     std::unique_ptr<OGRCoordinateTransformation> poCT_GT;
-    std::array<double, 6> adfGeoTransform{{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
-    if (psOptions->bOutCSGeoref &&
-        poSrcDS->GetGeoTransform(adfGeoTransform.data()) == CE_None)
+    GDALGeoTransform gt;
+    if (psOptions->bOutCSGeoref && poSrcDS->GetGeoTransform(gt) == CE_None)
     {
         auto poMaskBand = apoSrcMaskBands[0];
-        adfGeoTransform[1] *=
-            double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
-        adfGeoTransform[2] *=
-            double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
-        adfGeoTransform[4] *=
-            double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
-        adfGeoTransform[5] *=
-            double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
-        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(
-            adfGeoTransform);
+        gt.Rescale(double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize(),
+                   double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize());
+        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(gt);
     }
     else if (psOptions->bOutCSGeorefRequested)
     {
@@ -1006,14 +996,11 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         // Transform from overview pixel coordinates to full resolution
         // pixel coordinates
         auto poMaskBand = apoSrcMaskBands[0];
-        adfGeoTransform[1] =
-            double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] =
-            double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
-        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(
-            adfGeoTransform);
+        gt[1] = double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
+        gt[2] = 0;
+        gt[4] = 0;
+        gt[5] = double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
+        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(gt);
     }
 
     std::unique_ptr<GDALRasterBand> poMaskForRasterize;

@@ -992,7 +992,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                         }
                         if (bGeoTransformValid)
                         {
-                            oJP2MD.SetGeoTransform(adfGeoTransform);
+                            oJP2MD.SetGeoTransform(m_gt);
                         }
                     }
 
@@ -1126,20 +1126,18 @@ JP2OPJLikeDataset<CODEC, BASE>::SetSpatialRef(const OGRSpatialReference *poSRS)
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetGeoTransform(double *padfGeoTransform)
+CPLErr
+JP2OPJLikeDataset<CODEC, BASE>::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (eAccess == GA_Update)
     {
         this->bRewrite = TRUE;
-        memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
-        bGeoTransformValid =
-            !(adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0 &&
-              adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0 &&
-              adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0);
+        m_gt = gt;
+        bGeoTransformValid = m_gt != GDALGeoTransform();
         return CE_None;
     }
     else
-        return GDALJP2AbstractDataset::SetGeoTransform(padfGeoTransform);
+        return GDALJP2AbstractDataset::SetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -2460,11 +2458,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetSpatialRef(poSRS);
             }
-            double adfGeoTransform[6];
-            if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            GDALGeoTransform gt;
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
-                oJP2MD.SetGeoTransform(adfGeoTransform);
+                oJP2MD.SetGeoTransform(gt);
                 if (poSRS && !poSRS->IsEmpty())
                 {
                     bGeoreferencingCompatOfGMLJP2 =
@@ -2647,11 +2645,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
             /* Copy essential metadata */
 
-            double adfGeoTransform[6];
-
-            if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            GDALGeoTransform gt;
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
-                poDS->SetGeoTransform(adfGeoTransform);
+                poDS->SetGeoTransform(gt);
             }
 
             const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();

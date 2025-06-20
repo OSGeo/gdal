@@ -138,12 +138,10 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetProjection(poTmpDS->GetProjectionRef());
 
     // Transfer geotransform
-    double padfTransform[6];
-    CPLErr transformOk = poTmpDS->GetGeoTransform(padfTransform);
-
-    if (transformOk == CE_None)
+    GDALGeoTransform gt;
+    if (poTmpDS->GetGeoTransform(gt) == CE_None)
     {
-        poDS->SetGeoTransform(padfTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     // Transfer GCPs

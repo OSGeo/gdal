@@ -16,6 +16,7 @@
 #include "hdf5_api.h"
 
 #include "cpl_json.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
 #include <map>
@@ -65,7 +66,7 @@ class HDF5EOSParser
         std::vector<double>
             adfLowerRightPointMeters{};  // e.g (0.000000,4447802.078667)
 
-        bool GetGeoTransform(double adfGeoTransform[6]) const;
+        bool GetGeoTransform(GDALGeoTransform &gt) const;
         std::unique_ptr<OGRSpatialReference> GetSRS() const;
     };
 

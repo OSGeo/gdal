@@ -40,8 +40,6 @@ class SAFEDataset final : public GDALPamDataset
     GDAL_GCP *pasGCPList = nullptr;
     OGRSpatialReference m_oGCPSRS{};
     char **papszSubDatasets = nullptr;
-    double adfGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
-    bool bHaveGeoTransform = false;
     char **papszExtraFiles = nullptr;
     int m_nSubDSNum = 0;
 
@@ -64,8 +62,6 @@ class SAFEDataset final : public GDALPamDataset
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-
-    virtual CPLErr GetGeoTransform(double *) override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

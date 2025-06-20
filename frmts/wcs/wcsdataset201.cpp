@@ -133,12 +133,10 @@ std::vector<double> WCSDataset201::GetNativeExtent(int nXOff, int nYOff,
 {
     std::vector<double> extent;
     // WCS 2.0 extents are the outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] + (nXOff)*adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff + nYSize) * adfGeoTransform[5]);
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] + (nYOff)*adfGeoTransform[5]);
+    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
+    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
     return extent;
 }
 
@@ -201,9 +199,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
     }
     /*
     std::string a = CPLString().Printf(
-        "%.17g", MAX(adfGeoTransform[0], extent[0]));
+        "%.17g", MAX(m_gt[0], extent[0]));
     std::string b = CPLString().Printf(
-        "%.17g", MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1],
+        "%.17g", MIN(m_gt[0] + nRasterXSize * m_gt[1],
     extent[2]));
     */
 
@@ -225,9 +223,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
     }
     /*
     a = CPLString().Printf(
-        "%.17g", MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5],
+        "%.17g", MAX(m_gt[3] + nRasterYSize * m_gt[5],
     extent[1])); b = CPLString().Printf(
-        "%.17g", MIN(adfGeoTransform[3], extent[3]));
+        "%.17g", MIN(m_gt[3], extent[3]));
     */
 
     request +=
@@ -266,9 +264,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
         // scaling is expressed in grid axes
         if (CPLGetXMLBoolean(psService, "UseScaleFactor"))
         {
-            double fx = fabs((extent[2] - extent[0]) / adfGeoTransform[1] /
+            double fx = fabs((extent[2] - extent[0]) / m_gt[1] /
                              ((double)nBufXSize + 0.5));
-            double fy = fabs((extent[3] - extent[1]) / adfGeoTransform[5] /
+            double fy = fabs((extent[3] - extent[1]) / m_gt[5] /
                              ((double)nBufYSize + 0.5));
             tmp.Printf("&SCALEFACTOR=%.15g", MIN(fx, fy));
         }

@@ -358,7 +358,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     // Inherit GeoTransform from source if not explicitly defined in VRT
     if (iOvrLevel < 0 && !CPLGetXMLNode(psTree, "GeoTransform"))
     {
-        if (m_poSrcDS->GetGeoTransform(m_adfGeoTransform) == CE_None)
+        if (m_poSrcDS->GetGeoTransform(m_gt) == CE_None)
             m_bGeoTransformSet = true;
     }
 
@@ -404,20 +404,14 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     if (iOvrLevel >= 0 && poParentDS->m_bGeoTransformSet)
     {
         m_bGeoTransformSet = true;
-        m_adfGeoTransform[0] = poParentDS->m_adfGeoTransform[0];
-        m_adfGeoTransform[1] = poParentDS->m_adfGeoTransform[1];
-        m_adfGeoTransform[2] = poParentDS->m_adfGeoTransform[2];
-        m_adfGeoTransform[3] = poParentDS->m_adfGeoTransform[3];
-        m_adfGeoTransform[4] = poParentDS->m_adfGeoTransform[4];
-        m_adfGeoTransform[5] = poParentDS->m_adfGeoTransform[5];
-
-        m_adfGeoTransform[1] *=
+        m_gt = poParentDS->m_gt;
+        m_gt[1] *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_adfGeoTransform[2] *=
+        m_gt[2] *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
-        m_adfGeoTransform[4] *=
+        m_gt[4] *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_adfGeoTransform[5] *=
+        m_gt[5] *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
     }
 
@@ -1329,15 +1323,10 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
     const double dfSrcXSize = nBufXSize;
     const double dfSrcYSize = nBufYSize;
 
-    double adfSrcGT[6];
-    if (m_poSrcDS->GetGeoTransform(adfSrcGT) != CE_None)
+    GDALGeoTransform srcGT;
+    if (m_poSrcDS->GetGeoTransform(srcGT) != CE_None)
     {
-        adfSrcGT[0] = 0;
-        adfSrcGT[1] = 1;
-        adfSrcGT[2] = 0;
-        adfSrcGT[3] = 0;
-        adfSrcGT[4] = 0;
-        adfSrcGT[5] = 1;
+        srcGT = GDALGeoTransform();
     }
 
     GDALDataType eLastDT = eFirstDT;
@@ -1391,7 +1380,7 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
                 abyInput.data(), abyInput.size(), oStep.eInDT, oStep.nInBands,
                 oStep.adfInNoData.data(), abyOutput.data(), abyOutput.size(),
                 oStep.eOutDT, oStep.nOutBands, oStep.adfOutNoData.data(),
-                dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, adfSrcGT,
+                dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, srcGT.data(),
                 m_osVRTPath.c_str(),
                 /*papszExtra=*/nullptr) != CE_None)
         {
