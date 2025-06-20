@@ -960,3 +960,37 @@ def test_vsizip_sozip_of_file_bigger_than_4GB():
         assert gdal.VSIFReadL(1, 2, f) == b"\x00"
     finally:
         gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/12572
+
+
+@pytest.mark.require_curl()
+def test_vsizip_vsicurl_error():
+
+    gdal.VSIErrorReset()
+    gdal.VSIStatL(
+        "/vsicurl/https://expired-rsa-dv.ssl.com/",
+        gdal.VSI_STAT_EXISTS_FLAG
+        | gdal.VSI_STAT_NATURE_FLAG
+        | gdal.VSI_STAT_SIZE_FLAG
+        | gdal.VSI_STAT_SET_ERROR_FLAG,
+    )
+    if "server certificate verification failed" not in gdal.VSIGetLastErrorMsg():
+        pytest.skip(
+            "Expected 'server certificate verification failed' in "
+            + gdal.VSIGetLastErrorMsg()
+        )
+
+    gdal.VSICurlClearCache()
+
+    gdal.VSIErrorReset()
+    gdal.VSIStatL(
+        "/vsizip/{/vsicurl/https://expired-rsa-dv.ssl.com/}",
+        gdal.VSI_STAT_EXISTS_FLAG
+        | gdal.VSI_STAT_NATURE_FLAG
+        | gdal.VSI_STAT_SIZE_FLAG
+        | gdal.VSI_STAT_SET_ERROR_FLAG,
+    )
+    assert "server certificate verification failed" in gdal.VSIGetLastErrorMsg()

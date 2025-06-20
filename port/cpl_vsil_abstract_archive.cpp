@@ -331,7 +331,8 @@ static std::string CompactFilename(const char *pszArchiveInFileNameIn)
 
 char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                                                  CPLString &osFileInArchive,
-                                                 int bCheckMainFileExists)
+                                                 bool bCheckMainFileExists,
+                                                 bool bSetError)
 {
     // TODO(schwehr): Cleanup redundant calls to GetPrefix and strlen.
     if (strcmp(pszFilename, GetPrefix()) == 0)
@@ -381,9 +382,10 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             VSIStatBufL statBuf;
             VSIFilesystemHandler *poFSHandler =
                 VSIFileManager::GetHandler(archiveFilename);
-            if (poFSHandler->Stat(archiveFilename, &statBuf,
-                                  VSI_STAT_EXISTS_FLAG |
-                                      VSI_STAT_NATURE_FLAG) == 0 &&
+            int nFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG;
+            if (bSetError)
+                nFlags |= VSI_STAT_SET_ERROR_FLAG;
+            if (poFSHandler->Stat(archiveFilename, &statBuf, nFlags) == 0 &&
                 !VSI_ISDIR(statBuf.st_mode))
             {
                 bArchiveFileExists = true;
@@ -672,12 +674,14 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
 /************************************************************************/
 
 int VSIArchiveFilesystemHandler::Stat(const char *pszFilename,
-                                      VSIStatBufL *pStatBuf, int /* nFlags */)
+                                      VSIStatBufL *pStatBuf, int nFlags)
 {
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     CPLString osFileInArchive;
-    char *archiveFilename = SplitFilename(pszFilename, osFileInArchive, TRUE);
+    char *archiveFilename =
+        SplitFilename(pszFilename, osFileInArchive, true,
+                      (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
     if (archiveFilename == nullptr)
         return -1;
 
@@ -755,7 +759,8 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
                                               int nMaxFiles)
 {
     CPLString osInArchiveSubDir;
-    char *archiveFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
+    char *archiveFilename =
+        SplitFilename(pszDirname, osInArchiveSubDir, true, true);
     if (archiveFilename == nullptr)
         return nullptr;
 
