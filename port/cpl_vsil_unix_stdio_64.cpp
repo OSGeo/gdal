@@ -145,6 +145,8 @@ static_assert(sizeof(VSIStatBufL::st_size) == sizeof(vsi_l_offset),
 /* ==================================================================== */
 /************************************************************************/
 
+struct VSIDIRUnixStdio;
+
 class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioFilesystemHandler)
@@ -182,6 +184,10 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 
     VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
                     const char *const *papszOptions) override;
+
+    static std::unique_ptr<VSIDIRUnixStdio>
+    OpenDirInternal(const char *pszPath, int nRecurseDepth,
+                    const char *const *papszOptions);
 
 #ifdef HAS_CASE_INSENSITIVE_FILE_SYSTEM
     std::string
@@ -1027,41 +1033,48 @@ bool VSIUnixStdioFilesystemHandler::SupportsRandomWrite(
 
 struct VSIDIRUnixStdio final : public VSIDIR
 {
+    struct DIRCloser
+    {
+        void operator()(DIR *d)
+        {
+            if (d)
+                closedir(d);
+        }
+    };
+
     CPLString osRootPath{};
     CPLString osBasePath{};
-    DIR *m_psDir = nullptr;
+    std::unique_ptr<DIR, DIRCloser> m_psDir{};
     int nRecurseDepth = 0;
     VSIDIREntry entry{};
-    std::vector<VSIDIRUnixStdio *> aoStackSubDir{};
-    VSIUnixStdioFilesystemHandler *poFS = nullptr;
+    std::vector<std::unique_ptr<VSIDIR>> aoStackSubDir{};
     std::string m_osFilterPrefix{};
     bool m_bNameAndTypeOnly = false;
 
-    explicit VSIDIRUnixStdio(VSIUnixStdioFilesystemHandler *poFSIn)
-        : poFS(poFSIn)
-    {
-    }
-
-    ~VSIDIRUnixStdio();
-
     const VSIDIREntry *NextDirEntry() override;
-
-    VSIDIRUnixStdio(const VSIDIRUnixStdio &) = delete;
-    VSIDIRUnixStdio &operator=(const VSIDIRUnixStdio &) = delete;
 };
 
 /************************************************************************/
-/*                        ~VSIDIRUnixStdio()                            */
+/*                        OpenDirInternal()                             */
 /************************************************************************/
 
-VSIDIRUnixStdio::~VSIDIRUnixStdio()
+/* static */
+std::unique_ptr<VSIDIRUnixStdio> VSIUnixStdioFilesystemHandler::OpenDirInternal(
+    const char *pszPath, int nRecurseDepth, const char *const *papszOptions)
 {
-    while (!aoStackSubDir.empty())
+    std::unique_ptr<DIR, VSIDIRUnixStdio::DIRCloser> psDir(opendir(pszPath));
+    if (psDir == nullptr)
     {
-        delete aoStackSubDir.back();
-        aoStackSubDir.pop_back();
+        return nullptr;
     }
-    closedir(m_psDir);
+    auto dir = std::make_unique<VSIDIRUnixStdio>();
+    dir->osRootPath = pszPath;
+    dir->nRecurseDepth = nRecurseDepth;
+    dir->m_psDir = std::move(psDir);
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
+    dir->m_bNameAndTypeOnly = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "NAME_AND_TYPE_ONLY", "NO"));
+    return dir;
 }
 
 /************************************************************************/
@@ -1072,19 +1085,7 @@ VSIDIR *VSIUnixStdioFilesystemHandler::OpenDir(const char *pszPath,
                                                int nRecurseDepth,
                                                const char *const *papszOptions)
 {
-    DIR *psDir = opendir(pszPath);
-    if (psDir == nullptr)
-    {
-        return nullptr;
-    }
-    VSIDIRUnixStdio *dir = new VSIDIRUnixStdio(this);
-    dir->osRootPath = pszPath;
-    dir->nRecurseDepth = nRecurseDepth;
-    dir->m_psDir = psDir;
-    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
-    dir->m_bNameAndTypeOnly = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "NAME_AND_TYPE_ONLY", "NO"));
-    return dir;
+    return OpenDirInternal(pszPath, nRecurseDepth, papszOptions).release();
 }
 
 /************************************************************************/
@@ -1100,16 +1101,15 @@ begin:
         if (!osCurFile.empty())
             osCurFile += '/';
         osCurFile += entry.pszName;
-        auto subdir = static_cast<VSIDIRUnixStdio *>(
-            poFS->VSIUnixStdioFilesystemHandler::OpenDir(
-                osCurFile, nRecurseDepth - 1, nullptr));
+        auto subdir = VSIUnixStdioFilesystemHandler::OpenDirInternal(
+            osCurFile, nRecurseDepth - 1, nullptr);
         if (subdir)
         {
             subdir->osRootPath = osRootPath;
             subdir->osBasePath = entry.pszName;
             subdir->m_osFilterPrefix = m_osFilterPrefix;
             subdir->m_bNameAndTypeOnly = m_bNameAndTypeOnly;
-            aoStackSubDir.push_back(subdir);
+            aoStackSubDir.push_back(std::move(subdir));
         }
         entry.nMode = 0;
     }
@@ -1121,17 +1121,11 @@ begin:
         {
             return l_entry;
         }
-        delete aoStackSubDir.back();
         aoStackSubDir.pop_back();
     }
 
-    while (true)
+    while (const auto *psEntry = readdir(m_psDir.get()))
     {
-        const auto *psEntry = readdir(m_psDir);
-        if (psEntry == nullptr)
-        {
-            return nullptr;
-        }
         // Skip . and ..entries
         if (psEntry->d_name[0] == '.' &&
             (psEntry->d_name[1] == '\0' ||
@@ -1217,11 +1211,11 @@ begin:
                 StatFile();
             }
 
-            break;
+            return &(entry);
         }
     }
 
-    return &(entry);
+    return nullptr;
 }
 
 #ifdef VSI_COUNT_BYTES_READ
