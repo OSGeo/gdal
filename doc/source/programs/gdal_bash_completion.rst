@@ -11,6 +11,9 @@ using the <TAB> key. Bash completion is enabled by first sourcing the
 :file:`${install_prefix}/share/bash-completion/completions/gdal` file, which
 should be automatically done on a number of binary distributions of GDAL.
 
+That script can also be sourced when using :program:`zsh` as a shell (starting
+with GDAL 3.11.1)
+
 Examples of completion
 ++++++++++++++++++++++
 
