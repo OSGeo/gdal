@@ -131,6 +131,23 @@ def vsifile_generic(filename, options=[]):
         if fp:
             gdal.VSIFCloseL(fp)
 
+    dirname = os.path.dirname(filename)
+    if dirname == "/vsimem":
+        dirname += "/"
+    d = gdal.OpenDir(dirname)
+    assert d
+    content = []
+    try:
+        while True:
+            entry = gdal.GetNextDirEntry(d)
+            if not entry:
+                break
+            content.append(entry.name)
+    finally:
+        gdal.CloseDir(d)
+
+    assert content == ["vsifile.bin"]
+
     gdal.Unlink(filename)
 
     if not filename.startswith("/vsicrypt/"):
@@ -147,7 +164,7 @@ def vsifile_generic(filename, options=[]):
             assert gdal.VSIStatL(subdir) is not None
 
         # Safety belt...
-        assert filename.startswith("tmp/") or filename.startswith("/vsimem/")
+        assert "pytest-of" in filename or filename.startswith("/vsimem/")
         assert gdal.RmdirRecursive(filename) == 0
 
         assert gdal.VSIStatL(subdir) is None
@@ -158,16 +175,26 @@ def vsifile_generic(filename, options=[]):
 # Test /vsimem
 
 
-def test_vsifile_1():
-    vsifile_generic("/vsimem/vsifile_1.bin")
+def test_vsifile_vsimem(tmp_vsimem):
+    vsifile_generic(f"{tmp_vsimem}/vsifile.bin")
 
 
 ###############################################################################
 # Test regular file system
 
 
-def test_vsifile_2():
-    vsifile_generic("tmp/vsifile_2.bin")
+def test_vsifile_regular_filesystem(tmp_path):
+    vsifile_generic(f"{tmp_path}/vsifile.bin")
+
+
+###############################################################################
+# Test regular file system
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_vsifile_regular_filesystem_non_utf8(tmp_path):
+    with gdal.config_option("GDAL_FILENAME_IS_UTF8", "NO"):
+        vsifile_generic(f"{tmp_path}/vsifile.bin")
 
 
 ###############################################################################
@@ -175,8 +202,8 @@ def test_vsifile_2():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
-def test_vsifile_WRITE_THROUGH():
-    vsifile_generic("tmp/vsifile_WRITE_THROUGH.bin", ["WRITE_THROUGH=YES"])
+def test_vsifile_WRITE_THROUGH(tmp_path):
+    vsifile_generic(f"{tmp_path}/vsifile.bin", ["WRITE_THROUGH=YES"])
 
 
 ###############################################################################
