@@ -1886,7 +1886,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             {
                 json_object *poRAT =
                     static_cast<json_object *>(GDALRATSerializeJSON(hRAT));
-                json_object_object_add(poJsonObject, "rat", poRAT);
+                json_object_object_add(poBand, "rat", poRAT);
             }
             else
             {

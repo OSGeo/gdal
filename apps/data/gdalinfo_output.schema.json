@@ -34,6 +34,9 @@
         "band": {
           "type": "integer"
         },
+        "description": {
+          "type": "string"
+        },
         "block": {
           "$ref": "#/definitions/arrayOfTwoIntegers"
         },
@@ -118,6 +121,31 @@
         },
         "metadata": {
           "$ref": "#/definitions/metadata"
+        },
+        "colorTable": {
+          "type": "object",
+          "properties": {
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            },
+            "count": {
+              "type": "integer"
+            },
+            "palette": {
+              "type": "string"
+            }
+          }
+        },
+        "rat": {
+          "type": "object"
         }
       },
       "required": [
