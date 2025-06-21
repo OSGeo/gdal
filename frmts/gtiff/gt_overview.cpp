@@ -1212,6 +1212,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
             }
         }
 
+        if (!EQUAL(pszResampling, "NONE"))
         {
             CPLConfigOptionSetter oSetter(
                 "GDAL_NUM_THREADS",
@@ -1229,7 +1230,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         }
         CPLFree(papapoOverviewBands);
     }
-    else
+    else if (!EQUAL(pszResampling, "NONE"))
     {
         GDALRasterBand **papoOverviews = static_cast<GDALRasterBand **>(
             CPLCalloc(sizeof(void *), knMaxOverviews));

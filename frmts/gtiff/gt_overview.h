@@ -39,12 +39,4 @@ void GTIFFBuildOverviewMetadata(const char *pszResampling,
                                 GDALDataset *poBaseDS, bool bIsForMaskBand,
                                 CPLString &osMetadata);
 
-CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
-                             GDALRasterBand *const *papoBandList,
-                             int nOverviews, const int *panOverviewList,
-                             const std::pair<int, int> *pasOverviewSize,
-                             const char *pszResampling,
-                             const char *const *papszOptions,
-                             GDALProgressFunc pfnProgress, void *pProgressData);
-
 #endif
