@@ -237,6 +237,18 @@ def test_gdalinfo_lib_nodata_full_precision_float64():
     assert ret["bands"][0]["noDataValue"] == float(nodata_str)
 
 
+def test_gdalinfo_lib_nodata_int():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    assert "NoData Value=255\n" in gdal.Info(ds).replace("\r\n", "\n")
+
+    ret = gdal.Info(ds, format="json")
+    ndv = ret["bands"][0]["noDataValue"]
+    assert ndv == 255
+    assert isinstance(ndv, int)
+
+
 ###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/8137
 
