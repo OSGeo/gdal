@@ -488,6 +488,8 @@ class MRFDataset final : public GDALPamDataset
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
+    using GDALDataset::AddOverviews;
+
     GIntBig AddOverviews(int scale);
 
     // Late allocation buffer

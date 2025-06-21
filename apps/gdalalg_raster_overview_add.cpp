@@ -44,6 +44,12 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
            GDAL_OF_RASTER | GDAL_OF_UPDATE)
         .SetPositional()
         .SetRequired();
+
+    constexpr const char *INPUT_LEVELS_MUTEX = "input-levels";
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
+                       /* positionalAndRequired = */ false)
+        .SetMutualExclusionGroup(INPUT_LEVELS_MUTEX);
+
     AddArg("external", 0, _("Add external overviews"), &m_readOnly)
         .AddHiddenAlias("ro")
         .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
@@ -54,7 +60,8 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
         .SetHiddenChoices("near", "none");
 
     AddArg("levels", 0, _("Levels / decimation factors"), &m_levels)
-        .SetMinValueIncluded(2);
+        .SetMinValueIncluded(2)
+        .SetMutualExclusionGroup(INPUT_LEVELS_MUTEX);
     AddArg("min-size", 0,
            _("Maximum width or height of the smallest overview level."),
            &m_minSize)
@@ -91,6 +98,18 @@ bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,
     }
     if (resampling.empty())
         resampling = "nearest";
+
+    if (!m_inputDataset.empty())
+    {
+        std::vector<GDALDataset *> apoDS;
+        for (auto &val : m_inputDataset)
+        {
+            CPLAssert(val.GetDatasetRef());
+            apoDS.push_back(val.GetDatasetRef());
+        }
+        return poDS->AddOverviews(apoDS, pfnProgress, pProgressData, nullptr) ==
+               CE_None;
+    }
 
     std::vector<int> levels = m_levels;
 
