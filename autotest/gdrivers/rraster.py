@@ -251,26 +251,26 @@ def test_rraster_rat(filename="data/rraster/byte_rraster_rat.grd"):
                 "colorInterpretation": "Undefined",
                 "metadata": {},
                 "type": "Byte",
+                "rat": {
+                    "fieldDefn": [
+                        {"index": 0, "name": "ID", "type": 0, "usage": 0},
+                        {"index": 1, "name": "int_field", "type": 0, "usage": 0},
+                        {"index": 2, "name": "numeric_field", "type": 1, "usage": 0},
+                        {"index": 3, "name": "string_field", "type": 2, "usage": 0},
+                        {"index": 4, "name": "red", "type": 0, "usage": 6},
+                        {"index": 5, "name": "green", "type": 0, "usage": 7},
+                        {"index": 6, "name": "blue", "type": 0, "usage": 8},
+                        {"index": 7, "name": "alpha", "type": 0, "usage": 9},
+                        {"index": 8, "name": "pixelcount", "type": 0, "usage": 1},
+                        {"index": 9, "name": "name", "type": 2, "usage": 2},
+                    ],
+                    "row": [
+                        {"f": [0, 10, 1.2, "foo", 0, 2, 4, 6, 8, "baz"], "index": 0},
+                        {"f": [1, 11, 2.3, "bar", 1, 3, 5, 7, 9, "baw"], "index": 1},
+                    ],
+                },
             }
-        ],
-        "rat": {
-            "fieldDefn": [
-                {"index": 0, "name": "ID", "type": 0, "usage": 0},
-                {"index": 1, "name": "int_field", "type": 0, "usage": 0},
-                {"index": 2, "name": "numeric_field", "type": 1, "usage": 0},
-                {"index": 3, "name": "string_field", "type": 2, "usage": 0},
-                {"index": 4, "name": "red", "type": 0, "usage": 6},
-                {"index": 5, "name": "green", "type": 0, "usage": 7},
-                {"index": 6, "name": "blue", "type": 0, "usage": 8},
-                {"index": 7, "name": "alpha", "type": 0, "usage": 9},
-                {"index": 8, "name": "pixelcount", "type": 0, "usage": 1},
-                {"index": 9, "name": "name", "type": 2, "usage": 2},
-            ],
-            "row": [
-                {"f": [0, 10, 1.2, "foo", 0, 2, 4, 6, 8, "baz"], "index": 0},
-                {"f": [1, 11, 2.3, "bar", 1, 3, 5, 7, 9, "baw"], "index": 1},
-            ],
-        },
+        ]
     }
     assert _is_dict_included_in_dict(info, expected_info)
 
