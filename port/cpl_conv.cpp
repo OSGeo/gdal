@@ -15,8 +15,10 @@
 
 #ifdef HAVE_USELOCALE
 // For uselocale, define _XOPEN_SOURCE = 700
-// but on Solaris, we don't have uselocale and we cannot have
-// std=c++11 with _XOPEN_SOURCE != 600
+// and OpenBSD with libcxx 19.1.7 requires 800 for vasprintf
+// (cf https://github.com/OSGeo/gdal/issues/12619)
+// (not sure if the following is still up to date...) but on Solaris, we don't
+// have uselocale and we cannot have std=c++11 with _XOPEN_SOURCE != 600
 #if defined(__sun__) && __cplusplus >= 201103L
 #if _XOPEN_SOURCE != 600
 #ifdef _XOPEN_SOURCE
@@ -28,7 +30,7 @@
 #ifdef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE
 #endif
-#define _XOPEN_SOURCE 700
+#define _XOPEN_SOURCE 800
 #endif
 #endif
 
