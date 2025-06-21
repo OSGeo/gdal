@@ -2984,6 +2984,219 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
 }
 
 /************************************************************************/
+/*                            AddOverviews()                            */
+/************************************************************************/
+
+CPLErr
+GTiffDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDSIn,
+                           GDALProgressFunc pfnProgress, void *pProgressData,
+                           CSLConstList papszOptions)
+{
+    /* -------------------------------------------------------------------- */
+    /*      If we don't have read access, then create the overviews         */
+    /*      externally.                                                     */
+    /* -------------------------------------------------------------------- */
+    if (GetAccess() != GA_Update)
+    {
+        CPLDebug("GTiff", "File open for read-only accessing, "
+                          "creating overviews externally.");
+
+        CPLErr eErr = GDALDataset::AddOverviews(apoSrcOvrDSIn, pfnProgress,
+                                                pProgressData, papszOptions);
+        if (eErr == CE_None && m_poMaskDS)
+        {
+            ReportError(
+                CE_Warning, CPLE_NotSupported,
+                "Building external overviews whereas there is an internal "
+                "mask is not fully supported. "
+                "The overviews of the non-mask bands will be created, "
+                "but not the overviews of the mask band.");
+        }
+        return eErr;
+    }
+
+    std::vector<GDALDataset *> apoSrcOvrDS = apoSrcOvrDSIn;
+    // Sort overviews by descending size
+    std::sort(apoSrcOvrDS.begin(), apoSrcOvrDS.end(),
+              [](const GDALDataset *poDS1, const GDALDataset *poDS2)
+              { return poDS1->GetRasterXSize() > poDS2->GetRasterXSize(); });
+
+    if (!GDALDefaultOverviews::CheckSrcOverviewsConsistencyWithBase(
+            this, apoSrcOvrDS))
+        return CE_Failure;
+
+    ScanDirectories();
+
+    // Make implicit JPEG overviews invisible, but do not destroy
+    // them in case they are already used (not sure that the client
+    // has the right to do that). Behavior maybe undefined in GDAL API.
+    m_nJPEGOverviewCount = 0;
+
+    FlushDirectory();
+
+    /* -------------------------------------------------------------------- */
+    /*      If we are averaging bit data to grayscale we need to create     */
+    /*      8bit overviews.                                                 */
+    /* -------------------------------------------------------------------- */
+    int nOvBitsPerSample = m_nBitsPerSample;
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we need some metadata for the overviews?                     */
+    /* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+
+    const bool bIsForMaskBand = nBands == 1 && GetRasterBand(1)->IsMaskBand();
+    GTIFFBuildOverviewMetadata(/* resampling = */ "", this, bIsForMaskBand,
+                               osMetadata);
+
+    int nCompression;
+    uint16_t nPlanarConfig;
+    uint16_t nPredictor;
+    uint16_t nPhotometric;
+    int nOvrJpegQuality;
+    std::string osNoData;
+    uint16_t *panExtraSampleValues = nullptr;
+    uint16_t nExtraSamples = 0;
+    if (!GetOverviewParameters(nCompression, nPlanarConfig, nPredictor,
+                               nPhotometric, nOvrJpegQuality, osNoData,
+                               panExtraSampleValues, nExtraSamples,
+                               papszOptions))
+    {
+        return CE_Failure;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a palette?  If so, create a TIFF compatible version. */
+    /* -------------------------------------------------------------------- */
+    std::vector<unsigned short> anTRed;
+    std::vector<unsigned short> anTGreen;
+    std::vector<unsigned short> anTBlue;
+    unsigned short *panRed = nullptr;
+    unsigned short *panGreen = nullptr;
+    unsigned short *panBlue = nullptr;
+
+    if (nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr)
+    {
+        if (m_nColorTableMultiplier == 0)
+            m_nColorTableMultiplier = DEFAULT_COLOR_TABLE_MULTIPLIER_257;
+
+        CreateTIFFColorTable(m_poColorTable.get(), nOvBitsPerSample,
+                             m_nColorTableMultiplier, anTRed, anTGreen, anTBlue,
+                             panRed, panGreen, panBlue);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Establish which of the overview levels we already have, and     */
+    /*      which are new.  We assume that band 1 of the file is            */
+    /*      representative.                                                 */
+    /* -------------------------------------------------------------------- */
+    int nOvrBlockXSize = 0;
+    int nOvrBlockYSize = 0;
+    GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
+                              &nOvrBlockXSize, &nOvrBlockYSize);
+
+    CPLErr eErr = CE_None;
+    for (const auto *poSrcOvrDS : apoSrcOvrDS)
+    {
+        bool bFound = false;
+        for (int i = 0; i < m_nOverviewCount && eErr == CE_None; ++i)
+        {
+            const GTiffDataset *poExistingODS = m_papoOverviewDS[i];
+            if (poExistingODS->GetRasterXSize() ==
+                    poSrcOvrDS->GetRasterXSize() &&
+                poExistingODS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
+            {
+                bFound = true;
+                break;
+            }
+        }
+        if (!bFound && eErr == CE_None)
+        {
+            if (m_bLayoutIFDSBeforeData && !m_bKnownIncompatibleEdition &&
+                !m_bWriteKnownIncompatibleEdition)
+            {
+                ReportError(CE_Warning, CPLE_AppDefined,
+                            "Adding new overviews invalidates the "
+                            "LAYOUT=IFDS_BEFORE_DATA property");
+                m_bKnownIncompatibleEdition = true;
+                m_bWriteKnownIncompatibleEdition = true;
+            }
+
+            const toff_t nOverviewOffset = GTIFFWriteDirectory(
+                m_hTIFF, FILETYPE_REDUCEDIMAGE, poSrcOvrDS->GetRasterXSize(),
+                poSrcOvrDS->GetRasterYSize(), nOvBitsPerSample, nPlanarConfig,
+                m_nSamplesPerPixel, nOvrBlockXSize, nOvrBlockYSize, TRUE,
+                nCompression, nPhotometric, m_nSampleFormat, nPredictor, panRed,
+                panGreen, panBlue, nExtraSamples, panExtraSampleValues,
+                osMetadata,
+                nOvrJpegQuality >= 0 ? CPLSPrintf("%d", nOvrJpegQuality)
+                                     : nullptr,
+                CPLSPrintf("%d", m_nJpegTablesMode),
+                osNoData.empty() ? nullptr : osNoData.c_str(),
+                m_anLercAddCompressionAndVersion, false);
+
+            if (nOverviewOffset == 0)
+                eErr = CE_Failure;
+            else
+                eErr = RegisterNewOverviewDataset(
+                    nOverviewOffset, nOvrJpegQuality, papszOptions);
+        }
+    }
+
+    CPLFree(panExtraSampleValues);
+    panExtraSampleValues = nullptr;
+
+    ReloadDirectory();
+
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
+    // almost 0, but not 0 to please Coverity Scan
+    double dfTotalPixels = std::numeric_limits<double>::min();
+    for (const auto *poSrcOvrDS : apoSrcOvrDS)
+    {
+        dfTotalPixels += static_cast<double>(poSrcOvrDS->GetRasterXSize()) *
+                         poSrcOvrDS->GetRasterYSize();
+    }
+
+    // Copy source datasets into target overview datasets
+    double dfCurPixels = 0;
+    for (auto *poSrcOvrDS : apoSrcOvrDS)
+    {
+        GDALDataset *poDstOvrDS = nullptr;
+        for (int i = 0; i < m_nOverviewCount && eErr == CE_None; ++i)
+        {
+            GTiffDataset *poExistingODS = m_papoOverviewDS[i];
+            if (poExistingODS->GetRasterXSize() ==
+                    poSrcOvrDS->GetRasterXSize() &&
+                poExistingODS->GetRasterYSize() == poSrcOvrDS->GetRasterYSize())
+            {
+                poDstOvrDS = poExistingODS;
+                break;
+            }
+        }
+        if (poDstOvrDS)
+        {
+            const double dfThisPixels =
+                static_cast<double>(poSrcOvrDS->GetRasterXSize()) *
+                poSrcOvrDS->GetRasterYSize();
+            void *pScaledProgressData = GDALCreateScaledProgress(
+                dfCurPixels / dfTotalPixels,
+                (dfCurPixels + dfThisPixels) / dfTotalPixels, pfnProgress,
+                pProgressData);
+            dfCurPixels += dfThisPixels;
+            eErr = GDALDatasetCopyWholeRaster(GDALDataset::ToHandle(poSrcOvrDS),
+                                              GDALDataset::ToHandle(poDstOvrDS),
+                                              nullptr, GDALScaledProgress,
+                                              pScaledProgressData);
+            GDALDestroyScaledProgress(pScaledProgressData);
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 

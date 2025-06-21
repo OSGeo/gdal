@@ -2156,7 +2156,7 @@ CPLErr GDALSetGCPs2(GDALDatasetH hDS, int nGCPCount, const GDAL_GCP *pasGCPList,
 /**
  * \brief Build raster overview(s)
  *
- * If the operation is unsupported for the indicated dataset, then
+ * If the operation is not supported for the indicated dataset, then
  * CE_Failure is returned, and CPLGetLastErrorNo() will return
  * CPLE_NotSupported.
  *
@@ -2333,6 +2333,54 @@ CPLErr GDALDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                            AddOverviews()                            */
+/*                                                                      */
+/*      Default implementation.                                         */
+/************************************************************************/
+
+/**
+ * \brief Add overview from existing dataset(s)
+ *
+ * This function creates new overview levels or refresh existing one from
+ * the list of provided overview datasets.
+ * Source overviews may come from any GDAL supported format, provided they
+ * have the same number of bands and geospatial extent than the target
+ * dataset.
+ *
+ * If the operation is not supported for the indicated dataset, then
+ * CE_Failure is returned, and CPLGetLastErrorNo() will return
+ * CPLE_NotSupported.
+ *
+ * At time of writing, this method is only implemented for internal overviews
+ * of GeoTIFF datasets and external overviews in GeoTIFF format.
+ *
+ * @param apoSrcOvrDS Vector of source overviews.
+ * @param pfnProgress a function to call to report progress, or NULL.
+ * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions NULL terminated list of options as
+ *                     key=value pairs, or NULL. None currently
+ *
+ * @return CE_None on success or CE_Failure if the operation doesn't work.
+ * @since 3.12
+ */
+CPLErr GDALDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDS,
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressData, CSLConstList papszOptions)
+{
+    if (oOvManager.IsInitialized())
+    {
+        return oOvManager.AddOverviews(nullptr, apoSrcOvrDS, pfnProgress,
+                                       pProgressData, papszOptions);
+    }
+    else
+    {
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "AddOverviews() not supported for this dataset.");
+        return CE_Failure;
+    }
+}
 
 /************************************************************************/
 /*                             IRasterIO()                              */

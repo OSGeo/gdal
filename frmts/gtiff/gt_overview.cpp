@@ -947,6 +947,11 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         return CE_Failure;
     fpL = nullptr;
 
+    if (EQUAL(pszResampling, "NONE"))
+    {
+        return CE_None;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Open the overview dataset so that we can get at the overview    */
     /*      bands.                                                          */
