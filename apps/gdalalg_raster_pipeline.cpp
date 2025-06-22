@@ -147,7 +147,8 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
 {
     GDALAlgorithmRegistry::AlgInfo algInfo;
 
-    const auto addSuffixIfNeeded = [forMixedPipeline](const char *name)
+    const auto addSuffixIfNeeded =
+        [forMixedPipeline](const char *name) -> std::string
     {
         return forMixedPipeline ? std::string(name).append(RASTER_SUFFIX)
                                 : std::string(name);
