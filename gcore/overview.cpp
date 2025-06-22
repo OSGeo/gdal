@@ -2009,7 +2009,7 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
             if (poColorTable == nullptr)
             {
                 double dfTotal = 0.0;
-                uint64_t nCount = 0;
+                GInt64 nCount = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2048,10 +2048,10 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
             }
             else
             {
-                uint64_t nTotalR = 0;
-                uint64_t nTotalG = 0;
-                uint64_t nTotalB = 0;
-                uint64_t nTotalWeight = 0;
+                GInt64 nTotalR = 0;
+                GInt64 nTotalG = 0;
+                GInt64 nTotalB = 0;
+                GInt64 nTotalWeight = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2073,13 +2073,13 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
                         {
                             const int nWeight = panLineWeight[i];
                             nTotalR +=
-                                static_cast<uint64_t>(colorEntries[idx].c1) *
+                                static_cast<GInt64>(colorEntries[idx].c1) *
                                 nWeight;
                             nTotalG +=
-                                static_cast<uint64_t>(colorEntries[idx].c2) *
+                                static_cast<GInt64>(colorEntries[idx].c2) *
                                 nWeight;
                             nTotalB +=
-                                static_cast<uint64_t>(colorEntries[idx].c3) *
+                                static_cast<GInt64>(colorEntries[idx].c3) *
                                 nWeight;
                             nTotalWeight += nWeight;
                         }
