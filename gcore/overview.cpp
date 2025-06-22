@@ -1958,15 +1958,11 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
         }
 
         const double *const padfSrcScanline =
-            padfChunk +
-            (static_cast<size_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
+            padfChunk + ((nSrcYOff - nChunkYOff) * nChunkXSize);
         const GByte *pabySrcScanlineNodataMask = nullptr;
         if (pabyChunkNodataMask != nullptr)
-        {
             pabySrcScanlineNodataMask =
-                pabyChunkNodataMask +
-                (static_cast<size_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
-        }
+                pabyChunkNodataMask + ((nSrcYOff - nChunkYOff) * nChunkXSize);
 
         /* --------------------------------------------------------------------
          */
@@ -1974,8 +1970,7 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
         /* --------------------------------------------------------------------
          */
         double *const padfDstScanline =
-            padfDstBuffer +
-            static_cast<size_t>(iDstLine - nDstYOff) * nDstXWidth;
+            padfDstBuffer + (iDstLine - nDstYOff) * nDstXWidth;
         for (int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel)
         {
             int nSrcXOff = static_cast<int>(0.5 + iDstPixel * dfXRatioDstToSrc);
@@ -2021,11 +2016,12 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<size_t>(iY - nSrcYOff) *
+                                            static_cast<GPtrDiff_t>(iY -
+                                                                    nSrcYOff) *
                                                 nChunkXSize];
                         if (pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX - nChunkXOff +
-                                                      static_cast<size_t>(
+                                                      static_cast<GPtrDiff_t>(
                                                           iY - nSrcYOff) *
                                                           nChunkXSize])
                         {
@@ -2042,8 +2038,7 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
                 }
                 else
                 {
-                    padfDstScanline[iDstPixel - nDstXOff] =
-                        dfTotal / static_cast<double>(nCount);
+                    padfDstScanline[iDstPixel - nDstXOff] = dfTotal / nCount;
                 }
             }
             else
@@ -2063,12 +2058,13 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<size_t>(iY - nSrcYOff) *
+                                            static_cast<GPtrDiff_t>(iY -
+                                                                    nSrcYOff) *
                                                 nChunkXSize];
                         if (val < 0 || val >= colorEntries.size())
                             continue;
 
-                        const size_t idx = static_cast<size_t>(val);
+                        size_t idx = static_cast<size_t>(val);
                         if (colorEntries[idx].c4)
                         {
                             const int nWeight = panLineWeight[i];
@@ -2224,17 +2220,15 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
             nSrcYOff2 = nChunkBottomYOff;
 
         const T *const paSrcScanline =
-            pChunk + (static_cast<size_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
+            pChunk +
+            (static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
         const GByte *pabySrcScanlineNodataMask = nullptr;
         if (pabyChunkNodataMask != nullptr)
-        {
             pabySrcScanlineNodataMask =
                 pabyChunkNodataMask +
-                static_cast<size_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
-        }
+                static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
 
-        T *const paDstScanline =
-            pDstBuffer + static_cast<size_t>(iDstLine - nDstYOff) * nDstXSize;
+        T *const paDstScanline = pDstBuffer + (iDstLine - nDstYOff) * nDstXSize;
         /* --------------------------------------------------------------------
          */
         /*      Loop over destination pixels */
@@ -2323,8 +2317,8 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const size_t iTotYOff =
-                        static_cast<size_t>(iY - nSrcYOff) * nChunkXSize -
+                    const GPtrDiff_t iTotYOff =
+                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
@@ -2382,8 +2376,8 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const size_t iTotYOff =
-                        static_cast<size_t>(iY - nSrcYOff) * nChunkXSize -
+                    const GPtrDiff_t iTotYOff =
+                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
