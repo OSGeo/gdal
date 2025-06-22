@@ -55,8 +55,8 @@ class TestCopyWords : public ::testing::Test
   protected:
     void SetUp() override
     {
-        pIn = (GByte *)malloc(256);
-        pOut = (GByte *)malloc(256);
+        pIn = (GByte *)malloc(2048);
+        pOut = (GByte *)malloc(2048);
     }
 
     void TearDown() override
@@ -74,8 +74,8 @@ class TestCopyWords : public ::testing::Test
               GDALDataType outtype, ConstantType outval, ConstantType outvali,
               int numLine)
     {
-        memset(pIn, 0xff, 128);
-        memset(pOut, 0xff, 128);
+        memset(pIn, 0xff, 1024);
+        memset(pOut, 0xff, 1024);
 
         *(InType *)(pIn) = (InType)inval;
         *(InType *)(pIn + 32) = (InType)inval;
@@ -89,14 +89,14 @@ class TestCopyWords : public ::testing::Test
         GDALCopyWords(pIn, intype, 32, pOut, outtype, 32, 2);
 
         /* Test negative offsets */
-        GDALCopyWords(pIn + 32, intype, -32, pOut + 128 - 16, outtype, -32, 2);
+        GDALCopyWords(pIn + 32, intype, -32, pOut + 1024 - 16, outtype, -32, 2);
 
         MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
         MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut + 32));
         MY_EXPECT(intype, inval, outtype, outval,
-                  *(OutType *)(pOut + 128 - 16));
+                  *(OutType *)(pOut + 1024 - 16));
         MY_EXPECT(intype, inval, outtype, outval,
-                  *(OutType *)(pOut + 128 - 16 - 32));
+                  *(OutType *)(pOut + 1024 - 16 - 32));
 
         if (GDALDataTypeIsComplex(outtype))
         {
@@ -105,38 +105,29 @@ class TestCopyWords : public ::testing::Test
                       ((OutType *)(pOut + 32))[1]);
 
             MY_EXPECT(intype, invali, outtype, outvali,
-                      ((OutType *)(pOut + 128 - 16))[1]);
+                      ((OutType *)(pOut + 1024 - 16))[1]);
             MY_EXPECT(intype, invali, outtype, outvali,
-                      ((OutType *)(pOut + 128 - 16 - 32))[1]);
+                      ((OutType *)(pOut + 1024 - 16 - 32))[1]);
         }
         else
         {
-            *(InType *)(pIn + GDALGetDataTypeSizeBytes(intype)) = (InType)inval;
+            constexpr int N = 32 + 31;
+            for (int i = 0; i < N; ++i)
+            {
+                *(InType *)(pIn + i * GDALGetDataTypeSizeBytes(intype)) =
+                    (InType)inval;
+            }
+
             /* Test packed offsets */
             GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
-                          outtype, GDALGetDataTypeSizeBytes(outtype), 2);
+                          outtype, GDALGetDataTypeSizeBytes(outtype), N);
 
-            MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
-            MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
-
-            *(InType *)(pIn + 2 * GDALGetDataTypeSizeBytes(intype)) =
-                (InType)inval;
-            *(InType *)(pIn + 3 * GDALGetDataTypeSizeBytes(intype)) =
-                (InType)inval;
-            /* Test packed offsets */
-            GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
-                          outtype, GDALGetDataTypeSizeBytes(outtype), 4);
-
-            MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
-            MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
-            MY_EXPECT(
-                intype, inval, outtype, outval,
-                *(OutType *)(pOut + 2 * GDALGetDataTypeSizeBytes(outtype)));
-            MY_EXPECT(
-                intype, inval, outtype, outval,
-                *(OutType *)(pOut + 3 * GDALGetDataTypeSizeBytes(outtype)));
+            for (int i = 0; i < N; ++i)
+            {
+                MY_EXPECT(
+                    intype, inval, outtype, outval,
+                    *(OutType *)(pOut + i * GDALGetDataTypeSizeBytes(outtype)));
+            }
         }
     }
 
