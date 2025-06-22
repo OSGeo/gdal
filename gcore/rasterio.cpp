@@ -3020,6 +3020,50 @@ CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
                             nDstPixelStride, nWordCount);
 }
 
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+#ifdef __F16C__
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GFloat16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GFloat16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+#endif  // __F16C__
+
 #endif  // HAVE_SSE2
 
 template <>
@@ -3051,50 +3095,6 @@ CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
-
-#ifdef __F16C__
-
-template <>
-CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                                 int nSrcPixelStride,
-                                 GFloat16 *const CPL_RESTRICT pDstData,
-                                 int nDstPixelStride, GPtrDiff_t nWordCount)
-{
-    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
-                            nDstPixelStride, nWordCount);
-}
-
-template <>
-CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
-                                 int nSrcPixelStride,
-                                 float *const CPL_RESTRICT pDstData,
-                                 int nDstPixelStride, GPtrDiff_t nWordCount)
-{
-    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
-                            nDstPixelStride, nWordCount);
-}
-
-template <>
-CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
-                                 int nSrcPixelStride,
-                                 GFloat16 *const CPL_RESTRICT pDstData,
-                                 int nDstPixelStride, GPtrDiff_t nWordCount)
-{
-    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
-                            nDstPixelStride, nWordCount);
-}
-
-template <>
-CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
-                                 int nSrcPixelStride,
-                                 double *const CPL_RESTRICT pDstData,
-                                 int nDstPixelStride, GPtrDiff_t nWordCount)
-{
-    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
-                            nDstPixelStride, nWordCount);
-}
-
-#endif
 
 /************************************************************************/
 /*                   GDALCopyWordsComplexT()                            */
