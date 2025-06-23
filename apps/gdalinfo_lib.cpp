@@ -925,8 +925,6 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
         json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
-        json_object *poLongLatExtent = json_object_new_object();
-        json_object *poLongLatExtentType = json_object_new_string("Polygon");
         json_object *poLongLatExtentCoordinates = json_object_new_array();
 
         GDALInfoReportCorner(psOptions, hDataset, hTransform, "upperLeft", 0.0,
@@ -955,12 +953,25 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
         json_object_object_add(poJsonObject, "cornerCoordinates",
                                poCornerCoordinates);
-        json_object_object_add(poLongLatExtent, "type", poLongLatExtentType);
-        json_object_array_add(poLinearRing, poLongLatExtentCoordinates);
-        json_object_object_add(poLongLatExtent, "coordinates", poLinearRing);
-        json_object_object_add(poJsonObject,
-                               bTransformToWGS84 ? "wgs84Extent" : "extent",
-                               poLongLatExtent);
+
+        if (json_object_array_length(poLongLatExtentCoordinates) > 0)
+        {
+            json_object *poLongLatExtent = json_object_new_object();
+            json_object *poLongLatExtentType =
+                json_object_new_string("Polygon");
+            json_object_object_add(poLongLatExtent, "type",
+                                   poLongLatExtentType);
+            json_object_array_add(poLinearRing, poLongLatExtentCoordinates);
+            json_object_object_add(poLongLatExtent, "coordinates",
+                                   poLinearRing);
+            json_object_object_add(poJsonObject,
+                                   bTransformToWGS84 ? "wgs84Extent" : "extent",
+                                   poLongLatExtent);
+        }
+        else
+        {
+            json_object_put(poLongLatExtentCoordinates);
+        }
     }
     else if (GDALGetRasterXSize(hDataset))
     {
