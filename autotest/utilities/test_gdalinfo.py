@@ -550,7 +550,7 @@ def test_gdalinfo_33(gdalinfo_path):
     ret = gdaltest.runexternal(gdalinfo_path + " -json ../gdrivers/data/hfa/int.img")
     ret = json.loads(ret)
     assert "overviews" in ret["bands"][0]
-    assert "rat" in ret
+    assert "rat" in ret["bands"][0]
 
 
 ###############################################################################
