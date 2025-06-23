@@ -998,6 +998,36 @@ inline void GDALCopy4Words(const double *pValueIn, float *const pValueOut)
 }
 
 template <>
+inline void GDALCopy4Words(const double *pValueIn, GByte *const pValueOut)
+{
+    const __m128d p0d5 = _mm_set1_pd(0.5);
+    const __m128d xmm_max = _mm_set1_pd(255);
+
+    __m128d val01 = _mm_loadu_pd(pValueIn);
+    __m128d val23 = _mm_loadu_pd(pValueIn + 2);
+    val01 = _mm_add_pd(val01, p0d5);
+    val01 = _mm_min_pd(_mm_max_pd(val01, p0d5), xmm_max);
+    val23 = _mm_add_pd(val23, p0d5);
+    val23 = _mm_min_pd(_mm_max_pd(val23, p0d5), xmm_max);
+
+    const __m128i val01_u32 = _mm_cvttpd_epi32(val01);
+    const __m128i val23_u32 = _mm_cvttpd_epi32(val23);
+
+    // Merge 4 int32 values into a single register
+    auto xmm_i = _mm_castpd_si128(_mm_shuffle_pd(
+        _mm_castsi128_pd(val01_u32), _mm_castsi128_pd(val23_u32), 0));
+
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
+    xmm_i = _mm_shuffle_epi8(
+        xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24)));
+#else
+    xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
+    xmm_i = _mm_packus_epi16(xmm_i, xmm_i);  // Pack int16 to uint8
+#endif
+    GDALCopyXMMToInt32(xmm_i, pValueOut);
+}
+
+template <>
 inline void GDALCopy4Words(const float *pValueIn, double *const pValueOut)
 {
     const __m128 valIn = _mm_loadu_ps(pValueIn);

@@ -2993,6 +2993,16 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
 template <>
 CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
                                  int nSrcPixelStride,
+                                 GByte *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
                                  GUInt16 *const CPL_RESTRICT pDstData,
                                  int nDstPixelStride, GPtrDiff_t nWordCount)
 {
