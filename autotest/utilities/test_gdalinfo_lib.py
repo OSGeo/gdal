@@ -347,3 +347,18 @@ def test_gdalinfo_lib_json_stac_common_name():
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PanBand)
     ret = gdal.Info(ds, options="-json")
     assert ret["stac"]["eo:bands"][0]["common_name"] == "pan"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("HFA")
+def test_gdalinfo_lib_json_color_table_and_rat():
+
+    ds = gdal.Open("../gcore/data/rat.img")
+
+    ret = gdal.Info(ds, format="json")
+    assert "colorTable" in ret["bands"][0]
+    assert "rat" in ret["bands"][0]
+
+    gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
