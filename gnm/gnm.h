@@ -495,7 +495,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
 
     std::map<GNMGFID, CPLString> m_moFeatureFIDMap{};
     std::vector<OGRLayer *> m_apoLayers{};
-    std::vector<GNMRule> m_asRules{};
+    std::vector<GNMRule> m_asRules;
     bool m_bIsRulesChanged = false;
 
     GNMGraph m_oGraph{};
