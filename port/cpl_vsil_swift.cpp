@@ -563,7 +563,8 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             }
 
             struct curl_slist *headers = VSICurlSetOptions(
-                hCurlHandle, poS3HandleHelper->GetURL().c_str(), nullptr);
+                hCurlHandle, poS3HandleHelper->GetURL().c_str(),
+                aosHTTPOptions.List());
             // Disable automatic redirection
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
