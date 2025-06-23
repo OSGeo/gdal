@@ -22,7 +22,12 @@
 #if defined(OGR_ADBC_HAS_DRIVER_MANAGER)
 #include <arrow-adbc/adbc_driver_manager.h>
 #else
+#if defined(_WIN32)
+#include <windows.h>
+#include <libloaderapi.h>
+#else
 #include <dlfcn.h>
+#endif  // defined(_WIN32)
 #endif
 
 #define OGR_ADBC_VERSION ADBC_VERSION_1_1_0
