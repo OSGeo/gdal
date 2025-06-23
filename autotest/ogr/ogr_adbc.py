@@ -24,13 +24,7 @@ def _has_adbc_driver_manager():
     return drv and drv.GetMetadataItem("HAS_ADBC_DRIVER_MANAGER")
 
 
-pytestmark = [
-    pytest.mark.require_driver("ADBC"),
-    pytest.mark.skipif(
-        not _has_adbc_driver_manager(),
-        reason="ADBC driver built without AdbcDriverManager",
-    ),
-]
+pytestmark = pytest.mark.require_driver("ADBC")
 
 ###############################################################################
 
@@ -47,6 +41,25 @@ def _has_sqlite_driver():
 ###############################################################################
 
 
+def _has_duckdb_driver():
+    import ctypes
+
+    for libname in ["libduckdb.so", "libduckdb.dylib", "duckdb.dll"]:
+        try:
+            if ctypes.cdll.LoadLibrary(libname):
+                return True
+        except Exception:
+            pass
+    return False
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
 def test_ogr_adbc_driver_open_option():
 
     if not _has_sqlite_driver():
@@ -76,10 +89,11 @@ def test_ogr_adbc_invalid_driver():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_invalid_dataset():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with pytest.raises(Exception):
         gdal.OpenEx(
@@ -92,10 +106,15 @@ def test_ogr_adbc_invalid_dataset():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_sqlite3():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with gdal.OpenEx(
         "data/sqlite/poly_spatialite.sqlite", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
@@ -110,11 +129,16 @@ def test_ogr_adbc_sqlite3():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 @pytest.mark.require_driver("GPKG")
 def test_ogr_adbc_create_empty_gpkg_and_open(tmp_path):
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     filename = tmp_path / "out.gpkg"
     ogr.GetDriverByName("GPKG").CreateDataSource(filename)
@@ -131,10 +155,15 @@ def test_ogr_adbc_create_empty_gpkg_and_open(tmp_path):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_sql_open_option():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with gdal.OpenEx(
         "ADBC:data/sqlite/poly_spatialite.sqlite",
@@ -149,10 +178,11 @@ def test_ogr_adbc_sql_open_option():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_invalid_sql():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with pytest.raises(Exception):
         gdal.OpenEx(
@@ -165,10 +195,15 @@ def test_ogr_adbc_invalid_sql():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_generic_open_option():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with gdal.OpenEx(
         "ADBC:",
@@ -184,10 +219,15 @@ def test_ogr_adbc_generic_open_option():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
 def test_ogr_adbc_execute_sql():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with gdal.OpenEx(
         "data/sqlite/poly_spatialite.sqlite",
@@ -203,22 +243,11 @@ def test_ogr_adbc_execute_sql():
 ###############################################################################
 
 
-def _has_libduckdb():
-    import ctypes
-
-    try:
-        return ctypes.cdll.LoadLibrary("libduckdb.so") is not None
-    except Exception:
-        return False
-
-
-###############################################################################
-
-
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 def test_ogr_adbc_duckdb_parquet():
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.OpenEx(
         "data/parquet/partitioned_flat/part.0.parquet",
@@ -234,10 +263,11 @@ def test_ogr_adbc_duckdb_parquet():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 def test_ogr_adbc_duckdb_parquet_with_sql_open_option():
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.OpenEx(
         "data/parquet/partitioned_flat/part.0.parquet",
@@ -254,11 +284,12 @@ def test_ogr_adbc_duckdb_parquet_with_sql_open_option():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.config_option(
         "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
@@ -329,13 +360,14 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
     OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL,
 ):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.config_option(
         "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
@@ -352,11 +384,12 @@ def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.config_option(
         "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
@@ -373,10 +406,15 @@ def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
 def test_ogr_adbc_duckdb_sql(tmp_path):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     tmp_filename = str(tmp_path / "test.parquet")
     shutil.copy("data/parquet/poly.parquet", tmp_filename)
@@ -396,11 +434,15 @@ def test_ogr_adbc_duckdb_sql(tmp_path):
 # Run test_ogrsf on a SQLite3 database
 
 
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite driver missing",
+)
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
 def test_ogr_adbc_test_ogrsf_sqlite3():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
-
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -419,10 +461,11 @@ def test_ogr_adbc_test_ogrsf_sqlite3():
 # Run test_ogrsf on a single Parquet file
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 def test_ogr_adbc_test_ogrsf_parquet():
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     import test_cli_utilities
 
@@ -442,10 +485,11 @@ def test_ogr_adbc_test_ogrsf_parquet():
 # Run test_ogrsf on a partitioned Parquet dataset
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 def test_ogr_adbc_test_ogrsf_parquet_filename_with_glob():
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     import test_cli_utilities
 
@@ -465,11 +509,12 @@ def test_ogr_adbc_test_ogrsf_parquet_filename_with_glob():
 # Run test_ogrsf on a GeoParquet file
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_test_ogrsf_geoparquet(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     import test_cli_utilities
 
@@ -489,12 +534,13 @@ def test_ogr_adbc_test_ogrsf_geoparquet(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 # Test DATETIME_AS_STRING=YES GetArrowStream() option
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 def test_ogr_adbc_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     with gdal.OpenEx(
         "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
@@ -519,11 +565,12 @@ def test_ogr_adbc_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
 # Run test_ogrsf on a DuckDB dataset
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_test_ogrsf_duckdb(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     import test_cli_utilities
 
@@ -543,13 +590,14 @@ def test_ogr_adbc_test_ogrsf_duckdb(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 # Run test_ogrsf on a DuckDB dataset
 
 
+@pytest.mark.skipif(
+    not _has_duckdb_driver(),
+    reason="duckdb driver missing",
+)
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_test_ogrsf_duckdb_with_spatial_index(
     OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL,
 ):
-
-    if not _has_libduckdb():
-        pytest.skip("libduckdb.so missing")
 
     import test_cli_utilities
 
@@ -568,10 +616,15 @@ def test_ogr_adbc_test_ogrsf_duckdb_with_spatial_index(
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _has_sqlite_driver(),
+    reason="adbc_driver_sqlite missing",
+)
+@pytest.mark.skipif(
+    not _has_adbc_driver_manager(),
+    reason="ADBC driver built without AdbcDriverManager",
+)
 def test_ogr_adbc_layer_list():
-
-    if not _has_sqlite_driver():
-        pytest.skip("adbc_driver_sqlite missing")
 
     with gdal.OpenEx(
         "data/sqlite/poly_spatialite.sqlite", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
