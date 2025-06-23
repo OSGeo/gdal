@@ -21,13 +21,6 @@
 
 #if defined(OGR_ADBC_HAS_DRIVER_MANAGER)
 #include <arrow-adbc/adbc_driver_manager.h>
-#else
-#if defined(_WIN32)
-#include <windows.h>
-#include <libloaderapi.h>
-#else
-#include <dlfcn.h>
-#endif  // defined(_WIN32)
 #endif
 
 #define OGR_ADBC_VERSION ADBC_VERSION_1_1_0
@@ -40,22 +33,7 @@ namespace
 AdbcStatusCode OGRDuckDBLoadDriver(const char *driver_name, void *driver,
                                    struct AdbcError *error)
 {
-#if defined(_WIN32)
-    HMODULE handle = LoadLibraryExA(library, NULL, 0);
-#else
-    void *handle = dlopen(driver_name, RTLD_NOW | RTLD_LOCAL);
-#endif
-    if (!handle)
-    {
-        return ADBC_STATUS_INTERNAL;
-    }
-
-#if defined(_WIN32)
-    void *load_handle =
-        reinterpret_cast<void *>(GetProcAddress(handle, "duckdb_adbc_init"));
-#else
-    void *load_handle = dlsym(handle, "duckdb_adbc_init");
-#endif
+    void *load_handle = CPLGetSymbol(driver_name, "duckdb_adbc_init");
     if (!load_handle)
     {
         return ADBC_STATUS_INTERNAL;
