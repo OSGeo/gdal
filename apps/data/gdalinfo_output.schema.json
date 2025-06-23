@@ -47,7 +47,15 @@
           "type": "string"
         },
         "noDataValue": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "const": "NaN"
+            }
+          ]
         },
         "type": {
           "enum": [
