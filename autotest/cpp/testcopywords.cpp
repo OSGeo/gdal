@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 
 #include "gtest_include.h"
 
@@ -26,9 +27,9 @@ namespace
 
 // ---------------------------------------------------------------------------
 
-template <class OutType, class ConstantType>
-void AssertRes(GDALDataType intype, ConstantType inval, GDALDataType outtype,
-               ConstantType expected_outval, OutType outval, int numLine)
+template <class OutType, class CT1, class CT2>
+void AssertRes(GDALDataType intype, CT1 inval, GDALDataType outtype,
+               CT2 expected_outval, OutType outval, int numLine)
 {
     if (static_cast<double>(expected_outval) == static_cast<double>(outval) ||
         (std::isnan(static_cast<double>(expected_outval)) &&
@@ -1071,7 +1072,20 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     Tout arrayOut[N];
     for (int i = 0; i < N; i++)
     {
-        arrayIn[i] = static_cast<Tin>(i + 1);
+        if constexpr (!std::is_integral_v<Tin> && std::is_integral_v<Tout>)
+        {
+            // Test correct rounding
+            if (i == 0 && std::is_unsigned_v<Tout>)
+                arrayIn[i] = cpl::NumericLimits<Tin>::quiet_NaN();
+            else if ((i % 2) != 0)
+                arrayIn[i] = static_cast<Tin>(i + 0.4);
+            else
+                arrayIn[i] = static_cast<Tin>(i + 0.6);
+        }
+        else
+        {
+            arrayIn[i] = static_cast<Tin>(i + 1);
+        }
         arrayOut[i] = 0;
     }
     GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn), arrayOut, eOut,
@@ -1079,7 +1093,26 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     int numLine = 0;
     for (int i = 0; i < N; i++)
     {
-        MY_EXPECT(eIn, i + 1, eOut, i + 1, arrayOut[i]);
+        if constexpr (!std::is_integral_v<Tin> && std::is_integral_v<Tout>)
+        {
+            if (i == 0 && std::is_unsigned_v<Tout>)
+            {
+                MY_EXPECT(eIn, cpl::NumericLimits<Tin>::quiet_NaN(), eOut, 0,
+                          arrayOut[i]);
+            }
+            else if ((i % 2) != 0)
+            {
+                MY_EXPECT(eIn, i + 0.4, eOut, i, arrayOut[i]);
+            }
+            else
+            {
+                MY_EXPECT(eIn, i + 0.6, eOut, i + 1, arrayOut[i]);
+            }
+        }
+        else
+        {
+            MY_EXPECT(eIn, i + 1, eOut, i + 1, arrayOut[i]);
+        }
     }
 }
 
