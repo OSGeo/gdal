@@ -21,6 +21,8 @@
 
 #if defined(OGR_ADBC_HAS_DRIVER_MANAGER)
 #include <arrow-adbc/adbc_driver_manager.h>
+#else
+#include <dlfcn.h>
 #endif
 
 #define OGR_ADBC_VERSION ADBC_VERSION_1_1_0
@@ -28,6 +30,37 @@ static_assert(sizeof(AdbcDriver) == ADBC_DRIVER_1_1_0_SIZE);
 
 namespace
 {
+
+#if !defined(OGR_ADBC_HAS_DRIVER_MANAGER)
+AdbcStatusCode OGRDuckDBLoadDriver(const char *driver_name, void *driver,
+                                   struct AdbcError *error)
+{
+#if defined(_WIN32)
+    HMODULE handle = LoadLibraryExA(library, NULL, 0);
+#else
+    void *handle = dlopen(driver_name, RTLD_NOW | RTLD_LOCAL);
+#endif
+    if (!handle)
+    {
+        return ADBC_STATUS_INTERNAL;
+    }
+
+#if defined(_WIN32)
+    void *load_handle =
+        reinterpret_cast<void *>(GetProcAddress(handle, "duckdb_adbc_init"));
+#else
+    void *load_handle = dlsym(handle, "duckdb_adbc_init");
+#endif
+    if (!load_handle)
+    {
+        return ADBC_STATUS_INTERNAL;
+    }
+
+    AdbcDriverInitFunc init_func =
+        reinterpret_cast<AdbcDriverInitFunc>(load_handle);
+    return init_func(OGR_ADBC_VERSION, driver, error);
+}
+#endif
 
 AdbcStatusCode OGRADBCLoadDriver(const char *driver_name,
                                  const char *entrypoint, void *driver,
@@ -46,6 +79,12 @@ AdbcStatusCode OGRADBCLoadDriver(const char *driver_name,
         return AdbcLoadDriver(driver_name, entrypoint, OGR_ADBC_VERSION, driver,
                               error);
 #else
+        // If the driver is for DuckDB, use a minimal loading function, which
+        // doesn't rely on the ADBC driver manager.
+        if (strstr(driver_name, "duckdb"))
+        {
+            return OGRDuckDBLoadDriver(driver_name, driver, error);
+        }
         return ADBC_STATUS_NOT_IMPLEMENTED;
 #endif
     }
