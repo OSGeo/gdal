@@ -834,6 +834,35 @@ def test_vsigs_GetFileMetadatabucket_root_oauth2(
 
 
 ###############################################################################
+# Test GetFileMetadata() on root of bucket with manual OAuth2
+
+
+def test_vsigs_GetFileMetadatabucket_root_manual_oauth2(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/storage/v1/b/gs_fake_bucket",
+        200,
+        {"Content-type": "application/json"},
+        '{"foo":"bar"}',
+        expected_headers={"Authorization": "Bearer MY_BEARER"},
+    )
+    with webserver.install_http_handler(handler):
+
+        with gdaltest.config_options(
+            {
+                "GDAL_HTTP_HEADERS": "Authorization: Bearer MY_BEARER",
+            },
+            thread_local=False,
+        ):
+            md = gdal.GetFileMetadata("/vsigs/gs_fake_bucket/", None)
+            assert md == {"foo": "bar"}
+
+
+###############################################################################
 # Test GetFileMetadata() on root of bucket with non-OAuth2 (does not work)
 
 
@@ -1557,6 +1586,51 @@ Content-Length: 0
         assert ret
 
     gdal.Unlink("/vsimem/.boto")
+
+
+###############################################################################
+# Test UnlinkBatch() with manual OAuth2
+
+
+def test_vsigs_unlinkbatch_manual_oauth2(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/batch/storage/v1",
+        200,
+        {
+            "content-type": "multipart/mixed; boundary=batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5"
+        },
+        """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-1>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
+""",
+        expected_body=b"--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <1>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/foo HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n",
+        expected_headers={"Authorization": "Bearer MY_BEARER"},
+    )
+    with webserver.install_http_handler(handler):
+
+        with gdaltest.config_options(
+            {
+                "GDAL_HTTP_HEADERS": "Authorization: Bearer MY_BEARER",
+            },
+            thread_local=False,
+        ):
+            ret = gdal.UnlinkBatch(
+                [
+                    "/vsigs/unlink_batch/foo",
+                ]
+            )
+            assert ret
 
 
 ###############################################################################
