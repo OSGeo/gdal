@@ -331,7 +331,7 @@
 %typemap(cstype)  CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] "CSTYPE[]"
 %typemap(csin,
     pre="    IntPtr swig_ptrs_ptr_$csinput = System.IntPtr.Zero;
-    GCHandle swig_handleTo_ptrs_$csinput = default;
+    GCHandle swig_handleTo_ptrs_$csinput = new GCHandle();
     if ($csinput != null) {
         IntPtr[] swig_ptrs_$csinput = new IntPtr[$csinput.Length];
         for (int i = 0; i < $csinput.Length; i++) swig_ptrs_$csinput[i] = CSTYPE.getCPtr($csinput[i]).Handle;
@@ -346,7 +346,7 @@
 ) CTYPE OBJPTRS[] "swig_ptrs_ptr_$csinput"
 %typemap(csin,
     pre="    IntPtr swig_ptrs_ptr_$csinput = System.IntPtr.Zero;
-    GCHandle swig_handleTo_ptrs_$csinput = default;
+    GCHandle swig_handleTo_ptrs_$csinput = new GCHandle();
     if ($csinput != null) {
         IntPtr[] swig_ptrs_$csinput = new IntPtr[$csinput.Length];
         for (int i = 0; i < $csinput.Length; i++) swig_ptrs_$csinput[i] = CSTYPE.getCPtr($csinput[i]).Handle;
