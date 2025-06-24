@@ -29,6 +29,17 @@ static mu::value_type isnan(mu::value_type x)
     return std::isnan(x);
 }
 
+static mu::value_type isnodata(void *userdata, mu::value_type x)
+{
+    double noData = *static_cast<double *>(userdata);
+    return x == noData || (std::isnan(x) && std::isnan(noData));
+}
+
+static mu::value_type always_false(mu::value_type)
+{
+    return 0;
+}
+
 static std::optional<std::string> Sanitize(const std::string &osVariable)
 {
     // muparser does not allow characters '[' or ']' which we use to emulate
@@ -117,6 +128,23 @@ class MuParserExpression::Impl
         {
             m_oParser.DefineFun(_T("isnan"), isnan);
 
+            // Check to see if a NODATA variable has been defined and, if so,
+            // bind it to the isnodata() function
+            const auto &varmap = m_oParser.GetVar();
+            if (auto it = varmap.find("NODATA"); it != varmap.end())
+            {
+                m_oParser.DefineFunUserData(_T("isnodata"), isnodata,
+                                            it->second);
+            }
+            else
+            {
+                // muparser doesn't allow userData to be null, so we bind isnodata
+                // to a dummy function instead
+                m_oParser.DefineFun(_T("isnodata"), always_false);
+            }
+
+            // Edit the expression ot replace variable names such as X[1] with
+            // their sanitized versions
             std::string tmpExpression(m_osExpression);
 
             for (const auto &[osFrom, osTo] : m_oSubstitutions)
