@@ -75,7 +75,7 @@ The following options are available:
     and ``sum(A,C)`` is expanded into ``sum(A[1], A[2], A[3], C[1])``. If the expression consists _only_ of aggregate functions,
     this will produce a single output band no matter how many input bands are present. However, if the expression contains
     a non-aggregate reference to all bands of an input, then one output band will still be produced for each input band. A simple
-    example is the expression ``A / sum(A)``, which would produce an N-band raster where each ouput band contains the input band's
+    example is the expression ``A / sum(A)``, which would produce an N-band raster where each output band contains the input band's
     fraction of the total.
     
     Multiple calculations may be specified; output band(s) will be produced for each expression in the order they
