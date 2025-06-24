@@ -528,6 +528,7 @@ typedef void retGetPoints;
 
 #else
 typedef int OGRErr;
+typedef int CPLErr;
 
 #define wkb25DBit 0x80000000
 #define ogrZMarker 0x21125711
@@ -1377,8 +1378,13 @@ public:
     return OGR_L_UpsertFeature(self, feature);
   }
 
+#if defined(SWIGCSHARP)
+%apply int PINNED[] {int *panUpdatedFieldsIdx};
+%apply int PINNED[] {int *panUpdatedGeomFieldsIdx};
+#else
 %apply (int nList, int *pList ) { (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx ) };
 %apply (int nList, int *pList ) { (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx ) };
+#endif
   OGRErr UpdateFeature(OGRFeatureShadow *feature,
                        int nUpdatedFieldsCount,
                        const int *panUpdatedFieldsIdx,
@@ -1392,8 +1398,13 @@ public:
                                panUpdatedGeomFieldsIdx,
                                bUpdateStyleString);
   }
+#if defined(SWIGCSHARP)
+%clear int *panUpdatedFieldsIdx;
+%clear int *panUpdatedGeomFieldsIdx;
+#else
 %clear (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx );
 %clear (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx );
+#endif
 %clear OGRFeatureShadow *feature;
 
   OGRErr DeleteFeature(GIntBig fid) {
