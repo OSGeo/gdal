@@ -627,9 +627,10 @@ def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem):
         ds.GetRasterBand(1).Fill(10)
         ds.GetRasterBand(2).Fill(100)
 
-    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
-        ds.GetRasterBand(1).Fill(20)
-        ds.GetRasterBand(2).Fill(200)
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 3) as ds:
+        ds.GetRasterBand(1).Fill(2)
+        ds.GetRasterBand(2).Fill(20)
+        ds.GetRasterBand(3).Fill(200)
 
     calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
     calc["output-format"] = "stream"
@@ -639,7 +640,7 @@ def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem):
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
-    expected_val = (10 + 100) - (20 + 200)
+    expected_val = (10 + 100) - (2 + 20 + 200)
     assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
         expected_val,
         expected_val,
