@@ -99,13 +99,14 @@ static std::string SetBandIndices(const std::string &origExpression,
     return expression;
 }
 
-static bool PosIsFunctionArgument(const std::string &expression, size_t pos)
+static bool PosIsAggregateFunctionArgument(const std::string &expression,
+                                           size_t pos)
 {
     // If this position is a function argument, we should be able to
     // scan backwards for a ( and find only variable names, literals or commas.
     while (pos != 0)
     {
-        char c = expression[pos];
+        const char c = expression[pos];
         if (c == '(')
         {
             pos--;
@@ -119,20 +120,19 @@ static bool PosIsFunctionArgument(const std::string &expression, size_t pos)
         pos--;
     }
 
-    // Now what we've found the (, the preceding character should be part of a
-    // value function name
-    while (pos != 0)
+    // Now what we've found the (, the preceding characters should be an
+    // aggregate function name
+    if (pos < 2)
     {
-        char c = expression[pos];
-        if (isalnum(c) || c == '_')
-        {
-            return true;
-        }
-        if (!isspace(c))
-        {
-            return false;
-        }
-        pos--;
+        return false;
+    }
+
+    if (STARTS_WITH_CI(expression.c_str() + (pos - 2), "avg") ||
+        STARTS_WITH_CI(expression.c_str() + (pos - 2), "sum") ||
+        STARTS_WITH_CI(expression.c_str() + (pos - 2), "min") ||
+        STARTS_WITH_CI(expression.c_str() + (pos - 2), "max"))
+    {
+        return true;
     }
 
     return false;
@@ -154,7 +154,7 @@ SetBandIndicesFlattenedExpression(const std::string &origExpression,
         auto end = pos + variable.size();
 
         if (MatchIsCompleteVariableNameWithNoIndex(expression, pos, end) &&
-            PosIsFunctionArgument(expression, pos))
+            PosIsAggregateFunctionArgument(expression, pos))
         {
             std::string newExpr = expression.substr(0, pos);
             for (int i = 1; i <= nBands; ++i)
