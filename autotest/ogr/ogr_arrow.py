@@ -922,3 +922,38 @@ def test_ogr_arrow_check_geoarrow_types(
 
     schema = pyarrow.feather.read_table(filename).schema
     assert str(schema.field("geometry").type) == expected_arrow_type
+
+
+###############################################################################
+
+
+def _parquet_has_geo_types():
+    drv = gdal.GetDriverByName("Parquet")
+    return drv is not None and "USE_PARQUET_GEO_TYPES" in drv.GetMetadataItem(
+        "DS_LAYER_CREATIONOPTIONLIST"
+    )
+
+
+###############################################################################
+# Test files from https://github.com/geoarrow/geoarrow-data/tree/main/example-crs/files
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+@pytest.mark.parametrize(
+    "filename,crs_name",
+    [
+        ("example-crs_vermont-4326_wkb.arrows", "WGS 84"),  # uses PROJJSON
+        ("example-crs_vermont-crs84-auth-code_wkb.arrows", "WGS 84"),
+        ("example-crs_vermont-crs84-wkt2_wkb.arrows", "WGS 84"),
+        ("example-crs_vermont-utm_wkb.arrows", "WGS 84 / UTM zone 18N"),
+    ],
+)
+def test_ogr_arrow_with_geoarrow_wkb_but_no_geo_metadata(filename, crs_name):
+
+    ds = ogr.Open("data/arrow/geoarrow_crs/" + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetSpatialRef().GetName() == crs_name
