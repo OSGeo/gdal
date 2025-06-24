@@ -2936,11 +2936,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                 }
 
                 dfResult = poExpression->Results()[0];
-
-                if (std::isnan(dfResult) && GDALDataTypeIsInteger(eBufType))
-                {
-                    dfResult = dfNoData;
-                }
             }
         }
 

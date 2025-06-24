@@ -152,7 +152,9 @@ def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
     result = calc["output"].GetDataset().ReadAsMaskedArray()
 
     if output_type == gdal.GDT_Int16:
-        assert np.all(result.mask)
+        # NaN output value cannot be represented as an integer, so it
+        # becomes zero (for now)
+        np.testing.assert_array_equal(result, np.ma.masked_array([[0]], False))
     else:
         assert np.isnan(result)
 
