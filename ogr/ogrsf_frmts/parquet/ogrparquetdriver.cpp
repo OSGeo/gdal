@@ -460,7 +460,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         if (!st.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "parquet::arrow::OpenFile() failed");
+                     "parquet::arrow::OpenFile() failed: %s",
+                     st.message().c_str());
             return nullptr;
         }
 #endif
