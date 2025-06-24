@@ -56,21 +56,45 @@ bool OGRADBCDriverIsParquet(const GDALOpenInfo *poOpenInfo)
 
 int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    return STARTS_WITH(poOpenInfo->pszFilename, "ADBC:") ||
-           ((OGRADBCDriverIsDuckDB(poOpenInfo) ||
-             (OGRADBCDriverIsSQLite3(poOpenInfo) &&
-              ((!poOpenInfo->IsExtensionEqualToCI("gpkg") &&
-                (GDALGetDriverByName("SQLite") == nullptr ||
-                 poOpenInfo->IsSingleAllowedDriver("ADBC"))) ||
-               (poOpenInfo->IsExtensionEqualToCI("gpkg") &&
-                (GDALGetDriverByName("GPKG") == nullptr ||
-                 poOpenInfo->IsSingleAllowedDriver("ADBC"))))) ||
-             OGRADBCDriverIsParquet(poOpenInfo))
-#ifndef OGR_ADBC_HAS_DRIVER_MANAGER
-            && GDALGetAdbcLoadDriverOverride() != nullptr
+    if (STARTS_WITH(poOpenInfo->pszFilename, "ADBC:"))
+        return true;
+
+    if (STARTS_WITH(poOpenInfo->pszFilename, "/vsi"))
+        return false;
+
+    if (OGRADBCDriverIsDuckDB(poOpenInfo) || OGRADBCDriverIsParquet(poOpenInfo))
+    {
+#ifdef OGR_ADBC_HAS_DRIVER_MANAGER
+        return true;
+#else
+        const char *pszADBCDriverName =
+#ifdef _WIN32
+            "duckdb.dll"
+#elif defined(__MACH__) && defined(__APPLE__)
+            "libduckdb.dylib"
+#else
+            "libduckdb.so"
 #endif
-            && !STARTS_WITH(poOpenInfo->pszFilename, "/vsi") &&
-            !poOpenInfo->IsExtensionEqualToCI("mbtiles"));
+            ;
+        return (GDALGetAdbcLoadDriverOverride() != nullptr ||
+                CPLGetSymbol(pszADBCDriverName, "duckdb_adbc_init") != nullptr);
+#endif
+    }
+    else
+    {
+        return !poOpenInfo->IsExtensionEqualToCI("mbtiles") &&
+               (OGRADBCDriverIsSQLite3(poOpenInfo) &&
+                ((!poOpenInfo->IsExtensionEqualToCI("gpkg") &&
+                  (GDALGetDriverByName("SQLite") == nullptr ||
+                   poOpenInfo->IsSingleAllowedDriver("ADBC"))) ||
+                 (poOpenInfo->IsExtensionEqualToCI("gpkg") &&
+                  (GDALGetDriverByName("GPKG") == nullptr ||
+                   poOpenInfo->IsSingleAllowedDriver("ADBC")))))
+#ifndef OGR_ADBC_HAS_DRIVER_MANAGER
+               && GDALGetAdbcLoadDriverOverride() != nullptr
+#endif
+            ;
+    }
 }
 
 /************************************************************************/
