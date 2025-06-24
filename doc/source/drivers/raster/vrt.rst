@@ -1230,11 +1230,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        if a NoData pixel is found in one of the bands, if will be propagated to
 
-       the output value. Otherwise, NoData pixels will be converted to NaN before
+       the output value. Otherwise, NoData pixels will be passed to the expression
 
-       evaluating the expression. The expression can then use the ``isnan``
-       
-       function to test for these pixels and handle them accordingly.
+       as-is. The expression can then use the ``NODATA`` variable (or ``isnodata`` 
+
+       muparser function) to test for these pixels and handle them accordingly.
 
        Within the expression, band values can be accessed:
 

@@ -107,7 +107,11 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
         ds.WriteArray(np.array([[1, -999], [3, 4]]))
 
     calc["input"] = [f"A={input_1}", f"B={input_2}"]
-    calc["calc"] = "A+B" if dialect == "muparser" else "sum"
+    calc["calc"] = (
+        "(isnodata(A) ? 0 : A) + (isnodata(B) ? 0 : B)"
+        if dialect == "muparser"
+        else "sum"
+    )
     calc["dialect"] = dialect
     calc["nodata"] = 255
     calc["output-format"] = "stream"
@@ -124,8 +128,6 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
         np.testing.assert_array_equal(result, [[2, 255], [255, 8]])
     elif dialect == "builtin":
         np.testing.assert_array_equal(result, [[2, 2], [3, 8]])
-    else:
-        np.testing.assert_array_equal(result, [[2, float("nan")], [float("nan"), 8]])
 
 
 @pytest.mark.parametrize("output_type", (gdal.GDT_Int16, gdal.GDT_Float32))
@@ -141,7 +143,7 @@ def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
         ds.GetRasterBand(1).Fill(-999)
 
     calc["input"] = [tmp_vsimem / "src.tif"]
-    calc["calc"] = "X + 20"
+    calc["calc"] = "X + nan"
     calc["output-format"] = "stream"
     calc["output-data-type"] = output_type
 
@@ -167,7 +169,7 @@ def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
         ds.GetRasterBand(1).Fill(-999)
 
     calc["input"] = [tmp_vsimem / "src.tif"]
-    calc["calc"] = "isnan(X) ? NODATA : 5"
+    calc["calc"] = "isnodata(X) ? NODATA : 5"
     calc["output-format"] = "stream"
     calc["nodata"] = -802
 

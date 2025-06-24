@@ -2907,15 +2907,9 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                 // cppcheck-suppress unreadVariable
                 double dfVal = GetSrcVal(papoSources[iSrc], eSrcType, ii);
 
-                if (bHasNoData && IsNoData(dfVal, dfNoData))
+                if (bHasNoData && bPropagateNoData && IsNoData(dfVal, dfNoData))
                 {
-                    if (bPropagateNoData)
-                    {
-                        resultIsNoData = true;
-                        break;
-                    }
-
-                    dfVal = std::numeric_limits<double>::quiet_NaN();
+                    resultIsNoData = true;
                 }
 
                 adfValuesForPixel[iSrc] = dfVal;
