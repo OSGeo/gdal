@@ -91,6 +91,9 @@ def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
+    if dialect == "muparser" and gdaltest.is_travis_branch("ubuntu_2004"):
+        pytest.skip("muparser version does not support isnodata function")
+
     input_1 = tmp_vsimem / "in1.tif"
     input_2 = tmp_vsimem / "in2.tif"
 
@@ -160,6 +163,8 @@ def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
 
 
 def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
+    if gdaltest.is_travis_branch("ubuntu_2004"):
+        pytest.skip("muparser version does not support isnodata function")
 
     gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")

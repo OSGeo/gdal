@@ -40,6 +40,42 @@ static mu::value_type always_false(mu::value_type)
     return 0;
 }
 
+// Only newer versions of muparser have the DefineFunUserData method that we
+// need to register the isnodata() function above. Since it's not clear what
+// version this was introduced or how to check the version, we test for the
+// method directly.
+namespace
+{
+
+template <typename, typename = void>
+struct HasDefineFunUserData : std::false_type
+{
+};
+
+template <typename Parser>
+struct HasDefineFunUserData<
+    Parser, std::void_t<decltype(std::declval<Parser>().DefineFunUserData(
+                _T("x"), isnodata, nullptr))>> : std::true_type
+{
+};
+
+template <typename T> void DefineIsNoDataFunction(T &parser)
+{
+    const auto &varmap = parser.GetVar();
+    if (auto it = varmap.find("NODATA"); it != varmap.end())
+    {
+        parser.DefineFunUserData(_T("isnodata"), isnodata, it->second);
+    }
+    else
+    {
+        // muparser doesn't allow userData to be null, so we bind isnodata
+        // to a dummy function instead
+        parser.DefineFun(_T("isnodata"), always_false);
+    }
+}
+
+}  // namespace
+
 static std::optional<std::string> Sanitize(const std::string &osVariable)
 {
     // muparser does not allow characters '[' or ']' which we use to emulate
@@ -130,17 +166,11 @@ class MuParserExpression::Impl
 
             // Check to see if a NODATA variable has been defined and, if so,
             // bind it to the isnodata() function
-            const auto &varmap = m_oParser.GetVar();
-            if (auto it = varmap.find("NODATA"); it != varmap.end())
+            if constexpr (HasDefineFunUserData<mu::Parser>::value)
             {
-                m_oParser.DefineFunUserData(_T("isnodata"), isnodata,
-                                            it->second);
-            }
-            else
-            {
-                // muparser doesn't allow userData to be null, so we bind isnodata
-                // to a dummy function instead
-                m_oParser.DefineFun(_T("isnodata"), always_false);
+                // gcc 9.4 still requires the code disabled by if constexpr to
+                // compile, so we hide it in a templated function
+                DefineIsNoDataFunction(m_oParser);
             }
 
             // Edit the expression ot replace variable names such as X[1] with
