@@ -541,7 +541,8 @@ struct GDALGeoTransform
     /** Constructor from a array of 6 double */
     inline explicit GDALGeoTransform(const double coeffs[6])
     {
-        static_assert(sizeof(GDALGeoTransform) == 6 * sizeof(double));
+        static_assert(sizeof(GDALGeoTransform) == 6 * sizeof(double),
+                      "Wrong size for GDALGeoTransform");
         xorig = coeffs[0];
         xscale = coeffs[1];
         xrot = coeffs[2];
