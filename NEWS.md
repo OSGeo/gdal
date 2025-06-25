@@ -153,6 +153,8 @@ VRT driver:
  * reclassify: Avoid crash with empty mapping
  * ExprPixelFunc(): avoid potential undefined behavior
  * VRTProcessedDataset::Init(): fix memleak in one case
+ * VRT pixel function: do not crash when 'expression' pixel function argument
+   is missing (ossfuzz #427499233)
 
 WCS driver:
  * avoid out-of-bounds read (oss-fuzz #416429855)
