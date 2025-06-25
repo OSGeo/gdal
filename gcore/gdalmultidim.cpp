@@ -7603,12 +7603,12 @@ bool GDALMDArray::IsRegularlySpaced(double &dfStart, double &dfIncrement) const
  *                             (bPixelIsPoint = true), or with the pixel-is-area
  *                             (top left corner convention)
  *                             (bPixelIsPoint = false)
- * @param[out] adfGeoTransform Computed geotransform
+ * @param[out] gt              Computed geotransform
  * @return true if a geotransform could be computed.
  */
 bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
                                     bool bPixelIsPoint,
-                                    double adfGeoTransform[6]) const
+                                    GDALGeoTransform &gt) const
 {
     const auto &dims(GetDimensions());
     auto poVarX = dims[nDimX]->GetIndexingVariable();
@@ -7624,15 +7624,36 @@ bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
         poVarX->IsRegularlySpaced(dfXStart, dfXSpacing) &&
         poVarY->IsRegularlySpaced(dfYStart, dfYSpacing))
     {
-        adfGeoTransform[0] = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
-        adfGeoTransform[1] = dfXSpacing;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = dfYSpacing;
+        gt[0] = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
+        gt[1] = dfXSpacing;
+        gt[2] = 0;
+        gt[3] = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
+        gt[4] = 0;
+        gt[5] = dfYSpacing;
         return true;
     }
     return false;
+}
+
+/** Returns whether 2 specified dimensions form a geotransform
+ *
+ * @param nDimX                Index of the X axis.
+ * @param nDimY                Index of the Y axis.
+ * @param bPixelIsPoint        Whether the geotransform should be returned
+ *                             with the pixel-is-point (pixel-center) convention
+ *                             (bPixelIsPoint = true), or with the pixel-is-area
+ *                             (top left corner convention)
+ *                             (bPixelIsPoint = false)
+ * @param[out] adfGeoTransform Computed geotransform
+ * @return true if a geotransform could be computed.
+ */
+bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
+                                    bool bPixelIsPoint,
+                                    double adfGeoTransform[6]) const
+{
+    GDALGeoTransform *gt =
+        reinterpret_cast<GDALGeoTransform *>(adfGeoTransform);
+    return GuessGeoTransform(nDimX, nDimY, bPixelIsPoint, *gt);
 }
 
 /************************************************************************/
@@ -7666,7 +7687,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
     std::shared_ptr<GDALMDArray> m_poArray;
     const size_t m_iXDim;
     const size_t m_iYDim;
-    double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
 
@@ -7692,17 +7713,16 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
         nRasterXSize = static_cast<int>(
             std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
 
-        m_bHasGT = m_poArray->GuessGeoTransform(m_iXDim, m_iYDim, false,
-                                                m_adfGeoTransform);
+        m_bHasGT = m_poArray->GuessGeoTransform(m_iXDim, m_iYDim, false, m_gt);
 
         SetBand(1, new GDALMDArrayResampledDatasetRasterBand(this));
     }
 
     ~GDALMDArrayResampledDataset() override;
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return m_bHasGT ? CE_None : CE_Failure;
     }
 
@@ -8346,8 +8366,8 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
     anBlockSize.emplace_back(nBlockYSize);
     anBlockSize.emplace_back(nBlockXSize);
 
-    double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
-    CPLErr eErr = poReprojectedDS->GetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt;
+    CPLErr eErr = poReprojectedDS->GetGeoTransform(gt);
     CPLAssert(eErr == CE_None);
     CPL_IGNORE_RET_VAL(eErr);
 
@@ -8355,16 +8375,14 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
         std::string(), "dimY", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
         poReprojectedDS->GetRasterYSize());
     auto varY = GDALMDArrayRegularlySpaced::Create(
-        std::string(), poDimY->GetName(), poDimY,
-        adfGeoTransform[3] + adfGeoTransform[5] / 2, adfGeoTransform[5], 0);
+        std::string(), poDimY->GetName(), poDimY, gt[3] + gt[5] / 2, gt[5], 0);
     poDimY->SetIndexingVariable(varY);
 
     auto poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
         std::string(), "dimX", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
         poReprojectedDS->GetRasterXSize());
     auto varX = GDALMDArrayRegularlySpaced::Create(
-        std::string(), poDimX->GetName(), poDimX,
-        adfGeoTransform[0] + adfGeoTransform[1] / 2, adfGeoTransform[1], 0);
+        std::string(), poDimX->GetName(), poDimX, gt[0] + gt[1] / 2, gt[1], 0);
     poDimX->SetIndexingVariable(varX);
 
     apoNewDims.emplace_back(poDimY);
@@ -8663,7 +8681,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
     std::shared_ptr<GDALMDArray> m_poArray;
     size_t m_iXDim;
     size_t m_iYDim;
-    double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     GDALMultiDomainMetadata m_oMDD{};
@@ -8718,9 +8736,9 @@ class GDALDatasetFromArray final : public GDALPamDataset
         return eErr;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return m_bHasGT ? CE_None : CE_Failure;
     }
 
@@ -9877,8 +9895,7 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
-    poDS->m_bHasGT =
-        array->GuessGeoTransform(iXDim, iYDim, false, poDS->m_adfGeoTransform);
+    poDS->m_bHasGT = array->GuessGeoTransform(iXDim, iYDim, false, poDS->m_gt);
 
     const auto attrs(array->GetAttributes());
     for (const auto &attr : attrs)

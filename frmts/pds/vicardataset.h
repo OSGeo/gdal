@@ -57,7 +57,7 @@ class VICARDataset final : public RawDataset
     CPLStringList m_aosVICARMD{};
 
     bool m_bGotTransform = false;
-    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -100,8 +100,8 @@ class VICARDataset final : public RawDataset
     VICARDataset();
     virtual ~VICARDataset();
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

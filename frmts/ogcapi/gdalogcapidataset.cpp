@@ -55,7 +55,7 @@ class OGCAPIDataset final : public GDALDataset
     CPLString m_osRootURL{};
     CPLString m_osUserPwd{};
     CPLString m_osUserQueryParams{};
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
     CPLString m_osTileData{};
@@ -124,10 +124,10 @@ class OGCAPIDataset final : public GDALDataset
     int CloseDependentDatasets() override;
 
   public:
-    OGCAPIDataset();
+    OGCAPIDataset() = default;
     ~OGCAPIDataset();
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     int GetLayerCount() override
@@ -325,20 +325,6 @@ int OGCAPITiledLayerFeatureDefn::GetFieldCount() const
 }
 
 /************************************************************************/
-/*                            OGCAPIDataset()                           */
-/************************************************************************/
-
-OGCAPIDataset::OGCAPIDataset()
-{
-    m_adfGeoTransform[0] = 0;
-    m_adfGeoTransform[1] = 1;
-    m_adfGeoTransform[2] = 0;
-    m_adfGeoTransform[3] = 0;
-    m_adfGeoTransform[4] = 0;
-    m_adfGeoTransform[5] = 1;
-}
-
-/************************************************************************/
 /*                           ~OGCAPIDataset()                           */
 /************************************************************************/
 
@@ -375,9 +361,9 @@ int OGCAPIDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr OGCAPIDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr OGCAPIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+    gt = m_gt;
     return CE_None;
 }
 
@@ -774,10 +760,10 @@ bool OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
 
     nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
     nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-    m_adfGeoTransform[0] = dfXMin;
-    m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
-    m_adfGeoTransform[3] = dfYMax;
-    m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+    m_gt[0] = dfXMin;
+    m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
+    m_gt[3] = dfYMax;
+    m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
 
     return true;
 }
@@ -1424,10 +1410,10 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
 
             nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
             nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-            m_adfGeoTransform[0] = dfXMin;
-            m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
-            m_adfGeoTransform[3] = dfYMax;
-            m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+            m_gt[0] = dfXMin;
+            m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
+            m_gt[3] = dfYMax;
+            m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
         }
 
         OGRSpatialReference oSRS;
@@ -2249,7 +2235,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             m_apoDatasetsCropped.emplace_back(
                 GDALDataset::FromHandle(hCroppedDS));
 
-            if (tileMatrix.mResX <= m_adfGeoTransform[1])
+            if (tileMatrix.mResX <= m_gt[1])
                 break;
         }
         if (!m_apoDatasetsCropped.empty())
@@ -2258,7 +2244,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                          std::end(m_apoDatasetsCropped));
             nRasterXSize = m_apoDatasetsCropped[0]->GetRasterXSize();
             nRasterYSize = m_apoDatasetsCropped[0]->GetRasterYSize();
-            m_apoDatasetsCropped[0]->GetGeoTransform(m_adfGeoTransform);
+            m_apoDatasetsCropped[0]->GetGeoTransform(m_gt);
 
             for (int i = 1; i <= m_apoDatasetsCropped[0]->GetRasterCount(); i++)
             {

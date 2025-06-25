@@ -84,9 +84,9 @@ class HSVMergeDataset final : public GDALDataset
   public:
     HSVMergeDataset(GDALDataset &oColorDS, GDALDataset &oGrayScaleDS);
 
-    CPLErr GetGeoTransform(double *padfGT) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        return m_oColorDS.GetGeoTransform(padfGT);
+        return m_oColorDS.GetGeoTransform(gt);
     }
 
     const OGRSpatialReference *GetSpatialRef() const override

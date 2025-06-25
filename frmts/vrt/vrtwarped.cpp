@@ -371,7 +371,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
 
 GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
                                              int nLines,
-                                             double *padfGeoTransform,
+                                             const double *padfGeoTransform,
                                              GDALWarpOptions *psOptions)
 
 {
@@ -387,7 +387,7 @@ GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
     GDALWarpResolveWorkingDataType(psOptions);
 
     psOptions->hDstDS = poDS;
-    poDS->SetGeoTransform(padfGeoTransform);
+    poDS->SetGeoTransform(GDALGeoTransform(padfGeoTransform));
 
     for (int i = 0; i < psOptions->nBandCount; i++)
     {

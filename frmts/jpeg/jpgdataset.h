@@ -30,7 +30,6 @@
 #include <setjmp.h>
 
 #include <algorithm>
-#include <array>
 #include <mutex>
 #include <string>
 
@@ -158,7 +157,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     mutable OGRSpatialReference m_oSRS{};
     bool bGeoTransformValid{};
-    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     std::vector<gdal::GCP> m_aoGCPs{};
 
     VSILFILE *m_fpImage{};
@@ -247,7 +246,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

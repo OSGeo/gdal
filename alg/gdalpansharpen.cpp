@@ -210,8 +210,8 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                  "poPanchroBand");
         return CE_Failure;
     }
-    std::array<double, 6> adfPanchroGT;
-    if (poPanchroDS->GetGeoTransform(adfPanchroGT.data()) != CE_None)
+    GDALGeoTransform panchroGT;
+    if (poPanchroDS->GetGeoTransform(panchroGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Panchromatic band has no associated geotransform");
@@ -237,16 +237,16 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         return CE_Failure;
     }
 
-    std::array<double, 6> adfRefMSGT;
-    if (poRefBandDS->GetGeoTransform(adfRefMSGT.data()) != CE_None)
+    GDALGeoTransform refMSGT;
+    if (poRefBandDS->GetGeoTransform(refMSGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ahInputSpectralBands[0] band has no associated geotransform");
         return CE_Failure;
     }
 
-    std::array<double, 6> adfInvMSGT;
-    if (!GDALInvGeoTransform(adfRefMSGT.data(), adfInvMSGT.data()))
+    GDALGeoTransform invMSGT;
+    if (!refMSGT.GetInverse(invMSGT))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ahInputSpectralBands[0] geotransform is not invertible");
@@ -254,25 +254,20 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     }
 
     // Do InvMSGT * PanchroGT multiplication
-    m_adfPanToMSGT[1] =
-        adfInvMSGT[1] * adfPanchroGT[1] + adfInvMSGT[2] * adfPanchroGT[4];
-    m_adfPanToMSGT[2] =
-        adfInvMSGT[1] * adfPanchroGT[2] + adfInvMSGT[2] * adfPanchroGT[5];
-    m_adfPanToMSGT[0] = adfInvMSGT[1] * adfPanchroGT[0] +
-                        adfInvMSGT[2] * adfPanchroGT[3] + adfInvMSGT[0];
-    m_adfPanToMSGT[4] =
-        adfInvMSGT[4] * adfPanchroGT[1] + adfInvMSGT[5] * adfPanchroGT[4];
-    m_adfPanToMSGT[5] =
-        adfInvMSGT[4] * adfPanchroGT[2] + adfInvMSGT[5] * adfPanchroGT[5];
-    m_adfPanToMSGT[3] = adfInvMSGT[4] * adfPanchroGT[0] +
-                        adfInvMSGT[5] * adfPanchroGT[3] + adfInvMSGT[3];
+    m_panToMSGT[1] = invMSGT[1] * panchroGT[1] + invMSGT[2] * panchroGT[4];
+    m_panToMSGT[2] = invMSGT[1] * panchroGT[2] + invMSGT[2] * panchroGT[5];
+    m_panToMSGT[0] =
+        invMSGT[1] * panchroGT[0] + invMSGT[2] * panchroGT[3] + invMSGT[0];
+    m_panToMSGT[4] = invMSGT[4] * panchroGT[1] + invMSGT[5] * panchroGT[4];
+    m_panToMSGT[5] = invMSGT[4] * panchroGT[2] + invMSGT[5] * panchroGT[5];
+    m_panToMSGT[3] =
+        invMSGT[4] * panchroGT[0] + invMSGT[5] * panchroGT[3] + invMSGT[3];
 #if 0
-    CPLDebug("GDAL", "m_adfPanToMSGT[] = %g %g %g %g %g %g",
-           m_adfPanToMSGT[0], m_adfPanToMSGT[1], m_adfPanToMSGT[2],
-           m_adfPanToMSGT[3], m_adfPanToMSGT[4], m_adfPanToMSGT[5]);
+    CPLDebug("GDAL", "m_panToMSGT[] = %g %g %g %g %g %g",
+           m_panToMSGT[0], m_panToMSGT[1], m_panToMSGT[2],
+           m_panToMSGT[3], m_panToMSGT[4], m_panToMSGT[5]);
 #endif
-    if (std::fabs(m_adfPanToMSGT[2]) > 1e-10 ||
-        std::fabs(m_adfPanToMSGT[4]) > 1e-10)
+    if (std::fabs(m_panToMSGT[2]) > 1e-10 || std::fabs(m_panToMSGT[4]) > 1e-10)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Composition of panchromatic and multispectral geotransform "
@@ -314,8 +309,8 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             return CE_Failure;
         }
 
-        std::array<double, 6> adfMSGT;
-        if (poBandDS->GetGeoTransform(adfMSGT.data()) != CE_None)
+        GDALGeoTransform MSGT;
+        if (poBandDS->GetGeoTransform(MSGT) != CE_None)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -323,7 +318,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                 i + 1);
             return CE_Failure;
         }
-        if (adfMSGT != adfRefMSGT)
+        if (MSGT != refMSGT)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "input spectral band %d has a different "
@@ -1220,10 +1215,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     // cppcheck-suppress redundantAssignment
     sExtraArg.eResampleAlg = eResampleAlg;
     sExtraArg.bFloatingPointWindowValidity = TRUE;
-    sExtraArg.dfXOff = m_adfPanToMSGT[0] + nXOff * m_adfPanToMSGT[1];
-    sExtraArg.dfYOff = m_adfPanToMSGT[3] + nYOff * m_adfPanToMSGT[5];
-    sExtraArg.dfXSize = nXSize * m_adfPanToMSGT[1];
-    sExtraArg.dfYSize = nYSize * m_adfPanToMSGT[5];
+    sExtraArg.dfXOff = m_panToMSGT[0] + nXOff * m_panToMSGT[1];
+    sExtraArg.dfYOff = m_panToMSGT[3] + nYOff * m_panToMSGT[5];
+    sExtraArg.dfXSize = nXSize * m_panToMSGT[1];
+    sExtraArg.dfYSize = nYSize * m_panToMSGT[5];
     if (sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize())
         sExtraArg.dfXSize = aMSBands[0]->GetXSize() - sExtraArg.dfXOff;
     if (sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize())
@@ -1376,12 +1371,12 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].poMEMDS = poMEMDS;
                     pasJobs[i].eResampleAlg = eResampleAlg;
                     pasJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
-                    pasJobs[i].dfYOff =
-                        m_adfPanToMSGT[3] +
-                        (nYOff + iStartLine) * m_adfPanToMSGT[5] - nYOffExtract;
+                    pasJobs[i].dfYOff = m_panToMSGT[3] +
+                                        (nYOff + iStartLine) * m_panToMSGT[5] -
+                                        nYOffExtract;
                     pasJobs[i].dfXSize = sExtraArg.dfXSize;
                     pasJobs[i].dfYSize =
-                        (iNextStartLine - iStartLine) * m_adfPanToMSGT[5];
+                        (iNextStartLine - iStartLine) * m_panToMSGT[5];
                     if (pasJobs[i].dfXOff + pasJobs[i].dfXSize > nXSizeExtract)
                     {
                         pasJobs[i].dfXSize = nYSizeExtract - pasJobs[i].dfXOff;

@@ -69,7 +69,7 @@ class SRPDataset final : public GDALPamDataset
     ~SRPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadata(const char *pszDomain = "") override;
 
@@ -376,7 +376,7 @@ const OGRSpatialReference *SRPDataset::GetSpatialRef() const
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr SRPDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (EQUAL(osProduct, "ASRP"))
     {
@@ -385,49 +385,49 @@ CPLErr SRPDataset::GetGeoTransform(double *padfGeoTransform)
         if (ZNA == 9)
         {
             // North Polar Case
-            padfGeoTransform[0] = 111319.4907933 * (90.0 - PSO / 3600.0) *
-                                  sin(LSO * M_PI / 648000.0);
-            padfGeoTransform[1] = 40075016.68558 / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = -111319.4907933 * (90.0 - PSO / 3600.0) *
-                                  cos(LSO * M_PI / 648000.0);
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -40075016.68558 / ARV;
+            gt[0] = 111319.4907933 * (90.0 - PSO / 3600.0) *
+                    sin(LSO * M_PI / 648000.0);
+            gt[1] = 40075016.68558 / ARV;
+            gt[2] = 0.0;
+            gt[3] = -111319.4907933 * (90.0 - PSO / 3600.0) *
+                    cos(LSO * M_PI / 648000.0);
+            gt[4] = 0.0;
+            gt[5] = -40075016.68558 / ARV;
         }
         else if (ZNA == 18)
         {
             // South Polar Case
-            padfGeoTransform[0] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                                  sin(LSO * M_PI / 648000.0);
-            padfGeoTransform[1] = 40075016.68558 / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                                  cos(LSO * M_PI / 648000.0);
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -40075016.68558 / ARV;
+            gt[0] = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                    sin(LSO * M_PI / 648000.0);
+            gt[1] = 40075016.68558 / ARV;
+            gt[2] = 0.0;
+            gt[3] = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                    cos(LSO * M_PI / 648000.0);
+            gt[4] = 0.0;
+            gt[5] = -40075016.68558 / ARV;
         }
         else
         {
             if (BRV == 0)
                 return CE_Failure;
-            padfGeoTransform[0] = LSO / 3600.0;
-            padfGeoTransform[1] = 360. / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = PSO / 3600.0;
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -360. / BRV;
+            gt[0] = LSO / 3600.0;
+            gt[1] = 360. / ARV;
+            gt[2] = 0.0;
+            gt[3] = PSO / 3600.0;
+            gt[4] = 0.0;
+            gt[5] = -360. / BRV;
         }
 
         return CE_None;
     }
     else if (EQUAL(osProduct, "USRP"))
     {
-        padfGeoTransform[0] = LSO;
-        padfGeoTransform[1] = LOD;
-        padfGeoTransform[2] = 0.0;
-        padfGeoTransform[3] = PSO;
-        padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = -LAD;
+        gt[0] = LSO;
+        gt[1] = LOD;
+        gt[2] = 0.0;
+        gt[3] = PSO;
+        gt[4] = 0.0;
+        gt[5] = -LAD;
         return CE_None;
     }
 

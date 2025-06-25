@@ -1051,9 +1051,8 @@ CPLErr ILWISDataset::WriteProjection()
     /* -------------------------------------------------------------------- */
     /*  Determine to write a geo-referencing file for the dataset to create */
     /* -------------------------------------------------------------------- */
-    if (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-        adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-        adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0)
+    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
+        m_gt[4] != 0.0 || fabs(m_gt[5]) != 1.0)
         WriteElement("GeoRef", "CoordSystem", grFileName, csy);
 
     /* -------------------------------------------------------------------- */

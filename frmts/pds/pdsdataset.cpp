@@ -57,7 +57,7 @@ class PDSDataset final : public RawDataset
     NASAKeywordHandler oKeywords{};
 
     bool bGotTransform{};
-    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -92,7 +92,7 @@ class PDSDataset final : public RawDataset
     PDSDataset();
     virtual ~PDSDataset();
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetFileList(void) override;
@@ -271,16 +271,16 @@ const OGRSpatialReference *PDSDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDSDataset::GetGeoTransform(double *padfTransform)
+CPLErr PDSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -696,12 +696,12 @@ void PDSDataset::ParseSRS()
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         bGotTransform = TRUE;
-        adfGeoTransform[0] = dfULXMap;
-        adfGeoTransform[1] = dfXDim;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfULYMap;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = dfYDim;
+        m_gt[0] = dfULXMap;
+        m_gt[1] = dfXDim;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfULYMap;
+        m_gt[4] = 0.0;
+        m_gt[5] = dfYDim;
 
         const double rotation = CPLAtof(GetKeyword(
             osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_ROTATION"));
@@ -711,34 +711,26 @@ void PDSDataset::ParseSRS()
                 rotation == 90 ? 1.0 : sin(rotation / 180 * M_PI);
             const double cos_rot =
                 rotation == 90 ? 0.0 : cos(rotation / 180 * M_PI);
-            const double gt_1 =
-                cos_rot * adfGeoTransform[1] - sin_rot * adfGeoTransform[4];
-            const double gt_2 =
-                cos_rot * adfGeoTransform[2] - sin_rot * adfGeoTransform[5];
-            const double gt_0 =
-                cos_rot * adfGeoTransform[0] - sin_rot * adfGeoTransform[3];
-            const double gt_4 =
-                sin_rot * adfGeoTransform[1] + cos_rot * adfGeoTransform[4];
-            const double gt_5 =
-                sin_rot * adfGeoTransform[2] + cos_rot * adfGeoTransform[5];
-            const double gt_3 =
-                sin_rot * adfGeoTransform[0] + cos_rot * adfGeoTransform[3];
-            adfGeoTransform[1] = gt_1;
-            adfGeoTransform[2] = gt_2;
-            adfGeoTransform[0] = gt_0;
-            adfGeoTransform[4] = gt_4;
-            adfGeoTransform[5] = gt_5;
-            adfGeoTransform[3] = gt_3;
+            const double gt_1 = cos_rot * m_gt[1] - sin_rot * m_gt[4];
+            const double gt_2 = cos_rot * m_gt[2] - sin_rot * m_gt[5];
+            const double gt_0 = cos_rot * m_gt[0] - sin_rot * m_gt[3];
+            const double gt_4 = sin_rot * m_gt[1] + cos_rot * m_gt[4];
+            const double gt_5 = sin_rot * m_gt[2] + cos_rot * m_gt[5];
+            const double gt_3 = sin_rot * m_gt[0] + cos_rot * m_gt[3];
+            m_gt[1] = gt_1;
+            m_gt[2] = gt_2;
+            m_gt[0] = gt_0;
+            m_gt[4] = gt_4;
+            m_gt[5] = gt_5;
+            m_gt[3] = gt_3;
         }
     }
 
     if (!bGotTransform)
-        bGotTransform =
-            GDALReadWorldFile(pszFilename, "psw", adfGeoTransform.data());
+        bGotTransform = GDALReadWorldFile(pszFilename, "psw", m_gt.data());
 
     if (!bGotTransform)
-        bGotTransform =
-            GDALReadWorldFile(pszFilename, "wld", adfGeoTransform.data());
+        bGotTransform = GDALReadWorldFile(pszFilename, "wld", m_gt.data());
 }
 
 /************************************************************************/

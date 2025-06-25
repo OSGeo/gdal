@@ -529,12 +529,7 @@ bool MEMRasterBand::IsMaskBand() const
 MEMDataset::MEMDataset()
     : GDALDataset(FALSE), bGeoTransformSet(FALSE), m_poPrivate(new Private())
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = -1.0;
+    m_gt[5] = -1;
     DisableReadWriteMutex();
 }
 
@@ -598,10 +593,10 @@ CPLErr MEMDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MEMDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr MEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfGeoTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     if (bGeoTransformSet)
         return CE_None;
 
@@ -612,10 +607,10 @@ CPLErr MEMDataset::GetGeoTransform(double *padfGeoTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MEMDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr MEMDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    m_gt = gt;
     bGeoTransformSet = TRUE;
 
     return CE_None;
@@ -890,14 +885,12 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             poOvrDS->nRasterYSize =
                 DIV_ROUND_UP(nRasterYSize, panOverviewList[i]);
             poOvrDS->bGeoTransformSet = bGeoTransformSet;
-            memcpy(poOvrDS->adfGeoTransform, adfGeoTransform,
-                   6 * sizeof(double));
+            poOvrDS->m_gt = m_gt;
             const double dfOvrXRatio =
                 static_cast<double>(nRasterXSize) / poOvrDS->nRasterXSize;
             const double dfOvrYRatio =
                 static_cast<double>(nRasterYSize) / poOvrDS->nRasterYSize;
-            GDALRescaleGeoTransform(poOvrDS->adfGeoTransform, dfOvrXRatio,
-                                    dfOvrYRatio);
+            poOvrDS->m_gt.Rescale(dfOvrXRatio, dfOvrYRatio);
             poOvrDS->m_oSRS = m_oSRS;
             for (int iBand = 0; iBand < nBands; iBand++)
             {
@@ -1082,8 +1075,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
         poNewDS->nRasterXSize = nRasterXSize;
         poNewDS->nRasterYSize = nRasterYSize;
         poNewDS->bGeoTransformSet = bGeoTransformSet;
-        memcpy(poNewDS->adfGeoTransform, adfGeoTransform,
-               sizeof(adfGeoTransform));
+        poNewDS->m_gt = m_gt;
         poNewDS->m_oSRS = m_oSRS;
         poNewDS->m_aoGCPs = m_aoGCPs;
         poNewDS->m_oGCPSRS = m_oGCPSRS;
@@ -1288,13 +1280,13 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
         char **values = CSLTokenizeStringComplex(pszOption, "/", TRUE, FALSE);
         if (CSLCount(values) == 6)
         {
-            double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+            GDALGeoTransform gt;
             for (size_t i = 0; i < 6; ++i)
             {
-                adfGeoTransform[i] = CPLScanDouble(
-                    values[i], static_cast<int>(strlen(values[i])));
+                gt[i] = CPLScanDouble(values[i],
+                                      static_cast<int>(strlen(values[i])));
             }
-            poDS->SetGeoTransform(adfGeoTransform);
+            poDS->SetGeoTransform(gt);
         }
         CSLDestroy(values);
     }

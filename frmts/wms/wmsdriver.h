@@ -311,8 +311,8 @@ class GDALWMSDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *gt) override;
-    virtual CPLErr SetGeoTransform(double *gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
                               GDALDataType bdt, int band_count, int *band_map,
                               char **options) override;

@@ -1188,9 +1188,9 @@ static bool TranslateArray(
             }
             else
             {
-                double adfGT[6];
-                if (poSrcDS->GetGeoTransform(adfGT) == CE_None &&
-                    adfGT[2] == 0.0 && adfGT[4] == 0.0)
+                GDALGeoTransform gt;
+                if (poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
+                    gt[4] == 0.0)
                 {
                     auto var = std::dynamic_pointer_cast<VRTMDArray>(
                         poDstGroup->CreateMDArray(
@@ -1200,13 +1200,10 @@ static bool TranslateArray(
                     {
                         const double dfStart =
                             srcIndexVar->GetName() == "X"
-                                ? adfGT[0] +
-                                      (range.m_nStartIdx + 0.5) * adfGT[1]
-                                : adfGT[3] +
-                                      (range.m_nStartIdx + 0.5) * adfGT[5];
+                                ? gt[0] + (range.m_nStartIdx + 0.5) * gt[1]
+                                : gt[3] + (range.m_nStartIdx + 0.5) * gt[5];
                         const double dfIncr =
-                            (srcIndexVar->GetName() == "X" ? adfGT[1]
-                                                           : adfGT[5]) *
+                            (srcIndexVar->GetName() == "X" ? gt[1] : gt[5]) *
                             range.m_nIncr;
                         std::unique_ptr<VRTMDArraySourceRegularlySpaced>
                             poSource(new VRTMDArraySourceRegularlySpaced(

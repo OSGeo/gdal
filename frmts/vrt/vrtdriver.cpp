@@ -283,11 +283,10 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Do we have a geotransform?                                      */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {0.0};
-
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
-        poVRTDS->SetGeoTransform(adfGeoTransform);
+        poVRTDS->SetGeoTransform(gt);
     }
 
     /* -------------------------------------------------------------------- */

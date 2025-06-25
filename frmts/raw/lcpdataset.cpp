@@ -54,7 +54,7 @@ class LCPDataset final : public RawDataset
 
     char **GetFileList(void) override;
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -120,7 +120,7 @@ CPLErr LCPDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LCPDataset::GetGeoTransform(double *padfTransform)
+CPLErr LCPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     double dfEast = 0.0;
     double dfWest = 0.0;
@@ -142,13 +142,13 @@ CPLErr LCPDataset::GetGeoTransform(double *padfTransform)
     CPL_LSBPTR64(&dfCellX);
     CPL_LSBPTR64(&dfCellY);
 
-    padfTransform[0] = dfWest;
-    padfTransform[3] = dfNorth;
-    padfTransform[1] = dfCellX;
-    padfTransform[2] = 0.0;
+    gt[0] = dfWest;
+    gt[3] = dfNorth;
+    gt[1] = dfCellX;
+    gt[2] = 0.0;
 
-    padfTransform[4] = 0.0;
-    padfTransform[5] = -1 * dfCellY;
+    gt[4] = 0.0;
+    gt[5] = -1 * dfCellY;
 
     return CE_None;
 }
@@ -1177,8 +1177,8 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     // If no latitude is supplied, attempt to extract the central latitude
     // from the image.  It must be set either manually or here, otherwise
     // we fail.
-    double adfSrcGeoTransform[6] = {0.0};
-    poSrcDS->GetGeoTransform(adfSrcGeoTransform);
+    GDALGeoTransform srcGT;
+    poSrcDS->GetGeoTransform(srcGT);
     const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
     double dfLongitude = 0.0;
     double dfLatitude = 0.0;
@@ -1199,8 +1199,7 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
                 OGRCreateCoordinateTransformation(poSrcSRS, &oDstSRS));
         if (poCT != nullptr)
         {
-            dfLatitude =
-                adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize / 2;
+            dfLatitude = srcGT[3] + srcGT[5] * nYSize / 2;
             const int nErr =
                 static_cast<int>(poCT->Transform(1, &dfLongitude, &dfLatitude));
             if (!nErr)
@@ -1392,16 +1391,16 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     nTemp = static_cast<GInt32>(dfLatitude + 0.5);
     CPL_LSBPTR32(&nTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
-    dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
+    dfLongitude = srcGT[0] + srcGT[1] * nXSize;
     CPL_LSBPTR64(&dfLongitude);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfLongitude, 8, 1, fp));
-    dfLongitude = adfSrcGeoTransform[0];
+    dfLongitude = srcGT[0];
     CPL_LSBPTR64(&dfLongitude);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfLongitude, 8, 1, fp));
-    dfLatitude = adfSrcGeoTransform[3];
+    dfLatitude = srcGT[3];
     CPL_LSBPTR64(&dfLatitude);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfLatitude, 8, 1, fp));
-    dfLatitude = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
+    dfLatitude = srcGT[3] + srcGT[5] * nYSize;
     CPL_LSBPTR64(&dfLatitude);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfLatitude, 8, 1, fp));
 
@@ -1473,19 +1472,19 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
 
     // X and Y boundaries.
     // Max x.
-    double dfTemp = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
+    double dfTemp = srcGT[0] + srcGT[1] * nXSize;
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
     // Min x.
-    dfTemp = adfSrcGeoTransform[0];
+    dfTemp = srcGT[0];
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
     // Max y.
-    dfTemp = adfSrcGeoTransform[3];
+    dfTemp = srcGT[3];
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
     // Min y.
-    dfTemp = adfSrcGeoTransform[3] + adfSrcGeoTransform[5] * nYSize;
+    dfTemp = srcGT[3] + srcGT[5] * nYSize;
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
 
@@ -1495,11 +1494,11 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
 
     // Resolution.
     // X resolution.
-    dfTemp = adfSrcGeoTransform[1];
+    dfTemp = srcGT[1];
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
     // Y resolution.
-    dfTemp = fabs(adfSrcGeoTransform[5]);
+    dfTemp = fabs(srcGT[5]);
     CPL_LSBPTR64(&dfTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&dfTemp, 8, 1, fp));
 

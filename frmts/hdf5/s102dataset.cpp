@@ -238,8 +238,8 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverage01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
+    poDS->m_bHasGT =
+        S100GetGeoTransform(poBathymetryCoverage01.get(), poDS->m_gt, bNorthUp);
 
     auto poGroup001 = poBathymetryCoverage01->OpenGroup("Group_001");
     if (!poGroup001)
@@ -500,8 +500,7 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
     }
 
     // Compute geotransform
-    m_bHasGT = S100GetGeoTransform(poGroupQuality01.get(), m_adfGeoTransform,
-                                   bNorthUp);
+    m_bHasGT = S100GetGeoTransform(poGroupQuality01.get(), m_gt, bNorthUp);
 
     auto poGroup001 = poGroupQuality01->OpenGroup("Group_001");
     if (!poGroup001)

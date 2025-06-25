@@ -1330,7 +1330,7 @@ OGRSpatialReferenceH CPL_DLL GDALGetSpatialRef(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALSetProjection(GDALDatasetH, const char *);
 CPLErr CPL_DLL GDALSetSpatialRef(GDALDatasetH, OGRSpatialReferenceH);
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform(GDALDatasetH, double *);
-CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, double *);
+CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, const double *);
 
 CPLErr CPL_DLL GDALGetExtent(GDALDatasetH, OGREnvelope *,
                              OGRSpatialReferenceH hCRS);

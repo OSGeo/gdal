@@ -226,7 +226,7 @@ class GTADataset final : public GDALPamDataset
     vsi_l_offset DataOffset = 0;
     // Metadata
     bool bHaveGeoTransform = false;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int nGCPs = 0;
     mutable OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
@@ -247,8 +247,8 @@ class GTADataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -786,7 +786,6 @@ GTADataset::GTADataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -913,12 +912,12 @@ CPLErr GTADataset::WriteBlock()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTADataset::GetGeoTransform(double *padfTransform)
+CPLErr GTADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bHaveGeoTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return CE_None;
     }
     else
@@ -931,7 +930,7 @@ CPLErr GTADataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTADataset::SetGeoTransform(double *)
+CPLErr GTADataset::SetGeoTransform(const GDALGeoTransform &)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
@@ -1124,7 +1123,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->bHaveGeoTransform = true;
         ScanDoubles(poDS->oHeader.global_taglist().get("GDAL/GEO_TRANSFORM"),
-                    poDS->adfGeoTransform, 6);
+                    poDS->m_gt.data(), 6);
     }
     else
     {
@@ -1470,11 +1469,11 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             oHeader.global_taglist().set("GDAL/PROJECTION", pszWKT);
         }
-        double adfTransform[6];
-        if (poSrcDS->GetGeoTransform(adfTransform) == CE_None)
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
         {
             oHeader.global_taglist().set("GDAL/GEO_TRANSFORM",
-                                         PrintDoubles(adfTransform, 6).c_str());
+                                         PrintDoubles(gt.data(), 6).c_str());
         }
         // GCPs
         if (poSrcDS->GetGCPCount() > 0)

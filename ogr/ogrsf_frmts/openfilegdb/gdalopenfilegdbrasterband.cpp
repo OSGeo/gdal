@@ -400,10 +400,10 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             nWidth = 1 + static_cast<int>(
                              std::round((dfMaxX - dfMinXAdjusted) / dfResX));
         }
-        m_adfGeoTransform[0] =
+        m_gt[0] =
             (dfBlockOriginX + m_nShiftBlockX * dfBlockGeorefWidth) - dfResX / 2;
-        m_adfGeoTransform[1] = dfResX;
-        m_adfGeoTransform[2] = 0.0;
+        m_gt[1] = dfResX;
+        m_gt[2] = 0.0;
         const double dfBlockGeorefHeight = dfResY * nBlockHeight;
         if (dfMaxY != dfBlockOriginY)
         {
@@ -426,11 +426,10 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             nHeight = 1 + static_cast<int>(
                               std::round((dfMaxYAdjusted - dfMinY) / dfResY));
         }
-        m_adfGeoTransform[3] =
-            (dfBlockOriginY - m_nShiftBlockY * dfBlockGeorefHeight) +
-            dfResY / 2;
-        m_adfGeoTransform[4] = 0.0;
-        m_adfGeoTransform[5] = -dfResY;
+        m_gt[3] = (dfBlockOriginY - m_nShiftBlockY * dfBlockGeorefHeight) +
+                  dfResY / 2;
+        m_gt[4] = 0.0;
+        m_gt[5] = -dfResY;
     }
 
     // Two cases:
@@ -1069,10 +1068,9 @@ void OGROpenFileGDBDataSource::ReadAuxTable(const std::string &osLayerName)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr OGROpenFileGDBDataSource::GetGeoTransform(double *padfGeoTransform)
+CPLErr OGROpenFileGDBDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, m_adfGeoTransform.data(),
-           sizeof(m_adfGeoTransform));
+    gt = m_gt;
     return m_bHasGeoTransform ? CE_None : CE_Failure;
 }
 

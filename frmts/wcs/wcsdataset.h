@@ -50,7 +50,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     bool native_crs;       // the CRS is the native CRS of the server
     bool axis_order_swap;  // the CRS requires x and y coordinates to be swapped
                            // for requests
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     bool SetCRS(const std::string &crs, bool native);
     void SetGeometry(const std::vector<int> &size,
                      const std::vector<double> &origin,
@@ -131,7 +131,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
     virtual char **GetFileList(void) override;
 

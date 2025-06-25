@@ -37,12 +37,6 @@ GeoRasterDataset::GeoRasterDataset()
     bForcedSRID = false;
     poGeoRaster = nullptr;
     papszSubdatasets = nullptr;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poMaskBand = nullptr;
     bApplyNoDataArray = false;
@@ -154,12 +148,12 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poGRW->bIsReferenced)
     {
-        poGRD->adfGeoTransform[1] = poGRW->dfXCoefficient[0];
-        poGRD->adfGeoTransform[2] = poGRW->dfXCoefficient[1];
-        poGRD->adfGeoTransform[0] = poGRW->dfXCoefficient[2];
-        poGRD->adfGeoTransform[4] = poGRW->dfYCoefficient[0];
-        poGRD->adfGeoTransform[5] = poGRW->dfYCoefficient[1];
-        poGRD->adfGeoTransform[3] = poGRW->dfYCoefficient[2];
+        poGRD->m_gt[1] = poGRW->dfXCoefficient[0];
+        poGRD->m_gt[2] = poGRW->dfXCoefficient[1];
+        poGRD->m_gt[0] = poGRW->dfXCoefficient[2];
+        poGRD->m_gt[4] = poGRW->dfYCoefficient[0];
+        poGRD->m_gt[5] = poGRW->dfYCoefficient[1];
+        poGRD->m_gt[3] = poGRW->dfYCoefficient[2];
     }
 
     //  -------------------------------------------------------------------
@@ -1397,15 +1391,12 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //  Copy information to the dataset
     //  -----------------------------------------------------------
 
-    double adfTransform[6];
-
-    if (poSrcDS->GetGeoTransform(adfTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
-        if (!(adfTransform[0] == 0.0 && adfTransform[1] == 1.0 &&
-              adfTransform[2] == 0.0 && adfTransform[3] == 0.0 &&
-              adfTransform[4] == 0.0 && adfTransform[5] == 1.0))
+        if (gt != GDALGeoTransform())
         {
-            poDstDS->SetGeoTransform(adfTransform);
+            poDstDS->SetGeoTransform(gt);
 
             if (!poDstDS->bForcedSRID) /* forced by create option SRID */
             {
@@ -1837,7 +1828,7 @@ CPLErr GeoRasterDataset::IRasterIO(
 //                                                            GetGeoTransform()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::GetGeoTransform(double *padfTransform)
+CPLErr GeoRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (poGeoRaster->phRPC)
     {
@@ -1849,9 +1840,7 @@ CPLErr GeoRasterDataset::GetGeoTransform(double *padfTransform)
         return CE_Failure;
     }
 
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
-
-    bGeoTransform = true;
+    gt = m_gt;
 
     return CE_None;
 }
@@ -2042,16 +2031,16 @@ const OGRSpatialReference *GeoRasterDataset::GetSpatialRef() const
 //                                                            SetGeoTransform()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::SetGeoTransform(double *padfTransform)
+CPLErr GeoRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
-    poGeoRaster->dfXCoefficient[0] = adfGeoTransform[1];
-    poGeoRaster->dfXCoefficient[1] = adfGeoTransform[2];
-    poGeoRaster->dfXCoefficient[2] = adfGeoTransform[0];
-    poGeoRaster->dfYCoefficient[0] = adfGeoTransform[4];
-    poGeoRaster->dfYCoefficient[1] = adfGeoTransform[5];
-    poGeoRaster->dfYCoefficient[2] = adfGeoTransform[3];
+    poGeoRaster->dfXCoefficient[0] = m_gt[1];
+    poGeoRaster->dfXCoefficient[1] = m_gt[2];
+    poGeoRaster->dfXCoefficient[2] = m_gt[0];
+    poGeoRaster->dfYCoefficient[0] = m_gt[4];
+    poGeoRaster->dfYCoefficient[1] = m_gt[5];
+    poGeoRaster->dfYCoefficient[2] = m_gt[3];
 
     bGeoTransform = true;
 

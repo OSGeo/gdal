@@ -11,5 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_minixml.h"
+#include "gdal_priv.h"
+
 CPLErr WCSParseGMLCoverage(CPLXMLNode *psTree, int *pnXSize, int *pnYSize,
-                           double *padfGeoTransform, char **ppszProjection);
+                           GDALGeoTransform &gt, char **ppszProjection);

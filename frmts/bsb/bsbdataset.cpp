@@ -37,7 +37,7 @@ class BSBDataset final : public GDALPamDataset
     GDAL_GCP *pasGCPList;
     OGRSpatialReference m_oGCPSRS{};
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int bGeoTransformSet;
 
     void ScanForGCPs(bool isNos, const char *pszFilename);
@@ -61,7 +61,7 @@ class BSBDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
 };
 
@@ -173,13 +173,6 @@ BSBDataset::BSBDataset()
 {
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
-
-    adfGeoTransform[0] = 0.0; /* X Origin (top left corner) */
-    adfGeoTransform[1] = 1.0; /* X Pixel size */
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0; /* Y Origin (top left corner) */
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0; /* Y Pixel Size */
 }
 
 /************************************************************************/
@@ -202,10 +195,10 @@ BSBDataset::~BSBDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BSBDataset::GetGeoTransform(double *padfTransform)
+CPLErr BSBDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     if (bGeoTransformSet)
         return CE_None;
@@ -549,7 +542,7 @@ void BSBDataset::ScanForGCPs(bool isNos, const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Attempt to prepare a geotransform from the GCPs.                */
     /* -------------------------------------------------------------------- */
-    if (GDALGCPsToGeoTransform(nGCPCount, pasGCPList, adfGeoTransform, FALSE))
+    if (GDALGCPsToGeoTransform(nGCPCount, pasGCPList, m_gt.data(), FALSE))
     {
         bGeoTransformSet = TRUE;
     }
@@ -1118,7 +1111,7 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Write the GCPs.                                                 */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     int nGCPCount = poSrcDS->GetGCPCount();
     if (nGCPCount)
     {
@@ -1134,31 +1127,23 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             }
         }
     }
-    else if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    else if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
         const char *pszProjection = poSrcDS->GetProjectionRef();
         if (BSBIsSRSOK(pszProjection))
         {
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 1, 0, 0,
-                        adfGeoTransform[3] + 0 * adfGeoTransform[4] +
-                            0 * adfGeoTransform[5],
-                        adfGeoTransform[0] + 0 * adfGeoTransform[1] +
-                            0 * adfGeoTransform[2]);
+                        gt[3] + 0 * gt[4] + 0 * gt[5],
+                        gt[0] + 0 * gt[1] + 0 * gt[2]);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 2, nXSize, 0,
-                        adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                            0 * adfGeoTransform[5],
-                        adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                            0 * adfGeoTransform[2]);
+                        gt[3] + nXSize * gt[4] + 0 * gt[5],
+                        gt[0] + nXSize * gt[1] + 0 * gt[2]);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 3, nXSize, nYSize,
-                        adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                            nYSize * adfGeoTransform[5],
-                        adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                            nYSize * adfGeoTransform[2]);
+                        gt[3] + nXSize * gt[4] + nYSize * gt[5],
+                        gt[0] + nXSize * gt[1] + nYSize * gt[2]);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 4, 0, nYSize,
-                        adfGeoTransform[3] + 0 * adfGeoTransform[4] +
-                            nYSize * adfGeoTransform[5],
-                        adfGeoTransform[0] + 0 * adfGeoTransform[1] +
-                            nYSize * adfGeoTransform[2]);
+                        gt[3] + 0 * gt[4] + nYSize * gt[5],
+                        gt[0] + 0 * gt[1] + nYSize * gt[2]);
         }
     }
 

@@ -61,7 +61,7 @@ class PLMosaicDataset final : public GDALPamDataset
     int nQuadSize{};
     CPLString osQuadsURL{};
     int bHasGeoTransform{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int nZoomLevelMax{};
     int bUseTMSForMain{};
     std::vector<GDALDataset *> apoTMSDS{};
@@ -114,7 +114,7 @@ class PLMosaicDataset final : public GDALPamDataset
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     GDALDataset *GetMetaTile(int tile_x, int tile_y);
 };
@@ -320,12 +320,6 @@ PLMosaicDataset::PLMosaicDataset()
       nLastMetaTileY(-1)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0;
-    adfGeoTransform[1] = 1;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = 0;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = 1;
 
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     osCachePathRoot = CPLGetPathSafe(CPLGenerateTempFilenameSafe("").c_str());
@@ -864,12 +858,12 @@ int PLMosaicDataset::OpenMosaic()
         }
 
         bHasGeoTransform = TRUE;
-        adfGeoTransform[0] = GM_ORIGIN;
-        adfGeoTransform[1] = dfResolution;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = -GM_ORIGIN;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -dfResolution;
+        m_gt[0] = GM_ORIGIN;
+        m_gt[1] = dfResolution;
+        m_gt[2] = 0;
+        m_gt[3] = -GM_ORIGIN;
+        m_gt[4] = 0;
+        m_gt[5] = -dfResolution;
         nRasterXSize = static_cast<int>(2 * -GM_ORIGIN / dfResolution + 0.5);
         nRasterYSize = nRasterXSize;
 
@@ -897,8 +891,8 @@ int PLMosaicDataset::OpenMosaic()
             ymin = floor(ymin / dfTileSize) * dfTileSize;
             xmax = ceil(xmax / dfTileSize) * dfTileSize;
             ymax = ceil(ymax / dfTileSize) * dfTileSize;
-            adfGeoTransform[0] = xmin;
-            adfGeoTransform[3] = ymax;
+            m_gt[0] = xmin;
+            m_gt[3] = ymax;
             nRasterXSize = static_cast<int>((xmax - xmin) / dfResolution + 0.5);
             nRasterYSize = static_cast<int>((ymax - ymin) / dfResolution + 0.5);
             nMetaTileXShift =
@@ -990,14 +984,12 @@ int PLMosaicDataset::OpenMosaic()
 
                     int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
 
-                    nSrcXOff = static_cast<int>(
-                        0.5 +
-                        (adfGeoTransform[0] - GM_ORIGIN) / dfThisResolution);
+                    nSrcXOff = static_cast<int>(0.5 + (m_gt[0] - GM_ORIGIN) /
+                                                          dfThisResolution);
                     nDstXOff = 0;
 
-                    nSrcYOff = static_cast<int>(
-                        0.5 +
-                        (-GM_ORIGIN - adfGeoTransform[3]) / dfThisResolution);
+                    nSrcYOff = static_cast<int>(0.5 + (-GM_ORIGIN - m_gt[3]) /
+                                                          dfThisResolution);
                     nDstYOff = 0;
 
                     for (int iBand = 1; iBand <= 4; iBand++)
@@ -1167,9 +1159,9 @@ const OGRSpatialReference *PLMosaicDataset::GetSpatialRef() const
 /*                            GetGeoTransform()                         */
 /************************************************************************/
 
-CPLErr PLMosaicDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr PLMosaicDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
+    gt = m_gt;
     return (bHasGeoTransform) ? CE_None : CE_Failure;
 }
 

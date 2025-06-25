@@ -79,12 +79,10 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
     PostGISRasterTileDataset *poRTDS =
         cpl::down_cast<PostGISRasterTileDataset *>(poDS);
 
-    const double dfTileUpperLeftX =
-        poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    const double dfTileUpperLeftY =
-        poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-    const double dfTileResX = poRTDS->adfGeoTransform[1];
-    const double dfTileResY = poRTDS->adfGeoTransform[5];
+    const double dfTileUpperLeftX = poRTDS->m_gt[GEOTRSFRM_TOPLEFT_X];
+    const double dfTileUpperLeftY = poRTDS->m_gt[GEOTRSFRM_TOPLEFT_Y];
+    const double dfTileResX = poRTDS->m_gt[1];
+    const double dfTileResY = poRTDS->m_gt[5];
     const int nTileXSize = nBlockXSize;
     const int nTileYSize = nBlockYSize;
 

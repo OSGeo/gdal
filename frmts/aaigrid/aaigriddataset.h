@@ -83,7 +83,7 @@ class AAIGDataset CPL_NON_FINAL : public GDALPamDataset
 
   protected:
     GDALDataType eDataType;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     bool bNoDataSet;
     double dfNoDataValue;
     CPLString osUnits{};
@@ -109,7 +109,7 @@ class AAIGDataset CPL_NON_FINAL : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 

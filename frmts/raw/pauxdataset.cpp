@@ -59,7 +59,7 @@ class PAuxDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     int GetGCPCount() override;
 
@@ -429,7 +429,7 @@ const GDAL_GCP *PAuxDataset::GetGCPs()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PAuxDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr PAuxDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (CSLFetchNameValue(papszAuxLines, "UpLeftX") == nullptr ||
@@ -437,13 +437,7 @@ CPLErr PAuxDataset::GetGeoTransform(double *padfGeoTransform)
         CSLFetchNameValue(papszAuxLines, "LoRightX") == nullptr ||
         CSLFetchNameValue(papszAuxLines, "LoRightY") == nullptr)
     {
-        padfGeoTransform[0] = 0.0;
-        padfGeoTransform[1] = 1.0;
-        padfGeoTransform[2] = 0.0;
-        padfGeoTransform[3] = 0.0;
-        padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = 1.0;
-
+        gt = GDALGeoTransform();
         return CE_Failure;
     }
 
@@ -456,12 +450,12 @@ CPLErr PAuxDataset::GetGeoTransform(double *padfGeoTransform)
     const double dfLoRightY =
         CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightY"));
 
-    padfGeoTransform[0] = dfUpLeftX;
-    padfGeoTransform[1] = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
-    padfGeoTransform[2] = 0.0;
-    padfGeoTransform[3] = dfUpLeftY;
-    padfGeoTransform[4] = 0.0;
-    padfGeoTransform[5] = (dfLoRightY - dfUpLeftY) / GetRasterYSize();
+    gt[0] = dfUpLeftX;
+    gt[1] = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
+    gt[2] = 0.0;
+    gt[3] = dfUpLeftY;
+    gt[4] = 0.0;
+    gt[5] = (dfLoRightY - dfUpLeftY) / GetRasterYSize();
 
     return CE_None;
 }

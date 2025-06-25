@@ -43,12 +43,6 @@ VRTDataset::VRTDataset(int nXSize, int nYSize, int nBlockXSize, int nBlockYSize)
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
     m_bBlockSizeSpecified = nBlockXSize > 0 && nBlockYSize > 0;
     m_nBlockXSize =
         nBlockXSize > 0 ? nBlockXSize : std::min(DEFAULT_BLOCK_SIZE, nXSize);
@@ -319,9 +313,7 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
         CPLSetXMLValue(
             psDSTree, "GeoTransform",
             CPLSPrintf("%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
-                       m_adfGeoTransform[0], m_adfGeoTransform[1],
-                       m_adfGeoTransform[2], m_adfGeoTransform[3],
-                       m_adfGeoTransform[4], m_adfGeoTransform[5]));
+                       m_gt[0], m_gt[1], m_gt[2], m_gt[3], m_gt[4], m_gt[5]));
     }
 
     /* -------------------------------------------------------------------- */
@@ -526,7 +518,7 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
         else
         {
             for (int iTA = 0; iTA < 6; iTA++)
-                m_adfGeoTransform[iTA] = CPLAtof(aosTokens[iTA]);
+                m_gt[iTA] = CPLAtof(aosTokens[iTA]);
             m_bGeoTransformSet = TRUE;
         }
     }
@@ -716,10 +708,10 @@ CPLErr VRTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VRTDataset::SetGeoTransform(double *padfGeoTransformIn)
+CPLErr VRTDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(m_adfGeoTransform, padfGeoTransformIn, sizeof(double) * 6);
+    m_gt = gt;
     m_bGeoTransformSet = TRUE;
 
     SetNeedsFlush();
@@ -731,10 +723,10 @@ CPLErr VRTDataset::SetGeoTransform(double *padfGeoTransformIn)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr VRTDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr VRTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfGeoTransform, m_adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     return m_bGeoTransformSet ? CE_None : CE_Failure;
 }

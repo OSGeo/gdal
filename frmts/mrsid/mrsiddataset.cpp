@@ -1269,18 +1269,17 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     if (!poImageReader->isGeoCoordImplicit())
     {
         const LTIGeoCoord &oGeo = poImageReader->getGeoCoord();
-        oGeo.get(adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
-                 adfGeoTransform[5], adfGeoTransform[2], adfGeoTransform[4]);
+        oGeo.get(m_gt[0], m_gt[3], m_gt[1], m_gt[5], m_gt[2], m_gt[4]);
 
-        adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
-        adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
+        m_gt[0] = m_gt[0] - m_gt[1] / 2;
+        m_gt[3] = m_gt[3] - m_gt[5] / 2;
         bGeoTransformValid = TRUE;
     }
     else if (iZoom == 0)
     {
         bGeoTransformValid =
-            GDALReadWorldFile(GetDescription(), nullptr, adfGeoTransform) ||
-            GDALReadWorldFile(GetDescription(), ".wld", adfGeoTransform);
+            GDALReadWorldFile(GetDescription(), nullptr, m_gt.data()) ||
+            GDALReadWorldFile(GetDescription(), ".wld", m_gt.data());
     }
 
 /* -------------------------------------------------------------------- */
@@ -2994,7 +2993,7 @@ class MrSIDDummyImageReader : public LTIImageReader
     LTIDataType eSampleType;
     const LTIPixel *poPixel;
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     virtual LT_STATUS decodeStrip(LTISceneBuffer &stripBuffer,
                                   const LTIScene &stripScene);
@@ -3095,20 +3094,15 @@ LT_STATUS MrSIDDummyImageReader::initialize()
             setDimensions(poDS->GetRasterXSize(), poDS->GetRasterYSize())))
         return LT_STS_Failure;
 
-    if (poDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    if (poDS->GetGeoTransform(m_gt) == CE_None)
     {
 #ifdef MRSID_SDK_40
-        LTIGeoCoord oGeo(adfGeoTransform[0] + adfGeoTransform[1] / 2,
-                         adfGeoTransform[3] + adfGeoTransform[5] / 2,
-                         adfGeoTransform[1], adfGeoTransform[5],
-                         adfGeoTransform[2], adfGeoTransform[4], nullptr,
+        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
+                         m_gt[5], m_gt[2], m_gt[4], nullptr,
                          poDS->GetProjectionRef());
 #else
-        LTIGeoCoord oGeo(adfGeoTransform[0] + adfGeoTransform[1] / 2,
-                         adfGeoTransform[3] + adfGeoTransform[5] / 2,
-                         adfGeoTransform[1], adfGeoTransform[5],
-                         adfGeoTransform[2], adfGeoTransform[4],
-                         poDS->GetProjectionRef());
+        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
+                         m_gt[5], m_gt[2], m_gt[4], poDS->GetProjectionRef());
 #endif
         if (!LT_SUCCESS(setGeoCoord(oGeo)))
             return LT_STS_Failure;

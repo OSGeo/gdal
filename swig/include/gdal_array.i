@@ -93,25 +93,25 @@ typedef char retStringAndCPLFree;
 
 class NUMPYDataset : public GDALDataset
 {
-    PyArrayObject *psArray;
+    PyArrayObject *psArray = nullptr;
 
-    int           bValidGeoTransform;
-    double	  adfGeoTransform[6];
+    bool             bValidGeoTransform = false;
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
-    int           nGCPCount;
-    GDAL_GCP      *pasGCPList;
-    OGRSpatialReference m_oGCPSRS{};;
+    int           nGCPCount = 0;
+    GDAL_GCP      *pasGCPList = nullptr;
+    OGRSpatialReference m_oGCPSRS{};
 
   public:
-                 NUMPYDataset();
+                 NUMPYDataset() = default;
                  ~NUMPYDataset();
 
     const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    virtual CPLErr GetGeoTransform( GDALGeoTransform& gt ) const override;
+    virtual CPLErr SetGeoTransform( const GDALGeoTransform& gt ) override;
 
     virtual int    GetGCPCount() override;
     const OGRSpatialReference* GetGCPSpatialRef() const override;
@@ -148,26 +148,6 @@ static void GDALRegister_NUMPY(void)
         GetGDALDriverManager()->RegisterDriver( poDriver );
 
     }
-}
-
-/************************************************************************/
-/*                            NUMPYDataset()                            */
-/************************************************************************/
-
-NUMPYDataset::NUMPYDataset()
-
-{
-    psArray = NULL;
-    bValidGeoTransform = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
-    pasGCPList = NULL;
 }
 
 /************************************************************************/
@@ -221,10 +201,10 @@ CPLErr NUMPYDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
+CPLErr NUMPYDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    gt = m_gt;
     if( bValidGeoTransform )
         return CE_None;
     else
@@ -235,11 +215,11 @@ CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NUMPYDataset::SetGeoTransform( double * padfTransform )
+CPLErr NUMPYDataset::SetGeoTransform(const GDALGeoTransform& gt)
 
 {
-    bValidGeoTransform = TRUE;
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    bValidGeoTransform = true;
+    m_gt = gt;
     return( CE_None );
 }
 

@@ -2483,18 +2483,18 @@ CPLErr JPGDataset::Restart()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPGDatasetCommon::GetGeoTransform(double *padfTransform)
+CPLErr JPGDatasetCommon::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    CPLErr eErr = GDALPamDataset::GetGeoTransform(padfTransform);
+    CPLErr eErr = GDALPamDataset::GetGeoTransform(gt);
     if (eErr != CE_Failure)
         return eErr;
 
-    LoadWorldFileOrTab();
+    const_cast<JPGDatasetCommon *>(this)->LoadWorldFileOrTab();
 
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
+        gt = m_gt;
 
         return CE_None;
     }
@@ -3252,12 +3252,12 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
         strlen(GetDescription()) > 4 &&
         EQUAL(GetDescription() + strlen(GetDescription()) - 4, ".wld");
     bGeoTransformValid =
-        GDALReadWorldFile2(GetDescription(), nullptr, adfGeoTransform.data(),
+        GDALReadWorldFile2(GetDescription(), nullptr, m_gt,
                            oOvManager.GetSiblingFiles(), &pszWldFilename) ||
-        GDALReadWorldFile2(GetDescription(), ".jpw", adfGeoTransform.data(),
+        GDALReadWorldFile2(GetDescription(), ".jpw", m_gt,
                            oOvManager.GetSiblingFiles(), &pszWldFilename) ||
         (!bEndsWithWld &&
-         GDALReadWorldFile2(GetDescription(), ".wld", adfGeoTransform.data(),
+         GDALReadWorldFile2(GetDescription(), ".wld", m_gt,
                             oOvManager.GetSiblingFiles(), &pszWldFilename));
 
     if (!bGeoTransformValid)
@@ -3265,10 +3265,9 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
         char *pszProjection = nullptr;
         int nGCPCount = 0;
         GDAL_GCP *pasGCPList = nullptr;
-        const bool bTabFileOK = CPL_TO_BOOL(
-            GDALReadTabFile2(GetDescription(), adfGeoTransform.data(),
-                             &pszProjection, &nGCPCount, &pasGCPList,
-                             oOvManager.GetSiblingFiles(), &pszWldFilename));
+        const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
+            GetDescription(), m_gt.data(), &pszProjection, &nGCPCount,
+            &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
         if (pszProjection)
             m_oSRS.importFromWkt(pszProjection);
         CPLFree(pszProjection);
@@ -4378,10 +4377,9 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                 // Do we need a world file?
                 if (CPLFetchBool(papszOptions, "WORLDFILE", false))
                 {
-                    double adfGeoTransform[6] = {};
-
-                    poSrcDS->GetGeoTransform(adfGeoTransform);
-                    GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+                    GDALGeoTransform gt;
+                    poSrcDS->GetGeoTransform(gt);
+                    GDALWriteWorldFile(pszFilename, "wld", gt.data());
                 }
 
                 // Re-open dataset, and copy any auxiliary pam information.
@@ -4815,10 +4813,9 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     // Do we need a world file?
     if (CPLFetchBool(papszOptions, "WORLDFILE", false))
     {
-        double adfGeoTransform[6] = {};
-
-        poSrcDS->GetGeoTransform(adfGeoTransform);
-        GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+        GDALGeoTransform gt;
+        poSrcDS->GetGeoTransform(gt);
+        GDALWriteWorldFile(pszFilename, "wld", gt.data());
     }
 
     // Re-open dataset, and copy any auxiliary pam information.

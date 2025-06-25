@@ -728,19 +728,14 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      Try setting the projection and geotransform if it seems         */
     /*      suitable.                                                       */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {};
-
     if (nDstBands == 0 && !bStrict)
         CPLTurnFailureIntoWarning(true);
 
-    if (eErr == CE_None &&
-        poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
-        // TODO(schwehr): The default value check should be a function.
-        && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-            adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-            adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
+    GDALGeoTransform gt;
+    if (eErr == CE_None && poSrcDS->GetGeoTransform(gt) == CE_None &&
+        gt != GDALGeoTransform())
     {
-        eErr = poDstDS->SetGeoTransform(adfGeoTransform);
+        eErr = poDstDS->SetGeoTransform(gt);
         if (!bStrict)
             eErr = CE_None;
     }

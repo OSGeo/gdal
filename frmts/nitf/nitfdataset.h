@@ -69,7 +69,7 @@ class NITFDataset final : public GDALPamDataset
     std::unique_ptr<GDALDataset> poJPEGDataset{};
 
     int bGotGeoTransform = false;
-    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -147,8 +147,8 @@ class NITFDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
 

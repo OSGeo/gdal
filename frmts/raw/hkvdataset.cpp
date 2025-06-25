@@ -217,7 +217,7 @@ class HKVDataset final : public RawDataset
 
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     char **papszAttrib;
 
@@ -256,7 +256,7 @@ class HKVDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -305,12 +305,6 @@ HKVDataset::HKVDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -364,10 +358,10 @@ CPLErr HKVDataset::Close()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HKVDataset::GetGeoTransform(double *padfTransform)
+CPLErr HKVDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -630,18 +624,13 @@ void HKVDataset::ProcessGeoref(const char *pszFilename)
             m_oGCPSRS = oUTM;
 
             bool transform_ok = CPL_TO_BOOL(
-                GDALGCPsToGeoTransform(5, pasGCPList, adfGeoTransform, 0));
+                GDALGCPsToGeoTransform(5, pasGCPList, m_gt.data(), 0));
 
             if (!transform_ok)
             {
                 // Transform may not be sufficient in all cases (slant range
                 // projection).
-                adfGeoTransform[0] = 0.0;
-                adfGeoTransform[1] = 1.0;
-                adfGeoTransform[2] = 0.0;
-                adfGeoTransform[3] = 0.0;
-                adfGeoTransform[4] = 0.0;
-                adfGeoTransform[5] = 1.0;
+                m_gt = GDALGeoTransform();
                 m_oGCPSRS.Clear();
             }
             else
@@ -688,19 +677,14 @@ void HKVDataset::ProcessGeoref(const char *pszFilename)
             }
         }
 
-        const bool transform_ok = CPL_TO_BOOL(
-            GDALGCPsToGeoTransform(5, pasGCPList, adfGeoTransform, 0));
+        const bool transform_ok =
+            CPL_TO_BOOL(GDALGCPsToGeoTransform(5, pasGCPList, m_gt.data(), 0));
 
         m_oSRS.Clear();
 
         if (!transform_ok)
         {
-            adfGeoTransform[0] = 0.0;
-            adfGeoTransform[1] = 1.0;
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = 0.0;
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = 1.0;
+            m_gt = GDALGeoTransform();
         }
         else
         {

@@ -2761,20 +2761,17 @@ const char *VRTSourcedRasterBand::GetMetadataItem(const char *pszName,
             if (GetDataset() == nullptr)
                 return nullptr;
 
-            double adfGeoTransform[6] = {0.0};
-            if (GetDataset()->GetGeoTransform(adfGeoTransform) != CE_None)
+            GDALGeoTransform gt, invGT;
+            if (GetDataset()->GetGeoTransform(gt) != CE_None ||
+                !gt.GetInverse(invGT))
+            {
                 return nullptr;
+            }
 
-            double adfInvGeoTransform[6] = {0.0};
-            if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
-                return nullptr;
-
-            iPixel = static_cast<int>(floor(adfInvGeoTransform[0] +
-                                            adfInvGeoTransform[1] * dfGeoX +
-                                            adfInvGeoTransform[2] * dfGeoY));
-            iLine = static_cast<int>(floor(adfInvGeoTransform[3] +
-                                           adfInvGeoTransform[4] * dfGeoX +
-                                           adfInvGeoTransform[5] * dfGeoY));
+            iPixel = static_cast<int>(
+                floor(invGT[0] + invGT[1] * dfGeoX + invGT[2] * dfGeoY));
+            iLine = static_cast<int>(
+                floor(invGT[3] + invGT[4] * dfGeoX + invGT[5] * dfGeoY));
         }
         else
         {

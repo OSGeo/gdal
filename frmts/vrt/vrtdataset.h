@@ -319,7 +319,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> m_poSRS{};
 
     int m_bGeoTransformSet = false;
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     virtual int CloseDependentDatasets() override;
 
@@ -350,8 +350,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     virtual CPLErr SetMetadata(char **papszMetadata,
                                const char *pszDomain = "") override;

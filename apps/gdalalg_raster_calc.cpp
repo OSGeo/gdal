@@ -22,7 +22,6 @@
 #include "vrtdataset.h"
 
 #include <algorithm>
-#include <array>
 #include <optional>
 
 //! @cond Doxygen_Suppress
@@ -184,7 +183,7 @@ struct SourceProperties
     int nBands{0};
     int nX{0};
     int nY{0};
-    std::array<double, 6> gt{};
+    GDALGeoTransform gt{};
     std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
         nullptr};
     std::vector<std::optional<double>> noData{};
@@ -218,7 +217,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
 
         if (options.checkExtent)
         {
-            ds->GetGeoTransform(source.gt.data());
+            ds->GetGeoTransform(source.gt);
         }
 
         if (options.checkSRS && out.srs)
@@ -767,7 +766,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
         out.nBands = 1;
         out.srs.reset(ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone()
                                           : nullptr);
-        ds->GetGeoTransform(out.gt.data());
+        ds->GetGeoTransform(out.gt);
     }
 
     CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
@@ -837,7 +836,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
     {
         return nullptr;
     };
-    ds->SetGeoTransform(out.gt.data());
+    ds->SetGeoTransform(out.gt);
     if (out.srs)
     {
         ds->SetSpatialRef(out.srs.get());

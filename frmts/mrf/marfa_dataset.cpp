@@ -88,10 +88,6 @@ MRFDataset::MRFDataset()
       pzscctx(nullptr), pzsdctx(nullptr), read_timer(), write_timer(0)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    //               X0   Xx   Xy  Y0    Yx   Yy
-    double gt[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
-
-    memcpy(GeoTransform, gt, sizeof(gt));
     ifp.FP = dfp.FP = nullptr;
     dfp.acc = GF_Read;
     ifp.acc = GF_Read;
@@ -771,11 +767,11 @@ CPLErr MRFDataset::LevelInit(const int l)
     SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
     SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
 
-    bGeoTransformValid = (CE_None == cds->GetGeoTransform(GeoTransform));
+    bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
     for (int i = 0; i < l + 1; i++)
     {
-        GeoTransform[1] *= scale;
-        GeoTransform[5] *= scale;
+        m_gt[1] *= scale;
+        m_gt[5] *= scale;
     }
 
     nRasterXSize = current.size.x;
@@ -1368,7 +1364,7 @@ CPLXMLNode *MRFDataset::BuildConfig()
     CPLXMLNode *gtags = CPLCreateXMLNode(config, CXT_Element, "GeoTags");
 
     // Do we have an affine transform different from identity?
-    double gt[6];
+    GDALGeoTransform gt;
     if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
         (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 || gt[3] != 0 || gt[4] != 0 ||
          gt[5] != 1))
@@ -1442,12 +1438,12 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
         y1 = atof(CPLGetXMLValue(bbox, "maxy", "1"));
         y0 = atof(CPLGetXMLValue(bbox, "miny", "0"));
 
-        GeoTransform[0] = x0;
-        GeoTransform[1] = (x1 - x0) / full.size.x;
-        GeoTransform[2] = 0;
-        GeoTransform[3] = y1;
-        GeoTransform[4] = 0;
-        GeoTransform[5] = (y0 - y1) / full.size.y;
+        m_gt[0] = x0;
+        m_gt[1] = (x1 - x0) / full.size.x;
+        m_gt[2] = 0;
+        m_gt[3] = y1;
+        m_gt[4] = 0;
+        m_gt[5] = (y0 - y1) / full.size.y;
         bGeoTransformValid = TRUE;
     }
 
@@ -1814,7 +1810,7 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
         }
 
         // Geotags
-        double gt[6];
+        GDALGeoTransform gt;
         if (CE_None == poSrcDS->GetGeoTransform(gt))
             poDS->SetGeoTransform(gt);
 
@@ -2516,7 +2512,7 @@ CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     return ret;
 }
 
-CPLErr MRFDataset::SetGeoTransform(double *gt)
+CPLErr MRFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (GetAccess() != GA_Update || bCrystalized)
     {
@@ -2524,7 +2520,7 @@ CPLErr MRFDataset::SetGeoTransform(double *gt)
                  "SetGeoTransform only works during Create call");
         return CE_Failure;
     }
-    memcpy(GeoTransform, gt, 6 * sizeof(double));
+    m_gt = gt;
     bGeoTransformValid = TRUE;
     return CE_None;
 }
@@ -2540,10 +2536,11 @@ bool MRFDataset::IsSingleTile()
 /*
  *  Returns 0,1,0,0,0,1 even if it was not set
  */
-CPLErr MRFDataset::GetGeoTransform(double *gt)
+CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(gt, GeoTransform, 6 * sizeof(double));
-    if (GetMetadata("RPC") || GetGCPCount())
+    gt = m_gt;
+    MRFDataset *nonConstThis = const_cast<MRFDataset *>(this);
+    if (nonConstThis->GetMetadata("RPC") || nonConstThis->GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid)
         return CE_Failure;

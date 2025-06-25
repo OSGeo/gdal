@@ -66,7 +66,7 @@ class LOSLASDataset final : public RawDataset
     int nRecordLength;
 
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     CPL_DISALLOW_COPY_ASSIGN(LOSLASDataset)
 
@@ -76,7 +76,7 @@ class LOSLASDataset final : public RawDataset
     LOSLASDataset();
     ~LOSLASDataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -101,8 +101,6 @@ LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
 {
     m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -262,12 +260,12 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Setup georeferencing.                                           */
     /* -------------------------------------------------------------------- */
-    poDS->adfGeoTransform[0] = min_lon - delta_lon * 0.5;
-    poDS->adfGeoTransform[1] = delta_lon;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -1.0 * delta_lat;
+    poDS->m_gt[0] = min_lon - delta_lon * 0.5;
+    poDS->m_gt[1] = delta_lon;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -1.0 * delta_lat;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -287,10 +285,10 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LOSLASDataset::GetGeoTransform(double *padfTransform)
+CPLErr LOSLASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

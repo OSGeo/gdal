@@ -105,7 +105,7 @@ class RIKDataset final : public GDALPamDataset
     VSILFILE *fp;
 
     OGRSpatialReference m_oSRS{};
-    double adfTransform[6];
+    GDALGeoTransform m_gt{};
 
     GUInt32 nBlockXSize;
     GUInt32 nBlockYSize;
@@ -124,7 +124,7 @@ class RIKDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -615,7 +615,6 @@ RIKDataset::RIKDataset()
         "PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",1500000],"
         "PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\","
         "\"9001\"]],AUTHORITY[\"EPSG\",\"3021\"]]");
-    memset(adfTransform, 0, sizeof(adfTransform));
 }
 
 /************************************************************************/
@@ -636,11 +635,10 @@ RIKDataset::~RIKDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RIKDataset::GetGeoTransform(double *padfTransform)
+CPLErr RIKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, &adfTransform, sizeof(double) * 6);
-
+    gt = m_gt;
     return CE_None;
 }
 
@@ -1208,12 +1206,12 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    poDS->adfTransform[0] = header.fWest - metersPerPixel / 2.0;
-    poDS->adfTransform[1] = metersPerPixel;
-    poDS->adfTransform[2] = 0.0;
-    poDS->adfTransform[3] = header.fNorth + metersPerPixel / 2.0;
-    poDS->adfTransform[4] = 0.0;
-    poDS->adfTransform[5] = -metersPerPixel;
+    poDS->m_gt[0] = header.fWest - metersPerPixel / 2.0;
+    poDS->m_gt[1] = metersPerPixel;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = header.fNorth + metersPerPixel / 2.0;
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -metersPerPixel;
 
     poDS->nBlockXSize = header.iBlockWidth;
     poDS->nBlockYSize = header.iBlockHeight;

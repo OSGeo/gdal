@@ -4323,15 +4323,15 @@ void GTiffDataset::ApplyPamInfo()
           m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
          m_nGeoTransformGeorefSrcIndex < 0 || !m_bGeoTransformValid))
     {
-        double adfPamGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        if (GDALPamDataset::GetGeoTransform(adfPamGeoTransform) == CE_None)
+        GDALGeoTransform pamGT;
+        if (GDALPamDataset::GetGeoTransform(pamGT) == CE_None)
         {
             if (m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEGeorefSrcIndex)
             {
                 CPLFree(m_pszGeorefFilename);
                 m_pszGeorefFilename = nullptr;
             }
-            memcpy(m_adfGeoTransform, adfPamGeoTransform, sizeof(double) * 6);
+            m_gt = pamGT;
             m_bGeoTransformValid = true;
             bGotGTFromPAM = true;
         }
@@ -5877,12 +5877,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     GTIFFree(psGTIF);
                 }
 
-                m_adfGeoTransform[0] = 0.0;
-                m_adfGeoTransform[1] = 1.0;
-                m_adfGeoTransform[2] = 0.0;
-                m_adfGeoTransform[3] = 0.0;
-                m_adfGeoTransform[4] = 0.0;
-                m_adfGeoTransform[5] = 1.0;
+                m_gt = GDALGeoTransform();
 
                 uint16_t nCountScale = 0;
                 if (TIFFGetField(m_hTIFF, TIFFTAG_GEOPIXELSCALE, &nCountScale,
@@ -5890,7 +5885,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     nCountScale >= 2 && padfScale[0] != 0.0 &&
                     padfScale[1] != 0.0)
                 {
-                    m_adfGeoTransform[1] = padfScale[0];
+                    m_gt[1] = padfScale[0];
                     if (padfScale[1] < 0)
                     {
                         const char *pszOptionVal = CPLGetConfigOption(
@@ -5908,41 +5903,33 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                 "positive. You may override this behavior "
                                 "by setting the GTIFF_HONOUR_NEGATIVE_SCALEY "
                                 "configuration option to YES");
-                            m_adfGeoTransform[5] = padfScale[1];
+                            m_gt[5] = padfScale[1];
                         }
                         else if (CPLTestBool(pszOptionVal))
                         {
-                            m_adfGeoTransform[5] = -padfScale[1];
+                            m_gt[5] = -padfScale[1];
                         }
                         else
                         {
-                            m_adfGeoTransform[5] = padfScale[1];
+                            m_gt[5] = padfScale[1];
                         }
                     }
                     else
                     {
-                        m_adfGeoTransform[5] = -padfScale[1];
+                        m_gt[5] = -padfScale[1];
                     }
 
                     if (TIFFGetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, &nCount,
                                      &padfTiePoints) &&
                         nCount >= 6)
                     {
-                        m_adfGeoTransform[0] =
-                            padfTiePoints[3] -
-                            padfTiePoints[0] * m_adfGeoTransform[1];
-                        m_adfGeoTransform[3] =
-                            padfTiePoints[4] -
-                            padfTiePoints[1] * m_adfGeoTransform[5];
+                        m_gt[0] = padfTiePoints[3] - padfTiePoints[0] * m_gt[1];
+                        m_gt[3] = padfTiePoints[4] - padfTiePoints[1] * m_gt[5];
 
                         if (bPixelIsPoint && !bPointGeoIgnore)
                         {
-                            m_adfGeoTransform[0] -=
-                                (m_adfGeoTransform[1] * 0.5 +
-                                 m_adfGeoTransform[2] * 0.5);
-                            m_adfGeoTransform[3] -=
-                                (m_adfGeoTransform[4] * 0.5 +
-                                 m_adfGeoTransform[5] * 0.5);
+                            m_gt[0] -= (m_gt[1] * 0.5 + m_gt[2] * 0.5);
+                            m_gt[3] -= (m_gt[4] * 0.5 + m_gt[5] * 0.5);
                         }
 
                         m_bGeoTransformValid = true;
@@ -5981,19 +5968,17 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                       &padfMatrix) &&
                          nCount == 16)
                 {
-                    m_adfGeoTransform[0] = padfMatrix[3];
-                    m_adfGeoTransform[1] = padfMatrix[0];
-                    m_adfGeoTransform[2] = padfMatrix[1];
-                    m_adfGeoTransform[3] = padfMatrix[7];
-                    m_adfGeoTransform[4] = padfMatrix[4];
-                    m_adfGeoTransform[5] = padfMatrix[5];
+                    m_gt[0] = padfMatrix[3];
+                    m_gt[1] = padfMatrix[0];
+                    m_gt[2] = padfMatrix[1];
+                    m_gt[3] = padfMatrix[7];
+                    m_gt[4] = padfMatrix[4];
+                    m_gt[5] = padfMatrix[5];
 
                     if (bPixelIsPoint && !bPointGeoIgnore)
                     {
-                        m_adfGeoTransform[0] -= m_adfGeoTransform[1] * 0.5 +
-                                                m_adfGeoTransform[2] * 0.5;
-                        m_adfGeoTransform[3] -= m_adfGeoTransform[4] * 0.5 +
-                                                m_adfGeoTransform[5] * 0.5;
+                        m_gt[0] -= m_gt[1] * 0.5 + m_gt[2] * 0.5;
+                        m_gt[3] -= m_gt[4] * 0.5 + m_gt[5] * 0.5;
                     }
 
                     m_bGeoTransformValid = true;
@@ -6019,7 +6004,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 int nGCPCount = 0;
                 GDAL_GCP *pasGCPList = nullptr;
                 const int bTabFileOK = GDALReadTabFile2(
-                    m_pszFilename, m_adfGeoTransform, &pszTabWKT, &nGCPCount,
+                    m_pszFilename, m_gt.data(), &pszTabWKT, &nGCPCount,
                     &pasGCPList, papszSiblingFiles, &pszGeorefFilename);
 
                 if (bTabFileOK)
@@ -6058,15 +6043,15 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
                 CSLConstList papszSiblingFiles = GetSiblingFiles();
 
-                m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
-                    m_pszFilename, nullptr, m_adfGeoTransform,
-                    papszSiblingFiles, &pszGeorefFilename));
+                m_bGeoTransformValid = CPL_TO_BOOL(
+                    GDALReadWorldFile2(m_pszFilename, nullptr, m_gt,
+                                       papszSiblingFiles, &pszGeorefFilename));
 
                 if (!m_bGeoTransformValid)
                 {
                     m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
-                        m_pszFilename, "wld", m_adfGeoTransform,
-                        papszSiblingFiles, &pszGeorefFilename));
+                        m_pszFilename, "wld", m_gt, papszSiblingFiles,
+                        &pszGeorefFilename));
                 }
                 if (m_bGeoTransformValid)
                     m_nGeoTransformGeorefSrcIndex = nIndex;
@@ -6175,12 +6160,12 @@ const OGRSpatialReference *GTiffDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTiffDataset::GetGeoTransform(double *padfTransform)
+CPLErr GTiffDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    LoadGeoreferencingAndPamIfNeeded();
+    const_cast<GTiffDataset *>(this)->LoadGeoreferencingAndPamIfNeeded();
 
-    memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     if (!m_bGeoTransformValid)
         return CE_Failure;
@@ -6190,10 +6175,10 @@ CPLErr GTiffDataset::GetGeoTransform(double *padfTransform)
     if (CPLFetchBool(papszOpenOptions, "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180",
                      false))
     {
-        if (padfTransform[0] < -180.0 - padfTransform[1])
-            padfTransform[0] += 360.0;
-        else if (padfTransform[0] > 180.0)
-            padfTransform[0] -= 360.0;
+        if (gt[0] < -180.0 - gt[1])
+            gt[0] += 360.0;
+        else if (gt[0] > 180.0)
+            gt[0] -= 360.0;
     }
 
     return CE_None;

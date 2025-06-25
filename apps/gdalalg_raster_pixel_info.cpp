@@ -147,9 +147,9 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         GDALRasterIOGetResampleAlg(m_resampling.c_str());
 
     const auto poSrcCRS = poSrcDS->GetSpatialRef();
-    double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
-    const bool bHasGT = poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
-    double adfInvGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+    GDALGeoTransform gt;
+    const bool bHasGT = poSrcDS->GetGeoTransform(gt) == CE_None;
+    GDALGeoTransform invGT;
 
     if (m_posCrs != "pixel")
     {
@@ -167,7 +167,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
             return false;
         }
 
-        if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
+        if (!gt.GetInverse(invGT))
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Cannot invert geotransform");
@@ -339,7 +339,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
         if (m_posCrs != "pixel")
         {
-            GDALApplyGeoTransform(adfInvGeoTransform, x, y, &dfPixel, &dfLine);
+            invGT.Apply(x, y, &dfPixel, &dfLine);
         }
         else
         {
@@ -537,7 +537,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 x = dfPixel;
                 y = dfLine;
 
-                GDALApplyGeoTransform(adfGeoTransform, x, y, &x, &y);
+                gt.Apply(x, y, &x, &y);
 
                 if (poCTToWGS84)
                     poCTToWGS84->Transform(1, &x, &y);

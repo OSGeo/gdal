@@ -41,7 +41,7 @@ class CPGDataset final : public RawDataset
     GDAL_GCP *pasGCPList;
     OGRSpatialReference m_oGCPSRS{};
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
     int nLoadedStokesLine;
@@ -82,7 +82,7 @@ class CPGDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetFileList() override;
 
@@ -99,12 +99,6 @@ CPGDataset::CPGDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -704,10 +698,10 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
      */
     if (iUTMParamsFound == 7)
     {
-        poDS->adfGeoTransform[1] = 0.0;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 0.0;
+        poDS->m_gt[1] = 0.0;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = 0.0;
 
         double dfnorth_center;
         if (itransposed == 1)
@@ -717,18 +711,18 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
                      "with transposed=1 for testing.  Georeferencing may be "
                      "wrong.\n");
             dfnorth_center = dfnorth - nSamples * dfsample_size / 2.0;
-            poDS->adfGeoTransform[0] = dfeast;
-            poDS->adfGeoTransform[2] = dfsample_size_az;
-            poDS->adfGeoTransform[3] = dfnorth;
-            poDS->adfGeoTransform[4] = -1 * dfsample_size;
+            poDS->m_gt[0] = dfeast;
+            poDS->m_gt[2] = dfsample_size_az;
+            poDS->m_gt[3] = dfnorth;
+            poDS->m_gt[4] = -1 * dfsample_size;
         }
         else
         {
             dfnorth_center = dfnorth - nLines * dfsample_size / 2.0;
-            poDS->adfGeoTransform[0] = dfeast;
-            poDS->adfGeoTransform[1] = dfsample_size_az;
-            poDS->adfGeoTransform[3] = dfnorth;
-            poDS->adfGeoTransform[5] = -1 * dfsample_size;
+            poDS->m_gt[0] = dfeast;
+            poDS->m_gt[1] = dfsample_size_az;
+            poDS->m_gt[3] = dfnorth;
+            poDS->m_gt[5] = -1 * dfsample_size;
         }
 
         if (dfnorth_center < 0)
@@ -1049,12 +1043,12 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
     if (iUTMParamsFound == 8)
     {
         double dfnorth_center = dfnorth - nLines * dfysize / 2.0;
-        poDS->adfGeoTransform[0] = dfeast + dfOffsetX;
-        poDS->adfGeoTransform[1] = dfxsize;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfnorth + dfOffsetY;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = -1 * dfysize;
+        poDS->m_gt[0] = dfeast + dfOffsetX;
+        poDS->m_gt[1] = dfxsize;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = dfnorth + dfOffsetY;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = -1 * dfysize;
 
         OGRSpatialReference oUTM;
         if (dfnorth_center < 0)
@@ -1203,10 +1197,10 @@ const GDAL_GCP *CPGDataset::GetGCPs()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr CPGDataset::GetGeoTransform(double *padfTransform)
+CPLErr CPGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

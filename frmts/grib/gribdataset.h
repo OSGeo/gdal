@@ -83,7 +83,7 @@ class GRIBDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -102,7 +102,7 @@ class GRIBDataset final : public GDALPamDataset
 
     VSILFILE *fp;
     // Calculate and store once as GetGeoTransform may be called multiple times.
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     GIntBig nCachedBytes;
     GIntBig nCachedBytesThreshold;

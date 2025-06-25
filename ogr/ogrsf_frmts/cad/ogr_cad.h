@@ -70,7 +70,7 @@ class GDALCADDataset final : public GDALDataset
     OGRCADLayer **papoLayers;
     int nLayers;
     // raster
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     GDALDataset *poRasterDS;
     mutable OGRSpatialReference *poSpatialReference;
 
@@ -90,7 +90,7 @@ class GDALCADDataset final : public GDALDataset
     int TestCapability(const char *) override;
     virtual char **GetFileList() override;
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;

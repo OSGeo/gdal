@@ -876,10 +876,9 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Apply geotransformation matrix.                                 */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {dfXMin, (dfXMax - dfXMin) / nXSize,
-                                 0.0,    dfYMin,
-                                 0.0,    (dfYMax - dfYMin) / nYSize};
-    poDstDS->SetGeoTransform(adfGeoTransform);
+    poDstDS->SetGeoTransform(
+        GDALGeoTransform(dfXMin, (dfXMax - dfXMin) / nXSize, 0.0, dfYMin, 0.0,
+                         (dfYMax - dfYMin) / nYSize));
 
     /* -------------------------------------------------------------------- */
     /*      Apply SRS definition if set.                                    */

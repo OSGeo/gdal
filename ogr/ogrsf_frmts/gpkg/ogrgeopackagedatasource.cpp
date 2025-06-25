@@ -2412,8 +2412,7 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
     // Compute shift between GDAL origin and TileMatrixSet origin
-    const double dfShiftXPixels =
-        (m_adfGeoTransform[0] - m_dfTMSMinX) / m_adfGeoTransform[1];
+    const double dfShiftXPixels = (m_gt[0] - m_dfTMSMinX) / m_gt[1];
     if (!(dfShiftXPixels / nTileWidth >= INT_MIN &&
           dfShiftXPixels / nTileWidth < INT_MAX))
     {
@@ -2428,8 +2427,7 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
         (static_cast<int>(nShiftXPixels % nTileWidth) + nTileWidth) %
         nTileWidth;
 
-    const double dfShiftYPixels =
-        (m_adfGeoTransform[3] - m_dfTMSMaxY) / m_adfGeoTransform[5];
+    const double dfShiftYPixels = (m_gt[3] - m_dfTMSMaxY) / m_gt[5];
     if (!(dfShiftYPixels / nTileHeight >= INT_MIN &&
           dfShiftYPixels / nTileHeight < INT_MAX))
     {
@@ -2495,10 +2493,10 @@ bool GDALGeoPackageDataset::InitRaster(
     m_nTileMatrixHeight = nTileMatrixHeight;
 
     m_bGeoTransformValid = true;
-    m_adfGeoTransform[0] = dfGDALMinX;
-    m_adfGeoTransform[1] = dfPixelXSize;
-    m_adfGeoTransform[3] = dfGDALMaxY;
-    m_adfGeoTransform[5] = -dfPixelYSize;
+    m_gt[0] = dfGDALMinX;
+    m_gt[1] = dfPixelXSize;
+    m_gt[3] = dfGDALMaxY;
+    m_gt[5] = -dfPixelYSize;
     double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
     double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
     if (dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX)
@@ -3102,9 +3100,9 @@ CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALGeoPackageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, m_adfGeoTransform.data(), 6 * sizeof(double));
+    gt = m_gt;
     if (!m_bGeoTransformValid)
         return CE_Failure;
     else
@@ -3115,7 +3113,7 @@ CPLErr GDALGeoPackageDataset::GetGeoTransform(double *padfGeoTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr GDALGeoPackageDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (nBands == 0)
     {
@@ -3135,8 +3133,7 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform(double *padfGeoTransform)
                  "Cannot modify geotransform once set");
         return CE_Failure;
     }
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0 ||
-        padfGeoTransform[5] > 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0 || gt[5] > 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up non rotated geotransform supported");
@@ -3157,9 +3154,9 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform(double *padfGeoTransform)
                     dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
                 double dfExpectedPixelYSize =
                     dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
-                if (fabs(padfGeoTransform[1] - dfExpectedPixelXSize) <
+                if (fabs(gt[1] - dfExpectedPixelXSize) <
                         1e-8 * dfExpectedPixelXSize &&
-                    fabs(fabs(padfGeoTransform[5]) - dfExpectedPixelYSize) <
+                    fabs(fabs(gt[5]) - dfExpectedPixelYSize) <
                         1e-8 * dfExpectedPixelYSize)
                 {
                     break;
@@ -3178,7 +3175,7 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform(double *padfGeoTransform)
         }
     }
 
-    memcpy(m_adfGeoTransform.data(), padfGeoTransform, 6 * sizeof(double));
+    m_gt = gt;
     m_bGeoTransformValid = true;
 
     return FinalizeRasterRegistration();
@@ -3192,8 +3189,8 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 {
     OGRErr eErr;
 
-    m_dfTMSMinX = m_adfGeoTransform[0];
-    m_dfTMSMaxY = m_adfGeoTransform[3];
+    m_dfTMSMinX = m_gt[0];
+    m_dfTMSMaxY = m_gt[3];
 
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
@@ -3206,9 +3203,8 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
             m_nZoomLevel++;
     }
 
-    double dfPixelXSizeZoomLevel0 = m_adfGeoTransform[1] * (1 << m_nZoomLevel);
-    double dfPixelYSizeZoomLevel0 =
-        fabs(m_adfGeoTransform[5]) * (1 << m_nZoomLevel);
+    double dfPixelXSizeZoomLevel0 = m_gt[1] * (1 << m_nZoomLevel);
+    double dfPixelYSizeZoomLevel0 = fabs(m_gt[5]) * (1 << m_nZoomLevel);
     int nTileXCountZoomLevel0 =
         std::max(1, DIV_ROUND_UP((nRasterXSize >> m_nZoomLevel), nTileWidth));
     int nTileYCountZoomLevel0 =
@@ -3240,12 +3236,10 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         return CE_Failure;
     }
 
-    double dfGDALMinX = m_adfGeoTransform[0];
-    double dfGDALMinY =
-        m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
-    double dfGDALMaxX =
-        m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
-    double dfGDALMaxY = m_adfGeoTransform[3];
+    double dfGDALMinX = m_gt[0];
+    double dfGDALMinY = m_gt[3] + nRasterYSize * m_gt[5];
+    double dfGDALMaxX = m_gt[0] + nRasterXSize * m_gt[1];
+    double dfGDALMaxY = m_gt[3];
 
     if (SoftStartTransaction() != OGRERR_NONE)
         return CE_Failure;
@@ -3305,10 +3299,8 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         int nTileMatrixHeight = 0;
         if (EQUAL(m_osTilingScheme, "CUSTOM"))
         {
-            dfPixelXSizeZoomLevel =
-                m_adfGeoTransform[1] * (1 << (m_nZoomLevel - i));
-            dfPixelYSizeZoomLevel =
-                fabs(m_adfGeoTransform[5]) * (1 << (m_nZoomLevel - i));
+            dfPixelXSizeZoomLevel = m_gt[1] * (1 << (m_nZoomLevel - i));
+            dfPixelYSizeZoomLevel = fabs(m_gt[5]) * (1 << (m_nZoomLevel - i));
         }
         else
         {
@@ -3601,8 +3593,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
         for (int j = 0; j < static_cast<int>(m_apoOverviewDS.size()); j++)
         {
             const auto poODS = m_apoOverviewDS[j].get();
-            const int nOvFactor = static_cast<int>(
-                0.5 + poODS->m_adfGeoTransform[1] / m_adfGeoTransform[1]);
+            const int nOvFactor =
+                static_cast<int>(0.5 + poODS->m_gt[1] / m_gt[1]);
 
             nMaxOvFactor = nOvFactor;
 
@@ -3626,8 +3618,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 for (const auto &poODS : m_apoOverviewDS)
                 {
                     const int nOvFactor =
-                        static_cast<int>(0.5 + poODS->m_adfGeoTransform[1] /
-                                                   m_adfGeoTransform[1]);
+                        static_cast<int>(0.5 + poODS->m_gt[1] / m_gt[1]);
 
                     if (!osOvrList.empty())
                         osOvrList += ' ';
@@ -3696,15 +3687,12 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     }
                 }
 
-                double dfGDALMinX = m_adfGeoTransform[0];
-                double dfGDALMinY =
-                    m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
-                double dfGDALMaxX =
-                    m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
-                double dfGDALMaxY = m_adfGeoTransform[3];
-                double dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * nOvFactor;
-                double dfPixelYSizeZoomLevel =
-                    fabs(m_adfGeoTransform[5]) * nOvFactor;
+                double dfGDALMinX = m_gt[0];
+                double dfGDALMinY = m_gt[3] + nRasterYSize * m_gt[5];
+                double dfGDALMaxX = m_gt[0] + nRasterXSize * m_gt[1];
+                double dfGDALMaxY = m_gt[3];
+                double dfPixelXSizeZoomLevel = m_gt[1] * nOvFactor;
+                double dfPixelYSizeZoomLevel = fabs(m_gt[5]) * nOvFactor;
                 int nTileWidth, nTileHeight;
                 GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
                 int nTileMatrixWidth = DIV_ROUND_UP(nOvXSize, nTileWidth);
@@ -3759,8 +3747,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
             bool bFound = false;
             for (const auto &poODS : m_apoOverviewDS)
             {
-                const int nOvFactor = static_cast<int>(
-                    0.5 + poODS->m_adfGeoTransform[1] / m_adfGeoTransform[1]);
+                const int nOvFactor =
+                    static_cast<int>(0.5 + poODS->m_gt[1] / m_gt[1]);
 
                 if (nOvFactor == panOverviewList[i])
                 {
@@ -5991,20 +5979,17 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
     // ideal suggestion with PROJ 8) when reprojecting latitude = +/- 90 to
     // EPSG:3857.
-    double adfSrcGeoTransform[6];
+    GDALGeoTransform srcGT;
     std::unique_ptr<GDALDataset> poTmpDS;
     bool bEPSG3857Adjust = false;
-    if (nEPSGCode == 3857 &&
-        poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None &&
-        adfSrcGeoTransform[2] == 0 && adfSrcGeoTransform[4] == 0 &&
-        adfSrcGeoTransform[5] < 0)
+    if (nEPSGCode == 3857 && poSrcDS->GetGeoTransform(srcGT) == CE_None &&
+        srcGT[2] == 0 && srcGT[4] == 0 && srcGT[5] < 0)
     {
         const auto poSrcSRS = poSrcDS->GetSpatialRef();
         if (poSrcSRS && poSrcSRS->IsGeographic())
         {
-            double maxLat = adfSrcGeoTransform[3];
-            double minLat = adfSrcGeoTransform[3] +
-                            poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5];
+            double maxLat = srcGT[3];
+            double minLat = srcGT[3] + poSrcDS->GetRasterYSize() * srcGT[5];
             // Corresponds to the latitude of below MAX_GM
             constexpr double MAX_LAT = 85.0511287798066;
             bool bModified = false;
@@ -6024,13 +6009,10 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                 aosOptions.AddString("-of");
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
-                aosOptions.AddString(
-                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", srcGT[0]));
                 aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
-                aosOptions.AddString(
-                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
-                                            poSrcDS->GetRasterXSize() *
-                                                adfSrcGeoTransform[1]));
+                aosOptions.AddString(CPLSPrintf(
+                    "%.17g", srcGT[0] + poSrcDS->GetRasterXSize() * srcGT[1]));
                 aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
@@ -6062,12 +6044,12 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(hTransformArg);
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     double adfExtent[4];
     int nXSize, nYSize;
 
     if (GDALSuggestedWarpOutput2(poSrcDS, psInfo->pfnTransform, hTransformArg,
-                                 adfGeoTransform, &nXSize, &nYSize, adfExtent,
+                                 gt.data(), &nXSize, &nYSize, adfExtent,
                                  0) != CE_None)
     {
         CPLFree(pszWKT);
@@ -6085,8 +6067,8 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         constexpr double SPHERICAL_RADIUS = 6378137.0;
         constexpr double MAX_GM =
             SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
-        double maxNorthing = adfGeoTransform[3];
-        double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+        double maxNorthing = gt[3];
+        double minNorthing = gt[3] + gt[5] * nYSize;
         bool bChanged = false;
         if (maxNorthing > MAX_GM)
         {
@@ -6100,15 +6082,14 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         }
         if (bChanged)
         {
-            adfGeoTransform[3] = maxNorthing;
-            nYSize =
-                int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
-            adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
+            gt[3] = maxNorthing;
+            nYSize = int((maxNorthing - minNorthing) / (-gt[5]) + 0.5);
+            adfExtent[1] = maxNorthing + nYSize * gt[5];
             adfExtent[3] = maxNorthing;
         }
     }
 
-    double dfComputedRes = adfGeoTransform[1];
+    double dfComputedRes = gt[1];
     double dfPrevRes = 0.0;
     double dfRes = 0.0;
     int nZoomLevel = 0;  // Used after for.
@@ -6186,8 +6167,8 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 
     nXSize = static_cast<int>(0.5 + (dfMaxX - dfMinX) / dfRes);
     nYSize = static_cast<int>(0.5 + (dfMaxY - dfMinY) / dfRes);
-    adfGeoTransform[1] = dfRes;
-    adfGeoTransform[5] = -dfRes;
+    gt[1] = dfRes;
+    gt[5] = -dfRes;
 
     const GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     int nTargetBands = nBands;
@@ -6255,7 +6236,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         poDS->GetRasterBand(1)->SetNoDataValue(dfNoDataValue);
     }
 
-    poDS->SetGeoTransform(adfGeoTransform);
+    poDS->SetGeoTransform(gt);
     poDS->SetProjection(pszWKT);
     CPLFree(pszWKT);
     pszWKT = nullptr;

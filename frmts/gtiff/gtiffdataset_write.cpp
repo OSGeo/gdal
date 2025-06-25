@@ -3633,8 +3633,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         /*      use the tiepoint plus pixelscale otherwise we use a matrix. */
         /* --------------------------------------------------------------------
          */
-        if (m_adfGeoTransform[2] == 0.0 && m_adfGeoTransform[4] == 0.0 &&
-            m_adfGeoTransform[5] < 0.0)
+        if (m_gt[2] == 0.0 && m_gt[4] == 0.0 && m_gt[5] < 0.0)
         {
             double dfOffset = 0.0;
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -3652,21 +3651,17 @@ void GTiffDataset::WriteGeoTIFFInfo()
                 if (!bApplyScaleOffset || !bHasOffset)
                     dfOffset = 0.0;
                 const double adfPixelScale[3] = {
-                    m_adfGeoTransform[1], fabs(m_adfGeoTransform[5]),
-                    bApplyScaleOffset ? dfScale : 0.0};
+                    m_gt[1], fabs(m_gt[5]), bApplyScaleOffset ? dfScale : 0.0};
                 TIFFSetField(m_hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale);
             }
 
-            double adfTiePoints[6] = {
-                0.0,     0.0, 0.0, m_adfGeoTransform[0], m_adfGeoTransform[3],
-                dfOffset};
+            double adfTiePoints[6] = {0.0,     0.0,     0.0,
+                                      m_gt[0], m_gt[3], dfOffset};
 
             if (bPixelIsPoint && !bPointGeoIgnore)
             {
-                adfTiePoints[3] +=
-                    m_adfGeoTransform[1] * 0.5 + m_adfGeoTransform[2] * 0.5;
-                adfTiePoints[4] +=
-                    m_adfGeoTransform[4] * 0.5 + m_adfGeoTransform[5] * 0.5;
+                adfTiePoints[3] += m_gt[1] * 0.5 + m_gt[2] * 0.5;
+                adfTiePoints[4] += m_gt[4] * 0.5 + m_gt[5] * 0.5;
             }
 
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -3676,20 +3671,18 @@ void GTiffDataset::WriteGeoTIFFInfo()
         {
             double adfMatrix[16] = {};
 
-            adfMatrix[0] = m_adfGeoTransform[1];
-            adfMatrix[1] = m_adfGeoTransform[2];
-            adfMatrix[3] = m_adfGeoTransform[0];
-            adfMatrix[4] = m_adfGeoTransform[4];
-            adfMatrix[5] = m_adfGeoTransform[5];
-            adfMatrix[7] = m_adfGeoTransform[3];
+            adfMatrix[0] = m_gt[1];
+            adfMatrix[1] = m_gt[2];
+            adfMatrix[3] = m_gt[0];
+            adfMatrix[4] = m_gt[4];
+            adfMatrix[5] = m_gt[5];
+            adfMatrix[7] = m_gt[3];
             adfMatrix[15] = 1.0;
 
             if (bPixelIsPoint && !bPointGeoIgnore)
             {
-                adfMatrix[3] +=
-                    m_adfGeoTransform[1] * 0.5 + m_adfGeoTransform[2] * 0.5;
-                adfMatrix[7] +=
-                    m_adfGeoTransform[4] * 0.5 + m_adfGeoTransform[5] * 0.5;
+                adfMatrix[3] += m_gt[1] * 0.5 + m_gt[2] * 0.5;
+                adfMatrix[7] += m_gt[4] * 0.5 + m_gt[5] * 0.5;
             }
 
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -3698,9 +3691,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
 
         // Do we need a world file?
         if (CPLFetchBool(m_papszCreationOptions, "TFW", false))
-            GDALWriteWorldFile(m_pszFilename, "tfw", m_adfGeoTransform);
+            GDALWriteWorldFile(m_pszFilename, "tfw", m_gt.data());
         else if (CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false))
-            GDALWriteWorldFile(m_pszFilename, "wld", m_adfGeoTransform);
+            GDALWriteWorldFile(m_pszFilename, "wld", m_gt.data());
     }
     else if (GetGCPCount() > 0 && GetGCPCount() <= knMAX_GCP_COUNT &&
              m_eProfile != GTiffProfile::BASELINE)
@@ -4217,11 +4210,10 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         const double dfOffset = poBand->GetOffset();
         const double dfScale = poBand->GetScale();
         bool bGeoTIFFScaleOffsetInZ = false;
-        double adfGeoTransform[6];
+        GDALGeoTransform gt;
         // Check if we have already encoded scale/offset in the GeoTIFF tags
-        if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-            adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 &&
-            adfGeoTransform[5] < 0.0 && poSrcDS->GetSpatialRef() &&
+        if (poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
+            gt[4] == 0.0 && gt[5] < 0.0 && poSrcDS->GetSpatialRef() &&
             poSrcDS->GetSpatialRef()->IsVertical() &&
             poSrcDS->GetRasterCount() == 1)
         {
@@ -7543,16 +7535,14 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /*      Write affine transform if it is meaningful.                     */
     /* -------------------------------------------------------------------- */
     const OGRSpatialReference *l_poSRS = nullptr;
-    double l_adfGeoTransform[6] = {0.0};
-
-    if (poSrcDS->GetGeoTransform(l_adfGeoTransform) == CE_None)
+    GDALGeoTransform l_gt;
+    if (poSrcDS->GetGeoTransform(l_gt) == CE_None)
     {
         if (bGeoTIFF)
         {
             l_poSRS = poSrcDS->GetSpatialRef();
 
-            if (l_adfGeoTransform[2] == 0.0 && l_adfGeoTransform[4] == 0.0 &&
-                l_adfGeoTransform[5] < 0.0)
+            if (l_gt[2] == 0.0 && l_gt[4] == 0.0 && l_gt[5] < 0.0)
             {
                 double dfOffset = 0.0;
                 {
@@ -7572,27 +7562,21 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                         dfScale = 1.0;
                     if (!bApplyScaleOffset || !bHasOffset)
                         dfOffset = 0.0;
-                    const double adfPixelScale[3] = {
-                        l_adfGeoTransform[1], fabs(l_adfGeoTransform[5]),
-                        bApplyScaleOffset ? dfScale : 0.0};
+                    const double adfPixelScale[3] = {l_gt[1], fabs(l_gt[5]),
+                                                     bApplyScaleOffset ? dfScale
+                                                                       : 0.0};
 
                     TIFFSetField(l_hTIFF, TIFFTAG_GEOPIXELSCALE, 3,
                                  adfPixelScale);
                 }
 
-                double adfTiePoints[6] = {0.0,
-                                          0.0,
-                                          0.0,
-                                          l_adfGeoTransform[0],
-                                          l_adfGeoTransform[3],
-                                          dfOffset};
+                double adfTiePoints[6] = {0.0,     0.0,     0.0,
+                                          l_gt[0], l_gt[3], dfOffset};
 
                 if (bPixelIsPoint && !bPointGeoIgnore)
                 {
-                    adfTiePoints[3] +=
-                        l_adfGeoTransform[1] * 0.5 + l_adfGeoTransform[2] * 0.5;
-                    adfTiePoints[4] +=
-                        l_adfGeoTransform[4] * 0.5 + l_adfGeoTransform[5] * 0.5;
+                    adfTiePoints[3] += l_gt[1] * 0.5 + l_gt[2] * 0.5;
+                    adfTiePoints[4] += l_gt[4] * 0.5 + l_gt[5] * 0.5;
                 }
 
                 TIFFSetField(l_hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints);
@@ -7601,20 +7585,18 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             {
                 double adfMatrix[16] = {0.0};
 
-                adfMatrix[0] = l_adfGeoTransform[1];
-                adfMatrix[1] = l_adfGeoTransform[2];
-                adfMatrix[3] = l_adfGeoTransform[0];
-                adfMatrix[4] = l_adfGeoTransform[4];
-                adfMatrix[5] = l_adfGeoTransform[5];
-                adfMatrix[7] = l_adfGeoTransform[3];
+                adfMatrix[0] = l_gt[1];
+                adfMatrix[1] = l_gt[2];
+                adfMatrix[3] = l_gt[0];
+                adfMatrix[4] = l_gt[4];
+                adfMatrix[5] = l_gt[5];
+                adfMatrix[7] = l_gt[3];
                 adfMatrix[15] = 1.0;
 
                 if (bPixelIsPoint && !bPointGeoIgnore)
                 {
-                    adfMatrix[3] +=
-                        l_adfGeoTransform[1] * 0.5 + l_adfGeoTransform[2] * 0.5;
-                    adfMatrix[7] +=
-                        l_adfGeoTransform[4] * 0.5 + l_adfGeoTransform[5] * 0.5;
+                    adfMatrix[3] += l_gt[1] * 0.5 + l_gt[2] * 0.5;
+                    adfMatrix[7] += l_gt[4] * 0.5 + l_gt[5] * 0.5;
                 }
 
                 TIFFSetField(l_hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix);
@@ -7627,9 +7609,9 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         if (CPLFetchBool(papszOptions, "TFW", false))
-            GDALWriteWorldFile(pszFilename, "tfw", l_adfGeoTransform);
+            GDALWriteWorldFile(pszFilename, "tfw", l_gt.data());
         else if (CPLFetchBool(papszOptions, "WORLDFILE", false))
-            GDALWriteWorldFile(pszFilename, "wld", l_adfGeoTransform);
+            GDALWriteWorldFile(pszFilename, "wld", l_gt.data());
     }
 
     /* -------------------------------------------------------------------- */
@@ -7921,10 +7903,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     {
         // Copy georeferencing info to PAM if the profile is not GeoTIFF
         poDS->GDALPamDataset::SetSpatialRef(poDS->GetSpatialRef());
-        double adfGeoTransform[6];
-        if (poDS->GetGeoTransform(adfGeoTransform) == CE_None)
+        GDALGeoTransform gt;
+        if (poDS->GetGeoTransform(gt) == CE_None)
         {
-            poDS->GDALPamDataset::SetGeoTransform(adfGeoTransform);
+            poDS->GDALPamDataset::SetGeoTransform(gt);
         }
         poDS->GDALPamDataset::SetGCPs(poDS->GetGCPCount(), poDS->GetGCPs(),
                                       poDS->GetGCPSpatialRef());
@@ -8642,7 +8624,7 @@ CPLErr GTiffDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
+CPLErr GTiffDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     if (m_bStreamingOut && m_bCrystalized)
@@ -8666,9 +8648,8 @@ CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
             m_bForceUnsetGTOrGCPs = true;
             m_aoGCPs.clear();
         }
-        else if (padfTransform[0] == 0.0 && padfTransform[1] == 0.0 &&
-                 padfTransform[2] == 0.0 && padfTransform[3] == 0.0 &&
-                 padfTransform[4] == 0.0 && padfTransform[5] == 0.0)
+        else if (gt[0] == 0.0 && gt[1] == 0.0 && gt[2] == 0.0 && gt[3] == 0.0 &&
+                 gt[4] == 0.0 && gt[5] == 0.0)
         {
             if (m_bGeoTransformValid)
             {
@@ -8676,7 +8657,7 @@ CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
                 m_bGeoTIFFInfoChanged = true;
             }
             m_bGeoTransformValid = false;
-            memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+            m_gt = gt;
             return CE_None;
         }
 
@@ -8685,7 +8666,7 @@ CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
             !CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false) &&
             (GetPamFlags() & GPF_DISABLED) == 0)
         {
-            eErr = GDALPamDataset::SetGeoTransform(padfTransform);
+            eErr = GDALPamDataset::SetGeoTransform(gt);
         }
         else
         {
@@ -8697,12 +8678,12 @@ CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
     else
     {
         CPLDebug("GTIFF", "SetGeoTransform() goes to PAM instead of TIFF tags");
-        eErr = GDALPamDataset::SetGeoTransform(padfTransform);
+        eErr = GDALPamDataset::SetGeoTransform(gt);
     }
 
     if (eErr == CE_None)
     {
-        memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+        m_gt = gt;
         m_bGeoTransformValid = true;
     }
 
@@ -8731,12 +8712,7 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             ReportError(CE_Warning, CPLE_AppDefined,
                         "A geotransform previously set is going to be cleared "
                         "due to the setting of GCPs.");
-            m_adfGeoTransform[0] = 0.0;
-            m_adfGeoTransform[1] = 1.0;
-            m_adfGeoTransform[2] = 0.0;
-            m_adfGeoTransform[3] = 0.0;
-            m_adfGeoTransform[4] = 0.0;
-            m_adfGeoTransform[5] = 1.0;
+            m_gt = GDALGeoTransform();
             m_bGeoTransformValid = false;
             m_bForceUnsetGTOrGCPs = true;
         }

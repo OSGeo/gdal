@@ -46,7 +46,7 @@ class GDALNullDataset final : public GDALDataset
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -268,7 +268,7 @@ CPLErr GDALNullDataset::SetSpatialRef(const OGRSpatialReference *)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALNullDataset::SetGeoTransform(double *)
+CPLErr GDALNullDataset::SetGeoTransform(const GDALGeoTransform &)
 
 {
     return CE_None;

@@ -29,8 +29,6 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "rawdataset.h"
 #include "pdsdrivercore.h"
 
-#include <array>
-
 /************************************************************************/
 /* ==================================================================== */
 /*                      ISISDataset     version2                        */
@@ -45,7 +43,7 @@ class ISIS2Dataset final : public RawDataset
     NASAKeywordHandler oKeywords{};
 
     bool bGotTransform{};
-    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -68,7 +66,7 @@ class ISIS2Dataset final : public RawDataset
     ISIS2Dataset();
     virtual ~ISIS2Dataset();
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetFileList() override;
@@ -147,16 +145,16 @@ const OGRSpatialReference *ISIS2Dataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS2Dataset::GetGeoTransform(double *padfTransform)
+CPLErr ISIS2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform.data(), sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -700,21 +698,21 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         poDS->bGotTransform = TRUE;
-        poDS->adfGeoTransform[0] = dfULXMap;
-        poDS->adfGeoTransform[1] = dfXDim;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfULYMap;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = dfYDim;
+        poDS->m_gt[0] = dfULXMap;
+        poDS->m_gt[1] = dfXDim;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = dfULYMap;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = dfYDim;
     }
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "cbw",
-                                                poDS->adfGeoTransform.data());
+                                                poDS->m_gt.data());
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "wld",
-                                                poDS->adfGeoTransform.data());
+                                                poDS->m_gt.data());
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

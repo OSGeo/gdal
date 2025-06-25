@@ -1296,19 +1296,14 @@ void ECWDataset::CleanupStatistics()
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ECWDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr ECWDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (bIsJPEG2000 || eAccess == GA_ReadOnly)
-        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+        return GDALPamDataset::SetGeoTransform(gt);
 
-    if (!bGeoTransformValid || adfGeoTransform[0] != padfGeoTransform[0] ||
-        adfGeoTransform[1] != padfGeoTransform[1] ||
-        adfGeoTransform[2] != padfGeoTransform[2] ||
-        adfGeoTransform[3] != padfGeoTransform[3] ||
-        adfGeoTransform[4] != padfGeoTransform[4] ||
-        adfGeoTransform[5] != padfGeoTransform[5])
+    if (!bGeoTransformValid || gt != m_gt)
     {
-        memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
+        m_gt = gt;
         bGeoTransformValid = TRUE;
         bHdrDirty = TRUE;
         bGeoTransformChanged = TRUE;
@@ -1649,10 +1644,10 @@ void ECWDataset::WriteHeader()
 
     if (bGeoTransformChanged)
     {
-        psEditInfo->fOriginX = adfGeoTransform[0];
-        psEditInfo->fCellIncrementX = adfGeoTransform[1];
-        psEditInfo->fOriginY = adfGeoTransform[3];
-        psEditInfo->fCellIncrementY = adfGeoTransform[5];
+        psEditInfo->fOriginX = m_gt[0];
+        psEditInfo->fCellIncrementX = m_gt[1];
+        psEditInfo->fOriginY = m_gt[3];
+        psEditInfo->fCellIncrementY = m_gt[5];
         CPLDebug("ECW", "Rewrite Geotransform");
     }
 
@@ -2967,9 +2962,9 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
         if (!poDS->bGeoTransformValid)
         {
             poDS->bGeoTransformValid |=
-                GDALReadWorldFile2(osFilename, nullptr, poDS->adfGeoTransform,
+                GDALReadWorldFile2(osFilename, nullptr, poDS->m_gt,
                                    poOpenInfo->GetSiblingFiles(), nullptr) ||
-                GDALReadWorldFile2(osFilename, ".wld", poDS->adfGeoTransform,
+                GDALReadWorldFile2(osFilename, ".wld", poDS->m_gt,
                                    poOpenInfo->GetSiblingFiles(), nullptr);
         }
     }
@@ -3420,12 +3415,12 @@ void ECWDataset::ECW2WKTProjection()
     {
         bGeoTransformValid = TRUE;
 
-        adfGeoTransform[0] = psFileInfo->fOriginX;
-        adfGeoTransform[1] = psFileInfo->fCellIncrementX;
-        adfGeoTransform[2] = 0.0;
+        m_gt[0] = psFileInfo->fOriginX;
+        m_gt[1] = psFileInfo->fCellIncrementX;
+        m_gt[2] = 0.0;
 
-        adfGeoTransform[3] = psFileInfo->fOriginY;
-        adfGeoTransform[4] = 0.0;
+        m_gt[3] = psFileInfo->fOriginY;
+        m_gt[4] = 0.0;
 
         /* By default, set Y-resolution negative assuming images always */
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
@@ -3435,9 +3430,9 @@ void ECWDataset::ECW2WKTProjection()
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if (CPLTestBool(CPLGetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")))
-            adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
+            m_gt[5] = -fabs(psFileInfo->fCellIncrementY);
         else
-            adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+            m_gt[5] = psFileInfo->fCellIncrementY;
     }
 
     /* -------------------------------------------------------------------- */

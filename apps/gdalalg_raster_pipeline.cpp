@@ -700,9 +700,9 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryDataset(
     if (poOutDS && poSrcDSForMetadata)
     {
         poOutDS->SetSpatialRef(poSrcDSForMetadata->GetSpatialRef());
-        std::array<double, 6> adfGT{};
-        if (poSrcDSForMetadata->GetGeoTransform(adfGT.data()) == CE_None)
-            poOutDS->SetGeoTransform(adfGT.data());
+        GDALGeoTransform gt;
+        if (poSrcDSForMetadata->GetGeoTransform(gt) == CE_None)
+            poOutDS->SetGeoTransform(gt);
         if (const int nGCPCount = poSrcDSForMetadata->GetGCPCount())
         {
             const auto apsGCPs = poSrcDSForMetadata->GetGCPs();
