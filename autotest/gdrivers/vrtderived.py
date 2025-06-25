@@ -1053,6 +1053,28 @@ def identity(in_ar, out_ar, *args, **kwargs):
 
 
 ###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_expression_missing_expression_arg():
+
+    ds = gdal.Open(
+        """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <PixelFunctionType>expression</PixelFunctionType>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    with pytest.raises(Exception, match="Missing 'expression' pixel function argument"):
+        ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
 # Test arbitrary expression pixel functions
 
 

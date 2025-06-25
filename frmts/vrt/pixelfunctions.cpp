@@ -2777,6 +2777,12 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     std::unique_ptr<gdal::MathExpression> poExpression;
 
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
+    if (!pszExpression)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing 'expression' pixel function argument");
+        return CE_Failure;
+    }
 
     const char *pszSourceNames = CSLFetchNameValue(papszArgs, "source_names");
     const CPLStringList aosSourceNames(
