@@ -4316,21 +4316,33 @@ def test_ogr_parquet_write_use_geo_type(tmp_vsimem):
 @pytest.mark.parametrize(
     "filename,crs_name",
     [
-        ("example-crs_vermont-4326.parquet", "WGS 84"),
-        ("example-crs_vermont-crs84.parquet", "WGS 84"),
-        ("example-crs_vermont-crs84-wkt2.parquet", "WGS 84"),
-        ("example-crs_vermont-custom.parquet", "unknown"),
-        ("example-crs_vermont-utm.parquet", "WGS 84 / UTM zone 18N"),
+        ("parquet_geometry/example-crs_vermont-4326.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-crs84.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-crs84-wkt2.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-custom.parquet", "unknown"),
+        ("parquet_geometry/example-crs_vermont-utm.parquet", "WGS 84 / UTM zone 18N"),
+        ("parquet_geometry/example-crs_vermont-utm.parquet", "WGS 84 / UTM zone 18N"),
+        ("parquet_testing_geospatial/crs-srid.parquet", "NAD83 / Conus Albers"),
+        ("parquet_testing_geospatial/crs-projjson.parquet", "NAD83 / Conus Albers"),
+        ("parquet_testing_geospatial/crs-geography.parquet", "WGS 84"),
     ],
 )
 def test_ogr_parquet_read_parquet_geometry(filename, crs_name):
 
-    ds = ogr.Open("data/parquet/parquet_geometry/" + filename)
+    ds = ogr.Open("data/parquet/" + filename)
     lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == ogr.wkbPolygon
-    assert lyr.TestCapability(ogr.OLCFastGetExtent)
-    assert lyr.TestCapability(ogr.OLCFastSpatialFilter)
     assert lyr.GetSpatialRef().GetName() == crs_name
+
+    if "crs-geography" in filename:
+        assert lyr.GetGeomType() == ogr.wkbUnknown
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
+    else:
+        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetMetadataItem("EDGES") is None
+        assert lyr.TestCapability(ogr.OLCFastGetExtent)
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter)
 
     xmin, xmax, ymin, ymax = lyr.GetExtent()
     lyr.SetSpatialFilterRect(xmin + 1e-5, ymin + 1e-5, xmax - 1e-5, ymax - 1e-5)
@@ -4338,12 +4350,17 @@ def test_ogr_parquet_read_parquet_geometry(filename, crs_name):
     lyr.SetSpatialFilterRect(xmax + 1, ymin, xmax + 2, ymax)
     assert lyr.GetFeatureCount() == 0
 
-    ds = ogr.Open("PARQUET:data/parquet/parquet_geometry/" + filename)
+    ds = ogr.Open("PARQUET:data/parquet/" + filename)
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbUnknown
     assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
     assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
     assert lyr.GetSpatialRef().GetName() == crs_name
+
+    if "crs-geography" in filename:
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+    else:
+        assert lyr.GetMetadataItem("EDGES") is None
 
 
 ###############################################################################

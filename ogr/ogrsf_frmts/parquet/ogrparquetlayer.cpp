@@ -456,6 +456,8 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                                   ->crs();
                         if (crs.empty())
                             crs = "EPSG:4326";
+                        CPLDebugOnly("PARQUET", "GeometryLogicalType crs=%s",
+                                     crs.c_str());
                     }
                     else if (logicalType->is_geography())
                     {
@@ -471,6 +473,8 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                             CPLString(
                                 std::string(geographyType->algorithm_name()))
                                 .toupper());
+                        CPLDebugOnly("PARQUET", "GeographyLogicalType crs=%s",
+                                     crs.c_str());
                     }
                     else
                     {
@@ -483,6 +487,27 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                         {
                             eGeomType = computeGeometryTypeFun();
                             bSkipRowGroups = true;
+                        }
+                    }
+
+                    // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
+                    // "projjson: PROJJSON, identifier is the name of a table property or a file property where the projjson string is stored."
+                    // Here the property is interpreted as the key of a file metadata (as done in libarrow)
+                    constexpr const char *PROJJSON_PREFIX = "projjson:";
+                    if (cpl::starts_with(crs, PROJJSON_PREFIX) && metadata)
+                    {
+                        auto projjson_value =
+                            metadata->key_value_metadata()->Get(
+                                crs.substr(strlen(PROJJSON_PREFIX)));
+                        if (projjson_value.ok())
+                        {
+                            crs = *projjson_value;
+                        }
+                        else
+                        {
+                            CPLDebug("PARQUET",
+                                     "Cannot find file metadata for %s",
+                                     crs.c_str());
                         }
                     }
                 }
@@ -705,6 +730,23 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 
                 if (!crs.empty())
                 {
+                    // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
+                    // "srid: Spatial reference identifier, identifier is the SRID itself.."
+                    constexpr const char *SRID_PREFIX = "srid:";
+                    if (cpl::starts_with(crs, SRID_PREFIX))
+                    {
+                        // When getting the value from the GeometryLogicalType::crs() method
+                        crs = crs.substr(strlen(SRID_PREFIX));
+                    }
+                    if (CPLGetValueType(crs.c_str()) == CPL_VALUE_INTEGER)
+                    {
+                        // Getting here from above if, or if reading the ArrowWkb
+                        // metadata directly (typically from a OGRParquetDatasetLayer)
+
+                        // Assumes a SRID code is an EPSG code...
+                        crs = std::string("EPSG:") + crs;
+                    }
+
                     auto poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     if (poSRS->SetFromUserInput(
