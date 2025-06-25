@@ -677,6 +677,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_ARROW_LOAD_FILE_SYSTEM_FACTORIES", // from ogrfeatherdriver.cpp
    "OGR_ARROW_MEM_LIMIT", // from ograrrowarrayhelper.cpp
    "OGR_ARROW_READ_GDAL_FOOTER", // from ogrfeatherlayer.cpp
+   "OGR_ARROW_REGISTER_GEOARROW_WKB_EXTENSION", // from ogrfeatherdriver.cpp
    "OGR_ARROW_USE_VSI", // from ogrfeatherdriver.cpp
    "OGR_ARROW_WRITE_BBOX", // from ogrfeatherwriterlayer.cpp
    "OGR_ARROW_WRITE_GDAL_FOOTER", // from ogrfeatherwriterlayer.cpp

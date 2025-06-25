@@ -3012,6 +3012,34 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     }
     auto poRecordBatch = *poRecordBatchResult;
 
+    if (!(bRebuildBatch || !oMapGeomFieldNameToArray.empty()))
+    {
+        for (int i = 0; i < m_poSchema->num_fields(); ++i)
+        {
+            const auto oIter =
+                oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
+            auto l_array = (oIter != oMapGeomFieldNameToArray.end())
+                               ? oIter->second
+                               : poRecordBatch->column(i);
+            const auto schemaType = m_poSchema->field(i)->type();
+            const auto arrayType = l_array->type();
+            if (schemaType->id() != arrow::Type::EXTENSION &&
+                arrayType->id() == arrow::Type::EXTENSION)
+            {
+                bRebuildBatch = true;
+            }
+            else if (schemaType->id() != arrayType->id())
+            {
+                CPLDebug(
+                    "Arrow",
+                    "Field idx=%d name='%s', schema type=%s, array type=%s", i,
+                    m_poSchema->field(i)->name().c_str(),
+                    schemaType->ToString().c_str(),
+                    arrayType->ToString().c_str());
+            }
+        }
+    }
+
     // below assertion commented out since it is not strictly necessary, but
     // reflects what ImportRecordBatch() does.
     // CPLAssert(array->release == nullptr);
@@ -3036,6 +3064,14 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                 auto extensionType = cpl::down_cast<arrow::ExtensionType *>(
                     expectedFieldType.get());
                 expectedFieldType = extensionType->storage_type();
+            }
+
+            if (apoArrays.back()->type()->id() == arrow::Type::EXTENSION)
+            {
+                apoArrays.back() =
+                    std::static_pointer_cast<arrow::ExtensionArray>(
+                        apoArrays.back())
+                        ->storage();
             }
 
             if (apoArrays.back()->type()->id() != expectedFieldType->id())
