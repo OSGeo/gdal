@@ -26,8 +26,16 @@
 
 %include "cplvirtualmem.i"
 
+// SWIG 4.4.0 now uses a 2 stage module initialization, and the below
+// initialization code is included in a SWIG_mod_exec() function that returns
+// 0 on success, hence the use of import_array1(). Prior SWIG versions included
+// the code directly in SWIG_init() that returns a NULL pointer on error.
 %init %{
+#if SWIG_VERSION >= 0x040400
+  import_array1(-1);
+#else
   import_array();
+#endif
   PyDateTime_IMPORT;
   GDALRegister_NUMPY();
 %}
