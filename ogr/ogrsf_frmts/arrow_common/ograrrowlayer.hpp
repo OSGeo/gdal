@@ -2459,7 +2459,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto timestampType = static_cast<arrow::TimestampType *>(
                     array->data()->type.get());
                 const auto castArray =
-                    static_cast<const arrow::Int64Array *>(array);
+                    static_cast<const arrow::TimestampArray *>(array);
                 const int64_t timestamp = castArray->Value(nIdxInBatch);
                 OGRField sField;
                 sField.Set.nMarker1 = OGRUnsetMarker;
@@ -2476,7 +2476,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto timestampType =
                     static_cast<arrow::Time32Type *>(array->data()->type.get());
                 const auto castArray =
-                    static_cast<const arrow::Int32Array *>(array);
+                    static_cast<const arrow::Time32Array *>(array);
                 const auto unit = timestampType->unit();
                 int value = castArray->Value(nIdxInBatch);
                 double floatingPart = 0;
