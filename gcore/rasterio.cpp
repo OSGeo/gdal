@@ -57,6 +57,16 @@
 #endif
 #endif
 
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
+
+#ifdef __GNUC__
+#define CPL_NOINLINE __attribute__((noinline))
+#else
+#define CPL_NOINLINE
+#endif
+
 static void GDALFastCopyByte(const GByte *CPL_RESTRICT pSrcData,
                              int nSrcPixelStride, GByte *CPL_RESTRICT pDstData,
                              int nDstPixelStride, GPtrDiff_t nWordCount);
@@ -2190,10 +2200,11 @@ static void inline GDALCopyWordsGenericT(const Tin *const CPL_RESTRICT pSrcData,
 }
 
 template <class Tin, class Tout>
-static void inline GDALCopyWordsT(const Tin *const CPL_RESTRICT pSrcData,
-                                  int nSrcPixelStride,
-                                  Tout *const CPL_RESTRICT pDstData,
-                                  int nDstPixelStride, GPtrDiff_t nWordCount)
+static void CPL_NOINLINE GDALCopyWordsT(const Tin *const CPL_RESTRICT pSrcData,
+                                        int nSrcPixelStride,
+                                        Tout *const CPL_RESTRICT pDstData,
+                                        int nDstPixelStride,
+                                        GPtrDiff_t nWordCount)
 {
     GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData, nDstPixelStride,
                           nWordCount);
@@ -2280,18 +2291,20 @@ void GDALCopyWordsByteTo16Bit(const GByte *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GUInt16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo16Bit(pSrcData, nSrcPixelStride, pDstData,
                              nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GInt16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo16Bit(pSrcData, nSrcPixelStride, pDstData,
                              nDstPixelStride, nWordCount);
@@ -2345,27 +2358,30 @@ void GDALCopyWordsByteTo32Bit(const GByte *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt32 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GUInt32 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo32Bit(pSrcData, nSrcPixelStride, pDstData,
                              nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt32 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GInt32 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo32Bit(pSrcData, nSrcPixelStride, pDstData,
                              nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, float *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
@@ -2410,9 +2426,10 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, double *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
@@ -2432,6 +2449,19 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
             __m128i xmm2 = _mm_unpacklo_epi16(xmm_high, xmm_zero);
             __m128i xmm3 = _mm_unpackhi_epi16(xmm_high, xmm_zero);
 
+#if defined(__AVX2__) && defined(slightly_slower_than_SSE2)
+            _mm256_storeu_pd(reinterpret_cast<double *>(pabyDstDataPtr + n * 8),
+                             _mm256_cvtepi32_pd(xmm0));
+            _mm256_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 32),
+                _mm256_cvtepi32_pd(xmm1));
+            _mm256_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 64),
+                _mm256_cvtepi32_pd(xmm2));
+            _mm256_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 96),
+                _mm256_cvtepi32_pd(xmm3));
+#else
             __m128d xmm0_low_d = _mm_cvtepi32_pd(xmm0);
             __m128d xmm1_low_d = _mm_cvtepi32_pd(xmm1);
             __m128d xmm2_low_d = _mm_cvtepi32_pd(xmm2);
@@ -2468,6 +2498,7 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
             _mm_storeu_pd(
                 reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 112),
                 xmm3_high_d);
+#endif
         }
         for (; n < nWordCount; n++)
         {
@@ -2482,33 +2513,130 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GByte *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const uint8_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 int8_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
     {
         decltype(nWordCount) n = 0;
+        const __m128i xmm_127 = _mm_set1_epi8(127);
+        for (; n < nWordCount - 31; n += 32)
+        {
+            __m128i xmm0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 16));
+            xmm0 = _mm_min_epu8(xmm0, xmm_127);
+            xmm1 = _mm_min_epu8(xmm1, xmm_127);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 16),
+                             xmm1);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] =
+                pSrcData[n] >= 127 ? 127 : static_cast<int8_t>(pSrcData[n]);
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const int8_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 uint8_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+#if !(defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS))
+        const __m128i xmm_INT8_to_UINT8 = _mm_set1_epi8(-128);
+#endif
+        for (; n < nWordCount - 31; n += 32)
+        {
+            __m128i xmm0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 16));
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            xmm0 = _mm_max_epi8(xmm0, _mm_setzero_si128());
+            xmm1 = _mm_max_epi8(xmm1, _mm_setzero_si128());
+#else
+            xmm0 = _mm_add_epi8(xmm0, xmm_INT8_to_UINT8);
+            xmm1 = _mm_add_epi8(xmm1, xmm_INT8_to_UINT8);
+            xmm0 = _mm_max_epu8(xmm0, xmm_INT8_to_UINT8);
+            xmm1 = _mm_max_epu8(xmm1, xmm_INT8_to_UINT8);
+            xmm0 = _mm_sub_epi8(xmm0, xmm_INT8_to_UINT8);
+            xmm1 = _mm_sub_epi8(xmm1, xmm_INT8_to_UINT8);
+#endif
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 16),
+                             xmm1);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] =
+                pSrcData[n] < 0 ? 0 : static_cast<uint8_t>(pSrcData[n]);
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 uint8_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+        const auto xmm_MAX_INT16 = _mm_set1_epi16(32767);
+#else
         // In SSE2, min_epu16 does not exist, so shift from
         // UInt16 to SInt16 to be able to use min_epi16
         const __m128i xmm_UINT16_to_INT16 = _mm_set1_epi16(-32768);
         const __m128i xmm_m255_shifted = _mm_set1_epi16(255 - 32768);
-        for (; n < nWordCount - 7; n += 8)
+#endif
+        for (; n < nWordCount - 15; n += 16)
         {
-            __m128i xmm = _mm_loadu_si128(
+            __m128i xmm0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
-            xmm = _mm_add_epi16(xmm, xmm_UINT16_to_INT16);
-            xmm = _mm_min_epi16(xmm, xmm_m255_shifted);
-            xmm = _mm_sub_epi16(xmm, xmm_UINT16_to_INT16);
-            xmm = _mm_packus_epi16(xmm, xmm);
-            GDALCopyXMMToInt64(xmm,
-                               reinterpret_cast<GPtrDiff_t *>(pDstData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 8));
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            xmm0 = _mm_min_epu16(xmm0, xmm_MAX_INT16);
+            xmm1 = _mm_min_epu16(xmm1, xmm_MAX_INT16);
+#else
+            xmm0 = _mm_add_epi16(xmm0, xmm_UINT16_to_INT16);
+            xmm1 = _mm_add_epi16(xmm1, xmm_UINT16_to_INT16);
+            xmm0 = _mm_min_epi16(xmm0, xmm_m255_shifted);
+            xmm1 = _mm_min_epi16(xmm1, xmm_m255_shifted);
+            xmm0 = _mm_sub_epi16(xmm0, xmm_UINT16_to_INT16);
+            xmm1 = _mm_sub_epi16(xmm1, xmm_UINT16_to_INT16);
+#endif
+            xmm0 = _mm_packus_epi16(xmm0, xmm1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
         }
         for (; n < nWordCount; n++)
         {
             pDstData[n] =
-                pSrcData[n] >= 255 ? 255 : static_cast<GByte>(pSrcData[n]);
+                pSrcData[n] >= 255 ? 255 : static_cast<uint8_t>(pSrcData[n]);
         }
     }
     else
@@ -2519,31 +2647,49 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 int16_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
     {
         decltype(nWordCount) n = 0;
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+        const __m128i xmm_MAX_INT16 = _mm_set1_epi16(32767);
+#else
         // In SSE2, min_epu16 does not exist, so shift from
         // UInt16 to SInt16 to be able to use min_epi16
         const __m128i xmm_UINT16_to_INT16 = _mm_set1_epi16(-32768);
         const __m128i xmm_32767_shifted = _mm_set1_epi16(32767 - 32768);
-        for (; n < nWordCount - 7; n += 8)
+#endif
+        for (; n < nWordCount - 15; n += 16)
         {
-            __m128i xmm = _mm_loadu_si128(
+            __m128i xmm0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
-            xmm = _mm_add_epi16(xmm, xmm_UINT16_to_INT16);
-            xmm = _mm_min_epi16(xmm, xmm_32767_shifted);
-            xmm = _mm_sub_epi16(xmm, xmm_UINT16_to_INT16);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm);
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 8));
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+            xmm0 = _mm_min_epu16(xmm0, xmm_MAX_INT16);
+            xmm1 = _mm_min_epu16(xmm1, xmm_MAX_INT16);
+#else
+            xmm0 = _mm_add_epi16(xmm0, xmm_UINT16_to_INT16);
+            xmm1 = _mm_add_epi16(xmm1, xmm_UINT16_to_INT16);
+            xmm0 = _mm_min_epi16(xmm0, xmm_32767_shifted);
+            xmm1 = _mm_min_epi16(xmm1, xmm_32767_shifted);
+            xmm0 = _mm_sub_epi16(xmm0, xmm_UINT16_to_INT16);
+            xmm1 = _mm_sub_epi16(xmm1, xmm_UINT16_to_INT16);
+#endif
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
+                             xmm1);
         }
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] >= 32767 ? 32767 : static_cast<GInt16>(pSrcData[n]);
+            pDstData[n] = pSrcData[n] >= 32767
+                              ? 32767
+                              : static_cast<int16_t>(pSrcData[n]);
         }
     }
     else
@@ -2554,9 +2700,123 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, float *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 uint16_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+        const __m128i xmm_zero = _mm_setzero_si128();
+        for (; n < nWordCount - 15; n += 16)
+        {
+            __m128i xmm0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 8));
+            xmm0 = _mm_max_epi16(xmm0, xmm_zero);
+            xmm1 = _mm_max_epi16(xmm1, xmm_zero);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
+                             xmm1);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] =
+                pSrcData[n] < 0 ? 0 : static_cast<uint16_t>(pSrcData[n]);
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const uint32_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 int32_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+        const __m128i xmm_MAX_INT = _mm_set1_epi32(INT_MAX);
+        for (; n < nWordCount - 8; n += 7)
+        {
+            __m128i xmm0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 4));
+            xmm0 = _mm_min_epu32(xmm0, xmm_MAX_INT);
+            xmm1 = _mm_min_epu32(xmm1, xmm_MAX_INT);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
+                             xmm1);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] = pSrcData[n] >= INT_MAX
+                              ? INT_MAX
+                              : static_cast<int32_t>(pSrcData[n]);
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 uint32_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+        const __m128i xmm_zero = _mm_setzero_si128();
+        for (; n < nWordCount - 7; n += 8)
+        {
+            __m128i xmm0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i xmm1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 4));
+            xmm0 = _mm_max_epi32(xmm0, xmm_zero);
+            xmm1 = _mm_max_epi32(xmm1, xmm_zero);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
+                             xmm1);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] =
+                pSrcData[n] < 0 ? 0 : static_cast<uint32_t>(pSrcData[n]);
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+#endif  // defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
@@ -2591,9 +2851,48 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, double *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+        GByte *CPL_RESTRICT pabyDstDataPtr =
+            reinterpret_cast<GByte *>(pDstData);
+        for (; n < nWordCount - 7; n += 8)
+        {
+            __m128i xmm = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            const auto sign = _mm_srai_epi16(xmm, 15);
+            __m128i xmm0 = _mm_unpacklo_epi16(xmm, sign);
+            __m128i xmm1 = _mm_unpackhi_epi16(xmm, sign);
+            __m128 xmm0_f = _mm_cvtepi32_ps(xmm0);
+            __m128 xmm1_f = _mm_cvtepi32_ps(xmm1);
+            _mm_storeu_ps(reinterpret_cast<float *>(pabyDstDataPtr + n * 4),
+                          xmm0_f);
+            _mm_storeu_ps(
+                reinterpret_cast<float *>(pabyDstDataPtr + n * 4 + 16), xmm1_f);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] = pSrcData[n];
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
@@ -2641,56 +2940,111 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        decltype(nWordCount) n = 0;
+        GByte *CPL_RESTRICT pabyDstDataPtr =
+            reinterpret_cast<GByte *>(pDstData);
+        for (; n < nWordCount - 7; n += 8)
+        {
+            __m128i xmm = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            const auto sign = _mm_srai_epi16(xmm, 15);
+            __m128i xmm0 = _mm_unpacklo_epi16(xmm, sign);
+            __m128i xmm1 = _mm_unpackhi_epi16(xmm, sign);
+
+            __m128d xmm0_low_d = _mm_cvtepi32_pd(xmm0);
+            __m128d xmm1_low_d = _mm_cvtepi32_pd(xmm1);
+            xmm0 = _mm_srli_si128(xmm0, 8);
+            xmm1 = _mm_srli_si128(xmm1, 8);
+            __m128d xmm0_high_d = _mm_cvtepi32_pd(xmm0);
+            __m128d xmm1_high_d = _mm_cvtepi32_pd(xmm1);
+
+            _mm_storeu_pd(reinterpret_cast<double *>(pabyDstDataPtr + n * 8),
+                          xmm0_low_d);
+            _mm_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 16),
+                xmm0_high_d);
+            _mm_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 32),
+                xmm1_low_d);
+            _mm_storeu_pd(
+                reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 48),
+                xmm1_high_d);
+        }
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] = pSrcData[n];
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GByte *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, double *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GUInt16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, float *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
-{
-    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
-                            nDstPixelStride, nWordCount);
-}
-
-#endif  // HAVE_SSE2
-
-template <>
-void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GByte *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 float *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 double *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
@@ -2699,42 +3053,58 @@ void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
 #ifdef __F16C__
 
 template <>
-void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GFloat16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GFloat16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, float *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GFloat16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
+                            nDstPixelStride, nWordCount);
+}
+
+#endif  // __F16C__
+
+#endif  // HAVE_SSE2
+
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GByte *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GFloat16 *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GInt16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
 
 template <>
-void GDALCopyWordsT(const GFloat16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, double *const CPL_RESTRICT pDstData,
-                    int nDstPixelStride, GPtrDiff_t nWordCount)
+CPL_NOINLINE void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 GUInt16 *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
                             nDstPixelStride, nWordCount);
 }
-
-#endif
 
 /************************************************************************/
 /*                   GDALCopyWordsComplexT()                            */

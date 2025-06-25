@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 
 #include "gtest_include.h"
 
@@ -26,9 +27,9 @@ namespace
 
 // ---------------------------------------------------------------------------
 
-template <class OutType, class ConstantType>
-void AssertRes(GDALDataType intype, ConstantType inval, GDALDataType outtype,
-               ConstantType expected_outval, OutType outval, int numLine)
+template <class OutType, class CT1, class CT2>
+void AssertRes(GDALDataType intype, CT1 inval, GDALDataType outtype,
+               CT2 expected_outval, OutType outval, int numLine)
 {
     if (static_cast<double>(expected_outval) == static_cast<double>(outval) ||
         (std::isnan(static_cast<double>(expected_outval)) &&
@@ -55,8 +56,8 @@ class TestCopyWords : public ::testing::Test
   protected:
     void SetUp() override
     {
-        pIn = (GByte *)malloc(256);
-        pOut = (GByte *)malloc(256);
+        pIn = (GByte *)malloc(2048);
+        pOut = (GByte *)malloc(2048);
     }
 
     void TearDown() override
@@ -74,8 +75,8 @@ class TestCopyWords : public ::testing::Test
               GDALDataType outtype, ConstantType outval, ConstantType outvali,
               int numLine)
     {
-        memset(pIn, 0xff, 128);
-        memset(pOut, 0xff, 128);
+        memset(pIn, 0xff, 1024);
+        memset(pOut, 0xff, 1024);
 
         *(InType *)(pIn) = (InType)inval;
         *(InType *)(pIn + 32) = (InType)inval;
@@ -89,14 +90,14 @@ class TestCopyWords : public ::testing::Test
         GDALCopyWords(pIn, intype, 32, pOut, outtype, 32, 2);
 
         /* Test negative offsets */
-        GDALCopyWords(pIn + 32, intype, -32, pOut + 128 - 16, outtype, -32, 2);
+        GDALCopyWords(pIn + 32, intype, -32, pOut + 1024 - 16, outtype, -32, 2);
 
         MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
         MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut + 32));
         MY_EXPECT(intype, inval, outtype, outval,
-                  *(OutType *)(pOut + 128 - 16));
+                  *(OutType *)(pOut + 1024 - 16));
         MY_EXPECT(intype, inval, outtype, outval,
-                  *(OutType *)(pOut + 128 - 16 - 32));
+                  *(OutType *)(pOut + 1024 - 16 - 32));
 
         if (GDALDataTypeIsComplex(outtype))
         {
@@ -105,38 +106,29 @@ class TestCopyWords : public ::testing::Test
                       ((OutType *)(pOut + 32))[1]);
 
             MY_EXPECT(intype, invali, outtype, outvali,
-                      ((OutType *)(pOut + 128 - 16))[1]);
+                      ((OutType *)(pOut + 1024 - 16))[1]);
             MY_EXPECT(intype, invali, outtype, outvali,
-                      ((OutType *)(pOut + 128 - 16 - 32))[1]);
+                      ((OutType *)(pOut + 1024 - 16 - 32))[1]);
         }
         else
         {
-            *(InType *)(pIn + GDALGetDataTypeSizeBytes(intype)) = (InType)inval;
+            constexpr int N = 32 + 31;
+            for (int i = 0; i < N; ++i)
+            {
+                *(InType *)(pIn + i * GDALGetDataTypeSizeBytes(intype)) =
+                    (InType)inval;
+            }
+
             /* Test packed offsets */
             GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
-                          outtype, GDALGetDataTypeSizeBytes(outtype), 2);
+                          outtype, GDALGetDataTypeSizeBytes(outtype), N);
 
-            MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
-            MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
-
-            *(InType *)(pIn + 2 * GDALGetDataTypeSizeBytes(intype)) =
-                (InType)inval;
-            *(InType *)(pIn + 3 * GDALGetDataTypeSizeBytes(intype)) =
-                (InType)inval;
-            /* Test packed offsets */
-            GDALCopyWords(pIn, intype, GDALGetDataTypeSizeBytes(intype), pOut,
-                          outtype, GDALGetDataTypeSizeBytes(outtype), 4);
-
-            MY_EXPECT(intype, inval, outtype, outval, *(OutType *)(pOut));
-            MY_EXPECT(intype, inval, outtype, outval,
-                      *(OutType *)(pOut + GDALGetDataTypeSizeBytes(outtype)));
-            MY_EXPECT(
-                intype, inval, outtype, outval,
-                *(OutType *)(pOut + 2 * GDALGetDataTypeSizeBytes(outtype)));
-            MY_EXPECT(
-                intype, inval, outtype, outval,
-                *(OutType *)(pOut + 3 * GDALGetDataTypeSizeBytes(outtype)));
+            for (int i = 0; i < N; ++i)
+            {
+                MY_EXPECT(
+                    intype, inval, outtype, outval,
+                    *(OutType *)(pOut + i * GDALGetDataTypeSizeBytes(outtype)));
+            }
         }
     }
 
@@ -1080,7 +1072,20 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     Tout arrayOut[N];
     for (int i = 0; i < N; i++)
     {
-        arrayIn[i] = static_cast<Tin>(i + 1);
+        if constexpr (!std::is_integral_v<Tin> && std::is_integral_v<Tout>)
+        {
+            // Test correct rounding
+            if (i == 0 && std::is_unsigned_v<Tout>)
+                arrayIn[i] = cpl::NumericLimits<Tin>::quiet_NaN();
+            else if ((i % 2) != 0)
+                arrayIn[i] = static_cast<Tin>(i + 0.4);
+            else
+                arrayIn[i] = static_cast<Tin>(i + 0.6);
+        }
+        else
+        {
+            arrayIn[i] = static_cast<Tin>(i + 1);
+        }
         arrayOut[i] = 0;
     }
     GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn), arrayOut, eOut,
@@ -1088,7 +1093,26 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     int numLine = 0;
     for (int i = 0; i < N; i++)
     {
-        MY_EXPECT(eIn, i + 1, eOut, i + 1, arrayOut[i]);
+        if constexpr (!std::is_integral_v<Tin> && std::is_integral_v<Tout>)
+        {
+            if (i == 0 && std::is_unsigned_v<Tout>)
+            {
+                MY_EXPECT(eIn, cpl::NumericLimits<Tin>::quiet_NaN(), eOut, 0,
+                          arrayOut[i]);
+            }
+            else if ((i % 2) != 0)
+            {
+                MY_EXPECT(eIn, i + 0.4, eOut, i, arrayOut[i]);
+            }
+            else
+            {
+                MY_EXPECT(eIn, i + 0.6, eOut, i + 1, arrayOut[i]);
+            }
+        }
+        else
+        {
+            MY_EXPECT(eIn, i + 1, eOut, i + 1, arrayOut[i]);
+        }
     }
 }
 
