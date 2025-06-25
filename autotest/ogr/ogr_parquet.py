@@ -816,6 +816,33 @@ def test_ogr_parquet_write_compression(compression):
 
 
 ###############################################################################
+# Test compression level support
+
+
+def test_ogr_parquet_compression_level(tmp_vsimem):
+
+    lco = gdal.GetDriverByName("Parquet").GetMetadataItem("DS_LAYER_CREATIONOPTIONLIST")
+    if "ZSTD" not in lco:
+        pytest.skip("ZSTD codec missing")
+
+    gdal.VectorTranslate(
+        tmp_vsimem / "out1.parquet",
+        "data/poly.shp",
+        layerCreationOptions=["COMPRESSION=ZSTD", "COMPRESSION_LEVEL=1"],
+    )
+    gdal.VectorTranslate(
+        tmp_vsimem / "out22.parquet",
+        "data/poly.shp",
+        layerCreationOptions=["COMPRESSION=ZSTD", "COMPRESSION_LEVEL=22"],
+    )
+
+    assert (
+        gdal.VSIStatL(tmp_vsimem / "out22.parquet").size
+        < gdal.VSIStatL(tmp_vsimem / "out1.parquet").size
+    )
+
+
+###############################################################################
 # Test coordinate epoch support
 
 

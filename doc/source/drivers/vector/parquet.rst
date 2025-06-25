@@ -71,6 +71,15 @@ The following layer creation options are supported:
       Available values depend on how the Parquet library was compiled.
       Defaults to SNAPPY when available, otherwise NONE.
 
+- .. lco:: COMPRESSION_LEVEL
+     :choices: <integer>
+     :since: 3.12
+
+     Specify the compression level for the selected compression method. The
+     compression level has a different meaning for each codec. The description
+     of this option, returned at runtime for example by ``ogrinfo --format PARQUET``,
+     gives the range and default value for each codec.
+
 - .. lco:: GEOMETRY_ENCODING
      :choices: WKB, WKT, GEOARROW, GEOARROW_INTERLEAVED
      :default: WKB
