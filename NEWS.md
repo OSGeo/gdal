@@ -12,6 +12,7 @@ GDAL 3.11.1 is a bugfix release.
 * LIBERTIFF: fix build failure with GCC 12 (#12464)
 * cpl_vsi_virtual.h: add missing include (PDAL/PDAL#4742)
 * Fix build with libcxx 19.1.7 on OpenBSD (#12619)
+* Fix build of Python bindings with latest SWIG master (4.4.0dev)
 
 ## GDAL 3.11.1
 
@@ -186,6 +187,12 @@ WMTS driver:
 
 ### Vector drivers
 
+ADBC driver:
+ * do not try to open in update mode
+
+Arrow/Parquet driver:
+ * avoid wrong data type casts that make UBSAN unhappy
+
 GeoPackage driver:
  * GDALGeoPackageDataset::AddFieldDomain(): fix error message
  * avoid undefined behavior when appending to a layer with a (wrong)
@@ -215,6 +222,7 @@ OpenFileGDB driver:
 
 Parquet driver:
  * initialize arrow::compute for Arrow >= 21
+ * better error message with libarrow <= 18 when file cannot be opened
 
 PG/PGDump drivers:
  * fix truncation of identifiers with UTF-8 characters (#12532)
