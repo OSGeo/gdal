@@ -8264,9 +8264,11 @@ static int _TIFFFetchStrileValue(TIFF *tif, uint32_t strile,
         {
             td->td_stripoffsetbyteallocsize = nStripArrayAllocNew;
             /* Initialize new entries to ~0 / -1 */
+            /* coverity[overrun-buffer-arg] */
             memset(td->td_stripoffset_p + nStripArrayAllocBefore, 0xFF,
                    (td->td_stripoffsetbyteallocsize - nStripArrayAllocBefore) *
                        sizeof(uint64_t));
+            /* coverity[overrun-buffer-arg] */
             memset(td->td_stripbytecount_p + nStripArrayAllocBefore, 0xFF,
                    (td->td_stripoffsetbyteallocsize - nStripArrayAllocBefore) *
                        sizeof(uint64_t));

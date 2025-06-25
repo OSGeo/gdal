@@ -358,6 +358,7 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
         /* lines at a time to get a decompressed line, and 5000 */
         /* is some constant value, for example for JPEG tables */
 
+        /* coverity[dead_error_line:SUPPRESS] */
         if (tif->tif_scanlinesize < TIFF_TMSIZE_T_MAX / 16 &&
             tif->tif_scanlinesize * 16 < TIFF_TMSIZE_T_MAX - 5000)
         {
@@ -399,6 +400,7 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
     */
     else if (!whole_strip)
     {
+        /* coverity[dead_error_line:SUPPRESS] */
         if (((tif->tif_rawdata + tif->tif_rawdataloaded) - tif->tif_rawcp) <
                 read_ahead &&
             (uint64_t)tif->tif_rawdataoff + tif->tif_rawdataloaded <

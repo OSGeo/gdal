@@ -537,6 +537,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         {
             _TIFFfreeExt(tif, tif->tif_rawdata);
             tif->tif_rawdata = NULL;
+            tif->tif_rawcp = NULL;
             tif->tif_rawcc = 0;
             tif->tif_rawdatasize = 0;
             tif->tif_rawdataoff = 0;
