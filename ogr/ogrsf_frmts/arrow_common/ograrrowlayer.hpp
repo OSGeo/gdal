@@ -1385,7 +1385,7 @@ template <class ArrowType>
 static CPLJSONArray GetListAsJSON(const ArrowType *array,
                                   const size_t nIdxInArray)
 {
-    const auto values = std::static_pointer_cast<ArrowType>(array->values());
+    const auto values = array->values();
     const auto nIdxStart = array->value_offset(nIdxInArray);
     const auto nCount = array->value_length(nIdxInArray);
     CPLJSONArray oArray;
