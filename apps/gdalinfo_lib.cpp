@@ -923,7 +923,6 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     {
         CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
-        json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
         json_object *poLongLatExtentCoordinates = json_object_new_array();
 
@@ -956,6 +955,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
         if (json_object_array_length(poLongLatExtentCoordinates) > 0)
         {
+            json_object *poLinearRing = json_object_new_array();
             json_object *poLongLatExtent = json_object_new_object();
             json_object *poLongLatExtentType =
                 json_object_new_string("Polygon");
