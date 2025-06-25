@@ -97,11 +97,7 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
-#if defined(SWIGCSHARP)
-typedef int OGRErr;
-#endif
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP) */
 
 %{
 /* use this to not return the int returned by GDAL */
@@ -363,13 +359,13 @@ $1;
 %include "Driver.i"
 
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 /*
  * We need to import ogr.i and osr.i for OGRLayer and OSRSpatialRefrerence
  */
 #define FROM_GDAL_I
 %import ogr.i
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP) */
 
 
 //************************************************************************

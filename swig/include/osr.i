@@ -1130,7 +1130,7 @@ public:
     return OSRExportToMICoordSys( self, argout );
   }
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 %apply (char **dictAndCSLDestroy) { char ** };
 #else
 // We'd also need a dictAndCSLDestroy for other languages!

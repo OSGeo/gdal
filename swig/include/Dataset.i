@@ -580,7 +580,11 @@ public:
 #endif
 
 %apply (int *optional_int) { (GDALDataType *buf_type) };
+#if defined(SWIGCSHARP)
+%apply int PINNED[] {int *pband_list};
+#else
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+#endif
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
@@ -603,7 +607,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                  band_list, pband_list, options);
 }
 %clear (GDALDataType *buf_type);
+#if defined(SWIGCSHARP)
+%clear int *pband_list;
+#else
 %clear (int band_list, int *pband_list );
+#endif
 
 /* NEEDED */
 /* GetSubDatasets */
