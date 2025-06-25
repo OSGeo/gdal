@@ -621,29 +621,57 @@ def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
     assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240
 
 
-def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem):
+@pytest.mark.parametrize("fn", ("avg", "min", "max", "sum"))
+def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn):
 
     with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
         ds.GetRasterBand(1).Fill(10)
         ds.GetRasterBand(2).Fill(100)
 
-    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
-        ds.GetRasterBand(1).Fill(20)
-        ds.GetRasterBand(2).Fill(200)
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 3) as ds:
+        ds.GetRasterBand(1).Fill(2)
+        ds.GetRasterBand(2).Fill(20)
+        ds.GetRasterBand(3).Fill(200)
 
     calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
     calc["output-format"] = "stream"
     calc["output"] = ""
-    calc["calc"] = "sum(A)-sum(B)"
+    calc["calc"] = f"{fn}(A)-{fn}(B)"
     calc["flatten"] = True
     calc.Run()
     ds = calc["output"].GetDataset()
     assert ds.RasterCount == 1
-    expected_val = (10 + 100) - (20 + 200)
+
+    if fn == "sum":
+        expected_val = (10 + 100) - (2 + 20 + 200)
+    elif fn == "avg":
+        expected_val = (10 + 100) / 2 - (2 + 20 + 200) / 3
+    elif fn == "max":
+        expected_val = 100 - 200
+    elif fn == "min":
+        expected_val = 10 - 2
+
     assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
         expected_val,
         expected_val,
     )
+
+
+def test_gdalalg_raster_calc_muparser_flatten_not_an_aggregate(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "sin(X)"
+    calc["flatten"] = True
+
+    assert calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
 
 
 def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem):
