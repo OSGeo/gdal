@@ -122,6 +122,16 @@ The following options are available:
     Do not check the spatial reference systems of the inputs for consistency. All inputs will be assumed to have the
     spatial reference system of the first input, and this spatial reference system will be used for the output.
 
+.. option:: --nodata
+
+    Set the NoData value for the output dataset. May be set to "none" to leave the NoData value undefined. If 
+    :option:`--nodata` is not specified, :program:`gdal raster calc` will use a NoData value from the first
+    source dataset to have one.
+
+.. option:: --propagate-nodata
+
+    If set, a NoData value in any input dataset used an in expression will cause the output value to be NoData.
+
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 

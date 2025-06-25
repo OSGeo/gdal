@@ -2744,6 +2744,10 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
 
 static const char pszExprPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
     "   <Argument name='expression' "
     "             description='Expression to be evaluated' "
     "             type='string'></Argument>"
@@ -2766,7 +2770,6 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                             int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
-
     if (GDALDataTypeIsComplex(eSrcType))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2774,7 +2777,13 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
-    std::unique_ptr<gdal::MathExpression> poExpression;
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    const bool bPropagateNoData = CPLTestBool(
+        CSLFetchNameValueDef(papszArgs, "propagateNoData", "false"));
 
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
     if (!pszExpression)
@@ -2805,7 +2814,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         pszDialect = "muparser";
     }
 
-    poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+    auto poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
 
     // cppcheck-suppress knownConditionTrueFalse
     if (!poExpression)
@@ -2869,6 +2878,11 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         poExpression->RegisterVariable("_CENTER_Y_", &dfCenterY);
     }
 
+    if (bHasNoData)
+    {
+        poExpression->RegisterVariable("NODATA", &dfNoData);
+    }
+
     if (strstr(pszExpression, "BANDS"))
     {
         poExpression->RegisterVector("BANDS", &adfValuesForPixel);
@@ -2885,11 +2899,20 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     {
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
+            double &dfResult = padfResults.get()[iCol];
+            bool resultIsNoData = false;
+
             for (int iSrc = 0; iSrc < nSources; iSrc++)
             {
                 // cppcheck-suppress unreadVariable
-                adfValuesForPixel[iSrc] =
-                    GetSrcVal(papoSources[iSrc], eSrcType, ii);
+                double dfVal = GetSrcVal(papoSources[iSrc], eSrcType, ii);
+
+                if (bHasNoData && bPropagateNoData && IsNoData(dfVal, dfNoData))
+                {
+                    resultIsNoData = true;
+                }
+
+                adfValuesForPixel[iSrc] = dfVal;
             }
 
             if (includeCenterCoords)
@@ -2901,13 +2924,18 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                                       &dfCenterX, &dfCenterY);
             }
 
-            if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+            if (resultIsNoData)
             {
-                return CE_Failure;
+                dfResult = dfNoData;
             }
             else
             {
-                padfResults.get()[iCol] = poExpression->Results()[0];
+                if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+                {
+                    return CE_Failure;
+                }
+
+                dfResult = poExpression->Results()[0];
             }
         }
 

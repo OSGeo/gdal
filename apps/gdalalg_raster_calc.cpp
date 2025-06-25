@@ -187,6 +187,7 @@ struct SourceProperties
     std::array<double, 6> gt{};
     std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
         nullptr};
+    std::vector<std::optional<double>> noData{};
     GDALDataType eDT{GDT_Unknown};
 };
 
@@ -213,6 +214,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         source.nBands = ds->GetRasterCount();
         source.nX = ds->GetRasterXSize();
         source.nY = ds->GetRasterYSize();
+        source.noData.resize(source.nBands);
 
         if (options.checkExtent)
         {
@@ -226,17 +228,27 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         }
 
         // Store the source data type if it is the same for all bands in the source
-        for (int i = 0; i < source.nBands; ++i)
+        bool bandsHaveSameType = true;
+        for (int i = 1; i <= source.nBands; ++i)
         {
-            if (i == 0)
+            GDALRasterBand *band = ds->GetRasterBand(i);
+
+            if (i == 1)
             {
-                source.eDT = ds->GetRasterBand(1)->GetRasterDataType();
+                source.eDT = band->GetRasterDataType();
             }
-            else if (source.eDT !=
-                     ds->GetRasterBand(i + 1)->GetRasterDataType())
+            else if (bandsHaveSameType &&
+                     source.eDT != band->GetRasterDataType())
             {
                 source.eDT = GDT_Unknown;
-                break;
+                bandsHaveSameType = false;
+            }
+
+            int success;
+            double noData = band->GetNoDataValue(&success);
+            if (success)
+            {
+                source.noData[i - 1] = noData;
             }
         }
     }
@@ -335,6 +347,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
  * @param dialect Expression dialect
  * @param flatten Generate a single band output raster per expression, even if
  *                input datasets are multiband.
+ * @param noDataText nodata value to use for the created band, or "none", or ""
  * @param pixelFunctionArguments Pixel function arguments.
  * @param sources Mapping of source names to DSNs
  * @param sourceProps Mapping of source names to properties
@@ -345,6 +358,7 @@ static bool
 CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                      GDALDataType bandType, const std::string &expression,
                      const std::string &dialect, bool flatten,
+                     const std::string &noDataText,
                      const std::vector<std::string> &pixelFunctionArguments,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps,
@@ -364,13 +378,30 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
 
         CPLXMLNode *band = CPLCreateXMLNode(root, CXT_Element, "VRTRasterBand");
         CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        const char *pszDataType = nullptr;
-        if (bandType != GDT_Unknown)
+        if (bandType == GDT_Unknown)
         {
-            pszDataType = GDALGetDataTypeName(bandType);
+            bandType = GDT_Float64;
         }
         CPLAddXMLAttributeAndValue(band, "dataType",
-                                   pszDataType ? pszDataType : "Float64");
+                                   GDALGetDataTypeName(bandType));
+
+        std::optional<double> dstNoData;
+        bool autoSelectNoDataValue = false;
+        if (noDataText.empty())
+        {
+            autoSelectNoDataValue = true;
+        }
+        else if (noDataText != "none")
+        {
+            char *end;
+            dstNoData = CPLStrtod(noDataText.c_str(), &end);
+            if (end != noDataText.c_str() + noDataText.size())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid NoData value: %s", noDataText.c_str());
+                return false;
+            }
+        }
 
         for (const auto &[source_name, dsn] : sources)
         {
@@ -416,7 +447,7 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 }
             }
 
-            // Create a <SimpleSource> for each input band that is used in
+            // Create a source for each input band that is used in
             // the expression.
             for (int nInBand = 1; nInBand <= props.nBands; nInBand++)
             {
@@ -437,8 +468,12 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                     }
                 }
 
-                CPLXMLNode *source =
-                    CPLCreateXMLNode(band, CXT_Element, "SimpleSource");
+                const std::optional<double> &srcNoData =
+                    props.noData[nInBand - 1];
+
+                CPLXMLNode *source = CPLCreateXMLNode(
+                    band, CXT_Element,
+                    srcNoData.has_value() ? "ComplexSource" : "SimpleSource");
                 if (!inBandVariable.empty())
                 {
                     CPLAddXMLAttributeAndValue(source, "name",
@@ -464,6 +499,21 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                 CPLCreateXMLNode(sourceBand, CXT_Text,
                                  std::to_string(nInBand).c_str());
 
+                if (srcNoData.has_value())
+                {
+                    CPLXMLNode *srcNoDataNode =
+                        CPLCreateXMLNode(source, CXT_Element, "NODATA");
+                    std::string srcNoDataText =
+                        CPLSPrintf("%.17g", srcNoData.value());
+                    CPLCreateXMLNode(srcNoDataNode, CXT_Text,
+                                     srcNoDataText.c_str());
+
+                    if (autoSelectNoDataValue && !dstNoData.has_value())
+                    {
+                        dstNoData = srcNoData;
+                    }
+                }
+
                 if (fakeSourceFilename.empty())
                 {
                     CPLXMLNode *srcRect =
@@ -485,35 +535,52 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                                                std::to_string(nYOut).c_str());
                 }
             }
+
+            if (dstNoData.has_value())
+            {
+                if (!GDALIsValueExactAs(dstNoData.value(), bandType))
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Band output type %s cannot represent NoData value %g",
+                        GDALGetDataTypeName(bandType), dstNoData.value());
+                    return false;
+                }
+
+                CPLXMLNode *noDataNode =
+                    CPLCreateXMLNode(band, CXT_Element, "NoDataValue");
+                CPLString dstNoDataText =
+                    CPLSPrintf("%.17g", dstNoData.value());
+                CPLCreateXMLNode(noDataNode, CXT_Text, dstNoDataText.c_str());
+            }
         }
 
         CPLXMLNode *pixelFunctionType =
             CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
+        CPLXMLNode *arguments =
+            CPLCreateXMLNode(band, CXT_Element, "PixelFunctionArguments");
+
         if (dialect == "builtin")
         {
             CPLCreateXMLNode(pixelFunctionType, CXT_Text, expression.c_str());
-            if (!pixelFunctionArguments.empty())
-            {
-                CPLXMLNode *arguments = CPLCreateXMLNode(
-                    band, CXT_Element, "PixelFunctionArguments");
-                const CPLStringList args(pixelFunctionArguments);
-                for (const auto &[key, value] : cpl::IterateNameValue(args))
-                {
-                    CPLAddXMLAttributeAndValue(arguments, key, value);
-                }
-            }
         }
         else
         {
             CPLCreateXMLNode(pixelFunctionType, CXT_Text, "expression");
-            CPLXMLNode *arguments =
-                CPLCreateXMLNode(band, CXT_Element, "PixelFunctionArguments");
-
+            CPLAddXMLAttributeAndValue(arguments, "dialect", "muparser");
             // Add the expression as a last step, because we may modify the
             // expression as we iterate through the bands.
             CPLAddXMLAttributeAndValue(arguments, "expression",
                                        bandExpression.c_str());
-            CPLAddXMLAttributeAndValue(arguments, "dialect", "muparser");
+        }
+
+        if (!pixelFunctionArguments.empty())
+        {
+            const CPLStringList args(pixelFunctionArguments);
+            for (const auto &[key, value] : cpl::IterateNameValue(args))
+            {
+                CPLAddXMLAttributeAndValue(arguments, key, value);
+            }
         }
     }
 
@@ -647,6 +714,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
  * @param dialect Expression dialect
  * @param flatten Generate a single band output raster per expression, even if
  *                input datasets are multiband.
+ * @param noData NoData values to use for output bands, or "none", or ""
  * @param pixelFunctionArguments Pixel function arguments.
  * @param options flags controlling which checks should be performed on the inputs
  * @param[out] maxSourceBands Maximum number of bands in source dataset(s)
@@ -657,7 +725,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
 static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
     const std::vector<std::string> &inputs,
     const std::vector<std::string> &expressions, const std::string &dialect,
-    bool flatten,
+    bool flatten, const std::string &noData,
     const std::vector<std::vector<std::string>> &pixelFunctionArguments,
     const GDALCalcOptions &options, int &maxSourceBands,
     const std::string &fakeSourceFilename = std::string())
@@ -751,7 +819,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
         }
 
         if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, bandType,
-                                  origExpression, dialect, flatten,
+                                  origExpression, dialect, flatten, noData,
                                   pixelFunctionArguments[iExpr], sources,
                                   sourceProps, fakeSourceFilename))
         {
@@ -802,9 +870,14 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
 
     AddArg("no-check-srs", 0,
            _("Do not check consistency of input spatial reference systems"),
-           &m_NoCheckSRS);
+           &m_noCheckSRS);
     AddArg("no-check-extent", 0, _("Do not check consistency of input extents"),
-           &m_NoCheckExtent);
+           &m_noCheckExtent);
+
+    AddArg("propagate-nodata", 0,
+           _("Whether to set pixels to the output NoData value if any of the "
+             "input pixels is NoData"),
+           &m_propagateNoData);
 
     AddArg("calc", 0, _("Expression(s) to evaluate"), &m_expr)
         .SetRequired()
@@ -830,6 +903,8 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
            _("Generate a single band output raster per expression, even if "
              "input datasets are multiband"),
            &m_flatten);
+
+    AddNodataArg(&m_nodata, true);
 
     // This is a hidden option only used by test_gdalalg_raster_calc_expression_rewriting()
     // for now
@@ -869,8 +944,8 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     GDALCalcOptions options;
-    options.checkExtent = !m_NoCheckExtent;
-    options.checkSRS = !m_NoCheckSRS;
+    options.checkExtent = !m_noCheckExtent;
+    options.checkSRS = !m_noCheckSRS;
     if (!m_type.empty())
     {
         options.dstType = GDALGetDataTypeByName(m_type.c_str());
@@ -965,10 +1040,25 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         pixelFunctionArgs.resize(m_expr.size());
     }
 
+    if (m_propagateNoData)
+    {
+        if (m_nodata == "none")
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Output NoData value must be specified to use "
+                        "--propagate-nodata");
+            return false;
+        }
+        for (auto &args : pixelFunctionArgs)
+        {
+            args.push_back("propagateNoData=1");
+        }
+    }
+
     int maxSourceBands = 0;
-    auto vrt =
-        GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_dialect, m_flatten,
-                                 pixelFunctionArgs, options, maxSourceBands);
+    auto vrt = GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_dialect,
+                                        m_flatten, m_nodata, pixelFunctionArgs,
+                                        options, maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -1006,7 +1096,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (!osTmpFilename.empty())
             {
                 auto fakeVRT = GDALCalcCreateVRTDerived(
-                    inputFilenames, m_expr, m_dialect, m_flatten,
+                    inputFilenames, m_expr, m_dialect, m_flatten, m_nodata,
                     pixelFunctionArgs, options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,

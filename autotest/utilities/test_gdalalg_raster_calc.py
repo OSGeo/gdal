@@ -52,7 +52,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     assert calc.Run()
 
     with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
-        srcval = src.ReadAsArray().astype("float64")
+        srcval = src.ReadAsMaskedArray().astype("float64")
         expected = np.apply_along_axis(lambda x: 2 + x / (1 + x.sum()), 0, srcval)
 
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
@@ -82,6 +82,109 @@ def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
         assert src.GetGeoTransform() == dst.GetGeoTransform()
         assert src.GetSpatialRef().IsSame(dst.GetSpatialRef())
+
+
+@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+@pytest.mark.parametrize("propagateNoData", (True, False))
+def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    if dialect == "muparser" and gdaltest.is_travis_branch("ubuntu_2004"):
+        pytest.skip("muparser version does not support isnodata function")
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_1, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.WriteArray(np.array([[1, 2], [-9, 4]]))
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_2, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.WriteArray(np.array([[1, -999], [3, 4]]))
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["calc"] = (
+        "(isnodata(A) ? 0 : A) + (isnodata(B) ? 0 : B)"
+        if dialect == "muparser"
+        else "sum"
+    )
+    calc["dialect"] = dialect
+    calc["nodata"] = 255
+    calc["output-format"] = "stream"
+
+    if propagateNoData:
+        calc["propagate-nodata"] = True
+
+    assert calc.Run()
+    assert calc["output"].GetDataset().RasterCount == 1
+
+    result = calc["output"].GetDataset().ReadAsArray()
+
+    if propagateNoData:
+        np.testing.assert_array_equal(result, [[2, 255], [255, 8]])
+    elif dialect == "builtin":
+        np.testing.assert_array_equal(result, [[2, 2], [3, 8]])
+
+
+@pytest.mark.parametrize("output_type", (gdal.GDT_Int16, gdal.GDT_Float32))
+def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Float32
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.GetRasterBand(1).Fill(-999)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["calc"] = "X + nan"
+    calc["output-format"] = "stream"
+    calc["output-data-type"] = output_type
+
+    assert calc.Run()
+
+    result = calc["output"].GetDataset().ReadAsMaskedArray()
+
+    if output_type == gdal.GDT_Int16:
+        # NaN output value cannot be represented as an integer, so it
+        # becomes zero (for now)
+        np.testing.assert_array_equal(result, np.ma.masked_array([[0]], False))
+    else:
+        assert np.isnan(result)
+
+
+def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
+    if gdaltest.is_travis_branch("ubuntu_2004"):
+        pytest.skip("muparser version does not support isnodata function")
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Float32
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.GetRasterBand(1).Fill(-999)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["calc"] = "isnodata(X) ? NODATA : 5"
+    calc["output-format"] = "stream"
+    calc["nodata"] = -802
+
+    assert calc.Run()
+
+    result = calc["output"].GetDataset().ReadAsMaskedArray()
+
+    assert np.all(result.mask)
 
 
 def test_gdalalg_raster_calc_creation_options(calc, tmp_vsimem):
@@ -141,6 +244,45 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
     assert np.all(dst_ds.ReadAsArray() == 100)
 
     assert calc.Finalize()
+
+
+def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.GetRasterBand(1).Fill(-9)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["output-data-type"] = "Byte"
+    calc["nodata"] = -9
+
+    with pytest.raises(Exception, match="Byte cannot represent NoData value -9"):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(255)
+        ds.GetRasterBand(1).Fill(255)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["propagate-nodata"] = True
+
+    assert calc.Run()
+
+    ds = calc["output"].GetDataset()
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+
+    with pytest.raises(Exception, match="no valid pixels"):
+        ds.GetRasterBand(1).ComputeRasterMinMax(False)
 
 
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):

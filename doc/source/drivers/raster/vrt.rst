@@ -1217,11 +1217,24 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - ``expression``
 
        ``dialect`` (optional)
+
+       ``propagateNoData`` (GDAL >= 3.12, optional, default=false)
+
      - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
        or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
 
        The expression is specified using the "expression" argument.
        The dialect may be specified using the "dialect" argument.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be passed to the expression
+
+       as-is. The expression can then use the ``NODATA`` variable (or ``isnodata`` 
+
+       muparser function) to test for these pixels and handle them accordingly.
 
        Within the expression, band values can be accessed:
 
@@ -1235,7 +1248,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
          With muparser, it is expanded into a list of all input bands.
 
        Starting with GDAL 3.12, the variables ``_CENTER_X_`` and ``_CENTER_Y_`` can be
-       included in the expression to access cell center coordinates.
+
+       included in the expression to access cell center coordinates. The variable ``NODATA``
+
+       can be included in the expression if the derived band has a NoData value.
 
        ExprTk and muparser support a number of built-in functions and control structures.
 
