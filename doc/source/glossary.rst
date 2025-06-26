@@ -271,11 +271,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     VRT
 
-        Virtual Raster Tile: A lightweight XML-based GDAL format that references multiple rasters to create a
+        Virtual Raster Tile: A lightweight XML-based GDAL format that references multiple rasters or vectors to create a
         virtual mosaic without duplicating data.
 
         .. seealso::
-            :ref:`raster.vrt`.
+            :ref:`raster.vrt` and :ref:`vector.vrt`
 
     VSI
 
