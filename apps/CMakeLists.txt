@@ -42,6 +42,7 @@ target_sources(appslib PRIVATE
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
+  gdalalg_raster_as_features.cpp
   gdalalg_raster_aspect.cpp
   gdalalg_raster_calc.cpp
   gdalalg_raster_clean_collar.cpp
@@ -51,8 +52,8 @@ target_sources(appslib PRIVATE
   gdalalg_raster_compare.cpp
   gdalalg_raster_convert.cpp
   gdalalg_raster_create.cpp
-  gdalalg_raster_edit.cpp
   gdalalg_raster_contour.cpp
+  gdalalg_raster_edit.cpp
   gdalalg_raster_footprint.cpp
   gdalalg_raster_fill_nodata.cpp
   gdalalg_raster_hillshade.cpp

@@ -498,6 +498,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_as_features",
+        "gdal-raster-as-features",
+        "Create features representing the pixels of a raster",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_calc",
         "gdal-raster-calc",
         "Perform pixel-wise calculations on a raster",

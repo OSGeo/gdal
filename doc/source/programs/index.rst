@@ -77,6 +77,7 @@ Raster commands
 
    gdal_raster
    gdal_raster_info
+   gdal_raster_as_features
    gdal_raster_aspect
    gdal_raster_calc
    gdal_raster_clean_collar
@@ -127,6 +128,7 @@ Raster commands
 
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
+    - :reF:`gdal_raster_as_features`: Create features representing raster pixels
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
     - :ref:`gdal_raster_calc`: Perform raster algebra
     - :ref:`gdal_raster_clean_collar`: Clean the collar of a raster dataset, removing noise
