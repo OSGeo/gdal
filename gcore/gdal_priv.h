@@ -67,6 +67,7 @@ class GDALAlgorithm;
 #include <span>
 #endif
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "ogr_core.h"
@@ -290,6 +291,15 @@ class CPL_DLL GDALDefaultOverviews
                               GDALProgressFunc pfnProgress, void *pProgressData,
                               CSLConstList papszOptions);
 
+    static bool CheckSrcOverviewsConsistencyWithBase(
+        GDALDataset *poFullResDS,
+        const std::vector<GDALDataset *> &apoSrcOvrDS);
+
+    CPLErr AddOverviews(const char *pszBasename,
+                        const std::vector<GDALDataset *> &apoSrcOvrDS,
+                        GDALProgressFunc pfnProgress, void *pProgressData,
+                        CSLConstList papszOptions);
+
     CPLErr CleanOverviews();
 
     // Mask Related
@@ -308,6 +318,9 @@ class CPL_DLL GDALDefaultOverviews
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALDefaultOverviews)
+
+    CPLErr CreateOrOpenOverviewFile(const char *pszBasename,
+                                    CSLConstList papszOptions);
 };
 
 //! @endcond
@@ -1086,6 +1099,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                           const int *panBandList, GDALProgressFunc pfnProgress,
                           void *pProgressData, CSLConstList papszOptions);
 #endif
+
+    virtual CPLErr AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDS,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressData, CSLConstList papszOptions);
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
@@ -5191,6 +5208,15 @@ CPLErr CPL_DLL GTIFFBuildOverviews(const char *pszFilename, int nBands,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData,
                                    CSLConstList papszOptions);
+
+CPLErr CPL_DLL GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
+                                     GDALRasterBand *const *papoBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     const std::pair<int, int> *pasOverviewSize,
+                                     const char *pszResampling,
+                                     const char *const *papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData);
 
 int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand *poBand, int &nXOff,
                                          int &nYOff, int &nXSize, int &nYSize,

@@ -14,7 +14,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_overview_alg():
@@ -183,3 +183,213 @@ def test_gdalalg_overview_cog(tmp_vsimem):
 
     with gdal.Open(filename) as ds:
         assert ds.GetRasterBand(1).GetOverviewCount() > 0
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("external", [True, False])
+@pytest.mark.parametrize("with_progress", [True, False])
+def test_gdalalg_overview_add_from_dataset(tmp_vsimem, external, with_progress):
+
+    out_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "out.tif", 10, 10)
+    out_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    out_ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+    out_ds = None
+
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in.tif", 2, 5)
+    ds.SetGeoTransform([2, 5, 0, 49, 0, -2])
+    ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    if with_progress:
+        progress = my_progress
+    else:
+        progress = None
+
+    gdal.Run(
+        "raster",
+        "overview",
+        "add",
+        external=external,
+        overview_src=tmp_vsimem / "in.tif",
+        dataset=tmp_vsimem / "out.tif",
+        progress=progress,
+    )
+
+    if with_progress:
+        assert last_pct[0] == 1.0
+
+    assert (gdal.VSIStatL(tmp_vsimem / "out.tif.ovr") is not None) == external
+
+    ds = gdal.Open(tmp_vsimem / "out.tif", gdal.GA_Update)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    ovr = ds.GetRasterBand(1).GetOverview(0)
+    assert ovr.XSize == 2
+    assert ovr.YSize == 5
+    assert ovr.ComputeRasterMinMax(False) == (1, 1)
+    ovr.Fill(0)
+    ds = None
+
+    last_pct = [0]
+
+    gdal.Run(
+        "raster",
+        "overview",
+        "add",
+        external=external,
+        overview_src=tmp_vsimem / "in.tif",
+        dataset=tmp_vsimem / "out.tif",
+        progress=progress,
+    )
+
+    if with_progress:
+        assert last_pct[0] == 1.0
+
+    assert (gdal.VSIStatL(tmp_vsimem / "out.tif.ovr") is not None) == external
+
+    ds = gdal.Open(tmp_vsimem / "out.tif")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    ovr = ds.GetRasterBand(1).GetOverview(0)
+    assert ovr.XSize == 2
+    assert ovr.YSize == 5
+    assert ovr.ComputeRasterMinMax(False) == (1, 1)
+    ds = None
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_not_supported_by_this_format():
+
+    out_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 6, 5)
+
+    with pytest.raises(
+        Exception, match=r"AddOverviews\(\) not supported for this dataset"
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_bad_dimension(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 10, 10)
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 11, 5)
+
+    with pytest.raises(
+        Exception,
+        match=r"AddOverviews\(\): at least one input dataset has dimensions larger than the full resolution dataset",
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_zero_dimension(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 10, 10)
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 0, 0)
+
+    with pytest.raises(
+        Exception,
+        match=r"AddOverviews\(\): at least one input dataset has one of its dimensions equal to 0",
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_bad_band_count(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 10, 10)
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 5, 5, 2)
+
+    with pytest.raises(
+        Exception,
+        match=r"AddOverviews\(\): at least one input dataset not the same number of bands than the full resolution dataset",
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_bad_crs(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 10, 10)
+    out_ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 5, 5)
+    ovr_ds.SetSpatialRef(osr.SpatialReference(epsg=32631))
+
+    with pytest.raises(
+        Exception,
+        match=r"AddOverviews\(\): at least one input dataset has its CRS different from the one of the full resolution dataset",
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )
+
+
+###############################################################################
+
+
+def test_gdalalg_overview_add_from_dataset_bad_gt(tmp_vsimem):
+
+    out_ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 10, 10)
+    out_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    ovr_ds = gdal.GetDriverByName("MEM").Create("", 5, 5)
+    ovr_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    with pytest.raises(
+        Exception,
+        match=r"AddOverviews\(\): at least one input dataset has its geospatial extent different from the one of the full resolution dataset",
+    ):
+        gdal.Run(
+            "raster",
+            "overview",
+            "add",
+            overview_src=ovr_ds,
+            dataset=out_ds,
+        )

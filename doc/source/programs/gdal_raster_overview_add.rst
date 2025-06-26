@@ -31,6 +31,20 @@ most supported file formats with one of several downsampling algorithms.
 
     Create external ``.ovr`` overviews as GeoTIFF files.
 
+.. option::  --overview-src <INPUT>
+
+    .. versionadded:: 3.12
+
+    Add specified input raster datasets as overviews of the target dataset.
+    Source overviews may come from any GDAL supported format, provided they
+    have the same number of bands and geospatial extent than the target
+    dataset.
+
+    That mode is currently only implemented when the target dataset is in
+    GeoTIFF format, or when using :option:`--external`.
+
+    Mutually exclusive with :option:`--levels`
+
 .. option:: --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not
@@ -78,6 +92,8 @@ most supported file formats with one of several downsampling algorithms.
     - Otherwise, appropriate overview power-of-two factors will be selected
       until the smallest overview is smaller than the value of the
       :option:`--min-size` switch.
+
+    Mutually exclusive with :option:`--overview-src`
 
 .. option:: --min-size <val>
 
@@ -128,3 +144,10 @@ Examples
    .. code-block:: bash
 
        gdal raster overview add GPKG:file.gpkg:layer
+
+.. example::
+   :title: Add 3 existing datasets at scale 1:25K, 1:50K and 1:100K as overviews of :file:`my.tif`.
+
+   .. code-block:: bash
+
+       gdal raster overview add --overview-src ovr_25k.tif --overview-src ovr_50k.tif --overview-src ovr_100k.tif --dataset my.tif

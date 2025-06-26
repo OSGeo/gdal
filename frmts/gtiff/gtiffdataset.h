@@ -498,6 +498,11 @@ class GTiffDataset final : public GDALPamDataset
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
+    virtual CPLErr AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDS,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressData,
+                                CSLConstList papszOptions) override;
+
     bool ComputeBlocksPerColRowAndBand(int l_nBands);
 
     CPLErr OpenOffset(TIFF *, toff_t nDirOffset, GDALAccess,
