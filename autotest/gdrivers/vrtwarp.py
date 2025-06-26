@@ -80,10 +80,12 @@ def test_vrtwarp_2(tmp_path):
 # Test implicit overviews with default source overview level strategy (AUTO)
 
 
-def test_vrtwarp_4():
+def test_vrtwarp_4(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vrtwarp_4.tif", src_ds)
+    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "vrtwarp_4.tif", src_ds
+    )
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
     tmp_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     tmp_ds.GetRasterBand(1).GetOverview(0).Fill(127)
@@ -108,15 +110,15 @@ def test_vrtwarp_4():
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
         if i == 0:
-            vrtwarp_ds.SetDescription("tmp/vrtwarp_4.vrt")
+            vrtwarp_ds.SetDescription(f"{tmp_vsimem}/vrtwarp_4.vrt")
             vrtwarp_ds = None
-            vrtwarp_ds = gdal.Open("tmp/vrtwarp_4.vrt")
+            vrtwarp_ds = gdal.Open(tmp_vsimem / "vrtwarp_4.vrt")
         elif i == 1:
             vrtwarp_ds = None
-            tmp_ds = gdal.Open("tmp/vrtwarp_4.tif")
+            tmp_ds = gdal.Open(tmp_vsimem / "vrtwarp_4.tif")
             vrtwarp_ds = gdal.AutoCreateWarpedVRT(tmp_ds)
             vrtwarp_ds.SetMetadataItem("SrcOvrLevel", "AUTO")
-            vrtwarp_ds.SetDescription("tmp/vrtwarp_4.vrt")
+            vrtwarp_ds.SetDescription(f"{tmp_vsimem}/vrtwarp_4.vrt")
             tmp_ds = None
 
     # Add an explicit overview
@@ -128,7 +130,7 @@ def test_vrtwarp_4():
     expected_cs_ov2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    vrtwarp_ds = gdal.Open("tmp/vrtwarp_4.vrt")
+    vrtwarp_ds = gdal.Open(tmp_vsimem / "vrtwarp_4.vrt")
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 3
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
@@ -143,18 +145,17 @@ def test_vrtwarp_4():
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(2).Checksum() == expected_cs_ov2
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_4.vrt")
-    gdal.Unlink("tmp/vrtwarp_4.tif")
-
 
 ###############################################################################
 # Test implicit overviews with selection of the upper source overview level
 
 
-def test_vrtwarp_5():
+def test_vrtwarp_5(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vrtwarp_5.tif", src_ds)
+    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "vrtwarp_5.tif", src_ds
+    )
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
     tmp_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     tmp_ds.GetRasterBand(1).GetOverview(0).Fill(127)
@@ -164,7 +165,9 @@ def test_vrtwarp_5():
     tmp_ds = None
 
     ds = gdal.Warp(
-        "", "tmp/vrtwarp_5.tif", options="-of MEM -ovr NONE -overwrite -ts 10 10"
+        "",
+        tmp_vsimem / "vrtwarp_5.tif",
+        options="-of MEM -ovr NONE -overwrite -ts 10 10",
     )
     expected_cs_ov0 = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -174,7 +177,7 @@ def test_vrtwarp_5():
     expected_cs_ov1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    tmp_ds = gdal.Open("tmp/vrtwarp_5.tif")
+    tmp_ds = gdal.Open(tmp_vsimem / "vrtwarp_5.tif")
     vrtwarp_ds = gdal.AutoCreateWarpedVRT(tmp_ds)
     vrtwarp_ds.SetMetadataItem("SrcOvrLevel", "AUTO-1")
     tmp_ds = None
@@ -184,17 +187,17 @@ def test_vrtwarp_5():
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == expected_cs_ov1
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_5.tif")
-
 
 ###############################################################################
 # Test implicit overviews with GCP
 
 
-def test_vrtwarp_6():
+def test_vrtwarp_6(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vrtwarp_6.tif", src_ds)
+    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "vrtwarp_6.tif", src_ds
+    )
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
     tmp_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])  # cancel geotransform
     gcp1 = gdal.GCP()
@@ -219,11 +222,11 @@ def test_vrtwarp_6():
     cs_ov1 = tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
 
     vrtwarp_ds = gdal.AutoCreateWarpedVRT(tmp_ds)
-    vrtwarp_ds.SetDescription("tmp/vrtwarp_6.vrt")
+    vrtwarp_ds.SetDescription(f"{tmp_vsimem}/vrtwarp_6.vrt")
     vrtwarp_ds = None
     tmp_ds = None
 
-    vrtwarp_ds = gdal.Open("tmp/vrtwarp_6.vrt")
+    vrtwarp_ds = gdal.Open(tmp_vsimem / "vrtwarp_6.vrt")
 
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 2
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
@@ -231,18 +234,17 @@ def test_vrtwarp_6():
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_6.vrt")
-    gdal.Unlink("tmp/vrtwarp_6.tif")
-
 
 ###############################################################################
 # Test implicit overviews with GCP (TPS)
 
 
-def test_vrtwarp_7():
+def test_vrtwarp_7(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vrtwarp_7.tif", src_ds)
+    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "vrtwarp_7.tif", src_ds
+    )
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
     tmp_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])  # cancel geotransform
     gcp1 = gdal.GCP()
@@ -268,7 +270,9 @@ def test_vrtwarp_7():
     tmp_ds = None
 
     vrtwarp_ds = gdal.Warp(
-        "tmp/vrtwarp_7.vrt", "tmp/vrtwarp_7.tif", options="-overwrite -of VRT -tps"
+        tmp_vsimem / "vrtwarp_7.vrt",
+        tmp_vsimem / "vrtwarp_7.tif",
+        options="-overwrite -of VRT -tps",
     )
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 2
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
@@ -276,28 +280,27 @@ def test_vrtwarp_7():
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_7.vrt")
-    gdal.Unlink("tmp/vrtwarp_7.tif")
-
 
 ###############################################################################
 # Test implicit overviews with RPC
 
 
-def test_vrtwarp_8():
+def test_vrtwarp_8(tmp_vsimem):
 
-    shutil.copy("../gcore/data/byte.tif", "tmp/vrtwarp_8.tif")
-    shutil.copy("../gcore/data/test_rpc.txt", "tmp/vrtwarp_8_rpc.txt")
-    ds = gdal.Open("tmp/vrtwarp_8.tif", gdal.GA_Update)
+    gdal.CopyFile("../gcore/data/byte.tif", tmp_vsimem / "vrtwarp_8.tif")
+    gdal.CopyFile("../gcore/data/test_rpc.txt", tmp_vsimem / "vrtwarp_8_rpc.txt")
+    ds = gdal.Open(tmp_vsimem / "vrtwarp_8.tif", gdal.GA_Update)
     ds.BuildOverviews("NEAR", overviewlist=[2])
     ds = None
 
-    ds = gdal.Warp("", "tmp/vrtwarp_8.tif", options="-of MEM -rpc")
+    ds = gdal.Warp("", tmp_vsimem / "vrtwarp_8.tif", options="-of MEM -rpc")
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
 
     vrtwarp_ds = gdal.Warp(
-        "tmp/vrtwarp_8.vrt", "tmp/vrtwarp_8.tif", options="-overwrite -of VRT -rpc"
+        tmp_vsimem / "vrtwarp_8.vrt",
+        tmp_vsimem / "vrtwarp_8.tif",
+        options="-overwrite -of VRT -rpc",
     )
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
@@ -306,29 +309,25 @@ def test_vrtwarp_8():
         pytest.fail(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_8.vrt")
-    gdal.Unlink("tmp/vrtwarp_8.tif")
-    gdal.Unlink("tmp/vrtwarp_8_rpc.txt")
-
 
 ###############################################################################
 # Test implicit overviews with GEOLOCATION
 
 
-def test_vrtwarp_9():
+def test_vrtwarp_9(tmp_vsimem):
 
-    shutil.copy("../gcore/data/sstgeo.tif", "tmp/sstgeo.tif")
+    gdal.CopyFile("../gcore/data/sstgeo.tif", tmp_vsimem / "sstgeo.tif")
 
-    f = open("tmp/sstgeo.vrt", "wb")
+    f = gdal.VSIFile(tmp_vsimem / "sstgeo.vrt", "wb")
     f.write(
-        """<VRTDataset rasterXSize="60" rasterYSize="39">
+        f"""<VRTDataset rasterXSize="60" rasterYSize="39">
   <Metadata domain="GEOLOCATION">
     <MDI key="SRS">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]</MDI>
-    <MDI key="X_DATASET">tmp/sstgeo.tif</MDI>
+    <MDI key="X_DATASET">{tmp_vsimem}/sstgeo.tif</MDI>
     <MDI key="X_BAND">1</MDI>
     <MDI key="PIXEL_OFFSET">0</MDI>
     <MDI key="PIXEL_STEP">1</MDI>
-    <MDI key="Y_DATASET">tmp/sstgeo.tif</MDI>
+    <MDI key="Y_DATASET">{tmp_vsimem}/sstgeo.tif</MDI>
     <MDI key="Y_BAND">2</MDI>
     <MDI key="LINE_OFFSET">0</MDI>
     <MDI key="LINE_STEP">1</MDI>
@@ -349,16 +348,18 @@ def test_vrtwarp_9():
         )
     )
     f.close()
-    ds = gdal.Open("tmp/sstgeo.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_vsimem / "sstgeo.vrt", gdal.GA_Update)
     ds.BuildOverviews("NEAR", overviewlist=[2])
     ds = None
 
-    ds = gdal.Warp("", "tmp/sstgeo.vrt", options="-of MEM -geoloc")
+    ds = gdal.Warp("", tmp_vsimem / "sstgeo.vrt", options="-of MEM -geoloc")
     expected_cs_main = ds.GetRasterBand(1).Checksum()
     ds = None
 
     vrtwarp_ds = gdal.Warp(
-        "tmp/vrtwarp_9.vrt", "tmp/sstgeo.vrt", options="-overwrite -of VRT -geoloc"
+        tmp_vsimem / "vrtwarp_9.vrt",
+        tmp_vsimem / "sstgeo.vrt",
+        options="-overwrite -of VRT -geoloc",
     )
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
@@ -368,20 +369,17 @@ def test_vrtwarp_9():
     )
     vrtwarp_ds = None
 
-    gdal.Unlink("tmp/vrtwarp_9.vrt")
-    gdal.Unlink("tmp/sstgeo.vrt")
-    gdal.Unlink("tmp/sstgeo.vrt.ovr")
-    gdal.Unlink("tmp/sstgeo.tif")
-
 
 ###############################################################################
 # Test implicit overviews with selection of the full resolution level
 
 
-def test_vrtwarp_10():
+def test_vrtwarp_10(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vrtwarp_10.tif", src_ds)
+    tmp_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "vrtwarp_10.tif", src_ds
+    )
     cs_main = tmp_ds.GetRasterBand(1).Checksum()
     tmp_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     tmp_ds.GetRasterBand(1).GetOverview(0).Fill(127)
@@ -390,15 +388,19 @@ def test_vrtwarp_10():
     tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
     tmp_ds = None
 
-    ds = gdal.Warp("", "tmp/vrtwarp_10.tif", options="-of MEM -ovr NONE -ts 10 10")
+    ds = gdal.Warp(
+        "", tmp_vsimem / "vrtwarp_10.tif", options="-of MEM -ovr NONE -ts 10 10"
+    )
     expected_cs_ov0 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    ds = gdal.Warp("", "tmp/vrtwarp_10.tif", options="-of MEM -ovr NONE -ts 5 5")
+    ds = gdal.Warp(
+        "", tmp_vsimem / "vrtwarp_10.tif", options="-of MEM -ovr NONE -ts 5 5"
+    )
     expected_cs_ov1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    tmp_ds = gdal.Open("tmp/vrtwarp_10.tif")
+    tmp_ds = gdal.Open(tmp_vsimem / "vrtwarp_10.tif")
     vrtwarp_ds = gdal.AutoCreateWarpedVRT(tmp_ds)
     vrtwarp_ds.SetMetadataItem("SrcOvrLevel", "NONE")
     tmp_ds = None
@@ -407,8 +409,6 @@ def test_vrtwarp_10():
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == expected_cs_ov0
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == expected_cs_ov1
     vrtwarp_ds = None
-
-    gdal.Unlink("tmp/vrtwarp_10.tif")
 
 
 ###############################################################################
@@ -532,23 +532,19 @@ def test_vrtwarp_alpha_band_and_block_without_source_pixel():
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_all_relatives():
+def test_vrtwarp_sourcedataset_all_relatives(tmp_vsimem):
 
-    shutil.copy("data/byte.tif", "tmp")
+    gdal.CopyFile("data/byte.tif", tmp_vsimem / "byte.tif")
 
-    try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
-        ds = gdal.AutoCreateWarpedVRT(src_ds)
-        ds.SetDescription(os.path.join("tmp", "byte.vrt"))
-        src_ds = None
-        ds = None
-        assert (
-            '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    src_ds = gdal.Open(tmp_vsimem / "byte.tif")
+    ds = gdal.AutoCreateWarpedVRT(src_ds)
+    ds.SetDescription(f"{tmp_vsimem}/byte.vrt")
+    src_ds = None
+    ds = None
+    assert (
+        '<SourceDataset relativeToVRT="1">byte.tif<'
+        in gdal.VSIFile(tmp_vsimem / "byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################
