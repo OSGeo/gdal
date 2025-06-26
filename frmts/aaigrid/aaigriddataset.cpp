@@ -487,7 +487,16 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         return FALSE;
     }
     nRasterYSize = atoi(papszTokens[i + 1]);
-
+    const GIntBig nTotalPixels =
+        static_cast<GIntBig>(nRasterXSize) * nRasterYSize;
+    if( nTotalPixels <= 0 || nTotalPixels > 100000000LL )    // 100 M
+    {
+        CSLDestroy(papszTokens);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "AAIGrid: dataset dimensions too large (%d x %d)",
+                  nRasterXSize, nRasterYSize );
+        return FALSE;
+    }
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
         CSLDestroy(papszTokens);
@@ -685,7 +694,16 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         CSLDestroy(papszTokens);
         return FALSE;
     }
+    const GIntBig nCells =
+        static_cast<GIntBig>(nRasterXSize) * nRasterYSize;
+    const GIntBig nMaxCells =
+        GDALGetCacheMax64() / 8;   // asumiendo 8 bytes por celda (float64)
 
+    if( nCells > nMaxCells )
+    {
+        CSLDestroy(papszTokens);
+        return FALSE;
+    }
     const int iNorth = CSLFindString(papszTokens, "north");
     const int iSouth = CSLFindString(papszTokens, "south");
     const int iEast = CSLFindString(papszTokens, "east");
