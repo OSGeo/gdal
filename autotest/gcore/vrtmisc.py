@@ -201,10 +201,10 @@ def test_vrtmisc_9():
 # Test metadata serialization (#5944)
 
 
-def test_vrtmisc_10():
+def test_vrtmisc_10(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/vrtmisc_10.vrt",
+        tmp_vsimem / "vrtmisc_10.vrt",
         """<VRTDataset rasterXSize="1" rasterYSize="1">
   <Metadata>
       <MDI key="foo">bar</MDI>
@@ -228,12 +228,12 @@ def test_vrtmisc_10():
 """,
     )
 
-    ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_10.vrt", gdal.GA_Update)
     # to trigger a flush
     ds.SetMetadata(ds.GetMetadata())
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_10.vrt", gdal.GA_Update)
     assert ds.GetMetadata() == {"foo": "bar"}
     assert ds.GetMetadata("some_domain") == {"bar": "baz"}
     assert ds.GetMetadata_List("xml:a_xml_domain")[0] == "<some_xml />\n"
@@ -241,13 +241,11 @@ def test_vrtmisc_10():
     ds.SetMetadata({})
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_10.vrt")
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_10.vrt")
     assert ds.GetMetadata() == {}
     assert ds.GetMetadata("some_domain") == {"bar": "baz"}
     assert ds.GetMetadata_List("xml:a_xml_domain")[0] == "<some_xml />\n"
     ds = None
-
-    gdal.Unlink("/vsimem/vrtmisc_10.vrt")
 
 
 ###############################################################################
@@ -289,10 +287,10 @@ def test_vrtmisc_11():
 # Test set/delete nodata
 
 
-def test_vrtmisc_12():
+def test_vrtmisc_12(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/vrtmisc_12.vrt",
+        tmp_vsimem / "vrtmisc_12.vrt",
         """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
@@ -307,20 +305,18 @@ def test_vrtmisc_12():
 """,
     )
 
-    ds = gdal.Open("/vsimem/vrtmisc_12.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_12.vrt", gdal.GA_Update)
     ds.GetRasterBand(1).SetNoDataValue(123)
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_12.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_12.vrt", gdal.GA_Update)
     assert ds.GetRasterBand(1).GetNoDataValue() == 123
     assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_12.vrt")
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_12.vrt")
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
-
-    gdal.Unlink("/vsimem/vrtmisc_12.vrt")
 
 
 ###############################################################################
@@ -338,60 +334,36 @@ def test_vrtmisc_13():
 # Test SrcRect/DstRect are serialized as integers
 
 
-def test_vrtmisc_14():
+@pytest.mark.parametrize("xSize,ySize", [(123456789, 1), (1, 123456789)])
+def test_vrtmisc_14(tmp_vsimem, xSize, ySize):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/vrtmisc_14_src.tif",
-        123456789,
-        1,
+        tmp_vsimem / "vrtmisc_14_src.tif",
+        xSize,
+        ySize,
         options=["SPARSE_OK=YES", "TILED=YES"],
     )
-    gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrtmisc_14.vrt", src_ds)
+    gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "vrtmisc_14.vrt", src_ds)
     src_ds = None
-    fp = gdal.VSIFOpenL("/vsimem/vrtmisc_14.vrt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "vrtmisc_14.vrt", "rb")
     content = gdal.VSIFReadL(1, 10000, fp).decode("latin1")
     gdal.VSIFCloseL(fp)
 
-    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
-    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
-
-    assert (
-        '<SrcRect xOff="0" yOff="0" xSize="123456789" ySize="1"' in content
-        and '<DstRect xOff="0" yOff="0" xSize="123456789" ySize="1"' in content
-    )
-
-    src_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/vrtmisc_14_src.tif",
-        1,
-        123456789,
-        options=["SPARSE_OK=YES", "TILED=YES"],
-    )
-    gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrtmisc_14.vrt", src_ds)
-    src_ds = None
-    fp = gdal.VSIFOpenL("/vsimem/vrtmisc_14.vrt", "rb")
-    content = gdal.VSIFReadL(1, 10000, fp).decode("latin1")
-    gdal.VSIFCloseL(fp)
-
-    gdal.Unlink("/vsimem/vrtmisc_14_src.tif")
-    gdal.Unlink("/vsimem/vrtmisc_14.vrt")
-
-    assert (
-        '<SrcRect xOff="0" yOff="0" xSize="1" ySize="123456789"' in content
-        and '<DstRect xOff="0" yOff="0" xSize="1" ySize="123456789"' in content
-    )
+    assert f'<SrcRect xOff="0" yOff="0" xSize="{xSize}" ySize="{ySize}"' in content
+    assert f'<DstRect xOff="0" yOff="0" xSize="{xSize}" ySize="{ySize}"' in content
 
 
 ###############################################################################
 # Test rounding to closest int for coordinates
 
 
-def test_vrtmisc_16():
+def test_vrtmisc_16(tmp_vsimem):
 
     gdal.BuildVRT(
-        "/vsimem/vrtmisc_16.vrt",
+        tmp_vsimem / "vrtmisc_16.vrt",
         ["data/vrtmisc16_tile1.tif", "data/vrtmisc16_tile2.tif"],
     )
-    fp = gdal.VSIFOpenL("/vsimem/vrtmisc_16.vrt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "vrtmisc_16.vrt", "rb")
     content = gdal.VSIFReadL(1, 100000, fp).decode("latin1")
     gdal.VSIFCloseL(fp)
 
@@ -401,16 +373,17 @@ def test_vrtmisc_16():
     assert '<DstRect xOff="1680" yOff="5922" xSize="494" ySize="893"' in content
 
     gdal.GetDriverByName("GTiff").CreateCopy(
-        "/vsimem/vrtmisc_16.tif", gdal.Open("/vsimem/vrtmisc_16.vrt")
+        tmp_vsimem / "vrtmisc_16.tif", gdal.Open(tmp_vsimem / "vrtmisc_16.vrt")
     )
-    ds = gdal.Open("/vsimem/vrtmisc_16.tif")
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_16.tif")
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 206
-    gdal.Unlink("/vsimem/vrtmisc_16.tif")
-    gdal.Unlink("/vsimem/vrtmisc_16.vrt")
+
+
+def test_vrtmisc_16b(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/vrtmisc_16.vrt",
+        tmp_vsimem / "vrtmisc_16.vrt",
         """<VRTDataset rasterXSize="2174" rasterYSize="6815">
   <VRTRasterBand dataType="Byte" band="1">
     <NoDataValue>0</NoDataValue>
@@ -434,27 +407,23 @@ def test_vrtmisc_16():
 </VRTDataset>""",
     )
     gdal.GetDriverByName("GTiff").CreateCopy(
-        "/vsimem/vrtmisc_16.tif", gdal.Open("/vsimem/vrtmisc_16.vrt")
+        tmp_vsimem / "vrtmisc_16.tif", gdal.Open(tmp_vsimem / "vrtmisc_16.vrt")
     )
-    ds = gdal.Open("/vsimem/vrtmisc_16.tif")
+    ds = gdal.Open(tmp_vsimem / "vrtmisc_16.tif")
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 206
-    gdal.Unlink("/vsimem/vrtmisc_16.tif")
-    gdal.Unlink("/vsimem/vrtmisc_16.vrt")
 
 
 ###############################################################################
 # Check that the serialized xml:VRT doesn't include itself (#6767)
 
 
-def test_vrtmisc_17():
+def test_vrtmisc_17(tmp_vsimem):
 
     ds = gdal.Open("data/byte.tif")
-    vrt_ds = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrtmisc_17.vrt", ds)
+    vrt_ds = gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "vrtmisc_17.vrt", ds)
     xml_vrt = vrt_ds.GetMetadata("xml:VRT")[0]
     vrt_ds = None
-
-    gdal.Unlink("/vsimem/vrtmisc_17.vrt")
 
     assert "xml:VRT" not in xml_vrt
 
@@ -482,14 +451,14 @@ def test_vrtmisc_18():
 # Check RAT support
 
 
-def test_vrtmisc_rat():
+def test_vrtmisc_rat(tmp_vsimem):
 
-    ds = gdal.Translate("/vsimem/vrtmisc_rat.tif", "data/byte.tif", format="MEM")
+    ds = gdal.Translate(tmp_vsimem / "vrtmisc_rat.tif", "data/byte.tif", format="MEM")
     rat = gdal.RasterAttributeTable()
     rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic)
     ds.GetRasterBand(1).SetDefaultRAT(rat)
 
-    vrt_ds = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrtmisc_rat.vrt", ds)
+    vrt_ds = gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "vrtmisc_rat.vrt", ds)
 
     xml_vrt = vrt_ds.GetMetadata("xml:VRT")[0]
     assert gdal.GetLastErrorMsg() == ""
@@ -498,7 +467,7 @@ def test_vrtmisc_rat():
     assert '<GDALRasterAttributeTable tableType="thematic">' in xml_vrt
 
     vrt_ds = gdal.Translate(
-        "/vsimem/vrtmisc_rat.vrt", ds, format="VRT", srcWin=[0, 0, 1, 1]
+        tmp_vsimem / "vrtmisc_rat.vrt", ds, format="VRT", srcWin=[0, 0, 1, 1]
     )
 
     xml_vrt = vrt_ds.GetMetadata("xml:VRT")[0]
@@ -509,7 +478,7 @@ def test_vrtmisc_rat():
 
     ds = None
 
-    vrt_ds = gdal.Open("/vsimem/vrtmisc_rat.vrt", gdal.GA_Update)
+    vrt_ds = gdal.Open(tmp_vsimem / "vrtmisc_rat.vrt", gdal.GA_Update)
     rat = vrt_ds.GetRasterBand(1).GetDefaultRAT()
     assert rat is not None and rat.GetColumnCount() == 1
     vrt_ds.GetRasterBand(1).SetDefaultRAT(None)
@@ -517,8 +486,6 @@ def test_vrtmisc_rat():
     vrt_ds = None
 
     ds = None
-
-    gdal.Unlink("/vsimem/vrtmisc_rat.vrt")
 
 
 ###############################################################################
@@ -540,9 +507,9 @@ def test_vrtmisc_colortable():
 # Check histogram support
 
 
-def test_vrtmisc_histogram():
+def test_vrtmisc_histogram(tmp_vsimem):
 
-    tmpfile = "/vsimem/vrtmisc_histogram.vrt"
+    tmpfile = tmp_vsimem / "vrtmisc_histogram.vrt"
     ds = gdal.Translate(tmpfile, "data/byte.tif", format="VRT")
     ds.GetRasterBand(1).SetDefaultHistogram(1, 2, [3000000000, 4])
     ds = None
@@ -553,16 +520,14 @@ def test_vrtmisc_histogram():
 
     assert hist == (1.0, 2.0, 2, [3000000000, 4])
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 # write SRS with unusual data axis to SRS axis mapping
 
 
-def test_vrtmisc_write_srs():
+def test_vrtmisc_write_srs(tmp_vsimem):
 
-    tmpfile = "/vsimem/test_vrtmisc_write_srs.vrt"
+    tmpfile = tmp_vsimem / "test_vrtmisc_write_srs.vrt"
     ds = gdal.Translate(tmpfile, "data/byte.tif", format="VRT")
     sr = osr.SpatialReference()
     sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
@@ -575,49 +540,46 @@ def test_vrtmisc_write_srs():
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1, 2]
     ds = None
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 # complex scenario involving masks and implicit overviews
 
 
-def test_vrtmisc_mask_implicit_overviews():
+def test_vrtmisc_mask_implicit_overviews(tmp_vsimem):
 
     ds = gdal.Translate(
-        "/vsimem/cog.tif",
+        tmp_vsimem / "cog.tif",
         "data/stefan_full_rgba.tif",
         options="-outsize 2048 0 -b 1 -b 2 -b 3 -mask 4",
     )
     ds.BuildOverviews("NEAR", [2, 4])
     ds = None
-    gdal.Translate("/vsimem/cog.vrt", "/vsimem/cog.tif")
-    ds = gdal.Open("/vsimem/cog.vrt")
+    gdal.Translate(tmp_vsimem / "cog.vrt", tmp_vsimem / "cog.tif")
+    ds = gdal.Open(tmp_vsimem / "cog.vrt")
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_PER_DATASET
     assert ds.GetRasterBand(1).GetMaskBand().IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().IsMaskBand()
 
     ds = None
     gdal.Translate(
-        "/vsimem/out.tif", "/vsimem/cog.vrt", options="-b mask -outsize 10% 0"
+        tmp_vsimem / "out.tif", tmp_vsimem / "cog.vrt", options="-b mask -outsize 10% 0"
     )
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/cog.tif")
-    gdal.Unlink("/vsimem/cog.vrt")
-    ds = gdal.Open("/vsimem/out.tif")
+    gdal.GetDriverByName("GTiff").Delete(tmp_vsimem / "cog.tif")
+
+    ds = gdal.Open(tmp_vsimem / "out.tif")
     histo = ds.GetRasterBand(1).GetDefaultHistogram()[3]
     # Check that there are only 0 and 255 in the histogram
     assert histo[0] + histo[255] == ds.RasterXSize * ds.RasterYSize, histo
     assert ds.GetRasterBand(1).Checksum() == 46885
     ds = None
-    gdal.Unlink("/vsimem/out.tif")
 
 
 ###############################################################################
 # Test setting block size
 
 
-def test_vrtmisc_blocksize():
-    filename = "/vsimem/test_vrtmisc_blocksize.vrt"
+def test_vrtmisc_blocksize(tmp_vsimem):
+    filename = tmp_vsimem / "test_vrtmisc_blocksize.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(filename, 50, 50, 0)
     options = ["subClass=VRTSourcedRasterBand", "blockXSize=32", "blockYSize=48"]
     vrt_ds.AddBand(gdal.GDT_Byte, options)
@@ -629,15 +591,13 @@ def test_vrtmisc_blocksize():
     assert blockysize == 48
     vrt_ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test setting block size through creation options
 
 
-def test_vrtmisc_blocksize_creation_options():
-    filename = "/vsimem/test_vrtmisc_blocksize_creation_options.vrt"
+def test_vrtmisc_blocksize_creation_options(tmp_vsimem):
+    filename = tmp_vsimem / "test_vrtmisc_blocksize_creation_options.vrt"
     vrt_ds = gdal.GetDriverByName("VRT").Create(
         filename, 50, 50, 1, options=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
     )
@@ -649,15 +609,13 @@ def test_vrtmisc_blocksize_creation_options():
     assert blockysize == 48
     vrt_ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test setting block size through creation options
 
 
-def test_vrtmisc_blocksize_gdal_translate_direct():
-    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_direct.vrt"
+def test_vrtmisc_blocksize_gdal_translate_direct(tmp_vsimem):
+    filename = tmp_vsimem / "test_vrtmisc_blocksize_gdal_translate_direct.vrt"
     vrt_ds = gdal.Translate(
         filename, "data/byte.tif", creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
     )
@@ -669,15 +627,13 @@ def test_vrtmisc_blocksize_gdal_translate_direct():
     assert blockysize == 48
     vrt_ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test setting block size through creation options
 
 
-def test_vrtmisc_blocksize_gdalbuildvrt():
-    filename = "/vsimem/test_vrtmisc_blocksize_gdalbuildvrt.vrt"
+def test_vrtmisc_blocksize_gdalbuildvrt(tmp_vsimem):
+    filename = tmp_vsimem / "test_vrtmisc_blocksize_gdalbuildvrt.vrt"
     vrt_ds = gdal.BuildVRT(
         filename, ["data/byte.tif"], creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
     )
@@ -689,15 +645,13 @@ def test_vrtmisc_blocksize_gdalbuildvrt():
     assert blockysize == 48
     vrt_ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test setting block size through creation options
 
 
-def test_vrtmisc_blocksize_gdal_translate_indirect():
-    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_indirect.vrt"
+def test_vrtmisc_blocksize_gdal_translate_indirect(tmp_vsimem):
+    filename = tmp_vsimem / "test_vrtmisc_blocksize_gdal_translate_indirect.vrt"
     vrt_ds = gdal.Translate(
         filename,
         "data/byte.tif",
@@ -712,21 +666,19 @@ def test_vrtmisc_blocksize_gdal_translate_indirect():
     assert blockysize == 48
     vrt_ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test replicating source block size if we subset with an offset multiple
 # of the source block size
 
 
-def test_vrtmisc_blocksize_gdal_translate_implicit():
+def test_vrtmisc_blocksize_gdal_translate_implicit(tmp_vsimem):
 
-    src_filename = "/vsimem/src.tif"
+    src_filename = tmp_vsimem / "src.tif"
     gdal.GetDriverByName("GTiff").Create(
         src_filename, 128, 512, options=["TILED=YES", "BLOCKXSIZE=48", "BLOCKYSIZE=256"]
     )
-    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_implicit.vrt"
+    filename = tmp_vsimem / "test_vrtmisc_blocksize_gdal_translate_implicit.vrt"
     vrt_ds = gdal.Translate(filename, src_filename, srcWin=[48 * 2, 256, 100, 256])
     vrt_ds = None
 
@@ -736,47 +688,38 @@ def test_vrtmisc_blocksize_gdal_translate_implicit():
     assert blockysize == 256
     vrt_ds = None
 
-    gdal.Unlink(filename)
-    gdal.Unlink(src_filename)
-
 
 ###############################################################################
 # Test support for coordinate epoch
 
 
-def test_vrtmisc_coordinate_epoch():
+def test_vrtmisc_coordinate_epoch(tmp_vsimem):
 
-    filename = "/vsimem/temp.vrt"
+    filename = tmp_vsimem / "temp.vrt"
     gdal.Translate(filename, "data/byte.tif", options="-a_coord_epoch 2021.3")
     ds = gdal.Open(filename)
     srs = ds.GetSpatialRef()
     assert srs.GetCoordinateEpoch() == 2021.3
     ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceFilename
 
 
-def test_vrtmisc_sourcefilename_all_relatives():
+def test_vrtmisc_sourcefilename_all_relatives(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
-    try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
-        ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
-        ds.SetDescription(os.path.join("tmp", "byte.vrt"))
-        ds = None
-        src_ds = None
-        assert (
-            '<SourceFilename relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    src_ds = gdal.Open(tmp_path / "byte.tif")
+    ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
+    ds.SetDescription(f"{tmp_path}/byte.vrt")
+    ds = None
+    src_ds = None
+    assert (
+        '<SourceFilename relativeToVRT="1">byte.tif<'
+        in open(tmp_path / "byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################
@@ -858,9 +801,9 @@ def test_vrtmisc_sourcefilename_source_absolute_dest_relative():
 # Test Int64 nodata
 
 
-def test_vrtmisc_nodata_int64():
+def test_vrtmisc_nodata_int64(tmp_vsimem):
 
-    filename = "/vsimem/temp.vrt"
+    filename = tmp_vsimem / "temp.vrt"
     ds = gdal.Translate(
         filename, "data/byte.tif", format="VRT", outputType=gdal.GDT_Int64
     )
@@ -873,16 +816,14 @@ def test_vrtmisc_nodata_int64():
     assert ds.GetRasterBand(1).GetNoDataValue() == val
     ds = None
 
-    gdal.Unlink(filename)
-
 
 ###############################################################################
 # Test UInt64 nodata
 
 
-def test_vrtmisc_nodata_uint64():
+def test_vrtmisc_nodata_uint64(tmp_vsimem):
 
-    filename = "/vsimem/temp.vrt"
+    filename = tmp_vsimem / "temp.vrt"
     ds = gdal.Translate(
         filename, "data/byte.tif", format="VRT", outputType=gdal.GDT_UInt64
     )
@@ -894,8 +835,6 @@ def test_vrtmisc_nodata_uint64():
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).GetNoDataValue() == val
     ds = None
-
-    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -916,9 +855,9 @@ def test_vrtmisc_alpha_ismaskband():
 # require opening the source band.
 
 
-def test_vrtmisc_serialize_complexsource_with_NODATA():
+def test_vrtmisc_serialize_complexsource_with_NODATA(tmp_vsimem):
 
-    tmpfilename = "/vsimem/test_vrtmisc_serialize_complexsource_with_NODATA.vrt"
+    tmpfilename = tmp_vsimem / "test_vrtmisc_serialize_complexsource_with_NODATA.vrt"
     gdal.FileFromMemBuffer(
         tmpfilename,
         """<VRTDataset rasterXSize="1" rasterYSize="1">
@@ -954,9 +893,9 @@ def test_vrtmisc_serialize_complexsource_with_NODATA():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/7486
 
 
-def test_vrtmisc_nodata_float32():
+def test_vrtmisc_nodata_float32(tmp_vsimem):
 
-    tif_filename = "/vsimem/test_vrtmisc_nodata_float32.tif"
+    tif_filename = tmp_vsimem / "test_vrtmisc_nodata_float32.tif"
     ds = gdal.GetDriverByName("GTiff").Create(tif_filename, 1, 1, 1, gdal.GDT_Float32)
     nodata = -0.1
     ds.GetRasterBand(1).SetNoDataValue(nodata)
@@ -965,7 +904,7 @@ def test_vrtmisc_nodata_float32():
 
     # When re-opening the TIF file, the -0.1 double value will be exposed
     # with the float32 precision (~ -0.10000000149011612)
-    vrt_filename = "/vsimem/test_vrtmisc_nodata_float32.vrt"
+    vrt_filename = tmp_vsimem / "test_vrtmisc_nodata_float32.vrt"
     ds = gdal.Translate(vrt_filename, tif_filename)
     nodata_vrt = ds.GetRasterBand(1).GetNoDataValue()
     assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]
@@ -979,20 +918,17 @@ def test_vrtmisc_nodata_float32():
     assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]
     ds = None
 
-    gdal.Unlink(tif_filename)
-    gdal.Unlink(vrt_filename)
-
 
 ###############################################################################
-def test_vrt_write_copy_mdd():
+def test_vrt_write_copy_mdd(tmp_vsimem):
 
-    src_filename = "/vsimem/test_vrt_write_copy_mdd.tif"
+    src_filename = tmp_vsimem / "test_vrt_write_copy_mdd.tif"
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 1, 1)
     src_ds.SetMetadataItem("FOO", "BAR")
     src_ds.SetMetadataItem("BAR", "BAZ", "OTHER_DOMAIN")
     src_ds.SetMetadataItem("should_not", "be_copied", "IMAGE_STRUCTURE")
 
-    filename = "/vsimem/test_vrt_write_copy_mdd.vrt"
+    filename = tmp_vsimem / "test_vrt_write_copy_mdd.vrt"
 
     gdal.GetDriverByName("VRT").CreateCopy(filename, src_ds)
     ds = gdal.Open(filename)
@@ -1041,8 +977,6 @@ def test_vrt_write_copy_mdd():
     ds = None
 
     src_ds = None
-    gdal.Unlink(filename)
-    gdal.Unlink(src_filename)
 
 
 ###############################################################################
