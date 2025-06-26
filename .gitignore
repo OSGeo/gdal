@@ -170,3 +170,6 @@ gdal/share
 /build
 CMakeSettings.json
 out/
+build-*/
+install-asan/
+venv/
