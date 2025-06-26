@@ -569,16 +569,43 @@ void OGRParquetDriver::InitMetadata()
 
     std::vector<const char *> apszCompressionMethods;
     bool bHasSnappy = false;
+    int minComprLevel = INT_MAX;
+    int maxComprLevel = INT_MIN;
+    std::string osCompressionLevelDesc = "Compression level, codec dependent.";
     for (const char *pszMethod :
          {"SNAPPY", "GZIP", "BROTLI", "ZSTD", "LZ4_RAW", "LZO", "LZ4_HADOOP"})
     {
-        auto oResult = arrow::util::Codec::GetCompressionType(
+        auto compressionTypeRes = arrow::util::Codec::GetCompressionType(
             CPLString(pszMethod).tolower());
-        if (oResult.ok() && arrow::util::Codec::IsAvailable(*oResult))
+        if (compressionTypeRes.ok() &&
+            arrow::util::Codec::IsAvailable(*compressionTypeRes))
         {
+            const auto compressionType = *compressionTypeRes;
             if (EQUAL(pszMethod, "SNAPPY"))
                 bHasSnappy = true;
             apszCompressionMethods.emplace_back(pszMethod);
+
+            auto minCompressLevelRes =
+                arrow::util::Codec::MinimumCompressionLevel(compressionType);
+            auto maxCompressLevelRes =
+                arrow::util::Codec::MaximumCompressionLevel(compressionType);
+            auto defCompressLevelRes =
+                arrow::util::Codec::DefaultCompressionLevel(compressionType);
+            if (minCompressLevelRes.ok() && maxCompressLevelRes.ok() &&
+                defCompressLevelRes.ok())
+            {
+                minComprLevel = std::min(minComprLevel, *minCompressLevelRes);
+                maxComprLevel = std::max(maxComprLevel, *maxCompressLevelRes);
+                osCompressionLevelDesc += ' ';
+                osCompressionLevelDesc += pszMethod;
+                osCompressionLevelDesc += ": [";
+                osCompressionLevelDesc += std::to_string(*minCompressLevelRes);
+                osCompressionLevelDesc += ',';
+                osCompressionLevelDesc += std::to_string(*maxCompressLevelRes);
+                osCompressionLevelDesc += "], default=";
+                osCompressionLevelDesc += std::to_string(*defCompressLevelRes);
+                osCompressionLevelDesc += '.';
+            }
         }
     }
 
@@ -600,6 +627,19 @@ void OGRParquetDriver::InitMetadata()
             auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
             CPLCreateXMLNode(poValueNode, CXT_Text, pszMethod);
         }
+    }
+
+    if (minComprLevel <= maxComprLevel)
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "COMPRESSION_LEVEL");
+        CPLAddXMLAttributeAndValue(psOption, "type", "int");
+        CPLAddXMLAttributeAndValue(psOption, "min",
+                                   CPLSPrintf("%d", minComprLevel));
+        CPLAddXMLAttributeAndValue(psOption, "max",
+                                   CPLSPrintf("%d", maxComprLevel));
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   osCompressionLevelDesc.c_str());
     }
 
     {
