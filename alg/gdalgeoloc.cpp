@@ -74,10 +74,11 @@ static double UnshiftGeoX(const GDALGeoLocTransformInfo *psTransform,
 {
     if (!psTransform->bGeographicSRSWithMinus180Plus180LongRange)
         return dfX;
-    if (dfX > 180)
-        return dfX - 360;
-    if (dfX < -180)
-        return dfX + 360;
+    if (dfX > 180 || dfX < -180)
+    {
+        dfX = fmod(dfX + 180.0, 360.0) - 180.0;
+        return dfX;
+    }
     return dfX;
 }
 
@@ -178,7 +179,8 @@ void GDALGeoLoc<Accessors>::LoadGeolocFinish(
         {
             for (int iX = iXStart; iX < iXEnd; ++iX)
             {
-                const auto dfX = pAccessors->geolocXAccessor.Get(iX, iY);
+                const auto dfX = UnshiftGeoX(
+                    psTransform, pAccessors->geolocXAccessor.Get(iX, iY));
                 if (!psTransform->bHasNoData || dfX != psTransform->dfNoDataX)
                 {
                     UpdateMinMax(psTransform, dfX,
@@ -191,10 +193,10 @@ void GDALGeoLoc<Accessors>::LoadGeolocFinish(
 
     // Check if the SRS is geographic and the geoloc longitudes are in
     // [-180,180]
-    psTransform->bGeographicSRSWithMinus180Plus180LongRange = false;
     const char *pszSRS = CSLFetchNameValue(papszGeolocationInfo, "SRS");
-    if (pszSRS && psTransform->dfMinX >= -180.0 &&
-        psTransform->dfMaxX <= 180.0 && !psTransform->bSwapXY)
+    if (!psTransform->bGeographicSRSWithMinus180Plus180LongRange && pszSRS &&
+        psTransform->dfMinX >= -180.0 && psTransform->dfMaxX <= 180.0 &&
+        !psTransform->bSwapXY)
     {
         OGRSpatialReference oSRS;
         psTransform->bGeographicSRSWithMinus180Plus180LongRange =
@@ -536,7 +538,7 @@ bool GDALGeoLoc<Accessors>::PixelLineToXY(
         {
             return false;
         }
-        dfX = dfGLX;
+        dfX = UnshiftGeoX(psTransform, dfGLX);
         dfY = dfGLY;
         return true;
     }
@@ -1794,6 +1796,11 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
     psTransform->sTI.pfnCreateSimilar = GDALCreateSimilarGeoLocTransformer;
 
     psTransform->papszGeolocationInfo = CSLDuplicate(papszGeolocationInfo);
+
+    psTransform->bGeographicSRSWithMinus180Plus180LongRange =
+        CPLTestBool(CSLFetchNameValueDef(
+            papszTransformOptions,
+            "GEOLOC_NORMALIZE_LONGITUDE_MINUS_180_PLUS_180", "NO"));
 
     /* -------------------------------------------------------------------- */
     /*      Pull geolocation info from the options/metadata.                */
