@@ -25,13 +25,6 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        .. image:: ../../images/sponsors/logo-microsoft.png
-           :class: img-logos
-           :width: 250 px
-           :target: https://www.microsoft.com
-
-    .. container:: horizontal-logo
-
         .. image:: ../../images/sponsors/logo-planet.png
            :class: img-logos
            :width: 250 px
@@ -50,13 +43,6 @@ the health of the project:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
-
-    .. container:: horizontal-logo
-
-        .. image:: ../../images/sponsors/logo-google.png
-           :class: img-logos
-           :width: 200 px
-           :target: https://www.google.com
 
     .. container:: horizontal-logo
 
@@ -83,24 +69,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        .. image:: ../../images/sponsors/logo-koordinates.png
-           :class: img-logos
-           :width: 150 px
-           :target: https://www.koordinates.com
-
-    .. container:: horizontal-logo
-
         .. image:: ../../images/sponsors/logo-linz.png
            :class: img-logos
            :width: 150 px
            :target: https://www.linz.govt.nz
-
-    .. container:: horizontal-logo
-
-        .. image:: ../../images/sponsors/logo-mapgears.png
-           :class: img-logos
-           :width: 150 px
-           :target: https://www.mapgears.com
 
     .. container:: horizontal-logo
 
@@ -235,6 +207,8 @@ consult with your personal tax adviser or the IRS about your particular tax situ
            :class: img-logos
            :width: 150 px
            :target: https://numfocus.org
+
+We would like to also thank our :ref:`past_sponsors`.
 
 Sponsoring
 ----------
