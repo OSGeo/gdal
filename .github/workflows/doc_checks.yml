@@ -35,6 +35,7 @@ jobs:
           python3 -m venv create doc_env
           . doc_env/bin/activate
           python3 -m pip install -r doc/requirements.txt
+          python3 -m pip install setuptools
           echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Build GDAL
