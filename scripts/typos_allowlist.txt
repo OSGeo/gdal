@@ -349,3 +349,5 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
             .AddAlias("ot")
         EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);
 .. include:: gdal_options/ot.rst
+- Koordinates
+    Koordinates
