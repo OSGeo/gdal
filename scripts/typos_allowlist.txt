@@ -350,3 +350,6 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
         EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);
 .. include:: gdal_options/ot.rst
 for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
+- Koordinates
+    Koordinates
+%apply (int *INOUT) {int *buf_xsize, int *buf_ysize};

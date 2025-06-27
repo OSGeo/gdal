@@ -173,7 +173,7 @@ class MuParserExpression::Impl
                 DefineIsNoDataFunction(m_oParser);
             }
 
-            // Edit the expression ot replace variable names such as X[1] with
+            // Edit the expression to replace variable names such as X[1] with
             // their sanitized versions
             std::string tmpExpression(m_osExpression);
 
