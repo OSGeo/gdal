@@ -25,6 +25,18 @@ def test_tiledb_open():
     ut.testOpen()
 
 
+def test_tiledb_open_does_not_exist():
+    with gdal.ExceptionMgr(useExceptions=True):
+        try:
+            ds = gdal.OpenEx(
+                "tiledb_does_not_exist_array", gdal.GA_ReadOnly, ["TileDB"]
+            )
+            assert ds == None
+        except Exception:
+            assert gdal.GetLastErrorType() == gdal.CE_Failure
+            assert gdal.GetLastErrorMsg().startswith("Failed to open")
+
+
 ###############################################################################
 
 
