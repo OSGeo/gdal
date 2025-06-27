@@ -25,6 +25,8 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
         osUri.Printf("s3://%s", pszUri + 7);
     else if (STARTS_WITH_CI(pszUri, "/VSIGS/"))
         osUri.Printf("gcs://%s", pszUri + 7);
+    else if (STARTS_WITH_CI(pszUri, "/VSIAZ/"))
+        osUri.Printf("azure://%s", pszUri + 7);
     else
     {
         osUri = pszUri;
@@ -163,6 +165,24 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
         if (eIdentify == GDAL_IDENTIFY_FALSE)
             return nullptr;
 
+        const std::string osPath =
+            TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
+
+        // identify() identifies this as a request for a TileDB dataset but not whether it exists
+        if (poOpenInfo->eAccess == GA_ReadOnly)
+        {
+            tiledb::Context ctx;
+            const auto eType = tiledb::Object::object(ctx, osPath).type();
+
+            if (eType == tiledb::Object::Type::Invalid)
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Failed to open %s as an array or group.\n",
+                         poOpenInfo->pszFilename);
+                return nullptr;
+            }
+        }
+
         if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:") &&
             !STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB://"))
         {
@@ -192,8 +212,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 cfg["sm.enable_signal_handlers"] = "false";
                 oCtx = tiledb::Context(cfg);
             }
-            const std::string osPath =
-                TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
 
             const auto eType = tiledb::Object::object(oCtx, osPath).type();
             std::string osDatasetType;
