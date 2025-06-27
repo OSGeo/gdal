@@ -1557,6 +1557,8 @@ struct Context
     bool bFallbackToBase = false;
     // End of protected by mutex
 
+    int nSources = 0;
+
     bool bApproxOK = false;
     GDALProgressFunc pfnProgress = nullptr;
     void *pProgressData = nullptr;
@@ -1582,12 +1584,21 @@ struct Context
 #endif
     uint64_t nGlobalValidPixels = 0;
     uint64_t nTotalPixelsOfSources = 0;
+
+    // Keep original values from single source to avoid slight changes
+    // due to recomputation. Cf https://github.com/OSGeo/gdal/issues/12650
+    bool bUpdateStatsWithConstantValueRun = false;
+    double dfSingleSourceMin = 0;
+    double dfSingleSourceMax = 0;
+    double dfSingleSourceMean = 0;
+    double dfSingleSourceStdDev = 0;
 };
 }  // namespace
 
 static void UpdateStatsWithConstantValue(Context &sContext, double dfVal,
                                          uint64_t nPixelCount)
 {
+    sContext.bUpdateStatsWithConstantValueRun = true;
     sContext.dfGlobalMin = std::min(sContext.dfGlobalMin, dfVal);
     sContext.dfGlobalMax = std::max(sContext.dfGlobalMax, dfVal);
 #ifdef naive_update_not_used
@@ -1680,6 +1691,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         sContext.bHideNoDataValue = m_bHideNoDataValue;
         sContext.pfnProgress = pfnProgress;
         sContext.pProgressData = pProgressData;
+        sContext.nSources = nSources;
 
         struct Job
         {
@@ -1791,6 +1803,14 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                             *psContext, dfNoDataValueAfter,
                             psJob->nPixelCount - nValidPixels);
                     }
+                }
+
+                if (psContext->nSources == 1)
+                {
+                    psContext->dfSingleSourceMin = psJob->dfMin;
+                    psContext->dfSingleSourceMax = psJob->dfMax;
+                    psContext->dfSingleSourceMean = psJob->dfMean;
+                    psContext->dfSingleSourceStdDev = psJob->dfStdDev;
                 }
             }
         };
@@ -2008,23 +2028,30 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         }
 
 #ifdef naive_update_not_used
-        const double dfGlobalMean =
+        double dfGlobalMean =
             sContext.nGlobalValidPixels > 0
                 ? sContext.dfGlobalSum / sContext.nGlobalValidPixels
                 : 0;
-        const double dfGlobalStdDev =
-            sContext.nGlobalValidPixels > 0
-                ? sqrt(sContext.dfGlobalSumSquare /
-                           sContext.nGlobalValidPixels -
-                       dfGlobalMean * dfGlobalMean)
-                : 0;
+        double dfGlobalStdDev = sContext.nGlobalValidPixels > 0
+                                    ? sqrt(sContext.dfGlobalSumSquare /
+                                               sContext.nGlobalValidPixels -
+                                           dfGlobalMean * dfGlobalMean)
+                                    : 0;
 #else
-        const double dfGlobalMean = sContext.dfGlobalMean;
-        const double dfGlobalStdDev =
+        double dfGlobalMean = sContext.dfGlobalMean;
+        double dfGlobalStdDev =
             sContext.nGlobalValidPixels > 0
                 ? sqrt(sContext.dfGlobalM2 / sContext.nGlobalValidPixels)
                 : 0;
 #endif
+        if (nSources == 1 && !sContext.bUpdateStatsWithConstantValueRun)
+        {
+            sContext.dfGlobalMin = sContext.dfSingleSourceMin;
+            sContext.dfGlobalMax = sContext.dfSingleSourceMax;
+            dfGlobalMean = sContext.dfSingleSourceMean;
+            dfGlobalStdDev = sContext.dfSingleSourceStdDev;
+        }
+
         if (sContext.nGlobalValidPixels > 0)
         {
             if (bApproxOK)
