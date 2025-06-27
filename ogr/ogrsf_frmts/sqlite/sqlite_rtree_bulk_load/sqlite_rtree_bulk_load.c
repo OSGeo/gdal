@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
