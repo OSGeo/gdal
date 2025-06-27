@@ -47,15 +47,11 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
 /************************************************************************/
 /*                      TileDBObjectExists()                            */
 /************************************************************************/
-int TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
+bool TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
 {
     tiledb::Context ctx;
     const auto eType = tiledb::Object::object(ctx, osArrayUri).type();
-
-    if (eType == tiledb::Object::Type::Invalid)
-        return false;
-    else
-        return true;
+    return eType != tiledb::Object::Type::Invalid;
 }
 
 /************************************************************************/
