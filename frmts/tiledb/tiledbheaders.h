@@ -169,6 +169,7 @@ class TileDBDataset : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static CPLErr Delete(const char *pszFilename);
     static CPLString VSI_to_tiledb_uri(const char *pszUri);
+    static int TileDBObjectExists(const std::string &osArrayUri);
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,

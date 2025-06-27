@@ -45,6 +45,20 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
 }
 
 /************************************************************************/
+/*                      TileDBObjectExists()                            */
+/************************************************************************/
+int TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
+{
+    tiledb::Context ctx;
+    const auto eType = tiledb::Object::object(ctx, osArrayUri).type();
+
+    if (eType == tiledb::Object::Type::Invalid)
+        return false;
+    else
+        return true;
+}
+
+/************************************************************************/
 /*                           AddFilter()                                */
 /************************************************************************/
 
@@ -112,9 +126,10 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
             tiledb::Context ctx;
             CPLString osArrayPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
-            const auto eType = tiledb::Object::object(ctx, osArrayPath).type();
-            nRet = (eType == tiledb::Object::Type::Array ||
-                    eType == tiledb::Object::Type::Group);
+            if (TileDBDataset::TileDBObjectExists(osArrayPath))
+                nRet = TRUE;
+            else
+                nRet = FALSE;
         }
         catch (...)
         {
@@ -165,24 +180,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
         if (eIdentify == GDAL_IDENTIFY_FALSE)
             return nullptr;
 
-        const std::string osPath =
-            TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
-
-        // identify() identifies this as a request for a TileDB dataset but not whether it exists
-        if (poOpenInfo->eAccess == GA_ReadOnly)
-        {
-            tiledb::Context ctx;
-            const auto eType = tiledb::Object::object(ctx, osPath).type();
-
-            if (eType == tiledb::Object::Type::Invalid)
-            {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Failed to open %s as an array or group.\n",
-                         poOpenInfo->pszFilename);
-                return nullptr;
-            }
-        }
-
         if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:") &&
             !STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB://"))
         {
@@ -192,6 +189,19 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
+            const std::string osPath =
+                TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
+
+            // identify() identifies this as a request for a TileDB dataset but not whether it exists
+            if ((poOpenInfo->eAccess == GA_ReadOnly) &&
+                (!TileDBDataset::TileDBObjectExists(osPath)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Failed to open %s as an array or group.\n",
+                         poOpenInfo->pszFilename);
+                return nullptr;
+            }
+
             if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
             {
                 return TileDBDataset::OpenMultiDimensional(poOpenInfo);
