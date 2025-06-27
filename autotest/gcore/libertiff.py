@@ -332,6 +332,7 @@ def test_libertiff_check_byte(filename_middle):
         "uint64_LZW_predictor_2",
         "WEBP",
         "WEBP_tiled",
+        "WEBP_RGBA_alpha_omitted",
         "ZSTD_separate",
         "ZSTD",
         "ZSTD_tiled_separate",
