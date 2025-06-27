@@ -193,7 +193,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 (!TileDBDataset::TileDBObjectExists(osPath)))
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Failed to open %s as an array or group.\n",
+                         "Failed to open %s as an array or group.",
                          poOpenInfo->pszFilename);
                 return nullptr;
             }
