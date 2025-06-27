@@ -123,8 +123,7 @@ def test_geoloc_fill_line(use_temp_datasets):
             format="MEM",
         )
         assert warped_ds
-        # 20174 with Intel compiler
-        assert warped_ds.GetRasterBand(1).Checksum() in [22302]
+        assert warped_ds.GetRasterBand(1).Checksum() == 20177
 
 
 ###############################################################################

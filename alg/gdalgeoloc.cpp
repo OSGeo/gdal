@@ -76,7 +76,11 @@ static double UnshiftGeoX(const GDALGeoLocTransformInfo *psTransform,
         return dfX;
     if (dfX > 180 || dfX < -180)
     {
-        dfX = fmod(dfX + 180.0, 360.0) - 180.0;
+        dfX = fmod(dfX + 180.0, 360.0);
+        if (dfX < 0)
+            dfX += 180.0;
+        else
+            dfX -= 180.0;
         return dfX;
     }
     return dfX;
@@ -179,10 +183,10 @@ void GDALGeoLoc<Accessors>::LoadGeolocFinish(
         {
             for (int iX = iXStart; iX < iXEnd; ++iX)
             {
-                const auto dfX = UnshiftGeoX(
-                    psTransform, pAccessors->geolocXAccessor.Get(iX, iY));
+                double dfX = pAccessors->geolocXAccessor.Get(iX, iY);
                 if (!psTransform->bHasNoData || dfX != psTransform->dfNoDataX)
                 {
+                    dfX = UnshiftGeoX(psTransform, dfX);
                     UpdateMinMax(psTransform, dfX,
                                  pAccessors->geolocYAccessor.Get(iX, iY));
                 }
@@ -513,7 +517,7 @@ bool GDALGeoLoc<Accessors>::PixelLineToXY(
         }
         else
         {
-            dfX = dfGLX_0_0;
+            dfX = UnshiftGeoX(psTransform, dfGLX_0_0);
             dfY = dfGLY_0_0;
         }
         break;
