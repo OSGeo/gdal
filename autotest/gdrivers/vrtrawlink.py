@@ -20,9 +20,19 @@ import pytest
 
 from osgeo import gdal
 
+
+def _vrt_has_raw_support():
+    drv = gdal.GetDriverByName("VRT")
+    return (
+        drv is not None
+        and drv.GetMetadataItem("GDAL_VRT_ENABLE_RAWRASTERBAND") == "YES"
+        and gdaltest.vrt_has_open_support()
+    )
+
+
 pytestmark = pytest.mark.skipif(
-    not gdaltest.vrt_has_open_support(),
-    reason="VRT driver open missing",
+    not _vrt_has_raw_support(),
+    reason="VRT driver open missing and/or GDAL_VRT_ENABLE_RAWRASTERBAND disabled",
 )
 
 

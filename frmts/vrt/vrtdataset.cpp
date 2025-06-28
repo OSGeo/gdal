@@ -438,7 +438,16 @@ VRTDataset::InitBand(const char *pszSubclass, int nBand,
     else if (EQUAL(pszSubclass, "VRTDerivedRasterBand"))
         return std::make_unique<VRTDerivedRasterBand>(this, nBand);
     else if (EQUAL(pszSubclass, "VRTRawRasterBand"))
+    {
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
         return std::make_unique<VRTRawRasterBand>(this, nBand);
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTDataset::InitBand(): cannot instantiate VRTRawRasterBand, "
+                 "because disabled in this GDAL build");
+        return nullptr;
+#endif
+    }
     else if (EQUAL(pszSubclass, "VRTWarpedRasterBand") &&
              dynamic_cast<VRTWarpedDataset *>(this) != nullptr)
     {
@@ -1703,6 +1712,7 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
 
     if (pszSubClass != nullptr && EQUAL(pszSubClass, "VRTRawRasterBand"))
     {
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* ---------------------------------------------------------------- */
@@ -1766,6 +1776,12 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             SetBand(GetRasterCount() + 1, std::move(poBand));
 
         return eErr;
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTDataset::AddBand(): cannot instantiate VRTRawRasterBand, "
+                 "because disabled in this GDAL build");
+        return CE_Failure;
+#endif
     }
 
     /* ==================================================================== */
