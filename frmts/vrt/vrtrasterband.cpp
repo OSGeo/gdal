@@ -554,6 +554,10 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         else if (EQUAL(pszSubclass, "VRTRawRasterBand"))
         {
 #ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+            if (!VRTDataset::IsRawRasterBandEnabled())
+            {
+                return CE_Failure;
+            }
             poBand = std::make_unique<VRTRawRasterBand>(GetDataset(), 0);
 #else
             CPLError(CE_Failure, CPLE_NotSupported,

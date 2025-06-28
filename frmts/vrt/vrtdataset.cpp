@@ -417,6 +417,33 @@ CPLXMLNode *CPL_STDCALL VRTSerializeToXML(VRTDatasetH hDataset,
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
+/*                        IsRawRasterBandEnabled()                      */
+/************************************************************************/
+
+/** Return whether VRTRawRasterBand support is enabled */
+
+/* static */
+bool VRTDataset::IsRawRasterBandEnabled()
+{
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+    if (CPLTestBool(CPLGetConfigOption("GDAL_VRT_ENABLE_RAWRASTERBAND", "YES")))
+    {
+        return true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTRawRasterBand support has been disabled at run-time.");
+    }
+    return false;
+#else
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VRTRawRasterBand is disabled in this GDAL build");
+    return false;
+#endif
+}
+
+/************************************************************************/
 /*                             InitBand()                               */
 /************************************************************************/
 
@@ -440,6 +467,10 @@ VRTDataset::InitBand(const char *pszSubclass, int nBand,
     else if (EQUAL(pszSubclass, "VRTRawRasterBand"))
     {
 #ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+        if (!VRTDataset::IsRawRasterBandEnabled())
+        {
+            return nullptr;
+        }
         return std::make_unique<VRTRawRasterBand>(this, nBand);
 #else
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1713,6 +1744,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
     if (pszSubClass != nullptr && EQUAL(pszSubClass, "VRTRawRasterBand"))
     {
 #ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+        if (!VRTDataset::IsRawRasterBandEnabled())
+        {
+            return CE_Failure;
+        }
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* ---------------------------------------------------------------- */
