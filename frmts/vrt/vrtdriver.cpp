@@ -581,6 +581,10 @@ void GDALRegister_VRT()
     poDriver->SetMetadataItem(pszExpressionDialects, "none");
 #endif
 
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+    poDriver->SetMetadataItem("GDAL_VRT_ENABLE_RAWRASTERBAND", "YES");
+#endif
+
     poDriver->AddSourceParser("SimpleSource", VRTParseCoreSources);
     poDriver->AddSourceParser("ComplexSource", VRTParseCoreSources);
     poDriver->AddSourceParser("AveragedSource", VRTParseCoreSources);

@@ -1255,6 +1255,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     static void Cleanup();
 };
 
+#ifndef GDAL_VRT_DISABLE_RAWRASTERBAND
 /************************************************************************/
 /*                           VRTRawRasterBand                           */
 /************************************************************************/
@@ -1303,6 +1304,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles) override;
 };
+#endif
 
 /************************************************************************/
 /*                              VRTDriver                               */

@@ -552,7 +552,16 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         else if (EQUAL(pszSubclass, "VRTDerivedRasterBand"))
             poBand = std::make_unique<VRTDerivedRasterBand>(GetDataset(), 0);
         else if (EQUAL(pszSubclass, "VRTRawRasterBand"))
+        {
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
             poBand = std::make_unique<VRTRawRasterBand>(GetDataset(), 0);
+#else
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "VRTRasterBand::XMLInit(): cannot instantiate "
+                     "VRTRawRasterBand, because disabled in this GDAL build");
+            return CE_Failure;
+#endif
+        }
         else if (EQUAL(pszSubclass, "VRTWarpedRasterBand"))
             poBand = std::make_unique<VRTWarpedRasterBand>(GetDataset(), 0);
         else
