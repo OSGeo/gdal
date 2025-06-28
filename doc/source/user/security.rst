@@ -201,7 +201,7 @@ accepting data from the user, converting it, and sending back the result.
 
 The VRTRawRasterBand mechanism can read any file (not necessarily a
 valid GDAL dataset) accessible, which can extend the scope of the above
-mentioned issue.
+mentioned issue. Consult :ref:`vrtrawrasterband_restricted_access` for more details.
 
 The VRTDerivedRasterBand mechanism can use Pixel functions written in Python,
 directly embedded in a VRT file, or pointing to external Python code. By
