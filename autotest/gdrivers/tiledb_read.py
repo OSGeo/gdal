@@ -25,6 +25,11 @@ def test_tiledb_open():
     ut.testOpen()
 
 
+def test_tiledb_open_does_not_exist():
+    with pytest.raises(Exception, match="Failed to open"):
+        gdal.OpenEx("tiledb_does_not_exist_array", gdal.OF_READONLY, ["TileDB"])
+
+
 ###############################################################################
 
 
