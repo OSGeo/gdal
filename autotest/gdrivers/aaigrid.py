@@ -225,9 +225,10 @@ def test_aaigrid_6bis():
 )
 def test_aaigrid_7():
 
-    tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
+    with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
+        tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
 
-    tst.testCreateCopy(check_gt=1)
+        tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################

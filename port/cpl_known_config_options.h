@@ -411,6 +411,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_VRT_ENABLE_RAWRASTERBAND", // from vrtdataset.cpp
    "GDAL_VRT_PYTHON_EXCLUSIVE_LOCK", // from vrtderivedrasterband.cpp
    "GDAL_VRT_PYTHON_TRUSTED_MODULES", // from vrtderivedrasterband.cpp
+   "GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", // from vrtrawrasterband.cpp
    "GDAL_VRT_WARP_USE_DATASET_RASTERIO", // from vrtwarped.cpp
    "GDAL_WARP_USE_AFFINE_OPTIMIZATION", // from gdalwarpkernel.cpp
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
