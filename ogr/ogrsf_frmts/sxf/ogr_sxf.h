@@ -44,7 +44,7 @@ class OGRSXFLayer final : public OGRLayer
     CPLString sFIDColumn_{};
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
-    virtual OGRFeature *GetNextRawFeature(long nFID);
+    OGRFeature *GetNextRawFeature(long nFID);
 
     GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
                          const char *psBuff, GUInt32 nBufLen, double *dfX,
@@ -88,15 +88,14 @@ class OGRSXFLayer final : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
     virtual const char *GetFIDColumn() override;
 
-    virtual GByte GetId() const
+    GByte GetId() const
     {
         return nLayerID;
     }
 
-    virtual void AddClassifyCode(unsigned nClassCode,
-                                 const char *szName = nullptr);
-    virtual bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
-                           bool bHasSemantic, size_t nSemanticsSize);
+    void AddClassifyCode(unsigned nClassCode, const char *szName = nullptr);
+    bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
+                   bool bHasSemantic, size_t nSemanticsSize);
 
   private:
     static int CanRecode(const char *pszEncoding);

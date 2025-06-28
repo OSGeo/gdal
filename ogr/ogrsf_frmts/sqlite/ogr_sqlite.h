@@ -665,7 +665,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     int m_nUndefinedSRID = -1;
 
-    virtual void DeleteLayer(const char *pszLayer);
+    void DeleteLayer(const char *pszLayer);
 
     const char *GetSRTEXTColName();
 

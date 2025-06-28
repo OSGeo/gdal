@@ -1165,7 +1165,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
         return TABMAP_OBJECT_BLOCK;
     }
 
-    virtual int ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
+    int ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int WriteIntCoord(GInt32 nX, GInt32 nY, GBool bCompressed);
     int WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax, GInt32 nYMax,
                          GBool bCompressed);
