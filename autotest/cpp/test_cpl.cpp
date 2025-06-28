@@ -5958,4 +5958,13 @@ TEST_F(test_cpl, CPLStrlenUTF8Ex)
               3);
 }
 
+TEST_F(test_cpl, CPLGetRemainingFileDescriptorCount)
+{
+#ifdef _WIN32
+    EXPECT_EQ(CPLGetRemainingFileDescriptorCount(), -1);
+#else
+    EXPECT_GE(CPLGetRemainingFileDescriptorCount(), 0);
+#endif
+}
+
 }  // namespace
