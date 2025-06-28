@@ -1,0 +1,31 @@
+<VRTDataset rasterXSize="5" rasterYSize="10">
+  <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["unknown",GEOGCS["unknown",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]</SRS>
+
+  <Metadata domain="GEOLOCATION">
+    <MDI key="LINE_OFFSET">0</MDI>
+    <MDI key="LINE_STEP">1</MDI>
+    <MDI key="PIXEL_OFFSET">0</MDI>
+    <MDI key="PIXEL_STEP">1</MDI>
+    <MDI key="SRS">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]</MDI>
+    <MDI key="X_BAND">1</MDI>
+    <MDI key="X_DATASET">vrt://../gcore/data/geolocation_arrays_lon180_lon360.tif?bands=4</MDI>
+    <MDI key="Y_BAND">1</MDI>
+    <MDI key="Y_DATASET">vrt://../gcore/data/geolocation_arrays_lon180_lon360.tif?bands=3</MDI>
+  </Metadata>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="COMPRESSION">DEFLATE</MDI>
+    <MDI key="INTERLEAVE">PIXEL</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Float32" band="1">
+    <Description>lyr.1</Description>
+    <NoDataValue>nan</NoDataValue>
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">geolocation_arrays_lon180_lon360.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="5" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="5" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+
