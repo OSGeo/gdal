@@ -404,12 +404,12 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLString const &GetPhotometricInterpretation()
+    CPLString const &GetPhotometricInterpretation()
     {
         return photometric;
     }
 
-    virtual CPLErr SetPhotometricInterpretation(const char *photo)
+    CPLErr SetPhotometricInterpretation(const char *photo)
     {
         photometric = photo;
         return CE_None;
@@ -442,10 +442,9 @@ class MRFDataset final : public GDALPamDataset
 
     // Patches a region of all the next overview, argument counts are in blocks
     // Exported for mrf_insert utility
-    virtual CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width,
-                                         int Height, int srcLevel = 0,
-                                         int recursive = false,
-                                         int sampling_mode = SAMPLING_Avg);
+    CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
+                                 int srcLevel = 0, int recursive = false,
+                                 int sampling_mode = SAMPLING_Avg);
 
     // Creates an XML tree from the current MRF.  If written to a file it
     // becomes an MRF
@@ -514,8 +513,7 @@ class MRFDataset final : public GDALPamDataset
     virtual int CloseDependentDatasets() override;
 
     // Write a tile, the infooffset is the relative position in the index file
-    virtual CPLErr WriteTile(void *buff, GUIntBig infooffset,
-                             GUIntBig size = 0);
+    CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
 
     // Custom CopyWholeRaster for Zen JPEG
     CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,

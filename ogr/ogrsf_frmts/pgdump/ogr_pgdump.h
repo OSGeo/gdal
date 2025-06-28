@@ -162,8 +162,8 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual int TestCapability(const char *) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
-    virtual OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
+    OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
+    OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
