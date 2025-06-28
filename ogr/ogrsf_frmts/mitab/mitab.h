@@ -267,9 +267,8 @@ class TABFile final : public IMapInfoFile
         return Open(pszFname, eAccess, bTestOpenNoError, 512, pszCharset);
     }
 
-    virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError, int nBlockSizeForCreate,
-                     const char *pszCharset);
+    int Open(const char *pszFname, TABAccess eAccess, GBool bTestOpenNoError,
+             int nBlockSizeForCreate, const char *pszCharset);
 
     virtual int Close() override;
 
@@ -329,7 +328,7 @@ class TABFile final : public IMapInfoFile
         return FALSE;
     }
 
-    virtual int GetVersion()
+    int GetVersion()
     {
         return m_nVersion;
     }
@@ -817,7 +816,7 @@ class MIFFile final : public IMapInfoFile
     virtual GBool IsFieldIndexed(int nFieldId) override;
     virtual GBool IsFieldUnique(int nFieldId) override;
 
-    virtual int GetVersion()
+    int GetVersion()
     {
         return m_nVersion;
     }
