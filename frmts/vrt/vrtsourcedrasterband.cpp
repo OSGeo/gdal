@@ -114,7 +114,6 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 {
     VRTSourcedRasterBand::CloseDependentDatasets();
-    CSLDestroy(m_papszSourceList);
 }
 
 /************************************************************************/
@@ -2258,8 +2257,8 @@ CPLErr VRTSourcedRasterBand::XMLInit(const CPLXMLNode *psTree,
     /* -------------------------------------------------------------------- */
     /*      Process sources.                                                */
     /* -------------------------------------------------------------------- */
-    VRTDriver *const poDriver =
-        static_cast<VRTDriver *>(GDALGetDriverByName("VRT"));
+    VRTDriver *const poDriver = dynamic_cast<VRTDriver *>(
+        GetGDALDriverManager()->GetDriverByName("VRT"));
 
     for (const CPLXMLNode *psChild = psTree->psChild;
          psChild != nullptr && poDriver != nullptr; psChild = psChild->psNext)
@@ -2903,30 +2902,27 @@ char **VRTSourcedRasterBand::GetMetadata(const char *pszDomain)
     /* ==================================================================== */
     if (pszDomain != nullptr && EQUAL(pszDomain, "vrt_sources"))
     {
-        CSLDestroy(m_papszSourceList);
-        m_papszSourceList = nullptr;
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Process SimpleSources. */
-        /* --------------------------------------------------------------------
-         */
-        for (int iSource = 0; iSource < nSources; iSource++)
+        if (m_aosSourceList.size() != nSources)
         {
-            CPLXMLNode *const psXMLSrc =
-                papoSources[iSource]->SerializeToXML(nullptr);
-            if (psXMLSrc == nullptr)
-                continue;
+            m_aosSourceList.clear();
 
-            char *const pszXML = CPLSerializeXMLTree(psXMLSrc);
+            // Process SimpleSources
+            for (int iSource = 0; iSource < nSources; iSource++)
+            {
+                CPLXMLNode *const psXMLSrc =
+                    papoSources[iSource]->SerializeToXML(nullptr);
+                if (psXMLSrc == nullptr)
+                    continue;
 
-            m_papszSourceList = CSLSetNameValue(
-                m_papszSourceList, CPLSPrintf("source_%d", iSource), pszXML);
-            CPLFree(pszXML);
-            CPLDestroyXMLNode(psXMLSrc);
+                char *const pszXML = CPLSerializeXMLTree(psXMLSrc);
+
+                m_aosSourceList.AddString(
+                    CPLSPrintf("source_%d=%s", iSource, pszXML));
+                CPLFree(pszXML);
+                CPLDestroyXMLNode(psXMLSrc);
+            }
         }
-
-        return m_papszSourceList;
+        return m_aosSourceList.List();
     }
 
     /* ==================================================================== */
@@ -2953,25 +2949,27 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem(const char *pszName,
 
     if (pszDomain != nullptr && EQUAL(pszDomain, "new_vrt_sources"))
     {
-        VRTDriver *const poDriver =
-            static_cast<VRTDriver *>(GDALGetDriverByName("VRT"));
-
-        CPLXMLNode *const psTree = CPLParseXMLString(pszValue);
-        if (psTree == nullptr)
-            return CE_Failure;
-
-        auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
-        if (l_poDS == nullptr)
+        VRTDriver *const poDriver = dynamic_cast<VRTDriver *>(
+            GetGDALDriverManager()->GetDriverByName("VRT"));
+        if (poDriver)
         {
-            CPLDestroyXMLNode(psTree);
-            return CE_Failure;
-        }
-        VRTSource *const poSource =
-            poDriver->ParseSource(psTree, nullptr, l_poDS->m_oMapSharedSources);
-        CPLDestroyXMLNode(psTree);
+            CPLXMLNode *const psTree = CPLParseXMLString(pszValue);
+            if (psTree == nullptr)
+                return CE_Failure;
 
-        if (poSource != nullptr)
-            return AddSource(poSource);
+            auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
+            if (l_poDS == nullptr)
+            {
+                CPLDestroyXMLNode(psTree);
+                return CE_Failure;
+            }
+            VRTSource *const poSource = poDriver->ParseSource(
+                psTree, nullptr, l_poDS->m_oMapSharedSources);
+            CPLDestroyXMLNode(psTree);
+
+            if (poSource != nullptr)
+                return AddSource(poSource);
+        }
 
         return CE_Failure;
     }
@@ -2988,32 +2986,32 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem(const char *pszName,
                      pszName, nSources - 1);
             return CE_Failure;
         }
-
-        VRTDriver *const poDriver =
-            static_cast<VRTDriver *>(GDALGetDriverByName("VRT"));
-
-        CPLXMLNode *const psTree = CPLParseXMLString(pszValue);
-        if (psTree == nullptr)
-            return CE_Failure;
-
-        auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
-        if (l_poDS == nullptr)
+        VRTDriver *const poDriver = dynamic_cast<VRTDriver *>(
+            GetGDALDriverManager()->GetDriverByName("VRT"));
+        if (poDriver)
         {
+            CPLXMLNode *const psTree = CPLParseXMLString(pszValue);
+            if (psTree == nullptr)
+                return CE_Failure;
+
+            auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
+            if (l_poDS == nullptr)
+            {
+                CPLDestroyXMLNode(psTree);
+                return CE_Failure;
+            }
+            VRTSource *const poSource = poDriver->ParseSource(
+                psTree, nullptr, l_poDS->m_oMapSharedSources);
             CPLDestroyXMLNode(psTree);
-            return CE_Failure;
-        }
-        VRTSource *const poSource =
-            poDriver->ParseSource(psTree, nullptr, l_poDS->m_oMapSharedSources);
-        CPLDestroyXMLNode(psTree);
 
-        if (poSource != nullptr)
-        {
-            delete papoSources[iSource];
-            papoSources[iSource] = poSource;
-            static_cast<VRTDataset *>(poDS)->SetNeedsFlush();
-            return CE_None;
+            if (poSource != nullptr)
+            {
+                delete papoSources[iSource];
+                papoSources[iSource] = poSource;
+                static_cast<VRTDataset *>(poDS)->SetNeedsFlush();
+                return CE_None;
+            }
         }
-
         return CE_Failure;
     }
 
@@ -3031,8 +3029,10 @@ CPLErr VRTSourcedRasterBand::SetMetadata(char **papszNewMD,
     if (pszDomain != nullptr && (EQUAL(pszDomain, "new_vrt_sources") ||
                                  EQUAL(pszDomain, "vrt_sources")))
     {
-        VRTDriver *const poDriver =
-            static_cast<VRTDriver *>(GDALGetDriverByName("VRT"));
+        VRTDriver *const poDriver = dynamic_cast<VRTDriver *>(
+            GetGDALDriverManager()->GetDriverByName("VRT"));
+        if (!poDriver)
+            return CE_Failure;
 
         if (EQUAL(pszDomain, "vrt_sources"))
         {
