@@ -1008,7 +1008,8 @@ class MosaicDataset : public GDALDataset
     const GDALColorTable *const m_poCT;
 
     GDALGeoTransform m_gt{};
-    lru11::Cache<std::string, std::shared_ptr<GDALDataset>> m_oCacheTile{};
+    const int m_nMaxCacheTileSize;
+    lru11::Cache<std::string, std::shared_ptr<GDALDataset>> m_oCacheTile;
 
     CPL_DISALLOW_COPY_ASSIGN(MosaicDataset)
 
@@ -1020,12 +1021,14 @@ class MosaicDataset : public GDALDataset
                   int nTileMaxX, int nTileMaxY, const std::string &convention,
                   int nBandsIn, GDALDataType eDT, const double *pdfDstNoData,
                   const std::vector<std::string> &metadata,
-                  const GDALColorTable *poCT)
+                  const GDALColorTable *poCT, int maxCacheTileSize)
         : m_directory(directory), m_extension(extension), m_format(format),
           m_poSrcDS(poSrcDS), m_oTM(oTM), m_oSRS(oSRS), m_nTileMinX(nTileMinX),
           m_nTileMinY(nTileMinY), m_nTileMaxX(nTileMaxX),
           m_nTileMaxY(nTileMaxY), m_convention(convention), m_eDT(eDT),
-          m_pdfDstNoData(pdfDstNoData), m_metadata(metadata), m_poCT(poCT)
+          m_pdfDstNoData(pdfDstNoData), m_metadata(metadata), m_poCT(poCT),
+          m_nMaxCacheTileSize(maxCacheTileSize),
+          m_oCacheTile(/* max_size = */ maxCacheTileSize, /* elasticity = */ 0)
     {
         nRasterXSize = (nTileMaxX - nTileMinX + 1) * oTM.mTileWidth;
         nRasterYSize = (nTileMaxY - nTileMinY + 1) * oTM.mTileHeight;
@@ -1073,7 +1076,8 @@ class MosaicDataset : public GDALDataset
         return std::make_unique<MosaicDataset>(
             m_directory, m_extension, m_format, m_poSrcDS, m_oTM, m_oSRS,
             m_nTileMinX, m_nTileMinY, m_nTileMaxX, m_nTileMaxY, m_convention,
-            nBands, m_eDT, m_pdfDstNoData, m_metadata, m_poCT);
+            nBands, m_eDT, m_pdfDstNoData, m_metadata, m_poCT,
+            m_nMaxCacheTileSize);
     }
 };
 
@@ -1097,6 +1101,7 @@ CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
                                                   nullptr};
         const char *const apszAllowedDriversForCOG[] = {"GTiff", "LIBERTIFF",
                                                         nullptr};
+        // CPLDebugOnly("gdal_raster_tile", "Opening %s", filename.c_str());
         poTileDS.reset(GDALDataset::Open(
             filename.c_str(), GDAL_OF_RASTER | GDAL_OF_INTERNAL,
             EQUAL(poThisDS->m_format.c_str(), "COG") ? apszAllowedDriversForCOG
@@ -2935,6 +2940,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                  "Generating tiles z=%d, y=%d...%d, x=%d...%d", m_maxZoomLevel,
                  nMinTileY, nMaxTileY, nMinTileX, nMaxTileX);
 
+        m_numThreads = std::max(1, m_numThreads);
         if (static_cast<uint64_t>(m_numThreads) > nBaseTiles)
             m_numThreads = static_cast<int>(nBaseTiles);
 
@@ -3159,15 +3165,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                            nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX,
                            nSrcMaxTileY, m_noIntersectionIsOK, bIntersects));
 
-        MosaicDataset oSrcDS(
-            CPLFormFilenameSafe(m_outputDirectory.c_str(),
-                                CPLSPrintf("%d", iZ + 1), nullptr),
-            pszExtension, m_outputFormat, poSrcDS, srcTileMatrix, oSRS_TMS,
-            nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY,
-            m_convention, nDstBands, psWO->eWorkingDataType,
-            psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0]) : nullptr,
-            m_metadata, poColorTable);
-
         auto ovrTileMatrix = tileMatrixList[iZ];
         int nOvrMinTileX = 0;
         int nOvrMinTileY = 0;
@@ -3177,6 +3174,54 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             GetTileIndices(ovrTileMatrix, bInvertAxisTMS, m_tileSize, adfExtent,
                            nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX,
                            nOvrMaxTileY, m_noIntersectionIsOK, bIntersects));
+
+        constexpr double EPSILON = 1e-3;
+        int maxCacheTileSizePerThread = static_cast<int>(
+            (1 +
+             std::ceil((ovrTileMatrix.mResY * ovrTileMatrix.mTileHeight) /
+                           (srcTileMatrix.mResY * srcTileMatrix.mTileHeight) -
+                       EPSILON)) *
+            (1 +
+             std::ceil((ovrTileMatrix.mResX * ovrTileMatrix.mTileWidth) /
+                           (srcTileMatrix.mResX * srcTileMatrix.mTileWidth) -
+                       EPSILON)));
+
+        CPLDebugOnly("gdal_raster_tile", "Ideal maxCacheTileSizePerThread = %d",
+                     maxCacheTileSizePerThread);
+
+#ifndef _WIN32
+        const int remainingFileDescriptorCount =
+            CPLGetRemainingFileDescriptorCount();
+        CPLDebugOnly("gdal_raster_tile", "remainingFileDescriptorCount = %d",
+                     remainingFileDescriptorCount);
+        if (remainingFileDescriptorCount >= 0 &&
+            remainingFileDescriptorCount <
+                (1 + maxCacheTileSizePerThread) * m_numThreads)
+        {
+            const int newNumThreads =
+                std::max(1, remainingFileDescriptorCount /
+                                (1 + maxCacheTileSizePerThread));
+            if (newNumThreads < m_numThreads)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Not enough file descriptors available given the number of "
+                    "threads. Reducing the number of threads %d to %d",
+                    m_numThreads, newNumThreads);
+                m_numThreads = newNumThreads;
+            }
+        }
+#endif
+
+        MosaicDataset oSrcDS(
+            CPLFormFilenameSafe(m_outputDirectory.c_str(),
+                                CPLSPrintf("%d", iZ + 1), nullptr),
+            pszExtension, m_outputFormat, poSrcDS, srcTileMatrix, oSRS_TMS,
+            nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY,
+            m_convention, nDstBands, psWO->eWorkingDataType,
+            psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0]) : nullptr,
+            m_metadata, poColorTable, maxCacheTileSizePerThread);
+
         bRet = bIntersects;
 
         if (bRet)

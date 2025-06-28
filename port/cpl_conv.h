@@ -307,6 +307,7 @@ int CPL_DLL CPLCopyTree(const char *pszNewPath, const char *pszOldPath);
 int CPL_DLL CPLMoveFile(const char *pszNewPath, const char *pszOldPath);
 int CPL_DLL CPLSymlink(const char *pszOldPath, const char *pszNewPath,
                        CSLConstList papszOptions);
+int CPL_DLL CPLGetRemainingFileDescriptorCount(void);
 
 /* -------------------------------------------------------------------- */
 /*      Lock related functions.                                         */
