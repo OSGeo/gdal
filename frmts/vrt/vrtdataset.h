@@ -457,6 +457,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     static CPLErr Delete(const char *pszFilename);
 
     static int GetNumThreads(GDALDataset *poDS);
+
+    static bool IsRawRasterBandEnabled();
 };
 
 /************************************************************************/

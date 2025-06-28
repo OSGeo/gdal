@@ -355,3 +355,42 @@ def test_vrtrawlink_vax_order():
         </VRTDataset>"""
     )
     assert ds.GetRasterBand(1).Checksum() == 129
+
+
+###############################################################################
+#
+
+
+def test_vrtrawlink_disabled_open():
+
+    with gdaltest.config_option("GDAL_VRT_ENABLE_RAWRASTERBAND", "NO"):
+        with pytest.raises(
+            Exception, match="VRTRawRasterBand support has been disabled at run-time"
+        ):
+            gdal.Open("data/small.vrt")
+
+
+###############################################################################
+#
+
+
+def test_vrtrawlink_disabled_add_band():
+
+    with gdaltest.config_option("GDAL_VRT_ENABLE_RAWRASTERBAND", "NO"):
+        driver = gdal.GetDriverByName("VRT")
+        ds = driver.Create("", 31, 35, 0)
+
+        # Add a new band pointing to this bogus file.
+        options = [
+            "subClass=VRTRawRasterBand",
+            "SourceFilename=rawlink7.dat",
+            "relativeToVRT=1",
+            "ImageOffset=100",
+            "PixelOffset=3",
+            "LineOffset=93",
+            "ByteOrder=MSB",
+        ]
+        with pytest.raises(
+            Exception, match="VRTRawRasterBand support has been disabled at run-time"
+        ):
+            ds.AddBand(gdal.GDT_UInt16, options)

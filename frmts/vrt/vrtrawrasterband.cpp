@@ -46,6 +46,15 @@ VRTRawRasterBand::VRTRawRasterBand(GDALDataset *poDSIn, int nBandIn,
     : m_poRawRaster(nullptr), m_pszSourceFilename(nullptr),
       m_bRelativeToVRT(FALSE)
 {
+    if (!VRTDataset::IsRawRasterBandEnabled())
+    {
+        // Safety belt. Not supposed to happen, hence CE_Fatal
+        CPLError(CE_Fatal, CPLE_NotSupported,
+                 "Crashing process: VRTRawRasterBand constructor called "
+                 "whereas not authorized");
+        return;
+    }
+
     Initialize(poDSIn->GetRasterXSize(), poDSIn->GetRasterYSize());
 
     // Declared in GDALRasterBand.
