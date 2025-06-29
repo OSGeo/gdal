@@ -2408,6 +2408,38 @@ def test_vrt_read_compute_statistics_mosaic_optimization_not_triggered():
 
 
 ###############################################################################
+# Test ComputeStatistics() mosaic optimization on single source and check that
+# it exacly preserves source statistics
+# Note that the test unfortunately does pass even without the tweak in
+# VRTSourcedRasterBand::ComputeStatistics() to exactly use the source statistics
+
+
+def test_vrt_read_compute_statistics_mosaic_optimization_single_source(tmp_vsimem):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+    rng = np.random.default_rng(0)
+    N = 512
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "in.tif", N, N, 1, gdal.GDT_Float32, options=["TILED=YES"]
+    ) as ds:
+        ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+        ds.WriteArray((rng.standard_normal(N * N)).reshape(N, N))
+    gdal.Translate(
+        tmp_vsimem / "test.tif", tmp_vsimem / "in.tif", options="-stats -co TILED=YES"
+    )
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        md_band_1 = ds.GetRasterBand(1).GetMetadata()
+    gdal.BuildVRT(tmp_vsimem / "test.vrt", tmp_vsimem / "test.tif")
+    with gdal.Open(tmp_vsimem / "test.vrt", gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).ComputeStatistics(False)
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        assert ds.GetRasterBand(1).GetMetadata() == md_band_1
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert ds.GetRasterBand(1).GetMetadata() == md_band_1
+
+
+###############################################################################
 # Test complex source with requesting a buffer with a type "larger" than
 # the VRT data type
 
