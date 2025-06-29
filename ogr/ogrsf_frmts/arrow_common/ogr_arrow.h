@@ -15,6 +15,7 @@
 
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
+#include "ogrlayerarrow.h"
 
 #include <map>
 #include <set>
@@ -189,6 +190,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int64_t m_nIdxInBatch = 0;
     std::map<std::string, CPLJSONObject> m_oMapGeometryColumns{};
     mutable std::map<int, OGREnvelope> m_oMapExtents{};
+    mutable std::map<int, OGREnvelope3D> m_oMapExtents3D{};
     int m_iRecordBatch = -1;
     std::shared_ptr<arrow::RecordBatch> m_poBatch{};
     // m_poBatch->columns() is a relatively costly operation, so cache its
@@ -434,6 +436,11 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::set<OGRwkbGeometryType>>
         m_oSetWrittenGeometryTypes{};  // size: GetGeomFieldCount()
 
+    bool m_bEdgesSpherical = false;
+#if ARROW_VERSION_MAJOR >= 21
+    bool m_bUseArrowWKBExtension = false;
+#endif
+
     static OGRArrowGeomEncoding
     GetPreciseArrowGeomEncoding(OGRArrowGeomEncoding eEncodingType,
                                 OGRwkbGeometryType eGType);
@@ -544,7 +551,87 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     bool FlushFeatures();
+
+    static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj);
+    static OGRSpatialReference IdentifyCRS(const OGRSpatialReference *poSRS);
 };
+
+/************************************************************************/
+/*                     OGRGeoArrowWkbExtensionType                      */
+/************************************************************************/
+
+#if ARROW_VERSION_MAJOR >= 21
+
+class OGRGeoArrowWkbExtensionType final : public arrow::ExtensionType
+{
+  public:
+    explicit OGRGeoArrowWkbExtensionType(
+        const std::shared_ptr<arrow::DataType> &storage_type,
+        const std::string &metadata)
+        : arrow::ExtensionType(storage_type), metadata_(metadata)
+    {
+    }
+
+    std::string extension_name() const override
+    {
+        return EXTENSION_NAME_GEOARROW_WKB;
+    }
+
+    bool ExtensionEquals(const arrow::ExtensionType &other) const override
+    {
+        return extension_name() == other.extension_name() &&
+               storage_type_->Equals(other.storage_type()) &&
+               Serialize() == other.Serialize();
+    }
+
+    arrow::Result<std::shared_ptr<arrow::DataType>>
+    Deserialize(std::shared_ptr<arrow::DataType> storage_type,
+                const std::string &serialized) const override
+    {
+        return Make(std::move(storage_type), serialized);
+    }
+
+    std::string Serialize() const override
+    {
+        return metadata_;
+    }
+
+    std::shared_ptr<arrow::Array>
+    MakeArray(std::shared_ptr<arrow::ArrayData> data) const override
+    {
+        CPLAssert(data->type->id() == arrow::Type::EXTENSION);
+        CPLAssert(EXTENSION_NAME_GEOARROW_WKB ==
+                  static_cast<const arrow::ExtensionType &>(*data->type)
+                      .extension_name());
+        return std::make_shared<arrow::ExtensionArray>(data);
+    }
+
+    static bool IsSupportedStorageType(arrow::Type::type type_id)
+    {
+        // TODO: also add BINARY_VIEW if we support it some day.
+        return type_id == arrow::Type::BINARY ||
+               type_id == arrow::Type::LARGE_BINARY;
+    }
+
+    static arrow::Result<std::shared_ptr<arrow::DataType>>
+    Make(std::shared_ptr<arrow::DataType> storage_type,
+         const std::string &metadata)
+    {
+        if (!IsSupportedStorageType(storage_type->id()))
+        {
+            return arrow::Status::Invalid(
+                "Invalid storage type for OGRGeoArrowWkbExtensionType: ",
+                storage_type->ToString());
+        }
+        return std::make_shared<OGRGeoArrowWkbExtensionType>(
+            std::move(storage_type), metadata);
+    }
+
+  private:
+    std::string metadata_{};
+};
+
+#endif  // ARROW_VERSION_MAJOR >= 21
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

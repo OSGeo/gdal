@@ -315,9 +315,11 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                                        const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
-    m_bWriteBBoxStruct = CPLTestBool(CSLFetchNameValueDef(
+    const char *pszWriteCoveringBBox = CSLFetchNameValueDef(
         papszOptions, "WRITE_COVERING_BBOX",
-        CPLGetConfigOption("OGR_PARQUET_WRITE_COVERING_BBOX", "YES")));
+        CPLGetConfigOption("OGR_PARQUET_WRITE_COVERING_BBOX", nullptr));
+    m_bWriteBBoxStruct =
+        pszWriteCoveringBBox == nullptr || CPLTestBool(pszWriteCoveringBBox);
 
     if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "SORT_BY_BBOX", "NO")))
     {
@@ -474,11 +476,32 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         m_oWriterPropertiesBuilder.enable_write_page_index();
 #endif
 
+    const char *pszWriteGeo =
+        CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", nullptr);
+    m_bWriteGeoMetadata = pszWriteGeo == nullptr || CPLTestBool(pszWriteGeo);
+
     if (m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone)
     {
+#if ARROW_VERSION_MAJOR >= 21
+        const char *pszUseParquetGeoTypes =
+            CSLFetchNameValueDef(papszOptions, "USE_PARQUET_GEO_TYPES", "NO");
+        if (EQUAL(pszUseParquetGeoTypes, "ONLY"))
+        {
+            m_bUseArrowWKBExtension = true;
+            if (pszWriteGeo == nullptr)
+                m_bWriteGeoMetadata = false;
+            if (pszWriteCoveringBBox == nullptr)
+                m_bWriteBBoxStruct = false;
+        }
+        else
+        {
+            m_bUseArrowWKBExtension = CPLTestBool(pszUseParquetGeoTypes);
+        }
+#else
         m_oWriterPropertiesBuilder.disable_statistics(
             parquet::schema::ColumnPath::FromDotString(
                 m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()));
+#endif
     }
 
     const char *pszRowGroupSize =
@@ -518,120 +541,6 @@ bool OGRParquetWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
-/*                            IdentifyCRS()                             */
-/************************************************************************/
-
-static OGRSpatialReference IdentifyCRS(const OGRSpatialReference *poSRS)
-{
-    OGRSpatialReference oSRSIdentified(*poSRS);
-
-    if (poSRS->GetAuthorityName(nullptr) == nullptr)
-    {
-        // Try to find a registered CRS that matches the input one
-        int nEntries = 0;
-        int *panConfidence = nullptr;
-        OGRSpatialReferenceH *pahSRS =
-            poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
-
-        // If there are several matches >= 90%, take the only one
-        // that is EPSG
-        int iOtherAuthority = -1;
-        int iEPSG = -1;
-        const char *const apszOptions[] = {
-            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
-        int iConfidenceBestMatch = -1;
-        for (int iSRS = 0; iSRS < nEntries; iSRS++)
-        {
-            auto poCandidateCRS = OGRSpatialReference::FromHandle(pahSRS[iSRS]);
-            if (panConfidence[iSRS] < iConfidenceBestMatch ||
-                panConfidence[iSRS] < 70)
-            {
-                break;
-            }
-            if (poSRS->IsSame(poCandidateCRS, apszOptions))
-            {
-                const char *pszAuthName =
-                    poCandidateCRS->GetAuthorityName(nullptr);
-                if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG"))
-                {
-                    iOtherAuthority = -2;
-                    if (iEPSG < 0)
-                    {
-                        iConfidenceBestMatch = panConfidence[iSRS];
-                        iEPSG = iSRS;
-                    }
-                    else
-                    {
-                        iEPSG = -1;
-                        break;
-                    }
-                }
-                else if (iEPSG < 0 && pszAuthName != nullptr)
-                {
-                    if (EQUAL(pszAuthName, "OGC"))
-                    {
-                        const char *pszAuthCode =
-                            poCandidateCRS->GetAuthorityCode(nullptr);
-                        if (pszAuthCode && EQUAL(pszAuthCode, "CRS84"))
-                        {
-                            iOtherAuthority = iSRS;
-                            break;
-                        }
-                    }
-                    else if (iOtherAuthority == -1)
-                    {
-                        iConfidenceBestMatch = panConfidence[iSRS];
-                        iOtherAuthority = iSRS;
-                    }
-                    else
-                        iOtherAuthority = -2;
-                }
-            }
-        }
-        if (iEPSG >= 0)
-        {
-            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iEPSG]);
-        }
-        else if (iOtherAuthority >= 0)
-        {
-            oSRSIdentified =
-                *OGRSpatialReference::FromHandle(pahSRS[iOtherAuthority]);
-        }
-        OSRFreeSRSArray(pahSRS);
-        CPLFree(panConfidence);
-    }
-
-    return oSRSIdentified;
-}
-
-/************************************************************************/
-/*                      RemoveIDFromMemberOfEnsembles()                 */
-/************************************************************************/
-
-static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
-{
-    // Remove "id" from members of datum ensembles for compatibility with
-    // older PROJ versions
-    // Cf https://github.com/opengeospatial/geoparquet/discussions/110
-    // and https://github.com/OSGeo/PROJ/pull/3221
-    if (obj.GetType() == CPLJSONObject::Type::Object)
-    {
-        for (auto &subObj : obj.GetChildren())
-        {
-            RemoveIDFromMemberOfEnsembles(subObj);
-        }
-    }
-    else if (obj.GetType() == CPLJSONObject::Type::Array &&
-             obj.GetName() == "members")
-    {
-        for (auto &subObj : obj.ToArray())
-        {
-            subObj.Delete("id");
-        }
-    }
-}
-
-/************************************************************************/
 /*                            GetGeoMetadata()                          */
 /************************************************************************/
 
@@ -643,8 +552,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
     if (pszGeoMetadata)
         return pszGeoMetadata;
 
-    if (m_poFeatureDefn->GetGeomFieldCount() != 0 &&
-        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")))
+    if (m_poFeatureDefn->GetGeomFieldCount() != 0 && m_bWriteGeoMetadata)
     {
         CPLJSONObject oRoot;
         oRoot.Add("version", "1.1.0");
@@ -978,7 +886,12 @@ OGRErr OGRParquetWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
 {
     OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
     if (eErr == OGRERR_NONE &&
-        m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB)
+        m_aeGeomEncoding.back() == OGRArrowGeomEncoding::WKB
+#if ARROW_VERSION_MAJOR < 21
+        // Geostatistics in Arrow 21 do not support geographic type for now
+        && m_bEdgesSpherical
+#endif
+    )
     {
         m_oWriterPropertiesBuilder.disable_statistics(
             parquet::schema::ColumnPath::FromDotString(

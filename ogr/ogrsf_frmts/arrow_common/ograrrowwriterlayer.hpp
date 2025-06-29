@@ -108,6 +108,124 @@ inline bool OGRArrowWriterLayer::FinalizeWriting()
 }
 
 /************************************************************************/
+/*                      RemoveIDFromMemberOfEnsembles()                 */
+/************************************************************************/
+
+/* static */
+inline void
+OGRArrowWriterLayer::RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
+{
+    // Remove "id" from members of datum ensembles for compatibility with
+    // older PROJ versions
+    // Cf https://github.com/opengeospatial/geoparquet/discussions/110
+    // and https://github.com/OSGeo/PROJ/pull/3221
+    if (obj.GetType() == CPLJSONObject::Type::Object)
+    {
+        for (auto &subObj : obj.GetChildren())
+        {
+            RemoveIDFromMemberOfEnsembles(subObj);
+        }
+    }
+    else if (obj.GetType() == CPLJSONObject::Type::Array &&
+             obj.GetName() == "members")
+    {
+        for (auto &subObj : obj.ToArray())
+        {
+            subObj.Delete("id");
+        }
+    }
+}
+
+/************************************************************************/
+/*                            IdentifyCRS()                             */
+/************************************************************************/
+
+/* static */
+inline OGRSpatialReference
+OGRArrowWriterLayer::IdentifyCRS(const OGRSpatialReference *poSRS)
+{
+    OGRSpatialReference oSRSIdentified(*poSRS);
+
+    if (poSRS->GetAuthorityName(nullptr) == nullptr)
+    {
+        // Try to find a registered CRS that matches the input one
+        int nEntries = 0;
+        int *panConfidence = nullptr;
+        OGRSpatialReferenceH *pahSRS =
+            poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
+
+        // If there are several matches >= 90%, take the only one
+        // that is EPSG
+        int iOtherAuthority = -1;
+        int iEPSG = -1;
+        const char *const apszOptions[] = {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
+        int iConfidenceBestMatch = -1;
+        for (int iSRS = 0; iSRS < nEntries; iSRS++)
+        {
+            auto poCandidateCRS = OGRSpatialReference::FromHandle(pahSRS[iSRS]);
+            if (panConfidence[iSRS] < iConfidenceBestMatch ||
+                panConfidence[iSRS] < 70)
+            {
+                break;
+            }
+            if (poSRS->IsSame(poCandidateCRS, apszOptions))
+            {
+                const char *pszAuthName =
+                    poCandidateCRS->GetAuthorityName(nullptr);
+                if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG"))
+                {
+                    iOtherAuthority = -2;
+                    if (iEPSG < 0)
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iEPSG = iSRS;
+                    }
+                    else
+                    {
+                        iEPSG = -1;
+                        break;
+                    }
+                }
+                else if (iEPSG < 0 && pszAuthName != nullptr)
+                {
+                    if (EQUAL(pszAuthName, "OGC"))
+                    {
+                        const char *pszAuthCode =
+                            poCandidateCRS->GetAuthorityCode(nullptr);
+                        if (pszAuthCode && EQUAL(pszAuthCode, "CRS84"))
+                        {
+                            iOtherAuthority = iSRS;
+                            break;
+                        }
+                    }
+                    else if (iOtherAuthority == -1)
+                    {
+                        iConfidenceBestMatch = panConfidence[iSRS];
+                        iOtherAuthority = iSRS;
+                    }
+                    else
+                        iOtherAuthority = -2;
+                }
+            }
+        }
+        if (iEPSG >= 0)
+        {
+            oSRSIdentified = *OGRSpatialReference::FromHandle(pahSRS[iEPSG]);
+        }
+        else if (iOtherAuthority >= 0)
+        {
+            oSRSIdentified =
+                *OGRSpatialReference::FromHandle(pahSRS[iOtherAuthority]);
+        }
+        OSRFreeSRSArray(pahSRS);
+        CPLFree(panConfidence);
+    }
+
+    return oSRSIdentified;
+}
+
+/************************************************************************/
 /*                       CreateSchemaCommon()                           */
 /************************************************************************/
 
@@ -343,7 +461,43 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         switch (m_aeGeomEncoding[i])
         {
             case OGRArrowGeomEncoding::WKB:
-                dt = arrow::binary();
+#if ARROW_VERSION_MAJOR >= 21
+                if (m_bUseArrowWKBExtension)
+                {
+                    CPLJSONDocument oMetadataDoc;
+
+                    const auto poSRS = poGeomFieldDefn->GetSpatialRef();
+                    if (poSRS)
+                    {
+                        OGRSpatialReference oSRSIdentified(IdentifyCRS(poSRS));
+
+                        // CRS encoded as PROJJSON
+                        char *pszPROJJSON = nullptr;
+                        oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
+                        CPLJSONDocument oCRSDoc;
+                        CPL_IGNORE_RET_VAL(oCRSDoc.LoadMemory(pszPROJJSON));
+                        CPLFree(pszPROJJSON);
+                        CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
+                        RemoveIDFromMemberOfEnsembles(oCRSRoot);
+
+                        oMetadataDoc.GetRoot().Add("crs", oCRSRoot);
+                    }
+
+                    if (m_bEdgesSpherical)
+                    {
+                        oMetadataDoc.GetRoot().Add("edges", "spherical");
+                    }
+
+                    const std::string metadata = oMetadataDoc.GetRoot().Format(
+                        CPLJSONObject::PrettyFormat::Plain);
+                    dt = std::make_shared<OGRGeoArrowWkbExtensionType>(
+                        arrow::binary(), metadata);
+                }
+                else
+#endif
+                {
+                    dt = arrow::binary();
+                }
                 break;
 
             case OGRArrowGeomEncoding::WKT:
@@ -2858,6 +3012,34 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     }
     auto poRecordBatch = *poRecordBatchResult;
 
+    if (!(bRebuildBatch || !oMapGeomFieldNameToArray.empty()))
+    {
+        for (int i = 0; i < m_poSchema->num_fields(); ++i)
+        {
+            const auto oIter =
+                oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
+            auto l_array = (oIter != oMapGeomFieldNameToArray.end())
+                               ? oIter->second
+                               : poRecordBatch->column(i);
+            const auto schemaType = m_poSchema->field(i)->type();
+            const auto arrayType = l_array->type();
+            if (schemaType->id() != arrow::Type::EXTENSION &&
+                arrayType->id() == arrow::Type::EXTENSION)
+            {
+                bRebuildBatch = true;
+            }
+            else if (schemaType->id() != arrayType->id())
+            {
+                CPLDebug(
+                    "Arrow",
+                    "Field idx=%d name='%s', schema type=%s, array type=%s", i,
+                    m_poSchema->field(i)->name().c_str(),
+                    schemaType->ToString().c_str(),
+                    arrayType->ToString().c_str());
+            }
+        }
+    }
+
     // below assertion commented out since it is not strictly necessary, but
     // reflects what ImportRecordBatch() does.
     // CPLAssert(array->release == nullptr);
@@ -2875,12 +3057,31 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                 apoArrays.emplace_back(oIter->second);
             else
                 apoArrays.emplace_back(poRecordBatch->column(i));
-            if (apoArrays.back()->type()->id() !=
-                m_poSchema->field(i)->type()->id())
+
+            auto expectedFieldType = m_poSchema->field(i)->type();
+            if (expectedFieldType->id() == arrow::Type::EXTENSION)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field '%s' of unexpected type",
-                         m_poSchema->field(i)->name().c_str());
+                auto extensionType = cpl::down_cast<arrow::ExtensionType *>(
+                    expectedFieldType.get());
+                expectedFieldType = extensionType->storage_type();
+            }
+
+            if (apoArrays.back()->type()->id() == arrow::Type::EXTENSION)
+            {
+                apoArrays.back() =
+                    std::static_pointer_cast<arrow::ExtensionArray>(
+                        apoArrays.back())
+                        ->storage();
+            }
+
+            if (apoArrays.back()->type()->id() != expectedFieldType->id())
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Field '%s' of unexpected type. Got '%s', expected '%s'",
+                    m_poSchema->field(i)->name().c_str(),
+                    apoArrays.back()->type()->name().c_str(),
+                    expectedFieldType->name().c_str());
                 return false;
             }
         }

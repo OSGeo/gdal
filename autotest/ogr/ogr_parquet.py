@@ -80,6 +80,30 @@ def _has_arrow_dataset():
 ###############################################################################
 
 
+def _get_do_not_use_parquet_geo_types():
+    options = []
+    if "USE_PARQUET_GEO_TYPES" in gdal.GetDriverByName("PARQUET").GetMetadataItem(
+        "DS_LAYER_CREATIONOPTIONLIST"
+    ):
+        options.append("USE_PARQUET_GEO_TYPES=NO")
+    return options
+
+
+###############################################################################
+
+
+def _get_use_parquet_geo_types():
+    options = []
+    if "USE_PARQUET_GEO_TYPES" in gdal.GetDriverByName("PARQUET").GetMetadataItem(
+        "DS_LAYER_CREATIONOPTIONLIST"
+    ):
+        options.append("USE_PARQUET_GEO_TYPES=YES")
+    return options
+
+
+###############################################################################
+
+
 @pytest.fixture(scope="module", params=[True, False], ids=["arrow-dataset", "regular"])
 def with_arrow_dataset_or_not(request):
 
@@ -603,17 +627,31 @@ def test_ogr_parquet_test_ogrsf_all_geoms_with_arrow_dataset():
 
 
 @pytest.mark.parametrize(
-    "use_vsi,row_group_size,fid", [(False, None, None), (True, 2, "fid")]
+    "use_vsi,row_group_size,fid,use_parquet_geo_types",
+    [(False, None, None, True), (False, None, None, "ONLY"), (True, 2, "fid", False)],
 )
-def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
+def test_ogr_parquet_write_from_another_dataset(
+    use_vsi, row_group_size, fid, use_parquet_geo_types
+):
 
     outfilename = "/vsimem/out.parquet" if use_vsi else "tmp/out.parquet"
+    layerCreationOptions = []
+    if row_group_size:
+        layerCreationOptions.append("ROW_GROUP_SIZE=" + str(row_group_size))
+    if fid:
+        layerCreationOptions.append("FID=" + fid)
+    if use_parquet_geo_types == "ONLY":
+        if "USE_PARQUET_GEO_TYPES" in gdal.GetDriverByName("PARQUET").GetMetadataItem(
+            "DS_LAYER_CREATIONOPTIONLIST"
+        ):
+            layerCreationOptions.append("USE_PARQUET_GEO_TYPES=ONLY")
+        else:
+            pytest.skip("Skipping use_parquet_geo_types=ONLY due to libarrow < 21")
+    elif use_parquet_geo_types:
+        layerCreationOptions += _get_use_parquet_geo_types()
+    elif not use_parquet_geo_types:
+        layerCreationOptions += _get_do_not_use_parquet_geo_types()
     try:
-        layerCreationOptions = []
-        if row_group_size:
-            layerCreationOptions.append("ROW_GROUP_SIZE=" + str(row_group_size))
-        if fid:
-            layerCreationOptions.append("FID=" + fid)
         gdal.VectorTranslate(
             outfilename,
             "data/parquet/test.parquet",
@@ -661,28 +699,31 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
                     )
 
         geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
-        assert geo is not None
-        j = json.loads(geo)
-        assert j is not None
-        assert "version" in j
-        assert j["version"] == "1.1.0"
-        assert "primary_column" in j
-        assert j["primary_column"] == "geometry"
-        assert "columns" in j
-        assert "geometry" in j["columns"]
-        assert "encoding" in j["columns"]["geometry"]
-        assert j["columns"]["geometry"]["encoding"] == "WKB"
-        assert j["columns"]["geometry"]["covering"] == {
-            "bbox": {
-                "xmax": ["geometry_bbox", "xmax"],
-                "xmin": ["geometry_bbox", "xmin"],
-                "ymax": ["geometry_bbox", "ymax"],
-                "ymin": ["geometry_bbox", "ymin"],
+        if use_parquet_geo_types == "ONLY":
+            assert geo is None
+        else:
+            assert geo is not None
+            j = json.loads(geo)
+            assert j is not None
+            assert "version" in j
+            assert j["version"] == "1.1.0"
+            assert "primary_column" in j
+            assert j["primary_column"] == "geometry"
+            assert "columns" in j
+            assert "geometry" in j["columns"]
+            assert "encoding" in j["columns"]["geometry"]
+            assert j["columns"]["geometry"]["encoding"] == "WKB"
+            assert j["columns"]["geometry"]["covering"] == {
+                "bbox": {
+                    "xmax": ["geometry_bbox", "xmax"],
+                    "xmin": ["geometry_bbox", "xmin"],
+                    "ymax": ["geometry_bbox", "ymax"],
+                    "ymin": ["geometry_bbox", "ymin"],
+                }
             }
-        }
 
-        md = lyr.GetMetadata("_PARQUET_METADATA_")
-        assert "geo" in md
+            md = lyr.GetMetadata("_PARQUET_METADATA_")
+            assert "geo" in md
 
         ds = None
 
@@ -2885,19 +2926,19 @@ def test_ogr_parquet_recognize_geo_from_arrow_extension_name():
             }
         ):
             ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
-            lyr = ds.CreateLayer("test")
+            lyr = ds.CreateLayer("test", options=_get_do_not_use_parquet_geo_types())
             f = ogr.Feature(lyr.GetLayerDefn())
             f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
             lyr.CreateFeature(f)
             f = None
             ds = None
 
-            ds = ogr.Open(outfilename)
-            lyr = ds.GetLayer(0)
-            geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
-            assert geo is None
-            assert lyr.GetGeomType() == ogr.wkbPoint
-            ds = None
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is None
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        ds = None
 
     finally:
         gdal.Unlink(outfilename)
@@ -4243,3 +4284,129 @@ def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
         assert (
             batch["timestamp_ms_gmt_minus_0215"][0] == b"2019-01-01T14:00:00.500-02:15"
         )
+
+
+###############################################################################
+
+
+def _parquet_has_geo_types():
+    drv = gdal.GetDriverByName("Parquet")
+    return drv is not None and "USE_PARQUET_GEO_TYPES" in drv.GetMetadataItem(
+        "DS_LAYER_CREATIONOPTIONLIST"
+    )
+
+
+###############################################################################
+# Write file using Parquet geo types
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_write_use_geo_type(tmp_vsimem):
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            srs=osr.SpatialReference(epsg=4326),
+            options=["USE_PARQUET_GEO_TYPES=ONLY"],
+        )
+        lyr.SetMetadataItem("EDGES", "SPHERICAL")
+
+    with gdal.OpenEx(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        ds.CreateLayer(
+            "test",
+            srs=osr.SpatialReference(epsg=32631),
+            options=["USE_PARQUET_GEO_TYPES=ONLY"],
+        )
+
+    with gdal.OpenEx(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetMetadataItem("EDGES") is None
+
+
+###############################################################################
+# Test files using Parquet GEOMETRY logical type introduced in libarrow 21
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+@pytest.mark.parametrize(
+    "filename,crs_name",
+    [
+        ("parquet_geometry/example-crs_vermont-4326.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-crs84.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-crs84-wkt2.parquet", "WGS 84"),
+        ("parquet_geometry/example-crs_vermont-custom.parquet", "unknown"),
+        ("parquet_geometry/example-crs_vermont-utm.parquet", "WGS 84 / UTM zone 18N"),
+        ("parquet_geometry/example-crs_vermont-utm.parquet", "WGS 84 / UTM zone 18N"),
+        ("parquet_testing_geospatial/crs-srid.parquet", "NAD83 / Conus Albers"),
+        ("parquet_testing_geospatial/crs-projjson.parquet", "NAD83 / Conus Albers"),
+        ("parquet_testing_geospatial/crs-geography.parquet", "WGS 84"),
+    ],
+)
+def test_ogr_parquet_read_parquet_geometry(filename, crs_name):
+
+    ds = ogr.Open("data/parquet/" + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetName() == crs_name
+
+    if "crs-geography" in filename:
+        assert lyr.GetGeomType() == ogr.wkbUnknown
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
+    else:
+        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetMetadataItem("EDGES") is None
+        assert lyr.TestCapability(ogr.OLCFastGetExtent)
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter)
+
+    xmin, xmax, ymin, ymax = lyr.GetExtent()
+    lyr.SetSpatialFilterRect(xmin + 1e-5, ymin + 1e-5, xmax - 1e-5, ymax - 1e-5)
+    assert lyr.GetFeatureCount() == 1
+    lyr.SetSpatialFilterRect(xmax + 1, ymin, xmax + 2, ymax)
+    assert lyr.GetFeatureCount() == 0
+
+    ds = ogr.Open("PARQUET:data/parquet/" + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbUnknown
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
+    assert lyr.GetSpatialRef().GetName() == crs_name
+
+    if "crs-geography" in filename:
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+    else:
+        assert lyr.GetMetadataItem("EDGES") is None
+
+
+###############################################################################
+# Run test_ogrsf on files using Parquet GEOMETRY logical type introduced in libarrow 21
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_test_ogrsf_parquet_geometry():
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -ro data/parquet/parquet_geometry/example-crs_vermont-utm.parquet"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
