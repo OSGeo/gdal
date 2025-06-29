@@ -2545,6 +2545,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
             }
+            val.SetDatasetOpenedByAlgorithm();
             val.Set(poDS);
             poDS->ReleaseRef();
         }

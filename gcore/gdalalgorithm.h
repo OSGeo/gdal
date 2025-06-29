@@ -439,6 +439,12 @@ class CPL_DLL GDALArgDatasetValue final
      */
     void SetFrom(const GDALArgDatasetValue &other);
 
+    /** Whether the dataset has been opened by the algorithm */
+    bool HasDatasetBeenOpenedByAlgorithm() const
+    {
+        return m_openedByAlgorithm;
+    }
+
   protected:
     friend class GDALAlgorithm;
 
@@ -447,6 +453,12 @@ class CPL_DLL GDALArgDatasetValue final
     {
         CPLAssert(!m_ownerArg);
         m_ownerArg = arg;
+    }
+
+    /** Set that the dataset has been opened by the algorithm */
+    void SetDatasetOpenedByAlgorithm()
+    {
+        m_openedByAlgorithm = true;
     }
 
   private:
@@ -461,6 +473,9 @@ class CPL_DLL GDALArgDatasetValue final
 
     /** Whether a dataset name (possibly empty for a MEM dataset...) has been set */
     bool m_nameSet = false;
+
+    /** Whether the dataset has been opened by the algorithm */
+    bool m_openedByAlgorithm = false;
 
     GDALArgDatasetValue(const GDALArgDatasetValue &) = delete;
     GDALArgDatasetValue &operator=(const GDALArgDatasetValue &) = delete;
