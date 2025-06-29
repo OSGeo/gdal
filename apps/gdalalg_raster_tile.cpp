@@ -471,6 +471,8 @@ static bool GenerateTile(
 
     CPLConfigOptionSetter oSetter("GDAL_PAM_ENABLED", bAuxXML ? "YES" : "NO",
                                   false);
+    CPLConfigOptionSetter oSetter2("GDAL_DISABLE_READDIR_ON_OPEN", "YES",
+                                   false);
 
     std::unique_ptr<CPLConfigOptionSetter> poSetter;
     // No need to reopen the dataset at end of CreateCopy() (for PNG
@@ -549,6 +551,8 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
     }
     CPLConfigOptionSetter oSetter("GDAL_PAM_ENABLED", bAuxXML ? "YES" : "NO",
                                   false);
+    CPLConfigOptionSetter oSetter2("GDAL_DISABLE_READDIR_ON_OPEN", "YES",
+                                   false);
 
     aosOptions.AddString("-r");
     aosOptions.AddString(resampling.c_str());
