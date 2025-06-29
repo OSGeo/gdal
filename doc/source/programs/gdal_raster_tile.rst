@@ -190,6 +190,20 @@ Standard options
    Number of jobs to run at once.
    Default: number of CPUs detected.
 
+.. option:: --parallel-method thread|spawn
+
+   .. versionadded:: GDAL 3.12
+
+   Parallelization method. ``thread`` uses multi-threading (i.e. parallelized tasks
+   are run within the same process), whereas ``spawn`` launches child :program:`gdal` sub-processes.
+   ``spawn`` can achieve better "scaling", but requires the :program:`gdal` binary to be
+   available. GDAL will try to locate it, but you can also set the ``GDAL_PATH``
+   configuration option to point to the directory where the :program:`gdal` binary is
+   located. If :option:`--parallel-method` is not specified, GDAL will automatically
+   decide which of the method is the most appropriate, opting for ``spawn`` if
+   the :program:`gdal` binary can be located and a sufficient number of tiles per job
+   are generated, and otherwise falling back to ``thread``.
+
 
 Advanced Resampling Options
 +++++++++++++++++++++++++++

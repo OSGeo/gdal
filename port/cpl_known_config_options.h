@@ -351,6 +351,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PAM_ENABLED", // from gdalpamdataset.cpp
    "GDAL_PAM_MODE", // from gdalpamdataset.cpp
    "GDAL_PAM_PROXY_DIR", // from gdalpamproxydb.cpp
+   "GDAL_PATH", // from gdalgetgdalpath.cpp
    "GDAL_PDF_BANDS", // from pdfdrivercore.cpp
    "GDAL_PDF_DPI", // from pdfdrivercore.cpp
    "GDAL_PDF_GEO_ENCODING", // from pdfcreatecopy.cpp, pdfdataset.cpp
@@ -371,6 +372,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PROXY_AUTH", // from cpl_http.cpp
    "GDAL_PYTHON_DRIVER_PATH", // from gdalpythondriverloader.cpp
    "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", // from gdalalg_raster_pipeline.cpp
+   "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_KML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTERIO_RESAMPLING", // from gdal_misc.cpp

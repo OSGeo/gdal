@@ -134,6 +134,10 @@ if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
 endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
+if (NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(appslib PRIVATE STATIC_BUILD)
+endif()
+
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 if (GDAL_USE_GEOS)
