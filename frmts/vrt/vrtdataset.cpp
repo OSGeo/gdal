@@ -94,8 +94,6 @@ VRTDataset::~VRTDataset()
     VRTDataset::FlushCache(true);
     CPLFree(m_pszVRTPath);
 
-    delete m_poMaskBand;
-
     for (size_t i = 0; i < m_apoOverviews.size(); i++)
         delete m_apoOverviews[i];
     for (size_t i = 0; i < m_apoOverviewsBak.size(); i++)
@@ -419,42 +417,83 @@ CPLXMLNode *CPL_STDCALL VRTSerializeToXML(VRTDatasetH hDataset,
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
+/*                        IsRawRasterBandEnabled()                      */
+/************************************************************************/
+
+/** Return whether VRTRawRasterBand support is enabled */
+
+/* static */
+bool VRTDataset::IsRawRasterBandEnabled()
+{
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+    if (CPLTestBool(CPLGetConfigOption("GDAL_VRT_ENABLE_RAWRASTERBAND", "YES")))
+    {
+        return true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTRawRasterBand support has been disabled at run-time.");
+    }
+    return false;
+#else
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VRTRawRasterBand is disabled in this GDAL build");
+    return false;
+#endif
+}
+
+/************************************************************************/
 /*                             InitBand()                               */
 /************************************************************************/
 
-VRTRasterBand *VRTDataset::InitBand(const char *pszSubclass, int nBand,
-                                    bool bAllowPansharpenedOrProcessed)
+std::unique_ptr<VRTRasterBand>
+VRTDataset::InitBand(const char *pszSubclass, int nBand,
+                     bool bAllowPansharpenedOrProcessed)
 {
-    VRTRasterBand *poBand = nullptr;
     if (auto poProcessedDS = dynamic_cast<VRTProcessedDataset *>(this))
     {
         if (bAllowPansharpenedOrProcessed &&
             EQUAL(pszSubclass, "VRTProcessedRasterBand"))
         {
-            poBand = new VRTProcessedRasterBand(poProcessedDS, nBand);
+            return std::make_unique<VRTProcessedRasterBand>(poProcessedDS,
+                                                            nBand);
         }
     }
     else if (EQUAL(pszSubclass, "VRTSourcedRasterBand"))
-        poBand = new VRTSourcedRasterBand(this, nBand);
+        return std::make_unique<VRTSourcedRasterBand>(this, nBand);
     else if (EQUAL(pszSubclass, "VRTDerivedRasterBand"))
-        poBand = new VRTDerivedRasterBand(this, nBand);
+        return std::make_unique<VRTDerivedRasterBand>(this, nBand);
     else if (EQUAL(pszSubclass, "VRTRawRasterBand"))
-        poBand = new VRTRawRasterBand(this, nBand);
+    {
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+        if (!VRTDataset::IsRawRasterBandEnabled())
+        {
+            return nullptr;
+        }
+        return std::make_unique<VRTRawRasterBand>(this, nBand);
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTDataset::InitBand(): cannot instantiate VRTRawRasterBand, "
+                 "because disabled in this GDAL build");
+        return nullptr;
+#endif
+    }
     else if (EQUAL(pszSubclass, "VRTWarpedRasterBand") &&
              dynamic_cast<VRTWarpedDataset *>(this) != nullptr)
-        poBand = new VRTWarpedRasterBand(this, nBand);
+    {
+        return std::make_unique<VRTWarpedRasterBand>(this, nBand);
+    }
     else if (bAllowPansharpenedOrProcessed &&
              EQUAL(pszSubclass, "VRTPansharpenedRasterBand") &&
              dynamic_cast<VRTPansharpenedDataset *>(this) != nullptr)
-        poBand = new VRTPansharpenedRasterBand(this, nBand);
-
-    if (!poBand)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "VRTRasterBand of unrecognized subclass '%s'.", pszSubclass);
+        return std::make_unique<VRTPansharpenedRasterBand>(this, nBand);
     }
 
-    return poBand;
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "VRTRasterBand of unrecognized subclass '%s'.", pszSubclass);
+    return nullptr;
 }
 
 /************************************************************************/
@@ -559,17 +598,16 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
             const char *pszSubclass =
                 CPLGetXMLValue(psChild, "subclass", "VRTSourcedRasterBand");
 
-            VRTRasterBand *poBand = InitBand(pszSubclass, 0, false);
+            auto poBand = InitBand(pszSubclass, 0, false);
             if (poBand != nullptr &&
                 poBand->XMLInit(psChild, pszVRTPathIn, m_oMapSharedSources) ==
                     CE_None)
             {
-                SetMaskBand(poBand);
+                SetMaskBand(std::move(poBand));
                 break;
             }
             else
             {
-                delete poBand;
                 return CE_Failure;
             }
         }
@@ -604,17 +642,16 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
                 return CE_Failure;
             }
 
-            VRTRasterBand *poBand = InitBand(pszSubclass, l_nBands + 1, true);
+            auto poBand = InitBand(pszSubclass, l_nBands + 1, true);
             if (poBand != nullptr &&
                 poBand->XMLInit(psChild, pszVRTPathIn, m_oMapSharedSources) ==
                     CE_None)
             {
                 l_nBands++;
-                SetBand(l_nBands, poBand);
+                SetBand(l_nBands, std::move(poBand));
             }
             else
             {
-                delete poBand;
                 return CE_Failure;
             }
         }
@@ -1706,6 +1743,11 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
 
     if (pszSubClass != nullptr && EQUAL(pszSubClass, "VRTRawRasterBand"))
     {
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+        if (!VRTDataset::IsRawRasterBandEnabled())
+        {
+            return CE_Failure;
+        }
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* ---------------------------------------------------------------- */
@@ -1757,30 +1799,24 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         /*      Create and initialize the band.                            */
         /* --------------------------------------------------------------- */
 
-        VRTRawRasterBand *poBand =
-            new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
+        auto poBand = std::make_unique<VRTRawRasterBand>(
+            this, GetRasterCount() + 1, eType);
 
-        char *l_pszVRTPath =
-            CPLStrdup(CPLGetPathSafe(GetDescription()).c_str());
-        if (EQUAL(l_pszVRTPath, ""))
-        {
-            CPLFree(l_pszVRTPath);
-            l_pszVRTPath = nullptr;
-        }
-
+        const std::string osPath = CPLGetPathSafe(GetDescription());
         const CPLErr eErr = poBand->SetRawLink(
-            pszFilename, l_pszVRTPath, bRelativeToVRT, nImageOffset,
-            nPixelOffset, nLineOffset, pszByteOrder);
-        CPLFree(l_pszVRTPath);
-        if (eErr != CE_None)
-        {
-            delete poBand;
-            return eErr;
-        }
+            pszFilename, osPath.empty() ? nullptr : osPath.c_str(),
+            bRelativeToVRT, nImageOffset, nPixelOffset, nLineOffset,
+            pszByteOrder);
+        if (eErr == CE_None)
+            SetBand(GetRasterCount() + 1, std::move(poBand));
 
-        SetBand(GetRasterCount() + 1, poBand);
-
-        return CE_None;
+        return eErr;
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "VRTDataset::AddBand(): cannot instantiate VRTRawRasterBand, "
+                 "because disabled in this GDAL build");
+        return CE_Failure;
+#endif
     }
 
     /* ==================================================================== */
@@ -2083,7 +2119,7 @@ CPLErr VRTDataset::CreateMaskBand(int)
         return CE_Failure;
     }
 
-    SetMaskBand(new VRTSourcedRasterBand(this, 0));
+    SetMaskBand(std::make_unique<VRTSourcedRasterBand>(this, 0));
 
     return CE_None;
 }
@@ -2092,10 +2128,9 @@ CPLErr VRTDataset::CreateMaskBand(int)
 /*                           SetMaskBand()                              */
 /************************************************************************/
 
-void VRTDataset::SetMaskBand(VRTRasterBand *poMaskBandIn)
+void VRTDataset::SetMaskBand(std::unique_ptr<VRTRasterBand> poMaskBandIn)
 {
-    delete m_poMaskBand;
-    m_poMaskBand = poMaskBandIn;
+    m_poMaskBand = std::move(poMaskBandIn);
     m_poMaskBand->SetIsMaskBand();
 }
 
@@ -2826,7 +2861,7 @@ void VRTDataset::BuildVirtualOverviews()
 
     if (m_poMaskBand)
     {
-        if (!CheckBandForOverview(m_poMaskBand, poFirstBand, nOverviews,
+        if (!CheckBandForOverview(m_poMaskBand.get(), poFirstBand, nOverviews,
                                   oSetOvrSizes, m_apoOverviewsBak))
             return;
     }
@@ -2893,7 +2928,7 @@ void VRTDataset::BuildVirtualOverviews()
             [&poOvrVDS, nOvrXSize, nOvrYSize, dfXRatio,
              dfYRatio](VRTSourcedRasterBand *poVRTBand)
         {
-            VRTSourcedRasterBand *poOvrVRTBand = new VRTSourcedRasterBand(
+            auto poOvrVRTBand = std::make_unique<VRTSourcedRasterBand>(
                 poOvrVDS, poVRTBand->GetBand(), poVRTBand->GetRasterDataType(),
                 nOvrXSize, nOvrYSize);
             poOvrVRTBand->CopyCommonInfoFrom(poVRTBand);
@@ -2939,16 +2974,15 @@ void VRTDataset::BuildVirtualOverviews()
         {
             VRTSourcedRasterBand *poSrcBand =
                 cpl::down_cast<VRTSourcedRasterBand *>(GetRasterBand(i + 1));
-            auto poOvrVRTBand = CreateOverviewBand(poSrcBand);
-            poOvrVDS->SetBand(poOvrVDS->GetRasterCount() + 1, poOvrVRTBand);
+            poOvrVDS->SetBand(poOvrVDS->GetRasterCount() + 1,
+                              CreateOverviewBand(poSrcBand));
         }
 
         if (m_poMaskBand)
         {
             VRTSourcedRasterBand *poSrcBand =
-                cpl::down_cast<VRTSourcedRasterBand *>(m_poMaskBand);
-            auto poOvrVRTBand = CreateOverviewBand(poSrcBand);
-            poOvrVDS->SetMaskBand(poOvrVRTBand);
+                cpl::down_cast<VRTSourcedRasterBand *>(m_poMaskBand.get());
+            poOvrVDS->SetMaskBand(CreateOverviewBand(poSrcBand));
         }
     }
 }

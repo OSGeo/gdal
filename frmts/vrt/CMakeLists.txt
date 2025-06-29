@@ -1,3 +1,4 @@
+option(GDAL_VRT_ENABLE_RAWRASTERBAND "Whether to enable the VRTRawRasterBand functionality (access to raw files)" ON)
 
 add_gdal_driver(
   TARGET gdal_vrt
@@ -9,7 +10,6 @@ add_gdal_driver(
           vrtexpression.h
           vrtfilters.cpp
           vrtrasterband.cpp
-          vrtrawrasterband.cpp
           vrtsourcedrasterband.cpp
           vrtsources.cpp
           vrtwarped.cpp
@@ -23,6 +23,13 @@ add_gdal_driver(
           vrtreclassifier.cpp
 )
 gdal_standard_includes(gdal_vrt)
+if (GDAL_VRT_ENABLE_RAWRASTERBAND)
+    target_sources(gdal_vrt PRIVATE vrtrawrasterband.cpp)
+    target_compile_definitions(gdal_vrt PRIVATE GDAL_VRT_ENABLE_RAWRASTERBAND)
+else()
+    target_compile_definitions(gdal_vrt PRIVATE GDAL_VRT_DISABLE_RAWRASTERBAND)
+endif()
+
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 

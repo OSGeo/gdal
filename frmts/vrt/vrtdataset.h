@@ -266,7 +266,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     char *m_pszVRTPath = nullptr;
 
-    VRTRasterBand *m_poMaskBand = nullptr;
+    std::unique_ptr<VRTRasterBand> m_poMaskBand{};
 
     mutable int m_nCompatibleForDatasetIO = -1;
     bool CheckCompatibleForDatasetIO() const;
@@ -298,8 +298,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     bool m_bMultiThreadedRasterIOLastUsed = false;
 
-    VRTRasterBand *InitBand(const char *pszSubclass, int nBand,
-                            bool bAllowPansharpenedOrProcessed);
+    std::unique_ptr<VRTRasterBand> InitBand(const char *pszSubclass, int nBand,
+                                            bool bAllowPansharpenedOrProcessed);
     static GDALDataset *OpenVRTProtocol(const char *pszSpec);
     bool AddVirtualOverview(int nOvFactor, const char *pszResampling);
 
@@ -341,7 +341,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     }
 
     virtual CPLErr CreateMaskBand(int nFlags) override;
-    void SetMaskBand(VRTRasterBand *poMaskBand);
+    void SetMaskBand(std::unique_ptr<VRTRasterBand> poMaskBand);
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -457,6 +457,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     static CPLErr Delete(const char *pszFilename);
 
     static int GetNumThreads(GDALDataset *poDS);
+
+    static bool IsRawRasterBandEnabled();
 };
 
 /************************************************************************/
@@ -793,11 +795,11 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
   protected:
     friend class VRTDataset;
 
-    int m_bIsMaskBand = FALSE;
+    bool m_bIsMaskBand = false;
 
-    int m_bNoDataValueSet = FALSE;
+    bool m_bNoDataValueSet = false;
     // If set to true, will not report the existence of nodata.
-    int m_bHideNoDataValue = FALSE;
+    int m_bHideNoDataValue = false;
     double m_dfNoDataValue = VRT_DEFAULT_NODATA_VALUE;
 
     bool m_bNoDataSetAsInt64 = false;
@@ -810,19 +812,19 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
 
     GDALColorInterp m_eColorInterp = GCI_Undefined;
 
-    char *m_pszUnitType = nullptr;
+    std::string m_osUnitType{};
     CPLStringList m_aosCategoryNames{};
 
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
 
-    CPLXMLNode *m_psSavedHistograms = nullptr;
+    CPLXMLTreeCloser m_psSavedHistograms{nullptr};
 
     void Initialize(int nXSize, int nYSize);
 
     std::vector<VRTOverviewInfo> m_aoOverviewInfos{};
 
-    VRTRasterBand *m_poMaskBand = nullptr;
+    std::unique_ptr<VRTRasterBand> m_poMaskBand{};
 
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
@@ -902,7 +904,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
 
     virtual CPLErr CreateMaskBand(int nFlagsIn) override;
 
-    void SetMaskBand(VRTRasterBand *poMaskBand);
+    void SetMaskBand(std::unique_ptr<VRTRasterBand> poMaskBand);
 
     void SetIsMaskBand();
 
@@ -912,14 +914,14 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
 
     virtual int CloseDependentDatasets();
 
-    virtual int IsSourcedRasterBand()
+    virtual bool IsSourcedRasterBand()
     {
-        return FALSE;
+        return false;
     }
 
-    virtual int IsPansharpenRasterBand()
+    virtual bool IsPansharpenRasterBand()
     {
-        return FALSE;
+        return false;
     }
 };
 
@@ -933,7 +935,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 {
   private:
     CPLString m_osLastLocationInfo{};
-    char **m_papszSourceList = nullptr;
+    CPLStringList m_aosSourceList{};
     int m_nSkipBufferInitialization = -1;
 
     bool CanUseSourcesMinMaxImplementations();
@@ -1065,9 +1067,9 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     virtual int CloseDependentDatasets() override;
 
-    virtual int IsSourcedRasterBand() override
+    virtual bool IsSourcedRasterBand() override
     {
-        return TRUE;
+        return true;
     }
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
@@ -1140,9 +1142,9 @@ class VRTPansharpenedRasterBand final : public VRTRasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual int IsPansharpenRasterBand() override
+    virtual bool IsPansharpenRasterBand() override
     {
-        return TRUE;
+        return true;
     }
 
     void SetIndexAsPansharpenedBand(int nIdx)
@@ -1255,6 +1257,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     static void Cleanup();
 };
 
+#ifndef GDAL_VRT_DISABLE_RAWRASTERBAND
 /************************************************************************/
 /*                           VRTRawRasterBand                           */
 /************************************************************************/
@@ -1303,6 +1306,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles) override;
 };
+#endif
 
 /************************************************************************/
 /*                              VRTDriver                               */
