@@ -31,6 +31,7 @@
 #endif
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <string>
 
@@ -476,16 +477,6 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         return FALSE;
     }
 
-    // TODO(schwehr): Would be good to also factor the file size into the max.
-    // TODO(schwehr): Allow the user to disable this check.
-    // The driver allocates a panLineOffset array based on nRasterYSize
-    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
-    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
-    {
-        CSLDestroy(papszTokens);
-        return FALSE;
-    }
-
     double dfCellDX = 0.0;
     double dfCellDY = 0.0;
     if ((i = CSLFindString(papszTokens, "cellsize")) < 0)
@@ -653,16 +644,6 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
     nRasterYSize = atoi(papszTokens[i + 1]);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
-    {
-        CSLDestroy(papszTokens);
-        return FALSE;
-    }
-
-    // TODO(schwehr): Would be good to also factor the file size into the max.
-    // TODO(schwehr): Allow the user to disable this check.
-    // The driver allocates a panLineOffset array based on nRasterYSize
-    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
-    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
     {
         CSLDestroy(papszTokens);
         return FALSE;
@@ -894,6 +875,11 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         return FALSE;
     }
 
+    if (!GDALCheckDatasetDimensions(nRows, nCols))
+    {
+        return false;
+    }
+
     // Correct rounding errors.
 
     const auto TryRoundTo = [](double &dfDelta, double dfRoundedDelta,
@@ -1082,6 +1068,32 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
+
+    // Sanity check in particular to avoid allocating a too large
+    // AAIGRasterBand::panLineOffset array
+    if (poDS->nRasterXSize > 10 * 1000 * 1000 ||
+        poDS->nRasterYSize > 10 * 1000 * 1000 ||
+        static_cast<int64_t>(poDS->nRasterXSize) * poDS->nRasterYSize >
+            1000 * 1000 * 1000)
+    {
+        // We need at least 2 bytes for each pixel: one for the character for
+        // its value and one for the space separator
+        constexpr int MIN_BYTE_COUNT_PER_PIXEL = 2;
+        if (VSIFSeekL(poDS->fp, 0, SEEK_END) != 0 ||
+            VSIFTellL(poDS->fp) <
+                static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+                    poDS->nRasterYSize * MIN_BYTE_COUNT_PER_PIXEL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large raster dimension %d x %d compared to file size "
+                     "(%" PRIu64 " bytes)",
+                     poDS->nRasterXSize, poDS->nRasterYSize,
+                     static_cast<uint64_t>(VSIFTellL(poDS->fp)));
+            delete poDS;
+            return nullptr;
+        }
+        VSIFSeekL(poDS->fp, 0, SEEK_SET);
+    }
 
     // Find the start of real data.
     int nStartOfData = 0;
