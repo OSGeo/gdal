@@ -675,6 +675,33 @@ def test_gdalalg_raster_tile_multithread(tmp_vsimem):
     assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
 
 
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        last_pct[0] = pct
+        return True
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["parallel-method"] = "spawn"
+    alg["metadata"] = {"foo": "bar"}
+    with gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "CPL_LOG": str(tmp_path / "log.txt")}
+    ):
+        alg.Run(my_progress)
+
+    assert last_pct[0] == 1.0
+
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+    assert gdal.VSIStatL(tmp_path / "log.txt") is not None
+
+
 def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
 
     last_pct = [0]

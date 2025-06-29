@@ -14,6 +14,8 @@
 
 #include "cpl_conv.h"
 #include "cpl_mem_cache.h"
+#include "cpl_spawn.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
@@ -26,6 +28,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cinttypes>
 #include <cmath>
 #include <mutex>
 
@@ -43,6 +46,10 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();
+    AddArg("progress-forked", 0, _("Report progress as a forked child"),
+           &m_progressForked)
+        .SetHidden();
+
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
@@ -154,6 +161,9 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("resume", 0, _("Generate only missing files"), &m_resume);
 
     AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
+    AddArg("parallel-method", 0, _("Parallelization method (thread / spawn)"),
+           &m_parallelMethod)
+        .SetChoices("thread", "spawn");
 
     constexpr const char *ADVANCED_RESAMPLING_CATEGORY = "Advanced Resampling";
     auto &excludedValuesArg =
@@ -2089,6 +2099,139 @@ class PerThreadLowerZoomResourceManager final
 }  // namespace
 
 /************************************************************************/
+/*                              GetGDALPath()                           */
+/************************************************************************/
+
+static std::string GetGDALPath()
+{
+    constexpr int MAXPATH_SIZE = 4096;
+    std::string osPath;
+    osPath.resize(MAXPATH_SIZE);
+    if (CPLGetExecPath(osPath.data(), MAXPATH_SIZE))
+    {
+        osPath.resize(strlen(osPath.c_str()));
+        if (!cpl::ends_with(osPath, "/gdal") &&
+            !cpl::ends_with(osPath, "\\gdal") &&
+            !cpl::ends_with(osPath, "\\gdal.exe"))
+        {
+            osPath.clear();
+#if defined(__linux) && !defined(STATIC_BUILD)
+            const CPLStringList aosLines(CSLLoad("/proc/self/maps"));
+            for (const char *pszLine : aosLines)
+            {
+                const char *pszLibName = strstr(pszLine, "/libgdal.so.");
+                while (pszLibName &&
+                       static_cast<size_t>(pszLibName - pszLine) > 1 &&
+                       pszLibName[-1] != ' ')
+                {
+                    --pszLibName;
+                }
+                if (pszLibName &&
+                    static_cast<size_t>(pszLibName - pszLine) > 1 &&
+                    pszLibName[0] == '/')
+                {
+                    const std::string osPathOfGDALLib =
+                        CPLGetDirnameSafe(pszLibName);
+                    std::string osBinFilename = CPLFormFilenameSafe(
+                        CPLGetDirnameSafe(osPathOfGDALLib.c_str()).c_str(),
+                        "bin/gdal", nullptr);
+                    VSIStatBufL sStat;
+                    if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
+                    {
+                        // Case if pszLibName=/usr/lib/libgdal.so.xxx
+                        osPath = osBinFilename;
+                    }
+                    else
+                    {
+                        osBinFilename = CPLFormFilenameSafe(
+                            CPLGetDirnameSafe(
+                                CPLGetDirnameSafe(osPathOfGDALLib.c_str())
+                                    .c_str())
+                                .c_str(),
+                            "bin/gdal", nullptr);
+                        if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
+                        {
+                            // Case if pszLibName=/usr/lib/yyyyy/libgdal.so.xxx
+                            osPath = osBinFilename;
+                        }
+                        else
+                        {
+                            osBinFilename = CPLFormFilenameSafe(
+                                osPathOfGDALLib.c_str(), "apps/gdal", nullptr);
+                            if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
+                            {
+                                // Case if pszLibName=/path/to/build_dir/libgdal.so.xxx
+                                osPath = osBinFilename;
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+        }
+        if (!osPath.empty())
+        {
+            CPLDebug("gdal_raster_tile", "gdal binary found at '%s'",
+                     osPath.c_str());
+        }
+    }
+    if (osPath.empty())
+    {
+        // Try to locate from the path
+#ifdef _WIN32
+        osPath = "gdal.exe";
+#else
+        osPath = "gdal";
+#endif
+    }
+
+    const char *const apszArgv[] = {osPath.c_str(), "--version", nullptr};
+    const std::string osTmpFilenameVersion =
+        VSIMemGenerateHiddenFilename(nullptr);
+    auto fpOut = std::unique_ptr<VSIVirtualHandle>(
+        VSIFOpenL(osTmpFilenameVersion.c_str(), "wb+"));
+    VSIUnlink(osTmpFilenameVersion.c_str());
+    CPLAssert(fpOut);
+    CPLSpawn(apszArgv, nullptr, fpOut.get(), /* bDisplayErr = */ false);
+    const auto nPos = fpOut->Tell();
+    char szVersion[128] = {0};
+    if (nPos > 0 && nPos < sizeof(szVersion))
+    {
+        size_t nVersionSize = static_cast<size_t>(nPos);
+        fpOut->Seek(0, SEEK_SET);
+        fpOut->Read(szVersion, 1, nVersionSize);
+        for (const char ch : {'\n', '\r'})
+        {
+            if (szVersion[nVersionSize - 1] == ch)
+            {
+                szVersion[nVersionSize - 1] = 0;
+                --nVersionSize;
+            }
+        }
+        if (strcmp(szVersion, GDALVersionInfo("")) == 0)
+        {
+            return osPath;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s --version' returned '%s', whereas '%s' "
+                     "expected. Make sure the gdal binary corresponding "
+                     "to the version of the libgdal of the current "
+                     "process is in the PATH environment variable",
+                     osPath.c_str(), szVersion, GDALVersionInfo(""));
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not find 'gdal' binary. Make sure it is in the "
+                 "PATH environment variable.");
+    }
+    return std::string();
+}
+
+/************************************************************************/
 /*                  GDALRasterTileAlgorithm::RunImpl()                  */
 /************************************************************************/
 
@@ -2954,6 +3097,286 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     };
 
+    bool bThreadPoolInitialized = false;
+    const auto InitThreadPool =
+        [this, nBaseTiles, &oThreadPool, &bRet, &bThreadPoolInitialized]()
+    {
+        if (!bThreadPoolInitialized)
+        {
+            bThreadPoolInitialized = true;
+            m_numThreads = std::max(1, m_numThreads);
+            if (static_cast<uint64_t>(m_numThreads) > nBaseTiles)
+                m_numThreads = static_cast<int>(nBaseTiles);
+
+            if (bRet && m_numThreads > 1)
+            {
+                CPLDebug("gdal_raster_tile", "Using %d threads", m_numThreads);
+                bRet = oThreadPool.Setup(m_numThreads, nullptr, nullptr);
+            }
+        }
+
+        return bRet;
+    };
+
+    if (m_numThreads > 1 && m_parallelMethod == "spawn")
+    {
+        auto poSrcDriver = poSrcDS->GetDriver();
+        if (poSrcDS->GetDescription()[0] == 0 || !poSrcDriver ||
+            EQUAL(poSrcDriver->GetDescription(), "MEM"))
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "Unnamed or memory dataset sources are not supported "
+                        "with spawn parallelization method");
+            return false;
+        }
+        if (cpl::starts_with(m_outputDirectory, "/vsimem/"))
+        {
+            ReportError(CE_Failure, CPLE_NotSupported,
+                        "/vsimem/ output directory not supported with spawn "
+                        "parallelization method");
+            return false;
+        }
+
+        const std::string osGDALPath = GetGDALPath();
+        if (osGDALPath.empty())
+            return false;
+
+        double dfTilesYPerJob;
+        int nYOuterIterations;
+        double dfTilesXPerJob;
+        int nXOuterIterations;
+        ComputeJobChunkSize(nBaseTilesPerCol, nBaseTilesPerRow, dfTilesYPerJob,
+                            nYOuterIterations, dfTilesXPerJob,
+                            nXOuterIterations);
+
+        CPLDebugOnly("gdal_raster_tile",
+                     "nYOuterIterations=%d, dfTilesYPerJob=%g, "
+                     "nXOuterIterations=%d, dfTilesXPerJob=%g",
+                     nYOuterIterations, dfTilesYPerJob, nXOuterIterations,
+                     dfTilesXPerJob);
+
+        std::vector<CPLSpawnedProcess *> ahSpawnedProcesses;
+        std::vector<uint64_t> anRemainingTilesForProcess;
+
+        const uint64_t nCacheMaxPerProcess = GDALGetCacheMax64() / m_numThreads;
+
+        int nLastYEndIncluded = nMinTileY - 1;
+        for (int iYOuterIter = 0; bRet && iYOuterIter < nYOuterIterations &&
+                                  nLastYEndIncluded < nMaxTileY;
+             ++iYOuterIter)
+        {
+            const int iYStart = nLastYEndIncluded + 1;
+            const int iYEndIncluded =
+                iYOuterIter + 1 == nYOuterIterations
+                    ? nMaxTileY
+                    : std::max(iYStart,
+                               static_cast<int>(std::floor(
+                                   nMinTileY +
+                                   (iYOuterIter + 1) * dfTilesYPerJob - 1)));
+
+            nLastYEndIncluded = iYEndIncluded;
+
+            int nLastXEndIncluded = nMinTileX - 1;
+            for (int iXOuterIter = 0; bRet && iXOuterIter < nXOuterIterations &&
+                                      nLastXEndIncluded < nMaxTileX;
+                 ++iXOuterIter)
+            {
+                const int iXStart = nLastXEndIncluded + 1;
+                const int iXEndIncluded =
+                    iXOuterIter + 1 == nXOuterIterations
+                        ? nMaxTileX
+                        : std::max(
+                              iXStart,
+                              static_cast<int>(std::floor(
+                                  nMinTileX +
+                                  (iXOuterIter + 1) * dfTilesXPerJob - 1)));
+
+                nLastXEndIncluded = iXEndIncluded;
+
+                anRemainingTilesForProcess.push_back(
+                    static_cast<uint64_t>(iYEndIncluded - iYStart + 1) *
+                    (iXEndIncluded - iXStart + 1));
+
+                CPLStringList aosArgv;
+                aosArgv.push_back(osGDALPath.c_str());
+                aosArgv.push_back("raster");
+                aosArgv.push_back("tile");
+                aosArgv.push_back("--config");
+                aosArgv.push_back("GDAL_NUM_THREADS=1");
+                aosArgv.push_back("--config");
+                aosArgv.push_back(
+                    CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
+                for (auto pfnFunc :
+                     {&CPLGetConfigOptions, &CPLGetThreadLocalConfigOptions})
+                {
+                    CPLStringList aosConfigOptions((*pfnFunc)());
+                    for (const char *pszNameValue : aosConfigOptions)
+                    {
+                        if (!STARTS_WITH(pszNameValue, "GDAL_CACHEMAX") &&
+                            !STARTS_WITH(pszNameValue, "GDAL_NUM_THREADS"))
+                        {
+                            aosArgv.push_back("--config");
+                            aosArgv.push_back(pszNameValue);
+                        }
+                    }
+                }
+                aosArgv.push_back("--num-threads");
+                aosArgv.push_back("1");
+                aosArgv.push_back("--min-x");
+                aosArgv.push_back(CPLSPrintf("%d", iXStart));
+                aosArgv.push_back("--max-x");
+                aosArgv.push_back(CPLSPrintf("%d", iXEndIncluded));
+                aosArgv.push_back("--min-y");
+                aosArgv.push_back(CPLSPrintf("%d", iYStart));
+                aosArgv.push_back("--max-y");
+                aosArgv.push_back(CPLSPrintf("%d", iYEndIncluded));
+                aosArgv.push_back("--webviewer");
+                aosArgv.push_back("none");
+                aosArgv.push_back("--progress-forked");
+                aosArgv.push_back("--input");
+                aosArgv.push_back(poSrcDS->GetDescription());
+                for (const auto &arg : GetArgs())
+                {
+                    if (arg->IsExplicitlySet() && arg->GetName() != "min-x" &&
+                        arg->GetName() != "min-y" &&
+                        arg->GetName() != "max-x" &&
+                        arg->GetName() != "max-y" &&
+                        arg->GetName() != "min-zoom" &&
+                        arg->GetName() != "progress" &&
+                        arg->GetName() != "progress-forked" &&
+                        arg->GetName() != "input" &&
+                        arg->GetName() != "num-threads" &&
+                        arg->GetName() != "webviewer" &&
+                        arg->GetName() != "parallel-method")
+                    {
+                        aosArgv.push_back(
+                            CPLSPrintf("--%s", arg->GetName().c_str()));
+                        if (arg->GetType() == GAAT_STRING)
+                        {
+                            aosArgv.push_back(arg->Get<std::string>().c_str());
+                        }
+                        else if (arg->GetType() == GAAT_STRING_LIST)
+                        {
+                            bool bFirst = true;
+                            for (const std::string &s :
+                                 arg->Get<std::vector<std::string>>())
+                            {
+                                if (!bFirst)
+                                {
+                                    aosArgv.push_back(CPLSPrintf(
+                                        "--%s", arg->GetName().c_str()));
+                                }
+                                bFirst = false;
+                                aosArgv.push_back(s.c_str());
+                            }
+                        }
+                        else if (arg->GetType() == GAAT_REAL)
+                        {
+                            aosArgv.push_back(
+                                CPLSPrintf("%.17g", arg->Get<double>()));
+                        }
+                        else if (arg->GetType() == GAAT_INTEGER)
+                        {
+                            aosArgv.push_back(
+                                CPLSPrintf("%d", arg->Get<int>()));
+                        }
+                        else if (arg->GetType() != GAAT_BOOLEAN)
+                        {
+                            ReportError(CE_Failure, CPLE_AppDefined,
+                                        "Bug: argument of type %d not handled "
+                                        "by gdal raster tile!",
+                                        static_cast<int>(arg->GetType()));
+                            return false;
+                        }
+                    }
+                }
+
+                CPLSpawnedProcess *hSpawnedProcess =
+                    CPLSpawnAsync(nullptr, aosArgv.List(),
+                                  /* bCreateInputPipe = */ false,
+                                  /* bCreateOutputPipe = */ true,
+                                  /* bCreateErrorPipe = */ false, nullptr);
+                if (!hSpawnedProcess)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Spawning child gdal process failed");
+                    bRet = false;
+                    break;
+                }
+
+                CPLDebugOnly(
+                    "gdal_raster_tile",
+                    "Job for y in [%d,%d] and x in [%d,%d], "
+                    "run by process %" PRIu64,
+                    iYStart, iYEndIncluded, iXStart, iXEndIncluded,
+                    static_cast<uint64_t>(
+                        CPLSpawnAsyncGetChildProcessId(hSpawnedProcess)));
+
+                ahSpawnedProcesses.push_back(hSpawnedProcess);
+            }
+        }
+
+        uint64_t nCurTileLocal = 0;
+        while (bRet)
+        {
+            size_t iProcess = 0;
+            size_t nFinished = 0;
+            for (CPLSpawnedProcess *hSpawnedProcess : ahSpawnedProcesses)
+            {
+                char ch = 0;
+                if (anRemainingTilesForProcess[iProcess] == 0 ||
+                    !CPLPipeRead(
+                        CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess), &ch,
+                        1))
+                {
+                    ++nFinished;
+                }
+                else if (ch != '.')
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Did not get expected '.' from child "
+                                "process, but '%c'",
+                                ch);
+                    bRet = false;
+                }
+                else
+                {
+                    --anRemainingTilesForProcess[iProcess];
+                    ++nCurTileLocal;
+                    bRet &= (!pfnProgress ||
+                             pfnProgress(static_cast<double>(nCurTileLocal) /
+                                             static_cast<double>(nTotalTiles),
+                                         "", pProgressData));
+                }
+                ++iProcess;
+            }
+            if (!bRet || nFinished == ahSpawnedProcesses.size())
+                break;
+        }
+
+        for (CPLSpawnedProcess *hSpawnedProcess : ahSpawnedProcesses)
+        {
+            CPLSpawnAsyncCloseInputFileHandle(hSpawnedProcess);
+
+            CPLSpawnAsyncFinish(hSpawnedProcess, /* bWait = */ true,
+                                /* bKill = */ false);
+        }
+
+        if (bRet && nCurTileLocal != nBaseTiles)
+        {
+            bRet = false;
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Not all tiles at max zoom level have been "
+                        "generated. Got %" PRIu64 ", expected %" PRIu64,
+                        nCurTileLocal, nBaseTiles);
+        }
+
+        if (!bRet)
+            return false;
+
+        nCurTile = nCurTileLocal;
+    }
+    else
     {
         PerThreadMaxZoomResourceManager oResourceManager(
             poSrcDS, psWO.get(), hTransformArg.get(), oFakeMaxZoomDS,
@@ -2966,15 +3389,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                  "Generating tiles z=%d, y=%d...%d, x=%d...%d", m_maxZoomLevel,
                  nMinTileY, nMaxTileY, nMinTileX, nMaxTileX);
 
-        m_numThreads = std::max(1, m_numThreads);
-        if (static_cast<uint64_t>(m_numThreads) > nBaseTiles)
-            m_numThreads = static_cast<int>(nBaseTiles);
-
-        if (bRet && m_numThreads > 1)
-        {
-            CPLDebug("gdal_raster_tile", "Using %d threads", m_numThreads);
-            bRet = oThreadPool.Setup(m_numThreads, nullptr, nullptr);
-        }
+        bRet &= InitThreadPool();
 
         if (bRet && m_numThreads > 1)
         {
@@ -3143,6 +3558,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                              pfnProgress(static_cast<double>(nCurTile) /
                                              static_cast<double>(nTotalTiles),
                                          "", pProgressData));
+                    if (m_progressForked)
+                    {
+                        fwrite(".", 1, 1, stdout);
+                        fflush(stdout);
+                    }
                 }
             }
         }
@@ -3194,6 +3614,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     /* -------------------------------------------------------------------- */
     for (int iZ = m_maxZoomLevel - 1; bRet && iZ >= m_minZoomLevel; --iZ)
     {
+        bRet &= InitThreadPool();
+
         auto srcTileMatrix = tileMatrixList[iZ + 1];
         int nSrcMinTileX = 0;
         int nSrcMinTileY = 0;
