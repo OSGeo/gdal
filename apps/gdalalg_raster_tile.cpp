@@ -472,6 +472,14 @@ static bool GenerateTile(
     CPLConfigOptionSetter oSetter("GDAL_PAM_ENABLED", bAuxXML ? "YES" : "NO",
                                   false);
 
+    std::unique_ptr<CPLConfigOptionSetter> poSetter;
+    // No need to reopen the dataset at end of CreateCopy() (for PNG
+    // and JPEG) if we don't need to generate .aux.xml
+    if (!bAuxXML)
+        poSetter = std::make_unique<CPLConfigOptionSetter>(
+            "GDAL_OPEN_AFTER_COPY", "NO", false);
+    CPL_IGNORE_RET_VAL(poSetter);
+
     const std::string osTmpFilename = osFilename + ".tmp." + pszExtension;
 
     std::unique_ptr<GDALDataset> poOutDS(
@@ -675,6 +683,14 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *poDstDriver,
                     dfMinX, tileMatrix.mResX, 0, dfMaxY, 0, -tileMatrix.mResY));
 
                 memDS->SetSpatialRef(oSrcDS.GetSpatialRef());
+
+                std::unique_ptr<CPLConfigOptionSetter> poSetter;
+                // No need to reopen the dataset at end of CreateCopy() (for PNG
+                // and JPEG) if we don't need to generate .aux.xml
+                if (!bAuxXML)
+                    poSetter = std::make_unique<CPLConfigOptionSetter>(
+                        "GDAL_OPEN_AFTER_COPY", "NO", false);
+                CPL_IGNORE_RET_VAL(poSetter);
 
                 poOutDS.reset(poDstDriver->CreateCopy(
                     osTmpFilename.c_str(), memDS.get(), false, creationOptions,
