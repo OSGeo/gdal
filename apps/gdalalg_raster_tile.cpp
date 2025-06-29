@@ -994,7 +994,7 @@ class MosaicDataset : public GDALDataset
     const std::string m_directory;
     const std::string m_extension;
     const std::string m_format;
-    GDALDataset *const m_poSrcDS;
+    const std::vector<GDALColorInterp> m_aeColorInterp;
     const gdal::TileMatrixSet::TileMatrix &m_oTM;
     const OGRSpatialReference m_oSRS;
     const int m_nTileMinX;
@@ -1015,7 +1015,8 @@ class MosaicDataset : public GDALDataset
 
   public:
     MosaicDataset(const std::string &directory, const std::string &extension,
-                  const std::string &format, GDALDataset *poSrcDS,
+                  const std::string &format,
+                  const std::vector<GDALColorInterp> &aeColorInterp,
                   const gdal::TileMatrixSet::TileMatrix &oTM,
                   const OGRSpatialReference &oSRS, int nTileMinX, int nTileMinY,
                   int nTileMaxX, int nTileMaxY, const std::string &convention,
@@ -1023,10 +1024,11 @@ class MosaicDataset : public GDALDataset
                   const std::vector<std::string> &metadata,
                   const GDALColorTable *poCT, int maxCacheTileSize)
         : m_directory(directory), m_extension(extension), m_format(format),
-          m_poSrcDS(poSrcDS), m_oTM(oTM), m_oSRS(oSRS), m_nTileMinX(nTileMinX),
-          m_nTileMinY(nTileMinY), m_nTileMaxX(nTileMaxX),
-          m_nTileMaxY(nTileMaxY), m_convention(convention), m_eDT(eDT),
-          m_pdfDstNoData(pdfDstNoData), m_metadata(metadata), m_poCT(poCT),
+          m_aeColorInterp(aeColorInterp), m_oTM(oTM), m_oSRS(oSRS),
+          m_nTileMinX(nTileMinX), m_nTileMinY(nTileMinY),
+          m_nTileMaxX(nTileMaxX), m_nTileMaxY(nTileMaxY),
+          m_convention(convention), m_eDT(eDT), m_pdfDstNoData(pdfDstNoData),
+          m_metadata(metadata), m_poCT(poCT),
           m_nMaxCacheTileSize(maxCacheTileSize),
           m_oCacheTile(/* max_size = */ maxCacheTileSize, /* elasticity = */ 0)
     {
@@ -1041,8 +1043,8 @@ class MosaicDataset : public GDALDataset
         for (int i = 1; i <= nBandsIn; ++i)
         {
             const GDALColorInterp eColorInterp =
-                (i <= poSrcDS->GetRasterCount())
-                    ? poSrcDS->GetRasterBand(i)->GetColorInterpretation()
+                (i <= static_cast<int>(m_aeColorInterp.size()))
+                    ? m_aeColorInterp[i - 1]
                     : GCI_AlphaBand;
             SetBand(i, new MosaicRasterBand(
                            this, i, nRasterXSize, nRasterYSize, oTM.mTileWidth,
@@ -1074,7 +1076,7 @@ class MosaicDataset : public GDALDataset
     std::unique_ptr<MosaicDataset> Clone() const
     {
         return std::make_unique<MosaicDataset>(
-            m_directory, m_extension, m_format, m_poSrcDS, m_oTM, m_oSRS,
+            m_directory, m_extension, m_format, m_aeColorInterp, m_oTM, m_oSRS,
             m_nTileMinX, m_nTileMinY, m_nTileMaxX, m_nTileMaxY, m_convention,
             nBands, m_eDT, m_pdfDstNoData, m_metadata, m_poCT,
             m_nMaxCacheTileSize);
@@ -2620,8 +2622,12 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const bool bOutputSupportsAlpha = !EQUAL(m_outputFormat.c_str(), "JPEG");
     const bool bOutputSupportsNoData = EQUAL(m_outputFormat.c_str(), "GTiff");
     const bool bDstNoDataSpecified = GetArg("dst-nodata")->IsExplicitlySet();
-    const GDALColorTable *poColorTable =
-        poSrcDS->GetRasterBand(1)->GetColorTable();
+    auto poColorTable = std::unique_ptr<GDALColorTable>(
+        [poSrcDS]()
+        {
+            auto poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+            return poCT ? poCT->Clone() : nullptr;
+        }());
 
     const bool bUserAskedForAlpha = m_addalpha;
     if (!m_noalpha && !m_addalpha)
@@ -3014,7 +3020,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                 pszExtension, &aosCreationOptions, &psWO,
                                 &tileMatrix, nDstBands, iXStart, iXEndIncluded,
                                 iYStart, iYEndIncluded, nMinTileX, nMinTileY,
-                                poColorTable, bUserAskedForAlpha]()
+                                &poColorTable, bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
@@ -3042,7 +3048,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             m_convention, nMinTileX, nMinTileY,
                                             m_skipBlank, bUserAskedForAlpha,
                                             m_auxXML, m_resume, m_metadata,
-                                            poColorTable, resources->dstBuffer))
+                                            poColorTable.get(),
+                                            resources->dstBuffer))
                                     {
                                         oResourceManager.SetError();
                                         bFailure = true;
@@ -3109,7 +3116,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                                 : nullptr,
                         m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
                         nMinTileY, m_skipBlank, bUserAskedForAlpha, m_auxXML,
-                        m_resume, m_metadata, poColorTable, dstBuffer);
+                        m_resume, m_metadata, poColorTable.get(), dstBuffer);
 
                     ++nCurTile;
                     bRet &= (!pfnProgress ||
@@ -3147,6 +3154,19 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 }
             }
         }
+    }
+
+    // Close source dataset if we have opened it (in GDALAlgorithm core code),
+    // to free file descriptors, particularly if it is a VRT file.
+    std::vector<GDALColorInterp> aeColorInterp;
+    for (int i = 1; i <= poSrcDS->GetRasterCount(); ++i)
+        aeColorInterp.push_back(
+            poSrcDS->GetRasterBand(i)->GetColorInterpretation());
+    if (m_dataset.HasDatasetBeenOpenedByAlgorithm())
+    {
+        m_dataset.Close();
+        poSrcDS = nullptr;
+        CPL_IGNORE_RET_VAL(poSrcDS);
     }
 
     /* -------------------------------------------------------------------- */
@@ -3216,11 +3236,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         MosaicDataset oSrcDS(
             CPLFormFilenameSafe(m_outputDirectory.c_str(),
                                 CPLSPrintf("%d", iZ + 1), nullptr),
-            pszExtension, m_outputFormat, poSrcDS, srcTileMatrix, oSRS_TMS,
-            nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY,
+            pszExtension, m_outputFormat, aeColorInterp, srcTileMatrix,
+            oSRS_TMS, nSrcMinTileX, nSrcMinTileY, nSrcMaxTileX, nSrcMaxTileY,
             m_convention, nDstBands, psWO->eWorkingDataType,
             psWO->padfDstNoDataReal ? &(psWO->padfDstNoDataReal[0]) : nullptr,
-            m_metadata, poColorTable, maxCacheTileSizePerThread);
+            m_metadata, poColorTable.get(), maxCacheTileSizePerThread);
 
         bRet = bIntersects;
 
