@@ -31,6 +31,7 @@
 #endif
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <string>
 
@@ -463,74 +464,59 @@ GDALDataset *AAIGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          ParseHeader()                               */
 /************************************************************************/
 
-int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
+bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
 {
-    char **papszTokens = CSLTokenizeString2(pszHeader, " \n\r\t", 0);
-    const int nTokens = CSLCount(papszTokens);
+    const CPLStringList aosTokens(CSLTokenizeString2(pszHeader, " \n\r\t", 0));
+    const int nTokens = aosTokens.size();
 
     int i = 0;
-    if ((i = CSLFindString(papszTokens, "ncols")) < 0 || i + 1 >= nTokens)
+    if ((i = aosTokens.FindString("ncols")) < 0 || i + 1 >= nTokens)
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
-    nRasterXSize = atoi(papszTokens[i + 1]);
-    if ((i = CSLFindString(papszTokens, "nrows")) < 0 || i + 1 >= nTokens)
+    nRasterXSize = atoi(aosTokens[i + 1]);
+    if ((i = aosTokens.FindString("nrows")) < 0 || i + 1 >= nTokens)
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
-    nRasterYSize = atoi(papszTokens[i + 1]);
+    nRasterYSize = atoi(aosTokens[i + 1]);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
-    }
-
-    // TODO(schwehr): Would be good to also factor the file size into the max.
-    // TODO(schwehr): Allow the user to disable this check.
-    // The driver allocates a panLineOffset array based on nRasterYSize
-    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
-    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
-    {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
 
     double dfCellDX = 0.0;
     double dfCellDY = 0.0;
-    if ((i = CSLFindString(papszTokens, "cellsize")) < 0)
+    if ((i = aosTokens.FindString("cellsize")) < 0)
     {
         int iDX, iDY;
-        if ((iDX = CSLFindString(papszTokens, "dx")) < 0 ||
-            (iDY = CSLFindString(papszTokens, "dy")) < 0 ||
-            iDX + 1 >= nTokens || iDY + 1 >= nTokens)
+        if ((iDX = aosTokens.FindString("dx")) < 0 ||
+            (iDY = aosTokens.FindString("dy")) < 0 || iDX + 1 >= nTokens ||
+            iDY + 1 >= nTokens)
         {
-            CSLDestroy(papszTokens);
-            return FALSE;
+            return false;
         }
 
-        dfCellDX = CPLAtofM(papszTokens[iDX + 1]);
-        dfCellDY = CPLAtofM(papszTokens[iDY + 1]);
+        dfCellDX = CPLAtofM(aosTokens[iDX + 1]);
+        dfCellDY = CPLAtofM(aosTokens[iDY + 1]);
     }
     else
     {
         if (i + 1 >= nTokens)
         {
-            CSLDestroy(papszTokens);
-            return FALSE;
+            return false;
         }
-        dfCellDY = CPLAtofM(papszTokens[i + 1]);
+        dfCellDY = CPLAtofM(aosTokens[i + 1]);
         dfCellDX = dfCellDY;
     }
 
     int j = 0;
-    if ((i = CSLFindString(papszTokens, "xllcorner")) >= 0 &&
-        (j = CSLFindString(papszTokens, "yllcorner")) >= 0 && i + 1 < nTokens &&
+    if ((i = aosTokens.FindString("xllcorner")) >= 0 &&
+        (j = aosTokens.FindString("yllcorner")) >= 0 && i + 1 < nTokens &&
         j + 1 < nTokens)
     {
-        m_gt[0] = CPLAtofM(papszTokens[i + 1]);
+        m_gt[0] = CPLAtofM(aosTokens[i + 1]);
 
         // Small hack to compensate from insufficient precision in cellsize
         // parameter in datasets of
@@ -545,20 +531,20 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
 
         m_gt[1] = dfCellDX;
         m_gt[2] = 0.0;
-        m_gt[3] = CPLAtofM(papszTokens[j + 1]) + nRasterYSize * dfCellDY;
+        m_gt[3] = CPLAtofM(aosTokens[j + 1]) + nRasterYSize * dfCellDY;
         m_gt[4] = 0.0;
         m_gt[5] = -dfCellDY;
     }
-    else if ((i = CSLFindString(papszTokens, "xllcenter")) >= 0 &&
-             (j = CSLFindString(papszTokens, "yllcenter")) >= 0 &&
-             i + 1 < nTokens && j + 1 < nTokens)
+    else if ((i = aosTokens.FindString("xllcenter")) >= 0 &&
+             (j = aosTokens.FindString("yllcenter")) >= 0 && i + 1 < nTokens &&
+             j + 1 < nTokens)
     {
         SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
-        m_gt[0] = CPLAtofM(papszTokens[i + 1]) - 0.5 * dfCellDX;
+        m_gt[0] = CPLAtofM(aosTokens[i + 1]) - 0.5 * dfCellDX;
         m_gt[1] = dfCellDX;
         m_gt[2] = 0.0;
-        m_gt[3] = CPLAtofM(papszTokens[j + 1]) - 0.5 * dfCellDY +
+        m_gt[3] = CPLAtofM(aosTokens[j + 1]) - 0.5 * dfCellDY +
                   nRasterYSize * dfCellDY;
         m_gt[4] = 0.0;
         m_gt[5] = -dfCellDY;
@@ -573,10 +559,9 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         m_gt[5] = -dfCellDY;
     }
 
-    if ((i = CSLFindString(papszTokens, "NODATA_value")) >= 0 &&
-        i + 1 < nTokens)
+    if ((i = aosTokens.FindString("NODATA_value")) >= 0 && i + 1 < nTokens)
     {
-        const char *pszNoData = papszTokens[i + 1];
+        const char *pszNoData = aosTokens[i + 1];
 
         bNoDataSet = true;
         if (strcmp(pszNoData, "null") == 0)
@@ -619,9 +604,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         }
     }
 
-    CSLDestroy(papszTokens);
-
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -643,58 +626,44 @@ GDALDataset *GRASSASCIIDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          ParseHeader()                               */
 /************************************************************************/
 
-int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
-                                   const char *pszDataType)
+bool GRASSASCIIDataset::ParseHeader(const char *pszHeader,
+                                    const char *pszDataType)
 {
-    char **papszTokens = CSLTokenizeString2(pszHeader, " \n\r\t:", 0);
-    const int nTokens = CSLCount(papszTokens);
+    const CPLStringList aosTokens(CSLTokenizeString2(pszHeader, " \n\r\t:", 0));
+    const int nTokens = aosTokens.size();
     int i = 0;
-    if ((i = CSLFindString(papszTokens, "cols")) < 0 || i + 1 >= nTokens)
+    if ((i = aosTokens.FindString("cols")) < 0 || i + 1 >= nTokens)
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
-    nRasterXSize = atoi(papszTokens[i + 1]);
-    if ((i = CSLFindString(papszTokens, "rows")) < 0 || i + 1 >= nTokens)
+    nRasterXSize = atoi(aosTokens[i + 1]);
+    if ((i = aosTokens.FindString("rows")) < 0 || i + 1 >= nTokens)
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
-    nRasterYSize = atoi(papszTokens[i + 1]);
+    nRasterYSize = atoi(aosTokens[i + 1]);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
 
-    // TODO(schwehr): Would be good to also factor the file size into the max.
-    // TODO(schwehr): Allow the user to disable this check.
-    // The driver allocates a panLineOffset array based on nRasterYSize
-    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
-    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
-    {
-        CSLDestroy(papszTokens);
-        return FALSE;
-    }
-
-    const int iNorth = CSLFindString(papszTokens, "north");
-    const int iSouth = CSLFindString(papszTokens, "south");
-    const int iEast = CSLFindString(papszTokens, "east");
-    const int iWest = CSLFindString(papszTokens, "west");
+    const int iNorth = aosTokens.FindString("north");
+    const int iSouth = aosTokens.FindString("south");
+    const int iEast = aosTokens.FindString("east");
+    const int iWest = aosTokens.FindString("west");
 
     if (iNorth == -1 || iSouth == -1 || iEast == -1 || iWest == -1 ||
         std::max(std::max(iNorth, iSouth), std::max(iEast, iWest)) + 1 >=
             nTokens)
     {
-        CSLDestroy(papszTokens);
-        return FALSE;
+        return false;
     }
 
-    const double dfNorth = CPLAtofM(papszTokens[iNorth + 1]);
-    const double dfSouth = CPLAtofM(papszTokens[iSouth + 1]);
-    const double dfEast = CPLAtofM(papszTokens[iEast + 1]);
-    const double dfWest = CPLAtofM(papszTokens[iWest + 1]);
+    const double dfNorth = CPLAtofM(aosTokens[iNorth + 1]);
+    const double dfSouth = CPLAtofM(aosTokens[iSouth + 1]);
+    const double dfEast = CPLAtofM(aosTokens[iEast + 1]);
+    const double dfWest = CPLAtofM(aosTokens[iWest + 1]);
     const double dfPixelXSize = (dfEast - dfWest) / nRasterXSize;
     const double dfPixelYSize = (dfNorth - dfSouth) / nRasterYSize;
 
@@ -705,9 +674,9 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
     m_gt[4] = 0.0;
     m_gt[5] = -dfPixelYSize;
 
-    if ((i = CSLFindString(papszTokens, "null")) >= 0 && i + 1 < nTokens)
+    if ((i = aosTokens.FindString("null")) >= 0 && i + 1 < nTokens)
     {
-        const char *pszNoData = papszTokens[i + 1];
+        const char *pszNoData = aosTokens[i + 1];
 
         bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
@@ -725,9 +694,9 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         }
     }
 
-    if ((i = CSLFindString(papszTokens, "type")) >= 0 && i + 1 < nTokens)
+    if ((i = aosTokens.FindString("type")) >= 0 && i + 1 < nTokens)
     {
-        const char *pszType = papszTokens[i + 1];
+        const char *pszType = aosTokens[i + 1];
         if (EQUAL(pszType, "int"))
             eDataType = GDT_Int32;
         else if (EQUAL(pszType, "float"))
@@ -741,9 +710,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         }
     }
 
-    CSLDestroy(papszTokens);
-
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -765,13 +732,13 @@ GDALDataset *ISGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          ParseHeader()                               */
 /************************************************************************/
 
-int ISGDataset::ParseHeader(const char *pszHeader, const char *)
+bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
 {
     // See https://www.isgeoid.polimi.it/Geoid/ISG_format_v10_20160121.pdf
     //     https://www.isgeoid.polimi.it/Geoid/ISG_format_v101_20180915.pdf
     //     https://www.isgeoid.polimi.it/Geoid/ISG_format_v20_20200625.pdf
 
-    CPLStringList aosLines(CSLTokenizeString2(pszHeader, "\n\r", 0));
+    const CPLStringList aosLines(CSLTokenizeString2(pszHeader, "\n\r", 0));
     CPLString osLatMin;
     CPLString osLatMax;
     CPLString osLonMin;
@@ -788,7 +755,8 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
     std::string osCoordUnits;    // ISG 2.0
     for (int iLine = 0; iLine < aosLines.size(); iLine++)
     {
-        CPLStringList aosTokens(CSLTokenizeString2(aosLines[iLine], ":=", 0));
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(aosLines[iLine], ":=", 0));
         if (aosTokens.size() == 2)
         {
             const CPLString osLeft(CPLString(aosTokens[0]).Trim());
@@ -835,26 +803,26 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         osLonMax.empty() || osDeltaLat.empty() || osDeltaLon.empty() ||
         osRows.empty() || osCols.empty())
     {
-        return FALSE;
+        return false;
     }
     if (!osDataFormat.empty() && osDataFormat != "grid")
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ISG: data format = %s not supported", osDataFormat.c_str());
-        return FALSE;
+        return false;
     }
     if (!osDataOrdering.empty() && osDataOrdering != "N-to-S, W-to-E")
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ISG: data ordering = %s not supported",
                  osDataOrdering.c_str());
-        return FALSE;
+        return false;
     }
     if (!osCoordType.empty() && osCoordType != "geodetic")
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ISG: coord type = %s not supported", osCoordType.c_str());
-        return FALSE;
+        return false;
     }
 
     const auto parseDMS = [](CPLString &str)
@@ -878,7 +846,7 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
             CPLError(CE_Failure, CPLE_NotSupported,
                      "ISG: coord units = %s not supported",
                      osCoordUnits.c_str());
-            return FALSE;
+            return false;
         }
     }
     double dfLatMin = useDMS ? parseDMS(osLatMin) : CPLAtof(osLatMin);
@@ -900,7 +868,12 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         !(dfDeltaLat > 0 && dfDeltaLon > 0 && dfDeltaLat < 180 &&
           dfDeltaLon < 360))
     {
-        return FALSE;
+        return false;
+    }
+
+    if (!GDALCheckDatasetDimensions(nRows, nCols))
+    {
+        return false;
     }
 
     // Correct rounding errors.
@@ -1029,7 +1002,7 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         bNoDataSet = true;
         dfNoDataValue = MapNoDataToFloat(CPLAtof(osNodata));
     }
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1043,15 +1016,15 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
         return nullptr;
 
     // Create a corresponding GDALDataset.
-    AAIGDataset *poDS = nullptr;
+    std::unique_ptr<AAIGDataset> poDS;
 
     if (eFormat == FORMAT_AAIG)
-        poDS = new AAIGDataset();
+        poDS = std::make_unique<AAIGDataset>();
     else if (eFormat == FORMAT_GRASSASCII)
-        poDS = new GRASSASCIIDataset();
+        poDS = std::make_unique<GRASSASCIIDataset>();
     else
     {
-        poDS = new ISGDataset();
+        poDS = std::make_unique<ISGDataset>();
         poDS->eDataType = GDT_Float32;
     }
 
@@ -1087,12 +1060,36 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
             pszDataType))
     {
-        delete poDS;
         return nullptr;
     }
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
+
+    // Sanity check in particular to avoid allocating a too large
+    // AAIGRasterBand::panLineOffset array
+    if (poDS->nRasterXSize > 10 * 1000 * 1000 ||
+        poDS->nRasterYSize > 10 * 1000 * 1000 ||
+        static_cast<int64_t>(poDS->nRasterXSize) * poDS->nRasterYSize >
+            1000 * 1000 * 1000)
+    {
+        // We need at least 2 bytes for each pixel: one for the character for
+        // its value and one for the space separator
+        constexpr int MIN_BYTE_COUNT_PER_PIXEL = 2;
+        if (VSIFSeekL(poDS->fp, 0, SEEK_END) != 0 ||
+            VSIFTellL(poDS->fp) <
+                static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+                    poDS->nRasterYSize * MIN_BYTE_COUNT_PER_PIXEL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large raster dimension %d x %d compared to file size "
+                     "(%" PRIu64 " bytes)",
+                     poDS->nRasterXSize, poDS->nRasterYSize,
+                     static_cast<uint64_t>(VSIFTellL(poDS->fp)));
+            return nullptr;
+        }
+        VSIFSeekL(poDS->fp, 0, SEEK_SET);
+    }
 
     // Find the start of real data.
     int nStartOfData = 0;
@@ -1104,7 +1101,6 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                    "end_of_head");
         if (pszEOH == nullptr)
         {
-            delete poDS;
             return nullptr;
         }
         for (int i = 0; pszEOH[i]; i++)
@@ -1120,7 +1116,6 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
         }
         if (nStartOfData == 0)
         {
-            delete poDS;
             return nullptr;
         }
         if (poOpenInfo->pabyHeader[nStartOfData] == '\n' ||
@@ -1140,7 +1135,6 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                 ReportError(poOpenInfo->pszFilename, CE_Failure,
                             CPLE_AppDefined,
                             "Couldn't find data values in ASCII Grid file.");
-                delete poDS;
                 return nullptr;
             }
 
@@ -1179,30 +1173,28 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     {
         // Allocate 100K chunk + 1 extra byte for NULL character.
         constexpr size_t nChunkSize = 1024 * 100;
-        GByte *pabyChunk = static_cast<GByte *>(
-            VSI_CALLOC_VERBOSE(nChunkSize + 1, sizeof(GByte)));
+        std::unique_ptr<GByte, VSIFreeReleaser> pabyChunk(static_cast<GByte *>(
+            VSI_CALLOC_VERBOSE(nChunkSize + 1, sizeof(GByte))));
         if (pabyChunk == nullptr)
         {
-            delete poDS;
             return nullptr;
         }
-        pabyChunk[nChunkSize] = '\0';
+        (pabyChunk.get())[nChunkSize] = '\0';
 
         if (VSIFSeekL(poDS->fp, nStartOfData, SEEK_SET) < 0)
         {
-            delete poDS;
-            VSIFree(pabyChunk);
             return nullptr;
         }
 
         // Scan for dot in subsequent chunks of data.
         while (!VSIFEofL(poDS->fp))
         {
-            const size_t nLen = VSIFReadL(pabyChunk, 1, nChunkSize, poDS->fp);
+            const size_t nLen =
+                VSIFReadL(pabyChunk.get(), 1, nChunkSize, poDS->fp);
 
             for (size_t i = 0; i < nLen; i++)
             {
-                const GByte ch = pabyChunk[i];
+                const GByte ch = (pabyChunk.get())[i];
                 if (ch == '.' || ch == ',' || ch == 'e' || ch == 'E')
                 {
                     poDS->eDataType = GDT_Float32;
@@ -1210,17 +1202,13 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                 }
             }
         }
-
-        // Deallocate chunk.
-        VSIFree(pabyChunk);
     }
 
     // Create band information objects.
-    AAIGRasterBand *band = new AAIGRasterBand(poDS, nStartOfData);
+    AAIGRasterBand *band = new AAIGRasterBand(poDS.get(), nStartOfData);
     poDS->SetBand(1, band);
     if (band->panLineOffset == nullptr)
     {
-        delete poDS;
         return nullptr;
     }
     if (!poDS->osUnits.empty())
@@ -1229,12 +1217,11 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     }
 
     // Try to read projection file.
-    char *const pszDirname =
-        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
-    char *const pszBasename =
-        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
+    const std::string osDirname = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const std::string osBasename = CPLGetBasenameSafe(poOpenInfo->pszFilename);
 
-    poDS->osPrjFilename = CPLFormFilenameSafe(pszDirname, pszBasename, "prj");
+    poDS->osPrjFilename =
+        CPLFormFilenameSafe(osDirname.c_str(), osBasename.c_str(), "prj");
     int nRet = 0;
     {
         VSIStatBufL sStatBuf;
@@ -1243,7 +1230,7 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
     if (nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename))
     {
         poDS->osPrjFilename =
-            CPLFormFilenameSafe(pszDirname, pszBasename, "PRJ");
+            CPLFormFilenameSafe(osDirname.c_str(), osBasename.c_str(), "PRJ");
 
         VSIStatBufL sStatBuf;
         nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
@@ -1276,18 +1263,15 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    CPLFree(pszDirname);
-    CPLFree(pszBasename);
-
     // Initialize any PAM information.
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
     // Check for external overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename,
                                 poOpenInfo->GetSiblingFiles());
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
