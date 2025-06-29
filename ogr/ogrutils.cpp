@@ -1265,6 +1265,16 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
                 return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
 
+            // Avoid rounding 59.999xxx to 60.0f (or set second to zero and
+            // increment the minute value) where x is 9, but round to 59.999 as
+            // the maximum value representable on a float.
+            if (pszInput[0] == '5' && pszInput[1] == '9' &&
+                pszInput[2] == '.' && pszInput[3] == '9' &&
+                psField->Date.Second == 60.000f)
+            {
+                psField->Date.Second = 59.999f;
+            }
+
             pszInput += 2;
             if (*pszInput == '.')
             {
