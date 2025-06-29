@@ -353,7 +353,7 @@ void GDALPamDataset::PamInitialize()
 
     if (!CPLTestBool(CPLGetConfigOption("GDAL_PAM_ENABLED", pszPamDefault)))
     {
-        CPLDebug("GDAL", "PAM is disabled");
+        CPLDebugOnce("GDAL", "PAM is disabled");
         nPamFlags |= GPF_DISABLED;
     }
 
