@@ -954,12 +954,13 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         return true;
     };
 
-    if (bNeedStats && !bWrkHasStatistics)
+    if (bNeedStats)
     {
         if (poSrcDS == poCurDS && !CreateVRTWithOrWithoutStats())
         {
             return nullptr;
         }
+        poCurDS->ClearStatistics();
 
         // Avoid source files to be modified
         CPLConfigOptionSetter enablePamDirtyDisabler(
