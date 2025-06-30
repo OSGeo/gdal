@@ -9570,7 +9570,7 @@ GDALRasterBand::WindowIterator::operator*() const
 GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 {
     m_col++;
-    if (m_col >= m_nRasterXSize / m_nBlockXSize)
+    if (m_col >= DIV_ROUND_UP(m_nRasterXSize, m_nBlockXSize))
     {
         m_col = 0;
         m_row++;
