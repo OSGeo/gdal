@@ -251,7 +251,7 @@ bool GDALAlgorithmArg::ProcessString(std::string &value) const
     {
         GByte *pabyData = nullptr;
         if (VSIIngestFile(nullptr, value.c_str() + 1, &pabyData, nullptr,
-                          1024 * 1024))
+                          10 * 1024 * 1024))
         {
             // Remove UTF-8 BOM
             size_t offset = 0;
