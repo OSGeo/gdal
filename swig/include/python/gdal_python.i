@@ -388,6 +388,64 @@ static void readraster_releasebuffer(CPLErr eErr,
 
   LogicalNot = logical_not
 
+  class Window:
+      def __init__(self, xoff, yoff, xsize, ysize):
+          self.data = [xoff, yoff, xsize, ysize]
+
+      def __copy__(self):
+          return Window(*self.data)
+
+      def __getitem__(self, i):
+          return self.data[i]    
+
+      def __setitem__(self, i, value):
+          self.data[i] = value
+      
+      def __iter__(self):
+          return iter(self.data)
+
+      def __eq__(self, other):
+          if isinstance(other, Window):
+              return self.data == other.data
+          if type(other) is tuple:
+              return tuple(self.data) == other
+          return self.data == other
+
+      def __repr__(self):
+          return f'Window({self.data[0]}, {self.data[1]}, {self.data[2]}, {self.data[3]})'
+
+      @property
+      def xoff(self):
+          return self.data[0]
+
+      @xoff.setter
+      def xoff(self, value):
+          self.data[0] = value 
+
+      @property
+      def yoff(self):
+          return self.data[1]
+
+      @yoff.setter
+      def yoff(self, value):
+          self.data[1] = value 
+
+      @property
+      def xsize(self):
+          return self.data[2]
+
+      @xsize.setter
+      def xsize(self, value):
+          self.data[2] = value 
+
+      @property
+      def ysize(self):
+          return self.data[3]
+
+      @ysize.setter
+      def ysize(self, value):
+          self.data[3] = value
+
 %}
 
 %{
@@ -1161,6 +1219,32 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
+
+  def BlockWindows(self):
+       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to 
+       each block in this ``Band``. Iteration order is from left to right,
+       then from top to bottom.
+
+
+       Examples
+       --------
+       >>> for window in src_band.BlockWindows():
+       >>>    values = src_band.ReadAsArray(*window)
+       >>>    dst_band.WriteArray(values + 20, window.xoff, window.yoff)
+       0
+       """
+       import math
+       blockXSize, blockYSize = self.GetBlockSize()
+       nBlocksX = math.ceil(self.XSize / blockXSize)
+       nBlocksY = math.ceil(self.YSize / blockYSize)
+       for winrow in range(0, nBlocksY):
+           yOff = winrow * blockYSize
+           ySize = min(blockYSize, self.YSize - yOff)
+           for wincol in range(0, nBlocksX):
+               xOff = wincol * blockXSize
+               xSize = min(blockXSize, self.XSize - xOff)
+               yield Window(xOff, yOff, xSize, ySize)
+
 
 %}
 
