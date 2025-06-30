@@ -240,6 +240,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_DAAS_X_FORWARDED_USER", // from daasdataset.cpp
    "GDAL_DATA", // from cpl_csv.cpp, cpl_findfile.cpp, gdaldrivermanager.cpp
    "GDAL_DEBUG_BLOCK_CACHE", // from gdalrasterblock.cpp
+   "GDAL_DEBUG_CPU_COUNT", // from gdalalgorithm.cpp
    "GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", // from gdaljp2metadata.cpp
    "GDAL_DEFAULT_CREATE_COPY", // from gdaldriver.cpp
    "GDAL_DEFAULT_WMS_CACHE_PATH", // from gdalwmscache.cpp
