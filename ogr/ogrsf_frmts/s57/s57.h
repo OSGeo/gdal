@@ -314,7 +314,7 @@ class CPL_DLL S57Reader
     void AssembleSoundingGeometry(DDFRecord *, OGRFeature *);
     // cppcheck-suppress functionStatic
     void AssemblePointGeometry(DDFRecord *, OGRFeature *);
-    void AssembleLineGeometry(DDFRecord *, OGRFeature *);
+    bool AssembleLineGeometry(DDFRecord *, OGRFeature *);
     void AssembleAreaGeometry(const DDFRecord *, OGRFeature *);
 
     bool FetchPoint(int, int, double *, double *, double * = nullptr);
