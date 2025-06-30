@@ -5307,6 +5307,17 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                         "Invalid value for BLOCKXSIZE");
             return nullptr;
         }
+        if (!bTiled)
+        {
+            ReportError(pszFilename, CE_Warning, CPLE_IllegalArg,
+                        "BLOCKXSIZE can only be used with TILED=YES");
+        }
+        else if (l_nBlockXSize % 16 != 0)
+        {
+            ReportError(pszFilename, CE_Failure, CPLE_IllegalArg,
+                        "BLOCKXSIZE must be a multiple of 16");
+            return nullptr;
+        }
     }
 
     int l_nBlockYSize = 0;
@@ -5317,6 +5328,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         {
             ReportError(pszFilename, CE_Failure, CPLE_IllegalArg,
                         "Invalid value for BLOCKYSIZE");
+            return nullptr;
+        }
+        if (bTiled && (l_nBlockYSize % 16 != 0))
+        {
+            ReportError(pszFilename, CE_Failure, CPLE_IllegalArg,
+                        "BLOCKYSIZE must be a multiple of 16");
             return nullptr;
         }
     }
