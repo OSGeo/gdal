@@ -507,14 +507,12 @@ def test_identify_various(major_brand, compatible_brands, expect_success):
 
 
 @pytest.mark.require_curl()
-# Hangs on 24.04 CI targets since ~ May 23th 2025
-@pytest.mark.skipif(gdaltest.is_ci(), reason="hangs on CI")
 def test_heif_network_read(tmp_vsimem):
 
     if not _has_read_write_support_for("UNCOMPRESSED"):
         pytest.skip("does not support UNCOMPRESSED")
-    if get_version() < [1, 19, 0]:
-        pytest.skip("libheif >= 1.19.0 not met")
+    if get_version() < [1, 19, 8]:
+        pytest.skip("libheif >= 1.19.8 not met")
 
     filename = tmp_vsimem / "test.hic"
     gdal.Translate(
@@ -585,6 +583,8 @@ def test_heif_network_read(tmp_vsimem):
 
                 request.wfile.write(extract(start, end - start + 1))
 
+        handler.add("GET", "/test.hic", custom_method=method)
+        handler.add("GET", "/test.hic", custom_method=method)
         handler.add("GET", "/test.hic", custom_method=method)
         with webserver.install_http_handler(handler):
             ret = ds.ReadRaster()
