@@ -17,6 +17,7 @@
 #include "cpl_string.h"
 #include "gdal_alg_priv.h"
 #include "gdal_frmts.h"
+#include "vrtexpression.h"
 
 #include <mutex>
 
@@ -579,6 +580,13 @@ void GDALRegister_VRT()
     poDriver->SetMetadataItem(pszExpressionDialects, "exprtk");
 #else
     poDriver->SetMetadataItem(pszExpressionDialects, "none");
+#endif
+
+#ifdef GDAL_VRT_ENABLE_MUPARSER
+    if (gdal::MuParserHasDefineFunUserData())
+    {
+        poDriver->SetMetadataItem("MUPARSER_HAS_DEFINE_FUN_USER_DATA", "YES");
+    }
 #endif
 
     poDriver->AddSourceParser("SimpleSource", VRTParseCoreSources);
