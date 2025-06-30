@@ -297,7 +297,7 @@ typedef uintptr_t GUIntptr_t;
 #ifdef GDAL_COMPILATION
 #define CPL_DLL __declspec(dllexport)
 #else
-#define CPL_DLL
+#define CPL_DLL __declspec(dllimport)
 #endif
 #define CPL_INTERNAL
 #else
