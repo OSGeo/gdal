@@ -1061,6 +1061,20 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
         }
     };
 
+    const auto AddListValueSeparator = [this, &ret]()
+    {
+        if (GetPackedValuesAllowed())
+        {
+            ret += ',';
+        }
+        else
+        {
+            ret += " --";
+            ret += GetName();
+            ret += ' ';
+        }
+    };
+
     ret += ' ';
     switch (GetType())
     {
@@ -1099,7 +1113,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
             for (size_t i = 0; i < vals.size(); ++i)
             {
                 if (i > 0)
-                    ret += ',';
+                    AddListValueSeparator();
                 AppendString(vals[i]);
             }
             break;
@@ -1110,7 +1124,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
             for (size_t i = 0; i < vals.size(); ++i)
             {
                 if (i > 0)
-                    ret += ',';
+                    AddListValueSeparator();
                 ret += CPLSPrintf("%d", vals[i]);
             }
             break;
@@ -1121,7 +1135,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
             for (size_t i = 0; i < vals.size(); ++i)
             {
                 if (i > 0)
-                    ret += ',';
+                    AddListValueSeparator();
                 ret += CPLSPrintf("%.17g", vals[i]);
             }
             break;
@@ -1132,7 +1146,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
             for (size_t i = 0; i < vals.size(); ++i)
             {
                 if (i > 0)
-                    ret += ',';
+                    AddListValueSeparator();
                 const auto &val = vals[i];
                 const auto &str = val.GetName();
                 if (str.empty())
