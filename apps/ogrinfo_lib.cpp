@@ -2605,7 +2605,7 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         {
             GByte *pabyRet = nullptr;
             if (VSIIngestFile(nullptr, psOptions->osWHERE.substr(1).c_str(),
-                              &pabyRet, nullptr, 1024 * 1024))
+                              &pabyRet, nullptr, 10 * 1024 * 1024))
             {
                 GDALRemoveBOM(pabyRet);
                 psOptions->osWHERE = reinterpret_cast<const char *>(pabyRet);
@@ -2625,7 +2625,7 @@ GDALVectorInfoOptionsNew(char **papszArgv,
             GByte *pabyRet = nullptr;
             if (VSIIngestFile(nullptr,
                               psOptions->osSQLStatement.substr(1).c_str(),
-                              &pabyRet, nullptr, 1024 * 1024))
+                              &pabyRet, nullptr, 10 * 1024 * 1024))
             {
                 GDALRemoveBOM(pabyRet);
                 char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);

@@ -7602,7 +7602,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 GByte *pabyRet = nullptr;
                 if (!s.empty() && s.front() == '@' &&
                     VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
-                                  1024 * 1024))
+                                  10 * 1024 * 1024))
                 {
                     GDALRemoveBOM(pabyRet);
                     char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
@@ -7637,7 +7637,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 GByte *pabyRet = nullptr;
                 if (!s.empty() && s.front() == '@' &&
                     VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
-                                  1024 * 1024))
+                                  10 * 1024 * 1024))
                 {
                     GDALRemoveBOM(pabyRet);
                     char *pszWHERE = reinterpret_cast<char *>(pabyRet);

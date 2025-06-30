@@ -180,7 +180,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
                     GByte *pabyRet = nullptr;
                     if (!sql.empty() && sql.at(0) == '@' &&
                         VSIIngestFile(nullptr, sql.substr(1).c_str(), &pabyRet,
-                                      nullptr, 1024 * 1024))
+                                      nullptr, 10 * 1024 * 1024))
                     {
                         GDALRemoveBOM(pabyRet);
                         char *pszSQLStatement =
