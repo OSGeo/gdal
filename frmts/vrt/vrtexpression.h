@@ -199,6 +199,8 @@ MathExpression::Create([[maybe_unused]] const char *pszExpression,
     return nullptr;
 }
 
+bool MuParserHasDefineFunUserData();
+
 /*! @endcond */
 
 }  // namespace gdal

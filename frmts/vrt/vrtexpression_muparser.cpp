@@ -76,6 +76,18 @@ template <typename T> void DefineIsNoDataFunction(T &parser)
 
 }  // namespace
 
+bool MuParserHasDefineFunUserData()
+{
+    if constexpr (HasDefineFunUserData<mu::Parser>::value)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 static std::optional<std::string> Sanitize(const std::string &osVariable)
 {
     // muparser does not allow characters '[' or ']' which we use to emulate
