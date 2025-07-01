@@ -4323,3 +4323,49 @@ def test_ogr_dxf_insert_col_count_zero():
         with ogr.Open("data/dxf/insert_only_col_count_zero.dxf") as ds:
             lyr = ds.GetLayerByName("blocks")
             assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_read_binary_dxf_r12():
+
+    with ogr.Open("data/dxf/bin_dxf_r12.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 3
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_read_binary_dxf_r2000():
+
+    with ogr.Open("data/dxf/bin_dxf_r2000.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_convert_from_binary_dxf_r12(tmp_vsimem):
+
+    gdal.VectorTranslate(tmp_vsimem / "out.dxf", "data/dxf/bin_dxf_r12.dxf")
+    with ogr.Open(tmp_vsimem / "out.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 3
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_convert_from_binary_dxf_r2000(tmp_vsimem):
+
+    gdal.VectorTranslate(tmp_vsimem / "out.dxf", "data/dxf/bin_dxf_r2000.dxf")
+    with ogr.Open(tmp_vsimem / "out.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1

@@ -28,6 +28,10 @@
 class OGRDXFDataSource;
 class OGRDXFFeature;
 
+constexpr std::array<char, 22> AUTOCAD_BINARY_DXF_SIGNATURE = {
+    'A', 'u', 't', 'o', 'C', 'A', 'D', ' ',  'B',  'i',    'n',
+    'a', 'r', 'y', ' ', 'D', 'X', 'F', '\r', '\n', '\x1A', '\x00'};
+
 /************************************************************************/
 /*                          DXFBlockDefinition                          */
 /*                                                                      */
@@ -624,9 +628,27 @@ class OGRDXFReaderASCII final : public OGRDXFReaderBase
         return iSrcBufferFileOffset + iSrcBufferOffset;
     }
 
-    int ReadValue(char *pszValueBuffer, int nValueBufferSize = 81) override;
+    int ReadValue(char *pszValueBuffer, int nValueBufferSize) override;
     void UnreadValue() override;
-    void ResetReadPointer(uint64_t, int nNewLineNumber = 0) override;
+    void ResetReadPointer(uint64_t, int nNewLineNumber) override;
+};
+
+class OGRDXFReaderBinary final : public OGRDXFReaderBase
+{
+    bool m_bIsR12 = false;
+    uint64_t m_nPrevPos = static_cast<uint64_t>(-1);
+
+  public:
+    OGRDXFReaderBinary() = default;
+
+    uint64_t GetCurrentFilePos() const override
+    {
+        return VSIFTellL(fp);
+    }
+
+    int ReadValue(char *pszValueBuffer, int nValueBufferSize) override;
+    void UnreadValue() override;
+    void ResetReadPointer(uint64_t, int nNewLineNumber) override;
 };
 
 /************************************************************************/
@@ -693,8 +715,8 @@ class OGRDXFDataSource final : public GDALDataset
     OGRDXFDataSource();
     ~OGRDXFDataSource();
 
-    int Open(const char *pszFilename, bool bHeaderOnly,
-             CSLConstList papszOptionsIn);
+    bool Open(const char *pszFilename, VSILFILE *fpIn, bool bHeaderOnly,
+              CSLConstList papszOptionsIn);
 
     int GetLayerCount() override
     {

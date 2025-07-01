@@ -16,6 +16,8 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                       ~OGRDXFReaderBase()                            */
 /************************************************************************/
@@ -274,4 +276,151 @@ void OGRDXFReaderASCII::UnreadValue()
     iSrcBufferOffset -= nLastValueSize;
     nLineNumber -= 2;
     nLastValueSize = 0;
+}
+
+int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
+{
+    if (VSIFTellL(fp) == 0)
+    {
+        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+    }
+    if (VSIFTellL(fp) == AUTOCAD_BINARY_DXF_SIGNATURE.size())
+    {
+        // Detect if the file is AutoCAD Binary r12
+        GByte abyZeroSection[8] = {0};
+        if (VSIFReadL(abyZeroSection, 1, sizeof(abyZeroSection), fp) !=
+            sizeof(abyZeroSection))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        m_bIsR12 = memcmp(abyZeroSection, "\x00SECTION", 8) == 0;
+        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+    }
+
+    m_nPrevPos = VSIFTellL(fp);
+
+    uint16_t nCode = 0;
+    bool bReadCodeUINT16 = true;
+    if (m_bIsR12)
+    {
+        GByte nCodeByte = 0;
+        if (VSIFReadL(&nCodeByte, 1, 1, fp) != 1)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        bReadCodeUINT16 = (nCodeByte == 255);
+        if (!bReadCodeUINT16)
+            nCode = nCodeByte;
+    }
+    if (bReadCodeUINT16)
+    {
+        if (VSIFReadL(&nCode, 1, sizeof(uint16_t), fp) != sizeof(uint16_t))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        CPL_LSBPTR16(&nCode);
+    }
+
+    // Credits to ezdxf for the ranges
+    bool bRet = true;
+    if (nCode >= 290 && nCode < 300)
+    {
+        GByte nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == 1;
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+    }
+    else if ((nCode >= 60 && nCode < 80) || (nCode >= 170 && nCode < 180) ||
+             (nCode >= 270 && nCode < 290) || (nCode >= 370 && nCode < 390) ||
+             (nCode >= 400 && nCode < 410) || (nCode >= 1060 && nCode < 1071))
+    {
+        int16_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR16(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+    }
+    else if ((nCode >= 90 && nCode < 100) || (nCode >= 420 && nCode < 430) ||
+             (nCode >= 440 && nCode < 460) || (nCode == 1071))
+    {
+        int32_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR32(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+    }
+    else if (nCode >= 160 && nCode < 170)
+    {
+        int64_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR64(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%" PRId64, nVal);
+    }
+    else if ((nCode >= 10 && nCode < 60) || (nCode >= 110 && nCode < 150) ||
+             (nCode >= 210 && nCode < 240) || (nCode >= 460 && nCode < 470) ||
+             (nCode >= 1010 && nCode < 1060))
+    {
+        double dfVal = 0;
+        bRet = VSIFReadL(&dfVal, 1, sizeof(dfVal), fp) == sizeof(dfVal);
+        CPL_LSBPTR64(&dfVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%.17g", dfVal);
+    }
+    else
+    {
+        // Zero terminated string
+        bool bEOS = false;
+        for (int i = 0; bRet && i < nValueBufferSize; ++i)
+        {
+            char ch = 0;
+            bRet = VSIFReadL(&ch, 1, 1, fp) == 1;
+            pszValueBuffer[i] = ch;
+            if (ch == 0)
+            {
+                bEOS = true;
+                break;
+            }
+        }
+        if (!bEOS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Provided buffer too small to store string");
+            while (bRet)
+            {
+                char ch = 0;
+                bRet = VSIFReadL(&ch, 1, 1, fp) == 1;
+                if (ch == 0)
+                {
+                    break;
+                }
+            }
+            return -1;
+        }
+    }
+
+    if (!bRet)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "File too short");
+        return -1;
+    }
+    return nCode;
+}
+
+void OGRDXFReaderBinary::UnreadValue()
+{
+    if (m_nPrevPos == static_cast<uint64_t>(-1))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "UnreadValue() can be called just once after ReadValue()");
+    }
+    else
+    {
+        VSIFSeekL(fp, m_nPrevPos, SEEK_SET);
+        m_nPrevPos = static_cast<uint64_t>(-1);
+    }
+}
+
+void OGRDXFReaderBinary::ResetReadPointer(uint64_t nPos, int nNewLineNumber)
+{
+    VSIFSeekL(fp, nPos, SEEK_SET);
+    nLineNumber = nNewLineNumber;
 }

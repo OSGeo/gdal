@@ -285,7 +285,7 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
     /*      Attempt to read the template header file so we have a list      */
     /*      of layers, linestyles and blocks.                               */
     /* -------------------------------------------------------------------- */
-    if (!oHeaderDS.Open(osHeaderFile, true, nullptr))
+    if (!oHeaderDS.Open(osHeaderFile, nullptr, true, nullptr))
         return FALSE;
 
     /* -------------------------------------------------------------------- */
