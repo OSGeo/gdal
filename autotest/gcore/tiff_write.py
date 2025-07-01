@@ -208,6 +208,46 @@ def test_tiff_write_4():
     gdaltest.tiff_drv.Delete("tmp/test_4.tif")
 
 
+def test_tiff_write_tiled_blockxsize_not_tiled(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "BLOCKXSIZE can only be used with TILED=YES"
+    ):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"BLOCKXSIZE": 16, "BLOCKYSIZE": 16},
+        )
+
+
+def test_tiff_write_tiled_blocksize_invalid(tmp_vsimem):
+
+    with gdaltest.error_raised(gdal.CE_Failure, "BLOCKXSIZE must be a multiple of 16"):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"TILED": True, "BLOCKXSIZE": 12, "BLOCKYSIZE": 16},
+        )
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif") is None
+
+    with gdaltest.error_raised(gdal.CE_Failure, "BLOCKYSIZE must be a multiple of 16"):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"TILED": True, "BLOCKXSIZE": 16, "BLOCKYSIZE": 12},
+        )
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif") is None
+
+
 ###############################################################################
 # Write a file with GCPs.
 
