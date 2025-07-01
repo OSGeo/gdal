@@ -42,6 +42,12 @@
 // driver would output on stdout.
 constexpr const char PROGRESS_MARKER[] = {'!', '.', 'x'};
 
+// Minimum number of threads for automatic switch to spawning
+constexpr int THRESHOLD_MIN_THREADS_FOR_SPAWN = 8;
+
+// Minimum number of tiles per job to decide for automatic switch to spawning
+constexpr int THRESHOLD_TILES_PER_JOB = 100;
+
 /************************************************************************/
 /*           GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()         */
 /************************************************************************/
@@ -2434,11 +2440,10 @@ void GDALRasterTileAlgorithm::WaitForSpawnedProcesses(
 
 /************************************************************************/
 /*               GDALRasterTileAlgorithm::GetMaxChildCount()            */
-/************************************************************************/
+/**********************************f**************************************/
 
-int GDALRasterTileAlgorithm::GetMaxChildCount() const
+int GDALRasterTileAlgorithm::GetMaxChildCount(int nMaxJobCount) const
 {
-    int nMaxJobCount = m_numThreads;
 #ifndef _WIN32
     // Limit the number of jobs compared to how many file descriptors we have
     // left
@@ -2507,7 +2512,13 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 {
     CPLAssert(!m_osGDALPath.empty());
 
-    const int nMaxJobCount = GetMaxChildCount();
+    // Config option for test only
+    const int nThreshold = std::max(
+        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
+                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
+    const int nMaxJobCount = GetMaxChildCount(
+        std::max(1, static_cast<int>(std::min<uint64_t>(
+                        m_numThreads, nBaseTiles / nThreshold))));
 
     double dfTilesYPerJob;
     int nYOuterIterations;
@@ -2689,7 +2700,13 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
     const uint64_t nExpectedOvrTileCount =
         static_cast<uint64_t>(nOvrTilesPerCol) * nOvrTilesPerRow;
 
-    const int nMaxJobCount = GetMaxChildCount();
+    // Config option for test only
+    const int nThreshold = std::max(
+        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
+                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
+    const int nMaxJobCount = GetMaxChildCount(
+        std::max(1, static_cast<int>(std::min<uint64_t>(
+                        m_numThreads, nExpectedOvrTileCount / nThreshold))));
 
     double dfTilesYPerJob;
     int nYOuterIterations;
@@ -3655,7 +3672,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const bool bEmitSpuriousCharsOnStdout = CPLTestBool(
         CPLGetConfigOption("GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", "NO"));
 
-    constexpr int THRESHOLD_TILES_PER_JOB = 100;
     const auto IsCompatibleOfSpawnSilent = [this]()
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -3668,9 +3684,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         // do not generate base tiles if called as a child process with
         // --ovr-zoom-level
     }
-    else if (m_numThreads > 1 &&
+    else if (m_numThreads > 1 && nBaseTiles > 1 &&
              ((m_parallelMethod.empty() &&
-               nBaseTiles / m_numThreads > THRESHOLD_TILES_PER_JOB &&
+               m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
+               nBaseTiles >=
+                   THRESHOLD_MIN_THREADS_FOR_SPAWN * THRESHOLD_TILES_PER_JOB &&
                IsCompatibleOfSpawnSilent()) ||
               m_parallelMethod == "spawn"))
     {
@@ -3964,12 +3982,15 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                      nOvrMinTileY, nOvrMaxTileY, nOvrMinTileX, nOvrMaxTileX);
         }
 
+        const int nOvrTilesPerCol = nOvrMaxTileY - nOvrMinTileY + 1;
+        const int nOvrTilesPerRow = nOvrMaxTileX - nOvrMinTileX + 1;
         const uint64_t nOvrTileCount =
-            static_cast<uint64_t>(nOvrMaxTileX - nOvrMinTileX + 1) *
-            (nOvrMaxTileY - nOvrMinTileY + 1);
-        if (m_numThreads > 1 &&
+            static_cast<uint64_t>(nOvrTilesPerCol) * nOvrTilesPerRow;
+        if (m_numThreads > 1 && nOvrTileCount > 1 &&
             ((m_parallelMethod.empty() &&
-              nOvrTileCount / m_numThreads > THRESHOLD_TILES_PER_JOB &&
+              m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
+              nOvrTileCount >=
+                  THRESHOLD_MIN_THREADS_FOR_SPAWN * THRESHOLD_TILES_PER_JOB &&
               IsCompatibleOfSpawnSilent()) ||
              m_parallelMethod == "spawn"))
         {
@@ -4049,10 +4070,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             std::atomic<bool> bFailure = false;
             std::atomic<int> nQueuedJobs = 0;
 
-            const int nOvrTilesPerCol = nOvrMaxTileY - nOvrMinTileY + 1;
-            const int nOvrTilesPerRow = nOvrMaxTileX - nOvrMinTileX + 1;
-            const bool bUseThreads = m_numThreads > 1 && (nOvrTilesPerCol > 1 ||
-                                                          nOvrTilesPerRow > 1);
+            const bool bUseThreads = m_numThreads > 1 && nOvrTileCount > 1;
 
             if (bUseThreads)
             {

@@ -766,10 +766,11 @@ def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
     alg["max-zoom"] = 3
     alg["num-threads"] = 3
     try:
-        with gdaltest.error_raised(
-            gdal.CE_Warning, "Limiting the number of child workers to"
-        ):
-            alg.Run()
+        with gdal.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+            with gdaltest.error_raised(
+                gdal.CE_Warning, "Limiting the number of child workers to"
+            ):
+                alg.Run()
     finally:
         del fd
 

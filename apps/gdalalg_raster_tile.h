@@ -112,7 +112,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
 
     bool IsCompatibleOfSpawn(const char *&pszErrorMsg);
 
-    int GetMaxChildCount() const;
+    int GetMaxChildCount(int nMaxJobCount) const;
 
     void WaitForSpawnedProcesses(
         bool &bRet, const std::vector<std::string> &asCommandLines,
