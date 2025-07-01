@@ -228,6 +228,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
   public:
     VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn, FILE *fpIn,
                        bool bReadOnlyIn, bool bModeAppendReadWriteIn);
+    ~VSIUnixStdioHandle() override;
 
     int Seek(vsi_l_offset nOffsetIn, int nWhence) override;
     vsi_l_offset Tell() override;
@@ -271,6 +272,15 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
       poFS(poFSIn)
 #endif
 {
+}
+
+/************************************************************************/
+/*                         ~VSIUnixStdioHandle()                        */
+/************************************************************************/
+
+VSIUnixStdioHandle::~VSIUnixStdioHandle()
+{
+    VSIUnixStdioHandle::Close();
 }
 
 /************************************************************************/
