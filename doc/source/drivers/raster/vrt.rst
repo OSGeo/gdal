@@ -1131,6 +1131,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **argmax**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Index (1-based, contrary to ``numpy.argmax``) of band with the maximum value
+   * - **argmin**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Index (1-based, contrary to ``numpy.argmin``) of band with the minimum value
    * - **cmul**
      - 2
      - -

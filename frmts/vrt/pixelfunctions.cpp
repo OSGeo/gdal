@@ -2346,6 +2346,14 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 /*                   pszMinMaxFuncMetadataNodata                        */
 /************************************************************************/
 
+static const char pszArgMinMaxFuncMetadataNodata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' description='Whether the output value "
+    "should be NoData as as soon as one source is NoData' type='boolean' "
+    "default='false' />"
+    "</PixelFunctionArgumentsList>";
+
 static const char pszMinMaxFuncMetadataNodata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='k' description='Optional constant term' type='double' "
@@ -2356,7 +2364,13 @@ static const char pszMinMaxFuncMetadataNodata[] =
     "default='false' />"
     "</PixelFunctionArgumentsList>";
 
-template <class Comparator>
+namespace
+{
+struct ReturnIndex;
+struct ReturnValue;
+}  // namespace
+
+template <class Comparator, class ReturnType = ReturnValue>
 static CPLErr MinOrMaxPixelFunc(double dfK, void **papoSources, int nSources,
                                 void *pData, int nXSize, int nYSize,
                                 GDALDataType eSrcType, GDALDataType eBufType,
@@ -2384,6 +2398,7 @@ static CPLErr MinOrMaxPixelFunc(double dfK, void **papoSources, int nSources,
         for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             double dfRes = std::numeric_limits<double>::quiet_NaN();
+            double dfResSrc = std::numeric_limits<double>::quiet_NaN();
 
             for (int iSrc = 0; iSrc < nSources; ++iSrc)
             {
@@ -2394,23 +2409,46 @@ static CPLErr MinOrMaxPixelFunc(double dfK, void **papoSources, int nSources,
                     if (bPropagateNoData)
                     {
                         dfRes = dfNoData;
+                        if constexpr (std::is_same_v<ReturnType, ReturnIndex>)
+                        {
+                            dfResSrc = std::numeric_limits<double>::quiet_NaN();
+                        }
                         break;
                     }
                 }
                 else if (Comparator::compare(dfVal, dfRes))
                 {
                     dfRes = dfVal;
+                    if constexpr (std::is_same_v<ReturnType, ReturnIndex>)
+                    {
+                        dfResSrc = iSrc;
+                    }
                 }
             }
 
-            if (std::isnan(dfRes))
+            if constexpr (std::is_same_v<ReturnType, ReturnIndex>)
             {
-                if (!bPropagateNoData)
-                    dfRes = dfNoData;
+                static_cast<void>(dfK);  // Placate gcc 9.4
+                dfRes = std::isnan(dfResSrc) ? dfNoData : dfResSrc + 1;
             }
-            else if (!std::isnan(dfK) && Comparator::compare(dfK, dfRes))
+            else
             {
-                dfRes = dfK;
+                if (std::isnan(dfRes))
+                {
+                    dfRes = dfNoData;
+                }
+
+                if (IsNoData(dfRes, dfNoData))
+                {
+                    if (!bPropagateNoData && !std::isnan(dfK))
+                    {
+                        dfRes = dfK;
+                    }
+                }
+                else if (!std::isnan(dfK) && Comparator::compare(dfK, dfRes))
+                {
+                    dfRes = dfK;
+                }
             }
 
             GDALCopyWords(&dfRes, GDT_Float64, 0,
@@ -2618,6 +2656,7 @@ struct SSEWrapperMaxDouble
 
 #endif  // USE_SSE2
 
+template <typename ReturnType>
 static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize, GDALDataType eSrcType,
                            GDALDataType eBufType, int nPixelSpace,
@@ -2633,53 +2672,57 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
     };
 
     double dfK = std::numeric_limits<double>::quiet_NaN();
-    if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
-        return CE_Failure;
+    if constexpr (std::is_same_v<ReturnType, ReturnValue>)
+    {
+        if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
+            return CE_Failure;
 
 #ifdef USE_SSE2
-    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
-    if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
-        eSrcType == eBufType &&
-        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
-    {
-        if (eSrcType == GDT_Byte)
+        const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+        if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
+            eSrcType == eBufType &&
+            nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
         {
-            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMinByte>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
+            if (eSrcType == GDT_Byte)
+            {
+                OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMinByte>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_UInt16)
+            {
+                OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMinUInt16>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Int16)
+            {
+                OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMinInt16>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Float32)
+            {
+                OptimizedMinOrMaxSSE2<float, SSEWrapperMinFloat>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Float64)
+            {
+                OptimizedMinOrMaxSSE2<double, SSEWrapperMinDouble>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
         }
-        else if (eSrcType == GDT_UInt16)
-        {
-            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMinUInt16>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Int16)
-        {
-            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMinInt16>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Float32)
-        {
-            OptimizedMinOrMaxSSE2<float, SSEWrapperMinFloat>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Float64)
-        {
-            OptimizedMinOrMaxSSE2<double, SSEWrapperMinDouble>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-    }
 #endif
+    }
 
-    return MinOrMaxPixelFunc<Comparator>(dfK, papoSources, nSources, pData,
-                                         nXSize, nYSize, eSrcType, eBufType,
-                                         nPixelSpace, nLineSpace, papszArgs);
+    return MinOrMaxPixelFunc<Comparator, ReturnType>(
+        dfK, papoSources, nSources, pData, nXSize, nYSize, eSrcType, eBufType,
+        nPixelSpace, nLineSpace, papszArgs);
 }
 
+template <typename ReturnType>
 static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
                            int nXSize, int nYSize, GDALDataType eSrcType,
                            GDALDataType eBufType, int nPixelSpace,
@@ -2695,51 +2738,54 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
     };
 
     double dfK = std::numeric_limits<double>::quiet_NaN();
-    if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
-        return CE_Failure;
+    if constexpr (std::is_same_v<ReturnType, ReturnValue>)
+    {
+        if (FetchDoubleArg(papszArgs, "k", &dfK, &dfK) != CE_None)
+            return CE_Failure;
 
 #ifdef USE_SSE2
-    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
-    if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
-        eSrcType == eBufType &&
-        nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
-    {
-        if (eSrcType == GDT_Byte)
+        const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+        if (std::isnan(dfK) && nSources > 0 && !bHasNoData &&
+            eSrcType == eBufType &&
+            nPixelSpace == GDALGetDataTypeSizeBytes(eSrcType))
         {
-            OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMaxByte>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
+            if (eSrcType == GDT_Byte)
+            {
+                OptimizedMinOrMaxSSE2<uint8_t, SSEWrapperMaxByte>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_UInt16)
+            {
+                OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMaxUInt16>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Int16)
+            {
+                OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMaxInt16>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Float32)
+            {
+                OptimizedMinOrMaxSSE2<float, SSEWrapperMaxFloat>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
+            else if (eSrcType == GDT_Float64)
+            {
+                OptimizedMinOrMaxSSE2<double, SSEWrapperMaxDouble>(
+                    papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
+                return CE_None;
+            }
         }
-        else if (eSrcType == GDT_UInt16)
-        {
-            OptimizedMinOrMaxSSE2<uint16_t, SSEWrapperMaxUInt16>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Int16)
-        {
-            OptimizedMinOrMaxSSE2<int16_t, SSEWrapperMaxInt16>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Float32)
-        {
-            OptimizedMinOrMaxSSE2<float, SSEWrapperMaxFloat>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-        else if (eSrcType == GDT_Float64)
-        {
-            OptimizedMinOrMaxSSE2<double, SSEWrapperMaxDouble>(
-                papoSources, nSources, pData, nXSize, nYSize, nLineSpace);
-            return CE_None;
-        }
-    }
 #endif
+    }
 
-    return MinOrMaxPixelFunc<Comparator>(dfK, papoSources, nSources, pData,
-                                         nXSize, nYSize, eSrcType, eBufType,
-                                         nPixelSpace, nLineSpace, papszArgs);
+    return MinOrMaxPixelFunc<Comparator, ReturnType>(
+        dfK, papoSources, nSources, pData, nXSize, nYSize, eSrcType, eBufType,
+        nPixelSpace, nLineSpace, papszArgs);
 }
 
 static const char pszExprPixelFuncMetadata[] =
@@ -4006,10 +4052,14 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszScalePixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("norm_diff", NormDiffPixelFunc,
                                         pszNormDiffPixelFuncMetadata);
-    GDALAddDerivedBandPixelFuncWithArgs("min", MinPixelFunc,
+    GDALAddDerivedBandPixelFuncWithArgs("min", MinPixelFunc<ReturnValue>,
                                         pszMinMaxFuncMetadataNodata);
-    GDALAddDerivedBandPixelFuncWithArgs("max", MaxPixelFunc,
+    GDALAddDerivedBandPixelFuncWithArgs("argmin", MinPixelFunc<ReturnIndex>,
+                                        pszArgMinMaxFuncMetadataNodata);
+    GDALAddDerivedBandPixelFuncWithArgs("max", MaxPixelFunc<ReturnValue>,
                                         pszMinMaxFuncMetadataNodata);
+    GDALAddDerivedBandPixelFuncWithArgs("argmax", MaxPixelFunc<ReturnIndex>,
+                                        pszArgMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("expression", ExprPixelFunc,
                                         pszExprPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
