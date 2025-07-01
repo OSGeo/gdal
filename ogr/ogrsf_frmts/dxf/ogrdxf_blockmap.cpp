@@ -31,10 +31,10 @@ bool OGRDXFDataSource::ReadBlocksSection()
     bInlineBlocks = false;
 
     OGRDXFLayer *poReaderLayer =
-        static_cast<OGRDXFLayer *>(GetLayerByName("Entities"));
+        cpl::down_cast<OGRDXFLayer *>(GetLayerByName("Entities"));
 
-    iEntitiesOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    iEntitiesLineNumber = oReader.nLineNumber;
+    iEntitiesOffset = poReader->GetCurrentFilePos();
+    iEntitiesLineNumber = poReader->nLineNumber;
 
     char szLineBuf[257];
     int nCode = 0;

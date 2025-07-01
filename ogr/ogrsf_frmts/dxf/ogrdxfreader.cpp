@@ -17,29 +17,16 @@
 #include "cpl_csv.h"
 
 /************************************************************************/
-/*                            OGRDXFReader()                            */
+/*                       ~OGRDXFReaderBase()                            */
 /************************************************************************/
 
-OGRDXFReader::OGRDXFReader()
-    : fp(nullptr), iSrcBufferOffset(0), nSrcBufferBytes(0),
-      iSrcBufferFileOffset(0), achSrcBuffer{}, nLastValueSize(0), nLineNumber(0)
-{
-}
-
-/************************************************************************/
-/*                           ~OGRDXFReader()                            */
-/************************************************************************/
-
-OGRDXFReader::~OGRDXFReader()
-
-{
-}
+OGRDXFReaderBase::~OGRDXFReaderBase() = default;
 
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
-void OGRDXFReader::Initialize(VSILFILE *fpIn)
+void OGRDXFReaderBase::Initialize(VSILFILE *fpIn)
 
 {
     fp = fpIn;
@@ -49,8 +36,8 @@ void OGRDXFReader::Initialize(VSILFILE *fpIn)
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFReader::ResetReadPointer(unsigned int iNewOffset,
-                                    int nNewLineNumber /* = 0 */)
+void OGRDXFReaderASCII::ResetReadPointer(uint64_t iNewOffset,
+                                         int nNewLineNumber /* = 0 */)
 
 {
     nSrcBufferBytes = 0;
@@ -69,7 +56,7 @@ void OGRDXFReader::ResetReadPointer(unsigned int iNewOffset,
 /*      file.                                                           */
 /************************************************************************/
 
-void OGRDXFReader::LoadDiskChunk()
+void OGRDXFReaderASCII::LoadDiskChunk()
 
 {
     if (nSrcBufferBytes - iSrcBufferOffset > 511)
@@ -80,15 +67,15 @@ void OGRDXFReader::LoadDiskChunk()
         CPLAssert(nSrcBufferBytes <= 1024);
         CPLAssert(iSrcBufferOffset <= nSrcBufferBytes);
 
-        memmove(achSrcBuffer, achSrcBuffer + iSrcBufferOffset,
+        memmove(achSrcBuffer.data(), achSrcBuffer.data() + iSrcBufferOffset,
                 nSrcBufferBytes - iSrcBufferOffset);
         iSrcBufferFileOffset += iSrcBufferOffset;
         nSrcBufferBytes -= iSrcBufferOffset;
         iSrcBufferOffset = 0;
     }
 
-    nSrcBufferBytes +=
-        static_cast<int>(VSIFReadL(achSrcBuffer + nSrcBufferBytes, 1, 512, fp));
+    nSrcBufferBytes += static_cast<int>(
+        VSIFReadL(achSrcBuffer.data() + nSrcBufferBytes, 1, 512, fp));
     achSrcBuffer[nSrcBufferBytes] = '\0';
 
     CPLAssert(nSrcBufferBytes <= 1024);
@@ -101,7 +88,7 @@ void OGRDXFReader::LoadDiskChunk()
 /*      Read one type code and value line pair from the DXF file.       */
 /************************************************************************/
 
-int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
+int OGRDXFReaderASCII::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
 
 {
     /* -------------------------------------------------------------------- */
@@ -114,7 +101,7 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     /*      Capture the value code, and skip past it.                       */
     /* -------------------------------------------------------------------- */
     unsigned int iStartSrcBufferOffset = iSrcBufferOffset;
-    int nValueCode = atoi(achSrcBuffer + iSrcBufferOffset);
+    int nValueCode = atoi(achSrcBuffer.data() + iSrcBufferOffset);
 
     nLineNumber++;
 
@@ -169,8 +156,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
         }
 
         osValue.resize(nValueLength + iEOL - iSrcBufferOffset, '\0');
-        std::copy(achSrcBuffer + iSrcBufferOffset, achSrcBuffer + iEOL,
-                  osValue.begin() + nValueLength);
+        std::copy(achSrcBuffer.data() + iSrcBufferOffset,
+                  achSrcBuffer.data() + iEOL, osValue.begin() + nValueLength);
 
         iSrcBufferOffset = iEOL;
         LoadDiskChunk();
@@ -208,7 +195,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     if (static_cast<int>(iEOL - iSrcBufferOffset) >
         nValueBufSize - static_cast<int>(nValueBufLen) - 1)
     {
-        strncpy(pszValueBuf + nValueBufLen, achSrcBuffer + iSrcBufferOffset,
+        strncpy(pszValueBuf + nValueBufLen,
+                achSrcBuffer.data() + iSrcBufferOffset,
                 nValueBufSize - static_cast<int>(nValueBufLen) - 1);
         pszValueBuf[nValueBufSize - 1] = '\0';
 
@@ -217,7 +205,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     }
     else
     {
-        strncpy(pszValueBuf + nValueBufLen, achSrcBuffer + iSrcBufferOffset,
+        strncpy(pszValueBuf + nValueBufLen,
+                achSrcBuffer.data() + iSrcBufferOffset,
                 iEOL - iSrcBufferOffset);
         pszValueBuf[nValueBufLen + iEOL - iSrcBufferOffset] = '\0';
     }
@@ -247,7 +236,7 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     return nValueCode;
 }
 
-int OGRDXFReader::ReadValue(char *pszValueBuf, int nValueBufSize)
+int OGRDXFReaderASCII::ReadValue(char *pszValueBuf, int nValueBufSize)
 {
     int nValueCode;
     while (true)
@@ -270,7 +259,7 @@ int OGRDXFReader::ReadValue(char *pszValueBuf, int nValueBufSize)
 /*      read pointer.                                                   */
 /************************************************************************/
 
-void OGRDXFReader::UnreadValue()
+void OGRDXFReaderASCII::UnreadValue()
 
 {
     if (nLastValueSize == 0)

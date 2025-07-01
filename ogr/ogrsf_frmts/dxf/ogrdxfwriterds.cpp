@@ -744,7 +744,7 @@ bool OGRDXFWriterDS::TransferUpdateTrailer(VSILFILE *fpOut)
     if (l_fp == nullptr)
         return false;
 
-    OGRDXFReader oReader;
+    OGRDXFReaderASCII oReader;
     oReader.Initialize(l_fp);
 
     /* -------------------------------------------------------------------- */
@@ -1169,7 +1169,7 @@ void OGRDXFWriterDS::ScanForEntities(const char *pszFilename,
     if (l_fp == nullptr)
         return;
 
-    OGRDXFReader oReader;
+    OGRDXFReaderASCII oReader;
     oReader.Initialize(l_fp);
 
     /* -------------------------------------------------------------------- */

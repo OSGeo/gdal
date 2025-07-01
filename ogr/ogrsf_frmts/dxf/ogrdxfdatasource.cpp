@@ -25,7 +25,8 @@ OGRDXFDataSource::OGRDXFDataSource()
     : fp(nullptr), iEntitiesOffset(0), iEntitiesLineNumber(0),
       bInlineBlocks(false), bMergeBlockGeometries(false),
       bTranslateEscapeSequences(false), bIncludeRawCodeValues(false),
-      b3DExtensibleMode(false), bHaveReadSolidData(false)
+      b3DExtensibleMode(false), bHaveReadSolidData(false),
+      poReader(std::make_unique<OGRDXFReaderASCII>())
 {
 }
 
@@ -130,7 +131,7 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
     if (fp == nullptr)
         return FALSE;
 
-    oReader.Initialize(fp);
+    poReader->Initialize(fp);
 
     /* -------------------------------------------------------------------- */
     /*      Confirm we have a header section.                               */
@@ -317,8 +318,8 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
         return FALSE;
     }
 
-    iEntitiesOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    iEntitiesLineNumber = oReader.nLineNumber;
+    iEntitiesOffset = poReader->GetCurrentFilePos();
+    iEntitiesLineNumber = poReader->nLineNumber;
     apoLayers[0]->ResetReading();
 
     return TRUE;
@@ -1017,9 +1018,8 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
 
     // Keep track of our current position and line number in the file so we can
     // return here later
-    unsigned int iPrevOffset =
-        oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    int nPrevLineNumber = oReader.nLineNumber;
+    uint64_t iPrevOffset = poReader->GetCurrentFilePos();
+    int nPrevLineNumber = poReader->nLineNumber;
 
     char szLineBuf[4096];
     int nCode = 0;
@@ -1046,7 +1046,7 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
 
     if (!bFound)
     {
-        oReader.ResetReadPointer(iPrevOffset, nPrevLineNumber);
+        poReader->ResetReadPointer(iPrevOffset, nPrevLineNumber);
         return 0;
     }
 
@@ -1120,7 +1120,7 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
         }
     }
 
-    oReader.ResetReadPointer(iPrevOffset, nPrevLineNumber);
+    poReader->ResetReadPointer(iPrevOffset, nPrevLineNumber);
 
     bHaveReadSolidData = true;
 
