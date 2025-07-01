@@ -3649,14 +3649,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     bool bThreadPoolInitialized = false;
     const auto InitThreadPool =
-        [this, nBaseTiles, &oThreadPool, &bRet, &bThreadPoolInitialized]()
+        [this, &oThreadPool, &bRet, &bThreadPoolInitialized]()
     {
         if (!bThreadPoolInitialized)
         {
             bThreadPoolInitialized = true;
-            m_numThreads = std::max(1, m_numThreads);
-            if (static_cast<uint64_t>(m_numThreads) > nBaseTiles)
-                m_numThreads = static_cast<int>(nBaseTiles);
 
             if (bRet && m_numThreads > 1)
             {
@@ -3679,6 +3676,13 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return IsCompatibleOfSpawn(pszErrorMsg);
     };
 
+    // Config option for test only
+    const int nThreshold = std::max(
+        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
+                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
+    m_numThreads = std::max(1, static_cast<int>(std::min<uint64_t>(
+                                   m_numThreads, nBaseTiles / nThreshold)));
+
     if (m_ovrZoomLevel >= 0)
     {
         // do not generate base tiles if called as a child process with
@@ -3687,8 +3691,6 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     else if (m_numThreads > 1 && nBaseTiles > 1 &&
              ((m_parallelMethod.empty() &&
                m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
-               nBaseTiles >=
-                   THRESHOLD_MIN_THREADS_FOR_SPAWN * THRESHOLD_TILES_PER_JOB &&
                IsCompatibleOfSpawnSilent()) ||
               m_parallelMethod == "spawn"))
     {
@@ -3986,11 +3988,14 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         const int nOvrTilesPerRow = nOvrMaxTileX - nOvrMinTileX + 1;
         const uint64_t nOvrTileCount =
             static_cast<uint64_t>(nOvrTilesPerCol) * nOvrTilesPerRow;
+
+        m_numThreads =
+            std::max(1, static_cast<int>(std::min<uint64_t>(
+                            m_numThreads, nOvrTileCount / nThreshold)));
+
         if (m_numThreads > 1 && nOvrTileCount > 1 &&
             ((m_parallelMethod.empty() &&
               m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
-              nOvrTileCount >=
-                  THRESHOLD_MIN_THREADS_FOR_SPAWN * THRESHOLD_TILES_PER_JOB &&
               IsCompatibleOfSpawnSilent()) ||
              m_parallelMethod == "spawn"))
         {

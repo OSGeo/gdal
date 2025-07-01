@@ -735,7 +735,8 @@ def test_gdalalg_raster_tile_multithread_spawn_error_in_child(tmp_path):
     alg["max-zoom"] = 3
     alg["num-threads"] = 2
     with pytest.raises(Exception, match="Child process.*failed"):
-        alg.Run()
+        with gdal.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+            alg.Run()
 
 
 @pytest.mark.skipif(gdal.GetNumCPUs() <= 2, reason="needs more than 2 CPUs")
@@ -806,6 +807,7 @@ def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
             "CPL_DEBUG": "ON",
             "CPL_LOG": str(tmp_path / "log.txt"),
             "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS": "YES",
+            "GDAL_THRESHOLD_TILES_PER_JOB": "1",
         }
     ):
         with gdaltest.error_handler(my_handler):
@@ -831,7 +833,8 @@ def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
     alg["output"] = tmp_vsimem
     alg["min-zoom"] = 0
     alg["max-zoom"] = 3
-    alg.Run(my_progress)
+    with gdaltest.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+        alg.Run(my_progress)
 
     assert last_pct[0] == 1.0
 
