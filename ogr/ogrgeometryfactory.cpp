@@ -548,6 +548,41 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt(char **ppszData, OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                    OGR_G_CreateFromEnvelope()                        */
+/************************************************************************/
+/**
+ * \brief Create a Polygon geometry from an envelope
+ *
+ *
+ * @param dfMinX minimum X coordinate
+ * @param dfMinY minimum Y coordinate
+ * @param dfMaxX maximum X coordinate
+ * @param dfMaxY maximum Y coordinate
+ * @param hSRS handle to the spatial reference to be assigned to the
+ *             created geometry object. This may be NULL.
+ *
+ * @return the newly created geometry. Should be freed with
+ *          OGRGeometryFactory::destroyGeometry() after use.
+ */
+
+OGRGeometryH CPL_DLL OGR_G_CreateFromEnvelope(double dfMinX, double dfMinY,
+                                              double dfMaxX, double dfMaxY,
+                                              OGRSpatialReferenceH hSRS)
+
+{
+    auto poPolygon =
+        std::make_unique<OGRPolygon>(dfMinX, dfMinY, dfMaxX, dfMaxY);
+
+    if (hSRS)
+    {
+        poPolygon->assignSpatialReference(
+            OGRSpatialReference::FromHandle(hSRS));
+    }
+
+    return OGRGeometry::ToHandle(poPolygon.release());
+}
+
+/************************************************************************/
 /*                           createGeometry()                           */
 /************************************************************************/
 
