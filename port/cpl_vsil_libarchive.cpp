@@ -398,6 +398,7 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
 
     virtual int Close() override
     {
+        m_poReader.reset();
         return 0;
     }
 };
