@@ -237,6 +237,7 @@ blockings
 blocksize
 BlockSizeX
 BlockSizeY
+BlockWindows
 blocky
 bLookForCircular
 bLookForNonLinear
