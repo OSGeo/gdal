@@ -8608,20 +8608,13 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
         if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
         {
-            OGRLinearRing oRing;
             const double dfMinX = (*oSpat)[0];
             const double dfMinY = (*oSpat)[1];
             const double dfMaxX = (*oSpat)[2];
             const double dfMaxY = (*oSpat)[3];
 
-            oRing.addPoint(dfMinX, dfMinY);
-            oRing.addPoint(dfMinX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMinY);
-            oRing.addPoint(dfMinX, dfMinY);
-
-            auto poSpatialFilter = std::make_shared<OGRPolygon>();
-            poSpatialFilter->addRing(&oRing);
+            auto poSpatialFilter =
+                std::make_shared<OGRPolygon>(dfMinX, dfMinY, dfMaxX, dfMaxY);
             psOptions->poSpatialFilter = poSpatialFilter;
         }
 
@@ -8695,17 +8688,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 const double dfMaxX = CPLAtofM((*oClipDst)[2].c_str());
                 const double dfMaxY = CPLAtofM((*oClipDst)[3].c_str());
 
-                OGRLinearRing oRing;
-
-                oRing.addPoint(dfMinX, dfMinY);
-                oRing.addPoint(dfMinX, dfMaxY);
-                oRing.addPoint(dfMaxX, dfMaxY);
-                oRing.addPoint(dfMaxX, dfMinY);
-                oRing.addPoint(dfMinX, dfMinY);
-
-                auto poPoly = std::make_shared<OGRPolygon>();
+                auto poPoly = std::make_shared<OGRPolygon>(dfMinX, dfMinY,
+                                                           dfMaxX, dfMaxY);
                 psOptions->poClipDst = poPoly;
-                poPoly->addRing(&oRing);
             }
             else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
                       STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
