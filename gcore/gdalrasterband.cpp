@@ -4496,15 +4496,6 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
             const int iYBlock = static_cast<int>(iSampleBlock / nBlocksPerRow);
             const int iXBlock = static_cast<int>(iSampleBlock % nBlocksPerRow);
 
-            GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
-            if (poBlock == nullptr)
-            {
-                CPLFree(pabyMaskData);
-                return CE_Failure;
-            }
-
-            void *pData = poBlock->GetDataRef();
-
             int nXCheck = 0, nYCheck = 0;
             GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
@@ -4515,9 +4506,17 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                      0, nBlockXSize, nullptr) != CE_None)
             {
                 CPLFree(pabyMaskData);
-                poBlock->DropLock();
                 return CE_Failure;
             }
+
+            GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+            if (poBlock == nullptr)
+            {
+                CPLFree(pabyMaskData);
+                return CE_Failure;
+            }
+
+            void *pData = poBlock->GetDataRef();
 
             // this is a special case for a common situation.
             if (eDataType == GDT_Byte && !bSignedByte && dfScale == 1.0 &&
@@ -6862,16 +6861,6 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             const int iYBlock = static_cast<int>(iSampleBlock / nBlocksPerRow);
             const int iXBlock = static_cast<int>(iSampleBlock % nBlocksPerRow);
 
-            GDALRasterBlock *const poBlock =
-                GetLockedBlockRef(iXBlock, iYBlock);
-            if (poBlock == nullptr)
-            {
-                CPLFree(pabyMaskData);
-                return CE_Failure;
-            }
-
-            void *const pData = poBlock->GetDataRef();
-
             int nXCheck = 0, nYCheck = 0;
             GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
@@ -6882,9 +6871,18 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                      0, nBlockXSize, nullptr) != CE_None)
             {
                 CPLFree(pabyMaskData);
-                poBlock->DropLock();
                 return CE_Failure;
             }
+
+            GDALRasterBlock *const poBlock =
+                GetLockedBlockRef(iXBlock, iYBlock);
+            if (poBlock == nullptr)
+            {
+                CPLFree(pabyMaskData);
+                return CE_Failure;
+            }
+
+            void *const pData = poBlock->GetDataRef();
 
             // This isn't the fastest way to do this, but is easier for now.
             for (int iY = 0; iY < nYCheck; iY++)
@@ -7296,15 +7294,6 @@ static bool ComputeMinMaxGenericIterBlocks(
         const int iYBlock = static_cast<int>(iSampleBlock / nBlocksPerRow);
         const int iXBlock = static_cast<int>(iSampleBlock % nBlocksPerRow);
 
-        GDALRasterBlock *poBlock = poBand->GetLockedBlockRef(iXBlock, iYBlock);
-        if (poBlock == nullptr)
-        {
-            CPLFree(pabyMaskData);
-            return false;
-        }
-
-        void *const pData = poBlock->GetDataRef();
-
         int nXCheck = 0, nYCheck = 0;
         poBand->GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
@@ -7314,10 +7303,18 @@ static bool ComputeMinMaxGenericIterBlocks(
                                  pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
                                  nBlockXSize, nullptr) != CE_None)
         {
-            poBlock->DropLock();
             CPLFree(pabyMaskData);
             return false;
         }
+
+        GDALRasterBlock *poBlock = poBand->GetLockedBlockRef(iXBlock, iYBlock);
+        if (poBlock == nullptr)
+        {
+            CPLFree(pabyMaskData);
+            return false;
+        }
+
+        void *const pData = poBlock->GetDataRef();
 
         ComputeMinMaxGeneric(pData, eDataType, bSignedByte, nXCheck, nYCheck,
                              nBlockXSize, sNoDataValues, pabyMaskData, dfMin,
@@ -7797,15 +7794,6 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
         const int iYBlock = static_cast<int>(iBlock / nBlocksPerRow);
         const int iXBlock = static_cast<int>(iBlock % nBlocksPerRow);
 
-        GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
-        if (poBlock == nullptr)
-        {
-            CPLFree(pabyMaskData);
-            return CE_Failure;
-        }
-
-        void *const pData = poBlock->GetDataRef();
-
         int nXCheck = 0, nYCheck = 0;
         GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
@@ -7815,10 +7803,18 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
                                  pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
                                  nBlockXSize, nullptr) != CE_None)
         {
-            poBlock->DropLock();
             CPLFree(pabyMaskData);
             return CE_Failure;
         }
+
+        GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+        if (poBlock == nullptr)
+        {
+            CPLFree(pabyMaskData);
+            return CE_Failure;
+        }
+
+        void *const pData = poBlock->GetDataRef();
 
         if (poMaskBand || nYCheck < nBlockYSize || nXCheck < nBlockXSize)
         {
