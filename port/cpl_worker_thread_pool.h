@@ -71,6 +71,7 @@ class CPL_DLL CPLWorkerThreadPool
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
     std::queue<std::function<void()>> jobQueue;
     int nPendingJobs = 0;
+    bool m_bNotifyEvent = false;
 
     CPLList *psWaitingWorkerThreadsList = nullptr;
     int nWaitingWorkerThreads = 0;
@@ -98,6 +99,7 @@ class CPL_DLL CPLWorkerThreadPool
     bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void *> &apData);
     void WaitCompletion(int nMaxRemainingJobs = 0);
     void WaitEvent();
+    void WakeUpWaitEvent();
 
     /** Return the number of threads setup */
     int GetThreadCount() const;

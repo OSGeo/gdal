@@ -67,12 +67,16 @@
 
 #include <sys/types.h>  // open
 #include <sys/stat.h>   // open
-#include <fcntl.h>      // open
+#include <fcntl.h>      // open, fcntl
 
 #ifdef _WIN32
 #include <io.h>  // _isatty, _wopen
 #else
-#include <unistd.h>  // isatty
+#include <unistd.h>  // isatty, fcntl
+#if HAVE_GETRLIMIT
+#include <sys/resource.h>  // getrlimit
+#include <sys/time.h>      // getrlimit
+#endif
 #endif
 
 #include <string>
@@ -3957,4 +3961,65 @@ std::string CPLFormatReadableFileSize(uint64_t nSizeInBytes)
 std::string CPLFormatReadableFileSize(double dfSizeInBytes)
 {
     return CPLFormatReadableFileSizeInternal(dfSizeInBytes);
+}
+
+/************************************************************************/
+/*                 CPLGetRemainingFileDescriptorCount()                 */
+/************************************************************************/
+
+/** Return the number of file descriptors that can still be opened by the
+ * current process.
+ *
+ * Only implemented on non-Windows operating systems
+ *
+ * Return a negative value in case of error or not implemented.
+ *
+ * @since 3.12
+ */
+int CPLGetRemainingFileDescriptorCount()
+{
+#if !defined(_WIN32) && HAVE_GETRLIMIT
+    struct rlimit limitNumberOfFilesPerProcess;
+    if (getrlimit(RLIMIT_NOFILE, &limitNumberOfFilesPerProcess) != 0)
+    {
+        return -1;
+    }
+    const int maxNumberOfFilesPerProcess =
+        static_cast<int>(limitNumberOfFilesPerProcess.rlim_cur);
+
+    int countFilesInUse = 0;
+    {
+        const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES", nullptr};
+#ifdef __linux
+        VSIDIR *dir = VSIOpenDir("/proc/self/fd", 0, apszOptions);
+#else
+        // MacOSX
+        VSIDIR *dir = VSIOpenDir("/dev/fd", 0, apszOptions);
+#endif
+        if (dir)
+        {
+            while (VSIGetNextDirEntry(dir))
+                ++countFilesInUse;
+            countFilesInUse -= 2;  // do not count . and ..
+            VSICloseDir(dir);
+        }
+    }
+
+    if (countFilesInUse <= 0)
+    {
+        // Fallback if above method does not work
+        for (int fd = 0; fd < maxNumberOfFilesPerProcess; fd++)
+        {
+            errno = 0;
+            if (fcntl(fd, F_GETFD) != -1 || errno != EBADF)
+            {
+                countFilesInUse++;
+            }
+        }
+    }
+
+    return maxNumberOfFilesPerProcess - countFilesInUse;
+#else
+    return -1;
+#endif
 }

@@ -105,6 +105,7 @@ add_library(
   gdalalg_vsi_move.cpp
   gdalalg_vsi_sozip.cpp
   gdalalg_vsi_sync.cpp
+  gdalgetgdalpath.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp
@@ -132,6 +133,10 @@ if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
     gdal_target_link_libraries(appslib PRIVATE atomic)
 endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
+
+if (NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(appslib PRIVATE STATIC_BUILD)
+endif()
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 

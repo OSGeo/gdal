@@ -345,7 +345,8 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 /*                            WaitEvent()                               */
 /************************************************************************/
 
-/** Wait for completion of at least one job, if there are any remaining
+/** Wait for completion of at least one job, if there are any remaining,
+ * or for WakeUpWaitEvent() to have been called.
  */
 void CPLWorkerThreadPool::WaitEvent()
 {
@@ -357,7 +358,25 @@ void CPLWorkerThreadPool::WaitEvent()
         return;
     const int nPendingJobsBefore = nPendingJobs;
     m_cv.wait(oGuard, [this, nPendingJobsBefore]
-              { return nPendingJobs < nPendingJobsBefore; });
+              { return nPendingJobs < nPendingJobsBefore || m_bNotifyEvent; });
+    m_bNotifyEvent = false;
+}
+
+/************************************************************************/
+/*                          WakeUpWaitEvent()                           */
+/************************************************************************/
+
+/** Wake-up WaitEvent().
+ *
+ * This method is thread-safe.
+ *
+ * @since GDAL 3.12
+ */
+void CPLWorkerThreadPool::WakeUpWaitEvent()
+{
+    std::unique_lock<std::mutex> oGuard(m_mutex);
+    m_bNotifyEvent = true;
+    m_cv.notify_one();
 }
 
 /************************************************************************/
