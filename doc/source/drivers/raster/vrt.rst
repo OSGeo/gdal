@@ -799,8 +799,14 @@ Except if (from top priority to lesser priority) :
   a single SimpleSource or ComplexSource that has overviews.
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
+.. _vrtrawrasterband:
+
 .vrt Descriptions for Raw Files
 -------------------------------
+
+.. warning:: Consult the :ref:`vrtrawrasterband_restricted_access` below
+             section for potential security issues related to that functionality
+             and how to restrict it.
 
 So far we have described how to derive new virtual datasets from existing
 files supported by GDAL.  However, it is also common to need to utilize
@@ -852,8 +858,6 @@ A few other notes:
 
 - The VRTRawRasterBand supports in place update of the raster, whereas the source based VRTRasterBand is always read-only.
 
-- The OpenEV tool includes a File menu option to input parameters describing a raw raster file in a GUI and create the corresponding .vrt file.
-
 - Multiple bands in the one .vrt file can come from the same raw file. Just ensure that the ImageOffset, PixelOffset, and LineOffset definition for each band is appropriate for the pixels of that particular band.
 
 Another example, in this case a 400x300 RGB pixel interleaved image.
@@ -883,6 +887,59 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
         <LineOffset>1200</LineOffset>
     </VRTRasterBand>
     </VRTDataset>
+
+.. _vrtrawrasterband_restricted_access:
+
+Restricting access to Raw Files
+-------------------------------
+
+Some usages of GDAL, for example its use on a server that allows users to upload
+a (VRT) file, convert it to another format, and get the result back,
+could be abused to read the content of local files. Starting with GDAL 3.12, it
+is possible to restrict the use of the VRTRawRasterBand capability in several
+ways:
+
+- at build time, the CMake ``GDAL_VRT_ENABLE_RAWRASTERBAND`` variable can be set
+  to ``OFF``, to complete disable VRTRawRasterBand.
+
+- at runtime, with the following configuration options:
+
+  * .. config:: GDAL_VRT_ENABLE_RAWRASTERBAND
+       :choices: YES, NO
+       :default: YES
+       :since: 3.12
+
+       Whether the VRTRawRasterBand capability is allowed at runtime.
+
+  * .. config:: GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE
+       :choices: SIBLING_OR_CHILD_OF_VRT_PATH, ONLY_REMOTE, ALL, <path>
+       :default: SIBLING_OR_CHILD_OF_VRT_PATH
+       :since: 3.12
+
+       Restricts which SourceFilename values are allowed:
+
+       - if set to ``SIBLING_OR_CHILD_OF_VRT_PATH`` (which is the default value of
+         that configuration option starting with GDAL 3.12), the ``relativeToVRT``
+         attribute of ``SourceFilename`` will need to set to ``1``, and the path
+         expressed by ``SourceFilename`` must not contain any `../` or `..\\` substring.
+         Note that GDAL does not try to detect if one of the files, in the file
+         hierarchy below the directory of the VRT, is a symbolic link pointing to
+         elsewhere in the file system.
+
+       - if set to ``ONLY_REMOTE``, only ``SourceFilename`` pointing to one of the
+         :ref:`VSI network based file systems <network_based_file_systems>` will be
+         allowed. Be careful though that this could still be used to access files
+         accessible on a local network, depending on the network configuration of the
+         machine on which GDAL is run.
+
+       - if set to ``ALL`` there is no restriction on the value of  ``SourceFilename``.
+
+       - if set to one absolute path (or several ones, separated by the ``;`` (semi-colon) character
+         on Windows, or ``:`` (colon) on other operating systems), only ``SourceFilename`` that
+         start with those allowed absolute paths will be accepted.
+
+In versions before GDAL 3.12, disabling entirely the VRT driver by setting the
+:config:`GDAL_SKIP` configuration option to ``VRT`` may be a workaround.
 
 Creation of VRT Datasets
 ------------------------
@@ -1240,7 +1297,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        the output value. Otherwise, NoData pixels will be passed to the expression
 
-       as-is. The expression can then use the ``NODATA`` variable (or ``isnodata`` 
+       as-is. The expression can then use the ``NODATA`` variable (or ``isnodata``
 
        muparser function) to test for these pixels and handle them accordingly.
 

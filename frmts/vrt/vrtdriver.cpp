@@ -457,11 +457,11 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         if ((poSrcBand->GetMaskFlags() &
              (GMF_PER_DATASET | GMF_ALL_VALID | GMF_NODATA)) == 0)
         {
-            VRTSourcedRasterBand *poVRTMaskBand = new VRTSourcedRasterBand(
+            auto poVRTMaskBand = std::make_unique<VRTSourcedRasterBand>(
                 poVRTDS.get(), 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
                 poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
             poVRTMaskBand->AddMaskBandSource(poSrcBand);
-            poVRTBand->SetMaskBand(poVRTMaskBand);
+            poVRTBand->SetMaskBand(std::move(poVRTMaskBand));
         }
     }
 
@@ -473,11 +473,11 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         poSrcDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET)
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
-        VRTSourcedRasterBand *poVRTMaskBand = new VRTSourcedRasterBand(
+        auto poVRTMaskBand = std::make_unique<VRTSourcedRasterBand>(
             poVRTDS.get(), 0, poSrcBand->GetMaskBand()->GetRasterDataType(),
             poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize());
         poVRTMaskBand->AddMaskBandSource(poSrcBand);
-        poVRTDS->SetMaskBand(poVRTMaskBand);
+        poVRTDS->SetMaskBand(std::move(poVRTMaskBand));
     }
 
     if (strcmp(pszFilename, "") != 0)
@@ -587,6 +587,10 @@ void GDALRegister_VRT()
     {
         poDriver->SetMetadataItem("MUPARSER_HAS_DEFINE_FUN_USER_DATA", "YES");
     }
+#endif
+
+#ifdef GDAL_VRT_ENABLE_RAWRASTERBAND
+    poDriver->SetMetadataItem("GDAL_VRT_ENABLE_RAWRASTERBAND", "YES");
 #endif
 
     poDriver->AddSourceParser("SimpleSource", VRTParseCoreSources);

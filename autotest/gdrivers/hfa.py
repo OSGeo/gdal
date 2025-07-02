@@ -659,7 +659,8 @@ def test_hfa_vsimem():
 def test_hfa_proName():
 
     drv = gdal.GetDriverByName("HFA")
-    src_ds = gdal.Open("data/hfa/stateplane.vrt")
+    with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
+        src_ds = gdal.Open("data/hfa/stateplane.vrt")
     dst_ds = drv.CreateCopy("tmp/proname.img", src_ds)
 
     del dst_ds
