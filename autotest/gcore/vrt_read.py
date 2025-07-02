@@ -2409,7 +2409,7 @@ def test_vrt_read_compute_statistics_mosaic_optimization_not_triggered():
 
 ###############################################################################
 # Test ComputeStatistics() mosaic optimization on single source and check that
-# it exacly preserves source statistics
+# it exactly preserves source statistics
 # Note that the test unfortunately does pass even without the tweak in
 # VRTSourcedRasterBand::ComputeStatistics() to exactly use the source statistics
 
