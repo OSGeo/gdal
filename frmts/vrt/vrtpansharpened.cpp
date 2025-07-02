@@ -1722,8 +1722,8 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
 
         GDALRasterBand *poPanBand =
             GDALRasterBand::FromHandle(psOptions->hPanchroBand);
-        const int nPanOvrCount = poPanBand->GetOverviewCount();
-        if (nPanOvrCount > 0)
+        int nOvrCount = poPanBand->GetOverviewCount();
+        if (nOvrCount > 0)
         {
             for (int i = 0; i < poGDS->GetRasterCount(); i++)
             {
@@ -1734,20 +1734,45 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                 }
             }
 
-            int nSpectralOvrCount =
-                GDALRasterBand::FromHandle(psOptions->pahInputSpectralBands[0])
-                    ->GetOverviewCount();
-            for (int i = 1; i < psOptions->nInputSpectralBands; i++)
+            // Limit number of overviews of the VRTPansharpenedRasterBand to
+            // the minimum number of overviews of the pan and spectral source
+            // bands, and also make sure all spectral bands have overviews
+            // of the same dimension for a given level.
+            std::vector<std::pair<int, int>> sizeSpectralOverviews;
+            for (int i = 0; i < psOptions->nInputSpectralBands; i++)
             {
                 auto poSpectralBand = GDALRasterBand::FromHandle(
                     psOptions->pahInputSpectralBands[i]);
-                if (poSpectralBand->GetOverviewCount() != nSpectralOvrCount)
+                nOvrCount =
+                    std::min(nOvrCount, poSpectralBand->GetOverviewCount());
+                if (i == 0)
                 {
-                    return 0;
+                    for (int iOvr = 0; iOvr < nOvrCount; ++iOvr)
+                    {
+                        auto poOvrBand = poSpectralBand->GetOverview(iOvr);
+                        sizeSpectralOverviews.emplace_back(
+                            poOvrBand->GetXSize(), poOvrBand->GetYSize());
+                    }
+                }
+                else
+                {
+                    for (int iOvr = 0; iOvr < nOvrCount; ++iOvr)
+                    {
+                        auto poOvrBand = poSpectralBand->GetOverview(iOvr);
+                        if (sizeSpectralOverviews[iOvr].first !=
+                                poOvrBand->GetXSize() ||
+                            sizeSpectralOverviews[iOvr].second !=
+                                poOvrBand->GetYSize())
+                        {
+                            nOvrCount = iOvr;
+                            break;
+                        }
+                    }
                 }
             }
+
             auto poPanBandDS = poPanBand->GetDataset();
-            for (int j = 0; j < std::min(nPanOvrCount, nSpectralOvrCount); j++)
+            for (int j = 0; j < nOvrCount; j++)
             {
                 std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>
                     poPanOvrDS(GDALCreateOverviewDataset(poPanBandDS, j, true));
