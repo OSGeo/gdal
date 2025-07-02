@@ -935,7 +935,7 @@ def test_vsizip_byte_sozip(tmp_path):
 
         ds = gdal.Open(dstfilename)
         assert ds.GetRasterBand(1).Checksum() == 4672
-        del ds
+        ds.Close()
 
     fds_open = 0
     if sys.platform == "linux":
