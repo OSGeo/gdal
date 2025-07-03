@@ -671,6 +671,10 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
 
         if (strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
             (strstr(pszHeader, "\"tiled-assets\"") != nullptr ||
+             strstr(
+                 pszHeader,
+                 "https:\\/\\/stac-extensions.github.io\\/tiled-assets\\/") !=
+                 nullptr ||
              strstr(pszHeader,
                     "https://stac-extensions.github.io/tiled-assets/") !=
                  nullptr))
@@ -844,17 +848,37 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                  osAssetName.c_str());
     }
     osURLTemplate.replaceAll("{TileMatrixSet}", osTMS);
-    if (STARTS_WITH(osURLTemplate, "file://"))
+
+    // UPDATE oMapVSIToURIPrefix in apps/gdalalg_raster_tile if updating below
+    const std::map<std::string, std::string> oMapURIPrefixToVSI = {
+        {"s3", "/vsis3/"},
+        {"gs", "/vsigs/"},
+        {"az", "/vsiaz/"},     // Not universally recognized
+        {"azure", "/vsiaz/"},  // Not universally recognized
+    };
+
+    if (cpl::starts_with(osURLTemplate, "file://"))
     {
         osURLTemplate = osURLTemplate.substr(strlen("file://"));
     }
-    else if (STARTS_WITH(osURLTemplate, "s3://"))
+    else
     {
-        osURLTemplate = "/vsis3/" + osURLTemplate.substr(strlen("s3://"));
+        const auto nPosColonSlashSlash = osURLTemplate.find("://");
+        if (nPosColonSlashSlash != std::string::npos)
+        {
+            const auto oIter = oMapURIPrefixToVSI.find(
+                osURLTemplate.substr(0, nPosColonSlashSlash));
+            if (oIter != oMapURIPrefixToVSI.end())
+            {
+                osURLTemplate = std::string(oIter->second)
+                                    .append(osURLTemplate.substr(
+                                        nPosColonSlashSlash + strlen("://")));
+            }
+        }
     }
 
-    if (!STARTS_WITH(osURLTemplate, "http://") &&
-        !STARTS_WITH(osURLTemplate, "https://"))
+    if (!cpl::starts_with(osURLTemplate, "http://") &&
+        !cpl::starts_with(osURLTemplate, "https://"))
     {
         if (STARTS_WITH(osURLTemplate, "./"))
             osURLTemplate = osURLTemplate.substr(2);
@@ -1079,11 +1103,17 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (poProtoDS == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find prototype dataset");
-            return false;
+            if (m_bSkipMissingMetaTile)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find prototype dataset");
+                return false;
+            }
         }
-        nExpectedBandCount = poProtoDS->GetRasterCount();
+        else
+        {
+            nExpectedBandCount = poProtoDS->GetRasterCount();
+        }
     }
 
     // Iterate over tile matrices to create corresponding STACTARawDataset
@@ -1250,7 +1280,8 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const auto osName = oItem.GetName();
         if (osName != "tiles:tile_matrix_links" &&
-            osName != "tiles:tile_matrix_sets")
+            osName != "tiles:tile_matrix_sets" &&
+            !cpl::starts_with(osName, "proj:"))
         {
             GDALDataset::SetMetadataItem(osName.c_str(),
                                          oItem.ToString().c_str());
