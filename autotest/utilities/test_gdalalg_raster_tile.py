@@ -676,6 +676,24 @@ def test_gdalalg_raster_tile_multithread(tmp_vsimem):
     assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
 
 
+def test_gdalalg_raster_tile_multithread_spawn_auto(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        alg.Run()
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+
+
 @pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_multithread_spawn_incompatible_source(tmp_path):
 
@@ -735,7 +753,7 @@ def test_gdalalg_raster_tile_multithread_spawn_error_in_child(tmp_path):
     alg["max-zoom"] = 3
     alg["num-threads"] = 2
     with pytest.raises(Exception, match="Child process.*failed"):
-        with gdal.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
             alg.Run()
 
 
@@ -767,7 +785,7 @@ def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
     alg["max-zoom"] = 3
     alg["num-threads"] = 3
     try:
-        with gdal.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
             with gdaltest.error_raised(
                 gdal.CE_Warning, "Limiting the number of child workers to"
             ):
@@ -807,7 +825,7 @@ def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
             "CPL_DEBUG": "ON",
             "CPL_LOG": str(tmp_path / "log.txt"),
             "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS": "YES",
-            "GDAL_THRESHOLD_TILES_PER_JOB": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
         }
     ):
         with gdaltest.error_handler(my_handler):
@@ -833,7 +851,7 @@ def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
     alg["output"] = tmp_vsimem
     alg["min-zoom"] = 0
     alg["max-zoom"] = 3
-    with gdaltest.config_option("GDAL_THRESHOLD_TILES_PER_JOB", "1"):
+    with gdaltest.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
         alg.Run(my_progress)
 
     assert last_pct[0] == 1.0

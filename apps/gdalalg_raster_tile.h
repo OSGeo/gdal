@@ -93,6 +93,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
     std::string m_numThreadsStr{"ALL_CPUS"};
     std::map<std::string, std::string> m_mapTileMatrixIdentifierToScheme{};
     GDALDataset *m_poSrcDS = nullptr;
+    bool m_bIsNamedNonMemSrcDS = false;
     GDALDriver *m_poDstDriver = nullptr;
     std::string m_osGDALPath{};
 

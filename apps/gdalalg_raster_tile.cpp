@@ -42,11 +42,35 @@
 // driver would output on stdout.
 constexpr const char PROGRESS_MARKER[] = {'!', '.', 'x'};
 
-// Minimum number of threads for automatic switch to spawning
-constexpr int THRESHOLD_MIN_THREADS_FOR_SPAWN = 8;
+/************************************************************************/
+/*                       GetThresholdMinTilesPerJob()                   */
+/************************************************************************/
 
-// Minimum number of tiles per job to decide for automatic switch to spawning
-constexpr int THRESHOLD_TILES_PER_JOB = 100;
+static int GetThresholdMinThreadsForSpawn()
+{
+    // Minimum number of threads for automatic switch to spawning
+    constexpr int THRESHOLD_MIN_THREADS_FOR_SPAWN = 8;
+
+    // Config option for test only
+    return std::max(1, atoi(CPLGetConfigOption(
+                           "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN",
+                           CPLSPrintf("%d", THRESHOLD_MIN_THREADS_FOR_SPAWN))));
+}
+
+/************************************************************************/
+/*                        GetThresholdMinTilesPerJob()                  */
+/************************************************************************/
+
+static int GetThresholdMinTilesPerJob()
+{
+    // Minimum number of tiles per job to decide for automatic switch to spawning
+    constexpr int THRESHOLD_TILES_PER_JOB = 100;
+
+    // Config option for test only
+    return std::max(
+        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_MIN_TILES_PER_JOB",
+                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
+}
 
 /************************************************************************/
 /*           GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()         */
@@ -2299,9 +2323,7 @@ bool GDALRasterTileAlgorithm::AddArgToArgv(const GDALAlgorithmArg *arg,
 bool GDALRasterTileAlgorithm::IsCompatibleOfSpawn(const char *&pszErrorMsg)
 {
     pszErrorMsg = "";
-    auto poSrcDriver = m_poSrcDS->GetDriver();
-    if (m_poSrcDS->GetDescription()[0] == 0 || !poSrcDriver ||
-        EQUAL(poSrcDriver->GetDescription(), "MEM"))
+    if (!m_bIsNamedNonMemSrcDS)
     {
         pszErrorMsg = "Unnamed or memory dataset sources are not supported "
                       "with spawn parallelization method";
@@ -2512,13 +2534,9 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 {
     CPLAssert(!m_osGDALPath.empty());
 
-    // Config option for test only
-    const int nThreshold = std::max(
-        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
-                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
-    const int nMaxJobCount = GetMaxChildCount(
-        std::max(1, static_cast<int>(std::min<uint64_t>(
-                        m_numThreads, nBaseTiles / nThreshold))));
+    const int nMaxJobCount = GetMaxChildCount(std::max(
+        1, static_cast<int>(std::min<uint64_t>(
+               m_numThreads, nBaseTiles / GetThresholdMinTilesPerJob()))));
 
     double dfTilesYPerJob;
     int nYOuterIterations;
@@ -2700,13 +2718,10 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
     const uint64_t nExpectedOvrTileCount =
         static_cast<uint64_t>(nOvrTilesPerCol) * nOvrTilesPerRow;
 
-    // Config option for test only
-    const int nThreshold = std::max(
-        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
-                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
     const int nMaxJobCount = GetMaxChildCount(
         std::max(1, static_cast<int>(std::min<uint64_t>(
-                        m_numThreads, nExpectedOvrTileCount / nThreshold))));
+                        m_numThreads, nExpectedOvrTileCount /
+                                          GetThresholdMinTilesPerJob()))));
 
     double dfTilesYPerJob;
     int nYOuterIterations;
@@ -2888,6 +2903,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         ReportError(CE_Failure, CPLE_AppDefined, "Invalid source dataset");
         return false;
     }
+
+    auto poSrcDriver = m_poSrcDS->GetDriver();
+    m_bIsNamedNonMemSrcDS =
+        (m_poSrcDS->GetDescription()[0] != 0 && poSrcDriver &&
+         !EQUAL(poSrcDriver->GetDescription(), "MEM"));
 
     if (m_parallelMethod == "spawn")
     {
@@ -3676,12 +3696,9 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return IsCompatibleOfSpawn(pszErrorMsg);
     };
 
-    // Config option for test only
-    const int nThreshold = std::max(
-        1, atoi(CPLGetConfigOption("GDAL_THRESHOLD_TILES_PER_JOB",
-                                   CPLSPrintf("%d", THRESHOLD_TILES_PER_JOB))));
-    m_numThreads = std::max(1, static_cast<int>(std::min<uint64_t>(
-                                   m_numThreads, nBaseTiles / nThreshold)));
+    m_numThreads = std::max(
+        1, static_cast<int>(std::min<uint64_t>(
+               m_numThreads, nBaseTiles / GetThresholdMinTilesPerJob())));
 
     if (m_ovrZoomLevel >= 0)
     {
@@ -3690,7 +3707,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else if (m_numThreads > 1 && nBaseTiles > 1 &&
              ((m_parallelMethod.empty() &&
-               m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
+               m_numThreads >= GetThresholdMinThreadsForSpawn() &&
                IsCompatibleOfSpawnSilent()) ||
               m_parallelMethod == "spawn"))
     {
@@ -3989,13 +4006,14 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         const uint64_t nOvrTileCount =
             static_cast<uint64_t>(nOvrTilesPerCol) * nOvrTilesPerRow;
 
-        m_numThreads =
-            std::max(1, static_cast<int>(std::min<uint64_t>(
-                            m_numThreads, nOvrTileCount / nThreshold)));
+        m_numThreads = std::max(
+            1,
+            static_cast<int>(std::min<uint64_t>(
+                m_numThreads, nOvrTileCount / GetThresholdMinTilesPerJob())));
 
         if (m_numThreads > 1 && nOvrTileCount > 1 &&
             ((m_parallelMethod.empty() &&
-              m_numThreads >= THRESHOLD_MIN_THREADS_FOR_SPAWN &&
+              m_numThreads >= GetThresholdMinThreadsForSpawn() &&
               IsCompatibleOfSpawnSilent()) ||
              m_parallelMethod == "spawn"))
         {
