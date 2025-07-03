@@ -22,7 +22,7 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/"
+        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/" || /bin/true
         echo "Finished"
     fi
     if [ -n "${WITH_CCACHE:-}" ]; then
@@ -48,7 +48,7 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" || /bin/true
         echo "Finished"
     fi
     if [ -n "${WITH_CCACHE:-}" ]; then
