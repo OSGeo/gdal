@@ -564,6 +564,7 @@ mode.
  * issuing the starting transaction and committing the final one.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
+ * @since GDAL 2.4
  */
 CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                              CSLConstList options, GDALProgressFunc pfnProgress,

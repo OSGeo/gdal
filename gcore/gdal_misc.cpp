@@ -372,6 +372,7 @@ GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
  *
  * @param eDataType type, such as GDT_Byte.
  * @return the number of bytes or zero if it is not recognised.
+ * @since GDAL 2.1
  */
 
 int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
@@ -424,6 +425,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
  *
  * @param eDataType type, such as GDT_Byte.
  * @return the number of bits or zero if it is not recognised.
+ * @since GDAL 2.1
  */
 
 int CPL_STDCALL GDALGetDataTypeSizeBits(GDALDataType eDataType)
