@@ -57,6 +57,7 @@ set(CPL_SOURCES
     cpl_vsi_mem.cpp
     cpl_http.cpp
     cpl_hash_set.cpp
+    cplgetcurrentthreadcount.cpp
     cplkeywordparser.cpp
     cpl_recode.cpp
     cpl_recode_stub.cpp

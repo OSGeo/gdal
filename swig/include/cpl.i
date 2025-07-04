@@ -656,6 +656,9 @@ int wrapper_HasThreadSupport()
 }
 }
 
+%rename (GetCurrentThreadCount) CPLGetCurrentThreadCount();
+int CPLGetCurrentThreadCount();
+
 /* Added for GDAL 1.8 */
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
