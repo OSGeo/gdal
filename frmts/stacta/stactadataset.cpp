@@ -32,6 +32,25 @@ extern "C" void GDALRegister_STACTA();
 // https://github.com/stac-extensions/tiled-assets
 
 /************************************************************************/
+/*                         GetAllowedDrivers()                          */
+/************************************************************************/
+
+static CPLStringList GetAllowedDrivers()
+{
+    CPLStringList aosAllowedDrivers;
+    aosAllowedDrivers.AddString("GTiff");
+    aosAllowedDrivers.AddString("PNG");
+    aosAllowedDrivers.AddString("JPEG");
+    aosAllowedDrivers.AddString("JPEGXL");
+    aosAllowedDrivers.AddString("WEBP");
+    aosAllowedDrivers.AddString("JP2KAK");
+    aosAllowedDrivers.AddString("JP2ECW");
+    aosAllowedDrivers.AddString("JP2MrSID");
+    aosAllowedDrivers.AddString("JP2OpenJPEG");
+    return aosAllowedDrivers;
+}
+
+/************************************************************************/
 /*                         STACTARasterBand()                           */
 /************************************************************************/
 
@@ -436,14 +455,7 @@ CPLErr STACTARawDataset::IRasterIO(
                         "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR",
                         /* bSetOnlyIfUndefined = */ true);
 
-                    CPLStringList aosAllowedDrivers;
-                    aosAllowedDrivers.AddString("GTiff");
-                    aosAllowedDrivers.AddString("PNG");
-                    aosAllowedDrivers.AddString("JPEG");
-                    aosAllowedDrivers.AddString("JP2KAK");
-                    aosAllowedDrivers.AddString("JP2ECW");
-                    aosAllowedDrivers.AddString("JP2MrSID");
-                    aosAllowedDrivers.AddString("JP2OpenJPEG");
+                    CPLStringList aosAllowedDrivers(GetAllowedDrivers());
                     std::unique_ptr<GDALDataset> poTileDS;
                     if (bDownloadWholeMetaTile && !VSIIsLocal(osURL.c_str()))
                     {
@@ -1087,7 +1099,9 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                                           /* bSetOnlyIfUndefined = */ true);
             if (m_bSkipMissingMetaTile)
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-            poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str()));
+            poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str(),
+                                              GDAL_OF_RASTER,
+                                              GetAllowedDrivers().List()));
             if (m_bSkipMissingMetaTile)
                 CPLPopErrorHandler();
             if (poProtoDS != nullptr)
