@@ -246,20 +246,30 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
         CPLTestBool(
             CPLGetConfigOption("OGR_CT_PREFER_OFFICIAL_SRS_DEF", "YES")))
     {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
         CPLString osAuthCode(pszAuth);
         osAuthCode += ':';
         osAuthCode += pszCode;
         OGRSpatialReference oTmpSRS;
-        oTmpSRS.SetFromUserInput(osAuthCode);
-        oTmpSRS.SetDataAxisToSRSAxisMapping(
-            poSRS->GetDataAxisToSRSAxisMapping());
-        const char *const apszOptionsIsSame[] = {"CRITERION=EQUIVALENT",
-                                                 nullptr};
-        if (oTmpSRS.IsSame(poSRS, apszOptionsIsSame))
+        if (oTmpSRS.SetFromUserInput(osAuthCode) == OGRERR_NONE)
         {
-            if (CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth))
+            const char *pszAuthAfter = oTmpSRS.GetAuthorityName(nullptr);
+            const char *pszCodeAfter = oTmpSRS.GetAuthorityCode(nullptr);
+            if (pszAuthAfter && pszCodeAfter && EQUAL(pszAuthAfter, pszAuth) &&
+                EQUAL(pszCodeAfter, pszCode))
             {
-                pszText = CPLStrdup(osAuthCode);
+                oTmpSRS.SetDataAxisToSRSAxisMapping(
+                    poSRS->GetDataAxisToSRSAxisMapping());
+                const char *const apszOptionsIsSame[] = {"CRITERION=EQUIVALENT",
+                                                         nullptr};
+                if (oTmpSRS.IsSame(poSRS, apszOptionsIsSame))
+                {
+                    if (CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth))
+                    {
+                        pszText = CPLStrdup(osAuthCode);
+                    }
+                }
             }
         }
     }
