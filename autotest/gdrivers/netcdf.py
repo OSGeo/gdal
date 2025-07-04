@@ -6787,3 +6787,15 @@ def test_netcdf_open_fake_PACE_OCI():
     assert ds.RasterCount == 4
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
+
+
+###############################################################################
+#
+
+
+def test_netcdf_open_y_x_other_dim_thanks_to_geolocation():
+
+    ds = gdal.Open("data/netcdf/y_x_other_dim_thanks_to_geolocation.nc")
+    assert ds.RasterCount == 4
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 2
