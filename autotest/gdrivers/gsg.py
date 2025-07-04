@@ -24,6 +24,12 @@ def test_gsg_1():
     tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
+def test_gsg_2():
+
+    tst = gdaltest.GDALTest("gsag", "gsg/gsg_ascii.grd", 1, 4672)
+    tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
+
+
 def test_gsg_3():
 
     tst = gdaltest.GDALTest("gs7bg", "gsg/gsg_7binary.grd", 1, 4672)
@@ -37,6 +43,13 @@ def test_gsg_3():
 def test_gsg_4():
 
     tst = gdaltest.GDALTest("gsbg", "gsg/gsg_binary.grd", 1, 4672)
+
+    tst.testCreateCopy(check_gt=1)
+
+
+def test_gsg_5():
+
+    tst = gdaltest.GDALTest("gsag", "gsg/gsg_ascii.grd", 1, 4672)
 
     tst.testCreateCopy(check_gt=1)
 
