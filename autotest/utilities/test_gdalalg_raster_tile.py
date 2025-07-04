@@ -738,11 +738,18 @@ def test_gdalalg_raster_tile_multithread_interrupt_in_ovr_tiles(tmp_path):
     assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) != 107
 
 
-def test_gdalalg_raster_tile_spawn_auto(tmp_vsimem):
+def _get_effective_cpus():
+    val = gdal.GetConfigOption("GDAL_NUM_THREADS", None)
+    if val:
+        return int(val)
+    return gdal.GetNumCPUs()
+
+
+def test_gdalalg_raster_tile_spawn_auto(tmp_path):
 
     alg = get_alg()
     alg["input"] = "../gdrivers/data/small_world.tif"
-    alg["output"] = tmp_vsimem
+    alg["output"] = tmp_path / "subdir"
     alg["min-zoom"] = 0
     alg["max-zoom"] = 3
     with gdaltest.config_options(
@@ -753,10 +760,15 @@ def test_gdalalg_raster_tile_spawn_auto(tmp_vsimem):
     ):
         alg.Run()
 
-    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+
+    if _get_effective_cpus() >= 2:
+        assert alg["parallel-method"] == "spawn"
+    else:
+        assert alg["parallel-method"] == ""
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_incompatible_source(tmp_path):
 
     alg = get_alg()
@@ -770,7 +782,7 @@ def test_gdalalg_raster_tile_spawn_incompatible_source(tmp_path):
         alg.Run()
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_incompatible_output(tmp_vsimem):
 
     alg = get_alg()
@@ -784,7 +796,7 @@ def test_gdalalg_raster_tile_spawn_incompatible_output(tmp_vsimem):
         alg.Run()
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_gdal_not_found(tmp_path):
 
     alg = get_alg()
@@ -798,7 +810,134 @@ def test_gdalalg_raster_tile_spawn_gdal_not_found(tmp_path):
             alg.Run()
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def _has_GetCurrentThreadCount_and_fork():
+    return (
+        sys.platform in ("linux", "darwin")
+        or sys.platform.startswith("freebsd")
+        or sys.platform.startswith("netbsd")
+    )
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(
+    not _has_GetCurrentThreadCount_and_fork(),
+    reason="needs Linux, Mac, FreeBSD or netBSD",
+)
+def test_gdalalg_raster_tile_fork_auto(tmp_path):
+
+    monothreaded = gdal.GetCurrentThreadCount() == 1
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+            "GDAL_PATH": "/i_do/not/exist",
+        }
+    ):
+        alg.Run()
+
+    if monothreaded:
+        assert alg["parallel-method"] == "fork"
+    else:
+        print("Fork cannot be used due to other threads being active")
+        assert alg["parallel-method"] == ""
+
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(
+    not _has_GetCurrentThreadCount_and_fork(),
+    reason="needs Linux, Mac, FreeBSD or netBSD",
+)
+def test_gdalalg_raster_tile_fork_auto_incompatible_output(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+            "GDAL_PATH": "/i_do/not/exist",
+        }
+    ):
+        alg.Run()
+
+    assert alg["parallel-method"] != "fork"
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem / "subdir")) == 107
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
+def test_gdalalg_raster_tile_fork_forced(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate("", "../gdrivers/data/small_world.tif", format="MEM")
+    alg["output"] = tmp_path / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["parallel-method"] = "fork"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        alg.Run()
+
+    assert alg["parallel-method"] == "fork"
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
+def test_gdalalg_raster_tile_fork_incompatible_source(tmp_vsimem):
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    src_ds.SetDescription("")
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["parallel-method"] = "fork"
+    with pytest.raises(
+        Exception,
+        match="Unnamed non-MEM source are not supported with fork parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
+def test_gdalalg_raster_tile_fork_incompatible_output(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["parallel-method"] = "fork"
+    with pytest.raises(
+        Exception,
+        match="/vsimem/ output directory not supported with fork parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_error_in_child(tmp_path):
 
     input_filename = tmp_path / "in.tif"
@@ -819,7 +958,7 @@ def test_gdalalg_raster_tile_spawn_error_in_child(tmp_path):
             alg.Run()
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 2, reason="needs more than 2 CPUs")
+@pytest.mark.skipif(_get_effective_cpus() <= 2, reason="needs more than 2 CPUs")
 @pytest.mark.skipif(
     sys.platform == "win32", reason="Windows not supported for this test"
 )
@@ -860,7 +999,7 @@ def test_gdalalg_raster_tile_spawn_limit(tmp_path):
     assert len(gdal.ReadDirRecursive(tmp_path)) == 107
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn(tmp_path):
 
     last_pct = [0]
@@ -902,7 +1041,7 @@ def test_gdalalg_raster_tile_spawn(tmp_path):
     assert got_spurious[0]
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_interrupt_in_base_tiles(tmp_path):
 
     last_pct = [0]
@@ -922,7 +1061,7 @@ def test_gdalalg_raster_tile_spawn_interrupt_in_base_tiles(tmp_path):
     assert last_pct[0] != 1.0
 
 
-@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+@pytest.mark.skipif(_get_effective_cpus() <= 1, reason="needs more than one CPU")
 def test_gdalalg_raster_tile_spawn_interrupt_in_ovr_tiles(tmp_path):
 
     last_pct = [0]
