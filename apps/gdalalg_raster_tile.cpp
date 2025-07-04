@@ -37,6 +37,10 @@
 #include <utility>
 #include <thread>
 
+#ifndef _WIN32
+#define FORK_ALLOWED
+#endif
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -100,9 +104,16 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();
-    AddArg("spawned", 0, _("Whether this is spawned worker"),
+    AddArg("spawned", 0, _("Whether this is a spawned worker"),
            &m_spawned)
         .SetHidden();  // Used in spawn mode
+#ifdef FORK_ALLOWED
+    AddArg("forked", 0, _("Whether this is a forked worker"),
+           &m_forked)
+        .SetHidden();  // Used in forked mode
+#else
+    CPL_IGNORE_RET_VAL(m_forked);
+#endif
     AddArg("config-options-in-stdin", 0, _(""), &m_dummy)
         .SetHidden();  // Used in spawn mode
     AddArg("ovr-zoom-level", 0, _("Overview zoom level to compute"),
@@ -233,9 +244,20 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     AddArg("resume", 0, _("Generate only missing files"), &m_resume);
 
     AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
-    AddArg("parallel-method", 0, _("Parallelization method (thread / spawn)"),
+    AddArg("parallel-method", 0,
+#ifdef FORK_ALLOWED
+           _("Parallelization method (thread, spawn, fork)")
+#else
+           _("Parallelization method (thread / spawn)")
+#endif
+               ,
            &m_parallelMethod)
-        .SetChoices("thread", "spawn");
+        .SetChoices("thread", "spawn"
+#ifdef FORK_ALLOWED
+                    ,
+                    "fork"
+#endif
+        );
 
     constexpr const char *ADVANCED_RESAMPLING_CATEGORY = "Advanced Resampling";
     auto &excludedValuesArg =
@@ -2945,6 +2967,46 @@ static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
 }
 
 /************************************************************************/
+/*                        GenerateTilesForkMethod()                     */
+/************************************************************************/
+
+#ifdef FORK_ALLOWED
+
+namespace
+{
+struct ForkWorkStructure
+{
+    uint64_t nCacheMaxPerProcess = 0;
+    CPLStringList aosArgv{};
+    GDALDataset *poMemSrcDS{};
+};
+}  // namespace
+
+static CPL_FILE_HANDLE pipeIn = CPL_FILE_INVALID_HANDLE;
+static CPL_FILE_HANDLE pipeOut = CPL_FILE_INVALID_HANDLE;
+
+static int GenerateTilesForkMethod(CPL_FILE_HANDLE in, CPL_FILE_HANDLE out)
+{
+    pipeIn = in;
+    pipeOut = out;
+
+    const ForkWorkStructure *pWorkStructure = nullptr;
+    CPLPipeRead(in, &pWorkStructure, sizeof(pWorkStructure));
+
+    CPLSetConfigOption("GDAL_NUM_THREADS", "1");
+    GDALSetCacheMax64(pWorkStructure->nCacheMaxPerProcess);
+
+    GDALRasterTileAlgorithm alg;
+    if (pWorkStructure->poMemSrcDS)
+        alg.GetArg(GDAL_ARG_NAME_INPUT)->Set(pWorkStructure->poMemSrcDS);
+    return alg.ParseCommandLineArguments(pWorkStructure->aosArgv) && alg.Run()
+               ? 0
+               : 1;
+}
+
+#endif  // FORK_ALLOWED
+
+/************************************************************************/
 /*          GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod()     */
 /************************************************************************/
 
@@ -2953,7 +3015,10 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
     int nMaxTileX, int nMaxTileY, uint64_t nTotalTiles, uint64_t nBaseTiles,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    CPLAssert(!m_osGDALPath.empty());
+    if (m_parallelMethod == "spawn")
+    {
+        CPLAssert(!m_osGDALPath.empty());
+    }
 
     const int nMaxJobCount = GetMaxChildCount(std::max(
         1, static_cast<int>(std::min<uint64_t>(
@@ -2979,7 +3044,15 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 
     const uint64_t nCacheMaxPerProcess = GDALGetCacheMax64() / nMaxJobCount;
 
+    const auto poSrcDriver = m_poSrcDS->GetDriver();
+    const bool bIsMEMSource =
+        poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "MEM");
+
     int nLastYEndIncluded = nMinTileY - 1;
+
+#ifdef FORK_ALLOWED
+    std::vector<std::unique_ptr<ForkWorkStructure>> forkWorkStructures;
+#endif
 
     bool bRet = true;
     for (int iYOuterIter = 0; bRet && iYOuterIter < nYOuterIterations &&
@@ -3018,15 +3091,18 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
                 (iXEndIncluded - iXStart + 1));
 
             CPLStringList aosArgv;
-            aosArgv.push_back(m_osGDALPath.c_str());
-            aosArgv.push_back("raster");
-            aosArgv.push_back("tile");
-            aosArgv.push_back("--config-options-in-stdin");
-            aosArgv.push_back("--config");
-            aosArgv.push_back("GDAL_NUM_THREADS=1");
-            aosArgv.push_back("--config");
-            aosArgv.push_back(
-                CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
+            if (m_parallelMethod == "spawn")
+            {
+                aosArgv.push_back(m_osGDALPath.c_str());
+                aosArgv.push_back("raster");
+                aosArgv.push_back("tile");
+                aosArgv.push_back("--config-options-in-stdin");
+                aosArgv.push_back("--config");
+                aosArgv.push_back("GDAL_NUM_THREADS=1");
+                aosArgv.push_back("--config");
+                aosArgv.push_back(
+                    CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
+            }
             aosArgv.push_back("--num-threads");
             aosArgv.push_back("1");
             aosArgv.push_back("--min-x");
@@ -3039,9 +3115,13 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
             aosArgv.push_back(CPLSPrintf("%d", iYEndIncluded));
             aosArgv.push_back("--webviewer");
             aosArgv.push_back("none");
-            aosArgv.push_back("--spawned");
-            aosArgv.push_back("--input");
-            aosArgv.push_back(m_poSrcDS->GetDescription());
+            aosArgv.push_back(m_parallelMethod == "spawn" ? "--spawned"
+                                                          : "--forked");
+            if (!bIsMEMSource)
+            {
+                aosArgv.push_back("--input");
+                aosArgv.push_back(m_poSrcDS->GetDescription());
+            }
             for (const auto &arg : GetArgs())
             {
                 if (arg->IsExplicitlySet() && arg->GetName() != "min-x" &&
@@ -3066,14 +3146,34 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
                     cmdLine += ' ';
                 cmdLine += arg;
             }
-            CPLDebugOnly("gdal_raster_tile", "Spawning %s", cmdLine.c_str());
+            CPLDebugOnly("gdal_raster_tile", "%s %s",
+                         m_parallelMethod == "spawn" ? "Spawning" : "Forking",
+                         cmdLine.c_str());
             asCommandLines.push_back(std::move(cmdLine));
 
-            CPLSpawnedProcess *hSpawnedProcess =
-                CPLSpawnAsync(nullptr, aosArgv.List(),
-                              /* bCreateInputPipe = */ true,
-                              /* bCreateOutputPipe = */ true,
-                              /* bCreateErrorPipe = */ true, nullptr);
+#ifdef FORK_ALLOWED
+            if (m_parallelMethod == "fork")
+            {
+                forkWorkStructures.push_back(
+                    std::make_unique<ForkWorkStructure>());
+                ForkWorkStructure *pData = forkWorkStructures.back().get();
+                pData->nCacheMaxPerProcess = nCacheMaxPerProcess;
+                pData->aosArgv = aosArgv;
+                if (bIsMEMSource)
+                    pData->poMemSrcDS = m_poSrcDS;
+            }
+            CPL_IGNORE_RET_VAL(aosArgv);
+#endif
+
+            CPLSpawnedProcess *hSpawnedProcess = CPLSpawnAsync(
+#ifdef FORK_ALLOWED
+                m_parallelMethod == "fork" ? GenerateTilesForkMethod :
+#endif
+                                           nullptr,
+                m_parallelMethod == "fork" ? nullptr : aosArgv.List(),
+                /* bCreateInputPipe = */ true,
+                /* bCreateOutputPipe = */ true,
+                /* bCreateErrorPipe = */ true, nullptr);
             if (!hSpawnedProcess)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -3092,7 +3192,21 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 
             ahSpawnedProcesses.push_back(hSpawnedProcess);
 
-            SendConfigOptions(hSpawnedProcess, bRet);
+            if (m_parallelMethod == "spawn")
+            {
+                SendConfigOptions(hSpawnedProcess, bRet);
+            }
+
+#ifdef FORK_ALLOWED
+            else
+            {
+                ForkWorkStructure *pData = forkWorkStructures.back().get();
+                auto handle = CPLSpawnAsyncGetOutputFileHandle(hSpawnedProcess);
+                bRet &= CPL_TO_BOOL(CPLPipeWrite(
+                    handle, &pData, static_cast<int>(sizeof(pData))));
+            }
+#endif
+
             if (!bRet)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -3132,7 +3246,10 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
     int nOvrMaxTileY, std::atomic<uint64_t> &nCurTile, uint64_t nTotalTiles,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    CPLAssert(!m_osGDALPath.empty());
+    if (m_parallelMethod == "spawn")
+    {
+        CPLAssert(!m_osGDALPath.empty());
+    }
 
     const int nOvrTilesPerCol = nOvrMaxTileY - nOvrMinTileY + 1;
     const int nOvrTilesPerRow = nOvrMaxTileX - nOvrMinTileX + 1;
@@ -3162,7 +3279,15 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
     std::vector<CPLSpawnedProcess *> ahSpawnedProcesses;
     std::vector<uint64_t> anRemainingTilesForProcess;
 
+#ifdef FORK_ALLOWED
+    std::vector<std::unique_ptr<ForkWorkStructure>> forkWorkStructures;
+#endif
+
     const uint64_t nCacheMaxPerProcess = GDALGetCacheMax64() / nMaxJobCount;
+
+    const auto poSrcDriver = m_poSrcDS ? m_poSrcDS->GetDriver() : nullptr;
+    const bool bIsMEMSource =
+        poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "MEM");
 
     int nLastYEndIncluded = nOvrMinTileY - 1;
     bool bRet = true;
@@ -3202,15 +3327,18 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
                 (iXEndIncluded - iXStart + 1));
 
             CPLStringList aosArgv;
-            aosArgv.push_back(m_osGDALPath.c_str());
-            aosArgv.push_back("raster");
-            aosArgv.push_back("tile");
-            aosArgv.push_back("--config-options-in-stdin");
-            aosArgv.push_back("--config");
-            aosArgv.push_back("GDAL_NUM_THREADS=1");
-            aosArgv.push_back("--config");
-            aosArgv.push_back(
-                CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
+            if (m_parallelMethod == "spawn")
+            {
+                aosArgv.push_back(m_osGDALPath.c_str());
+                aosArgv.push_back("raster");
+                aosArgv.push_back("tile");
+                aosArgv.push_back("--config-options-in-stdin");
+                aosArgv.push_back("--config");
+                aosArgv.push_back("GDAL_NUM_THREADS=1");
+                aosArgv.push_back("--config");
+                aosArgv.push_back(
+                    CPLSPrintf("GDAL_CACHEMAX=%" PRIu64, nCacheMaxPerProcess));
+            }
             aosArgv.push_back("--num-threads");
             aosArgv.push_back("1");
             aosArgv.push_back("--ovr-zoom-level");
@@ -3225,9 +3353,13 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
             aosArgv.push_back(CPLSPrintf("%d", iYEndIncluded));
             aosArgv.push_back("--webviewer");
             aosArgv.push_back("none");
-            aosArgv.push_back("--spawned");
-            aosArgv.push_back("--input");
-            aosArgv.push_back(m_dataset.GetName().c_str());
+            aosArgv.push_back(m_parallelMethod == "spawn" ? "--spawned"
+                                                          : "--forked");
+            if (!bIsMEMSource)
+            {
+                aosArgv.push_back("--input");
+                aosArgv.push_back(m_dataset.GetName().c_str());
+            }
             for (const auto &arg : GetArgs())
             {
                 if (arg->IsExplicitlySet() && arg->GetName() != "progress" &&
@@ -3249,14 +3381,34 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
                     cmdLine += ' ';
                 cmdLine += arg;
             }
-            CPLDebugOnly("gdal_raster_tile", "Spawning %s", cmdLine.c_str());
+            CPLDebugOnly("gdal_raster_tile", "%s %s",
+                         m_parallelMethod == "spawn" ? "Spawning" : "Forking",
+                         cmdLine.c_str());
             asCommandLines.push_back(std::move(cmdLine));
 
-            CPLSpawnedProcess *hSpawnedProcess =
-                CPLSpawnAsync(nullptr, aosArgv.List(),
-                              /* bCreateInputPipe = */ true,
-                              /* bCreateOutputPipe = */ true,
-                              /* bCreateErrorPipe = */ true, nullptr);
+#ifdef FORK_ALLOWED
+            if (m_parallelMethod == "fork")
+            {
+                forkWorkStructures.push_back(
+                    std::make_unique<ForkWorkStructure>());
+                ForkWorkStructure *pData = forkWorkStructures.back().get();
+                pData->nCacheMaxPerProcess = nCacheMaxPerProcess;
+                pData->aosArgv = aosArgv;
+                if (bIsMEMSource)
+                    pData->poMemSrcDS = m_poSrcDS;
+            }
+            CPL_IGNORE_RET_VAL(aosArgv);
+#endif
+
+            CPLSpawnedProcess *hSpawnedProcess = CPLSpawnAsync(
+#ifdef FORK_ALLOWED
+                m_parallelMethod == "fork" ? GenerateTilesForkMethod :
+#endif
+                                           nullptr,
+                m_parallelMethod == "fork" ? nullptr : aosArgv.List(),
+                /* bCreateInputPipe = */ true,
+                /* bCreateOutputPipe = */ true,
+                /* bCreateErrorPipe = */ true, nullptr);
             if (!hSpawnedProcess)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -3275,7 +3427,20 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
 
             ahSpawnedProcesses.push_back(hSpawnedProcess);
 
-            SendConfigOptions(hSpawnedProcess, bRet);
+            if (m_parallelMethod == "spawn")
+            {
+                SendConfigOptions(hSpawnedProcess, bRet);
+            }
+
+#ifdef FORK_ALLOWED
+            else
+            {
+                ForkWorkStructure *pData = forkWorkStructures.back().get();
+                auto handle = CPLSpawnAsyncGetOutputFileHandle(hSpawnedProcess);
+                bRet &= CPL_TO_BOOL(CPLPipeWrite(
+                    handle, &pData, static_cast<int>(sizeof(pData))));
+            }
+#endif
             if (!bRet)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -3325,10 +3490,12 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
+    const bool bIsNamedSource = m_poSrcDS->GetDescription()[0] != 0;
     auto poSrcDriver = m_poSrcDS->GetDriver();
-    m_bIsNamedNonMemSrcDS =
-        (m_poSrcDS->GetDescription()[0] != 0 && poSrcDriver &&
-         !EQUAL(poSrcDriver->GetDescription(), "MEM"));
+    const bool bIsMEMSource =
+        poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "MEM");
+    m_bIsNamedNonMemSrcDS = bIsNamedSource && !bIsMEMSource;
+    const bool bSrcIsFineForFork = bIsNamedSource || bIsMEMSource;
 
     if (m_parallelMethod == "spawn")
     {
@@ -3340,6 +3507,25 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             return false;
         }
     }
+#ifdef FORK_ALLOWED
+    else if (m_parallelMethod == "fork")
+    {
+        if (!bSrcIsFineForFork)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Unnamed non-MEM source are not supported "
+                        "with fork parallelization method");
+            return false;
+        }
+        if (cpl::starts_with(m_outputDirectory, "/vsimem/"))
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "/vsimem/ output directory not supported with fork "
+                        "parallelization method");
+            return false;
+        }
+    }
+#endif
 
     if (m_resampling == "near")
         m_resampling = "nearest";
@@ -4126,11 +4312,35 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const bool bEmitSpuriousCharsOnStdout = CPLTestBool(
         CPLGetConfigOption("GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", "NO"));
 
-    const auto IsCompatibleOfSpawnSilent = [this]()
+    const auto IsCompatibleOfSpawnSilent = [bSrcIsFineForFork, this]()
     {
-        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         const char *pszErrorMsg = "";
-        return IsCompatibleOfSpawn(pszErrorMsg);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            if (IsCompatibleOfSpawn(pszErrorMsg))
+            {
+                m_parallelMethod = "spawn";
+                return true;
+            }
+        }
+        (void)bSrcIsFineForFork;
+#ifdef FORK_ALLOWED
+        if (bSrcIsFineForFork &&
+            !cpl::starts_with(m_outputDirectory, "/vsimem/"))
+        {
+            if (CPLGetCurrentThreadCount() == 1)
+            {
+                CPLDebugOnce(
+                    "gdal_raster_tile",
+                    "'gdal' binary not found. Using instead "
+                    "parallel-method=fork. If causing instability issues, set "
+                    "parallel-method to 'thread' or 'spawn'");
+                m_parallelMethod = "fork";
+                return true;
+            }
+        }
+#endif
+        return false;
     };
 
     m_numThreads = std::max(
@@ -4161,6 +4371,29 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 }
             });
     }
+#ifdef FORK_ALLOWED
+    else if (m_forked)
+    {
+        threadWaitForParentStop = std::thread(
+            [&bParentAskedForStop]()
+            {
+                std::string buffer;
+                buffer.resize(strlen(STOP_MARKER));
+                if (CPLPipeRead(pipeIn, buffer.data(),
+                                static_cast<int>(strlen(STOP_MARKER))) &&
+                    buffer == STOP_MARKER)
+                {
+                    bParentAskedForStop = true;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Got unexpected input from parent '%s'",
+                             buffer.c_str());
+                }
+            });
+    }
+#endif
 
     if (m_ovrZoomLevel >= 0)
     {
@@ -4171,7 +4404,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
              ((m_parallelMethod.empty() &&
                m_numThreads >= GetThresholdMinThreadsForSpawn() &&
                IsCompatibleOfSpawnSilent()) ||
-              m_parallelMethod == "spawn"))
+              (m_parallelMethod == "spawn" || m_parallelMethod == "fork")))
     {
         if (!GenerateBaseTilesSpawnMethod(nBaseTilesPerCol, nBaseTilesPerRow,
                                           nMinTileX, nMinTileY, nMaxTileX,
@@ -4384,6 +4617,13 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                stdout);
                         fflush(stdout);
                     }
+#ifdef FORK_ALLOWED
+                    else if (m_forked)
+                    {
+                        CPLPipeWrite(pipeOut, PROGRESS_MARKER,
+                                     sizeof(PROGRESS_MARKER));
+                    }
+#endif
                     else
                     {
                         ++nCurTile;
@@ -4493,7 +4733,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             ((m_parallelMethod.empty() &&
               m_numThreads >= GetThresholdMinThreadsForSpawn() &&
               IsCompatibleOfSpawnSilent()) ||
-             m_parallelMethod == "spawn"))
+             (m_parallelMethod == "spawn" || m_parallelMethod == "fork")))
         {
             bRet &= GenerateOverviewTilesSpawnMethod(
                 iZ, nOvrMinTileX, nOvrMinTileY, nOvrMaxTileX, nOvrMaxTileY,
@@ -4749,6 +4989,13 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                    stdout);
                             fflush(stdout);
                         }
+#ifdef FORK_ALLOWED
+                        else if (m_forked)
+                        {
+                            CPLPipeWrite(pipeOut, PROGRESS_MARKER,
+                                         sizeof(PROGRESS_MARKER));
+                        }
+#endif
                         else
                         {
                             ++nCurTile;
@@ -4968,6 +5215,13 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         fclose(stdout);
         threadWaitForParentStop.join();
     }
+#ifdef FORK_ALLOWED
+    else if (m_forked)
+    {
+        CPLPipeWrite(pipeOut, END_MARKER, sizeof(END_MARKER));
+        threadWaitForParentStop.join();
+    }
+#endif
 
     return bRet;
 }
