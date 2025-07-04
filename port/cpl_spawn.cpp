@@ -610,11 +610,25 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     int pipe_out[2] = {-1, -1};
     int pipe_err[2] = {-1, -1};
 
+    const auto ClosePipes = [pipe_in, pipe_out, pipe_err]()
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (pipe_in[i] >= 0)
+                close(pipe_in[i]);
+            if (pipe_out[i] >= 0)
+                close(pipe_out[i]);
+            if (pipe_err[i] >= 0)
+                close(pipe_err[i]);
+        }
+    };
+
     if ((bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
         (bCreateErrorPipe && pipe(pipe_err)))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
+        ClosePipes();
         return nullptr;
     }
 
@@ -708,16 +722,7 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
                 posix_spawn_file_actions_destroy(&actions);
             CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
             CSLDestroy(papszArgvDup);
-            for (int i = 0; i < 2; i++)
-            {
-                if (pipe_in[i] >= 0)
-                    close(pipe_in[i]);
-                if (pipe_out[i] >= 0)
-                    close(pipe_out[i]);
-                if (pipe_err[i] >= 0)
-                    close(pipe_err[i]);
-            }
-
+            ClosePipes();
             return nullptr;
         }
 
@@ -833,16 +838,7 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
 
     CSLDestroy(papszArgvDup);
-    for (int i = 0; i < 2; i++)
-    {
-        if (pipe_in[i] >= 0)
-            close(pipe_in[i]);
-        if (pipe_out[i] >= 0)
-            close(pipe_out[i]);
-        if (pipe_err[i] >= 0)
-            close(pipe_err[i]);
-    }
-
+    ClosePipes();
     return nullptr;
 }
 
