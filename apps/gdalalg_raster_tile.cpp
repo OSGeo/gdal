@@ -35,6 +35,7 @@
 #include <cmath>
 #include <mutex>
 #include <utility>
+#include <thread>
 
 //! @cond Doxygen_Suppress
 
@@ -45,6 +46,9 @@
 // Unlikely substring to appear in stdout. We do that in case some GDAL
 // driver would output on stdout.
 constexpr const char PROGRESS_MARKER[] = {'!', '.', 'x'};
+constexpr const char END_MARKER[] = {'?', 'E', '?', 'N', '?', 'D', '?'};
+
+constexpr const char *STOP_MARKER = "STOP\n";
 
 namespace
 {
@@ -96,8 +100,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();
-    AddArg("progress-forked", 0, _("Report progress as a forked child"),
-           &m_progressForked)
+    AddArg("spawned", 0, _("Whether this is spawned worker"),
+           &m_spawned)
         .SetHidden();  // Used in spawn mode
     AddArg("config-options-in-stdin", 0, _(""), &m_dummy)
         .SetHidden();  // Used in spawn mode
@@ -2747,6 +2751,8 @@ static void GetProgressForChildProcesses(
     uint64_t nTotalTiles, GDALProgressFunc pfnProgress, void *pProgressData)
 {
     std::vector<unsigned int> anProgressState(ahSpawnedProcesses.size(), 0);
+    std::vector<unsigned int> anEndState(ahSpawnedProcesses.size(), 0);
+    std::vector<bool> abFinished(ahSpawnedProcesses.size(), false);
 
     while (bRet)
     {
@@ -2755,7 +2761,7 @@ static void GetProgressForChildProcesses(
         for (CPLSpawnedProcess *hSpawnedProcess : ahSpawnedProcesses)
         {
             char ch = 0;
-            if (anRemainingTilesForProcess[iProcess] == 0 ||
+            if (abFinished[iProcess] ||
                 !CPLPipeRead(CPLSpawnAsyncGetInputFileHandle(hSpawnedProcess),
                              &ch, 1))
             {
@@ -2769,10 +2775,28 @@ static void GetProgressForChildProcesses(
                     anProgressState[iProcess] = 0;
                     --anRemainingTilesForProcess[iProcess];
                     ++nCurTile;
-                    bRet &= (!pfnProgress ||
-                             pfnProgress(static_cast<double>(nCurTile) /
+                    if (bRet && pfnProgress)
+                    {
+                        if (!pfnProgress(static_cast<double>(nCurTile) /
                                              static_cast<double>(nTotalTiles),
-                                         "", pProgressData));
+                                         "", pProgressData))
+                        {
+                            CPLError(CE_Failure, CPLE_UserInterrupt,
+                                     "Process interrupted by user");
+                            bRet = false;
+                            return;
+                        }
+                    }
+                }
+            }
+            else if (ch == END_MARKER[anEndState[iProcess]])
+            {
+                ++anEndState[iProcess];
+                if (anEndState[iProcess] == sizeof(END_MARKER))
+                {
+                    anEndState[iProcess] = 0;
+                    abFinished[iProcess] = true;
+                    ++nFinished;
                 }
             }
             else
@@ -2804,7 +2828,9 @@ void GDALRasterTileAlgorithm::WaitForSpawnedProcesses(
     size_t iProcess = 0;
     for (CPLSpawnedProcess *hSpawnedProcess : ahSpawnedProcesses)
     {
-        CPLSpawnAsyncCloseInputFileHandle(hSpawnedProcess);
+        CPL_IGNORE_RET_VAL(
+            CPLPipeWrite(CPLSpawnAsyncGetOutputFileHandle(hSpawnedProcess),
+                         STOP_MARKER, static_cast<int>(strlen(STOP_MARKER))));
 
         char ch = 0;
         std::string errorMsg;
@@ -2842,7 +2868,6 @@ void GDALRasterTileAlgorithm::WaitForSpawnedProcesses(
                 errorMsg += ch;
             }
         }
-        CPLSpawnAsyncCloseErrorFileHandle(hSpawnedProcess);
 
         if (CPLSpawnAsyncFinish(hSpawnedProcess, /* bWait = */ true,
                                 /* bKill = */ false) != 0)
@@ -2913,10 +2938,10 @@ static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
             }
         }
     }
-    constexpr const char *END_MARKER = "END\n";
-    bRet &= CPL_TO_BOOL(
-        CPLPipeWrite(handle, END_MARKER, static_cast<int>(strlen(END_MARKER))));
-    CPLSpawnAsyncCloseOutputFileHandle(hSpawnedProcess);
+    constexpr const char *END_CONFIG_MARKER = "END_CONFIG\n";
+    bRet &=
+        CPL_TO_BOOL(CPLPipeWrite(handle, END_CONFIG_MARKER,
+                                 static_cast<int>(strlen(END_CONFIG_MARKER))));
 }
 
 /************************************************************************/
@@ -3014,7 +3039,7 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
             aosArgv.push_back(CPLSPrintf("%d", iYEndIncluded));
             aosArgv.push_back("--webviewer");
             aosArgv.push_back("none");
-            aosArgv.push_back("--progress-forked");
+            aosArgv.push_back("--spawned");
             aosArgv.push_back("--input");
             aosArgv.push_back(m_poSrcDS->GetDescription());
             for (const auto &arg : GetArgs())
@@ -3200,7 +3225,7 @@ bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
             aosArgv.push_back(CPLSPrintf("%d", iYEndIncluded));
             aosArgv.push_back("--webviewer");
             aosArgv.push_back("none");
-            aosArgv.push_back("--progress-forked");
+            aosArgv.push_back("--spawned");
             aosArgv.push_back("--input");
             aosArgv.push_back(m_dataset.GetName().c_str());
             for (const auto &arg : GetArgs())
@@ -4112,6 +4137,31 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         1, static_cast<int>(std::min<uint64_t>(
                m_numThreads, nBaseTiles / GetThresholdMinTilesPerJob())));
 
+    std::atomic<bool> bParentAskedForStop = false;
+    std::thread threadWaitForParentStop;
+    if (m_spawned)
+    {
+        threadWaitForParentStop = std::thread(
+            [&bParentAskedForStop]()
+            {
+                char szBuffer[81] = {0};
+                while (fgets(szBuffer, 80, stdin))
+                {
+                    if (strcmp(szBuffer, STOP_MARKER) == 0)
+                    {
+                        bParentAskedForStop = true;
+                        break;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Got unexpected input from parent '%s'",
+                                 szBuffer);
+                    }
+                }
+            });
+    }
+
     if (m_ovrZoomLevel >= 0)
     {
         // do not generate base tiles if called as a child process with
@@ -4211,20 +4261,24 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                  iXEndIncluded);
 
                     auto job = [this, &oThreadPool, &oResourceManager,
-                                &bFailure, &nCurTile, &nQueuedJobs,
-                                pszExtension, &aosCreationOptions, &psWO,
-                                &tileMatrix, nDstBands, iXStart, iXEndIncluded,
-                                iYStart, iYEndIncluded, nMinTileX, nMinTileY,
-                                &poColorTable, bUserAskedForAlpha]()
+                                &bFailure, &bParentAskedForStop, &nCurTile,
+                                &nQueuedJobs, pszExtension, &aosCreationOptions,
+                                &psWO, &tileMatrix, nDstBands, iXStart,
+                                iXEndIncluded, iYStart, iYEndIncluded,
+                                nMinTileX, nMinTileY, &poColorTable,
+                                bUserAskedForAlpha]()
                     {
                         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
                         auto resources = oResourceManager.AcquireResources();
                         if (resources)
                         {
-                            for (int iY = iYStart; iY <= iYEndIncluded; ++iY)
+                            for (int iY = iYStart;
+                                 iY <= iYEndIncluded && !bParentAskedForStop;
+                                 ++iY)
                             {
-                                for (int iX = iXStart; iX <= iXEndIncluded;
+                                for (int iX = iXStart; iX <= iXEndIncluded &&
+                                                       !bParentAskedForStop;
                                      ++iX)
                                 {
                                     if (!GenerateTile(
@@ -4276,11 +4330,17 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             while (bRet && nQueuedJobs > 0)
             {
                 oThreadPool.WaitEvent();
-                bRet &= !bFailure &&
-                        (!pfnProgress ||
-                         pfnProgress(static_cast<double>(nCurTile) /
-                                         static_cast<double>(nTotalTiles),
-                                     "", pProgressData));
+                bRet &= !bFailure;
+                if (bRet && pfnProgress &&
+                    !pfnProgress(static_cast<double>(nCurTile) /
+                                     static_cast<double>(nTotalTiles),
+                                 "", pProgressData))
+                {
+                    bParentAskedForStop = true;
+                    bRet = false;
+                    CPLError(CE_Failure, CPLE_UserInterrupt,
+                             "Process interrupted by user");
+                }
             }
             oThreadPool.WaitCompletion();
             bRet &=
@@ -4299,9 +4359,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         else
         {
             // Branch for single-thread max zoom level tile generation
-            for (int iY = nMinTileY; bRet && iY <= nMaxTileY; ++iY)
+            for (int iY = nMinTileY;
+                 bRet && !bParentAskedForStop && iY <= nMaxTileY; ++iY)
             {
-                for (int iX = nMinTileX; bRet && iX <= nMaxTileX; ++iX)
+                for (int iX = nMinTileX;
+                     bRet && !bParentAskedForStop && iX <= nMaxTileX; ++iX)
                 {
                     bRet = GenerateTile(
                         m_poSrcDS, m_poDstDriver, pszExtension,
@@ -4314,7 +4376,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         nMinTileY, m_skipBlank, bUserAskedForAlpha, m_auxXML,
                         m_resume, m_metadata, poColorTable.get(), dstBuffer);
 
-                    if (m_progressForked)
+                    if (m_spawned)
                     {
                         if (bEmitSpuriousCharsOnStdout)
                             fwrite(&PROGRESS_MARKER[0], 1, 1, stdout);
@@ -4325,11 +4387,15 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     else
                     {
                         ++nCurTile;
-                        bRet &=
-                            (!pfnProgress ||
-                             pfnProgress(static_cast<double>(nCurTile) /
+                        if (bRet && pfnProgress &&
+                            !pfnProgress(static_cast<double>(nCurTile) /
                                              static_cast<double>(nTotalTiles),
-                                         "", pProgressData));
+                                         "", pProgressData))
+                        {
+                            bRet = false;
+                            CPLError(CE_Failure, CPLE_UserInterrupt,
+                                     "Process interrupted by user");
+                        }
                     }
                 }
             }
@@ -4564,12 +4630,12 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             "gdal_raster_tile",
                             "Job for z=%d, y in [%d,%d] and x in [%d,%d]", iZ,
                             iYStart, iYEndIncluded, iXStart, iXEndIncluded);
-                        auto job = [this, &oThreadPool, &oResourceManager,
-                                    &bFailure, &nCurTile, &nQueuedJobs,
-                                    pszExtension, &aosCreationOptions,
-                                    &aosWarpOptions, &ovrTileMatrix, iZ,
-                                    iXStart, iXEndIncluded, iYStart,
-                                    iYEndIncluded, bUserAskedForAlpha]()
+                        auto job =
+                            [this, &oThreadPool, &oResourceManager, &bFailure,
+                             &bParentAskedForStop, &nCurTile, &nQueuedJobs,
+                             pszExtension, &aosCreationOptions, &aosWarpOptions,
+                             &ovrTileMatrix, iZ, iXStart, iXEndIncluded,
+                             iYStart, iYEndIncluded, bUserAskedForAlpha]()
                         {
                             CPLErrorStateBackuper oBackuper(
                                 CPLQuietErrorHandler);
@@ -4578,10 +4644,13 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                 oResourceManager.AcquireResources();
                             if (resources)
                             {
-                                for (int iY = iYStart; iY <= iYEndIncluded;
+                                for (int iY = iYStart; iY <= iYEndIncluded &&
+                                                       !bParentAskedForStop;
                                      ++iY)
                                 {
-                                    for (int iX = iXStart; iX <= iXEndIncluded;
+                                    for (int iX = iXStart;
+                                         iX <= iXEndIncluded &&
+                                         !bParentAskedForStop;
                                          ++iX)
                                     {
                                         if (!GenerateOverviewTile(
@@ -4627,11 +4696,17 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 while (bRet && nQueuedJobs > 0)
                 {
                     oThreadPool.WaitEvent();
-                    bRet &= !bFailure &&
-                            (!pfnProgress ||
-                             pfnProgress(static_cast<double>(nCurTile) /
-                                             static_cast<double>(nTotalTiles),
-                                         "", pProgressData));
+                    bRet &= !bFailure;
+                    if (bRet && pfnProgress &&
+                        !pfnProgress(static_cast<double>(nCurTile) /
+                                         static_cast<double>(nTotalTiles),
+                                     "", pProgressData))
+                    {
+                        bParentAskedForStop = true;
+                        bRet = false;
+                        CPLError(CE_Failure, CPLE_UserInterrupt,
+                                 "Process interrupted by user");
+                    }
                 }
                 oThreadPool.WaitCompletion();
                 bRet &= !bFailure &&
@@ -4651,9 +4726,11 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             {
                 // Branch for single-thread overview generation
 
-                for (int iY = nOvrMinTileY; bRet && iY <= nOvrMaxTileY; ++iY)
+                for (int iY = nOvrMinTileY;
+                     bRet && !bParentAskedForStop && iY <= nOvrMaxTileY; ++iY)
                 {
-                    for (int iX = nOvrMinTileX; bRet && iX <= nOvrMaxTileX;
+                    for (int iX = nOvrMinTileX;
+                         bRet && !bParentAskedForStop && iX <= nOvrMaxTileX;
                          ++iX)
                     {
                         bRet = GenerateOverviewTile(
@@ -4664,7 +4741,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             m_skipBlank, bUserAskedForAlpha, m_auxXML,
                             m_resume);
 
-                        if (m_progressForked)
+                        if (m_spawned)
                         {
                             if (bEmitSpuriousCharsOnStdout)
                                 fwrite(&PROGRESS_MARKER[0], 1, 1, stdout);
@@ -4675,11 +4752,16 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         else
                         {
                             ++nCurTile;
-                            bRet &= (!pfnProgress ||
-                                     pfnProgress(
-                                         static_cast<double>(nCurTile) /
-                                             static_cast<double>(nTotalTiles),
-                                         "", pProgressData));
+                            if (bRet && pfnProgress &&
+                                !pfnProgress(
+                                    static_cast<double>(nCurTile) /
+                                        static_cast<double>(nTotalTiles),
+                                    "", pProgressData))
+                            {
+                                bRet = false;
+                                CPLError(CE_Failure, CPLE_UserInterrupt,
+                                         "Process interrupted by user");
+                            }
                         }
                     }
                 }
@@ -4877,6 +4959,14 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         // If that happens, this is a programming error
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Bug: process failed without returning an error message");
+    }
+
+    if (m_spawned)
+    {
+        fwrite(END_MARKER, sizeof(END_MARKER), 1, stdout);
+        fflush(stdout);
+        fclose(stdout);
+        threadWaitForParentStop.join();
     }
 
     return bRet;
