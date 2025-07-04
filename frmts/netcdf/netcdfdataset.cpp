@@ -8589,7 +8589,35 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_VERIFY_DIMS", "YES")) &&
         STARTS_WITH_CI(szConventions, "CF");
 
-    if (nd >= 2 && bCheckDims)
+    bool bYXBandOrder = false;
+    if (nd == 3)
+    {
+        char szDim0Name[NC_MAX_NAME + 1] = {};
+        char szDim1Name[NC_MAX_NAME + 1] = {};
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[0], szDim0Name);
+        NCDF_ERR(status);
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[1], szDim1Name);
+        NCDF_ERR(status);
+
+        if (strcmp(szDim0Name, "number_of_lines") == 0 &&
+            strcmp(szDim1Name, "pixels_per_line") == 0)
+        {
+            // Like in PACE OCI products
+            bYXBandOrder = true;
+        }
+        else
+        {
+            // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
+            // dimension order is downtrack, crosstrack, bands
+            char szDim2Name[NC_MAX_NAME + 1] = {};
+            status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDim2Name);
+            NCDF_ERR(status);
+            bYXBandOrder = strcmp(szDim2Name, "bands") == 0 ||
+                           strcmp(szDim2Name, "band") == 0;
+        }
+    }
+
+    if (nd >= 2 && bCheckDims && !bYXBandOrder)
     {
         char szDimName1[NC_MAX_NAME + 1] = {};
         char szDimName2[NC_MAX_NAME + 1] = {};
@@ -8655,18 +8683,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-    }
-
-    // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
-    // dimension order is downtrack, crosstrack, bands
-    bool bYXBandOrder = false;
-    if (nd == 3)
-    {
-        char szDimName[NC_MAX_NAME + 1] = {};
-        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDimName);
-        NCDF_ERR(status);
-        bYXBandOrder =
-            strcmp(szDimName, "bands") == 0 || strcmp(szDimName, "band") == 0;
     }
 
     // Get X dimensions information.
