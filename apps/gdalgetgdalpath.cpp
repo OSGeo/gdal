@@ -120,6 +120,10 @@ std::string GDALGetGDALPath()
             CPLDebug("GDAL", "gdal binary found at '%s'", osPath.c_str());
         }
     }
+    else
+    {
+        osPath.clear();
+    }
     if (osPath.empty())
     {
         // Try to locate from the path
