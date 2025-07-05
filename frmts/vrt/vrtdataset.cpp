@@ -2896,20 +2896,26 @@ void VRTDataset::BuildVirtualOverviews()
         }
         int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
         int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
-        if (nOvrXSize < DEFAULT_BLOCK_SIZE || nOvrYSize < DEFAULT_BLOCK_SIZE)
-            break;
 
         // Look for a source overview whose size is very close to the
         // theoretical computed one.
+        bool bSrcOvrMatchFound = false;
         for (const auto &ovrSize : oSetOvrSizes)
         {
             if (std::abs(ovrSize.first - nOvrXSize) <= 1 &&
                 std::abs(ovrSize.second - nOvrYSize) <= 1)
             {
+                bSrcOvrMatchFound = true;
                 nOvrXSize = ovrSize.first;
                 nOvrYSize = ovrSize.second;
                 break;
             }
+        }
+
+        if (!bSrcOvrMatchFound &&
+            (nOvrXSize < DEFAULT_BLOCK_SIZE || nOvrYSize < DEFAULT_BLOCK_SIZE))
+        {
+            break;
         }
 
         int nBlockXSize = 0;
