@@ -1019,10 +1019,10 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 }
 
 /************************************************************************/
-/*                           CreateCheckDims()                          */
+/*                      GS7BGCreateCheckDims()                          */
 /************************************************************************/
 
-static bool CreateCheckDims(int nXSize, int nYSize)
+static bool GS7BGCreateCheckDims(int nXSize, int nYSize)
 {
     if (nXSize <= 1 || nYSize <= 1)
     {
@@ -1049,7 +1049,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
                                   char ** /* papszParamList*/)
 
 {
-    if (!CreateCheckDims(nXSize, nYSize))
+    if (!GS7BGCreateCheckDims(nXSize, nYSize))
     {
         return nullptr;
     }
@@ -1150,7 +1150,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterXSize();
-    if (!CreateCheckDims(nXSize, nYSize))
+    if (!GS7BGCreateCheckDims(nXSize, nYSize))
     {
         return nullptr;
     }

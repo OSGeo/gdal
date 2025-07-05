@@ -775,10 +775,10 @@ CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                           CreateCheckDims()                          */
+/*                        GSBGCreateCheckDims()                         */
 /************************************************************************/
 
-static bool CreateCheckDims(int nXSize, int nYSize)
+static bool GSBGCreateCheckDims(int nXSize, int nYSize)
 {
     if (nXSize <= 1 || nYSize <= 1)
     {
@@ -809,7 +809,7 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
                                  GDALDataType eType,
                                  CPL_UNUSED char **papszParamList)
 {
-    if (!CreateCheckDims(nXSize, nYSize))
+    if (!GSBGCreateCheckDims(nXSize, nYSize))
     {
         return nullptr;
     }
@@ -901,7 +901,7 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
-    if (!CreateCheckDims(poSrcBand->GetXSize(), poSrcBand->GetYSize()))
+    if (!GSBGCreateCheckDims(poSrcBand->GetXSize(), poSrcBand->GetYSize()))
     {
         return nullptr;
     }
