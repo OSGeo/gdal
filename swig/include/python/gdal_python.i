@@ -388,6 +388,64 @@ static void readraster_releasebuffer(CPLErr eErr,
 
   LogicalNot = logical_not
 
+  def abs(band):
+      """Return the absolute value (or module for complex data type) of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_ABS)._add_parent_references([band])
+
+  Abs = abs
+
+  def sqrt(band):
+      """Return the square root of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_SQRT)._add_parent_references([band])
+
+  Sqrt = sqrt
+
+  def log10(band):
+      """Return the logarithm base 10 of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOG10)._add_parent_references([band])
+
+  Log10 = log10
+
+  def log(band):
+      """Return the natural logarithm of a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOG)._add_parent_references([band])
+
+  Log = log
+
+
+  def pow(x1, x2):
+      """Raise x1 to the power of x2 between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_POW, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_POW, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDoubleToBand(x1, GRABO_POW, x2)._add_parent_references([x2])
+
+  Pow = pow
+
   class Window:
       def __init__(self, xoff, yoff, xsize, ysize):
           self.data = [xoff, yoff, xsize, ysize]
@@ -396,11 +454,11 @@ static void readraster_releasebuffer(CPLErr eErr,
           return Window(*self.data)
 
       def __getitem__(self, i):
-          return self.data[i]    
+          return self.data[i]
 
       def __setitem__(self, i, value):
           self.data[i] = value
-      
+
       def __iter__(self):
           return iter(self.data)
 
@@ -420,7 +478,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @xoff.setter
       def xoff(self, value):
-          self.data[0] = value 
+          self.data[0] = value
 
       @property
       def yoff(self):
@@ -428,7 +486,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @yoff.setter
       def yoff(self, value):
-          self.data[1] = value 
+          self.data[1] = value
 
       @property
       def xsize(self):
@@ -436,7 +494,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @xsize.setter
       def xsize(self, value):
-          self.data[2] = value 
+          self.data[2] = value
 
       @property
       def ysize(self):
@@ -1221,7 +1279,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         return gdal_array.VirtualMemGetArray( virtualmem )
 
   def BlockWindows(self):
-       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to 
+       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to
        each block in this ``Band``. Iteration order is from left to right,
        then from top to bottom.
 
