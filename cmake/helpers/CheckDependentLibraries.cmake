@@ -448,9 +448,12 @@ gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 
 define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
 gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
-
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles(
+if (HEIF_FOUND)
+  include(CMakePushCheckState)
+  include(CheckCXXSourceCompiles)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES ${HEIF_INCLUDE_DIRS})
+  check_cxx_source_compiles(
     "
     #include <libheif/heif.h>
     int main()
@@ -460,10 +463,12 @@ check_cxx_source_compiles(
     }
     "
     LIBHEIF_SUPPORTS_TILES
-)
-if (LIBHEIF_SUPPORTS_TILES)
-  set_property(TARGET HEIF::HEIF APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "LIBHEIF_SUPPORTS_TILES")
-endif ()
+  )
+  if (LIBHEIF_SUPPORTS_TILES)
+    set_property(TARGET HEIF::HEIF APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "LIBHEIF_SUPPORTS_TILES")
+  endif ()
+  cmake_pop_check_state()
+endif()
 
 include(CheckDependentLibrariesAVIF)
 
