@@ -784,6 +784,32 @@ CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                        GSBGCreateCheckDims()                         */
+/************************************************************************/
+
+static bool GSBGCreateCheckDims(int nXSize, int nYSize)
+{
+    if (nXSize <= 1 || nYSize <= 1)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Unable to create grid, both X and Y size must be "
+                 "larger or equal to 2.");
+        return false;
+    }
+    if (nXSize > std::numeric_limits<short>::max() ||
+        nYSize > std::numeric_limits<short>::max())
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Unable to create grid, Golden Software Binary Grid format "
+                 "only supports sizes up to %dx%d.  %dx%d not supported.",
+                 std::numeric_limits<short>::max(),
+                 std::numeric_limits<short>::max(), nXSize, nYSize);
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
 
@@ -792,23 +818,8 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
                                  GDALDataType eType,
                                  CPL_UNUSED char **papszParamList)
 {
-    if (nXSize <= 0 || nYSize <= 0)
+    if (!GSBGCreateCheckDims(nXSize, nYSize))
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Unable to create grid, both X and Y size must be "
-                 "non-negative.\n");
-
-        return nullptr;
-    }
-    else if (nXSize > std::numeric_limits<short>::max() ||
-             nYSize > std::numeric_limits<short>::max())
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Unable to create grid, Golden Software Binary Grid format "
-                 "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-                 std::numeric_limits<short>::max(),
-                 std::numeric_limits<short>::max(), nXSize, nYSize);
-
         return nullptr;
     }
 
@@ -899,16 +910,8 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
-    if (poSrcBand->GetXSize() > std::numeric_limits<short>::max() ||
-        poSrcBand->GetYSize() > std::numeric_limits<short>::max())
+    if (!GSBGCreateCheckDims(poSrcBand->GetXSize(), poSrcBand->GetYSize()))
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Unable to create grid, Golden Software Binary Grid format "
-                 "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-                 std::numeric_limits<short>::max(),
-                 std::numeric_limits<short>::max(), poSrcBand->GetXSize(),
-                 poSrcBand->GetYSize());
-
         return nullptr;
     }
 
