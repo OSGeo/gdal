@@ -244,6 +244,10 @@ inline bool OGRArrowLayer::IsHandledListOrMapType(
 #if ARROW_VERSION_MAJOR >= 15
            itemTypeId == arrow::Type::STRING_VIEW ||
 #endif
+           itemTypeId == arrow::Type::BINARY ||
+#if ARROW_VERSION_MAJOR >= 15
+           itemTypeId == arrow::Type::BINARY_VIEW ||
+#endif
            itemTypeId == arrow::Type::STRUCT ||
            (itemTypeId == arrow::Type::MAP &&
             IsHandledMapType(
@@ -491,6 +495,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
                     break;
                 case arrow::Type::STRING:
                 case arrow::Type::LARGE_STRING:
+                case arrow::Type::BINARY:
 #if ARROW_VERSION_MAJOR >= 15
                 case arrow::Type::STRING_VIEW:
 #endif
@@ -1242,62 +1247,63 @@ static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
 /*                               AddToArray()                           */
 /************************************************************************/
 
-static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
-                       const size_t nIdx)
+template <class Container>
+void AddToContainer(Container &oContainer, const arrow::Array *array,
+                    const size_t nIdx)
 {
     switch (array->type()->id())
     {
         case arrow::Type::BOOL:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::BooleanArray *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::UINT8:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::UInt8Array *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::INT8:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::Int8Array *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::UINT16:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::UInt16Array *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::INT16:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::Int16Array *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::INT32:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::Int32Array *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::UINT32:
         {
-            oArray.Add(static_cast<GInt64>(
+            oContainer.Add(static_cast<GInt64>(
                 static_cast<const arrow::UInt32Array *>(array)->Value(nIdx)));
             break;
         }
         case arrow::Type::INT64:
         {
-            oArray.Add(static_cast<GInt64>(
+            oContainer.Add(static_cast<GInt64>(
                 static_cast<const arrow::Int64Array *>(array)->Value(nIdx)));
             break;
         }
         case arrow::Type::UINT64:
         {
-            oArray.Add(static_cast<uint64_t>(
+            oContainer.Add(static_cast<uint64_t>(
                 static_cast<const arrow::UInt64Array *>(array)->Value(nIdx)));
             break;
         }
@@ -1308,18 +1314,18 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
             uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
             float f;
             memcpy(&f, &nFloat32, sizeof(nFloat32));
-            oArray.Add(f);
+            oContainer.Add(f);
             break;
         }
         case arrow::Type::FLOAT:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::FloatArray *>(array)->Value(nIdx));
             break;
         }
         case arrow::Type::DOUBLE:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
             break;
         }
@@ -1327,22 +1333,24 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
 #if ARROW_VERSION_MAJOR >= 18
         case arrow::Type::DECIMAL32:
         {
-            oArray.Add(CPLAtof(static_cast<const arrow::Decimal32Array *>(array)
-                                   ->FormatValue(nIdx)
-                                   .c_str()));
+            oContainer.Add(
+                CPLAtof(static_cast<const arrow::Decimal32Array *>(array)
+                            ->FormatValue(nIdx)
+                            .c_str()));
             break;
         }
         case arrow::Type::DECIMAL64:
         {
-            oArray.Add(CPLAtof(static_cast<const arrow::Decimal64Array *>(array)
-                                   ->FormatValue(nIdx)
-                                   .c_str()));
+            oContainer.Add(
+                CPLAtof(static_cast<const arrow::Decimal64Array *>(array)
+                            ->FormatValue(nIdx)
+                            .c_str()));
             break;
         }
 #endif
         case arrow::Type::DECIMAL128:
         {
-            oArray.Add(
+            oContainer.Add(
                 CPLAtof(static_cast<const arrow::Decimal128Array *>(array)
                             ->FormatValue(nIdx)
                             .c_str()));
@@ -1350,7 +1358,7 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
         }
         case arrow::Type::DECIMAL256:
         {
-            oArray.Add(
+            oContainer.Add(
                 CPLAtof(static_cast<const arrow::Decimal256Array *>(array)
                             ->FormatValue(nIdx)
                             .c_str()));
@@ -1358,14 +1366,14 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
         }
         case arrow::Type::STRING:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::StringArray *>(array)->GetString(
                     nIdx));
             break;
         }
         case arrow::Type::LARGE_STRING:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::LargeStringArray *>(array)->GetString(
                     nIdx));
             break;
@@ -1373,7 +1381,7 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
 #if ARROW_VERSION_MAJOR >= 15
         case arrow::Type::STRING_VIEW:
         {
-            oArray.Add(
+            oContainer.Add(
                 static_cast<const arrow::StringViewArray *>(array)->GetString(
                     nIdx));
             break;
@@ -1385,17 +1393,84 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
         case arrow::Type::MAP:
         case arrow::Type::STRUCT:
         {
-            oArray.Add(GetObjectAsJSON(array, nIdx));
+            oContainer.Add(GetObjectAsJSON(array, nIdx));
             break;
         }
 
+        case arrow::Type::BINARY:
+        {
+            const auto castArray =
+                static_cast<const arrow::BinaryArray *>(array);
+            int length = 0;
+            const uint8_t *data = castArray->GetValue(nIdx, &length);
+            bool bIsASCII = true;
+            for (int i = 0; i < length && bIsASCII; ++i)
+                bIsASCII = data[i] >= 32 && data[i] <= 127;
+            if (bIsASCII)
+            {
+                oContainer.Add(
+                    std::string(reinterpret_cast<const char *>(data), length));
+            }
+            else
+            {
+                char *pszBase64 = CPLBase64Encode(length, data);
+                oContainer.Add(std::string("base64:").append(pszBase64));
+                CPLFree(pszBase64);
+            }
+            break;
+        }
+
+#if ARROW_VERSION_MAJOR >= 15
+        case arrow::Type::BINARY_VIEW:
+        {
+            const auto castArray =
+                static_cast<const arrow::BinaryViewArray *>(array);
+            const auto view = castArray->GetView(nIdx);
+            if (view.size() <= INT_MAX)
+            {
+                const int length = static_cast<int>(view.size());
+                const char *data = view.data();
+                bool bIsASCII = true;
+                for (int i = 0; i < length && bIsASCII; ++i)
+                    bIsASCII =
+                        data[i] >= 32 && static_cast<unsigned>(data[i]) <= 127;
+                if (bIsASCII)
+                {
+                    oContainer.Add(std::string(view));
+                }
+                else
+                {
+                    char *pszBase64 = CPLBase64Encode(
+                        length, reinterpret_cast<const GByte *>(data));
+                    oContainer.Add(std::string("base64:").append(pszBase64));
+                    CPLFree(pszBase64);
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large binary view");
+            }
+            break;
+        }
+#endif
+
         default:
         {
-            CPLDebug("ARROW", "AddToArray(): unexpected data type %s",
+            CPLDebug("ARROW", "AddToContainer(): unexpected data type %s",
                      array->type()->ToString().c_str());
             break;
         }
     }
+}
+
+/************************************************************************/
+/*                               AddToArray()                           */
+/************************************************************************/
+
+static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
+                       const size_t nIdx)
+{
+    AddToContainer(oArray, array, nIdx);
 }
 
 /************************************************************************/
@@ -1425,174 +1500,30 @@ static CPLJSONArray GetListAsJSON(const ArrowType *array,
 /*                              AddToDict()                             */
 /************************************************************************/
 
+namespace
+{
+struct ContainerAdapter
+{
+    CPLJSONObject &m_oDict;
+    const std::string m_osKey;
+
+    ContainerAdapter(CPLJSONObject &oDictIn, const std::string &osKeyIn)
+        : m_oDict(oDictIn), m_osKey(osKeyIn)
+    {
+    }
+
+    template <class T> void Add(const T &v)
+    {
+        m_oDict.Add(m_osKey, v);
+    }
+};
+}  // namespace
+
 static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
                       const arrow::Array *array, const size_t nIdx)
 {
-    switch (array->type()->id())
-    {
-        case arrow::Type::BOOL:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::BooleanArray *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::UINT8:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::UInt8Array *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::INT8:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::Int8Array *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::UINT16:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::UInt16Array *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::INT16:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::Int16Array *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::INT32:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::Int32Array *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::UINT32:
-        {
-            oDict.Add(osKey,
-                      static_cast<GInt64>(
-                          static_cast<const arrow::UInt32Array *>(array)->Value(
-                              nIdx)));
-            break;
-        }
-        case arrow::Type::INT64:
-        {
-            oDict.Add(osKey,
-                      static_cast<GInt64>(
-                          static_cast<const arrow::Int64Array *>(array)->Value(
-                              nIdx)));
-            break;
-        }
-        case arrow::Type::UINT64:
-        {
-            oDict.Add(osKey,
-                      static_cast<uint64_t>(
-                          static_cast<const arrow::UInt64Array *>(array)->Value(
-                              nIdx)));
-            break;
-        }
-        case arrow::Type::HALF_FLOAT:
-        {
-            const uint16_t nFloat16 =
-                static_cast<const arrow::HalfFloatArray *>(array)->Value(nIdx);
-            uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
-            float f;
-            memcpy(&f, &nFloat32, sizeof(nFloat32));
-            oDict.Add(osKey, f);
-            break;
-        }
-        case arrow::Type::FLOAT:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::FloatArray *>(array)->Value(nIdx));
-            break;
-        }
-        case arrow::Type::DOUBLE:
-        {
-            oDict.Add(
-                osKey,
-                static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
-            break;
-        }
-
-#if ARROW_VERSION_MAJOR >= 18
-        case arrow::Type::DECIMAL32:
-        {
-            oDict.Add(osKey,
-                      CPLAtof(static_cast<const arrow::Decimal32Array *>(array)
-                                  ->FormatValue(nIdx)
-                                  .c_str()));
-            break;
-        }
-        case arrow::Type::DECIMAL64:
-        {
-            oDict.Add(osKey,
-                      CPLAtof(static_cast<const arrow::Decimal64Array *>(array)
-                                  ->FormatValue(nIdx)
-                                  .c_str()));
-            break;
-        }
-#endif
-        case arrow::Type::DECIMAL128:
-        {
-            oDict.Add(osKey,
-                      CPLAtof(static_cast<const arrow::Decimal128Array *>(array)
-                                  ->FormatValue(nIdx)
-                                  .c_str()));
-            break;
-        }
-        case arrow::Type::DECIMAL256:
-        {
-            oDict.Add(osKey,
-                      CPLAtof(static_cast<const arrow::Decimal256Array *>(array)
-                                  ->FormatValue(nIdx)
-                                  .c_str()));
-            break;
-        }
-        case arrow::Type::STRING:
-        {
-            oDict.Add(osKey,
-                      static_cast<const arrow::StringArray *>(array)->GetString(
-                          nIdx));
-            break;
-        }
-        case arrow::Type::LARGE_STRING:
-        {
-            oDict.Add(osKey, static_cast<const arrow::LargeStringArray *>(array)
-                                 ->GetString(nIdx));
-            break;
-        }
-#if ARROW_VERSION_MAJOR >= 15
-        case arrow::Type::STRING_VIEW:
-        {
-            oDict.Add(osKey, static_cast<const arrow::StringViewArray *>(array)
-                                 ->GetString(nIdx));
-            break;
-        }
-#endif
-        case arrow::Type::LIST:
-        case arrow::Type::LARGE_LIST:
-        case arrow::Type::FIXED_SIZE_LIST:
-        case arrow::Type::MAP:
-        case arrow::Type::STRUCT:
-        {
-            oDict.Add(osKey, GetObjectAsJSON(array, nIdx));
-            break;
-        }
-
-        default:
-        {
-            CPLDebug("ARROW", "AddToDict(): unexpected data type %s",
-                     array->type()->ToString().c_str());
-            break;
-        }
-    }
+    ContainerAdapter dictAdapter(oDict, osKey);
+    AddToContainer(dictAdapter, array, nIdx);
 }
 
 /************************************************************************/
@@ -1928,6 +1859,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             poFeature->SetField(i, aosList.List());
             break;
         }
+
         case arrow::Type::LARGE_STRING:
         {
             const auto values =
@@ -1947,6 +1879,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             poFeature->SetField(i, aosList.List());
             break;
         }
+
 #if ARROW_VERSION_MAJOR >= 15
         case arrow::Type::STRING_VIEW:
         {
@@ -1968,6 +1901,49 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             break;
         }
 #endif
+
+        case arrow::Type::BINARY:
+        {
+            const auto values =
+                std::static_pointer_cast<arrow::BinaryArray>(array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const auto nCount = array->value_length(nIdxInArray);
+            CPLStringList aosList;
+            for (auto k = decltype(nCount){0}; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                {
+                    aosList.AddString(
+                        "");  // we cannot have null strings in a list
+                }
+                else
+                {
+                    int length = 0;
+                    const uint8_t *data =
+                        values->GetValue(nIdxStart + k, &length);
+                    bool bIsASCII = true;
+                    for (int j = 0; j < length && bIsASCII; ++j)
+                        bIsASCII = data[j] >= 32 && data[j] <= 127;
+                    if (bIsASCII)
+                    {
+                        aosList.AddString(
+                            std::string(reinterpret_cast<const char *>(data),
+                                        length)
+                                .c_str());
+                    }
+                    else
+                    {
+                        char *pszBase64 = CPLBase64Encode(length, data);
+                        aosList.AddString(
+                            std::string("base64:").append(pszBase64).c_str());
+                        CPLFree(pszBase64);
+                    }
+                }
+            }
+            poFeature->SetField(i, aosList.List());
+            break;
+        }
+
         case arrow::Type::LIST:
         case arrow::Type::LARGE_LIST:
         case arrow::Type::FIXED_SIZE_LIST:
