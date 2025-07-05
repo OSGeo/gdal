@@ -21,7 +21,7 @@
  *
  * Return the current number of threads of the current process.
  *
- * Implemented for Linux, Windows, FreeBSD and MACOSX.
+ * Implemented for Linux, Windows, FreeBSD, netBSD and MACOSX.
  *
  * Return 0 on other platforms or in case of error.
  *
@@ -116,6 +116,28 @@ int CPLGetCurrentThreadCount()
     }
 
     return kp.ki_numthreads;
+}
+
+#elif defined(__NetBSD__)
+
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/lwp.h>
+#include <unistd.h>
+
+int CPLGetCurrentThreadCount()
+{
+    const pid_t pid = getpid();
+    int mib[5] = {CTL_KERN, KERN_PROC, static_cast<int>(pid),
+                  static_cast<int>(sizeof(struct kinfo_lwp)), 0};
+
+    size_t len = 0;
+    if (sysctl(mib, 5, nullptr, &len, nullptr, 0) == -1)
+    {
+        return 0;
+    }
+
+    return static_cast<int>(len / sizeof(struct kinfo_lwp));
 }
 
 #elif defined(__APPLE__) && defined(__MACH__)

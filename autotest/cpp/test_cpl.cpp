@@ -5970,7 +5970,7 @@ TEST_F(test_cpl, CPLGetRemainingFileDescriptorCount)
 TEST_F(test_cpl, CPLGetCurrentThreadCount)
 {
 #if defined(_WIN32) || defined(__linux) || defined(__FreeBSD__) ||             \
-    (defined(__APPLE__) && defined(__MACH__))
+    defined(__NetBSD__) || (defined(__APPLE__) && defined(__MACH__))
     // Not sure why it returns 0 on those, whereas it works fine on build-windows-msys2-mingw
     if (strstr(CPLGetConfigOption("BUILD_NAME", ""), "build-windows-conda") !=
             nullptr &&
