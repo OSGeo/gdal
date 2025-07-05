@@ -936,3 +936,24 @@ def test_osr_ct_fix_9732():
     x, y, _ = ct.TransformPoint(2300000, 2000000, 0)
     assert x == pytest.approx(2301000)
     assert y == pytest.approx(2000000)
+
+
+def test_osr_ct_one_crs_has_a_esri_epsg_code():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4269)  # NAD83
+    s.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    t = osr.SpatialReference()
+    t.SetFromUserInput(
+        """PROJCS["NAD_1983_StatePlane_California_I_FIPS_0401_Feet",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",
+SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic_2SP"],
+PARAMETER["False_Easting",6561666.666666666],PARAMETER["False_Northing",1640416.666666667],PARAMETER["Central_Meridian",-122],
+PARAMETER["Standard_Parallel_1",40],PARAMETER["Standard_Parallel_2",41.66666666666666],PARAMETER["Latitude_Of_Origin",39.33333333333334],
+UNIT["Foot_US",0.30480060960121924],AUTHORITY["EPSG","102641"]]"""
+    )
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(-122, 39.3333333333333, 0)
+    assert x == pytest.approx(6561666.667)
+    assert y == pytest.approx(1640416.667)
