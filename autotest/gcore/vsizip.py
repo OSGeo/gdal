@@ -12,7 +12,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import random
+import sys
 
 import gdaltest
 import pytest
@@ -207,30 +209,37 @@ def test_vsizip_2():
 # Test opening in write mode a file inside a zip archive whose content has been listed before (testcase for fix of r22625)
 
 
-def test_vsizip_3():
+def test_vsizip_3(tmp_path):
 
-    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip", "wb")
+    fds_open = 0
+    if sys.platform == "linux":
+        fds_open = len(os.listdir("/proc/self/fd"))
 
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/foo", "wb")
+    filename_base = f"/vsizip/{tmp_path}/test3.zip"
+
+    fmain = gdal.VSIFOpenL(filename_base, "wb")
+
+    f = gdal.VSIFOpenL(filename_base + "/foo", "wb")
     gdal.VSIFWriteL("foo", 1, 3, f)
     gdal.VSIFCloseL(f)
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/bar", "wb")
+    f = gdal.VSIFOpenL(filename_base + "/bar", "wb")
     gdal.VSIFWriteL("bar", 1, 3, f)
     gdal.VSIFCloseL(f)
 
     gdal.VSIFCloseL(fmain)
 
-    gdal.ReadDir("/vsizip/vsimem/test3.zip")
+    gdal.ReadDir(filename_base)
 
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test3.zip/baz", "wb")
+    f = gdal.VSIFOpenL(filename_base + "/baz", "wb")
     gdal.VSIFWriteL("baz", 1, 3, f)
     gdal.VSIFCloseL(f)
 
-    res = gdal.ReadDir("/vsizip/vsimem/test3.zip")
-
-    gdal.Unlink("/vsimem/test3.zip")
+    res = gdal.ReadDir(filename_base)
 
     assert res == ["foo", "bar", "baz"]
+
+    if sys.platform == "linux":
+        assert len(os.listdir("/proc/self/fd")) == fds_open
 
 
 ###############################################################################
@@ -910,11 +919,10 @@ def test_vsizip_byte_copyfile_file_already_open():
 ###############################################################################
 
 
-def test_vsizip_byte_sozip():
-
-    zipfilename = "/vsimem/test_vsizip_byte_sozip.zip"
-    dstfilename = f"/vsizip/{zipfilename}/test.tif"
-    try:
+def test_vsizip_byte_sozip(tmp_path):
+    def do():
+        zipfilename = f"{tmp_path}/test_vsizip_byte_sozip.zip"
+        dstfilename = f"/vsizip/{zipfilename}/test.tif"
         options = ["SOZIP_ENABLED=YES", "SOZIP_CHUNK_SIZE=128"]
         assert gdal.CopyFile("data/byte.tif", dstfilename, options=options) == 0
         assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
@@ -927,9 +935,16 @@ def test_vsizip_byte_sozip():
 
         ds = gdal.Open(dstfilename)
         assert ds.GetRasterBand(1).Checksum() == 4672
+        ds.Close()
 
-    finally:
-        gdal.Unlink(zipfilename)
+    fds_open = 0
+    if sys.platform == "linux":
+        fds_open = len(os.listdir("/proc/self/fd"))
+
+    do()
+
+    if sys.platform == "linux":
+        assert len(os.listdir("/proc/self/fd")) == fds_open
 
 
 ###############################################################################
