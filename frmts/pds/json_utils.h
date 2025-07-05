@@ -21,9 +21,11 @@ static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
 
     if (!oChild.IsValid())
     {
-        oChild = CPLJSONObject();
-        oParent.Add(osKey, oChild);
+        CPLJSONObject oNewChild;
+        oParent.Add(osKey, oNewChild);
+        return oNewChild;
     }
+
     return oChild;
 }
 

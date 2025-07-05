@@ -102,6 +102,11 @@ class CPL_DLL TileMatrixSet
         return mTileMatrixList;
     }
 
+    std::vector<TileMatrix> &tileMatrixList()
+    {
+        return mTileMatrixList;
+    }
+
     /** Parse a TileMatrixSet definition, passed inline or by filename,
      * corresponding to the JSON encoding of the OGC Two Dimensional Tile Matrix
      * Set: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html */
@@ -125,6 +130,8 @@ class CPL_DLL TileMatrixSet
     bool hasOnlyPowerOfTwoVaryingScales() const;
 
     bool hasVariableMatrixWidth() const;
+
+    std::string exportToTMSJsonV1() const;
 
   private:
     TileMatrixSet() = default;

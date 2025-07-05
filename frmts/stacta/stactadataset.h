@@ -62,6 +62,8 @@ class STACTADataset final : public GDALPamDataset
 
     bool m_bDownloadWholeMetaTile = false;
     bool m_bSkipMissingMetaTile = false;
+    bool m_bTriedVSICLOUDSubstitution = false;
+    bool m_bVSICLOUDSubstitutionOK = false;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
