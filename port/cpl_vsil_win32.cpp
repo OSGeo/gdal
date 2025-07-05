@@ -97,6 +97,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
     bool m_bWriteThrough = false;
 
     VSIWin32Handle() = default;
+    ~VSIWin32Handle() override;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
@@ -217,6 +218,15 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
     CPLAssert(0 <= err);
 
     return err;
+}
+
+/************************************************************************/
+/*                          ~VSIWin32Handle()                           */
+/************************************************************************/
+
+VSIWin32Handle::~VSIWin32Handle()
+{
+    VSIWin32Handle::Close();
 }
 
 /************************************************************************/
