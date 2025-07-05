@@ -24,7 +24,7 @@
 #include <windows.h>
 #elif defined(__MACH__) && defined(__APPLE__)
 #include <mach-o/dyld.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #endif
@@ -38,7 +38,7 @@
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable. Currently this only works on
- * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8
+ * Windows, Linux, MacOS, FreeBSD and netBSD platforms.  The returned path is UTF-8
  * encoded, and will be nul-terminated if success is reported.
  *
  * @param pszPathBuf the buffer into which the path is placed.
@@ -130,6 +130,18 @@ int CPLGetExecPath(char *pszPathBuf, int nMaxLength)
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PATHNAME;
     mib[3] = -1;
+    size_t size = static_cast<size_t>(nMaxLength);
+    if (sysctl(mib, 4, pszPathBuf, &size, nullptr, 0) == 0)
+    {
+        return TRUE;
+    }
+    return FALSE;
+#elif defined(__NetBSD__)
+    int mib[4];
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC_ARGS;
+    mib[2] = -1;
+    mib[3] = KERN_PROC_PATHNAME;
     size_t size = static_cast<size_t>(nMaxLength);
     if (sysctl(mib, 4, pszPathBuf, &size, nullptr, 0) == 0)
     {
