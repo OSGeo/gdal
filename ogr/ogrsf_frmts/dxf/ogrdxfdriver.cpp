@@ -12,6 +12,9 @@
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
+#include "cpl_vsi_virtual.h"
+
+#include <algorithm>
 
 /************************************************************************/
 /*                       OGRDXFDriverIdentify()                         */
@@ -24,7 +27,12 @@ static int OGRDXFDriverIdentify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     if (poOpenInfo->IsExtensionEqualToCI("dxf"))
         return TRUE;
-    const char *pszIter = (const char *)poOpenInfo->pabyHeader;
+
+    const char *pszIter =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (STARTS_WITH(pszIter, AUTOCAD_BINARY_DXF_SIGNATURE.data()))
+        return true;
+
     bool bFoundZero = false;
     int i = 0;  // Used after for.
     for (; pszIter[i]; i++)
@@ -67,16 +75,18 @@ static GDALDataset *OGRDXFDriverOpen(GDALOpenInfo *poOpenInfo)
     if (!OGRDXFDriverIdentify(poOpenInfo))
         return nullptr;
 
-    OGRDXFDataSource *poDS = new OGRDXFDataSource();
+    auto poDS = std::make_unique<OGRDXFDataSource>();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, false,
+    VSILFILE *fp = nullptr;
+    std::swap(fp, poOpenInfo->fpL);
+
+    if (!poDS->Open(poOpenInfo->pszFilename, fp, false,
                     poOpenInfo->papszOpenOptions))
     {
-        delete poDS;
-        poDS = nullptr;
+        poDS.reset();
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -97,6 +107,124 @@ OGRDXFDriverCreate(const char *pszName, CPL_UNUSED int nBands,
         delete poDS;
         return nullptr;
     }
+}
+
+/************************************************************************/
+/*                   OGRDXFDriverCanVectorTranslateFrom()               */
+/************************************************************************/
+
+static bool OGRDXFDriverCanVectorTranslateFrom(
+    const char * /*pszDestName*/, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments, char ***ppapszFailureReasons)
+{
+    VSIVirtualHandleUniquePtr fpSrc;
+    auto poSrcDriver = poSourceDS->GetDriver();
+    if (poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "DXF"))
+    {
+        fpSrc.reset(VSIFOpenL(poSourceDS->GetDescription(), "rb"));
+    }
+    if (!fpSrc)
+    {
+        if (ppapszFailureReasons)
+            *ppapszFailureReasons = CSLAddString(
+                *ppapszFailureReasons, "Source driver is not binary DXF");
+        return false;
+    }
+    std::string osBuffer;
+    constexpr size_t nBinarySignatureLen = AUTOCAD_BINARY_DXF_SIGNATURE.size();
+    osBuffer.resize(nBinarySignatureLen);
+    if (!(fpSrc->Read(osBuffer.data(), 1, osBuffer.size()) == osBuffer.size() &&
+          memcmp(osBuffer.data(), AUTOCAD_BINARY_DXF_SIGNATURE.data(),
+                 nBinarySignatureLen) == 0))
+    {
+        if (ppapszFailureReasons)
+            *ppapszFailureReasons = CSLAddString(
+                *ppapszFailureReasons, "Source driver is not binary DXF");
+        return false;
+    }
+
+    if (papszVectorTranslateArguments)
+    {
+        const int nArgs = CSLCount(papszVectorTranslateArguments);
+        for (int i = 0; i < nArgs; ++i)
+        {
+            if (i + 1 < nArgs &&
+                (strcmp(papszVectorTranslateArguments[i], "-f") == 0 ||
+                 strcmp(papszVectorTranslateArguments[i], "-of") == 0))
+            {
+                ++i;
+            }
+            else
+            {
+                if (ppapszFailureReasons)
+                    *ppapszFailureReasons =
+                        CSLAddString(*ppapszFailureReasons,
+                                     "Direct copy from binary DXF does not "
+                                     "support GDALVectorTranslate() options");
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                     OGRDXFDriverVectorTranslateFrom()                */
+/************************************************************************/
+
+static GDALDataset *OGRDXFDriverVectorTranslateFrom(
+    const char *pszDestName, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments,
+    GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
+{
+    if (!OGRDXFDriverCanVectorTranslateFrom(
+            pszDestName, poSourceDS, papszVectorTranslateArguments, nullptr))
+    {
+        return nullptr;
+    }
+
+    CPLDebug("DXF",
+             "Doing direct translation from AutoCAD DXF Binary to DXF ASCII");
+
+    VSIVirtualHandleUniquePtr fpSrc(
+        VSIFOpenL(poSourceDS->GetDescription(), "rb"));
+    if (!fpSrc)
+    {
+        return nullptr;
+    }
+
+    VSIVirtualHandleUniquePtr fpDst(VSIFOpenL(pszDestName, "wb"));
+    if (!fpDst)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s ", pszDestName);
+        return nullptr;
+    }
+
+    OGRDXFReaderBinary reader;
+    reader.Initialize(fpSrc.get());
+
+    constexpr const int BUFFER_SIZE = 4096;
+    std::string osBuffer;
+    osBuffer.resize(BUFFER_SIZE);
+
+    bool bOK = true;
+    int nCode;
+    while (bOK && (nCode = reader.ReadValue(&osBuffer[0], BUFFER_SIZE)) >= 0)
+    {
+        bOK = fpDst->Printf("%d\n%s\n", nCode, osBuffer.c_str()) != 0;
+        if (nCode == 0 && osBuffer.compare(0, 3, "EOF", 3) == 0)
+            break;
+    }
+
+    if (!bOK || VSIFCloseL(fpDst.release()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Error while writing file");
+        return nullptr;
+    }
+
+    GDALOpenInfo oOpenInfo(pszDestName, GA_ReadOnly);
+    return OGRDXFDriverOpen(&oOpenInfo);
 }
 
 /************************************************************************/
@@ -194,6 +322,8 @@ void RegisterOGRDXF()
     poDriver->pfnOpen = OGRDXFDriverOpen;
     poDriver->pfnIdentify = OGRDXFDriverIdentify;
     poDriver->pfnCreate = OGRDXFDriverCreate;
+    poDriver->pfnCanVectorTranslateFrom = OGRDXFDriverCanVectorTranslateFrom;
+    poDriver->pfnVectorTranslateFrom = OGRDXFDriverVectorTranslateFrom;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
