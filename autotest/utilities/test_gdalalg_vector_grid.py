@@ -410,7 +410,8 @@ def test_gdalalg_vector_grid_regular(subalg, geom3D, options, checksum, ret_valu
     else:
         assert False
     ds = alg["output"].GetDataset()
-    assert ds.GetRasterBand(1).Checksum() == pytest.approx(checksum, abs=1)
+    # abs=3 needed on FreeBSD 14.3 x86_64 / clang 19.1.7 -O2
+    assert ds.GetRasterBand(1).Checksum() == pytest.approx(checksum, abs=3)
     if "nodata" in options:
         assert ds.GetRasterBand(1).GetNoDataValue() == options["nodata"]
 
