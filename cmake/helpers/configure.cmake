@@ -170,6 +170,8 @@ else ()
     check_symbol_exists(getrandom "sys/random.h" HAVE_GETRANDOM)
   endif()
 
+  check_function_exists(dl_iterate_phdr HAVE_DL_ITERATE_PHDR)
+
   check_function_exists(ftell64 HAVE_FTELL64)
   if (HAVE_FTELL64)
     set(VSI_FTELL64 "ftell64")
