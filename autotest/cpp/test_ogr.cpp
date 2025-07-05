@@ -602,6 +602,11 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 56.789f);
     EXPECT_EQ(sField.Date.TZFlag, 100);
 
+    EXPECT_EQ(OGRParseDate("2017-11-31T23:59:59.999999Z", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Hour, 23);
+    EXPECT_EQ(sField.Date.Minute, 59);
+    EXPECT_EQ(sField.Date.Second, 59.999f);
+
     EXPECT_EQ(OGRParseDate("2017-11-31", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 11);
