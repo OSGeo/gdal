@@ -727,6 +727,21 @@ inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
 }
 
 /************************************************************************/
+/*                         GetStorageArray()                            */
+/************************************************************************/
+
+static const arrow::Array *GetStorageArray(const arrow::Array *array)
+{
+    if (array->type_id() == arrow::Type::EXTENSION)
+    {
+        auto extensionArray =
+            cpl::down_cast<const arrow::ExtensionArray *>(array);
+        array = extensionArray->storage().get();
+    }
+    return array;
+}
+
+/************************************************************************/
 /*               ComputeGeometryColumnTypeProcessBatch()                */
 /************************************************************************/
 
@@ -735,25 +750,26 @@ inline OGRwkbGeometryType OGRArrowLayer::ComputeGeometryColumnTypeProcessBatch(
     int iBatchCol, OGRwkbGeometryType eGeomType) const
 {
     const auto array = poBatch->column(iBatchCol);
+    const auto storageArray = GetStorageArray(array.get());
     const auto castBinaryArray =
         (m_aeGeomEncoding[iGeomCol] == OGRArrowGeomEncoding::WKB)
-            ? std::dynamic_pointer_cast<arrow::BinaryArray>(array)
+            ? dynamic_cast<const arrow::BinaryArray *>(storageArray)
             : nullptr;
     const auto castLargeBinaryArray =
         (m_aeGeomEncoding[iGeomCol] == OGRArrowGeomEncoding::WKB)
-            ? std::dynamic_pointer_cast<arrow::LargeBinaryArray>(array)
+            ? dynamic_cast<const arrow::LargeBinaryArray *>(storageArray)
             : nullptr;
     const auto castStringArray =
         (m_aeGeomEncoding[iGeomCol] == OGRArrowGeomEncoding::WKT)
-            ? std::dynamic_pointer_cast<arrow::StringArray>(array)
+            ? dynamic_cast<const arrow::StringArray *>(storageArray)
             : nullptr;
     const auto castLargeStringArray =
         (m_aeGeomEncoding[iGeomCol] == OGRArrowGeomEncoding::WKT)
-            ? std::dynamic_pointer_cast<arrow::LargeStringArray>(array)
+            ? dynamic_cast<const arrow::LargeStringArray *>(storageArray)
             : nullptr;
     for (int64_t i = 0; i < poBatch->num_rows(); i++)
     {
-        if (!array->IsNull(i))
+        if (!storageArray->IsNull(i))
         {
             OGRwkbGeometryType eThisGeomType = wkbNone;
             if (m_aeGeomEncoding[iGeomCol] == OGRArrowGeomEncoding::WKB &&
@@ -2157,21 +2173,6 @@ OGRArrowLayer::TimestampToOGR(int64_t timestamp,
     psField->Date.Minute = static_cast<GByte>(dt.tm_min);
     psField->Date.TZFlag = static_cast<GByte>(nTZFlag);
     psField->Date.Second = static_cast<float>(dt.tm_sec + floatingPart);
-}
-
-/************************************************************************/
-/*                         GetStorageArray()                            */
-/************************************************************************/
-
-static const arrow::Array *GetStorageArray(const arrow::Array *array)
-{
-    if (array->type_id() == arrow::Type::EXTENSION)
-    {
-        auto extensionArray =
-            cpl::down_cast<const arrow::ExtensionArray *>(array);
-        array = extensionArray->storage().get();
-    }
-    return array;
 }
 
 /************************************************************************/
@@ -5213,16 +5214,15 @@ inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
         }
         *psExtent = OGREnvelope();
 
-        auto array = m_poBatchColumns[iCol];
-        std::shared_ptr<arrow::BinaryArray> smallArray;
-        std::shared_ptr<arrow::LargeBinaryArray> largeArray;
+        auto array = GetStorageArray(m_poBatchColumns[iCol].get());
+        const arrow::BinaryArray *smallArray = nullptr;
+        const arrow::LargeBinaryArray *largeArray = nullptr;
         if (array->type_id() == arrow::Type::BINARY)
-            smallArray = std::static_pointer_cast<arrow::BinaryArray>(array);
+            smallArray = static_cast<const arrow::BinaryArray *>(array);
         else
         {
             CPLAssert(array->type_id() == arrow::Type::LARGE_BINARY);
-            largeArray =
-                std::static_pointer_cast<arrow::LargeBinaryArray>(array);
+            largeArray = static_cast<const arrow::LargeBinaryArray *>(array);
         }
         OGREnvelope sEnvelope;
         while (true)
@@ -5267,16 +5267,14 @@ inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
                     }
                     return OGRERR_FAILURE;
                 }
-                array = m_poBatchColumns[iCol];
+                array = GetStorageArray(m_poBatchColumns[iCol].get());
                 if (array->type_id() == arrow::Type::BINARY)
-                    smallArray =
-                        std::static_pointer_cast<arrow::BinaryArray>(array);
+                    smallArray = static_cast<const arrow::BinaryArray *>(array);
                 else
                 {
                     CPLAssert(array->type_id() == arrow::Type::LARGE_BINARY);
                     largeArray =
-                        std::static_pointer_cast<arrow::LargeBinaryArray>(
-                            array);
+                        static_cast<const arrow::LargeBinaryArray *>(array);
                 }
             }
         }
@@ -5381,6 +5379,15 @@ inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 inline bool OGRArrowLayer::FastGetExtent3D(int iGeomField,
                                            OGREnvelope3D *psExtent) const
 {
+    {
+        const auto oIter = m_oMapExtents3D.find(iGeomField);
+        if (oIter != m_oMapExtents3D.end())
+        {
+            *psExtent = oIter->second;
+            return true;
+        }
+    }
+
     const char *pszGeomFieldName =
         m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
     const auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);

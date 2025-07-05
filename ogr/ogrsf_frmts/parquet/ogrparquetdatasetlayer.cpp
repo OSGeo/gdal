@@ -236,8 +236,8 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
             continue;
         }
 
-        const bool bGeometryField =
-            DealWithGeometryColumn(i, field, []() { return wkbUnknown; });
+        const bool bGeometryField = DealWithGeometryColumn(
+            i, field, []() { return wkbUnknown; }, nullptr, nullptr, -1);
         if (bGeometryField)
         {
             const auto oIter = m_oMapGeometryColumns.find(field->name());
