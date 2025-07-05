@@ -11,8 +11,10 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-
 import gdaltest
+import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Perform simple read tests.
@@ -76,3 +78,40 @@ def test_gsg_8():
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize(
+    "drv_name,xsize,ysize",
+    [
+        ("GSBG", 2, 1),
+        ("GSBG", 1, 2),
+        ("GSBG", 2, 32768),
+        ("GSBG", 32768, 2),
+        ("GS7BG", 2, 1),
+        ("GS7BG", 1, 2),
+        ("GS7BG", 2, (1 << 31) - 1),
+        ("GS7BG", (1 << 31) - 1, 2),
+    ],
+)
+def test_gsg_create_wrong_dims(tmp_vsimem, drv_name, xsize, ysize):
+
+    with pytest.raises(Exception):
+        gdal.GetDriverByName(drv_name).Create(tmp_vsimem / "out", xsize, ysize)
+
+
+@pytest.mark.parametrize(
+    "drv_name,xsize,ysize",
+    [
+        ("GSBG", 2, 1),
+        ("GSBG", 1, 2),
+        ("GSBG", 2, 32768),
+        ("GSBG", 32768, 2),
+        ("GS7BG", 2, 1),
+        ("GS7BG", 1, 2),
+    ],
+)
+def test_gsg_createcopy_wrong_dims(tmp_vsimem, drv_name, xsize, ysize):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize)
+    with pytest.raises(Exception):
+        gdal.GetDriverByName(drv_name).CreateCopy(tmp_vsimem / "out", src_ds)
