@@ -88,6 +88,9 @@
 /* Define to 1 if you have the `RLIMIT_AS' constant. */
 #cmakedefine HAVE_RLIMIT_AS 1
 
+/* Define to 1 if you have the `dl_iterate_phdr' function. */
+#cmakedefine HAVE_DL_ITERATE_PHDR 1
+
 /* Define to 1 if you have the <direct.h> header file. */
 #cmakedefine HAVE_DIRECT_H 1
 

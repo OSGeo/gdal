@@ -13,7 +13,7 @@
 
 #include "cpl_config.h"
 
-#ifdef HAVE_USELOCALE
+#if defined(HAVE_USELOCALE) && !defined(__FreeBSD__)
 // For uselocale, define _XOPEN_SOURCE = 700
 // and OpenBSD with libcxx 19.1.7 requires 800 for vasprintf
 // (cf https://github.com/OSGeo/gdal/issues/12619)
@@ -66,8 +66,14 @@
 #endif
 
 #include <sys/types.h>  // open
-#include <sys/stat.h>   // open
-#include <fcntl.h>      // open, fcntl
+
+#if defined(__FreeBSD__)
+#include <sys/user.h>  // must be after sys/types.h
+#include <sys/sysctl.h>
+#endif
+
+#include <sys/stat.h>  // open
+#include <fcntl.h>     // open, fcntl
 
 #ifdef _WIN32
 #include <io.h>  // _isatty, _wopen
@@ -3967,7 +3973,9 @@ std::string CPLFormatReadableFileSize(double dfSizeInBytes)
 /*                 CPLGetRemainingFileDescriptorCount()                 */
 /************************************************************************/
 
-/** Return the number of file descriptors that can still be opened by the
+/** \fn CPLGetRemainingFileDescriptorCount()
+ *
+ * Return the number of file descriptors that can still be opened by the
  * current process.
  *
  * Only implemented on non-Windows operating systems
@@ -3976,6 +3984,36 @@ std::string CPLFormatReadableFileSize(double dfSizeInBytes)
  *
  * @since 3.12
  */
+
+#if defined(__FreeBSD__)
+
+int CPLGetRemainingFileDescriptorCount()
+{
+    struct rlimit limitNumberOfFilesPerProcess;
+    if (getrlimit(RLIMIT_NOFILE, &limitNumberOfFilesPerProcess) != 0)
+    {
+        return -1;
+    }
+    const int maxNumberOfFilesPerProcess =
+        static_cast<int>(limitNumberOfFilesPerProcess.rlim_cur);
+
+    const pid_t pid = getpid();
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_FILEDESC,
+                  static_cast<int>(pid)};
+
+    size_t len = 0;
+
+    if (sysctl(mib, 4, nullptr, &len, nullptr, 0) == -1)
+    {
+        return -1;
+    }
+
+    return maxNumberOfFilesPerProcess -
+           static_cast<int>(len / sizeof(struct kinfo_file));
+}
+
+#else
+
 int CPLGetRemainingFileDescriptorCount()
 {
 #if !defined(_WIN32) && HAVE_GETRLIMIT
@@ -4023,3 +4061,5 @@ int CPLGetRemainingFileDescriptorCount()
     return -1;
 #endif
 }
+
+#endif

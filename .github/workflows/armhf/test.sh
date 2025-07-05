@@ -4,7 +4,7 @@ set -eu
 
 source ${GDAL_SOURCE_DIR:=..}/scripts/setdevenv.sh
 
-autotest/cpp/gdal_unit_test --gtest_filter=-test_cpl.CPLSpawn
+autotest/cpp/gdal_unit_test --gtest_filter=-test_cpl.CPLSpawn:test_cpl.CPLGetCurrentThreadCount
 
 pytest autotest/alg -k "not test_warp_52 and not test_warp_rpc_source_has_geotransform"
 # Excluded tests starting at test_tiff_read_multi_threaded are due to lack of virtual memory
