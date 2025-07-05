@@ -270,10 +270,9 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
 CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
-    GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert(poGDS != nullptr);
+    GSAGDataset *poGDS = cpl::down_cast<GSAGDataset *>(poDS);
 
-    double *pdfImage = (double *)pImage;
+    double *pdfImage = static_cast<double *>(pImage);
 
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
@@ -552,8 +551,7 @@ CPLErr GSAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert(poGDS != nullptr);
+    GSAGDataset *poGDS = cpl::down_cast<GSAGDataset *>(poDS);
 
     if (padfRowMinZ == nullptr || padfRowMaxZ == nullptr || nMinZRow < 0 ||
         nMaxZRow < 0)
@@ -1061,12 +1059,8 @@ CPLErr GSAGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = GDALGeoTransform();
 
-    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand(1);
-
-    if (poGRB == nullptr)
-    {
-        return CE_Failure;
-    }
+    const GSAGRasterBand *poGRB =
+        cpl::down_cast<const GSAGRasterBand *>(GetRasterBand(1));
 
     /* check if we have a PAM GeoTransform stored */
     CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1107,7 +1101,7 @@ CPLErr GSAGDataset::SetGeoTransform(const GDALGeoTransform &gt)
         return CE_Failure;
     }
 
-    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand(1);
+    GSAGRasterBand *poGRB = cpl::down_cast<GSAGRasterBand *>(GetRasterBand(1));
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
     /*if( gt[2] != 0.0 || gt[4] != 0.0
@@ -1376,12 +1370,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
 CPLErr GSAGDataset::UpdateHeader()
 
 {
-    GSAGRasterBand *poBand = (GSAGRasterBand *)GetRasterBand(1);
-    if (poBand == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to open raster band.\n");
-        return CE_Failure;
-    }
+    GSAGRasterBand *poBand = cpl::down_cast<GSAGRasterBand *>(GetRasterBand(1));
 
     std::ostringstream ssOutBuf;
     ssOutBuf.precision(nFIELD_PRECISION);
