@@ -456,7 +456,11 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
     const char *pszCompressionLevel =
         CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
     if (pszCompressionLevel)
-        m_oWriterPropertiesBuilder.compression_level(atoi(pszCompressionLevel));
+    {
+        const int nCompressionLevel = atoi(pszCompressionLevel);
+        if (nCompressionLevel != DEFAULT_COMPRESSION_LEVEL)
+            m_oWriterPropertiesBuilder.compression_level(nCompressionLevel);
+    }
 
     const std::string osCreator =
         CSLFetchNameValueDef(papszOptions, "CREATOR", "");

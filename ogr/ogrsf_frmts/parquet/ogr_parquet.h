@@ -24,6 +24,8 @@
 #include "../arrow_common/ogr_arrow.h"
 #include "ogr_include_parquet.h"
 
+constexpr int DEFAULT_COMPRESSION_LEVEL = -1;
+
 /************************************************************************/
 /*                       OGRParquetLayerBase                            */
 /************************************************************************/

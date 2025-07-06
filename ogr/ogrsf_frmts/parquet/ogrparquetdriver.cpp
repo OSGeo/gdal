@@ -728,12 +728,16 @@ void OGRParquetDriver::InitMetadata()
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psOption, "name", "COMPRESSION_LEVEL");
         CPLAddXMLAttributeAndValue(psOption, "type", "int");
-        CPLAddXMLAttributeAndValue(psOption, "min",
-                                   CPLSPrintf("%d", minComprLevel));
+        CPLAddXMLAttributeAndValue(
+            psOption, "min",
+            CPLSPrintf("%d",
+                       std::min(DEFAULT_COMPRESSION_LEVEL, minComprLevel)));
         CPLAddXMLAttributeAndValue(psOption, "max",
                                    CPLSPrintf("%d", maxComprLevel));
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    osCompressionLevelDesc.c_str());
+        CPLAddXMLAttributeAndValue(psOption, "default",
+                                   CPLSPrintf("%d", DEFAULT_COMPRESSION_LEVEL));
     }
 
     {
