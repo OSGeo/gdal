@@ -610,7 +610,7 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     int pipe_out[2] = {-1, -1};
     int pipe_err[2] = {-1, -1};
 
-    const auto ClosePipes = [pipe_in, pipe_out, pipe_err]()
+    const auto ClosePipes = [&pipe_in, &pipe_out, &pipe_err]()
     {
         for (int i = 0; i < 2; i++)
         {

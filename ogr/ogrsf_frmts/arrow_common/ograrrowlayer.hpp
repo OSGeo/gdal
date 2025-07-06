@@ -24,6 +24,7 @@
 #include "ogr_wkb.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cinttypes>
 #include <limits>
 #include <string_view>
@@ -5217,6 +5218,7 @@ inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
                 else
                 {
+                    assert(largeArray);
                     int64_t out_length = 0;
                     const uint8_t *data =
                         largeArray->GetValue(m_nIdxInBatch, &out_length);

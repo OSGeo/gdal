@@ -15,6 +15,8 @@
 #include "gdal.h"
 #include "gdalgetgdalpath.h"
 
+#include <cassert>
+
 /************************************************************************/
 /*                         GDALGetGDALPath()                            */
 /************************************************************************/
@@ -38,7 +40,7 @@ std::string GDALGetGDALPath()
 #endif
              })
         {
-            const std::string osPath =
+            std::string osPath =
                 CPLFormFilenameSafe(pszGDAL_PATH, pszProgramName, nullptr);
             if (VSIStatL(osPath.c_str(), &sStat) == 0)
                 return osPath;
@@ -83,7 +85,7 @@ std::string GDALGetGDALPath()
                     if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                     {
                         // Case if pszLibName=/usr/lib/libgdal.so.xxx
-                        osPath = osBinFilename;
+                        osPath = std::move(osBinFilename);
                     }
                     else
                     {
@@ -96,7 +98,7 @@ std::string GDALGetGDALPath()
                         if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                         {
                             // Case if pszLibName=/usr/lib/yyyyy/libgdal.so.xxx
-                            osPath = osBinFilename;
+                            osPath = std::move(osBinFilename);
                         }
                         else
                         {
@@ -105,7 +107,7 @@ std::string GDALGetGDALPath()
                             if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                             {
                                 // Case if pszLibName=/path/to/build_dir/libgdal.so.xxx
-                                osPath = osBinFilename;
+                                osPath = std::move(osBinFilename);
                             }
                         }
                     }
@@ -145,7 +147,7 @@ std::string GDALGetGDALPath()
         fpOut->Read(szVersion, 1, nVersionSize);
         for (const char ch : {'\n', '\r'})
         {
-            if (szVersion[nVersionSize - 1] == ch)
+            if (nVersionSize >= 1 && szVersion[nVersionSize - 1] == ch)
             {
                 szVersion[nVersionSize - 1] = 0;
                 --nVersionSize;
