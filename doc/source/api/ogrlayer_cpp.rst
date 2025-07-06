@@ -12,7 +12,7 @@ OGRLayer C++ API
 Include file
 ------------
 
-:file:`ogrsf_frmts.h`
+:source_file:`ogr/ogrsf_frmts/ogrsf_frmts.h`
 
 OGRLayer class
 --------------

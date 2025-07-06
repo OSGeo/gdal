@@ -3,29 +3,20 @@
    Doxygen comments using the Breathe extension. Edits to the documentation
    can be made by making changes in the appropriate .cpp files.
 
-.. _ogrgeomcoordinateprecision_cpp:
+.. _gdalmajorobject_cpp:
 
 ================================================================================
-OGRGeomCoordinatePrecision C++ API
+GDALMajorObject C++ API
 ================================================================================
 
 Include file
 ------------
 
-:source_file:`ogr/ogr_geomcoordinateprecision.h`
+:source_file:`gcore/gdal_priv.h`
 
-OGRGeomCoordinatePrecision struct
----------------------------------
+GDALMajorObject class
+---------------------
 
-.. doxygenstruct:: OGRGeomCoordinatePrecision
+.. doxygenclass:: GDALMajorObject
    :project: api
    :members:
-
-
-.. below is an allow-list for spelling checker.
-
-.. spelling:word-list::
-    poSRSDst
-    xytolerance
-    xorigin
-    yorigin

@@ -103,7 +103,7 @@ See :cpp:func:`GDALDataset::BuildOverviews`
 Parameters
 ----------
 resampling : str, optional
-             The resampling method to use. See :cpp:func:`GDALDataset::BuildOveriews`.
+             The resampling method to use. See :cpp:func:`GDALDataset::BuildOverviews`.
 overviewlist : list
              A list of overview levels (decimation factors) to build, or an
              empty list to clear existing overviews.
@@ -138,7 +138,7 @@ Examples
 
 Clear statistics
 
-See :cpp:func:`GDALDatset::ClearStatistics`.
+See :cpp:func:`GDALDataset::ClearStatistics`.
 
 ";
 
@@ -166,7 +166,7 @@ See :cpp:func:`GDALDataset::CommitTransaction`.
 
 Duplicate an existing :py:class:`ogr.Layer`.
 
-See :cpp:func:`GDALDAtaset::CopyLayer`.
+See :cpp:func:`GDALDataset::CopyLayer`.
 
 Parameters
 ----------

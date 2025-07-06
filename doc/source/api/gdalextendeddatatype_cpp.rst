@@ -12,7 +12,7 @@ GDALExtendedDataType C++ API
 Include file
 ------------
 
-:file:`gdal_priv.h`
+:source_file:`gcore/gdal_priv.h`
 
 GDALExtendedDataType class
 --------------------------

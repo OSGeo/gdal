@@ -455,7 +455,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
  * same dataset could be pushed simultaneously to the IWriteBlock() method of
  * that dataset from different threads, causing races.
  *
- * Calling this method before that code can help workarounding that issue,
+ * Calling this method before that code can help to work around that issue,
  * in a multiple readers, one writer scenario.
  *
  * @since GDAL 2.0

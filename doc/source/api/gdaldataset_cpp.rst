@@ -12,12 +12,26 @@ GDALDataset C++ API
 Include file
 ------------
 
-:file:`gdal_priv.h`
+:source_file:`gcore/gdal_priv.h`
 
 GDALDataset class
 -----------------
 
 .. doxygenclass:: GDALDataset
+   :project: api
+   :members:
+
+GDALOpenInfo class
+----------------------
+
+.. doxygenclass:: GDALOpenInfo
+   :project: api
+   :members:
+
+GDALGeoTransform class
+----------------------
+
+.. doxygenclass:: GDALGeoTransform
    :project: api
    :members:
 

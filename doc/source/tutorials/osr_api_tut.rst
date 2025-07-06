@@ -212,9 +212,9 @@ longitude, latitude. For that, the following must be called
 The argument passed to :cpp:func:`OGRSpatialReference::SetAxisMappingStrategy` is the
 data axis to CRS axis mapping strategy.
 
-- :c:macro:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
-- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the default value when instantiating OGRSpatialReference.
-- :c:macro:`OAMS_CUSTOM` means that the data axes are customly defined with SetDataAxisToSRSAxisMapping().
+- :c:enumerator:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
+- :c:enumerator:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the default value when instantiating OGRSpatialReference.
+- :c:enumerator:`OAMS_CUSTOM` means that the data axes are customly defined with SetDataAxisToSRSAxisMapping().
 
 What has been discussed in this section for the particular case of Geographic
 CRS also applies to Projected CRS. While most of them use Easting first, Northing

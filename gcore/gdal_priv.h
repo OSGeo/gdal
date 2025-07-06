@@ -526,8 +526,9 @@ class CPL_DLL GCP
  *
  * @since 3.12
  */
-struct GDALGeoTransform
+class GDALGeoTransform
 {
+  public:
     // NOTE to GDAL developers: do not reorder those coefficients!
 
     /** X value of the origin of the raster */
@@ -1789,8 +1790,9 @@ constexpr GDALSuggestedBlockAccessPattern GSBAP_LARGEST_CHUNK_POSSIBLE = 0x100;
 class GDALComputedRasterBand;
 
 /** A rectangular subset of pixels within a raster */
-struct GDALRasterWindow
+class GDALRasterWindow
 {
+  public:
     /** left offset of the window */
     int nXOff;
 

@@ -45,8 +45,8 @@ capability):
     OGRFieldDefn oRenamedField("new_name", poLayer->GetLayerDefn()->GetFieldDefn(iFieldIdx)->GetType());
     poLayer->AlterFieldDefn(iFieldIdx, &oRenamedField, ALTER_NAME_FLAG);
 
-For other operations, such as calling :cpp:func:`OGRFieldDefn::AddFieldDefn()`
-or :cpp:func:`OGRFieldDefn::DeleteFieldDefn()` on an instance of OGRLayer::GetLayerDefn(),
+For other operations, such as calling :cpp:func:`OGRLayerDefn::AddFieldDefn()`
+or :cpp:func:`OGRLayerDefn::DeleteFieldDefn()` on an instance of OGRLayer::GetLayerDefn(),
 crashes could potentially occur in drivers that are not ready to see the number
 of fields to change behind their back. The correct way of adding or deleting
 fields to a layer is to use :cpp:func:`OGRLayer::CreateField()` or
