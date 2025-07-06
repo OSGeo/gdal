@@ -125,7 +125,7 @@ MAIN_START(argc, argv)
                             CPLFree(pszUnescaped);
                         }
                     }
-                    else if (strcmp(line.c_str(), "--END\n") == 0)
+                    else if (strcmp(line.c_str(), "END_CONFIG\n") == 0)
                     {
                         break;
                     }
