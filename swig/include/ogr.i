@@ -3264,7 +3264,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %}
 
 #ifndef SWIGCSHARP
-%newobject CreateGeometryFromExtent;
+%newobject CreateGeometryFromEnvelope;
 %inline %{
   OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin, 
                                                 double ymin, 
