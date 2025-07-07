@@ -544,20 +544,33 @@ static bool GenerateTile(
             "GDAL_OPEN_AFTER_COPY", "NO", false);
     CPL_IGNORE_RET_VAL(poSetter);
 
-    const std::string osTmpFilename = osFilename + ".tmp." + pszExtension;
+    const bool bSupportsCreateOnlyVisibleAtCloseTime =
+        m_poDstDriver->GetMetadataItem(
+            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
 
+    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
+                                          ? osFilename
+                                          : osFilename + ".tmp." + pszExtension;
+
+    CPLStringList aosCreationOptions(creationOptions);
+    if (bSupportsCreateOnlyVisibleAtCloseTime)
+        aosCreationOptions.SetNameValue("@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
+                                        "YES");
     std::unique_ptr<GDALDataset> poOutDS(
         m_poDstDriver->CreateCopy(osTmpFilename.c_str(), memDS.get(), false,
-                                  creationOptions, nullptr, nullptr));
+                                  aosCreationOptions.List(), nullptr, nullptr));
     bool bRet = poOutDS && poOutDS->Close() == CE_None;
     poOutDS.reset();
     if (bRet)
     {
-        bRet = VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
-        if (bAuxXML)
+        if (!bSupportsCreateOnlyVisibleAtCloseTime)
         {
-            VSIRename((osTmpFilename + ".aux.xml").c_str(),
-                      (osFilename + ".aux.xml").c_str());
+            bRet = VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
+            if (bAuxXML)
+            {
+                VSIRename((osTmpFilename + ".aux.xml").c_str(),
+                          (osFilename + ".aux.xml").c_str());
+            }
         }
     }
     else
@@ -601,6 +614,10 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
     VSIMkdir(osDirZ.c_str(), 0755);
     VSIMkdir(osDirX.c_str(), 0755);
 
+    const bool bSupportsCreateOnlyVisibleAtCloseTime =
+        m_poDstDriver->GetMetadataItem(
+            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
+
     CPLStringList aosOptions;
 
     aosOptions.AddString("-of");
@@ -611,6 +628,12 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
         aosOptions.AddString("-co");
         aosOptions.AddString(pszCO);
     }
+    if (bSupportsCreateOnlyVisibleAtCloseTime)
+    {
+        aosOptions.AddString("-co");
+        aosOptions.AddString("@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES");
+    }
+
     CPLConfigOptionSetter oSetter("GDAL_PAM_ENABLED", bAuxXML ? "YES" : "NO",
                                   false);
     CPLConfigOptionSetter oSetter2("GDAL_DISABLE_READDIR_ON_OPEN", "YES",
@@ -634,7 +657,9 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
          resampling == "cubicspline" || resampling == "lanczos" ||
          resampling == "mode");
 
-    const std::string osTmpFilename = osFilename + ".tmp." + pszExtension;
+    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
+                                          ? osFilename
+                                          : osFilename + ".tmp." + pszExtension;
 
     if (resamplingCompatibleOfTranslate)
     {
@@ -758,9 +783,13 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
                         "GDAL_OPEN_AFTER_COPY", "NO", false);
                 CPL_IGNORE_RET_VAL(poSetter);
 
+                CPLStringList aosCreationOptions(creationOptions);
+                if (bSupportsCreateOnlyVisibleAtCloseTime)
+                    aosCreationOptions.SetNameValue(
+                        "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "YES");
                 poOutDS.reset(m_poDstDriver->CreateCopy(
-                    osTmpFilename.c_str(), memDS.get(), false, creationOptions,
-                    nullptr, nullptr));
+                    osTmpFilename.c_str(), memDS.get(), false,
+                    aosCreationOptions.List(), nullptr, nullptr));
             }
         }
         else
@@ -847,11 +876,14 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
     poOutDS.reset();
     if (bRet)
     {
-        bRet = VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
-        if (bAuxXML)
+        if (!bSupportsCreateOnlyVisibleAtCloseTime)
         {
-            VSIRename((osTmpFilename + ".aux.xml").c_str(),
-                      (osFilename + ".aux.xml").c_str());
+            bRet = VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
+            if (bAuxXML)
+            {
+                VSIRename((osTmpFilename + ".aux.xml").c_str(),
+                          (osFilename + ".aux.xml").c_str());
+            }
         }
     }
     else
