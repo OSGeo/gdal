@@ -1275,7 +1275,15 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
                 psField->Date.Second = 59.999f;
             }
 
-            pszInput += 2;
+            if ((nOptions & OGRPARSEDATE_OPTION_LAX) != 0 &&
+                !(pszInput[1] >= '0' && pszInput[1] <= '9'))
+            {
+                ++pszInput;
+            }
+            else
+            {
+                pszInput += 2;
+            }
             if (*pszInput == '.')
             {
                 ++pszInput;
