@@ -165,6 +165,12 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
                            bool bSetError,
                            CSLConstList /* papszOptions */) override;
+
+    VSIVirtualHandle *
+    CreateOnlyVisibleAtCloseTime(const char *pszFilename,
+                                 bool bEmulationAllowed,
+                                 CSLConstList papszOptions) override;
+
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -207,6 +213,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 
 class VSIUnixStdioHandle final : public VSIVirtualHandle
 {
+    friend class VSIUnixStdioFilesystemHandler;
     CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioHandle)
 
     FILE *fp = nullptr;
@@ -225,6 +232,13 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     vsi_l_offset nTotalBytesRead = 0;
     VSIUnixStdioFilesystemHandler *poFS = nullptr;
 #endif
+
+    bool m_bCancelCreation = false;
+    std::string m_osFilenameToSetAtCloseTime{};
+#if !defined(__linux)
+    std::string m_osTmpFilename{};
+#endif
+
   public:
     VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn, FILE *fpIn,
                        bool bReadOnlyIn, bool bModeAppendReadWriteIn);
@@ -253,6 +267,11 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     size_t PRead(void * /*pBuffer*/, size_t /* nSize */,
                  vsi_l_offset /*nOffset*/) const override;
 #endif
+
+    void CancelCreation() override
+    {
+        m_bCancelCreation = true;
+    }
 };
 
 /************************************************************************/
@@ -299,7 +318,48 @@ int VSIUnixStdioHandle::Close()
     poFS->AddToTotal(nTotalBytesRead);
 #endif
 
-    int ret = fclose(fp);
+    int ret = 0;
+
+#ifdef __linux
+    if (!m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+    {
+        ret = fflush(fp);
+        if (ret == 0)
+        {
+            // As advised by "man 2 open" if the caller doesn't have the
+            // CAP_DAC_READ_SEARCH capability, which seems to be the default
+
+            char szPath[32];
+            const int fd = fileno(fp);
+            snprintf(szPath, sizeof(szPath), "/proc/self/fd/%d", fd);
+            ret =
+                linkat(AT_FDCWD, szPath, AT_FDCWD,
+                       m_osFilenameToSetAtCloseTime.c_str(), AT_SYMLINK_FOLLOW);
+            if (ret != 0)
+                CPLDebug("CPL", "linkat() failed with errno=%d", errno);
+        }
+    }
+#endif
+
+    int ret2 = fclose(fp);
+    if (ret == 0 && ret2 != 0)
+        ret = ret2;
+
+#if !defined(__linux)
+    if (!m_osFilenameToSetAtCloseTime.empty())
+    {
+        if (m_bCancelCreation)
+        {
+            ret = unlink(m_osFilenameToSetAtCloseTime.c_str());
+        }
+        else
+        {
+            ret = rename(m_osTmpFilename.c_str(),
+                         m_osFilenameToSetAtCloseTime.c_str());
+        }
+    }
+#endif
+
     fp = nullptr;
     return ret;
 }
@@ -772,6 +832,73 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
     }
 
     return poHandle;
+}
+
+/************************************************************************/
+/*                      CreateOnlyVisibleAtCloseTime()                  */
+/************************************************************************/
+
+VSIVirtualHandle *VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+    const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
+{
+#ifdef __linux
+    static bool bIsLinkatSupported = []()
+    {
+        // Check that /proc is accessible, since we will need it to run linkat()
+        struct stat statbuf;
+        return stat("/proc/self/fd", &statbuf) == 0;
+    }();
+
+    const int fd = bIsLinkatSupported
+                       ? open(CPLGetDirnameSafe(pszFilename).c_str(),
+                              O_TMPFILE | O_RDWR, 0666)
+                       : -1;
+    if (fd < 0)
+        return VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+            pszFilename, bEmulationAllowed, papszOptions);
+
+    FILE *fp = fdopen(fd, "wb+");
+    if (!fp)
+    {
+        close(fd);
+        return nullptr;
+    }
+
+    VSIUnixStdioHandle *poHandle = new (std::nothrow) VSIUnixStdioHandle(
+        this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
+    if (poHandle)
+    {
+        poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    }
+    return poHandle;
+#else
+    if (!bEmulationAllowed)
+        return nullptr;
+
+    std::string osTmpFilename = std::string(pszFilename).append("XXXXXX");
+    int fd = mkstemp(osTmpFilename.data());
+    if (fd < 0)
+    {
+        return VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+            pszFilename, bEmulationAllowed, papszOptions);
+    }
+
+    FILE *fp = fdopen(fd, "wb+");
+    if (!fp)
+    {
+        close(fd);
+        return nullptr;
+    }
+
+    VSIUnixStdioHandle *poHandle = new (std::nothrow) VSIUnixStdioHandle(
+        this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
+    if (poHandle)
+    {
+        poHandle->m_osTmpFilename = std::move(osTmpFilename);
+        poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    }
+    return poHandle;
+#endif
 }
 
 /************************************************************************/
