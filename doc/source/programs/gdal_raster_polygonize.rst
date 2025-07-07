@@ -23,11 +23,10 @@ Description
 :program:`gdal raster polygonize` creates vector polygons for all connected
 regions of pixels in the raster sharing a common pixel value.
 Each polygon is created with an attribute indicating the pixel value of that
-polygon. A mask (either explicit, or implicit through nodata value or
-band) associated to the selected band can be used to determine the which pixels
-should be included in the processing.
+polygon. Pixels that are set to the NoData value, or masked using an external mask
+band, are not included in processing.
 
-The utility can create the output vector datasource if it does not already exist,
+The utility can create the output vector dataset if it does not already exist,
 otherwise it may append to an existing one.
 
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
@@ -35,7 +34,15 @@ details on the algorithm.
 
 Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 
-The following options are available:
+.. only:: html
+
+   .. figure:: ../../images/programs/gdal_raster_polygonize.svg
+   
+   Polygonization of a 3x3 raster input. The middle figure shows the default behavior,
+   where separate polygons are created for pixel regions that are connected only to
+   a diagonal neighbor.
+   In the figure on the right, :option:`--connect-diagonal-pixels`
+   has been specified, and a single polygon has been created for pixels with value 4.
 
 Standard options
 ++++++++++++++++

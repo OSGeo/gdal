@@ -61,6 +61,63 @@ def test_gdal_raster_footprint(tmp_path):
     )
 
 
+def test_gdal_raster_polygonize(tmp_path):
+    output_fname = tmp_path / "out.shp"
+
+    nodata = -9
+
+    data = np.array([[4, 1, 4], [nodata, 4, 2], [1, 2, 2]])
+    data = np.ma.masked_array(data, data == nodata)
+
+    plt, ax = pyplot.subplots(1, 3, figsize=(15, 6))
+
+    for x in ax:
+        x.set_aspect("equal", adjustable="box")
+        x.set_xlim([0, data.shape[1]])
+        x.set_ylim([0, data.shape[0]])
+        x.invert_yaxis()
+        x.axis("off")
+
+    ds = gdal_array.OpenArray(data)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
+
+    ax[0].pcolor(data, cmap=pyplot.get_cmap("Set2"))
+    ax[0].grid(color="black", linewidth=2)
+    ax[0].set_xticks([0, 1, 2, 3], [])
+    ax[0].set_yticks([0, 1, 2, 3], [])
+    ax[0].axis("on")
+    ax[0].tick_params(length=0)
+    print_cell_values(ax[0], data)
+
+    for connect_diagonals in (False, True):
+
+        alg = gdal.Run(
+            "raster polygonize",
+            input=ds,
+            output=output_fname,
+            connect_diagonal_pixels=connect_diagonals,
+            overwrite=True,
+        )
+        alg.Finalize()
+
+        colors = ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462"]
+
+        out_gdf = gpd.read_file(output_fname)
+        out_gdf.sort_values(by="DN", inplace=True)
+        out_gdf.plot(
+            ax=ax[1 + connect_diagonals],
+            edgecolor="black",
+            linewidth=2,
+            color=colors[: len(out_gdf)],
+        )
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_polygonize.svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 def test_gdal_raster_reclassify():
     nodata = -999
     data_raw = np.arange(9, dtype=np.int16).reshape(3, 3)
