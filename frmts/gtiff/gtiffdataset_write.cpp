@@ -5842,7 +5842,13 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         strcat(szOpeningFlag, "l");
 
     VSIErrorReset();
-    VSILFILE *l_fpL = VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
+    const bool bOnlyVisibleAtCloseTime = CPLTestBool(CSLFetchNameValueDef(
+        papszParamList, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"));
+    VSILFILE *l_fpL =
+        bOnlyVisibleAtCloseTime && !bAppend
+            ? VSIFileManager::GetHandler(pszFilename)
+                  ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
+            : VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
     if (l_fpL == nullptr)
     {
         VSIToCPLErrorWithMsg(CE_Failure, CPLE_OpenFailed,
@@ -5860,6 +5866,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                      "Attempt to create new tiff file `%s' "
                      "failed in XTIFFOpen().",
                      pszFilename);
+        l_fpL->CancelCreation();
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
         return nullptr;
     }
@@ -5969,6 +5976,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                     pszFilename, CE_Failure, CPLE_NotSupported,
                     "Currently, PHOTOMETRIC=YCBCR requires COMPRESS=JPEG");
                 XTIFFClose(l_hTIFF);
+                l_fpL->CancelCreation();
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
                 return nullptr;
             }
@@ -5978,6 +5986,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
                             "PHOTOMETRIC=YCBCR requires INTERLEAVE=PIXEL");
                 XTIFFClose(l_hTIFF);
+                l_fpL->CancelCreation();
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
                 return nullptr;
             }
@@ -5993,6 +6002,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                     "only compatible of a 3-band (RGB) raster",
                     l_nBands);
                 XTIFFClose(l_hTIFF);
+                l_fpL->CancelCreation();
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
                 return nullptr;
             }
@@ -6112,6 +6122,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                              LERC_ADD_COMPRESSION_ZSTD) != 1)
             {
                 XTIFFClose(l_hTIFF);
+                l_fpL->CancelCreation();
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
                 return nullptr;
             }
@@ -6128,6 +6139,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             !TIFFSetField(l_hTIFF, TIFFTAG_TILELENGTH, l_nBlockYSize))
         {
             XTIFFClose(l_hTIFF);
+            l_fpL->CancelCreation();
             CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
             return nullptr;
         }
@@ -6678,6 +6690,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
 
     if (!poDS->ComputeBlocksPerColRowAndBand(l_nBands))
     {
+        poDS->m_fpL->CancelCreation();
         delete poDS;
         return nullptr;
     }
@@ -8021,6 +8034,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     {
         if (bStreaming)
             VSIUnlink(l_osTmpFilename);
+        l_fpL->CancelCreation();
         CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
         return nullptr;
     }
@@ -8051,6 +8065,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                          true    // bReadGeoTransform
                          ) != CE_None)
     {
+        l_fpL->CancelCreation();
         delete poDS;
         if (bStreaming)
             VSIUnlink(l_osTmpFilename);
@@ -8388,11 +8403,13 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             poMaskOvrDS.reset(GDALDataset::Open(pszMaskOvrDS));
             if (!poMaskOvrDS)
             {
+                l_fpL->CancelCreation();
                 delete poDS;
                 return nullptr;
             }
             if (poMaskOvrDS->GetRasterCount() != 1)
             {
+                l_fpL->CancelCreation();
                 delete poDS;
                 return nullptr;
             }
@@ -8770,8 +8787,19 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     poDS->m_bWriteCOGLayout = false;
 
+    if (eErr == CE_None &&
+        CPLTestBool(CSLFetchNameValueDef(poDS->m_papszCreationOptions,
+                                         "@FLUSHCACHE", "NO")))
+    {
+        if (poDS->FlushCache(false) != CE_None)
+        {
+            eErr = CE_Failure;
+        }
+    }
+
     if (eErr == CE_Failure)
     {
+        l_fpL->CancelCreation();
         delete poDS;
         poDS = nullptr;
 
