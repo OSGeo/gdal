@@ -12141,3 +12141,125 @@ def test_tiff_create_copy_only_visible_at_close_time(tmp_path):
 
     with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close(tmp_path):
+
+    out_filename = tmp_path / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(out_filename, 1, 1)
+    assert gdal.VSIStatL(out_filename) is not None
+    ds.MarkSuppressOnClose()
+    assert gdal.VSIStatL(out_filename) is not None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is None
+
+
+###############################################################################
+
+
+def _start_directory_observer(path_to_monitor):
+    try:
+        from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
+    except ModuleNotFoundError:
+        return None, None
+
+    import threading
+
+    class MyHandler(FileSystemEventHandler):
+        def __init__(self, ready_event, files_created):
+            self.ready_event = ready_event
+            self.files_created = files_created
+
+        def on_created(self, event):
+            if event.src_path.endswith(".__watchdog_ready__"):
+                self.ready_event.set()
+            elif not event.is_directory:
+                self.files_created.append(event.src_path)
+
+    watch_ready = threading.Event()
+    files_created = []
+
+    observer = Observer()
+    observer.schedule(
+        MyHandler(watch_ready, files_created), path=path_to_monitor, recursive=False
+    )
+
+    observer.start()
+
+    # Create a dummy file, and wait for its creation to be noticed, to make
+    # sure the observer thread is fully started
+    dummy_file = os.path.join(path_to_monitor, ".__watchdog_ready__")
+    with open(dummy_file, "w") as f:
+        f.write("ping")
+
+    watch_ready.wait()
+
+    os.remove(dummy_file)
+
+    return observer, files_created
+
+
+###############################################################################
+
+
+def _stop_directory_observer(observer):
+    if observer:
+        observer.stop()
+        observer.join()
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time(tmp_path):
+
+    observer, files_created = _start_directory_observer(tmp_path)
+
+    try:
+        out_filename = tmp_path / "tmp.tif"
+        ds = gdal.GetDriverByName("GTiff").Create(
+            out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.MarkSuppressOnClose()
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is None
+    finally:
+        _stop_directory_observer(observer)
+        if files_created is not None and sys.platform == "linux":
+            assert len(files_created) == 0
+
+
+###############################################################################
+
+
+def test_tiff_create_only_visible_at_close_time_vsimem(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+    )
+    assert gdal.VSIStatL(out_filename) is None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is not None
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time_vsimem(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+    )
+    assert gdal.VSIStatL(out_filename) is None
+    ds.MarkSuppressOnClose()
+    assert gdal.VSIStatL(out_filename) is None
+    ds.Close()
+    assert gdal.VSIStatL(out_filename) is None
