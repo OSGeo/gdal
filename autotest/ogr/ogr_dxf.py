@@ -13,6 +13,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import re
+
 import gdaltest
 import ogrtest
 import pytest
@@ -3480,7 +3482,7 @@ def test_ogr_dxf_47():
 
 
 ###############################################################################
-# Test ByLayer and ByBlock color values (#7130)
+# Rudimentary test of ByLayer and ByBlock color values (#7130)
 
 
 def test_ogr_dxf_48():
@@ -3905,6 +3907,23 @@ def test_ogr_dxf_53():
 
 def test_ogr_dxf_54(tmp_vsimem):
 
+    # Note about the test file frozen-off.dxf:
+    #
+    # There are five layers in the file: the default layer 0 and four other
+    # layers named according to their visibility (ON/OFF) and frozenness
+    # (THAW/FREEZE). Entities are assigned to layers according to the quadrant
+    # of the Cartesian plane they lie within, according to the following plan
+    # where + represents (0,0):
+    #
+    #     OFFTHAW  |  ONTHAW
+    #   -----------+----------
+    #    OFFFREEZE | ONFREEZE
+    #
+    # This arrangement applies not only to the entities on the drawing itself,
+    # but also to the entities on each block within the drawing.
+    #
+    # The circle/polyline entities at the center of the blocks are on layer 0.
+
     with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
         ds = ogr.Open("data/dxf/frozen-off.dxf")
     lyr = ds.GetLayer(0)
@@ -3948,6 +3967,93 @@ def test_ogr_dxf_54(tmp_vsimem):
             f.DumpReadable()
             pytest.fail(
                 "Wrong visibility on feature %d (testing with layer 0 frozen)" % number
+            )
+
+
+###############################################################################
+# Comprehensive test of ByBlock and ByLayer color handling
+
+
+def test_ogr_dxf_54a(tmp_vsimem):
+
+    # Note about the test file byblock-bylayer-new.dxf:
+    #
+    # There are three layers in the file, layer 0 (black), MYLAYERRED (red)
+    # and MYLAYERBLUE (blue).
+    # The drawing contains two levels of nested blocks:
+    #    drawing -> DEMOBLOCK -> DEMOBLOCKWITHSUB
+    # Geometrically speaking, the drawing itself, and each block within
+    # the drawing, is divided as follows:
+    #
+    #      ByBlock   |     Set*    |   ByLayer
+    #      layer 0   |   layer 0   |   layer 0
+    #   -------------+-------------+-------------
+    #      ByBlock   |     Set*    |   ByLayer
+    #    MYLAYERRED  | MYLAYERRED  | MYLAYERRED
+    #   -------------+-------------+-------------
+    #      ByBlock   |     Set*    |   ByLayer
+    #    MYLAYERBLUE | MYLAYERBLUE | MYLAYERBLUE
+    #
+    # * "Set" indicates that the color is set directly (group code 62).
+    #   On the drawing the color used is green. On DEMOBLOCK the color
+    #   is cyan. On DEMOBLOCKWITHSUB the color is yellow.
+
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/byblock-bylayer-new.dxf")
+    lyr = ds.GetLayer(0)
+
+    # Features should be colored in the following order:
+    featureColors = (
+        "77727127527472412452477271275271121121521412412452"  # 0
+        + "47127127527552512552545241245247527127527377271275"  #
+        + "27472412452437231235231121121521412412452431231235"  # 100
+        + "23552512552545241245243523123523777271275274724124"  #
+        + "52477271275271121121521412412452471271275275525125"  # 200
+        + "52545241245247527127527111211215214124124524112112"  #
+        + "15211121121521412412452411211215215525125525452412"  # 300
+        + "45241521121521311211215214124124524312312352311211"  #
+        + "21521412412452431231235235525125525452412452435231"  # 400
+        + "23523711211215214124124524712712752711211215214124"  #
+        + "12452471271275275525125525452412452475271275275552"  # 500
+        + "51255254524124524552512552511211215214124124524512"  #
+        + "51255255525125525452412452455251255253552512552545"  # 600
+        + "24124524352312352311211215214124124524312312352355"  #
+        + "25125525452412452435231235237552512552545241245247"  # 700
+        + "52712752711211215214124124524712712752755251255254"  #
+        + "5241245247527127527"  # 800
+    )
+
+    featureColorDictionary = {
+        "#ff0000": "1",  # red
+        "#ffff00": "2",  # yellow
+        "#00ff00": "3",  # green
+        "#00ffff": "4",  # cyan
+        "#0000ff": "5",  # blue
+        "#000000": "7",  # black
+    }
+
+    for number, expectedColorCode in enumerate(featureColors):
+        f = lyr.GetNextFeature()
+        actualColor = re.search("c:(#......)", f.GetStyleString()).group(1)
+
+        if actualColor not in featureColorDictionary:
+            f.DumpReadable()
+            pytest.fail("Unknown color %s on feature %d" % (actualColor, number))
+
+        actualColorCode = featureColorDictionary[actualColor]
+        if actualColorCode != expectedColorCode:
+            f.DumpReadable()
+            pytest.fail(
+                "Wrong color on feature %d (got %s, expected %s)"
+                % (
+                    number,
+                    actualColor,
+                    [
+                        hex
+                        for hex, code in featureColorDictionary.items()
+                        if code == expectedColorCode
+                    ][0],
+                )
             )
 
 

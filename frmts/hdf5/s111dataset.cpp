@@ -54,6 +54,8 @@ class S111RasterBand final : public GDALProxyRasterBand
     std::string m_osUnitType{};
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
+    CPL_DISALLOW_COPY_ASSIGN(S111RasterBand)
+
   public:
     explicit S111RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
         : m_poDS(std::move(poDSIn)),
@@ -232,8 +234,8 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
     // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poSurfaceCurrent01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
+    poDS->m_bHasGT =
+        S100GetGeoTransform(poSurfaceCurrent01.get(), poDS->m_gt, bNorthUp);
 
     if (osGroup.empty())
     {

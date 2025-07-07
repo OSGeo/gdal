@@ -947,6 +947,11 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         return CE_Failure;
     fpL = nullptr;
 
+    if (EQUAL(pszResampling, "NONE"))
+    {
+        return CE_None;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Open the overview dataset so that we can get at the overview    */
     /*      bands.                                                          */
@@ -968,7 +973,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     /* -------------------------------------------------------------------- */
     /*      Do we need to set the jpeg quality?                             */
     /* -------------------------------------------------------------------- */
-    TIFF *hTIFF = static_cast<TIFF *>(hODS->GetInternalHandle(nullptr));
+    TIFF *hTIFF = static_cast<TIFF *>(hODS->GetInternalHandle("TIFF_HANDLE"));
 
     const char *pszJPEGQuality =
         GetOptionValue("JPEG_QUALITY", "JPEG_QUALITY_OVERVIEW");

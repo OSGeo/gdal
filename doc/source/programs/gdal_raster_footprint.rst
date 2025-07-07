@@ -25,13 +25,15 @@ a raster file, taking into account nodata values (or more generally the mask
 band attached to the raster bands), and generating polygons/multipolygons
 corresponding to areas where pixels are valid, and write to an output vector file.
 
+Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
+
 The :program:`gdal raster clean-collar` utility may be run as a pre-processing
 step to generate proper mask bands.
 
 .. figure:: ../../images/programs/gdal_raster_footprint.png
 
 Example footprint calculated with default options of :program:`gdal raster footprint`.
- 
+
 The following options are available:
 
 .. include:: gdal_options/of_vector.rst
@@ -166,6 +168,13 @@ Post-vectorization geometric operations are applied in the following order:
 * optional application of convex hull (:option:`--convex-hull`)
 * optional simplification (:option:`--simplify-tolerance`)
 * limitation of number of points (:option:`--max-points`)
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
 
 Examples
 --------

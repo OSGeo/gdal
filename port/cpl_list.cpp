@@ -93,6 +93,9 @@ CPLList *CPLListInsert(CPLList *psList, void *pData, int nPosition)
 
     if (nCount < nPosition)
     {
+#ifdef __COVERITY__
+        CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+#else
         // Allocate room for the new object.
         CPLList *psLast = CPLListGetLast(psList);
         for (int i = nCount; i <= nPosition - 1; i++)
@@ -109,6 +112,7 @@ CPLList *CPLListInsert(CPLList *psList, void *pData, int nPosition)
 
         /* coverity[leaked_storage] */
         return psList;
+#endif
     }
 
     CPLList *psNew = static_cast<CPLList *>(CPLMalloc(sizeof(CPLList)));

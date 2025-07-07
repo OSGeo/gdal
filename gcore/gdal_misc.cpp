@@ -663,8 +663,8 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
             return TRUE;
 
         // E.g UInt32 to UInt16
-        const int nFromSize = GDALGetDataTypeSize(eTypeFrom);
-        const int nToSize = GDALGetDataTypeSize(eTypeTo);
+        const int nFromSize = GDALGetDataTypeSizeBits(eTypeFrom);
+        const int nToSize = GDALGetDataTypeSizeBits(eTypeTo);
         if (nFromSize > nToSize)
             return TRUE;
 
@@ -2616,6 +2616,14 @@ int CPL_STDCALL GDALReadWorldFile(const char *pszBaseFilename,
 {
     return GDALReadWorldFile2(pszBaseFilename, pszExtension, padfGeoTransform,
                               nullptr, nullptr);
+}
+
+int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
+                       GDALGeoTransform &gt, CSLConstList papszSiblingFiles,
+                       char **ppszWorldFileNameOut)
+{
+    return GDALReadWorldFile2(pszBaseFilename, pszExtension, gt.data(),
+                              papszSiblingFiles, ppszWorldFileNameOut);
 }
 
 int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
@@ -5839,24 +5847,4 @@ bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType,
     }
 
     return false;
-}
-
-/************************************************************************/
-/*                        GDALRescaleGeoTransform()                     */
-/************************************************************************/
-
-/** Rescale a geotransform by multiplying its scale and rotation terms by
- * the provided ratios.
- *
- * This is typically used to compute the geotransform matrix of an overview
- * dataset from the full resolution dataset, where the ratios are the size
- * of the full resolution dataset divided by the size of the overview.
- */
-void GDALRescaleGeoTransform(double adfGeoTransform[6], double dfXRatio,
-                             double dfYRatio)
-{
-    adfGeoTransform[1] *= dfXRatio;
-    adfGeoTransform[2] *= dfYRatio;
-    adfGeoTransform[4] *= dfXRatio;
-    adfGeoTransform[5] *= dfYRatio;
 }

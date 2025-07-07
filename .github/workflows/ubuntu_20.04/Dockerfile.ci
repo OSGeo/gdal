@@ -79,6 +79,7 @@ RUN apt-get update -y \
     python3-dev \
     python3-numpy \
     python3-pip \
+    python3-lxml \
     software-properties-common \
     swig \
     unixodbc-dev \
@@ -275,4 +276,4 @@ RUN wget -q -P /usr/local/include https://raw.githubusercontent.com/ArashPartow/
 RUN ldconfig
 
 COPY requirements.txt /tmp/
-RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r /tmp/requirements.txt

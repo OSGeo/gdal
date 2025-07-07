@@ -12,12 +12,20 @@
 
 .. Index:: gdal vector pipeline
 
+Description
+-----------
+
+:program:`gdal vector pipeline` can be used to process a vector dataset and
+perform various processing steps that accept vector and generate vector.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
 .. program-output:: gdal vector pipeline --help-doc=main
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
+A pipeline chains several steps, separated with the `!` (exclamation mark) character.
 The first step must be ``read`` or ``concat``, and the last one ``write``. Each step has its
 own positional or non-positional arguments. Apart from ``read``, ``concat`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
@@ -121,12 +129,6 @@ Details for options can be found in :ref:`gdal_vector_swap_xy`.
 * write
 
 .. program-output:: gdal vector pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal vector pipeline` can be used to process a vector dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

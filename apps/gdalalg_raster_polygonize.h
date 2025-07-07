@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_POLYGONIZE_INCLUDED
 #define GDALALG_RASTER_POLYGONIZE_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                     GDALRasterPolygonizeAlgorithm                    */
 /************************************************************************/
 
-class GDALRasterPolygonizeAlgorithm final : public GDALAlgorithm
+class GDALRasterPolygonizeAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "polygonize";
@@ -30,28 +31,47 @@ class GDALRasterPolygonizeAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_polygonize.html";
 
-    GDALRasterPolygonizeAlgorithm();
+    explicit GDALRasterPolygonizeAlgorithm(bool standaloneStep = false);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_overwrite = false;
-    bool m_update = false;
-    bool m_overwriteLayer = false;
-    bool m_appendLayer = false;
 
     // polygonize specific arguments
     int m_band = 1;
-    std::string m_outputLayerName = "polygonize";
     std::string m_attributeName = "DN";
     bool m_connectDiagonalPixels = false;
+};
+
+/************************************************************************/
+/*                 GDALRasterPolygonizeAlgorithmStandalone              */
+/************************************************************************/
+
+class GDALRasterPolygonizeAlgorithmStandalone final
+    : public GDALRasterPolygonizeAlgorithm
+{
+  public:
+    GDALRasterPolygonizeAlgorithmStandalone()
+        : GDALRasterPolygonizeAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterPolygonizeAlgorithmStandalone() override;
 };
 
 //! @endcond

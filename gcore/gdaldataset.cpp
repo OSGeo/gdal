@@ -15,6 +15,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <array>
 #include <climits>
 #include <cstdarg>
 #include <cstdio>
@@ -1360,6 +1361,47 @@ CPLErr CPL_STDCALL GDALSetProjection(GDALDatasetH hDS,
  * space, and projection coordinates (Xp,Yp) space.
  *
  * \code
+ *   Xp = gt[0] + P*gt[1] + L*gt[2];
+ *   Yp = gt[3] + P*padfTransform[4] + L*gt[5];
+ * \endcode
+ *
+ * In a north up image, gt[1] is the pixel width, and
+ * gt[5] is the pixel height.  The upper left corner of the
+ * upper left pixel is at position (gt[0],gt[3]).
+ *
+ * The default transform is (0,1,0,0,0,1) and should be returned even when
+ * a CE_Failure error is returned, such as for formats that don't support
+ * transformation to projection coordinates.
+ *
+ * This method does the same thing as the C GDALGetGeoTransform() function.
+ *
+ * @param gt an existing six double buffer into which the
+ * transformation will be placed.
+ *
+ * @return CE_None on success, or CE_Failure if no transform can be fetched.
+ *
+ * @since 3.12
+ */
+
+CPLErr GDALDataset::GetGeoTransform(GDALGeoTransform &gt) const
+
+{
+    gt = GDALGeoTransform();
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+/**
+ * \brief Fetch the affine transformation coefficients.
+ *
+ * Fetches the coefficients for transforming between pixel/line (P,L) raster
+ * space, and projection coordinates (Xp,Yp) space.
+ *
+ * \code
  *   Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
  *   Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
  * \endcode
@@ -1378,22 +1420,15 @@ CPLErr CPL_STDCALL GDALSetProjection(GDALDatasetH hDS,
  * transformation will be placed.
  *
  * @return CE_None on success, or CE_Failure if no transform can be fetched.
+ *
+ * @deprecated since 3.12. Use GetGeoTransform(GDALGeoTransform&) instead
  */
 
-CPLErr GDALDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALDataset::GetGeoTransform(double *padfTransform) const
 
 {
-    CPLAssert(padfTransform != nullptr);
-
-    padfTransform[0] = 0.0;  // X Origin (top left corner)
-    padfTransform[1] = 1.0;  // X Pixel size */
-    padfTransform[2] = 0.0;
-
-    padfTransform[3] = 0.0;  // Y Origin (top left corner)
-    padfTransform[4] = 0.0;
-    padfTransform[5] = 1.0;  // Y Pixel Size
-
-    return CE_Failure;
+    return GetGeoTransform(
+        *reinterpret_cast<GDALGeoTransform *>(padfTransform));
 }
 
 /************************************************************************/
@@ -1411,7 +1446,8 @@ CPLErr CPL_STDCALL GDALGetGeoTransform(GDALDatasetH hDS, double *padfTransform)
 {
     VALIDATE_POINTER1(hDS, "GDALGetGeoTransform", CE_Failure);
 
-    return GDALDataset::FromHandle(hDS)->GetGeoTransform(padfTransform);
+    return GDALDataset::FromHandle(hDS)->GetGeoTransform(
+        *reinterpret_cast<GDALGeoTransform *>(padfTransform));
 }
 
 /************************************************************************/
@@ -1419,7 +1455,37 @@ CPLErr CPL_STDCALL GDALGetGeoTransform(GDALDatasetH hDS, double *padfTransform)
 /************************************************************************/
 
 /**
- * \fn GDALDataset::SetGeoTransform(double*)
+ * \fn GDALDataset::SetGeoTransform(const GDALGeoTransform&)
+ * \brief Set the affine transformation coefficients.
+ *
+ * See GetGeoTransform() for details on the meaning of the padfTransform
+ * coefficients.
+ *
+ * This method does the same thing as the C GDALSetGeoTransform() function.
+ *
+ * @param gt the transformation coefficients to be written with the dataset.
+ *
+ * @return CE_None on success, or CE_Failure if this transform cannot be
+ * written.
+ *
+ * @since 3.12
+ */
+
+CPLErr GDALDataset::SetGeoTransform(CPL_UNUSED const GDALGeoTransform &gt)
+
+{
+    if (!(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED))
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "SetGeoTransform() not supported for this dataset.");
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+/**
  * \brief Set the affine transformation coefficients.
  *
  * See GetGeoTransform() for details on the meaning of the padfTransform
@@ -1432,16 +1498,14 @@ CPLErr CPL_STDCALL GDALGetGeoTransform(GDALDatasetH hDS, double *padfTransform)
  *
  * @return CE_None on success, or CE_Failure if this transform cannot be
  * written.
+ *
+ * @deprecated since 3.12. Use SetGeoTransform(const GDALGeoTransform&) instead
  */
-
-CPLErr GDALDataset::SetGeoTransform(CPL_UNUSED double *padfTransform)
+CPLErr GDALDataset::SetGeoTransform(const double *padfTransform)
 
 {
-    if (!(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED))
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "SetGeoTransform() not supported for this dataset.");
-
-    return CE_Failure;
+    return SetGeoTransform(
+        *reinterpret_cast<const GDALGeoTransform *>(padfTransform));
 }
 
 /************************************************************************/
@@ -1454,12 +1518,15 @@ CPLErr GDALDataset::SetGeoTransform(CPL_UNUSED double *padfTransform)
  * @see GDALDataset::SetGeoTransform()
  */
 
-CPLErr CPL_STDCALL GDALSetGeoTransform(GDALDatasetH hDS, double *padfTransform)
+CPLErr CPL_STDCALL GDALSetGeoTransform(GDALDatasetH hDS,
+                                       const double *padfTransform)
 
 {
     VALIDATE_POINTER1(hDS, "GDALSetGeoTransform", CE_Failure);
+    VALIDATE_POINTER1(padfTransform, "GDALSetGeoTransform", CE_Failure);
 
-    return GDALDataset::FromHandle(hDS)->SetGeoTransform(padfTransform);
+    return GDALDataset::FromHandle(hDS)->SetGeoTransform(
+        *reinterpret_cast<const GDALGeoTransform *>(padfTransform));
 }
 
 /************************************************************************/
@@ -2089,7 +2156,7 @@ CPLErr GDALSetGCPs2(GDALDatasetH hDS, int nGCPCount, const GDAL_GCP *pasGCPList,
 /**
  * \brief Build raster overview(s)
  *
- * If the operation is unsupported for the indicated dataset, then
+ * If the operation is not supported for the indicated dataset, then
  * CE_Failure is returned, and CPLGetLastErrorNo() will return
  * CPLE_NotSupported.
  *
@@ -2266,6 +2333,54 @@ CPLErr GDALDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                            AddOverviews()                            */
+/*                                                                      */
+/*      Default implementation.                                         */
+/************************************************************************/
+
+/**
+ * \brief Add overview from existing dataset(s)
+ *
+ * This function creates new overview levels or refresh existing one from
+ * the list of provided overview datasets.
+ * Source overviews may come from any GDAL supported format, provided they
+ * have the same number of bands and geospatial extent than the target
+ * dataset.
+ *
+ * If the operation is not supported for the indicated dataset, then
+ * CE_Failure is returned, and CPLGetLastErrorNo() will return
+ * CPLE_NotSupported.
+ *
+ * At time of writing, this method is only implemented for internal overviews
+ * of GeoTIFF datasets and external overviews in GeoTIFF format.
+ *
+ * @param apoSrcOvrDS Vector of source overviews.
+ * @param pfnProgress a function to call to report progress, or NULL.
+ * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions NULL terminated list of options as
+ *                     key=value pairs, or NULL. None currently
+ *
+ * @return CE_None on success or CE_Failure if the operation doesn't work.
+ * @since 3.12
+ */
+CPLErr GDALDataset::AddOverviews(const std::vector<GDALDataset *> &apoSrcOvrDS,
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressData, CSLConstList papszOptions)
+{
+    if (oOvManager.IsInitialized())
+    {
+        return oOvManager.AddOverviews(nullptr, apoSrcOvrDS, pfnProgress,
+                                       pProgressData, papszOptions);
+    }
+    else
+    {
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "AddOverviews() not supported for this dataset.");
+        return CE_Failure;
+    }
+}
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -7930,6 +8045,11 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
           layers in a non sequential way.<p>
   <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling
          CreateFeature() on layers in a non sequential way.<p>
+  <li> <b>GDsCAddRelationship</b>: True if AddRelationship() is supported</li>
+  <li> <b>GDsCDeleteRelationship</b>: True if DeleteRelationship() is supported</li>
+  <li> <b>GDsCUpdateRelationship</b>: True if UpdateRelationship() is supported</li>
+  <li> <b>GDsCFastGetExtent</b>: True if GetExtent() is fast</li>
+  <li> <b>GDsCFastGetExtentWGS84LongLat</b>: True if GetExtentWGS84LongLat() is fast</li>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -7945,8 +8065,18 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability(CPL_UNUSED const char *pszCap)
+int GDALDataset::TestCapability(const char *pszCap)
 {
+    if (EQUAL(pszCap, GDsCFastGetExtent) ||
+        EQUAL(pszCap, GDsCFastGetExtentWGS84LongLat))
+    {
+        for (auto &&poLayer : GetLayers())
+        {
+            if (!poLayer->TestCapability(OLCFastGetExtent))
+                return FALSE;
+        }
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -7978,6 +8108,11 @@ int GDALDataset::TestCapability(CPL_UNUSED const char *pszCap)
           layers in a non sequential way.<p>
   <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling
           CreateFeature() on layers in a non sequential way.<p>
+  <li> <b>GDsCAddRelationship</b>: True if AddRelationship() is supported</li>
+  <li> <b>GDsCDeleteRelationship</b>: True if DeleteRelationship() is supported</li>
+  <li> <b>GDsCUpdateRelationship</b>: True if UpdateRelationship() is supported</li>
+  <li> <b>GDsCFastGetExtent</b>: True if GetExtent() is fast</li>
+  <li> <b>GDsCFastGetExtentWGS84LongLat</b>: True if GetExtentWGS84LongLat() is fast</li>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -8412,6 +8547,7 @@ void GDALDataset::TemporarilyDropReadWriteLock()
         return;
     }
 
+#ifndef __COVERITY__
     if (m_poPrivate->hMutex)
     {
 #ifdef DEBUG_VERBOSE
@@ -8426,14 +8562,13 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 #ifdef DEBUG_EXTRA
         m_poPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()] = nCount;
 #endif
-#ifndef __COVERITY__
         for (int i = 0; i < nCount + 1; i++)
         {
             // The mutex is recursive
             CPLReleaseMutex(m_poPrivate->hMutex);
         }
-#endif
     }
+#endif
 }
 
 /************************************************************************/
@@ -8451,6 +8586,7 @@ void GDALDataset::ReacquireReadWriteLock()
         return;
     }
 
+#ifndef __COVERITY__
     if (m_poPrivate->hMutex)
     {
 #ifdef DEBUG_VERBOSE
@@ -8468,14 +8604,13 @@ void GDALDataset::ReacquireReadWriteLock()
 #endif
         if (nCount == 0)
             CPLReleaseMutex(m_poPrivate->hMutex);
-#ifndef __COVERITY__
         for (int i = 0; i < nCount - 1; i++)
         {
             // The mutex is recursive
             CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
         }
-#endif
     }
+#endif
 }
 
 /************************************************************************/
@@ -10424,6 +10559,208 @@ CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
     return poDS->GeolocationToPixelLine(
         dfGeolocX, dfGeolocY, OGRSpatialReference::FromHandle(hSRS), pdfPixel,
         pdfLine, papszTransformerOptions);
+}
+
+/************************************************************************/
+/*                               GetExtent()                            */
+/************************************************************************/
+
+/** Return extent of dataset in specified CRS.
+ *
+ * OGREnvelope.MinX/MaxX represents longitudes, and MinY/MaxY latitudes.
+ *
+ * For rasters, the base implementation of this method only succeeds if
+ * GetGeoTransform() and GetSpatialRef() succeed.
+ * For vectors, the base implementation of this method iterates over layers
+ * and call their OGRLayer::GetExtent() method.
+ *
+ * TestCapability(GDsCFastGetExtent) can be used to test if the execution
+ * time of this method is fast.
+ *
+ * This is the same as C function GDALGetExtent()
+ *
+ * @param[out] psExtent Pointer to output extent. Must NOT be null.
+ * @param poCRS CRS in which to express the extent. If not specified, this will
+ * be the raster CRS or the CRS of the first layer for a vector dataset.
+ * @return CE_None in case of success, CE_Failure otherwise
+ * @since GDAL 3.12
+ */
+
+CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
+                              const OGRSpatialReference *poCRS) const
+{
+    auto poThisDS = const_cast<GDALDataset *>(this);
+    const OGRSpatialReference *poThisCRS = poThisDS->GetSpatialRef();
+    int nLayerCount = 0;
+    if (!poThisCRS)
+    {
+        nLayerCount = poThisDS->GetLayerCount();
+        if (nLayerCount >= 1)
+        {
+            if (auto poLayer = poThisDS->GetLayer(0))
+                poThisCRS = poLayer->GetSpatialRef();
+        }
+        if (!poThisCRS)
+            return CE_Failure;
+    }
+    if (!poCRS)
+        poCRS = poThisCRS;
+
+    *psExtent = OGREnvelope();
+
+    GDALGeoTransform gt;
+    const bool bHasGT = poThisDS->GetGeoTransform(gt) == CE_None;
+    if (bHasGT)
+    {
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(poThisCRS, poCRS));
+        if (poCT)
+        {
+            constexpr int DENSIFY_POINT_COUNT = 21;
+            OGREnvelope sEnvTmp;
+            double dfULX = gt[0];
+            double dfULY = gt[3];
+            double dfURX = 0, dfURY = 0;
+            gt.Apply(nRasterXSize, 0, &dfURX, &dfURY);
+            double dfLLX = 0, dfLLY = 0;
+            gt.Apply(0, nRasterYSize, &dfLLX, &dfLLY);
+            double dfLRX = 0, dfLRY = 0;
+            gt.Apply(nRasterXSize, nRasterYSize, &dfLRX, &dfLRY);
+            const double xmin =
+                std::min(std::min(dfULX, dfURX), std::min(dfLLX, dfLRX));
+            const double ymin =
+                std::min(std::min(dfULY, dfURY), std::min(dfLLY, dfLRY));
+            const double xmax =
+                std::max(std::max(dfULX, dfURX), std::max(dfLLX, dfLRX));
+            const double ymax =
+                std::max(std::max(dfULY, dfURY), std::max(dfLLY, dfLRY));
+            if (poCT->TransformBounds(xmin, ymin, xmax, ymax, &(sEnvTmp.MinX),
+                                      &(sEnvTmp.MinY), &(sEnvTmp.MaxX),
+                                      &(sEnvTmp.MaxY), DENSIFY_POINT_COUNT))
+            {
+                *psExtent = std::move(sEnvTmp);
+            }
+        }
+    }
+
+    if (nLayerCount > 0)
+    {
+        for (auto &&poLayer : poThisDS->GetLayers())
+        {
+            auto poLayerCRS = poLayer->GetSpatialRef();
+            if (poLayerCRS)
+            {
+                OGREnvelope sLayerExtent;
+                if (poLayer->GetExtent(&sLayerExtent) == OGRERR_NONE)
+                {
+                    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(poLayerCRS, poCRS));
+                    if (poCT)
+                    {
+                        constexpr int DENSIFY_POINT_COUNT = 21;
+                        OGREnvelope sEnvTmp;
+                        if (poCT->TransformBounds(
+                                sLayerExtent.MinX, sLayerExtent.MinY,
+                                sLayerExtent.MaxX, sLayerExtent.MaxY,
+                                &(sEnvTmp.MinX), &(sEnvTmp.MinY),
+                                &(sEnvTmp.MaxX), &(sEnvTmp.MaxY),
+                                DENSIFY_POINT_COUNT))
+                        {
+                            psExtent->Merge(sEnvTmp);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return psExtent->IsInit() ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                           GDALGetExtent()                            */
+/************************************************************************/
+
+/** Return extent of dataset in specified CRS.
+ *
+ * OGREnvelope.MinX/MaxX represents longitudes, and MinY/MaxY latitudes.
+ *
+ * For rasters, the base implementation of this method only succeeds if
+ * GetGeoTransform() and GetSpatialRef() succeed.
+ * For vectors, the base implementation of this method iterates over layers
+ * and call their OGRLayer::GetExtent() method.
+ *
+ * TestCapability(GDsCFastGetExtent) can be used to test if the execution
+ * time of this method is fast.
+ *
+ * This is the same as C++ method GDALDataset::GetExtent()
+ *
+ * @param hDS Dataset handle. Must NOT be null.
+ * @param[out] psExtent Pointer to output extent. Must NOT be null.
+ * @param hCRS CRS in which to express the extent. If not specified, this will
+ * be the raster CRS or the CRS of the first layer for a vector dataset.
+ * @return extent in poCRS (valid only if IsInit() method returns true)
+ * @since GDAL 3.12
+ */
+
+CPLErr GDALGetExtent(GDALDatasetH hDS, OGREnvelope *psExtent,
+                     OGRSpatialReferenceH hCRS)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(psExtent, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->GetExtent(
+        psExtent, OGRSpatialReference::FromHandle(hCRS));
+}
+
+/************************************************************************/
+/*                         GetExtentWGS84LongLat()                      */
+/************************************************************************/
+
+/** Return extent of dataset in WGS84 longitude/latitude
+ *
+ * OGREnvelope.MinX/MaxX represents longitudes, and MinY/MaxY latitudes.
+ *
+ * TestCapability(GDsCFastGetExtentWGS84LongLat) can be used to test if the execution
+ * time of this method is fast.
+ *
+ * This is the same as C function GDALGetExtentWGS84LongLat()
+ *
+ * @return extent (valid only if IsInit() method returns true)
+ * @since GDAL 3.12
+ */
+
+CPLErr GDALDataset::GetExtentWGS84LongLat(OGREnvelope *psExtent) const
+{
+    OGRSpatialReference oSRS_WGS84;
+    oSRS_WGS84.SetFromUserInput("WGS84");
+    oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    return GetExtent(psExtent, &oSRS_WGS84);
+}
+
+/************************************************************************/
+/*                    GDALGetExtentWGS84LongLat()                       */
+/************************************************************************/
+
+/** Return extent of dataset in WGS84 longitude/latitude
+ *
+ * OGREnvelope.MinX/MaxX represents longitudes, and MinY/MaxY latitudes.
+ *
+ * TestCapability(GDsCFastGetExtentWGS84LongLat) can be used to test if the execution
+ * time of this method is fast.
+ *
+ * This is the same as C++ method GDALDataset::GetExtentWGS84LongLat()
+ *
+ * @param hDS Dataset handle. Must NOT be null.
+ * @param[out] psExtent Pointer to output extent. Must NOT be null.
+ * @return extent (valid only if IsInit() method returns true)
+ * @since GDAL 3.12
+ */
+
+CPLErr GDALGetExtentWGS84LongLat(GDALDatasetH hDS, OGREnvelope *psExtent)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    VALIDATE_POINTER1(psExtent, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->GetExtentWGS84LongLat(psExtent);
 }
 
 /************************************************************************/

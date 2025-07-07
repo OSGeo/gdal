@@ -49,6 +49,7 @@ repos:
                 third_party/fast_float/|
                 third_party/muparser/|
                 third_party/LercLib/|
+                third_party/libdivide/|
                 autotest/ogr/data/|
                 alg/internal_libqhull/|
                 apps/argparse/|

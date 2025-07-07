@@ -623,7 +623,7 @@ import org.gdal.gdalconst.gdalconstConstants;
         GDALDataType eDataType;
         GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
         eDataType = GDALGetRasterDataType(self);
-        int nDataTypeSize = GDALGetDataTypeSize( eDataType ) / 8;
+        int nDataTypeSize = GDALGetDataTypeSizeBytes( eDataType );
         if (nBlockXSize > (INT_MAX / nDataTypeSize) / nBlockYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
@@ -675,7 +675,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
   }
 
   GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
-                         buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                         buf_xsize, buf_ysize, GDALGetDataTypeSizeBytes(buf_type),
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof_ctype > 1 );
 
@@ -842,7 +842,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     }
 
     GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
-                            buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
+                            buf_xsize, buf_ysize, GDALGetDataTypeSizeBytes(buf_type),
                             nPixelSpace, nLineSpace, sizeof_ctype > 1 );
     if (nMinBufferSizeInBytes > 0x7fffffff)
     {
@@ -1174,7 +1174,7 @@ import org.gdal.osr.SpatialReference;
    public java.nio.ByteBuffer ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize,
                                                 int buf_xsize, int buf_ysize, int buf_type)
    {
-       long buf_size = buf_xsize * buf_ysize * (gdal.GetDataTypeSize(buf_type) / 8);
+       long buf_size = buf_xsize * buf_ysize * gdal.GetDataTypeSizeBytes(buf_type);
        if ((int)buf_size != buf_size)
                throw new OutOfMemoryError();
        java.nio.ByteBuffer nioBuffer = java.nio.ByteBuffer.allocateDirect((int)buf_size);

@@ -581,11 +581,17 @@ RUN if test "$(uname -p)" = "x86_64"; then \
     fi
 
 # Install libduckdb
+ARG DUCKDB_VERSION=v1.3.1
 RUN if test "$(uname -p)" = "x86_64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.3/libduckdb-linux-amd64.zip \
+    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
     && rm -f libduckdb-linux-amd64.zip; \
+    elif test "${TARGET_ARCH}" = "arm64"; then \
+    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-arm64.zip \
+    && unzip libduckdb-linux-arm64.zip libduckdb.so \
+    && mv libduckdb.so /usr/lib/aarch64-linux-gnu \
+    && rm -f libduckdb-linux-arm64.zip; \
     fi
 
 ARG WITH_ORACLE=
@@ -622,9 +628,7 @@ COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN ldconfig
 
 # Install duckdb_spatial
-RUN if test "$(uname -p)" = "x86_64"; then \
-    ogrinfo ADBC::memory: -oo ADBC_DRIVER=duckdb -oo PRELUDE_STATEMENTS="INSTALL spatial"; \
-    fi
+RUN ogrinfo ADBC::memory: -oo ADBC_DRIVER=libduckdb.so -oo PRELUDE_STATEMENTS="INSTALL spatial";
 
 RUN echo "source /usr/share/bash-completion/bash_completion" >> /root/.bashrc
 

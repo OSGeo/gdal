@@ -48,7 +48,7 @@ GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
 /************************************************************************/
 
 bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
-    GDALRasterPipelineStepAlgorithm *poNextStep) const
+    GDALPipelineStepAlgorithm *poNextStep) const
 {
     return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
            poNextStep->GetOutputFormat() != "stream";
@@ -58,10 +58,9 @@ bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
 /*               GDALRasterColorMapAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterColorMapAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterColorMapAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
@@ -170,8 +169,7 @@ bool GDALRasterColorMapAlgorithm::RunStep(
             }
             auto poOutDS = std::unique_ptr<GDALDataset>(
                 GDALDataset::FromHandle(GDALDEMProcessing(
-                    outputFilename.c_str(),
-                    GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
+                    outputFilename.c_str(), GDALDataset::ToHandle(poSrcDS),
                     "color-relief", m_colorMap.c_str(), psOptions, nullptr)));
             GDALDEMProcessingOptionsFree(psOptions);
             bOK = poOutDS != nullptr;

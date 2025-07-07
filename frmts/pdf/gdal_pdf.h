@@ -192,7 +192,7 @@ class PDFDataset final : public GDALPamDataset
     double m_dfDPI = GDAL_DEFAULT_DPI;
     bool m_bHasCTM = false;
     std::array<double, 6> m_adfCTM = {{0, 0, 0, 0, 0, 0}};
-    std::array<double, 6> m_adfGeoTransform = {{0, 1, 0, 0, 0, 1}};
+    GDALGeoTransform m_gt{};
     bool m_bGeoTransformValid = false;
     int m_nGCPCount = 0;
     GDAL_GCP *m_pasGCPList = nullptr;
@@ -410,9 +410,9 @@ class PDFDataset final : public GDALPamDataset
                int nYSize = 0);
     virtual ~PDFDataset();
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual CPLErr SetGeoTransform(double *padfGeoTransform) override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -538,7 +538,7 @@ class PDFWritableVectorDataset final : public GDALDataset
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    virtual OGRErr SyncToDisk();
+    OGRErr SyncToDisk();
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

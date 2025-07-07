@@ -45,7 +45,7 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
 /*            GDALVectorReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorReprojectAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

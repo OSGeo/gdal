@@ -363,8 +363,17 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
             if (!poHandleHelper)
                 return nullptr;
 
+            // Check if OAuth2 is used externally and a bearer token is passed
+            // as a header in path-specific options
+            const CPLStringList aosHTTPOptions(
+                CPLHTTPGetOptionsFromEnv(pszFilename));
+            bool bUsingBearerToken = false;
+            const char *pszHeaders = aosHTTPOptions.FetchNameValue("HEADERS");
+            if (pszHeaders && strstr(pszHeaders, "Authorization: Bearer "))
+                bUsingBearerToken = true;
+
             // The JSON API cannot be used with HMAC keys
-            if (poHandleHelper->UsesHMACKey())
+            if (poHandleHelper->UsesHMACKey() && !bUsingBearerToken)
             {
                 CPLDebug(GetDebugKey(),
                          "GetFileMetadata() on bucket "
@@ -376,8 +385,6 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
             NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
             NetworkStatisticsAction oContextAction("GetFileMetadata");
 
-            const CPLStringList aosHTTPOptions(
-                CPLHTTPGetOptionsFromEnv(pszFilename));
             const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
             CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
@@ -654,6 +661,16 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     const char *pszFirstFilename =
         papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
 
+    bool bUsingBearerToken = false;
+    if (pszFirstFilename)
+    {
+        const CPLStringList aosHTTPOptions(
+            CPLHTTPGetOptionsFromEnv(pszFirstFilename));
+        const char *pszHeaders = aosHTTPOptions.FetchNameValue("HEADERS");
+        if (pszHeaders && strstr(pszHeaders, "Authorization: Bearer "))
+            bUsingBearerToken = true;
+    }
+
     auto poHandleHelper =
         std::unique_ptr<VSIGSHandleHelper>(VSIGSHandleHelper::BuildFromURI(
             "batch/storage/v1", GetFSPrefix().c_str(),
@@ -663,7 +680,7 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
                 : nullptr));
 
     // The JSON API cannot be used with HMAC keys
-    if (poHandleHelper && poHandleHelper->UsesHMACKey())
+    if ((poHandleHelper && poHandleHelper->UsesHMACKey()) && !bUsingBearerToken)
     {
         CPLDebug(GetDebugKey(), "UnlinkBatch() has an efficient implementation "
                                 "only for OAuth2 authentication");

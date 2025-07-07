@@ -19,6 +19,7 @@
 #include "gdalpython.h"
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <vector>
 #include <utility>
@@ -205,8 +206,10 @@ VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn)
 
 VRTDerivedRasterBand::VRTDerivedRasterBand(GDALDataset *poDSIn, int nBandIn,
                                            GDALDataType eType, int nXSize,
-                                           int nYSize)
-    : VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize),
+                                           int nYSize, int nBlockXSizeIn,
+                                           int nBlockYSizeIn)
+    : VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize,
+                           nBlockXSizeIn, nBlockYSizeIn),
       m_poPrivate(nullptr), eSourceTransferType(GDT_Unknown)
 {
     m_poPrivate = new VRTDerivedRasterBandPrivateData;
@@ -832,7 +835,7 @@ bool VRTDerivedRasterBand::InitializePython()
 
 CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
     const CPLString &osMetadata,
-    const std::vector<int> &anMapBufferIdxToSourceIdx,
+    const std::vector<int> &anMapBufferIdxToSourceIdx, int nXOff, int nYOff,
     std::vector<std::pair<CPLString, CPLString>> &oAdditionalArgs)
 {
 
@@ -865,13 +868,38 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     CPLString osVal;
                     double dfVal = 0;
 
-                    int success;
+                    int success(FALSE);
                     if (osArgName == "NoData")
                         dfVal = this->GetNoDataValue(&success);
                     else if (osArgName == "scale")
                         dfVal = this->GetScale(&success);
                     else if (osArgName == "offset")
                         dfVal = this->GetOffset(&success);
+                    else if (osArgName == "xoff")
+                    {
+                        dfVal = static_cast<double>(nXOff);
+                        success = true;
+                    }
+                    else if (osArgName == "yoff")
+                    {
+                        dfVal = static_cast<double>(nYOff);
+                        success = true;
+                    }
+                    else if (osArgName == "geotransform")
+                    {
+                        GDALGeoTransform gt;
+                        if (GetDataset()->GetGeoTransform(gt) != CE_None)
+                        {
+                            // Do not fail here because the argument is most
+                            // likely not needed by the pixel function. If it
+                            // is needed, the pixel function can emit the error.
+                            continue;
+                        }
+                        osVal = CPLSPrintf(
+                            "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g", gt[0], gt[1],
+                            gt[2], gt[3], gt[4], gt[5]);
+                        success = true;
+                    }
                     else if (osArgName == "source_names")
                     {
                         for (size_t iBuffer = 0;
@@ -1406,7 +1434,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     if (poPixelFunc != nullptr && !poPixelFunc->second.empty())
     {
         if (GetPixelFunctionArguments(poPixelFunc->second,
-                                      anMapBufferIdxToSourceIdx,
+                                      anMapBufferIdxToSourceIdx, nXOff, nYOff,
                                       oAdditionalArgs) != CE_None)
         {
             eErr = CE_Failure;
@@ -1493,19 +1521,12 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             PyTuple_SetItem(pyArgs, 7, PyLong_FromLong(nRasterYSize));
             PyTuple_SetItem(pyArgs, 8, PyLong_FromLong(nBufferRadius));
 
-            double adfGeoTransform[6];
-            adfGeoTransform[0] = 0;
-            adfGeoTransform[1] = 1;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = 0;
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] = 1;
+            GDALGeoTransform gt;
             if (GetDataset())
-                GetDataset()->GetGeoTransform(adfGeoTransform);
+                GetDataset()->GetGeoTransform(gt);
             PyObject *pyGT = PyTuple_New(6);
             for (int i = 0; i < 6; i++)
-                PyTuple_SetItem(pyGT, i,
-                                PyFloat_FromDouble(adfGeoTransform[i]));
+                PyTuple_SetItem(pyGT, i, PyFloat_FromDouble(gt[i]));
             PyTuple_SetItem(pyArgs, 9, pyGT);
 
             // Prepare kwargs

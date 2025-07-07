@@ -2983,3 +2983,37 @@ def test_ogr_mem_lyr_get_dataset():
     ds = ogr.GetDriverByName("MEM").CreateDataSource("foo")
     lyr = ds.CreateLayer("test")
     assert lyr.GetDataset().GetDescription() == "foo"
+
+
+###############################################################################
+# Test Dataset.GetExtent()
+
+
+def test_ogr_mem_extent():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 10)
+    assert ds.GetExtent() is None
+    assert ds.GetExtentWGS84LongLat() is None
+
+    srs = osr.SpatialReference(epsg=3857)
+    lyr = ds.CreateLayer("test", srs=srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((1000 1980,1000 2000,1002 2000,1002 1980,1000 1980))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    # OGRMemLayer doesn't report OLCFastGetExtent...
+    assert not ds.TestCapability(gdal.GDsCFastGetExtent)
+    assert ds.GetExtent() == (1000, 1002, 1980, 2000)
+    assert not ds.TestCapability(gdal.GDsCFastGetExtentWGS84LongLat)
+    assert ds.GetExtentWGS84LongLat() == pytest.approx(
+        (
+            0.008983152841195215,
+            0.009001119146877604,
+            0.017786642339884726,
+            0.01796630538796444,
+        )
+    )

@@ -156,13 +156,27 @@ void OGRFeatherLayer::EstablishFeatureDefn()
 
         const auto &field_kv_metadata = field->metadata();
         std::string osExtensionName;
-        if (field_kv_metadata)
+        std::string osExtensionMetadata;
+        if (field->type()->id() == arrow::Type::EXTENSION)
+        {
+            osExtensionName =
+                cpl::down_cast<arrow::ExtensionType *>(field->type().get())
+                    ->extension_name();
+        }
+        else if (field_kv_metadata)
         {
             auto extension_name =
                 field_kv_metadata->Get(ARROW_EXTENSION_NAME_KEY);
             if (extension_name.ok())
             {
                 osExtensionName = *extension_name;
+            }
+
+            auto extension_metadata =
+                field_kv_metadata->Get(ARROW_EXTENSION_METADATA_KEY);
+            if (extension_metadata.ok())
+            {
+                osExtensionMetadata = *extension_metadata;
             }
 #ifdef DEBUG
             CPLDebug("FEATHER", "Metadata field %s:", fieldName.c_str());
@@ -189,7 +203,7 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                 oJSONDef = oIter->second;
             auto osEncoding = oJSONDef.GetString("encoding");
             if (osEncoding.empty() && !osExtensionName.empty())
-                osEncoding = std::move(osExtensionName);
+                osEncoding = osExtensionName;
 
             OGRwkbGeometryType eGeomType = wkbUnknown;
             auto eGeomEncoding = OGRArrowGeomEncoding::WKB;
@@ -200,8 +214,50 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                 bRegularField = false;
                 OGRGeomFieldDefn oField(fieldName.c_str(), wkbUnknown);
 
-                const auto osWKT = oJSONDef.GetString("crs");
-                if (osWKT.empty())
+                auto osCRS = oJSONDef.GetString("crs");
+
+#if ARROW_VERSION_MAJOR >= 21
+                if (osExtensionName == EXTENSION_NAME_GEOARROW_WKB &&
+                    osExtensionMetadata.empty() &&
+                    field->type()->id() == arrow::Type::EXTENSION)
+                {
+                    const auto arrowWkb =
+                        std::dynamic_pointer_cast<OGRGeoArrowWkbExtensionType>(
+                            field->type());
+                    if (arrowWkb)
+                    {
+                        osExtensionMetadata = arrowWkb->Serialize();
+                    }
+                }
+#endif
+
+                if (osCRS.empty() &&
+                    osExtensionName == EXTENSION_NAME_GEOARROW_WKB &&
+                    !osExtensionMetadata.empty() &&
+                    osExtensionMetadata[0] == '{' &&
+                    osExtensionMetadata.back() == '}')
+                {
+                    CPLJSONDocument oDoc;
+                    if (oDoc.LoadMemory(osExtensionMetadata))
+                    {
+                        auto jCrs = oDoc.GetRoot()["crs"];
+                        if (jCrs.GetType() == CPLJSONObject::Type::Object)
+                        {
+                            osCRS =
+                                jCrs.Format(CPLJSONObject::PrettyFormat::Plain);
+                        }
+                        else if (jCrs.GetType() == CPLJSONObject::Type::String)
+                        {
+                            osCRS = jCrs.ToString();
+                        }
+                        if (oDoc.GetRoot()["edges"].ToString() == "spherical")
+                        {
+                            SetMetadataItem("EDGES", "SPHERICAL");
+                        }
+                    }
+                }
+
+                if (osCRS.empty())
                 {
 #if 0
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -214,8 +270,23 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                     OGRSpatialReference *poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                    if (poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE)
+                    if (poSRS->SetFromUserInput(
+                            osCRS.c_str(),
+                            OGRSpatialReference::
+                                SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                        OGRERR_NONE)
                     {
+                        const char *pszAuthName =
+                            poSRS->GetAuthorityName(nullptr);
+                        const char *pszAuthCode =
+                            poSRS->GetAuthorityCode(nullptr);
+                        if (pszAuthName && pszAuthCode &&
+                            EQUAL(pszAuthName, "OGC") &&
+                            EQUAL(pszAuthCode, "CRS84"))
+                        {
+                            poSRS->importFromEPSG(4326);
+                        }
+
                         const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
                         if (dfCoordEpoch > 0)
                             poSRS->SetCoordinateEpoch(dfCoordEpoch);

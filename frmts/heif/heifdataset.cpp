@@ -526,12 +526,19 @@ static bool GetPropertyData(heif_context *m_hCtxt, heif_item_id item_id,
 
 void GDALHEIFDataset::processProperties()
 {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
     constexpr heif_item_property_type TIEP_4CC =
         (heif_item_property_type)heif_fourcc('t', 'i', 'e', 'p');
     constexpr heif_item_property_type MTXF_4CC =
         (heif_item_property_type)heif_fourcc('m', 't', 'x', 'f');
     constexpr heif_item_property_type MCRS_4CC =
         (heif_item_property_type)heif_fourcc('m', 'c', 'r', 's');
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
     constexpr int MAX_PROPERTIES_REQUIRED = 50;
     heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
     heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
@@ -946,7 +953,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
         }
         const int nBitsPerPixel = heif_image_get_bits_per_pixel(
             poGDS->m_hImage, heif_channel_interleaved);
-        if (nBitsPerPixel != nBands * GDALGetDataTypeSize(eDataType))
+        if (nBitsPerPixel != nBands * GDALGetDataTypeSizeBits(eDataType))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected bits_per_pixel = %d value", nBitsPerPixel);
@@ -982,9 +989,9 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALHEIFDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALHEIFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    return geoHEIF.GetGeoTransform(padfTransform);
+    return geoHEIF.GetGeoTransform(gt);
 }
 
 /************************************************************************/

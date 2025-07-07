@@ -137,37 +137,33 @@ bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (poDstDS->GetRasterBand(1)->GetOverviewCount() > 0 &&
         !m_noUpdateOverviews)
     {
-        std::array<double, 6> adfGT;
+        GDALGeoTransform gt;
         const auto poSrcCRS = poSrcDS->GetSpatialRef();
         const auto poDstCRS = poDstDS->GetSpatialRef();
         const bool bBothCRS = poSrcCRS && poDstCRS;
         const bool bBothNoCRS = !poSrcCRS && !poDstCRS;
-        if ((bBothCRS || bBothNoCRS) &&
-            poSrcDS->GetGeoTransform(adfGT.data()) == CE_None)
+        if ((bBothCRS || bBothNoCRS) && poSrcDS->GetGeoTransform(gt) == CE_None)
         {
             auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                 bBothCRS ? OGRCreateCoordinateTransformation(poSrcCRS, poDstCRS)
                          : nullptr);
             if (bBothNoCRS || poCT)
             {
-                const double dfTLX = adfGT[0];
-                const double dfTLY = adfGT[3];
+                const double dfTLX = gt[0];
+                const double dfTLY = gt[3];
 
                 double dfTRX = 0;
                 double dfTRY = 0;
-                GDALApplyGeoTransform(adfGT.data(), poSrcDS->GetRasterXSize(),
-                                      0, &dfTRX, &dfTRY);
+                gt.Apply(poSrcDS->GetRasterXSize(), 0, &dfTRX, &dfTRY);
 
                 double dfBLX = 0;
                 double dfBLY = 0;
-                GDALApplyGeoTransform(
-                    adfGT.data(), 0, poSrcDS->GetRasterYSize(), &dfBLX, &dfBLY);
+                gt.Apply(0, poSrcDS->GetRasterYSize(), &dfBLX, &dfBLY);
 
                 double dfBRX = 0;
                 double dfBRY = 0;
-                GDALApplyGeoTransform(adfGT.data(), poSrcDS->GetRasterXSize(),
-                                      poSrcDS->GetRasterYSize(), &dfBRX,
-                                      &dfBRY);
+                gt.Apply(poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+                         &dfBRX, &dfBRY);
 
                 const double dfXMin =
                     std::min(std::min(dfTLX, dfTRX), std::min(dfBLX, dfBRX));

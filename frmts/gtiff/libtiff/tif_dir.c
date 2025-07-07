@@ -2342,6 +2342,7 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
         _TIFFfreeExt(tif, tif->tif_rawdata);
         tif->tif_rawdata = NULL;
         tif->tif_rawcc = 0;
+        tif->tif_rawcp = NULL;
         tif->tif_rawdataoff = 0;
         tif->tif_rawdataloaded = 0;
     }

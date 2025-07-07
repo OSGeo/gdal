@@ -94,6 +94,46 @@ MAIN_START(argc, argv)
     else
     {
         EarlySetConfigOptions(argc, argv);
+        for (int i = 1; i < argc; ++i)
+        {
+            // Used by gdal raster tile --parallel-method=spawn to pass
+            // config options in a stealth way
+            if (strcmp(argv[i], "--config-options-in-stdin") == 0)
+            {
+                std::string line;
+                constexpr int LINE_SIZE = 10 * 1024;
+                line.resize(LINE_SIZE);
+                while (fgets(line.data(), LINE_SIZE, stdin))
+                {
+                    if (strcmp(line.c_str(), "--config\n") == 0 &&
+                        fgets(line.data(), LINE_SIZE, stdin))
+                    {
+                        std::string osLine(line.c_str());
+                        if (!osLine.empty() && osLine.back() == '\n')
+                        {
+                            osLine.pop_back();
+                            char *pszUnescaped = CPLUnescapeString(
+                                osLine.c_str(), nullptr, CPLES_URL);
+                            char *pszKey = nullptr;
+                            const char *pszValue =
+                                CPLParseNameValue(pszUnescaped, &pszKey);
+                            if (pszKey && pszValue)
+                            {
+                                CPLSetConfigOption(pszKey, pszValue);
+                            }
+                            CPLFree(pszKey);
+                            CPLFree(pszUnescaped);
+                        }
+                    }
+                    else if (strcmp(line.c_str(), "--END\n") == 0)
+                    {
+                        break;
+                    }
+                }
+
+                break;
+            }
+        }
     }
 
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(

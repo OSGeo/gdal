@@ -13,6 +13,7 @@
 
 
 %include "typemaps.i"
+%include "arrays_csharp.i"
 
 /* CSHARP TYPEMAPS */
 
@@ -159,6 +160,28 @@ OPTIONAL_POD(int, int);
     return res;
 }
 
+/*
+ * Typemap for GUIntBig (uint64)
+ */
+
+%typemap(ctype, out="GUIntBig") GUIntBig  %{GUIntBig%}
+%typemap(imtype, out="ulong") GUIntBig "ulong"
+%typemap(cstype) GUIntBig %{ulong%}
+%typemap(in) GUIntBig %{ $1 = $input; %}
+%typemap(out) GUIntBig %{ $result = $1; %}
+%typemap(csin) GUIntBig "$csinput"
+%typemap(csout, excode=SWIGEXCODE) GUIntBig {
+    ulong res = $imcall;$excode
+    return res;
+}
+
+/*
+ * Typemap for PINNED arrays
+ */
+
+CSHARP_ARRAYS_PINNED(GUIntBig, uint)
+CSHARP_ARRAYS_PINNED(int, int)
+CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 
 /******************************************************************************
  * Marshaler for NULL terminated string arrays                                *
@@ -187,16 +210,13 @@ OPTIONAL_POD(int, int);
  * Typemap for char** options
  */
 
-/* FIXME: all those typemaps are not equivalent... out(char **CSL) should free */
-/* the list with CSLDestroy() for example */
-
-%typemap(imtype, out="IntPtr") char **options, char **dict, char **CSL "IntPtr[]"
-%typemap(cstype) char **options, char **dict, char **CSL %{string[]%}
-%typemap(in) char **options, char **dict, char **CSL %{ $1 = ($1_ltype)$input; %}
-%typemap(out) char **options, char **dict, char **CSL %{ $result = $1; %}
-%typemap(csin) char **options, char **dict, char **CSL "($csinput != null)? new $modulePINVOKE.StringListMarshal($csinput)._ar : null"
+%typemap(imtype, out="IntPtr") char **options, char **dict, char **dictAndCSLDestroy, char **CSL "IntPtr[]"
+%typemap(cstype) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{string[]%}
+%typemap(in) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $1 = ($1_ltype)$input; %}
+%typemap(out) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $result = $1; %}
+%typemap(csin) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "($csinput != null)? new $modulePINVOKE.StringListMarshal($csinput)._ar : null"
 %typemap(csout, excode=SWIGEXCODE) char**options, char **dict {
-        /* %typemap(csout) char**options */
+        /* %typemap(csout) char**options, char **dict */
         IntPtr cPtr = $imcall;
         IntPtr objPtr;
         int count = 0;
@@ -208,15 +228,15 @@ OPTIONAL_POD(int, int);
         if (count > 0) {
 	        for(int cx = 0; cx < count; cx++) {
                 objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-                ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : $module.Utf8BytesToString(objPtr);
             }
         }
         $excode
         return ret;
 }
 
-%typemap(csout, excode=SWIGEXCODE) char** CSL {
-        /* %typemap(csout) char** CSL */
+%typemap(csout, excode=SWIGEXCODE) char** CSL, char **dictAndCSLDestroy {
+        /* %typemap(csout) char** CSL, char **dictAndCSLDestroy */
         IntPtr cPtr = $imcall;
         IntPtr objPtr;
         int count = 0;
@@ -228,7 +248,7 @@ OPTIONAL_POD(int, int);
         if (count > 0) {
 	        for(int cx = 0; cx < count; cx++) {
                 objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-                ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : $module.Utf8BytesToString(objPtr);
             }
         }
         if (cPtr != IntPtr.Zero)
@@ -528,6 +548,15 @@ OPTIONAL_POD(int, int);
 
 %apply (double **array_argout) {double **pList};
 
+/*
+ * Typemap for void* user_data for SetErrorHandler.
+ * Note: The user should implement marshaling their own data to IntPtr.
+ */
+
+%typemap(imtype) (void* user_data) "IntPtr"
+%typemap(cstype) (void* user_data) "IntPtr"
+%typemap(csin) (void* user_data)  "$csinput"
+
 /******************************************************************************
  * GDAL raster R/W support                                                    *
  *****************************************************************************/
@@ -553,6 +582,14 @@ OPTIONAL_POD(int, int);
 %inline %{
     void StringListDestroy(void *buffer_ptr) {
        CSLDestroy((char**)buffer_ptr);
+    }
+%}
+
+%csmethodmodifiers CPLMemDestroy "internal";
+%inline %{
+    void CPLMemDestroy(void *buffer_ptr) {
+       if (buffer_ptr)
+           CPLFree(buffer_ptr);
     }
 %}
 
@@ -583,6 +620,7 @@ OPTIONAL_POD(int, int);
 %typemap(cstype) (void* callback_data) "string"
 %typemap(csin) (void* callback_data) "$csinput"
 
+%ignore SWIGTYPE_p_GDALProgressFunc;
 
 /******************************************************************************
  * GDALGetNextFeature typemaps                                                *
@@ -598,3 +636,51 @@ OPTIONAL_POD(int, int);
  * GDALGetLayerByName typemaps                                                *
  *****************************************************************************/
 %apply ( const char *utf8_path ) { const char* layer_name };
+
+/******************************************************************************
+ * Band.AdviseRead and Dataset.AdviseRead typemaps                            *
+ *****************************************************************************/
+%apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
+
+/******************************************************************************
+ * SpatialReference.FindMatches                                               *
+ *****************************************************************************/
+%apply (int *hasval) {int *nvalues};
+%typemap(imtype, out="IntPtr") OSRSpatialReferenceShadow** FindMatches "SpatialReference[]"
+%typemap(cstype) OSRSpatialReferenceShadow** FindMatches %{SpatialReference[]%}
+%typemap(imtype) int** confidence_values "out IntPtr"
+%typemap(cstype) int** confidence_values %{out int[]%}
+%typemap(csin) int** confidence_values "out confValPtr"
+%typemap(in) (int** confidence_values)
+{
+  /* %typemap(in) (int** confidence_values) */
+  $1 = ($1_ltype)$input;
+}
+%typemap(csout, excode=SWIGEXCODE) OSRSpatialReferenceShadow** FindMatches {
+        /* %typemap(csout) char** FindMatches */
+        IntPtr confValPtr;
+        IntPtr cPtr = $imcall;
+        IntPtr objPtr;
+        SpatialReference[] ret = new SpatialReference[nvalues];
+        confidence_values = (confValPtr == IntPtr.Zero) ? null : new int[nvalues];
+        if (nvalues > 0) {
+	        for(int cx = 0; cx < nvalues; cx++) {
+                objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+                /* SpatialReference will take ownership of the unmanaged memory and will call OSRRelease() when the object is disposed.
+                   Therefore, OSRFreeSRSArray() is not called; only CPLFree() is used to release the array itself. */
+                ret[cx]= (objPtr == IntPtr.Zero) ? null : new SpatialReference(objPtr, true, null);
+                if (confValPtr != IntPtr.Zero) {
+                    confidence_values[cx] = System.Runtime.InteropServices.Marshal.ReadInt32(confValPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(Int32)));
+                }
+                
+            }
+        }
+        if (cPtr != IntPtr.Zero) {
+            $modulePINVOKE.CPLMemDestroy(cPtr);
+        }
+        if (confValPtr != IntPtr.Zero) {
+            $modulePINVOKE.CPLMemDestroy(confValPtr);
+        }
+        $excode
+        return ret;
+}

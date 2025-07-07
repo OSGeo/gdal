@@ -23,7 +23,7 @@
 /*                      GDALVectorGridAverageAlgorithm                  */
 /************************************************************************/
 
-class GDALVectorGridAverageAlgorithm final
+class GDALVectorGridAverageAlgorithm /* non final */
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
@@ -33,9 +33,25 @@ class GDALVectorGridAverageAlgorithm final
         "interpolation.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
 
-    GDALVectorGridAverageAlgorithm();
+    explicit GDALVectorGridAverageAlgorithm(bool standaloneStep = false);
 
     std::string GetGridAlgorithm() const override;
+};
+
+/************************************************************************/
+/*               GDALVectorGridAverageAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorGridAverageAlgorithmStandalone final
+    : public GDALVectorGridAverageAlgorithm
+{
+  public:
+    GDALVectorGridAverageAlgorithmStandalone()
+        : GDALVectorGridAverageAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridAverageAlgorithmStandalone() override;
 };
 
 //! @endcond

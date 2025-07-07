@@ -212,7 +212,7 @@ int GDAL_EDBFile::ReadBlock(int channel, int block_index, void *buffer,
     const int nBlockY = block_index / nWidthInBlocks;
 
     const int nPixelOffset =
-        GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8;
+        GDALGetDataTypeSizeBytes(poBand->GetRasterDataType());
     const int nLineOffset = win_xsize * nPixelOffset;
 
     /* -------------------------------------------------------------------- */

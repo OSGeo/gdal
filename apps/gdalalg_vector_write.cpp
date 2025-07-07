@@ -30,15 +30,15 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddOutputArgs(/* hiddenForCLI = */ false,
-                  /* shortNameOutputLayerAllowed=*/true);
+    AddVectorOutputArgs(/* hiddenForCLI = */ false,
+                        /* shortNameOutputLayerAllowed=*/true);
 }
 
 /************************************************************************/
 /*                  GDALVectorWriteAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorWriteAlgorithm::RunStep(GDALVectorPipelineStepRunContext &ctxt)
+bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;

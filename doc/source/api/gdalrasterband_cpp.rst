@@ -21,3 +21,18 @@ GDALRasterBand class
    :project: api
    :members:
    :protected-members:
+
+GDALRasterBand related functions
+--------------------------------
+
+.. doxygenfunction:: gdal::min
+   :project: api
+
+.. doxygenfunction:: gdal::max
+   :project: api
+
+.. doxygenfunction:: gdal::mean
+   :project: api
+
+.. doxygenfunction:: gdal::IfThenElse
+   :project: api

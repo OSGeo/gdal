@@ -3363,6 +3363,10 @@ TEST_F(test_gdal_algorithm, packed_values_allowed_false)
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--arg=foo", "--arg=bar"}));
         auto expected = std::vector<std::string>{"foo", "bar"};
         EXPECT_EQ(alg.m_arg, expected);
+
+        std::string serialized;
+        EXPECT_TRUE(alg.GetArg("arg")->Serialize(serialized));
+        EXPECT_STREQ(serialized.c_str(), "--arg foo --arg bar");
     }
 
     {
@@ -4544,7 +4548,7 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_set_geo_transform)
             eAccess = GA_Update;
         }
 
-        CPLErr SetGeoTransform(double *) override
+        CPLErr SetGeoTransform(const GDALGeoTransform &) override
         {
             return CE_Failure;
         }

@@ -107,7 +107,8 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString odFilename =
         filename.substr(alg_pos + 1, filename.size() - alg_pos);
 
-    GDALDataset *poTmpDS = (GDALDataset *)GDALOpen(odFilename, GA_ReadOnly);
+    auto poTmpDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open(odFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
 
     if (poTmpDS == nullptr)
         return nullptr;
@@ -116,7 +117,6 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (nbBands == 0)
     {
-        GDALClose(poTmpDS);
         return nullptr;
     }
 
@@ -138,12 +138,10 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetProjection(poTmpDS->GetProjectionRef());
 
     // Transfer geotransform
-    double padfTransform[6];
-    CPLErr transformOk = poTmpDS->GetGeoTransform(padfTransform);
-
-    if (transformOk == CE_None)
+    GDALGeoTransform gt;
+    if (poTmpDS->GetGeoTransform(gt) == CE_None)
     {
-        poDS->SetGeoTransform(padfTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     // Transfer GCPs
@@ -165,8 +163,6 @@ GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
         poBand->AddComplexSource(odFilename, nBand, 0, 0, nCols, nRows, 0, 0,
                                  nCols, nRows);
     }
-
-    GDALClose(poTmpDS);
 
     // If dataset is a real file, initialize overview manager
     VSIStatBufL sStat;

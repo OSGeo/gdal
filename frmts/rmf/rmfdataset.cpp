@@ -769,9 +769,9 @@ RMFDataset::~RMFDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RMFDataset::GetGeoTransform(double *padfTransform)
+CPLErr RMFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform.data(), sizeof(adfGeoTransform));
+    gt = m_gt;
 
     if (sHeader.iGeorefFlag)
         return CE_None;
@@ -783,14 +783,14 @@ CPLErr RMFDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RMFDataset::SetGeoTransform(double *padfTransform)
+CPLErr RMFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(adfGeoTransform.data(), padfTransform, sizeof(adfGeoTransform));
-    sHeader.dfPixelSize = adfGeoTransform[1];
+    m_gt = gt;
+    sHeader.dfPixelSize = m_gt[1];
     if (sHeader.dfPixelSize != 0.0)
         sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
-    sHeader.dfLLX = adfGeoTransform[0];
-    sHeader.dfLLY = adfGeoTransform[3] - nRasterYSize * sHeader.dfPixelSize;
+    sHeader.dfLLX = m_gt[0];
+    sHeader.dfLLY = m_gt[3] - nRasterYSize * sHeader.dfPixelSize;
     sHeader.iGeorefFlag = 1;
 
     bHeaderDirty = true;
@@ -904,9 +904,8 @@ CPLErr RMFDataset::WriteHeader()
         {
             if (poFrameGeom->getGeometryType() == wkbPolygon)
             {
-                std::array<double, 6> adfReverseGeoTransform = {0};
-                if (GDALInvGeoTransform(adfGeoTransform.data(),
-                                        adfReverseGeoTransform.data()) == TRUE)
+                GDALGeoTransform reverseGT;
+                if (m_gt.GetInverse(reverseGT))
                 {
                     OGRPolygon *poFramePoly = poFrameGeom->toPolygon();
                     if (!poFramePoly->IsEmpty())
@@ -915,14 +914,12 @@ CPLErr RMFDataset::WriteHeader()
                             poFramePoly->getExteriorRing();
                         for (int i = 0; i < poFrameRing->getNumPoints(); i++)
                         {
-                            int nX = int(adfReverseGeoTransform[0] +
-                                         poFrameRing->getX(i) *
-                                             adfReverseGeoTransform[1] -
-                                         0.5);
-                            int nY = int(adfReverseGeoTransform[3] +
-                                         poFrameRing->getY(i) *
-                                             adfReverseGeoTransform[5] -
-                                         0.5);
+                            int nX =
+                                int(reverseGT[0] +
+                                    poFrameRing->getX(i) * reverseGT[1] - 0.5);
+                            int nY =
+                                int(reverseGT[3] +
+                                    poFrameRing->getY(i) * reverseGT[5] - 0.5);
 
                             CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
 
@@ -1898,14 +1895,13 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     if ((poDS->eRMFType == RMFT_RSW && poDS->sHeader.iGeorefFlag) ||
         (poDS->eRMFType == RMFT_MTW && poDS->sHeader.dfPixelSize != 0.0))
     {
-        poDS->adfGeoTransform[0] = poDS->sHeader.dfLLX;
-        poDS->adfGeoTransform[3] =
-            poDS->sHeader.dfLLY +
-            poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
-        poDS->adfGeoTransform[1] = poDS->sHeader.dfPixelSize;
-        poDS->adfGeoTransform[5] = -poDS->sHeader.dfPixelSize;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
+        poDS->m_gt[0] = poDS->sHeader.dfLLX;
+        poDS->m_gt[3] = poDS->sHeader.dfLLY +
+                        poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
+        poDS->m_gt[1] = poDS->sHeader.dfPixelSize;
+        poDS->m_gt[5] = -poDS->sHeader.dfPixelSize;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[4] = 0.0;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1988,12 +1984,10 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
                 CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
 
-                double dfX = poDS->adfGeoTransform[0] +
-                             nX * poDS->adfGeoTransform[1] +
-                             nY * poDS->adfGeoTransform[2];
-                double dfY = poDS->adfGeoTransform[3] +
-                             nX * poDS->adfGeoTransform[4] +
-                             nY * poDS->adfGeoTransform[5];
+                double dfX =
+                    poDS->m_gt[0] + nX * poDS->m_gt[1] + nY * poDS->m_gt[2];
+                double dfY =
+                    poDS->m_gt[3] + nX * poDS->m_gt[4] + nY * poDS->m_gt[5];
 
                 if (bFirst)
                 {

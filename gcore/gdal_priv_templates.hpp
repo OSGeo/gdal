@@ -24,6 +24,41 @@
 
 #include "cpl_float.h"
 
+// Needs SSE2
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2) ||               \
+    defined(USE_NEON_OPTIMIZATIONS)
+
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
+#include <immintrin.h>
+#endif
+
+static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
+{
+    int n32 = _mm_cvtsi128_si32(xmm);  // Extract lower 32 bit word
+    memcpy(pDest, &n32, sizeof(n32));
+}
+
+static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
+{
+    _mm_storel_epi64(reinterpret_cast<__m128i *>(pDest), xmm);
+}
+
+#if __SSSE3__
+#include <tmmintrin.h>
+#endif
+
+#if defined(__SSE4_1__) || defined(__AVX__)
+#include <smmintrin.h>
+#endif
+
+#ifdef __F16C__
+#include <immintrin.h>
+#endif
+
+#endif
+
 /************************************************************************/
 /*                        GDALGetDataLimits()                           */
 /************************************************************************/
@@ -315,6 +350,9 @@ template <> struct sGDALCopyWord<float, GFloat16>
 {
     static inline void f(const float fValueIn, GFloat16 &hfValueOut)
     {
+        // Our custom implementation when std::float16_t is not
+        // available ensures proper behavior.
+#if !defined(HAVE_STD_FLOAT16_T)
         if (fValueIn > cpl::NumericLimits<GFloat16>::max())
         {
             hfValueOut = cpl::NumericLimits<GFloat16>::infinity();
@@ -325,7 +363,7 @@ template <> struct sGDALCopyWord<float, GFloat16>
             hfValueOut = -cpl::NumericLimits<GFloat16>::infinity();
             return;
         }
-
+#endif
         hfValueOut = static_cast<GFloat16>(fValueIn);
     }
 };
@@ -334,6 +372,9 @@ template <> struct sGDALCopyWord<double, GFloat16>
 {
     static inline void f(const double dfValueIn, GFloat16 &hfValueOut)
     {
+        // Our custom implementation when std::float16_t is not
+        // available ensures proper behavior.
+#if !defined(HAVE_STD_FLOAT16_T)
         if (dfValueIn > cpl::NumericLimits<GFloat16>::max())
         {
             hfValueOut = cpl::NumericLimits<GFloat16>::infinity();
@@ -344,7 +385,7 @@ template <> struct sGDALCopyWord<double, GFloat16>
             hfValueOut = -cpl::NumericLimits<GFloat16>::infinity();
             return;
         }
-
+#endif
         hfValueOut = static_cast<GFloat16>(dfValueIn);
     }
 };
@@ -353,6 +394,12 @@ template <> struct sGDALCopyWord<double, float>
 {
     static inline void f(const double dfValueIn, float &fValueOut)
     {
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)
+        // We could just write fValueOut = static_cast<float>(dfValueIn);
+        // but a sanitizer might complain with values above FLT_MAX
+        _mm_store_ss(&fValueOut,
+                     _mm_cvtsd_ss(_mm_undefined_ps(), _mm_load_sd(&dfValueIn)));
+#else
         if (dfValueIn > std::numeric_limits<float>::max())
         {
             fValueOut = std::numeric_limits<float>::infinity();
@@ -365,6 +412,7 @@ template <> struct sGDALCopyWord<double, float>
         }
 
         fValueOut = static_cast<float>(dfValueIn);
+#endif
     }
 };
 
@@ -868,31 +916,6 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 #if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2) ||               \
     defined(USE_NEON_OPTIMIZATIONS)
 
-#ifdef USE_NEON_OPTIMIZATIONS
-#include "include_sse2neon.h"
-#else
-#include <emmintrin.h>
-#endif
-
-static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
-{
-    int n32 = _mm_cvtsi128_si32(xmm);  // Extract lower 32 bit word
-    memcpy(pDest, &n32, sizeof(n32));
-}
-
-static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
-{
-    _mm_storel_epi64(reinterpret_cast<__m128i *>(pDest), xmm);
-}
-
-#if __SSSE3__
-#include <tmmintrin.h>
-#endif
-
-#if defined(__SSE4_1__) || defined(__AVX__)
-#include <smmintrin.h>
-#endif
-
 template <>
 inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 {
@@ -963,9 +986,231 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
     GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 
+template <>
+inline void GDALCopy4Words(const double *pValueIn, float *const pValueOut)
+{
+    const __m128d val01 = _mm_loadu_pd(pValueIn);
+    const __m128d val23 = _mm_loadu_pd(pValueIn + 2);
+    const __m128 val01_s = _mm_cvtpd_ps(val01);
+    const __m128 val23_s = _mm_cvtpd_ps(val23);
+    const __m128 val = _mm_movelh_ps(val01_s, val23_s);
+    _mm_storeu_ps(pValueOut, val);
+}
+
+template <>
+inline void GDALCopy4Words(const double *pValueIn, GByte *const pValueOut)
+{
+    const __m128d p0d5 = _mm_set1_pd(0.5);
+    const __m128d xmm_max = _mm_set1_pd(255);
+
+    __m128d val01 = _mm_loadu_pd(pValueIn);
+    __m128d val23 = _mm_loadu_pd(pValueIn + 2);
+    val01 = _mm_add_pd(val01, p0d5);
+    val01 = _mm_min_pd(_mm_max_pd(val01, p0d5), xmm_max);
+    val23 = _mm_add_pd(val23, p0d5);
+    val23 = _mm_min_pd(_mm_max_pd(val23, p0d5), xmm_max);
+
+    const __m128i val01_u32 = _mm_cvttpd_epi32(val01);
+    const __m128i val23_u32 = _mm_cvttpd_epi32(val23);
+
+    // Merge 4 int32 values into a single register
+    auto xmm_i = _mm_castpd_si128(_mm_shuffle_pd(
+        _mm_castsi128_pd(val01_u32), _mm_castsi128_pd(val23_u32), 0));
+
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
+    xmm_i = _mm_shuffle_epi8(
+        xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24)));
+#else
+    xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
+    xmm_i = _mm_packus_epi16(xmm_i, xmm_i);  // Pack int16 to uint8
+#endif
+    GDALCopyXMMToInt32(xmm_i, pValueOut);
+}
+
+template <>
+inline void GDALCopy4Words(const float *pValueIn, double *const pValueOut)
+{
+    const __m128 valIn = _mm_loadu_ps(pValueIn);
+    _mm_storeu_pd(pValueOut, _mm_cvtps_pd(valIn));
+    _mm_storeu_pd(pValueOut + 2, _mm_cvtps_pd(_mm_movehl_ps(valIn, valIn)));
+}
+
+#ifdef __F16C__
+template <>
+inline void GDALCopy4Words(const GFloat16 *pValueIn, float *const pValueOut)
+{
+    __m128i xmm = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(pValueIn));
+    _mm_storeu_ps(pValueOut, _mm_cvtph_ps(xmm));
+}
+
+template <>
+inline void GDALCopy4Words(const float *pValueIn, GFloat16 *const pValueOut)
+{
+    __m128 xmm = _mm_loadu_ps(pValueIn);
+    GDALCopyXMMToInt64(_mm_cvtps_ph(xmm, _MM_FROUND_TO_NEAREST_INT), pValueOut);
+}
+
+template <>
+inline void GDALCopy4Words(const GFloat16 *pValueIn, double *const pValueOut)
+{
+    float tmp[4];
+    GDALCopy4Words(pValueIn, tmp);
+    GDALCopy4Words(tmp, pValueOut);
+}
+
+template <>
+inline void GDALCopy4Words(const double *pValueIn, GFloat16 *const pValueOut)
+{
+    float tmp[4];
+    GDALCopy4Words(pValueIn, tmp);
+    GDALCopy4Words(tmp, pValueOut);
+}
+#else  // !__F16C__
+
+static inline __m128i GDALIfThenElse(__m128i mask, __m128i thenVal,
+                                     __m128i elseVal)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_epi8(elseVal, thenVal, mask);
+#else
+    return _mm_or_si128(_mm_and_si128(mask, thenVal),
+                        _mm_andnot_si128(mask, elseVal));
+#endif
+}
+
+// Convert 4 float16 values to 4 float 32 values
+// xmm must contain 4 float16 values stored in 32 bit each (with upper 16 bits at zero)
+static inline __m128i GDALFourFloat16ToFloat32(__m128i xmm)
+{
+    // Ported from https://github.com/simd-everywhere/simde/blob/51743e7920b6e867678cb50e9c62effe28f70b33/simde/simde-f16.h#L242C4-L242C68
+    // to SSE2 in a branch-less way
+
+    /* This code is CC0, based heavily on code by Fabian Giesen. */
+    const auto denorm_magic =
+        _mm_castsi128_ps(_mm_set1_epi32((128 - 15) << 23));
+    const auto shifted_exp =
+        _mm_set1_epi32(0x7c00 << 13); /* exponent mask after shift */
+
+    // Shift exponent and mantissa bits to their position in a float32
+    auto f32u = _mm_slli_epi32(_mm_and_si128(xmm, _mm_set1_epi32(0x7fff)), 13);
+    // Extract the (shifted) exponent
+    const auto exp = _mm_and_si128(shifted_exp, f32u);
+    // Adjust the exponent
+    const auto exp_adjustment = _mm_set1_epi32((127 - 15) << 23);
+    f32u = _mm_add_epi32(f32u, exp_adjustment);
+
+    const auto is_inf_nan = _mm_cmpeq_epi32(exp, shifted_exp); /* Inf/NaN? */
+    // When is_inf_nan is true: extra exponent adjustment
+    const auto f32u_inf_nan = _mm_add_epi32(f32u, exp_adjustment);
+
+    const auto is_denormal =
+        _mm_cmpeq_epi32(exp, _mm_setzero_si128()); /* Zero/Denormal? */
+    // When is_denormal is true:
+    auto f32u_denormal = _mm_add_epi32(f32u, _mm_set1_epi32(1 << 23));
+    f32u_denormal = _mm_castps_si128(
+        _mm_sub_ps(_mm_castsi128_ps(f32u_denormal), denorm_magic));
+
+    f32u = GDALIfThenElse(is_inf_nan, f32u_inf_nan, f32u);
+    f32u = GDALIfThenElse(is_denormal, f32u_denormal, f32u);
+
+    // Re-apply sign bit
+    f32u = _mm_or_si128(
+        f32u, _mm_slli_epi32(_mm_and_si128(xmm, _mm_set1_epi32(0x8000)), 16));
+    return f32u;
+}
+
+template <>
+inline void GDALCopy8Words(const GFloat16 *pValueIn, float *const pValueOut)
+{
+    __m128i xmm = _mm_loadu_si128(reinterpret_cast<const __m128i *>(pValueIn));
+    const auto xmm_0 =
+        GDALFourFloat16ToFloat32(_mm_unpacklo_epi16(xmm, _mm_setzero_si128()));
+    const auto xmm_1 =
+        GDALFourFloat16ToFloat32(_mm_unpackhi_epi16(xmm, _mm_setzero_si128()));
+    _mm_storeu_ps(pValueOut + 0, _mm_castsi128_ps(xmm_0));
+    _mm_storeu_ps(pValueOut + 4, _mm_castsi128_ps(xmm_1));
+}
+
+template <>
+inline void GDALCopy8Words(const GFloat16 *pValueIn, double *const pValueOut)
+{
+    __m128i xmm = _mm_loadu_si128(reinterpret_cast<const __m128i *>(pValueIn));
+    const auto xmm_0 = _mm_castsi128_ps(
+        GDALFourFloat16ToFloat32(_mm_unpacklo_epi16(xmm, _mm_setzero_si128())));
+    const auto xmm_1 = _mm_castsi128_ps(
+        GDALFourFloat16ToFloat32(_mm_unpackhi_epi16(xmm, _mm_setzero_si128())));
+    _mm_storeu_pd(pValueOut + 0, _mm_cvtps_pd(xmm_0));
+    _mm_storeu_pd(pValueOut + 2, _mm_cvtps_pd(_mm_movehl_ps(xmm_0, xmm_0)));
+    _mm_storeu_pd(pValueOut + 4, _mm_cvtps_pd(xmm_1));
+    _mm_storeu_pd(pValueOut + 6, _mm_cvtps_pd(_mm_movehl_ps(xmm_1, xmm_1)));
+}
+
+#endif  // __F16C__
+
 #ifdef __AVX2__
 
 #include <immintrin.h>
+
+template <>
+inline void GDALCopy8Words(const double *pValueIn, float *const pValueOut)
+{
+    const __m256d val0123 = _mm256_loadu_pd(pValueIn);
+    const __m256d val4567 = _mm256_loadu_pd(pValueIn + 4);
+    const __m256 val0123_s = _mm256_castps128_ps256(_mm256_cvtpd_ps(val0123));
+    const __m256 val4567_s = _mm256_castps128_ps256(_mm256_cvtpd_ps(val4567));
+    const __m256 val =
+        _mm256_permute2f128_ps(val0123_s, val4567_s, 0 | (2 << 4));
+    _mm256_storeu_ps(pValueOut, val);
+}
+
+template <>
+inline void GDALCopy8Words(const float *pValueIn, double *const pValueOut)
+{
+    const __m256 valIn = _mm256_loadu_ps(pValueIn);
+    _mm256_storeu_pd(pValueOut, _mm256_cvtps_pd(_mm256_castps256_ps128(valIn)));
+    _mm256_storeu_pd(pValueOut + 4,
+                     _mm256_cvtps_pd(_mm256_castps256_ps128(
+                         _mm256_permute2f128_ps(valIn, valIn, 1))));
+}
+
+#ifdef __F16C__
+
+template <>
+inline void GDALCopy8Words(const GFloat16 *pValueIn, float *const pValueOut)
+{
+    __m128i xmm = _mm_loadu_si128(reinterpret_cast<const __m128i *>(pValueIn));
+    _mm256_storeu_ps(pValueOut, _mm256_cvtph_ps(xmm));
+}
+
+template <>
+inline void GDALCopy8Words(const float *pValueIn, GFloat16 *const pValueOut)
+{
+    __m256 ymm = _mm256_loadu_ps(pValueIn);
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut),
+                     _mm256_cvtps_ph(ymm, _MM_FROUND_TO_NEAREST_INT));
+}
+
+template <>
+inline void GDALCopy8Words(const GFloat16 *pValueIn, double *const pValueOut)
+{
+    __m128i xmm = _mm_loadu_si128(reinterpret_cast<const __m128i *>(pValueIn));
+    const auto ymm = _mm256_cvtph_ps(xmm);
+    _mm256_storeu_pd(pValueOut, _mm256_cvtps_pd(_mm256_extractf128_ps(ymm, 0)));
+    _mm256_storeu_pd(pValueOut + 4,
+                     _mm256_cvtps_pd(_mm256_extractf128_ps(ymm, 1)));
+}
+
+template <>
+inline void GDALCopy8Words(const double *pValueIn, GFloat16 *const pValueOut)
+{
+    __m256d ymm0 = _mm256_loadu_pd(pValueIn);
+    __m256d ymm1 = _mm256_loadu_pd(pValueIn + 4);
+    __m256 ymm = _mm256_set_m128(_mm256_cvtpd_ps(ymm1), _mm256_cvtpd_ps(ymm0));
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut),
+                     _mm256_cvtps_ph(ymm, _MM_FROUND_TO_NEAREST_INT));
+}
+
+#endif
 
 template <>
 inline void GDALCopy8Words(const float *pValueIn, GByte *const pValueOut)
@@ -1033,37 +1278,6 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
 #endif
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
-}
-#endif
-
-#ifdef notdef_because_slightly_slower_than_default_implementation
-template <>
-inline void GDALCopy4Words(const double *pValueIn, float *const pValueOut)
-{
-    __m128d float_posmax = _mm_set1_pd(std::numeric_limits<float>::max());
-    __m128d float_negmax = _mm_set1_pd(-std::numeric_limits<float>::max());
-    __m128d float_posinf = _mm_set1_pd(std::numeric_limits<float>::infinity());
-    __m128d float_neginf = _mm_set1_pd(-std::numeric_limits<float>::infinity());
-    __m128d val01 = _mm_loadu_pd(pValueIn);
-    __m128d val23 = _mm_loadu_pd(pValueIn + 2);
-    __m128d mask_max = _mm_cmpge_pd(val01, float_posmax);
-    __m128d mask_max23 = _mm_cmpge_pd(val23, float_posmax);
-    val01 = _mm_or_pd(_mm_and_pd(mask_max, float_posinf),
-                      _mm_andnot_pd(mask_max, val01));
-    val23 = _mm_or_pd(_mm_and_pd(mask_max23, float_posinf),
-                      _mm_andnot_pd(mask_max23, val23));
-    __m128d mask_min = _mm_cmple_pd(val01, float_negmax);
-    __m128d mask_min23 = _mm_cmple_pd(val23, float_negmax);
-    val01 = _mm_or_pd(_mm_and_pd(mask_min, float_neginf),
-                      _mm_andnot_pd(mask_min, val01));
-    val23 = _mm_or_pd(_mm_and_pd(mask_min23, float_neginf),
-                      _mm_andnot_pd(mask_min23, val23));
-    __m128 val01_s = _mm_cvtpd_ps(val01);
-    __m128 val23_s = _mm_cvtpd_ps(val23);
-    __m128i val01_i = _mm_castps_si128(val01_s);
-    __m128i val23_i = _mm_castps_si128(val23_s);
-    GDALCopyXMMToInt64(val01_i, pValueOut);
-    GDALCopyXMMToInt64(val23_i, pValueOut + 2);
 }
 #endif
 

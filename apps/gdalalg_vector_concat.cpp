@@ -36,11 +36,14 @@
 /************************************************************************/
 
 GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL, bStandalone)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(bStandalone)
+                                          .SetInputDatasetMaxCount(INT_MAX))
 {
     if (!bStandalone)
     {
-        AddInputArgs(/* hiddenForCLI = */ false);
+        AddVectorInputArgs(/* hiddenForCLI = */ false);
     }
 
     AddArg(
@@ -180,7 +183,7 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
 /*                   GDALVectorConcatAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALVectorConcatAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     std::unique_ptr<OGRSpatialReference> poSrcCRS;
     if (!m_srsCrs.empty())
@@ -424,7 +427,7 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        GDALVectorPipelineStepRunContext stepCtxt;
+        GDALPipelineStepRunContext stepCtxt;
         stepCtxt.m_pfnProgress = pfnProgress;
         stepCtxt.m_pProgressData = pProgressData;
         return RunStep(stepCtxt);

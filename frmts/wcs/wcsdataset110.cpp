@@ -30,55 +30,51 @@
 using namespace WCSUtils;
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize,
-                                             CPL_UNUSED int nBufXSize,
-                                             CPL_UNUSED int nBufYSize)
+std::vector<double> WCSDataset110::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int nBufXSize,
+                                                   CPL_UNUSED int nBufYSize)
 {
     std::vector<double> extent;
 
     // outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] + (nXOff)*adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff + nYSize) * adfGeoTransform[5]);
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] + (nYOff)*adfGeoTransform[5]);
+    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
+    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
 
     bool no_shrink = CPLGetXMLBoolean(psService, "OuterExtents");
 
     // WCS 1.1 extents are centers of outer pixels.
     if (!no_shrink)
     {
-        extent[2] -= adfGeoTransform[1] * 0.5;
-        extent[0] += adfGeoTransform[1] * 0.5;
-        extent[1] -= adfGeoTransform[5] * 0.5;
-        extent[3] += adfGeoTransform[5] * 0.5;
+        extent[2] -= m_gt[1] * 0.5;
+        extent[0] += m_gt[1] * 0.5;
+        extent[1] -= m_gt[5] * 0.5;
+        extent[3] += m_gt[5] * 0.5;
     }
 
     double dfXStep, dfYStep;
 
     if (!no_shrink)
     {
-        dfXStep = (nXSize / (double)nBufXSize) * adfGeoTransform[1];
-        dfYStep = (nYSize / (double)nBufYSize) * adfGeoTransform[5];
+        dfXStep = (nXSize / (double)nBufXSize) * m_gt[1];
+        dfYStep = (nYSize / (double)nBufYSize) * m_gt[5];
         // Carefully adjust bounds for pixel centered values at new
         // sampling density.
         if (nBufXSize != nXSize || nBufYSize != nYSize)
         {
-            dfXStep = (nXSize / (double)nBufXSize) * adfGeoTransform[1];
-            dfYStep = (nYSize / (double)nBufYSize) * adfGeoTransform[5];
+            dfXStep = (nXSize / (double)nBufXSize) * m_gt[1];
+            dfYStep = (nYSize / (double)nBufYSize) * m_gt[5];
 
-            extent[0] =
-                nXOff * adfGeoTransform[1] + adfGeoTransform[0] + dfXStep * 0.5;
+            extent[0] = nXOff * m_gt[1] + m_gt[0] + dfXStep * 0.5;
             extent[2] = extent[0] + (nBufXSize - 1) * dfXStep;
 
-            extent[3] =
-                nYOff * adfGeoTransform[5] + adfGeoTransform[3] + dfYStep * 0.5;
+            extent[3] = nYOff * m_gt[5] + m_gt[3] + dfYStep * 0.5;
             extent[1] = extent[3] + (nBufYSize - 1) * dfYStep;
         }
     }
@@ -86,8 +82,8 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff, int nXSize,
     {
         double adjust =
             CPLAtof(CPLGetXMLValue(psService, "BufSizeAdjust", "0.0"));
-        dfXStep = (nXSize / ((double)nBufXSize + adjust)) * adfGeoTransform[1];
-        dfYStep = (nYSize / ((double)nBufYSize + adjust)) * adfGeoTransform[5];
+        dfXStep = (nXSize / ((double)nBufXSize + adjust)) * m_gt[1];
+        dfYStep = (nYSize / ((double)nBufYSize + adjust)) * m_gt[5];
     }
 
     extent.push_back(dfXStep);

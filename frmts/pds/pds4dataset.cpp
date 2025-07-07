@@ -56,9 +56,10 @@ PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void PDS4WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void PDS4WrapperRasterBand::SetMaskBand(
+    std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -219,9 +220,9 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void PDS4RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
+void PDS4RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 {
-    poMask.reset(poMaskBand, true);
+    poMask.reset(std::move(poMaskBand));
     nMaskFlags = 0;
 }
 
@@ -477,12 +478,6 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 PDS4Dataset::PDS4Dataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -594,39 +589,37 @@ CPLErr PDS4Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDS4Dataset::GetGeoTransform(double *padfTransform)
+CPLErr PDS4Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (m_bGotTransform)
     {
-        memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDS4Dataset::SetGeoTransform(double *padfTransform)
+CPLErr PDS4Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    if (!((padfTransform[1] > 0.0 && padfTransform[2] == 0.0 &&
-           padfTransform[4] == 0.0 && padfTransform[5] < 0.0) ||
-          (padfTransform[1] == 0.0 && padfTransform[2] > 0.0 &&
-           padfTransform[4] > 0.0 && padfTransform[5] == 0.0)))
+    if (!((gt[1] > 0.0 && gt[2] == 0.0 && gt[4] == 0.0 && gt[5] < 0.0) ||
+          (gt[1] == 0.0 && gt[2] > 0.0 && gt[4] > 0.0 && gt[5] == 0.0)))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform or map_projection_rotation=90 "
                  "supported");
         return CE_Failure;
     }
-    memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     m_bGotTransform = true;
     if (m_poExternalDS)
-        m_poExternalDS->SetGeoTransform(padfTransform);
+        m_poExternalDS->SetGeoTransform(m_gt);
     return CE_None;
 }
 
@@ -1322,12 +1315,12 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
             // origin convention, but it appears from
             // https://github.com/OSGeo/gdal/issues/735 that it matches GDAL
             // top-left corner of top-left pixel
-            m_adfGeoTransform[0] = dfULX;
-            m_adfGeoTransform[1] = dfXRes;
-            m_adfGeoTransform[2] = 0.0;
-            m_adfGeoTransform[3] = dfULY;
-            m_adfGeoTransform[4] = 0.0;
-            m_adfGeoTransform[5] = -dfYRes;
+            m_gt[0] = dfULX;
+            m_gt[1] = dfXRes;
+            m_gt[2] = 0.0;
+            m_gt[3] = dfULY;
+            m_gt[4] = 0.0;
+            m_gt[5] = -dfYRes;
             m_bGotTransform = true;
 
             if (dfMapProjectionRotation != 0)
@@ -1340,24 +1333,18 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
                     dfMapProjectionRotation == 90
                         ? 0.0
                         : cos(dfMapProjectionRotation / 180 * M_PI);
-                const double gt_1 = cos_rot * m_adfGeoTransform[1] -
-                                    sin_rot * m_adfGeoTransform[4];
-                const double gt_2 = cos_rot * m_adfGeoTransform[2] -
-                                    sin_rot * m_adfGeoTransform[5];
-                const double gt_0 = cos_rot * m_adfGeoTransform[0] -
-                                    sin_rot * m_adfGeoTransform[3];
-                const double gt_4 = sin_rot * m_adfGeoTransform[1] +
-                                    cos_rot * m_adfGeoTransform[4];
-                const double gt_5 = sin_rot * m_adfGeoTransform[2] +
-                                    cos_rot * m_adfGeoTransform[5];
-                const double gt_3 = sin_rot * m_adfGeoTransform[0] +
-                                    cos_rot * m_adfGeoTransform[3];
-                m_adfGeoTransform[1] = gt_1;
-                m_adfGeoTransform[2] = gt_2;
-                m_adfGeoTransform[0] = gt_0;
-                m_adfGeoTransform[4] = gt_4;
-                m_adfGeoTransform[5] = gt_5;
-                m_adfGeoTransform[3] = gt_3;
+                const double gt_1 = cos_rot * m_gt[1] - sin_rot * m_gt[4];
+                const double gt_2 = cos_rot * m_gt[2] - sin_rot * m_gt[5];
+                const double gt_0 = cos_rot * m_gt[0] - sin_rot * m_gt[3];
+                const double gt_4 = sin_rot * m_gt[1] + cos_rot * m_gt[4];
+                const double gt_5 = sin_rot * m_gt[2] + cos_rot * m_gt[5];
+                const double gt_3 = sin_rot * m_gt[0] + cos_rot * m_gt[3];
+                m_gt[1] = gt_1;
+                m_gt[2] = gt_2;
+                m_gt[0] = gt_0;
+                m_gt[4] = gt_4;
+                m_gt[5] = gt_5;
+                m_gt[3] = gt_3;
             }
         }
     }
@@ -2055,8 +2042,8 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                      adfConstants.size() >= 2 ||
                      (adfConstants.size() == 1 && !bNoDataSet)))
                 {
-                    poBand->SetMaskBand(
-                        new PDS4MaskBand(poBand.get(), adfConstants));
+                    poBand->SetMaskBand(std::make_unique<PDS4MaskBand>(
+                        poBand.get(), adfConstants));
                 }
 
                 poDS->SetBand(i + 1, std::move(poBand));
@@ -2142,20 +2129,20 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
         bHasBoundingBox = true;
 
         // upper left
-        adfX[0] = m_adfGeoTransform[0];
-        adfY[0] = m_adfGeoTransform[3];
+        adfX[0] = m_gt[0];
+        adfY[0] = m_gt[3];
 
         // upper right
-        adfX[1] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize;
-        adfY[1] = m_adfGeoTransform[3];
+        adfX[1] = m_gt[0] + m_gt[1] * nRasterXSize;
+        adfY[1] = m_gt[3];
 
         // lower left
-        adfX[2] = m_adfGeoTransform[0];
-        adfY[2] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize;
+        adfX[2] = m_gt[0];
+        adfY[2] = m_gt[3] + m_gt[5] * nRasterYSize;
 
         // lower right
-        adfX[3] = m_adfGeoTransform[0] + m_adfGeoTransform[1] * nRasterXSize;
-        adfY[3] = m_adfGeoTransform[3] + m_adfGeoTransform[5] * nRasterYSize;
+        adfX[3] = m_gt[0] + m_gt[1] * nRasterXSize;
+        adfY[3] = m_gt[3] + m_gt[5] * nRasterYSize;
     }
     else
     {
@@ -2277,18 +2264,17 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
         psSRI, CXT_Element,
         (osPrefix + "Horizontal_Coordinate_System_Definition").c_str());
 
-    double dfUnrotatedULX = m_adfGeoTransform[0];
-    double dfUnrotatedULY = m_adfGeoTransform[3];
-    double dfUnrotatedResX = m_adfGeoTransform[1];
-    double dfUnrotatedResY = m_adfGeoTransform[5];
+    double dfUnrotatedULX = m_gt[0];
+    double dfUnrotatedULY = m_gt[3];
+    double dfUnrotatedResX = m_gt[1];
+    double dfUnrotatedResY = m_gt[5];
     double dfMapProjectionRotation = 0.0;
-    if (m_adfGeoTransform[1] == 0.0 && m_adfGeoTransform[2] > 0.0 &&
-        m_adfGeoTransform[4] > 0.0 && m_adfGeoTransform[5] == 0.0)
+    if (m_gt[1] == 0.0 && m_gt[2] > 0.0 && m_gt[4] > 0.0 && m_gt[5] == 0.0)
     {
-        dfUnrotatedULX = m_adfGeoTransform[3];
-        dfUnrotatedULY = -m_adfGeoTransform[0];
-        dfUnrotatedResX = m_adfGeoTransform[4];
-        dfUnrotatedResY = -m_adfGeoTransform[2];
+        dfUnrotatedULX = m_gt[3];
+        dfUnrotatedULY = -m_gt[0];
+        dfUnrotatedResX = m_gt[4];
+        dfUnrotatedResY = -m_gt[2];
         dfMapProjectionRotation = 90.0;
     }
 
@@ -4695,12 +4681,11 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
         GDALDataset *poExistingDS = Open(&oOpenInfo);
         if (poExistingDS)
         {
-            double adfExistingGT[6] = {0.0};
+            GDALGeoTransform existingGT;
             const bool bExistingHasGT =
-                poExistingDS->GetGeoTransform(adfExistingGT) == CE_None;
-            double adfGeoTransform[6] = {0.0};
-            const bool bSrcHasGT =
-                poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
+                poExistingDS->GetGeoTransform(existingGT) == CE_None;
+            GDALGeoTransform gt;
+            const bool bSrcHasGT = poSrcDS->GetGeoTransform(gt) == CE_None;
 
             OGRSpatialReference oExistingSRS;
             OGRSpatialReference oSrcSRS;
@@ -4734,21 +4719,20 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
             delete poExistingDS;
 
             const auto maxRelErrorGT =
-                [](const double adfGT1[6], const double adfGT2[6])
+                [](const GDALGeoTransform &gt1, const GDALGeoTransform &gt2)
             {
                 double maxRelError = 0.0;
                 for (int i = 0; i < 6; i++)
                 {
-                    if (adfGT1[i] == 0.0)
+                    if (gt1[i] == 0.0)
                     {
-                        maxRelError =
-                            std::max(maxRelError, std::abs(adfGT2[i]));
+                        maxRelError = std::max(maxRelError, std::abs(gt2[i]));
                     }
                     else
                     {
-                        maxRelError = std::max(maxRelError,
-                                               std::abs(adfGT2[i] - adfGT1[i]) /
-                                                   std::abs(adfGT1[i]));
+                        maxRelError =
+                            std::max(maxRelError, std::abs(gt2[i] - gt1[i]) /
+                                                      std::abs(gt1[i]));
                     }
                 }
                 return maxRelError;
@@ -4757,7 +4741,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
             if ((bExistingHasGT && !bSrcHasGT) ||
                 (!bExistingHasGT && bSrcHasGT) ||
                 (bExistingHasGT && bSrcHasGT &&
-                 maxRelErrorGT(adfExistingGT, adfGeoTransform) > 1e-10))
+                 maxRelErrorGT(existingGT, gt) > 1e-10))
             {
                 CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                          "Appending to a dataset with a different "
@@ -4788,13 +4772,10 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
     if (poDS == nullptr)
         return nullptr;
 
-    double adfGeoTransform[6] = {0.0};
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-         adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None && gt != GDALGeoTransform())
     {
-        poDS->SetGeoTransform(adfGeoTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     if (poSrcDS->GetProjectionRef() != nullptr &&

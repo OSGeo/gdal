@@ -59,7 +59,7 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
         double m_bboxY1{};
         double m_bboxX2{};
         double m_bboxY2{};
-        double m_adfGT[6]{0, 1, 0, 0, 0, 1};
+        GDALGeoTransform m_gt{};
     };
 
     std::vector<GDALPDFObjectNum> m_anParentElements{};

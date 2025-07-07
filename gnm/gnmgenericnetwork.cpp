@@ -35,7 +35,9 @@
 #include <set>
 
 //! @cond Doxygen_Suppress
-GNMGenericNetwork::GNMGenericNetwork() = default;
+GNMGenericNetwork::GNMGenericNetwork() : m_asRules()
+{
+}
 
 GNMGenericNetwork::~GNMGenericNetwork()
 {

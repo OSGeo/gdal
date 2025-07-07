@@ -31,7 +31,8 @@ class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
     GDALVectorGridDataMetricsAbstractAlgorithm(const std::string &name,
                                                const std::string &description,
                                                const std::string &helpURL,
-                                               const std::string &method);
+                                               const std::string &method,
+                                               bool standaloneStep);
 
     ~GDALVectorGridDataMetricsAbstractAlgorithm() override;
 
@@ -45,7 +46,7 @@ class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
 /*                      GDALVectorGridMinimumAlgorithm                  */
 /************************************************************************/
 
-class GDALVectorGridMinimumAlgorithm final
+class GDALVectorGridMinimumAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -54,9 +55,9 @@ class GDALVectorGridMinimumAlgorithm final
         "Create a regular grid from scattered points using the minimum value "
         "in the search ellipse.";
 
-    GDALVectorGridMinimumAlgorithm()
-        : GDALVectorGridDataMetricsAbstractAlgorithm(NAME, DESCRIPTION,
-                                                     HELP_URL, "minimum")
+    explicit GDALVectorGridMinimumAlgorithm(bool standaloneStep = false)
+        : GDALVectorGridDataMetricsAbstractAlgorithm(
+              NAME, DESCRIPTION, HELP_URL, "minimum", standaloneStep)
     {
     }
 
@@ -64,10 +65,26 @@ class GDALVectorGridMinimumAlgorithm final
 };
 
 /************************************************************************/
+/*               GDALVectorGridMinimumAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorGridMinimumAlgorithmStandalone final
+    : public GDALVectorGridMinimumAlgorithm
+{
+  public:
+    GDALVectorGridMinimumAlgorithmStandalone()
+        : GDALVectorGridMinimumAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridMinimumAlgorithmStandalone() override;
+};
+
+/************************************************************************/
 /*                      GDALVectorGridMaximumAlgorithm                  */
 /************************************************************************/
 
-class GDALVectorGridMaximumAlgorithm final
+class GDALVectorGridMaximumAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -76,9 +93,9 @@ class GDALVectorGridMaximumAlgorithm final
         "Create a regular grid from scattered points using the maximum value "
         "in the search ellipse.";
 
-    GDALVectorGridMaximumAlgorithm()
-        : GDALVectorGridDataMetricsAbstractAlgorithm(NAME, DESCRIPTION,
-                                                     HELP_URL, "maximum")
+    explicit GDALVectorGridMaximumAlgorithm(bool standaloneStep = false)
+        : GDALVectorGridDataMetricsAbstractAlgorithm(
+              NAME, DESCRIPTION, HELP_URL, "maximum", standaloneStep)
     {
     }
 
@@ -86,10 +103,26 @@ class GDALVectorGridMaximumAlgorithm final
 };
 
 /************************************************************************/
+/*               GDALVectorGridMaximumAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorGridMaximumAlgorithmStandalone final
+    : public GDALVectorGridMaximumAlgorithm
+{
+  public:
+    GDALVectorGridMaximumAlgorithmStandalone()
+        : GDALVectorGridMaximumAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridMaximumAlgorithmStandalone() override;
+};
+
+/************************************************************************/
 /*                       GDALVectorGridRangeAlgorithm                   */
 /************************************************************************/
 
-class GDALVectorGridRangeAlgorithm final
+class GDALVectorGridRangeAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -98,9 +131,9 @@ class GDALVectorGridRangeAlgorithm final
         "Create a regular grid from scattered points using the difference "
         "between the minimum and maximum values in the search ellipse.";
 
-    GDALVectorGridRangeAlgorithm()
-        : GDALVectorGridDataMetricsAbstractAlgorithm(NAME, DESCRIPTION,
-                                                     HELP_URL, "range")
+    explicit GDALVectorGridRangeAlgorithm(bool standaloneStep = false)
+        : GDALVectorGridDataMetricsAbstractAlgorithm(
+              NAME, DESCRIPTION, HELP_URL, "range", standaloneStep)
     {
     }
 
@@ -108,10 +141,26 @@ class GDALVectorGridRangeAlgorithm final
 };
 
 /************************************************************************/
+/*                GDALVectorGridRangeAlgorithmStandalone                */
+/************************************************************************/
+
+class GDALVectorGridRangeAlgorithmStandalone final
+    : public GDALVectorGridRangeAlgorithm
+{
+  public:
+    GDALVectorGridRangeAlgorithmStandalone()
+        : GDALVectorGridRangeAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridRangeAlgorithmStandalone() override;
+};
+
+/************************************************************************/
 /*                       GDALVectorGridCountAlgorithm                   */
 /************************************************************************/
 
-class GDALVectorGridCountAlgorithm final
+class GDALVectorGridCountAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -120,9 +169,9 @@ class GDALVectorGridCountAlgorithm final
         "Create a regular grid from scattered points using the number of "
         "points in the search ellipse.";
 
-    GDALVectorGridCountAlgorithm()
-        : GDALVectorGridDataMetricsAbstractAlgorithm(NAME, DESCRIPTION,
-                                                     HELP_URL, "count")
+    explicit GDALVectorGridCountAlgorithm(bool standaloneStep = false)
+        : GDALVectorGridDataMetricsAbstractAlgorithm(
+              NAME, DESCRIPTION, HELP_URL, "count", standaloneStep)
     {
     }
 
@@ -130,10 +179,26 @@ class GDALVectorGridCountAlgorithm final
 };
 
 /************************************************************************/
+/*                GDALVectorGridCountAlgorithmStandalone                */
+/************************************************************************/
+
+class GDALVectorGridCountAlgorithmStandalone final
+    : public GDALVectorGridCountAlgorithm
+{
+  public:
+    GDALVectorGridCountAlgorithmStandalone()
+        : GDALVectorGridCountAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridCountAlgorithmStandalone() override;
+};
+
+/************************************************************************/
 /*                 GDALVectorGridAverageDistanceAlgorithm               */
 /************************************************************************/
 
-class GDALVectorGridAverageDistanceAlgorithm final
+class GDALVectorGridAverageDistanceAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -143,9 +208,9 @@ class GDALVectorGridAverageDistanceAlgorithm final
         "distance between the grid node (center of the search ellipse) and all "
         "of the data points in the search ellipse.";
 
-    GDALVectorGridAverageDistanceAlgorithm()
+    explicit GDALVectorGridAverageDistanceAlgorithm(bool standaloneStep = false)
         : GDALVectorGridDataMetricsAbstractAlgorithm(
-              NAME, DESCRIPTION, HELP_URL, "average_distance")
+              NAME, DESCRIPTION, HELP_URL, "average_distance", standaloneStep)
     {
     }
 
@@ -153,10 +218,26 @@ class GDALVectorGridAverageDistanceAlgorithm final
 };
 
 /************************************************************************/
+/*           GDALVectorGridAverageDistanceAlgorithmStandalone           */
+/************************************************************************/
+
+class GDALVectorGridAverageDistanceAlgorithmStandalone final
+    : public GDALVectorGridAverageDistanceAlgorithm
+{
+  public:
+    GDALVectorGridAverageDistanceAlgorithmStandalone()
+        : GDALVectorGridAverageDistanceAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridAverageDistanceAlgorithmStandalone() override;
+};
+
+/************************************************************************/
 /*             GDALVectorGridAverageDistancePointsAlgorithm             */
 /************************************************************************/
 
-class GDALVectorGridAverageDistancePointsAlgorithm final
+class GDALVectorGridAverageDistancePointsAlgorithm /* non final */
     : public GDALVectorGridDataMetricsAbstractAlgorithm
 {
   public:
@@ -165,13 +246,32 @@ class GDALVectorGridAverageDistancePointsAlgorithm final
         "Create a regular grid from scattered points using the average "
         "distance between the data points in the search ellipse.";
 
-    GDALVectorGridAverageDistancePointsAlgorithm()
+    explicit GDALVectorGridAverageDistancePointsAlgorithm(
+        bool standaloneStep = false)
         : GDALVectorGridDataMetricsAbstractAlgorithm(
-              NAME, DESCRIPTION, HELP_URL, "average_distance_pts")
+              NAME, DESCRIPTION, HELP_URL, "average_distance_pts",
+              standaloneStep)
     {
     }
 
     ~GDALVectorGridAverageDistancePointsAlgorithm() override;
+};
+
+/************************************************************************/
+/*        GDALVectorGridAverageDistancePointsAlgorithmStandalone        */
+/************************************************************************/
+
+class GDALVectorGridAverageDistancePointsAlgorithmStandalone final
+    : public GDALVectorGridAverageDistancePointsAlgorithm
+{
+  public:
+    GDALVectorGridAverageDistancePointsAlgorithmStandalone()
+        : GDALVectorGridAverageDistancePointsAlgorithm(
+              /* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridAverageDistancePointsAlgorithmStandalone() override;
 };
 
 //! @endcond

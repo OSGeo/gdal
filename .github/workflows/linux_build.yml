@@ -80,6 +80,7 @@ jobs:
             travis_branch: fedora_rawhide
             container: fedora_rawhide
             build_script: build.sh
+            test_script: test.sh
             os: ubuntu-22.04
 
           - name: Ubuntu 24.04, gcc
@@ -143,6 +144,7 @@ jobs:
           - name: Ubuntu 24.04, s390x
             id: s390x
             container: s390x
+            travis_branch: s390x
             build_script: build.sh
             test_script: test.sh
             os: ubuntu-22.04

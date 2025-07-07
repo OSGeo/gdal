@@ -314,12 +314,12 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
     nRasterXSize = static_cast<int>(nWidth);
     nRasterYSize = static_cast<int>(nHeight);
     m_bGeoTransformValid = true;
-    m_adfGeoTransform[0] = dfMinX;
-    m_adfGeoTransform[1] = (dfMaxX - dfMinX) / nRasterXSize;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = dfMaxY;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = -(dfMaxY - dfMinY) / nRasterYSize;
+    m_gt[0] = dfMinX;
+    m_gt[1] = (dfMaxX - dfMinX) / nRasterXSize;
+    m_gt[2] = 0.0;
+    m_gt[3] = dfMaxY;
+    m_gt[4] = 0.0;
+    m_gt[5] = -(dfMaxY - dfMinY) / nRasterYSize;
 
     // Get SRS
     int nSRID = 0;
@@ -836,13 +836,13 @@ void OGRSQLiteDataSource::ListOverviews()
 void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
                                                            double dfYRes)
 {
-    if (fabs(dfXRes - m_adfGeoTransform[1]) < 1e-5 * m_adfGeoTransform[1])
+    if (fabs(dfXRes - m_gt[1]) < 1e-5 * m_gt[1])
         return;
 
     for (size_t i = 0; i < m_apoOverviewDS.size(); ++i)
     {
-        if (fabs(dfXRes - m_apoOverviewDS[i]->m_adfGeoTransform[1]) <
-            1e-5 * m_apoOverviewDS[i]->m_adfGeoTransform[1])
+        if (fabs(dfXRes - m_apoOverviewDS[i]->m_gt[1]) <
+            1e-5 * m_apoOverviewDS[i]->m_gt[1])
         {
             return;
         }
@@ -855,14 +855,14 @@ void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
     poOvrDS->m_nSectionId = m_nSectionId;
     poOvrDS->m_bPromote1BitAs8Bit = m_bPromote1BitAs8Bit;
     poOvrDS->m_bRL2MixedResolutions = m_bRL2MixedResolutions;
-    poOvrDS->m_adfGeoTransform[0] = m_adfGeoTransform[0];
-    poOvrDS->m_adfGeoTransform[1] = dfXRes;
-    poOvrDS->m_adfGeoTransform[3] = m_adfGeoTransform[3];
-    poOvrDS->m_adfGeoTransform[5] = -dfYRes;
-    const double dfMinX = m_adfGeoTransform[0];
-    const double dfMaxX = dfMinX + m_adfGeoTransform[1] * nRasterXSize;
-    const double dfMaxY = m_adfGeoTransform[3];
-    const double dfMinY = dfMaxY + m_adfGeoTransform[5] * nRasterYSize;
+    poOvrDS->m_gt[0] = m_gt[0];
+    poOvrDS->m_gt[1] = dfXRes;
+    poOvrDS->m_gt[3] = m_gt[3];
+    poOvrDS->m_gt[5] = -dfYRes;
+    const double dfMinX = m_gt[0];
+    const double dfMaxX = dfMinX + m_gt[1] * nRasterXSize;
+    const double dfMaxY = m_gt[3];
+    const double dfMinY = dfMaxY + m_gt[5] * nRasterYSize;
     poOvrDS->nRasterXSize = static_cast<int>(0.5 + (dfMaxX - dfMinX) / dfXRes);
     poOvrDS->nRasterYSize = static_cast<int>(0.5 + (dfMaxY - dfMinY) / dfYRes);
     if (poOvrDS->nRasterXSize <= 1 || poOvrDS->nRasterYSize <= 1 ||
@@ -1046,13 +1046,11 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 #endif
 
     const int nMaxThreads = 1;
-    const double *padfGeoTransform = poGDS->GetGeoTransform();
-    const double dfMinX =
-        padfGeoTransform[0] + nBlockXOff * nBlockXSize * padfGeoTransform[1];
-    const double dfMaxX = dfMinX + nBlockXSize * padfGeoTransform[1];
-    const double dfMaxY =
-        padfGeoTransform[3] + nBlockYOff * nBlockYSize * padfGeoTransform[5];
-    const double dfMinY = dfMaxY + nBlockYSize * padfGeoTransform[5];
+    const auto &gt = poGDS->GetGeoTransform();
+    const double dfMinX = gt[0] + nBlockXOff * nBlockXSize * gt[1];
+    const double dfMaxX = dfMinX + nBlockXSize * gt[1];
+    const double dfMaxY = gt[3] + nBlockYOff * nBlockYSize * gt[5];
+    const double dfMinY = dfMaxY + nBlockYSize * gt[5];
     unsigned char *pBuffer = nullptr;
     int nBufSize = 0;
 
@@ -1078,8 +1076,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     {
         int ret = rl2_get_section_raw_raster_data(
             hDB, nMaxThreads, cov, nSectionId, nBlockXSize, nBlockYSize, dfMinX,
-            dfMinY, dfMaxX, dfMaxY, padfGeoTransform[1],
-            fabs(padfGeoTransform[5]), &pBuffer, &nBufSize,
+            dfMinY, dfMaxX, dfMaxY, gt[1], fabs(gt[5]), &pBuffer, &nBufSize,
             nullptr,  // palette
             nOutPixel);
         if (ret != RL2_OK)
@@ -1089,8 +1086,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     {
         int ret = rl2_get_raw_raster_data(
             hDB, nMaxThreads, cov, nBlockXSize, nBlockYSize, dfMinX, dfMinY,
-            dfMaxX, dfMaxY, padfGeoTransform[1], fabs(padfGeoTransform[5]),
-            &pBuffer, &nBufSize,
+            dfMaxX, dfMaxY, gt[1], fabs(gt[5]), &pBuffer, &nBufSize,
             nullptr,  // palette
             nOutPixel);
         if (ret != RL2_OK)
@@ -1339,16 +1335,16 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
 /*                       RasterLite2Callback()                          */
 /************************************************************************/
 
-typedef struct
+struct RasterLite2CallbackData
 {
-    GDALDataset *poSrcDS;
-    unsigned char nPixelType;
-    unsigned char nSampleType;
-    rl2PalettePtr pPalette;
-    GDALProgressFunc pfnProgress;
-    void *pProgressData;
-    double adfGeoTransform[6];
-} RasterLite2CallbackData;
+    GDALDataset *poSrcDS{};
+    unsigned char nPixelType{};
+    unsigned char nSampleType{};
+    rl2PalettePtr pPalette{};
+    GDALProgressFunc pfnProgress{};
+    void *pProgressData{};
+    GDALGeoTransform gt{};
+};
 
 static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
                                double dfTileMaxX, double dfTileMaxY,
@@ -1368,18 +1364,14 @@ static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
         else
             *pOutPalette = nullptr;
     }
-    int nXOff =
-        static_cast<int>(0.5 + (dfTileMinX - pCbkData->adfGeoTransform[0]) /
-                                   pCbkData->adfGeoTransform[1]);
-    int nXOff2 =
-        static_cast<int>(0.5 + (dfTileMaxX - pCbkData->adfGeoTransform[0]) /
-                                   pCbkData->adfGeoTransform[1]);
-    int nYOff =
-        static_cast<int>(0.5 + (dfTileMaxY - pCbkData->adfGeoTransform[3]) /
-                                   pCbkData->adfGeoTransform[5]);
-    int nYOff2 =
-        static_cast<int>(0.5 + (dfTileMinY - pCbkData->adfGeoTransform[3]) /
-                                   pCbkData->adfGeoTransform[5]);
+    int nXOff = static_cast<int>(0.5 + (dfTileMinX - pCbkData->gt[0]) /
+                                           pCbkData->gt[1]);
+    int nXOff2 = static_cast<int>(0.5 + (dfTileMaxX - pCbkData->gt[0]) /
+                                            pCbkData->gt[1]);
+    int nYOff = static_cast<int>(0.5 + (dfTileMaxY - pCbkData->gt[3]) /
+                                           pCbkData->gt[5]);
+    int nYOff2 = static_cast<int>(0.5 + (dfTileMinY - pCbkData->gt[3]) /
+                                            pCbkData->gt[5]);
     int nReqXSize = nXOff2 - nXOff;
     bool bZeroInitialize = false;
     if (nXOff2 > pCbkData->poSrcDS->GetRasterXSize())
@@ -1478,9 +1470,9 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         return nullptr;
     }
 
-    double adfGeoTransform[6];
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0))
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None &&
+        (gt[2] != 0.0 || gt[4] != 0.0))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Raster with rotation/shearing geotransform terms "
@@ -2051,8 +2043,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
 
     if (cvg == nullptr)
     {
-        const double dfXRes = adfGeoTransform[1];
-        const double dfYRes = fabs(adfGeoTransform[5]);
+        const double dfXRes = gt[1];
+        const double dfYRes = fabs(gt[5]);
         const bool bStrictResolution = true;
         const bool bMixedResolutions = false;
         const bool bSectionPaths = false;
@@ -2102,12 +2094,12 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
         }
     }
 
-    if (adfGeoTransform[5] > 0)
-        adfGeoTransform[5] = -adfGeoTransform[5];
-    double dfXMin = adfGeoTransform[0];
-    double dfXMax = dfXMin + adfGeoTransform[1] * poSrcDS->GetRasterXSize();
-    double dfYMax = adfGeoTransform[3];
-    double dfYMin = dfYMax + adfGeoTransform[5] * poSrcDS->GetRasterYSize();
+    if (gt[5] > 0)
+        gt[5] = -gt[5];
+    double dfXMin = gt[0];
+    double dfXMax = dfXMin + gt[1] * poSrcDS->GetRasterXSize();
+    double dfYMax = gt[3];
+    double dfYMin = dfYMax + gt[5] * poSrcDS->GetRasterYSize();
 
     CPLString osSectionName(CSLFetchNameValueDef(
         papszOptions, "SECTION", CPLGetBasenameSafe(pszName).c_str()));
@@ -2119,7 +2111,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     cbk_data.pPalette = pPalette;
     cbk_data.pfnProgress = pfnProgress;
     cbk_data.pProgressData = pProgressData;
-    memcpy(&cbk_data.adfGeoTransform, adfGeoTransform, sizeof(adfGeoTransform));
+    cbk_data.gt = gt;
 
     if (rl2_load_raw_tiles_into_dbms(
             poDS->GetDB(), poDS->GetRL2Context(), cvg, osSectionName,
@@ -2268,14 +2260,14 @@ char **OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr OGRSQLiteDataSource::GetGeoTransform(double *padfGeoTransform)
+CPLErr OGRSQLiteDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGeoTransformValid)
     {
-        memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return CE_None;
     }
-    return GDALPamDataset::GetGeoTransform(padfGeoTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/

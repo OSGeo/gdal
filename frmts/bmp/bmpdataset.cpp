@@ -220,7 +220,7 @@ class BMPDataset final : public GDALPamDataset
     int nColorElems;
     GByte *pabyColorTable;
     GDALColorTable *poColorTable;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int bGeoTransformValid;
     bool m_bNewFile = false;
     vsi_l_offset m_nFileSize = 0;
@@ -244,8 +244,8 @@ class BMPDataset final : public GDALPamDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 };
 
 /************************************************************************/
@@ -310,7 +310,7 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
              nBand, nBlockXSize, nBlockYSize, nScanSize);
 #endif
 
-    pabyScan = static_cast<GByte *>(VSIMalloc(nScanSize));
+    pabyScan = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nScanSize));
 }
 
 /************************************************************************/
@@ -939,13 +939,6 @@ BMPDataset::BMPDataset()
 
     memset(&sFileHeader, 0, sizeof(sFileHeader));
     memset(&sInfoHeader, 0, sizeof(sInfoHeader));
-
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -979,25 +972,25 @@ BMPDataset::~BMPDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BMPDataset::GetGeoTransform(double *padfTransform)
+CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    if (GDALPamDataset::GetGeoTransform(padfTransform) == CE_None)
+    if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
         return CE_None;
 
 #ifdef notdef
     // See http://trac.osgeo.org/gdal/ticket/3578
     if (sInfoHeader.iXPelsPerMeter > 0 && sInfoHeader.iYPelsPerMeter > 0)
     {
-        padfTransform[1] = sInfoHeader.iXPelsPerMeter;
-        padfTransform[5] = -sInfoHeader.iYPelsPerMeter;
-        padfTransform[0] = -0.5 * padfTransform[1];
-        padfTransform[3] = -0.5 * padfTransform[5];
+        gt[1] = sInfoHeader.iXPelsPerMeter;
+        gt[5] = -sInfoHeader.iYPelsPerMeter;
+        gt[0] = -0.5 * gt[1];
+        gt[3] = -0.5 * gt[5];
         return CE_None;
     }
 #endif
@@ -1009,14 +1002,14 @@ CPLErr BMPDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr BMPDataset::SetGeoTransform(double *padfTransform)
+CPLErr BMPDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (pszFilename && bGeoTransformValid)
     {
-        memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+        m_gt = gt;
 
         CPLErr eErr = CE_None;
-        if (GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform) == FALSE)
+        if (GDALWriteWorldFile(pszFilename, "wld", m_gt.data()) == FALSE)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Can't write world file.");
             eErr = CE_Failure;
@@ -1024,7 +1017,7 @@ CPLErr BMPDataset::SetGeoTransform(double *padfTransform)
         return eErr;
     }
 
-    return GDALPamDataset::SetGeoTransform(padfTransform);
+    return GDALPamDataset::SetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -1385,12 +1378,12 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for world file.                                           */
     /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid = GDALReadWorldFile(
-        poOpenInfo->pszFilename, nullptr, poDS->adfGeoTransform);
+    poDS->bGeoTransformValid =
+        GDALReadWorldFile(poOpenInfo->pszFilename, nullptr, poDS->m_gt.data());
 
     if (!poDS->bGeoTransformValid)
-        poDS->bGeoTransformValid = GDALReadWorldFile(
-            poOpenInfo->pszFilename, ".wld", poDS->adfGeoTransform);
+        poDS->bGeoTransformValid = GDALReadWorldFile(poOpenInfo->pszFilename,
+                                                     ".wld", poDS->m_gt.data());
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -1640,7 +1633,15 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     for (int iBand = 1; iBand <= poDS->nBands; iBand++)
     {
-        poDS->SetBand(iBand, new BMPRasterBand(poDS, iBand));
+        auto band = new BMPRasterBand(poDS, iBand);
+        poDS->SetBand(iBand, band);
+        if (band->pabyScan == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Image with (%d) too large.",
+                     poDS->nRasterXSize);
+            delete poDS;
+            return nullptr;
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -1649,7 +1650,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (CPLFetchBool(papszOptions, "WORLDFILE", false))
         poDS->bGeoTransformValid = TRUE;
 
-    return (GDALDataset *)poDS;
+    return poDS;
 }
 
 /************************************************************************/

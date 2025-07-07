@@ -51,6 +51,7 @@ class GDALVectorInfoAlgorithm final : public GDALAlgorithm
     bool m_update = false;
     std::vector<std::string> m_layerNames{};
     bool m_listFeatures = false;
+    bool m_summaryOnly = false;
     bool m_stdout = false;
     std::string m_sql{};
     std::string m_where{};

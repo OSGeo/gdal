@@ -35,7 +35,7 @@ interpretation, etc. If not, files that do not match the common characteristics 
 
 Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
 be specified (:option:`--pixel-function`) to calculate pixel values from
-overlapping inputs. If no function is specified, or in earlier versions, 
+overlapping inputs. If no function is specified, or in earlier versions,
 the order of the input list is used to determine priority.
 Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
@@ -43,6 +43,11 @@ to potentially fetch data from lower-priority datasets, but currently, alpha cha
 is not taken into account to do alpha compositing (so a source with alpha=0
 appearing on top of another source will override its content). This might be
 changed in later versions.
+
+Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
+
+Options
++++++++
 
 The following options are available:
 
@@ -146,13 +151,11 @@ The following options are available:
 
     .. versionadded:: 3.12
 
-GDALG output (on-the-fly / streamed dataset)
---------------------------------------------
 
-This program supports serializing the command line as a JSON file using the ``GDALG`` output format.
-The resulting file can then be opened as a raster dataset using the
-:ref:`raster.gdalg` driver, and apply the specified pipeline in a on-the-fly /
-streamed way.
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
 Examples
 --------

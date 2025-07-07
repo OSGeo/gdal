@@ -55,7 +55,7 @@ class GTXDataset final : public RawDataset
     VSILFILE *fpImage = nullptr;  // image data file.
 
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     CPL_DISALLOW_COPY_ASSIGN(GTXDataset)
 
@@ -66,19 +66,12 @@ class GTXDataset final : public RawDataset
     {
         m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = 0.0;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = 1.0;
     }
 
     ~GTXDataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -231,17 +224,11 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the header.                                                */
     /* -------------------------------------------------------------------- */
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[4] = 0.0;
-
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(poDS->adfGeoTransform + 3, 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(poDS->adfGeoTransform + 0, 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(poDS->adfGeoTransform + 5, 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(poDS->adfGeoTransform + 1, 8, 1, poDS->fpImage));
+    double gt[6] = {0};
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[3], 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[0], 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[5], 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[1], 8, 1, poDS->fpImage));
 
     CPL_IGNORE_RET_VAL(VSIFReadL(&(poDS->nRasterYSize), 4, 1, poDS->fpImage));
     CPL_IGNORE_RET_VAL(VSIFReadL(&(poDS->nRasterXSize), 4, 1, poDS->fpImage));
@@ -249,26 +236,27 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     CPL_MSBPTR32(&(poDS->nRasterYSize));
     CPL_MSBPTR32(&(poDS->nRasterXSize));
 
-    CPL_MSBPTR64(poDS->adfGeoTransform + 0);
-    CPL_MSBPTR64(poDS->adfGeoTransform + 1);
-    CPL_MSBPTR64(poDS->adfGeoTransform + 3);
-    CPL_MSBPTR64(poDS->adfGeoTransform + 5);
+    CPL_MSBPTR64(&gt[0]);
+    CPL_MSBPTR64(&gt[1]);
+    CPL_MSBPTR64(&gt[3]);
+    CPL_MSBPTR64(&gt[5]);
 
-    poDS->adfGeoTransform[3] += poDS->adfGeoTransform[5] *
-                                (static_cast<double>(poDS->nRasterYSize) - 1);
+    poDS->m_gt = GDALGeoTransform(gt);
+    poDS->m_gt[3] +=
+        poDS->m_gt[5] * (static_cast<double>(poDS->nRasterYSize) - 1);
 
-    poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
-    poDS->adfGeoTransform[3] += poDS->adfGeoTransform[5] * 0.5;
+    poDS->m_gt[0] -= poDS->m_gt[1] * 0.5;
+    poDS->m_gt[3] += poDS->m_gt[5] * 0.5;
 
-    poDS->adfGeoTransform[5] *= -1;
+    poDS->m_gt[5] *= -1;
 
     if (CPLFetchBool(poOpenInfo->papszOpenOptions,
                      "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180", false))
     {
-        if (poDS->adfGeoTransform[0] < -180.0 - poDS->adfGeoTransform[1])
-            poDS->adfGeoTransform[0] += 360.0;
-        else if (poDS->adfGeoTransform[0] > 180.0)
-            poDS->adfGeoTransform[0] -= 360.0;
+        if (poDS->m_gt[0] < -180.0 - poDS->m_gt[1])
+            poDS->m_gt[0] += 360.0;
+        else if (poDS->m_gt[0] > 180.0)
+            poDS->m_gt[0] -= 360.0;
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
@@ -327,10 +315,10 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTXDataset::GetGeoTransform(double *padfTransform)
+CPLErr GTXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -338,23 +326,21 @@ CPLErr GTXDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTXDataset::SetGeoTransform(double *padfTransform)
-
+CPLErr GTXDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to write skewed or rotated geotransform to gtx.");
         return CE_Failure;
     }
 
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
-    const double dfXOrigin = adfGeoTransform[0] + 0.5 * adfGeoTransform[1];
-    const double dfYOrigin =
-        adfGeoTransform[3] + (nRasterYSize - 0.5) * adfGeoTransform[5];
-    const double dfWidth = adfGeoTransform[1];
-    const double dfHeight = -adfGeoTransform[5];
+    const double dfXOrigin = m_gt[0] + 0.5 * m_gt[1];
+    const double dfYOrigin = m_gt[3] + (nRasterYSize - 0.5) * m_gt[5];
+    const double dfWidth = m_gt[1];
+    const double dfHeight = -m_gt[5];
 
     unsigned char header[32] = {'\0'};
     memcpy(header + 0, &dfYOrigin, 8);

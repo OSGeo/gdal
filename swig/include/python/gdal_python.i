@@ -246,6 +246,206 @@ static void readraster_releasebuffer(CPLErr eErr,
             yield entry
     finally:
         CloseDir(dir)
+
+  def where(cond_band, then_band, else_band):
+      """Ternary operator. Return a band whose value is then_band if the
+         corresponding pixel in cond_band is not zero, or the one from else_band
+         otherwise.
+
+         cond_band must be a band or convertible to a band. then_band or else_band
+         can be band, convertible to band or numeric constants.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      cond_band = Band._get_as_band_if_possible(cond_band)
+      then_band = Band._get_as_band_if_possible(then_band)
+      else_band = Band._get_as_band_if_possible(else_band)
+
+      if not isinstance(then_band, Band):
+          then_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, then_band, False)) + then_band
+
+      if not isinstance(else_band, Band):
+          else_band = (cond_band * 0).astype(DataTypeUnionWithValue(gdalconst.GDT_Unknown, else_band, False)) + else_band
+
+      return _gdal.Band_IfThenElse(cond_band, then_band, else_band)._add_parent_references([cond_band, then_band, else_band])
+
+  Where = where
+
+  def minimum(*args):
+      """Return a band whose each pixel value is the minimum of the corresponding
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg < constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = _gdal.Band_MinimumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = _gdal.Band_MinConstant(res, constant)._add_parent_references([res])
+      return res
+
+  Minimum = minimum
+
+  def maximum(*args):
+      """Return a band whose each pixel value is the maximum of the corresponding
+         pixel values in the input arguments which may be gdal.Band or a numeric constant.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      constant = None
+      band_refs = []
+      band_args = []
+      for arg in args:
+          band_arg = Band._get_as_band_if_possible(arg)
+          if isinstance(band_arg, Band):
+              band_args.append(band_arg)
+              band_refs.append(arg)
+          elif constant is None or arg > constant:
+              constant = arg
+      if not band_args:
+          raise RuntimeError("At least one argument should be a band (or convertible to a band)")
+      res = _gdal.Band_MaximumOfNBands(band_args)._add_parent_references(band_refs)
+      if constant is not None:
+          res = _gdal.Band_MaxConstant(res, constant)._add_parent_references([res])
+      return res
+
+  Maximum = maximum
+
+  def mean(*args):
+      """Return a band whose each pixel value is the arithmetic mean of the corresponding
+         pixel values in the input bands.
+
+         The resulting band is lazily evaluated.
+
+         :since: 3.12
+      """
+      bands = [Band._get_as_band_if_possible(band) for band in args]
+      band_refs = [band for band in args]
+      return _gdal.Band_MeanOfNBands(bands)._add_parent_references(band_refs)
+
+  Mean = mean
+
+
+  def logical_and(x1, x2):
+      """Perform a logical and between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_LOGICAL_AND, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_LOGICAL_AND, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDouble(x2, GRABO_LOGICAL_AND, x1)._add_parent_references([x2])
+
+  LogicalAnd = logical_and
+
+
+  def logical_or(x1, x2):
+      """Perform a logical or between two objects, such objects being
+         a raster band a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      x1 = Band._get_as_band_if_possible(x1)
+      x2 = Band._get_as_band_if_possible(x2)
+      if isinstance(x1, Band) and isinstance(x2, Band):
+          return _gdal.Band_BinaryOpBand(x1, GRABO_LOGICAL_OR, x2)._add_parent_references([x1, x2])
+      elif isinstance(x1, Band):
+          return _gdal.Band_BinaryOpDouble(x1, GRABO_LOGICAL_OR, x2)._add_parent_references([x1])
+      else:
+          return _gdal.Band_BinaryOpDouble(x2, GRABO_LOGICAL_OR, x1)._add_parent_references([x2])
+
+  LogicalOr = logical_or
+
+
+  def logical_not(band):
+      """Perform a logical not on a raster band or a numpy array.
+
+         The resulting band is lazily evaluated.
+      """
+      band = Band._get_as_band_if_possible(band)
+      return _gdal.Band_UnaryOp(band, GRAUO_LOGICAL_NOT)._add_parent_references([band])
+
+  LogicalNot = logical_not
+
+  class Window:
+      def __init__(self, xoff, yoff, xsize, ysize):
+          self.data = [xoff, yoff, xsize, ysize]
+
+      def __copy__(self):
+          return Window(*self.data)
+
+      def __getitem__(self, i):
+          return self.data[i]    
+
+      def __setitem__(self, i, value):
+          self.data[i] = value
+      
+      def __iter__(self):
+          return iter(self.data)
+
+      def __eq__(self, other):
+          if isinstance(other, Window):
+              return self.data == other.data
+          if type(other) is tuple:
+              return tuple(self.data) == other
+          return self.data == other
+
+      def __repr__(self):
+          return f'Window({self.data[0]}, {self.data[1]}, {self.data[2]}, {self.data[3]})'
+
+      @property
+      def xoff(self):
+          return self.data[0]
+
+      @xoff.setter
+      def xoff(self, value):
+          self.data[0] = value 
+
+      @property
+      def yoff(self):
+          return self.data[1]
+
+      @yoff.setter
+      def yoff(self, value):
+          self.data[1] = value 
+
+      @property
+      def xsize(self):
+          return self.data[2]
+
+      @xsize.setter
+      def xsize(self, value):
+          self.data[2] = value 
+
+      @property
+      def ysize(self):
+          return self.data[3]
+
+      @ysize.setter
+      def ysize(self, value):
+          self.data[3] = value
+
 %}
 
 %{
@@ -459,7 +659,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
     size_t buf_size = static_cast<size_t>(
         ComputeBandRasterIOSize( nxsize, nysize,
-                                 GDALGetDataTypeSize( ntype ) / 8,
+                                 GDALGetDataTypeSizeBytes( ntype ),
                                  pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
@@ -522,7 +722,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
     GDALDataType ntype = GDALGetRasterDataType(self);
-    int nDataTypeSize = (GDALGetDataTypeSize(ntype) / 8);
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(ntype);
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
 
@@ -548,6 +748,202 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 
 %pythoncode %{
+
+  def _add_parent_references(self, parents):
+      if not hasattr(self, '_parent_references'):
+          self._parent_references = set()
+      for parent in parents:
+          if hasattr(parent, '_parent_references'):
+              for parent_of_parent in parent._parent_references:
+                  if parent_of_parent not in self._parent_references:
+                      parent_of_parent._add_child_ref(self)
+                      self._parent_references.add(parent_of_parent)
+          elif hasattr(parent, "_parent_ds"):
+              parent_ds = parent._parent_ds()
+              if parent_ds and parent_ds not in self._parent_references:
+                  parent_ds._add_child_ref(self)
+                  self._parent_references.add(parent_ds)
+      return self
+
+  @staticmethod
+  def _get_as_band_if_possible(o):
+        if hasattr(o, "shape"):
+            from osgeo import gdal_array
+            ds = gdal_array.OpenArray(o)
+            if ds.RasterCount != 1:
+                raise ValueError("numpy array must hold a single band")
+            band = ds.GetRasterBand(1)
+            band._hard_ref_to_parent = ds
+            return band
+        else:
+            return o
+
+  def __key(self):
+      return str(self)
+
+  def __hash__(self):
+      return hash(self.__key())
+
+  def __add__(self, other):
+      """Add this raster band to a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_ADD, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_ADD, other)._add_parent_references([self])
+
+  def __radd__(self, constant):
+      """Add a constant to this raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_ADD, self)._add_parent_references([self])
+
+  def __sub__(self, other):
+      """Subtract this raster band with a raster band, a numpy array or constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_SUB, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_SUB, other)._add_parent_references([self])
+
+  def __rsub__(self, constant):
+      """Subtract a constant with a raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_SUB, self)._add_parent_references([self])
+
+  def __mul__(self, other):
+      """Multiply this raster band with a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_MUL, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_MUL, other)._add_parent_references([self])
+
+  def __rmul__(self, constant):
+      """Multiply a constant with this raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_MUL, self)._add_parent_references([self])
+
+  def __truediv__(self, other):
+      """Divide this raster band by a raster band, a numpy array or a constant
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_DIV, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_DIV, other)._add_parent_references([self])
+
+  def __rtruediv__(self, constant):
+      """Divide a constant by a raster band
+
+         The resulting band is lazily evaluated.
+      """
+      return _gdal.Band_BinaryOpDoubleToBand(constant, GRABO_DIV, self)._add_parent_references([self])
+
+  def __gt__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is greater than the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_GT, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_GT, other)._add_parent_references([self])
+
+  def __ge__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is greater or equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_GE, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_GE, other)._add_parent_references([self])
+
+  def __lt__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is lesser than the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_LT, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_LT, other)._add_parent_references([self])
+
+  def __le__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is lesser or equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_LE, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_LE, other)._add_parent_references([self])
+
+  def __eq__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_EQ, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_EQ, other)._add_parent_references([self])
+
+  def __ne__(self, other):
+      """Return a band whose value is 1 if the pixel value of the left operand
+         is not equal to the pixel value of the right operand.
+
+         The resulting band is lazily evaluated.
+      """
+      other = Band._get_as_band_if_possible(other)
+      if isinstance(other, Band):
+          return _gdal.Band_BinaryOpBand(self, GRABO_NE, other)._add_parent_references([self, other])
+      else:
+          return _gdal.Band_BinaryOpDouble(self, GRABO_NE, other)._add_parent_references([self])
+
+  def astype(self, dt):
+      """Cast this band to the specified data type
+
+         The data type can be one of the constant of the GDAL ``GDT_`` enumeration
+         or a numpy dtype.
+
+         The resulting band is lazily evaluated.
+      """
+      if not isinstance(dt, int):
+          try:
+              from osgeo import gdal_array
+              dt = gdal_array.NumericTypeCodeToGDALTypeCode(dt)
+          except Exception:
+              raise ValueError( "Invalid dt value")
+
+      return _gdal.Band_AsType(self, dt)._add_parent_references([self])
 
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,
@@ -824,6 +1220,32 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
             virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
+  def BlockWindows(self):
+       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to 
+       each block in this ``Band``. Iteration order is from left to right,
+       then from top to bottom.
+
+
+       Examples
+       --------
+       >>> for window in src_band.BlockWindows():
+       >>>    values = src_band.ReadAsArray(*window)
+       >>>    dst_band.WriteArray(values + 20, window.xoff, window.yoff)
+       0
+       """
+       import math
+       blockXSize, blockYSize = self.GetBlockSize()
+       nBlocksX = math.ceil(self.XSize / blockXSize)
+       nBlocksY = math.ceil(self.YSize / blockYSize)
+       for winrow in range(0, nBlocksY):
+           yOff = winrow * blockYSize
+           ySize = min(blockYSize, self.YSize - yOff)
+           for wincol in range(0, nBlocksX):
+               xOff = wincol * blockXSize
+               xSize = min(blockXSize, self.XSize - xOff)
+               yield Window(xOff, yOff, xSize, ySize)
+
+
 %}
 
 %feature("pythonappend") GetMaskBand %{
@@ -1036,7 +1458,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
+    int ntypesize = GDALGetDataTypeSizeBytes( ntype );
     size_t buf_size = static_cast<size_t>(
         ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
                                     band_list ? band_list :
@@ -1503,7 +1925,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         if buf_obj is None:
             from sys import version_info
-            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * (_gdal.GetDataTypeSize(buf_type) / 8))
+            nRequiredSize = int(buf_xsize * buf_ysize * len(band_list) * _gdal.GetDataTypeSizeBytes(buf_type))
             if version_info >= (3, 0, 0):
                 buf_obj_ar = [None]
                 exec("buf_obj_ar[0] = b' ' * nRequiredSize")
@@ -1770,13 +2192,40 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     ...     print(lyr.GetFeatureCount())
     """
 
-    sql_lyr = $action(self, statement, spatialFilter, dialect)
+    class MyHandler:
+        def __init__(self):
+            self.errors = []
+
+        def callback(self, err_type, err_no, err_msg):
+            self.errors.append([err_type, err_no, err_msg])
+
+    my_error_handler = MyHandler()
+    if GetUseExceptions():
+        with ExceptionMgr(useExceptions=False):
+            PushErrorHandler(my_error_handler.callback)
+            try:
+                sql_lyr = $action(self, statement, spatialFilter, dialect)
+            finally:
+                PopErrorHandler()
+    else:
+        sql_lyr = $action(self, statement, spatialFilter, dialect)
     if sql_lyr:
         import weakref
         sql_lyr._to_release = True
         sql_lyr._dataset_weak_ref = weakref.ref(self)
         if keep_ref_on_ds:
             sql_lyr._dataset_strong_ref = self
+
+    if my_error_handler.errors and my_error_handler.errors[-1][0] == CE_Failure:
+        if sql_lyr:
+            self.ReleaseResultSet(sql_lyr)
+        raise RuntimeError(my_error_handler.errors[-1][2])
+
+    elif my_error_handler.errors:
+        for err_type, err_no, err_msg in my_error_handler.errors:
+            if err_type == CE_Warning:
+                Error(err_type, err_no, err_msg)
+
     return sql_lyr
 %}
 
@@ -2253,6 +2702,14 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 
 %pythonprepend CreateCopy %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    if len(args) >= 2 and isinstance(args[1], Band):
+        ds = args[1].GetDataset()
+        if ds:
+            args = [arg for arg in args]
+            args[1] = ds
+            args = tuple(args)
+
 %}
 
 %pythonprepend Delete %{

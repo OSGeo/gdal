@@ -12,6 +12,7 @@
 ###############################################################################
 
 import struct
+import sys
 
 import gdaltest
 import pytest
@@ -675,6 +676,168 @@ def test_gdalalg_raster_tile_multithread(tmp_vsimem):
     assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
 
 
+def test_gdalalg_raster_tile_multithread_spawn_auto(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        alg.Run()
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_incompatible_source(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate("", "../gdrivers/data/small_world.tif", format="MEM")
+    alg["output"] = tmp_path / "subdir"
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception,
+        match="Unnamed or memory dataset sources are not supported with spawn parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_incompatible_output(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception,
+        match="/vsimem/ output directory not supported with spawn parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_gdal_not_found(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception, match="No 'gdal' binary can be found in '/i_do/not/exist'"
+    ):
+        with gdal.config_option("GDAL_PATH", "/i_do/not/exist"):
+            alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_error_in_child(tmp_path):
+
+    input_filename = tmp_path / "in.tif"
+    gdal.Translate(input_filename, "../gdrivers/data/small_world.tif")
+    f = gdal.VSIFOpenL(input_filename, "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, 4096)
+    gdal.VSIFCloseL(f)
+
+    alg = get_alg()
+    alg["input"] = input_filename
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    alg["max-zoom"] = 3
+    alg["num-threads"] = 2
+    with pytest.raises(Exception, match="Child process.*failed"):
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+            alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 2, reason="needs more than 2 CPUs")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
+def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
+
+    import resource
+
+    if resource.getrlimit(resource.RLIMIT_NOFILE)[0] > 4096:
+        pytest.skip("Limit for number of opened files is too high")
+
+    fd = []
+    while True:
+        try:
+            fd.append(open("/dev/null", "rb"))
+        except Exception:
+            break
+    for i in range(8):
+        fd.pop()
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["num-threads"] = 3
+    try:
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+            with gdaltest.error_raised(
+                gdal.CE_Warning, "Limiting the number of child workers to"
+            ):
+                alg.Run()
+    finally:
+        del fd
+
+    assert len(gdal.ReadDirRecursive(tmp_path)) == 107
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= last_pct[0]
+        last_pct[0] = pct
+        return True
+
+    got_spurious = [False]
+
+    def my_handler(errorClass, errno, msg):
+        if "Spurious" in msg:
+            got_spurious[0] = True
+        return
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["parallel-method"] = "spawn"
+    alg["metadata"] = {"foo": "bar"}
+    with gdaltest.config_options(
+        {
+            "CPL_DEBUG": "ON",
+            "CPL_LOG": str(tmp_path / "log.txt"),
+            "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS": "YES",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        with gdaltest.error_handler(my_handler):
+            alg.Run(my_progress)
+
+    assert last_pct[0] == 1.0
+
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+    assert gdal.VSIStatL(tmp_path / "log.txt") is not None
+    assert got_spurious[0]
+
+
 def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
 
     last_pct = [0]
@@ -688,7 +851,8 @@ def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
     alg["output"] = tmp_vsimem
     alg["min-zoom"] = 0
     alg["max-zoom"] = 3
-    alg.Run(my_progress)
+    with gdaltest.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+        alg.Run(my_progress)
 
     assert last_pct[0] == 1.0
 

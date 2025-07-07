@@ -321,7 +321,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALAutoCreateWarpedVRTEx(
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels, int nLines,
-                    double *padfGeoTransform, GDALWarpOptions *psOptions);
+                    const double *padfGeoTransform, GDALWarpOptions *psOptions);
 
 CPLErr CPL_DLL CPL_STDCALL GDALInitializeWarpedVRT(GDALDatasetH hDS,
                                                    GDALWarpOptions *psWO);

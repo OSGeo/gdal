@@ -44,12 +44,11 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
 /*                GDALRasterRGBToPaletteAlgorithm::RunStep()            */
 /************************************************************************/
 
-bool GDALRasterRGBToPaletteAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     const int nSrcBandCount = poSrcDS->GetRasterCount();

@@ -46,7 +46,7 @@ class GDALVectorExplodeCollectionsAlgorithm /* non final */
     explicit GDALVectorExplodeCollectionsAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

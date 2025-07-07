@@ -1474,8 +1474,8 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
 /*                      GDALComputeAreaOfInterest()                     */
 /************************************************************************/
 
-bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double adfGT[6],
-                               int nXSize, int nYSize,
+bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS,
+                               double adfGT[6], int nXSize, int nYSize,
                                double &dfWestLongitudeDeg,
                                double &dfSouthLatitudeDeg,
                                double &dfEastLongitudeDeg,
@@ -1560,7 +1560,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double adfGT[6],
     return ret;
 }
 
-bool GDALComputeAreaOfInterest(OGRSpatialReference *poSRS, double dfX1,
+bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS, double dfX1,
                                double dfY1, double dfX2, double dfY2,
                                double &dfWestLongitudeDeg,
                                double &dfSouthLatitudeDeg,
@@ -1952,6 +1952,14 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
            "description for details, assumptions, and defaults. If this "
            "option is set, DST_METHOD=GEOLOC_ARRAY will be assumed if not "
            "set.'/>"
+           "<Option name='GEOLOC_NORMALIZE_LONGITUDE_MINUS_180_PLUS_180' "
+           "type='boolean' "
+           "description='"
+           "Force geolocation longitudes into -180,180 when longitude/latitude "
+           "is the coordinate system of the geolocation arrays' default='NO'>"
+           "  <Value>YES</Value>"
+           "  <Value>NO</Value>"
+           "</Option>"
            "<Option name='NUM_THREADS' type='string' "
            "description='Number of threads to use'/>"
            "</OptionList>";
@@ -2156,6 +2164,11 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * the GEOLOCATION metadata domain of the destination dataset. See
  * SRC_GEOLOC_ARRAY description for details, assumptions, and defaults. If this
  * option is set, DST_METHOD=GEOLOC_ARRAY will be assumed if not set.
+ * </li>
+ * <li>GEOLOC_NORMALIZE_LONGITUDE_MINUS_180_PLUS_180=YES/NO. (GDAL &gt;= 3.12.0)
+ * Whether to force geolocation longitudes into -180,180 when longitude/latitude is
+ * the coordinate system of the geolocation arrays. The default is to enable this mode
+ * when the values in the geolocation array are in the -180,180, otherwise NO.
  * </li>
  * </ul>
  *

@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include "gdalalg_vector_rasterize.h"
+#include "gdalalg_raster_write.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -28,21 +29,32 @@
 /*        GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()  */
 /************************************************************************/
 
-GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
+    : GDALPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(bStandaloneStep)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE})
-        .AddMetadataItem(GAAMDI_VRT_COMPATIBLE, {"false"});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-    AddCreationOptionsArg(&m_datasetCreationOptions);
+    if (bStandaloneStep)
+    {
+        AddOutputFormatArg(&m_format)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                             {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE})
+            .AddMetadataItem(GAAMDI_VRT_COMPATIBLE, {"false"});
+        AddOpenOptionsArg(&m_openOptions);
+        AddInputFormatsArg(&m_inputFormats)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR)
+            .SetMinCount(1)
+            .SetMaxCount(1);
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+        AddCreationOptionsArg(&m_creationOptions);
+        AddOverwriteArg(&m_overwrite);
+    }
+
     AddBandArg(&m_bands, _("The band(s) to burn values into (1-based index)"));
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)
         .SetDefault(false);
@@ -54,8 +66,6 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            _("Indicates that a burn value should be extracted from the Z"
              " values of the feature"),
            &m_3d);
-    auto &addArg =
-        AddArg("add", 0, _("Add to existing raster"), &m_add).SetDefault(false);
     AddArg("layer-name", 'l', _("Layer name"), &m_layerName)
         .AddAlias("layer")
         .SetMutualExclusionGroup("layer-name-or-sql");
@@ -105,24 +115,29 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()
            &m_optimization)
         .SetChoices("AUTO", "RASTER", "VECTOR")
         .SetDefault("AUTO");
-    auto &updateArg = AddUpdateArg(&m_update);
-    AddOverwriteArg(&m_overwrite);
-    addArg.AddValidationAction(
-        [&updateArg]()
-        {
-            updateArg.Set(true);
-            return true;
-        });
+
+    if (bStandaloneStep)
+    {
+        auto &addArg = AddArg("add", 0, _("Add to existing raster"), &m_add)
+                           .SetDefault(false);
+        auto &updateArg = AddUpdateArg(&m_update);
+        addArg.AddValidationAction(
+            [&updateArg]()
+            {
+                updateArg.Set(true);
+                return true;
+            });
+    }
 }
 
 /************************************************************************/
-/*                GDALVectorRasterizeAlgorithm::RunImpl()               */
+/*                GDALVectorRasterizeAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                           void *pProgressData)
+bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
 
     CPLStringList aosOptions;
 
@@ -196,10 +211,31 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         aosOptions.AddString(m_dialect.c_str());
     }
 
-    if (!m_outputFormat.empty())
+    std::string outputFilename;
+    if (m_standaloneStep)
     {
+        outputFilename = m_outputDataset.GetName();
+        if (!m_format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(m_format.c_str());
+        }
+
+        for (const std::string &co : m_creationOptions)
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(co.c_str());
+        }
+    }
+    else
+    {
+        outputFilename = CPLGenerateTempFilenameSafe("_rasterize.tif");
+
         aosOptions.AddString("-of");
-        aosOptions.AddString(m_outputFormat.c_str());
+        aosOptions.AddString("GTiff");
+
+        aosOptions.AddString("-co");
+        aosOptions.AddString("TILED=YES");
     }
 
     if (!std::isnan(m_nodata))
@@ -230,12 +266,6 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             aosOptions.AddString("-to");
             aosOptions.AddString(to.c_str());
         }
-    }
-
-    for (const auto &co : m_datasetCreationOptions)
-    {
-        aosOptions.AddString("-dsco");
-        aosOptions.AddString(co.c_str());
     }
 
     if (m_targetExtent.size())
@@ -288,26 +318,46 @@ bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                   GDALRasterizeOptionsFree};
     if (psOptions)
     {
-        GDALRasterizeOptionsSetProgress(psOptions.get(), pfnProgress,
-                                        pProgressData);
+        GDALRasterizeOptionsSetProgress(psOptions.get(), ctxt.m_pfnProgress,
+                                        ctxt.m_pProgressData);
 
         GDALDatasetH hDstDS =
             GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
 
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
-        auto poRetDS = GDALDataset::FromHandle(
-            GDALRasterize(m_outputDataset.GetName().c_str(), hDstDS, hSrcDS,
-                          psOptions.get(), nullptr));
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        auto poRetDS = GDALDataset::FromHandle(GDALRasterize(
+            outputFilename.c_str(), hDstDS, hSrcDS, psOptions.get(), nullptr));
         bOK = poRetDS != nullptr;
 
         if (!hDstDS)
         {
+            if (!m_standaloneStep && poRetDS)
+            {
+                VSIUnlink(outputFilename.c_str());
+                poRetDS->MarkSuppressOnClose();
+            }
+
             m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
         }
     }
 
     return bOK;
 }
+
+/************************************************************************/
+/*               GDALVectorRasterizeAlgorithm::RunImpl()               */
+/************************************************************************/
+
+bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                           void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+GDALVectorRasterizeAlgorithmStandalone::
+    ~GDALVectorRasterizeAlgorithmStandalone() = default;
 
 //! @endcond

@@ -12,14 +12,22 @@
 
 .. Index:: gdal raster pipeline
 
+Description
+-----------
+
+:program:`gdal raster pipeline` can be used to process a raster dataset and
+perform various processing steps that accept raster and generate raster.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
 .. program-output:: gdal raster pipeline --help-doc=main
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
-The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read`` and ``write``,
+A pipeline chains several steps, separated with the `!` (exclamation mark) character.
+The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``calc``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -27,6 +35,24 @@ Potential steps are:
 * read
 
 .. program-output:: gdal raster pipeline --help-doc=read
+
+* calc
+
+.. program-output:: gdal raster pipeline --help-doc=calc
+
+Details for options can be found in :ref:`gdal_raster_calc`.
+
+* mosaic
+
+.. program-output:: gdal raster pipeline --help-doc=mosaic
+
+Details for options can be found in :ref:`gdal_raster_mosaic`.
+
+* stack
+
+.. program-output:: gdal raster pipeline --help-doc=stack
+
+Details for options can be found in :ref:`gdal_raster_stack`.
 
 * aspect
 
@@ -69,6 +95,12 @@ Details for options can be found in :ref:`gdal_raster_fill_nodata`.
 .. program-output:: gdal raster pipeline --help-doc=hillshade
 
 Details for options can be found in :ref:`gdal_raster_hillshade`.
+
+* nodata-to-alpha
+
+.. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
+
+Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
 
 * pansharpen
 
@@ -163,12 +195,6 @@ Details for options can be found in :ref:`gdal_raster_viewshed`.
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal raster pipeline` can be used to process a raster dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

@@ -39,6 +39,8 @@ class WEBPDataset final : public GDALPamDataset
 
     int bHasReadXMPMetadata;
 
+    CPL_DISALLOW_COPY_ASSIGN(WEBPDataset)
+
   public:
     WEBPDataset();
     virtual ~WEBPDataset();
@@ -534,7 +536,9 @@ GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
         config.input.format == 2 ? "LOSSLESS" : "LOSSY", "IMAGE_STRUCTURE");
 #endif
 
-    if (config.input.has_alpha)
+    if (config.input.has_alpha ||
+        CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                         "FORCE_4BANDS", "NO")))
         nBands = 4;
 
     WebPFreeDecBuffer(&config.output);

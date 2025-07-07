@@ -5205,8 +5205,8 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     }
     out_array->length = m_nRowCountInResultSet;
     out_array->n_children = nChildren;
-    out_array->children =
-        (struct ArrowArray **)CPLCalloc(sizeof(struct ArrowArray *), nChildren);
+    out_array->children = static_cast<struct ArrowArray **>(
+        CPLCalloc(sizeof(struct ArrowArray *), nChildren));
 
     // Allocate list of parent buffers: no nulls, null bitmap can be omitted
     out_array->n_buffers = 1;

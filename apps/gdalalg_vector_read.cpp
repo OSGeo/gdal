@@ -29,7 +29,7 @@ GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddInputArgs(/* hiddenForCLI = */ false);
+    AddVectorInputArgs(/* hiddenForCLI = */ false);
 }
 
 /************************************************************************/
@@ -151,7 +151,7 @@ OGRFeature *GDALVectorPipelineReadOutputDataset::GetNextFeature(
 /*                  GDALVectorReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALVectorReadAlgorithm::RunStep(GDALVectorPipelineStepRunContext &)
+bool GDALVectorReadAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);

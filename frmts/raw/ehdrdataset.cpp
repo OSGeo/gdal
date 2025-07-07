@@ -341,12 +341,6 @@ EHdrDataset::EHdrDataset()
       bHDRDirty(false), papszHDR(nullptr), bCLRDirty(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -592,34 +586,34 @@ CPLErr EHdrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr EHdrDataset::GetGeoTransform(double *padfTransform)
+CPLErr EHdrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr EHdrDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     // We only support non-rotated images with info in the .HDR file.
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
     {
-        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+        return GDALPamDataset::SetGeoTransform(gt);
     }
 
     // Record new geotransform.
     bGotTransform = true;
-    memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     // Strip out all old geotransform keywords from HDR records.
     for (int i = CSLCount(papszHDR) - 1; i >= 0; i--)
@@ -636,16 +630,16 @@ CPLErr EHdrDataset::SetGeoTransform(double *padfGeoTransform)
     // Set the transformation information.
     CPLString oValue;
 
-    oValue.Printf("%.15g", adfGeoTransform[0] + adfGeoTransform[1] * 0.5);
+    oValue.Printf("%.15g", m_gt[0] + m_gt[1] * 0.5);
     ResetKeyValue("ULXMAP", oValue);
 
-    oValue.Printf("%.15g", adfGeoTransform[3] + adfGeoTransform[5] * 0.5);
+    oValue.Printf("%.15g", m_gt[3] + m_gt[5] * 0.5);
     ResetKeyValue("ULYMAP", oValue);
 
-    oValue.Printf("%.15g", adfGeoTransform[1]);
+    oValue.Printf("%.15g", m_gt[1]);
     ResetKeyValue("XDIM", oValue);
 
-    oValue.Printf("%.15g", fabs(adfGeoTransform[5]));
+    oValue.Printf("%.15g", fabs(m_gt[5]));
     ResetKeyValue("YDIM", oValue);
 
     return CE_None;
@@ -1150,8 +1144,16 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         VSIStatBufL sStatBuf;
         if (VSIStatL(poOpenInfo->pszFilename, &sStatBuf) == 0)
         {
-            const size_t nBytes = static_cast<size_t>(sStatBuf.st_size / nCols /
-                                                      nRows / l_nBands);
+            const vsi_l_offset nBytes =
+                sStatBuf.st_size / nCols / nRows / l_nBands;
+            // Exit now if nBytes value does not make sense to avoid later overflow in below multiplication
+            if (nBytes > 8)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "EHdr driver cannot infer NBITS value");
+                CSLDestroy(papszHDR);
+                return nullptr;
+            }
             if (nBytes > 0 && nBytes != 3)
                 nBits = static_cast<int>(nBytes * 8);
 
@@ -1327,31 +1329,31 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         if (bCenter)
         {
-            poDS->adfGeoTransform[0] = dfULXMap - dfXDim * 0.5;
-            poDS->adfGeoTransform[1] = dfXDim;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = dfULYMap + dfYDim * 0.5;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = -dfYDim;
+            poDS->m_gt[0] = dfULXMap - dfXDim * 0.5;
+            poDS->m_gt[1] = dfXDim;
+            poDS->m_gt[2] = 0.0;
+            poDS->m_gt[3] = dfULYMap + dfYDim * 0.5;
+            poDS->m_gt[4] = 0.0;
+            poDS->m_gt[5] = -dfYDim;
         }
         else
         {
-            poDS->adfGeoTransform[0] = dfULXMap;
-            poDS->adfGeoTransform[1] = dfXDim;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = dfULYMap;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = -dfYDim;
+            poDS->m_gt[0] = dfULXMap;
+            poDS->m_gt[1] = dfXDim;
+            poDS->m_gt[2] = 0.0;
+            poDS->m_gt[3] = dfULYMap;
+            poDS->m_gt[4] = 0.0;
+            poDS->m_gt[5] = -dfYDim;
         }
     }
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, nullptr, poDS->adfGeoTransform));
+            poOpenInfo->pszFilename, nullptr, poDS->m_gt.data()));
 
     if (!poDS->bGotTransform)
         poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
-            poOpenInfo->pszFilename, "wld", poDS->adfGeoTransform));
+            poOpenInfo->pszFilename, "wld", poDS->m_gt.data()));
 
     // Check for a .prj file.
     std::string osPrjFilename = CPLFormCIFilenameSafe(osPath, osName, "prj");
@@ -1383,12 +1385,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                               ""),
                       "DS"))
             {
-                poDS->adfGeoTransform[0] /= 3600.0;
-                poDS->adfGeoTransform[1] /= 3600.0;
-                poDS->adfGeoTransform[2] /= 3600.0;
-                poDS->adfGeoTransform[3] /= 3600.0;
-                poDS->adfGeoTransform[4] /= 3600.0;
-                poDS->adfGeoTransform[5] /= 3600.0;
+                poDS->m_gt[0] /= 3600.0;
+                poDS->m_gt[1] /= 3600.0;
+                poDS->m_gt[2] /= 3600.0;
+                poDS->m_gt[3] /= 3600.0;
+                poDS->m_gt[4] /= 3600.0;
+                poDS->m_gt[5] /= 3600.0;
             }
         }
         else
@@ -1682,26 +1684,38 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
 
     // Create the hdr filename.
-    char *const pszHdrFilename =
-        CPLStrdup(CPLResetExtensionSafe(pszFilename, "hdr").c_str());
+    const std::string osHdrFilename = CPLResetExtensionSafe(pszFilename, "hdr");
 
     // Open the file.
-    fp = VSIFOpenL(pszHdrFilename, "wt");
+    fp = VSIFOpenL(osHdrFilename.c_str(), "wt");
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed.", pszHdrFilename);
-        CPLFree(pszHdrFilename);
+                 "Attempt to create file `%s' failed.", osHdrFilename.c_str());
         return nullptr;
     }
 
     // Decide how many bits the file should have.
-    int nBits = GDALGetDataTypeSize(eType);
-
-    if (CSLFetchNameValue(papszParamList, "NBITS") != nullptr)
-        nBits = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
+    const char *pszNBITS = CSLFetchNameValue(papszParamList, "NBITS");
+    const int nBits =
+        pszNBITS ? atoi(pszNBITS) : GDALGetDataTypeSizeBits(eType);
+    if (nBits <= 0 || nXSize > (static_cast<int64_t>(INT_MAX) * 8 - 7) / nBits)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid NBITS or too large image width");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        return nullptr;
+    }
 
     const int nRowBytes = (nBits * nXSize + 7) / 8;
+
+    if (nRowBytes > INT_MAX / nBandsIn)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large band count and/or image width");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        return nullptr;
+    }
 
     // Check for signed byte.
     const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
@@ -1729,8 +1743,6 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
 
     if (VSIFCloseL(fp) != 0)
         bOK = false;
-
-    CPLFree(pszHdrFilename);
 
     if (!bOK)
         return nullptr;

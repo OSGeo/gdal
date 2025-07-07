@@ -1372,8 +1372,9 @@ double GDALWarpOperation::GetWorkingMemoryForWindow(int nSrcXSize,
     /*      Based on the types of masks in use, how many bits will each     */
     /*      source pixel cost us?                                           */
     /* -------------------------------------------------------------------- */
-    int nSrcPixelCostInBits = GDALGetDataTypeSize(psOptions->eWorkingDataType) *
-                              psOptions->nBandCount;
+    int nSrcPixelCostInBits =
+        GDALGetDataTypeSizeBits(psOptions->eWorkingDataType) *
+        psOptions->nBandCount;
 
     if (psOptions->pfnSrcDensityMaskFunc != nullptr)
         nSrcPixelCostInBits += 32;  // Float mask?
@@ -1399,8 +1400,9 @@ double GDALWarpOperation::GetWorkingMemoryForWindow(int nSrcXSize,
     /* -------------------------------------------------------------------- */
     /*      What about the cost for the destination.                        */
     /* -------------------------------------------------------------------- */
-    int nDstPixelCostInBits = GDALGetDataTypeSize(psOptions->eWorkingDataType) *
-                              psOptions->nBandCount;
+    int nDstPixelCostInBits =
+        GDALGetDataTypeSizeBits(psOptions->eWorkingDataType) *
+        psOptions->nBandCount;
 
     if (psOptions->pfnDstDensityMaskFunc != nullptr)
         nDstPixelCostInBits += 32;

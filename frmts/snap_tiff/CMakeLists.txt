@@ -3,7 +3,6 @@ add_gdal_driver(
   SOURCES snaptiffdriver.cpp
   PLUGIN_CAPABLE
   NO_DEPS
-  STRONG_CXX_WFLAGS
 )
 
 gdal_standard_includes(gdal_SNAP_TIFF)

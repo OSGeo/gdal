@@ -30,26 +30,34 @@
 /*          GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()    */
 /************************************************************************/
 
-GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_outputLayerName("contour"),
-      m_elevAttributeName(""), m_amin(""), m_amax(""), m_levels{}
+GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
+    : GDALPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
+    m_outputLayerName = "contour";
 
     AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddLayerCreationOptionsArg(&m_layerCreationOptions);
+    if (standaloneStep)
+    {
+        AddOutputFormatArg(&m_format).AddMetadataItem(
+            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+        AddOpenOptionsArg(&m_openOptions);
+        AddInputFormatsArg(&m_inputFormats)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
+        AddCreationOptionsArg(&m_creationOptions);
+        AddLayerCreationOptionsArg(&m_layerCreationOptions);
+        AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
+        AddOverwriteArg(&m_overwrite);
+    }
 
     // gdal_contour specific options
     AddBandArg(&m_band).SetDefault(1);
-    AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
+
     AddArg("elevation-name", 0, _("Name of the elevation field"),
            &m_elevAttributeName);
     AddArg("min-name", 0, _("Name of the minimum elevation field"), &m_amin);
@@ -74,7 +82,6 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
            _("Group n features per transaction (default 100 000)"),
            &m_groupTransactions)
         .SetMinValueIncluded(0);
-    AddOverwriteArg(&m_overwrite);
 }
 
 /************************************************************************/
@@ -84,29 +91,63 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()
 bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
 
+/************************************************************************/
+/*                  GDALRasterContourAlgorithm::RunStep()               */
+/************************************************************************/
+
+bool GDALRasterContourAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
     CPLErrorReset();
 
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    if (!m_outputFormat.empty())
-    {
-        aosOptions.AddString("-of");
-        aosOptions.AddString(m_outputFormat);
-    }
 
-    for (const auto &co : m_creationOptions)
+    std::string outputFilename;
+    if (m_standaloneStep)
     {
-        aosOptions.AddString("-co");
-        aosOptions.AddString(co);
-    }
+        outputFilename = m_outputDataset.GetName();
+        if (!m_format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(m_format.c_str());
+        }
 
-    for (const auto &co : m_layerCreationOptions)
+        for (const auto &co : m_creationOptions)
+        {
+            aosOptions.push_back("-co");
+            aosOptions.push_back(co.c_str());
+        }
+
+        for (const auto &co : m_layerCreationOptions)
+        {
+            aosOptions.push_back("-lco");
+            aosOptions.push_back(co.c_str());
+        }
+    }
+    else
     {
-        aosOptions.AddString("-lco");
-        aosOptions.AddString(co);
+        if (GetGDALDriverManager()->GetDriverByName("GPKG"))
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString("GPKG");
+
+            outputFilename = CPLGenerateTempFilenameSafe("_contour.gpkg");
+        }
+        else
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString("MEM");
+        }
     }
 
     if (m_band > 0)
@@ -188,41 +229,54 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    aosOptions.AddString(m_inputDataset.GetName());
-    aosOptions.AddString(m_outputDataset.GetName());
+    aosOptions.AddString(m_inputDataset[0].GetName());
+    aosOptions.AddString(outputFilename);
 
+    bool bRet = false;
     GDALContourOptionsForBinary optionsForBinary;
     std::unique_ptr<GDALContourOptions, decltype(&GDALContourOptionsFree)>
         psOptions{GDALContourOptionsNew(aosOptions.List(), &optionsForBinary),
                   GDALContourOptionsFree};
-
-    if (!psOptions)
+    if (psOptions)
     {
-        return false;
+        GDALDatasetH hSrcDS{poSrcDS};
+        GDALRasterBandH hBand{nullptr};
+        GDALDatasetH hDstDS{m_outputDataset.GetDatasetRef()};
+        OGRLayerH hLayer{nullptr};
+        char **papszStringOptions = nullptr;
+
+        bRet = GDALContourProcessOptions(psOptions.get(), &papszStringOptions,
+                                         &hSrcDS, &hBand, &hDstDS,
+                                         &hLayer) == CE_None;
+
+        if (bRet)
+        {
+            bRet = GDALContourGenerateEx(hBand, hLayer, papszStringOptions,
+                                         ctxt.m_pfnProgress,
+                                         ctxt.m_pProgressData) == CE_None;
+        }
+
+        CSLDestroy(papszStringOptions);
+
+        auto poDstDS = GDALDataset::FromHandle(hDstDS);
+        if (bRet)
+        {
+            bRet = poDstDS != nullptr;
+        }
+        if (poDstDS && !m_standaloneStep && !outputFilename.empty())
+        {
+            poDstDS->MarkSuppressOnClose();
+            if (bRet)
+                bRet = poDstDS->FlushCache() == CE_None;
+            VSIUnlink(outputFilename.c_str());
+        }
+        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poDstDS));
     }
 
-    GDALDatasetH hSrcDS{m_inputDataset.GetDatasetRef()};
-    GDALRasterBandH hBand{nullptr};
-    GDALDatasetH hDstDS{m_outputDataset.GetDatasetRef()};
-    OGRLayerH hLayer{nullptr};
-    char **papszStringOptions = nullptr;
-
-    CPLErr eErr =
-        GDALContourProcessOptions(psOptions.get(), &papszStringOptions, &hSrcDS,
-                                  &hBand, &hDstDS, &hLayer);
-
-    if (eErr == CE_None)
-    {
-        eErr = GDALContourGenerateEx(hBand, hLayer, papszStringOptions,
-                                     pfnProgress, pProgressData);
-    }
-
-    CSLDestroy(papszStringOptions);
-
-    auto poDstDS = GDALDataset::FromHandle(hDstDS);
-    m_outputDataset.Set(std::unique_ptr<GDALDataset>(poDstDS));
-
-    return eErr == CE_None;
+    return bRet;
 }
+
+GDALRasterContourAlgorithmStandalone::~GDALRasterContourAlgorithmStandalone() =
+    default;
 
 //! @endcond

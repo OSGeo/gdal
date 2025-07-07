@@ -20,8 +20,6 @@
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
 /************************************************************************/
 
-#define GDAL_mm256_load1_ps(x) _mm256_set_ps(x, x, x, x, x, x, x, x)
-
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     const void *poOptions, GUInt32 nPoints,
     CPL_UNUSED const double *unused_padfX,
@@ -39,9 +37,9 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     const float fEpsilon = 0.0000000000001f;
     const float fXPoint = static_cast<float>(dfXPoint);
     const float fYPoint = static_cast<float>(dfYPoint);
-    const __m256 ymm_small = GDAL_mm256_load1_ps(fEpsilon);
-    const __m256 ymm_x = GDAL_mm256_load1_ps(fXPoint);
-    const __m256 ymm_y = GDAL_mm256_load1_ps(fYPoint);
+    const __m256 ymm_small = _mm256_set1_ps(fEpsilon);
+    const __m256 ymm_x = _mm256_set1_ps(fXPoint);
+    const __m256 ymm_y = _mm256_set1_ps(fYPoint);
     __m256 ymm_nominator = _mm256_setzero_ps();
     __m256 ymm_denominator = _mm256_setzero_ps();
     int mask = 0;
@@ -121,10 +119,6 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
             {
                 (*pdfValue) = (pafZ)[i + j];
 
-                // GCC and MSVC need explicit zeroing.
-#if !defined(__clang__)
-                _mm256_zeroupper();
-#endif
                 return CE_None;
             }
         }
@@ -186,11 +180,6 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
     else
         (*pdfValue) = fNominator / fDenominator;
-
-        // GCC needs explicit zeroing.
-#if defined(__GNUC__) && !defined(__clang__)
-    _mm256_zeroupper();
-#endif
 
     return CE_None;
 }

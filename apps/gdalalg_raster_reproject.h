@@ -34,10 +34,10 @@ class GDALRasterReprojectAlgorithm /* non final */
 
     explicit GDALRasterReprojectAlgorithm(bool standaloneStep = false);
 
-    bool CanHandleNextStep(GDALRasterPipelineStepAlgorithm *) const override;
+    bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const override;
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_srsCrs{};
     std::string m_dstCrs{};

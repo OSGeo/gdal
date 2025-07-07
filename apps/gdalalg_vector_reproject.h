@@ -33,7 +33,7 @@ class GDALVectorReprojectAlgorithm /* non final */
     explicit GDALVectorReprojectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::string m_srsCrs{};

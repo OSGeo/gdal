@@ -34,7 +34,7 @@ class GDALRasterUnscaleAlgorithm /* non final */
     explicit GDALRasterUnscaleAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_type{};
 };

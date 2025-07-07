@@ -40,7 +40,7 @@ class GDALHEIFDataset final : public GDALPamDataset
     bool m_bIsThumbnail = false;
 
 #ifdef LIBHEIF_SUPPORTS_TILES
-    heif_image_tiling m_tiling;
+    heif_image_tiling m_tiling{};
 #endif
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
@@ -76,6 +76,8 @@ class GDALHEIFDataset final : public GDALPamDataset
                                          void *userdata);
 #endif
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALHEIFDataset)
+
   public:
     GDALHEIFDataset();
     ~GDALHEIFDataset();
@@ -88,7 +90,7 @@ class GDALHEIFDataset final : public GDALPamDataset
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
     void ReadUserDescription();
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

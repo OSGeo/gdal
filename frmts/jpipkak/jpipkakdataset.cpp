@@ -234,9 +234,9 @@ CPLErr JPIPKAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Fix the buffer layer.                                           */
     /* -------------------------------------------------------------------- */
-    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
-    int nLineSpace = nPixelSpace * nBlockXSize;
-    int nBandSpace = nLineSpace * nBlockYSize;
+    const int nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
+    const int nLineSpace = nPixelSpace * nBlockXSize;
+    const int nBandSpace = nLineSpace * nBlockYSize;
 
     /* -------------------------------------------------------------------- */
     /*      Zoom up file window based on overview level so we are           */
@@ -354,13 +354,6 @@ CPLErr JPIPKAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*****************************************/
 JPIPKAKDataset::JPIPKAKDataset()
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
     pGlobalMutex = CPLCreateMutex();
     CPLReleaseMutex(pGlobalMutex);
 }
@@ -756,8 +749,7 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
             m_oSRS = oJP2Geo.m_oSRS;
             bGeoTransformValid = TRUE;
 
-            memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
-                   sizeof(double) * 6);
+            m_gt = oJP2Geo.m_gt;
             nGCPCount = oJP2Geo.nGCPCount;
             pasGCPList = oJP2Geo.pasGCPList;
 
@@ -1074,17 +1066,17 @@ const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPIPKAKDataset::GetGeoTransform(double *padfTransform)
+CPLErr JPIPKAKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
 
         return CE_None;
     }
     else
-        return GDALPamDataset::GetGeoTransform(padfTransform);
+        return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -1244,7 +1236,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     /*      Provide default packing if needed.                              */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(bufType) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(bufType);
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * bufXSize;
     if (nBandSpace == 0)
@@ -1295,7 +1287,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     /* -------------------------------------------------------------------- */
     if (bufType != eDT)
     {
-        ario->nPixelSpace = GDALGetDataTypeSize(eDT) / 8;
+        ario->nPixelSpace = GDALGetDataTypeSizeBytes(eDT);
         ario->nLineSpace = ario->nPixelSpace * bufXSize;
         ario->nBandSpace = ario->nLineSpace * bufYSize;
 
@@ -1718,7 +1710,7 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
     /*      down to the target canvas.                                      */
     /* -------------------------------------------------------------------- */
     kdu_dims view_dims, region;
-    int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
+    int nBytesPerPixel = GDALGetDataTypeSizeBytes(poJDS->eDT);
     int nPrecision = 0;
 
     try

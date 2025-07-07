@@ -142,7 +142,9 @@ typedef void OSRCoordinateTransformationShadow;
 #endif
 %}
 
+#if !defined(SWIGCSHARP) || !defined(FROM_OGR_I)
 typedef int OGRErr;
+#endif
 
 #if defined(SWIGPYTHON)
 %include osr_python.i
@@ -316,6 +318,10 @@ public:
 
   const char* GetName() {
     return OSRGetName( self );
+  }
+
+  const char* GetCelestialBodyName() {
+    return OSRGetCelestialBodyName( self );
   }
 
 %apply Pointer NONNULL {OSRSpatialReferenceShadow* rhs};
@@ -563,6 +569,13 @@ public:
   void FindMatches( char** options = NULL, OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL )
   {
         *matches = OSRFindMatches(self, options, nvalues, confidence_values);
+  }
+#endif
+
+#ifdef SWIGCSHARP
+  OSRSpatialReferenceShadow** FindMatches(char** options, int* nvalues, int** confidence_values)
+  {
+       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
   }
 #endif
 
@@ -1117,7 +1130,7 @@ public:
     return OSRExportToMICoordSys( self, argout );
   }
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 %apply (char **dictAndCSLDestroy) { char ** };
 #else
 // We'd also need a dictAndCSLDestroy for other languages!
@@ -1285,6 +1298,8 @@ public:
 #endif
 #if SWIGPYTHON
   void _TransformPoint4Double( double inout[4] ) {
+#elif defined(SWIGCSHARP)
+  void TransformPoint4D( double inout[4] ) {
 #else
   void TransformPoint( double inout[4] ) {
 #endif
@@ -1459,6 +1474,8 @@ struct OSRCRSInfo {
     /** Name of the projection method for a projected CRS. Might be NULL even
      *for projected CRS in some cases. */
     char* projection_method;
+    /** Name of the celestial body of the CRS (e.g. "Earth"). */
+    char* celestial_body_name;
 
   OSRCRSInfo( const char* auth_name,
               const char* code,
@@ -1471,7 +1488,8 @@ struct OSRCRSInfo {
               double east_lon_degree,
               double north_lat_degree,
               const char* area_name,
-              const char* projection_method)
+              const char* projection_method,
+              const char* celestial_body_name)
     {
     OSRCRSInfo *self = (OSRCRSInfo*) CPLMalloc( sizeof( OSRCRSInfo ) );
     self->pszAuthName = auth_name ? CPLStrdup(auth_name) : NULL;
@@ -1486,6 +1504,7 @@ struct OSRCRSInfo {
     self->dfNorthLatitudeDeg = north_lat_degree;
     self->pszAreaName = area_name ? CPLStrdup(area_name) : NULL;
     self->pszProjectionMethod = projection_method ? CPLStrdup(projection_method) : NULL;
+    self->pszCelestialBodyName = celestial_body_name ? CPLStrdup(celestial_body_name) : NULL;
     return self;
   }
 
@@ -1495,6 +1514,7 @@ struct OSRCRSInfo {
     CPLFree( self->pszName );
     CPLFree( self->pszAreaName );
     CPLFree( self->pszProjectionMethod );
+    CPLFree( self->pszCelestialBodyName );
     CPLFree( self );
   }
 } /* extend */
@@ -1549,6 +1569,10 @@ const char* OSRCRSInfo_area_name_get( OSRCRSInfo *crsInfo ) {
 
 const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
   return crsInfo->pszProjectionMethod;
+}
+
+const char* OSRCRSInfo_celestial_body_name_get( OSRCRSInfo *crsInfo ) {
+  return crsInfo->pszCelestialBodyName;
 }
 
 %}

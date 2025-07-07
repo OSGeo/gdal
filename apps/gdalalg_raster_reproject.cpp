@@ -169,7 +169,7 @@ void GDALRasterReprojectUtils::AddWarpOptTransformOptErrorThresholdArg(
 /************************************************************************/
 
 bool GDALRasterReprojectAlgorithm::CanHandleNextStep(
-    GDALRasterPipelineStepAlgorithm *poNextStep) const
+    GDALPipelineStepAlgorithm *poNextStep) const
 {
     return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
            poNextStep->GetOutputFormat() != "stream";
@@ -179,10 +179,10 @@ bool GDALRasterReprojectAlgorithm::CanHandleNextStep(
 /*            GDALRasterReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReprojectAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -344,8 +344,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(
             GDALWarpAppOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
                                           ctxt.m_pProgressData);
         }
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
         auto poRetDS = GDALDataset::FromHandle(GDALWarp(
             outputFilename.c_str(), nullptr, 1, &hSrcDS, psOptions, nullptr));
         GDALWarpAppOptionsFree(psOptions);

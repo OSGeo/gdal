@@ -46,7 +46,7 @@ class GDALVectorBufferAlgorithm /* non final */
     explicit GDALVectorBufferAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

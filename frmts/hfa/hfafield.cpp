@@ -503,7 +503,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
             nIntValue = INT_MAX;
         else if (dfDoubleValue < INT_MIN)
             nIntValue = INT_MIN;
-        else
+        else if (std::isfinite(dfDoubleValue))
             nIntValue = static_cast<int>(dfDoubleValue);
     }
     else if (chReqType == 'i')

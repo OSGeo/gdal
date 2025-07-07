@@ -143,12 +143,11 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
 /*                 GDALRasterViewshedAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterViewshedAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -176,8 +175,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(
     if (!GetArg("curvature-coefficient")->IsExplicitlySet())
     {
         m_opts.curveCoeff = gdal::viewshed::adjustCurveCoeff(
-            m_opts.curveCoeff,
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()));
+            m_opts.curveCoeff, GDALDataset::ToHandle(poSrcDS));
     }
 
     if (m_outputMode == "normal")
@@ -224,7 +222,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(
         }
         gdal::viewshed::Cumulative oViewshed(m_opts);
         const bool bSuccess = oViewshed.run(
-            m_inputDataset.GetName().c_str(),
+            m_inputDataset[0].GetName().c_str(),
             pfnProgress ? pfnProgress : GDALDummyProgress, pProgressData);
         if (bSuccess)
         {

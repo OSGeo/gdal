@@ -2799,21 +2799,24 @@ def test_jp2openjpeg_45():
     ds = None
 
     # We have to explicitly allow it.
-    ds = gdal.OpenEx("/vsimem/jp2openjpeg_45.jp2", open_options=["OPEN_REMOTE_GML=YES"])
+    if gdaltest.built_against_curl():
+        ds = gdal.OpenEx(
+            "/vsimem/jp2openjpeg_45.jp2", open_options=["OPEN_REMOTE_GML=YES"]
+        )
+
+        if ds is None:
+            if (
+                gdaltest.gdalurlopen(
+                    "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml"
+                )
+                is None
+            ):
+                pytest.skip()
+            pytest.fail()
+        assert ds.GetLayerCount() == 1
+        ds = None
+
     gdal.Unlink("/vsimem/jp2openjpeg_45.jp2")
-
-    if ds is None:
-        if (
-            gdaltest.gdalurlopen(
-                "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml"
-            )
-            is None
-        ):
-            pytest.skip()
-        pytest.fail()
-    assert ds.GetLayerCount() == 1
-    ds = None
-
     gdal.Unlink("/vsimem/jp2openjpeg_45.jp2.aux.xml")
 
 

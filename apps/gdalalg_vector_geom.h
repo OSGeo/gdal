@@ -33,7 +33,7 @@ class GDALVectorGeomAlgorithm /* non final */
     explicit GDALVectorGeomAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     void WarnIfDeprecated() override;
 
@@ -87,7 +87,7 @@ class GDALVectorGeomAbstractAlgorithm /* non final */
                                     const std::string &helpURL,
                                     bool standaloneStep, OptionsBase &opts);
 
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
   private:
     std::string &m_activeLayer;

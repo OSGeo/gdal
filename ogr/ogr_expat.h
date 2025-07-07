@@ -29,6 +29,12 @@
 #define XML_STATUS_ERROR 0
 #endif
 
+#undef XML_FALSE
+#define XML_FALSE static_cast<XML_Bool>(0)
+
+#undef XML_TRUE
+#define XML_TRUE static_cast<XML_Bool>(1)
+
 /* XML_StopParser only available for expat >= 1.95.8 */
 #if !defined(XML_MAJOR_VERSION) ||                                             \
     (XML_MAJOR_VERSION * 10000 + XML_MINOR_VERSION * 100 +                     \

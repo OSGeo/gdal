@@ -60,14 +60,14 @@ GDALRasterColorMergeAlgorithm::GDALRasterColorMergeAlgorithm(
 
     if (standaloneStep)
     {
-        AddInputArgs(false, false);
+        AddRasterInputArgs(false, false);
         AddGrayscaleDataset();
         AddProgressArg();
-        AddOutputArgs(false);
+        AddRasterOutputArgs(false);
     }
     else
     {
-        AddHiddenInputDatasetArg();
+        AddRasterHiddenInputDatasetArg();
         AddGrayscaleDataset();
     }
 }
@@ -84,9 +84,9 @@ class HSVMergeDataset final : public GDALDataset
   public:
     HSVMergeDataset(GDALDataset &oColorDS, GDALDataset &oGrayScaleDS);
 
-    CPLErr GetGeoTransform(double *padfGT) override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        return m_oColorDS.GetGeoTransform(padfGT);
+        return m_oColorDS.GetGeoTransform(gt);
     }
 
     const OGRSpatialReference *GetSpatialRef() const override
@@ -758,9 +758,9 @@ CPLErr HSVMergeBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                 GDALRasterColorMergeAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALRasterColorMergeAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterColorMergeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     auto poGrayScaleDS = m_grayScaleDataset.GetDatasetRef();

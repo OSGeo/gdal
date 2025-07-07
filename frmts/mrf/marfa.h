@@ -404,19 +404,19 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLString const &GetPhotometricInterpretation()
+    CPLString const &GetPhotometricInterpretation()
     {
         return photometric;
     }
 
-    virtual CPLErr SetPhotometricInterpretation(const char *photo)
+    CPLErr SetPhotometricInterpretation(const char *photo)
     {
         photometric = photo;
         return CE_None;
     }
 
-    virtual CPLErr GetGeoTransform(double *gt) override;
-    virtual CPLErr SetGeoTransform(double *gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual char **GetFileList() override;
 
@@ -442,10 +442,9 @@ class MRFDataset final : public GDALPamDataset
 
     // Patches a region of all the next overview, argument counts are in blocks
     // Exported for mrf_insert utility
-    virtual CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width,
-                                         int Height, int srcLevel = 0,
-                                         int recursive = false,
-                                         int sampling_mode = SAMPLING_Avg);
+    CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
+                                 int srcLevel = 0, int recursive = false,
+                                 int sampling_mode = SAMPLING_Avg);
 
     // Creates an XML tree from the current MRF.  If written to a file it
     // becomes an MRF
@@ -488,6 +487,8 @@ class MRFDataset final : public GDALPamDataset
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
+    using GDALDataset::AddOverviews;
+
     GIntBig AddOverviews(int scale);
 
     // Late allocation buffer
@@ -512,8 +513,7 @@ class MRFDataset final : public GDALPamDataset
     virtual int CloseDependentDatasets() override;
 
     // Write a tile, the infooffset is the relative position in the index file
-    virtual CPLErr WriteTile(void *buff, GUIntBig infooffset,
-                             GUIntBig size = 0);
+    CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
 
     // Custom CopyWholeRaster for Zen JPEG
     CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
@@ -603,8 +603,8 @@ class MRFDataset final : public GDALPamDataset
         bdirty;  // Holds bits, to be used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
-    double GeoTransform[6];
-    int bGeoTransformValid;
+    GDALGeoTransform m_gt{};
+    mutable int bGeoTransformValid;
 
     // CRS
     OGRSpatialReference m_oSRS{};

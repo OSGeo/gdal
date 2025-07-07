@@ -63,14 +63,14 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
 
     if (standaloneStep)
     {
-        AddInputArgs(false, false);
+        AddRasterInputArgs(false, false);
         AddSpectralDatasetArg();
         AddProgressArg();
-        AddOutputArgs(false);
+        AddRasterOutputArgs(false);
     }
     else
     {
-        AddHiddenInputDatasetArg();
+        AddRasterHiddenInputDatasetArg();
         AddSpectralDatasetArg();
     }
 
@@ -94,9 +94,9 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
 /*            GDALRasterPansharpenAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterPansharpenAlgorithm::RunStep(GDALRasterPipelineStepRunContext &)
+bool GDALRasterPansharpenAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    auto poPanDS = m_inputDataset.GetDatasetRef();
+    auto poPanDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poPanDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());

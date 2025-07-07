@@ -30,22 +30,21 @@
 using namespace WCSUtils;
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize, CPL_UNUSED int,
-                                             CPL_UNUSED int)
+std::vector<double> WCSDataset100::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int,
+                                                   CPL_UNUSED int)
 {
     std::vector<double> extent;
     // WCS 1.0 extents are the outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] + (nXOff)*adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff + nYSize) * adfGeoTransform[5]);
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] + (nYOff)*adfGeoTransform[5]);
+    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
+    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
     return extent;
 }
 
@@ -233,7 +232,7 @@ bool WCSDataset100::ExtractGridInfo()
     /*      Projection is, if it is, from Point.srsName                     */
     /* -------------------------------------------------------------------- */
     char *pszProjection = nullptr;
-    if (WCSParseGMLCoverage(psRG, &nRasterXSize, &nRasterYSize, adfGeoTransform,
+    if (WCSParseGMLCoverage(psRG, &nRasterXSize, &nRasterYSize, m_gt,
                             &pszProjection) != CE_None)
     {
         CPLFree(pszProjection);
@@ -248,10 +247,10 @@ bool WCSDataset100::ExtractGridInfo()
     // MapServer have origin at pixel boundary
     if (CPLGetXMLBoolean(psService, "OriginAtBoundary"))
     {
-        adfGeoTransform[0] += adfGeoTransform[1] * 0.5;
-        adfGeoTransform[0] += adfGeoTransform[2] * 0.5;
-        adfGeoTransform[3] += adfGeoTransform[4] * 0.5;
-        adfGeoTransform[3] += adfGeoTransform[5] * 0.5;
+        m_gt[0] += m_gt[1] * 0.5;
+        m_gt[0] += m_gt[2] * 0.5;
+        m_gt[3] += m_gt[4] * 0.5;
+        m_gt[3] += m_gt[5] * 0.5;
     }
 
     /* -------------------------------------------------------------------- */

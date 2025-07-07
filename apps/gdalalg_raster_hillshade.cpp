@@ -69,7 +69,7 @@ GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
 /************************************************************************/
 
 bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
-    GDALRasterPipelineStepAlgorithm *poNextStep) const
+    GDALPipelineStepAlgorithm *poNextStep) const
 {
     return poNextStep->GetName() == GDALRasterWriteAlgorithm::NAME &&
            poNextStep->GetOutputFormat() != "stream";
@@ -79,10 +79,10 @@ bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
 /*              GDALRasterHillshadeAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterHillshadeAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -178,11 +178,10 @@ bool GDALRasterHillshadeAlgorithm::RunStep(
             GDALDEMProcessingOptionsSetProgress(psOptions, ctxt.m_pfnProgress,
                                                 ctxt.m_pProgressData);
         }
-        auto poOutDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::FromHandle(GDALDEMProcessing(
-                outputFilename.c_str(),
-                GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-                "hillshade", nullptr, psOptions, nullptr)));
+        auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+            GDALDEMProcessing(outputFilename.c_str(),
+                              GDALDataset::ToHandle(poSrcDS), "hillshade",
+                              nullptr, psOptions, nullptr)));
         GDALDEMProcessingOptionsFree(psOptions);
         bOK = poOutDS != nullptr;
         if (poOutDS)

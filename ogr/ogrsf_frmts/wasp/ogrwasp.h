@@ -46,8 +46,8 @@ class OGRWAsPLayer final : public OGRLayer,
 
     GDALDataset *m_poDS = nullptr;
     const bool bMerge;
-    std::vector<Zone> oZones;
-    std::vector<Boundary> oBoundaries;
+    std::vector<Zone> oZones{};
+    std::vector<Boundary> oBoundaries{};
 
     static bool isEqual(const double &dfRouhness1, const double &dfRouhness2)
     {
@@ -56,10 +56,10 @@ class OGRWAsPLayer final : public OGRLayer,
 
     /* end of stuff for polygon processing */
 
-    int iFeatureCount;
+    int iFeatureCount{};
 
     const CPLString sName;
-    VSILFILE *hFile;
+    VSILFILE *hFile{};
 
     /* for roughness zone, two fields for linestrings (left/right), one for
      * polygons */
@@ -67,14 +67,14 @@ class OGRWAsPLayer final : public OGRLayer,
     const CPLString sFirstField;
     const CPLString sSecondField;
     const CPLString sGeomField;
-    int iFirstFieldIdx;
-    int iSecondFieldIdx;
-    int iGeomFieldIdx;
+    int iFirstFieldIdx{};
+    int iSecondFieldIdx{};
+    int iGeomFieldIdx{};
 
-    OGRFeatureDefn *poLayerDefn;
-    OGRSpatialReference *poSpatialReference;
+    OGRFeatureDefn *poLayerDefn{};
+    OGRSpatialReference *poSpatialReference{};
 
-    vsi_l_offset iOffsetFeatureBegin;
+    vsi_l_offset iOffsetFeatureBegin{};
 
     enum OpenMode
     {
@@ -82,11 +82,11 @@ class OGRWAsPLayer final : public OGRLayer,
         WRITE_ONLY
     };
 
-    OpenMode eMode;
+    OpenMode eMode = READ_ONLY;
 
-    std::unique_ptr<double> pdfTolerance;
-    std::unique_ptr<double> pdfAdjacentPointTolerance;
-    std::unique_ptr<double> pdfPointToCircleRadius;
+    std::unique_ptr<double> pdfTolerance{};
+    std::unique_ptr<double> pdfAdjacentPointTolerance{};
+    std::unique_ptr<double> pdfPointToCircleRadius{};
 
     OGRErr WriteRoughness(OGRLineString *, const double &dfZleft,
                           const double &dfZright);
@@ -118,6 +118,8 @@ class OGRWAsPLayer final : public OGRLayer,
     OGRLineString *Simplify(const OGRLineString &line) const;
 
     OGRFeature *GetNextRawFeature();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRWAsPLayer)
 
   public:
     /* For writing */
@@ -169,12 +171,14 @@ class OGRWAsPLayer final : public OGRLayer,
 
 class OGRWAsPDataSource final : public GDALDataset
 {
-    CPLString sFilename;
-    VSILFILE *hFile;
-    std::unique_ptr<OGRWAsPLayer> oLayer;
+    CPLString sFilename{};
+    VSILFILE *hFile{};
+    std::unique_ptr<OGRWAsPLayer> oLayer{};
 
     void GetOptions(CPLString &sFirstField, CPLString &sSecondField,
                     CPLString &sGeomField, bool &bMerge) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRWAsPDataSource)
 
   public:
     /** @note takes ownership of hFile (i.e. responsibility for closing) */

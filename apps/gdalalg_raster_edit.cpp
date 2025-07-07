@@ -67,7 +67,7 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 
     AddBBOXArg(&m_bbox);
 
-    AddNodataDataTypeArg(&m_nodata, /* noneAllowed = */ true);
+    AddNodataArg(&m_nodata, /* noneAllowed = */ true);
 
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),
@@ -225,7 +225,7 @@ std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
 /*                GDALRasterEditAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     GDALDataset *poDS = m_dataset.GetDatasetRef();
     if (poDS)
@@ -240,7 +240,8 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
     }
     else
     {
-        CPLAssert(m_inputDataset.GetDatasetRef());
+        const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+        CPLAssert(poSrcDS);
         CPLAssert(m_outputDataset.GetName().empty());
         CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -249,8 +250,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
         aosOptions.push_back("VRT");
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-        GDALDatasetH hSrcDS =
-            GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
         auto poRetDS = GDALDataset::FromHandle(
             GDALTranslate("", hSrcDS, psOptions, nullptr));
         GDALTranslateOptionsFree(psOptions);
@@ -293,14 +293,14 @@ bool GDALRasterEditAlgorithm::RunStep(GDALRasterPipelineStepRunContext &ctxt)
                             "or width is null");
                 return false;
             }
-            double adfGT[6];
-            adfGT[0] = m_bbox[0];
-            adfGT[1] = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
-            adfGT[2] = 0;
-            adfGT[3] = m_bbox[3];
-            adfGT[4] = 0;
-            adfGT[5] = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
-            if (poDS->SetGeoTransform(adfGT) != CE_None)
+            GDALGeoTransform gt;
+            gt[0] = m_bbox[0];
+            gt[1] = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
+            gt[2] = 0;
+            gt[3] = m_bbox[3];
+            gt[4] = 0;
+            gt[5] = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
+            if (poDS->SetGeoTransform(gt) != CE_None)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "Setting extent failed");

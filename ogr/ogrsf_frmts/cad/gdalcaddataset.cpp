@@ -49,12 +49,6 @@ GDALCADDataset::GDALCADDataset()
     : poCADFile(nullptr), papoLayers(nullptr), nLayers(0), poRasterDS(nullptr),
       poSpatialReference(nullptr)
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 GDALCADDataset::~GDALCADDataset()
@@ -97,14 +91,13 @@ void GDALCADDataset::FillTransform(CADImage *pImage, double dfUnits)
     CADVector oSizePt = pImage->getImageSizeInPx();
     CADVector oInsPt = pImage->getVertInsertionPoint();
     CADVector oSizeUnitsPt = pImage->getPixelSizeInACADUnits();
-    adfGeoTransform[0] = oInsPt.getX();
-    adfGeoTransform[3] =
-        oInsPt.getY() + oSizePt.getY() * oSizeUnitsPt.getX() * dfMultiply;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[4] = 0.0;
+    m_gt[0] = oInsPt.getX();
+    m_gt[3] = oInsPt.getY() + oSizePt.getY() * oSizeUnitsPt.getX() * dfMultiply;
+    m_gt[2] = 0.0;
+    m_gt[4] = 0.0;
 
-    adfGeoTransform[1] = oSizeUnitsPt.getX() * dfMultiply;
-    adfGeoTransform[5] = -oSizeUnitsPt.getY() * dfMultiply;
+    m_gt[1] = oSizeUnitsPt.getX() * dfMultiply;
+    m_gt[5] = -oSizeUnitsPt.getY() * dfMultiply;
 }
 
 int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
@@ -255,7 +248,7 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
                 return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
             }
 
-            if (poRasterDS->GetGeoTransform(adfGeoTransform) != CE_None)
+            if (poRasterDS->GetGeoTransform(m_gt) != CE_None)
             {
                 // The external world file have priority
                 double dfUnits = 1.0;
@@ -436,9 +429,9 @@ const std::string GDALCADDataset::GetPrjFilePath() const
     return std::string();
 }
 
-CPLErr GDALCADDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALCADDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfGeoTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

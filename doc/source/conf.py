@@ -275,6 +275,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_pipeline",
+        "gdal-pipeline",
+        "Execute a pipeline",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster",
         "gdal-raster",
         "Entry point for raster commands",
@@ -390,6 +397,13 @@ man_pages = [
         "programs/gdal_raster_mosaic",
         "gdal-raster-mosaic",
         "Build a mosaic",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_nodata_to_alpha",
+        "gdal-raster-nodata-to-alpha",
+        "Replace nodata value(s) with an alpha band",
         [author_evenr],
         1,
     ),

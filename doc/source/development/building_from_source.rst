@@ -2195,6 +2195,19 @@ Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
              -DGDAL_ENABLE_DRIVER_JP2OPENJPEG:BOOL=ON \
              -DOGR_ENABLE_DRIVER_SVG:BOOL=ON
 
+Driver specific options
++++++++++++++++++++++++
+
+For the VRT driver
+------------------
+
+.. option:: GDAL_VRT_ENABLE_RAWRASTERBAND:BOOL=ON/OFF
+
+   Defaults to ON. Can be set to OFF to disable the Raw Files (VRTRawRasterBand)
+   capability of the :ref:`raster.vrt` driver. Consult
+   :ref:`vrtrawrasterband_restricted_access` for more details.
+
+
 Build drivers as plugins
 ++++++++++++++++++++++++
 

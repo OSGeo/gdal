@@ -21,6 +21,7 @@ GDAL
     sponsors/index
     contributing/index
     faq
+    glossary
     license
     thanks
 

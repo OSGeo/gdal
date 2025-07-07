@@ -240,14 +240,12 @@ class TileMatrixSet:
         return tms
 
 
-tmsMap = {}
-
-
-def get_profile_list():
+def get_profile_list_and_tmsMap():
     profile_list = ["mercator", "geodetic", "raster"]
 
     # Read additional tile matrix sets from GDAL data directory
     filename = gdal.FindFile("gdal", "tms_MapML_APSTILE.json")
+    tmsMap = {}
     if filename:
         dirname = os.path.dirname(filename)
         for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
@@ -270,7 +268,7 @@ def get_profile_list():
             tmsMap[tms.identifier] = tms
             profile_list.append(tms.identifier)
 
-    return profile_list
+    return profile_list, tmsMap
 
 
 threadLocal = threading.local()
@@ -709,7 +707,7 @@ def set_cache_max(cache_in_bytes: int) -> None:
 
 
 def generate_kml(
-    tx, ty, tz, tileext, tile_size, tileswne, options, children=None, **args
+    tx, ty, tz, tileext, tile_size, tileswne, options, tmsMap, children=None, **args
 ):
     """
     Template for the KML. Returns filled string.
@@ -734,7 +732,7 @@ def generate_kml(
         args["xml_escaped_title"] = gdal.EscapeString(options.title, gdal.CPLES_XML)
     else:
         tilekml = True
-        args["realtiley"] = GDAL2Tiles.getYTile(ty, tz, options)
+        args["realtiley"] = GDAL2Tiles.getYTile(ty, tz, options, tmsMap)
         args["xml_escaped_title"] = "%d/%d/%d.kml" % (tz, tx, args["realtiley"])
         args["south"], args["west"], args["north"], args["east"] = tileswne(tx, ty, tz)
 
@@ -798,7 +796,7 @@ def generate_kml(
 
     for cx, cy, cz in children:
         csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
-        ytile = GDAL2Tiles.getYTile(cy, cz, options)
+        ytile = GDAL2Tiles.getYTile(cy, cz, options, tmsMap)
         s += """
     <NetworkLink>
       <name>%d/%d/%d.%s</name>
@@ -1008,7 +1006,7 @@ def setup_input_srs(
 
 
 def setup_output_srs(
-    input_srs: Optional[osr.SpatialReference], options: Options
+    input_srs: Optional[osr.SpatialReference], options: Options, tmsMap: dict
 ) -> Optional[osr.SpatialReference]:
     """
     Setup the desired SRS (based on options)
@@ -1282,7 +1280,12 @@ def _get_creation_options(options):
     return copts
 
 
-def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") -> None:
+def create_base_tile(
+    tile_job_info: "TileJobInfo", tmsMap: dict, tile_detail: "TileDetail"
+) -> None:
+
+    if tmsMap is None:
+        _, tmsMap = get_profile_list_and_tmsMap()
 
     dataBandsCount = tile_job_info.nb_data_bands
     output = tile_job_info.output_file_path
@@ -1428,6 +1431,7 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
                             tile_job_info.tile_size,
                             swne,
                             tile_job_info.options,
+                            tmsMap,
                         ).encode("utf-8")
                     )
 
@@ -1470,13 +1474,17 @@ def create_overview_tile(
     output_folder: str,
     tile_job_info: "TileJobInfo",
     options: Options,
+    tmsMap: dict,
 ):
     """Generating an overview tile from no more than 4 underlying tiles(base tiles)"""
+
+    if tmsMap is None:
+        _, tmsMap = get_profile_list_and_tmsMap()
 
     overview_tz = base_tz - 1
     overview_tx = base_tiles[0][0] >> 1
     overview_ty = base_tiles[0][1] >> 1
-    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
+    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options, tmsMap)
 
     tilefilename = os.path.join(
         output_folder,
@@ -1512,7 +1520,7 @@ def create_overview_tile(
     for base_tile in base_tiles:
         base_tx = base_tile[0]
         base_ty = base_tile[1]
-        base_ty_real = GDAL2Tiles.getYTile(base_ty, base_tz, options)
+        base_ty_real = GDAL2Tiles.getYTile(base_ty, base_tz, options, tmsMap)
 
         base_tile_path = os.path.join(
             output_folder,
@@ -1649,6 +1657,7 @@ def create_overview_tile(
                         tile_job_info.tile_size,
                         swne,
                         options,
+                        tmsMap,
                         [(t[0], t[1], base_tz) for t in base_tiles],
                     ).encode("utf-8")
                 )
@@ -1698,7 +1707,7 @@ def optparse_init() -> optparse.OptionParser:
     usage = "Usage: %prog [options] input_file [output]"
     p = optparse.OptionParser(usage, version="%prog " + __version__)
 
-    profile_list = get_profile_list()
+    profile_list, tmsMap = get_profile_list_and_tmsMap()
 
     p.add_option(
         "-p",
@@ -1950,11 +1959,11 @@ def optparse_init() -> optparse.OptionParser:
         processes=1,
     )
 
-    return p
+    return p, tmsMap
 
 
 def process_args(argv: List[str], called_from_main=False) -> Tuple[str, str, Options]:
-    parser = optparse_init()
+    parser, tmsMap = optparse_init()
     options, args = parser.parse_args(args=argv)
 
     # Args should be either an input file OR an input file and an output folder
@@ -1999,7 +2008,7 @@ def process_args(argv: List[str], called_from_main=False) -> Tuple[str, str, Opt
 
     options = options_post_processing(options, input_file, output_folder)
 
-    return input_file, output_folder, options
+    return input_file, output_folder, options, tmsMap
 
 
 def options_post_processing(
@@ -2141,8 +2150,11 @@ class Gdal2TilesError(Exception):
 
 
 class GDAL2Tiles:
-    def __init__(self, input_file: str, output_folder: str, options: Options) -> None:
+    def __init__(
+        self, input_file: str, output_folder: str, options: Options, tmsMap: dict
+    ) -> None:
         """Constructor function - initialization"""
+        self.tmsMap = tmsMap
         self.out_drv = None
         self.mem_drv = None
         self.warped_input_dataset = None
@@ -2294,7 +2306,7 @@ class GDAL2Tiles:
 
         self.in_srs, self.in_srs_wkt = setup_input_srs(input_dataset, self.options)
 
-        self.out_srs = setup_output_srs(self.in_srs, self.options)
+        self.out_srs = setup_output_srs(self.in_srs, self.options, self.tmsMap)
 
         # If input and output reference systems are different, we reproject the input dataset into
         # the output reference system for easier manipulation
@@ -2607,7 +2619,7 @@ class GDAL2Tiles:
 
         else:
 
-            tms = tmsMap[self.options.profile]
+            tms = self.tmsMap[self.options.profile]
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = None  # not implemented
@@ -2775,6 +2787,7 @@ class GDAL2Tiles:
                                 self.tile_size,
                                 self.tileswne,
                                 self.options,
+                                self.tmsMap,
                                 children,
                             ).encode("utf-8")
                         )
@@ -2820,7 +2833,7 @@ class GDAL2Tiles:
             for tx in range(tminx, tmaxx + 1):
 
                 ti += 1
-                ytile = GDAL2Tiles.getYTile(ty, tz, self.options)
+                ytile = GDAL2Tiles.getYTile(ty, tz, self.options, self.tmsMap)
                 tilefilename = os.path.join(
                     self.output_folder,
                     str(tz),
@@ -2841,7 +2854,7 @@ class GDAL2Tiles:
                 elif self.options.profile == "geodetic":
                     b = self.geodetic.TileBounds(tx, ty, tz)
                 elif self.options.profile != "raster":
-                    b = tmsMap[self.options.profile].TileBounds(
+                    b = self.tmsMap[self.options.profile].TileBounds(
                         tx, ty, tz, self.tile_size
                     )
 
@@ -4230,7 +4243,7 @@ function ExtDraggableObject(src, opt_drag) {
 
         else:
 
-            tms = tmsMap[self.options.profile]
+            tms = self.tmsMap[self.options.profile]
             base_res = tms.resolution
             resolutions = [base_res / 2**i for i in range(self.tmaxz + 1)]
             args["maxres"] = resolutions[self.tminz]
@@ -4369,11 +4382,13 @@ function ExtDraggableObject(src, opt_drag) {
         tminx, tminy, tmaxx, tmaxy = self.tminmax[self.tmaxz]
         s = s.replace("${MINTILEX}", str(tminx))
         s = s.replace(
-            "${MINTILEY}", str(GDAL2Tiles.getYTile(tmaxy, self.tmaxz, self.options))
+            "${MINTILEY}",
+            str(GDAL2Tiles.getYTile(tmaxy, self.tmaxz, self.options, self.tmsMap)),
         )
         s = s.replace("${MAXTILEX}", str(tmaxx))
         s = s.replace(
-            "${MAXTILEY}", str(GDAL2Tiles.getYTile(tminy, self.tmaxz, self.options))
+            "${MAXTILEY}",
+            str(GDAL2Tiles.getYTile(tminy, self.tmaxz, self.options, self.tmsMap)),
         )
         s = s.replace("${CURZOOM}", str(self.tmaxz))
         s = s.replace("${MINZOOM}", str(self.tminz))
@@ -4383,7 +4398,7 @@ function ExtDraggableObject(src, opt_drag) {
         return s
 
     @staticmethod
-    def getYTile(ty, tz, options):
+    def getYTile(ty, tz, options, tmsMap):
         """
         Calculates the y-tile number based on whether XYZ or TMS (default) system is used
         :param ty: The y-tile number
@@ -4403,9 +4418,9 @@ function ExtDraggableObject(src, opt_drag) {
 
 
 def worker_tile_details(
-    input_file: str, output_folder: str, options: Options
+    input_file: str, output_folder: str, options: Options, tmsMap: dict
 ) -> Tuple[TileJobInfo, List[TileDetail]]:
-    gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
+    gdal2tiles = GDAL2Tiles(input_file, output_folder, options, tmsMap)
     gdal2tiles.open_input()
     gdal2tiles.generate_metadata()
     tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
@@ -4480,7 +4495,7 @@ def get_tile_swne(tile_job_info, options):
 
 
 def single_threaded_tiling(
-    input_file: str, output_folder: str, options: Options
+    input_file: str, output_folder: str, options: Options, tmsMap: dict
 ) -> None:
     """
     Keep a single threaded version that stays clear of multiprocessing, for platforms that would not
@@ -4488,7 +4503,7 @@ def single_threaded_tiling(
     """
     if options.verbose:
         logger.debug("Begin tiles details calc")
-    conf, tile_details = worker_tile_details(input_file, output_folder, options)
+    conf, tile_details = worker_tile_details(input_file, output_folder, options, tmsMap)
 
     if options.verbose:
         logger.debug("Tiles details calc complete.")
@@ -4498,7 +4513,7 @@ def single_threaded_tiling(
         base_progress_bar.start()
 
     for tile_detail in tile_details:
-        create_base_tile(conf, tile_detail)
+        create_base_tile(conf, tmsMap, tile_detail)
 
         if not options.verbose and not options.quiet:
             base_progress_bar.log_progress()
@@ -4518,7 +4533,9 @@ def single_threaded_tiling(
     for base_tz in range(conf.tmaxz, conf.tminz, -1):
         base_tile_groups = group_overview_base_tiles(base_tz, output_folder, conf)
         for base_tiles in base_tile_groups:
-            create_overview_tile(base_tz, base_tiles, output_folder, conf, options)
+            create_overview_tile(
+                base_tz, base_tiles, output_folder, conf, options, tmsMap
+            )
             if not options.verbose and not options.quiet:
                 overview_progress_bar.log_progress()
 
@@ -4527,14 +4544,14 @@ def single_threaded_tiling(
 
 @enable_gdal_exceptions
 def multi_threaded_tiling(
-    input_file: str, output_folder: str, options: Options, pool
+    input_file: str, output_folder: str, options: Options, pool, tmsMap: dict
 ) -> None:
     nb_processes = options.nb_processes or 1
 
     if options.verbose:
         logger.debug("Begin tiles details calc")
 
-    conf, tile_details = worker_tile_details(input_file, output_folder, options)
+    conf, tile_details = worker_tile_details(input_file, output_folder, options, tmsMap)
 
     if options.verbose:
         logger.debug("Tiles details calc complete.")
@@ -4547,7 +4564,7 @@ def multi_threaded_tiling(
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
     chunksize = max(1, min(128, len(tile_details) // nb_processes))
     for _ in pool.imap_unordered(
-        partial(create_base_tile, conf), tile_details, chunksize=chunksize
+        partial(create_base_tile, conf, None), tile_details, chunksize=chunksize
     ):
         if not options.verbose and not options.quiet:
             base_progress_bar.log_progress()
@@ -4571,6 +4588,7 @@ def multi_threaded_tiling(
                 output_folder=output_folder,
                 tile_job_info=conf,
                 options=options,
+                tmsMap=None,
             ),
             base_tile_groups,
             chunksize=chunksize,
@@ -4631,7 +4649,7 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
-    input_file, output_folder, options = process_args(
+    input_file, output_folder, options, tmsMap = process_args(
         argv[1:], called_from_main=called_from_main
     )
     if pool_size:
@@ -4639,9 +4657,9 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
     nb_processes = options.nb_processes or 1
 
     if pool is not None:  # MPI
-        multi_threaded_tiling(input_file, output_folder, options, pool)
+        multi_threaded_tiling(input_file, output_folder, options, pool, tmsMap)
     elif nb_processes == 1:
-        single_threaded_tiling(input_file, output_folder, options)
+        single_threaded_tiling(input_file, output_folder, options, tmsMap)
     else:
         # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
         # and https://bugs.python.org/issue42949
@@ -4652,7 +4670,7 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
         from multiprocessing import Pool
 
         with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
-            multi_threaded_tiling(input_file, output_folder, options, pool)
+            multi_threaded_tiling(input_file, output_folder, options, pool, tmsMap)
 
     return 0
 

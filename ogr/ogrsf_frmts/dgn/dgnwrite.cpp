@@ -2308,7 +2308,7 @@ int DGNAddMSLink(DGNHandle hDGN, DGNElemCore *psElement, int nLinkageType,
  *
  * @param hDGN the file to which the element corresponds.
  * @param psElement the element being updated.
- * @param nLinkSize the size of the linkage in bytes.
+ * @param nLinkSize the size of the linkage in bytes. Must be a multiple of 2.
  * @param pabyRawLinkData the raw linkage data (nLinkSize bytes worth).
  *
  * @return -1 on failure, or the link index.
@@ -2318,8 +2318,7 @@ int DGNAddRawAttrLink(DGNHandle hDGN, DGNElemCore *psElement, int nLinkSize,
                       unsigned char *pabyRawLinkData)
 
 {
-    if (nLinkSize % 2 == 1)
-        nLinkSize++;
+    CPLAssert((nLinkSize % 2) == 0);
 
     if (psElement->size + nLinkSize > 768)
     {

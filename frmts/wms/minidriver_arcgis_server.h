@@ -41,17 +41,17 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
      * https://developers.arcgis.com/rest/services-reference/enterprise/export-map/
      * Parameter - format
      */
-    CPLString m_image_format;
-    CPLString m_transparent;
-    CPLString m_bbox_order;
-    CPLString m_irs;
+    CPLString m_image_format{};
+    CPLString m_transparent{};
+    CPLString m_bbox_order{};
+    CPLString m_irs{};
 
-    CPLString m_layers;
-    CPLString m_srs;
-    CPLString m_crs;
-    CPLString m_time_range;
+    CPLString m_layers{};
+    CPLString m_srs{};
+    CPLString m_crs{};
+    CPLString m_time_range{};
 
-    CPLString m_identification_tolerance;
+    CPLString m_identification_tolerance{};
 };
 
 #endif /* MINIDRIVER_AGS_H_INCLUDED */

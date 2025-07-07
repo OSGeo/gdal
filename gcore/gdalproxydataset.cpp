@@ -176,9 +176,9 @@ D_PROXY_METHOD_WITH_RET(const OGRSpatialReference *, nullptr, GetSpatialRef,
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetSpatialRef,
                         (const OGRSpatialReference *poSRS), (poSRS))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetGeoTransform,
-                        (double *padfGeoTransform), (padfGeoTransform))
+                        (GDALGeoTransform & gt) const, (gt))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGeoTransform,
-                        (double *padfGeoTransform), (padfGeoTransform))
+                        (const GDALGeoTransform &gt), (gt))
 
 D_PROXY_METHOD_WITH_RET(void *, nullptr, GetInternalHandle, (const char *arg1),
                         (arg1))

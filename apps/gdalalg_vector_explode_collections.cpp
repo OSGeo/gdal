@@ -281,7 +281,7 @@ GDALVectorExplodeCollectionsAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 /************************************************************************/
 
 bool GDALVectorExplodeCollectionsAlgorithm::RunStep(
-    GDALVectorPipelineStepRunContext &ctxt)
+    GDALPipelineStepRunContext &ctxt)
 {
     if (!m_opts.m_type.empty())
     {

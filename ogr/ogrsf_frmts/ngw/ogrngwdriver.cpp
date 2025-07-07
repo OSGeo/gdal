@@ -305,7 +305,7 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
 
     if (bCloseDS)
     {
-        GDALClose((GDALDatasetH)poSrcDS);
+        delete poSrcDS;
     }
 
     std::string osKey = CSLFetchNameValueDef(papszOptions, "KEY", "");

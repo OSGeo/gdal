@@ -4,6 +4,8 @@
 Programs
 ================================================================================
 
+.. _programs_gdal:
+
 "gdal" application
 ------------------
 
@@ -58,11 +60,13 @@ Commands working with raster or vector inputs
 
    gdal_info
    gdal_convert
+   gdal_pipeline
 
 .. only:: html
 
     - :ref:`gdal_info`: Get information on a dataset
     - :ref:`gdal_convert`: Convert a dataset
+    - :ref:`gdal_pipeline`: Execute a pipeline
 
 Raster commands
 +++++++++++++++
@@ -88,6 +92,7 @@ Raster commands
    gdal_raster_hillshade
    gdal_raster_index
    gdal_raster_mosaic
+   gdal_raster_nodata_to_alpha
    gdal_raster_overview
    gdal_raster_overview_add
    gdal_raster_overview_delete
@@ -134,6 +139,7 @@ Raster commands
     - :ref:`gdal_raster_hillshade`: Generate a shaded relief map
     - :ref:`gdal_raster_index`: Create a vector index of raster datasets
     - :ref:`gdal_raster_mosaic`: Build a mosaic, either virtual (VRT) or materialized.
+    - :ref:`gdal_raster_nodata_to_alpha`: Replace nodata value(s) with an alpha band
     - :ref:`gdal_raster_overview`: Manage overviews of a raster dataset
     - :ref:`gdal_raster_overview_add`: Add overviews to a raster dataset
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
@@ -299,6 +305,8 @@ Driver specific commands
     - :ref:`gdal_driver_openfilegdb_repack`: Repack in-place a FileGeodabase dataset
     - :ref:`gdal_driver_pdf_list_layers`: Return the list of layers of a PDF file.
 
+
+.. _programs_traditional:
 
 "Traditional" applications
 --------------------------

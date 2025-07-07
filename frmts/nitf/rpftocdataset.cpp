@@ -61,7 +61,7 @@ class RPFTOCDataset final : public GDALPamDataset
     char **papszSubDatasets = nullptr;
     OGRSpatialReference m_oSRS{};
     int bGotGeoTransform = false;
-    std::array<double, 6> adfGeoTransform = {0};
+    GDALGeoTransform m_gt{};
     char **papszFileList = nullptr;
     CPL_DISALLOW_COPY_ASSIGN(RPFTOCDataset)
 
@@ -92,22 +92,20 @@ class RPFTOCDataset final : public GDALPamDataset
         nRasterYSize = rasterYSize;
     }
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         if (bGotGeoTransform)
         {
-            memcpy(padfGeoTransform, adfGeoTransform.data(),
-                   sizeof(adfGeoTransform));
+            gt = m_gt;
             return CE_None;
         }
         return CE_Failure;
     }
 
-    virtual CPLErr SetGeoTransform(double *padfGeoTransform) override
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override
     {
         bGotGeoTransform = TRUE;
-        memcpy(adfGeoTransform.data(), padfGeoTransform,
-               sizeof(adfGeoTransform));
+        m_gt = gt;
         return CE_None;
     }
 
@@ -632,20 +630,17 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset *sourceDS)
     int src_nBlockYSize;
     int nBlockXSize;
     int nBlockYSize;
-    double l_adfGeoTransform[6] = {};
+    GDALGeoTransform l_gt;
 
     checkOK = TRUE;
     checkDone = TRUE;
 
-    sourceDS->GetGeoTransform(l_adfGeoTransform);
-    WARN_ON_FAIL(fabs(l_adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - nwLong) <
-                 l_adfGeoTransform[1]);
-    WARN_ON_FAIL(fabs(l_adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - nwLat) <
-                 fabs(l_adfGeoTransform[5]));
-    WARN_ON_FAIL(l_adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
-                 l_adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] ==
-                     0);                            /* No rotation */
-    ERROR_ON_FAIL(sourceDS->GetRasterCount() == 1); /* Just 1 band */
+    sourceDS->GetGeoTransform(l_gt);
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_X] - nwLong) < l_gt[1]);
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_Y] - nwLat) < fabs(l_gt[5]));
+    WARN_ON_FAIL(l_gt[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
+                 l_gt[GEOTRSFRM_ROTATION_PARAM2] == 0); /* No rotation */
+    ERROR_ON_FAIL(sourceDS->GetRasterCount() == 1);     /* Just 1 band */
     ERROR_ON_FAIL(sourceDS->GetRasterXSize() == nRasterXSize);
     ERROR_ON_FAIL(sourceDS->GetRasterYSize() == nRasterYSize);
     WARN_ON_FAIL(EQUAL(sourceDS->GetProjectionRef(), GetProjectionRef()));
@@ -784,7 +779,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
 
     int nBlockXSize = 0;
     int nBlockYSize = 0;
-    double geoTransf[6] = {};
+    GDALGeoTransform gt;
     char *projectionRef = nullptr;
     int index = 0;
 
@@ -806,23 +801,21 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
             GDALDataset *poSrcDS = GDALDataset::FromHandle(GDALOpenShared(
                 entry->frameEntries[i].fullFilePath, GA_ReadOnly));
             ASSERT_CREATE_VRT(poSrcDS);
-            poSrcDS->GetGeoTransform(geoTransf);
+            poSrcDS->GetGeoTransform(gt);
             projectionRef = CPLStrdup(poSrcDS->GetProjectionRef());
-            ASSERT_CREATE_VRT(geoTransf[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
-                              geoTransf[GEOTRSFRM_ROTATION_PARAM2] ==
+            ASSERT_CREATE_VRT(gt[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
+                              gt[GEOTRSFRM_ROTATION_PARAM2] ==
                                   0);                          /* No rotation */
             ASSERT_CREATE_VRT(poSrcDS->GetRasterCount() == 1); /* Just 1 band */
 
             /* Tolerance of 1%... This is necessary for CADRG_L22/RPF/A.TOC for
              * example */
-            ASSERT_CREATE_VRT(
-                (entry->horizInterval - geoTransf[GEOTRSFRM_WE_RES]) /
-                    entry->horizInterval <
-                0.01); /* X interval same as in TOC */
-            ASSERT_CREATE_VRT(
-                (entry->vertInterval - (-geoTransf[GEOTRSFRM_NS_RES])) /
-                    entry->vertInterval <
-                0.01); /* Y interval same as in TOC */
+            ASSERT_CREATE_VRT((entry->horizInterval - gt[GEOTRSFRM_WE_RES]) /
+                                  entry->horizInterval <
+                              0.01); /* X interval same as in TOC */
+            ASSERT_CREATE_VRT((entry->vertInterval - (-gt[GEOTRSFRM_NS_RES])) /
+                                  entry->vertInterval <
+                              0.01); /* Y interval same as in TOC */
 
             const int ds_sizeX = poSrcDS->GetRasterXSize();
             const int ds_sizeY = poSrcDS->GetRasterYSize();
@@ -872,9 +865,9 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
 
     poVirtualDS->SetProjection(projectionRef);
 
-    geoTransf[GEOTRSFRM_TOPLEFT_X] = entry->nwLong;
-    geoTransf[GEOTRSFRM_TOPLEFT_Y] = entry->nwLat;
-    poVirtualDS->SetGeoTransform(geoTransf);
+    gt[GEOTRSFRM_TOPLEFT_X] = entry->nwLong;
+    gt[GEOTRSFRM_TOPLEFT_Y] = entry->nwLat;
+    poVirtualDS->SetGeoTransform(gt);
 
     int nBands;
 
@@ -1153,7 +1146,7 @@ GDALDataset *RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         double nwLat = 0.0;
         double seLong = 0.0;
         double seLat = 0.0;
-        double adfGeoTransform[6] = {};
+        GDALGeoTransform gt;
 
         ds->papszFileList = CSLAddString(ds->papszFileList, pszFilename);
 
@@ -1173,28 +1166,26 @@ GDALDataset *RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
                         ds->papszFileList, -1, papszSubDatasetFileList + 1);
                     CSLDestroy(papszSubDatasetFileList);
 
-                    tmpDS->GetGeoTransform(adfGeoTransform);
+                    tmpDS->GetGeoTransform(gt);
                     if (projectionRef == nullptr)
                     {
                         ok = true;
                         projectionRef = CPLStrdup(tmpDS->GetProjectionRef());
-                        nwLong = adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-                        nwLat = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-                        seLong = nwLong + adfGeoTransform[GEOTRSFRM_WE_RES] *
-                                              tmpDS->GetRasterXSize();
-                        seLat = nwLat + adfGeoTransform[GEOTRSFRM_NS_RES] *
-                                            tmpDS->GetRasterYSize();
+                        nwLong = gt[GEOTRSFRM_TOPLEFT_X];
+                        nwLat = gt[GEOTRSFRM_TOPLEFT_Y];
+                        seLong = nwLong +
+                                 gt[GEOTRSFRM_WE_RES] * tmpDS->GetRasterXSize();
+                        seLat = nwLat +
+                                gt[GEOTRSFRM_NS_RES] * tmpDS->GetRasterYSize();
                     }
                     else if (ok)
                     {
-                        double _nwLong = adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-                        double _nwLat = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-                        double _seLong =
-                            _nwLong + adfGeoTransform[GEOTRSFRM_WE_RES] *
-                                          tmpDS->GetRasterXSize();
-                        double _seLat =
-                            _nwLat + adfGeoTransform[GEOTRSFRM_NS_RES] *
-                                         tmpDS->GetRasterYSize();
+                        double _nwLong = gt[GEOTRSFRM_TOPLEFT_X];
+                        double _nwLat = gt[GEOTRSFRM_TOPLEFT_Y];
+                        double _seLong = _nwLong + gt[GEOTRSFRM_WE_RES] *
+                                                       tmpDS->GetRasterXSize();
+                        double _seLat = _nwLat + gt[GEOTRSFRM_NS_RES] *
+                                                     tmpDS->GetRasterYSize();
                         if (!EQUAL(projectionRef, tmpDS->GetProjectionRef()))
                             ok = false;
                         if (_nwLong < nwLong)
@@ -1213,15 +1204,14 @@ GDALDataset *RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
         }
         if (ok)
         {
-            adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = nwLong;
-            adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = nwLat;
+            gt[GEOTRSFRM_TOPLEFT_X] = nwLong;
+            gt[GEOTRSFRM_TOPLEFT_Y] = nwLat;
             ds->SetSize(
-                static_cast<int>(0.5 + (seLong - nwLong) /
-                                           adfGeoTransform[GEOTRSFRM_WE_RES]),
-                static_cast<int>(0.5 + (seLat - nwLat) /
-                                           adfGeoTransform[GEOTRSFRM_NS_RES]));
+                static_cast<int>(0.5 +
+                                 (seLong - nwLong) / gt[GEOTRSFRM_WE_RES]),
+                static_cast<int>(0.5 + (seLat - nwLat) / gt[GEOTRSFRM_NS_RES]));
 
-            ds->SetGeoTransform(adfGeoTransform);
+            ds->SetGeoTransform(gt);
             ds->SetProjection(projectionRef);
         }
         CPLFree(projectionRef);

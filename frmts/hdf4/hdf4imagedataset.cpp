@@ -102,7 +102,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     int iBandDim;
     int i4Dim;
     int nBandCount;
-    char **papszLocalMetadata;
+    char **papszLocalMetadata{};
     uint8 aiPaletteData[N_COLOR_ENTRIES][3];  // XXX: Static array for now
     char szName[HDF4_SDS_MAXNAMELEN];
     char *pszSubdatasetName;
@@ -113,7 +113,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
     bool bHasGeoTransform;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     std::vector<gdal::GCP> m_aoGCPs{};
 
     HDF4DatasetType iDatasetType;
@@ -137,6 +137,8 @@ class HDF4ImageDataset final : public HDF4Dataset
     static long USGSMnemonicToCode(const char *);
     static void ReadCoordinates(const char *, double *, double *);
 
+    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageDataset)
+
   public:
     HDF4ImageDataset();
     virtual ~HDF4ImageDataset();
@@ -146,8 +148,8 @@ class HDF4ImageDataset final : public HDF4Dataset
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
     virtual CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
     virtual int GetGCPCount() override;
@@ -165,15 +167,17 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 {
     friend class HDF4ImageDataset;
 
-    bool bNoDataSet;
-    double dfNoDataValue;
+    bool bNoDataSet{false};
+    double dfNoDataValue{-9999.0};
 
-    bool bHaveScale;
-    bool bHaveOffset;
-    double dfScale;
-    double dfOffset;
+    bool bHaveScale{false};
+    bool bHaveOffset{false};
+    double dfScale{1.0};
+    double dfOffset{0.0};
 
-    CPLString osUnitType;
+    CPLString osUnitType{};
+
+    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageRasterBand)
 
   public:
     HDF4ImageRasterBand(HDF4ImageDataset *, int, GDALDataType);
@@ -199,8 +203,6 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 
 HDF4ImageRasterBand::HDF4ImageRasterBand(HDF4ImageDataset *poDSIn, int nBandIn,
                                          GDALDataType eType)
-    : bNoDataSet(false), dfNoDataValue(-9999.0), bHaveScale(false),
-      bHaveOffset(false), dfScale(1.0), dfOffset(0.0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -577,7 +579,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             aiEdges[poGDS->iXDim] = nBlockXSize;
 
             if ((SDwritedata(l_iSDS, aiStart, nullptr, aiEdges,
-                             (VOIDP)pImage)) < 0)
+                             static_cast<VOIDP>(pImage))) < 0)
                 eErr = CE_Failure;
 
             SDendaccess(l_iSDS);
@@ -594,7 +596,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             aiEdges[poGDS->iXDim] = nBlockXSize;
 
             if ((SDwritedata(l_iSDS, aiStart, nullptr, aiEdges,
-                             (VOIDP)pImage)) < 0)
+                             static_cast<VOIDP>(pImage))) < 0)
                 eErr = CE_Failure;
 
             SDendaccess(l_iSDS);
@@ -755,15 +757,8 @@ HDF4ImageDataset::HDF4ImageDataset()
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(aiDimSizes, 0, sizeof(aiDimSizes));
-    papszLocalMetadata = nullptr;
     memset(aiPaletteData, 0, sizeof(aiPaletteData));
     memset(szName, 0, sizeof(szName));
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -826,9 +821,9 @@ HDF4ImageDataset::~HDF4ImageDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HDF4ImageDataset::GetGeoTransform(double *padfTransform)
+CPLErr HDF4ImageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     if (!bHasGeoTransform)
         return CE_Failure;
@@ -840,10 +835,10 @@ CPLErr HDF4ImageDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HDF4ImageDataset::SetGeoTransform(double *padfTransform)
+CPLErr HDF4ImageDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     bHasGeoTransform = true;
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     return CE_None;
 }
@@ -917,9 +912,8 @@ CPLErr HDF4ImageDataset::FlushCache(bool bAtClosing)
 
     // Write out transformation matrix.
     const char *pszValue =
-        CPLSPrintf("%f, %f, %f, %f, %f, %f", adfGeoTransform[0],
-                   adfGeoTransform[1], adfGeoTransform[2], adfGeoTransform[3],
-                   adfGeoTransform[4], adfGeoTransform[5]);
+        CPLSPrintf("%f, %f, %f, %f, %f, %f", m_gt[0], m_gt[1], m_gt[2], m_gt[3],
+                   m_gt[4], m_gt[5]);
     if ((SDsetattr(hSD, "TransformationMatrix", DFNT_CHAR8,
                    static_cast<int>(strlen(pszValue)) + 1, pszValue)) < 0)
     {
@@ -1337,14 +1331,12 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         adfXY[0 * 2 + 1] == adfXY[1 * 2 + 1] && bLLPossible)
     {
         bHasGeoTransform = true;
-        adfGeoTransform[0] = adfXY[0 * 2 + 0];
-        adfGeoTransform[1] =
-            (adfXY[1 * 2 + 0] - adfXY[0 * 2 + 0]) / nRasterXSize;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = adfXY[0 * 2 + 1];
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] =
-            (adfXY[2 * 2 + 1] - adfXY[0 * 2 + 1]) / nRasterYSize;
+        m_gt[0] = adfXY[0 * 2 + 0];
+        m_gt[1] = (adfXY[1 * 2 + 0] - adfXY[0 * 2 + 0]) / nRasterXSize;
+        m_gt[2] = 0.0;
+        m_gt[3] = adfXY[0 * 2 + 1];
+        m_gt[4] = 0.0;
+        m_gt[5] = (adfXY[2 * 2 + 1] - adfXY[0 * 2 + 1]) / nRasterYSize;
 
         m_oSRS.SetWellKnownGeogCS("WGS84");
     }
@@ -1430,12 +1422,12 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
             poCT->Transform(1, &dfLRX, &dfLRY))
         {
             bHasGeoTransform = true;
-            adfGeoTransform[0] = dfULX;
-            adfGeoTransform[1] = (dfLRX - dfULX) / nRasterXSize;
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = dfULY;
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = (dfLRY - dfULY) / nRasterYSize;
+            m_gt[0] = dfULX;
+            m_gt[1] = (dfLRX - dfULX) / nRasterXSize;
+            m_gt[2] = 0.0;
+            m_gt[3] = dfULY;
+            m_gt[4] = 0.0;
+            m_gt[5] = (dfLRY - dfULY) / nRasterYSize;
         }
 
         delete poCT;
@@ -1555,16 +1547,16 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
     }
 
     bHasGeoTransform = true;
-    adfGeoTransform[0] = CPLAtof(papszTokens[4]);
-    adfGeoTransform[1] = CPLAtof(papszTokens[2]);
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = CPLAtof(papszTokens[5]);
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = CPLAtof(papszTokens[1]);
+    m_gt[0] = CPLAtof(papszTokens[4]);
+    m_gt[1] = CPLAtof(papszTokens[2]);
+    m_gt[2] = 0.0;
+    m_gt[3] = CPLAtof(papszTokens[5]);
+    m_gt[4] = 0.0;
+    m_gt[5] = CPLAtof(papszTokens[1]);
 
     // Middle of pixel adjustment.
-    adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
-    adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+    m_gt[0] -= m_gt[1] * 0.5;
+    m_gt[3] -= m_gt[5] * 0.5;
 
     CSLDestroy(papszTokens);
 }
@@ -1795,10 +1787,10 @@ void HDF4ImageDataset::GetGridAttrs(int32 hGD)
 
             if (l_iNumType == DFNT_CHAR8 || l_iNumType == DFNT_UCHAR8)
             {
-                reinterpret_cast<char *>(pData)[nValues] = '\0';
+                static_cast<char *>(pData)[nValues] = '\0';
                 papszLocalMetadata =
                     CSLAddNameValue(papszLocalMetadata, papszAttributes[i],
-                                    (const char *)pData);
+                                    static_cast<const char *>(pData));
             }
             else
             {
@@ -2248,7 +2240,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
             nLatCount = nXPoints * nYPoints;
             pLat = CPLMalloc(nLatCount * iDataSize);
             if (SWreadfield(hSW, papszGeolocations[i], nullptr, nullptr,
-                            nullptr, (VOIDP)pLat) < 0)
+                            nullptr, static_cast<VOIDP>(pLat)) < 0)
             {
                 CPLDebug("HDF4Image", "Can't read geolocation field %s",
                          papszGeolocations[i]);
@@ -2262,7 +2254,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
             nLongCount = nXPoints * nYPoints;
             pLong = CPLMalloc(nLongCount * iDataSize);
             if (SWreadfield(hSW, papszGeolocations[i], nullptr, nullptr,
-                            nullptr, (VOIDP)pLong) < 0)
+                            nullptr, static_cast<VOIDP>(pLong)) < 0)
             {
                 CPLDebug("HDF4Image", "Can't read geolocation field %s",
                          papszGeolocations[i]);
@@ -2302,7 +2294,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
         pLatticeX = CPLMalloc(nLatCount * iLatticeDataSize);
         if (SWreadfield(hSW, pszLatticePoint, iStart, nullptr, iEdges,
-                        (VOIDP)pLatticeX) < 0)
+                        static_cast<VOIDP>(pLatticeX)) < 0)
         {
             CPLDebug("HDF4Image", "Can't read lattice field");
             CPLFree(pLatticeX);
@@ -2314,7 +2306,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
         pLatticeY = CPLMalloc(nLatCount * iLatticeDataSize);
         if (SWreadfield(hSW, pszLatticePoint, iStart, nullptr, iEdges,
-                        (VOIDP)pLatticeY) < 0)
+                        static_cast<VOIDP>(pLatticeY)) < 0)
         {
             CPLDebug("HDF4Image", "Can't read lattice field");
             CPLFree(pLatticeY);
@@ -3098,31 +3090,27 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                         if (iProjCode)
                         {
                             // For projected systems coordinates are in meters.
-                            poDS->adfGeoTransform[1] =
+                            poDS->m_gt[1] =
                                 (adfLowRight[0] - adfUpLeft[0]) / nXSize;
-                            poDS->adfGeoTransform[5] =
+                            poDS->m_gt[5] =
                                 (adfLowRight[1] - adfUpLeft[1]) / nYSize;
-                            poDS->adfGeoTransform[0] = adfUpLeft[0];
-                            poDS->adfGeoTransform[3] = adfUpLeft[1];
+                            poDS->m_gt[0] = adfUpLeft[0];
+                            poDS->m_gt[3] = adfUpLeft[1];
                         }
                         else
                         {
                             // Handle angular geographic coordinates here.
-                            poDS->adfGeoTransform[1] =
-                                (CPLPackedDMSToDec(adfLowRight[0]) -
-                                 CPLPackedDMSToDec(adfUpLeft[0])) /
-                                nXSize;
-                            poDS->adfGeoTransform[5] =
-                                (CPLPackedDMSToDec(adfLowRight[1]) -
-                                 CPLPackedDMSToDec(adfUpLeft[1])) /
-                                nYSize;
-                            poDS->adfGeoTransform[0] =
-                                CPLPackedDMSToDec(adfUpLeft[0]);
-                            poDS->adfGeoTransform[3] =
-                                CPLPackedDMSToDec(adfUpLeft[1]);
+                            poDS->m_gt[1] = (CPLPackedDMSToDec(adfLowRight[0]) -
+                                             CPLPackedDMSToDec(adfUpLeft[0])) /
+                                            nXSize;
+                            poDS->m_gt[5] = (CPLPackedDMSToDec(adfLowRight[1]) -
+                                             CPLPackedDMSToDec(adfUpLeft[1])) /
+                                            nYSize;
+                            poDS->m_gt[0] = CPLPackedDMSToDec(adfUpLeft[0]);
+                            poDS->m_gt[3] = CPLPackedDMSToDec(adfUpLeft[1]);
                         }
-                        poDS->adfGeoTransform[2] = 0.0;
-                        poDS->adfGeoTransform[4] = 0.0;
+                        poDS->m_gt[2] = 0.0;
+                        poDS->m_gt[4] = 0.0;
                         poDS->bHasGeoTransform = true;
                     }
 
@@ -3582,8 +3570,7 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                 char *pszString = const_cast<char *>(pszValue);
                 while (*pszValue && i < 6)
                 {
-                    poDS->adfGeoTransform[i++] =
-                        CPLStrtod(pszString, &pszString);
+                    poDS->m_gt[i++] = CPLStrtod(pszString, &pszString);
                     pszString++;
                 }
                 poDS->bHasGeoTransform = true;
@@ -3643,14 +3630,14 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                                                      "Southernmost Latitude"));
             poDS->ToGeoref(&dfULX, &dfULY);
             poDS->ToGeoref(&dfLRX, &dfLRY);
-            poDS->adfGeoTransform[0] = dfULX;
-            poDS->adfGeoTransform[3] = dfULY;
-            poDS->adfGeoTransform[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
-            poDS->adfGeoTransform[5] = (dfULY - dfLRY) / poDS->nRasterYSize;
+            poDS->m_gt[0] = dfULX;
+            poDS->m_gt[3] = dfULY;
+            poDS->m_gt[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
+            poDS->m_gt[5] = (dfULY - dfLRY) / poDS->nRasterYSize;
             if (dfULY > 0)  // Northern hemisphere.
-                poDS->adfGeoTransform[5] = -poDS->adfGeoTransform[5];
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[4] = 0.0;
+                poDS->m_gt[5] = -poDS->m_gt[5];
+            poDS->m_gt[2] = 0.0;
+            poDS->m_gt[4] = 0.0;
             poDS->bHasGeoTransform = true;
         }
         break;

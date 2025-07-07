@@ -22,7 +22,7 @@ Description
 
 :program:`gdal raster color-map` generates a RGB or RGBA dataset from a
 single band, using a color map, either attached directly to a raster band,
-or from an external text file. It is typically used to create hypsometric maps
+or from an external text file. It is typically used to create :term:`hypsometric` maps
 from a DEM.
 
 This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`

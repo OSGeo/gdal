@@ -42,7 +42,7 @@ class MFFDataset final : public RawDataset
 
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     char **m_papszFileList;
 
     void ScanForGCPs();
@@ -76,7 +76,7 @@ class MFFDataset final : public RawDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -144,7 +144,7 @@ CPLErr MFFTiledBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
     const int nTilesPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    const int nWordSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
     const int nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
 
     const vsi_l_offset nOffset =
@@ -234,12 +234,6 @@ MFFDataset::MFFDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -319,10 +313,9 @@ int MFFDataset::GetGCPCount()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MFFDataset::GetGeoTransform(double *padfTransform)
-
+CPLErr MFFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -579,7 +572,7 @@ void MFFDataset::ScanForProjectionInfo()
     if (EQUAL(pszProjName, "LL"))
     {
         transform_ok = CPL_TO_BOOL(
-            GDALGCPsToGeoTransform(nGCPCount, pasGCPList, adfGeoTransform, 0));
+            GDALGCPsToGeoTransform(nGCPCount, pasGCPList, m_gt.data(), 0));
     }
     else
     {
@@ -614,8 +607,8 @@ void MFFDataset::ScanForProjectionInfo()
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
             }
-            transform_ok = CPL_TO_BOOL(GDALGCPsToGeoTransform(
-                nGCPCount, pasGCPList, adfGeoTransform, 0));
+            transform_ok = CPL_TO_BOOL(
+                GDALGCPsToGeoTransform(nGCPCount, pasGCPList, m_gt.data(), 0));
         }
 
         if (poTransform)
@@ -632,12 +625,7 @@ void MFFDataset::ScanForProjectionInfo()
     {
         /* transform is sufficient in some cases (slant range, standalone gcps)
          */
-        adfGeoTransform[0] = 0.0;
-        adfGeoTransform[1] = 1.0;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = 0.0;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = 1.0;
+        m_gt = GDALGeoTransform();
         m_oSRS.Clear();
     }
 
@@ -774,16 +762,13 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the directory to find matching band files.                 */
     /* -------------------------------------------------------------------- */
-    char *const pszTargetPath =
-        CPLStrdup(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
-    char *const pszTargetBase =
-        CPLStrdup(CPLGetBasenameSafe(poOpenInfo->pszFilename).c_str());
-    char **papszDirFiles =
-        VSIReadDir(CPLGetPathSafe(poOpenInfo->pszFilename).c_str());
-    if (papszDirFiles == nullptr)
+    const std::string osTargetPath = CPLGetPathSafe(poOpenInfo->pszFilename);
+    const std::string osTargetBase =
+        CPLGetBasenameSafe(poOpenInfo->pszFilename);
+    const CPLStringList aosDirFiles(
+        VSIReadDir(CPLGetPathSafe(poOpenInfo->pszFilename).c_str()));
+    if (aosDirFiles.empty())
     {
-        CPLFree(pszTargetPath);
-        CPLFree(pszTargetBase);
         return nullptr;
     }
 
@@ -793,14 +778,13 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
         /* Find the next raw band file. */
 
         int i = 0;  // Used after for.
-        for (; papszDirFiles[i] != nullptr; i++)
+        for (; i < aosDirFiles.size(); i++)
         {
-            if (!EQUAL(CPLGetBasenameSafe(papszDirFiles[i]).c_str(),
-                       pszTargetBase))
+            if (!EQUAL(CPLGetBasenameSafe(aosDirFiles[i]).c_str(),
+                       osTargetBase.c_str()))
                 continue;
 
-            const std::string osExtension =
-                CPLGetExtensionSafe(papszDirFiles[i]);
+            const std::string osExtension = CPLGetExtensionSafe(aosDirFiles[i]);
             if (osExtension.size() >= 2 &&
                 isdigit(static_cast<unsigned char>(osExtension[1])) &&
                 atoi(osExtension.c_str() + 1) == nRawBand &&
@@ -808,12 +792,12 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 break;
         }
 
-        if (papszDirFiles[i] == nullptr)
+        if (i == aosDirFiles.size())
             break;
 
         /* open the file for required level of access */
         const std::string osRawFilename =
-            CPLFormFilenameSafe(pszTargetPath, papszDirFiles[i], nullptr);
+            CPLFormFilenameSafe(osTargetPath.c_str(), aosDirFiles[i], nullptr);
 
         VSILFILE *fpRaw = nullptr;
         if (poOpenInfo->eAccess == GA_Update)
@@ -832,7 +816,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
             CSLAddString(poDS->m_papszFileList, osRawFilename.c_str());
 
         GDALDataType eDataType = GDT_Unknown;
-        const std::string osExt = CPLGetExtensionSafe(papszDirFiles[i]);
+        const std::string osExt = CPLGetExtensionSafe(aosDirFiles[i]);
         if (pszRefinedType != nullptr)
         {
             if (EQUAL(pszRefinedType, "C*4"))
@@ -918,6 +902,13 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (bTiled)
         {
+            if (nTileXSize > INT_MAX / nTileYSize / nPixelOffset)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large tile");
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpRaw));
+                return nullptr;
+            }
+
             poBand = std::make_unique<MFFTiledBand>(poDS.get(), nBand, fpRaw,
                                                     nTileXSize, nTileYSize,
                                                     eDataType, eByteOrder);
@@ -942,10 +933,6 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         poDS->SetBand(nBand, std::move(poBand));
     }
-
-    CPLFree(pszTargetPath);
-    CPLFree(pszTargetBase);
-    CSLDestroy(papszDirFiles);
 
     /* -------------------------------------------------------------------- */
     /*      Check if we have bands.                                         */

@@ -169,6 +169,7 @@ backporting
 Backporting
 backports
 backslashed
+backtick
 bak
 bAllowPromotingToCurves
 bAllowResizeOutptr
@@ -236,6 +237,7 @@ blockings
 blocksize
 BlockSizeX
 BlockSizeY
+BlockWindows
 blocky
 bLookForCircular
 bLookForNonLinear
@@ -448,6 +450,7 @@ conceptualhelp
 cond
 conda
 Conda
+condBand
 conf
 config
 Config
@@ -783,6 +786,7 @@ Elbor
 ElementPath
 ellps
 elpaso
+elseBand
 emptor
 Enablement
 Encodings
@@ -1268,7 +1272,9 @@ hashset
 hashtable
 hAttr
 Hayford
+hBand
 hComp
+hCondBand
 hCT
 hCutline
 hdbuserstore
@@ -1287,6 +1293,7 @@ heightfield
 Heightfield
 heightfields
 Helmert
+hElseBand
 Helvetica
 hether
 hFeat
@@ -1351,6 +1358,7 @@ hSrcDS
 hST
 hTarget
 hTargetEDT
+hThenBand
 hThis
 html
 hTransformArg
@@ -1366,6 +1374,8 @@ Hydrologic
 Hydrological
 hypercubes
 hyperspectral
+hypsometric
+Hypsometric
 iAxis
 iBand
 iChild
@@ -1388,6 +1398,7 @@ ieee
 ifdef
 ifit
 ifndef
+IfThenElse
 ifv
 igc
 IGeometry
@@ -1760,8 +1771,11 @@ MaxSize
 maxwidth
 maxx
 maxX
+MaxX
+MaxX
 maxy
 maxY
+MaxY
 MaxZ
 mbtiles
 mbtowc
@@ -1808,6 +1822,7 @@ minsize
 minX
 miny
 minY
+MinY
 MinZ
 Mipmaps
 MiraD
@@ -2481,6 +2496,7 @@ pnSrcYSize
 pnt
 pnXSize
 pnYSize
+poCRS
 podaac
 podofo
 PoDoFo
@@ -3233,6 +3249,7 @@ tgz
 th
 thebuffer
 themself
+thenBand
 thescale
 thf
 THH

@@ -275,7 +275,7 @@ int OGROSMLayer::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastGetExtent))
     {
         OGREnvelope sExtent;
-        if (m_poDS->GetExtent(&sExtent) == OGRERR_NONE)
+        if (m_poDS->GetNativeExtent(&sExtent) == OGRERR_NONE)
             return TRUE;
     }
 
@@ -378,7 +378,7 @@ bool OGROSMLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature,
 OGRErr OGROSMLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
                                bool /* bForce */)
 {
-    if (m_poDS->GetExtent(psExtent) == OGRERR_NONE)
+    if (m_poDS->GetNativeExtent(psExtent) == OGRERR_NONE)
         return OGRERR_NONE;
 
     return OGRERR_FAILURE;

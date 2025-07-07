@@ -13,6 +13,7 @@
 #include "vrtexpression.h"
 #include "cpl_string.h"
 
+#include <cmath>
 #include <limits>
 #include <map>
 #include <optional>
@@ -22,6 +23,70 @@ namespace gdal
 {
 
 /*! @cond Doxygen_Suppress */
+
+static mu::value_type isnan(mu::value_type x)
+{
+    return std::isnan(x);
+}
+
+static mu::value_type isnodata(void *userdata, mu::value_type x)
+{
+    double noData = *static_cast<double *>(userdata);
+    return x == noData || (std::isnan(x) && std::isnan(noData));
+}
+
+static mu::value_type always_false(mu::value_type)
+{
+    return 0;
+}
+
+// Only newer versions of muparser have the DefineFunUserData method that we
+// need to register the isnodata() function above. Since it's not clear what
+// version this was introduced or how to check the version, we test for the
+// method directly.
+namespace
+{
+
+template <typename, typename = void>
+struct HasDefineFunUserData : std::false_type
+{
+};
+
+template <typename Parser>
+struct HasDefineFunUserData<
+    Parser, std::void_t<decltype(std::declval<Parser>().DefineFunUserData(
+                _T("x"), isnodata, nullptr))>> : std::true_type
+{
+};
+
+template <typename T> void DefineIsNoDataFunction(T &parser)
+{
+    const auto &varmap = parser.GetVar();
+    if (auto it = varmap.find("NODATA"); it != varmap.end())
+    {
+        parser.DefineFunUserData(_T("isnodata"), isnodata, it->second);
+    }
+    else
+    {
+        // muparser doesn't allow userData to be null, so we bind isnodata
+        // to a dummy function instead
+        parser.DefineFun(_T("isnodata"), always_false);
+    }
+}
+
+}  // namespace
+
+bool MuParserHasDefineFunUserData()
+{
+    if constexpr (HasDefineFunUserData<mu::Parser>::value)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 static std::optional<std::string> Sanitize(const std::string &osVariable)
 {
@@ -109,6 +174,19 @@ class MuParserExpression::Impl
 
         try
         {
+            m_oParser.DefineFun(_T("isnan"), isnan);
+
+            // Check to see if a NODATA variable has been defined and, if so,
+            // bind it to the isnodata() function
+            if constexpr (HasDefineFunUserData<mu::Parser>::value)
+            {
+                // gcc 9.4 still requires the code disabled by if constexpr to
+                // compile, so we hide it in a templated function
+                DefineIsNoDataFunction(m_oParser);
+            }
+
+            // Edit the expression to replace variable names such as X[1] with
+            // their sanitized versions
             std::string tmpExpression(m_osExpression);
 
             for (const auto &[osFrom, osTo] : m_oSubstitutions)

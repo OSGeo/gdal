@@ -665,7 +665,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     int m_nUndefinedSRID = -1;
 
-    virtual void DeleteLayer(const char *pszLayer);
+    void DeleteLayer(const char *pszLayer);
 
     const char *GetSRTEXTColName();
 
@@ -694,7 +694,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 #endif
     CPLStringList m_aosSubDatasets{};
     bool m_bGeoTransformValid = false;
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
     bool m_bPromote1BitAs8Bit = false;
     bool OpenRaster();
@@ -762,7 +762,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static char *LaunderName(const char *);
@@ -829,9 +829,9 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
         return m_nSectionId;
     }
 
-    const double *GetGeoTransform() const
+    const GDALGeoTransform &GetGeoTransform() const
     {
-        return m_adfGeoTransform;
+        return m_gt;
     }
 
     bool IsRL2MixedResolutions() const

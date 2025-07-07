@@ -34,7 +34,7 @@ class GDALRasterProximityAlgorithm /* non final */
     explicit GDALRasterProximityAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     double m_noDataValue = 0.0;
     int m_inputBand = 1;

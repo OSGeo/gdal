@@ -11,7 +11,10 @@ add_gdal_driver(
           s57featuredefns.cpp
           s57filecollector.cpp
           s57writer.cpp
-  BUILTIN)
+  BUILTIN
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 target_include_directories(ogr_S57 PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
 gdal_standard_includes(ogr_S57)
 

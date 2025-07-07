@@ -120,6 +120,18 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+#if ARROW_VERSION_MAJOR >= 21
+    // Register geoarrow.wkb extension only if requested for Arrow driver
+    if (CPLTestBool(CPLGetConfigOption(
+            "OGR_ARROW_REGISTER_GEOARROW_WKB_EXTENSION", "NO")) &&
+        arrow::GetExtensionType(EXTENSION_NAME_GEOARROW_WKB))
+    {
+        CPL_IGNORE_RET_VAL(arrow::RegisterExtensionType(
+            std::make_shared<OGRGeoArrowWkbExtensionType>(
+                std::move(arrow::binary()), std::string())));
+    }
+#endif
+
     GDALOpenInfo *poOpenInfoForIdentify = poOpenInfo;
     std::unique_ptr<GDALOpenInfo> poOpenInfoTmp;
     if (STARTS_WITH(poOpenInfo->pszFilename, "gdalvsi://"))

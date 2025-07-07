@@ -500,14 +500,8 @@ bool STACITDataset::SetupDataset(
     nRasterYSize = static_cast<int>(dfYSize);
 
     // Set geotransform
-    double adfGeoTransform[6];
-    adfGeoTransform[0] = dfXMin;
-    adfGeoTransform[1] = dfXRes;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = dfYMax;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = -dfYRes;
-    SetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt{dfXMin, dfXRes, 0, dfYMax, 0, -dfYRes};
+    SetGeoTransform(gt);
 
     // Set SRS
     OGRSpatialReference oSRS;

@@ -44,7 +44,6 @@ class GDALWrite {
 
         if (args.Length < 1) usage();
 
-        int bXSize, bYSize;
         int w, h;
 
         w = 100;
@@ -55,9 +54,6 @@ class GDALWrite {
 
         if (args.Length > 2)
             h = int.Parse(args[2]);
-
-        bXSize = w;
-        bYSize = 1;
 
         //try 
         {

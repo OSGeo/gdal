@@ -20,8 +20,10 @@
 /*    GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()  */
 /************************************************************************/
 
-GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()
-    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm(
+    bool standaloneStep)
+    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     AddRadiusArg();
     AddRadius1AndRadius2Arg();
@@ -80,5 +82,8 @@ std::string GDALVectorGridAverageAlgorithm::GetGridAlgorithm() const
             CPLSPrintf(":max_points_per_quadrant=%d", m_maxPointsPerQuadrant);
     return ret;
 }
+
+GDALVectorGridAverageAlgorithmStandalone::
+    ~GDALVectorGridAverageAlgorithmStandalone() = default;
 
 //! @endcond

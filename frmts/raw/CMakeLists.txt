@@ -32,7 +32,6 @@ add_gdal_driver(
           envidataset.cpp
           nsidcbindataset.cpp
           rawdrivers.cpp
-  PLUGIN_CAPABLE NO_DEPS
-  CXX_WFLAGS_EFFCXX)
+  PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_raw)
 target_include_directories(gdal_raw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

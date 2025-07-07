@@ -149,8 +149,8 @@ static bool gmlHugeFileSQLiteInit(huge_helper *helper)
     {
         const char osCommand[] = "CREATE TABLE gml_edges ("
                                  "     gml_id VARCHAR PRIMARY KEY, "
-                                 "     gml_string BLOB, "
-                                 "     gml_resolved BLOB, "
+                                 "     gml_string TEXT, "
+                                 "     gml_resolved TEXT, "
                                  "     node_from_id TEXT, "
                                  "     node_from_x DOUBLE, "
                                  "     node_from_y DOUBLE, "
@@ -414,10 +414,10 @@ static bool gmlHugeFileResolveEdges(huge_helper *helper)
             bError = false;
             pszGmlId = reinterpret_cast<const char *>(
                 sqlite3_column_text(hQueryStmt, 0));
-            if (sqlite3_column_type(hQueryStmt, 1) != SQLITE_NULL)
+            if (sqlite3_column_type(hQueryStmt, 1) == SQLITE_TEXT)
             {
-                pszGmlString = static_cast<const char *>(
-                    sqlite3_column_blob(hQueryStmt, 1));
+                pszGmlString = reinterpret_cast<const char *>(
+                    sqlite3_column_text(hQueryStmt, 1));
             }
             if (sqlite3_column_type(hQueryStmt, 2) != SQLITE_NULL)
             {
@@ -615,7 +615,7 @@ static bool gmlHugeFileResolveEdges(huge_helper *helper)
                         char *gmlText = CPLSerializeXMLTree(psNode);
                         sqlite3_reset(hUpdateStmt);
                         sqlite3_clear_bindings(hUpdateStmt);
-                        sqlite3_bind_blob(hUpdateStmt, 1, gmlText,
+                        sqlite3_bind_text(hUpdateStmt, 1, gmlText,
                                           static_cast<int>(strlen(gmlText)),
                                           SQLITE_STATIC);
                         sqlite3_bind_text(hUpdateStmt, 2, pszGmlId, -1,
@@ -755,14 +755,14 @@ static bool gmlHugeFileSQLiteInsert(huge_helper *helper)
         if (pItem->bIsNodeFromHref == false && pItem->bIsNodeToHref == false)
         {
             sqlite3_bind_null(helper->hEdges, 2);
-            sqlite3_bind_blob(
+            sqlite3_bind_text(
                 helper->hEdges, 3, pItem->gmlTagValue->c_str(),
                 static_cast<int>(strlen(pItem->gmlTagValue->c_str())),
                 SQLITE_STATIC);
         }
         else
         {
-            sqlite3_bind_blob(
+            sqlite3_bind_text(
                 helper->hEdges, 2, pItem->gmlTagValue->c_str(),
                 static_cast<int>(strlen(pItem->gmlTagValue->c_str())),
                 SQLITE_STATIC);

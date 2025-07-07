@@ -508,6 +508,7 @@ int VSIOCILobHandle::Close()
     if (bUpdate)
     {
         poConnection->Commit();
+        bUpdate = false;
     }
 
     return 0;

@@ -214,8 +214,8 @@ OM, SOM). Contact me if you have troubles with proper projection
             oDict.Add("DecodeParms", &((new GDALPDFDictionaryRW())
             else if (EQUAL(pszDatum, "HEN")) /* HERAT North, Afghanistan */
     else if (EQUAL(pszMnemonic, "SOM"))
- * Author:   Trent Hare (thare@usgs.gov),
  * Author:   Trent Hare (thare@usgs.gov)
+ * Author:   Trent Hare (thare at usgs.gov),
             PLACE(achTSH + 0, TE, "TE");
             nTreIndex--;
     for (psIter = psTreNode->psChild; psIter != NULL && *pbError == FALSE;
@@ -349,3 +349,7 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
             .AddAlias("ot")
         EXPECT_EQ(raster->InstantiateSubAlgorithm("pipleine"), nullptr);
 .. include:: gdal_options/ot.rst
+for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
+- Koordinates
+    Koordinates
+%apply (int *INOUT) {int *buf_xsize, int *buf_ysize};

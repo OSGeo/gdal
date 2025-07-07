@@ -20,8 +20,10 @@
 /*    GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()    */
 /************************************************************************/
 
-GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm()
-    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm(
+    bool standaloneStep)
+    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     m_radius = std::numeric_limits<double>::infinity();
     AddRadiusArg().SetDefault(m_radius);
@@ -36,5 +38,8 @@ std::string GDALVectorGridLinearAlgorithm::GetGridAlgorithm() const
 {
     return CPLSPrintf("linear:radius=%.17g:nodata=%.17g", m_radius, m_nodata);
 }
+
+GDALVectorGridLinearAlgorithmStandalone::
+    ~GDALVectorGridLinearAlgorithmStandalone() = default;
 
 //! @endcond

@@ -39,9 +39,6 @@
 /************************************************************************/
 
 OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
-    : papoLayers(nullptr), paeLayerType(nullptr), nLayers(0), psTree(nullptr),
-      nCallLevel(0), poLayerPool(nullptr), poParentDS(nullptr),
-      bRecursionDetected(false)
 {
     poDriver = poDriverIn;
 }
@@ -59,8 +56,6 @@ OGRVRTDataSource::~OGRVRTDataSource()
 
     if (psTree != nullptr)
         CPLDestroyXMLNode(psTree);
-
-    delete poLayerPool;
 }
 
 /************************************************************************/
@@ -650,19 +645,20 @@ OGRVRTDataSource::InstantiateLayerInternal(CPLXMLNode *psLTree,
 /*                        OGRVRTOpenProxiedLayer()                      */
 /************************************************************************/
 
-typedef struct
+struct PooledInitData
 {
-    OGRVRTDataSource *poDS;
-    CPLXMLNode *psNode;
-    char *pszVRTDirectory;
-    bool bUpdate;
-} PooledInitData;
+    OGRVRTDataSource *poDS = nullptr;
+    CPLXMLNode *psNode = nullptr;
+    std::string osVRTDirectory{};
+    bool bUpdate = false;
+};
 
 static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 {
-    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
+    const PooledInitData *pData =
+        static_cast<const PooledInitData *>(pUserData);
     return pData->poDS->InstantiateLayerInternal(
-        pData->psNode, pData->pszVRTDirectory, pData->bUpdate, 0);
+        pData->psNode, pData->osVRTDirectory.c_str(), pData->bUpdate, 0);
 }
 
 /************************************************************************/
@@ -671,9 +667,7 @@ static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 
 static void OGRVRTFreeProxiedLayerUserData(void *pUserData)
 {
-    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
-    CPLFree(pData->pszVRTDirectory);
-    CPLFree(pData);
+    delete static_cast<PooledInitData *>(pUserData);
 }
 
 /************************************************************************/
@@ -686,14 +680,14 @@ OGRLayer *OGRVRTDataSource::InstantiateLayer(CPLXMLNode *psLTree,
 {
     if (poLayerPool != nullptr && EQUAL(psLTree->pszValue, "OGRVRTLayer"))
     {
-        PooledInitData *pData =
-            (PooledInitData *)CPLMalloc(sizeof(PooledInitData));
+        auto pData = std::make_unique<PooledInitData>();
         pData->poDS = this;
         pData->psNode = psLTree;
-        pData->pszVRTDirectory = CPLStrdup(pszVRTDirectory);
+        pData->osVRTDirectory = pszVRTDirectory ? pszVRTDirectory : "";
         pData->bUpdate = CPL_TO_BOOL(bUpdate);
-        return new OGRProxiedLayer(poLayerPool, OGRVRTOpenProxiedLayer,
-                                   OGRVRTFreeProxiedLayerUserData, pData);
+        return new OGRProxiedLayer(poLayerPool.get(), OGRVRTOpenProxiedLayer,
+                                   OGRVRTFreeProxiedLayerUserData,
+                                   pData.release());
     }
 
     return InstantiateLayerInternal(psLTree, pszVRTDirectory, bUpdate,
@@ -704,7 +698,7 @@ OGRLayer *OGRVRTDataSource::InstantiateLayer(CPLXMLNode *psLTree,
 /*                           CountOGRVRTLayers()                        */
 /************************************************************************/
 
-static int CountOGRVRTLayers(CPLXMLNode *psTree)
+static int CountOGRVRTLayers(const CPLXMLNode *psTree)
 {
     if (psTree->eType != CXT_Element)
         return 0;
@@ -713,7 +707,7 @@ static int CountOGRVRTLayers(CPLXMLNode *psTree)
     if (EQUAL(psTree->pszValue, "OGRVRTLayer"))
         ++nCount;
 
-    for (CPLXMLNode *psNode = psTree->psChild; psNode != nullptr;
+    for (const CPLXMLNode *psNode = psTree->psChild; psNode != nullptr;
          psNode = psNode->psNext)
     {
         nCount += CountOGRVRTLayers(psNode);
@@ -756,7 +750,7 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
     const int nMaxSimultaneouslyOpened =
         std::max(atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100")), 1);
     if (nOGRVRTLayerCount > nMaxSimultaneouslyOpened)
-        poLayerPool = new OGRLayerPool(nMaxSimultaneouslyOpened);
+        poLayerPool = std::make_unique<OGRLayerPool>(nMaxSimultaneouslyOpened);
 
     // Apply any dataset level metadata.
     oMDMD.XMLInit(psVRTDSXML, TRUE);

@@ -23,7 +23,7 @@
 /*                    GDALVectorGridInvdistNNAlgorithm                  */
 /************************************************************************/
 
-class GDALVectorGridInvdistNNAlgorithm final
+class GDALVectorGridInvdistNNAlgorithm /* non final */
     : public GDALVectorGridAbstractAlgorithm
 {
   public:
@@ -33,13 +33,29 @@ class GDALVectorGridInvdistNNAlgorithm final
         "distance interpolation nearest neighbour.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
 
-    GDALVectorGridInvdistNNAlgorithm();
+    explicit GDALVectorGridInvdistNNAlgorithm(bool standaloneStep = false);
 
     std::string GetGridAlgorithm() const override;
 
   private:
     double m_power = 2.0;
     double m_smoothing = 0.0;
+};
+
+/************************************************************************/
+/*              GDALVectorGridInvdistNNAlgorithmStandalone              */
+/************************************************************************/
+
+class GDALVectorGridInvdistNNAlgorithmStandalone final
+    : public GDALVectorGridInvdistNNAlgorithm
+{
+  public:
+    GDALVectorGridInvdistNNAlgorithmStandalone()
+        : GDALVectorGridInvdistNNAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridInvdistNNAlgorithmStandalone() override;
 };
 
 //! @endcond

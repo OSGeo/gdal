@@ -381,7 +381,7 @@ class IdrisiDataset final : public GDALPamDataset
     char *pszFilename;
     char *pszDocFilename;
     char **papszRDC;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     mutable OGRSpatialReference m_oSRS{};
     char **papszCategories;
@@ -407,8 +407,8 @@ class IdrisiDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     virtual char **GetFileList(void) override;
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
-    virtual CPLErr SetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -473,12 +473,6 @@ IdrisiDataset::IdrisiDataset()
       poColorTable(new GDALColorTable())
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -699,12 +693,12 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
         dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
         dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
 
-        poDS->adfGeoTransform[0] = dfMinX;
-        poDS->adfGeoTransform[1] = dfXPixSz;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfMaxY;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = dfYPixSz;
+        poDS->m_gt[0] = dfMinX;
+        poDS->m_gt[1] = dfXPixSz;
+        poDS->m_gt[2] = 0.0;
+        poDS->m_gt[3] = dfMaxY;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = dfYPixSz;
     }
 
     // --------------------------------------------------------------------
@@ -1127,10 +1121,10 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
     //      Copy information to the dataset
     // --------------------------------------------------------------------
 
-    double adfGeoTransform[6];
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
-        poDS->SetGeoTransform(adfGeoTransform);
+        poDS->SetGeoTransform(gt);
     }
 
     if (!EQUAL(poSrcDS->GetProjectionRef(), ""))
@@ -1267,20 +1261,11 @@ char **IdrisiDataset::GetFileList()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr IdrisiDataset::GetGeoTransform(double *padfTransform)
+CPLErr IdrisiDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (GDALPamDataset::GetGeoTransform(padfTransform) != CE_None)
+    if (GDALPamDataset::GetGeoTransform(gt) != CE_None)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
-        /*
-if( adfGeoTransform[0] == 0.0
-&&  adfGeoTransform[1] == 1.0
-&&  adfGeoTransform[2] == 0.0
-&&  adfGeoTransform[3] == 0.0
-&&  adfGeoTransform[4] == 0.0
-&&  adfGeoTransform[5] == 1.0 )
-    return CE_Failure;
-        */
+        gt = m_gt;
     }
 
     return CE_None;
@@ -1290,9 +1275,9 @@ if( adfGeoTransform[0] == 0.0
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr IdrisiDataset::SetGeoTransform(double *padfTransform)
+CPLErr IdrisiDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to set rotated geotransform on Idrisi Raster file.\n"
@@ -1304,21 +1289,21 @@ CPLErr IdrisiDataset::SetGeoTransform(double *padfTransform)
     // Update the .rdc file
     // --------------------------------------------------------------------
 
-    double dfXPixSz = padfTransform[1];
-    double dfYPixSz = padfTransform[5];
-    double dfMinX = padfTransform[0];
+    double dfXPixSz = gt[1];
+    double dfYPixSz = gt[5];
+    double dfMinX = gt[0];
     double dfMaxX = (dfXPixSz * nRasterXSize) + dfMinX;
 
     double dfMinY, dfMaxY;
     if (dfYPixSz < 0)
     {
-        dfMaxY = padfTransform[3];
-        dfMinY = (dfYPixSz * nRasterYSize) + padfTransform[3];
+        dfMaxY = gt[3];
+        dfMinY = (dfYPixSz * nRasterYSize) + gt[3];
     }
     else
     {
-        dfMaxY = (dfYPixSz * nRasterYSize) + padfTransform[3];
-        dfMinY = padfTransform[3];
+        dfMaxY = (dfYPixSz * nRasterYSize) + gt[3];
+        dfMinY = gt[3];
     }
 
     papszRDC = CSLSetNameValue(papszRDC, rdcMIN_X, CPLSPrintf("%.7f", dfMinX));
@@ -1332,7 +1317,7 @@ CPLErr IdrisiDataset::SetGeoTransform(double *padfTransform)
     // Update the Dataset attribute
     // --------------------------------------------------------------------
 
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     return CE_None;
 }

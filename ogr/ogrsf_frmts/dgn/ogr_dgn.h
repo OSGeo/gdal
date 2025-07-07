@@ -25,14 +25,14 @@ class OGRDGNDataSource;
 class OGRDGNLayer final : public OGRLayer
 {
     OGRDGNDataSource *m_poDS = nullptr;
-    OGRFeatureDefn *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn{};
 
-    int iNextShapeId;
+    int iNextShapeId{};
 
-    DGNHandle hDGN;
-    int bUpdate;
+    DGNHandle hDGN{};
+    int bUpdate{};
 
-    char *pszLinkFormat;
+    char *pszLinkFormat{};
 
     OGRFeature *ElementToFeature(DGNElemCore *, int nRecLevel);
 
@@ -44,9 +44,11 @@ class OGRDGNLayer final : public OGRLayer
 
     // Unused:
     // int                 bHaveSimpleQuery;
-    OGRFeature *poEvalFeature;
+    OGRFeature *poEvalFeature{};
 
     OGRErr CreateFeatureWithGeom(OGRFeature *, const OGRGeometry *);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRDGNLayer)
 
   public:
     OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName, DGNHandle hDGN,
@@ -91,6 +93,8 @@ class OGRDGNDataSource final : public GDALDataset
     char **papszOptions = nullptr;
 
     std::string m_osEncoding{};
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRDGNDataSource)
 
   public:
     OGRDGNDataSource();

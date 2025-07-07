@@ -1288,7 +1288,9 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
  * This function returns a pointer to the memory buffer underlying a
  * virtual "in memory" file.  If bUnlinkAndSeize is TRUE the filesystem
  * object will be deleted, and ownership of the buffer will pass to the
- * caller otherwise the underlying file will remain in existence.
+ * caller, otherwise the underlying file will remain in existence.
+ * bUnlinkAndSeize should only be used for files that own their data
+ * (see the bTakeOwnership parameter of VSIFileFromMemBuffer).
  *
  * @param pszFilename the name of the file to grab the buffer of.
  * @param pnDataLength (file) length returned in this variable.

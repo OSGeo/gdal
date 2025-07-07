@@ -20,8 +20,10 @@
 /*    GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()  */
 /************************************************************************/
 
-GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()
-    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm(
+    bool standaloneStep)
+    : GDALVectorGridAbstractAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     AddRadiusArg();
     AddRadius1AndRadius2Arg();
@@ -50,5 +52,8 @@ std::string GDALVectorGridNearestAlgorithm::GetGridAlgorithm() const
     }
     return ret;
 }
+
+GDALVectorGridNearestAlgorithmStandalone::
+    ~GDALVectorGridNearestAlgorithmStandalone() = default;
 
 //! @endcond

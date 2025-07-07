@@ -300,3 +300,66 @@
     return ret;
   }
 %enddef
+
+%define CSHARP_ARRAYS_PINNED(CTYPE, CSTYPE)
+%typemap(ctype)   CTYPE PINNED[], CTYPE PINNED_STATIC[] "CTYPE*"
+%typemap(imtype)  CTYPE PINNED[], CTYPE PINNED_STATIC[] "global::System.IntPtr"
+%typemap(cstype)  CTYPE PINNED[], CTYPE PINNED_STATIC[] "CSTYPE[]"
+%typemap(csin,
+    pre="    GCHandle swig_handleTo_$csinput = GCHandle.Alloc($csinput, GCHandleType.Pinned);
+    try {",
+    terminator="    } finally {
+        swig_handleTo_$csinput.Free();
+        GC.KeepAlive(this);
+    }"
+) CTYPE PINNED[] "swig_handleTo_$csinput.AddrOfPinnedObject()"
+%typemap(csin,
+    pre="    GCHandle swig_handleTo_$csinput = GCHandle.Alloc($csinput, GCHandleType.Pinned);
+    try {",
+    terminator="    } finally {
+        swig_handleTo_$csinput.Free();
+    }"
+) CTYPE PINNED_STATIC[] "swig_handleTo_$csinput.AddrOfPinnedObject()"
+%typemap(in)      CTYPE PINNED[], CTYPE PINNED_STATIC[] "$1 = ($1_ltype)$input;"
+%typemap(freearg) CTYPE PINNED[], CTYPE PINNED_STATIC[] ""
+%typemap(argout)  CTYPE PINNED[], CTYPE PINNED_STATIC[] ""
+%enddef // CSHARP_ARRAYS_PINNED
+
+%define CSHARP_OBJECT_ARRAYS_PINNED(CTYPE, CSTYPE)
+%typemap(ctype)   CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] "CTYPE**"
+%typemap(imtype)  CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] "global::System.IntPtr"
+%typemap(cstype)  CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] "CSTYPE[]"
+%typemap(csin,
+    pre="    IntPtr swig_ptrs_ptr_$csinput = System.IntPtr.Zero;
+    GCHandle swig_handleTo_ptrs_$csinput = new GCHandle();
+    if ($csinput != null) {
+        IntPtr[] swig_ptrs_$csinput = new IntPtr[$csinput.Length];
+        for (int i = 0; i < $csinput.Length; i++) swig_ptrs_$csinput[i] = CSTYPE.getCPtr($csinput[i]).Handle;
+        swig_handleTo_ptrs_$csinput = GCHandle.Alloc(swig_ptrs_$csinput, GCHandleType.Pinned);
+        swig_ptrs_ptr_$csinput = swig_handleTo_ptrs_$csinput.AddrOfPinnedObject();
+    }
+    try {",
+    terminator="    } finally {
+        if ($csinput != null) swig_handleTo_ptrs_$csinput.Free();
+        GC.KeepAlive(this);
+    }"
+) CTYPE OBJPTRS[] "swig_ptrs_ptr_$csinput"
+%typemap(csin,
+    pre="    IntPtr swig_ptrs_ptr_$csinput = System.IntPtr.Zero;
+    GCHandle swig_handleTo_ptrs_$csinput = new GCHandle();
+    if ($csinput != null) {
+        IntPtr[] swig_ptrs_$csinput = new IntPtr[$csinput.Length];
+        for (int i = 0; i < $csinput.Length; i++) swig_ptrs_$csinput[i] = CSTYPE.getCPtr($csinput[i]).Handle;
+        swig_handleTo_ptrs_$csinput = GCHandle.Alloc(swig_ptrs_$csinput, GCHandleType.Pinned);
+        swig_ptrs_ptr_$csinput = swig_handleTo_ptrs_$csinput.AddrOfPinnedObject();
+    }
+    try {",
+    terminator="    } finally {
+        if ($csinput != null) swig_handleTo_ptrs_$csinput.Free();
+    }"
+) CTYPE OBJPTRS_STATIC[] "swig_ptrs_ptr_$csinput"
+
+%typemap(in)      CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] "$1 = ($1_ltype)$input;"
+%typemap(freearg) CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] ""
+%typemap(argout)  CTYPE OBJPTRS[], CTYPE OBJPTRS_STATIC[] ""
+%enddef // CSHARP_OBJECT_ARRAYS_PINNED

@@ -87,12 +87,6 @@ ENVIDataset::ENVIDataset()
     : fpImage(nullptr), fp(nullptr), pszHDRFilename(nullptr),
       bFoundMapinfo(false), bHeaderDirty(false), bFillFile(false)
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -579,25 +573,19 @@ void ENVIDataset::WriteProjectionInfo()
     CPLString osLocation;
     CPLString osRotation;
 
-    const double dfPixelXSize = sqrt(adfGeoTransform[1] * adfGeoTransform[1] +
-                                     adfGeoTransform[2] * adfGeoTransform[2]);
-    const double dfPixelYSize = sqrt(adfGeoTransform[4] * adfGeoTransform[4] +
-                                     adfGeoTransform[5] * adfGeoTransform[5]);
-    const bool bHasNonDefaultGT =
-        adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-        adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-        adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0;
-    if (adfGeoTransform[1] > 0.0 && adfGeoTransform[2] == 0.0 &&
-        adfGeoTransform[4] == 0.0 && adfGeoTransform[5] > 0.0)
+    const double dfPixelXSize = sqrt(m_gt[1] * m_gt[1] + m_gt[2] * m_gt[2]);
+    const double dfPixelYSize = sqrt(m_gt[4] * m_gt[4] + m_gt[5] * m_gt[5]);
+    const bool bHasNonDefaultGT = m_gt[0] != 0.0 || m_gt[1] != 1.0 ||
+                                  m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
+                                  m_gt[4] != 0.0 || m_gt[5] != 1.0;
+    if (m_gt[1] > 0.0 && m_gt[2] == 0.0 && m_gt[4] == 0.0 && m_gt[5] > 0.0)
     {
         osRotation = ", rotation=180";
     }
     else if (bHasNonDefaultGT)
     {
-        const double dfRotation1 =
-            -atan2(-adfGeoTransform[2], adfGeoTransform[1]) * kdfRadToDeg;
-        const double dfRotation2 =
-            -atan2(-adfGeoTransform[4], -adfGeoTransform[5]) * kdfRadToDeg;
+        const double dfRotation1 = -atan2(-m_gt[2], m_gt[1]) * kdfRadToDeg;
+        const double dfRotation2 = -atan2(-m_gt[4], -m_gt[5]) * kdfRadToDeg;
         const double dfRotation = (dfRotation1 + dfRotation2) / 2.0;
 
         if (fabs(dfRotation1 - dfRotation2) > 1e-5)
@@ -613,8 +601,8 @@ void ENVIDataset::WriteProjectionInfo()
         }
     }
 
-    osLocation.Printf("1, 1, %.15g, %.15g, %.15g, %.15g", adfGeoTransform[0],
-                      adfGeoTransform[3], dfPixelXSize, dfPixelYSize);
+    osLocation.Printf("1, 1, %.15g, %.15g, %.15g, %.15g", m_gt[0], m_gt[3],
+                      dfPixelXSize, dfPixelYSize);
 
     // Minimal case - write out simple geotransform if we have a
     // non-default geotransform.
@@ -1117,10 +1105,10 @@ CPLErr ENVIDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ENVIDataset::GetGeoTransform(double *padfTransform)
+CPLErr ENVIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
 
     if (bFoundMapinfo)
         return CE_None;
@@ -1132,9 +1120,9 @@ CPLErr ENVIDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ENVIDataset::SetGeoTransform(double *padfTransform)
+CPLErr ENVIDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
     bHeaderDirty = true;
     bFoundMapinfo = true;
@@ -1373,18 +1361,18 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     const double xPixelSize = CPLAtof(papszFields[5]);
     const double yPixelSize = CPLAtof(papszFields[6]);
 
-    adfGeoTransform[0] = pixelEasting - (xReference - 1) * xPixelSize;
-    adfGeoTransform[1] = cos(dfRotation) * xPixelSize;
-    adfGeoTransform[2] = -sin(dfRotation) * xPixelSize;
-    adfGeoTransform[3] = pixelNorthing + (yReference - 1) * yPixelSize;
-    adfGeoTransform[4] = -sin(dfRotation) * yPixelSize;
-    adfGeoTransform[5] = -cos(dfRotation) * yPixelSize;
+    m_gt[0] = pixelEasting - (xReference - 1) * xPixelSize;
+    m_gt[1] = cos(dfRotation) * xPixelSize;
+    m_gt[2] = -sin(dfRotation) * xPixelSize;
+    m_gt[3] = pixelNorthing + (yReference - 1) * yPixelSize;
+    m_gt[4] = -sin(dfRotation) * yPixelSize;
+    m_gt[5] = -cos(dfRotation) * yPixelSize;
     if (bUpsideDown)  // to avoid numeric approximations
     {
-        adfGeoTransform[1] = xPixelSize;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = yPixelSize;
+        m_gt[1] = xPixelSize;
+        m_gt[2] = 0;
+        m_gt[4] = 0;
+        m_gt[5] = yPixelSize;
     }
 
     // TODO(schwehr): Symbolic constants for the fields.
@@ -1562,12 +1550,12 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
                     conversionFactor = 60.0;
                 else if (EQUAL(pszUnits, "Seconds"))
                     conversionFactor = 3600.0;
-                adfGeoTransform[0] /= conversionFactor;
-                adfGeoTransform[1] /= conversionFactor;
-                adfGeoTransform[2] /= conversionFactor;
-                adfGeoTransform[3] /= conversionFactor;
-                adfGeoTransform[4] /= conversionFactor;
-                adfGeoTransform[5] /= conversionFactor;
+                m_gt[0] /= conversionFactor;
+                m_gt[1] /= conversionFactor;
+                m_gt[2] /= conversionFactor;
+                m_gt[3] /= conversionFactor;
+                m_gt[4] /= conversionFactor;
+                m_gt[5] /= conversionFactor;
             }
         }
     }

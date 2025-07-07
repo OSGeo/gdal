@@ -221,7 +221,7 @@ class RMFDataset final : public GDALDataset
     GUInt32 nColorTableSize = 0;
     GByte *pabyColorTable = nullptr;
     GDALColorTable *poColorTable = nullptr;
-    std::array<double, 6> adfGeoTransform = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
     char *pszUnitType = nullptr;
@@ -305,8 +305,8 @@ class RMFDataset final : public GDALDataset
                                double dfOvFactor);
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 

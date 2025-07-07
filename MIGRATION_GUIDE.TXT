@@ -10,9 +10,20 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
   * Furthermore, sub-command "set-type" of "gdal vector geom" is renamed as
     "set-geom-type" and also placed under "gdal vector".
 
+- The raw file capabilities (VRTRawRasterBand) of the VRT raster driver have
+  been limited by default for security reasons. Consult
+  https://gdal.org/drivers/raster/vrt.html#vrtrawrasterband_restricted_access
+  for more details.
+
 - Methods GDALRasterAttributeTable::SetValue() now return a CPLErr instead of
   void. This will impact in particular out-of-tree drivers that implement those
   methods in a subclass of GDALRasterAttributeTable.
+
+- Virtual methods GDALDataset::GetGeoTransform() (resp. SetGeoTransform() have
+  been modified to accept "GDALGeoTransform& gt" (resp. "const GDALGeoTransform& gt")
+  parameters instead of a pointer to 6 doubles. The new class GDALGeoTransform
+  is a thin wrapper around a std::array<double, 6>. This change affects out-of-tree
+  raster drivers.
 
 MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
 -------------------------------------------

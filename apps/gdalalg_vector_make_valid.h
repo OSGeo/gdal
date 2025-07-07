@@ -43,7 +43,7 @@ class GDALVectorMakeValidAlgorithm /* non final */
     explicit GDALVectorMakeValidAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

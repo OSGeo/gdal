@@ -61,13 +61,12 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
 /*                 GDALRasterProximityAlgorithm::RunStep()              */
 /************************************************************************/
 
-bool GDALRasterProximityAlgorithm::RunStep(
-    GDALRasterPipelineStepRunContext &ctxt)
+bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;
 
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     GDALDataType outputType = GDT_Float32;

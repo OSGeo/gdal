@@ -11,6 +11,7 @@ export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../autotest/asan_suppressions.txt
 export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../autotest/lsan_suppressions.txt
+export UBSAN_OPTIONS=print_stacktrace=1,suppressions=$PWD/../autotest/ubsan_suppressions.txt
 export PYTHONMALLOC=malloc
 
 gdalinfo autotest/gcore/data/byte.tif
@@ -62,6 +63,12 @@ if grep -P '===.*\d+ failed' ./test-output.txt > /dev/null ; then
     exit 1
 elif grep '==ABORTING' ./test-output.txt; then
     echo 'Tests crashed'
+    exit 1
+elif grep 'UndefinedBehaviorSanitizer' ./test-output.txt; then
+    echo 'UndefinedBehavior detected'
+    exit 1
+elif grep 'ERROR: LeakSanitizer' ./test-output.txt; then
+    echo 'Memory leak detected'
     exit 1
 else
     echo 'Tests passed'

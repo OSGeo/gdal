@@ -1476,9 +1476,9 @@ CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr ZarrDataset::GetGeoTransform(double *padfTransform)
+CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    memcpy(padfTransform, &m_adfGeoTransform[0], 6 * sizeof(double));
+    gt = m_gt;
     return m_bHasGT ? CE_None : CE_Failure;
 }
 
@@ -1486,9 +1486,9 @@ CPLErr ZarrDataset::GetGeoTransform(double *padfTransform)
 /*                         SetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
+CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (padfTransform[2] != 0 || padfTransform[4] != 0)
+    if (gt[2] != 0 || gt[4] != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Geotransform with rotated terms not supported");
@@ -1497,7 +1497,7 @@ CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
     if (m_poDimX == nullptr || m_poDimY == nullptr)
         return CE_Failure;
 
-    memcpy(&m_adfGeoTransform[0], padfTransform, 6 * sizeof(double));
+    m_gt = gt;
     m_bHasGT = true;
 
     const auto oDTFloat64 = GDALExtendedDataType::Create(GDT_Float64);
@@ -1514,8 +1514,7 @@ CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
         {
             adfX.reserve(nRasterXSize);
             for (int i = 0; i < nRasterXSize; ++i)
-                adfX.emplace_back(padfTransform[0] +
-                                  padfTransform[1] * (i + 0.5));
+                adfX.emplace_back(m_gt[0] + m_gt[1] * (i + 0.5));
         }
         catch (const std::exception &)
         {
@@ -1547,8 +1546,7 @@ CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
         {
             adfY.reserve(nRasterYSize);
             for (int i = 0; i < nRasterYSize; ++i)
-                adfY.emplace_back(padfTransform[3] +
-                                  padfTransform[5] * (i + 0.5));
+                adfY.emplace_back(m_gt[3] + m_gt[5] * (i + 0.5));
         }
         catch (const std::exception &)
         {

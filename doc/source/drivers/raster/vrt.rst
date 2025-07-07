@@ -799,8 +799,14 @@ Except if (from top priority to lesser priority) :
   a single SimpleSource or ComplexSource that has overviews.
   Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
+.. _vrtrawrasterband:
+
 .vrt Descriptions for Raw Files
 -------------------------------
+
+.. warning:: Consult the :ref:`vrtrawrasterband_restricted_access` below
+             section for potential security issues related to that functionality
+             and how to restrict it.
 
 So far we have described how to derive new virtual datasets from existing
 files supported by GDAL.  However, it is also common to need to utilize
@@ -852,8 +858,6 @@ A few other notes:
 
 - The VRTRawRasterBand supports in place update of the raster, whereas the source based VRTRasterBand is always read-only.
 
-- The OpenEV tool includes a File menu option to input parameters describing a raw raster file in a GUI and create the corresponding .vrt file.
-
 - Multiple bands in the one .vrt file can come from the same raw file. Just ensure that the ImageOffset, PixelOffset, and LineOffset definition for each band is appropriate for the pixels of that particular band.
 
 Another example, in this case a 400x300 RGB pixel interleaved image.
@@ -883,6 +887,59 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
         <LineOffset>1200</LineOffset>
     </VRTRasterBand>
     </VRTDataset>
+
+.. _vrtrawrasterband_restricted_access:
+
+Restricting access to Raw Files
+-------------------------------
+
+Some usages of GDAL, for example its use on a server that allows users to upload
+a (VRT) file, convert it to another format, and get the result back,
+could be abused to read the content of local files. Starting with GDAL 3.12, it
+is possible to restrict the use of the VRTRawRasterBand capability in several
+ways:
+
+- at build time, the CMake ``GDAL_VRT_ENABLE_RAWRASTERBAND`` variable can be set
+  to ``OFF``, to complete disable VRTRawRasterBand.
+
+- at runtime, with the following configuration options:
+
+  * .. config:: GDAL_VRT_ENABLE_RAWRASTERBAND
+       :choices: YES, NO
+       :default: YES
+       :since: 3.12
+
+       Whether the VRTRawRasterBand capability is allowed at runtime.
+
+  * .. config:: GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE
+       :choices: SIBLING_OR_CHILD_OF_VRT_PATH, ONLY_REMOTE, ALL, <path>
+       :default: SIBLING_OR_CHILD_OF_VRT_PATH
+       :since: 3.12
+
+       Restricts which SourceFilename values are allowed:
+
+       - if set to ``SIBLING_OR_CHILD_OF_VRT_PATH`` (which is the default value of
+         that configuration option starting with GDAL 3.12), the ``relativeToVRT``
+         attribute of ``SourceFilename`` will need to set to ``1``, and the path
+         expressed by ``SourceFilename`` must not contain any `../` or `..\\` substring.
+         Note that GDAL does not try to detect if one of the files, in the file
+         hierarchy below the directory of the VRT, is a symbolic link pointing to
+         elsewhere in the file system.
+
+       - if set to ``ONLY_REMOTE``, only ``SourceFilename`` pointing to one of the
+         :ref:`VSI network based file systems <network_based_file_systems>` will be
+         allowed. Be careful though that this could still be used to access files
+         accessible on a local network, depending on the network configuration of the
+         machine on which GDAL is run.
+
+       - if set to ``ALL`` there is no restriction on the value of  ``SourceFilename``.
+
+       - if set to one absolute path (or several ones, separated by the ``;`` (semi-colon) character
+         on Windows, or ``:`` (colon) on other operating systems), only ``SourceFilename`` that
+         start with those allowed absolute paths will be accepted.
+
+In versions before GDAL 3.12, disabling entirely the VRT driver by setting the
+:config:`GDAL_SKIP` configuration option to ``VRT`` may be a workaround.
 
 Creation of VRT Datasets
 ------------------------
@@ -1131,6 +1188,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **argmax**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Index (1-based, contrary to ``numpy.argmax``) of band with the maximum value
+   * - **argmin**
+     - >= 1
+     - ``propagateNoData`` (optional, default=false)
+     - (GDAL >= 3.12) Index (1-based, contrary to ``numpy.argmin``) of band with the minimum value
    * - **cmul**
      - 2
      - -
@@ -1215,13 +1280,26 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **expression**
      - 1
      - ``expression``
-       
+
        ``dialect`` (optional)
+
+       ``propagateNoData`` (GDAL >= 3.12, optional, default=false)
+
      - Evaluate a specified expression using `muparser <https://beltoforion.de/en/muparser/>`__ (default)
        or `ExprTk <https://www.partow.net/programming/exprtk/index.html>`__.
 
        The expression is specified using the "expression" argument.
        The dialect may be specified using the "dialect" argument.
+
+       If the optional ``propagateNoData`` parameter is set to ``true``, then
+
+       if a NoData pixel is found in one of the bands, if will be propagated to
+
+       the output value. Otherwise, NoData pixels will be passed to the expression
+
+       as-is. The expression can then use the ``NODATA`` variable (or ``isnodata``
+
+       muparser function) to test for these pixels and handle them accordingly.
 
        Within the expression, band values can be accessed:
 
@@ -1233,6 +1311,12 @@ GDAL provides a set of default pixel functions that can be used without writing 
          With ExprTk, ``BANDS`` is exposed as a standard (0-indexed) vector.
 
          With muparser, it is expanded into a list of all input bands.
+
+       Starting with GDAL 3.12, the variables ``_CENTER_X_`` and ``_CENTER_Y_`` can be
+
+       included in the expression to access cell center coordinates. The variable ``NODATA``
+
+       can be included in the expression if the derived band has a NoData value.
 
        ExprTk and muparser support a number of built-in functions and control structures.
 
@@ -1281,7 +1365,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
 
-       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       value of the derived band (set with ``<NoDataValue>``), the result will be the
 
        NoData value.
    * - **interpolate_linear**
@@ -1293,7 +1377,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Starting with GDAL 3.12, if either input source bounding ``t`` is equal to the NoData
 
-       value of the derived band (set with ``<NoDataValue>``), the result will be the 
+       value of the derived band (set with ``<NoDataValue>``), the result will be the
 
        NoData value.
    * - **inv**
@@ -1317,9 +1401,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **max**
-     - >= 2
+     - >= 1
      - ``propagateNoData`` (optional, default=false)
-     - (GDAL >= 3.8) Maximum of 2 or more raster bands.
+
+       ``k``: constant (optional)
+     - (GDAL >= 3.8) Maximum of raster band(s) and an optional constant
 
        If the optional ``propagateNoData`` parameter is set to ``true``, then
 
@@ -1347,9 +1433,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        the output value. Otherwise, NoData pixels will be ignored.
    * - **min**
-     - >= 2
+     - >= 1
      - ``propagateNoData`` (optional, default=false)
-     - (GDAL >= 3.8) Minimum of 2 or more raster bands.
+
+       ``k``: constant (optional)
+     - (GDAL >= 3.8) Minimum of raster band(s) and an optional constant
 
        If the optional ``propagateNoData`` parameter is set to ``true``, then
 
@@ -1380,7 +1468,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        If the optional ``k`` parameter is provided then the result is
 
        multiplied by the scalar ``k``.
-       
+
        Starting with GDAL 3.12, if ``propagateNoData`` is true, any input pixel
 
        equal to the derived band's NoData value (set with ``<NoDataValue>``)

@@ -321,7 +321,8 @@ bool OGRGmtLayer::ReadLine()
             size_t iValEnd = i + 2;  // Used after for.
             for (; iValEnd < osLine.length(); iValEnd++)
             {
-                if (!bInQuotes && isspace((unsigned char)osLine[iValEnd]))
+                if (!bInQuotes &&
+                    isspace(static_cast<unsigned char>(osLine[iValEnd])))
                     break;
 
                 if (bInQuotes && iValEnd < osLine.length() - 1 &&

@@ -15,8 +15,10 @@
 
 #ifdef HAVE_USELOCALE
 // For uselocale, define _XOPEN_SOURCE = 700
-// but on Solaris, we don't have uselocale and we cannot have
-// std=c++11 with _XOPEN_SOURCE != 600
+// and OpenBSD with libcxx 19.1.7 requires 800 for vasprintf
+// (cf https://github.com/OSGeo/gdal/issues/12619)
+// (not sure if the following is still up to date...) but on Solaris, we don't
+// have uselocale and we cannot have std=c++11 with _XOPEN_SOURCE != 600
 #if defined(__sun__) && __cplusplus >= 201103L
 #if _XOPEN_SOURCE != 600
 #ifdef _XOPEN_SOURCE
@@ -28,7 +30,7 @@
 #ifdef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE
 #endif
-#define _XOPEN_SOURCE 700
+#define _XOPEN_SOURCE 800
 #endif
 #endif
 
@@ -65,12 +67,16 @@
 
 #include <sys/types.h>  // open
 #include <sys/stat.h>   // open
-#include <fcntl.h>      // open
+#include <fcntl.h>      // open, fcntl
 
 #ifdef _WIN32
 #include <io.h>  // _isatty, _wopen
 #else
-#include <unistd.h>  // isatty
+#include <unistd.h>  // isatty, fcntl
+#if HAVE_GETRLIMIT
+#include <sys/resource.h>  // getrlimit
+#include <sys/time.h>      // getrlimit
+#endif
 #endif
 
 #include <string>
@@ -3955,4 +3961,65 @@ std::string CPLFormatReadableFileSize(uint64_t nSizeInBytes)
 std::string CPLFormatReadableFileSize(double dfSizeInBytes)
 {
     return CPLFormatReadableFileSizeInternal(dfSizeInBytes);
+}
+
+/************************************************************************/
+/*                 CPLGetRemainingFileDescriptorCount()                 */
+/************************************************************************/
+
+/** Return the number of file descriptors that can still be opened by the
+ * current process.
+ *
+ * Only implemented on non-Windows operating systems
+ *
+ * Return a negative value in case of error or not implemented.
+ *
+ * @since 3.12
+ */
+int CPLGetRemainingFileDescriptorCount()
+{
+#if !defined(_WIN32) && HAVE_GETRLIMIT
+    struct rlimit limitNumberOfFilesPerProcess;
+    if (getrlimit(RLIMIT_NOFILE, &limitNumberOfFilesPerProcess) != 0)
+    {
+        return -1;
+    }
+    const int maxNumberOfFilesPerProcess =
+        static_cast<int>(limitNumberOfFilesPerProcess.rlim_cur);
+
+    int countFilesInUse = 0;
+    {
+        const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES", nullptr};
+#ifdef __linux
+        VSIDIR *dir = VSIOpenDir("/proc/self/fd", 0, apszOptions);
+#else
+        // MacOSX
+        VSIDIR *dir = VSIOpenDir("/dev/fd", 0, apszOptions);
+#endif
+        if (dir)
+        {
+            while (VSIGetNextDirEntry(dir))
+                ++countFilesInUse;
+            countFilesInUse -= 2;  // do not count . and ..
+            VSICloseDir(dir);
+        }
+    }
+
+    if (countFilesInUse <= 0)
+    {
+        // Fallback if above method does not work
+        for (int fd = 0; fd < maxNumberOfFilesPerProcess; fd++)
+        {
+            errno = 0;
+            if (fcntl(fd, F_GETFD) != -1 || errno != EBADF)
+            {
+                countFilesInUse++;
+            }
+        }
+    }
+
+    return maxNumberOfFilesPerProcess - countFilesInUse;
+#else
+    return -1;
+#endif
 }

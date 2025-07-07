@@ -1001,8 +1001,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             continue;
         }
 
-        double adfGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        if (poSrcDS->GetGeoTransform(adfGeoTransform) != CE_None)
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) != CE_None)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "It appears no georeferencing is available for\n"
@@ -1057,30 +1057,20 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         double adfX[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
         double adfY[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-        adfX[0] = adfGeoTransform[0] + 0 * adfGeoTransform[1] +
-                  0 * adfGeoTransform[2];
-        adfY[0] = adfGeoTransform[3] + 0 * adfGeoTransform[4] +
-                  0 * adfGeoTransform[5];
+        adfX[0] = gt[0] + 0 * gt[1] + 0 * gt[2];
+        adfY[0] = gt[3] + 0 * gt[4] + 0 * gt[5];
 
-        adfX[1] = adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                  0 * adfGeoTransform[2];
-        adfY[1] = adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                  0 * adfGeoTransform[5];
+        adfX[1] = gt[0] + nXSize * gt[1] + 0 * gt[2];
+        adfY[1] = gt[3] + nXSize * gt[4] + 0 * gt[5];
 
-        adfX[2] = adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
-                  nYSize * adfGeoTransform[2];
-        adfY[2] = adfGeoTransform[3] + nXSize * adfGeoTransform[4] +
-                  nYSize * adfGeoTransform[5];
+        adfX[2] = gt[0] + nXSize * gt[1] + nYSize * gt[2];
+        adfY[2] = gt[3] + nXSize * gt[4] + nYSize * gt[5];
 
-        adfX[3] = adfGeoTransform[0] + 0 * adfGeoTransform[1] +
-                  nYSize * adfGeoTransform[2];
-        adfY[3] = adfGeoTransform[3] + 0 * adfGeoTransform[4] +
-                  nYSize * adfGeoTransform[5];
+        adfX[3] = gt[0] + 0 * gt[1] + nYSize * gt[2];
+        adfY[3] = gt[3] + 0 * gt[4] + nYSize * gt[5];
 
-        adfX[4] = adfGeoTransform[0] + 0 * adfGeoTransform[1] +
-                  0 * adfGeoTransform[2];
-        adfY[4] = adfGeoTransform[3] + 0 * adfGeoTransform[4] +
-                  0 * adfGeoTransform[5];
+        adfX[4] = gt[0] + 0 * gt[1] + 0 * gt[2];
+        adfY[4] = gt[3] + 0 * gt[4] + 0 * gt[5];
 
         // If set target srs, do the forward transformation of all points.
         if (!oTargetSRS.IsEmpty() && poSrcSRS)

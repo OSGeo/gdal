@@ -35,7 +35,7 @@ constexpr int FORTRAN_TRAILER_SIZE = 4;
 class NOAA_B_Dataset final : public RawDataset
 {
     OGRSpatialReference m_oSRS{};
-    double m_adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     CPL_DISALLOW_COPY_ASSIGN(NOAA_B_Dataset)
 
@@ -50,16 +50,9 @@ class NOAA_B_Dataset final : public RawDataset
     NOAA_B_Dataset()
     {
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-        m_adfGeoTransform[0] = 0.0;
-        m_adfGeoTransform[1] = 1.0;
-        m_adfGeoTransform[2] = 0.0;
-        m_adfGeoTransform[3] = 0.0;
-        m_adfGeoTransform[4] = 0.0;
-        m_adfGeoTransform[5] = 1.0;
     }
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -188,10 +181,10 @@ int NOAA_B_Dataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NOAA_B_Dataset::GetGeoTransform(double *padfTransform)
+CPLErr NOAA_B_Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -264,13 +257,12 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Convert from south-west center-of-pixel convention to
     // north-east pixel-corner convention
-    poDS->m_adfGeoTransform[0] = dfSWLon - dfDeltaLon / 2;
-    poDS->m_adfGeoTransform[1] = dfDeltaLon;
-    poDS->m_adfGeoTransform[2] = 0.0;
-    poDS->m_adfGeoTransform[3] =
-        dfSWLat + (nRows - 1) * dfDeltaLat + dfDeltaLat / 2;
-    poDS->m_adfGeoTransform[4] = 0.0;
-    poDS->m_adfGeoTransform[5] = -dfDeltaLat;
+    poDS->m_gt[0] = dfSWLon - dfDeltaLon / 2;
+    poDS->m_gt[1] = dfDeltaLon;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = dfSWLat + (nRows - 1) * dfDeltaLat + dfDeltaLat / 2;
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -dfDeltaLat;
 
     /* -------------------------------------------------------------------- */
     /*      Create band information object.                                 */

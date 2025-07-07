@@ -62,6 +62,7 @@ typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
+typedef void GDALComputedRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALSubdatasetInfoShadow;
@@ -96,11 +97,7 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
-#if defined(SWIGCSHARP)
-typedef int OGRErr;
-#endif
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP) */
 
 %{
 /* use this to not return the int returned by GDAL */
@@ -268,6 +265,44 @@ typedef enum {
 
 #endif
 
+/*! Raster algebra unary operation */
+%rename (RasterAlgebraUnaryOperation) GDALRasterAlgebraUnaryOperation;
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT = 0
+} GDALRasterAlgebraUnaryOperation;
+
+/*! Raster algebra binary operation */
+%rename (RasterAlgebraBinaryOperation) GDALRasterAlgebraBinaryOperation;
+typedef enum
+{
+    /** Addition */
+    GRABO_ADD = 0,
+    /** Subtraction */
+    GRABO_SUB = 1,
+    /** Multiplication */
+    GRABO_MUL = 2,
+    /** Division */
+    GRABO_DIV = 3,
+    /** Strictly greater than test*/
+    GRABO_GT = 4,
+    /** Greater or equal to test */
+    GRABO_GE = 5,
+    /** Strictly lesser than test */
+    GRABO_LT = 6,
+    /** Lesser or equal to test */
+    GRABO_LE = 7,
+    /** Equality test */
+    GRABO_EQ = 8,
+    /** Non-equality test */
+    GRABO_NE = 9,
+    /** Logical and */
+    GRABO_LOGICAL_AND = 10,
+    /** Logical or */
+    GRABO_LOGICAL_OR = 11
+} GDALRasterAlgebraBinaryOperation;
+
 #if defined(SWIGPYTHON)
 %include "gdal_python.i"
 #elif defined(SWIGCSHARP)
@@ -324,13 +359,13 @@ $1;
 %include "Driver.i"
 
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 /*
  * We need to import ogr.i and osr.i for OGRLayer and OSRSpatialRefrerence
  */
 #define FROM_GDAL_I
 %import ogr.i
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
+#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP) */
 
 
 //************************************************************************
@@ -352,11 +387,14 @@ $1;
 %rename (GetCacheMax) wrapper_GDALGetCacheMax;
 %rename (SetCacheMax) wrapper_GDALSetCacheMax;
 %rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
-%rename (GetDataTypeSize) GDALGetDataTypeSize;
+%rename (GetDataTypeSize) wrapper_GDALGetDataTypeSizeBits;  // deprecated
+%rename (GetDataTypeSizeBits) GDALGetDataTypeSizeBits;
+%rename (GetDataTypeSizeBytes) GDALGetDataTypeSizeBytes;
 %rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 %rename (GetDataTypeName) GDALGetDataTypeName;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
 %rename (DataTypeUnion) GDALDataTypeUnion;
+%rename (DataTypeUnionWithValue) GDALDataTypeUnionWithValue;
 %rename (GetColorInterpretationName) GDALGetColorInterpretationName;
 %rename (GetColorInterpretationByName) GDALGetColorInterpretationByName;
 %rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
@@ -745,7 +783,16 @@ void wrapper_GDALSetCacheMax(int nBytes)
 }
 #endif
 
-int GDALGetDataTypeSize( GDALDataType eDataType );
+%inline {
+int wrapper_GDALGetDataTypeSizeBits( GDALDataType eDataType )
+{
+    return GDALGetDataTypeSizeBits(eDataType);
+}
+}
+
+int GDALGetDataTypeSizeBits( GDALDataType eDataType );
+
+int GDALGetDataTypeSizeBytes( GDALDataType eDataType );
 
 int GDALDataTypeIsComplex( GDALDataType eDataType );
 
@@ -754,6 +801,8 @@ const char *GDALGetDataTypeName( GDALDataType eDataType );
 GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 
 GDALDataType GDALDataTypeUnion( GDALDataType a, GDALDataType b );
+
+GDALDataType GDALDataTypeUnionWithValue( GDALDataType a, double val, bool isComplex);
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
 

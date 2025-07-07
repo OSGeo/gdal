@@ -240,6 +240,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_DAAS_X_FORWARDED_USER", // from daasdataset.cpp
    "GDAL_DATA", // from cpl_csv.cpp, cpl_findfile.cpp, gdaldrivermanager.cpp
    "GDAL_DEBUG_BLOCK_CACHE", // from gdalrasterblock.cpp
+   "GDAL_DEBUG_CPU_COUNT", // from gdalalgorithm.cpp
    "GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", // from gdaljp2metadata.cpp
    "GDAL_DEFAULT_CREATE_COPY", // from gdaldriver.cpp
    "GDAL_DEFAULT_WMS_CACHE_PATH", // from gdalwmscache.cpp
@@ -351,6 +352,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PAM_ENABLED", // from gdalpamdataset.cpp
    "GDAL_PAM_MODE", // from gdalpamdataset.cpp
    "GDAL_PAM_PROXY_DIR", // from gdalpamproxydb.cpp
+   "GDAL_PATH", // from gdalgetgdalpath.cpp
    "GDAL_PDF_BANDS", // from pdfdrivercore.cpp
    "GDAL_PDF_DPI", // from pdfdrivercore.cpp
    "GDAL_PDF_GEO_ENCODING", // from pdfcreatecopy.cpp, pdfdataset.cpp
@@ -371,6 +373,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PROXY_AUTH", // from cpl_http.cpp
    "GDAL_PYTHON_DRIVER_PATH", // from gdalpythondriverloader.cpp
    "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", // from gdalalg_raster_pipeline.cpp
+   "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_KML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTERIO_RESAMPLING", // from gdal_misc.cpp
@@ -391,6 +394,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_SWATH_SIZE", // from gdalmultidim.cpp, rasterio.cpp
    "GDAL_TEMP_DRIVER_NAME", // from nearblack_lib_floodfill.cpp
    "GDAL_TERM_PROGRESS_OSC_9_4", // from cpl_progress.cpp
+   "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN", // from gdalalg_raster_tile.cpp
+   "GDAL_THRESHOLD_MIN_TILES_PER_JOB", // from gdalalg_raster_tile.cpp
    "GDAL_TIFF_DEFLATE_SUBCODEC", // from gtiffdataset.cpp
    "GDAL_TIFF_ENDIANNESS", // from gtiffdataset_write.cpp
    "GDAL_TIFF_INTERNAL_MASK", // from gtiffdataset_write.cpp
@@ -404,8 +409,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp
    "GDAL_VRT_ENABLE_PYTHON", // from vrtderivedrasterband.cpp
+   "GDAL_VRT_ENABLE_RAWRASTERBAND", // from vrtdataset.cpp
    "GDAL_VRT_PYTHON_EXCLUSIVE_LOCK", // from vrtderivedrasterband.cpp
    "GDAL_VRT_PYTHON_TRUSTED_MODULES", // from vrtderivedrasterband.cpp
+   "GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", // from vrtrawrasterband.cpp
    "GDAL_VRT_WARP_USE_DATASET_RASTERIO", // from vrtwarped.cpp
    "GDAL_WARP_USE_AFFINE_OPTIMIZATION", // from gdalwarpkernel.cpp
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
@@ -677,6 +684,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_ARROW_LOAD_FILE_SYSTEM_FACTORIES", // from ogrfeatherdriver.cpp
    "OGR_ARROW_MEM_LIMIT", // from ograrrowarrayhelper.cpp
    "OGR_ARROW_READ_GDAL_FOOTER", // from ogrfeatherlayer.cpp
+   "OGR_ARROW_REGISTER_GEOARROW_WKB_EXTENSION", // from ogrfeatherdriver.cpp
    "OGR_ARROW_USE_VSI", // from ogrfeatherdriver.cpp
    "OGR_ARROW_WRITE_BBOX", // from ogrfeatherwriterlayer.cpp
    "OGR_ARROW_WRITE_GDAL_FOOTER", // from ogrfeatherwriterlayer.cpp
@@ -749,20 +757,22 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", // from ogropenfilegdblayer_write.cpp
    "OGR_ORGANIZE_POLYGONS", // from filegdbtable.cpp, ogrgeometryfactory.cpp
    "OGR_PARQUET_BATCH_READ_AHEAD", // from ogrparquetdatasetlayer.cpp
-   "OGR_PARQUET_BATCH_SIZE", // from ogrparquetdatasetlayer.cpp, ogrparquetlayer.cpp
+   "OGR_PARQUET_BATCH_SIZE", // from ogrparquetdatasetlayer.cpp, ogrparquetdriver.cpp
    "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", // from ogrparquetlayer.cpp
    "OGR_PARQUET_CRS_ENCODING", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_CRS_OMIT_IF_WGS84", // from ogrparquetwriterlayer.cpp
+   "OGR_PARQUET_ENABLE_ARROW_EXTENSIONS", // from ogrparquetdriver.cpp
    "OGR_PARQUET_FRAGMENT_READ_AHEAD", // from ogrparquetdatasetlayer.cpp
    "OGR_PARQUET_GEO_METADATA", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_LOAD_FILE_SYSTEM_FACTORIES", // from ogrparquetdriver.cpp
    "OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", // from ogrparquetdatasetlayer.cpp
    "OGR_PARQUET_OPTIMIZED_SPATIAL_FILTER", // from ogrparquetdatasetlayer.cpp
+   "OGR_PARQUET_REGISTER_GEOARROW_WKB_EXTENSION", // from ogrparquetdriver.cpp
    "OGR_PARQUET_SHOW_ROW_GROUP_EXTENT", // from ogrparquetdriver.cpp
    "OGR_PARQUET_USE_BBOX", // from ogrparquetdatasetlayer.cpp, ogrparquetlayer.cpp
    "OGR_PARQUET_USE_METADATA_FILE", // from ogrparquetdriver.cpp
    "OGR_PARQUET_USE_STATISTICS", // from ogrparquetdataset.cpp
-   "OGR_PARQUET_USE_THREADS", // from ogrparquetdatasetlayer.cpp, ogrparquetlayer.cpp
+   "OGR_PARQUET_USE_THREADS", // from ogrparquetdatasetlayer.cpp, ogrparquetdriver.cpp
    "OGR_PARQUET_USE_VSI", // from ogrparquetdriver.cpp
    "OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME", // from ogrparquetwriterlayer.cpp
    "OGR_PARQUET_WRITE_ARROW_SCHEMA", // from ogrparquetwriterlayer.cpp

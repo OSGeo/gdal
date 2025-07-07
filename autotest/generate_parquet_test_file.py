@@ -1083,6 +1083,11 @@ def generate_nested_types():
         type=pa.list_(pa.list_(pa.string())),
     )
 
+    list_list_binary = pa.array(
+        [[["a"], None, ["b", None, "cd"]], None, [[b"\x01\x02"]], [], []],
+        type=pa.list_(pa.list_(pa.binary())),
+    )
+
     list_list_large_string = pa.array(
         [[["a"], None, ["b", None, "cd"]], None, [["efg"]], [], []],
         type=pa.list_(pa.list_(pa.large_string())),
@@ -1143,6 +1148,7 @@ def generate_nested_types():
         "list_list_decimal256",
         "list_list_string",
         "list_list_large_string",
+        "list_list_binary",
         "list_large_list_string",
         "list_fixed_size_list_string",
         "list_map_string",
@@ -1313,6 +1319,25 @@ def generate_arrow_largelistview():
     feather.write_feather(table, HERE / "ogr/data/arrow/largelistview.feather")
 
 
+def generate_parquet_list_binary():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    list_binary = pa.array(
+        [None, [None], ["foo", "bar", b"\x01"]],
+        pa.list_(pa.binary()),
+    )
+    names = ["list_binary"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    pq.write_table(table, HERE / "ogr/data/parquet/list_binary.parquet")
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
@@ -1324,3 +1349,4 @@ if __name__ == "__main__":
     generate_arrow_binaryview()
     generate_arrow_listview()
     generate_arrow_largelistview()
+    generate_parquet_list_binary()

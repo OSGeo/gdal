@@ -33,7 +33,7 @@ class GDALVectorEditAlgorithm /* non final */
     explicit GDALVectorEditAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::string m_overrideCrs{};

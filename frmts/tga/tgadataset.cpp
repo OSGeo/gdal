@@ -72,6 +72,8 @@ class GDALTGADataset final : public GDALPamDataset
     int m_nLastLineKnownOffset = 0;
     bool m_bFourthChannelIsAlpha = false;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALTGADataset)
+
   public:
     GDALTGADataset(const ImageHeader &sHeader, VSILFILE *fpImage);
     ~GDALTGADataset() override;

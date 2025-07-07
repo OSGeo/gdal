@@ -45,6 +45,8 @@
 #include "proj_experimental.h"
 #include "proj_constants.h"
 
+bool GDALThreadLocalDatasetCacheIsInDestruction();
+
 // Exists since 8.0.1
 #ifndef PROJ_AT_LEAST_VERSION
 #define PROJ_COMPUTE_VERSION(maj, min, patch)                                  \
@@ -88,6 +90,7 @@ struct OGRSpatialReference::Private
     std::vector<std::string> m_wktImportWarnings{};
     std::vector<std::string> m_wktImportErrors{};
     CPLString m_osAreaName{};
+    CPLString m_celestialBodyName{};
 
     bool m_bIsThreadSafe = false;
     bool m_bNodesChanged = false;
@@ -235,7 +238,17 @@ OGRSpatialReference::Private::~Private()
     // In case we destroy the object not in the thread that created it,
     // we need to reassign the PROJ context. Having the context bundled inside
     // PJ* deeply sucks...
-    auto ctxt = getPROJContext();
+    PJ_CONTEXT *pj_context_to_destroy = nullptr;
+    PJ_CONTEXT *ctxt;
+    if (GDALThreadLocalDatasetCacheIsInDestruction())
+    {
+        pj_context_to_destroy = proj_context_create();
+        ctxt = pj_context_to_destroy;
+    }
+    else
+    {
+        ctxt = getPROJContext();
+    }
 
     proj_assign_context(m_pj_crs, ctxt);
     proj_destroy(m_pj_crs);
@@ -257,6 +270,7 @@ OGRSpatialReference::Private::~Private()
 
     delete m_poRootBackup;
     delete m_poRoot;
+    proj_context_destroy(pj_context_to_destroy);
 }
 
 void OGRSpatialReference::Private::clear()
@@ -1414,6 +1428,73 @@ const char *OSRGetName(OGRSpatialReferenceH hSRS)
     VALIDATE_POINTER1(hSRS, "OSRGetName", nullptr);
 
     return ToPointer(hSRS)->GetName();
+}
+
+/************************************************************************/
+/*                       GetCelestialBodyName()                         */
+/************************************************************************/
+
+/**
+ * \brief Return the name of the celestial body of this CRS.
+ *
+ * e.g. "Earth" for an Earth CRS
+ *
+ * The returned value is only short lived and should not be used after other
+ * calls to methods on this object.
+ *
+ * @since GDAL 3.12 and PROJ 8.1
+ */
+
+const char *OGRSpatialReference::GetCelestialBodyName() const
+{
+#if PROJ_AT_LEAST_VERSION(8, 1, 0)
+
+    TAKE_OPTIONAL_LOCK();
+
+    d->refreshProjObj();
+    if (!d->m_pj_crs)
+        return nullptr;
+    d->demoteFromBoundCRS();
+    const char *name =
+        proj_get_celestial_body_name(d->getPROJContext(), d->m_pj_crs);
+    if (name)
+    {
+        d->m_celestialBodyName = name;
+    }
+    d->undoDemoteFromBoundCRS();
+    return d->m_celestialBodyName.c_str();
+#else
+    if (std::fabs(GetSemiMajor(nullptr) - SRS_WGS84_SEMIMAJOR) <=
+        0.05 * SRS_WGS84_SEMIMAJOR)
+        return "Earth";
+    const char *pszAuthName = GetAuthorityName(nullptr);
+    if (pszAuthName && EQUAL(pszAuthName, "EPSG"))
+        return "Earth";
+    return nullptr;
+#endif
+}
+
+/************************************************************************/
+/*                       OSRGetCelestialBodyName()                      */
+/************************************************************************/
+
+/**
+ * \brief Return the name of the celestial body of this CRS.
+ *
+ * e.g. "Earth" for an Earth CRS
+ *
+ * The returned value is only short lived and should not be used after other
+ * calls to methods on this object.
+ *
+ * @since GDAL 3.12 and PROJ 8.1
+ */
+
+const char *OSRGetCelestialBodyName(OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1(hSRS, "GetCelestialBodyName", nullptr);
+
+    return ToPointer(hSRS)->GetCelestialBodyName();
 }
 
 /************************************************************************/
@@ -12870,6 +12951,17 @@ OSRGetCRSInfoListFromDatabase(const char *pszAuthName,
             projList[i]->projection_method_name
                 ? CPLStrdup(projList[i]->projection_method_name)
                 : nullptr;
+#if PROJ_AT_LEAST_VERSION(8, 1, 0)
+        res[i]->pszCelestialBodyName =
+            projList[i]->celestial_body_name
+                ? CPLStrdup(projList[i]->celestial_body_name)
+                : nullptr;
+#else
+        res[i]->pszCelestialBodyName =
+            res[i]->pszAuthName && EQUAL(res[i]->pszAuthName, "EPSG")
+                ? CPLStrdup("Earth")
+                : nullptr;
+#endif
     }
     res[nResultCount] = nullptr;
     proj_crs_info_list_destroy(projList);
@@ -12896,6 +12988,7 @@ void OSRDestroyCRSInfoList(OSRCRSInfo **list)
             CPLFree(list[i]->pszName);
             CPLFree(list[i]->pszAreaName);
             CPLFree(list[i]->pszProjectionMethod);
+            CPLFree(list[i]->pszCelestialBodyName);
             delete list[i];
         }
         delete[] list;

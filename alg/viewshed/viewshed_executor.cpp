@@ -140,7 +140,7 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
         m_lowTanPitch = std::tan(oOpts.lowPitch * (2 * M_PI / 360.0));
     if (opts.highPitch != 90.0)
         m_highTanPitch = std::tan(oOpts.highPitch * (2 * M_PI / 360.0));
-    m_srcBand.GetDataset()->GetGeoTransform(m_adfTransform.data());
+    m_srcBand.GetDataset()->GetGeoTransform(m_gt);
     int hasNoData = false;
     m_noDataValue = m_srcBand.GetNoDataValue(&hasNoData);
     m_hasNoData = hasNoData;
@@ -271,16 +271,16 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
         m_dfMinDistance2 > 0)
     {
         // Hoist invariants from the loops.
-        const double dfLineX = m_adfTransform[2] * nYOffset;
-        const double dfLineY = m_adfTransform[5] * nYOffset;
+        const double dfLineX = m_gt[2] * nYOffset;
+        const double dfLineY = m_gt[5] * nYOffset;
 
         // Go left
         double *pdfHeight = vThisLineVal.data() + nXStart;
         for (int nXOffset = nXStart - m_nX; nXOffset >= -m_nX;
              nXOffset--, pdfHeight--)
         {
-            double dfX = m_adfTransform[1] * nXOffset + dfLineX;
-            double dfY = m_adfTransform[4] * nXOffset + dfLineY;
+            double dfX = m_gt[1] * nXOffset + dfLineX;
+            double dfY = m_gt[4] * nXOffset + dfLineY;
             double dfR2 = dfX * dfX + dfY * dfY;
 
             if (dfR2 < m_dfMinDistance2)
@@ -300,8 +300,8 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
         for (int nXOffset = nXStart - m_nX + 1;
              nXOffset < oCurExtent.xSize() - m_nX; nXOffset++, pdfHeight++)
         {
-            double dfX = m_adfTransform[1] * nXOffset + dfLineX;
-            double dfY = m_adfTransform[4] * nXOffset + dfLineY;
+            double dfX = m_gt[1] * nXOffset + dfLineX;
+            double dfY = m_gt[4] * nXOffset + dfLineY;
             double dfR2 = dfX * dfX + dfY * dfY;
             if (dfR2 < m_dfMinDistance2)
                 ll.rightMin++;
@@ -991,8 +991,8 @@ void ViewshedExecutor::maskLowPitch(double &dfZ, int nXOffset, int nYOffset)
     if (std::isnan(m_lowTanPitch))
         return;
 
-    double dfX = m_adfTransform[1] * nXOffset + m_adfTransform[2] * nYOffset;
-    double dfY = m_adfTransform[4] * nXOffset + m_adfTransform[5] * nYOffset;
+    double dfX = m_gt[1] * nXOffset + m_gt[2] * nYOffset;
+    double dfY = m_gt[4] * nXOffset + m_gt[5] * nYOffset;
     double dfR2 = dfX * dfX + dfY * dfY;
     double dfDist = std::sqrt(dfR2);
     double dfZmask = dfDist * m_lowTanPitch;
@@ -1013,8 +1013,8 @@ void ViewshedExecutor::maskHighPitch(double &dfResult, double dfZ, int nXOffset,
     if (std::isnan(m_highTanPitch))
         return;
 
-    double dfX = m_adfTransform[1] * nXOffset + m_adfTransform[2] * nYOffset;
-    double dfY = m_adfTransform[4] * nXOffset + m_adfTransform[5] * nYOffset;
+    double dfX = m_gt[1] * nXOffset + m_gt[2] * nYOffset;
+    double dfY = m_gt[4] * nXOffset + m_gt[5] * nYOffset;
     double dfR2 = dfX * dfX + dfY * dfY;
     double dfDist = std::sqrt(dfR2);
     double dfZmask = dfDist * m_highTanPitch;

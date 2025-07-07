@@ -46,6 +46,15 @@ VRTRawRasterBand::VRTRawRasterBand(GDALDataset *poDSIn, int nBandIn,
     : m_poRawRaster(nullptr), m_pszSourceFilename(nullptr),
       m_bRelativeToVRT(FALSE)
 {
+    if (!VRTDataset::IsRawRasterBandEnabled())
+    {
+        // Safety belt. Not supposed to happen, hence CE_Fatal
+        CPLError(CE_Fatal, CPLE_NotSupported,
+                 "Crashing process: VRTRawRasterBand constructor called "
+                 "whereas not authorized");
+        return;
+    }
+
     Initialize(poDSIn->GetRasterXSize(), poDSIn->GetRasterYSize());
 
     // Declared in GDALRasterBand.
@@ -176,30 +185,124 @@ CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
         return CE_Failure;
     }
 
-    char *pszExpandedFilename = nullptr;
-    if (pszVRTPath != nullptr && bRelativeToVRTIn)
+    const std::string osExpandedFilename =
+        (pszVRTPath && bRelativeToVRTIn)
+            ? CPLProjectRelativeFilenameSafe(pszVRTPath, pszFilename)
+            : pszFilename;
+
+    const char *pszAllowedPaths =
+        CPLGetConfigOption("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", nullptr);
+    if (pszAllowedPaths == nullptr ||
+        EQUAL(pszAllowedPaths, "SIBLING_OR_CHILD_OF_VRT_PATH"))
     {
-        pszExpandedFilename = CPLStrdup(
-            CPLProjectRelativeFilenameSafe(pszVRTPath, pszFilename).c_str());
+        const char *pszErrorMsgPart =
+            pszAllowedPaths
+                ? "GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE=SIBLING_OR_CHILD_OF_"
+                  "VRT_PATH"
+                : "the GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE configuration "
+                  "option is not set (and thus defaults to "
+                  "SIBLING_OR_CHILD_OF_VRT_PATH. Consult "
+                  "https://gdal.org/drivers/raster/"
+                  "vrt.html#vrtrawrasterband_restricted_access for more "
+                  "details)";
+        if (!bRelativeToVRTIn)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is invalid because the relativeToVRT flag is not "
+                     "set and %s",
+                     pszFilename, pszErrorMsgPart);
+            return CE_Failure;
+        }
+        if (!CPLIsFilenameRelative(pszFilename))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is invalid because it is not relative to the VRT "
+                     "path and %s",
+                     pszFilename, pszErrorMsgPart);
+            return CE_Failure;
+        }
+        if (strstr(pszFilename, "../") || strstr(pszFilename, "..\\"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is invalid because it may not be a sibling or "
+                     "child of the VRT path and %s",
+                     pszFilename, pszErrorMsgPart);
+            return CE_Failure;
+        }
+    }
+    else if (EQUAL(pszAllowedPaths, "ALL"))
+    {
+        // ok
+    }
+    else if (EQUAL(pszAllowedPaths, "ONLY_REMOTE"))
+    {
+        if (VSIIsLocal(pszFilename))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is a local file, whereas "
+                     "GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE=ONLY_REMOTE is set",
+                     pszFilename);
+            return CE_Failure;
+        }
     }
     else
     {
-        pszExpandedFilename = CPLStrdup(pszFilename);
+        if (strstr(pszFilename, "../") || strstr(pszFilename, "..\\"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is invalid because the presence of ../ in it may "
+                     "escape from the allowed path(s)",
+                     pszFilename);
+            return CE_Failure;
+        }
+#ifdef _WIN32
+        constexpr const char *pszSep = ";";
+#else
+        constexpr const char *pszSep = ":";
+#endif
+        bool bOK = false;
+        const CPLStringList aosPaths(
+            CSLTokenizeString2(pszAllowedPaths, pszSep, 0));
+        for (const char *pszPath : aosPaths)
+        {
+            if (CPLIsFilenameRelative(pszPath))
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Invalid value for GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE. "
+                    "'%s' is not an absolute path",
+                    pszPath);
+                return CE_Failure;
+            }
+            if (STARTS_WITH(osExpandedFilename.c_str(), pszPath))
+            {
+                bOK = true;
+                break;
+            }
+        }
+        if (!bOK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'%s' is invalid because it is not contained in one of "
+                     "the allowed path(s)",
+                     pszFilename);
+            return CE_Failure;
+        }
     }
 
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.  We always use the large file API.       */
     /* -------------------------------------------------------------------- */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    FILE *fp = CPLOpenShared(pszExpandedFilename, "rb+", TRUE);
+    FILE *fp = CPLOpenShared(osExpandedFilename.c_str(), "rb+", TRUE);
 
     if (fp == nullptr)
-        fp = CPLOpenShared(pszExpandedFilename, "rb", TRUE);
+        fp = CPLOpenShared(osExpandedFilename.c_str(), "rb", TRUE);
 
     if (fp == nullptr &&
         static_cast<VRTDataset *>(poDS)->GetAccess() == GA_Update)
     {
-        fp = CPLOpenShared(pszExpandedFilename, "wb+", TRUE);
+        fp = CPLOpenShared(osExpandedFilename.c_str(), "wb+", TRUE);
     }
     CPLPopErrorHandler();
     CPLErrorReset();
@@ -207,13 +310,10 @@ CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Unable to open %s.%s",
-                 pszExpandedFilename, VSIStrerror(errno));
+                 osExpandedFilename.c_str(), VSIStrerror(errno));
 
-        CPLFree(pszExpandedFilename);
         return CE_Failure;
     }
-
-    CPLFree(pszExpandedFilename);
 
     if (!RAWDatasetCheckMemoryUsage(
             nRasterXSize, nRasterYSize, 1,

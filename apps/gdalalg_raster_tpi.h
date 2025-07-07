@@ -35,7 +35,7 @@ class GDALRasterTPIAlgorithm /* non final */
     explicit GDALRasterTPIAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     bool m_noEdges = false;

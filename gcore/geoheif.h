@@ -18,13 +18,13 @@ namespace gdal
 
 /*
  * GeoHEIF support implementation.
- * 
+ *
  * This class provides shared implementation for OGC GeoHEIF georeferencing,
  * which is currently in draft (see OGC 24-038).
- * 
+ *
  * GeoHEIF provides parsing and caching for spatial references, pixel
  * to model affine transformation, and tie-points.
- * 
+ *
  * This class is only shared here to provide common usage within
  * AVIF and HEIF drivers. It is not intended to be a user-level API.
 */
@@ -43,7 +43,7 @@ class CPL_DLL GeoHEIF final
     bool has_GCPs() const;
     const OGRSpatialReference *GetSpatialRef() const;
     void setModelTransformation(const uint8_t *payload, size_t length);
-    CPLErr GetGeoTransform(double *) const;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const;
     void addGCPs(const uint8_t *payload, size_t length);
     int GetGCPCount() const;
     const GDAL_GCP *GetGCPs();

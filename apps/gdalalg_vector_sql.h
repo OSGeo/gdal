@@ -34,7 +34,7 @@ class GDALVectorSQLAlgorithm /* non final */
 
   private:
     static ConstructorOptions GetConstructorOptions(bool standaloneStep);
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_sql{};
     std::vector<std::string> m_outputLayer{};

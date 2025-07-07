@@ -282,14 +282,14 @@ CPLErr PCRasterRasterBand::IWriteBlock(CPL_UNUSED int nBlockXoff,
         REAL8 west = 0.0;
         REAL8 north = 0.0;
         REAL8 cellSize = 1.0;
-        double transform[6];
-        if (this->poDS->GetGeoTransform(transform) == CE_None)
+        GDALGeoTransform gt;
+        if (this->poDS->GetGeoTransform(gt) == CE_None)
         {
-            if (transform[2] == 0.0 && transform[4] == 0.0)
+            if (gt[2] == 0.0 && gt[4] == 0.0)
             {
-                west = static_cast<REAL8>(transform[0]);
-                north = static_cast<REAL8>(transform[3]);
-                cellSize = static_cast<REAL8>(transform[1]);
+                west = static_cast<REAL8>(gt[0]);
+                north = static_cast<REAL8>(gt[3]);
+                cellSize = static_cast<REAL8>(gt[1]);
             }
         }
         (void)RputXUL(d_dataset->map(), west);

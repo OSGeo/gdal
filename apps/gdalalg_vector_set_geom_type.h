@@ -62,7 +62,7 @@ class GDALVectorSetGeomTypeAlgorithm /* non final */
     CreateAlgLayer(OGRLayer &srcLayer) override;
 
   private:
-    bool RunStep(GDALVectorPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     Options m_opts{};
 };

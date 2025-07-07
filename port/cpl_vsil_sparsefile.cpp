@@ -55,7 +55,7 @@ class SFRegion
 
 class VSISparseFileFilesystemHandler;
 
-class VSISparseFileHandle : public VSIVirtualHandle
+class VSISparseFileHandle final : public VSIVirtualHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSISparseFileHandle)
 
@@ -68,6 +68,8 @@ class VSISparseFileHandle : public VSIVirtualHandle
         : m_poFS(poFS)
     {
     }
+
+    ~VSISparseFileHandle() override;
 
     GUIntBig nOverallLength = 0;
     GUIntBig nCurOffset = 0;
@@ -140,6 +142,15 @@ class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
 /************************************************************************/
 
 /************************************************************************/
+/*                        ~VSISparseFileHandle()                        */
+/************************************************************************/
+
+VSISparseFileHandle::~VSISparseFileHandle()
+{
+    VSISparseFileHandle::Close();
+}
+
+/************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
 
@@ -151,6 +162,7 @@ int VSISparseFileHandle::Close()
         if (aoRegions[i].fp != nullptr)
             CPL_IGNORE_RET_VAL(VSIFCloseL(aoRegions[i].fp));
     }
+    aoRegions.clear();
 
     return 0;
 }

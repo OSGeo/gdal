@@ -35,7 +35,7 @@ class GDALRasterClipAlgorithm /* non final */
     explicit GDALRasterClipAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     bool m_onlyBBOX{false};
     bool m_allowExtentOutsideSource{false};

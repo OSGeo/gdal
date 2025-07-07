@@ -38,7 +38,7 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
     unsigned int nYSize = pBand->GetYSize();
 
     // allocate some space
-    int nPixelSize = GDALGetDataTypeSize(eGDALType) / 8;
+    const int nPixelSize = GDALGetDataTypeSizeBytes(eGDALType);
     void *pData = VSIMalloc3(nPixelSize, nBlockSize, nBlockSize);
     if (pData == nullptr)
     {
@@ -46,10 +46,10 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
         return false;
     }
     // for progress
-    int nTotalBlocks =
-        static_cast<int>(std::ceil((double)nXSize / (double)nBlockSize) *
-                         std::ceil((double)nYSize / (double)nBlockSize));
-    int nBlocksComplete = 0;
+    const uint64_t nTotalBlocks =
+        static_cast<uint64_t>(DIV_ROUND_UP(nXSize, nBlockSize)) *
+        DIV_ROUND_UP(nYSize, nBlockSize);
+    uint64_t nBlocksComplete = 0;
     double dLastFraction = -1;
     // go through the image
     for (unsigned int nY = 0; nY < nYSize; nY += nBlockSize)
@@ -426,16 +426,16 @@ static void KEACopySpatialInfo(GDALDataset *pDataset,
 {
     kealib::KEAImageSpatialInfo *pSpatialInfo = pImageIO->getSpatialInfo();
 
-    double padfTransform[6];
-    if (pDataset->GetGeoTransform(padfTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (pDataset->GetGeoTransform(gt) == CE_None)
     {
         // convert back from GDAL's array format
-        pSpatialInfo->tlX = padfTransform[0];
-        pSpatialInfo->xRes = padfTransform[1];
-        pSpatialInfo->xRot = padfTransform[2];
-        pSpatialInfo->tlY = padfTransform[3];
-        pSpatialInfo->yRot = padfTransform[4];
-        pSpatialInfo->yRes = padfTransform[5];
+        pSpatialInfo->tlX = gt[0];
+        pSpatialInfo->xRes = gt[1];
+        pSpatialInfo->xRot = gt[2];
+        pSpatialInfo->tlY = gt[3];
+        pSpatialInfo->yRot = gt[4];
+        pSpatialInfo->yRes = gt[5];
     }
 
     const char *pszProjection = pDataset->GetProjectionRef();

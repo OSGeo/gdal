@@ -141,7 +141,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;

@@ -1,7 +1,7 @@
 .. _vector.vrt:
 
-VRT -- Virtual Format
-=====================
+VRT -- OGR Virtual Format
+=========================
 
 .. shortname:: VRT
 

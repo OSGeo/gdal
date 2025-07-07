@@ -33,7 +33,7 @@ class GDALRasterSieveAlgorithm /* non final */
     explicit GDALRasterSieveAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     int m_sizeThreshold = 2;

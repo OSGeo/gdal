@@ -3296,7 +3296,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd));
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
     returnErrorIf(nParts > static_cast<size_t>(pabyEnd - pabyCur));
-    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
+    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32) - 1);
     if (bHasCurveDesc)
     {
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves));
@@ -4314,8 +4314,10 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             }
             int *panPartType =
                 static_cast<int *>(VSI_MALLOC_VERBOSE(sizeof(int) * nParts));
-            int *panPartStart =
-                static_cast<int *>(VSI_MALLOC_VERBOSE(sizeof(int) * nParts));
+            // The + 1 is to add an extra element, not actually used, but
+            // to please Coverity Scan
+            int *panPartStart = static_cast<int *>(
+                VSI_MALLOC_VERBOSE(sizeof(int) * (nParts + 1)));
             double *padfXYZ = static_cast<double *>(
                 VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints));
             double *padfX = padfXYZ;
@@ -4373,8 +4375,8 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             panPartStart[0] = 0;
             for (i = 1; i < nParts; ++i)
                 panPartStart[i] = panPartStart[i - 1] + panPointCount[i - 1];
-            // (CID 1404102)
-            // coverity[overrun-buffer-arg]
+            // Not used, but avoids a Coverity Scan warning
+            panPartStart[nParts] = nPoints;
             OGRGeometry *poRet = OGRCreateFromMultiPatch(
                 static_cast<int>(nParts), panPartStart, panPartType,
                 static_cast<int>(nPoints), padfX, padfY, padfZ);

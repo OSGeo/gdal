@@ -25,128 +25,39 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALVectorPipelineStepRunContext                    */
-/************************************************************************/
-
-class GDALVectorPipelineStepAlgorithm;
-
-class GDALVectorPipelineStepRunContext
-{
-  public:
-    GDALVectorPipelineStepRunContext() = default;
-
-    // Progress callback to use during execution of the step
-    GDALProgressFunc m_pfnProgress = nullptr;
-    void *m_pProgressData = nullptr;
-
-    // If there is a step in the pipeline immediately following step to which
-    // this instance of GDALRasterPipelineStepRunContext is passed, and that
-    // this next step is usable by the current step (as determined by
-    // CanHandleNextStep()), then this member will point to this next step.
-    GDALVectorPipelineStepAlgorithm *m_poNextUsableStep = nullptr;
-
-  private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineStepRunContext)
-};
-
-/************************************************************************/
 /*                GDALVectorPipelineStepAlgorithm                       */
 /************************************************************************/
 
-class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
+class GDALVectorPipelineStepAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
+  public:
+    ~GDALVectorPipelineStepAlgorithm() override;
+
   protected:
     GDALVectorPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
-    struct ConstructorOptions
-    {
-        bool standaloneStep = false;
-        bool outputDatasetRequired = true;
-        std::string updateMutualExclusionGroup{};
-        std::string outputDatasetMutualExclusionGroup{};
-
-        inline ConstructorOptions &SetStandaloneStep(bool b)
-        {
-            standaloneStep = b;
-            return *this;
-        }
-
-        inline ConstructorOptions &SetOutputDatasetRequired(bool b)
-        {
-            outputDatasetRequired = b;
-            return *this;
-        }
-
-        inline ConstructorOptions &
-        SetUpdateMutualExclusionGroup(const std::string &s)
-        {
-            updateMutualExclusionGroup = s;
-            return *this;
-        }
-
-        inline ConstructorOptions &
-        SetOutputDatasetMutualExclusionGroup(const std::string &s)
-        {
-            outputDatasetMutualExclusionGroup = s;
-            return *this;
-        }
-    };
-
     GDALVectorPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
                                     const ConstructorOptions &options);
 
-    using StepRunContext = GDALVectorPipelineStepRunContext;
-
     friend class GDALVectorPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
 
-    virtual bool IsNativelyStreamingCompatible() const
+    int GetInputType() const override
     {
-        return true;
+        return GDAL_OF_VECTOR;
     }
 
-    virtual bool CanHandleNextStep(GDALVectorPipelineStepAlgorithm *) const
+    int GetOutputType() const override
     {
-        return false;
+        return GDAL_OF_VECTOR;
     }
-
-    virtual bool RunStep(GDALVectorPipelineStepRunContext &ctxt) = 0;
-
-    void AddInputArgs(bool hiddenForCLI);
-    void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);
-
-    bool m_standaloneStep = false;
-    const ConstructorOptions m_constructorOptions;
-
-    bool m_outputVRTCompatible = false;
-
-    // Input arguments
-    std::vector<GDALArgDatasetValue> m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    std::vector<std::string> m_inputLayerNames{};
-
-    // Output arguments
-    GDALArgDatasetValue m_outputDataset{};
-    std::string m_format{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_overwrite = false;
-    bool m_update = false;
-    bool m_overwriteLayer = false;
-    bool m_appendLayer = false;
-    std::string m_outputLayerName{};
-
-  private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-    GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
-    bool CheckSafeForStreamOutput() override;
 };
 
 /************************************************************************/
@@ -187,14 +98,8 @@ class GDALVectorPipelineAlgorithm final
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-  protected:
-    GDALArgDatasetValue &GetOutputDataset() override
-    {
-        return m_outputDataset;
-    }
-
-  private:
-    std::string m_helpDocCategory{};
+    static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
+                                   bool forMixedPipeline);
 };
 
 /************************************************************************/

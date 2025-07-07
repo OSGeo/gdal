@@ -29,6 +29,22 @@ static_assert(sizeof(AdbcDriver) == ADBC_DRIVER_1_1_0_SIZE);
 namespace
 {
 
+#if !defined(OGR_ADBC_HAS_DRIVER_MANAGER)
+AdbcStatusCode OGRDuckDBLoadDriver(const char *driver_name, void *driver,
+                                   struct AdbcError *error)
+{
+    void *load_handle = CPLGetSymbol(driver_name, "duckdb_adbc_init");
+    if (!load_handle)
+    {
+        return ADBC_STATUS_INTERNAL;
+    }
+
+    AdbcDriverInitFunc init_func =
+        reinterpret_cast<AdbcDriverInitFunc>(load_handle);
+    return init_func(OGR_ADBC_VERSION, driver, error);
+}
+#endif
+
 AdbcStatusCode OGRADBCLoadDriver(const char *driver_name,
                                  const char *entrypoint, void *driver,
                                  struct AdbcError *error)
@@ -46,6 +62,12 @@ AdbcStatusCode OGRADBCLoadDriver(const char *driver_name,
         return AdbcLoadDriver(driver_name, entrypoint, OGR_ADBC_VERSION, driver,
                               error);
 #else
+        // If the driver is for DuckDB, use a minimal loading function, which
+        // doesn't rely on the ADBC driver manager.
+        if (strstr(driver_name, "duckdb"))
+        {
+            return OGRDuckDBLoadDriver(driver_name, driver, error);
+        }
         return ADBC_STATUS_NOT_IMPLEMENTED;
 #endif
     }

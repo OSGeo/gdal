@@ -53,7 +53,7 @@ static herr_t HDF5_vsil_truncate(H5FD_t *_file, hid_t dxpl_id, hbool_t closing);
 static hid_t HDF5VFLGetFileDriver();
 static void HDF5VFLUnloadFileDriver();
 
-#define MAXADDR (((haddr_t)1 << (8 * sizeof(haddr_t) - 1)) - 1)
+#define MAXADDR ((static_cast<haddr_t>(1) << (8 * sizeof(haddr_t) - 1)) - 1)
 
 /* See https://support.hdfgroup.org/HDF5/doc/TechNotes/VFL.html */
 static const H5FD_class_t HDF5_vsil_g = {
@@ -63,7 +63,7 @@ static const H5FD_class_t HDF5_vsil_g = {
 #ifdef HDF5_1_13_OR_LATER
     /* value: 513 has been reserved with hdfgroup and is registered at:
      * https://portal.hdfgroup.org/pages/viewpage.action?pageId=74188097 */
-    (H5FD_class_value_t)(513),
+    static_cast<H5FD_class_value_t>(513),
 #endif
     "vsil",            /* name */
     MAXADDR,           /* maxaddr  */
@@ -111,7 +111,7 @@ static const H5FD_class_t HDF5_vsil_g = {
 
 typedef struct HDF5_vsil_t
 {
-    H5FD_t pub; /* must be first */
+    H5FD_t pub{}; /* must be first */
     VSILFILE *fp = nullptr;
     haddr_t eoa = 0;
     haddr_t eof = 0;

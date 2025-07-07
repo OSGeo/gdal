@@ -50,7 +50,7 @@ class GDALApplyVSGDataset final : public GDALDataset
 
     virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     bool IsInitOK();
@@ -139,9 +139,9 @@ int GDALApplyVSGDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALApplyVSGDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALApplyVSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    return m_poSrcDataset->GetGeoTransform(padfGeoTransform);
+    return m_poSrcDataset->GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -347,8 +347,8 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     VALIDATE_POINTER1(hSrcDataset, "GDALApplyVerticalShiftGrid", nullptr);
     VALIDATE_POINTER1(hGridDataset, "GDALApplyVerticalShiftGrid", nullptr);
 
-    double adfSrcGT[6];
-    if (GDALGetGeoTransform(hSrcDataset, adfSrcGT) != CE_None)
+    GDALGeoTransform srcGT;
+    if (GDALDataset::FromHandle(hSrcDataset)->GetGeoTransform(srcGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset has no geotransform.");
@@ -386,8 +386,9 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
         return nullptr;
     }
 
-    double adfGridGT[6];
-    if (GDALGetGeoTransform(hGridDataset, adfGridGT) != CE_None)
+    GDALGeoTransform gridGT;
+    if (GDALDataset::FromHandle(hGridDataset)->GetGeoTransform(gridGT) !=
+        CE_None)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Grid dataset has no geotransform.");
@@ -426,7 +427,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     double dfSouthLatitudeDeg = 0.0;
     double dfEastLongitudeDeg = 0.0;
     double dfNorthLatitudeDeg = 0.0;
-    GDALComputeAreaOfInterest(&oSrcSRS, adfSrcGT, nSrcXSize, nSrcYSize,
+    GDALComputeAreaOfInterest(&oSrcSRS, srcGT.data(), nSrcXSize, nSrcYSize,
                               dfWestLongitudeDeg, dfSouthLatitudeDeg,
                               dfEastLongitudeDeg, dfNorthLatitudeDeg);
 
@@ -441,8 +442,8 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
                        dfNorthLatitudeDeg));
     }
     void *hTransform = GDALCreateGenImgProjTransformer4(
-        hGridSRS, adfGridGT, OGRSpatialReference::ToHandle(&oSrcSRS), adfSrcGT,
-        aosOptions.List());
+        hGridSRS, gridGT.data(), OGRSpatialReference::ToHandle(&oSrcSRS),
+        srcGT.data(), aosOptions.List());
     if (hTransform == nullptr)
         return nullptr;
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
@@ -501,7 +502,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     CPLAssert(eErr == CE_None);
     CPL_IGNORE_RET_VAL(eErr);
     GDALDestroyWarpOptions(psWO);
-    poReprojectedGrid->SetGeoTransform(adfSrcGT);
+    poReprojectedGrid->SetGeoTransform(srcGT);
     poReprojectedGrid->AddBand(GDT_Float32, nullptr);
 
     GDALApplyVSGDataset *poOutDS = new GDALApplyVSGDataset(

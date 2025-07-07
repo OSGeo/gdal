@@ -35,7 +35,7 @@ class GDALRasterViewshedAlgorithm /* non final */
     explicit GDALRasterViewshedAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALRasterPipelineStepRunContext &ctxt) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<double> m_observerPos{};
     gdal::viewshed::Options m_opts{};

@@ -1190,7 +1190,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
         {
             if (offset + sizeof(uint16_t) > size)
                 return CPLErrorInvalidSize("property value");
-            uint16_t i = *((uint16_t *)(data + offset));
+            uint16_t i;
+            memcpy(&i, data + offset, sizeof(i));
             CPL_LSBPTR16(&i);
             // CPLDebugOnly("FlatGeobuf", "DEBUG parseFeature: i: %hu", i);
             offset += sizeof(uint16_t);
@@ -1665,7 +1666,8 @@ begin:
                     CPLErrorInvalidSize("property value");
                     goto error;
                 }
-                uint16_t i = *((uint16_t *)(data + offset));
+                uint16_t i;
+                memcpy(&i, data + offset, sizeof(i));
                 CPL_LSBPTR16(&i);
                 offset += sizeof(uint16_t);
                 // TODO: use columns from feature if defined
