@@ -90,7 +90,7 @@ Extract the stops from the GTFS file and save into a FlatGeobuf file:
 
    .. code-tab:: bash
 
-        ogr2ogr -f "FlatGeobuf" stops.fgb GTFS_Realtime.zip stops
+        ogr2ogr stops.fgb GTFS_Realtime.zip stops
 
    .. code-tab:: bash gdal CLI
 
