@@ -131,6 +131,8 @@ void JPEGDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
 #endif
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
+                              "YES");
 
     const char *pszOpenOptions =
         "<OpenOptionList>\n"
