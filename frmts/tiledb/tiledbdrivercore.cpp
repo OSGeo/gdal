@@ -22,6 +22,10 @@
 int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 
 {
+    if (poOpenInfo->pszFilename[0] == 0)
+    {
+        return FALSE;
+    }
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:"))
     {
         return TRUE;
