@@ -562,7 +562,8 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt(char **ppszData, OGRSpatialReferenceH hSRS,
  *             created geometry object. This may be NULL.
  *
  * @return the newly created geometry. Should be freed with
- *          OGRGeometryFactory::destroyGeometry() after use.
+ *          OGR_G_DestroyGeometry() after use.
+ * @since 3.12
  */
 
 OGRGeometryH CPL_DLL OGR_G_CreateFromEnvelope(double dfMinX, double dfMinY,
