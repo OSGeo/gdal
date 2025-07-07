@@ -255,7 +255,8 @@ static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
     GDALDataType eDT, GDALTransformerArgUniquePtr &hTransformArg,
-    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions);
+    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions,
+    bool bUpdateTransformerWithDestGT);
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
                                       CSLConstList papszMetadata,
@@ -1161,17 +1162,18 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
         return true;
     };
 
+    CPLString osTargetSRS;
+    if (COGGetTargetSRS(aosCreateOptions.List(), osTargetSRS))
+    {
+        if (!SetDstSRS(osTargetSRS))
+            return false;
+    }
+
     if (!(psOptions->dfMinX == 0 && psOptions->dfMinY == 0 &&
           psOptions->dfMaxX == 0 && psOptions->dfMaxY == 0 &&
           psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
           psOptions->nForcePixels == 0 && psOptions->nForceLines == 0))
     {
-        CPLString osTargetSRS;
-        if (COGGetTargetSRS(aosCreateOptions.List(), osTargetSRS))
-        {
-            if (!SetDstSRS(osTargetSRS))
-                return false;
-        }
         if (!psOptions->bResampleAlgSpecifiedByUser && nSrcCount > 0)
         {
             GDALGetWarpResampleAlg(
@@ -1196,15 +1198,14 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
         nSrcCount, pahSrcDS, osTmpFilename, "GTiff",
         oClonedOptions.aosTransformerOptions.List(),
         aosTmpGTiffCreateOptions.List(), oClonedOptions.eOutputType,
-        hUniqueTransformArg, false, &oClonedOptions);
-
+        hUniqueTransformArg, false, &oClonedOptions,
+        /* bUpdateTransformerWithDestGT = */ false);
     if (hTmpDS == nullptr)
     {
         return false;
     }
 
     CPLString osResampling;
-    CPLString osTargetSRS;
     int nXSize = 0;
     int nYSize = 0;
     double dfMinX = 0;
@@ -1219,8 +1220,6 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     {
         if (!psOptions->bResampleAlgSpecifiedByUser)
             GDALGetWarpResampleAlg(osResampling, psOptions->eResampleAlg);
-        if (!SetDstSRS(osTargetSRS))
-            bRet = false;
         psOptions->dfMinX = dfMinX;
         psOptions->dfMinY = dfMinY;
         psOptions->dfMaxX = dfMaxX;
@@ -1742,7 +1741,8 @@ CreateOutput(const char *pszDest, int nSrcCount, GDALDatasetH *pahSrcDS,
         nSrcCount, pahSrcDS, pszDest, psOptions->osFormat.c_str(),
         psOptions->aosTransformerOptions.List(),
         psOptions->aosCreateOptions.List(), psOptions->eOutputType,
-        hUniqueTransformArg, psOptions->bSetColorInterpretation, psOptions);
+        hUniqueTransformArg, psOptions->bSetColorInterpretation, psOptions,
+        /* bUpdateTransformerWithDestGT = */ true);
     if (hDstDS == nullptr)
     {
         return nullptr;
@@ -3507,7 +3507,8 @@ static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
     GDALDataType eDT, GDALTransformerArgUniquePtr &hUniqueTransformArg,
-    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions)
+    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions,
+    bool bUpdateTransformerWithDestGT)
 
 {
     GDALDriverH hDriver;
@@ -4855,7 +4856,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         adfDstGeoTransform[5] = fabs(adfDstGeoTransform[5]);
     }
 
-    if (hUniqueTransformArg)
+    if (hUniqueTransformArg && bUpdateTransformerWithDestGT)
     {
         GDALSetGenImgProjTransformerDstGeoTransform(hUniqueTransformArg.get(),
                                                     adfDstGeoTransform);
