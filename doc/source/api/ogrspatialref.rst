@@ -12,7 +12,7 @@ Spatial Reference System C++ API
 Include file
 ------------
 
-:file:`ogr_spatialref.h`
+:source_file:`ogr/ogr_spatialref.h`
 
 Spatial Reference System C++ API
 --------------------------------

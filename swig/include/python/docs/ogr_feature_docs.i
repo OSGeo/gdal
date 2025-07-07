@@ -259,7 +259,7 @@ Fetch field value as a 32-bit integer.
 :py:const:`OFTReal` fields will be cast to integer. Other field types, or
 errors will result in a return value of zero.
 
-See :cpp:func:`GetFieldAsInteger`.
+See :cpp:func:`OGRFeature::GetFieldAsInteger`.
 
 Parameters
 -----------

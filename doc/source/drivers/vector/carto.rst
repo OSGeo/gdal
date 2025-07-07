@@ -61,7 +61,7 @@ Filtering
 The driver will forward any spatial filter set with
 :cpp:func:`OGRLayer::SetSpatialFilter` to the server.
 It also makes the same for attribute filters set with
-:cpp:func:`SetAttributeFilter`.
+:cpp:func:`OGRLayer::SetAttributeFilter`.
 
 Paging
 ------
@@ -80,13 +80,13 @@ mode.
 The mapping between the operations of the Carto service and the OGR
 concepts is the following :
 
-- :cpp:func:`OGRFeature::CreateFeature` <==> ``INSERT`` operation
-- :cpp:func:`OGRFeature::SetFeature` <==> ``UPDATE`` operation
-- :cpp:func:`OGRFeature::DeleteFeature` <==> ``DELETE`` operation
-- :cpp:func:`OGRDataSource::CreateLayer` <==> ``CREATE TABLE`` operation
-- :cpp:func:`OGRDataSource::DeleteLayer` <==> ``DROP TABLE`` operation
+- :cpp:func:`OGRLayer::CreateFeature` <==> ``INSERT`` operation
+- :cpp:func:`OGRLayer::SetFeature` <==> ``UPDATE`` operation
+- :cpp:func:`OGRLayer::DeleteFeature` <==> ``DELETE`` operation
+- :cpp:func:`GDALDataset::CreateLayer` <==> ``CREATE TABLE`` operation
+- :cpp:func:`GDALDataset::DeleteLayer` <==> ``DROP TABLE`` operation
 
-When inserting a new feature with :cpp:func:`OGRFeature::CreateFeature`,
+When inserting a new feature with :cpp:func:`OGRLayer::CreateFeature`,
 and if the command is successful, OGR will fetch the returned rowid and use it
 as the OGR FID.
 
@@ -95,22 +95,22 @@ OGR API call. This however can cause performance penalties when issuing a lot
 of commands due to many client/server exchanges.
 
 So, on a newly created layer, the ``INSERT`` of
-:cpp:func:`OGRFeature::CreateFeature` operations are grouped together in chunks
+:cpp:func:`OGRLayer::CreateFeature` operations are grouped together in chunks
 until they reach 15 MB (can be changed with the :config:`CARTO_MAX_CHUNK_SIZE`
 configuration option, with a value in MB), at which point they are transferred
 to the server. By setting :config:`CARTO_MAX_CHUNK_SIZE` to 0, immediate transfer occurs.
 
 .. warning::
 
-    Don't use :cpp:func:`OGRDataSource::DeleteLayer` and
-    :cpp:func:`OGRDataSource::CreateLayer` to overwrite a table. Instead only
-    call :cpp:func:`OGRDataSource::CreateLayer` with OVERWRITE=YES. This will
+    Don't use :cpp:func:`GDALDataset::DeleteLayer` and
+    :cpp:func:`GDALDataset::CreateLayer` to overwrite a table. Instead only
+    call :cpp:func:`GDALDataset::CreateLayer` with OVERWRITE=YES. This will
     avoid CARTO deleting maps that depend on this table
 
 SQL
 ---
 
-SQL commands provided to the :cpp:func:`OGRDataSource::ExecuteSQL` call
+SQL commands provided to the :cpp:func:`GDALDataset::ExecuteSQL` call
 are executed on the server side, unless the OGRSQL dialect is specified.
 You can use the full power of PostgreSQL + PostGIS SQL capabilities.
 

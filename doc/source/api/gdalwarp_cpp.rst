@@ -12,7 +12,7 @@ Warper C++ API
 Include file
 ------------
 
-:file:`gdalwarper.h`
+:source_file:`alg/gdalwarper.h`
 
 Warper C++ API
 --------------

@@ -12,7 +12,7 @@ GDALRasterBand C++ API
 Include file
 ------------
 
-:file:`gdal_priv.h`
+:source_file:`gcore/gdal_priv.h`
 
 GDALRasterBand class
 --------------------
@@ -36,3 +36,23 @@ GDALRasterBand related functions
 
 .. doxygenfunction:: gdal::IfThenElse
    :project: api
+
+GDALMaskValueRange enumeration
+------------------------------
+
+.. doxygenenum:: GDALMaskValueRange
+   :project: api
+
+GDALRasterBlock class
+---------------------
+
+.. doxygenclass:: GDALRasterBlock
+   :project: api
+   :members:
+
+GDALRasterWindow class
+----------------------
+
+.. doxygenclass:: GDALRasterWindow
+   :project: api
+   :members:

@@ -140,7 +140,7 @@ const GDALColorEntry *CPL_STDCALL GDALGetColorEntry(GDALColorTableH hTable,
  *
  * @param i entry offset from zero to GetColorEntryCount()-1.
  *
- * @param poEntry the existing GDALColorEntry to be overrwritten with the RGB
+ * @param poEntry the existing GDALColorEntry to be overwritten with the RGB
  * values.
  *
  * @return TRUE on success, or FALSE if the conversion isn't supported.
@@ -551,7 +551,7 @@ static const CPLXMLNode *FindRasterRenderer(const CPLXMLNode *psNode)
  *
  * Supported formats are:
  * - QGIS Layer Style File (.qml) or QGIS Layer Definition File (.qlr) using
- *   "Palette/unique values" raster renderer or "Singleband pseudocolor" renderer
+ *   "Palette/unique values" raster renderer or "Single band pseudocolor" renderer
  * - GMT or GRASS text files, when entry index are integers
  *
  * @return a new color table, or NULL in case of error.

@@ -377,7 +377,7 @@ New corresponding C API:
 OGRLayer CreateLayer()/ICreateLayer() changes
 +++++++++++++++++++++++++++++++++++++++++++++
 
-The signature of the current :cpp:func:`OGRLayer::ICreateLayer()` protected
+The signature of the current :cpp:func:`GDALDataset::ICreateLayer()` protected
 method (implemented by drivers) will be changed from
 
 .. code-block:: c++

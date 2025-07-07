@@ -42,7 +42,7 @@ enum class OGRWktFormat
 };
 
 /// Options for formatting WKT output
-struct CPL_DLL OGRWktOptions
+class CPL_DLL OGRWktOptions
 {
   public:
     /// Type of WKT output to produce.
@@ -302,8 +302,9 @@ class CPL_DLL OGRDefaultConstGeometryVisitor : public IOGRConstGeometryVisitor
  *
  * @since GDAL 3.9
  */
-struct CPL_DLL OGRGeomCoordinateBinaryPrecision
+class CPL_DLL OGRGeomCoordinateBinaryPrecision
 {
+  public:
     int nXYBitPrecision =
         INT_MIN; /**< Number of bits needed to achieved XY precision. Typically
                     computed with SetFromResolution() */

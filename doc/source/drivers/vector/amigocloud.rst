@@ -88,11 +88,11 @@ mode.
 The mapping between the operations of the AmigoCloud service and the OGR
 concepts is the following :
 
-- :cpp:func:`OGRFeature::CreateFeature` <==> ``INSERT`` operation
-- :cpp:func:`OGRFeature::SetFeature` <==> ``UPDATE`` operation
-- :cpp:func:`OGRFeature::DeleteFeature` <==> ``DELETE`` operation
-- :cpp:func:`OGRDataSource::CreateLayer` <==> ``CREATE TABLE`` operation
-- :cpp:func:`OGRDataSource::DeleteLayer` <==> `DROP TABLE` operation
+- :cpp:func:`OGRLayer::CreateFeature` <==> ``INSERT`` operation
+- :cpp:func:`OGRLayer::SetFeature` <==> ``UPDATE`` operation
+- :cpp:func:`OGRLayer::DeleteFeature` <==> ``DELETE`` operation
+- :cpp:func:`GDALDataset::CreateLayer` <==> ``CREATE TABLE`` operation
+- :cpp:func:`GDALDataset::DeleteLayer` <==> ``DROP TABLE`` operation
 
 When inserting a new feature with CreateFeature(), and if the command is
 successful, OGR will fetch the returned amigo_id (GUID) and use hash
