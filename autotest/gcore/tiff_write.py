@@ -12146,6 +12146,66 @@ def test_tiff_create_copy_only_visible_at_close_time(tmp_path):
 ###############################################################################
 
 
+def test_tiff_createcopy_only_visible_at_close_time_relative_path():
+
+    my_path = "tmp/test_tiff_create_only_visible_at_close_time_relative_path"
+    gdal.Mkdir(my_path, 0o755)
+
+    out_filename = my_path + "/tmp.tif"
+    try:
+        src_ds = gdal.Open("data/byte.tif")
+        ds = gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is not None
+
+        with gdal.Open(out_filename) as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+    finally:
+        gdal.Unlink(out_filename)
+        gdal.Rmdir(my_path)
+
+
+###############################################################################
+# Test operations with Windows special filenames (prefix with "\\?\")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_tiff_createcopy_only_visible_at_close_time_win32_specific(tmp_path):
+
+    # Try prefix filenames
+    tmp_path_str = str(tmp_path)
+    if "/" not in tmp_path_str:
+        prefix_path = "\\\\?\\" + tmp_path_str
+
+        src_ds = gdal.Open("data/byte.tif")
+        out_filename = prefix_path + "\\tmp.tif"
+
+        def my_callback(pct, msg, user_data):
+            if pct < 1:
+                assert gdal.VSIStatL(out_filename) is None
+            return True
+
+        drv = gdal.GetDriverByName("GTIFF")
+        assert drv.GetMetadataItem(gdal.DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) == "YES"
+        ds = drv.CreateCopy(
+            out_filename,
+            src_ds,
+            options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"],
+            callback=my_callback,
+        )
+        ds.Close()
+
+        with gdal.Open(out_filename) as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
 def test_tiff_create_suppress_on_close(tmp_path):
 
     out_filename = tmp_path / "tmp.tif"
@@ -12233,6 +12293,38 @@ def test_tiff_create_suppress_on_close_only_visible_at_close_time(tmp_path):
         _stop_directory_observer(observer)
         if files_created is not None and sys.platform == "linux":
             assert len(files_created) == 0
+        elif files_created is not None and sys.platform == "win32":
+            assert len(files_created) == 1 and files_created[0].endswith(".tmp_hidden")
+
+
+###############################################################################
+
+
+def test_tiff_create_suppress_on_close_only_visible_at_close_time_relative_path():
+
+    my_path = "tmp/test_tiff_create_suppress_on_close_only_visible_at_close_time_relative_path"
+    gdal.Mkdir(my_path, 0o755)
+
+    observer, files_created = _start_directory_observer(os.getcwd() + "/" + my_path)
+
+    try:
+        out_filename = my_path + "/tmp.tif"
+        ds = gdal.GetDriverByName("GTiff").Create(
+            out_filename, 1, 1, options=["@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME=YES"]
+        )
+        assert gdal.VSIStatL(out_filename) is None
+        ds.MarkSuppressOnClose()
+        assert gdal.VSIStatL(out_filename) is None
+        ds.Close()
+        assert gdal.VSIStatL(out_filename) is None
+    finally:
+        _stop_directory_observer(observer)
+        if files_created is not None and sys.platform == "linux":
+            assert len(files_created) == 0
+        elif files_created is not None and sys.platform == "win32":
+            assert len(files_created) == 1 and files_created[0].endswith(".tmp_hidden")
+
+        gdal.RmdirRecursive(my_path)
 
 
 ###############################################################################
