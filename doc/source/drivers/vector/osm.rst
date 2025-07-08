@@ -278,7 +278,7 @@ The following open options are supported:
 Examples
 --------
 
-List the contents of a local PBF file, downloaded from https://download.geofabrik.de/.
+List the contents of a local PBF file, with the original downloaded from https://download.geofabrik.de/europe/bosnia-herzegovina-latest.osm.pbf.
 
 .. tabs::
 
@@ -334,3 +334,7 @@ See Also
    description <http://wiki.openstreetmap.org/wiki/OSM_XML>`__
 -  `OSM PBF Format
    description <http://wiki.openstreetmap.org/wiki/PBF_Format>`__
+
+
+.. spelling:word-list::
+    Mostar
