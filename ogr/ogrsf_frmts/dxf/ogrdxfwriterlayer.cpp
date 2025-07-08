@@ -202,9 +202,9 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
         osSanitizedLayer.replaceAll('\r', '_');
         osSanitizedLayer.replaceAll('\n', '_');
 
-        const char *pszExists =
+        auto osExists =
             poDS->oHeaderDS.LookupLayerProperty(osSanitizedLayer, "Exists");
-        if ((pszExists == nullptr || strlen(pszExists) == 0) &&
+        if (!osExists &&
             CSLFindString(poDS->papszLayersToCreate, osSanitizedLayer) == -1)
         {
             poDS->papszLayersToCreate =

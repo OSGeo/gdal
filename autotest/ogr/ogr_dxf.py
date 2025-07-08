@@ -4323,3 +4323,16 @@ def test_ogr_dxf_insert_col_count_zero():
         with ogr.Open("data/dxf/insert_only_col_count_zero.dxf") as ds:
             lyr = ds.GetLayerByName("blocks")
             assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test reading transparency 440 block
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_read_transparency():
+
+    with ogr.Open("data/dxf/transparency.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "PEN(c:#ffbeb87f)"
