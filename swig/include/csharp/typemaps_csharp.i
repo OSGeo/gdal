@@ -238,10 +238,17 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 
         int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
         IntPtr unmanagedString = Marshal.AllocHGlobal(byteCount + 1);
-        byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(str);
-        Marshal.Copy(utf8Bytes, 0, unmanagedString, byteCount);
-        // null-terminate the string
-        Marshal.WriteByte(unmanagedString, byteCount, 0);
+
+        unsafe
+        {
+            byte* ptr = (byte*)unmanagedString.ToPointer();
+            fixed (char *pStr = str)
+            {
+                System.Text.Encoding.UTF8.GetBytes(pStr, str.Length, ptr, byteCount);
+                // null-terminate
+                ptr[byteCount] = 0;
+            }
+        }
 
         return unmanagedString;
     }
