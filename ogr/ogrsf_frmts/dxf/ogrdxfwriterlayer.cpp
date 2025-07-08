@@ -1114,13 +1114,42 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
             poTool = oSM.GetPart(0);
     }
     // Write style brush fore color
+    std::string osBrushId;
+    std::string osBackgroundColor;
+    double dfSize = 1.0;
+    double dfAngle = 0.0;
     if (poTool && poTool->GetType() == OGRSTCBrush)
     {
         OGRStyleBrush *poBrush = cpl::down_cast<OGRStyleBrush *>(poTool);
         GBool bDefault;
-        const char *pszColor = poBrush->ForeColor(bDefault);
-        if (pszColor != nullptr && !bDefault)
-            oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
+
+        const char *pszBrushId = poBrush->Id(bDefault);
+        if (pszBrushId && !bDefault)
+            osBrushId = pszBrushId;
+
+        // null brush (transparent - no fill, irrespective of fc or bc values
+        if (osBrushId == "ogr-brush-1")
+        {
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, "#00000000");
+        }
+        else
+        {
+            const char *pszColor = poBrush->ForeColor(bDefault);
+            if (pszColor != nullptr && !bDefault)
+                oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
+
+            const char *pszBGColor = poBrush->BackColor(bDefault);
+            if (pszBGColor != nullptr && !bDefault)
+                osBackgroundColor = pszBGColor;
+        }
+
+        double dfStyleSize = poBrush->Size(bDefault);
+        if (!bDefault)
+            dfSize = dfStyleSize;
+
+        double dfStyleAngle = poBrush->Angle(bDefault);
+        if (!bDefault)
+            dfAngle = dfStyleAngle;
     }
     delete poTool;
 
@@ -1143,9 +1172,70 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     WriteValue(220, 0);    // extrusion direction Y
     WriteValue(230, 1.0);  // extrusion direction Z
 
-    WriteValue(2, "SOLID");  // fill pattern
-    WriteValue(70, 1);       // solid fill
-    WriteValue(71, 0);       // associativity
+    const char *pszPatternName = "SOLID";
+    double dfPatternRotation = 0;
+
+    // Cf https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html#predefined-hatch-pattern
+    // for DXF standard hatch pattern names
+
+    if (osBrushId.empty() || osBrushId == "ogr-brush-0")
+    {
+        // solid fill pattern
+    }
+    else if (osBrushId == "ogr-brush-2")
+    {
+        // horizontal line.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = -45;
+    }
+    else if (osBrushId == "ogr-brush-3")
+    {
+        // vertical line.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 45;
+    }
+    else if (osBrushId == "ogr-brush-4")
+    {
+        // top-left to bottom-right diagonal hatch.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 90;
+    }
+    else if (osBrushId == "ogr-brush-5")
+    {
+        // bottom-left to top-right diagonal hatch
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 0;
+    }
+    else if (osBrushId == "ogr-brush-6")
+    {
+        // cross hatch
+        pszPatternName = "ANSI37";
+        dfPatternRotation = 45;
+    }
+    else if (osBrushId == "ogr-brush-7")
+    {
+        // diagonal cross hatch
+        pszPatternName = "ANSI37";
+        dfPatternRotation = 0;
+    }
+    else
+    {
+        // solid fill pattern as a fallback
+    }
+
+    dfPatternRotation += dfAngle;
+
+    WriteValue(2, pszPatternName);
+
+    if (EQUAL(pszPatternName, "ANSI31") || EQUAL(pszPatternName, "ANSI37"))
+    {
+        WriteValue(70, 0);  // pattern fill
+    }
+    else
+    {
+        WriteValue(70, 1);  // solid fill
+    }
+    WriteValue(71, 0);  // associativity
 
 /* -------------------------------------------------------------------- */
 /*      Handle a PEN tool to control drawing color and width.           */
@@ -1219,7 +1309,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     /*      Process the loops (rings).                                      */
     /* -------------------------------------------------------------------- */
-    OGRPolygon *poPoly = poGeom->toPolygon();
+    const OGRPolygon *poPoly = poGeom->toPolygon();
 
     WriteValue(91, poPoly->getNumInteriorRings() + 1);
 
@@ -1241,7 +1331,126 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
 
     WriteValue(75, 0);  // hatch style = Hatch "odd parity" area (Normal style)
     WriteValue(76, 1);  // hatch pattern type = predefined
+
+    const auto roundIfClose = [](double x)
+    {
+        if (std::fabs(x - std::round(x)) < 1e-12)
+            x = std::round(x);
+        return x == 0 ? 0 : x;  // make sure we return positive zero
+    };
+
+    if (EQUAL(pszPatternName, "ANSI31"))
+    {
+        // Single line. With dfPatternRotation=0, this is a bottom-left to top-right diagonal hatch
+
+        WriteValue(52, dfPatternRotation);  // Hatch pattern angle
+        WriteValue(41, dfSize);             // Hatch pattern scale or spacing
+        WriteValue(77, 0);  // Hatch pattern double flag : 0 = not double
+
+        WriteValue(78, 1);  // Number of pattern definition lines
+
+        const double angle = dfPatternRotation + 45.0;
+        WriteValue(53, angle);  // Pattern line angle
+        WriteValue(43, 0.0);    // Pattern line base point, X component
+        WriteValue(44, 0.0);    // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+    }
+    else if (EQUAL(pszPatternName, "ANSI37"))
+    {
+        // cross hatch. With dfPatternRotation=0, lines are diagonals
+
+        WriteValue(52, dfPatternRotation);  // Hatch pattern angle
+        WriteValue(41, dfSize);             // Hatch pattern scale or spacing
+        WriteValue(77, 0);  // Hatch pattern double flag : 0 = not double
+
+        WriteValue(78, 2);  // Number of pattern definition lines
+
+        const double angle1 = dfPatternRotation + 45;
+        WriteValue(53, angle1);  // Pattern line angle
+        WriteValue(43, 0.0);     // Pattern line base point, X component
+        WriteValue(44, 0.0);     // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle1 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle1 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+
+        const double angle2 = dfPatternRotation + 135;
+        WriteValue(53, angle2);  // Pattern line angle
+        WriteValue(43, 0.0);     // Pattern line base point, X component
+        WriteValue(44, 0.0);     // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle2 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle2 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+    }
+
     WriteValue(98, 0);  // 0 seed points
+
+    // Deal with brush background color
+    if (!osBackgroundColor.empty())
+    {
+        bool bPerfectMatch = false;
+        int nColor =
+            ColorStringToDXFColor(osBackgroundColor.c_str(), bPerfectMatch);
+        if (nColor >= 0)
+        {
+            WriteValue(1001, "HATCHBACKGROUNDCOLOR");
+            if (bPerfectMatch)
+            {
+                // C3 is top 8 bit means an indexed color
+                unsigned nRGBColorUnsigned =
+                    (static_cast<unsigned>(0xC3) << 24) |
+                    ((nColor & 0xff) << 0);
+                // Convert to signed (negative) value
+                int nRGBColorSigned;
+                memcpy(&nRGBColorSigned, &nRGBColorUnsigned,
+                       sizeof(nRGBColorSigned));
+                WriteValue(1071, nRGBColorSigned);
+            }
+            else
+            {
+                unsigned int nRed = 0;
+                unsigned int nGreen = 0;
+                unsigned int nBlue = 0;
+                unsigned int nOpacity = 255;
+
+                const int nCount =
+                    sscanf(osBackgroundColor.c_str(), "#%2x%2x%2x%2x", &nRed,
+                           &nGreen, &nBlue, &nOpacity);
+                if (nCount >= 3)
+                {
+                    // C2 is top 8 bit means a true color
+                    unsigned nRGBColorUnsigned =
+                        (static_cast<unsigned>(0xC2) << 24) |
+                        ((nRed & 0xff) << 16) | ((nGreen & 0xff) << 8) |
+                        ((nBlue & 0xff) << 0);
+                    // Convert to signed (negative) value
+                    int nRGBColorSigned;
+                    memcpy(&nRGBColorSigned, &nRGBColorUnsigned,
+                           sizeof(nRGBColorSigned));
+                    WriteValue(1071, nRGBColorSigned);
+                }
+            }
+        }
+    }
 
     return OGRERR_NONE;
 
