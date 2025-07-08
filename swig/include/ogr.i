@@ -3263,6 +3263,20 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 
 %}
 
+#ifndef SWIGCSHARP
+%newobject CreateGeometryFromEnvelope;
+%inline %{
+  OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin, 
+                                                double ymin, 
+                                                double xmax,
+                                                double ymax,
+                                                OSRSpatialReferenceShadow *reference = nullptr) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*) OGR_G_CreateFromEnvelope(xmin, ymin, xmax, ymax, reference);
+    return geom;
+  }
+%}
+#endif
+
 %newobject BuildPolygonFromEdges;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) BuildPolygonFromEdges;
