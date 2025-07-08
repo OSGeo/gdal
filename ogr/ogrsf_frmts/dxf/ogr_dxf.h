@@ -21,6 +21,7 @@
 #include <array>
 #include <vector>
 #include <map>
+#include <optional>
 #include <set>
 #include <queue>
 #include <memory>
@@ -789,8 +790,8 @@ class OGRDXFDataSource final : public GDALDataset
     bool ReadLineTypeDefinition();
     bool ReadTextStyleDefinition();
     bool ReadDimStyleDefinition();
-    const char *LookupLayerProperty(const char *pszLayer,
-                                    const char *pszProperty);
+    std::optional<CPLString> LookupLayerProperty(const char *pszLayer,
+                                                 const char *pszProperty) const;
     const char *LookupTextStyleProperty(const char *pszTextStyle,
                                         const char *pszProperty,
                                         const char *pszDefault);

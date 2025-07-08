@@ -4391,3 +4391,16 @@ def test_ogr_dxf_read_wipeout_binary():
         feat,
         "POLYGON ((448380.538954307 6913930.73282502,448380.538954307 6913930.73282502,448380.538954307 6913931.73282502,448381.538954307 6913931.73282502,448381.538954307 6913930.73282502,448380.538954307 6913930.73282502))",
     )
+
+
+###############################################################################
+# Test reading transparency 440 block
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_read_transparency():
+
+    with ogr.Open("data/dxf/transparency.dxf") as ds:
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "PEN(c:#ffbeb87f)"

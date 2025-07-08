@@ -179,6 +179,10 @@ void OGRDXFLayer::TranslateGenericProperty(OGRDXFFeature *poFeature, int nCode,
             poFeature->oStyleProperties["TrueColor"] = pszValue;
             break;
 
+        case 440:
+            poFeature->oStyleProperties["Transparency"] = pszValue;
+            break;
+
         case 6:
             poFeature->SetField("Linetype", TextRecode(pszValue));
             break;
@@ -339,7 +343,9 @@ void OGRDXFLayer::PrepareLineStyle(
     // Use layer lineweight?
     if (CPLAtof(osWeight) == -1)
     {
-        osWeight = poDS->LookupLayerProperty(osLayer, "LineWeight");
+        auto osLayerLineWeight =
+            poDS->LookupLayerProperty(osLayer, "LineWeight");
+        osWeight = osLayerLineWeight ? *osLayerLineWeight : CPLString();
     }
 
     // Will be zero in the case of an invalid value
@@ -348,26 +354,28 @@ void OGRDXFLayer::PrepareLineStyle(
     /* -------------------------------------------------------------------- */
     /*      Do we have a dash/dot line style?                               */
     /* -------------------------------------------------------------------- */
-    const char *pszLinetype = poFeature->GetFieldAsString("Linetype");
+    CPLString osLinetype = poFeature->GetFieldAsString("Linetype");
 
     // Use ByBlock line style?
-    if (pszLinetype && EQUAL(pszLinetype, "ByBlock") && poBlockFeature)
+    if (!osLinetype.empty() && EQUAL(osLinetype, "ByBlock") && poBlockFeature)
     {
-        pszLinetype = poBlockFeature->GetFieldAsString("Linetype");
+        osLinetype = poBlockFeature->GetFieldAsString("Linetype");
 
         // Use the inherited line style if we regenerate the style string
         // again during block insertion
-        if (pszLinetype)
-            poFeature->SetField("Linetype", pszLinetype);
+        if (!osLinetype.empty())
+            poFeature->SetField("Linetype", osLinetype);
     }
 
     // Use layer line style?
-    if (pszLinetype && EQUAL(pszLinetype, ""))
+    if (osLinetype.empty())
     {
-        pszLinetype = poDS->LookupLayerProperty(osLayer, "Linetype");
+        auto osLayerLineType = poDS->LookupLayerProperty(osLayer, "Linetype");
+        if (osLayerLineType)
+            osLinetype = *osLayerLineType;
     }
 
-    const std::vector<double> oLineType = poDS->LookupLineType(pszLinetype);
+    const std::vector<double> oLineType = poDS->LookupLineType(osLinetype);
 
     // Linetype scale is not inherited from the block feature
     double dfLineTypeScale = CPLAtof(poDS->GetVariable("$LTSCALE", "1.0"));
