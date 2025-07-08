@@ -4404,3 +4404,23 @@ def test_ogr_dxf_read_transparency():
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
         assert feat.GetStyleString() == "PEN(c:#ffbeb87f)"
+
+
+###############################################################################
+# Test writing true color and transparency
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_write_true_color_and_transparency(tmp_path):
+
+    # Check that we perfectly roundtry transparency.dxf
+    gdal.VectorTranslate(
+        tmp_path / "out.dxf",
+        "data/dxf/transparency.dxf",
+        datasetCreationOptions=["FIRST_ENTITY=131072"],
+    )
+
+    with gdal.VSIFile(tmp_path / "out.dxf", "rb") as fout, gdal.VSIFile(
+        "data/dxf/transparency.dxf", "rb"
+    ) as fin:
+        assert fout.read() == fin.read()

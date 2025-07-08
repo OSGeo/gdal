@@ -25,6 +25,7 @@
 #include <set>
 #include <queue>
 #include <memory>
+#include <utility>
 
 class OGRDXFDataSource;
 class OGRDXFFeature;
@@ -865,7 +866,11 @@ class OGRDXFWriterLayer final : public OGRLayer
     int WriteValue(int nCode, int nValue);
     int WriteValue(int nCode, double dfValue);
 
-    OGRErr WriteCore(OGRFeature *);
+    static constexpr int PROP_RGBA_COLOR = -1;
+
+    using CorePropertiesType = std::vector<std::pair<int, std::string>>;
+
+    OGRErr WriteCore(OGRFeature *, const CorePropertiesType &oCoreProperties);
     OGRErr WritePOINT(OGRFeature *);
     OGRErr WriteTEXT(OGRFeature *);
     OGRErr WritePOLYLINE(OGRFeature *, const OGRGeometry * = nullptr);
@@ -873,7 +878,7 @@ class OGRDXFWriterLayer final : public OGRLayer
     OGRErr WriteINSERT(OGRFeature *);
 
     static CPLString TextEscape(const char *);
-    static int ColorStringToDXFColor(const char *);
+    static int ColorStringToDXFColor(const char *, bool &bPerfectMatch);
     static std::vector<double> PrepareLineTypeDefinition(OGRStylePen *);
     static std::map<CPLString, CPLString>
     PrepareTextStyleDefinition(OGRStyleLabel *);
