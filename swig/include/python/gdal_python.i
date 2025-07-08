@@ -2719,22 +2719,47 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 %pythoncode %{
 
 def CreateDataSource(self, utf8_path, options=None):
+    """
+    Synonym for :py:meth:`CreateVector`.
+    """
     return self.Create(utf8_path, 0, 0, 0, GDT_Unknown, options or [])
 
 def CopyDataSource(self, ds, utf8_path, options=None):
+    """
+    Synonym for :py:meth:`CreateCopy`.
+    """
     return self.CreateCopy(utf8_path, ds, options = options or [])
 
 def DeleteDataSource(self, utf8_path):
+    """
+    Synonym for :py:meth:`Delete`.
+    """
     return self.Delete(utf8_path)
 
 def Open(self, utf8_path, update=False):
+    """
+    Attempt to open a specified path with this driver.
+
+    Parameters
+    ----------
+    utf8_path : str
+       The path to open
+    update : bool, default = False
+       Whether to open the dataset in update mode.
+       
+    Returns
+    -------
+    Dataset, or None on error 
+    """
     return OpenEx(utf8_path,
                   OF_VECTOR | (OF_UPDATE if update else 0),
                   [self.GetDescription()])
 
 def GetName(self):
+    """
+    Synonym for :py:meth:`GetDescription`.
+    """
     return self.GetDescription()
-
 %}
 
 }
