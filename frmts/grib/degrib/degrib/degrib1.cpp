@@ -241,6 +241,14 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                return &parm_table_ecmwf_170[0];
             case 180:
                return &parm_table_ecmwf_180[0];
+            case 210:
+               return &parm_table_ecmwf_210[0];
+            case 215:
+               return &parm_table_ecmwf_215[0];
+            case 217:
+               return &parm_table_ecmwf_217[0];
+            case 218:
+               return &parm_table_ecmwf_218[0];
             case 228:
                return &parm_table_ecmwf_228[0];
          }
