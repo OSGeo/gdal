@@ -17,6 +17,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_spawn.h"
 #include "cpl_time.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
@@ -40,6 +41,8 @@
 #ifndef _WIN32
 #define FORK_ALLOWED
 #endif
+
+#include "cpl_zlib_header.h"  // for crc32()
 
 //! @cond Doxygen_Suppress
 
@@ -459,6 +462,18 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 /*                          GenerateTile()                              */
 /************************************************************************/
 
+// Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
+// for specification of SUB and AVG filters
+inline GByte PNG_SUB(int nVal, int nValPrev)
+{
+    return static_cast<GByte>((nVal - nValPrev) & 0xff);
+}
+
+inline GByte PNG_AVG(int nVal, int nValPrev, int nValUp)
+{
+    return static_cast<GByte>((nVal - (nValPrev + nValUp) / 2) & 0xff);
+}
+
 static bool GenerateTile(
     GDALDataset *poSrcDS, GDALDriver *m_poDstDriver, const char *pszExtension,
     CSLConstList creationOptions, GDALWarpOperation &oWO,
@@ -468,7 +483,8 @@ static bool GenerateTile(
     int nZoomLevel, int iX, int iY, const std::string &convention,
     int nMinTileX, int nMinTileY, bool bSkipBlank, bool bUserAskedForAlpha,
     bool bAuxXML, bool bResume, const std::vector<std::string> &metadata,
-    const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer)
+    const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer,
+    std::vector<GByte> &tmpBuffer)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -494,7 +510,7 @@ static bool GenerateTile(
     if (eErr != CE_None)
         return false;
 
-    const bool bDstHasAlpha =
+    bool bDstHasAlpha =
         nBands > poSrcDS->GetRasterCount() ||
         (nBands == poSrcDS->GetRasterCount() &&
          poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() ==
@@ -520,11 +536,302 @@ static bool GenerateTile(
             bAllOpaque = (dstBuffer[(nBands - 1) * nBytesPerBand + i] == 255);
         }
         if (bAllOpaque)
+        {
+            bDstHasAlpha = false;
             nBands--;
+        }
     }
 
     VSIMkdir(osDirZ.c_str(), 0755);
     VSIMkdir(osDirX.c_str(), 0755);
+
+    const bool bSupportsCreateOnlyVisibleAtCloseTime =
+        m_poDstDriver->GetMetadataItem(
+            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
+
+    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
+                                           ? osFilename
+                                           : osFilename + ".tmp." + pszExtension;
+
+    if (!bAuxXML && EQUAL(pszExtension, "png") &&
+        eWorkingDataType == GDT_Byte &&
+        tileMatrix.mTileWidth <=
+            (INT_MAX - INT_MAX / 10) / nBands / tileMatrix.mTileHeight &&
+        poColorTable == nullptr && pdfDstNoData == nullptr &&
+        CSLCount(creationOptions) == 0 &&
+        CPLTestBool(
+            CPLGetConfigOption("GDAL_RASTER_TILE_USE_PNG_OPTIM", "YES")))
+    {
+        // This is an optimized code path completely shortcircuiting libpng
+        // We manually generate the PNG file using the Average filter and
+        // ZLIB compressing the whole buffer, hopefully with libdeflate.
+
+        const int W = tileMatrix.mTileWidth;
+        const int H = tileMatrix.mTileHeight;
+        const int nDstBytesPerRow = 1 + nBands * W;
+        const int nBPB = static_cast<int>(nBytesPerBand);
+
+        bool bBlank = false;
+        if (bDstHasAlpha)
+        {
+            bBlank = true;
+            for (int i = 0; i < nBPB && bBlank; ++i)
+            {
+                bBlank = (dstBuffer[(nBands - 1) * nBPB + i] == 0);
+            }
+        }
+
+        constexpr GByte PNG_FILTER_SUB = 1;  // horizontal diff
+        constexpr GByte PNG_FILTER_AVG = 3;  // average with pixel before and up
+
+        if (bBlank)
+            tmpBuffer.clear();
+        tmpBuffer.resize(cpl::fits_on<int>(nDstBytesPerRow * H));
+
+        for (int j = 0; !bBlank && j < H; ++j)
+        {
+            if (j > 0)
+            {
+                tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                    PNG_FILTER_AVG;
+                for (int i = 0; i < nBands; ++i)
+                {
+                    tmpBuffer[1 + j * nDstBytesPerRow + i] =
+                        PNG_AVG(dstBuffer[i * nBPB + j * W], 0,
+                                dstBuffer[i * nBPB + (j - 1) * W]);
+                }
+            }
+            else
+            {
+                tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                    PNG_FILTER_SUB;
+                for (int i = 0; i < nBands; ++i)
+                {
+                    tmpBuffer[1 + j * nDstBytesPerRow + i] =
+                        dstBuffer[i * nBPB + j * W];
+                }
+            }
+
+            if (nBands == 1)
+            {
+                if (j > 0)
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else if (nBands == 2)
+            {
+                if (j > 0)
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else if (nBands == 3)
+            {
+                if (j > 0)
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_SUB(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else /* if( nBands == 4 ) */
+            {
+                if (j > 0)
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 3] =
+                            PNG_AVG(dstBuffer[3 * nBPB + j * W + i],
+                                    dstBuffer[3 * nBPB + j * W + i - 1],
+                                    dstBuffer[3 * nBPB + (j - 1) * W + i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_SUB(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 3] =
+                            PNG_SUB(dstBuffer[3 * nBPB + j * W + i],
+                                    dstBuffer[3 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+        }
+        size_t nOutSize = 0;
+        // Shouldn't happen given the care we have done to dimension dstBuffer
+        if (CPLZLibDeflate(tmpBuffer.data(), tmpBuffer.size(), -1,
+                           dstBuffer.data(), dstBuffer.size(),
+                           &nOutSize) == nullptr ||
+            nOutSize > static_cast<size_t>(INT32_MAX))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CPLZLibDeflate() failed: too small destination buffer");
+            return false;
+        }
+
+        VSILFILE *fp = VSIFOpenL(osTmpFilename.c_str(), "wb");
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                     osTmpFilename.c_str());
+            return false;
+        }
+
+        // Cf https://en.wikipedia.org/wiki/PNG#Examples for formatting of
+        // IHDR, IDAT and IEND chunks
+
+        // PNG Signature
+        fp->Write("\x89PNG\x0D\x0A\x1A\x0A", 8, 1);
+
+        uLong crc;
+        const auto WriteAndUpdateCRC_Byte = [fp, &crc](uint8_t nVal)
+        {
+            fp->Write(&nVal, 1, sizeof(nVal));
+            crc = crc32(crc, &nVal, sizeof(nVal));
+        };
+        const auto WriteAndUpdateCRC_Int = [fp, &crc](int32_t nVal)
+        {
+            CPL_MSBPTR32(&nVal);
+            fp->Write(&nVal, 1, sizeof(nVal));
+            crc = crc32(crc, reinterpret_cast<const Bytef *>(&nVal),
+                        sizeof(nVal));
+        };
+
+        // IHDR chunk
+        uint32_t nIHDRSize = 13;
+        CPL_MSBPTR32(&nIHDRSize);
+        fp->Write(&nIHDRSize, 1, sizeof(nIHDRSize));
+        crc = crc32(0, reinterpret_cast<const Bytef *>("IHDR"), 4);
+        fp->Write("IHDR", 1, 4);
+        WriteAndUpdateCRC_Int(W);
+        WriteAndUpdateCRC_Int(H);
+        WriteAndUpdateCRC_Byte(8);  // Number of bits per pixel
+        const uint8_t nColorType = nBands == 1   ? 0
+                                   : nBands == 2 ? 4
+                                   : nBands == 3 ? 2
+                                                 : 6;
+        WriteAndUpdateCRC_Byte(nColorType);
+        WriteAndUpdateCRC_Byte(0);  // Compression method
+        WriteAndUpdateCRC_Byte(0);  // Filter method
+        WriteAndUpdateCRC_Byte(0);  // Interlacing=off
+        {
+            uint32_t nCrc32 = static_cast<uint32_t>(crc);
+            CPL_MSBPTR32(&nCrc32);
+            fp->Write(&nCrc32, 1, sizeof(nCrc32));
+        }
+
+        // IDAT chunk
+        uint32_t nIDATSize = static_cast<uint32_t>(nOutSize);
+        CPL_MSBPTR32(&nIDATSize);
+        fp->Write(&nIDATSize, 1, sizeof(nIDATSize));
+        crc = crc32(0, reinterpret_cast<const Bytef *>("IDAT"), 4);
+        fp->Write("IDAT", 1, 4);
+        crc = crc32(crc, dstBuffer.data(), static_cast<uint32_t>(nOutSize));
+        fp->Write(dstBuffer.data(), 1, nOutSize);
+        {
+            uint32_t nCrc32 = static_cast<uint32_t>(crc);
+            CPL_MSBPTR32(&nCrc32);
+            fp->Write(&nCrc32, 1, sizeof(nCrc32));
+        }
+
+        // IEND chunk
+        fp->Write("\x00\x00\x00\x00IEND\xAE\x42\x60\x82", 12, 1);
+
+        bool bRet =
+            fp->Tell() == 8 + 4 + 4 + 13 + 4 + 4 + 4 + nOutSize + 4 + 12;
+        bRet = VSIFCloseL(fp) == 0 && bRet &&
+               VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
+        if (!bRet)
+            VSIUnlink(osTmpFilename.c_str());
+
+        return bRet;
+    }
 
     auto memDS = std::unique_ptr<GDALDataset>(
         MEMDataset::Create("", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0,
@@ -586,18 +893,11 @@ static bool GenerateTile(
             "GDAL_OPEN_AFTER_COPY", "NO", false);
     CPL_IGNORE_RET_VAL(poSetter);
 
-    const bool bSupportsCreateOnlyVisibleAtCloseTime =
-        m_poDstDriver->GetMetadataItem(
-            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
-
-    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
-                                          ? osFilename
-                                          : osFilename + ".tmp." + pszExtension;
-
     CPLStringList aosCreationOptions(creationOptions);
     if (bSupportsCreateOnlyVisibleAtCloseTime)
         aosCreationOptions.SetNameValue("@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
                                         "YES");
+
     std::unique_ptr<GDALDataset> poOutDS(
         m_poDstDriver->CreateCopy(osTmpFilename.c_str(), memDS.get(), false,
                                   aosCreationOptions.List(), nullptr, nullptr));
@@ -4075,9 +4375,18 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         psWO->nDstAlphaBand ? psWO->nDstAlphaBand : psWO->nBandCount;
 
     std::vector<GByte> dstBuffer;
-    const uint64_t dstBufferSize =
-        static_cast<uint64_t>(tileMatrix.mTileWidth) * tileMatrix.mTileHeight *
-        nDstBands * GDALGetDataTypeSizeBytes(psWO->eWorkingDataType);
+    const bool bIsPNGOutput = EQUAL(pszExtension, "png");
+    uint64_t dstBufferSize =
+        (static_cast<uint64_t>(tileMatrix.mTileWidth) *
+             // + 1 for PNG filter type / row byte
+             nDstBands * GDALGetDataTypeSizeBytes(psWO->eWorkingDataType) +
+         (bIsPNGOutput ? 1 : 0)) *
+        tileMatrix.mTileHeight;
+    if (bIsPNGOutput)
+    {
+        // Security margin for deflate compression
+        dstBufferSize += dstBufferSize / 10;
+    }
     const uint64_t nUsableRAM =
         std::min<uint64_t>(INT_MAX, CPLGetUsablePhysicalRAM() / 4);
     if (dstBufferSize <=
@@ -4506,6 +4815,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         auto resources = oResourceManager.AcquireResources();
                         if (resources)
                         {
+                            std::vector<GByte> tmpBuffer;
                             for (int iY = iYStart;
                                  iY <= iYEndIncluded && !bParentAskedForStop;
                                  ++iY)
@@ -4531,7 +4841,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             m_skipBlank, bUserAskedForAlpha,
                                             m_auxXML, m_resume, m_metadata,
                                             poColorTable.get(),
-                                            resources->dstBuffer))
+                                            resources->dstBuffer, tmpBuffer))
                                     {
                                         oResourceManager.SetError();
                                         bFailure = true;
@@ -4592,6 +4902,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         else
         {
             // Branch for single-thread max zoom level tile generation
+            std::vector<GByte> tmpBuffer;
             for (int iY = nMinTileY;
                  bRet && !bParentAskedForStop && iY <= nMaxTileY; ++iY)
             {
@@ -4607,7 +4918,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                                 : nullptr,
                         m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
                         nMinTileY, m_skipBlank, bUserAskedForAlpha, m_auxXML,
-                        m_resume, m_metadata, poColorTable.get(), dstBuffer);
+                        m_resume, m_metadata, poColorTable.get(), dstBuffer,
+                        tmpBuffer);
 
                     if (m_spawned)
                     {
