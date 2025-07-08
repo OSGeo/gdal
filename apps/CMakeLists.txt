@@ -162,6 +162,16 @@ else ()
   gdal_target_link_libraries(appslib PRIVATE ${JSONC_TARGET})
 endif ()
 
+if (GDAL_USE_ZLIB_INTERNAL)
+  gdal_add_vendored_lib(appslib libz)
+else()
+  target_compile_definitions(appslib PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
+  if (MSVC AND NOT ZLIB_IS_STATIC)
+    target_compile_definitions(appslib PRIVATE -DZLIB_DLL)
+  endif ()
+  gdal_target_link_libraries(appslib PRIVATE ZLIB::ZLIB)
+endif ()
+
 include(TargetPublicHeader)
 target_public_header(TARGET ${GDAL_LIB_TARGET_NAME} HEADERS gdal_utils.h)
 

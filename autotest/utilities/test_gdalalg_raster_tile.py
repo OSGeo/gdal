@@ -2128,3 +2128,32 @@ def test_gdalalg_raster_tile_nodata_values_pct_threshold(tmp_vsimem):
 
     ds = gdal.Open(tmp_vsimem / "0/0/0.png")
     assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)
+
+
+def test_gdalalg_raster_tile_red_tile_with_alpha(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.GetRasterBand(2).Fill(0)
+    src_ds.GetRasterBand(3).Fill(0)
+    src_ds.GetRasterBand(4).Fill(255)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    # Spatial extent of tile (0,0) at zoom level 0
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z0, 0, MAX_GM, 0, -RES_Z0])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["max-zoom"] = 0
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
+    assert ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
+    assert ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
