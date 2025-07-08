@@ -26,6 +26,7 @@ GDAL 3.11.2 is a bugfix release.
 ### Raster utilities
 
 * gdalwarp: fix reprojecting to COG (3.11.0 regression)
+* gdallocationinfo: handle properly nodata values (3.10.0 regression fix)
 
 ### Raster drivers
 
