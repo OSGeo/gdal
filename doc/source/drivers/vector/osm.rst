@@ -282,7 +282,7 @@ List the contents of a local PBF file, with the original downloaded from https:/
 
 .. tabs::
 
-   .. code-tab:: bash
+   .. code-tab:: bash ogr2ogr
 
         ogrinfo bosnia-herzegovina-latest.osm.pbf
 
