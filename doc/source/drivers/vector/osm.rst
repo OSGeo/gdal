@@ -286,7 +286,7 @@ List the contents of a local PBF file, with the original downloaded from https:/
 
         ogrinfo bosnia-herzegovina-latest.osm.pbf
 
-   .. code-tab:: bash gdal CLI
+   .. code-tab:: bash gdal vector info
 
         gdal vector info bosnia-herzegovina-latest.osm.pbf
 
