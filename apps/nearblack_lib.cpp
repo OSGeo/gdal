@@ -272,7 +272,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         /***** add the color to the colors *****/
-        oColors.push_back(oColor);
+        oColors.push_back(std::move(oColor));
         assert(!oColors.empty());
     }
 
@@ -846,7 +846,7 @@ GDALNearblackOptionsGetParser(GDALNearblackOptions *psOptions,
 
                     /***** add the color to the colors *****/
 
-                    psOptions->oColors.push_back(oColor);
+                    psOptions->oColors.push_back(std::move(oColor));
                 })
             .help(_("Search for pixels near the specified color."));
     }

@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import pathlib
 import struct
 
@@ -969,3 +970,118 @@ def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
             gt = ds.GetGeoTransform()
             assert gt[1] == expected
             assert -gt[5] == expected
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("separate", [True, False])
+def test_gdalbuildvrt_write_absolute_path_from_absolute_path(tmp_vsimem, separate):
+
+    gdal.Translate(
+        tmp_vsimem / "byte.tif", "../gcore/data/byte.tif", options="-b 1 -mask 1"
+    )
+    gdal.BuildVRT(
+        tmp_vsimem / "out.vrt",
+        [tmp_vsimem / "byte.tif"],
+        writeAbsolutePath=True,
+        separate=separate,
+    )
+    with gdal.Open(tmp_vsimem / "out.vrt") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+    with gdal.VSIFile(tmp_vsimem / "out.vrt", "rb") as f:
+        content = f.read().decode("utf-8")
+    assert (
+        '<SourceFilename relativeToVRT="0">' + str(tmp_vsimem / "byte.tif") in content
+    )
+    assert '<SourceFilename relativeToVRT="1">byte.tif' not in content
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("separate", [True, False])
+def test_gdalbuildvrt_write_absolute_path_from_relative_path(tmp_path, separate):
+
+    old_curdir = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        gdal.Translate("byte.tif", os.path.join(old_curdir, "../gcore/data/byte.tif"))
+        gdal.BuildVRT(
+            "out.vrt", ["byte.tif"], writeAbsolutePath=True, separate=separate
+        )
+        with gdal.Open("out.vrt") as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
+        with gdal.VSIFile("out.vrt", "rb") as f:
+            content = f.read().decode("utf-8").replace("\\", "/")
+        assert (
+            '<SourceFilename relativeToVRT="0">'
+            + str(tmp_path / "byte.tif").replace("\\", "/")
+            in content
+        )
+        assert '<SourceFilename relativeToVRT="1">byte.tif' not in content
+
+    finally:
+        os.chdir(old_curdir)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "pixfn,args,expected",
+    [
+        ("sum", None, [[1, 1, 3, 2, 2]]),
+        # next test is disabled - pixel function can't distinguish between
+        # "source not present" and "source present with NoData value"
+        # ("sum", "propagateNoData=True", [[1, 99, 3, 99, 2]]),
+    ],
+)
+def test_gdalbuildvrt_pixel_function(tmp_vsimem, pixfn, args, expected):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 4, 1) as src1_ds:
+        src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+        src1_ds.GetRasterBand(1).WriteArray(np.array([[1, 1, 1, 99]]))
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 4, 1) as src2_ds:
+        src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+        src2_ds.GetRasterBand(1).WriteArray(np.array([[99, 2, 2, 2]]))
+
+    with gdal.BuildVRT(
+        "",
+        [tmp_vsimem / "src1.tif", tmp_vsimem / "src2.tif"],
+        pixelFunction=pixfn,
+        pixelFunctionArgs=args,
+        VRTNodata=99,
+    ) as ds:
+        dst_values = ds.ReadAsArray()
+        np.testing.assert_array_equal(dst_values, expected)
+
+
+def test_gdalbuildvrt_pixel_function_invalid_args():
+
+    # test -pixel-function exclusive with -separate
+    with pytest.raises(RuntimeError, match="Argument .* not allowed"):
+        gdal.BuildVRT(
+            "",
+            "../gcore/data/byte.tif",
+            pixelFunction="sum",
+            separate=True,
+        )
+
+
+def test_gdalbuildvrt_pixel_function_invalid():
+
+    with pytest.raises(RuntimeError, match="not a registered pixel function"):
+        gdal.BuildVRT("", "../gcore/data/byte.tif", pixelFunction="does_not_exist")
+
+
+def test_gdalbuildvrt_pixel_function_arg_no_pixel_function():
+
+    with pytest.raises(
+        RuntimeError, match="arguments provided without a pixel function"
+    ):
+        gdal.BuildVRT("", "../gcore/data/byte.tif", pixelFunctionArgs={"k": 7})

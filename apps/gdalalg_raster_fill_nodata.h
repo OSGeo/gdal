@@ -22,7 +22,7 @@
 /************************************************************************/
 
 class GDALRasterFillNodataAlgorithm /* non final */
-    : public GDALAlgorithm
+    : public GDALRasterPipelineNonNativelyStreamingAlgorithm
 {
   public:
     static constexpr const char *NAME = "fill-nodata";
@@ -31,18 +31,12 @@ class GDALRasterFillNodataAlgorithm /* non final */
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_fill_nodata.html";
 
-    explicit GDALRasterFillNodataAlgorithm() noexcept;
+    explicit GDALRasterFillNodataAlgorithm(
+        bool standaloneStep = false) noexcept;
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    GDALArgDatasetValue m_inputDataset{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::string m_format{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_inputFormats{};
-
-    bool m_overwrite{false};
     // The maximum distance (in pixels) that the algorithm will search out for values to interpolate. The default is 100 pixels.
     int m_maxDistance = 100;
     // The number of 3x3 average filter smoothing iterations to run after the interpolation to dampen artifacts. The default is zero smoothing iterations.
@@ -53,6 +47,22 @@ class GDALRasterFillNodataAlgorithm /* non final */
     GDALArgDatasetValue m_maskDataset{};
     // By default, pixels are interpolated using an inverse distance weighting (inv_dist). It is also possible to choose a nearest neighbour (nearest) strategy.
     std::string m_strategy = "invdist";
+};
+
+/************************************************************************/
+/*                GDALRasterFillNodataAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALRasterFillNodataAlgorithmStandalone final
+    : public GDALRasterFillNodataAlgorithm
+{
+  public:
+    GDALRasterFillNodataAlgorithmStandalone()
+        : GDALRasterFillNodataAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterFillNodataAlgorithmStandalone() override;
 };
 
 //! @endcond

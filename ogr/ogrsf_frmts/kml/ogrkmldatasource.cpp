@@ -35,16 +35,7 @@
 /*                         OGRKMLDataSource()                           */
 /************************************************************************/
 
-OGRKMLDataSource::OGRKMLDataSource()
-    :
-#ifdef HAVE_EXPAT
-      poKMLFile_(nullptr),
-#endif
-      papoLayers_(nullptr), nLayers_(0), pszNameField_(nullptr),
-      pszDescriptionField_(nullptr), pszAltitudeMode_(nullptr),
-      papszCreateOptions_(nullptr), fpOutput_(nullptr), bIssuedCTError_(false)
-{
-}
+OGRKMLDataSource::OGRKMLDataSource() = default;
 
 /************************************************************************/
 /*                        ~OGRKMLDataSource()                           */

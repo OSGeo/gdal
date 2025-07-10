@@ -16,6 +16,9 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "../frmts/vrt/vrtdataset.h"
+#include "../frmts/vrt/vrtreclassifier.h"
+
+#include <array>
 
 //! @cond Doxygen_Suppress
 
@@ -41,7 +44,27 @@ GDALRasterReclassifyAlgorithm::GDALRasterReclassifyAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALRasterReclassifyCreateVRTDerived)                   */
+/*              GDALRasterReclassifyValidateMappings                    */
+/************************************************************************/
+
+static bool GDALReclassifyValidateMappings(GDALDataset &input,
+                                           const std::string &mappings,
+                                           GDALDataType eDstType)
+{
+    int hasNoData;
+    std::optional<double> noData =
+        input.GetRasterBand(1)->GetNoDataValue(&hasNoData);
+    if (!hasNoData)
+    {
+        noData.reset();
+    }
+
+    gdal::Reclassifier reclassifier;
+    return reclassifier.Init(mappings.c_str(), noData, eDstType) == CE_None;
+}
+
+/************************************************************************/
+/*              GDALRasterReclassifyCreateVRTDerived                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALDataset>
@@ -95,9 +118,9 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
         poDstBand->AddSimpleSource(poSrcBand);
     }
 
-    std::array<double, 6> gt;
-    if (input.GetGeoTransform(gt.data()) == CE_None)
-        ds->SetGeoTransform(gt.data());
+    GDALGeoTransform gt;
+    if (input.GetGeoTransform(gt) == CE_None)
+        ds->SetGeoTransform(gt);
     ds->SetSpatialRef(input.GetSpatialRef());
 
     return ds;
@@ -107,9 +130,9 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 /*           GDALRasterReclassifyAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReclassifyAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    const auto poSrcDS = m_inputDataset.GetDatasetRef();
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
@@ -177,10 +200,18 @@ bool GDALRasterReclassifyAlgorithm::RunStep(GDALProgressFunc, void *)
     }
     if (nErrorCount == CPLGetErrorCounter())
     {
+        if (!GDALReclassifyValidateMappings(*poSrcDS, m_mapping, eDstType))
+        {
+            return false;
+        }
+
         m_outputDataset.Set(
             GDALReclassifyCreateVRTDerived(*poSrcDS, m_mapping, eDstType));
     }
     return m_outputDataset.GetDatasetRef() != nullptr;
 }
+
+GDALRasterReclassifyAlgorithmStandalone::
+    ~GDALRasterReclassifyAlgorithmStandalone() = default;
 
 //! @endcond

@@ -29,9 +29,9 @@ has been compiled with an AV1 compatible decoder.
 Driver capabilities
 -------------------
 
-.. supports_virtualio
+.. supports_virtualio::
 
-.. supports_createcopy
+.. supports_createcopy::
 
 .. supports_georeferencing::
 

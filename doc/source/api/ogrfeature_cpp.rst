@@ -12,7 +12,7 @@ OGRFeature C++ API
 Include file
 ------------
 
-:file:`ogr_feature.h`
+:source_file:`ogr/ogr_feature.h`
 
 OGRFeature class
 ----------------

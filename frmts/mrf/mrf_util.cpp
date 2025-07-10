@@ -343,7 +343,7 @@ bool is_Endianness_Dependent(GDALDataType dt, ILCompression comp)
 {
     // Add here all endianness dependent compressions
     if (IL_ZLIB == comp || IL_NONE == comp)
-        if (GDALGetDataTypeSize(dt) > 8)
+        if (GDALGetDataTypeSizeBytes(dt) > 1)
             return true;
     return false;
 }

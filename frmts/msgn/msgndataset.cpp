@@ -59,7 +59,7 @@ class MSGNDataset final : public GDALDataset
     int m_nHRVSplitLine = 0;
     int m_nHRVLowerShiftX = 0;
     int m_nHRVUpperShiftX = 0;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
   public:
@@ -68,7 +68,7 @@ class MSGNDataset final : public GDALDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 };
 
@@ -168,7 +168,7 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void *pImage)
 
 {
-    MSGNDataset *poGDS = (MSGNDataset *)poDS;
+    MSGNDataset *poGDS = cpl::down_cast<MSGNDataset *>(poDS);
 
     // invert y position
     const int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
@@ -209,7 +209,7 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     char *pszRecord = (char *)CPLMalloc(data_length);
     size_t nread = VSIFReadL(pszRecord, 1, data_length, poGDS->fp);
 
-    SUB_VISIRLINE *p = (SUB_VISIRLINE *)pszRecord;
+    SUB_VISIRLINE *p = reinterpret_cast<SUB_VISIRLINE *>(pszRecord);
     to_native(*p);
 
     if (p->lineValidity != 1 || poGDS->m_Shape != WHOLE_DISK)
@@ -356,7 +356,6 @@ double MSGNRasterBand::GetMaximum(int *pbSuccess)
 MSGNDataset::MSGNDataset() : fp(nullptr), msg_reader_core(nullptr)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    std::fill_n(adfGeoTransform, CPL_ARRAYSIZE(adfGeoTransform), 0);
 }
 
 /************************************************************************/
@@ -379,13 +378,10 @@ MSGNDataset::~MSGNDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr MSGNDataset::GetGeoTransform(double *padfTransform)
+CPLErr MSGNDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    for (int i = 0; i < 6; i++)
-    {
-        padfTransform[i] = adfGeoTransform[i];
-    }
+    gt = m_gt;
 
     return CE_None;
 }
@@ -727,13 +723,13 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
            CGMS/DOC/12/0017 section 4.4.2
         */
 
-        poDS->adfGeoTransform[0] = -origin_x;
-        poDS->adfGeoTransform[1] = pixel_gsd_x;
-        poDS->adfGeoTransform[2] = 0.0;
+        poDS->m_gt[0] = -origin_x;
+        poDS->m_gt[1] = pixel_gsd_x;
+        poDS->m_gt[2] = 0.0;
 
-        poDS->adfGeoTransform[3] = -origin_y;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = -pixel_gsd_y;
+        poDS->m_gt[3] = -origin_y;
+        poDS->m_gt[4] = 0.0;
+        poDS->m_gt[5] = -pixel_gsd_y;
 
         poDS->m_oSRS.SetProjCS("Geostationary projection (MSG)");
 

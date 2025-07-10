@@ -23,6 +23,11 @@
 
 #include "gtest_include.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 namespace test_marching_squares_square
 {
 using namespace marching_squares;
@@ -730,3 +735,7 @@ TEST_F(test_ms_square, full_border_test_2)
     }
 }
 }  // namespace test_marching_squares_square
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

@@ -95,10 +95,7 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
         return 1;
     }
 
-    OGRLayer *GetLayer(int nLayer) override
-    {
-        return (nLayer == 0) ? m_poLayer.get() : nullptr;
-    }
+    OGRLayer *GetLayer(int nLayer) override;
 
     OGRLayer *GetUnderlyingLayer()
     {
@@ -113,6 +110,11 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
         return m_osURL;
     }
 };
+
+OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer)
+{
+    return (nLayer == 0) ? m_poLayer.get() : nullptr;
+}
 
 /************************************************************************/
 /*                       OGRESRIFeatureServiceLayer()                   */

@@ -5,8 +5,11 @@ add_gdal_driver(
           dted_create.c
           dted_ptstream.c
           dteddataset.cpp
-          PLUGIN_CAPABLE
-          NO_DEPS)
+  PLUGIN_CAPABLE
+  NO_DEPS
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(gdal_DTED)
 
 if (NOT GDAL_ENABLE_DRIVER_DTED_PLUGIN)

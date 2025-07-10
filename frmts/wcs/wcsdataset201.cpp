@@ -107,10 +107,7 @@ static void ParseParameters(CPLXMLNode *service,
         }
         else
         {
-            std::vector<std::string> kv2;
-            kv2.push_back(kv[0]);
-            kv2.push_back(kv[1]);
-            others.push_back(kv2);
+            others.push_back(std::vector<std::string>{kv[0], kv[1]});
         }
     }
     // fallback to service values, if any
@@ -125,23 +122,21 @@ static void ParseParameters(CPLXMLNode *service,
 }
 
 /************************************************************************/
-/*                         GetExtent()                                  */
+/*                         GetNativeExtent()                            */
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff, int nXSize,
-                                             int nYSize,
-                                             CPL_UNUSED int nBufXSize,
-                                             CPL_UNUSED int nBufYSize)
+std::vector<double> WCSDataset201::GetNativeExtent(int nXOff, int nYOff,
+                                                   int nXSize, int nYSize,
+                                                   CPL_UNUSED int nBufXSize,
+                                                   CPL_UNUSED int nBufYSize)
 {
     std::vector<double> extent;
     // WCS 2.0 extents are the outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] + (nXOff)*adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff + nYSize) * adfGeoTransform[5]);
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] + (nYOff)*adfGeoTransform[5]);
+    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
+    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
+    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
     return extent;
 }
 
@@ -204,9 +199,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
     }
     /*
     std::string a = CPLString().Printf(
-        "%.17g", MAX(adfGeoTransform[0], extent[0]));
+        "%.17g", MAX(m_gt[0], extent[0]));
     std::string b = CPLString().Printf(
-        "%.17g", MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1],
+        "%.17g", MIN(m_gt[0] + nRasterXSize * m_gt[1],
     extent[2]));
     */
 
@@ -228,9 +223,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
     }
     /*
     a = CPLString().Printf(
-        "%.17g", MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5],
+        "%.17g", MAX(m_gt[3] + nRasterYSize * m_gt[5],
     extent[1])); b = CPLString().Printf(
-        "%.17g", MIN(adfGeoTransform[3], extent[3]));
+        "%.17g", MIN(m_gt[3], extent[3]));
     */
 
     request +=
@@ -269,9 +264,9 @@ WCSDataset201::GetCoverageRequest(bool scaled, int nBufXSize, int nBufYSize,
         // scaling is expressed in grid axes
         if (CPLGetXMLBoolean(psService, "UseScaleFactor"))
         {
-            double fx = fabs((extent[2] - extent[0]) / adfGeoTransform[1] /
+            double fx = fabs((extent[2] - extent[0]) / m_gt[1] /
                              ((double)nBufXSize + 0.5));
-            double fy = fabs((extent[3] - extent[1]) / adfGeoTransform[5] /
+            double fy = fabs((extent[3] - extent[1]) / m_gt[5] /
                              ((double)nBufYSize + 0.5));
             tmp.Printf("&SCALEFACTOR=%.15g", MIN(fx, fy));
         }
@@ -432,14 +427,8 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid, const std::string &subtype,
         if (offset.size() < 2)
         {
             // error or not?
-            std::vector<double> x;
-            x.push_back(1);
-            x.push_back(0);
-            std::vector<double> y;
-            y.push_back(0);
-            y.push_back(1);
-            offset.push_back(x);
-            offset.push_back(y);
+            offset.push_back(std::vector<double>{1, 0});  // x
+            offset.push_back(std::vector<double>{0, 1});  // y
         }
         // if axis_order_swap
         // the offset order should be swapped
@@ -756,7 +745,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage,
                     *metadata, (key + "INTERVAL").c_str(), interval.c_str());
             }
 
-            nodata_array.push_back(nodata);
+            nodata_array.push_back(std::move(nodata));
             fields += 1;
         }
 
@@ -1057,8 +1046,7 @@ bool WCSDataset201::ExtractGridInfo()
         int domain_index = IndexOf(axes[i], domain);
         if (domain_index != -1)
         {
-            std::vector<double> trim = Flist(params, 0, 2);
-            domain_trim.push_back(trim);
+            domain_trim.push_back(Flist(params, 0, 2));
             continue;
         }
         // size == 1 => sliced

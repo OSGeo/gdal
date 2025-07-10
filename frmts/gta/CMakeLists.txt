@@ -2,7 +2,10 @@ add_gdal_driver(TARGET gdal_GTA
                 SOURCES gta_headers.h gtadataset.cpp
                 CORE_SOURCES gtadrivercore.cpp
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+                NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 
 if(NOT TARGET gdal_GTA)
     return()

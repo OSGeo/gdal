@@ -26,22 +26,22 @@ class OGRGmtLayer final : public OGRLayer,
 {
     GDALDataset *m_poDS = nullptr;
     OGRSpatialReference *m_poSRS = nullptr;
-    OGRFeatureDefn *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn{};
 
-    int iNextFID;
+    int iNextFID{};
 
-    bool bUpdate;
-    bool bHeaderComplete;
+    bool bUpdate{};
+    bool bHeaderComplete{};
 
-    bool bRegionComplete;
-    OGREnvelope sRegion;
-    vsi_l_offset nRegionOffset;
+    bool bRegionComplete{};
+    OGREnvelope sRegion{};
+    vsi_l_offset nRegionOffset{};
 
     VSILFILE *m_fp = nullptr;
 
     bool ReadLine();
-    CPLString osLine;
-    char **papszKeyedValues;
+    CPLString osLine{};
+    char **papszKeyedValues{};
 
     bool ScanAheadForHole();
     bool NextIsFeature();
@@ -50,6 +50,8 @@ class OGRGmtLayer final : public OGRLayer,
 
     OGRErr WriteGeometry(OGRGeometryH hGeom, bool bHaveAngle);
     OGRErr CompleteHeader(OGRGeometry *);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGmtLayer)
 
   public:
     bool bValidFile;
@@ -92,6 +94,8 @@ class OGRGmtDataSource final : public GDALDataset
     int nLayers;
 
     bool bUpdate;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGmtDataSource)
 
   public:
     OGRGmtDataSource();

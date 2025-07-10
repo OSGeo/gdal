@@ -7,11 +7,13 @@ XLS - MS Excel format
 
 .. build_dependencies:: libfreexl
 
-This driver reads spreadsheets in MS Excel format. GDAL/OGR must be
-built against the FreeXL library (GPL/LPL/MPL licensed), and the driver
+This driver reads spreadsheets in the (old) Microsoft Excel binary format. This
+format pre-dates Excel Open XML Spreadsheet, introduced in Microsoft Excel 2007,
+and supported by the :ref:`XLSX <vector.xlsx>` driver.
+
+GDAL/OGR must be built against the FreeXL library (GPL/LPL/MPL licensed), and the driver
 has the same restrictions as the FreeXL library itself as far as which
-and how Excel files are supported. (At the time of writing - with FreeXL
-1.0.0a -, it means in particular that formulas are not supported.)
+and how Excel files are supported, in particular formulas are not supported.
 
 Each sheet is presented as a OGR layer. No geometry support is available
 directly (but you may use the OGR VRT capabilities for that).

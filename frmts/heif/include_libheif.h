@@ -12,6 +12,10 @@
 #ifndef INCLUDE_LIBHEIF_DEFINED
 #define INCLUDE_LIBHEIF_DEFINED
 
+#ifdef __GNUC__
+#pragma GCC system_header
+#endif
+
 #include "libheif/heif.h"
 
 #define BUILD_LIBHEIF_VERSION(x, y, z)                                         \

@@ -870,7 +870,7 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
             psField = oTable.GetFieldValue(iName);
             if (psField)
             {
-                const std::string osLayerName(psField->String);
+                std::string osLayerName(psField->String);
 
                 psField = oTable.GetFieldValue(iDocumentation);
                 const std::string osDocumentation(psField ? psField->String
@@ -893,7 +893,7 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
                                    poOpenInfo->pszFilename,
                                    osLayerName.c_str()));
 
-                    std::string osDesc(osLayerName);
+                    std::string osDesc(std::move(osLayerName));
                     if (!osDocumentation.empty())
                     {
                         CPLXMLTreeCloser psTree(
@@ -1028,7 +1028,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
                 {
                     /* We should perhaps also check that the CLSID is the one of
                      * a spatial table */
-                    aosName.push_back(osName);
+                    aosName.push_back(std::move(osName));
                 }
             }
         }

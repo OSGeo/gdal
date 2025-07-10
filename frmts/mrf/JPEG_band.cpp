@@ -276,7 +276,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     ILSize sz = img.pagesize;
 
     jpeg_destination_mgr jmgr;
-    jmgr.next_output_byte = (JOCTET *)dst.buffer;
+    jmgr.next_output_byte = reinterpret_cast<JOCTET *>(dst.buffer);
     jmgr.free_in_buffer = dst.size;
     jmgr.init_destination = init_or_terminate_destination;
     jmgr.empty_output_buffer = empty_output_buffer;

@@ -35,7 +35,7 @@ class RRASTERDataset final : public RawDataset
     bool m_bHeaderDirty = false;
     CPLString m_osGriFilename{};
     bool m_bGeoTransformValid = false;
-    double m_adfGeoTransform[6]{0, 1, 0, 0, 0, -1};
+    GDALGeoTransform m_gt{};
     VSILFILE *m_fpImage = nullptr;
     OGRSpatialReference m_oSRS{};
     std::shared_ptr<GDALRasterAttributeTable> m_poRAT{};
@@ -75,8 +75,8 @@ class RRASTERDataset final : public RawDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-    CPLErr GetGeoTransform(double *) override;
-    CPLErr SetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
@@ -754,12 +754,10 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
     VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
 
-    VSIFPrintfL(fp, "xmin=%.17g\n", m_adfGeoTransform[0]);
-    VSIFPrintfL(fp, "ymin=%.17g\n",
-                m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
-    VSIFPrintfL(fp, "xmax=%.17g\n",
-                m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
-    VSIFPrintfL(fp, "ymax=%.17g\n", m_adfGeoTransform[3]);
+    VSIFPrintfL(fp, "xmin=%.17g\n", m_gt[0]);
+    VSIFPrintfL(fp, "ymin=%.17g\n", m_gt[3] + nRasterYSize * m_gt[5]);
+    VSIFPrintfL(fp, "xmax=%.17g\n", m_gt[0] + nRasterXSize * m_gt[1]);
+    VSIFPrintfL(fp, "ymax=%.17g\n", m_gt[3]);
 
     if (!m_oSRS.IsEmpty())
     {
@@ -801,11 +799,11 @@ char **RRASTERDataset::GetFileList()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RRASTERDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr RRASTERDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (m_bGeoTransformValid)
     {
-        memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return CE_None;
     }
     return CE_Failure;
@@ -815,7 +813,7 @@ CPLErr RRASTERDataset::GetGeoTransform(double *padfGeoTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr RRASTERDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr RRASTERDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     if (GetAccess() != GA_Update)
@@ -826,16 +824,16 @@ CPLErr RRASTERDataset::SetGeoTransform(double *padfGeoTransform)
     }
 
     // We only support non-rotated images with info in the .HDR file.
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotated / skewed images not supported");
-        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+        return GDALPamDataset::SetGeoTransform(gt);
     }
 
     // Record new geotransform.
     m_bGeoTransformValid = true;
-    memcpy(m_adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    m_gt = gt;
     SetHeaderDirty();
 
     return CE_None;
@@ -1219,12 +1217,12 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->m_bGeoTransformValid = true;
-    poDS->m_adfGeoTransform[0] = dfXMin;
-    poDS->m_adfGeoTransform[1] = (dfXMax - dfXMin) / nCols;
-    poDS->m_adfGeoTransform[2] = 0.0;
-    poDS->m_adfGeoTransform[3] = dfYMax;
-    poDS->m_adfGeoTransform[4] = 0.0;
-    poDS->m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRows;
+    poDS->m_gt[0] = dfXMin;
+    poDS->m_gt[1] = (dfXMax - dfXMin) / nCols;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = dfYMax;
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -(dfYMax - dfYMin) / nRows;
     poDS->m_fpImage = fpImage;
     poDS->m_bNativeOrder = bNativeOrder;
 

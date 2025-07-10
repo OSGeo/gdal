@@ -387,4 +387,6 @@ void netCDFVID::nc_put_vvar1_string(int varid, const size_t *index,
     }
 }
 
+netCDFVAttribute::~netCDFVAttribute() = default;
+
 }  // namespace nccfdriver

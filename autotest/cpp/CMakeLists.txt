@@ -1,6 +1,5 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
-
 find_package(GTest 1.10.0)
 if(GTest_FOUND)
   option(USE_EXTERNAL_GTEST "Compile against external GTest" ON)
@@ -116,6 +115,7 @@ gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 target_compile_definitions(gdal_unit_test PRIVATE ALLOW_DEPRECATED_CPL_PATH_FUNCTIONS)
+target_compile_definitions(gdal_unit_test PRIVATE CPL_DISABLE_WARN_DEPRECATED)
 target_include_directories(
   gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (GDAL_USE_SQLITE3)
@@ -132,6 +132,10 @@ endif ()
 if (GDAL_USE_CURL)
   target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_CURL)
 endif ()
+if (GDAL_USE_MUPARSER)
+  target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_MUPARSER)
+endif()
+
 target_compile_definitions(gdal_unit_test PRIVATE "-DPROJ_DB_TMPDIR=\"${CMAKE_CURRENT_BINARY_DIR}/proj_db_tmpdir\"" "-DPROJ_GRIDS_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/../proj_grids\"")
 
 # gtest with lots of assertion can be very slow to build in optimized mode.
@@ -389,6 +393,9 @@ gdal_gtest_target(testlog test-log
 gdal_gtest_target(test_deferred_plugin test-deferred-plugin
     FILES
         test_deferred_plugin.cpp)
+gdal_gtest_target(test_driver_metadata_multithread test-driver-metadata-multithread.cpp
+    FILES
+        test_driver_metadata_multithread.cpp)
 
 if (GDAL_ENABLE_DRIVER_JPEG_PLUGIN)
     target_compile_definitions(test_deferred_plugin PRIVATE -DJPEG_PLUGIN)
@@ -416,3 +423,12 @@ foreach (_test IN LISTS QUICKTEST_LIST)
   set_tests_properties(${_test} PROPERTIES LABELS "quicktest")
 endforeach ()
 
+###
+
+gdal_gtest_target(viewshed_internal_test test-viewshed-internal
+    FILES
+        test_viewshed_internal.cpp
+        ../../alg/viewshed/viewshed.cpp
+        ../../alg/viewshed/progress.cpp
+        ../../alg/viewshed/viewshed_executor.cpp
+        ../../alg/viewshed/util.cpp)

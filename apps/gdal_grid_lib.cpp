@@ -274,24 +274,25 @@ class GDALGridGeometryVisitor final : public OGRDefaultConstGeometryVisitor
 
     using OGRDefaultConstGeometryVisitor::visit;
 
-    void visit(const OGRPoint *p) override
-    {
-        if (poClipSrc && !p->Within(poClipSrc))
-            return;
-
-        if (iBurnField < 0 && std::isnan(p->getZ()))
-            return;
-
-        adfX.push_back(p->getX());
-        adfY.push_back(p->getY());
-        if (iBurnField < 0)
-            adfZ.push_back((p->getZ() + dfIncreaseBurnValue) *
-                           dfMultiplyBurnValue);
-        else
-            adfZ.push_back((dfBurnValue + dfIncreaseBurnValue) *
-                           dfMultiplyBurnValue);
-    }
+    void visit(const OGRPoint *p) override;
 };
+
+void GDALGridGeometryVisitor::visit(const OGRPoint *p)
+{
+    if (poClipSrc && !p->Within(poClipSrc))
+        return;
+
+    if (iBurnField < 0 && std::isnan(p->getZ()))
+        return;
+
+    adfX.push_back(p->getX());
+    adfY.push_back(p->getY());
+    if (iBurnField < 0)
+        adfZ.push_back((p->getZ() + dfIncreaseBurnValue) * dfMultiplyBurnValue);
+    else
+        adfZ.push_back((dfBurnValue + dfIncreaseBurnValue) *
+                       dfMultiplyBurnValue);
+}
 
 /************************************************************************/
 /*                            ProcessLayer()                            */
@@ -875,10 +876,9 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Apply geotransformation matrix.                                 */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {dfXMin, (dfXMax - dfXMin) / nXSize,
-                                 0.0,    dfYMin,
-                                 0.0,    (dfYMax - dfYMin) / nYSize};
-    poDstDS->SetGeoTransform(adfGeoTransform);
+    poDstDS->SetGeoTransform(
+        GDALGeoTransform(dfXMin, (dfXMax - dfXMin) / nXSize, 0.0, dfYMin, 0.0,
+                         (dfYMax - dfYMin) / nYSize));
 
     /* -------------------------------------------------------------------- */
     /*      Apply SRS definition if set.                                    */
@@ -1280,20 +1280,13 @@ GDALGridOptionsNew(char **papszArgv,
 
         if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
         {
-            OGRLinearRing oRing;
             const double dfMinX = (*oSpat)[0];
             const double dfMinY = (*oSpat)[1];
             const double dfMaxX = (*oSpat)[2];
             const double dfMaxY = (*oSpat)[3];
 
-            oRing.addPoint(dfMinX, dfMinY);
-            oRing.addPoint(dfMinX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMinY);
-            oRing.addPoint(dfMinX, dfMinY);
-
-            auto poPolygon = std::make_unique<OGRPolygon>();
-            poPolygon->addRing(&oRing);
+            auto poPolygon =
+                std::make_unique<OGRPolygon>(dfMinX, dfMinY, dfMaxX, dfMaxY);
             psOptions->poSpatialFilter = std::move(poPolygon);
         }
 

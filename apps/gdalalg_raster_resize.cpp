@@ -55,9 +55,10 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
                             ok = true;
                         }
                     }
-                    else if (endptr &&
-                             ((endptr[0] == ' ' && endptr[1] == '%') ||
-                              endptr[0] == '%'))
+                    else if (endptr && ((endptr[0] == ' ' && endptr[1] == '%' &&
+                                         endptr + 2 == s.c_str() + s.size()) ||
+                                        (endptr[0] == '%' &&
+                                         endptr + 1 == s.c_str() + s.size())))
                     {
                         if (val >= 0)
                         {
@@ -84,9 +85,10 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
 /*              GDALRasterResizeAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterResizeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -110,8 +112,7 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
         GDALTranslateOptionsNew(aosOptions.List(), nullptr);
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALTranslate("", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-                      psOptions, nullptr)));
+        GDALTranslate("", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
     GDALTranslateOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
@@ -121,5 +122,8 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterResizeAlgorithmStandalone::~GDALRasterResizeAlgorithmStandalone() =
+    default;
 
 //! @endcond

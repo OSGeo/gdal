@@ -1,4 +1,5 @@
 #!/usr/bin/env pytest
+# -*- coding: utf-8 -*-
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
@@ -1510,6 +1511,22 @@ def test_ogr_pgdump_CREATE_TABLE_NO(tmp_vsimem):
             "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_bb4af_pk",
             "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_2c8a17fc_0_geom_idx",
         ),
+        (
+            False,
+            "test_" + ("é" * 64) + "_long_name",
+            "wkb_geometry",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_aba056f0",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_aba05_pk",
+            "test_éééééééééééééééééééééééééééééééééééééé_f883ade2_0_geom_idx",
+        ),
+        (
+            True,
+            "TEST_" + ("é" * 64) + "_long_name",
+            "wkb_geometry",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_d8582e33",
+            "test_ééééééééééééééééééééééééééééééééééééééééééééééééé_d8582_pk",
+            "test_éééééééééééééééééééééééééééééééééééééé_6573ce0d_0_geom_idx",
+        ),
     ],
 )
 def test_ogr_pgdump_long_identifiers(
@@ -1618,3 +1635,40 @@ def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
     gdal.VSIFCloseL(f)
     assert '"ae"' in sql
     assert '"be"' in sql
+
+
+###############################################################################
+# Test SKIP_CONFLICTS
+
+
+def test_ogr_pgdump_skip_conflicts(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        tmp_vsimem / "test_ogr_pgdump_skip_conflicts.sql"
+    )
+
+    with gdal.quiet_errors():
+        lyr = ds.CreateLayer(
+            "skip_conflicts",
+            geom_type=ogr.wkbPoint,
+            options=["SKIP_CONFLICTS=YES"],
+        )
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "foo"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_ogr_pgdump_skip_conflicts.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove(") ON CONFLICT DO NOTHING;")

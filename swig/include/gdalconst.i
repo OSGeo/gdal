@@ -167,11 +167,19 @@
 %constant CPLE_UserInterrupt              = CPLE_UserInterrupt;
 %constant CPLE_ObjectNull                 = CPLE_ObjectNull;
 %constant CPLE_HttpResponse               = CPLE_HttpResponse;
-%constant CPLE_AWSBucketNotFound          = CPLE_AWSBucketNotFound;
-%constant CPLE_AWSObjectNotFound          = CPLE_AWSObjectNotFound;
-%constant CPLE_AWSAccessDenied            = CPLE_AWSAccessDenied;
-%constant CPLE_AWSInvalidCredentials      = CPLE_AWSInvalidCredentials;
-%constant CPLE_AWSSignatureDoesNotMatch   = CPLE_AWSSignatureDoesNotMatch;
+%constant CPLE_BucketNotFound             = CPLE_BucketNotFound;
+%constant CPLE_ObjectNotFound             = CPLE_ObjectNotFound;
+%constant CPLE_AccessDenied               = CPLE_AccessDenied;
+%constant CPLE_InvalidCredentials         = CPLE_InvalidCredentials;
+%constant CPLE_SignatureDoesNotMatch      = CPLE_SignatureDoesNotMatch;
+%constant CPLE_ObjectStorageGenericError  = CPLE_ObjectStorageGenericError;
+
+// Deprecated values
+%constant CPLE_AWSBucketNotFound          = CPLE_BucketNotFound;
+%constant CPLE_AWSObjectNotFound          = CPLE_ObjectNotFound;
+%constant CPLE_AWSAccessDenied            = CPLE_AccessDenied;
+%constant CPLE_AWSInvalidCredentials      = CPLE_InvalidCredentials;
+%constant CPLE_AWSSignatureDoesNotMatch   = CPLE_SignatureDoesNotMatch;
 
 // Open flags
 %constant OF_ALL     = GDAL_OF_ALL;
@@ -212,6 +220,7 @@
 %constant char *DMD_SUPPORTED_SQL_DIALECTS    = GDAL_DMD_SUPPORTED_SQL_DIALECTS;
 %constant char *DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR = GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR;
 %constant char *DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN = GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN;
+%constant char *DMD_MAX_STRING_LENGTH = GDAL_DMD_MAX_STRING_LENGTH;
 
 %constant char *DCAP_OPEN       = GDAL_DCAP_OPEN;
 %constant char *DCAP_CREATE     = GDAL_DCAP_CREATE;
@@ -265,6 +274,8 @@
 %constant char *GDsCAddRelationship    = "AddRelationship";
 %constant char *GDsCDeleteRelationship = "DeleteRelationship";
 %constant char *GDsCUpdateRelationship = "UpdateRelationship";
+%constant char *GDsCFastGetExtent = "FastGetExtent";
+%constant char *GDsCFastGetExtentWGS84LongLat = "FastGetExtentWGS84LongLat";
 
 #else
 
@@ -324,6 +335,8 @@
 #define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR"
 #define DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN"
 #define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN"
+#define DMD_MAX_STRING_LENGTH "DMD_MAX_STRING_LENGTH"
+#define GDAL_DMD_MAX_STRING_LENGTH "DMD_MAX_STRING_LENGTH"
 
 #define DCAP_OPEN       "DCAP_OPEN"
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
@@ -424,6 +437,8 @@
 #define GDsCAddRelationship    "AddRelationship"
 #define GDsCDeleteRelationship "DeleteRelationship"
 #define GDsCUpdateRelationship "UpdateRelationship"
+#define GDsCFastGetExtent "FastGetExtent"
+#define GDsCFastGetExtentWGS84LongLat "FastGetExtentWGS84LongLat"
 
 #endif
 

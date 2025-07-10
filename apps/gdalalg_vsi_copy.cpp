@@ -15,6 +15,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 
 #include <algorithm>
 
@@ -35,38 +36,18 @@ GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
         auto &arg =
             AddArg("source", 0, _("Source file or directory name"), &m_source)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_source.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Source filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
     {
         auto &arg =
             AddArg("destination", 0, _("Destination file or directory name"),
                    &m_destination)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_destination.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Destination filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
 
     AddArg("recursive", 'r', _("Copy subdirectories recursively"),
@@ -83,6 +64,23 @@ GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
 bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                    void *pProgressData)
 {
+    const auto ReportSourceNotAccessible =
+        [this](int nOldErrorNum, int nNewErrorNum, const std::string &filename)
+    {
+        if (nOldErrorNum != nNewErrorNum)
+        {
+            ReportError(CE_Failure, CPLE_FileIO,
+                        "'%s' cannot be accessed. %s: %s", filename.c_str(),
+                        VSIErrorNumToString(nNewErrorNum),
+                        VSIGetLastErrorMsg());
+        }
+        else
+        {
+            ReportError(CE_Failure, CPLE_FileIO, "'%s' cannot be accessed.",
+                        filename.c_str());
+        }
+    };
+
     if (m_recursive || cpl::ends_with(m_source, "/*") ||
         cpl::ends_with(m_source, "\\*"))
     {
@@ -93,17 +91,16 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         if (!cpl::ends_with(m_source, "/*") && !cpl::ends_with(m_source, "\\*"))
         {
+            VSIErrorReset();
+            const auto nOldErrorNum = VSIGetLastErrorNo();
             VSIStatBufL statBufSrc;
-            bool srcExists =
-                VSIStatExL(m_source.c_str(), &statBufSrc,
-                           VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+            bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
             if (!srcExists)
             {
-                srcExists =
-                    VSIStatExL(
-                        std::string(m_source).append("/").c_str(), &statBufSrc,
-                        VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+                srcExists = VSIStatL(std::string(m_source).append("/").c_str(),
+                                     &statBufSrc) == 0;
             }
+            const auto nNewErrorNum = VSIGetLastErrorNo();
             VSIStatBufL statBufDst;
             const bool dstExists =
                 VSIStatExL(m_destination.c_str(), &statBufDst,
@@ -120,10 +117,25 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                     m_destination = CPLFormFilenameSafe(
                         m_destination.c_str(), m_source.c_str(), nullptr);
             }
+            else if (!srcExists)
+            {
+                ReportSourceNotAccessible(nOldErrorNum, nNewErrorNum, m_source);
+                return false;
+            }
         }
         else
         {
             m_source.resize(m_source.size() - 2);
+            VSIErrorReset();
+            const auto nOldErrorNum = VSIGetLastErrorNo();
+            VSIStatBufL statBufSrc;
+            bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
+            if (!srcExists)
+            {
+                const auto nNewErrorNum = VSIGetLastErrorNo();
+                ReportSourceNotAccessible(nOldErrorNum, nNewErrorNum, m_source);
+                return false;
+            }
         }
 
         uint64_t curAmount = 0;
@@ -133,13 +145,13 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     else
     {
         VSIStatBufL statBufSrc;
-        bool srcExists =
-            VSIStatExL(m_source.c_str(), &statBufSrc,
-                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+        VSIErrorReset();
+        const auto nOldErrorNum = VSIGetLastErrorNo();
+        bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
         if (!srcExists)
         {
-            ReportError(CE_Failure, CPLE_FileIO, "%s does not exist",
-                        m_source.c_str());
+            const auto nNewErrorNum = VSIGetLastErrorNo();
+            ReportSourceNotAccessible(nOldErrorNum, nNewErrorNum, m_source);
             return false;
         }
         if (VSI_ISDIR(statBufSrc.st_mode))

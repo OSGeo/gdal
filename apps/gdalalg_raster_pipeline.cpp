@@ -12,28 +12,45 @@
 
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
+#include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
+#include "gdalalg_raster_color_merge.h"
 #include "gdalalg_raster_edit.h"
+#include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
+#include "gdalalg_raster_mosaic.h"
+#include "gdalalg_raster_nodata_to_alpha.h"
+#include "gdalalg_raster_pansharpen.h"
+#include "gdalalg_raster_proximity.h"
 #include "gdalalg_raster_reclassify.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_resize.h"
+#include "gdalalg_raster_rgb_to_palette.h"
 #include "gdalalg_raster_roughness.h"
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_set_type.h"
+#include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
+#include "gdalalg_raster_stack.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_raster_tpi.h"
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
+#include "gdalalg_raster_viewshed.h"
 
 #include "cpl_conv.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_priv.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
+#include <array>
+#include <cassert>
 
 //! @cond Doxygen_Suppress
 
@@ -48,61 +65,39 @@
 GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
     const std::string &name, const std::string &description,
     const std::string &helpURL, bool standaloneStep)
-    : GDALAlgorithm(name, description, helpURL),
-      m_standaloneStep(standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(
+          name, description, helpURL,
+          ConstructorOptions().SetStandaloneStep(standaloneStep))
+{
+}
+
+/************************************************************************/
+/*  GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm()  */
+/************************************************************************/
+
+GDALRasterPipelineStepAlgorithm::GDALRasterPipelineStepAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL, const ConstructorOptions &options)
+    : GDALPipelineStepAlgorithm(name, description, helpURL, options)
 {
     if (m_standaloneStep)
     {
         m_supportsStreamedOutput = true;
 
-        AddInputArgs(false, false);
-        AddProgressArg();
-        AddOutputArgs(false);
+        if (m_constructorOptions.addDefaultArguments)
+        {
+            AddRasterInputArgs(false, false);
+            AddProgressArg();
+            AddRasterOutputArgs(false);
+        }
+    }
+    else if (m_constructorOptions.addDefaultArguments)
+    {
+        AddRasterHiddenInputDatasetArg();
     }
 }
 
-/************************************************************************/
-/*             GDALRasterPipelineStepAlgorithm::AddInputArgs()          */
-/************************************************************************/
-
-void GDALRasterPipelineStepAlgorithm::AddInputArgs(
-    bool openForMixedRasterVector, bool hiddenForCLI)
-{
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(
-            GAAMDI_REQUIRED_CAPABILITIES,
-            openForMixedRasterVector
-                ? std::vector<std::string>{GDAL_DCAP_RASTER, GDAL_DCAP_VECTOR}
-                : std::vector<std::string>{GDAL_DCAP_RASTER})
-        .SetHiddenForCLI(hiddenForCLI);
-    AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
-    AddInputDatasetArg(&m_inputDataset,
-                       openForMixedRasterVector
-                           ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
-                           : GDAL_OF_RASTER,
-                       /* positionalAndRequired = */ !hiddenForCLI)
-        .SetHiddenForCLI(hiddenForCLI);
-}
-
-/************************************************************************/
-/*             GDALRasterPipelineStepAlgorithm::AddOutputArgs()         */
-/************************************************************************/
-
-void GDALRasterPipelineStepAlgorithm::AddOutputArgs(bool hiddenForCLI)
-{
-    m_outputFormatArg =
-        &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
-                             /* bGDALGAllowed = */ true)
-              .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                               {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY})
-              .SetHiddenForCLI(hiddenForCLI));
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
-                        /* positionalAndRequired = */ !hiddenForCLI)
-        .SetHiddenForCLI(hiddenForCLI)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-    AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
-    AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
-}
+GDALRasterPipelineStepAlgorithm::~GDALRasterPipelineStepAlgorithm() = default;
 
 /************************************************************************/
 /*        GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible()     */
@@ -119,128 +114,6 @@ void GDALRasterPipelineStepAlgorithm::SetOutputVRTCompatible(bool b)
 }
 
 /************************************************************************/
-/*            GDALRasterPipelineStepAlgorithm::RunImpl()                */
-/************************************************************************/
-
-bool GDALRasterPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                              void *pProgressData)
-{
-    if (m_standaloneStep)
-    {
-        GDALRasterReadAlgorithm readAlg;
-        for (auto &arg : readAlg.GetArgs())
-        {
-            auto stepArg = GetArg(arg->GetName());
-            if (stepArg && stepArg->IsExplicitlySet())
-            {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*stepArg);
-            }
-        }
-
-        GDALRasterWriteAlgorithm writeAlg;
-        for (auto &arg : writeAlg.GetArgs())
-        {
-            auto stepArg = GetArg(arg->GetName());
-            if (stepArg && stepArg->IsExplicitlySet())
-            {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*stepArg);
-            }
-        }
-
-        // Already checked by GDALAlgorithm::Run()
-        CPLAssert(!m_executionForStreamOutput ||
-                  EQUAL(m_format.c_str(), "stream"));
-
-        bool ret = false;
-        if (readAlg.Run())
-        {
-            m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
-            m_outputDataset.Set(nullptr);
-            if (RunStep(nullptr, nullptr))
-            {
-                if (m_format == "stream")
-                {
-                    ret = true;
-                }
-                else if (!m_outputVRTCompatible &&
-                         (EQUAL(m_format.c_str(), "VRT") ||
-                          (m_format.empty() &&
-                           EQUAL(CPLGetExtensionSafe(
-                                     writeAlg.m_outputDataset.GetName().c_str())
-                                     .c_str(),
-                                 "VRT"))))
-                {
-                    ReportError(
-                        CE_Failure, CPLE_NotSupported,
-                        "VRT output is not supported. Consider using the "
-                        "GDALG driver instead (files with .gdalg.json "
-                        "extension)");
-                    ret = false;
-                }
-                else
-                {
-                    writeAlg.m_outputVRTCompatible = m_outputVRTCompatible;
-                    writeAlg.m_inputDataset.Set(
-                        m_outputDataset.GetDatasetRef());
-                    if (writeAlg.Run(pfnProgress, pProgressData))
-                    {
-                        m_outputDataset.Set(
-                            writeAlg.m_outputDataset.GetDatasetRef());
-                        ret = true;
-                    }
-                }
-            }
-        }
-
-        return ret;
-    }
-    else
-    {
-        return RunStep(pfnProgress, pProgressData);
-    }
-}
-
-/************************************************************************/
-/*                          ProcessGDALGOutput()                        */
-/************************************************************************/
-
-GDALAlgorithm::ProcessGDALGOutputRet
-GDALRasterPipelineStepAlgorithm::ProcessGDALGOutput()
-{
-    if (m_standaloneStep)
-    {
-        return GDALAlgorithm::ProcessGDALGOutput();
-    }
-    else
-    {
-        // GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep() might
-        // actually detect a GDALG output request and process it.
-        return GDALAlgorithm::ProcessGDALGOutputRet::NOT_GDALG;
-    }
-}
-
-/************************************************************************/
-/*      GDALRasterPipelineStepAlgorithm::CheckSafeForStreamOutput()     */
-/************************************************************************/
-
-bool GDALRasterPipelineStepAlgorithm::CheckSafeForStreamOutput()
-{
-    if (m_standaloneStep)
-    {
-        return GDALAlgorithm::CheckSafeForStreamOutput();
-    }
-    else
-    {
-        // The check is actually done in
-        // GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep()
-        // so return true for now.
-        return true;
-    }
-}
-
-/************************************************************************/
 /*        GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm()    */
 /************************************************************************/
 
@@ -248,35 +121,97 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     bool openForMixedRasterVector)
     : GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>(
           NAME, DESCRIPTION, HELP_URL,
-          /*standaloneStep=*/false)
+          ConstructorOptions()
+              .SetAddDefaultArguments(false)
+              .SetInputDatasetMaxCount(INT_MAX))
 {
     m_supportsStreamedOutput = true;
 
-    AddInputArgs(openForMixedRasterVector, /* hiddenForCLI = */ true);
+    AddRasterInputArgs(openForMixedRasterVector, /* hiddenForCLI = */ true);
     AddProgressArg();
     AddArg("pipeline", 0, _("Pipeline string"), &m_pipeline)
         .SetHiddenForCLI()
         .SetPositional();
-    AddOutputArgs(/* hiddenForCLI = */ true);
+    AddRasterOutputArgs(/* hiddenForCLI = */ true);
 
-    m_stepRegistry.Register<GDALRasterReadAlgorithm>();
-    m_stepRegistry.Register<GDALRasterWriteAlgorithm>();
-    m_stepRegistry.Register<GDALRasterAspectAlgorithm>();
-    m_stepRegistry.Register<GDALRasterClipAlgorithm>();
-    m_stepRegistry.Register<GDALRasterColorMapAlgorithm>();
-    m_stepRegistry.Register<GDALRasterEditAlgorithm>();
-    m_stepRegistry.Register<GDALRasterHillshadeAlgorithm>();
-    m_stepRegistry.Register<GDALRasterReclassifyAlgorithm>();
-    m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
-    m_stepRegistry.Register<GDALRasterResizeAlgorithm>();
-    m_stepRegistry.Register<GDALRasterRoughnessAlgorithm>();
-    m_stepRegistry.Register<GDALRasterScaleAlgorithm>();
-    m_stepRegistry.Register<GDALRasterSelectAlgorithm>();
-    m_stepRegistry.Register<GDALRasterSetTypeAlgorithm>();
-    m_stepRegistry.Register<GDALRasterSlopeAlgorithm>();
-    m_stepRegistry.Register<GDALRasterTPIAlgorithm>();
-    m_stepRegistry.Register<GDALRasterTRIAlgorithm>();
-    m_stepRegistry.Register<GDALRasterUnscaleAlgorithm>();
+    RegisterAlgorithms(m_stepRegistry, false);
+}
+
+/************************************************************************/
+/*       GDALRasterPipelineAlgorithm::RegisterAlgorithms()              */
+/************************************************************************/
+
+/* static */
+void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
+    GDALAlgorithmRegistry &registry, bool forMixedPipeline)
+{
+    GDALAlgorithmRegistry::AlgInfo algInfo;
+
+    const auto addSuffixIfNeeded =
+        [forMixedPipeline](const char *name) -> std::string
+    {
+        return forMixedPipeline ? std::string(name).append(RASTER_SUFFIX)
+                                : std::string(name);
+    };
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterReadAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterReadAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterCalcAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterWriteAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterWriteAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterAspectAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterClipAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterColorMapAlgorithm>();
+    registry.Register<GDALRasterColorMergeAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterEditAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterEditAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterNoDataToAlphaAlgorithm>();
+    registry.Register<GDALRasterFillNodataAlgorithm>();
+    registry.Register<GDALRasterHillshadeAlgorithm>();
+    registry.Register<GDALRasterMosaicAlgorithm>();
+    registry.Register<GDALRasterPansharpenAlgorithm>();
+    registry.Register<GDALRasterProximityAlgorithm>();
+    registry.Register<GDALRasterReclassifyAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterReprojectAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterReprojectAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterResizeAlgorithm>();
+    registry.Register<GDALRasterRGBToPaletteAlgorithm>();
+    registry.Register<GDALRasterRoughnessAlgorithm>();
+    registry.Register<GDALRasterScaleAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALRasterSelectAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALRasterSelectAlgorithm>(); };
+    registry.Register(algInfo);
+
+    registry.Register<GDALRasterSetTypeAlgorithm>();
+    registry.Register<GDALRasterSieveAlgorithm>();
+    registry.Register<GDALRasterSlopeAlgorithm>();
+    registry.Register<GDALRasterStackAlgorithm>();
+    registry.Register<GDALRasterTPIAlgorithm>();
+    registry.Register<GDALRasterTRIAlgorithm>();
+    registry.Register<GDALRasterUnscaleAlgorithm>();
+    registry.Register<GDALRasterViewshedAlgorithm>();
 }
 
 /************************************************************************/
@@ -332,6 +267,21 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
             continue;
         }
 
+        if (IsCalledFromCommandLine() && (arg == "-h" || arg == "--help"))
+        {
+            if (!steps.back().alg)
+                steps.pop_back();
+            if (steps.empty())
+            {
+                return GDALAlgorithm::ParseCommandLineArguments(args);
+            }
+            else
+            {
+                m_stepOnWhichHelpIsRequested = std::move(steps.back().alg);
+                return true;
+            }
+        }
+
         auto &curStep = steps.back();
 
         if (arg == "!" || arg == "|")
@@ -375,7 +325,7 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
                             "unknown step name: %s", algName.c_str());
                 return false;
             }
-            curStep.alg->SetCallPath({algName});
+            curStep.alg->SetCallPath({std::move(algName)});
         }
         else
         {
@@ -425,31 +375,45 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         steps.back().args.push_back("streamed_dataset");
     }
 
+    bool helpRequested = false;
+    if (IsCalledFromCommandLine())
+    {
+        for (auto &step : steps)
+            step.alg->SetCalledFromCommandLine();
+
+        for (const std::string &v : args)
+        {
+            if (cpl::ends_with(v, "=?"))
+                helpRequested = true;
+        }
+    }
+
     if (steps.size() < 2)
     {
+        if (!steps.empty() && helpRequested)
+        {
+            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            return false;
+        }
+
         ReportError(CE_Failure, CPLE_AppDefined,
                     "At least 2 steps must be provided");
         return false;
     }
 
-    if (steps.front().alg->GetName() != GDALRasterReadAlgorithm::NAME)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "First step should be '%s'",
-                    GDALRasterReadAlgorithm::NAME);
+    std::vector<GDALRasterPipelineStepAlgorithm *> stepAlgs;
+    for (const auto &step : steps)
+        stepAlgs.push_back(step.alg.get());
+    if (!CheckFirstStep(stepAlgs))
         return false;
-    }
-    for (size_t i = 1; i < steps.size() - 1; ++i)
-    {
-        if (steps[i].alg->GetName() == GDALRasterReadAlgorithm::NAME)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only first step can be '%s'",
-                        GDALRasterReadAlgorithm::NAME);
-            return false;
-        }
-    }
+
     if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME)
     {
+        if (helpRequested)
+        {
+            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            return false;
+        }
         ReportError(CE_Failure, CPLE_AppDefined, "Last step should be '%s'",
                     GDALRasterWriteAlgorithm::NAME);
         return false;
@@ -477,11 +441,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.front();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
@@ -491,11 +458,14 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         auto &step = steps.back();
         for (auto &arg : step.alg->GetArgs())
         {
-            auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (!arg->IsHidden())
             {
-                arg->SetSkipIfAlreadySet(true);
-                arg->SetFrom(*pipelineArg);
+                auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    arg->SetFrom(*pipelineArg);
+                }
             }
         }
     }
@@ -512,7 +482,8 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
     // argument of the "write" step, in case they point to the same dataset.
     auto inputArg = steps.front().alg->GetArg(GDAL_ARG_NAME_INPUT);
     if (inputArg && inputArg->IsExplicitlySet() &&
-        inputArg->GetType() == GAAT_DATASET)
+        inputArg->GetType() == GAAT_DATASET_LIST &&
+        inputArg->Get<std::vector<GDALArgDatasetValue>>().size() == 1)
     {
         steps.front().alg->ProcessDatasetArg(inputArg, steps.back().alg.get());
     }
@@ -565,7 +536,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     if (shortUsage)
         return ret;
 
-    ret += "\n<PIPELINE> is of the form: read [READ-OPTIONS] "
+    ret += "\n<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] "
            "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
@@ -597,11 +568,24 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     }
     for (const std::string &name : m_stepRegistry.GetNames())
     {
-        if (name != GDALRasterReadAlgorithm::NAME &&
+        auto alg = GetStepAlg(name);
+        assert(alg);
+        if (alg->CanBeFirstStep() && !alg->IsHidden() &&
+            name != GDALRasterReadAlgorithm::NAME)
+        {
+            ret += '\n';
+            alg->SetCallPath({name});
+            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+        }
+    }
+    for (const std::string &name : m_stepRegistry.GetNames())
+    {
+        auto alg = GetStepAlg(name);
+        assert(alg);
+        if (!alg->CanBeFirstStep() && !alg->IsHidden() &&
             name != GDALRasterWriteAlgorithm::NAME)
         {
             ret += '\n';
-            auto alg = GetStepAlg(name);
             alg->SetCallPath({name});
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
@@ -617,6 +601,205 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     ret += GetUsageForCLIEnd();
 
     return ret;
+}
+
+/************************************************************************/
+/*           GDALRasterPipelineNonNativelyStreamingAlgorithm()          */
+/************************************************************************/
+
+GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, bool standaloneStep)
+    : GDALRasterPipelineStepAlgorithm(name, description, helpURL,
+                                      standaloneStep)
+{
+}
+
+/************************************************************************/
+/*                    IsNativelyStreamingCompatible()                   */
+/************************************************************************/
+
+bool GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    IsNativelyStreamingCompatible() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                     MustCreateOnDiskTempDataset()                    */
+/************************************************************************/
+
+static bool MustCreateOnDiskTempDataset(int nWidth, int nHeight, int nBands,
+                                        GDALDataType eDT)
+{
+    // Config option mostly for autotest purposes
+    if (CPLTestBool(CPLGetConfigOption(
+            "GDAL_RASTER_PIPELINE_USE_GTIFF_FOR_TEMP_DATASET", "NO")))
+        return true;
+
+    // Allow up to 10% of RAM usage for temporary dataset
+    const auto nRAM = CPLGetUsablePhysicalRAM() / 10;
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    const bool bOnDisk =
+        nBands > 0 && nDTSize > 0 && nRAM > 0 &&
+        static_cast<int64_t>(nWidth) * nHeight > nRAM / (nBands * nDTSize);
+    return bOnDisk;
+}
+
+/************************************************************************/
+/*                      CreateTemporaryDataset()                        */
+/************************************************************************/
+
+std::unique_ptr<GDALDataset>
+GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryDataset(
+    int nWidth, int nHeight, int nBands, GDALDataType eDT,
+    bool bTiledIfPossible, GDALDataset *poSrcDSForMetadata, bool bCopyMetadata)
+{
+    const bool bOnDisk =
+        MustCreateOnDiskTempDataset(nWidth, nHeight, nBands, eDT);
+    const char *pszDriverName = bOnDisk ? "GTIFF" : "MEM";
+    GDALDriver *poDriver =
+        GetGDALDriverManager()->GetDriverByName(pszDriverName);
+    CPLStringList aosOptions;
+    std::string osTmpFilename;
+    if (bOnDisk)
+    {
+        osTmpFilename =
+            CPLGenerateTempFilenameSafe(
+                poSrcDSForMetadata
+                    ? CPLGetBasenameSafe(poSrcDSForMetadata->GetDescription())
+                          .c_str()
+                    : "") +
+            ".tif";
+        if (bTiledIfPossible)
+            aosOptions.SetNameValue("TILED", "YES");
+        const char *pszCOList =
+            poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
+        aosOptions.SetNameValue("COMPRESS",
+                                pszCOList && strstr(pszCOList, "ZSTD") ? "ZSTD"
+                                                                       : "LZW");
+        aosOptions.SetNameValue("SPARSE_OK", "YES");
+    }
+    std::unique_ptr<GDALDataset> poOutDS(
+        poDriver ? poDriver->Create(osTmpFilename.c_str(), nWidth, nHeight,
+                                    nBands, eDT, aosOptions.List())
+                 : nullptr);
+    if (poOutDS && bOnDisk)
+    {
+        // In file systems that allow it (all but Windows...), we want to
+        // delete the temporary file as soon as soon as possible after
+        // having open it, so that if someone kills the process there are
+        // no temp files left over. If that unlink() doesn't succeed
+        // (on Windows), then the file will eventually be deleted when
+        // poTmpDS is cleaned due to MarkSuppressOnClose().
+        VSIUnlink(osTmpFilename.c_str());
+        poOutDS->MarkSuppressOnClose();
+    }
+
+    if (poOutDS && poSrcDSForMetadata)
+    {
+        poOutDS->SetSpatialRef(poSrcDSForMetadata->GetSpatialRef());
+        GDALGeoTransform gt;
+        if (poSrcDSForMetadata->GetGeoTransform(gt) == CE_None)
+            poOutDS->SetGeoTransform(gt);
+        if (const int nGCPCount = poSrcDSForMetadata->GetGCPCount())
+        {
+            const auto apsGCPs = poSrcDSForMetadata->GetGCPs();
+            if (apsGCPs)
+            {
+                poOutDS->SetGCPs(nGCPCount, apsGCPs,
+                                 poSrcDSForMetadata->GetGCPSpatialRef());
+            }
+        }
+        if (bCopyMetadata)
+        {
+            poOutDS->SetMetadata(poSrcDSForMetadata->GetMetadata());
+        }
+    }
+
+    return poOutDS;
+}
+
+/************************************************************************/
+/*                       CreateTemporaryCopy()                          */
+/************************************************************************/
+
+std::unique_ptr<GDALDataset>
+GDALRasterPipelineNonNativelyStreamingAlgorithm::CreateTemporaryCopy(
+    GDALAlgorithm *poAlg, GDALDataset *poSrcDS, int nSingleBand,
+    bool bTiledIfPossible, GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    const int nBands = nSingleBand > 0 ? 1 : poSrcDS->GetRasterCount();
+    const auto eDT =
+        nBands ? poSrcDS->GetRasterBand(1)->GetRasterDataType() : GDT_Unknown;
+    const bool bOnDisk = MustCreateOnDiskTempDataset(
+        poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), nBands, eDT);
+    const char *pszDriverName = bOnDisk ? "GTIFF" : "MEM";
+
+    CPLStringList options;
+    if (nSingleBand > 0)
+    {
+        options.AddString("-b");
+        options.AddString(CPLSPrintf("%d", nSingleBand));
+    }
+
+    options.AddString("-of");
+    options.AddString(pszDriverName);
+
+    std::string osTmpFilename;
+    if (bOnDisk)
+    {
+        osTmpFilename =
+            CPLGenerateTempFilenameSafe(
+                CPLGetBasenameSafe(poSrcDS->GetDescription()).c_str()) +
+            ".tif";
+        if (bTiledIfPossible)
+        {
+            options.AddString("-co");
+            options.AddString("TILED=YES");
+        }
+
+        GDALDriver *poDriver =
+            GetGDALDriverManager()->GetDriverByName(pszDriverName);
+        const char *pszCOList =
+            poDriver ? poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST)
+                     : nullptr;
+        options.AddString("-co");
+        options.AddString(pszCOList && strstr(pszCOList, "ZSTD")
+                              ? "COMPRESS=ZSTD"
+                              : "COMPRESS=LZW");
+    }
+
+    GDALTranslateOptions *translateOptions =
+        GDALTranslateOptionsNew(options.List(), nullptr);
+
+    if (pfnProgress)
+        GDALTranslateOptionsSetProgress(translateOptions, pfnProgress,
+                                        pProgressData);
+
+    std::unique_ptr<GDALDataset> poOutDS(GDALDataset::FromHandle(
+        GDALTranslate(osTmpFilename.c_str(), GDALDataset::ToHandle(poSrcDS),
+                      translateOptions, nullptr)));
+    GDALTranslateOptionsFree(translateOptions);
+
+    if (!poOutDS)
+    {
+        poAlg->ReportError(CE_Failure, CPLE_AppDefined,
+                           "Failed to create temporary dataset");
+    }
+    else if (bOnDisk)
+    {
+        // In file systems that allow it (all but Windows...), we want to
+        // delete the temporary file as soon as soon as possible after
+        // having open it, so that if someone kills the process there are
+        // no temp files left over. If that unlink() doesn't succeed
+        // (on Windows), then the file will eventually be deleted when
+        // poTmpDS is cleaned due to MarkSuppressOnClose().
+        VSIUnlink(osTmpFilename.c_str());
+        poOutDS->MarkSuppressOnClose();
+    }
+    return poOutDS;
 }
 
 //! @endcond

@@ -872,20 +872,20 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
     {
         const double X = sqlite3_value_double(argv[3]);
         const double Y = sqlite3_value_double(argv[4]);
-        double adfGeoTransform[6];
-        if (poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+        GDALGeoTransform gt;
+        if (poDS->GetGeoTransform(gt) != CE_None)
         {
             sqlite3_result_null(pContext);
             return;
         }
-        double adfInvGT[6];
-        if (!GDALInvGeoTransform(adfGeoTransform, adfInvGT))
+        GDALGeoTransform invGT;
+        if (!gt.GetInverse(invGT))
         {
             sqlite3_result_null(pContext);
             return;
         }
-        x = adfInvGT[0] + X * adfInvGT[1] + Y * adfInvGT[2];
-        y = adfInvGT[3] + X * adfInvGT[4] + Y * adfInvGT[5];
+        x = invGT[0] + X * invGT[1] + Y * invGT[2];
+        y = invGT[3] + X * invGT[4] + Y * invGT[5];
     }
     else if (EQUAL(pszCoordType, "pixel"))
     {
@@ -1049,3 +1049,15 @@ bool SQLCheckLineIsSafe(const char *pszLine)
 }
 
 #endif
+
+int SQLPrepareWithError(sqlite3 *db, const char *sql, int nByte,
+                        sqlite3_stmt **ppStmt, const char **pzTail)
+{
+    int ret = sqlite3_prepare_v2(db, sql, nByte, ppStmt, pzTail);
+    if (ret != SQLITE_OK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to prepare SQL %s: %s",
+                 sql, sqlite3_errmsg(db));
+    }
+    return ret;
+}

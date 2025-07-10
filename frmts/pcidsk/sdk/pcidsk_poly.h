@@ -49,7 +49,7 @@ namespace PCIDSK {
         virtual void SetProjParamInfo(const std::vector<double>& oInfo) =0;
 
         // Virtual destructor
-        virtual ~PCIDSKPolySegment() {}
+        virtual ~PCIDSKPolySegment();
     };
 }
 

@@ -727,6 +727,8 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
  *
  **********************************************************************/
 
+TABMAPObjHdr::~TABMAPObjHdr() = default;
+
 /**********************************************************************
  *                    TABMAPObjHdr::NewObj()
  *
@@ -884,6 +886,21 @@ void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY, GInt32 nMaxX,
     m_nMaxX = std::max(nMinX, nMaxX);
     m_nMaxY = std::max(nMinY, nMaxY);
 }
+
+/**********************************************************************
+ *                   class TABMAPObjNone
+ **********************************************************************/
+
+int TABMAPObjNone::ReadObj(TABMAPObjectBlock *)
+{
+    return 0;
+}
+
+/**********************************************************************
+ *                   class TABMAPObjHdrWithCoord
+ **********************************************************************/
+
+TABMAPObjHdrWithCoord::~TABMAPObjHdrWithCoord() = default;
 
 /**********************************************************************
  *                   class TABMAPObjLine

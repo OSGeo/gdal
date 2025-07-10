@@ -12,7 +12,7 @@ Geographic Network C++ API
 Include file
 ------------
 
-:file:`gnm.h`
+:source_file:`gnm/gnm.h`
 
 Geographic Network C++ API
 --------------------------

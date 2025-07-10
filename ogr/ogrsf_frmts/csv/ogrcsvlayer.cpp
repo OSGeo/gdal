@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #endif
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <string>
 #include <vector>
@@ -44,6 +45,8 @@
 
 #define DIGIT_ZERO '0'
 
+IOGRCSVLayer::~IOGRCSVLayer() = default;
+
 /************************************************************************/
 /*                            OGRCSVLayer()                             */
 /*                                                                      */
@@ -55,19 +58,9 @@ OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
                          VSILFILE *fp, int nMaxLineSize,
                          const char *pszFilenameIn, int bNewIn,
                          int bInWriteModeIn, char chDelimiterIn)
-    : m_poDS(poDS), poFeatureDefn(nullptr), fpCSV(fp),
-      m_nMaxLineSize(nMaxLineSize), nNextFID(1), bHasFieldNames(false),
+    : m_poDS(poDS), fpCSV(fp), m_nMaxLineSize(nMaxLineSize),
       bNew(CPL_TO_BOOL(bNewIn)), bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
-      bUseCRLF(false), bNeedRewindBeforeRead(false),
-      eGeometryFormat(OGR_CSV_GEOM_NONE), pszFilename(CPLStrdup(pszFilenameIn)),
-      bCreateCSVT(false), bWriteBOM(false), nCSVFieldCount(0),
-      panGeomFieldIndex(nullptr), bFirstFeatureAppendedDuringSession(true),
-      bHiddenWKTColumn(false), iNfdcLongitudeS(-1), iNfdcLatitudeS(-1),
-      bHonourStrings(true), iLongitudeField(-1), iLatitudeField(-1),
-      iZField(-1), bIsEurostatTSV(false), nEurostatDims(0),
-      nTotalFeatures(bNewIn ? 0 : -1), bWarningBadTypeOrWidth(false),
-      bKeepSourceColumns(false), bKeepGeomColumns(true), bMergeDelimiter(false),
-      bEmptyStringNull(false)
+      pszFilename(CPLStrdup(pszFilenameIn)), nTotalFeatures(bNewIn ? 0 : -1)
 {
     szDelimiter[0] = chDelimiterIn;
     szDelimiter[1] = 0;
@@ -329,12 +322,12 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         // Only try to read .csvt from files that have an extension
         if (!CPLGetExtensionSafe(pszFilename).empty())
         {
-            const std::string osCSVTFilename =
+            std::string osCSVTFilename =
                 CPLResetExtensionSafe(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
-                m_osCSVTFilename = osCSVTFilename;
+                m_osCSVTFilename = std::move(osCSVTFilename);
                 VSIRewindL(fpCSVT);
                 papszFieldTypes =
                     CSVReadParseLine3L(fpCSVT, m_nMaxLineSize, ",",
@@ -786,7 +779,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 OGRSpatialReference *poSRS = new OGRSpatialReference();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
-                        (const char *)pabyRet,
+                        reinterpret_cast<const char *>(pabyRet),
                         OGRSpatialReference::
                             SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
                     OGRERR_NONE)
@@ -1284,7 +1277,7 @@ void OGRCSVLayer::ResetReading()
 
     bNeedRewindBeforeRead = false;
 
-    nNextFID = 1;
+    m_nNextFID = FID_INITIAL_VALUE;
 }
 
 /************************************************************************/
@@ -1318,17 +1311,17 @@ char **OGRCSVLayer::GetNextLineTokens()
 
 OGRFeature *OGRCSVLayer::GetFeature(GIntBig nFID)
 {
-    if (nFID < 1 || fpCSV == nullptr)
+    if (nFID < FID_INITIAL_VALUE || fpCSV == nullptr)
         return nullptr;
-    if (nFID < nNextFID || bNeedRewindBeforeRead)
+    if (nFID < m_nNextFID || bNeedRewindBeforeRead)
         ResetReading();
-    while (nNextFID < nFID)
+    while (m_nNextFID < nFID)
     {
         char **papszTokens = GetNextLineTokens();
         if (papszTokens == nullptr)
             return nullptr;
         CSLDestroy(papszTokens);
-        nNextFID++;
+        m_nNextFID++;
     }
     return GetNextUnfilteredFeature();
 }
@@ -1460,9 +1453,10 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             {
                 bWarningBadTypeOrWidth = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Invalid value type found in record %d for field %s. "
+                         "Invalid value type found in record %" PRId64
+                         " for field %s. "
                          "This warning will no longer be emitted",
-                         nNextFID, poFieldDefn->GetNameRef());
+                         m_nNextFID, poFieldDefn->GetNameRef());
             };
         };
 
@@ -1473,9 +1467,9 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 bWarningBadTypeOrWidth = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Value with a width greater than field width "
-                         "found in record %d for field %s. "
+                         "found in record %" PRId64 " for field %s. "
                          "This warning will no longer be emitted",
-                         nNextFID, poFieldDefn->GetNameRef());
+                         m_nNextFID, poFieldDefn->GetNameRef());
             };
         };
 
@@ -1558,10 +1552,10 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                             bWarningBadTypeOrWidth = true;
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Value with a precision greater than "
-                                     "field precision found in record %d for "
-                                     "field %s. "
+                                     "field precision found in record %" PRId64
+                                     " for field %s. "
                                      "This warning will no longer be emitted",
-                                     nNextFID, poFieldDefn->GetNameRef());
+                                     m_nNextFID, poFieldDefn->GetNameRef());
                         }
                     }
                 }
@@ -1723,8 +1717,14 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
 
     CSLDestroy(papszTokens);
 
+    if ((m_nNextFID % 100000) == 0)
+    {
+        CPLDebug("CSV", "FID = %" PRId64 ", file offset = %" PRIu64, m_nNextFID,
+                 static_cast<uint64_t>(fpCSV->Tell()));
+    }
+
     // Translate the record id.
-    poFeature->SetFID(nNextFID++);
+    poFeature->SetFID(m_nNextFID++);
 
     m_nFeaturesRead++;
 
@@ -1973,13 +1973,33 @@ OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
 
 OGRErr OGRCSVLayer::WriteHeader()
 {
-    if (!bNew)
-        return OGRERR_NONE;
+    CPLAssert(bNew);
 
     // Write field names if we haven't written them yet.
     // Write .csvt file if needed.
     bNew = false;
     bHasFieldNames = true;
+
+    const auto CreateCSV = [this]()
+    {
+        if (STARTS_WITH(pszFilename, "/vsistdout/") ||
+            STARTS_WITH(pszFilename, "/vsizip/"))
+            fpCSV = VSIFOpenL(pszFilename, "wb");
+        else
+            fpCSV = VSIFOpenL(pszFilename, "w+b");
+
+        if (fpCSV == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
+                     pszFilename, VSIStrerror(errno));
+            return OGRERR_FAILURE;
+        }
+        return OGRERR_NONE;
+    };
+
+    if (!m_bWriteHeader)
+        return CreateCSV();
+
     bool bOK = true;
 
     for (int iFile = 0; iFile < (bCreateCSVT ? 2 : 1); iFile++)
@@ -1999,19 +2019,8 @@ OGRErr OGRCSVLayer::WriteHeader()
         }
         else
         {
-            if (STARTS_WITH(pszFilename, "/vsistdout/") ||
-                STARTS_WITH(pszFilename, "/vsizip/"))
-                fpCSV = VSIFOpenL(pszFilename, "wb");
-            else
-                fpCSV = VSIFOpenL(pszFilename, "w+b");
-
-            if (fpCSV == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Failed to create %s:\n%s", pszFilename,
-                         VSIStrerror(errno));
+            if (CreateCSV() != OGRERR_NONE)
                 return OGRERR_FAILURE;
-            }
         }
 
         if (bWriteBOM && fpCSV)

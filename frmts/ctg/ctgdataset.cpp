@@ -107,7 +107,7 @@ class CTGDataset final : public GDALPamDataset
     CTGDataset();
     ~CTGDataset() override;
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -172,7 +172,7 @@ CTGRasterBand::~CTGRasterBand()
 CPLErr CTGRasterBand::IReadBlock(int /* nBlockXOff */, int /* nBlockYOff */,
                                  void *pImage)
 {
-    CTGDataset *poGDS = (CTGDataset *)poDS;
+    CTGDataset *poGDS = cpl::down_cast<CTGDataset *>(poDS);
 
     poGDS->ReadImagery();
     memcpy(pImage,
@@ -315,9 +315,9 @@ int CTGDataset::ReadImagery()
             int nVal = atoi(ExtractField(szField, szLine, 20 + 10 * i, 10));
             if (nVal >= 2000000000)
                 nVal = 0;
-            ((int *)
-                 pabyImage)[i * nCells +
-                            static_cast<int>(nCellY) * nRasterXSize + nCellX] =
+            reinterpret_cast<int *>(
+                pabyImage)[i * nCells +
+                           static_cast<int>(nCellY) * nRasterXSize + nCellX] =
                 nVal;
         }
 
@@ -521,15 +521,15 @@ GDALDataset *CTGDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr CTGDataset::GetGeoTransform(double *padfTransform)
+CPLErr CTGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    padfTransform[0] = static_cast<double>(nNWEasting) - nCellSize / 2;
-    padfTransform[1] = nCellSize;
-    padfTransform[2] = 0;
-    padfTransform[3] = static_cast<double>(nNWNorthing) + nCellSize / 2;
-    padfTransform[4] = 0.;
-    padfTransform[5] = -nCellSize;
+    gt[0] = static_cast<double>(nNWEasting) - nCellSize / 2;
+    gt[1] = nCellSize;
+    gt[2] = 0;
+    gt[3] = static_cast<double>(nNWNorthing) + nCellSize / 2;
+    gt[4] = 0.;
+    gt[5] = -nCellSize;
 
     return CE_None;
 }

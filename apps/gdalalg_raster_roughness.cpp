@@ -44,9 +44,10 @@ GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm(bool standaloneStep)
 /*                GDALRasterRoughnessAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALRasterRoughnessAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterRoughnessAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -61,10 +62,9 @@ bool GDALRasterRoughnessAlgorithm::RunStep(GDALProgressFunc, void *)
     GDALDEMProcessingOptions *psOptions =
         GDALDEMProcessingOptionsNew(aosOptions.List(), nullptr);
 
-    auto poOutDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALDEMProcessing(
-            "", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-            "roughness", nullptr, psOptions, nullptr)));
+    auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+        GDALDEMProcessing("", GDALDataset::ToHandle(poSrcDS), "roughness",
+                          nullptr, psOptions, nullptr)));
     GDALDEMProcessingOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
@@ -74,5 +74,8 @@ bool GDALRasterRoughnessAlgorithm::RunStep(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterRoughnessAlgorithmStandalone::
+    ~GDALRasterRoughnessAlgorithmStandalone() = default;
 
 //! @endcond

@@ -1618,3 +1618,16 @@ def test_hdf5_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["HDF5"])
     assert drv is None
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+def test_hdf5_open_larger_than_INT_MAX_pixels():
+
+    with gdal.OpenEx(
+        "data/bag/larger_than_INT_MAX_pixels.bag", allowed_drivers=["HDF5"]
+    ) as ds:
+        assert len(ds.GetSubDatasets()) == 0
+
+    with pytest.raises(Exception, match="At least one dimension size exceeds INT_MAX"):
+        gdal.Open('HDF5:"data/bag/larger_than_INT_MAX_pixels.bag"://BAG_root/elevation')

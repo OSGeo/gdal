@@ -420,7 +420,7 @@ static int ParseSect1 (sInt4 *is1, sInt4 ns1, grib_MetaData *meta)
  *   5/2003 AAT: Stopped messing around with the way buffer and data[i]
  *          were allocated.  It was confusing the free routine.
  *   5/2003 AAT: Added maxLen to Wx structure.
- *   6/2003 AAT: Revisited after Matt (matt@wunderground.com) informed me of
+ *   6/2003 AAT: Revisited after Matt (matt at wunderground.com) informed me of
  *          memory problems.
  *          1) I had a memory leak caused by a buffer+= buffLen
  *          2) buffLen could have increased out of bounds of buffer.
@@ -2618,7 +2618,7 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
          if (attrib->fieldType) {
             itemp = iain + (startY + y - 1) * Nx + (startX - 1);
          } else {
-            ftemp = ((float *) iain) + (startY + y - 1) * Nx + (startX - 1);
+            ftemp = reinterpret_cast<float *>(iain) + (startY + y - 1) * Nx + (startX - 1);
          }
          for (x = 0; x < subNx; x++) {
             if (((startX + x - 1) < 0) || ((startX + x - 1) >= Nx)) {
@@ -2743,7 +2743,7 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
          if (attrib->fieldType) {
             itemp = iain + (startY + y - 1) * Nx + (startX - 1);
          } else {
-            ftemp = ((float *) iain) + (startY + y - 1) * Nx + (startX - 1);
+            ftemp = reinterpret_cast<float *>(iain) + (startY + y - 1) * Nx + (startX - 1);
          }
          for (x = 0; x < subNx; x++) {
             if (((startX + x - 1) < 0) || ((startX + x - 1) >= Nx)) {
@@ -2873,7 +2873,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
          if (attrib->fieldType) {
             itemp = iain + (startY + y - 1) * Nx + (startX - 1);
          } else {
-            ftemp = ((float *) iain) + (startY + y - 1) * Nx + (startX - 1);
+            ftemp = reinterpret_cast<float *>(iain) + (startY + y - 1) * Nx + (startX - 1);
          }
          for (x = 0; x < subNx; x++) {
             if (((startX + x - 1) < 0) || ((startX + x - 1) >= Nx)) {
@@ -3008,7 +3008,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
    double *grib_Data = nullptr;
    sInt4 missCnt = 0;   /* Number of detected missing values. */
    uInt4 index;         /* Current index into Wx table. */
-   float *ain = (float *) iain;
+   float *ain = reinterpret_cast<float *>(iain);
    uInt4 subNx;         /* The Nx dimension of the subgrid. */
    uInt4 subNy;         /* The Ny dimension of the subgrid. */
 

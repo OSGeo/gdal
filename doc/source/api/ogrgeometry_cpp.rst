@@ -12,7 +12,7 @@ OGRGeometry C++ API
 Include file
 ------------
 
-:file:`ogr_geometry.h`
+:source_file:`ogr/ogr_geometry.h`
 
 OGRGeometryFactory class
 ------------------------
@@ -25,6 +25,13 @@ OGRGeometry class
 -----------------
 
 .. doxygenclass:: OGRGeometry
+   :project: api
+   :members:
+
+OGRRawPoint class
+------------------
+
+.. doxygenclass:: OGRRawPoint
    :project: api
    :members:
 
@@ -81,6 +88,13 @@ OGRPolygon class
 ----------------
 
 .. doxygenclass:: OGRPolygon
+   :project: api
+   :members:
+
+OGRCompoundCurve class
+----------------------
+
+.. doxygenclass:: OGRCompoundCurve
    :project: api
    :members:
 
@@ -153,3 +167,37 @@ OGRTriangulatedSurface class
 .. doxygenclass:: OGRTriangulatedSurface
    :project: api
    :members:
+
+OGRWktOptions class
+-------------------
+
+.. doxygenclass:: OGRWktOptions
+   :project: api
+   :members:
+
+IOGRGeometryVisitor class
+-------------------------
+
+.. doxygenclass:: IOGRGeometryVisitor
+   :project: api
+   :members:
+
+IOGRConstGeometryVisitor class
+------------------------------
+
+.. doxygenclass:: IOGRConstGeometryVisitor
+   :project: api
+   :members:
+
+OGRGeomCoordinateBinaryPrecision class
+--------------------------------------
+
+.. doxygenclass:: OGRGeomCoordinateBinaryPrecision
+   :project: api
+   :members:
+
+OGRWktFormat enumeration
+------------------------
+
+.. doxygenenum:: OGRWktFormat
+   :project: api

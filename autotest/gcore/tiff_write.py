@@ -208,6 +208,46 @@ def test_tiff_write_4():
     gdaltest.tiff_drv.Delete("tmp/test_4.tif")
 
 
+def test_tiff_write_tiled_blockxsize_not_tiled(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "BLOCKXSIZE can only be used with TILED=YES"
+    ):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"BLOCKXSIZE": 16, "BLOCKYSIZE": 16},
+        )
+
+
+def test_tiff_write_tiled_blocksize_invalid(tmp_vsimem):
+
+    with gdaltest.error_raised(gdal.CE_Failure, "BLOCKXSIZE must be a multiple of 16"):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"TILED": True, "BLOCKXSIZE": 12, "BLOCKYSIZE": 16},
+        )
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif") is None
+
+    with gdaltest.error_raised(gdal.CE_Failure, "BLOCKYSIZE must be a multiple of 16"):
+        gdaltest.tiff_drv.Create(
+            tmp_vsimem / "test.tif",
+            32,
+            32,
+            1,
+            gdal.GDT_Byte,
+            {"TILED": True, "BLOCKXSIZE": 16, "BLOCKYSIZE": 12},
+        )
+    assert gdal.VSIStatL(tmp_vsimem / "test.tif") is None
+
+
 ###############################################################################
 # Write a file with GCPs.
 
@@ -12033,3 +12073,45 @@ def test_tiff_write_interleave_tile(tmp_vsimem, COPY_SRC_OVERVIEWS):
                 )
                 assert offset > last_offset
                 last_offset = offset
+
+
+###############################################################################
+#
+
+
+def test_tiff_write_multi_band_interleaved_predictor_3(tmp_vsimem):
+
+    ref_content = struct.pack("f" * 8, 1.5, -3.5, 4.5, -2.5, 10, -20, 30, -40)
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test.tif",
+        4,
+        1,
+        2,
+        gdal.GDT_Float32,
+        options=["INTERLEAVE=PIXEL", "PREDICTOR=3", "COMPRESS=LZW"],
+    ) as ds:
+        ds.WriteRaster(0, 0, 4, 1, ref_content)
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        content = ds.ReadRaster()
+        assert ref_content == content, struct.unpack("f" * 8, content)
+
+
+###############################################################################
+#
+
+
+def test_tiff_write_5_bands_interleaved_predictor_2(tmp_vsimem):
+
+    ref_content = struct.pack("B" * 10, 1, 5, 3, 2, 4, 9, 6, 8, 0, 7)
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test.tif",
+        2,
+        1,
+        5,
+        gdal.GDT_Byte,
+        options=["INTERLEAVE=PIXEL", "PREDICTOR=2", "COMPRESS=LZW"],
+    ) as ds:
+        ds.WriteRaster(0, 0, 2, 1, ref_content)
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        content = ds.ReadRaster()
+        assert ref_content == content, struct.unpack("B" * 10, content)

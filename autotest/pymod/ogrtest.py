@@ -424,6 +424,7 @@ def check_transaction_rollback(ds, start_transaction, test_geometry=False):
     f.SetField("fld1", "value1")
     f.SetField("fld2", "value2")
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
     fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
     fld2 = lyr.GetLayerDefn().GetFieldDefn(1)
@@ -541,6 +542,8 @@ def check_transaction_rollback(ds, start_transaction, test_geometry=False):
     assert feat.GetField("fld2") == "value2-2"
     assert feat.GetGeomFieldRef(0).ExportToWkt() == "POINT (1 2)"
     assert feat.GetGeomFieldRef(1).ExportToWkt() == "POINT (3 4)"
+    feat = None
+
     ds.RollbackTransaction() if start_transaction else ds.ExecuteSQL("ROLLBACK")
 
     # Verify that we have not added GEOMETRY_2 field.
@@ -724,6 +727,7 @@ def check_transaction_savepoint_release(
             f.SetField("fld%d" % i, "value%d" % i)
 
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        f = None
 
         fld1 = lyr.GetLayerDefn().GetFieldDefn(0)
         fld2 = lyr.GetLayerDefn().GetFieldDefn(1)

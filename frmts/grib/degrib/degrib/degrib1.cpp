@@ -241,6 +241,14 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                return &parm_table_ecmwf_170[0];
             case 180:
                return &parm_table_ecmwf_180[0];
+            case 210:
+               return &parm_table_ecmwf_210[0];
+            case 215:
+               return &parm_table_ecmwf_215[0];
+            case 217:
+               return &parm_table_ecmwf_217[0];
+            case 218:
+               return &parm_table_ecmwf_218[0];
             case 228:
                return &parm_table_ecmwf_228[0];
          }
@@ -1952,7 +1960,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       IS->ipackLen = nd5;
       IS->ipack = newipack;
    }
-   c_ipack = (uChar *) IS->ipack;
+   c_ipack = reinterpret_cast<uChar *>(IS->ipack);
    /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
    IS->ipack[nd5 - 1] = 0;
    /* Init first 2 sInt4 to sect0. */

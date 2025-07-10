@@ -73,7 +73,7 @@ struct JP2DatasetBase
         return nThreads;
     }
 
-    std::string m_osFilename;
+    std::string m_osFilename{};
     VSILFILE *fp_ = nullptr; /* Large FILE API */
     vsi_l_offset nCodeStreamStart = 0;
     vsi_l_offset nCodeStreamLength = 0;
@@ -102,6 +102,8 @@ struct JP2DatasetBase
     int m_nY0 = 0;
     uint32_t m_nTileWidth = 0;
     uint32_t m_nTileHeight = 0;
+
+    virtual ~JP2DatasetBase();
 };
 
 /************************************************************************/
@@ -116,6 +118,9 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
 {
     friend class JP2OPJLikeRasterBand<CODEC, BASE>;
     JP2OPJLikeDataset **papoOverviewDS = nullptr;
+
+    JP2OPJLikeDataset(const JP2OPJLikeDataset &) = delete;
+    JP2OPJLikeDataset &operator=(const JP2OPJLikeDataset &) = delete;
 
   protected:
     virtual int CloseDependentDatasets() override;
@@ -136,7 +141,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
@@ -189,8 +194,11 @@ template <typename CODEC, typename BASE>
 class JP2OPJLikeRasterBand final : public GDALPamRasterBand
 {
     friend class JP2OPJLikeDataset<CODEC, BASE>;
-    int bPromoteTo8Bit;
-    GDALColorTable *poCT;
+    int bPromoteTo8Bit = false;
+    GDALColorTable *poCT = nullptr;
+
+    JP2OPJLikeRasterBand(const JP2OPJLikeRasterBand &) = delete;
+    JP2OPJLikeRasterBand &operator=(const JP2OPJLikeRasterBand &) = delete;
 
   public:
     JP2OPJLikeRasterBand(JP2OPJLikeDataset<CODEC, BASE> *poDSIn, int nBandIn,

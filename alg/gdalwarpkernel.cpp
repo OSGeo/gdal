@@ -203,21 +203,20 @@ struct GWKJobStruct
 {
     std::mutex &mutex;
     std::condition_variable &cv;
+    int counterSingleThreaded = 0;
     int &counter;
     bool &stopFlag;
-    GDALWarpKernel *poWK;
-    int iYMin;
-    int iYMax;
-    int (*pfnProgress)(GWKJobStruct *psJob);
-    void *pTransformerArg;
-    void (*pfnFunc)(
-        void *);  // used by GWKRun() to assign the proper pTransformerArg
+    GDALWarpKernel *poWK = nullptr;
+    int iYMin = 0;
+    int iYMax = 0;
+    int (*pfnProgress)(GWKJobStruct *psJob) = nullptr;
+    void *pTransformerArg = nullptr;
+    // used by GWKRun() to assign the proper pTransformerArg
+    void (*pfnFunc)(void *) = nullptr;
 
     GWKJobStruct(std::mutex &mutex_, std::condition_variable &cv_,
                  int &counter_, bool &stopFlag_)
-        : mutex(mutex_), cv(cv_), counter(counter_), stopFlag(stopFlag_),
-          poWK(nullptr), iYMin(0), iYMax(0), pfnProgress(nullptr),
-          pTransformerArg(nullptr), pfnFunc(nullptr)
+        : mutex(mutex_), cv(cv_), counter(counter_), stopFlag(stopFlag_)
     {
     }
 };
@@ -265,12 +264,11 @@ static int GWKProgressThread(GWKJobStruct *psJob)
 static int GWKProgressMonoThread(GWKJobStruct *psJob)
 {
     GDALWarpKernel *poWK = psJob->poWK;
-    // coverity[missing_lock]
-    if (!poWK->pfnProgress(
-            poWK->dfProgressBase +
-                poWK->dfProgressScale *
-                    (++psJob->counter / static_cast<double>(psJob->iYMax)),
-            "", poWK->pProgress))
+    if (!poWK->pfnProgress(poWK->dfProgressBase +
+                               poWK->dfProgressScale *
+                                   (++psJob->counterSingleThreaded /
+                                    static_cast<double>(psJob->iYMax)),
+                           "", poWK->pProgress))
     {
         CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
         psJob->stopFlag = true;
@@ -295,7 +293,9 @@ static CPLErr GWKGenericMonoThread(GDALWarpKernel *poWK,
     job.iYMax = poWK->nDstYSize;
     job.pfnProgress = GWKProgressMonoThread;
     job.pTransformerArg = poWK->pTransformerArg;
+    job.counterSingleThreaded = td.counter;
     pfnFunc(&job);
+    td.counter = job.counterSingleThreaded;
 
     return td.stopFlag ? CE_Failure : CE_None;
 }

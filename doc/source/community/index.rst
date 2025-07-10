@@ -70,14 +70,43 @@ Social media
 You can follow GDAL official news on Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
 
 
-Conference
-----------
+Conferences
+-----------
 
-.. image::   ../../images/foss4g2023.png
-   :alt:     FOSS4G 2023
-   :target:  https://2023.foss4g.org/
+Upcoming
+++++++++
 
-`FOSS4G 2023 <https://2023.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held at Prizren, Kosovo from June 26th to July 2nd 2023.
+.. image::   ../../images/community/foss4geurope2025.png
+   :alt:     FOSS4G Europe 2025
+   :target:  https://2025.europe.foss4g.org/
+
+`FOSS4G Europe 2025 <https://2025.europe.foss4g.org/>`__ is a European extension of the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending.
+The conference will be held in Mostar, Bosnia-Herzegovina from July 14th to July 20th 2025.
+
+Previous
+++++++++
+
+GDAL presentations have been given at FOSS4G, the leading annual conference for free and open source geospatial software.
+It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them.
+
++ `State of GDAL 3.8 & 3.9 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202024%29.pdf>`__
+  by Even Rouault, Spatialys, at `FOSS4G Europe 2024 <https://2024.europe.foss4g.org/>`_ in Tartu, Estonia. `Recording <https://av.tib.eu/media/68541>`__.
++ `State of GDAL 3.6 & 3.7 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G%202023%29.pdf>`__
+  by Even Rouault, Spatialys, at  `FOSS4G 2023 <https://2023.foss4g.org/>`_ in Prizren, Kosovo. `Recording <https://av.tib.eu/media/66550>`__.
++ `State of GDAL 3.4 & 3.5 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G%202022%29.pdf>`__
+  by Even Rouault, Spatialys, at  `FOSS4G 2022 <https://2022.foss4g.org/>`_ in Firenze, Italy. `Recording <https://av.tib.eu/media/69002>`__.
++ `State of GDAL 3.1, 3.2, 3.3… <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G%202021%29.pdf>`__
+  by Even Rouault, Spatialys, at  `FOSS4G 2021 <https://2021.foss4g.org/>`_ in Buenos Aires, Argentina. `Recording <https://av.tib.eu/media/57241>`__.
++ `State of GDAL 2.4 and 3.0 <https://download.osgeo.org/gdal/presentations/GDAL%202.4%20and%203.0%20%28FOSS4G%202019%29.pdf>`__
+  by Even Rouault, Spatialys, at  `FOSS4G 2019 <https://2019.foss4g.org/>`_ in Bucharest, Romania. `Recording <https://av.tib.eu/media/43447>`__.
+
+.. spelling:word-list::
+    Mostar
+    Tartu
+    Firenze
+    Buenos
+
 
 Governance and Community Participation
 --------------------------------------
@@ -112,18 +141,18 @@ placed in the hands of a Project Steering Committee. This project steering
 committee operates under the rules of :ref:`rfc-1`, and is overall responsible for
 decisions related to the GDAL/OGR project. The current members are (@github username):
 
-- Frank Warmerdam      (@warmerdam)
-- Daniel Morissette    (@dmorissette)
-- Howard Butler        (@hobu)
-- Tamas Szekeres       (@szekerest)
-- Even Rouault (chair) (@rouault)
-- Jukka Rahkonen       (@jratike80)
-- Kurt Schwehr         (@schwehr)
-- Norman Barker        (@normanb)
-- Sean Gillies         (@sgillies)
-- Javier Jimenez Shaw  (@jjimenezshaw)
-- Dan Baston           (@dbaston)
-- Michael Smith        (@msmitherdc)
+- Frank Warmerdam      (`@warmerdam <https://github.com/warmerdam>`__)
+- Daniel Morissette    (`@dmorissette <https://github.com/dmorissette>`__)
+- Howard Butler        (`@hobu <https://github.com/hobu>`__)
+- Tamas Szekeres       (`@szekerest <https://github.com/szekerest>`__)
+- Even Rouault (chair) (`@rouault <https://github.com/rouault>`__)
+- Jukka Rahkonen       (`@jratike80 <https://github.com/jratike80>`__)
+- Kurt Schwehr         (`@schwehr <https://github.com/schwehr>`__)
+- Norman Barker        (`@normanb <https://github.com/normanb>`__)
+- Sean Gillies         (`@sgillies <https://github.com/sgillies>`__)
+- Javier Jimenez Shaw  (`@jjimenezshaw <https://github.com/jjimenezshaw>`__)
+- Dan Baston           (`@dbaston <https://github.com/dbaston>`__)
+- Michael Smith        (`@msmitherdc <https://github.com/msmitherdc>`__)
 
 Past members:
 

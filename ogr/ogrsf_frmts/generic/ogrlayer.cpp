@@ -3080,13 +3080,16 @@ static OGRErr set_result_schema(OGRLayer *pLayerResult,
                                 int *mapMethod, bool combined,
                                 const char *const *papszOptions)
 {
+    if (!CPLTestBool(CSLFetchNameValueDef(papszOptions, "ADD_FIELDS", "YES")))
+        return OGRERR_NONE;
+
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnResult = pLayerResult->GetLayerDefn();
     const char *pszInputPrefix =
         CSLFetchNameValue(papszOptions, "INPUT_PREFIX");
     const char *pszMethodPrefix =
         CSLFetchNameValue(papszOptions, "METHOD_PREFIX");
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     if (poDefnResult->GetFieldCount() > 0)
     {
@@ -3118,7 +3121,7 @@ static OGRErr set_result_schema(OGRLayer *pLayerResult,
     else
     {
         // use schema from the input layer or from input and method layers
-        int nFieldsInput = poDefnInput->GetFieldCount();
+        const int nFieldsInput = poDefnInput->GetFieldCount();
 
         // If no prefix is specified and we have input+method layers, make
         // sure we will generate unique field names
@@ -3140,67 +3143,81 @@ static OGRErr set_result_schema(OGRLayer *pLayerResult,
             }
         }
 
-        for (int iField = 0; iField < nFieldsInput; iField++)
+        const bool bAddInputFields = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "ADD_INPUT_FIELDS", "YES"));
+        if (bAddInputFields)
         {
-            OGRFieldDefn oFieldDefn(poDefnInput->GetFieldDefn(iField));
-            if (pszInputPrefix != nullptr)
-                oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix,
-                                              oFieldDefn.GetNameRef()));
-            else if (!oSetMethodFieldNames.empty() &&
-                     oSetMethodFieldNames.find(oFieldDefn.GetNameRef()) !=
-                         oSetMethodFieldNames.end())
+            for (int iField = 0; iField < nFieldsInput; iField++)
             {
-                // Field of same name present in method layer
-                oFieldDefn.SetName(
-                    CPLSPrintf("input_%s", oFieldDefn.GetNameRef()));
-            }
-            ret = pLayerResult->CreateField(&oFieldDefn);
-            if (ret != OGRERR_NONE)
-            {
-                if (!bSkipFailures)
-                    return ret;
-                else
+                OGRFieldDefn oFieldDefn(poDefnInput->GetFieldDefn(iField));
+                if (pszInputPrefix != nullptr)
+                    oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix,
+                                                  oFieldDefn.GetNameRef()));
+                else if (!oSetMethodFieldNames.empty() &&
+                         oSetMethodFieldNames.find(oFieldDefn.GetNameRef()) !=
+                             oSetMethodFieldNames.end())
                 {
-                    CPLErrorReset();
-                    ret = OGRERR_NONE;
+                    // Field of same name present in method layer
+                    oFieldDefn.SetName(
+                        CPLSPrintf("input_%s", oFieldDefn.GetNameRef()));
                 }
+                ret = pLayerResult->CreateField(&oFieldDefn);
+                if (ret != OGRERR_NONE)
+                {
+                    if (!bSkipFailures)
+                        return ret;
+                    else
+                    {
+                        CPLErrorReset();
+                        ret = OGRERR_NONE;
+                    }
+                }
+                if (mapInput)
+                    mapInput[iField] =
+                        pLayerResult->GetLayerDefn()->GetFieldCount() - 1;
             }
-            if (mapInput)
-                mapInput[iField] = iField;
         }
+
         if (!combined)
             return ret;
         if (!mapMethod)
             return ret;
         if (!poDefnMethod)
             return ret;
-        const int nFieldsMethod = poDefnMethod->GetFieldCount();
-        for (int iField = 0; iField < nFieldsMethod; iField++)
+
+        const bool bAddMethodFields = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "ADD_METHOD_FIELDS", "YES"));
+        if (bAddMethodFields)
         {
-            OGRFieldDefn oFieldDefn(poDefnMethod->GetFieldDefn(iField));
-            if (pszMethodPrefix != nullptr)
-                oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix,
-                                              oFieldDefn.GetNameRef()));
-            else if (!oSetInputFieldNames.empty() &&
-                     oSetInputFieldNames.find(oFieldDefn.GetNameRef()) !=
-                         oSetInputFieldNames.end())
+            const int nFieldsMethod = poDefnMethod->GetFieldCount();
+            for (int iField = 0; iField < nFieldsMethod; iField++)
             {
-                // Field of same name present in method layer
-                oFieldDefn.SetName(
-                    CPLSPrintf("method_%s", oFieldDefn.GetNameRef()));
-            }
-            ret = pLayerResult->CreateField(&oFieldDefn);
-            if (ret != OGRERR_NONE)
-            {
-                if (!bSkipFailures)
-                    return ret;
-                else
+                OGRFieldDefn oFieldDefn(poDefnMethod->GetFieldDefn(iField));
+                if (pszMethodPrefix != nullptr)
+                    oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix,
+                                                  oFieldDefn.GetNameRef()));
+                else if (!oSetInputFieldNames.empty() &&
+                         oSetInputFieldNames.find(oFieldDefn.GetNameRef()) !=
+                             oSetInputFieldNames.end())
                 {
-                    CPLErrorReset();
-                    ret = OGRERR_NONE;
+                    // Field of same name present in method layer
+                    oFieldDefn.SetName(
+                        CPLSPrintf("method_%s", oFieldDefn.GetNameRef()));
                 }
+                ret = pLayerResult->CreateField(&oFieldDefn);
+                if (ret != OGRERR_NONE)
+                {
+                    if (!bSkipFailures)
+                        return ret;
+                    else
+                    {
+                        CPLErrorReset();
+                        ret = OGRERR_NONE;
+                    }
+                }
+                mapMethod[iField] =
+                    pLayerResult->GetLayerDefn()->GetFieldCount() - 1;
             }
-            mapMethod[iField] = nFieldsInput + iField;
         }
     }
     return ret;

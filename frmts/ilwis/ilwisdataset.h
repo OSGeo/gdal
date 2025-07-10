@@ -149,7 +149,7 @@ class ILWISDataset final : public GDALPamDataset
     CPLString osFileName;
     std::string pszIlwFileName;
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     int bGeoDirty;
     int bNewDataset;          /* product of Create() */
     std::string pszFileType;  // indicating the input dataset: Map/MapList
@@ -174,8 +174,8 @@ class ILWISDataset final : public GDALPamDataset
                                int nBands, GDALDataType eType,
                                char **papszParamList);
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

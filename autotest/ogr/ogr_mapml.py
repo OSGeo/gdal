@@ -219,25 +219,15 @@ def test_ogr_mapml_creation_options():
 
     # Write a MapML file
     options = [
-        "HEAD=<title>My title</title>",
+        "HEAD=<map-title>My title</map-title>",
         "EXTENT_UNITS=OSMTILE",
-        "EXTENT_ACTION=action",
         "EXTENT_XMIN=-123456789",
         "EXTENT_YMIN=-234567890",
         "EXTENT_XMAX=123456789",
         "EXTENT_YMAX=234567890",
-        "EXTENT_XMIN_MIN=0",
-        "EXTENT_XMIN_MAX=1",
-        "EXTENT_YMIN_MIN=2",
-        "EXTENT_YMIN_MAX=3",
-        "EXTENT_XMAX_MIN=4",
-        "EXTENT_XMAX_MAX=5",
-        "EXTENT_YMAX_MIN=6",
-        "EXTENT_YMAX_MAX=7",
         "EXTENT_ZOOM=18",
         "EXTENT_ZOOM_MIN=15",
         "EXTENT_ZOOM_MAX=20",
-        "EXTENT_EXTRA=<foo/>",
     ]
     filename = "/vsimem/out.mapml"
     ds = ogr.GetDriverByName("MapML").CreateDataSource(filename, options=options)
@@ -253,38 +243,33 @@ def test_ogr_mapml_creation_options():
 
     assert (
         xml
-        == """<mapml>
-  <head>
-    <title>My title</title>
-  </head>
-  <body>
-    <extent action="action" units="OSMTILE">
-      <input name="xmin" type="location" units="pcrs" axis="x" position="top-left" value="-123456789" min="0" max="1" />
-      <input name="ymin" type="location" units="pcrs" axis="y" position="bottom-right" value="-234567890" min="2" max="3" />
-      <input name="xmax" type="location" units="pcrs" axis="x" position="bottom-right" value="123456789" min="4" max="5" />
-      <input name="ymax" type="location" units="pcrs" axis="y" position="top-left" value="234567890" min="6" max="7" />
-      <input name="projection" type="hidden" value="OSMTILE" />
-      <input name="zoom" type="zoom" value="18" min="15" max="20" />
-      <foo />
-    </extent>
-    <feature id="lyr.1" class="lyr">
-      <geometry>
-        <point>
-          <coordinates>-20037508.34 0.00</coordinates>
-        </point>
-      </geometry>
-    </feature>
-  </body>
-</mapml>
+        == """<mapml- xmlns="http://www.w3.org/1999/xhtml">
+  <map-head>
+    <map-title>My title</map-title>
+    <map-meta name="projection" content="OSMTILE"></map-meta>
+    <map-meta name="cs" content="pcrs"></map-meta>
+    <map-meta name="extent" content="top-left-easting=-20037508.34, top-left-northing=0.00, bottom-right-easting=-20037508.34, bottom-right-northing=0.00"></map-meta>
+    <map-meta name="zoom" content="min=15,max=20,value=18"></map-meta>
+  </map-head>
+  <map-body>
+    <map-feature id="lyr.1" class="lyr">
+      <map-geometry>
+        <map-point>
+          <map-coordinates>-20037508.34 0.00</map-coordinates>
+        </map-point>
+      </map-geometry>
+    </map-feature>
+  </map-body>
+</mapml->
 """
     )
 
     gdal.Unlink(filename)
 
 
-def test_ogr_mapml_body_links_single():
+def test_ogr_mapml_head_links_single():
 
-    options = ['BODY_LINKS=<link type="foo" href="bar"/>']
+    options = ['HEAD_LINKS=<map-link type="foo" href="bar"></map-link>']
     filename = "/vsimem/out.mapml"
     ds = ogr.GetDriverByName("MapML").CreateDataSource(filename, options=options)
     lyr = ds.CreateLayer("lyr")
@@ -298,18 +283,19 @@ def test_ogr_mapml_body_links_single():
     gdal.VSIFCloseL(f)
 
     assert (
-        """</extent>
-    <link type="foo" href="bar" />
-    <feature id="lyr.1" class="lyr">"""
+        """<map-link type="foo" href="bar"></map-link>
+  </map-head>"""
         in xml
     )
 
     gdal.Unlink(filename)
 
 
-def test_ogr_mapml_body_links_multiple():
+def test_ogr_mapml_head_links_multiple():
 
-    options = ['BODY_LINKS=<link type="foo" href="bar"/><link type="baz" href="baw"/>']
+    options = [
+        'HEAD_LINKS=<map-link type="foo" href="bar"></map-link><map-link type="baz" href="baw"></map-link>'
+    ]
     filename = "/vsimem/out.mapml"
     ds = ogr.GetDriverByName("MapML").CreateDataSource(filename, options=options)
     lyr = ds.CreateLayer("lyr")
@@ -323,10 +309,9 @@ def test_ogr_mapml_body_links_multiple():
     gdal.VSIFCloseL(f)
 
     assert (
-        """</extent>
-    <link type="foo" href="bar" />
-    <link type="baz" href="baw" />
-    <feature id="lyr.1" class="lyr">"""
+        """<map-link type="foo" href="bar"></map-link>
+    <map-link type="baz" href="baw"></map-link>
+  </map-head>"""
         in xml
     )
 
@@ -338,7 +323,7 @@ def test_ogr_mapml_no_class():
     filename = "/vsimem/out.mapml"
     gdal.FileFromMemBuffer(
         filename,
-        "<mapml><body><feature><geometry><unsupported/></geometry></feature><feature/></body></mapml>",
+        '<mapml- xmlns="http://www.w3.org/1999/xhtml"><map-body><map-feature><map-geometry><unsupported/></map-geometry></map-feature><map-feature/></map-body></mapml->',
     )
 
     ds = ogr.Open(filename)
@@ -363,17 +348,22 @@ def test_ogr_mapml_errors():
         )
 
     # Invalid XML
-    gdal.FileFromMemBuffer(filename, "<mapml>")
+    gdal.FileFromMemBuffer(filename, '<mapml- xmlns="http://www.w3.org/1999/xhtml">')
     with pytest.raises(Exception):
         assert ogr.Open(filename) is None
 
-    # Missing <body>
-    gdal.FileFromMemBuffer(filename, "<mapml></mapml>")
+    # Missing <map-body>
+    gdal.FileFromMemBuffer(
+        filename, '<mapml- xmlns="http://www.w3.org/1999/xhtml"></mapml->'
+    )
     with pytest.raises(Exception):
         ogr.Open(filename)
 
-    # No <feature>
-    gdal.FileFromMemBuffer(filename, "<mapml><body></body></mapml>")
+    # No <map-feature>
+    gdal.FileFromMemBuffer(
+        filename,
+        '<mapml- xmlns="http://www.w3.org/1999/xhtml"><map-body></map-body></mapml->',
+    )
     with pytest.raises(Exception):
         ogr.Open(filename)
 

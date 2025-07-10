@@ -309,7 +309,7 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
  * HISTORY
  *  11/2002 Arthur Taylor (MDL/RSIS): Created.
  *  12/2002 (TK,AC,TB,&MS): Code Review.
- *   6/2003 Matthew T. Kallio (matt@wunderground.com):
+ *   6/2003 Matthew T. Kallio (matt at wunderground.com):
  *          "wmo" dimension increased to WMO_HEADER_LEN + 1 (for '\0' char)
  *   8/2003 AAT: Removed dependence on offset and fileLen.
  *
@@ -1016,7 +1016,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
          IS->ipackLen = nd5;
          IS->ipack = ipackNew;
       }
-      c_ipack = (unsigned char *) IS->ipack;
+      c_ipack = reinterpret_cast<unsigned char *>(IS->ipack);
       /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
       IS->ipack[nd5 - 1] = 0;
       /* Init first 4 sInt4 to sect0. */
@@ -1143,7 +1143,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
             }
             /* Don't need to do the following, but we do in case code
              * changes. */
-            c_ipack = (unsigned char *) IS->ipack;
+            c_ipack = reinterpret_cast<unsigned char *>(IS->ipack);
          }
       }
       IS->nd5 = nd5;
@@ -1163,7 +1163,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
 #endif
 */
    } else {
-      c_ipack = (unsigned char *) IS->ipack;
+      c_ipack = reinterpret_cast<unsigned char *>(IS->ipack);
       /* GRIB2 files are in big endian so c_ipack is as well. */
 #ifdef LITTLE_ENDIAN
       revmemcpy (&gribLen, &(c_ipack[12]), sizeof (sInt4));
@@ -1185,7 +1185,7 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       /* Note we are getting data back either as a float or an int, but not
        * both, so we don't need to allocated room for both. */
       unpk_g2ncep (&kfildo,
-                   j == subgNum ? (float *) (IS->iain) : nullptr,
+                   j == subgNum ? reinterpret_cast<float *>(IS->iain) : nullptr,
                    j == subgNum ? IS->iain : nullptr,
                   &(IS->nd2x3),
                   IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],

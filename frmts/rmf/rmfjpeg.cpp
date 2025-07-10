@@ -65,7 +65,7 @@ size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Invalid band count %d in tile, must be %d",
-                 GDALGetRasterCount(hTile), (int)RMF_JPEG_BAND_COUNT);
+                 GDALGetRasterCount(hTile), RMF_JPEG_BAND_COUNT);
         GDALClose(hTile);
         VSIFCloseL(fp);
         VSIUnlink(osTmpFilename);
@@ -153,7 +153,7 @@ size_t RMFDataset::JPEGCompress(const GByte *pabyIn, GUInt32 nSizeIn,
     if (poDS != nullptr && poDS->sHeader.iJpegQuality > 0)
     {
         snprintf(szQuality, sizeof(szQuality), "QUALITY=%d",
-                 (int)poDS->sHeader.iJpegQuality);
+                 poDS->sHeader.iJpegQuality);
     }
     else
     {

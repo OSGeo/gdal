@@ -10,11 +10,9 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-// g++ -g -Wall -fPIC frmts/nitf/ecrgtocdataset.cpp -shared -o gdal_ECRGTOC.so
-// -Iport -Igcore -Iogr -Ifrmts/vrt -L. -lgdal
-
 #include "cpl_port.h"
 
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -65,19 +63,17 @@ typedef struct
 class ECRGTOCDataset final : public GDALPamDataset
 {
     OGRSpatialReference m_oSRS{};
-    char **papszSubDatasets;
-    double adfGeoTransform[6];
+    char **papszSubDatasets = nullptr;
+    GDALGeoTransform m_gt{};
+    char **papszFileList = nullptr;
 
-    char **papszFileList;
+    CPL_DISALLOW_COPY_ASSIGN(ECRGTOCDataset)
 
   public:
     ECRGTOCDataset()
     {
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        papszSubDatasets = nullptr;
-        papszFileList = nullptr;
-        memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
     }
 
     virtual ~ECRGTOCDataset()
@@ -96,9 +92,9 @@ class ECRGTOCDataset final : public GDALPamDataset
     void AddSubDataset(const char *pszFilename, const char *pszProductTitle,
                        const char *pszDiscId, const char *pszScale);
 
-    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
-        memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
+        gt = m_gt;
         return CE_None;
     }
 
@@ -124,7 +120,8 @@ class ECRGTOCDataset final : public GDALPamDataset
 
 class ECRGTOCSubDataset final : public VRTDataset
 {
-    char **papszFileList;
+    char **papszFileList = nullptr;
+    CPL_DISALLOW_COPY_ASSIGN(ECRGTOCSubDataset)
 
   public:
     ECRGTOCSubDataset(int nXSize, int nYSize) : VRTDataset(nXSize, nYSize)
@@ -134,16 +131,10 @@ class ECRGTOCSubDataset final : public VRTDataset
 
         /* The driver is set to VRT in VRTDataset constructor. */
         /* We have to set it to the expected value ! */
-        poDriver =
-            reinterpret_cast<GDALDriver *>(GDALGetDriverByName("ECRGTOC"));
-
-        papszFileList = nullptr;
+        poDriver = GDALDriver::FromHandle(GDALGetDriverByName("ECRGTOC"));
     }
 
-    ~ECRGTOCSubDataset()
-    {
-        CSLDestroy(papszFileList);
-    }
+    ~ECRGTOCSubDataset() override;
 
     virtual char **GetFileList() override
     {
@@ -157,6 +148,11 @@ class ECRGTOCSubDataset final : public VRTDataset
           double dfGlobalMinY, double dfGlobalMaxX, double dfGlobalMaxY,
           double dfGlobalPixelXSize, double dfGlobalPixelYSize);
 };
+
+ECRGTOCSubDataset::~ECRGTOCSubDataset()
+{
+    CSLDestroy(papszFileList);
+}
 
 /************************************************************************/
 /*                           LaunderString()                            */
@@ -449,14 +445,13 @@ bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand *poBand) const
     auto poSourceDS = poBand->GetDataset();
     CPLAssert(poSourceDS);
 
-    double l_adfGeoTransform[6] = {};
-    poSourceDS->GetGeoTransform(l_adfGeoTransform);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[0] - m_dfMinX) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[3] - m_dfMaxY) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - m_dfPixelXSize) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-m_dfPixelYSize)) < 1e-10);
-    WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
-                  l_adfGeoTransform[4] == 0);  // No rotation.
+    GDALGeoTransform l_gt;
+    poSourceDS->GetGeoTransform(l_gt);
+    WARN_CHECK_DS(fabs(l_gt[0] - m_dfMinX) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt[3] - m_dfMaxY) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt[1] - m_dfPixelXSize) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt[5] - (-m_dfPixelYSize)) < 1e-10);
+    WARN_CHECK_DS(l_gt[2] == 0 && l_gt[4] == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == m_nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == m_nRasterYSize);
@@ -535,16 +530,17 @@ GDALDataset *ECRGTOCSubDataset::Build(
 
     poVirtualDS->SetProjection(SRS_WKT_WGS84_LAT_LONG);
 
-    double adfGeoTransform[6] = {
+    GDALGeoTransform gt{
         dfGlobalMinX,       dfGlobalPixelXSize, 0, dfGlobalMaxY, 0,
         -dfGlobalPixelYSize};
-    poVirtualDS->SetGeoTransform(adfGeoTransform);
+    poVirtualDS->SetGeoTransform(gt);
 
     for (int i = 0; i < 3; i++)
     {
         poVirtualDS->AddBand(GDT_Byte, nullptr);
         GDALRasterBand *poBand = poVirtualDS->GetRasterBand(i + 1);
-        poBand->SetColorInterpretation((GDALColorInterp)(GCI_RedBand + i));
+        poBand->SetColorInterpretation(
+            static_cast<GDALColorInterp>(GCI_RedBand + i));
     }
 
     poVirtualDS->SetDescription(pszTOCFilename);
@@ -581,9 +577,9 @@ GDALDataset *ECRGTOCSubDataset::Build(
         double dfMaxY = 0.0;
         double dfPixelXSize = 0.0;
         double dfPixelYSize = 0.0;
-        GetExtent(aosFrameDesc[i].pszName, aosFrameDesc[i].nScale,
-                  aosFrameDesc[i].nZone, dfMinX, dfMaxX, dfMinY, dfMaxY,
-                  dfPixelXSize, dfPixelYSize);
+        ::GetExtent(aosFrameDesc[i].pszName, aosFrameDesc[i].nScale,
+                    aosFrameDesc[i].nZone, dfMinX, dfMaxX, dfMinY, dfMaxY,
+                    dfPixelXSize, dfPixelYSize);
 
         const int nFrameXSize =
             static_cast<int>((dfMaxX - dfMinX) / dfPixelXSize + 0.5);
@@ -845,8 +841,8 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
                     double dfMaxY = 0.0;
                     double dfPixelXSize = 0.0;
                     double dfPixelYSize = 0.0;
-                    GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
-                              dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
+                    ::GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
+                                dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
 
                     nValidFrames++;
 
@@ -934,12 +930,12 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
         return poRetDS;
     }
 
-    poDS->adfGeoTransform[0] = dfGlobalMinX;
-    poDS->adfGeoTransform[1] = dfGlobalPixelXSize;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = dfGlobalMaxY;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -dfGlobalPixelYSize;
+    poDS->m_gt[0] = dfGlobalMinX;
+    poDS->m_gt[1] = dfGlobalPixelXSize;
+    poDS->m_gt[2] = 0.0;
+    poDS->m_gt[3] = dfGlobalMaxY;
+    poDS->m_gt[4] = 0.0;
+    poDS->m_gt[5] = -dfGlobalPixelYSize;
 
     poDS->nRasterXSize = static_cast<int>(0.5 + (dfGlobalMaxX - dfGlobalMinX) /
                                                     dfGlobalPixelXSize);

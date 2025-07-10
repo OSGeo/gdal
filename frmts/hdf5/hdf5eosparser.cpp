@@ -206,14 +206,14 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
             {
                 if (oDimension.GetType() == CPLJSONObject::Type::Object)
                 {
-                    const auto osDimensionName =
+                    std::string osDimensionName =
                         oDimension.GetString("DimensionName");
                     int nSize = oDimension.GetInteger("Size");
                     oMapDimensionNameToSize[osDimensionName] = nSize;
                     Dimension oDim;
-                    oDim.osName = osDimensionName;
+                    oDim.osName = std::move(osDimensionName);
                     oDim.nSize = nSize;
-                    poGridMetadata->aoDimensions.push_back(oDim);
+                    poGridMetadata->aoDimensions.push_back(std::move(oDim));
                 }
             }
 
@@ -249,20 +249,20 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                 if (bDimListIsYDimXDim)
                 {
                     {
-                        const std::string osDimensionName("YDim");
+                        std::string osDimensionName("YDim");
                         oMapDimensionNameToSize[osDimensionName] = nYDim;
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = nYDim;
-                        poGridMetadata->aoDimensions.push_back(oDim);
+                        poGridMetadata->aoDimensions.push_back(std::move(oDim));
                     }
                     {
-                        const std::string osDimensionName("XDim");
+                        std::string osDimensionName("XDim");
                         oMapDimensionNameToSize[osDimensionName] = nXDim;
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = nXDim;
-                        poGridMetadata->aoDimensions.push_back(oDim);
+                        poGridMetadata->aoDimensions.push_back(std::move(oDim));
                     }
                 }
             }
@@ -306,7 +306,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                     bool bValid = oDimList.Size() > 0;
                     for (int j = 0; j < oDimList.Size(); ++j)
                     {
-                        const auto osDimensionName = oDimList[j].ToString();
+                        std::string osDimensionName = oDimList[j].ToString();
                         const auto oIter = oMapDimensionNameToSize.find(
                             osDimensionName.c_str());
                         if (oIter == oMapDimensionNameToSize.end())
@@ -315,9 +315,10 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                             break;
                         }
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = oIter->second;
-                        oDataFieldMetadata.aoDimensions.push_back(oDim);
+                        oDataFieldMetadata.aoDimensions.push_back(
+                            std::move(oDim));
                     }
                     if (bValid)
                     {
@@ -400,8 +401,8 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
             struct DimensionMap
             {
-                std::string osGeoDimName;
-                std::string osDataDimName;
+                std::string osGeoDimName{};
+                std::string osDataDimName{};
                 int nOffset = 0;
                 int nIncrement = 1;
             };
@@ -454,7 +455,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                         Dimension oDim;
                         oDim.osName = osDimensionName;
                         oDim.nSize = oIter->second;
-                        aoDimensions.push_back(oDim);
+                        aoDimensions.push_back(std::move(oDim));
                         if (oMapDataDimensionToGeoDimension.find(
                                 osDimensionName) ==
                             oMapDataDimensionToGeoDimension.end())
@@ -504,7 +505,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     bool bValid = oDimList.Size() > 0;
                     for (int j = 0; j < oDimList.Size(); ++j)
                     {
-                        const auto osDimensionName = oDimList[j].ToString();
+                        std::string osDimensionName = oDimList[j].ToString();
                         const auto oIter = oMapDimensionNameToSize.find(
                             osDimensionName.c_str());
                         if (oIter == oMapDimensionNameToSize.end())
@@ -513,9 +514,9 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                             break;
                         }
                         Dimension oDim;
-                        oDim.osName = osDimensionName;
+                        oDim.osName = std::move(osDimensionName);
                         oDim.nSize = oIter->second;
-                        oMetadata.aoDimensions.push_back(oDim);
+                        oMetadata.aoDimensions.push_back(std::move(oDim));
                     }
                     if (bValid)
                     {
@@ -644,8 +645,7 @@ bool HDF5EOSParser::GetSwathGeolocationFieldMetadata(
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-bool HDF5EOSParser::GridMetadata::GetGeoTransform(
-    double adfGeoTransform[6]) const
+bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (nProjCode >= 0 && osGridOrigin == "HE5_HDFE_GD_UL" &&
         adfUpperLeftPointMeters.size() == 2 &&
@@ -665,31 +665,27 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(
             return false;
         if (nProjCode == 0)  // GEO
         {
-            adfGeoTransform[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
-            adfGeoTransform[1] =
-                (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
-                 CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
-                nRasterXSize;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] =
-                (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
-                 CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
-                nRasterYSize;
+            gt[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
+            gt[1] = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
+                     CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
+                    nRasterXSize;
+            gt[2] = 0;
+            gt[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
+            gt[4] = 0;
+            gt[5] = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
+                     CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
+                    nRasterYSize;
         }
         else
         {
-            adfGeoTransform[0] = adfUpperLeftPointMeters[0];
-            adfGeoTransform[1] =
-                (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
-                nRasterXSize;
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = adfUpperLeftPointMeters[1];
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] =
-                (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
-                nRasterYSize;
+            gt[0] = adfUpperLeftPointMeters[0];
+            gt[1] = (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
+                    nRasterXSize;
+            gt[2] = 0;
+            gt[3] = adfUpperLeftPointMeters[1];
+            gt[4] = 0;
+            gt[5] = (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
+                    nRasterYSize;
         }
         return true;
     }

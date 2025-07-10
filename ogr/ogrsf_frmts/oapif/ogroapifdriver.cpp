@@ -71,24 +71,24 @@ class OGROAPIFDataset final : public GDALDataset
     CPLString m_osServerBaseURL{};
 
     // Service base URL. Like "https://example.com/ogcapi"
-    CPLString m_osRootURL;
+    CPLString m_osRootURL{};
 
-    CPLString m_osUserQueryParams;
-    CPLString m_osUserPwd;
+    CPLString m_osUserQueryParams{};
+    CPLString m_osUserPwd{};
     int m_nPageSize = 1000;
     int m_nInitialRequestPageSize = 20;
     bool m_bPageSizeSetFromOpenOptions = false;
-    std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
+    std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
     std::string m_osAskedCRS{};
     OGRSpatialReference m_oAskedCRS{};
     bool m_bAskedCRSIsRequired = false;
     bool m_bServerFeaturesAxisOrderGISFriendly = false;
 
     bool m_bAPIDocLoaded = false;
-    CPLJSONDocument m_oAPIDoc;
+    CPLJSONDocument m_oAPIDoc{};
 
     bool m_bLandingPageDocLoaded = false;
-    CPLJSONDocument m_oLandingPageDoc;
+    CPLJSONDocument m_oLandingPageDoc{};
 
     bool m_bIgnoreSchema = false;
 
@@ -146,23 +146,23 @@ class OGROAPIFLayer final : public OGRLayer
     bool m_bHasEmittedContentCRSWarning = false;
     bool m_bHasEmittedJsonCRWarning = false;
     std::string m_osActiveCRS{};
-    CPLString m_osURL;
-    CPLString m_osPath;
-    OGREnvelope m_oExtent;
-    OGREnvelope m_oOriginalExtent;
-    OGRSpatialReference m_oOriginalExtentCRS;
+    CPLString m_osURL{};
+    CPLString m_osPath{};
+    OGREnvelope m_oExtent{};
+    OGREnvelope m_oOriginalExtent{};
+    OGRSpatialReference m_oOriginalExtentCRS{};
     bool m_bFeatureDefnEstablished = false;
-    std::unique_ptr<GDALDataset> m_poUnderlyingDS;
+    std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
     OGRLayer *m_poUnderlyingLayer = nullptr;
     GIntBig m_nFID = 1;
-    CPLString m_osGetURL;
-    CPLString m_osAttributeFilter;
-    CPLString m_osGetID;
+    CPLString m_osGetURL{};
+    CPLString m_osAttributeFilter{};
+    CPLString m_osGetID{};
     std::vector<std::string> m_oSupportedCRSList{};
     OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
     bool m_bFilterMustBeClientSideEvaluated = false;
     bool m_bGotQueryableAttributes = false;
-    std::set<CPLString> m_aoSetQueryableAttributes;
+    std::set<CPLString> m_aoSetQueryableAttributes{};
     bool m_bHasCQLText = false;
     // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
     bool m_bHasJSONFilterExpression = false;
@@ -188,6 +188,8 @@ class OGROAPIFLayer final : public OGRLayer
     void GetQueryableAttributes();
     void GetSchema();
     void ComputeExtent();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROAPIFLayer)
 
   public:
     OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
@@ -223,6 +225,11 @@ class OGROAPIFLayer final : public OGRLayer
     GetSupportedSRSList(int iGeomField) override;
     OGRErr SetActiveSRS(int iGeomField,
                         const OGRSpatialReference *poSRS) override;
+
+    void SetTotalItemCount(GIntBig nCount)
+    {
+        m_nTotalFeatureCount = nCount;
+    }
 };
 
 /************************************************************************/
@@ -294,7 +301,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     CPLString osRet(osURL);
     // Cf https://datatracker.ietf.org/doc/html/rfc3986#section-5.4
     // Partial implementation for usual cases...
-    const std::string osRequestURLBase =
+    std::string osRequestURLBase =
         CPLGetPathSafe(CleanURL(osRequestURL).c_str());
     if (!osURL.empty() && osURL[0] == '/')
         osRet = m_osServerBaseURL + osURL;
@@ -303,7 +310,7 @@ CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
     else if (osURL.size() > 3 && osURL[0] == '.' && osURL[1] == '.' &&
              osURL[2] == '/')
     {
-        std::string osModifiedRequestURL(osRequestURLBase);
+        std::string osModifiedRequestURL(std::move(osRequestURLBase));
         while (osRet.size() > 3 && osRet[0] == '.' && osRet[1] == '.' &&
                osRet[2] == '/')
         {
@@ -701,22 +708,22 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
                 {
                     for (const auto &oGlobalCRS : oGlobalCRSList)
                     {
-                        const auto osCRS = oGlobalCRS.ToString();
+                        std::string osCRS = oGlobalCRS.ToString();
                         if (oSetCRS.find(osCRS) == oSetCRS.end())
                         {
                             oSetCRS.insert(osCRS);
-                            oCRSList.push_back(osCRS);
+                            oCRSList.push_back(std::move(osCRS));
                         }
                     }
                 }
             }
             else
             {
-                const auto osCRS = oCRS.ToString();
+                std::string osCRS = oCRS.ToString();
                 if (oSetCRS.find(osCRS) == oSetCRS.end())
                 {
                     oSetCRS.insert(osCRS);
-                    oCRSList.push_back(osCRS);
+                    oCRSList.push_back(std::move(osCRS));
                 }
             }
         }
@@ -794,12 +801,12 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
 
     // storageCRS is in the "OGC API - Features - Part 2: Coordinate Reference
     // Systems" extension
-    const std::string osStorageCRS = oCollection.GetString("storageCrs");
+    std::string osStorageCRS = oCollection.GetString("storageCrs");
     const double dfStorageCrsCoordinateEpoch =
         oCollection.GetDouble("storageCrsCoordinateEpoch");
     if (osActiveCRS.empty() || osActiveCRS == osStorageCRS)
     {
-        osActiveCRS = osStorageCRS;
+        osActiveCRS = std::move(osStorageCRS);
         dfCoordinateEpoch = dfStorageCrsCoordinateEpoch;
     }
 
@@ -838,6 +845,11 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
     {
         poLayer->SetItemAssets(oItemAssets);
     }
+
+    // LDProxy extension (https://github.com/opengeospatial/ogcapi-features/issues/261#issuecomment-1271010859)
+    const auto nItemCount = oCollection.GetLong("itemCount", -1);
+    if (nItemCount >= 0)
+        poLayer->SetTotalItemCount(nItemCount);
 
     auto oJSONStr = oCollection.Format(CPLJSONObject::PrettyFormat::Pretty);
     char *apszMetadata[2] = {&oJSONStr[0], nullptr};
@@ -2379,6 +2391,10 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
         m_poDS->m_osDateTime.empty())
     {
+        if (m_nTotalFeatureCount >= 0)
+        {
+            return m_nTotalFeatureCount;
+        }
         GetLayerDefn();
         if (m_nTotalFeatureCount >= 0)
         {
@@ -2603,14 +2619,14 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
         {
             char *pszEscapedFieldName =
                 CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
-            const CPLString osEscapedFieldName(pszEscapedFieldName);
+            CPLString osEscapedFieldName(pszEscapedFieldName);
             CPLFree(pszEscapedFieldName);
 
             if (poNode->papoSubExpr[1]->field_type == SWQ_STRING)
             {
                 char *pszEscapedValue = CPLEscapeString(
                     poNode->papoSubExpr[1]->string_value, -1, CPLES_URL);
-                CPLString osRet(osEscapedFieldName);
+                CPLString osRet(std::move(osEscapedFieldName));
                 osRet += "=";
                 osRet += pszEscapedValue;
                 CPLFree(pszEscapedValue);
@@ -2618,7 +2634,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
             }
             if (poNode->papoSubExpr[1]->field_type == SWQ_INTEGER)
             {
-                CPLString osRet(osEscapedFieldName);
+                CPLString osRet(std::move(osEscapedFieldName));
                 osRet += "=";
                 osRet +=
                     CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
@@ -3123,7 +3139,8 @@ OGRErr OGROAPIFLayer::SetAttributeFilter(const char *pszQuery)
     {
         GetQueryableAttributes();
 
-        swq_expr_node *poNode = (swq_expr_node *)m_poAttrQuery->GetSWQExpr();
+        swq_expr_node *poNode =
+            static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 

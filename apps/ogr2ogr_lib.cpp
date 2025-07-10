@@ -1207,15 +1207,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
         return hTransformArg != nullptr;
     }
 
-    virtual ~GCPCoordTransformation()
-    {
-        if (hTransformArg != nullptr)
-        {
-            GDALDestroyTransformer(hTransformArg);
-        }
-        if (poSRS)
-            poSRS->Dereference();
-    }
+    ~GCPCoordTransformation() override;
 
     virtual const OGRSpatialReference *GetSourceCS() const override
     {
@@ -1256,6 +1248,16 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
     }
 };
 
+GCPCoordTransformation::~GCPCoordTransformation()
+{
+    if (hTransformArg != nullptr)
+    {
+        GDALDestroyTransformer(hTransformArg);
+    }
+    if (poSRS)
+        poSRS->Dereference();
+}
+
 /************************************************************************/
 /*                            CompositeCT                               */
 /************************************************************************/
@@ -1286,13 +1288,7 @@ class CompositeCT : public OGRCoordinateTransformation
     {
     }
 
-    virtual ~CompositeCT()
-    {
-        if (bOwnCT1)
-            delete poCT1;
-        if (bOwnCT2)
-            delete poCT2;
-    }
+    ~CompositeCT() override;
 
     OGRCoordinateTransformation *Clone() const override
     {
@@ -1390,6 +1386,14 @@ class CompositeCT : public OGRCoordinateTransformation
     }
 };
 
+CompositeCT::~CompositeCT()
+{
+    if (bOwnCT1)
+        delete poCT1;
+    if (bOwnCT2)
+        delete poCT2;
+}
+
 /************************************************************************/
 /*                    AxisMappingCoordinateTransformation               */
 /************************************************************************/
@@ -1402,6 +1406,15 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         : bSwapXY(bSwapXYIn)
     {
     }
+
+    AxisMappingCoordinateTransformation(
+        const AxisMappingCoordinateTransformation &) = default;
+    AxisMappingCoordinateTransformation &
+    operator=(const AxisMappingCoordinateTransformation &) = delete;
+    AxisMappingCoordinateTransformation(
+        AxisMappingCoordinateTransformation &&) = delete;
+    AxisMappingCoordinateTransformation &
+    operator=(AxisMappingCoordinateTransformation &&) = delete;
 
   public:
     AxisMappingCoordinateTransformation(const std::vector<int> &mappingIn,
@@ -1425,9 +1438,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         }
     }
 
-    ~AxisMappingCoordinateTransformation() override
-    {
-    }
+    ~AxisMappingCoordinateTransformation() override;
 
     virtual OGRCoordinateTransformation *Clone() const override
     {
@@ -1476,6 +1487,9 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return new AxisMappingCoordinateTransformation(bSwapXY);
     }
 };
+
+AxisMappingCoordinateTransformation::~AxisMappingCoordinateTransformation() =
+    default;
 
 /************************************************************************/
 /*                        ApplySpatialFilter()                          */
@@ -2432,9 +2446,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         bUpdate = true;
     }
 
-    const CPLString osDateLineOffset =
-        CPLOPrintf("%g", psOptions->dfDateLineOffset);
-
     if (psOptions->bPreserveFID && psOptions->bExplodeCollections)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2679,6 +2690,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     std::vector<std::string> aoDrivers;
     if (poODS == nullptr && psOptions->osFormat.empty())
     {
+        const auto nErrorCount = CPLGetErrorCounter();
         aoDrivers = CPLStringList(GDALGetOutputDriversForDatasetName(
             pszDest, GDAL_OF_VECTOR, /* bSingleMatch = */ true,
             /* bWarn = */ true));
@@ -2691,6 +2703,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 bUpdate = true;
             }
+        }
+        else if (aoDrivers.empty() && CPLGetErrorCounter() > nErrorCount &&
+                 CPLGetLastErrorType() == CE_Failure)
+        {
+            return nullptr;
         }
     }
 
@@ -3093,7 +3110,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_poODS = poODS;
     oTranslator.m_bTransform = psOptions->bTransform;
     oTranslator.m_bWrapDateline = psOptions->bWrapDateline;
-    oTranslator.m_osDateLineOffset = osDateLineOffset;
+    oTranslator.m_osDateLineOffset =
+        CPLOPrintf("%g", psOptions->dfDateLineOffset);
     oTranslator.m_poOutputSRS = oOutputSRSHolder.get();
     oTranslator.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oTranslator.m_poUserSourceSRS = poSourceSRS;
@@ -3597,8 +3615,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             psOptions->osNewLayerName = CPLGetBasenameSafe(osDestFilename);
         }
 
-        std::vector<GIntBig> anLayerCountFeatures;
-        anLayerCountFeatures.resize(nLayerCount);
+        std::vector<GIntBig> anLayerCountFeatures(nLayerCount);
         GIntBig nCountLayersFeatures = 0;
         GIntBig nAccCountFeatures = 0;
 
@@ -3645,7 +3662,18 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     if (psOptions->nLimit >= 0)
                         anLayerCountFeatures[iLayer] = std::min(
                             anLayerCountFeatures[iLayer], psOptions->nLimit);
-                    nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    if (anLayerCountFeatures[iLayer] >= 0 &&
+                        anLayerCountFeatures[iLayer] <=
+                            std::numeric_limits<GIntBig>::max() -
+                                nCountLayersFeatures)
+                    {
+                        nCountLayersFeatures += anLayerCountFeatures[iLayer];
+                    }
+                    else
+                    {
+                        nCountLayersFeatures = 0;
+                        psOptions->bDisplayProgress = false;
+                    }
                 }
             }
         }
@@ -3714,9 +3742,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                             1.0 / nCountLayersFeatures,
                         psOptions->pfnProgress, psOptions->pProgressData);
                 }
-            }
 
-            nAccCountFeatures += anLayerCountFeatures[iLayer];
+                nAccCountFeatures += anLayerCountFeatures[iLayer];
+            }
 
             auto psInfo = oSetup.Setup(poPassedLayer,
                                        psOptions->osNewLayerName.empty()
@@ -7574,7 +7602,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 GByte *pabyRet = nullptr;
                 if (!s.empty() && s.front() == '@' &&
                     VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
-                                  1024 * 1024))
+                                  10 * 1024 * 1024))
                 {
                     GDALRemoveBOM(pabyRet);
                     char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
@@ -7609,7 +7637,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 GByte *pabyRet = nullptr;
                 if (!s.empty() && s.front() == '@' &&
                     VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
-                                  1024 * 1024))
+                                  10 * 1024 * 1024))
                 {
                     GDALRemoveBOM(pabyRet);
                     char *pszWHERE = reinterpret_cast<char *>(pabyRet);
@@ -8095,10 +8123,13 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .store_into(psOptions->dfDateLineOffset)
         .help(_("Offset from dateline in degrees."));
 
-    argParser->add_argument("-clipsrc")
-        .nargs(nCountClipSrc)
-        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
-        .help(_("Clip geometries (in source SRS)."));
+    auto &clipsrcArg =
+        argParser->add_argument("-clipsrc")
+            .metavar(
+                "[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
+            .help(_("Clip geometries (in source SRS)."));
+    if (nCountClipSrc > 1)
+        clipsrcArg.nargs(nCountClipSrc);
 
     argParser->add_argument("-clipsrcsql")
         .metavar("<sql_statement>")
@@ -8117,10 +8148,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .help(_("Restrict desired geometries from the source clip layer based "
                 "on an attribute query."));
 
-    argParser->add_argument("-clipdst")
-        .nargs(nCountClipDst)
-        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>")
-        .help(_("Clip geometries (in target SRS)."));
+    auto &clipdstArg =
+        argParser->add_argument("-clipdst")
+            .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>")
+            .help(_("Clip geometries (in target SRS)."));
+    if (nCountClipDst > 1)
+        clipdstArg.nargs(nCountClipDst);
 
     argParser->add_argument("-clipdstsql")
         .metavar("<sql_statement>")
@@ -8575,20 +8608,13 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
         if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
         {
-            OGRLinearRing oRing;
             const double dfMinX = (*oSpat)[0];
             const double dfMinY = (*oSpat)[1];
             const double dfMaxX = (*oSpat)[2];
             const double dfMaxY = (*oSpat)[3];
 
-            oRing.addPoint(dfMinX, dfMinY);
-            oRing.addPoint(dfMinX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMinY);
-            oRing.addPoint(dfMinX, dfMinY);
-
-            auto poSpatialFilter = std::make_shared<OGRPolygon>();
-            poSpatialFilter->addRing(&oRing);
+            auto poSpatialFilter =
+                std::make_shared<OGRPolygon>(dfMinX, dfMinY, dfMaxX, dfMaxY);
             psOptions->poSpatialFilter = poSpatialFilter;
         }
 
@@ -8662,17 +8688,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 const double dfMaxX = CPLAtofM((*oClipDst)[2].c_str());
                 const double dfMaxY = CPLAtofM((*oClipDst)[3].c_str());
 
-                OGRLinearRing oRing;
-
-                oRing.addPoint(dfMinX, dfMinY);
-                oRing.addPoint(dfMinX, dfMaxY);
-                oRing.addPoint(dfMaxX, dfMaxY);
-                oRing.addPoint(dfMaxX, dfMinY);
-                oRing.addPoint(dfMinX, dfMinY);
-
-                auto poPoly = std::make_shared<OGRPolygon>();
+                auto poPoly = std::make_shared<OGRPolygon>(dfMinX, dfMinY,
+                                                           dfMaxX, dfMaxY);
                 psOptions->poClipDst = poPoly;
-                poPoly->addRing(&oRing);
             }
             else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
                       STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&

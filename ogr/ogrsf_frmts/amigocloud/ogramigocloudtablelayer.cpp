@@ -431,7 +431,8 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature(OGRFeature *poFeature)
             continue;
 
         OGRAmigoCloudGeomFieldDefn *poGeomFieldDefn =
-            (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(i);
+            cpl::down_cast<OGRAmigoCloudGeomFieldDefn *>(
+                poFeatureDefn->GetGeomFieldDefn(i));
         int nSRID = poGeomFieldDefn->nSRID;
         if (nSRID == 0)
             nSRID = 4326;
@@ -463,7 +464,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (name == "amigo_id")
         {
-            amigo_id_value = value;
+            amigo_id_value = std::move(value);
             continue;
         }
         if (!poFeature->IsFieldSet(i))
@@ -607,8 +608,8 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature(OGRFeature *poFeature)
             else
             {
                 OGRAmigoCloudGeomFieldDefn *poGeomFieldDefn =
-                    (OGRAmigoCloudGeomFieldDefn *)
-                        poFeatureDefn->GetGeomFieldDefn(i);
+                    cpl::down_cast<OGRAmigoCloudGeomFieldDefn *>(
+                        poFeatureDefn->GetGeomFieldDefn(i));
                 int nSRID = poGeomFieldDefn->nSRID;
                 if (nSRID == 0)
                     nSRID = 4326;
@@ -1129,7 +1130,8 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
             osGeomType += "Z";
 
         OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-            (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
+            cpl::down_cast<OGRAmigoCloudGeomFieldDefn *>(
+                poFeatureDefn->GetGeomFieldDefn(0));
 
         json << "{\\\"name\\\":\\\"" << poFieldDefn->GetNameRef() << "\\\",";
         json << "\\\"type\\\":\\\"geometry\\\",";

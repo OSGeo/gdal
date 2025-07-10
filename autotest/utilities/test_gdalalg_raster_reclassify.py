@@ -224,6 +224,34 @@ def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
             assert np.all(dst_val[np.where(src_val >= 128)] == 1)
 
 
+def test_gdalalg_raster_reclassify_empty_mapping(reclassify, tmp_vsimem):
+
+    infile = "../gcore/data/byte.tif"
+    outfile = tmp_vsimem / "out.tif"
+
+    reclassify["input"] = infile
+    reclassify["output"] = outfile
+    reclassify["mapping"] = ""
+
+    with pytest.raises(
+        RuntimeError, match="Encountered value .* with no specified mapping"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_invalid_mapping_vrt_output(reclassify, tmp_vsimem):
+
+    infile = "../gcore/data/byte.tif"
+    outfile = tmp_vsimem / "out.vrt"
+
+    reclassify["input"] = infile
+    reclassify["output"] = outfile
+    reclassify["mapping"] = "invalid"
+
+    with pytest.raises(RuntimeError, match="Interval must start with"):
+        reclassify.Run()
+
+
 def test_gdalalg_raster_reclassify_mapping_not_found(reclassify, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"

@@ -55,7 +55,7 @@ class ENVIDataset final : public RawDataset
     bool bHeaderDirty;
     bool bFillFile;
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
@@ -101,8 +101,8 @@ class ENVIDataset final : public RawDataset
     ~ENVIDataset() override;
 
     CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

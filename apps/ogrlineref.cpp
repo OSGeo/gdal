@@ -187,8 +187,14 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
 
     if (pszOutputSepFieldName != nullptr)
     {
+        const auto poOutDrv = poDstDS->GetDriver();
+        const char *pszVal =
+            poOutDrv ? poOutDrv->GetMetadataItem(GDAL_DMD_MAX_STRING_LENGTH)
+                     : nullptr;
+        const int nMaxFieldSize = pszVal ? atoi(pszVal) : 0;
+
         OGRFieldDefn oSepField(pszOutputSepFieldName, OFTString);
-        oSepField.SetWidth(254);
+        oSepField.SetWidth(nMaxFieldSize);
         if (poDstLayer->CreateField(&oSepField) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
@@ -934,36 +940,33 @@ static OGRErr CreatePartsMultiple(
 
     poLnLayer->ResetReading();
 
-    std::set<CPLString> asIDs;
-    OGRFeature *pFeature = nullptr;
-    while ((pFeature = poLnLayer->GetNextFeature()) != nullptr)
+    std::set<std::string> oSetIDs;
+    for (auto &&pFeature : poLnLayer)
     {
-        CPLString sID = pFeature->GetFieldAsString(nLineSepFieldInd);
-        asIDs.insert(sID);
-
-        OGRFeature::DestroyFeature(pFeature);
+        oSetIDs.insert(pFeature->GetFieldAsString(nLineSepFieldInd));
     }
 
-    for (std::set<CPLString>::const_iterator it = asIDs.begin();
-         it != asIDs.end(); ++it)
+    for (const std::string &osID : oSetIDs)
     {
         // Create select clause
         CPLString sLineWhere;
-        sLineWhere.Printf("%s = '%s'", pszLineSepFieldName, it->c_str());
+        sLineWhere.Printf("%s = '%s'", pszLineSepFieldName, osID.c_str());
         poLnLayer->SetAttributeFilter(sLineWhere);
 
         CPLString sPkWhere;
-        sPkWhere.Printf("%s = '%s'", pszPicketsSepFieldName, it->c_str());
+        sPkWhere.Printf("%s = '%s'", pszPicketsSepFieldName, osID.c_str());
         poPkLayer->SetAttributeFilter(sPkWhere);
 
         if (!bQuiet)
         {
-            fprintf(stdout, "The %s %s\n", pszPicketsSepFieldName, it->c_str());
+            fprintf(stdout, "The %s %s\n", pszPicketsSepFieldName,
+                    osID.c_str());
         }
 
         // Don't check success as we want to try all paths
         CreateParts(poLnLayer, poPkLayer, nMValField, dfStep, poOutLayer,
-                    bDisplayProgress, bQuiet, pszOutputSepFieldName, *it);
+                    bDisplayProgress, bQuiet, pszOutputSepFieldName,
+                    osID.c_str());
     }
 
     return OGRERR_NONE;

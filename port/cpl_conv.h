@@ -19,6 +19,10 @@
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#include <cstdint>
+#endif
+
 /**
  * \file cpl_conv.h
  *
@@ -136,6 +140,14 @@ int CPL_DLL CPLPrintDouble(char *, const char *, double, const char *);
 int CPL_DLL CPLPrintTime(char *, int, const char *, const struct tm *,
                          const char *);
 int CPL_DLL CPLPrintPointer(char *, void *, int);
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    std::string CPL_DLL CPLFormatReadableFileSize(uint64_t nSizeInBytes);
+    std::string CPL_DLL CPLFormatReadableFileSize(double dfSizeInBytes);
+}
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
@@ -295,6 +307,7 @@ int CPL_DLL CPLCopyTree(const char *pszNewPath, const char *pszOldPath);
 int CPL_DLL CPLMoveFile(const char *pszNewPath, const char *pszOldPath);
 int CPL_DLL CPLSymlink(const char *pszOldPath, const char *pszNewPath,
                        CSLConstList papszOptions);
+int CPL_DLL CPLGetRemainingFileDescriptorCount(void);
 
 /* -------------------------------------------------------------------- */
 /*      Lock related functions.                                         */
@@ -480,6 +493,13 @@ extern "C++"
         CPLAssert(f == nullptr || dynamic_cast<To>(f) != nullptr);
         return static_cast<To>(f);
     }
+
+    /** Computes ceil(a/b) where a and b are integers */
+    template <class T, class U> inline T div_round_up(T a, U b)
+    {
+        return a / b + (((a % b) == 0) ? 0 : 1);
+    }
+
     }  // namespace cpl
 }  // extern "C++"
 

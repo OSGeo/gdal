@@ -6761,3 +6761,41 @@ def test_netcdf_geotransform_preserved_createcopy(tmp_path):
     dst = gdal.GetDriverByName("netCDF").CreateCopy(tmp_path / "test.nc", src)
 
     assert dst.GetGeoTransform() == src.GetGeoTransform()
+
+
+###############################################################################
+#
+
+
+@pytest.mark.require_proj(8, 2)
+def test_netcdf_read_rotated_pole_without_geogcrs_def():
+
+    ds = gdal.Open("data/netcdf/rotated_pole_without_geogcrs_def.nc")
+    assert ds.GetSpatialRef().IsDerivedGeographic()
+    assert [x for x in ds.GetGeoTransform()] == pytest.approx(
+        [144.0, 0.1, 0.0, -27.9, 0.0, -0.1]
+    )
+
+
+###############################################################################
+#
+
+
+def test_netcdf_open_fake_PACE_OCI():
+
+    ds = gdal.Open("data/netcdf/fake_PACE_OCI.nc")
+    assert ds.RasterCount == 4
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 2
+
+
+###############################################################################
+#
+
+
+def test_netcdf_open_y_x_other_dim_thanks_to_geolocation():
+
+    ds = gdal.Open("data/netcdf/y_x_other_dim_thanks_to_geolocation.nc")
+    assert ds.RasterCount == 4
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 2

@@ -19,6 +19,9 @@
 %include typemaps_csharp.i
 
 DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)
+DEFINE_EXTERNAL_CLASS(OGREnvelope, OSGeo.OGR.Envelope)
+DEFINE_EXTERNAL_CLASS(OGRFieldDomainShadow, OSGeo.OGR.FieldDomain)
+DEFINE_EXTERNAL_CLASS(GDALSubdatasetInfoShadow, OSGeo.GDAL.SubdatasetInfo)
 
 %apply (int *pList) {int *band_list, int *panHistogram_in};
 %apply (double *OUTPUT) {double *min_ret, double *max_ret};

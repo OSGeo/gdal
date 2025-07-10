@@ -22,47 +22,63 @@
 /*                GDALRasterPipelineStepAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
+class GDALRasterPipelineStepAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
+  public:
+    ~GDALRasterPipelineStepAlgorithm() override;
+
   protected:
     GDALRasterPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
                                     const std::string &helpURL,
                                     bool standaloneStep);
 
+    GDALRasterPipelineStepAlgorithm(const std::string &name,
+                                    const std::string &description,
+                                    const std::string &helpURL,
+                                    const ConstructorOptions &options);
+
     friend class GDALRasterPipelineAlgorithm;
     friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
+    friend class GDALRasterMosaicStackCommonAlgorithm;
 
-    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
 
-    void AddInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
-    void AddOutputArgs(bool hiddenForCLI);
+    int GetOutputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
 
     void SetOutputVRTCompatible(bool b);
+};
 
-    bool m_outputVRTCompatible = true;
-    bool m_standaloneStep = false;
+/************************************************************************/
+/*           GDALRasterPipelineNonNativelyStreamingAlgorithm            */
+/************************************************************************/
 
-    // Input arguments
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    std::vector<std::string> m_inputLayerNames{};
+class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
+    : public GDALRasterPipelineStepAlgorithm
+{
+  protected:
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, bool standaloneStep);
 
-    // Output arguments
-    GDALArgDatasetValue m_outputDataset{};
-    std::string m_format{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
-    std::string m_outputLayerName{};
-    GDALInConstructionAlgorithmArg *m_outputFormatArg = nullptr;
+    bool IsNativelyStreamingCompatible() const override;
 
-  private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-    GDALAlgorithm::ProcessGDALGOutputRet ProcessGDALGOutput() override;
-    bool CheckSafeForStreamOutput() override;
-
-    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPipelineStepAlgorithm)
+    static std::unique_ptr<GDALDataset>
+    CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
+                           GDALDataType eDT, bool bTiledIfPossible,
+                           GDALDataset *poSrcDSForMetadata,
+                           bool bCopyMetadata = true);
+    static std::unique_ptr<GDALDataset>
+    CreateTemporaryCopy(GDALAlgorithm *poAlg, GDALDataset *poSrcDS,
+                        int nSingleBand, bool bTiledIfPossible,
+                        GDALProgressFunc pfnProgress, void *pProgressData);
 };
 
 /************************************************************************/
@@ -105,19 +121,8 @@ class GDALRasterPipelineAlgorithm final
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-    GDALDataset *GetDatasetRef()
-    {
-        return m_inputDataset.GetDatasetRef();
-    }
-
-  protected:
-    GDALArgDatasetValue &GetOutputDataset() override
-    {
-        return m_outputDataset;
-    }
-
-  private:
-    std::string m_helpDocCategory{};
+    static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
+                                   bool forMixedPipeline);
 };
 
 //! @endcond

@@ -165,8 +165,7 @@ CPLErr DDSRasterBand::IReadBlock(int, int nYBlock, void *pImage)
             return CE_Failure;
         }
 
-        const uint32_t num_blocks_x =
-            (nRasterXSize + cDXTBlockSize - 1) / cDXTBlockSize;
+        const uint32_t num_blocks_x = DIV_ROUND_UP(nRasterXSize, cDXTBlockSize);
         const GByte *pabySrc =
             static_cast<const GByte *>(poGDS->pCompressedBuffer);
         crn_uint32
@@ -300,10 +299,8 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     const uint32_t bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
-    const uint32_t num_blocks_x =
-        (ddsDesc.dwWidth + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint32_t num_blocks_y =
-        (ddsDesc.dwHeight + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t num_blocks_x = DIV_ROUND_UP(ddsDesc.dwWidth, cDXTBlockSize);
+    const uint32_t num_blocks_y = DIV_ROUND_UP(ddsDesc.dwHeight, cDXTBlockSize);
     const uint32_t compressed_size_per_row = num_blocks_x * bytesPerBlock;
     const vsi_l_offset nCompressedDataSize =
         static_cast<vsi_l_offset>(compressed_size_per_row) * num_blocks_y;
@@ -624,8 +621,8 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     const uint32_t bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
     CPLErr eErr = CE_None;
-    const uint32_t nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;
-    const uint32_t num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint32_t nYNumBlocks = DIV_ROUND_UP(nYSize, cDXTBlockSize);
+    const uint32_t num_blocks_x = DIV_ROUND_UP(nXSize, cDXTBlockSize);
     const uint32_t total_compressed_size = num_blocks_x * bytesPerBlock;
 
     void *pCompressed_data = CPLMalloc(total_compressed_size);
@@ -655,7 +652,7 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
         crn_uint32 *pSrc_image = nullptr;
         if (nColorType == DDS_COLOR_TYPE_RGB_ALPHA)
-            pSrc_image = (crn_uint32 *)pabyScanlines;
+            pSrc_image = reinterpret_cast<crn_uint32 *>(pabyScanlines);
         else if (nColorType == DDS_COLOR_TYPE_RGB)
         { /* crunch needs 32bits integers */
             int nPixels = nXSize * cDXTBlockSize;

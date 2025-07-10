@@ -180,6 +180,11 @@ template <> inline double byteSwap(double v)
 
 namespace LIBERTIFF_NS
 {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 /** Interface to read from a file. */
 class FileReader
 {
@@ -194,6 +199,10 @@ class FileReader
      */
     virtual size_t read(uint64_t offset, size_t count, void *buffer) const = 0;
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 }  // namespace LIBERTIFF_NS
 
 namespace LIBERTIFF_NS
@@ -1165,8 +1174,8 @@ class Image
             {
                 if LIBERTIFF_CONSTEXPR (sizeof(tag.count) > sizeof(size_t))
                 {
-                    // coverity[result_independent_of_operands]
-                    if (tag.count > std::numeric_limits<size_t>::max())
+                    // "- 1" not strictly necessary, but pleases Coverity Scan
+                    if (tag.count > std::numeric_limits<size_t>::max() - 1)
                     {
                         ok = false;
                         return std::string();
@@ -1246,7 +1255,7 @@ class Image
         if (!ok)
             return nullptr;
         image->m_tags.reserve(tagCount);
-        // coverity[tainted_data]
+        assert(tagCount <= 65535);
         for (int i = 0; i < tagCount; ++i)
         {
             TagEntry entry;
@@ -1579,6 +1588,7 @@ class Image
         else if (dataTypeSize == sizeof(uint16_t))
         {
             // Read up to 2 (classic) or 4 (BigTIFF) inline 16-bit values
+            assert(entry.count <= 4);
             for (uint32_t idx = 0; idx < entry.count; ++idx)
             {
                 entry.uint16Values[idx] =

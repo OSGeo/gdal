@@ -34,13 +34,19 @@ Standard options
 
 .. option:: -l, --layer <LAYER>
 
-    Name of one or more layers to inspect.  If no layer names are passed and
+    Name of one or more layers to inspect. If no layer names are passed and
     :option:`--sql` is not specified, then all layers will be selected.
+
+.. option:: --summary
+
+    Print a summary with the list of layers and the geometry type of each layer.
+    This option is mutually exclusive with the :option:`--features` option.
 
 .. option:: --features
 
     List all features. Beware of RAM consumption on large layers when using
     JSON output.
+    This option is mutually exclusive with the :option:`--summary` option.
 
 .. option:: --sql <statement>|@<filename>
 

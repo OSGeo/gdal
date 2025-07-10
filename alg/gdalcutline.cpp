@@ -262,14 +262,6 @@ CPLErr GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int /* nBandCount */,
         return CE_Failure;
     }
 
-    GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if (hMemDriver == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GDALWarpCutlineMasker needs MEM driver");
-        return CE_Failure;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Check the polygon.                                              */
     /* -------------------------------------------------------------------- */

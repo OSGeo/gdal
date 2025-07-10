@@ -52,6 +52,22 @@ def test_ogr_fielddomain_range():
     assert domain.GetMergePolicy() == ogr.OFDMP_SUM
 
     domain = ogr.CreateRangeFieldDomain(
+        "name", "desc", ogr.OFTInteger, ogr.OFSTNone, None, False, 2, True
+    )
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTInteger
+    assert domain.GetMinAsDouble() == float("-inf")
+    assert domain.GetMaxAsDouble() == 2.0
+
+    domain = ogr.CreateRangeFieldDomain(
+        "name", "desc", ogr.OFTInteger, ogr.OFSTNone, 1, True, None, False
+    )
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTInteger
+    assert domain.GetMinAsDouble() == 1
+    assert domain.GetMaxAsDouble() == float("inf")
+
+    domain = ogr.CreateRangeFieldDomain(
         "name",
         None,
         ogr.OFTInteger64,
@@ -115,6 +131,28 @@ def test_ogr_fielddomain_range():
 
     with pytest.raises(Exception, match="should be called with a glob field domain"):
         domain.GetGlob()
+
+    domain = ogr.CreateRangeFieldDomainDateTime(
+        "datetime_range",
+        "datetime_range_desc",
+        None,
+        False,
+        "2023-07-03T12:13:15",
+        True,
+    )
+    assert domain.GetMinAsString() is None
+    assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
+
+    domain = ogr.CreateRangeFieldDomainDateTime(
+        "datetime_range",
+        "datetime_range_desc",
+        "2023-07-03T12:13:14",
+        True,
+        None,
+        False,
+    )
+    assert domain.GetMinAsString() == "2023-07-03T12:13:14"
+    assert domain.GetMaxAsString() is None
 
 
 def test_ogr_fielddomain_coded():
@@ -186,9 +224,10 @@ def test_ogr_fielddomain_mem_driver():
         ds.AddFieldDomain(None)
 
     # Duplicate domain
-    assert not ds.AddFieldDomain(
-        ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
-    )
+    with pytest.raises(Exception, match="A domain of identical name already exists"):
+        ds.AddFieldDomain(
+            ogr.CreateGlobFieldDomain("name", "desc", ogr.OFTString, ogr.OFSTNone, "*")
+        )
 
     assert ds.GetFieldDomainNames() == ["name"]
 

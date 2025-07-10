@@ -574,8 +574,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
     /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
-        FGdbLayer *poLayer = (FGdbLayer *)GetLayerByName(
-            pszSQLCommand + strlen("GetLayerDefinition "));
+        FGdbLayer *poLayer = cpl::down_cast<FGdbLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")));
         if (poLayer)
         {
             char *pszVal = nullptr;
@@ -594,8 +594,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
     /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
-        FGdbLayer *poLayer = (FGdbLayer *)GetLayerByName(
-            pszSQLCommand + strlen("GetLayerMetadata "));
+        FGdbLayer *poLayer = cpl::down_cast<FGdbLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")));
         if (poLayer)
         {
             char *pszVal = nullptr;

@@ -18,8 +18,10 @@ add_gdal_driver(TARGET ogr_DWG_DGNV8
                 DRIVER_NAME_OPTION DWG
                 SKIP_GDAL_PRIV_HEADER  # because of issue with _REENTRANT
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
-
+                NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 if(NOT TARGET ogr_DWG_DGNV8)
     return()
 endif()

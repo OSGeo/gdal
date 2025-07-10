@@ -23,6 +23,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKBinarySegment::~PCIDSKBinarySegment() = default;
+
 /**
  * Binary Segment constructor
  * @param[in,out] fileIn the PCIDSK file

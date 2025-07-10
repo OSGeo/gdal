@@ -13,6 +13,7 @@
 #include "gdalalg_vsi_move.h"
 
 #include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
 
 //! @cond Doxygen_Suppress
 
@@ -32,38 +33,18 @@ GDALVSIMoveAlgorithm::GDALVSIMoveAlgorithm()
         auto &arg =
             AddArg("source", 0, _("Source file or directory name"), &m_source)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_source.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Source filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
     {
         auto &arg =
             AddArg("destination", 0, _("Destination file or directory name"),
                    &m_destination)
                 .SetPositional()
+                .SetMinCharCount(1)
                 .SetRequired();
         SetAutoCompleteFunctionForFilename(arg, 0);
-        arg.AddValidationAction(
-            [this]()
-            {
-                if (m_destination.empty())
-                {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Destination filename cannot be empty");
-                    return false;
-                }
-                return true;
-            });
     }
 }
 
@@ -78,13 +59,24 @@ bool GDALVSIMoveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 pProgressData) != 0)
     {
         VSIStatBufL statBufSrc;
-        const bool srcExists =
-            VSIStatExL(m_source.c_str(), &statBufSrc,
-                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+        VSIErrorReset();
+        const auto nOldErrorNum = VSIGetLastErrorNo();
+        const bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
         if (!srcExists)
         {
-            ReportError(CE_Failure, CPLE_FileIO, "%s does not exist",
-                        m_source.c_str());
+            if (nOldErrorNum != VSIGetLastErrorNo())
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' cannot be accessed. %s: %s", m_source.c_str(),
+                            VSIErrorNumToString(VSIGetLastErrorNo()),
+                            VSIGetLastErrorMsg());
+            }
+            else
+            {
+                ReportError(CE_Failure, CPLE_FileIO,
+                            "'%s' does not exist or cannot be accessed",
+                            m_source.c_str());
+            }
         }
         else
         {

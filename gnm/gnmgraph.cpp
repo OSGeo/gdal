@@ -268,7 +268,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID,
     if (aoFirstPath.empty())
         return A;  // return empty array if there is no path between points.
 
-    A.push_back(aoFirstPath);
+    A.push_back(std::move(aoFirstPath));
 
     size_t i, k, l;
     GNMPATH::iterator itAk, tempIt, itR;

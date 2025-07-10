@@ -27,7 +27,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_BLUT
     {
     public:
-        virtual ~PCIDSK_BLUT() {}
+        virtual ~PCIDSK_BLUT();
 
 /**
 \brief Read a LUT Segment (SEG_BLUT).

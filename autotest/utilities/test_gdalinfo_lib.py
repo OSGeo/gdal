@@ -237,6 +237,18 @@ def test_gdalinfo_lib_nodata_full_precision_float64():
     assert ret["bands"][0]["noDataValue"] == float(nodata_str)
 
 
+def test_gdalinfo_lib_nodata_int():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    assert "NoData Value=255\n" in gdal.Info(ds).replace("\r\n", "\n")
+
+    ret = gdal.Info(ds, format="json")
+    ndv = ret["bands"][0]["noDataValue"]
+    assert ndv == 255
+    assert isinstance(ndv, int)
+
+
 ###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/8137
 
@@ -335,3 +347,18 @@ def test_gdalinfo_lib_json_stac_common_name():
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PanBand)
     ret = gdal.Info(ds, options="-json")
     assert ret["stac"]["eo:bands"][0]["common_name"] == "pan"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("HFA")
+def test_gdalinfo_lib_json_color_table_and_rat():
+
+    ds = gdal.Open("../gcore/data/rat.img")
+
+    ret = gdal.Info(ds, format="json")
+    assert "colorTable" in ret["bands"][0]
+    assert "rat" in ret["bands"][0]
+
+    gdaltest.validate_json(ret, "gdalinfo_output.schema.json")

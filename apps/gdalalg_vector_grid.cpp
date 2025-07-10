@@ -33,20 +33,55 @@
 /*            GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()        */
 /************************************************************************/
 
-GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorGridAlgorithm::GDALVectorGridAlgorithm(bool standaloneStep)
+    : GDALPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    RegisterSubAlgorithm<GDALVectorGridAverageAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridInvdistAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridInvdistNNAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridLinearAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridNearestAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridMinimumAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridMaximumAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridRangeAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridCountAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridAverageDistanceAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorGridAverageDistancePointsAlgorithm>();
+    if (standaloneStep)
+    {
+        RegisterSubAlgorithm<GDALVectorGridAverageAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridInvdistAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridInvdistNNAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridLinearAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridNearestAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridMinimumAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridMaximumAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridRangeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridCountAlgorithmStandalone>();
+        RegisterSubAlgorithm<
+            GDALVectorGridAverageDistanceAlgorithmStandalone>();
+        RegisterSubAlgorithm<
+            GDALVectorGridAverageDistancePointsAlgorithmStandalone>();
+    }
+    else
+    {
+        RegisterSubAlgorithm<GDALVectorGridAverageAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridInvdistAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridInvdistNNAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridLinearAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridNearestAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridMinimumAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridMaximumAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridRangeAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridCountAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridAverageDistanceAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorGridAverageDistancePointsAlgorithm>();
+    }
+}
+
+/************************************************************************/
+/*                  GDALVectorGridAlgorithm::RunStep()                  */
+/************************************************************************/
+
+bool GDALVectorGridAlgorithm::RunStep(GDALPipelineStepRunContext &)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "vector grid\" program.");
+    return false;
 }
 
 /************************************************************************/
@@ -67,19 +102,25 @@ bool GDALVectorGridAlgorithm::RunImpl(GDALProgressFunc, void *)
 
 GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
     const std::string &name, const std::string &description,
-    const std::string &helpURL)
-    : GDALAlgorithm(name, description, helpURL)
+    const std::string &helpURL, bool standaloneStep)
+    : GDALPipelineStepAlgorithm(
+          name, description, helpURL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
+    if (standaloneStep)
+    {
+        AddOutputFormatArg(&m_format).AddMetadataItem(
+            GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
+        AddOpenOptionsArg(&m_openOptions);
+        AddInputFormatsArg(&m_inputFormats)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
+        AddCreationOptionsArg(&m_creationOptions);
+    }
     AddArg("extent", 0, _("Set the target georeferenced extent"),
            &m_targetExtent)
         .SetMinCount(4)
@@ -142,28 +183,42 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridAbstractAlgorithm::RunImpl()             */
+/*               GDALVectorGridAbstractAlgorithm::RunStep()             */
 /************************************************************************/
 
-bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                              void *pProgressData)
+bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
 
-    if (!m_outputFormat.empty())
+    std::string outputFilename;
+    if (m_standaloneStep)
     {
-        aosOptions.AddString("-of");
-        aosOptions.AddString(m_outputFormat.c_str());
-    }
+        outputFilename = m_outputDataset.GetName();
+        if (!m_format.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString(m_format.c_str());
+        }
 
-    for (const auto &co : m_creationOptions)
+        for (const std::string &co : m_creationOptions)
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString(co.c_str());
+        }
+    }
+    else
     {
+        outputFilename = CPLGenerateTempFilenameSafe("_grid.tif");
+
+        aosOptions.AddString("-of");
+        aosOptions.AddString("GTiff");
+
         aosOptions.AddString("-co");
-        aosOptions.AddString(co.c_str());
+        aosOptions.AddString("TILED=YES");
     }
 
     if (!m_targetExtent.empty())
@@ -256,7 +311,7 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             if (poFeat)
             {
                 const auto poGeom = poFeat->GetGeometryRef();
-                if (!poGeom->Is3D())
+                if (!poGeom || !poGeom->Is3D())
                 {
                     ReportError(
                         CE_Warning, CPLE_AppDefined,
@@ -291,26 +346,47 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     aosOptions.AddString("-a");
     aosOptions.AddString(GetGridAlgorithm().c_str());
 
+    bool bOK = false;
     std::unique_ptr<GDALGridOptions, decltype(&GDALGridOptionsFree)> psOptions{
         GDALGridOptionsNew(aosOptions.List(), nullptr), GDALGridOptionsFree};
 
-    if (!psOptions)
+    if (psOptions)
     {
-        return false;
+        GDALGridOptionsSetProgress(psOptions.get(), ctxt.m_pfnProgress,
+                                   ctxt.m_pProgressData);
+
+        auto poRetDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+            GDALGrid(outputFilename.c_str(), GDALDataset::ToHandle(poSrcDS),
+                     psOptions.get(), nullptr)));
+
+        if (poRetDS)
+        {
+            bOK = true;
+
+            if (!m_standaloneStep)
+            {
+                VSIUnlink(outputFilename.c_str());
+                poRetDS->MarkSuppressOnClose();
+            }
+
+            m_outputDataset.Set(std::move(poRetDS));
+        }
     }
 
-    GDALGridOptionsSetProgress(psOptions.get(), pfnProgress, pProgressData);
+    return bOK;
+}
 
-    auto poRetDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALGrid(m_outputDataset.GetName().c_str(),
-                 GDALDataset::ToHandle(poSrcDS), psOptions.get(), nullptr)));
+/************************************************************************/
+/*               GDALVectorGridAbstractAlgorithm::RunImpl()             */
+/************************************************************************/
 
-    if (poRetDS)
-    {
-        m_outputDataset.Set(std::move(poRetDS));
-    }
-
-    return m_outputDataset.GetDatasetRef() != nullptr;
+bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
 }
 
 /************************************************************************/
@@ -415,5 +491,8 @@ GDALInConstructionAlgorithmArg &GDALVectorGridAbstractAlgorithm::AddNodataArg()
     return AddArg("nodata", 0, _("Target nodata value"), &m_nodata)
         .SetDefault(m_nodata);
 }
+
+GDALVectorGridAlgorithmStandalone::~GDALVectorGridAlgorithmStandalone() =
+    default;
 
 //! @endcond

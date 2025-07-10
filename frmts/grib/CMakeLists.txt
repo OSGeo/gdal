@@ -51,7 +51,10 @@ add_gdal_driver(
       PLUGIN_CAPABLE_IF
           "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
       NO_DEPS
-      NO_SHARED_SYMBOL_WITH_CORE)
+      NO_SHARED_SYMBOL_WITH_CORE
+      NO_CXX_WFLAGS_EFFCXX
+      NO_WFLAG_OLD_STYLE_CAST
+)
 
 if(NOT TARGET gdal_GRIB)
     return()
@@ -84,6 +87,7 @@ if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_5.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_6.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_7.csv
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_22.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_0.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_191.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_1.csv
@@ -96,11 +100,13 @@ if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_0.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_1.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_2.csv
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_3.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_0.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_3.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_4.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_5.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_6.csv
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_7.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_0.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_1.csv
         ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_2.csv

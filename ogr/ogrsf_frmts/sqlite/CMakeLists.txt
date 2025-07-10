@@ -22,7 +22,6 @@ add_gdal_driver(
           rasterlite2_header.h
           rasterlite2.cpp
           sqlite_rtree_bulk_load/wrapper.cpp
-   STRONG_CXX_WFLAGS
 )
 gdal_standard_includes(ogr_SQLite)
 

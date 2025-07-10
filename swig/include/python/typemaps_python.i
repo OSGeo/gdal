@@ -1543,6 +1543,7 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
 
 OPTIONAL_POD(int,i);
 OPTIONAL_POD(GIntBig,L);
+OPTIONAL_POD(double, d);
 
 /*
  * Typedef const char * <- Any object.
@@ -2477,7 +2478,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     else
     {
         PyObject* gdal_array = PyImport_ImportModule("osgeo.gdal_array");
-        if (gdal_array) 
+        if (gdal_array)
         {
             PyObject* dict = PyModule_GetDict(gdal_array);
             PyObject* fn = PyDict_GetItemString(dict, "NumericTypeCodeToGDALTypeCode");
@@ -2790,7 +2791,8 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
                                     (*$1)[i]->dfEastLongitudeDeg,
                                     (*$1)[i]->dfNorthLatitudeDeg,
                                     (*$1)[i]->pszAreaName,
-                                    (*$1)[i]->pszProjectionMethod );
+                                    (*$1)[i]->pszProjectionMethod,
+                                    (*$1)[i]->pszCelestialBodyName );
 
     PyTuple_SetItem(dict, i,
        SWIG_NewPointerObj((void*)o,SWIGTYPE_p_OSRCRSInfo,1) );

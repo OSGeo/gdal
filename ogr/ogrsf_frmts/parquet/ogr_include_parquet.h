@@ -42,6 +42,9 @@
 #include "parquet/arrow/reader.h"
 #include "parquet/arrow/writer.h"
 #include "parquet/arrow/schema.h"
+#if PARQUET_VERSION_MAJOR >= 21
+#include "parquet/geospatial/statistics.h"
+#endif
 
 #ifdef GDAL_USE_ARROWDATASET
 #include "arrow/filesystem/filesystem.h"
@@ -52,6 +55,10 @@
 #include "arrow/dataset/discovery.h"
 #include "arrow/dataset/file_parquet.h"
 #include "arrow/dataset/scanner.h"
+#endif
+
+#ifdef GDAL_USE_ARROWCOMPUTE
+#include <arrow/compute/api.h>
 #endif
 
 #ifdef _MSC_VER

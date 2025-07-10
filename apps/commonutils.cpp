@@ -163,3 +163,67 @@ int ArgIsNumeric(const char *pszArg)
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
+
+/************************************************************************/
+/*                         GDALPatternMatch()                           */
+/************************************************************************/
+
+bool GDALPatternMatch(const char *input, const char *pattern)
+
+{
+    while (*input != '\0')
+    {
+        if (*pattern == '\0')
+            return false;
+
+        else if (*pattern == '?')
+        {
+            pattern++;
+            if (static_cast<unsigned int>(*input) > 127)
+            {
+                // Continuation bytes of such characters are of the form
+                // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+                // and the start of a multi-byte is 11xxxxxx
+                do
+                {
+                    input++;
+                } while (static_cast<unsigned int>(*input) > 127);
+            }
+            else
+            {
+                input++;
+            }
+        }
+        else if (*pattern == '*')
+        {
+            if (pattern[1] == '\0')
+                return true;
+
+            // Try eating varying amounts of the input till we get a positive.
+            for (int eat = 0; input[eat] != '\0'; eat++)
+            {
+                if (GDALPatternMatch(input + eat, pattern + 1))
+                    return true;
+            }
+
+            return false;
+        }
+        else
+        {
+            if (CPLTolower(*pattern) != CPLTolower(*input))
+            {
+                return false;
+            }
+            else
+            {
+                input++;
+                pattern++;
+            }
+        }
+    }
+
+    if (*pattern != '\0' && strcmp(pattern, "*") != 0)
+        return false;
+    else
+        return true;
+}

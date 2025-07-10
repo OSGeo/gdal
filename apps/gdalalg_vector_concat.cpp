@@ -36,11 +36,14 @@
 /************************************************************************/
 
 GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL, bStandalone)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(bStandalone)
+                                          .SetInputDatasetMaxCount(INT_MAX))
 {
     if (!bStandalone)
     {
-        AddInputArgs(/* hiddenForCLI = */ false);
+        AddVectorInputArgs(/* hiddenForCLI = */ false);
     }
 
     AddArg(
@@ -91,10 +94,7 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
         m_layers.push_back(std::move(layer));
     }
 
-    int GetLayerCount() override
-    {
-        return static_cast<int>(m_layers.size());
-    }
+    int GetLayerCount() override;
 
     OGRLayer *GetLayer(int idx) override
     {
@@ -114,6 +114,11 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
     }
 };
 
+int GDALVectorConcatOutputDataset::GetLayerCount()
+{
+    return static_cast<int>(m_layers.size());
+}
+
 /************************************************************************/
 /*                     GDALVectorConcatRenamedLayer                     */
 /************************************************************************/
@@ -127,14 +132,16 @@ class GDALVectorConcatRenamedLayer final : public OGRLayerDecorator
     {
     }
 
-    const char *GetName() override
-    {
-        return m_newName.c_str();
-    }
+    const char *GetName() override;
 
   private:
     const std::string m_newName;
 };
+
+const char *GDALVectorConcatRenamedLayer::GetName()
+{
+    return m_newName.c_str();
+}
 
 /************************************************************************/
 /*                         BuildLayerName()                             */
@@ -176,7 +183,7 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
 /*                   GDALVectorConcatAlgorithm::RunStep()               */
 /************************************************************************/
 
-bool GDALVectorConcatAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     std::unique_ptr<OGRSpatialReference> poSrcCRS;
     if (!m_srsCrs.empty())
@@ -420,8 +427,14 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        return RunStep(pfnProgress, pProgressData);
+        GDALPipelineStepRunContext stepCtxt;
+        stepCtxt.m_pfnProgress = pfnProgress;
+        stepCtxt.m_pProgressData = pProgressData;
+        return RunStep(stepCtxt);
     }
 }
+
+GDALVectorConcatAlgorithmStandalone::~GDALVectorConcatAlgorithmStandalone() =
+    default;
 
 //! @endcond

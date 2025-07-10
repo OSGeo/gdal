@@ -14,6 +14,8 @@
 #include "ogr_p.h"
 #include "ogrlibjsonutils.h"
 
+OGRCartoGeomFieldDefn::~OGRCartoGeomFieldDefn() = default;
+
 /************************************************************************/
 /*                         OGRCARTOLayer()                            */
 /************************************************************************/

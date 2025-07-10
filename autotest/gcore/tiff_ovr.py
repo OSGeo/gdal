@@ -2681,7 +2681,31 @@ def test_tiff_ovr_external_mask_update(tmp_vsimem):
 # of the default scanlines based one
 
 
-def test_tiff_ovr_fallback_to_multiband_overview_generate():
+@pytest.mark.parametrize(
+    "config_options",
+    [
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+            "GDAL_OVR_TEMP_DRIVER": "MEM",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "10000",
+            "GDAL_OVR_TEMP_DRIVER": "GTIFF",
+        },
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+            "GDAL_OVR_TEMP_DRIVER": "GTIFF",
+        },
+    ],
+)
+def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
 
     filename = "/vsimem/test_tiff_ovr_issue_4932_src.tif"
     ds = gdal.Translate(
@@ -2689,15 +2713,13 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
-    with gdaltest.config_options(
-        {"GDAL_OVR_CHUNK_MAX_SIZE": "1000", "GDAL_OVR_TEMP_DRIVER": "MEM"}
-    ):
+    with gdaltest.config_options(config_options):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
 
     ds = gdal.Open(filename)
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 37308
+    assert cs == 36766
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
@@ -3031,3 +3053,93 @@ def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
         ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5271, 1, 1)
         == b"\x00"
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_raster_with_ovr_huge_block(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "tmp.tif",
+        open("data/gtiff/huge_raster_with_ovr_huge_block.tif", "rb").read(),
+    )
+
+    with pytest.raises(Exception):
+        with gdal.Open(tmp_vsimem / "tmp.tif", gdal.GA_Update) as ds:
+            ds.BuildOverviews("AVERAGE", [2])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_reduction_factor_nodata(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "test.tif",
+        1024,
+        1024,
+        3,
+        options=["BLOCKYSIZE=1024", "COMPRESS=LZW"],
+    )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.GetRasterBand(2).SetNoDataValue(0)
+    ds.GetRasterBand(3).SetNoDataValue(0)
+    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    with gdaltest.config_options(
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+        }
+    ):
+        ds.BuildOverviews("AVERAGE", [1024])
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_huge_reduction_factor_mask(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "test.tif",
+        1024,
+        1024,
+        3,
+        options=["BLOCKYSIZE=1024", "COMPRESS=LZW"],
+    )
+    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(511, 511, 1, 1, b"\xFF")
+    with gdaltest.config_options(
+        {
+            "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
+            "GDAL_OVR_CHUNK_MAX_SIZE_FOR_TEMP_FILE": "1000",
+        }
+    ):
+        ds.BuildOverviews("AVERAGE", [1024])
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_internal(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_INT_MAX_reduction_factor_external(tmp_vsimem):
+
+    gdal.GetDriverByName("GTIFF").Create(tmp_vsimem / "out.tif", 20, 20)
+    ds = gdal.Open(tmp_vsimem / "out.tif")
+    ds.BuildOverviews("NEAR", [(1 << 31) - 1])

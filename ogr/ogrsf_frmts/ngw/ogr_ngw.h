@@ -136,7 +136,11 @@ class OGRNGWCodedFieldDomain
   public:
     explicit OGRNGWCodedFieldDomain() = default;
     explicit OGRNGWCodedFieldDomain(const CPLJSONObject &oResourceJsonObject);
-    virtual ~OGRNGWCodedFieldDomain() = default;
+    OGRNGWCodedFieldDomain(const OGRNGWCodedFieldDomain &) = default;
+    OGRNGWCodedFieldDomain &operator=(const OGRNGWCodedFieldDomain &) = default;
+    OGRNGWCodedFieldDomain(OGRNGWCodedFieldDomain &&) = default;
+    OGRNGWCodedFieldDomain &operator=(OGRNGWCodedFieldDomain &&) = default;
+
     const OGRFieldDomain *ToFieldDomain(OGRFieldType eFieldType) const;
     GIntBig GetID() const;
     std::string GetDomainsNames() const;
@@ -323,7 +327,7 @@ class OGRNGWDataset final : public GDALDataset
                                  const char *pszDialect) override;
 
     virtual const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,

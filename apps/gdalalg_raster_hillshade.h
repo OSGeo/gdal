@@ -34,8 +34,10 @@ class GDALRasterHillshadeAlgorithm /* non final */
 
     explicit GDALRasterHillshadeAlgorithm(bool standaloneStep = false);
 
+    bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const override;
+
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     double m_zfactor = 1;
@@ -60,6 +62,8 @@ class GDALRasterHillshadeAlgorithmStandalone final
         : GDALRasterHillshadeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterHillshadeAlgorithmStandalone() override;
 };
 
 //! @endcond

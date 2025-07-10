@@ -39,12 +39,12 @@
 class IOGRMemLayerFeatureIterator
 {
   public:
-    virtual ~IOGRMemLayerFeatureIterator()
-    {
-    }
+    virtual ~IOGRMemLayerFeatureIterator();
 
     virtual OGRFeature *Next() = 0;
 };
+
+IOGRMemLayerFeatureIterator::~IOGRMemLayerFeatureIterator() = default;
 
 /************************************************************************/
 /*                            OGRMemLayer()                             */
@@ -66,6 +66,17 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
         poSRS->Release();
     }
+
+    m_oMapFeaturesIter = m_oMapFeatures.begin();
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
+}
+
+OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
+    : m_poFeatureDefn(oFeatureDefn.Clone())
+{
+    m_poFeatureDefn->Reference();
+
+    SetDescription(m_poFeatureDefn->GetName());
 
     m_oMapFeaturesIter = m_oMapFeatures.begin();
     m_poFeatureDefn->Seal(/* bSealFields = */ true);
@@ -974,6 +985,8 @@ class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
     const GIntBig m_nMaxFeatureCount;
     OGRFeature **const m_papoFeatures;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRMemLayerIteratorArray)
+
   public:
     OGRMemLayerIteratorArray(GIntBig nMaxFeatureCount,
                              OGRFeature **papoFeatures)
@@ -981,18 +994,20 @@ class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
     {
     }
 
-    virtual OGRFeature *Next() override
-    {
-        while (m_iCurIdx < m_nMaxFeatureCount)
-        {
-            OGRFeature *poFeature = m_papoFeatures[m_iCurIdx];
-            ++m_iCurIdx;
-            if (poFeature != nullptr)
-                return poFeature;
-        }
-        return nullptr;
-    }
+    OGRFeature *Next() override;
 };
+
+OGRFeature *OGRMemLayerIteratorArray::Next()
+{
+    while (m_iCurIdx < m_nMaxFeatureCount)
+    {
+        OGRFeature *poFeature = m_papoFeatures[m_iCurIdx];
+        ++m_iCurIdx;
+        if (poFeature != nullptr)
+            return poFeature;
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                         OGRMemLayerIteratorMap                       */
@@ -1012,20 +1027,22 @@ class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator
     {
     }
 
-    virtual OGRFeature *Next() override
-    {
-        if (m_oIter != m_oMapFeatures.end())
-        {
-            OGRFeature *poFeature = m_oIter->second.get();
-            ++m_oIter;
-            return poFeature;
-        }
-        return nullptr;
-    }
+    OGRFeature *Next() override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRMemLayerIteratorMap)
 };
+
+OGRFeature *OGRMemLayerIteratorMap::Next()
+{
+    if (m_oIter != m_oMapFeatures.end())
+    {
+        OGRFeature *poFeature = m_oIter->second.get();
+        ++m_oIter;
+        return poFeature;
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                            GetIterator()                             */

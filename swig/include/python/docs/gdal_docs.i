@@ -24,7 +24,7 @@ Apply a geotransform to convert a (col, row) location
 into a georeferenced (x, y) coordinate. To perform the
 inverse transformation, see :py:func:`InvGeoTransform`.
 
-See :cpp:func:`ApplyGeoTransform`.
+See :cpp:func:`GDALApplyGeoTransform`.
 
 Parameters
 ----------
@@ -34,7 +34,7 @@ dfPixel : float
    (Fractional) column in image coordinates (0.0 at the left edge of the image)
 dfLine : float
    (Fractional) row in image coordinates (0.0 at the top of the image)
-   
+
 Returns
 -------
 List

@@ -78,28 +78,30 @@ class KML
     static void XMLCALL endElement(void *, const char *);
 
     // Trunk of KMLnodes.
-    KMLNode *poTrunk_;
+    KMLNode *poTrunk_ = nullptr;
     // Number of layers.
-    int nNumLayers_;
-    KMLNode **papoLayers_;
+    int nNumLayers_ = -1;
+    KMLNode **papoLayers_ = nullptr;
 
   private:
     // Depth of the DOM.
-    unsigned int nDepth_;
+    unsigned int nDepth_ = 0;
     // KML version number.
-    std::string sVersion_;
+    std::string sVersion_{};
     // Set to KML_VALIDITY_VALID if the beginning of the file is detected as KML
-    OGRKMLValidity validity;
+    OGRKMLValidity validity = KML_VALIDITY_UNKNOWN;
     // File descriptor.
-    VSILFILE *pKMLFile_;
+    VSILFILE *pKMLFile_ = nullptr;
     // Error text ("" when everything is OK").
-    std::string sError_;
+    std::string sError_{};
     // Current KMLNode.
-    KMLNode *poCurrent_;
+    KMLNode *poCurrent_ = nullptr;
 
-    XML_Parser oCurrentParser;
-    int nDataHandlerCounter;
-    int nWithoutEventCounter;
+    XML_Parser oCurrentParser{};
+    int nDataHandlerCounter = 0;
+    int nWithoutEventCounter = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(KML)
 };
 
 #endif  // HAVE_EXPAT

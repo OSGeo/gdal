@@ -15,22 +15,24 @@ Synopsis
 
 .. code-block::
 
-   gdalbuildvrt [--help] [--long-usage] [--help-general]
-                [--quiet]
-                [[-strict]|[-non_strict]]
-                [-tile_index <field_name>]
-                [-resolution user|common|average|highest|lowest|same]
-                [-tr <xres> <yes>] [-input_file_list <filename>] [-separate]
-                [-allow_projection_difference] [-sd <n>] [-tap]
-                [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
-                [-hidenodata] [-overwrite]
-                [-srcnodata "<value>[ <value>]..."]
-                [-vrtnodata "<value>[ <value>]..."] [-a_srs <srs_def>]
-                [-r nearest|bilinear|cubic|cubicspline|lanczos|average|mode]
-                [-oo <NAME>=<VALUE>]... [-co <NAME>=<VALUE>]...
-                [-ignore_srcmaskband]
-                [-nodata_max_mask_threshold <threshold>]
-                <vrt_dataset_name> [<src_dataset_name>]...
+    gdalbuildvrt [--help] [--long-usage] [--help-general]
+                 [--quiet]
+                 [[-strict]|[-non_strict]]
+                 [-tile_index <field_name>]
+                 [-resolution user|average|common|highest|lowest|same]
+                 [-tr <xres> <yes>] [-input_file_list <filename>]
+                 [[-separate]|[-pixel-function <function>]]
+                 [-pixel-function-arg <NAME>=<VALUE>]...
+                 [-allow_projection_difference] [-sd <n>] [-tap]
+                 [-te <xmin> <ymin> <xmax> <ymax>] [-addalpha] [-b <band>]...
+                 [-hidenodata] [-overwrite]
+                 [-srcnodata "<value>[ <value>]..."]
+                 [-vrtnodata "<value>[ <value>]..."] [-a_srs <srs_def>]
+                 [-r nearest|bilinear|cubic|cubicspline|lanczos|average|mode]
+                 [-oo <NAME>=<VALUE>]... [-co <NAME>=<VALUE>]...
+                 [-ignore_srcmaskband]
+                 [-nodata_max_mask_threshold <threshold>]
+                 <vrt_dataset_name> [<src_dataset_name>]...
 
 
 Description
@@ -64,7 +66,10 @@ interpretation, etc. If not, files that do not match the common characteristics 
 unless :option:`-strict` is used.
 (This is only true in the default mode, and not when using the :option:`-separate` option)
 
-If the inputs spatially overlap, the order of the input list is used to determine priority.
+Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
+be specified (:option:`-pixel-function`) to calculate pixel values from
+overlapping inputs. If no function is specified, or in earlier versions, 
+the order of the input list is used to determine priority.
 Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
 to potentially fetch data from lower-priority datasets, but currently, alpha channel
@@ -191,12 +196,30 @@ changed in later versions.
     Place each input file into a separate band. See :example:`separate`.
     Contrary to the default mode, it is not
     required that all bands have the same datatype.
+    This option is mutually exclusive with :option:`-pixel-function`.
 
     Starting with GDAL 3.8, all bands of each input file are added as separate
     VRT bands, unless :option:`-b` is specified to select a subset of them.
     Before GDAL 3.8, only the first band of each input file was placed into a
     new VRT band, and :option:`-b` was ignored.
 
+.. option:: -pixel-function
+
+    Specify a function name to calculate a value from overlapping inputs.
+    For a list of available pixel functions, see :ref:`builtin_pixel_functions`.
+    If no function is specified, values will be taken from the last overlapping input.
+    This option is mutually exclusive with with :option:`-separate`.
+
+    .. versionadded:: 3.12
+
+.. option:: -pixel-function-arg
+
+    Specify an argument to be provided to a pixel function, in the format
+    ``<NAME>=<VALUE>``. Multiple arguments may be specified by repeating this
+    option.
+
+    .. versionadded:: 3.12
+    
 .. option:: -allow_projection_difference
 
     When this option is specified, the utility will create a VRT even if the input datasets do not have
@@ -247,6 +270,13 @@ changed in later versions.
     Skip source datasets that have issues with warnings, and continue processing. This is the default.
 
     .. versionadded:: 3.4.2
+
+.. option:: -write_absolute_path
+
+    .. versionadded:: 3.12.0
+
+    Enables writing the absolute path of the input datasets. By default, input
+    filenames are written in a relative way with respect to the VRT filename (when possible).
 
 Examples
 --------

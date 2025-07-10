@@ -434,3 +434,96 @@ def test_gdallocationinfo_interpolate_float_data(gdallocationinfo_path, tmp_path
         gdallocationinfo_path + " -valonly -r bilinear {} 1 1".format(dst_filename)
     )
     assert float(ret) == pytest.approx(4.45, rel=1e-6)
+
+
+def test_gdallocationinfo_nodata(gdallocationinfo_path, tmp_path):
+
+    filename = tmp_path / "out.tif"
+    # 64 because this is the size of the cache window of GDALInterpolateAtPoint
+    with gdal.GetDriverByName("MEM").Create("", 1, 64 + 1, 2) as src_ds:
+        src_ds.GetRasterBand(1).SetNoDataValue(16)
+        gdal.Translate(
+            filename, src_ds, creationOptions=["BLOCKYSIZE=1", "INTERLEAVE=PIXEL"]
+        )
+    with gdal.Open(filename, gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\x10")
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1, 1, b"\x10")
+        ds.GetRasterBand(1).WriteRaster(0, 1, 1, 1, b"\x10")
+        ds.GetRasterBand(2).WriteRaster(0, 1, 1, 1, b"\x11")
+
+    f = gdal.VSIFOpenL(filename, "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, gdal.VSIStatL(filename).size - 1)
+    gdal.VSIFCloseL(f)
+
+    ret = gdaltest.runexternal(gdallocationinfo_path + f" {filename} 0 0")
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """Report:
+  Location: (0P,0L)
+  Band 1:
+    Value: 16
+  Band 2:
+    Value: 16"""
+    assert ret.startswith(expected_ret)
+
+    ret = gdaltest.runexternal(gdallocationinfo_path + f" -xml {filename} 0 0")
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """<Report pixel="0" line="0">
+  <BandReport band="1">
+    <Value>16</Value>
+  </BandReport>
+  <BandReport band="2">
+    <Value>16</Value>
+  </BandReport>
+</Report>
+"""
+    assert ret.startswith(expected_ret)
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + f" -valonly -field_sep , {filename} 0 0"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """16,16"""
+    assert ret.startswith(expected_ret)
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + f" -valonly -field_sep , {filename} 0 1"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """16,17"""
+    assert ret.startswith(expected_ret)
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + f" {filename} 0 64"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """Report:
+  Location: (0P,64L)
+  Band 1:
+  Band 2:"""
+    assert ret.startswith(expected_ret)
+    assert "ret code = 1" in err
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + f" -xml {filename} 0 64"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """<Report pixel="0" line="64">
+  <BandReport band="1">
+    <IOError />
+  </BandReport>
+  <BandReport band="2">
+    <IOError />
+  </BandReport>
+</Report>"""
+    assert ret.startswith(expected_ret)
+    assert "ret code = 1" in err
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + f" -valonly -field_sep , {filename} 0 64"
+    )
+    ret = ret.replace("\r\n", "\n")
+    expected_ret = """,
+"""
+    assert ret.startswith(expected_ret)
+    assert "ret code = 1" in err

@@ -452,12 +452,20 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess *p)
  */
 int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
 {
+#ifdef __COVERITY__
+    (void)fin;
+    (void)data;
+    (void)length;
+    CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+    return FALSE;
+#else
     GByte *pabyData = static_cast<GByte *>(data);
     int nRemain = length;
     while (nRemain > 0)
     {
         while (true)
         {
+            assert(nRemain > 0);
             // coverity[overflow_sink]
             const ssize_t n = read(fin, pabyData, nRemain);
             if (n < 0)
@@ -470,11 +478,13 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
             else if (n == 0)
                 return FALSE;
             pabyData += n;
+            assert(n <= nRemain);
             nRemain -= static_cast<int>(n);
             break;
         }
     }
     return TRUE;
+#endif
 }
 
 /************************************************************************/
@@ -494,12 +504,20 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
  */
 int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
 {
+#ifdef __COVERITY__
+    (void)fout;
+    (void)data;
+    (void)length;
+    CPLError(CE_Failure, CPLE_AppDefined, "Not implemented");
+    return FALSE;
+#else
     const GByte *pabyData = static_cast<const GByte *>(data);
     int nRemain = length;
     while (nRemain > 0)
     {
         while (true)
         {
+            assert(nRemain > 0);
             // coverity[overflow_sink]
             const ssize_t n = write(fout, pabyData, nRemain);
             if (n < 0)
@@ -510,11 +528,13 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
                     return FALSE;
             }
             pabyData += n;
+            assert(n <= nRemain);
             nRemain -= static_cast<int>(n);
             break;
         }
     }
     return TRUE;
+#endif
 }
 
 /************************************************************************/
@@ -590,11 +610,25 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     int pipe_out[2] = {-1, -1};
     int pipe_err[2] = {-1, -1};
 
+    const auto ClosePipes = [&pipe_in, &pipe_out, &pipe_err]()
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (pipe_in[i] >= 0)
+                close(pipe_in[i]);
+            if (pipe_out[i] >= 0)
+                close(pipe_out[i]);
+            if (pipe_err[i] >= 0)
+                close(pipe_err[i]);
+        }
+    };
+
     if ((bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
         (bCreateErrorPipe && pipe(pipe_err)))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
+        ClosePipes();
         return nullptr;
     }
 
@@ -688,16 +722,7 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
                 posix_spawn_file_actions_destroy(&actions);
             CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
             CSLDestroy(papszArgvDup);
-            for (int i = 0; i < 2; i++)
-            {
-                if (pipe_in[i] >= 0)
-                    close(pipe_in[i]);
-                if (pipe_out[i] >= 0)
-                    close(pipe_out[i]);
-                if (pipe_err[i] >= 0)
-                    close(pipe_err[i]);
-            }
-
+            ClosePipes();
             return nullptr;
         }
 
@@ -813,16 +838,7 @@ CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
 
     CSLDestroy(papszArgvDup);
-    for (int i = 0; i < 2; i++)
-    {
-        if (pipe_in[i] >= 0)
-            close(pipe_in[i]);
-        if (pipe_out[i] >= 0)
-            close(pipe_out[i]);
-        if (pipe_err[i] >= 0)
-            close(pipe_err[i]);
-    }
-
+    ClosePipes();
     return nullptr;
 }
 

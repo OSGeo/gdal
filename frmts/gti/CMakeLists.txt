@@ -3,7 +3,7 @@ add_gdal_driver(
   PLUGIN_CAPABLE
   NO_DEPS
   SOURCES gdaltileindexdataset.cpp
-          STRONG_CXX_WFLAGS)
+)
 gdal_standard_includes(gdal_GTI)
 target_include_directories(gdal_GTI PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)

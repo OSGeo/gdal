@@ -522,23 +522,21 @@ OGRFeature *GDALEEDALayer::GetNextRawFeature()
             int nWidth = 0, nHeight = 0;
             double dfMinPixelSize = std::numeric_limits<double>::max();
             CPLString osSRS(aoBands[0].osWKT);
-            double dfULX = aoBands[0].adfGeoTransform[0];
-            double dfULY = aoBands[0].adfGeoTransform[3];
+            double dfULX = aoBands[0].gt[0];
+            double dfULY = aoBands[0].gt[3];
             bool bULValid = true;
             for (size_t i = 0; i < aoBands.size(); i++)
             {
                 nWidth = std::max(nWidth, aoBands[i].nWidth);
                 nHeight = std::max(nHeight, aoBands[i].nHeight);
                 dfMinPixelSize =
-                    std::min(dfMinPixelSize,
-                             std::min(aoBands[i].adfGeoTransform[1],
-                                      fabs(aoBands[i].adfGeoTransform[5])));
+                    std::min(dfMinPixelSize, std::min(aoBands[i].gt[1],
+                                                      fabs(aoBands[i].gt[5])));
                 if (osSRS != aoBands[i].osWKT)
                 {
                     osSRS.clear();
                 }
-                if (dfULX != aoBands[i].adfGeoTransform[0] ||
-                    dfULY != aoBands[i].adfGeoTransform[3])
+                if (dfULX != aoBands[i].gt[0] || dfULY != aoBands[i].gt[3])
                 {
                     bULValid = false;
                 }

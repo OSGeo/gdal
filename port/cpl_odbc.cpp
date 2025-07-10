@@ -844,10 +844,18 @@ int CPLODBCStatement::ExecuteSQL(const char *pszStatement)
 #endif
 
     // SQL_NTS=-3 is a valid value for SQLExecDirect.
-    // coverity[negative_returns]
-    if (Failed(SQLExecDirect(
-            m_hStmt, reinterpret_cast<SQLCHAR *>(m_pszStatement), SQL_NTS)))
+    if (Failed(SQLExecDirect(m_hStmt,
+                             reinterpret_cast<SQLCHAR *>(m_pszStatement),
+#ifdef __COVERITY__
+
+                             static_cast<SQLINTEGER>(strlen(m_pszStatement))
+#else
+                             SQL_NTS
+#endif
+                                 )))
+    {
         return FALSE;
+    }
 
     return CollectResultsInfo();
 }

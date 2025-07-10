@@ -73,6 +73,10 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     nRasterYSize = poDS->GetRasterYSize() / (1 << (iOverview + 1));
 
 #if ECWSDK_VERSION >= 51
+// undefine min macro if any
+#ifdef min
+#undef min
+#endif
     if (poDSIn->bIsJPEG2000 && poDSIn->poFileView)
     {
         UINT32 nTileWidth = 0;
@@ -869,7 +873,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Can we perform direct loads, or must we load into a working     */
     /*      buffer, and transform?                                          */
     /* -------------------------------------------------------------------- */
-    const int nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
+    const int nRawPixelSize = GDALGetDataTypeSizeBytes(poGDS->eRasterDataType);
 
     int bDirect = nPixelSpace == 1 && eBufType == GDT_Byte &&
                   nNewXSize == nBufXSize && nNewYSize == nBufYSize;
@@ -1008,7 +1012,7 @@ CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Default line and pixel spacing if needed.                       */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(eBufType) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(eBufType);
 
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
@@ -1061,8 +1065,8 @@ CPLErr ECWRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nYOff + nYSize > nRasterYSize)
         nYSize = nRasterYSize - nYOff;
 
-    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
-    int nLineSpace = nPixelSpace * nBlockXSize;
+    const GSpacing nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
+    const GSpacing nLineSpace = nPixelSpace * nBlockXSize;
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -1292,19 +1296,14 @@ void ECWDataset::CleanupStatistics()
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ECWDataset::SetGeoTransform(double *padfGeoTransform)
+CPLErr ECWDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (bIsJPEG2000 || eAccess == GA_ReadOnly)
-        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+        return GDALPamDataset::SetGeoTransform(gt);
 
-    if (!bGeoTransformValid || adfGeoTransform[0] != padfGeoTransform[0] ||
-        adfGeoTransform[1] != padfGeoTransform[1] ||
-        adfGeoTransform[2] != padfGeoTransform[2] ||
-        adfGeoTransform[3] != padfGeoTransform[3] ||
-        adfGeoTransform[4] != padfGeoTransform[4] ||
-        adfGeoTransform[5] != padfGeoTransform[5])
+    if (!bGeoTransformValid || gt != m_gt)
     {
-        memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
+        m_gt = gt;
         bGeoTransformValid = TRUE;
         bHdrDirty = TRUE;
         bGeoTransformChanged = TRUE;
@@ -1645,10 +1644,10 @@ void ECWDataset::WriteHeader()
 
     if (bGeoTransformChanged)
     {
-        psEditInfo->fOriginX = adfGeoTransform[0];
-        psEditInfo->fCellIncrementX = adfGeoTransform[1];
-        psEditInfo->fOriginY = adfGeoTransform[3];
-        psEditInfo->fCellIncrementY = adfGeoTransform[5];
+        psEditInfo->fOriginX = m_gt[0];
+        psEditInfo->fCellIncrementX = m_gt[1];
+        psEditInfo->fOriginY = m_gt[3];
+        psEditInfo->fCellIncrementY = m_gt[5];
         CPLDebug("ECW", "Rewrite Geotransform");
     }
 
@@ -1780,13 +1779,15 @@ CPLErr ECWDataset::RunDeferredAdviseRead()
     /* -------------------------------------------------------------------- */
     /*      Adjust band numbers to be zero based.                           */
     /* -------------------------------------------------------------------- */
-    int *panAdjustedBandList = (int *)CPLMalloc(sizeof(int) * nBandCount);
+    UINT32 *panAdjustedBandList =
+        (UINT32 *)CPLMalloc(sizeof(UINT32) * nBandCount);
     nBandIndexToPromoteTo8Bit = -1;
     for (int ii = 0; ii < nBandCount; ii++)
     {
-        panAdjustedBandList[ii] =
-            (panBandList != nullptr) ? panBandList[ii] - 1 : ii;
-        if (((ECWRasterBand *)GetRasterBand(panAdjustedBandList[ii] + 1))
+        const int nIdx = (panBandList != nullptr) ? panBandList[ii] - 1 : ii;
+        ;
+        panAdjustedBandList[ii] = nIdx;
+        if (cpl::down_cast<ECWRasterBand *>(GetRasterBand(nIdx + 1))
                 ->bPromoteTo8Bit)
             nBandIndexToPromoteTo8Bit = ii;
     }
@@ -1800,8 +1801,8 @@ CPLErr ECWDataset::RunDeferredAdviseRead()
     /*      Set the new requested window.                                   */
     /* -------------------------------------------------------------------- */
     CNCSError oErr = poFileView->SetView(
-        nBandCount, (UINT32 *)panAdjustedBandList, nXOff, nYOff,
-        nXOff + nXSize - 1, nYOff + nYSize - 1, nBufXSize, nBufYSize);
+        nBandCount, panAdjustedBandList, nXOff, nYOff, nXOff + nXSize - 1,
+        nYOff + nYSize - 1, nBufXSize, nBufYSize);
 
     CPLFree(panAdjustedBandList);
     if (oErr.GetErrorNumber() != NCS_SUCCESS)
@@ -1845,7 +1846,8 @@ CPLErr ECWDataset::RunDeferredAdviseRead()
     papCurLineBuf = (void **)CPLMalloc(sizeof(void *) * nWinBandCount);
     for (int iBand = 0; iBand < nWinBandCount; iBand++)
         papCurLineBuf[iBand] =
-            CPLMalloc(nBufXSize * (GDALGetDataTypeSize(eRasterDataType) / 8));
+            CPLMalloc(static_cast<size_t>(nBufXSize) *
+                      GDALGetDataTypeSizeBytes(eRasterDataType));
 
     CPLFree(panBandList);
 
@@ -1875,7 +1877,7 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
     /*      Provide default buffer organization.                            */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(eDT) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(eDT);
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
     if (nBandSpace == 0)
@@ -1975,7 +1977,7 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
             }
 
             GDALCopyWords(papCurLineBuf[iWinBand], eRasterDataType,
-                          GDALGetDataTypeSize(eRasterDataType) / 8,
+                          GDALGetDataTypeSizeBytes(eRasterDataType),
                           pabyData + nBandSpace * iBand + iBufLine * nLineSpace,
                           eDT, (int)nPixelSpace, nBufXSize);
         }
@@ -2068,7 +2070,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (bUseOldBandRasterIOImplementation)
         /* Sanity check. Should not happen */
         return CE_Failure;
-    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(eRasterDataType);
 
     if (nPixelSpace == 0)
     {
@@ -2089,7 +2091,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if ((nBufXSize > nXSize || nBufYSize > nYSize) &&
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
     {
-        int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
+        const int nBufDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         GByte *pabyTemp = (GByte *)VSI_MALLOC3_VERBOSE(
             nXSize, nYSize, nBufDataTypeSize * nBandCount);
         if (pabyTemp == nullptr)
@@ -2192,16 +2194,16 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             sCachedMultiBandIO.pabyData != nullptr)
         {
             int j;
-            int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
             for (j = 0; j < nBufYSize; j++)
             {
-                GDALCopyWords(sCachedMultiBandIO.pabyData +
-                                  (*panBandMap - 1) * nBufXSize * nBufYSize *
-                                      nBufTypeSize +
-                                  j * nBufXSize * nBufTypeSize,
-                              eBufType, nBufTypeSize,
-                              ((GByte *)pData) + j * nLineSpace, eBufType,
-                              (int)nPixelSpace, nBufXSize);
+                GDALCopyWords(
+                    sCachedMultiBandIO.pabyData +
+                        static_cast<size_t>(*panBandMap - 1) * nBufXSize *
+                            nBufYSize * nBufTypeSize +
+                        static_cast<size_t>(j) * nBufXSize * nBufTypeSize,
+                    eBufType, nBufTypeSize, ((GByte *)pData) + j * nLineSpace,
+                    eBufType, (int)nPixelSpace, nBufXSize);
             }
             return CE_None;
         }
@@ -2316,13 +2318,14 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         sCachedMultiBandIO.eBufType = eBufType;
         sCachedMultiBandIO.nBandsTried = 1;
 
-        int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+        const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
 
         if (sCachedMultiBandIO.bEnabled)
         {
-            GByte *pNew = (GByte *)VSIRealloc(sCachedMultiBandIO.pabyData,
-                                              nBufXSize * nBufYSize * nBands *
-                                                  nBufTypeSize);
+            GByte *pNew =
+                (GByte *)VSIRealloc(sCachedMultiBandIO.pabyData,
+                                    static_cast<size_t>(nBufXSize) * nBufYSize *
+                                        nBands * nBufTypeSize);
             if (pNew == nullptr)
                 CPLFree(sCachedMultiBandIO.pabyData);
             sCachedMultiBandIO.pabyData = pNew;
@@ -2334,7 +2337,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             nBandIndexToPromoteTo8Bit = -1;
             for (i = 0; i < nBands; i++)
             {
-                if (((ECWRasterBand *)GetRasterBand(i + 1))->bPromoteTo8Bit)
+                if (cpl::down_cast<ECWRasterBand *>(GetRasterBand(i + 1))
+                        ->bPromoteTo8Bit)
                     nBandIndexToPromoteTo8Bit = i;
                 anBandIndices[i] = i;
             }
@@ -2363,7 +2367,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             for (j = 0; j < nBufYSize; j++)
             {
                 GDALCopyWords(
-                    sCachedMultiBandIO.pabyData + j * nBufXSize * nBufTypeSize,
+                    sCachedMultiBandIO.pabyData +
+                        static_cast<size_t>(j) * nBufXSize * nBufTypeSize,
                     eBufType, nBufTypeSize, ((GByte *)pData) + j * nLineSpace,
                     eBufType, (int)nPixelSpace, nBufXSize);
             }
@@ -2465,12 +2470,12 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
     /* -------------------------------------------------------------------- */
     /*      Setup working scanline, and the pointers into it.               */
     /* -------------------------------------------------------------------- */
-    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    const int nDataTypeSizeBytes = GDALGetDataTypeSizeBytes(eRasterDataType);
     bool bDirect =
-        (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace &&
+        (eBufType == eRasterDataType) && nDataTypeSizeBytes == nPixelSpace &&
         nLineSpace == (nPixelSpace * nBufXSize) &&
         nBandSpace ==
-            (static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize);
+            (static_cast<GSpacing>(nDataTypeSizeBytes) * nBufXSize * nBufYSize);
     if (bDirect)
     {
         return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,
@@ -2480,12 +2485,13 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
     CPLDebug("ECW", "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.",
              nBufXSize, nBufYSize);
     CPLErr eErr = CE_None;
-    GByte *pabyBILScanline =
-        (GByte *)CPLMalloc(nBufXSize * nDataTypeSize * nBandCount);
+    GByte *pabyBILScanline = (GByte *)CPLMalloc(
+        static_cast<size_t>(nBufXSize) * nDataTypeSizeBytes * nBandCount);
     GByte **papabyBIL = (GByte **)CPLMalloc(nBandCount * sizeof(void *));
 
     for (i = 0; i < nBandCount; i++)
-        papabyBIL[i] = pabyBILScanline + i * nBufXSize * nDataTypeSize;
+        papabyBIL[i] = pabyBILScanline +
+                       static_cast<size_t>(i) * nBufXSize * nDataTypeSizeBytes;
 
     /* -------------------------------------------------------------------- */
     /*      Read back all the data for the requested view.                  */
@@ -2514,8 +2520,9 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
                 }
             }
 
-            GDALCopyWords(pabyBILScanline + i * nDataTypeSize * nBufXSize,
-                          eRasterDataType, nDataTypeSize,
+            GDALCopyWords(pabyBILScanline + static_cast<size_t>(i) *
+                                                nDataTypeSizeBytes * nBufXSize,
+                          eRasterDataType, nDataTypeSizeBytes,
                           ((GByte *)pData) + nLineSpace * iScanline +
                               nBandSpace * i,
                           eBufType, (int)nPixelSpace, nBufXSize);
@@ -2955,9 +2962,9 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
         if (!poDS->bGeoTransformValid)
         {
             poDS->bGeoTransformValid |=
-                GDALReadWorldFile2(osFilename, nullptr, poDS->adfGeoTransform,
+                GDALReadWorldFile2(osFilename, nullptr, poDS->m_gt,
                                    poOpenInfo->GetSiblingFiles(), nullptr) ||
-                GDALReadWorldFile2(osFilename, ".wld", poDS->adfGeoTransform,
+                GDALReadWorldFile2(osFilename, ".wld", poDS->m_gt,
                                    poOpenInfo->GetSiblingFiles(), nullptr);
         }
     }
@@ -3408,12 +3415,12 @@ void ECWDataset::ECW2WKTProjection()
     {
         bGeoTransformValid = TRUE;
 
-        adfGeoTransform[0] = psFileInfo->fOriginX;
-        adfGeoTransform[1] = psFileInfo->fCellIncrementX;
-        adfGeoTransform[2] = 0.0;
+        m_gt[0] = psFileInfo->fOriginX;
+        m_gt[1] = psFileInfo->fCellIncrementX;
+        m_gt[2] = 0.0;
 
-        adfGeoTransform[3] = psFileInfo->fOriginY;
-        adfGeoTransform[4] = 0.0;
+        m_gt[3] = psFileInfo->fOriginY;
+        m_gt[4] = 0.0;
 
         /* By default, set Y-resolution negative assuming images always */
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
@@ -3423,9 +3430,9 @@ void ECWDataset::ECW2WKTProjection()
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if (CPLTestBool(CPLGetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")))
-            adfGeoTransform[5] = -fabs(psFileInfo->fCellIncrementY);
+            m_gt[5] = -fabs(psFileInfo->fCellIncrementY);
         else
-            adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+            m_gt[5] = psFileInfo->fCellIncrementY;
     }
 
     /* -------------------------------------------------------------------- */

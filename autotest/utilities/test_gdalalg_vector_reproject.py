@@ -96,3 +96,17 @@ def test_gdalalg_vector_reproject_active_layer():
     out_lyr = out_ds.GetLayer(1)
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(out_f, "POINT (3 0)")
+
+
+def test_gdalalg_vector_reproject_complete_dst_crs():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector reproject ../ogr/data/poly.shp --dst-crs=EPSG:"
+    )
+    assert "4326\\ --" in out
+    assert "2193\\ --" not in out  # NZGD2000

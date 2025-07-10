@@ -26,22 +26,24 @@ GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       /* standaloneStep =*/false)
 {
-    AddOutputArgs(/* hiddenForCLI = */ false);
+    AddRasterOutputArgs(/* hiddenForCLI = */ false);
 }
 
 /************************************************************************/
 /*                  GDALRasterWriteAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALRasterWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
-                                       void *pProgressData)
+bool GDALRasterWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (m_format == "stream")
     {
-        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+        m_outputDataset.Set(poSrcDS);
         return true;
     }
 
@@ -71,7 +73,7 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
     const std::string osLastErrorMsg = CPLGetLastErrorMsg();
     const auto nLastErrorCounter = CPLGetErrorCounter();
 
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+    GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
     auto poRetDS = GDALDataset::FromHandle(GDALTranslate(
         m_outputDataset.GetName().c_str(), hSrcDS, psOptions, nullptr));
     GDALTranslateOptionsFree(psOptions);

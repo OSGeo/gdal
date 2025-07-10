@@ -261,9 +261,8 @@ CPLXMLNode *GDALPamDataset::SerializeToXML(const char *pszUnused)
     {
         CPLString oFmt;
         oFmt.Printf("%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
-                    psPam->adfGeoTransform[0], psPam->adfGeoTransform[1],
-                    psPam->adfGeoTransform[2], psPam->adfGeoTransform[3],
-                    psPam->adfGeoTransform[4], psPam->adfGeoTransform[5]);
+                    psPam->gt[0], psPam->gt[1], psPam->gt[2], psPam->gt[3],
+                    psPam->gt[4], psPam->gt[5]);
         CPLSetXMLValue(psDSTree, "GeoTransform", oFmt);
     }
 
@@ -354,7 +353,7 @@ void GDALPamDataset::PamInitialize()
 
     if (!CPLTestBool(CPLGetConfigOption("GDAL_PAM_ENABLED", pszPamDefault)))
     {
-        CPLDebug("GDAL", "PAM is disabled");
+        CPLDebugOnce("GDAL", "PAM is disabled");
         nPamFlags |= GPF_DISABLED;
     }
 
@@ -453,7 +452,7 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
         else
         {
             for (int iTA = 0; iTA < 6; iTA++)
-                psPam->adfGeoTransform[iTA] = CPLAtof(aosTokens[iTA]);
+                psPam->gt[iTA] = CPLAtof(aosTokens[iTA]);
             psPam->bHaveGeoTransform = TRUE;
         }
     }
@@ -621,31 +620,27 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
                 }
                 if (adfCoeffX.size() == 3 && adfCoeffY.size() == 3)
                 {
-                    psPam->adfGeoTransform[0] = adfCoeffX[0];
-                    psPam->adfGeoTransform[1] = adfCoeffX[1];
+                    psPam->gt[0] = adfCoeffX[0];
+                    psPam->gt[1] = adfCoeffX[1];
                     // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
                     // when comparing the .pgwx world file and .png.aux.xml file,
                     // it appears that the sign of the coefficients for the line
                     // terms must be negated (which is a bit in line with the
                     // negation of dfGCPLine in the above GCP case)
-                    psPam->adfGeoTransform[2] = -adfCoeffX[2];
-                    psPam->adfGeoTransform[3] = adfCoeffY[0];
-                    psPam->adfGeoTransform[4] = adfCoeffY[1];
-                    psPam->adfGeoTransform[5] = -adfCoeffY[2];
+                    psPam->gt[2] = -adfCoeffX[2];
+                    psPam->gt[3] = adfCoeffY[0];
+                    psPam->gt[4] = adfCoeffY[1];
+                    psPam->gt[5] = -adfCoeffY[2];
 
                     // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
                     // when comparing the .pgwx world file and .png.aux.xml file,
                     // one can see that they have the same origin, so knowing
                     // that world file uses a center-of-pixel convention,
                     // correct from center of pixel to top left of pixel
-                    psPam->adfGeoTransform[0] -=
-                        0.5 * psPam->adfGeoTransform[1];
-                    psPam->adfGeoTransform[0] -=
-                        0.5 * psPam->adfGeoTransform[2];
-                    psPam->adfGeoTransform[3] -=
-                        0.5 * psPam->adfGeoTransform[4];
-                    psPam->adfGeoTransform[3] -=
-                        0.5 * psPam->adfGeoTransform[5];
+                    psPam->gt[0] -= 0.5 * psPam->gt[1];
+                    psPam->gt[0] -= 0.5 * psPam->gt[2];
+                    psPam->gt[3] -= 0.5 * psPam->gt[4];
+                    psPam->gt[3] -= 0.5 * psPam->gt[5];
 
                     psPam->bHaveGeoTransform = TRUE;
                 }
@@ -1147,14 +1142,14 @@ CPLErr GDALPamDataset::CloneInfo(GDALDataset *poSrcDS, int nCloneFlags)
     /* -------------------------------------------------------------------- */
     if (nCloneFlags & GCIF_GEOTRANSFORM)
     {
-        double adfGeoTransform[6] = {0.0};
+        GDALGeoTransform gt;
 
-        if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
         {
-            double adfOldGT[6] = {0.0};
+            GDALGeoTransform oldGT;
 
-            if (!bOnlyIfMissing || GetGeoTransform(adfOldGT) != CE_None)
-                SetGeoTransform(adfGeoTransform);
+            if (!bOnlyIfMissing || GetGeoTransform(oldGT) != CE_None)
+                SetGeoTransform(gt);
         }
     }
 
@@ -1382,24 +1377,23 @@ CPLErr GDALPamDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALPamDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALPamDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (psPam && psPam->bHaveGeoTransform)
     {
-        memcpy(padfTransform, psPam->adfGeoTransform.data(),
-               sizeof(psPam->adfGeoTransform));
+        gt = psPam->gt;
         return CE_None;
     }
 
-    return GDALDataset::GetGeoTransform(padfTransform);
+    return GDALDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALPamDataset::SetGeoTransform(double *padfTransform)
+CPLErr GDALPamDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     PamInitialize();
@@ -1407,13 +1401,12 @@ CPLErr GDALPamDataset::SetGeoTransform(double *padfTransform)
     if (psPam)
     {
         MarkPamDirty();
-        psPam->bHaveGeoTransform = TRUE;
-        memcpy(psPam->adfGeoTransform.data(), padfTransform,
-               sizeof(psPam->adfGeoTransform));
+        psPam->bHaveGeoTransform = true;
+        psPam->gt = gt;
         return (CE_None);
     }
 
-    return GDALDataset::SetGeoTransform(padfTransform);
+    return GDALDataset::SetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -1680,7 +1673,7 @@ CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
     /* -------------------------------------------------------------------- */
     /*      Geotransform.                                                   */
     /* -------------------------------------------------------------------- */
-    if (poAuxDS->GetGeoTransform(psPam->adfGeoTransform.data()) == CE_None)
+    if (poAuxDS->GetGeoTransform(psPam->gt) == CE_None)
         psPam->bHaveGeoTransform = TRUE;
 
     /* -------------------------------------------------------------------- */

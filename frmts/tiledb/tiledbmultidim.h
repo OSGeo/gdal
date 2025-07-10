@@ -109,7 +109,7 @@ class TileDBAttributeHolder
                     uint32_t value_num, const void *value);
 
   public:
-    virtual ~TileDBAttributeHolder() = 0;
+    virtual ~TileDBAttributeHolder();
 
     virtual bool IIsWritable() const = 0;
     virtual const std::string &IGetFullName() const = 0;
@@ -510,8 +510,8 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 // in TileDB terminology maps to a TileDB metadata item.
 class TileDBAttribute final : public GDALAttribute
 {
-    std::shared_ptr<GDALAttribute> m_poMemAttribute;
-    std::weak_ptr<TileDBAttributeHolder> m_poParent;
+    std::shared_ptr<GDALAttribute> m_poMemAttribute{};
+    std::weak_ptr<TileDBAttributeHolder> m_poParent{};
 
     TileDBAttribute(const std::string &osParentName, const std::string &osName);
 
@@ -562,10 +562,7 @@ class TileDBDimension final : public GDALDimension
     {
     }
 
-    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override
-    {
-        return m_poIndexingVariable;
-    }
+    std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
 
     void SetIndexingVariableOneTime(
         const std::shared_ptr<GDALMDArray> &poIndexingVariable)
@@ -617,10 +614,7 @@ class TileDBMultiDimDataset final : public GDALDataset
     {
     }
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override
-    {
-        return m_poRG;
-    }
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
 };
 
 #endif  // TILEDBMULTIDIM_H_INCLUDED

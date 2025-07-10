@@ -168,8 +168,8 @@ void GDALPamProxyDB::LoadDB()
         }
         iNext++;
 
-        aosOriginalFiles.push_back(osOriginal);
-        aosProxyFiles.push_back(osProxy);
+        aosOriginalFiles.push_back(std::move(osOriginal));
+        aosProxyFiles.push_back(std::move(osProxy));
     }
 
     CPLFree(pszDBData);
@@ -414,8 +414,8 @@ const char *PamAllocateProxy(const char *pszOriginal)
     /*      Add the proxy and the original to the proxy list and resave     */
     /*      the database.                                                   */
     /* -------------------------------------------------------------------- */
-    poProxyDB->aosOriginalFiles.push_back(osOriginal);
-    poProxyDB->aosProxyFiles.push_back(osProxy);
+    poProxyDB->aosOriginalFiles.push_back(std::move(osOriginal));
+    poProxyDB->aosProxyFiles.push_back(std::move(osProxy));
 
     poProxyDB->SaveDB();
 

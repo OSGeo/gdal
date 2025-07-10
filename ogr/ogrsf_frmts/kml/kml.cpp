@@ -27,12 +27,7 @@
 
 constexpr int PARSER_BUF_SIZE = 8192;
 
-KML::KML()
-    : poTrunk_(nullptr), nNumLayers_(-1), papoLayers_(nullptr), nDepth_(0),
-      validity(KML_VALIDITY_UNKNOWN), pKMLFile_(nullptr), poCurrent_(nullptr),
-      oCurrentParser(nullptr), nDataHandlerCounter(0), nWithoutEventCounter(0)
-{
-}
+KML::KML() = default;
 
 KML::~KML()
 {
@@ -87,7 +82,8 @@ bool KML::parse()
     do
     {
         nDataHandlerCounter = 0;
-        nLen = (unsigned)VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_);
+        nLen = static_cast<unsigned>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_));
         nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
@@ -194,8 +190,8 @@ void KML::checkValidity()
                     CE_Failure, CPLE_AppDefined,
                     "XML parsing of KML file failed : %s at line %d, column %d",
                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                    (int)XML_GetCurrentLineNumber(oParser),
-                    (int)XML_GetCurrentColumnNumber(oParser));
+                    static_cast<int>(XML_GetCurrentLineNumber(oParser)),
+                    static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             }
 
             validity = KML_VALIDITY_INVALID;
@@ -445,7 +441,7 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
                             std::string sTmp(pszData + nLineStartPos,
                                              nPos - nLineStartPos);
                             if (!sDataWithoutNL.empty())
-                                sDataWithoutNL += " ";
+                                sDataWithoutNL += '\n';
                             sDataWithoutNL += sTmp;
                             bLineStart = true;
                         }
@@ -465,7 +461,7 @@ void XMLCALL KML::endElement(void *pUserData, const char *pszName)
                         std::string sTmp(pszData + nLineStartPos,
                                          nPos - nLineStartPos);
                         if (!sDataWithoutNL.empty())
-                            sDataWithoutNL += " ";
+                            sDataWithoutNL += '\n';
                         sDataWithoutNL += sTmp;
                     }
 

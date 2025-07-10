@@ -36,8 +36,10 @@ class GDALRasterColorMapAlgorithm /* non final */
 
     explicit GDALRasterColorMapAlgorithm(bool standaloneStep = false);
 
+    bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const override;
+
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     std::string m_colorMap{};
@@ -57,6 +59,8 @@ class GDALRasterColorMapAlgorithmStandalone final
         : GDALRasterColorMapAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterColorMapAlgorithmStandalone() override;
 };
 
 //! @endcond

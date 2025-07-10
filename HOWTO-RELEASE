@@ -367,3 +367,5 @@ or your message manually approved, with an administrator of the list.
     c) Click on the Activate button
     d) Go to https://readthedocs.org/projects/gdal/, and in the "Compile a version" drop-down list,
        select the newt "release-X.Y" label and click on the "Compile a version" button
+    e) Go to https://github.com/OSGeo/gdal/settings/variables/actions/STABLE_BRANCH and update it
+    f) In the release/X.Y GDAL github branch, update the branch name of "source_file_url_template" in doc/source/conf.py

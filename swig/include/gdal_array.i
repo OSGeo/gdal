@@ -26,8 +26,16 @@
 
 %include "cplvirtualmem.i"
 
+// SWIG 4.4.0 now uses a 2 stage module initialization, and the below
+// initialization code is included in a SWIG_mod_exec() function that returns
+// 0 on success, hence the use of import_array1(). Prior SWIG versions included
+// the code directly in SWIG_init() that returns a NULL pointer on error.
 %init %{
+#if SWIG_VERSION >= 0x040400
+  import_array1(-1);
+#else
   import_array();
+#endif
   PyDateTime_IMPORT;
   GDALRegister_NUMPY();
 %}
@@ -64,6 +72,7 @@ typedef void GDALRasterBandShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterAttributeTableShadow;
 #endif
+typedef void GDALComputedRasterBandShadow;
 
 // Declaration from memmultidim.h
 std::shared_ptr<GDALMDArray> CPL_DLL MEMGroupCreateMDArray(GDALGroup* poGroup,
@@ -84,25 +93,25 @@ typedef char retStringAndCPLFree;
 
 class NUMPYDataset : public GDALDataset
 {
-    PyArrayObject *psArray;
+    PyArrayObject *psArray = nullptr;
 
-    int           bValidGeoTransform;
-    double	  adfGeoTransform[6];
+    bool             bValidGeoTransform = false;
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
-    int           nGCPCount;
-    GDAL_GCP      *pasGCPList;
-    OGRSpatialReference m_oGCPSRS{};;
+    int           nGCPCount = 0;
+    GDAL_GCP      *pasGCPList = nullptr;
+    OGRSpatialReference m_oGCPSRS{};
 
   public:
-                 NUMPYDataset();
+                 NUMPYDataset() = default;
                  ~NUMPYDataset();
 
     const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    virtual CPLErr GetGeoTransform( GDALGeoTransform& gt ) const override;
+    virtual CPLErr SetGeoTransform( const GDALGeoTransform& gt ) override;
 
     virtual int    GetGCPCount() override;
     const OGRSpatialReference* GetGCPSpatialRef() const override;
@@ -139,26 +148,6 @@ static void GDALRegister_NUMPY(void)
         GetGDALDriverManager()->RegisterDriver( poDriver );
 
     }
-}
-
-/************************************************************************/
-/*                            NUMPYDataset()                            */
-/************************************************************************/
-
-NUMPYDataset::NUMPYDataset()
-
-{
-    psArray = NULL;
-    bValidGeoTransform = FALSE;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
-    pasGCPList = NULL;
 }
 
 /************************************************************************/
@@ -212,10 +201,10 @@ CPLErr NUMPYDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
+CPLErr NUMPYDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    gt = m_gt;
     if( bValidGeoTransform )
         return CE_None;
     else
@@ -226,11 +215,11 @@ CPLErr NUMPYDataset::GetGeoTransform( double * padfTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NUMPYDataset::SetGeoTransform( double * padfTransform )
+CPLErr NUMPYDataset::SetGeoTransform(const GDALGeoTransform& gt)
 
 {
-    bValidGeoTransform = TRUE;
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+    bValidGeoTransform = true;
+    m_gt = gt;
     return( CE_None );
 }
 
@@ -2040,7 +2029,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     PyArrayObject* ar;
     int flags = (readonly) ? 0x1 : 0x1 | 0x0400;
-    int nDataTypeSize = GDALGetDataTypeSize(datatype) / 8;
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(datatype);
     if( bAuto )
     {
         if( nBandCount == 1 )
@@ -2098,8 +2087,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     else
     {
-        npy_intp nTilesPerRow = static_cast<npy_intp>((nBufXSize + nTileXSize - 1) / nTileXSize);
-        npy_intp nTilesPerCol = static_cast<npy_intp>((nBufYSize + nTileYSize - 1) / nTileYSize);
+        npy_intp nTilesPerRow = static_cast<npy_intp>(DIV_ROUND_UP(nBufXSize, nTileXSize));
+        npy_intp nTilesPerCol = static_cast<npy_intp>(DIV_ROUND_UP(nBufYSize, nTileYSize));
         npy_intp shape[5], stride[5];
         if( nBandCount == 1 )
         {
@@ -2389,6 +2378,8 @@ np_class_to_gdal_code = { v : k for k, v in codes.items() }
 # since several things map to complex64 we must carefully select
 # the opposite that is an exact match (ticket 1518)
 np_class_to_gdal_code[numpy.complex64] = gdalconst.GDT_CFloat32
+# also recognize numpy bool arrays
+np_class_to_gdal_code[numpy.bool_] = gdalconst.GDT_Byte
 np_dtype_to_gdal_code = { numpy.dtype(k) : v for k, v in np_class_to_gdal_code.items() }
 
 def OpenArray(array, prototype_ds=None, interleave='band'):

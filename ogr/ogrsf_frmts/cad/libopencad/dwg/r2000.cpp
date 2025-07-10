@@ -3105,14 +3105,14 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
                     stLStyle.adfAreaFillParameters.push_back( buffer.ReadBITDOUBLE() );
             }
 
-            stVertex.astLStyles.push_back( stLStyle );
+            stVertex.astLStyles.push_back( std::move(stLStyle) );
             if( buffer.IsEOB() )
             {
                 delete mline;
                 return nullptr;
             }
         }
-        mline->avertVertices.push_back( stVertex );
+        mline->avertVertices.push_back( std::move(stVertex) );
     }
 
     if( mline->stCed.bbEntMode == 0 )

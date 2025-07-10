@@ -176,7 +176,7 @@ class OGRElasticLayer final : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK) override;
 
-    virtual const char *GetName() override
+    const char *GetName() override
     {
         return m_poFeatureDefn->GetName();
     }
@@ -280,12 +280,14 @@ class OGRElasticAggregationLayer final
     CPLJSONObject m_oAggregatedFieldsRequest{};
     std::vector<std::unique_ptr<OGRFeature>> m_apoCachedFeatures{};
 
-    explicit OGRElasticAggregationLayer(OGRElasticDataSource *poDS);
     std::string BuildRequest();
     void IssueAggregationRequest();
     OGRFeature *GetNextRawFeature();
 
   public:
+    // Do not use directly. Use Build() static method instead
+    explicit OGRElasticAggregationLayer(OGRElasticDataSource *poDS);
+
     ~OGRElasticAggregationLayer() override;
 
     OGRFeatureDefn *GetLayerDefn() override
@@ -358,7 +360,7 @@ class OGRElasticDataSource final : public GDALDataset
         return m_osURL.c_str();
     }
 
-    virtual const char *GetName()
+    const char *GetName()
     {
         return m_pszName;
     }

@@ -14,6 +14,8 @@ or anywhere in GDAL API or command line utilities where a raster input dataset
 is expected. GDALG files are conceptually close to :ref:`VRT (Virtual) files <raster.vrt>`,
 although the implementation is substantially different.
 
+.. note:: GDALG is the contraction of GDAL and ALGorithm.
+
 In-process stream execution
 ---------------------------
 
@@ -21,7 +23,7 @@ For algorithms that support GDALG output, it is also possible to use the
 ``stream`` output format to indicate that a raster or vector streamed dataset
 must be returned.
 
-For example the following snippet, runs that "gdal vector geom set-type"
+For example the following snippet, runs that "gdal vector set-type"
 algorithm on a source dataset and iterates over features from the returned
 streamed dataset.
 

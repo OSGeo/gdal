@@ -35,8 +35,12 @@ class S104Dataset final : public S100BaseDataset
     {
     }
 
+    ~S104Dataset() override;
+
     static GDALDataset *Open(GDALOpenInfo *);
 };
+
+S104Dataset::~S104Dataset() = default;
 
 /************************************************************************/
 /*                            S104RasterBand                            */
@@ -50,6 +54,8 @@ class S104RasterBand final : public GDALProxyRasterBand
     std::string m_osUnitType{};
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
+    CPL_DISALLOW_COPY_ASSIGN(S104RasterBand)
+
   public:
     explicit S104RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
         : m_poDS(std::move(poDSIn)),
@@ -60,10 +66,7 @@ class S104RasterBand final : public GDALProxyRasterBand
     }
 
     GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override
-    {
-        return m_poUnderlyingBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override;
 
     const char *GetUnitType() override
     {
@@ -75,6 +78,12 @@ class S104RasterBand final : public GDALProxyRasterBand
         return m_poRAT.get();
     }
 };
+
+GDALRasterBand *
+S104RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return m_poUnderlyingBand;
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -215,8 +224,8 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
     // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poWaterLevel01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
+    poDS->m_bHasGT =
+        S100GetGeoTransform(poWaterLevel01.get(), poDS->m_gt, bNorthUp);
 
     if (osGroup.empty())
     {

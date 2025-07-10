@@ -12,6 +12,7 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <array>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -204,16 +205,77 @@ namespace viewshed
 namespace
 {
 
-bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
-                   double *pRevTransform)
+bool getTransforms(GDALRasterBand &band, GDALGeoTransform &fwdTransform,
+                   GDALGeoTransform &revTransform)
 {
-    band.GetDataset()->GetGeoTransform(pFwdTransform);
-    if (!GDALInvGeoTransform(pFwdTransform, pRevTransform))
+    band.GetDataset()->GetGeoTransform(fwdTransform);
+    if (!fwdTransform.GetInverse(revTransform))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return false;
     }
     return true;
+}
+
+/// Shrink the extent of a window to just cover the slice defined by rays from
+/// (nX, nY) and [startAngle, endAngle]
+///
+/// @param oOutExtent  Window to modify
+/// @param nX  X coordinate of ray endpoint.
+/// @param nY  Y coordinate of ray endpoint.
+/// @param startAngle  Start angle of slice (standard mathmatics notion, in radians)
+/// @param endAngle  End angle of slice (standard mathmatics notion, in radians)
+void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
+                           double startAngle, double endAngle)
+{
+    /// NOTE: This probably doesn't work when the observer is outside the raster and
+    ///   needs to be enhanced for that case.
+
+    if (startAngle == endAngle)
+        return;
+
+    Window win = oOutExtent;
+
+    // Set the X boundaries for the angles
+    int startAngleX = hIntersect(startAngle, nX, nY, win);
+    int stopAngleX = hIntersect(endAngle, nX, nY, win);
+
+    int xmax = nX;
+    if (!rayBetween(startAngle, endAngle, 0))
+    {
+        xmax = std::max(xmax, startAngleX);
+        xmax = std::max(xmax, stopAngleX);
+        // Add one to xmax since we want one past the stop. [start, stop)
+        oOutExtent.xStop = std::min(oOutExtent.xStop, xmax + 1);
+    }
+
+    int xmin = nX;
+    if (!rayBetween(startAngle, endAngle, M_PI))
+    {
+        xmin = std::min(xmin, startAngleX);
+        xmin = std::min(xmin, stopAngleX);
+        oOutExtent.xStart = std::max(oOutExtent.xStart, xmin);
+    }
+
+    // Set the Y boundaries for the angles
+    int startAngleY = vIntersect(startAngle, nX, nY, win);
+    int stopAngleY = vIntersect(endAngle, nX, nY, win);
+
+    int ymin = nY;
+    if (!rayBetween(startAngle, endAngle, M_PI / 2))
+    {
+        ymin = std::min(ymin, startAngleY);
+        ymin = std::min(ymin, stopAngleY);
+        oOutExtent.yStart = std::max(oOutExtent.yStart, ymin);
+    }
+    int ymax = nY;
+    if (!rayBetween(startAngle, endAngle, 3 * M_PI / 2))
+    {
+        ymax = std::max(ymax, startAngleY);
+        ymax = std::max(ymax, stopAngleY);
+        // Add one to ymax since we want one past the stop. [start, stop)
+        oOutExtent.yStop = std::min(oOutExtent.yStop, ymax + 1);
+    }
 }
 
 }  // unnamed namespace
@@ -228,16 +290,24 @@ Viewshed::~Viewshed() = default;
 /// save the input raster extent.
 ///
 /// @return  false on error, true otherwise
-bool Viewshed::calcExtents(int nX, int nY,
-                           const std::array<double, 6> &adfInvTransform)
+bool Viewshed::calcExtents(int nX, int nY, const GDALGeoTransform &invGT)
 {
     // We start with the assumption that the output size matches the input.
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
     if (!oOutExtent.contains(nX, nY))
+    {
+        if (oOpts.startAngle != oOpts.endAngle)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Angle masking is not supported with an out-of-raster "
+                     "observer.");
+            return false;
+        }
         CPLError(CE_Warning, CPLE_AppDefined,
                  "NOTE: The observer location falls outside of the DEM area");
+    }
 
     constexpr double EPSILON = 1e-8;
     if (oOpts.maxDistance > 0)
@@ -246,19 +316,20 @@ bool Viewshed::calcExtents(int nX, int nY,
         //  Find the distance in the direction of the transformed unit vector in the X and Y
         //  directions and use those factors to determine the limiting values in the raster space.
         int nXStart = static_cast<int>(
-            std::floor(nX - adfInvTransform[1] * oOpts.maxDistance + EPSILON));
+            std::floor(nX - invGT[1] * oOpts.maxDistance + EPSILON));
         int nXStop = static_cast<int>(
-            std::ceil(nX + adfInvTransform[1] * oOpts.maxDistance - EPSILON) +
-            1);
+            std::ceil(nX + invGT[1] * oOpts.maxDistance - EPSILON) + 1);
+        //ABELL - These seem to be wrong. The transform of 1 is no transform, so not
+        //  sure why we're adding one in the first case. Really, the transformed distance
+        // should add EPSILON. Not sure what the change should be for a negative transform,
+        // which is what I think is being handled with the 1/0 addition/subtraction.
         int nYStart =
             static_cast<int>(std::floor(
-                nY - std::fabs(adfInvTransform[5]) * oOpts.maxDistance +
-                EPSILON)) -
-            (adfInvTransform[5] > 0 ? 1 : 0);
+                nY - std::fabs(invGT[5]) * oOpts.maxDistance + EPSILON)) -
+            (invGT[5] > 0 ? 1 : 0);
         int nYStop = static_cast<int>(
-            std::ceil(nY + std::fabs(adfInvTransform[5]) * oOpts.maxDistance -
-                      EPSILON) +
-            (adfInvTransform[5] < 0 ? 1 : 0));
+            std::ceil(nY + std::fabs(invGT[5]) * oOpts.maxDistance - EPSILON) +
+            (invGT[5] < 0 ? 1 : 0));
 
         // If the limits are invalid, set the window size to zero to trigger the error below.
         if (nXStart >= oOutExtent.xStop || nXStop < 0 ||
@@ -284,6 +355,8 @@ bool Viewshed::calcExtents(int nX, int nY,
         return false;
     }
 
+    shrinkWindowForAngles(oOutExtent, nX, nY, oOpts.startAngle, oOpts.endAngle);
+
     // normalize horizontal index to [ 0, oOutExtent.xSize() )
     oCurExtent = oOutExtent;
     oCurExtent.shiftX(-oOutExtent.xStart);
@@ -302,16 +375,13 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 {
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
-    std::array<double, 6> adfFwdTransform;
-    std::array<double, 6> adfInvTransform;
-    if (!getTransforms(*pSrcBand, adfFwdTransform.data(),
-                       adfInvTransform.data()))
+    GDALGeoTransform fwdTransform, invTransform;
+    if (!getTransforms(*pSrcBand, fwdTransform, invTransform))
         return false;
 
     // calculate observer position
     double dfX, dfY;
-    GDALApplyGeoTransform(adfInvTransform.data(), oOpts.observer.x,
-                          oOpts.observer.y, &dfX, &dfY);
+    invTransform.Apply(oOpts.observer.x, oOpts.observer.y, &dfX, &dfY);
     if (!GDALIsValueInRange<int>(dfX))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Observer X value out of range");
@@ -325,8 +395,43 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     int nX = static_cast<int>(dfX);
     int nY = static_cast<int>(dfY);
 
+    if (oOpts.startAngle < 0 || oOpts.startAngle >= 360)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Start angle out of range. Must be [0, 360).");
+        return false;
+    }
+    if (oOpts.endAngle < 0 || oOpts.endAngle >= 360)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "End angle out of range. Must be [0, 360).");
+        return false;
+    }
+    if (oOpts.highPitch > 90)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid highPitch. Cannot be greater than 90.");
+        return false;
+    }
+    if (oOpts.lowPitch < -90)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid lowPitch. Cannot be less than -90.");
+        return false;
+    }
+    if (oOpts.highPitch <= oOpts.lowPitch)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid pitch. highPitch must be > lowPitch");
+        return false;
+    }
+
+    // Normalize angle to radians and standard math arrangement.
+    oOpts.startAngle = normalizeAngle(oOpts.startAngle);
+    oOpts.endAngle = normalizeAngle(oOpts.endAngle);
+
     // Must calculate extents in order to make the output dataset.
-    if (!calcExtents(nX, nY, adfInvTransform))
+    if (!calcExtents(nX, nY, invTransform))
         return false;
 
     poDstDS = createOutputDataset(*pSrcBand, oOpts, oOutExtent);
@@ -368,6 +473,16 @@ double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
         }
     }
     return curveCoeff;
+}
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wmissing-declarations"
+#endif
+
+void testShrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
+                               double startAngle, double endAngle)
+{
+    shrinkWindowForAngles(oOutExtent, nX, nY, startAngle, endAngle);
 }
 
 }  // namespace viewshed

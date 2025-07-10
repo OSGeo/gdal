@@ -61,6 +61,10 @@ constexpr GUInt32 EXT_SHAPE_SEGMENT_ELLIPSE = 5;
 namespace OpenFileGDB
 {
 
+FileGDBGeomField::~FileGDBGeomField() = default;
+
+FileGDBRasterField::~FileGDBRasterField() = default;
+
 /************************************************************************/
 /*                           SanitizeScale()                            */
 /************************************************************************/
@@ -1040,7 +1044,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        const std::string osName(ReadUTF16String(pabyIter, nCarCount));
+        std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -1049,7 +1053,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        const std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
+        std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -1195,8 +1199,8 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
             }
 
             auto poField = std::make_unique<FileGDBField>(this);
-            poField->m_osName = osName;
-            poField->m_osAlias = osAlias;
+            poField->m_osName = std::move(osName);
+            poField->m_osAlias = std::move(osAlias);
             poField->m_eType = eType;
             poField->m_bNullable = (flags & FileGDBField::MASK_NULLABLE) != 0;
             poField->m_bRequired = (flags & FileGDBField::MASK_REQUIRED) != 0;
@@ -1221,8 +1225,8 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 poField = poRasterField;
             }
 
-            poField->m_osName = osName;
-            poField->m_osAlias = osAlias;
+            poField->m_osName = std::move(osName);
+            poField->m_osAlias = std::move(osAlias);
             poField->m_eType = eType;
             if (eType == FGFT_GEOMETRY)
                 m_iGeomField = static_cast<int>(m_apoFields.size());
@@ -2556,8 +2560,7 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     2 * nIdxNameCharCount,
                                 VSIFree(pabyIdx));
-        const std::string osIndexName(
-            ReadUTF16String(pabyCur, nIdxNameCharCount));
+        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCharCount));
         pabyCur += 2 * nIdxNameCharCount;
 
         // 4 "magic fields"
@@ -2626,7 +2629,7 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt16);
 
         auto poIndex = std::make_unique<FileGDBIndex>();
-        poIndex->m_osIndexName = osIndexName;
+        poIndex->m_osIndexName = std::move(osIndexName);
         poIndex->m_osExpression = osExpression;
 
         if (m_iObjectIdField < 0 ||
@@ -3203,6 +3206,8 @@ void FileGDBGeomField::SetMOriginScaleTolerance(double dfMOrigin,
     m_dfMTolerance = dfMTolerance;
 }
 
+FileGDBOGRGeometryConverter::~FileGDBOGRGeometryConverter() = default;
+
 /************************************************************************/
 /*                      FileGDBOGRGeometryConverterImpl                 */
 /************************************************************************/
@@ -3291,7 +3296,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd));
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
     returnErrorIf(nParts > static_cast<size_t>(pabyEnd - pabyCur));
-    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
+    returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32) - 1);
     if (bHasCurveDesc)
     {
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves));
@@ -3333,28 +3338,32 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
 class FileGDBOGRLineString : public OGRLineString
 {
   public:
-    FileGDBOGRLineString()
-    {
-    }
+    FileGDBOGRLineString() = default;
+
+    ~FileGDBOGRLineString() override;
 
     OGRRawPoint *GetPoints() const
     {
         return paoPoints;
     }
 };
+
+FileGDBOGRLineString::~FileGDBOGRLineString() = default;
 
 class FileGDBOGRLinearRing : public OGRLinearRing
 {
   public:
-    FileGDBOGRLinearRing()
-    {
-    }
+    FileGDBOGRLinearRing() = default;
+
+    ~FileGDBOGRLinearRing() override;
 
     OGRRawPoint *GetPoints() const
     {
         return paoPoints;
     }
 };
+
+FileGDBOGRLinearRing::~FileGDBOGRLinearRing() = default;
 
 class XYLineStringSetter
 {
@@ -3650,7 +3659,7 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     {
         returnError();
     }
-    const int nMaxSize = static_cast<int>(nMaxSize64);
+    const int nMaxSize = static_cast<int>(nMaxSize64 & INT_MAX);
     // coverity[overflow_sink]
     GByte *pabyExtShapeBuffer =
         static_cast<GByte *>(VSI_MALLOC_VERBOSE(nMaxSize));
@@ -4305,8 +4314,10 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             }
             int *panPartType =
                 static_cast<int *>(VSI_MALLOC_VERBOSE(sizeof(int) * nParts));
-            int *panPartStart =
-                static_cast<int *>(VSI_MALLOC_VERBOSE(sizeof(int) * nParts));
+            // The + 1 is to add an extra element, not actually used, but
+            // to please Coverity Scan
+            int *panPartStart = static_cast<int *>(
+                VSI_MALLOC_VERBOSE(sizeof(int) * (nParts + 1)));
             double *padfXYZ = static_cast<double *>(
                 VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints));
             double *padfX = padfXYZ;
@@ -4364,8 +4375,8 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             panPartStart[0] = 0;
             for (i = 1; i < nParts; ++i)
                 panPartStart[i] = panPartStart[i - 1] + panPointCount[i - 1];
-            // (CID 1404102)
-            // coverity[overrun-buffer-arg]
+            // Not used, but avoids a Coverity Scan warning
+            panPartStart[nParts] = nPoints;
             OGRGeometry *poRet = OGRCreateFromMultiPatch(
                 static_cast<int>(nParts), panPartStart, panPartType,
                 static_cast<int>(nPoints), padfX, padfY, padfZ);

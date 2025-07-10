@@ -26,7 +26,7 @@ namespace gdal
 class MathExpression
 {
   public:
-    virtual ~MathExpression() = default;
+    virtual ~MathExpression();
 
     /**
      * Create a MathExpression using a specified dialect.
@@ -198,6 +198,8 @@ MathExpression::Create([[maybe_unused]] const char *pszExpression,
     }
     return nullptr;
 }
+
+bool MuParserHasDefineFunUserData();
 
 /*! @endcond */
 

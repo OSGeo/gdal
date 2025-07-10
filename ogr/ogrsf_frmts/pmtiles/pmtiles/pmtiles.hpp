@@ -116,6 +116,11 @@ struct headerv3 {
 	}
 };
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 struct pmtiles_magic_number_exception : std::exception {
 	const char *what() const noexcept override {
 		return "pmtiles magic number exception";
@@ -127,6 +132,10 @@ struct pmtiles_version_exception : std::exception {
 		return "pmtiles version: must be 3";
 	}
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 template<class T>
 inline void copy_from_lsb(T* ptr, const std::string &s, size_t offset) {
@@ -218,6 +227,11 @@ struct entry_zxy {
 	}
 };
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 struct varint_too_long_exception : std::exception {
 	const char *what() const noexcept override {
 		return "varint too long exception";
@@ -229,6 +243,10 @@ struct end_of_buffer_exception : std::exception {
 		return "end of buffer exception";
 	}
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 namespace {
 constexpr const int8_t max_varint_length = sizeof(uint64_t) * 8 / 7 + 1;
@@ -470,11 +488,20 @@ inline std::string serialize_directory(const std::vector<entryv3> &entries) {
 	return data;
 }
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
+
 struct malformed_directory_exception : std::exception {
 	const char *what() const noexcept override {
 		return "malformed directory exception";
 	}
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 // takes an uncompressed byte buffer
 inline std::vector<entryv3> deserialize_directory(const std::string &decompressed) {

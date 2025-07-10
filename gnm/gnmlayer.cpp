@@ -35,7 +35,7 @@
  */
 GNMGenericLayer::GNMGenericLayer(OGRLayer *poLayer,
                                  GNMGenericNetwork *poNetwork)
-    : OGRLayer(), m_soLayerName(poLayer->GetName()), m_poLayer(poLayer),
+    : m_soLayerName(poLayer->GetName()), m_poLayer(poLayer),
       m_poNetwork(poNetwork)
 {
 }
@@ -43,9 +43,7 @@ GNMGenericLayer::GNMGenericLayer(OGRLayer *poLayer,
 /**
  * ~GNMGenericLayer
  */
-GNMGenericLayer::~GNMGenericLayer()
-{
-}
+GNMGenericLayer::~GNMGenericLayer() = default;
 
 const char *GNMGenericLayer::GetFIDColumn()
 {
@@ -231,7 +229,8 @@ OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
     OGRFeature::DestroyFeature(poFeature);
 
     // delete from graph
-    if (m_poNetwork->DisconnectFeaturesWithId((GNMGFID)nFID) != CE_None)
+    if (m_poNetwork->DisconnectFeaturesWithId(static_cast<GNMGFID>(nFID)) !=
+        CE_None)
         return CE_Failure;
 
     return m_poLayer->DeleteFeature(it->second);

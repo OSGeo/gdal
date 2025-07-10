@@ -21,15 +21,15 @@
 class WMSCTileSetDesc
 {
   public:
-    CPLString osLayers;
-    CPLString osSRS;
-    CPLString osMinX, osMinY, osMaxX, osMaxY;
-    double dfMinX, dfMinY, dfMaxX, dfMaxY;
-    int nResolutions;
-    double dfMinResolution;
-    CPLString osFormat;
-    CPLString osStyle;
-    int nTileWidth, nTileHeight;
+    CPLString osLayers{};
+    CPLString osSRS{};
+    CPLString osMinX{}, osMinY{}, osMaxX{}, osMaxY{};
+    double dfMinX{}, dfMinY{}, dfMaxX{}, dfMaxY{};
+    int nResolutions{};
+    double dfMinResolution{};
+    CPLString osFormat{};
+    CPLString osStyle{};
+    int nTileWidth{}, nTileHeight{};
 };
 
 /************************************************************************/
@@ -41,13 +41,15 @@ class WMSCTileSetDesc
 class GDALWMSMetaDataset final : public GDALPamDataset
 {
   private:
-    CPLString osGetURL;
-    CPLString osVersion;
-    CPLString osXMLEncoding;
-    char **papszSubDatasets;
+    CPLString osGetURL{};
+    CPLString osVersion{};
+    CPLString osXMLEncoding{};
+    char **papszSubDatasets{nullptr};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWMSMetaDataset)
 
     typedef std::pair<CPLString, CPLString> WMSCKeyType;
-    std::map<WMSCKeyType, WMSCTileSetDesc> osMapWMSCTileSet;
+    std::map<WMSCKeyType, WMSCTileSetDesc> osMapWMSCTileSet{};
 
     void AddSubDataset(const char *pszName, const char *pszDesc);
 

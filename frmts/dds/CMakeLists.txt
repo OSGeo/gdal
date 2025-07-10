@@ -3,7 +3,10 @@ add_gdal_driver(TARGET gdal_DDS
                 CORE_SOURCES ddsdrivercore.cpp
                 SKIP_GDAL_PRIV_HEADER  # because of issue with _REENTRANT
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+                NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 
 if(NOT TARGET gdal_DDS)
     return()

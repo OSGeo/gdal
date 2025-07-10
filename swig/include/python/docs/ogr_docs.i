@@ -24,6 +24,36 @@ Returns
 FieldDomain
 ";
 
+%feature("docstring")  CreateGeometryFromEnvelope "
+
+Creates a rectangular, axis-aligned Polygon geometry.
+
+.. versionadded:: 3.12
+
+Parameters
+----------
+xmin : float
+    minimum x coordinate value
+ymin : float
+    minimum y coordinate value
+xmax : float
+    maximum x coordinate value
+ymax : float
+    maximum y coordinate value
+srs : osr.SpatialReference, default = 0
+    optional spatial reference to assign to the geometry
+
+Returns
+-------
+Geometry
+
+Examples
+--------
+>>> g = ogr.CreateGeometryFromEnvelope(424788, 25211, 581555, 279799)
+>>> g.ExportToWkt()
+'POLYGON ((424788 25211,424788 279799,581555 279799,581555 25211,424788 25211))'
+";
+
 %feature("docstring")  CreateGlobFieldDomain "
 
 Creates a new glob field domain.

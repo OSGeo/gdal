@@ -190,7 +190,7 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
         const char *pszTimeoutLength = CPLGetConfigOption("MYSQL_TIMEOUT", "0");
 
         unsigned int timeout = atoi(pszTimeoutLength);
-        mysql_options(hConn, MYSQL_OPT_CONNECT_TIMEOUT, (char *)&timeout);
+        mysql_options(hConn, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 
         mysql_options(hConn, MYSQL_SET_CHARSET_NAME, "utf8");
     }

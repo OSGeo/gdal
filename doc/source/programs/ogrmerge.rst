@@ -60,6 +60,10 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
 
+.. note::
+
+    Starting with GDAL 3.11, a newer :ref:`gdal_vector_concat` program is available.
+
 .. program:: ogrmerge
 
 .. include:: options/help_and_help_general.rst

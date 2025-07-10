@@ -2118,6 +2118,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             }
             else
             {
+                // NOTE_3812_20250527:
                 // As https://gdal.org/api/ogrfeature_cpp.html indicates that
                 // precision (number of digits after decimal point) is optional,
                 // and a 0 is probably the default value, in that case we prefer
@@ -2509,10 +2510,24 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 }
 
                 char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
-                MM_SprintfDoubleSignifFigures(
-                    szChain, sizeof(szChain),
-                    phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
-                    padfRLValues[nIRecord]);
+                if (phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals > 0 &&
+                    phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals < MAX_RELIABLE_SF_DOUBLE)
+                {
+                    CPLsnprintf(szChain, sizeof(szChain), "%.*f",
+                                phMiraMonLayer->pLayerDB->pFields[iField]
+                                    .nNumberOfDecimals,
+                                padfRLValues[nIRecord]);
+                }
+                else
+                {
+                    MM_SprintfDoubleSignifFigures(
+                        szChain, sizeof(szChain),
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals,
+                        padfRLValues[nIRecord]);
+                }
 
                 if (MM_SecureCopyStringFieldValue(
                         &hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
@@ -2725,10 +2740,25 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             else
             {
                 char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
-                MM_SprintfDoubleSignifFigures(
-                    szChain, sizeof(szChain),
-                    phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
-                    poFeature->GetFieldAsDouble(iField));
+                // According to NOTE_3812_20250527
+                if (phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals > 0 &&
+                    phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals < MAX_RELIABLE_SF_DOUBLE)
+                {
+                    CPLsnprintf(szChain, sizeof(szChain), "%.*f",
+                                phMiraMonLayer->pLayerDB->pFields[iField]
+                                    .nNumberOfDecimals,
+                                poFeature->GetFieldAsDouble(iField));
+                }
+                else
+                {
+                    MM_SprintfDoubleSignifFigures(
+                        szChain, sizeof(szChain),
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals,
+                        poFeature->GetFieldAsDouble(iField));
+                }
 
                 if (MM_SecureCopyStringFieldValue(
                         &hMMFeature.pRecords[0].pField[iField].pDinValue,

@@ -72,8 +72,6 @@ class OGRILI2Layer final : public OGRLayer
 class OGRILI2DataSource final : public GDALDataset
 {
   private:
-    std::list<OGRLayer *> listLayer;
-
     char *pszName;
     ImdReader *poImdReader;
     IILI2Reader *poReader;
@@ -91,7 +89,7 @@ class OGRILI2DataSource final : public GDALDataset
 
     int GetLayerCount() override
     {
-        return static_cast<int>(listLayer.size());
+        return poReader->GetLayerCount();
     }
 
     OGRLayer *GetLayer(int) override;

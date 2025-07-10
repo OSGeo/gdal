@@ -559,6 +559,8 @@ class CPL_DLL OGRDataSource : public GDALDataset
 {
   public:
     OGRDataSource();
+    ~OGRDataSource() override;
+
     //! @cond Doxygen_Suppress
     virtual const char *GetName()
         OGR_DEPRECATED("Use GDALDataset class instead") = 0;

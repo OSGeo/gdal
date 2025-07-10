@@ -592,11 +592,11 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode *psRoot)
                     oField.m_osName = CPLGetXMLValue(psIter, "Name", "");
                     oField.m_osType = CPLGetXMLValue(psIter, "Type", "");
                     oField.m_osXPath = CPLGetXMLValue(psIter, "XPath", "");
-                    oItem.m_aoFields.push_back(oField);
+                    oItem.m_aoFields.push_back(std::move(oField));
                 }
             }
 
-            m_aoURLSpecificRules.push_back(oItem);
+            m_aoURLSpecificRules.push_back(std::move(oItem));
         }
     }
 

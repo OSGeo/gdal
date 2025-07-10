@@ -88,7 +88,7 @@ Standard options
     is evaluated after reprojection of its extent to the target CRS defined
     by :option:`--dst-crs`.
 
-.. option:: -location-name <LOCATION-NAME>
+.. option:: --location-name <LOCATION-NAME>
 
     The output field name to hold the file path/location to the indexed
     rasters. The default field name is ``location``.

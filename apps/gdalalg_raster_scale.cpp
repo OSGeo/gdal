@@ -51,9 +51,10 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
 /*               GDALRasterScaleAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterScaleAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -130,8 +131,7 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALProgressFunc, void *)
         GDALTranslateOptionsNew(aosOptions.List(), nullptr);
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALTranslate("", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-                      psOptions, nullptr)));
+        GDALTranslate("", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
     GDALTranslateOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
@@ -141,5 +141,8 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterScaleAlgorithmStandalone::~GDALRasterScaleAlgorithmStandalone() =
+    default;
 
 //! @endcond

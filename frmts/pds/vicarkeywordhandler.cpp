@@ -188,7 +188,8 @@ bool VICARKeywordHandler::Ingest(VSILFILE *fp, const GByte *pabyHeader)
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking to EOL");
         return false;
     }
-    char *pszChunkEOL = (char *)VSIMalloc(EOLabelSize + 1);
+    char *pszChunkEOL =
+        static_cast<char *>(VSI_MALLOC_VERBOSE(EOLabelSize + 1));
     if (pszChunkEOL == nullptr)
         return false;
     nBytesRead = static_cast<int>(VSIFReadL(pszChunkEOL, 1, EOLabelSize, fp));
@@ -349,7 +350,8 @@ bool VICARKeywordHandler::ReadName(CPLString &osWord)
     if (*pszHeaderNext == '\0')
         return false;
 
-    while (*pszHeaderNext != '=' && !isspace((unsigned char)*pszHeaderNext))
+    while (*pszHeaderNext != '=' &&
+           !isspace(static_cast<unsigned char>(*pszHeaderNext)))
     {
         if (*pszHeaderNext == '\0')
             return false;
@@ -408,7 +410,7 @@ bool VICARKeywordHandler::ReadValue(CPLString &osWord, bool bInList,
     }
     else
     {
-        while (!isspace((unsigned char)*pszHeaderNext))
+        while (!isspace(static_cast<unsigned char>(*pszHeaderNext)))
         {
             if (*pszHeaderNext == '\0')
                 return !bInList;
@@ -439,7 +441,7 @@ void VICARKeywordHandler::SkipWhite()
 {
     for (; true;)
     {
-        if (isspace((unsigned char)*pszHeaderNext))
+        if (isspace(static_cast<unsigned char>(*pszHeaderNext)))
         {
             pszHeaderNext++;
             continue;

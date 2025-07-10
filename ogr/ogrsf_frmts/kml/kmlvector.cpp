@@ -79,7 +79,7 @@ void KMLVector::findLayers(KMLNode *poNode, int bKeepEmptyContainers)
     }
     else if (isContainer(poNode->getName()))
     {
-        for (int z = 0; z < (int)poNode->countChildren(); z++)
+        for (std::size_t z = 0; z < poNode->countChildren(); z++)
         {
             if (isContainer(poNode->getChild(z)->getName()))
             {

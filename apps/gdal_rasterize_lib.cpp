@@ -180,7 +180,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
                     GByte *pabyRet = nullptr;
                     if (!sql.empty() && sql.at(0) == '@' &&
                         VSIIngestFile(nullptr, sql.substr(1).c_str(), &pabyRet,
-                                      nullptr, 1024 * 1024))
+                                      nullptr, 10 * 1024 * 1024))
                     {
                         GDALRemoveBOM(pabyRet);
                         char *pszSQLStatement =
@@ -711,9 +711,9 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
     {
         GDALDataset *poDS = GDALDataset::FromHandle(hDstDS);
         char **papszTransformerOptions = CSLDuplicate(papszTO);
-        double adfGeoTransform[6] = {0.0};
-        if (poDS->GetGeoTransform(adfGeoTransform) != CE_None &&
-            poDS->GetGCPCount() == 0 && poDS->GetMetadata("RPC") == nullptr)
+        GDALGeoTransform gt;
+        if (poDS->GetGeoTransform(gt) != CE_None && poDS->GetGCPCount() == 0 &&
+            poDS->GetMetadata("RPC") == nullptr)
         {
             papszTransformerOptions = CSLSetNameValue(
                 papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
@@ -1044,15 +1044,29 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         hDriver = GDALGetDriverByName(osFormat);
         char **papszDriverMD =
             hDriver ? GDALGetMetadata(hDriver, nullptr) : nullptr;
-        if (hDriver == nullptr ||
-            !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
-                                              "FALSE")) ||
-            !CPLTestBool(
+        if (hDriver == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Output driver `%s' not recognised.", osFormat.c_str());
+            return nullptr;
+        }
+        if (!CPLTestBool(
+                CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE")))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Output driver `%s' is not a raster driver.",
+                     osFormat.c_str());
+            return nullptr;
+        }
+        if (!CPLTestBool(
                 CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE")))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Output driver `%s' not recognised or does not support "
-                     "direct output file creation.",
+                     "Output driver `%s' does not support direct output file "
+                     "creation. "
+                     "To write a file to this format, first write to a "
+                     "different format such as "
+                     "GeoTIFF and then convert the output.",
                      osFormat.c_str());
             return nullptr;
         }
@@ -1312,8 +1326,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
         if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
         {
             ++i;
-            const std::string s = papszArgv[i];
-            psOptions->osNoData = s;
+            psOptions->osNoData = papszArgv[i];
             psOptions->bCreateOutput = true;
         }
 

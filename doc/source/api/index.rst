@@ -32,9 +32,12 @@ API
    .. toctree::
        :maxdepth: 1
 
+       gdalmajorobject_cpp
        gdaldriver_cpp
        gdaldataset_cpp
        gdalrasterband_cpp
+       gdalcolortable_cpp
+       gdalrasterattributetable_cpp
        gdalwarp_cpp
 
    Vector API
@@ -46,6 +49,7 @@ API
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
+       ogrgeomcoordinateprecision_cpp
        ogrlayer_cpp
 
    Spatial reference system API

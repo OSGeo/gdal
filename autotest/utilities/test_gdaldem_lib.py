@@ -104,7 +104,7 @@ def test_gdaldem_lib_hillshade_proj_crs(proj_unit):
     "name,factor",
     [("m", 1), ("unknown", 1), ("ft", 0.3048), ("us-ft", 0.3048006096012192)],
 )
-def test_gdaldem_lib_hillshade_projected_crs_vertical_units(name, factor):
+def test_gdaldem_lib_hillshade_projected_crs_vertical_units(tmp_path, name, factor):
 
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
@@ -115,12 +115,14 @@ def test_gdaldem_lib_hillshade_projected_crs_vertical_units(name, factor):
         outputType=gdal.GDT_Float32,
         format="MEM",
         dstSRS="+proj=tmerc +datum=WGS84 +lon_0=-79.5 +units=m",
+        dstNodata=0,
     )
     src_ds.GetRasterBand(1).SetUnitType(name)
     src_ds.GetRasterBand(1).SetNoDataValue(
         src_ds.GetRasterBand(1).GetNoDataValue() / factor
     )
     src_ds.GetRasterBand(1).WriteArray(src_ds.GetRasterBand(1).ReadAsArray() / factor)
+
     if name == "unknown":
         with gdal.quiet_errors():
             ds = gdal.DEMProcessing("", src_ds, "hillshade", format="MEM", zFactor=30)
@@ -545,11 +547,11 @@ def test_gdaldem_lib_color_relief():
     )
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 55066, "Bad checksum"
 
-    assert ds.GetRasterBand(2).Checksum() == 37543, "Bad checksum"
+    assert ds.GetRasterBand(2).Checksum() == 37594, "Bad checksum"
 
-    assert ds.GetRasterBand(3).Checksum() == 47711, "Bad checksum"
+    assert ds.GetRasterBand(3).Checksum() == 47768, "Bad checksum"
 
     src_gt = src_ds.GetGeoTransform()
     dst_gt = ds.GetGeoTransform()
@@ -587,7 +589,7 @@ def test_gdaldem_lib_color_relief():
         colorFilename="data/color_file.txt",
         colorSelection="linear_interpolation",
     )
-    assert ds.GetRasterBand(1).Checksum() == 55009
+    assert ds.GetRasterBand(1).Checksum() == 55066
 
     with pytest.raises(ValueError):
         gdal.DEMProcessing(

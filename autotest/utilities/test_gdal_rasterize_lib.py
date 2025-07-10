@@ -812,3 +812,41 @@ def test_gdal_rasterize_no_options(tmp_vsimem):
 
     # Call rasterize
     ds = gdal.Rasterize(target_ds, ds)
+
+
+###############################################################################
+# Error cases
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_rasterize_bad_output_format(tmp_vsimem):
+
+    if gdal.GetDriverByName("PNG"):
+        with pytest.raises(
+            RuntimeError, match="does not support direct output file creation"
+        ):
+            gdal.Rasterize(
+                tmp_vsimem / "out.png",
+                "../ogr/data/poly.shp",
+                width=100,
+                height=100,
+                format="PNG",
+            )
+
+    with pytest.raises(RuntimeError, match="driver .* not recognised"):
+        gdal.Rasterize(
+            tmp_vsimem / "out.pngg",
+            "../ogr/data/poly.shp",
+            width=100,
+            height=100,
+            format="DOES_NOT_EXIST",
+        )
+
+    with pytest.raises(RuntimeError, match="not a raster driver"):
+        gdal.Rasterize(
+            tmp_vsimem / "out.pngg",
+            "../ogr/data/poly.shp",
+            width=100,
+            height=100,
+            format="ESRI Shapefile",
+        )

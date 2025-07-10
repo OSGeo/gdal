@@ -317,9 +317,7 @@ class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
     {
     }
 
-    ~OGROpenFileGDBGeomFieldDefn()
-    {
-    }
+    ~OGROpenFileGDBGeomFieldDefn() override;
 
     void UnsetLayer()
     {
@@ -366,9 +364,7 @@ class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
     {
     }
 
-    ~OGROpenFileGDBFeatureDefn()
-    {
-    }
+    ~OGROpenFileGDBFeatureDefn() override;
 
     void UnsetLayer()
     {
@@ -429,7 +425,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
     std::string m_osRasterLayerName{};
     std::map<int, int> m_oMapGDALBandToGDBBandId{};
     bool m_bHasGeoTransform = false;
-    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    GDALGeoTransform m_gt{};
     int m_nShiftBlockX =
         0;  // Offset to add to FileGDB col_nbr field to convert from GDAL block numbering to FileGDB one
     int m_nShiftBlockY =
@@ -562,7 +558,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return m_aosSubdatasets;
     }
 
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetMetadata(const char *pszDomain = "") override;
@@ -722,19 +718,7 @@ class GDALOpenFileGDBRasterAttributeTable final
     {
     }
 
-    GDALRasterAttributeTable *Clone() const override
-    {
-        auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
-        GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
-        bool bRetryFileGDBUnused = false;
-        if (!poDS->Open(&oOpenInfo, bRetryFileGDBUnused))
-            return nullptr;
-        auto poVatLayer = poDS->BuildLayerFromName(m_osVATTableName.c_str());
-        if (!poVatLayer)
-            return nullptr;
-        return new GDALOpenFileGDBRasterAttributeTable(
-            std::move(poDS), m_osVATTableName, std::move(poVatLayer));
-    }
+    GDALRasterAttributeTable *Clone() const override;
 
     int GetColumnCount() const override
     {
@@ -814,19 +798,22 @@ class GDALOpenFileGDBRasterAttributeTable final
         return poFeat->GetFieldAsDouble(iField);
     }
 
-    void SetValue(int, int, const char *) override
+    CPLErr SetValue(int, int, const char *) override
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
     }
 
-    void SetValue(int, int, int) override
+    CPLErr SetValue(int, int, int) override
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
     }
 
-    void SetValue(int, int, double) override
+    CPLErr SetValue(int, int, double) override
     {
         CPLError(CE_Failure, CPLE_NotSupported, "SetValue() not supported");
+        return CE_Failure;
     }
 
     int ChangesAreWrittenToFile() override

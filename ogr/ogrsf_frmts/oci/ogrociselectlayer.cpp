@@ -68,9 +68,9 @@ OGROCISelectLayer::ReadTableDefinition(OGROCIStatement *poCommand)
         ub2 nOCIType;
         ub4 nOCILen;
 
-        nStatus = OCIParamGet(poCommand->GetStatement(), OCI_HTYPE_STMT,
-                              poSession->hError, (dvoid **)&hParamDesc,
-                              (ub4)iParam + 1);
+        nStatus = OCIParamGet(
+            poCommand->GetStatement(), OCI_HTYPE_STMT, poSession->hError,
+            reinterpret_cast<dvoid **>(&hParamDesc), (ub4)iParam + 1);
 
         if (nStatus == OCI_ERROR)
             break;

@@ -45,14 +45,17 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     friend class MEMRasterBand;
 
     int bGeoTransformSet;
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
     std::vector<gdal::GCP> m_aoGCPs{};
     OGRSpatialReference m_oGCPSRS{};
 
-    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
+    using GDALDatasetRefCountedPtr =
+        std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>;
+
+    std::vector<GDALDatasetRefCountedPtr> m_apoOverviewDS{};
 
     struct Private;
     std::unique_ptr<Private> m_poPrivate;
@@ -85,8 +88,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
-    virtual CPLErr SetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual void *GetInternalHandle(const char *) override;
 
@@ -134,6 +137,11 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     }
 
     OGRLayer *GetLayer(int) override;
+
+    using GDALDataset::CreateLayer;
+
+    OGRMemLayer *CreateLayer(const OGRFeatureDefn &oDefn,
+                             CSLConstList papszOptions);
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -252,6 +260,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // Clone poSRS if not nullptr
     OGRMemLayer(const char *pszName, const OGRSpatialReference *poSRS,
                 OGRwkbGeometryType eGeomType);
+    explicit OGRMemLayer(const OGRFeatureDefn &oFeatureDefn);
     virtual ~OGRMemLayer();
 
     void ResetReading() override;

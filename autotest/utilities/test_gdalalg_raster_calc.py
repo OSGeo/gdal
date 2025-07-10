@@ -39,6 +39,7 @@ def calc():
 @pytest.mark.parametrize("output_format", ("tif", "vrt"))
 def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/rgbsmall.tif"
@@ -51,7 +52,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
     assert calc.Run()
 
     with gdal.Open(infile) as src, gdal.Open(outfile) as dst:
-        srcval = src.ReadAsArray().astype("float64")
+        srcval = src.ReadAsMaskedArray().astype("float64")
         expected = np.apply_along_axis(lambda x: 2 + x / (1 + x.sum()), 0, srcval)
 
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
@@ -62,6 +63,7 @@ def test_gdalalg_raster_calc_basic_1(calc, tmp_vsimem, output_format):
 @pytest.mark.parametrize("output_format", ("tif", "vrt"))
 def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -80,6 +82,118 @@ def test_gdalalg_raster_calc_basic_2(calc, tmp_vsimem, output_format):
         np.testing.assert_array_equal(expected, dst.ReadAsArray())
         assert src.GetGeoTransform() == dst.GetGeoTransform()
         assert src.GetSpatialRef().IsSame(dst.GetSpatialRef())
+
+
+@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+@pytest.mark.parametrize("propagateNoData", (True, False))
+def test_gdalalg_raster_calc_nodata(calc, tmp_vsimem, dialect, propagateNoData):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    if (
+        dialect == "muparser"
+        and gdal.GetDriverByName("VRT").GetMetadataItem(
+            "MUPARSER_HAS_DEFINE_FUN_USER_DATA"
+        )
+        is None
+    ):
+        pytest.skip("muparser version does not support isnodata function")
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_1, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.WriteArray(np.array([[1, 2], [-9, 4]]))
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_2, 2, 2, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.WriteArray(np.array([[1, -999], [3, 4]]))
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["calc"] = (
+        "(isnodata(A) ? 0 : A) + (isnodata(B) ? 0 : B)"
+        if dialect == "muparser"
+        else "sum"
+    )
+    calc["dialect"] = dialect
+    calc["nodata"] = 255
+    calc["output-format"] = "stream"
+
+    if propagateNoData:
+        calc["propagate-nodata"] = True
+
+    assert calc.Run()
+    assert calc["output"].GetDataset().RasterCount == 1
+
+    result = calc["output"].GetDataset().ReadAsArray()
+
+    if propagateNoData:
+        np.testing.assert_array_equal(result, [[2, 255], [255, 8]])
+    elif dialect == "builtin":
+        np.testing.assert_array_equal(result, [[2, 2], [3, 8]])
+
+
+@pytest.mark.parametrize("output_type", (gdal.GDT_Int16, gdal.GDT_Float32))
+def test_gdalalg_raster_calc_nan_result(calc, tmp_vsimem, output_type):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Float32
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.GetRasterBand(1).Fill(-999)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["calc"] = "X + nan"
+    calc["output-format"] = "stream"
+    calc["output-data-type"] = output_type
+
+    assert calc.Run()
+
+    result = calc["output"].GetDataset().ReadAsMaskedArray()
+
+    if output_type == gdal.GDT_Int16:
+        # NaN output value cannot be represented as an integer, so it
+        # becomes zero (for now)
+        np.testing.assert_array_equal(result, np.ma.masked_array([[0]], False))
+    else:
+        assert np.isnan(result)
+
+
+def test_gdalalg_raster_calc_nodata_variable(calc, tmp_vsimem):
+    if (
+        gdal.GetDriverByName("VRT").GetMetadataItem("MUPARSER_HAS_DEFINE_FUN_USER_DATA")
+        is None
+    ):
+        pytest.skip("muparser version does not support isnodata function")
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Float32
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-999)
+        ds.GetRasterBand(1).Fill(-999)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["calc"] = "isnodata(X) ? NODATA : 5"
+    calc["output-format"] = "stream"
+    calc["nodata"] = -802
+
+    assert calc.Run()
+
+    result = calc["output"].GetDataset().ReadAsMaskedArray()
+
+    assert np.all(result.mask)
 
 
 def test_gdalalg_raster_calc_creation_options(calc, tmp_vsimem):
@@ -116,6 +230,7 @@ def test_gdalalg_raster_calc_output_format(calc, tmp_vsimem):
 
 def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
@@ -140,6 +255,45 @@ def test_gdalalg_raster_calc_output_type(calc, tmp_vsimem):
     assert calc.Finalize()
 
 
+def test_gdalalg_raster_calc_invalid_nodata_for_output_type(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, eType=gdal.GDT_Int16
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(-9)
+        ds.GetRasterBand(1).Fill(-9)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["output-data-type"] = "Byte"
+    calc["nodata"] = -9
+
+    with pytest.raises(Exception, match="Byte cannot represent NoData value -9"):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_output_nodata_taken_from_source(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(255)
+        ds.GetRasterBand(1).Fill(255)
+
+    calc["input"] = tmp_vsimem / "src.tif"
+    calc["output-format"] = "stream"
+    calc["calc"] = "X"
+    calc["propagate-nodata"] = True
+
+    assert calc.Run()
+
+    ds = calc["output"].GetDataset()
+
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+
+    with pytest.raises(Exception, match="no valid pixels"):
+        ds.GetRasterBand(1).ComputeRasterMinMax(False)
+
+
 def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"
@@ -162,6 +316,7 @@ def test_gdalalg_raster_calc_overwrite(calc, tmp_vsimem):
 @pytest.mark.parametrize("expr", ("X + 3", "X[1] + 3"))
 def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -177,8 +332,62 @@ def test_gdalalg_raster_calc_basic_named_source(calc, tmp_vsimem, expr):
         np.testing.assert_array_equal(src.ReadAsArray() + 3.0, dst.ReadAsArray())
 
 
+def test_gdalalg_raster_calc_several_inputs_same_name(calc, tmp_vsimem):
+
+    calc["input"] = ["A=../gcore/data/byte.tif", "A=../gcore/data/uint16.tif"]
+    calc["output"] = tmp_vsimem / "out.vrt"
+    calc["calc"] = "A"
+
+    with pytest.raises(
+        Exception, match="An input with name 'A' has already been provided"
+    ):
+        calc.Run()
+
+
+@pytest.mark.parametrize("dialect", ("muparser", "builtin"))
+def test_gdalalg_raster_calc_several_inputs_no_name(calc, tmp_vsimem, dialect):
+
+    calc["input"] = ["../gcore/data/byte.tif", "../gcore/data/uint16.tif"]
+    calc["output"] = tmp_vsimem / "out.vrt"
+    calc["calc"] = "sum"
+    calc["dialect"] = dialect
+
+    try:
+        calc.Run()
+    except Exception as e:
+        assert "Inputs must be named" in str(e)
+        assert dialect == "muparser"
+    else:
+        assert dialect == "builtin"
+
+
+@pytest.mark.parametrize(
+    "name,expected_error_msg",
+    [
+        ("_pi", "Name '_pi' is illegal because it starts with a '_'"),
+        ("0ko", "Name '0ko' is illegal because it starts with a '0'"),
+        ("ko-", "Name 'ko-' is illegal because character '-' is not allowed"),
+        ("ok", None),
+        ("ok_", None),
+        ("o0123456789", None),
+    ],
+)
+def test_gdalalg_raster_calc_test_name(calc, name, expected_error_msg):
+
+    calc["input"] = f"{name}=../gcore/data/byte.tif"
+    calc["output-format"] = "MEM"
+    calc["calc"] = name
+
+    if expected_error_msg:
+        with pytest.raises(Exception, match=expected_error_msg):
+            calc.Run()
+    else:
+        calc.Run()
+
+
 def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     infile = "../gcore/data/byte.tif"
@@ -207,6 +416,7 @@ def test_gdalalg_raster_calc_multiple_calcs(calc, tmp_vsimem):
 )
 def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     # convert 1-based indices to 0-based indices to evaluate expression
@@ -247,8 +457,10 @@ def test_gdalalg_raster_calc_multiple_inputs(calc, tmp_vsimem, expr):
         np.testing.assert_allclose(dat, eval(numpy_expr), rtol=1e-6)
 
 
-def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
+@pytest.mark.parametrize("formula", ["A+B", "sum(A, B)"])
+def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path, formula):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     input_1 = tmp_vsimem / "in1.tif"
@@ -268,7 +480,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
     calc["input"] = [f"@{input_txt}"]
     calc["output"] = outfile
-    calc["calc"] = ["A + B"]
+    calc["calc"] = formula
 
     assert calc.Run()
 
@@ -278,6 +490,7 @@ def test_gdalalg_raster_calc_inputs_from_file(calc, tmp_vsimem, tmp_path):
 
 def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     input_1 = tmp_vsimem / "in1.tif"
@@ -305,6 +518,7 @@ def test_gdalalg_raster_calc_different_band_counts(calc, tmp_vsimem):
 
 def test_gdalalg_calc_different_resolutions(calc, tmp_vsimem):
 
+    gdaltest.importorskip_gdal_array()
     np = pytest.importorskip("numpy")
 
     xmax = 60
@@ -487,6 +701,7 @@ def test_gdalalg_raster_calc_expression_rewriting(
     calc["input"] = [f"{source}={infile}"]
     calc["output"] = outfile
     calc["calc"] = [expr]
+    calc["no-check-expression"] = True
 
     assert calc.Run()
 
@@ -504,11 +719,291 @@ def test_gdalalg_raster_calc_gdalg_json(calc, tmp_vsimem):
 
     outfile = tmp_vsimem / "out.gdalg.json"
 
-    calc["input"] = "../gcore/data/byte.tif"
+    calc["input"] = "../gcore/data/rgbsmall.tif"
     calc["output"] = outfile
     calc["calc"] = "X"
     assert calc.Run()
     assert calc.Finalize()
 
     with gdal.Open(outfile) as ds:
-        assert ds.GetRasterBand(1).Checksum() == 4672
+        assert ds.GetRasterBand(1).Checksum() == 21212
+        assert ds.GetRasterBand(2).Checksum() == 21053
+        assert ds.GetRasterBand(3).Checksum() == 21349
+
+
+@pytest.mark.parametrize(
+    "output_format,ext",
+    [
+        ("VRT", None),
+        ("VRT", "vrt"),
+        ("stream", None),
+        ("GDALG", None),
+        ("GDALG", "gdalg.json"),
+        ("GTiff", None),
+        ("GTiff", "tif"),
+    ],
+)
+def test_gdalalg_raster_calc_invalid_formula(calc, tmp_vsimem, output_format, ext):
+
+    if output_format != "stream" and gdal.GetDriverByName(output_format) is None:
+        pytest.skip(f"{output_format} not available")
+
+    calc["input"] = "../gcore/data/byte.tif"
+    if ext:
+        calc["output"] = tmp_vsimem / f"out.{ext}"
+    else:
+        calc["output-format"] = output_format
+        calc["output"] = tmp_vsimem / "out"
+    calc["calc"] = "invalid"
+    with pytest.raises(Exception, match="invalid variable name"):
+        calc.Run()
+
+
+def test_gdalalg_raster_calc_reference_several_bands_to_stream(calc):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = "streamed"
+    calc["calc"] = "sum(X[1], X[2], X[3])"
+
+    assert calc.Run()
+
+    assert calc["output"].GetDataset().RasterCount == 1
+    assert calc["output"].GetDataset().GetRasterBand(1).Checksum() == 21240
+
+
+@pytest.mark.parametrize("fn", ("avg", "min", "max", "sum"))
+def test_gdalalg_raster_calc_muparser_flatten(calc, tmp_vsimem, fn):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 3) as ds:
+        ds.GetRasterBand(1).Fill(2)
+        ds.GetRasterBand(2).Fill(20)
+        ds.GetRasterBand(3).Fill(200)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = f"{fn}(A)-{fn}(B)"
+    calc["flatten"] = True
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+
+    if fn == "sum":
+        expected_val = (10 + 100) - (2 + 20 + 200)
+    elif fn == "avg":
+        expected_val = (10 + 100) / 2 - (2 + 20 + 200) / 3
+    elif fn == "max":
+        expected_val = 100 - 200
+    elif fn == "min":
+        expected_val = 10 - 2
+
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
+        expected_val,
+        expected_val,
+    )
+
+
+def test_gdalalg_raster_calc_muparser_flatten_not_an_aggregate(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    calc["input"] = [tmp_vsimem / "src.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "sin(X)"
+    calc["flatten"] = True
+
+    assert calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+
+
+def test_gdalalg_raster_calc_muparser_partial_flatten(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "A / sum(A)"
+    calc["flatten"] = True
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
+        10 / 110,
+        10 / 110,
+    )
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (
+        100 / 110,
+        100 / 110,
+    )
+
+
+def test_gdalalg_raster_calc_muparser_nothing_to_flatten(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(20)
+        ds.GetRasterBand(2).Fill(200)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "(A + B)"
+    calc["flatten"] = True
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (
+        10 + 20,
+        10 + 20,
+    )
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (
+        100 + 200,
+        100 + 200,
+    )
+
+
+@pytest.mark.parametrize("expression", ("min", "max", "mode", "mean", "median"))
+def test_gdalalg_raster_calc_dialect_builtin(calc, expression):
+
+    calc["input"] = "../gcore/data/rgbsmall.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = expression
+    calc["dialect"] = "builtin"
+    calc["flatten"] = True
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+
+    if expression in ("min", "max", "mode"):
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    else:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+
+    if expression == "mean":
+        assert ds.GetRasterBand(1).Checksum() == 21559
+
+
+def test_gdalalg_raster_calc_pixel_function_arg(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "sum(k=1)"
+    calc["dialect"] = "builtin"
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+    assert ds.GetRasterBand(1).Checksum() == 4455
+
+
+def test_gdalalg_raster_calc_builtin_with_multiple_inputs(calc, tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in1.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "in2.tif", 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(20)
+        ds.GetRasterBand(2).Fill(200)
+
+    calc["input"] = [f"A={tmp_vsimem}/in1.tif", f"B={tmp_vsimem}/in2.tif"]
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = "mean"
+    calc["dialect"] = "builtin"
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (15, 15)
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (150, 150)
+
+
+def test_gdalalg_raster_calc_builtin_with_multiple_formula(calc):
+
+    calc["input"] = "../gcore/data/byte.tif"
+    calc["output-format"] = "stream"
+    calc["output"] = ""
+    calc["calc"] = ["mean", "sum(k=1)"]
+    calc["dialect"] = "builtin"
+    calc.Run()
+    ds = calc["output"].GetDataset()
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (74, 255)
+    assert ds.GetRasterBand(2).ComputeRasterMinMax(False) == (75, 256)
+
+
+def test_gdalalg_raster_calc_complete():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster calc --calc")
+    assert "mean" not in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster calc --dialect=builtin --calc"
+    )
+    assert "mean" in out
+
+
+def test_gdalalg_raster_calc_sum_builtin_one_band_two_bands(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(input_1, 1, 1, 1) as ds:
+        ds.GetRasterBand(1).Fill(1)
+    with gdal.GetDriverByName("GTIff").Create(input_2, 1, 1, 2) as ds:
+        ds.GetRasterBand(1).Fill(10)
+        ds.GetRasterBand(2).Fill(100)
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "sum"
+    calc["dialect"] = "builtin"
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.RasterCount == 2
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (1 + 10, 1 + 10)
+    assert out_ds.GetRasterBand(2).ComputeRasterMinMax(False) == (1 + 100, 1 + 100)
+
+
+def test_gdalalg_raster_calc_sum_builtin_two_bands_three_bands_fail(calc, tmp_vsimem):
+
+    input_1 = tmp_vsimem / "in1.tif"
+    input_2 = tmp_vsimem / "in2.tif"
+
+    gdal.GetDriverByName("GTiff").Create(input_1, 1, 1, 2)
+    gdal.GetDriverByName("GTIff").Create(input_2, 1, 1, 3)
+
+    calc["input"] = [f"A={input_1}", f"B={input_2}"]
+    calc["output-format"] = "MEM"
+    calc["calc"] = "sum"
+    calc["dialect"] = "builtin"
+    with pytest.raises(
+        Exception,
+        match=r"Expression cannot operate on all bands of rasters with incompatible numbers of bands \(source B has 3 bands but expected to have 1 or 2 bands\)",
+    ):
+        calc.Run()

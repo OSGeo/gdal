@@ -1028,11 +1028,15 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     SAFile fpSHP = psHooks->FOpen(pszFullname, "w+b", psHooks->pvUserData);
     if (fpSHP == SHPLIB_NULLPTR)
     {
-        char szErrorMsg[200];
-        snprintf(szErrorMsg, sizeof(szErrorMsg), "Failed to create file %s: %s",
-                 pszFullname, strerror(errno));
-        psHooks->Error(szErrorMsg);
-
+        const size_t nMessageLen = strlen(pszFullname) + 256;
+        char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
+        if (pszMessage)
+        {
+            snprintf(pszMessage, nMessageLen, "Failed to create file %s: %s",
+                     pszFullname, strerror(errno));
+            psHooks->Error(pszMessage);
+            free(pszMessage);
+        }
         free(pszFullname);
         free(psSHP);
         return SHPLIB_NULLPTR;
@@ -1042,10 +1046,15 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     SAFile fpSHX = psHooks->FOpen(pszFullname, "w+b", psHooks->pvUserData);
     if (fpSHX == SHPLIB_NULLPTR)
     {
-        char szErrorMsg[200];
-        snprintf(szErrorMsg, sizeof(szErrorMsg), "Failed to create file %s: %s",
-                 pszFullname, strerror(errno));
-        psHooks->Error(szErrorMsg);
+        const size_t nMessageLen = strlen(pszFullname) + 256;
+        char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
+        if (pszMessage)
+        {
+            snprintf(pszMessage, nMessageLen, "Failed to create file %s: %s",
+                     pszFullname, strerror(errno));
+            psHooks->Error(pszMessage);
+            free(pszMessage);
+        }
 
         free(pszFullname);
         psHooks->FClose(fpSHP);

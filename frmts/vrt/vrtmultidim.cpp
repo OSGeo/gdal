@@ -23,6 +23,8 @@
 #include "cpl_multiproc.h"
 #include "vrtdataset.h"
 
+VRTMDArraySource::~VRTMDArraySource() = default;
+
 static std::shared_ptr<GDALMDArray> ParseArray(const CPLXMLNode *psTree,
                                                const char *pszVRTPath,
                                                const char *pszParentXMLNode);

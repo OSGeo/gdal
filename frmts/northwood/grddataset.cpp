@@ -93,8 +93,8 @@ class NWT_GRDDataset final : public GDALPamDataset
                                    void *pProgressData);
 #endif
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
-    CPLErr SetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -479,15 +479,15 @@ CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NWT_GRDDataset::GetGeoTransform(double *padfTransform)
+CPLErr NWT_GRDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    padfTransform[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
-    padfTransform[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
-    padfTransform[1] = pGrd->dfStepSize;
-    padfTransform[2] = 0.0;
+    gt[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
+    gt[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
+    gt[1] = pGrd->dfStepSize;
+    gt[2] = 0.0;
 
-    padfTransform[4] = 0.0;
-    padfTransform[5] = -1 * pGrd->dfStepSize;
+    gt[4] = 0.0;
+    gt[5] = -1 * pGrd->dfStepSize;
 
     return CE_None;
 }
@@ -496,22 +496,22 @@ CPLErr NWT_GRDDataset::GetGeoTransform(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NWT_GRDDataset::SetGeoTransform(double *padfTransform)
+CPLErr NWT_GRDDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
+    if (gt[2] != 0.0 || gt[4] != 0.0)
     {
 
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GRD datasets do not support skew/rotation");
         return CE_Failure;
     }
-    pGrd->dfStepSize = padfTransform[1];
+    pGrd->dfStepSize = gt[1];
 
     // GRD format sets the min/max coordinates to the centre of the
     // cell; We must account for this when copying the GDAL geotransform
     // which references the top left corner
-    pGrd->dfMinX = padfTransform[0] + (pGrd->dfStepSize * 0.5);
-    pGrd->dfMaxY = padfTransform[3] - (pGrd->dfStepSize * 0.5);
+    pGrd->dfMinX = gt[0] + (pGrd->dfStepSize * 0.5);
+    pGrd->dfMaxY = gt[3] - (pGrd->dfStepSize * 0.5);
 
     // Now set the miny and maxx
     pGrd->dfMaxX = pGrd->dfMinX + (pGrd->dfStepSize * (nRasterXSize - 1));

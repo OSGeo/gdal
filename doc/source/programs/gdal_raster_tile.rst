@@ -91,7 +91,7 @@ Standard options
 
     Minimum zoom level to generate. If not specified, equal to :option:`--max-zoom`.
 
-.. option:: --max-zoom <MIN-ZOOM>
+.. option:: --max-zoom <MAX-ZOOM>
 
     Maximum zoom level to generate. If not specified, this will be determined by
     comparing the resolution of the input dataset with the closest resolution in
@@ -175,6 +175,11 @@ Standard options
 
     Generate .aux.xml sidecar files when needed
 
+.. option:: --kml
+
+    Generate Google Earth SuperOverlay metadata.
+    Not compatible with tiling schemes with non-power-of-two zoom levels.
+
 .. option:: --resume
 
     Generate only missing files. Can be used when interrupting a previous run
@@ -184,6 +189,54 @@ Standard options
 
    Number of jobs to run at once.
    Default: number of CPUs detected.
+
+.. option:: --parallel-method thread|spawn
+
+   .. versionadded:: GDAL 3.12
+
+   Parallelization method. ``thread`` uses multi-threading (i.e. parallelized tasks
+   are run within the same process), whereas ``spawn`` launches child :program:`gdal` sub-processes.
+   ``spawn`` can achieve better "scaling", but requires the :program:`gdal` binary to be
+   available. GDAL will try to locate it, but you can also set the ``GDAL_PATH``
+   configuration option to point to the directory where the :program:`gdal` binary is
+   located. If :option:`--parallel-method` is not specified, GDAL will automatically
+   decide which of the method is the most appropriate, opting for ``spawn`` if
+   the :program:`gdal` binary can be located and a sufficient number of tiles per job
+   are generated, and otherwise falling back to ``thread``.
+
+
+Advanced Resampling Options
++++++++++++++++++++++++++++
+
+.. option:: --excluded-values=<EXCLUDED-VALUES>
+
+  Comma-separated tuple of values (thus typically "R,G,B"), that are ignored
+  as contributing source pixels during resampling. The number of values in
+  the tuple must be the same as the number of bands, excluding the alpha band.
+  Several tuples of excluded values may be specified using the "(R1,G1,B2),(R2,G2,B2)" syntax.
+  Only taken into account for average resampling.
+  This concept is a bit similar to nodata/alpha, but the main difference is
+  that pixels matching one of the excluded value tuples are still considered
+  as valid, when determining the target pixel validity/density.
+
+.. versionadded:: 3.11.1
+
+.. option:: --excluded-values-pct-threshold=<EXCLUDED-VALUES-PCT-THRESHOLD>
+
+  Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded
+  value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50(%)
+
+.. versionadded:: 3.11.1
+
+.. option:: --nodata-values-pct-threshold=<NODATA-VALUES-PCT-THRESHOLD>
+
+  Minimum percentage of source pixels that must be at nodata (or alpha=0 or any
+  other way to express transparent pixel) to cause the target pixel value to
+  be transparent. Default value is 100 (%), which means that a target pixel is
+  transparent only if all contributing source pixels are transparent.
+  Only taken into account for average resampling.
+
+.. versionadded:: 3.11.1
 
 
 Publication Options

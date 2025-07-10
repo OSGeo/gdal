@@ -28,6 +28,14 @@
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."
 
+void OGRPGFeatureDefn::UnsetLayer()
+{
+    const int nGeomFieldCount = GetGeomFieldCount();
+    for (int i = 0; i < nGeomFieldCount; i++)
+        cpl::down_cast<OGRPGGeomFieldDefn *>(apoGeomFieldDefn[i].get())
+            ->UnsetLayer();
+}
+
 /************************************************************************/
 /*                        OGRPGTableFeatureDefn                         */
 /************************************************************************/
@@ -49,11 +57,7 @@ class OGRPGTableFeatureDefn final : public OGRPGFeatureDefn
     {
     }
 
-    virtual void UnsetLayer() override
-    {
-        poLayer = nullptr;
-        OGRPGFeatureDefn::UnsetLayer();
-    }
+    virtual void UnsetLayer() override;
 
     virtual int GetFieldCount() const override
     {
@@ -107,6 +111,12 @@ class OGRPGTableFeatureDefn final : public OGRPGFeatureDefn
         return OGRPGFeatureDefn::GetGeomFieldIndex(pszName);
     }
 };
+
+void OGRPGTableFeatureDefn::UnsetLayer()
+{
+    poLayer = nullptr;
+    OGRPGFeatureDefn::UnsetLayer();
+}
 
 /************************************************************************/
 /*                           SolveFields()                              */
@@ -1818,8 +1828,8 @@ CPLString OGRPGEscapeColumnName(const char *pszColumnName)
 /************************************************************************/
 
 CPLString OGRPGEscapeString(void *hPGConnIn, const char *pszStrValue,
-                            int nMaxLength, const char *pszTableName,
-                            const char *pszFieldName)
+                            int /* nMaxWidth */, const char * /*pszTableName*/,
+                            const char * /*pszFieldName*/)
 {
     PGconn *hPGConn = reinterpret_cast<PGconn *>(hPGConnIn);
     CPLString osCommand;
@@ -1827,30 +1837,7 @@ CPLString OGRPGEscapeString(void *hPGConnIn, const char *pszStrValue,
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-    int nSrcLen = static_cast<int>(strlen(pszStrValue));
-    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
-
-    if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
-    {
-        CPLDebug("PG", "Truncated %s.%s field value '%s' to %d characters.",
-                 pszTableName, pszFieldName, pszStrValue, nMaxLength);
-
-        int iUTF8Char = 0;
-        for (int iChar = 0; iChar < nSrcLen; iChar++)
-        {
-            if (((reinterpret_cast<const unsigned char *>(pszStrValue))[iChar] &
-                 0xc0) != 0x80)
-            {
-                if (iUTF8Char == nMaxLength)
-                {
-                    nSrcLen = iChar;
-                    break;
-                }
-                iUTF8Char++;
-            }
-        }
-    }
-
+    const size_t nSrcLen = strlen(pszStrValue);
     char *pszDestStr = static_cast<char *>(CPLMalloc(2 * nSrcLen + 1));
 
     int nError = 0;
@@ -2443,7 +2430,7 @@ OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
             osCreateTable += osConstraints;
 
             if (!osCommentON.empty())
-                m_aosDeferredCommentOnColumns.push_back(osCommentON);
+                m_aosDeferredCommentOnColumns.push_back(std::move(osCommentON));
         }
     }
     else

@@ -10,6 +10,8 @@ GDALG: GDAL Streamed Algorithm
 
 .. built_in_by_default::
 
+.. note:: GDALG is the contraction of GDAL and ALGorithm.
+
 This is a read-only driver that reads a JSON file containing an invocation
 of the :ref:`gdal command line interface <gdal_program>`, that results in a
 on-the-fly / streamed raster dataset when used as an input
@@ -55,7 +57,7 @@ as relative to the location of the ``.gdalg.json`` file. If setting this member 
 they will be interpreted as being relative to the current working directory.
 
 ``.gdalg.json`` files can be validated against the following
-`JSON schema <https://github.com/OSGeo/gdal/blob/master/frmts/gdalg/data/gdalg.schema.json>`_
+JSON schema :source_file:`frmts/gdalg/data/gdalg.schema.json`
 
 This driver has also vector capabilities as detailed in :ref:`vector.gdalg`.
 

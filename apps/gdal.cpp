@@ -12,10 +12,12 @@
 
 #include "gdalalgorithm.h"
 #include "commonutils.h"
+#include "cpl_error.h"
 
 #include "gdal.h"
 
 #include <cassert>
+#include <utility>
 
 // #define DEBUG_COMPLETION
 
@@ -82,14 +84,67 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
 
 MAIN_START(argc, argv)
 {
+    const bool bIsCompletion = argc >= 3 && strcmp(argv[1], "completion") == 0;
+
+    if (bIsCompletion)
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EarlySetConfigOptions(argc, argv);
+    }
+    else
+    {
+        EarlySetConfigOptions(argc, argv);
+        for (int i = 1; i < argc; ++i)
+        {
+            // Used by gdal raster tile --parallel-method=spawn to pass
+            // config options in a stealth way
+            if (strcmp(argv[i], "--config-options-in-stdin") == 0)
+            {
+                std::string line;
+                constexpr int LINE_SIZE = 10 * 1024;
+                line.resize(LINE_SIZE);
+                while (fgets(line.data(), LINE_SIZE, stdin))
+                {
+                    if (strcmp(line.c_str(), "--config\n") == 0 &&
+                        fgets(line.data(), LINE_SIZE, stdin))
+                    {
+                        std::string osLine(line.c_str());
+                        if (!osLine.empty() && osLine.back() == '\n')
+                        {
+                            osLine.pop_back();
+                            char *pszUnescaped = CPLUnescapeString(
+                                osLine.c_str(), nullptr, CPLES_URL);
+                            char *pszKey = nullptr;
+                            const char *pszValue =
+                                CPLParseNameValue(pszUnescaped, &pszKey);
+                            if (pszKey && pszValue)
+                            {
+                                CPLSetConfigOption(pszKey, pszValue);
+                            }
+                            CPLFree(pszKey);
+                            CPLFree(pszUnescaped);
+                        }
+                    }
+                    else if (strcmp(line.c_str(), "--END\n") == 0)
+                    {
+                        break;
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
         GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);
     assert(alg);
 
-    if (argc >= 3 && strcmp(argv[1], "completion") == 0)
-    {
-        GDALAllRegister();
+    // Register GDAL drivers
+    GDALAllRegister();
 
+    if (bIsCompletion)
+    {
         const bool bLastWordIsComplete =
             EQUAL(argv[argc - 1], "last_word_is_complete=true");
         if (STARTS_WITH(argv[argc - 1], "last_word_is_complete="))
@@ -102,28 +157,49 @@ MAIN_START(argc, argv)
         return 0;
     }
 
-    EarlySetConfigOptions(argc, argv);
+    // Prevent GDALGeneralCmdLineProcessor() to process --format XXX, unless
+    // "gdal" is invoked only with it. Cf #12411
+    std::vector<std::pair<char **, char *>> apOrigFormat;
+    constexpr const char *pszFormatReplaced = "--format-XXXX";
+    if (!(argc == 3 && strcmp(argv[1], "--format") == 0))
+    {
+        for (int i = 1; i < argc; ++i)
+        {
+            if (strcmp(argv[i], "--format") == 0)
+            {
+                apOrigFormat.emplace_back(argv + i, argv[i]);
+                argv[i] = const_cast<char *>(pszFormatReplaced);
+            }
+        }
+    }
 
-    /* -------------------------------------------------------------------- */
-    /*      Register standard GDAL drivers, and process generic GDAL        */
-    /*      command options.                                                */
-    /* -------------------------------------------------------------------- */
-
-    GDALAllRegister();
-
+    // Process generic cmomand options
     argc = GDALGeneralCmdLineProcessor(
         argc, &argv, GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
+    for (auto &pair : apOrigFormat)
+    {
+        *(pair.first) = pair.second;
+    }
+
     if (argc < 1)
         return (-argc);
 
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i)
-        args.push_back(argv[i]);
+        args.push_back(strcmp(argv[i], pszFormatReplaced) == 0 ? "--format"
+                                                               : argv[i]);
     CSLDestroy(argv);
+
+    alg->SetCalledFromCommandLine();
 
     if (!alg->ParseCommandLineArguments(args))
     {
-        if (strstr(CPLGetLastErrorMsg(), "Do you mean") == nullptr)
+        if (strstr(CPLGetLastErrorMsg(), "Do you mean") == nullptr &&
+            strstr(CPLGetLastErrorMsg(), "Should be one among") == nullptr &&
+            strstr(CPLGetLastErrorMsg(), "Potential values for argument") ==
+                nullptr &&
+            strstr(CPLGetLastErrorMsg(),
+                   "Single potential value for argument") == nullptr)
         {
             fprintf(stderr, "%s", alg->GetUsageForCLI(true).c_str());
         }
@@ -139,8 +215,6 @@ MAIN_START(argc, argv)
     GDALProgressFunc pfnProgress =
         alg->IsProgressBarRequested() ? GDALTermProgress : nullptr;
     void *pProgressData = nullptr;
-
-    alg->SetCalledFromCommandLine();
 
     int ret = 0;
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())

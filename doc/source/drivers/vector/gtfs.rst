@@ -39,8 +39,65 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Examples
+--------
+
+List the contents of a GTFS local zip file:
+
+.. tabs::
+
+   .. code-tab:: bash
+
+        ogrinfo GTFS_Realtime.zip
+
+   .. code-tab:: bash gdal CLI
+
+        gdal vector info GTFS_Realtime.zip
+
+List the contents of a GTFS local directory:
+
+.. tabs::
+
+   .. code-tab:: bash
+
+        # specifying the driver
+        ogrinfo GTFS:"/data/GTFS_Realtime"
+        # specifying the input format
+        ogrinfo /data/GTFS_Realtime -if GTFS
+
+   .. code-tab:: bash gdal CLI
+
+        # specifying the driver
+        gdal vector info GTFS:"/data/GTFS_Realtime"
+        # specifying the input format
+        gdal vector info /data/GTFS_Realtime --input-format GTFS
+
+List the contents of a GTFS file at a URL:
+
+.. tabs::
+
+   .. code-tab:: bash
+
+        ogrinfo /vsicurl/https://www.transportforireland.ie/transitData/Data/GTFS_Realtime.zip
+
+   .. code-tab:: bash gdal CLI
+
+        gdal vector info /vsicurl/https://www.transportforireland.ie/transitData/Data/GTFS_Realtime.zip
+
+Extract the stops from the GTFS file and save into a FlatGeobuf file:
+
+.. tabs::
+
+   .. code-tab:: bash
+
+        ogr2ogr stops.fgb GTFS_Realtime.zip stops
+
+   .. code-tab:: bash gdal CLI
+
+        gdal vector convert GTFS_Realtime.zip stops.fgb --input-layer stops
 
 Links
 -----
 
 -  `GTFS Wikipedia page <https://en.wikipedia.org/wiki/GTFS>`__
+-  `GTFS.org <https://gtfs.org>`__

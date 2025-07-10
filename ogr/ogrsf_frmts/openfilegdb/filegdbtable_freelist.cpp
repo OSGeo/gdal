@@ -16,6 +16,7 @@
 #include "filegdbtable_priv.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <limits>
 #include <set>
@@ -40,7 +41,7 @@ constexpr int nPageHeaderSize = 2 * static_cast<int>(sizeof(uint32_t));
 /************************************************************************/
 
 // Fibonacci suite
-static const uint32_t anHoleSizes[] = {
+static const std::array<uint32_t, 43> anHoleSizes = {
     0,          8,         16,        24,        40,         64,
     104,        168,       272,       440,       712,        1152,
     1864,       3016,      4880,      7896,      12776,      20672,
@@ -52,7 +53,7 @@ static const uint32_t anHoleSizes[] = {
 
 static int FindFreelistRangeSlot(uint32_t nSize)
 {
-    for (size_t i = 0; i < CPL_ARRAYSIZE(anHoleSizes) - 1; i++)
+    for (size_t i = 0; i < anHoleSizes.size() - 1; i++)
     {
         if (/* nSize >= anHoleSizes[i] && */ nSize < anHoleSizes[i + 1])
         {
@@ -60,7 +61,8 @@ static int FindFreelistRangeSlot(uint32_t nSize)
         }
     }
 
-    CPLDebug("OpenFileGDB", "Hole larger than can be handled");
+    CPLDebug("OpenFileGDB", "Hole larger than %u can be handled",
+             anHoleSizes.back());
     return -1;
 }
 
@@ -270,6 +272,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
     }
+    assert(iSlot + 1 < static_cast<int>(anHoleSizes.size()));
     assert(iSlot < 100);
 
     // Read the last page index of the identified slot
@@ -650,9 +653,8 @@ bool FileGDBTable::CheckFreeListConsistency()
             {
                 const uint32_t nFreeAreaSize = GetUInt32(
                     abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
-                assert(iSlot + 1 <
-                       static_cast<int>(CPL_ARRAYSIZE(anHoleSizes)));
-                // coverity[overrun-local]
+                assert(iSlot >= 0);
+                assert(iSlot + 1 < static_cast<int>(anHoleSizes.size()));
                 if (nFreeAreaSize < anHoleSizes[iSlot] ||
                     nFreeAreaSize >= anHoleSizes[iSlot + 1])
                 {

@@ -82,6 +82,8 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt(char **, OGRSpatialReferenceH,
                                    OGRGeometryH *);
 OGRErr CPL_DLL OGR_G_CreateFromFgf(const void *, OGRSpatialReferenceH,
                                    OGRGeometryH *, int, int *);
+OGRGeometryH CPL_DLL OGR_G_CreateFromEnvelope(double, double, double, double,
+                                              OGRSpatialReferenceH);
 void CPL_DLL OGR_G_DestroyGeometry(OGRGeometryH);
 OGRGeometryH
     CPL_DLL OGR_G_CreateGeometry(OGRwkbGeometryType) CPL_WARN_UNUSED_RESULT;

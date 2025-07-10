@@ -121,7 +121,8 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
         {
             if (nSizeIn == 0)
                 break;
-            nCount = 32 + *((GByte *)pabyTempIn++);
+            nCount = 32 + *reinterpret_cast<const GByte *>(pabyTempIn);
+            pabyTempIn++;
             nSizeIn--;
         }
 
@@ -269,9 +270,12 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode = (*(GByte *)pabyTempIn) |
-                                   ((*(GByte *)(pabyTempIn + 1)) << 8) |
-                                   ((*(GByte *)(pabyTempIn + 2)) << 16);
+                    GInt32 nCode =
+                        (*reinterpret_cast<const GByte *>(pabyTempIn)) |
+                        ((*reinterpret_cast<const GByte *>(pabyTempIn + 1))
+                         << 8) |
+                        ((*reinterpret_cast<const GByte *>(pabyTempIn + 2))
+                         << 16);
                     pabyTempIn += 3;
                     if (nCode > RANGE_INT24)
                         nCode |= INV_INT24;
@@ -300,7 +304,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
         }
     }
 
-    return (GByte *)paiOut - pabyOut;
+    return reinterpret_cast<GByte *>(paiOut) - pabyOut;
 }
 
 /************************************************************************/

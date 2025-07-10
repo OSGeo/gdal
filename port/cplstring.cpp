@@ -431,9 +431,9 @@ CPLString CPLURLGetValue(const char *pszURL, const char *pszKey)
 CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
                        const char *pszValue)
 {
-    const CPLString osURL(strchr(pszURL, '?') == nullptr
-                              ? CPLString(pszURL).append("?")
-                              : pszURL);
+    CPLString osURL(strchr(pszURL, '?') == nullptr
+                        ? CPLString(pszURL).append("?")
+                        : pszURL);
 
     CPLString osKey(pszKey);
     osKey += "=";
@@ -460,7 +460,7 @@ CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
     }
     else
     {
-        CPLString osNewURL(osURL);
+        CPLString osNewURL(std::move(osURL));
         if (pszValue)
         {
             if (osNewURL.back() != '&' && osNewURL.back() != '?')

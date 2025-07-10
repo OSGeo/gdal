@@ -13,6 +13,8 @@
 #include <array>
 #include <utility>
 
+#include <iomanip>
+
 #include "gdal_unit_test.h"
 
 #include "gtest_include.h"
@@ -68,6 +70,274 @@ DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
 }
 
 }  // namespace
+
+TEST(Viewshed, min_max_mask)
+{
+    const int xlen = 15;
+    const int ylen = 15;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+
+    SCOPED_TRACE("min_max_mask");
+    Options opts(stdOptions(7, 7));
+    opts.minDistance = 2;
+    opts.maxDistance = 6;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<int8_t, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    EXPECT_EQ(xOutLen, 13);
+    EXPECT_EQ(yOutLen, 13);
+
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(),
+                                xOutLen, yOutLen, GDT_Int8, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    std::array<int8_t, 13 * 13> expected{
+        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+        0,   0,   0,   0,   0,   0,   127, 0,   0,   0,   0,   0,   0,
+        0,   0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0,
+        0,   0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,
+        0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
+        0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
+        0,   127, 127, 127, 127, 0,   0,   0,   127, 127, 127, 127, 0,
+        127, 127, 127, 127, 127, 0,   0,   0,   127, 127, 127, 127, 127,
+        0,   127, 127, 127, 127, 0,   0,   0,   127, 127, 127, 127, 0,
+        0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
+        0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,
+        0,   0,   127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,
+        0,   0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0};
+
+    int8_t *o = out.data();
+    int8_t *e = expected.data();
+    for (size_t i = 0; i < 13 * 13; ++i)
+        EXPECT_EQ(*e++, *o++);
+
+    /**
+    int8_t *p = out.data();
+    for (int y = 0; y < yOutLen; ++y)
+    {
+        for (int x = 0; x < xOutLen; ++x)
+        {
+            char c;
+            if (*p == 0)
+                c = '*';
+            else if (*p == 127)
+                c = '.';
+            else
+                c = '?';
+            std::cerr << c;
+            p++;
+        }
+        std::cerr << "\n";
+    }
+    std::cerr << "\n";
+    **/
+}
+
+TEST(Viewshed, angle)
+{
+    const int xlen = 17;
+    const int ylen = 17;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+
+    SCOPED_TRACE("min_max_mask");
+    Options opts(stdOptions(8, 8));
+    opts.startAngle = 0;
+    opts.endAngle = 30;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<int8_t, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    EXPECT_EQ(xOutLen, 6);
+    EXPECT_EQ(yOutLen, 9);
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(),
+                                xOutLen, yOutLen, GDT_Int8, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    std::array<int8_t, 6 * 9> expected{
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   127, 127,
+        127, 127, 0,   0,   127, 127, 127, 127, 0,   0,   127, 127, 127, 0,
+        0,   0,   127, 127, 127, 0,   0,   0,   127, 127, 0,   0,   0,   0,
+        127, 127, 0,   0,   0,   0,   127, 0,   0,   0,   0,   0};
+
+    int8_t *o = out.data();
+    int8_t *e = expected.data();
+    for (size_t i = 0; i < 6 * 9; ++i)
+        EXPECT_EQ(*e++, *o++);
+
+    /**
+    int8_t *p = out.data();
+    for (int y = 0; y < yOutLen; ++y)
+    {
+        for (int x = 0; x < xOutLen; ++x)
+        {
+            char c;
+            if (*p == 0)
+                c = '*';
+            else if (*p == 127)
+                c = '.';
+            else
+                c = '?';
+            std::cerr << c;
+            p++;
+        }
+        std::cerr << "\n";
+    }
+    std::cerr << "\n";
+    **/
+}
+
+TEST(Viewshed, angle2)
+{
+    const int xlen = 11;
+    const int ylen = 11;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+
+    SCOPED_TRACE("min_max_mask");
+    Options opts(stdOptions(5, 5));
+    opts.startAngle = 0;
+    opts.endAngle = 300;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<int8_t, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    EXPECT_EQ(xOutLen, 11);
+    EXPECT_EQ(yOutLen, 11);
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(),
+                                xOutLen, yOutLen, GDT_Int8, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    std::array<int8_t, 11 * 11> expected{
+        0,   0,   0,   0,   0,   127, 127, 127, 127, 127, 127, 0,   0,   0,
+        0,   0,   127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   127,
+        127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 0,   127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+        127, 127, 127, 127, 127, 127, 127, 127, 127,
+    };
+
+    int8_t *o = out.data();
+    int8_t *e = expected.data();
+    for (size_t i = 0; i < 11 * 11; ++i)
+        EXPECT_EQ(*e++, *o++);
+}
+
+TEST(Viewshed, high_mask)
+{
+    const int xlen = 15;
+    const int ylen = 15;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+    in[110] = 1;
+    in[111] = 3;
+    in[112] = 5;
+    in[113] = 7;
+    in[114] = 9;
+    in[115] = 11;
+    in[116] = 13;
+    in[117] = 15;
+    in[118] = 17;
+    in[119] = 19;
+
+    SCOPED_TRACE("high_mask");
+    Options opts(stdOptions(3, 7));
+
+    opts.highPitch = 58;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<int8_t, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    EXPECT_EQ(xOutLen, 15);
+    EXPECT_EQ(yOutLen, 15);
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(),
+                                xOutLen, yOutLen, GDT_Int8, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    std::array<int8_t, 15 * 15> expected{
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0, 0, 0,
+        127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0,   0, 0, 0,
+        127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 0, 0, 0};
+
+    int8_t *o = out.data();
+    int8_t *e = expected.data();
+    for (size_t i = 0; i < 11 * 11; ++i)
+        EXPECT_EQ(*e++, *o++);
+}
+
+TEST(Viewshed, low_mask)
+{
+    const int xlen = 5;
+    const int ylen = 5;
+    std::array<int8_t, xlen * ylen> in;
+    in.fill(0);
+    in[12] = 5;
+
+    SCOPED_TRACE("low_mask");
+    Options opts(stdOptions(2, 2));
+
+    opts.lowPitch = -45;
+    opts.outputMode = OutputMode::DEM;
+
+    DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
+
+    std::array<double, xlen * ylen> out;
+    GDALRasterBand *band = output->GetRasterBand(1);
+
+    int xOutLen = band->GetXSize();
+    int yOutLen = band->GetYSize();
+    CPLErr err = band->RasterIO(GF_Read, 0, 0, xOutLen, yOutLen, out.data(),
+                                xOutLen, yOutLen, GDT_Float64, 0, 0, nullptr);
+    EXPECT_EQ(err, CE_None);
+
+    std::array<double, 5 * 5> expected{2.17157, 2.76393, 3, 2.76393, 2.17157,
+                                       2.76393, 3.58579, 4, 3.58579, 2.76393,
+                                       3,       4,       5, 4,       3,
+                                       2.76393, 3.58579, 4, 3.58579, 2.76393,
+                                       2.17157, 2.76393, 3, 2.76393, 2.17157};
+
+    const double *o = out.data();
+    const double *e = expected.data();
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_NEAR(*o, *e, .00001);
+        o++;
+        e++;
+    }
+}
 
 TEST(Viewshed, all_visible)
 {

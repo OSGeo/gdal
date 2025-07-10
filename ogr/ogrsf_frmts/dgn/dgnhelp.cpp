@@ -12,6 +12,8 @@
 
 #include "dgnlibp.h"
 
+#include <algorithm>
+
 static const unsigned char abyDefaultPCT[256][3] = {
     {255, 255, 255}, {0, 0, 255},     {0, 255, 0},     {255, 0, 0},
     {255, 255, 0},   {255, 0, 255},   {255, 127, 0},   {0, 255, 255},
@@ -336,7 +338,7 @@ int DGNGetLineStyleName(CPL_UNUSED DGNInfo *psDGN, DGNElemMultiPoint *psLine,
  * @param fp the file (such as stdout) to report the element information to.
  */
 
-void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
+void DGNDumpElement(DGNHandle hDGN, const DGNElemCore *psElement, FILE *fp)
 
 {
     DGNInfo *psInfo = (DGNInfo *)hDGN;
@@ -402,7 +404,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
     {
         case DGNST_MULTIPOINT:
         {
-            DGNElemMultiPoint *psLine = (DGNElemMultiPoint *)psElement;
+            auto psLine =
+                reinterpret_cast<const DGNElemMultiPoint *>(psElement);
 
             for (int i = 0; i < psLine->num_vertices; i++)
                 fprintf(fp, "  (%.6f,%.6f,%.6f)\n", psLine->vertices[i].x,
@@ -412,7 +415,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_CELL_HEADER:
         {
-            DGNElemCellHeader *psCell = (DGNElemCellHeader *)psElement;
+            auto psCell =
+                reinterpret_cast<const DGNElemCellHeader *>(psElement);
 
             fprintf(
                 fp,
@@ -441,7 +445,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_CELL_LIBRARY:
         {
-            DGNElemCellLibrary *psCell = (DGNElemCellLibrary *)psElement;
+            auto psCell =
+                reinterpret_cast<const DGNElemCellLibrary *>(psElement);
 
             fprintf(
                 fp,
@@ -456,8 +461,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_SHARED_CELL_DEFN:
         {
-            DGNElemSharedCellDefn *psShared =
-                (DGNElemSharedCellDefn *)psElement;
+            auto psShared =
+                reinterpret_cast<const DGNElemSharedCellDefn *>(psElement);
 
             fprintf(fp, "  totlength=%d\n", psShared->totlength);
         }
@@ -465,7 +470,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_ARC:
         {
-            DGNElemArc *psArc = (DGNElemArc *)psElement;
+            auto psArc = reinterpret_cast<const DGNElemArc *>(psElement);
 
             if (psInfo->dimension == 2)
                 fprintf(fp, "  origin=(%.5f,%.5f), rotation=%f\n",
@@ -483,7 +488,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_TEXT:
         {
-            DGNElemText *psText = (DGNElemText *)psElement;
+            auto psText = reinterpret_cast<const DGNElemText *>(psElement);
 
             fprintf(fp,
                     "  origin=(%.5f,%.5f), rotation=%f\n"
@@ -497,7 +502,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_TEXT_NODE:
         {
-            DGNElemTextNode *psNode = (DGNElemTextNode *)psElement;
+            auto psNode = reinterpret_cast<const DGNElemTextNode *>(psElement);
 
             fprintf(fp, "  totlength=%d, num_texts=%d\n", psNode->totlength,
                     psNode->numelems);
@@ -515,7 +520,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_COMPLEX_HEADER:
         {
-            DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *)psElement;
+            auto psHdr =
+                reinterpret_cast<const DGNElemComplexHeader *>(psElement);
 
             fprintf(fp, "  totlength=%d, numelems=%d\n", psHdr->totlength,
                     psHdr->numelems);
@@ -530,7 +536,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_COLORTABLE:
         {
-            DGNElemColorTable *psCT = (DGNElemColorTable *)psElement;
+            auto psCT = reinterpret_cast<const DGNElemColorTable *>(psElement);
 
             fprintf(fp, "  screen_flag: %d\n", psCT->screen_flag);
             for (int i = 0; i < 256; i++)
@@ -543,7 +549,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_TCB:
         {
-            DGNElemTCB *psTCB = (DGNElemTCB *)psElement;
+            auto psTCB = reinterpret_cast<const DGNElemTCB *>(psElement);
 
             fprintf(fp, "  dimension = %d\n", psTCB->dimension);
             fprintf(fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
@@ -555,7 +561,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
             for (int iView = 0; iView < 8; iView++)
             {
-                DGNViewInfo *psView = psTCB->views + iView;
+                const DGNViewInfo *psView = psTCB->views + iView;
 
                 fprintf(fp,
                         "  View%d: flags=%04X, "
@@ -580,14 +586,14 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_TAG_SET:
         {
-            DGNElemTagSet *psTagSet = (DGNElemTagSet *)psElement;
+            auto psTagSet = reinterpret_cast<const DGNElemTagSet *>(psElement);
 
             fprintf(fp, "  tagSetName=%s, tagSet=%d, tagCount=%d, flags=%d\n",
                     psTagSet->tagSetName, psTagSet->tagSet, psTagSet->tagCount,
                     psTagSet->flags);
             for (int iTag = 0; iTag < psTagSet->tagCount; iTag++)
             {
-                DGNTagDef *psTagDef = psTagSet->tagList + iTag;
+                const DGNTagDef *psTagDef = psTagSet->tagList + iTag;
 
                 fprintf(fp, "    %d: name=%s, type=%d, prompt=%s", psTagDef->id,
                         psTagDef->name, psTagDef->type, psTagDef->prompt);
@@ -607,7 +613,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_TAG_VALUE:
         {
-            DGNElemTagValue *psTag = (DGNElemTagValue *)psElement;
+            auto psTag = reinterpret_cast<const DGNElemTagValue *>(psElement);
 
             fprintf(fp, "  tagType=%d, tagSet=%d, tagIndex=%d, tagLength=%d\n",
                     psTag->tagType, psTag->tagSet, psTag->tagIndex,
@@ -623,7 +629,7 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_CONE:
         {
-            DGNElemCone *psCone = (DGNElemCone *)psElement;
+            auto psCone = reinterpret_cast<const DGNElemCone *>(psElement);
 
             fprintf(fp,
                     "  center_1=(%g,%g,%g) radius=%g\n"
@@ -639,8 +645,9 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_BSPLINE_SURFACE_HEADER:
         {
-            DGNElemBSplineSurfaceHeader *psSpline =
-                (DGNElemBSplineSurfaceHeader *)psElement;
+            auto psSpline =
+                reinterpret_cast<const DGNElemBSplineSurfaceHeader *>(
+                    psElement);
 
             fprintf(fp, "  desc_words=%ld, curve type=%u\n",
                     psSpline->desc_words, psSpline->curve_type);
@@ -691,8 +698,8 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_BSPLINE_CURVE_HEADER:
         {
-            DGNElemBSplineCurveHeader *psSpline =
-                (DGNElemBSplineCurveHeader *)psElement;
+            auto psSpline =
+                reinterpret_cast<const DGNElemBSplineCurveHeader *>(psElement);
 
             fprintf(fp,
                     "  desc_words=%ld, curve type=%u\n"
@@ -726,8 +733,9 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_BSPLINE_SURFACE_BOUNDARY:
         {
-            DGNElemBSplineSurfaceBoundary *psBounds =
-                (DGNElemBSplineSurfaceBoundary *)psElement;
+            auto psBounds =
+                reinterpret_cast<const DGNElemBSplineSurfaceBoundary *>(
+                    psElement);
 
             fprintf(fp, "  boundary number=%d, # vertices=%d\n",
                     psBounds->number, psBounds->numverts);
@@ -741,8 +749,10 @@ void DGNDumpElement(DGNHandle hDGN, DGNElemCore *psElement, FILE *fp)
 
         case DGNST_KNOT_WEIGHT:
         {
-            DGNElemKnotWeight *psArray = (DGNElemKnotWeight *)psElement;
-            int numelems = (psArray->core.size - 36) / 4;
+            auto psArray =
+                reinterpret_cast<const DGNElemKnotWeight *>(psElement);
+
+            const int numelems = (psArray->core.size - 36) / 4;
             for (int i = 0; i < numelems; i++)
             {
                 fprintf(fp, "  %.6f\n", psArray->array[i]);
@@ -930,7 +940,7 @@ const char *DGNTypeToName(int nType)
  * @return size of linkage in bytes, or zero.
  */
 
-int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement,
+int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, const DGNElemCore *psElement,
                        int nOffset)
 {
     if (psElement->attr_bytes < nOffset + 4)
@@ -945,7 +955,14 @@ int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement,
 
     /* If low order bit of second byte is set, first byte is length */
     if (psElement->attr_data[nOffset + 1] & 0x10)
-        return psElement->attr_data[nOffset + 0] * 2 + 2;
+    {
+        // Useless comparison but to please Coverity Scan
+        const int ret = psElement->attr_data[nOffset + 0] * 2 + 2;
+        constexpr int MAX_ALLOWED = 255 * 2 + 2;
+        if (ret < MAX_ALLOWED)
+            return ret;
+        return MAX_ALLOWED;
+    }
 
     /* unknown */
     return 0;
@@ -986,8 +1003,8 @@ int DGNGetAttrLinkSize(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement,
  * altered or freed.  NULL returned on failure.
  */
 
-unsigned char *DGNGetLinkage(DGNHandle hDGN, DGNElemCore *psElement, int iIndex,
-                             int *pnLinkageType, int *pnEntityNum,
+unsigned char *DGNGetLinkage(DGNHandle hDGN, const DGNElemCore *psElement,
+                             int iIndex, int *pnLinkageType, int *pnEntityNum,
                              int *pnMSLink, int *pnLength)
 
 {

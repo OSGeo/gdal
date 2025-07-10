@@ -70,8 +70,10 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
-        // coverity[copy_assignment_call]
         value3 = value;
+        // avoid Coverity Scan warning about above assignment being better
+        // replaced with a move.
+        EXPECT_NE(value.getSpatialReference(), nullptr);
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
     ASSERT_EQ(1, poSRS->GetReferenceCount());
@@ -329,8 +331,9 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *mp_as_gc = gc;
+        // avoid Coverity Scan warning
+        EXPECT_EQ(gc.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRGeometryCollection::operator=(): trying to "
@@ -363,8 +366,9 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        // coverity[copy_assignment_call]
         *poly_as_cp = cp;
+        // avoid Coverity Scan warning
+        EXPECT_EQ(cp.getSpatialReference(), nullptr);
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
@@ -546,8 +550,16 @@ TEST_F(test_ogr, style_manager)
 
 TEST_F(test_ogr, OGRParseDate)
 {
+    const auto OGRParseDateWrapper =
+        [](const char *str, OGRField *psField, int nFlags)
+    {
+        // Putting inside a std::string helps Valgrind and other checkers to
+        // detect out-of-bounds access
+        return OGRParseDate(std::string(str).c_str(), psField, nFlags);
+    };
+
     OGRField sField;
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 11);
     EXPECT_EQ(sField.Date.Day, 31);
@@ -556,32 +568,35 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 56.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56+00", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56+12:00", &sField, 0),
+              TRUE);
     EXPECT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56+1200", &sField, 0),
+              TRUE);
     EXPECT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56+815", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.TZFlag, 100 + 8 * 4 + 1);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56-12:00", &sField, 0),
+              TRUE);
     EXPECT_EQ(sField.Date.TZFlag, 100 - 12 * 4);
 
-    EXPECT_EQ(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper(" 2017/11/31 12:34:56", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
 
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:56.789", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Second, 56.789f);
 
     // Leap second
-    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:60", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017/11/31 12:34:60", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Second, 60.0f);
 
-    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31T12:34:56", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 11);
     EXPECT_EQ(sField.Date.Day, 31);
@@ -590,15 +605,22 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 56.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31T12:34:56Z", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Second, 56.0f);
     EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31T12:34:56.789Z", &sField, 0),
+              TRUE);
     EXPECT_EQ(sField.Date.Second, 56.789f);
     EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    EXPECT_EQ(OGRParseDate("2017-11-31", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31T23:59:59.999999Z", &sField, 0),
+              TRUE);
+    EXPECT_EQ(sField.Date.Hour, 23);
+    EXPECT_EQ(sField.Date.Minute, 59);
+    EXPECT_EQ(sField.Date.Second, 59.999f);
+
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 11);
     EXPECT_EQ(sField.Date.Day, 31);
@@ -607,7 +629,7 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 0.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("2017-11-31Z", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-11-31Z", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 11);
     EXPECT_EQ(sField.Date.Day, 31);
@@ -616,7 +638,7 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 0.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("12:34", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("12:34", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 0);
     EXPECT_EQ(sField.Date.Month, 0);
     EXPECT_EQ(sField.Date.Day, 0);
@@ -625,10 +647,10 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 0.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("12:34:56", &sField, 0), TRUE);
-    EXPECT_EQ(OGRParseDate("12:34:56.789", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("12:34:56.789", &sField, 0), TRUE);
 
-    EXPECT_EQ(OGRParseDate("T12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("T12:34:56", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 0);
     EXPECT_EQ(sField.Date.Month, 0);
     EXPECT_EQ(sField.Date.Day, 0);
@@ -637,7 +659,7 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 56.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("T123456", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("T123456", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 0);
     EXPECT_EQ(sField.Date.Month, 0);
     EXPECT_EQ(sField.Date.Day, 0);
@@ -646,7 +668,7 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 56.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("T123456.789", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("T123456.789", &sField, 0), TRUE);
     EXPECT_EQ(sField.Date.Year, 0);
     EXPECT_EQ(sField.Date.Month, 0);
     EXPECT_EQ(sField.Date.Day, 0);
@@ -656,46 +678,49 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    EXPECT_TRUE(!OGRParseDate("123456-01-01", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("123456-01-01", &sField, 0));
     CPLPopErrorHandler();
-    EXPECT_TRUE(!OGRParseDate("2017", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017x-01-01", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-1-01", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-1", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01x", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("12:", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("12:3", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("1:23", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("12:34:5", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("1a:34", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-a-31T12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-00-31T12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-13-31T12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-00T12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-aT12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-32T12:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("a:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01Ta:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T25:34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:a:00", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T00: 34:56", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:61:00", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:00:61", &sField, 0));
-    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:00:a", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017x-01-01", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-1-01", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-1", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01x", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("12:", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("12:3", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("1:23", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("12:34:5", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("1a:34", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-a-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-00-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-13-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-00T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-aT12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-32T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("a:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01Ta:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T25:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T00:a:00", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T00: 34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T00:61:00", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T00:00:61", &sField, 0));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-01-01T00:00:a", &sField, 0));
 
     // Test OGRPARSEDATE_OPTION_LAX
-    EXPECT_EQ(OGRParseDate("2017-1-9", &sField, OGRPARSEDATE_OPTION_LAX), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("2017-1-9", &sField, OGRPARSEDATE_OPTION_LAX),
+              TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 1);
     EXPECT_EQ(sField.Date.Day, 9);
 
-    EXPECT_EQ(OGRParseDate("2017-1-31", &sField, OGRPARSEDATE_OPTION_LAX),
-              TRUE);
+    EXPECT_EQ(
+        OGRParseDateWrapper("2017-1-31", &sField, OGRPARSEDATE_OPTION_LAX),
+        TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 1);
     EXPECT_EQ(sField.Date.Day, 31);
 
-    EXPECT_EQ(OGRParseDate("2017-1-31T1:2:3", &sField, OGRPARSEDATE_OPTION_LAX),
+    EXPECT_EQ(OGRParseDateWrapper("2017-1-31T1:2:3", &sField,
+                                  OGRPARSEDATE_OPTION_LAX),
               TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 1);
@@ -705,8 +730,9 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 3.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("2017-1-31T1:3", &sField, OGRPARSEDATE_OPTION_LAX),
-              TRUE);
+    EXPECT_EQ(
+        OGRParseDateWrapper("2017-1-31T1:3", &sField, OGRPARSEDATE_OPTION_LAX),
+        TRUE);
     EXPECT_EQ(sField.Date.Year, 2017);
     EXPECT_EQ(sField.Date.Month, 1);
     EXPECT_EQ(sField.Date.Day, 31);
@@ -715,7 +741,8 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 0.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_EQ(OGRParseDate("1:3", &sField, OGRPARSEDATE_OPTION_LAX), TRUE);
+    EXPECT_EQ(OGRParseDateWrapper("1:3", &sField, OGRPARSEDATE_OPTION_LAX),
+              TRUE);
     EXPECT_EQ(sField.Date.Year, 0);
     EXPECT_EQ(sField.Date.Month, 0);
     EXPECT_EQ(sField.Date.Day, 0);
@@ -724,22 +751,31 @@ TEST_F(test_ogr, OGRParseDate)
     EXPECT_EQ(sField.Date.Second, 0.0f);
     EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    EXPECT_TRUE(!OGRParseDate("2017-a-01", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-0-01", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-a", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-0", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-32", &sField, OGRPARSEDATE_OPTION_LAX));
     EXPECT_TRUE(
-        !OGRParseDate("2017-1-1Ta:00:00", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-1T1", &sField, OGRPARSEDATE_OPTION_LAX));
+        !OGRParseDateWrapper("2017-a-01", &sField, OGRPARSEDATE_OPTION_LAX));
     EXPECT_TRUE(
-        !OGRParseDate("2017-1-1T00:a:00", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("2017-1-1T1:", &sField, OGRPARSEDATE_OPTION_LAX));
+        !OGRParseDateWrapper("2017-0-01", &sField, OGRPARSEDATE_OPTION_LAX));
     EXPECT_TRUE(
-        !OGRParseDate("2017-1-1T00:00:a", &sField, OGRPARSEDATE_OPTION_LAX));
-    EXPECT_TRUE(!OGRParseDate("1a:3", &sField, OGRPARSEDATE_OPTION_LAX));
+        !OGRParseDateWrapper("2017-1", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-a", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-0", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-32", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-1-1Ta:00:00", &sField,
+                                     OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-1T1", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-1-1T00:a:00", &sField,
+                                     OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDateWrapper("2017-1-1T1:", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDateWrapper("2017-1-1T00:00:a", &sField,
+                                     OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDateWrapper("1a:3", &sField, OGRPARSEDATE_OPTION_LAX));
 }
 
 // Test OGRPolygon::IsPointOnSurface()
@@ -1543,8 +1579,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
-        // coverity[copy_constructor_call]
         GDALDataset::Layers::Iterator newIter(srcIter);
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -1553,8 +1589,8 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
         GDALDataset::Layers::Iterator newIter;
-        // coverity[copy_assignent_call]
         newIter = srcIter;
+        srcIter = layers.begin();  // avoid Coverity Scan warning
         ASSERT_EQ(*newIter, layers[1]);
     }
 
@@ -2567,7 +2603,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
             {
                 entryLocal.error = pszError;
             }
-            queryLogLocal->push_back(entryLocal);
+            queryLogLocal->push_back(std::move(entryLocal));
         },
         &queryLog);
 
@@ -2624,9 +2660,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2638,9 +2672,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
     {
         char szInput[] = "2023-07-11T17:27";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2653,18 +2685,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
         // Invalid
         char szInput[] = "2023-07-11T17:2";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, &sField), false);
     }
 }
 
@@ -2673,9 +2700,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34Z";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2687,9 +2712,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
     {
         char szInput[] = "2023-07-11T17:27:34";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2702,18 +2725,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:3";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99";
         OGRField sField;
-        EXPECT_EQ(
-            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
-            false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, &sField), false);
     }
 }
 
@@ -2722,9 +2740,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123Z";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2736,9 +2752,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
     {
         char szInput[] = "2023-07-11T17:27:34.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  true);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), true);
         EXPECT_EQ(sField.Date.Year, 2023);
         EXPECT_EQ(sField.Date.Month, 7);
         EXPECT_EQ(sField.Date.Day, 11);
@@ -2751,18 +2765,13 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
         // Invalid
         char szInput[] = "2023-07-11T17:27:34.12";
         OGRField sField;
-        // coverity[overrun-buffer-val]
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
     {
         // Invalid
         char szInput[] = "2023-07-11T17:27:99.123";
         OGRField sField;
-        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
-                                                      &sField),
-                  false);
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, &sField), false);
     }
 }
 

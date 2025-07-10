@@ -114,6 +114,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
@@ -123,12 +124,13 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
     }
     else
     {
-        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, pdfData[iIndex]);
+            eErr = SetValue(iIndex, iField, pdfData[iIndex]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -178,6 +180,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
@@ -187,12 +190,13 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
     }
     else
     {
-        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, pnData[iIndex]);
+            eErr = SetValue(iIndex, iField, pnData[iIndex]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -244,6 +248,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
@@ -253,12 +258,13 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
     }
     else
     {
-        for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
+        for (int iIndex = iStartRow;
+             eErr == CE_None && iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, papszStrList[iIndex]);
+            eErr = SetValue(iIndex, iField, papszStrList[iIndex]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -1191,12 +1197,7 @@ void CPL_STDCALL GDALRATDumpReadable(GDALRasterAttributeTableH hRAT, FILE *fp)
 
 //! Construct empty table.
 
-GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable()
-    : bLinearBinning(false), dfRow0Min(-0.5), dfBinSize(1.0),
-      eTableType(GRTT_THEMATIC), bColumnsAnalysed(false), nMinCol(-1),
-      nMaxCol(-1), nRowCount(0)
-{
-}
+GDALDefaultRasterAttributeTable::GDALDefaultRasterAttributeTable() = default;
 
 /************************************************************************/
 /*                   GDALCreateRasterAttributeTable()                   */
@@ -1702,8 +1703,8 @@ void GDALDefaultRasterAttributeTable::SetRowCount(int nNewCount)
  * @param iField field index.
  * @param pszValue value.
  */
-void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
-                                               const char *pszValue)
+CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                                 const char *pszValue)
 
 {
     if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
@@ -1711,7 +1712,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
         CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
                  iField);
 
-        return;
+        return CE_Failure;
     }
 
     if (iRow == nRowCount)
@@ -1721,7 +1722,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
 
-        return;
+        return CE_Failure;
     }
 
     switch (aoFields[iField].eType)
@@ -1738,6 +1739,8 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
             aoFields[iField].aosValues[iRow] = pszValue;
             break;
     }
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1769,7 +1772,8 @@ void CPL_STDCALL GDALRATSetValueAsString(GDALRasterAttributeTableH hRAT,
 /*                              SetValue()                              */
 /************************************************************************/
 
-void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField, int nValue)
+CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                                 int nValue)
 
 {
     if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
@@ -1777,7 +1781,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField, int nValue)
         CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
                  iField);
 
-        return;
+        return CE_Failure;
     }
 
     if (iRow == nRowCount)
@@ -1787,7 +1791,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField, int nValue)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
 
-        return;
+        return CE_Failure;
     }
 
     switch (aoFields[iField].eType)
@@ -1809,6 +1813,8 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField, int nValue)
         }
         break;
     }
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1834,8 +1840,8 @@ void CPL_STDCALL GDALRATSetValueAsInt(GDALRasterAttributeTableH hRAT, int iRow,
 /*                              SetValue()                              */
 /************************************************************************/
 
-void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
-                                               double dfValue)
+CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
+                                                 double dfValue)
 
 {
     if (iField < 0 || iField >= static_cast<int>(aoFields.size()))
@@ -1843,7 +1849,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
         CPLError(CE_Failure, CPLE_AppDefined, "iField (%d) out of range.",
                  iField);
 
-        return;
+        return CE_Failure;
     }
 
     if (iRow == nRowCount)
@@ -1853,7 +1859,7 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "iRow (%d) out of range.", iRow);
 
-        return;
+        return CE_Failure;
     }
 
     switch (aoFields[iField].eType)
@@ -1875,6 +1881,8 @@ void GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
         }
         break;
     }
+
+    return CE_None;
 }
 
 /************************************************************************/

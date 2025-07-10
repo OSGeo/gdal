@@ -12,7 +12,6 @@ add_gdal_driver(
           ogrgeopackagetablelayer.cpp
           ogrgeopackageutility.cpp
           gdalgeopackagerasterband.cpp
-  STRONG_CXX_WFLAGS
   BUILTIN)
 gdal_standard_includes(ogr_GeoPackage)
 

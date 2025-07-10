@@ -23,6 +23,10 @@ Description
 :program:`gdal vector sql` returns one or several layers evaluated from
 SQL statements.
 
+Starting with GDAL 3.12, when using :option:`--update`, and without an output
+dataset specified, this can be used to execute statements that modify
+the input dataset, such as UPDATE, DELETE, etc.
+
 Standard options
 ++++++++++++++++
 
@@ -54,6 +58,19 @@ Standard options
     several --output-layer arguments, or a single one with the layer names
     combined with comma.
 
+.. option:: --update
+
+    .. versionadded:: 3.12
+
+    Open the (input) dataset in update mode. This option is mutually exclusive
+    with specifying an output dataset.
+
+.. option:: --quiet
+
+    .. versionadded:: 3.12
+
+    Silence potential information messages.
+
 Advanced options
 ++++++++++++++++
 
@@ -82,3 +99,10 @@ Examples
    .. code-block:: bash
 
         $ gdal vector sql in.gpkg out.gpkg --output-layer=beginning,end --sql="SELECT * FROM my_layer LIMIT 100" --sql="SELECT * FROM my_layer OFFSET 100000 LIMIT 100"
+
+.. example::
+   :title: Modify in-place a GeoPackage dataset
+
+   .. code-block:: bash
+
+        $ gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"

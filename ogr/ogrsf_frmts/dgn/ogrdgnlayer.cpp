@@ -229,7 +229,8 @@ void OGRDGNLayer::ResetReading()
 OGRFeature *OGRDGNLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    if (nFeatureId > INT_MAX || !DGNGotoElement(hDGN, (int)nFeatureId))
+    if (nFeatureId > INT_MAX ||
+        !DGNGotoElement(hDGN, static_cast<int>(nFeatureId)))
         return nullptr;
 
     // We should likely clear the spatial search region as it affects
@@ -558,7 +559,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             }
             else
             {
-                DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *)psElement;
+                DGNElemMultiPoint *psEMP =
+                    reinterpret_cast<DGNElemMultiPoint *>(psElement);
 
                 if (psEMP->num_vertices > 0)
                 {
@@ -580,7 +582,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
 
         case DGNST_ARC:
         {
-            DGNElemArc *psArc = (DGNElemArc *)psElement;
+            DGNElemArc *psArc = reinterpret_cast<DGNElemArc *>(psElement);
             int nPoints = static_cast<int>(
                 std::max(1.0, std::abs(psArc->sweepang) / 5.0) + 1.0);
             if (nPoints > 90)
@@ -782,7 +784,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             if (psText->rotation != 0.0)
                 snprintf(pszOgrFS + strlen(pszOgrFS),
                          nOgrFSLen - strlen(pszOgrFS), ",a:%d",
-                         (int)(psText->rotation + 0.5));
+                         static_cast<int>(psText->rotation + 0.5));
 
             snprintf(pszOgrFS + strlen(pszOgrFS), nOgrFSLen - strlen(pszOgrFS),
                      ")");
@@ -796,7 +798,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
 
         case DGNST_COMPLEX_HEADER:
         {
-            DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *)psElement;
+            DGNElemComplexHeader *psHdr =
+                reinterpret_cast<DGNElemComplexHeader *>(psElement);
             OGRMultiLineString oChildren;
 
             /* collect subsequent child geometries. */
@@ -1318,8 +1321,8 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom(OGRFeature *poFeature,
                 CPLFree(papsGroupInner);
             }
             int index = 1;
-            papsGroup = (DGNElemCore **)CPLCalloc(sizeof(void *),
-                                                  dgnElements.size() + 2);
+            papsGroup = static_cast<DGNElemCore **>(
+                CPLCalloc(sizeof(void *), dgnElements.size() + 2));
             for (std::list<DGNElemCore *>::iterator list_iter =
                      dgnElements.begin();
                  list_iter != dgnElements.end(); ++list_iter)

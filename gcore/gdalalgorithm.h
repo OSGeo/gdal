@@ -308,8 +308,11 @@ constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
 
-/** Name of the argument for overwrite. */
+/** Name of the argument for overwriting a dataset. */
 constexpr const char *GDAL_ARG_NAME_OVERWRITE = "overwrite";
+
+/** Name of the argument for overwriting a layer. */
+constexpr const char *GDAL_ARG_NAME_OVERWRITE_LAYER = "overwrite-layer";
 
 /** Name of the argument for append. */
 constexpr const char *GDAL_ARG_NAME_APPEND = "append";
@@ -436,6 +439,12 @@ class CPL_DLL GDALArgDatasetValue final
      */
     void SetFrom(const GDALArgDatasetValue &other);
 
+    /** Whether the dataset has been opened by the algorithm */
+    bool HasDatasetBeenOpenedByAlgorithm() const
+    {
+        return m_openedByAlgorithm;
+    }
+
   protected:
     friend class GDALAlgorithm;
 
@@ -444,6 +453,12 @@ class CPL_DLL GDALArgDatasetValue final
     {
         CPLAssert(!m_ownerArg);
         m_ownerArg = arg;
+    }
+
+    /** Set that the dataset has been opened by the algorithm */
+    void SetDatasetOpenedByAlgorithm()
+    {
+        m_openedByAlgorithm = true;
     }
 
   private:
@@ -458,6 +473,9 @@ class CPL_DLL GDALArgDatasetValue final
 
     /** Whether a dataset name (possibly empty for a MEM dataset...) has been set */
     bool m_nameSet = false;
+
+    /** Whether the dataset has been opened by the algorithm */
+    bool m_openedByAlgorithm = false;
 
     GDALArgDatasetValue(const GDALArgDatasetValue &) = delete;
     GDALArgDatasetValue &operator=(const GDALArgDatasetValue &) = delete;
@@ -1838,6 +1856,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     /** Autocompletion function */
     std::function<std::vector<std::string>(const std::string &)>
         m_autoCompleteFunction{};
+    /** Algorithm that may own this argument. */
+    GDALAlgorithm *m_owner = nullptr;
 
   private:
     bool m_skipIfAlreadySet = false;
@@ -1858,6 +1878,8 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     std::string ValidateChoice(const std::string &value) const;
     bool ValidateIntRange(int val) const;
     bool ValidateRealRange(double val) const;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALAlgorithmArg)
 };
 
 /************************************************************************/
@@ -1884,9 +1906,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     template <class T>
     GDALInConstructionAlgorithmArg(GDALAlgorithm *owner,
                                    const GDALAlgorithmArgDecl &decl, T *pValue)
-        : GDALAlgorithmArg(decl, pValue), m_owner(owner)
+        : GDALAlgorithmArg(decl, pValue)
     {
+        m_owner = owner;
     }
+
+    /** Destructor */
+    ~GDALInConstructionAlgorithmArg() override;
 
     /** Add a documented alias for the argument */
     GDALInConstructionAlgorithmArg &AddAlias(const std::string &alias);
@@ -2217,14 +2243,6 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetIsCRSArg(bool noneAllowed = false,
                 const std::vector<std::string> &specialValues =
                     std::vector<std::string>());
-
-  private:
-    GDALAlgorithm *const m_owner;
-
-    GDALInConstructionAlgorithmArg(const GDALInConstructionAlgorithmArg &) =
-        delete;
-    GDALInConstructionAlgorithmArg &
-    operator=(const GDALInConstructionAlgorithmArg &) = delete;
 };
 
 /************************************************************************/
@@ -2357,6 +2375,12 @@ class CPL_DLL GDALAlgorithmRegistry
     const std::string &GetHelpFullURL() const
     {
         return m_helpFullURL;
+    }
+
+    /** Returns whether this algorithm is hidden */
+    bool IsHidden() const
+    {
+        return m_hidden;
     }
 
     /** Returns whether this algorithm has sub-algorithms */
@@ -2622,8 +2646,18 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_calledFromCommandLine;
     }
 
+    /** Save command line in a .gdalg.json file. */
+    static bool SaveGDALG(const std::string &filename,
+                          const std::string &commandLine);
+
+    //! @cond Doxygen_Suppress
+    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
+    //! @endcond
+
   protected:
     friend class GDALInConstructionAlgorithmArg;
+    friend class GDALRasterReprojectUtils;
 
     /** Selected sub-algorithm. Set by ParseCommandLineArguments() when
      * handling over on a sub-algorithm. */
@@ -2653,6 +2687,9 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Whether this algorithm is run to generated a streamed output dataset. */
     bool m_executionForStreamOutput = false;
+
+    /** Whether this algorithm should be hidden (but can be instantiate if name known) */
+    bool m_hidden = false;
 
     /** Constructor */
     GDALAlgorithm(const std::string &name, const std::string &description,
@@ -2772,13 +2809,17 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddOverwriteArg(bool *pValue, const char *helpMessage = nullptr);
 
+    /** Add \--overwrite-layer argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOverwriteLayerArg(bool *pValue, const char *helpMessage = nullptr);
+
     /** Add \--update argument. */
     GDALInConstructionAlgorithmArg &
     AddUpdateArg(bool *pValue, const char *helpMessage = nullptr);
 
-    /** Add \--append argument. */
+    /** Add \--append argument for a vector layer. */
     GDALInConstructionAlgorithmArg &
-    AddAppendUpdateArg(bool *pValue, const char *helpMessage = nullptr);
+    AddAppendLayerArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add (non-CLI) output-string argument. */
     GDALInConstructionAlgorithmArg &
@@ -2797,9 +2838,9 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Add nodata argument. */
     GDALInConstructionAlgorithmArg &
-    AddNodataDataTypeArg(std::string *pValue, bool noneAllowed,
-                         const std::string &optionName = "nodata",
-                         const char *helpMessage = nullptr);
+    AddNodataArg(std::string *pValue, bool noneAllowed,
+                 const std::string &optionName = "nodata",
+                 const char *helpMessage = nullptr);
 
     /** Add creation option(s) argument. */
     GDALInConstructionAlgorithmArg &
@@ -2819,6 +2860,15 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddLayerNameArg(std::vector<std::string> *pValue,
                     const char *helpMessage = nullptr);
+
+    /** Add geometry type argument */
+    GDALInConstructionAlgorithmArg &
+    AddGeometryTypeArg(std::string *pValue, const char *helpMessage = nullptr);
+
+    /** Register an auto complete function for a layer name argument */
+    static void SetAutoCompleteFunctionForLayerName(
+        GDALInConstructionAlgorithmArg &layerArg,
+        GDALInConstructionAlgorithmArg &datasetArg);
 
     /** Add (single) band argument. */
     GDALInConstructionAlgorithmArg &
@@ -2844,6 +2894,20 @@ class CPL_DLL GDALAlgorithmRegistry
     AddNumThreadsArg(int *pValue, std::string *pStrValue,
                      const char *helpMessage = nullptr);
 
+    /** Add an argument to ask writing absolute paths. */
+    GDALInConstructionAlgorithmArg &
+    AddAbsolutePathArg(bool *pValue, const char *helpMessage = nullptr);
+
+    /** Add an argument for pixel function name */
+    GDALInConstructionAlgorithmArg &
+    AddPixelFunctionNameArg(std::string *pValue,
+                            const char *helpMessage = nullptr);
+
+    /** Add an argument for pixel function arguments */
+    GDALInConstructionAlgorithmArg &
+    AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
+                            const char *helpMessage = nullptr);
+
     /** Add \--progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
@@ -2865,6 +2929,9 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Validation function to use for key=value type of arguments. */
     bool ParseAndValidateKeyValue(GDALAlgorithmArg &arg);
+
+    /** Method used by GDALRaster|VectorPipelineAlgorithm */
+    bool RunPreStepPipelineValidations() const;
 
     /** Return whether output-format or output arguments express GDALG output */
     bool IsGDALGOutput() const;
@@ -2888,6 +2955,15 @@ class CPL_DLL GDALAlgorithmRegistry
      */
     virtual bool CheckSafeForStreamOutput();
 
+    /** Validate a format argument */
+    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                        bool bGDALGAllowed) const;
+
+    /** Completion function for a format argument */
+    static std::vector<std::string>
+    FormatAutoCompleteFunction(const GDALAlgorithmArg &arg, bool bStreamAllowed,
+                               bool bGDALGAllowed);
+
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
                      const std::string &alias);
@@ -2905,10 +2981,12 @@ class CPL_DLL GDALAlgorithmRegistry
         m_displayInJSONUsage = b;
     }
 
-    //! @cond Doxygen_Suppress
-    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
-                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
-    //! @endcond
+    /** Method that an algorithm can implement to issue a warning message about
+     * its deprecation. This is called at the beginning of the Run() method.
+     */
+    virtual void WarnIfDeprecated()
+    {
+    }
 
     /** Return the list of arguments for CLI usage */
     std::pair<std::vector<std::pair<GDALAlgorithmArg *, std::string>>, size_t>
@@ -2961,8 +3039,7 @@ class CPL_DLL GDALAlgorithmRegistry
                          std::vector<double>, std::vector<GDALArgDatasetValue>>>
             &inConstructionValues);
 
-    bool ValidateFormat(const GDALAlgorithmArg &arg, bool bStreamAllowed,
-                        bool bGDALGAllowed) const;
+    bool ValidateBandArg() const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
@@ -3019,10 +3096,7 @@ class CPL_DLL GDALContainerAlgorithm : public GDALAlgorithm
     }
 
   protected:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

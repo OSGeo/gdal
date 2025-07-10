@@ -22,6 +22,8 @@
 
 using namespace PCIDSK;
 
+PCIDSKGCPSegment::~PCIDSKGCPSegment() = default;
+
 CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const char *segment_pointer)
     : CPCIDSKSegment(fileIn, segmentIn, segment_pointer), loaded_(false)
 {

@@ -2600,8 +2600,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         osMetadataFile = pszMetadataFile;
     }
 
-    const CPLString osTileExtension(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
+    CPLString osTileExtension(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                   "TILE_EXTENSION", "pbf"));
     bool bJsonField =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
@@ -2842,7 +2842,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
 
     OGRMVTDataset *poDS = new OGRMVTDataset(nullptr);
 
-    const CPLString osMetadataMemFilename =
+    CPLString osMetadataMemFilename =
         VSIMemGenerateHiddenFilename("mvt_metadata.json");
     if (!LoadMetadata(osMetadataFile, osMetadataContent, oVectorLayers,
                       oTileStatLayers, oBounds, poDS->m_poSRS,
@@ -2894,8 +2894,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_bClip =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "CLIP", poDS->m_bClip);
-    poDS->m_osTileExtension = osTileExtension;
-    poDS->m_osMetadataMemFilename = osMetadataMemFilename;
+    poDS->m_osTileExtension = std::move(osTileExtension);
+    poDS->m_osMetadataMemFilename = std::move(osMetadataMemFilename);
     for (int i = 0; i < oVectorLayers.Size(); i++)
     {
         CPLJSONObject oId = oVectorLayers[i].GetObj("id");
@@ -4473,10 +4473,8 @@ void OGRMVTWriterDataset::UpdateLayerProperties(
 
                 poLayerProperties->m_oMapFieldNameToIdx[osKey] =
                     poLayerProperties->m_aoFields.size();
-                poLayerProperties->m_aoFields.push_back(oFieldProps);
-                poFieldProps = &(
-                    poLayerProperties
-                        ->m_aoFields[poLayerProperties->m_aoFields.size() - 1]);
+                poLayerProperties->m_aoFields.push_back(std::move(oFieldProps));
+                poFieldProps = &(poLayerProperties->m_aoFields.back());
             }
         }
     }

@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <cinttypes>
+
 #include "tiff_common.h"
 
 // Use code from internal libtiff for LZW, PackBits and LERC codecs
@@ -43,6 +45,7 @@ extern "C"
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 #define LZW_READ_ONLY

@@ -35,7 +35,7 @@ class GDALRasterTRIAlgorithm /* non final */
     explicit GDALRasterTRIAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     std::string m_algorithm = "Riley";
@@ -53,6 +53,8 @@ class GDALRasterTRIAlgorithmStandalone final : public GDALRasterTRIAlgorithm
         : GDALRasterTRIAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterTRIAlgorithmStandalone() override;
 };
 
 //! @endcond

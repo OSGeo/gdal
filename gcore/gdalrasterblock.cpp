@@ -256,7 +256,6 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                      nCacheMax / (1024 * 1024));
         });
 
-    // coverity[overflow_sink]
     return nCacheMax;
 }
 
@@ -397,27 +396,33 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
 
         if (poTarget == nullptr)
             return FALSE;
+#ifndef __COVERITY__
+        // Disabled to avoid complains about sleeping under locks, that
+        // are only true for debug/testing code
         if (bSleepsForBockCacheDebug)
         {
-            // coverity[tainted_data]
             const double dfDelay = CPLAtof(CPLGetConfigOption(
                 "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0"));
             if (dfDelay > 0)
                 CPLSleep(dfDelay);
         }
+#endif
 
         poTarget->Detach_unlocked();
         poTarget->GetBand()->UnreferenceBlock(poTarget);
     }
 
+#ifndef __COVERITY__
+    // Disabled to avoid complains about sleeping under locks, that
+    // are only true for debug/testing code
     if (bSleepsForBockCacheDebug)
     {
-        // coverity[tainted_data]
         const double dfDelay = CPLAtof(
             CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0"));
         if (dfDelay > 0)
             CPLSleep(dfDelay);
     }
+#endif
 
     if (poTarget->GetDirty())
     {
@@ -450,7 +455,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
  * same dataset could be pushed simultaneously to the IWriteBlock() method of
  * that dataset from different threads, causing races.
  *
- * Calling this method before that code can help workarounding that issue,
+ * Calling this method before that code can help to work around that issue,
  * in a multiple readers, one writer scenario.
  *
  * @since GDAL 2.0
@@ -967,14 +972,17 @@ CPLErr GDALRasterBlock::Internalize()
 
                 if (poTarget != nullptr)
                 {
+#ifndef __COVERITY__
+                    // Disabled to avoid complains about sleeping under locks,
+                    // that are only true for debug/testing code
                     if (bSleepsForBockCacheDebug)
                     {
-                        // coverity[tainted_data]
                         const double dfDelay = CPLAtof(CPLGetConfigOption(
                             "GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0"));
                         if (dfDelay > 0)
                             CPLSleep(dfDelay);
                     }
+#endif
 
                     GDALRasterBlock *_poPrevious = poTarget->poPrevious;
 
@@ -1022,15 +1030,18 @@ CPLErr GDALRasterBlock::Internalize()
 
             if (poBlock->GetDirty())
             {
+#ifndef __COVERITY__
+                // Disabled to avoid complains about sleeping under locks, that
+                // are only true for debug/testing code
                 if (bSleepsForBockCacheDebug)
                 {
-                    // coverity[tainted_data]
                     const double dfDelay = CPLAtof(CPLGetConfigOption(
                         "GDAL_RB_INTERNALIZE_SLEEP_AFTER_DETACH_BEFORE_WRITE",
                         "0"));
                     if (dfDelay > 0)
                         CPLSleep(dfDelay);
                 }
+#endif
 
                 CPLErr eErr = poBlock->Write();
                 if (eErr != CE_None)
@@ -1144,14 +1155,18 @@ int GDALRasterBlock::TakeLock()
 {
     const int nLockVal = AddLock();
     CPLAssert(nLockVal >= 0);
+#ifndef __COVERITY__
+    // Disabled to avoid complains about sleeping under locks, that
+    // are only true for debug/testing code
     if (bSleepsForBockCacheDebug)
     {
-        // coverity[tainted_data]
         const double dfDelay = CPLAtof(
             CPLGetConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0"));
         if (dfDelay > 0)
             CPLSleep(dfDelay);
     }
+#endif
+
     if (nLockVal == 0)
     {
         // The block is being evicted by GDALRasterBlock::Internalize()

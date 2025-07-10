@@ -204,8 +204,8 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName(const char *pszLayerName)
     const char *pszDotPos = strstr(pszLayerName, ".");
     if (pszDotPos != nullptr)
     {
-        int length = static_cast<int>(pszDotPos - pszLayerName);
-        pszSchemaName = (char *)CPLMalloc(length + 1);
+        const size_t length = static_cast<size_t>(pszDotPos - pszLayerName);
+        pszSchemaName = static_cast<char *>(CPLMalloc(length + 1));
         strncpy(pszSchemaName, pszLayerName, length);
         pszSchemaName[length] = '\0';
         pszTableName = CPLStrdup(pszDotPos + 1);  // skip "."
@@ -335,7 +335,7 @@ OGRMSSQLSpatialDataSource::ICreateLayer(const char *pszLayerName,
     if (pszDotPos != nullptr && bExtractSchemaFromLayerName)
     {
         int length = static_cast<int>(pszDotPos - pszLayerName);
-        pszSchemaName = (char *)CPLMalloc(length + 1);
+        pszSchemaName = static_cast<char *>(CPLMalloc(length + 1));
         CPLAssert(pszSchemaName !=
                   nullptr); /* to make Coverity happy and not believe a
                                REVERSE_INULL is possible */
@@ -599,8 +599,8 @@ OGRMSSQLSpatialDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
     /* -------------------------------------------------------------------- */
-    papoLayers = (OGRMSSQLSpatialTableLayer **)CPLRealloc(
-        papoLayers, sizeof(OGRMSSQLSpatialTableLayer *) * (nLayers + 1));
+    papoLayers = static_cast<OGRMSSQLSpatialTableLayer **>(CPLRealloc(
+        papoLayers, sizeof(OGRMSSQLSpatialTableLayer *) * (nLayers + 1)));
 
     papoLayers[nLayers++] = poLayer;
 
@@ -637,8 +637,8 @@ int OGRMSSQLSpatialDataSource::OpenTable(const char *pszSchemaName,
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
     /* -------------------------------------------------------------------- */
-    papoLayers = (OGRMSSQLSpatialTableLayer **)CPLRealloc(
-        papoLayers, sizeof(OGRMSSQLSpatialTableLayer *) * (nLayers + 1));
+    papoLayers = static_cast<OGRMSSQLSpatialTableLayer **>(CPLRealloc(
+        papoLayers, sizeof(OGRMSSQLSpatialTableLayer *) * (nLayers + 1)));
     papoLayers[nLayers++] = poLayer;
 
     return TRUE;
@@ -665,8 +665,8 @@ int OGRMSSQLSpatialDataSource::ParseValue(char **pszValue, char *pszSource,
     if ((*pszValue) == nullptr && nStart + nLen < nNext &&
         EQUALN(pszSource + nStart, pszKey, nLen))
     {
-        *pszValue =
-            (char *)CPLMalloc(sizeof(char) * (nNext - nStart - nLen + 1));
+        *pszValue = static_cast<char *>(
+            CPLMalloc(sizeof(char) * (nNext - nStart - nLen + 1)));
         strncpy(*pszValue, pszSource + nStart + nLen, nNext - nStart - nLen);
         (*pszValue)[nNext - nStart - nLen] = 0;
 
@@ -1336,8 +1336,8 @@ char *OGRMSSQLSpatialDataSource::LaunderName(const char *pszSrcName)
 
     for (i = 0; pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] =
-            (char)CPLTolower(static_cast<unsigned char>(pszSafeName[i]));
+        pszSafeName[i] = static_cast<char>(
+            CPLTolower(static_cast<unsigned char>(pszSafeName[i])));
         if (pszSafeName[i] == '-' || pszSafeName[i] == '#')
             pszSafeName[i] = '_';
     }
@@ -1577,8 +1577,11 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
             {
                 std::unique_ptr<OGRSpatialReference,
                                 OGRSpatialReferenceReleaser>
-                    poCachedSRS(new OGRSpatialReference(oSRS));
-                poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poCachedSRS;
+                poCachedSRS.reset(oSRS.Clone());
+                if (poCachedSRS)
+                    poCachedSRS->SetAxisMappingStrategy(
+                        OAMS_TRADITIONAL_GIS_ORDER);
                 AddSRIDToCache(nSRSId, std::move(poCachedSRS));
             }
             return nSRSId;

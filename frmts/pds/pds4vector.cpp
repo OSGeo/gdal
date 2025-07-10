@@ -2044,7 +2044,7 @@ OGRErr PDS4DelimitedTable::ICreateFeature(OGRFeature *poFeature)
         m_iWKT = m_poRawFeatureDefn->GetFieldCount() - 1;
         Field f;
         f.m_osDataType = "ASCII_String";
-        m_aoFields.push_back(f);
+        m_aoFields.push_back(std::move(f));
         m_bAddWKTColumnPending = false;
     }
 
@@ -2150,7 +2150,7 @@ OGRErr PDS4DelimitedTable::CreateField(const OGRFieldDefn *poFieldIn, int)
     }
 
     MarkHeaderDirty();
-    m_aoFields.push_back(f);
+    m_aoFields.push_back(std::move(f));
     m_poRawFeatureDefn->AddFieldDefn(poFieldIn);
     m_poFeatureDefn->AddFieldDefn(poFieldIn);
 
@@ -2511,7 +2511,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
             m_iLatField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
             f.m_osDataType = "ASCII_Real";
-            m_aoFields.push_back(f);
+            m_aoFields.push_back(std::move(f));
         }
         {
             OGRFieldDefn oFieldDefn(
@@ -2521,7 +2521,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
             m_iLongField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
             f.m_osDataType = "ASCII_Real";
-            m_aoFields.push_back(f);
+            m_aoFields.push_back(std::move(f));
         }
         if (eGType == wkbPoint25D)
         {
@@ -2531,7 +2531,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
             m_iAltField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
             f.m_osDataType = "ASCII_Real";
-            m_aoFields.push_back(f);
+            m_aoFields.push_back(std::move(f));
         }
     }
     else if (eGType != wkbNone &&
@@ -2731,6 +2731,8 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer)
                        new PDS4EditableSynchronizer<PDS4DelimitedTable>(), true)
 {
 }
+
+PDS4EditableLayer::~PDS4EditableLayer() = default;
 
 /************************************************************************/
 /*                           GetBaseLayer()                             */

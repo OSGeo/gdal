@@ -33,7 +33,7 @@ class GDALRasterResizeAlgorithm /* non final */
     explicit GDALRasterResizeAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_size{};
     std::string m_resampling{};
@@ -51,6 +51,8 @@ class GDALRasterResizeAlgorithmStandalone final
         : GDALRasterResizeAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterResizeAlgorithmStandalone() override;
 };
 
 //! @endcond

@@ -17,7 +17,10 @@ add_gdal_driver(TARGET gdal_JP2KAK
                         vsil_target.h
                 CORE_SOURCES jp2kakdrivercore.cpp
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+                NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 
 if(TARGET gdal_JP2KAK_core)
     target_include_directories(gdal_JP2KAK_core PRIVATE $<TARGET_PROPERTY:KDU::KDU,INTERFACE_INCLUDE_DIRECTORIES>)

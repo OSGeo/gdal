@@ -33,7 +33,7 @@ class GDALVectorEditAlgorithm /* non final */
     explicit GDALVectorEditAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
     std::string m_overrideCrs{};
@@ -55,6 +55,8 @@ class GDALVectorEditAlgorithmStandalone final : public GDALVectorEditAlgorithm
         : GDALVectorEditAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorEditAlgorithmStandalone() override;
 };
 
 //! @endcond

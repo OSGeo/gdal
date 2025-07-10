@@ -1,0 +1,2184 @@
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  9
+$INSBASE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$EXTMIN
+ 10
+-90.0000000000000284
+ 20
+-90.0
+ 30
+0.0
+  9
+$EXTMAX
+ 10
+190.0
+ 20
+190.0
+ 30
+0.0
+  9
+$LIMMIN
+ 10
+0.0
+ 20
+0.0
+  9
+$LIMMAX
+ 10
+420.0
+ 20
+297.0
+  9
+$ORTHOMODE
+ 70
+     0
+  9
+$REGENMODE
+ 70
+     1
+  9
+$FILLMODE
+ 70
+     1
+  9
+$QTEXTMODE
+ 70
+     0
+  9
+$MIRRTEXT
+ 70
+     0
+  9
+$DRAGMODE
+ 70
+     2
+  9
+$LTSCALE
+ 40
+1.0
+  9
+$OSMODE
+ 70
+    37
+  9
+$ATTMODE
+ 70
+     1
+  9
+$TEXTSIZE
+ 40
+2.5
+  9
+$TRACEWID
+ 40
+0.05
+  9
+$TEXTSTYLE
+  7
+STANDARD
+  9
+$CLAYER
+  8
+MYLAYERRED
+  9
+$CELTYPE
+  6
+CONTINUOUS
+  9
+$CECOLOR
+ 62
+   256
+  9
+$DIMSCALE
+ 40
+1.0
+  9
+$DIMASZ
+ 40
+0.18
+  9
+$DIMEXO
+ 40
+0.0625
+  9
+$DIMDLI
+ 40
+0.38
+  9
+$DIMRND
+ 40
+0.0
+  9
+$DIMDLE
+ 40
+0.0
+  9
+$DIMEXE
+ 40
+0.18
+  9
+$DIMTP
+ 40
+0.0
+  9
+$DIMTM
+ 40
+0.0
+  9
+$DIMTXT
+ 40
+0.18
+  9
+$DIMCEN
+ 40
+0.09
+  9
+$DIMTSZ
+ 40
+0.0
+  9
+$DIMTOL
+ 70
+     0
+  9
+$DIMLIM
+ 70
+     0
+  9
+$DIMTIH
+ 70
+     1
+  9
+$DIMTOH
+ 70
+     1
+  9
+$DIMSE1
+ 70
+     0
+  9
+$DIMSE2
+ 70
+     0
+  9
+$DIMTAD
+ 70
+     0
+  9
+$DIMZIN
+ 70
+     0
+  9
+$DIMBLK
+  1
+
+  9
+$DIMASO
+ 70
+     1
+  9
+$DIMSHO
+ 70
+     1
+  9
+$DIMPOST
+  1
+
+  9
+$DIMAPOST
+  1
+
+  9
+$DIMALT
+ 70
+     0
+  9
+$DIMALTD
+ 70
+     2
+  9
+$DIMALTF
+ 40
+25.3999999999999986
+  9
+$DIMLFAC
+ 40
+1.0
+  9
+$DIMTOFL
+ 70
+     0
+  9
+$DIMTVP
+ 40
+0.0
+  9
+$DIMTIX
+ 70
+     0
+  9
+$DIMSOXD
+ 70
+     0
+  9
+$DIMSAH
+ 70
+     0
+  9
+$DIMBLK1
+  1
+
+  9
+$DIMBLK2
+  1
+
+  9
+$DIMSTYLE
+  2
+STANDARD
+  9
+$DIMCLRD
+ 70
+     0
+  9
+$DIMCLRE
+ 70
+     0
+  9
+$DIMCLRT
+ 70
+     0
+  9
+$DIMTFAC
+ 40
+1.0
+  9
+$DIMGAP
+ 40
+0.09
+  9
+$LUNITS
+ 70
+     2
+  9
+$LUPREC
+ 70
+     4
+  9
+$SKETCHINC
+ 40
+0.1
+  9
+$FILLETRAD
+ 40
+0.0
+  9
+$AUNITS
+ 70
+     0
+  9
+$AUPREC
+ 70
+     0
+  9
+$MENU
+  1
+.
+  9
+$ELEVATION
+ 40
+0.0
+  9
+$PELEVATION
+ 40
+0.0
+  9
+$THICKNESS
+ 40
+0.0
+  9
+$LIMCHECK
+ 70
+     0
+  9
+$BLIPMODE
+ 70
+     0
+  9
+$CHAMFERA
+ 40
+0.0
+  9
+$CHAMFERB
+ 40
+0.0
+  9
+$SKPOLY
+ 70
+     0
+  9
+$TDCREATE
+ 40
+2460735.935833333991468
+  9
+$TDUPDATE
+ 40
+2460740.4757638890296221
+  9
+$TDINDWG
+ 40
+4.5343171295999998
+  9
+$TDUSRTIMER
+ 40
+4.5343171295999998
+  9
+$USRTIMER
+ 70
+     1
+  9
+$ANGBASE
+ 50
+0.0
+  9
+$ANGDIR
+ 70
+     0
+  9
+$PDMODE
+ 70
+     0
+  9
+$PDSIZE
+ 40
+0.0
+  9
+$PLINEWID
+ 40
+0.0
+  9
+$COORDS
+ 70
+     1
+  9
+$SPLFRAME
+ 70
+     0
+  9
+$SPLINETYPE
+ 70
+     6
+  9
+$SPLINESEGS
+ 70
+     8
+  9
+$ATTDIA
+ 70
+     1
+  9
+$ATTREQ
+ 70
+     1
+  9
+$HANDLING
+ 70
+     1
+  9
+$HANDSEED
+  5
+529
+  9
+$SURFTAB1
+ 70
+     6
+  9
+$SURFTAB2
+ 70
+     6
+  9
+$SURFTYPE
+ 70
+     6
+  9
+$SURFU
+ 70
+     6
+  9
+$SURFV
+ 70
+     6
+  9
+$UCSNAME
+  2
+
+  9
+$UCSORG
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSXDIR
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSYDIR
+ 10
+0.0
+ 20
+1.0
+ 30
+0.0
+  9
+$PUCSNAME
+  2
+
+  9
+$PUCSORG
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSXDIR
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSYDIR
+ 10
+0.0
+ 20
+1.0
+ 30
+0.0
+  9
+$USERI1
+ 70
+     0
+  9
+$USERI2
+ 70
+     0
+  9
+$USERI3
+ 70
+     0
+  9
+$USERI4
+ 70
+     0
+  9
+$USERI5
+ 70
+     0
+  9
+$USERR1
+ 40
+0.0
+  9
+$USERR2
+ 40
+0.0
+  9
+$USERR3
+ 40
+0.0
+  9
+$USERR4
+ 40
+0.0
+  9
+$USERR5
+ 40
+0.0
+  9
+$WORLDVIEW
+ 70
+     1
+  9
+$SHADEDGE
+ 70
+     3
+  9
+$SHADEDIF
+ 70
+    70
+  9
+$TILEMODE
+ 70
+     1
+  9
+$MAXACTVP
+ 70
+    64
+  9
+$PLIMCHECK
+ 70
+     0
+  9
+$PEXTMIN
+ 10
+1.0000000000000000E+20
+ 20
+1.0000000000000000E+20
+ 30
+1.0000000000000000E+20
+  9
+$PEXTMAX
+ 10
+-1.0000000000000000E+20
+ 20
+-1.0000000000000000E+20
+ 30
+-1.0000000000000000E+20
+  9
+$PLIMMIN
+ 10
+0.0
+ 20
+0.0
+  9
+$PLIMMAX
+ 10
+12.0
+ 20
+9.0
+  9
+$UNITMODE
+ 70
+     0
+  9
+$VISRETAIN
+ 70
+     1
+  9
+$PLINEGEN
+ 70
+     0
+  9
+$PSLTSCALE
+ 70
+     1
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+VPORT
+ 70
+     1
+  0
+VPORT
+  2
+*ACTIVE
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 11
+1.0
+ 21
+1.0
+ 12
+72.6388235217312115
+ 22
+-1.7894843539717149
+ 13
+0.0
+ 23
+0.0
+ 14
+10.0
+ 24
+10.0
+ 15
+10.0
+ 25
+10.0
+ 16
+0.0
+ 26
+0.0
+ 36
+1.0
+ 17
+0.0
+ 27
+0.0
+ 37
+0.0
+ 40
+405.2101602885007878
+ 41
+1.0337954939341421
+ 42
+50.0
+ 43
+0.0
+ 44
+0.0
+ 50
+0.0
+ 51
+0.0
+ 71
+     0
+ 72
+  1000
+ 73
+     1
+ 74
+     3
+ 75
+     1
+ 76
+     1
+ 77
+     0
+ 78
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LTYPE
+ 70
+     2
+  0
+LTYPE
+  2
+CONTINUOUS
+ 70
+     0
+  3
+Solid line
+ 72
+    65
+ 73
+     0
+ 40
+0.0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LAYER
+ 70
+     5
+  0
+LAYER
+  2
+0
+ 70
+     0
+ 62
+     7
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+MYLAYERRED
+ 70
+     0
+ 62
+     1
+  6
+CONTINUOUS
+  0
+LAYER
+  2
+MYLAYERBLUE
+ 70
+     0
+ 62
+     5
+  6
+CONTINUOUS
+  0
+ENDTAB
+  0
+TABLE
+  2
+STYLE
+ 70
+     3
+  0
+STYLE
+  2
+STANDARD
+ 70
+     0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+     0
+ 42
+2.5
+  3
+txt
+  4
+
+  0
+STYLE
+  2
+ANNOTATIVE
+ 70
+     0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+     0
+ 42
+0.2
+  3
+txt
+  4
+
+  0
+STYLE
+  2
+LEGEND
+ 70
+     0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+     0
+ 42
+0.2
+  3
+txt
+  4
+
+  0
+ENDTAB
+  0
+TABLE
+  2
+VIEW
+ 70
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+UCS
+ 70
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+APPID
+ 70
+    15
+  0
+APPID
+  2
+ACAD
+ 70
+     0
+  0
+APPID
+  2
+ACADANNOTATIVE
+ 70
+     0
+  0
+APPID
+  2
+ACMAPDMDISPLAYSTYLEREGAPP
+ 70
+     0
+  0
+APPID
+  2
+ACAD_NAV_VCDISPLAY
+ 70
+     0
+  0
+APPID
+  2
+AECCLAND130
+ 70
+     0
+  0
+APPID
+  2
+ACAUTHENVIRON
+ 70
+     0
+  0
+APPID
+  2
+ACDBDYNAMICBLOCKTRUENAME
+ 70
+     0
+  0
+APPID
+  2
+ACDBDYNAMICBLOCKGUID
+ 70
+     0
+  0
+APPID
+  2
+ADE
+ 70
+     0
+  0
+APPID
+  2
+DCO15
+ 70
+     0
+  0
+APPID
+  2
+MAPGWS
+ 70
+     0
+  0
+APPID
+  2
+ADE_PROJECTION
+ 70
+     0
+  0
+APPID
+  2
+ACAD_MLEADERVER
+ 70
+     0
+  0
+APPID
+  2
+MAPMANAGEMENTAPPNAME
+ 70
+     0
+  0
+APPID
+  2
+ACAD_EXEMPT_FROM_CAD_STANDARDS
+ 70
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+DIMSTYLE
+ 70
+     3
+  0
+DIMSTYLE
+  2
+STANDARD
+ 70
+     0
+  3
+
+  4
+
+  5
+
+  6
+
+  7
+
+ 40
+1.0
+ 41
+0.18
+ 42
+0.0625
+ 43
+0.38
+ 44
+0.18
+ 45
+0.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+140
+0.18
+141
+0.09
+142
+0.0
+143
+25.3999999999999986
+144
+1.0
+145
+0.0
+146
+1.0
+147
+0.09
+ 71
+     0
+ 72
+     0
+ 73
+     1
+ 74
+     1
+ 75
+     0
+ 76
+     0
+ 77
+     0
+ 78
+     0
+170
+     0
+171
+     2
+172
+     0
+173
+     0
+174
+     0
+175
+     0
+176
+     0
+177
+     0
+178
+     0
+  0
+DIMSTYLE
+  2
+ANNOTATIVE
+ 70
+     0
+  3
+
+  4
+
+  5
+
+  6
+
+  7
+
+ 40
+1.0
+ 41
+0.18
+ 42
+0.0625
+ 43
+0.38
+ 44
+0.18
+ 45
+0.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+140
+0.18
+141
+0.09
+142
+0.0
+143
+25.3999999999999986
+144
+1.0
+145
+0.0
+146
+1.0
+147
+0.09
+ 71
+     0
+ 72
+     0
+ 73
+     1
+ 74
+     1
+ 75
+     0
+ 76
+     0
+ 77
+     0
+ 78
+     0
+170
+     0
+171
+     2
+172
+     0
+173
+     0
+174
+     0
+175
+     0
+176
+     0
+177
+     0
+178
+     0
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  8
+0
+  2
+$MODEL_SPACE
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+$MODEL_SPACE
+  1
+
+  0
+ENDBLK
+  5
+344
+  8
+0
+  0
+BLOCK
+ 67
+     1
+  8
+0
+  2
+$PAPER_SPACE
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+$PAPER_SPACE
+  1
+
+  0
+ENDBLK
+  5
+340
+ 67
+     1
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+DEMOBLOCK
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+DEMOBLOCK
+  1
+
+  0
+LINE
+  5
+41F
+  8
+0
+  6
+CONTINUOUS
+ 10
+10.0
+ 20
+30.0
+ 30
+0.0
+ 11
+30.0
+ 21
+10.0
+ 31
+0.0
+  0
+INSERT
+  5
+421
+  8
+0
+  6
+CONTINUOUS
+  2
+DEMOBLOCKWITHSUB
+ 10
+20.0
+ 20
+20.0
+ 30
+0.0
+  0
+LINE
+  5
+422
+  8
+0
+  6
+CONTINUOUS
+ 62
+     4
+ 10
+10.0
+ 20
+20.0
+ 30
+0.0
+ 11
+-10.0
+ 21
+20.0
+ 31
+0.0
+  0
+INSERT
+  5
+423
+  8
+0
+  6
+CONTINUOUS
+ 62
+     4
+  2
+DEMOBLOCKWITHSUB
+ 10
+0.0
+ 20
+20.0
+ 30
+0.0
+  0
+LINE
+  5
+424
+  8
+0
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-10.0
+ 20
+30.0
+ 30
+0.0
+ 11
+-30.0
+ 21
+10.0
+ 31
+0.0
+  0
+INSERT
+  5
+425
+  8
+0
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCKWITHSUB
+ 10
+-20.0
+ 20
+20.0
+ 30
+0.0
+  0
+LINE
+  5
+426
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 10
+20.0
+ 20
+10.0
+ 30
+0.0
+ 11
+20.0
+ 21
+-10.0
+ 31
+0.0
+  0
+INSERT
+  5
+427
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+  2
+DEMOBLOCKWITHSUB
+ 10
+20.0
+ 20
+0.0
+ 30
+0.0
+  0
+LINE
+  5
+428
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     4
+ 10
+-10.0
+ 20
+0.0
+ 30
+0.0
+ 11
+10.0
+ 21
+0.0
+ 31
+0.0
+  0
+INSERT
+  5
+429
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     4
+  2
+DEMOBLOCKWITHSUB
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+LINE
+  5
+42A
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-20.0
+ 20
+10.0
+ 30
+0.0
+ 11
+-20.0
+ 21
+-10.0
+ 31
+0.0
+  0
+INSERT
+  5
+42B
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCKWITHSUB
+ 10
+-20.0
+ 20
+0.0
+ 30
+0.0
+  0
+LINE
+  5
+42C
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 10
+30.0
+ 20
+-10.0
+ 30
+0.0
+ 11
+10.0
+ 21
+-30.0
+ 31
+0.0
+  0
+INSERT
+  5
+42D
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+  2
+DEMOBLOCKWITHSUB
+ 10
+20.0
+ 20
+-20.0
+ 30
+0.0
+  0
+LINE
+  5
+42E
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     4
+ 10
+-10.0
+ 20
+-20.0
+ 30
+0.0
+ 11
+10.0
+ 21
+-20.0
+ 31
+0.0
+  0
+INSERT
+  5
+42F
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     4
+  2
+DEMOBLOCKWITHSUB
+ 10
+0.0
+ 20
+-20.0
+ 30
+0.0
+  0
+LINE
+  5
+430
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-30.0
+ 20
+-10.0
+ 30
+0.0
+ 11
+-10.0
+ 21
+-30.0
+ 31
+0.0
+  0
+INSERT
+  5
+431
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCKWITHSUB
+ 10
+-20.0
+ 20
+-20.0
+ 30
+0.0
+  0
+ENDBLK
+  5
+8B
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+DEMOBLOCKWITHSUB
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+DEMOBLOCKWITHSUB
+  1
+
+  0
+LINE
+  5
+43F
+  8
+0
+  6
+CONTINUOUS
+ 10
+2.0
+ 20
+4.0
+ 30
+0.0
+ 11
+4.0
+ 21
+2.0
+ 31
+0.0
+  0
+LINE
+  5
+440
+  8
+0
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+-1.0
+ 20
+3.0
+ 30
+0.0
+ 11
+1.0
+ 21
+3.0
+ 31
+0.0
+  0
+LINE
+  5
+441
+  8
+0
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-2.0
+ 20
+4.0
+ 30
+0.0
+ 11
+-4.0
+ 21
+2.0
+ 31
+0.0
+  0
+LINE
+  5
+442
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 10
+3.0
+ 20
+1.0
+ 30
+0.0
+ 11
+3.0
+ 21
+-1.0
+ 31
+0.0
+  0
+POLYLINE
+  5
+448
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 66
+     1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+     1
+  0
+VERTEX
+  5
+523
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+0.0000000000000001
+ 20
+1.0
+ 30
+0.0
+  0
+VERTEX
+  5
+524
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+-0.9510565162951534
+ 20
+0.3090169943749475
+ 30
+0.0
+  0
+VERTEX
+  5
+525
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+-0.5877852522924732
+ 20
+-0.8090169943749472
+ 30
+0.0
+  0
+VERTEX
+  5
+526
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+0.587785252292473
+ 20
+-0.8090169943749476
+ 30
+0.0
+  0
+VERTEX
+  5
+527
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+0.9510565162951536
+ 20
+0.3090169943749472
+ 30
+0.0
+  0
+SEQEND
+  5
+528
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     2
+  0
+LINE
+  5
+444
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-3.0
+ 20
+1.0
+ 30
+0.0
+ 11
+-3.0
+ 21
+-1.0
+ 31
+0.0
+  0
+LINE
+  5
+445
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 10
+4.0
+ 20
+-2.0
+ 30
+0.0
+ 11
+2.0
+ 21
+-4.0
+ 31
+0.0
+  0
+LINE
+  5
+446
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     2
+ 10
+1.0
+ 20
+-3.0
+ 30
+0.0
+ 11
+-1.0
+ 21
+-3.0
+ 31
+0.0
+  0
+LINE
+  5
+447
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-2.0
+ 20
+-4.0
+ 30
+0.0
+ 11
+-4.0
+ 21
+-2.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+99
+  8
+0
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LINE
+  5
+386
+  8
+0
+  6
+CONTINUOUS
+ 10
+160.0
+ 20
+190.0
+ 30
+0.0
+ 11
+190.0
+ 21
+170.0
+ 31
+0.0
+  0
+INSERT
+  5
+389
+  8
+0
+  6
+CONTINUOUS
+  2
+DEMOBLOCK
+ 10
+150.0
+ 20
+150.0
+ 30
+0.0
+  0
+LINE
+  5
+391
+  8
+0
+  6
+CONTINUOUS
+ 62
+     3
+ 10
+90.0
+ 20
+180.0
+ 30
+0.0
+ 11
+40.0
+ 21
+190.0
+ 31
+0.0
+  0
+INSERT
+  5
+392
+  8
+0
+  6
+CONTINUOUS
+ 62
+     3
+  2
+DEMOBLOCK
+ 10
+50.0
+ 20
+150.0
+ 30
+0.0
+  0
+LINE
+  5
+393
+  8
+0
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-90.0
+ 20
+170.0
+ 30
+0.0
+ 11
+-60.0
+ 21
+190.0
+ 31
+0.0
+  0
+INSERT
+  5
+394
+  8
+0
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCK
+ 10
+-50.0
+ 20
+150.0
+ 30
+0.0
+  0
+LINE
+  5
+395
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 10
+170.0
+ 20
+90.0
+ 30
+0.0
+ 11
+190.0
+ 21
+50.0
+ 31
+0.0
+  0
+INSERT
+  5
+396
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+  2
+DEMOBLOCK
+ 10
+150.0
+ 20
+50.0
+ 30
+0.0
+  0
+LINE
+  5
+397
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     3
+ 10
+89.9999999999999858
+ 20
+80.0
+ 30
+0.0
+ 11
+80.0
+ 21
+10.0
+ 31
+0.0
+  0
+INSERT
+  5
+398
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     3
+  2
+DEMOBLOCK
+ 10
+49.9999999999999929
+ 20
+50.0
+ 30
+0.0
+  0
+LINE
+  5
+399
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-90.0000000000000142
+ 20
+50.0
+ 30
+0.0
+ 11
+-70.0
+ 21
+90.0
+ 31
+0.0
+  0
+INSERT
+  5
+39A
+  8
+MYLAYERRED
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCK
+ 10
+-50.0000000000000071
+ 20
+50.0
+ 30
+0.0
+  0
+LINE
+  5
+39B
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 10
+170.0
+ 20
+-90.0
+ 30
+0.0
+ 11
+190.0
+ 21
+-40.0
+ 31
+0.0
+  0
+INSERT
+  5
+39C
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+  2
+DEMOBLOCK
+ 10
+150.0
+ 20
+-50.0
+ 30
+0.0
+  0
+LINE
+  5
+39D
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     3
+ 10
+89.9999999999999574
+ 20
+-80.0
+ 30
+0.0
+ 11
+39.9999999999999574
+ 21
+-90.0
+ 31
+0.0
+  0
+INSERT
+  5
+39E
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     3
+  2
+DEMOBLOCK
+ 10
+49.9999999999999716
+ 20
+-50.0
+ 30
+0.0
+  0
+LINE
+  5
+39F
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     0
+ 10
+-90.0000000000000284
+ 20
+-40.0
+ 30
+0.0
+ 11
+-70.0
+ 21
+-90.0
+ 31
+0.0
+  0
+INSERT
+  5
+3A0
+  8
+MYLAYERBLUE
+  6
+CONTINUOUS
+ 62
+     0
+  2
+DEMOBLOCK
+ 10
+-50.0000000000000284
+ 20
+-50.0
+ 30
+0.0
+  0
+ENDSEC
+  0
+EOF

@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+IGMLASInputSourceClosing::~IGMLASInputSourceClosing() = default;
+
 /************************************************************************/
 /*                        GMLASBinInputStream                           */
 /************************************************************************/
@@ -637,10 +639,12 @@ bool GMLASReader::Init(const char *pszFilename,
         m_poSAXReader->setFeature(XMLUni::fgSAX2CoreValidation, true);
         m_poSAXReader->setFeature(XMLUni::fgXercesSchema, true);
 
+#ifndef __COVERITY__
         // We want all errors to be reported
         // coverity[unsafe_xml_parse_config]
         m_poSAXReader->setFeature(XMLUni::fgXercesValidationErrorAsFatal,
                                   false);
+#endif
 
         CPLString osBaseDirname(CPLGetDirnameSafe(pszFilename));
 
@@ -1726,7 +1730,7 @@ void GMLASReader::startElement(const XMLCh *const uri,
                 m_aoStackContext.pop_back();
                 CreateNewFeature(osLocalname);
                 oContext.m_poFeature = m_oCurCtxt.m_poFeature;
-                m_aoStackContext.push_back(oContext);
+                m_aoStackContext.push_back(std::move(oContext));
                 m_oCurCtxt.m_oMapCounter.clear();
             }
 
@@ -2284,12 +2288,13 @@ void GMLASReader::ProcessXLinkHref(int nAttrIdx, const CPLString &osAttrXPath,
                 m_oCurCtxt.m_poLayer->GetLayerDefn()
                     ->GetFieldDefn(nAttrIdx)
                     ->GetNameRef());
-            const CPLString osId(osAttrValue.substr(1));
+            CPLString osId(osAttrValue.substr(1));
             if (m_bInitialPass)
             {
                 std::pair<OGRGMLASLayer *, CPLString> oReferringPair(
                     m_oCurCtxt.m_poLayer, osReferringField);
-                m_oMapFieldXPathToLinkValue[oReferringPair].push_back(osId);
+                m_oMapFieldXPathToLinkValue[oReferringPair].push_back(
+                    std::move(osId));
             }
             else
             {
@@ -3680,9 +3685,8 @@ void GMLASReader::CreateFieldsForURLSpecificRule(
                 osFieldXPath));
         if (poLayer->GetOGRFieldIndexFromXPath(osRawContentXPath) < 0)
         {
-            const CPLString osOGRFieldName(
+            CPLString osRawContentFieldname(
                 poLayer->GetLayerDefn()->GetFieldDefn(nFieldIdx)->GetNameRef());
-            CPLString osRawContentFieldname(osOGRFieldName);
             size_t nPos = osRawContentFieldname.find("_href");
             if (nPos != std::string::npos)
                 osRawContentFieldname.resize(nPos);
@@ -3703,10 +3707,9 @@ void GMLASReader::CreateFieldsForURLSpecificRule(
                     osFieldXPath, oRule.m_aoFields[i].m_osName));
             if (poLayer->GetOGRFieldIndexFromXPath(osDerivedFieldXPath) < 0)
             {
-                const CPLString osOGRFieldName(poLayer->GetLayerDefn()
-                                                   ->GetFieldDefn(nFieldIdx)
-                                                   ->GetNameRef());
-                CPLString osNewFieldname(osOGRFieldName);
+                CPLString osNewFieldname(poLayer->GetLayerDefn()
+                                             ->GetFieldDefn(nFieldIdx)
+                                             ->GetNameRef());
                 size_t nPos = osNewFieldname.find("_href");
                 if (nPos != std::string::npos)
                     osNewFieldname.resize(nPos);

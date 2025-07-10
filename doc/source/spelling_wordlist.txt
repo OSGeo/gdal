@@ -169,6 +169,7 @@ backporting
 Backporting
 backports
 backslashed
+backtick
 bak
 bAllowPromotingToCurves
 bAllowResizeOutptr
@@ -236,6 +237,7 @@ blockings
 blocksize
 BlockSizeX
 BlockSizeY
+BlockWindows
 blocky
 bLookForCircular
 bLookForNonLinear
@@ -448,6 +450,7 @@ conceptualhelp
 cond
 conda
 Conda
+condBand
 conf
 config
 Config
@@ -783,6 +786,7 @@ Elbor
 ElementPath
 ellps
 elpaso
+elseBand
 emptor
 Enablement
 Encodings
@@ -919,6 +923,7 @@ fld
 flippmoke
 floodfill
 flurstueck
+flushable
 Fonseca
 FootprintOptions
 fopen
@@ -1249,7 +1254,6 @@ GTiff
 GTO
 gtrnctr
 gtype
-Guildlines
 Gusev
 gusevmihs
 gxt
@@ -1269,7 +1273,9 @@ hashset
 hashtable
 hAttr
 Hayford
+hBand
 hComp
+hCondBand
 hCT
 hCutline
 hdbuserstore
@@ -1288,6 +1294,7 @@ heightfield
 Heightfield
 heightfields
 Helmert
+hElseBand
 Helvetica
 hether
 hFeat
@@ -1352,6 +1359,7 @@ hSrcDS
 hST
 hTarget
 hTargetEDT
+hThenBand
 hThis
 html
 hTransformArg
@@ -1367,6 +1375,8 @@ Hydrologic
 Hydrological
 hypercubes
 hyperspectral
+hypsometric
+Hypsometric
 iAxis
 iBand
 iChild
@@ -1389,6 +1399,7 @@ ieee
 ifdef
 ifit
 ifndef
+IfThenElse
 ifv
 igc
 IGeometry
@@ -1398,6 +1409,7 @@ igor
 IIP
 ij
 iLayer
+iLength
 ili
 imag
 imagefile
@@ -1462,6 +1474,7 @@ isdst
 IsEmpty
 IsNullable
 isspace
+iStartRow
 iSubGeom
 ISurface
 itemtypes
@@ -1761,8 +1774,11 @@ MaxSize
 maxwidth
 maxx
 maxX
+MaxX
+MaxX
 maxy
 maxY
+MaxY
 MaxZ
 mbtiles
 mbtowc
@@ -1809,6 +1825,7 @@ minsize
 minX
 miny
 minY
+MinY
 MinZ
 Mipmaps
 MiraD
@@ -2345,6 +2362,7 @@ papszOptions
 papszOverride
 papszSiblingFiles
 papszSrcDSNames
+papszStrList
 papszURL
 papszVectorTranslateArguments
 papszWarpOptions
@@ -2352,7 +2370,9 @@ Paquet
 paradygm
 parallelisation
 parallelising
+Parallelization
 parallelize
+parallelized
 param
 parameterisation
 parametrized
@@ -2482,6 +2502,7 @@ pnSrcYSize
 pnt
 pnXSize
 pnYSize
+poCRS
 podaac
 podofo
 PoDoFo
@@ -2627,12 +2648,14 @@ psExtent
 psExtraArg
 psField
 psGCP
+psNewOptions
 psNewSibling
 psNext
 psOlderSibling
 psOlderSiblings
 psOptions
 psOptionsIn
+psOwnedTransformerArg
 psql
 pSrcBuffer
 pSrcBufferAllocStart
@@ -2654,6 +2677,7 @@ pszDestFilename
 pszDomain
 pszDstFilename
 pszElement
+pszExt
 pszFile
 pszFilename
 pszFileName
@@ -2689,6 +2713,7 @@ pszTmpFieldValue
 pszValue
 pszXMLMetadata
 ptr
+pTransformerArg
 pTranslationTable
 pugixml
 Pulkovo
@@ -3231,6 +3256,7 @@ tgz
 th
 thebuffer
 themself
+thenBand
 thescale
 thf
 THH

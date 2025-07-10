@@ -245,7 +245,7 @@ void DDFSubfieldDefn::Dump(FILE *fp)
  */
 
 int DDFSubfieldDefn::GetDataLength(const char *pachSourceData, int nMaxBytes,
-                                   int *pnConsumedBytes)
+                                   int *pnConsumedBytes) const
 
 {
     if (!bIsVariable)
@@ -363,6 +363,9 @@ int DDFSubfieldDefn::GetDataLength(const char *pachSourceData, int nMaxBytes,
  * types other than DDFString, including data past zero chars.  This is
  * the standard way of extracting DDFBinaryString subfields for instance.<p>
  *
+ * CAUTION: this method is not thread safe as it updates mutable member
+ * variables.
+ *
  * @param pachSourceData The pointer to the raw data for this field.  This
  * may have come from DDFRecord::GetData(), taking into account skip factors
  * over previous subfields data.
@@ -383,7 +386,7 @@ int DDFSubfieldDefn::GetDataLength(const char *pachSourceData, int nMaxBytes,
 
 const char *DDFSubfieldDefn::ExtractStringData(const char *pachSourceData,
                                                int nMaxBytes,
-                                               int *pnConsumedBytes)
+                                               int *pnConsumedBytes) const
 
 {
     int nLength = GetDataLength(pachSourceData, nMaxBytes, pnConsumedBytes);
@@ -437,7 +440,8 @@ const char *DDFSubfieldDefn::ExtractStringData(const char *pachSourceData,
  */
 
 double DDFSubfieldDefn::ExtractFloatData(const char *pachSourceData,
-                                         int nMaxBytes, int *pnConsumedBytes)
+                                         int nMaxBytes,
+                                         int *pnConsumedBytes) const
 
 {
     switch (pszFormatString[0])
@@ -578,7 +582,7 @@ double DDFSubfieldDefn::ExtractFloatData(const char *pachSourceData,
  */
 
 int DDFSubfieldDefn::ExtractIntData(const char *pachSourceData, int nMaxBytes,
-                                    int *pnConsumedBytes)
+                                    int *pnConsumedBytes) const
 
 {
     switch (pszFormatString[0])
@@ -703,7 +707,8 @@ int DDFSubfieldDefn::ExtractIntData(const char *pachSourceData, int nMaxBytes,
  * @param fp File to write report to.
  */
 
-void DDFSubfieldDefn::DumpData(const char *pachData, int nMaxBytes, FILE *fp)
+void DDFSubfieldDefn::DumpData(const char *pachData, int nMaxBytes,
+                               FILE *fp) const
 
 {
     if (nMaxBytes < 0)
@@ -920,10 +925,12 @@ int DDFSubfieldDefn::FormatIntValue(char *pachData, int nBytesAvailable,
         {
             case NotBinary:
             {
-                char chFillChar = '0'; /* ASCII zero intended */
-                memset(pachData, chFillChar, nSize);
-                memcpy(pachData + nSize - strlen(szWork), szWork,
-                       strlen(szWork));
+                constexpr char chFillChar = '0'; /* ASCII zero intended */
+                const int nZeroFillCount =
+                    nSize - static_cast<int>(strlen(szWork));
+                for (int i = 0; i < nZeroFillCount; ++i)
+                    pachData[i] = chFillChar;
+                memcpy(pachData + nZeroFillCount, szWork, strlen(szWork));
                 break;
             }
 
@@ -1007,10 +1014,11 @@ int DDFSubfieldDefn::FormatFloatValue(char *pachData, int nBytesAvailable,
     {
         if (GetBinaryFormat() == NotBinary)
         {
-            const char chFillZeroASCII = '0'; /* ASCII zero intended */
-            /* coverity[bad_memset] */
-            memset(pachData, chFillZeroASCII, nSize);
-            memcpy(pachData + nSize - strlen(szWork), szWork, strlen(szWork));
+            constexpr char chFillChar = '0'; /* ASCII zero intended */
+            const int nZeroFillCount = nSize - static_cast<int>(strlen(szWork));
+            for (int i = 0; i < nZeroFillCount; ++i)
+                pachData[i] = chFillChar;
+            memcpy(pachData + nZeroFillCount, szWork, strlen(szWork));
         }
         else
         {

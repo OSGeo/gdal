@@ -70,7 +70,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand,
 {
     if (poDT != nullptr)
     {
-        nRows = poDT->GetIntField("numRows");
+        nRows = std::max(0, poDT->GetIntField("numRows"));
 
         // Scan under table for columns.
         for (HFAEntry *poDTChild = poDT->GetChild(); poDTChild != nullptr;
@@ -199,7 +199,7 @@ HFARasterAttributeTable::~HFARasterAttributeTable()
 
 GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
 {
-    if ((GetRowCount() * GetColumnCount()) > RAT_MAX_ELEM_FOR_CLONE)
+    if (nRows > 0 && GetColumnCount() > RAT_MAX_ELEM_FOR_CLONE / nRows)
         return nullptr;
 
     GDALDefaultRasterAttributeTable *poRAT =
@@ -221,8 +221,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, panColData) != CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, panColData) != CE_None)
             {
                 CPLFree(panColData);
                 delete poRAT;
@@ -245,8 +245,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, padfColData) != CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, padfColData) != CE_None)
             {
                 CPLFree(padfColData);
                 delete poRAT;
@@ -269,9 +269,8 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return nullptr;
             }
 
-            if (((GDALDefaultRasterAttributeTable *)this)
-                    ->ValuesIO(GF_Read, iCol, 0, nRows, papszColData) !=
-                CE_None)
+            if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+                    GF_Read, iCol, 0, nRows, papszColData) != CE_None)
             {
                 CPLFree(papszColData);
                 delete poRAT;
@@ -371,15 +370,16 @@ int HFARasterAttributeTable::GetRowCount() const
 const char *HFARasterAttributeTable::GetValueAsString(int iRow,
                                                       int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     char *apszStrList[1] = {nullptr};
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, apszStrList) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, apszStrList) != CE_None)
     {
         return "";
     }
 
-    ((HFARasterAttributeTable *)this)->osWorkingResult = apszStrList[0];
+    const_cast<HFARasterAttributeTable *>(this)->osWorkingResult =
+        apszStrList[0];
     CPLFree(apszStrList[0]);
 
     return osWorkingResult;
@@ -391,10 +391,10 @@ const char *HFARasterAttributeTable::GetValueAsString(int iRow,
 
 int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     int nValue = 0;
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, &nValue) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &nValue) != CE_None)
     {
         return 0;
     }
@@ -408,10 +408,10 @@ int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 
 double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 {
-    // Get ValuesIO do do the work.
+    // Let ValuesIO do the work.
     double dfValue = 0.0;
-    if (((HFARasterAttributeTable *)this)
-            ->ValuesIO(GF_Read, iField, iRow, 1, &dfValue) != CE_None)
+    if (const_cast<HFARasterAttributeTable *>(this)->ValuesIO(
+            GF_Read, iField, iRow, 1, &dfValue) != CE_None)
     {
         return 0.0;
     }
@@ -423,31 +423,32 @@ double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField,
-                                       const char *pszValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
+                                         const char *pszValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, (char **)&pszValue);
+    // Let ValuesIO do the work.
+    char *apszValues[1] = {const_cast<char *>(pszValue)};
+    return ValuesIO(GF_Write, iField, iRow, 1, apszValues);
 }
 
 /************************************************************************/
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, &dfValue);
+    // Let ValuesIO do the work.
+    return ValuesIO(GF_Write, iField, iRow, 1, &dfValue);
 }
 
 /************************************************************************/
 /*                          SetValue()                                  */
 /************************************************************************/
 
-void HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
+CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
 {
-    // Get ValuesIO do do the work.
-    ValuesIO(GF_Write, iField, iRow, 1, &nValue);
+    // Let ValuesIO do the work.
+    return ValuesIO(GF_Write, iField, iRow, 1, &nValue);
 }
 
 /************************************************************************/
@@ -2250,8 +2251,8 @@ void HFARasterBand::EstablishOverviews()
 
         for (int iOvIndex = 0; iOvIndex < nOverviews; iOvIndex++)
         {
-            papoOverviewBands[iOvIndex] =
-                new HFARasterBand((HFADataset *)poDS, nBand, iOvIndex);
+            papoOverviewBands[iOvIndex] = new HFARasterBand(
+                cpl::down_cast<HFADataset *>(poDS), nBand, iOvIndex);
             if (papoOverviewBands[iOvIndex]->GetXSize() == 0)
             {
                 delete papoOverviewBands[iOvIndex];
@@ -2716,8 +2717,8 @@ CPLErr HFARasterBand::BuildOverviews(const char *pszResampling,
             nOverviews = iResult + 1;
             papoOverviewBands = static_cast<HFARasterBand **>(
                 CPLRealloc(papoOverviewBands, sizeof(void *) * nOverviews));
-            papoOverviewBands[iResult] =
-                new HFARasterBand((HFADataset *)poDS, nBand, iResult);
+            papoOverviewBands[iResult] = new HFARasterBand(
+                cpl::down_cast<HFADataset *>(poDS), nBand, iResult);
 
             papoOvBands[iOverview] = papoOverviewBands[iResult];
         }
@@ -3049,8 +3050,6 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
 HFADataset::HFADataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -3893,16 +3892,14 @@ CPLErr HFADataset::WriteProjection()
     else
         sMapInfo.proName = const_cast<char *>("Unknown");
 
-    sMapInfo.upperLeftCenter.x = adfGeoTransform[0] + adfGeoTransform[1] * 0.5;
-    sMapInfo.upperLeftCenter.y = adfGeoTransform[3] + adfGeoTransform[5] * 0.5;
+    sMapInfo.upperLeftCenter.x = m_gt[0] + m_gt[1] * 0.5;
+    sMapInfo.upperLeftCenter.y = m_gt[3] + m_gt[5] * 0.5;
 
-    sMapInfo.lowerRightCenter.x =
-        adfGeoTransform[0] + adfGeoTransform[1] * (GetRasterXSize() - 0.5);
-    sMapInfo.lowerRightCenter.y =
-        adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize() - 0.5);
+    sMapInfo.lowerRightCenter.x = m_gt[0] + m_gt[1] * (GetRasterXSize() - 0.5);
+    sMapInfo.lowerRightCenter.y = m_gt[3] + m_gt[5] * (GetRasterYSize() - 0.5);
 
-    sMapInfo.pixelSize.width = std::abs(adfGeoTransform[1]);
-    sMapInfo.pixelSize.height = std::abs(adfGeoTransform[5]);
+    sMapInfo.pixelSize.width = std::abs(m_gt[1]);
+    sMapInfo.pixelSize.height = std::abs(m_gt[5]);
 
     // Handle units.  Try to match up with a known name.
     sMapInfo.units = const_cast<char *>("meters");
@@ -3946,14 +3943,13 @@ CPLErr HFADataset::WriteProjection()
     }
 
     // Write out definitions.
-    if (adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+    if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
     {
         HFASetMapInfo(hHFA, &sMapInfo);
     }
     else
     {
-        HFASetGeoTransform(hHFA, sMapInfo.proName, sMapInfo.units,
-                           adfGeoTransform);
+        HFASetGeoTransform(hHFA, sMapInfo.proName, sMapInfo.units, m_gt.data());
     }
 
     if (bHaveSRS && sPro.proName != nullptr)
@@ -4376,7 +4372,7 @@ GDALDataset *HFADataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Get geotransform, or if that fails, try to find XForms to
     // build gcps, and metadata.
-    if (!HFAGetGeoTransform(hHFA, poDS->adfGeoTransform))
+    if (!HFAGetGeoTransform(hHFA, poDS->m_gt.data()))
     {
         Efga_Polynomial *pasPolyListForward = nullptr;
         Efga_Polynomial *pasPolyListReverse = nullptr;
@@ -4534,28 +4530,27 @@ CPLErr HFADataset::SetMetadataItem(const char *pszTag, const char *pszValue,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HFADataset::GetGeoTransform(double *padfTransform)
+CPLErr HFADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-        adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-        adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0)
+    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
+        m_gt[4] != 0.0 || m_gt[5] != 1.0)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr HFADataset::SetGeoTransform(double *padfTransform)
+CPLErr HFADataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     bGeoDirty = true;
 
     return CE_None;
@@ -5011,9 +5006,9 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    HFADataset *poDS = (HFADataset *)Create(
-        pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-        nBandCount, eType, papszModOptions);
+    HFADataset *poDS = cpl::down_cast<HFADataset *>(
+        Create(pszFilename, poSrcDS->GetRasterXSize(),
+               poSrcDS->GetRasterYSize(), nBandCount, eType, papszModOptions));
 
     CSLDestroy(papszModOptions);
 
@@ -5059,14 +5054,13 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
     }
 
     // Copy projection information.
-    double adfGeoTransform[6] = {};
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
+        poDS->SetGeoTransform(gt);
 
-    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-        poDS->SetGeoTransform(adfGeoTransform);
-
-    const char *pszProj = poSrcDS->GetProjectionRef();
-    if (pszProj != nullptr && strlen(pszProj) > 0)
-        poDS->SetProjection(pszProj);
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    if (poSrcSRS)
+        poDS->SetSpatialRef(poSrcSRS);
 
     // Copy the imagery.
     if (!bCreateAux)

@@ -368,10 +368,12 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     //  Query all the basic information at once to reduce round trips
     //  -------------------------------------------------------------------
 
-    char szOwner[OWCODE];
-    char szTable[OWCODE];
-    char szColumn[OWTEXT];
-    char szDataTable[OWCODE];
+    // Note, the table, column or owner name length supported by Oracle is
+    // up to 128 bytes, not 128 characters.
+    char szOwner[OWNAME];
+    char szTable[OWNAME];
+    char szColumn[OWNAME];
+    char szDataTable[OWNAME];
     char szWhere[OWTEXT];
     long long nRasterId = -1;
     OCILobLocator *phLocator = nullptr;
@@ -843,13 +845,11 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
                              sInterleaving.c_str());
     }
 
-    nTotalColumnBlocks =
-        (int)((nRasterColumns + nColumnBlockSize - 1) / nColumnBlockSize);
+    nTotalColumnBlocks = (int)DIV_ROUND_UP(nRasterColumns, nColumnBlockSize);
 
-    nTotalRowBlocks = (int)((nRasterRows + nRowBlockSize - 1) / nRowBlockSize);
+    nTotalRowBlocks = (int)DIV_ROUND_UP(nRasterRows, nRowBlockSize);
 
-    nTotalBandBlocks =
-        (int)((nRasterBands + nBandBlockSize - 1) / nBandBlockSize);
+    nTotalBandBlocks = (int)DIV_ROUND_UP(nRasterBands, nBandBlockSize);
 
     //  -------------------------------------------------------------------
     //  Create Georaster Table if needed
@@ -861,9 +861,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(
             CPLSPrintf("DECLARE\n"
-                       "  TAB VARCHAR2(68)  := UPPER('%s');\n"
-                       "  COL VARCHAR2(68)  := UPPER('%s');\n"
-                       "  OWN VARCHAR2(68)  := UPPER('%s');\n"
+                       "  TAB VARCHAR2(128) := UPPER('%s');\n"
+                       "  COL VARCHAR2(128) := UPPER('%s');\n"
+                       "  OWN VARCHAR2(128) := UPPER('%s');\n"
                        "  CNT NUMBER        := 0;\n"
                        "BEGIN\n"
                        "  EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
@@ -952,9 +952,9 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
     {
         poStmt = poConnection->CreateStatement(CPLSPrintf(
             "DECLARE\n"
-            "  TAB  VARCHAR2(68)    := UPPER('%s');\n"
-            "  COL  VARCHAR2(68)    := UPPER('%s');\n"
-            "  OWN  VARCHAR2(68)    := UPPER('%s');\n"
+            "  TAB  VARCHAR2(128)   := UPPER('%s');\n"
+            "  COL  VARCHAR2(128)   := UPPER('%s');\n"
+            "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
             "  CNT  NUMBER          := 0;\n"
             "  GR1  SDO_GEORASTER   := NULL;\n"
             "BEGIN\n"
@@ -1058,7 +1058,7 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
         "  BB   NUMBER          := :3;\n"
         "  RB   NUMBER          := :4;\n"
         "  CB   NUMBER          := :5;\n"
-        "  OWN  VARCHAR2(68)    := UPPER('%s');\n"
+        "  OWN  VARCHAR2(128)   := UPPER('%s');\n"
         "  X    NUMBER          := 0;\n"
         "  Y    NUMBER          := 0;\n"
         "  CNT  NUMBER          := 0;\n"
@@ -1165,7 +1165,7 @@ void GeoRasterWrapper::PrepareToOverwrite(void)
     if (sscanf(sCellDepth.c_str(), "%dBIT", &nCellSizeBits))
     {
         nGDALCellBytes =
-            GDALGetDataTypeSize(OWGetDataType(sCellDepth.c_str())) / 8;
+            GDALGetDataTypeSizeBytes(OWGetDataType(sCellDepth.c_str()));
     }
     else
     {
@@ -1356,7 +1356,7 @@ void GeoRasterWrapper::GetRasterInfo(void)
     if (sscanf(sCellDepth.c_str(), "%dBIT", &nCellSizeBits))
     {
         nGDALCellBytes =
-            GDALGetDataTypeSize(OWGetDataType(sCellDepth.c_str())) / 8;
+            GDALGetDataTypeSizeBytes(OWGetDataType(sCellDepth.c_str()));
     }
     else
     {
@@ -3209,7 +3209,7 @@ bool GeoRasterWrapper::SetNoData(int nLayer, const char *pszValue)
     //  Add NoData for all bands (layer=0) or for a specific band
     // ------------------------------------------------------------
 
-    char szRDT[OWCODE];
+    char szRDT[OWNAME];
     char szNoData[OWTEXT];
 
     snprintf(szRDT, sizeof(szRDT), "%s", sDataTable.c_str());
@@ -4274,7 +4274,7 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
 
     for (int iLine = 0; iLine < nRowBlockSize; iLine++)
     {
-        JSAMPLE *ppSamples = (JSAMPLE *)pabyScanline;
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
         jpeg_read_scanlines(&sDInfo, &ppSamples, 1);
         pabyScanline += (nColumnBlockSize * nBandBlockSize);
     }
@@ -4364,7 +4364,7 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
 
     for (int iLine = 0; iLine < nRowBlockSize; iLine++)
     {
-        JSAMPLE *ppSamples = (JSAMPLE *)pabyScanline;
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
         jpeg_write_scanlines(&sCInfo, &ppSamples, 1);
         pabyScanline += (nColumnBlockSize * nBandBlockSize);
     }

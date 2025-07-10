@@ -297,7 +297,7 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
         if (!poOgrFeat->IsFieldSetAndNotNull(i))
             continue;
 
-        OGRFieldDefn *poOgrFieldDef = poOgrFeat->GetFieldDefnRef(i);
+        const OGRFieldDefn *poOgrFieldDef = poOgrFeat->GetFieldDefnRef(i);
         const OGRFieldType type = poOgrFieldDef->GetType();
         const char *name = poOgrFieldDef->GetNameRef();
 
@@ -611,7 +611,7 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
             }
 
             case OFTInteger:  //    Simple 32bit integer
-
+            {
                 /***** extrude *****/
                 if (EQUAL(name, oFC.extrudefield))
                 {
@@ -717,20 +717,25 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                 }
 
                 /***** other *****/
+                const char *value =
+                    poOgrFieldDef->GetSubType() == OFSTBoolean
+                        ? (poOgrFeat->GetFieldAsInteger(i) ? "true" : "false")
+                        : poOgrFeat->GetFieldAsString(i);
                 if (bUseSimpleField)
                 {
                     poKmlSimpleData = poKmlFactory->CreateSimpleData();
                     poKmlSimpleData->set_name(name);
-                    poKmlSimpleData->set_text(poOgrFeat->GetFieldAsString(i));
+                    poKmlSimpleData->set_text(value);
                 }
                 else
                 {
                     poKmlData = poKmlFactory->CreateData();
                     poKmlData->set_name(name);
-                    poKmlData->set_value(poOgrFeat->GetFieldAsString(i));
+                    poKmlData->set_value(value);
                 }
 
                 break;
+            }
 
             case OFTReal:  //   Double Precision floating point
             {
@@ -1606,12 +1611,15 @@ SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
     {
         case OFTInteger:
         case OFTIntegerList:
-            poKmlSimpleField->set_type("int");
+            poKmlSimpleField->set_type(
+                poOgrFieldDef->GetSubType() == OFSTBoolean ? "bool" : "int");
             return poKmlSimpleField;
 
         case OFTReal:
         case OFTRealList:
-            poKmlSimpleField->set_type("float");
+            poKmlSimpleField->set_type(
+                poOgrFieldDef->GetSubType() == OFSTFloat32 ? "float"
+                                                           : "double");
             return poKmlSimpleField;
 
         case OFTString:
@@ -1619,8 +1627,15 @@ SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
             poKmlSimpleField->set_type("string");
             return poKmlSimpleField;
 
-            /***** kml has these types but as timestamp/timespan *****/
+        case OFTInteger64:
+            if (bApproxOK)
+            {
+                poKmlSimpleField->set_type("string");
+                return poKmlSimpleField;
+            }
+            break;
 
+            /***** kml has these types but as timestamp/timespan *****/
         case OFTDate:
         case OFTTime:
         case OFTDateTime:
@@ -1682,27 +1697,35 @@ void kml2FeatureDef(SchemaPtr poKmlSchema, OGRFeatureDefn *poOgrFeatureDefn)
         }
         if (poOgrFeatureDefn->GetFieldIndex(osName.c_str()) < 0)
         {
-            if (EQUAL(pszType, "bool") || EQUAL(pszType, "boolean") ||
-                EQUAL(pszType, "int") || EQUAL(pszType, "short") ||
-                EQUAL(pszType, "ushort"))
+            if (EQUAL(pszType, "bool") || EQUAL(pszType, "boolean"))
             {
-                OGRFieldDefn oOgrFieldName(osName.c_str(), OFTInteger);
-                poOgrFeatureDefn->AddFieldDefn(&oOgrFieldName);
+                OGRFieldDefn ogrFieldDefn(osName.c_str(), OFTInteger);
+                ogrFieldDefn.SetSubType(OFSTBoolean);
+                poOgrFeatureDefn->AddFieldDefn(&ogrFieldDefn);
+            }
+            else if (EQUAL(pszType, "int") || EQUAL(pszType, "short") ||
+                     EQUAL(pszType, "ushort"))
+            {
+                OGRFieldDefn ogrFieldDefn(osName.c_str(), OFTInteger);
+                poOgrFeatureDefn->AddFieldDefn(&ogrFieldDefn);
             }
             else if (EQUAL(pszType, "uint"))
             {
-                OGRFieldDefn oOgrFieldName(osName.c_str(), OFTInteger64);
-                poOgrFeatureDefn->AddFieldDefn(&oOgrFieldName);
+                OGRFieldDefn ogrFieldDefn(osName.c_str(), OFTInteger64);
+                poOgrFeatureDefn->AddFieldDefn(&ogrFieldDefn);
             }
             else if (EQUAL(pszType, "float") || EQUAL(pszType, "double"))
             {
-                OGRFieldDefn oOgrFieldName(osName.c_str(), OFTReal);
-                poOgrFeatureDefn->AddFieldDefn(&oOgrFieldName);
+                // We write correctly 'double' for 64-bit since GDAL 3.11.1.
+                // In prior versions we wrote 'float', so it is premature
+                // on reading to set OFSTFloat32 when reading 'float'
+                OGRFieldDefn ogrFieldDefn(osName.c_str(), OFTReal);
+                poOgrFeatureDefn->AddFieldDefn(&ogrFieldDefn);
             }
             else  // string, or any other unrecognized type.
             {
-                OGRFieldDefn oOgrFieldName(osName.c_str(), OFTString);
-                poOgrFeatureDefn->AddFieldDefn(&oOgrFieldName);
+                OGRFieldDefn ogrFieldDefn(osName.c_str(), OFTString);
+                poOgrFeatureDefn->AddFieldDefn(&ogrFieldDefn);
             }
         }
     }

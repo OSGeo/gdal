@@ -234,9 +234,9 @@ CPLErr JPIPKAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Fix the buffer layer.                                           */
     /* -------------------------------------------------------------------- */
-    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
-    int nLineSpace = nPixelSpace * nBlockXSize;
-    int nBandSpace = nLineSpace * nBlockYSize;
+    const int nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
+    const int nLineSpace = nPixelSpace * nBlockXSize;
+    const int nBandSpace = nLineSpace * nBlockYSize;
 
     /* -------------------------------------------------------------------- */
     /*      Zoom up file window based on overview level so we are           */
@@ -354,13 +354,6 @@ CPLErr JPIPKAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*****************************************/
 JPIPKAKDataset::JPIPKAKDataset()
 {
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
-
     pGlobalMutex = CPLCreateMutex();
     CPLReleaseMutex(pGlobalMutex);
 }
@@ -756,8 +749,7 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
             m_oSRS = oJP2Geo.m_oSRS;
             bGeoTransformValid = TRUE;
 
-            memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
-                   sizeof(double) * 6);
+            m_gt = oJP2Geo.m_gt;
             nGCPCount = oJP2Geo.nGCPCount;
             pasGCPList = oJP2Geo.pasGCPList;
 
@@ -1074,17 +1066,17 @@ const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JPIPKAKDataset::GetGeoTransform(double *padfTransform)
+CPLErr JPIPKAKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGeoTransformValid)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
 
         return CE_None;
     }
     else
-        return GDALPamDataset::GetGeoTransform(padfTransform);
+        return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -1244,7 +1236,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     /*      Provide default packing if needed.                              */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(bufType) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(bufType);
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * bufXSize;
     if (nBandSpace == 0)
@@ -1295,7 +1287,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     /* -------------------------------------------------------------------- */
     if (bufType != eDT)
     {
-        ario->nPixelSpace = GDALGetDataTypeSize(eDT) / 8;
+        ario->nPixelSpace = GDALGetDataTypeSizeBytes(eDT);
         ario->nLineSpace = ario->nPixelSpace * bufXSize;
         ario->nBandSpace = ario->nLineSpace * bufYSize;
 
@@ -1483,7 +1475,7 @@ JPIPKAKAsyncReader::~JPIPKAKAsyncReader()
 
 void JPIPKAKAsyncReader::Start()
 {
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     // stop the currently running thread
     // start making requests to the server to the server
@@ -1499,12 +1491,11 @@ void JPIPKAKAsyncReader::Start()
     else
     {
         // Ensure we are working against full res
-        ((JPIPKAKDataset *)poDS)
-            ->poCodestream->apply_input_restrictions(0, 0, 0, 0, nullptr);
+        poJDS->poCodestream->apply_input_restrictions(0, 0, 0, 0, nullptr);
 
         // calculate the url the worker function is going to retrieve
         // calculate the kakadu adjust image size
-        channels.configure(*(((JPIPKAKDataset *)poDS)->poCodestream));
+        channels.configure(*(poJDS->poCodestream));
 
         // find current canvas width and height in the cache and check we don't
         // exceed this in our process request
@@ -1513,10 +1504,8 @@ void JPIPKAKAsyncReader::Start()
         ref_expansion.x = 1;
         ref_expansion.y = 1;
 
-        view_dims = ((JPIPKAKDataset *)poDS)
-                        ->poDecompressor->get_rendered_image_dims(
-                            *((JPIPKAKDataset *)poDS)->poCodestream, &channels,
-                            -1, nLevel, ref_expansion);
+        view_dims = poJDS->poDecompressor->get_rendered_image_dims(
+            *(poJDS->poCodestream), &channels, -1, nLevel, ref_expansion);
 
         kdu_coords *view_siz = view_dims.access_size();
 
@@ -1564,9 +1553,9 @@ void JPIPKAKAsyncReader::Start()
 
         jpipUrl.Printf("%s&type=jpp-stream&roff=%i,%i&rsiz=%i,%i&fsiz=%i,%i,"
                        "closest&quality=%i&comps=%s",
-                       ((JPIPKAKDataset *)poDS)->osRequestUrl.c_str(),
-                       rr_win.pos.x, rr_win.pos.y, rr_win.size.x, rr_win.size.y,
-                       fx, fy, nQualityLayers, comps.c_str());
+                       poJDS->osRequestUrl.c_str(), rr_win.pos.x, rr_win.pos.y,
+                       rr_win.size.x, rr_win.size.y, fx, fy, nQualityLayers,
+                       comps.c_str());
 
         JPIPRequest *pRequest = new JPIPRequest();
         pRequest->bPriority = bHighPriority;
@@ -1592,7 +1581,7 @@ void JPIPKAKAsyncReader::Start()
 /************************************************************************/
 void JPIPKAKAsyncReader::Stop()
 {
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     bComplete = 1;
     if (poJDS->pGlobalMutex)
@@ -1639,7 +1628,7 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                                                              int *pnybufsize)
 {
     GDALAsyncStatusType result = GARIO_ERROR;
-    JPIPKAKDataset *poJDS = (JPIPKAKDataset *)poDS;
+    JPIPKAKDataset *poJDS = cpl::down_cast<JPIPKAKDataset *>(poDS);
 
     long nSize = 0;
     // take a snapshot of the volatile variables
@@ -1721,7 +1710,7 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
     /*      down to the target canvas.                                      */
     /* -------------------------------------------------------------------- */
     kdu_dims view_dims, region;
-    int nBytesPerPixel = GDALGetDataTypeSize(poJDS->eDT) / 8;
+    int nBytesPerPixel = GDALGetDataTypeSizeBytes(poJDS->eDT);
     int nPrecision = 0;
 
     try
@@ -1861,9 +1850,9 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
                 else if (nBytesPerPixel == 2)
                 {
                     bIsDecompressing = poJDS->poDecompressor->process(
-                        (kdu_uint16 **)&(channel_bufs[0]), false, pixel_gap,
-                        origin, row_gap, 1000000, 0, incomplete_region,
-                        region_pass, nPrecision, false);
+                        reinterpret_cast<kdu_uint16 **>(&(channel_bufs[0])),
+                        false, pixel_gap, origin, row_gap, 1000000, 0,
+                        incomplete_region, region_pass, nPrecision, false);
                 }
 
                 CPLDebug("JPIPKAK",
@@ -1975,7 +1964,7 @@ static void JPIPWorkerFunc(void *req)
 
     JPIPRequest *pRequest = (JPIPRequest *)req;
     JPIPKAKDataset *poJDS =
-        (JPIPKAKDataset *)(pRequest->poARIO->GetGDALDataset());
+        cpl::down_cast<JPIPKAKDataset *>(pRequest->poARIO->GetGDALDataset());
 
     int bPriority = pRequest->bPriority;
 
@@ -2059,7 +2048,7 @@ static void JPIPWorkerFunc(void *req)
 
         int bError;
         int bComplete =
-            ((JPIPKAKDataset *)pRequest->poARIO->GetGDALDataset())
+            cpl::down_cast<JPIPKAKDataset *>(pRequest->poARIO->GetGDALDataset())
                 ->ReadFromInput(psResult->pabyData, psResult->nDataLen, bError);
         if (bPriority)
             poJDS->nHighThreadByteCount += psResult->nDataLen;

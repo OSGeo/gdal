@@ -21,7 +21,10 @@ add_gdal_driver(
           ogrdxf_leader.cpp
           ogrdxfwriterlayer.cpp
           ogrdxf_ocstransformer.cpp
-  BUILTIN)
+  BUILTIN
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_DXF)
 
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)

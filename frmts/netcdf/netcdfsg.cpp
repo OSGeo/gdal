@@ -808,9 +808,8 @@ void SGeometry_PropertyScanner::open(int container_id)
                 }
             }
 
-            std::string n(property_name);
             v_ids.push_back(curr);
-            v_headers.push_back(n);
+            v_headers.push_back(property_name);
         }
     }
 }

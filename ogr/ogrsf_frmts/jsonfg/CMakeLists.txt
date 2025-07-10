@@ -9,7 +9,6 @@ add_gdal_driver(
       ogrjsonfgstreamedlayer.cpp
       ogrjsonfgstreamingparser.cpp
       ogrjsonfgwritelayer.cpp
-  STRONG_CXX_WFLAGS
   BUILTIN)
 gdal_standard_includes(ogr_JSONFG)
 target_include_directories(ogr_JSONFG PRIVATE $<TARGET_PROPERTY:ogr_GeoJSON,SOURCE_DIR>)

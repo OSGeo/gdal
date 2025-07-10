@@ -69,7 +69,7 @@ class GDALOverviewDataset final : public GDALDataset
     ~GDALOverviewDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -369,23 +369,17 @@ const OGRSpatialReference *GDALOverviewDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALOverviewDataset::GetGeoTransform(double *padfTransform)
+CPLErr GDALOverviewDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    double adfGeoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    if (poMainDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    if (poMainDS->GetGeoTransform(gt) != CE_None)
         return CE_Failure;
 
-    adfGeoTransform[1] *=
+    const double dfOvrXRatio =
         static_cast<double>(poMainDS->GetRasterXSize()) / nRasterXSize;
-    adfGeoTransform[2] *=
+    const double dfOvrYRatio =
         static_cast<double>(poMainDS->GetRasterYSize()) / nRasterYSize;
-    adfGeoTransform[4] *=
-        static_cast<double>(poMainDS->GetRasterXSize()) / nRasterXSize;
-    adfGeoTransform[5] *=
-        static_cast<double>(poMainDS->GetRasterYSize()) / nRasterYSize;
-
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt.Rescale(dfOvrXRatio, dfOvrYRatio);
 
     return CE_None;
 }

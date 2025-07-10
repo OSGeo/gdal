@@ -428,8 +428,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         return;
 
     int nTPPerColumn = nNumDSR;
-    int nTPPerLine =
-        (GetRasterXSize() + nSamplesPerTiePoint - 1) / nSamplesPerTiePoint;
+    int nTPPerLine = DIV_ROUND_UP(GetRasterXSize(), nSamplesPerTiePoint);
 
     /* -------------------------------------------------------------------- */
     /*      Find a measurement type dataset to use as a reference raster    */
@@ -522,12 +521,14 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
     GByte *pabyRecord = (GByte *)CPLMalloc(nDSRSize - 13);
 
-    GUInt32 *tpLat = ((GUInt32 *)pabyRecord) + nTPPerLine * 0; /* latitude */
-    GUInt32 *tpLon = ((GUInt32 *)pabyRecord) + nTPPerLine * 1; /* longitude */
-    GUInt32 *tpLtc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 4; /* lat. DEM correction */
-    GUInt32 *tpLnc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
+    GUInt32 *tpLat =
+        reinterpret_cast<GUInt32 *>(pabyRecord) + nTPPerLine * 0; /* latitude */
+    GUInt32 *tpLon = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 1; /* longitude */
+    GUInt32 *tpLtc = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 4; /* lat. DEM correction */
+    GUInt32 *tpLnc = reinterpret_cast<GUInt32 *>(pabyRecord) +
+                     nTPPerLine * 5; /* lon. DEM correction */
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *)CPLCalloc(
@@ -962,8 +963,8 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
             eDataType = GDT_Byte;
     }
 
-    int nPrefixBytes =
-        dsr_size - ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
+    const int nPrefixBytes =
+        dsr_size - (GDALGetDataTypeSizeBytes(eDataType) * poDS->nRasterXSize);
 
     /* -------------------------------------------------------------------- */
     /*      Fail out if we didn't get non-zero sizes.                       */
@@ -1011,7 +1012,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             auto poBand = RawRasterBand::Create(
                 poDS.get(), iBand + 1, poDS->fpImage, ds_offset + nPrefixBytes,
-                GDALGetDataTypeSize(eDataType) / 8, dsr_size, eDataType,
+                GDALGetDataTypeSizeBytes(eDataType), dsr_size, eDataType,
                 RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
                 RawRasterBand::OwnFP::NO);
             if (!poBand)

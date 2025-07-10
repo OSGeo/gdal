@@ -14,6 +14,8 @@
 #include "opjdatasetbase.h"
 #include "openjpegdrivercore.h"
 
+JP2OPJDatasetBase::~JP2OPJDatasetBase() = default;
+
 /************************************************************************/
 /*                      GDALRegister_JP2OpenJPEG()                      */
 /************************************************************************/

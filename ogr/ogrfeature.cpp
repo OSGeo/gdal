@@ -7222,19 +7222,19 @@ int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
             poDefn->GetFieldDefn(i)->GetWidth() > 0 &&
             poDefn->GetFieldDefn(i)->GetType() == OFTString && IsFieldSet(i) &&
             CPLIsUTF8(GetFieldAsString(i), -1) &&
-            CPLStrlenUTF8(GetFieldAsString(i)) >
-                poDefn->GetFieldDefn(i)->GetWidth())
+            CPLStrlenUTF8Ex(GetFieldAsString(i)) >
+                static_cast<size_t>(poDefn->GetFieldDefn(i)->GetWidth()))
         {
             bRet = false;
             if (bEmitError)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s.%s has a %d UTF-8 characters whereas "
-                         "a maximum of %d is allowed",
-                         poDefn->GetName(),
-                         poDefn->GetFieldDefn(i)->GetNameRef(),
-                         CPLStrlenUTF8(GetFieldAsString(i)),
-                         poDefn->GetFieldDefn(i)->GetWidth());
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Field %s.%s has %" PRIu64 " UTF-8 characters whereas "
+                    "a maximum of %d is allowed",
+                    poDefn->GetName(), poDefn->GetFieldDefn(i)->GetNameRef(),
+                    static_cast<uint64_t>(CPLStrlenUTF8Ex(GetFieldAsString(i))),
+                    poDefn->GetFieldDefn(i)->GetWidth());
             }
         }
     }
@@ -8722,6 +8722,24 @@ OGRFeature::FieldValue::operator CSLConstList() const
             ->GetFieldAsStringList(GetIndex()));
 }
 
+OGRRangeFieldDomain *OGRRangeFieldDomain::Clone() const
+{
+    auto poDomain = new OGRRangeFieldDomain(
+        m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_sMin,
+        m_bMinIsInclusive, m_sMax, m_bMaxIsInclusive);
+    poDomain->SetMergePolicy(m_eMergePolicy);
+    poDomain->SetSplitPolicy(m_eSplitPolicy);
+    return poDomain;
+}
+
+OGRGlobFieldDomain *OGRGlobFieldDomain::Clone() const
+{
+    auto poDomain = new OGRGlobFieldDomain(
+        m_osName, m_osDescription, m_eFieldType, m_eFieldSubType, m_osGlob);
+    poDomain->SetMergePolicy(m_eMergePolicy);
+    poDomain->SetSplitPolicy(m_eSplitPolicy);
+    return poDomain;
+}
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif

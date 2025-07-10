@@ -34,7 +34,7 @@ GDALAsyncReader *ECWDataset::BeginAsyncReader(
     /*      Provide default packing if needed.                              */
     /* -------------------------------------------------------------------- */
     if (nPixelSpace == 0)
-        nPixelSpace = GDALGetDataTypeSize(eBufType) / 8;
+        nPixelSpace = GDALGetDataTypeSizeBytes(eBufType);
     if (nLineSpace == 0)
         nLineSpace = nPixelSpace * nBufXSize;
     if (nBandSpace == 0)
@@ -277,13 +277,15 @@ NCSEcwReadStatus ECWAsyncReader::ReadToBuffer()
     /* -------------------------------------------------------------------- */
     ECWDataset *poECWDS = (ECWDataset *)poDS;
     int i;
-    int nDataTypeSize = (GDALGetDataTypeSize(poECWDS->eRasterDataType) / 8);
-    GByte *pabyBILScanline =
-        (GByte *)CPLMalloc(nBufXSize * nDataTypeSize * nBandCount);
+    const int nDataTypeSize =
+        GDALGetDataTypeSizeBytes(poECWDS->eRasterDataType);
+    GByte *pabyBILScanline = (GByte *)CPLMalloc(static_cast<size_t>(nBufXSize) *
+                                                nDataTypeSize * nBandCount);
     GByte **papabyBIL = (GByte **)CPLMalloc(nBandCount * sizeof(void *));
 
     for (i = 0; i < nBandCount; i++)
-        papabyBIL[i] = pabyBILScanline + i * nBufXSize * nDataTypeSize;
+        papabyBIL[i] = pabyBILScanline +
+                       static_cast<size_t>(i) * nBufXSize * nDataTypeSize;
 
     /* -------------------------------------------------------------------- */
     /*      Read back the imagery into the buffer.                          */
@@ -306,7 +308,8 @@ NCSEcwReadStatus ECWAsyncReader::ReadToBuffer()
 
         for (i = 0; i < nBandCount; i++)
         {
-            GDALCopyWords(pabyBILScanline + i * nDataTypeSize * nBufXSize,
+            GDALCopyWords(pabyBILScanline + static_cast<size_t>(i) *
+                                                nDataTypeSize * nBufXSize,
                           poECWDS->eRasterDataType, nDataTypeSize,
                           ((GByte *)pBuf) + nLineSpace * iScanline +
                               nBandSpace * i,

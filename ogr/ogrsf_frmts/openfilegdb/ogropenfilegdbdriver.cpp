@@ -176,42 +176,44 @@ class OpenFileGDBRepackAlgorithm final : public GDALAlgorithm
     }
 
   protected:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override
-    {
-        auto poDS =
-            dynamic_cast<OGROpenFileGDBDataSource *>(m_dataset.GetDatasetRef());
-        if (!poDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "%s is not a FileGeoDatabase",
-                        m_dataset.GetName().c_str());
-            return false;
-        }
-        bool bSuccess = true;
-        int iLayer = 0;
-        for (auto &poLayer : poDS->GetLayers())
-        {
-            void *pScaledData = GDALCreateScaledProgress(
-                static_cast<double>(iLayer) / poDS->GetLayerCount(),
-                static_cast<double>(iLayer + 1) / poDS->GetLayerCount(),
-                pfnProgress, pProgressData);
-            const bool bRet = poLayer->Repack(
-                pScaledData ? GDALScaledProgress : nullptr, pScaledData);
-            GDALDestroyScaledProgress(pScaledData);
-            if (!bRet)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Repack of layer %s failed", poLayer->GetName());
-                bSuccess = false;
-            }
-            ++iLayer;
-        }
-        return bSuccess;
-    }
+    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
   private:
     GDALArgDatasetValue m_dataset{};
 };
+
+bool OpenFileGDBRepackAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                         void *pProgressData)
+{
+    auto poDS =
+        dynamic_cast<OGROpenFileGDBDataSource *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a FileGeoDatabase",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+    bool bSuccess = true;
+    int iLayer = 0;
+    for (auto &poLayer : poDS->GetLayers())
+    {
+        void *pScaledData = GDALCreateScaledProgress(
+            static_cast<double>(iLayer) / poDS->GetLayerCount(),
+            static_cast<double>(iLayer + 1) / poDS->GetLayerCount(),
+            pfnProgress, pProgressData);
+        const bool bRet = poLayer->Repack(
+            pScaledData ? GDALScaledProgress : nullptr, pScaledData);
+        GDALDestroyScaledProgress(pScaledData);
+        if (!bRet)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Repack of layer %s failed", poLayer->GetName());
+            bSuccess = false;
+        }
+        ++iLayer;
+    }
+    return bSuccess;
+}
 
 /************************************************************************/
 /*                 OGROpenFileGDBInstantiateAlgorithm()                 */

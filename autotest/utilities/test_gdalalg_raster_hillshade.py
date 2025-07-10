@@ -86,6 +86,13 @@ def test_gdalalg_raster_hillshade_band():
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).Checksum() == 63031
 
+    with gdal.Run(
+        "raster", "hillshade", input=src_ds, band=2, output="", output_format="stream"
+    ) as alg:
+        out_ds = alg.Output()
+    del src_ds
+    assert out_ds.GetRasterBand(1).Checksum() == 63031
+
 
 @pytest.mark.require_driver("GDALG")
 def test_gdalalg_raster_hillshade_gdalg(tmp_vsimem):
@@ -147,3 +154,40 @@ def test_gdalalg_raster_hillshade_vrt_output_pipeline_from_filename():
         match=r"hillshade: VRT output is not supported. Consider using the GDALG driver instead \(files with \.gdalg\.json extension\)",
     ):
         alg.Run()
+
+
+def test_gdalalg_raster_hillshade_overview():
+
+    src_ds = gdal.Translate(
+        "",
+        "../gdrivers/data/n43.tif",
+        format="MEM",
+        width=61,
+        resampleAlg=gdal.GRIORA_Bilinear,
+    )
+
+    with gdal.Run(
+        "raster", "hillshade", input=src_ds, output="", output_format="stream", z=30
+    ) as alg:
+        out_ds = alg.Output()
+        cs = out_ds.GetRasterBand(1).Checksum()
+        stats = out_ds.GetRasterBand(1).ComputeStatistics(False)
+
+    src_ds = gdal.Translate("", "../gdrivers/data/n43.tif", format="MEM")
+    src_ds.BuildOverviews("BILINEAR", [2, 4])
+
+    with gdal.Run(
+        "raster", "hillshade", input=src_ds, output="", output_format="stream", z=30
+    ) as alg:
+        out_ds = alg.Output()
+    del src_ds
+
+    assert out_ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert out_ds.GetRasterBand(1).GetOverview(-1) is None
+    assert out_ds.GetRasterBand(1).GetOverview(2) is None
+    assert out_ds.GetRasterBand(1).GetOverview(0).XSize == 61
+    assert out_ds.GetRasterBand(1).GetOverview(0).YSize == 61
+    assert out_ds.GetRasterBand(1).GetOverview(1).XSize == 31
+    assert out_ds.GetRasterBand(1).GetOverview(1).YSize == 31
+    assert out_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs
+    assert out_ds.GetRasterBand(1).GetOverview(0).ComputeStatistics(False) == stats

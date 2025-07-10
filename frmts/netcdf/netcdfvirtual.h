@@ -28,69 +28,41 @@ namespace nccfdriver
 // Exceptions
 class SG_Exception_NVOOB : public SG_Exception
 {
-    std::string err_msg;
-
   public:
     explicit SG_Exception_NVOOB(const char *dsname)
-        : err_msg(std::string("An attempt to read an undefined ID from ") +
-                  std::string(dsname) + std::string(" was made"))
+        : SG_Exception(std::string("An attempt to read an undefined ID from ") +
+                       std::string(dsname) + std::string(" was made"))
     {
-    }
-
-    const char *get_err_msg() override
-    {
-        return this->err_msg.c_str();
     }
 };
 
 class SG_Exception_DupName : public SG_Exception
 {
-    std::string err_msg;
-
   public:
     SG_Exception_DupName(const char *keyn, const char *dsname)
-        : err_msg(std::string("The key ") + std::string(keyn) +
-                  std::string(" already exists in") + std::string(dsname))
+        : SG_Exception(std::string("The key ") + std::string(keyn) +
+                       std::string(" already exists in") + std::string(dsname))
     {
-    }
-
-    const char *get_err_msg() override
-    {
-        return this->err_msg.c_str();
     }
 };
 
 class SG_Exception_BadMapping : public SG_Exception
 {
-    std::string err_msg;
-
   public:
     SG_Exception_BadMapping(const char *key, const char *where)
-        : err_msg(std::string(key) + std::string(" not found in ") +
-                  std::string(where))
+        : SG_Exception(std::string(key) + std::string(" not found in ") +
+                       std::string(where))
     {
-    }
-
-    const char *get_err_msg() override
-    {
-        return this->err_msg.c_str();
     }
 };
 
 class SG_Exception_VWrite_Failure : public SG_Exception
 {
-    std::string err_msg;
-
   public:
     SG_Exception_VWrite_Failure(const char *where, const char *type)
-        : err_msg(std::string("Failed to write ") + std::string(type) +
-                  std::string(" to ") + std::string(where))
+        : SG_Exception(std::string("Failed to write ") + std::string(type) +
+                       std::string(" to ") + std::string(where))
     {
-    }
-
-    const char *get_err_msg() override
-    {
-        return this->err_msg.c_str();
     }
 };
 
@@ -111,9 +83,7 @@ class netCDFVAttribute
     /*  ~netCDFVAttribute()
      * Virtual destructor
      */
-    virtual ~netCDFVAttribute()
-    {
-    }
+    virtual ~netCDFVAttribute();
 };
 
 template <class VClass, nc_type ntype>

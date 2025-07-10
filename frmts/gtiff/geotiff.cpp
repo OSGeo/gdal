@@ -1144,50 +1144,52 @@ struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
 
     // GDALSubdatasetInfo interface
   private:
-    void parseFileName() override
-    {
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "GTIFF_DIR:"))
-        {
-            return;
-        }
-
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
-
-        if (iPartsCount == 3 || iPartsCount == 4)
-        {
-
-            m_driverPrefixComponent = aosParts[0];
-
-            const bool hasDriveLetter{
-                strlen(aosParts[2]) == 1 &&
-                std::isalpha(static_cast<unsigned char>(aosParts[2][0]))};
-
-            // Check for drive letter
-            if (iPartsCount == 4)
-            {
-                // Invalid
-                if (!hasDriveLetter)
-                {
-                    return;
-                }
-                m_pathComponent = aosParts[2];
-                m_pathComponent.append(":");
-                m_pathComponent.append(aosParts[3]);
-            }
-            else  // count is 3
-            {
-                if (hasDriveLetter)
-                {
-                    return;
-                }
-                m_pathComponent = aosParts[2];
-            }
-
-            m_subdatasetComponent = aosParts[1];
-        }
-    }
+    void parseFileName() override;
 };
+
+void GTiffDriverSubdatasetInfo::parseFileName()
+{
+    if (!STARTS_WITH_CI(m_fileName.c_str(), "GTIFF_DIR:"))
+    {
+        return;
+    }
+
+    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    const int iPartsCount{CSLCount(aosParts)};
+
+    if (iPartsCount == 3 || iPartsCount == 4)
+    {
+
+        m_driverPrefixComponent = aosParts[0];
+
+        const bool hasDriveLetter{
+            strlen(aosParts[2]) == 1 &&
+            std::isalpha(static_cast<unsigned char>(aosParts[2][0]))};
+
+        // Check for drive letter
+        if (iPartsCount == 4)
+        {
+            // Invalid
+            if (!hasDriveLetter)
+            {
+                return;
+            }
+            m_pathComponent = aosParts[2];
+            m_pathComponent.append(":");
+            m_pathComponent.append(aosParts[3]);
+        }
+        else  // count is 3
+        {
+            if (hasDriveLetter)
+            {
+                return;
+            }
+            m_pathComponent = aosParts[2];
+        }
+
+        m_subdatasetComponent = aosParts[1];
+    }
+}
 
 static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
 {

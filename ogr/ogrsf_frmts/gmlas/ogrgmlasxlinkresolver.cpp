@@ -159,7 +159,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL,
         else if (bAllowRemoteDownload)
         {
             if (m_bRefresh)
-                m_aoSetRefreshedFiles.insert(osCachedFileName);
+                m_aoSetRefreshedFiles.insert(std::move(osCachedFileName));
         }
         else
         {
@@ -178,7 +178,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL,
             return oIter->second;
     }
 
-    const CPLString osContent(FetchRawContent(osURL, pszHeaders));
+    CPLString osContent(FetchRawContent(osURL, pszHeaders));
     // Cache to disk if possible
     if (bDiskCacheAvailable && bCacheResults && !osContent.empty())
     {

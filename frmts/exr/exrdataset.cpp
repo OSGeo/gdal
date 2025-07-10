@@ -56,15 +56,23 @@ class GDALEXRDataset final : public GDALPamDataset
     int m_iLevel = 0;
     std::vector<std::unique_ptr<GDALEXRDataset>> m_apoOvrDS{};
     OGRSpatialReference m_oSRS{};
-    double m_adfGT[6] = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
+
+    void AddOverview(std::unique_ptr<GDALEXRDataset> poOvrDS)
+    {
+        m_apoOvrDS.push_back(std::move(poOvrDS));
+        m_apoOvrDS.back()->m_poParent = this;
+    }
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRDataset)
 
   public:
     GDALEXRDataset() = default;
     ~GDALEXRDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *adfGT) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -86,7 +94,7 @@ class GDALEXRRasterBand final : public GDALPamRasterBand
     friend class GDALEXRDataset;
 
     GDALColorInterp m_eInterp = GCI_Undefined;
-    std::string m_osChannelName;
+    std::string m_osChannelName{};
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -389,13 +397,13 @@ const OGRSpatialReference *GDALEXRDataset::GetSpatialRef() const
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr GDALEXRDataset::GetGeoTransform(double *adfGT)
+CPLErr GDALEXRDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (GDALPamDataset::GetGeoTransform(adfGT) == CE_None)
+    if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
     {
         return CE_None;
     }
-    memcpy(adfGT, m_adfGT, 6 * sizeof(double));
+    gt = m_gt;
     return m_bHasGT ? CE_None : CE_Failure;
 }
 
@@ -412,11 +420,13 @@ class GDALEXRIOStreamException final : public std::exception
     {
     }
 
-    const char *what() const noexcept override
-    {
-        return m_msg.c_str();
-    }
+    const char *what() const noexcept override;
 };
+
+const char *GDALEXRIOStreamException::what() const noexcept
+{
+    return m_msg.c_str();
+}
 
 #if OPENEXR_VERSION_MAJOR < 3
 typedef Int64 IoInt64Type;
@@ -455,6 +465,8 @@ class GDALEXRIOStream final : public IStream, public OStream
 
   private:
     VSILFILE *m_fp;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRIOStream)
 };
 
 bool GDALEXRIOStream::read(char c[/*n*/], int n)
@@ -718,22 +730,20 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                         break;
                     }
                     auto poOvrDS = std::make_unique<GDALEXRDataset>();
-                    // coverity[escape]
-                    poOvrDS->m_poParent = poDS.get();
                     poOvrDS->m_iLevel = iLevel;
                     poOvrDS->nRasterXSize = nOvrWidth;
                     poOvrDS->nRasterYSize = nOvrHeight;
-                    poDS->m_apoOvrDS.push_back(std::move(poOvrDS));
                     i = 0;
                     for (auto iter = channels.begin(); iter != channels.end();
                          ++iter, ++i)
                     {
                         const Channel &channel = iter.channel();
-                        auto poBand = new GDALEXRRasterBand(
-                            poDS->m_apoOvrDS.back().get(), i + 1, iter.name(),
-                            channel.type, nBlockXSize, nBlockYSize);
-                        poDS->m_apoOvrDS.back()->SetBand(i + 1, poBand);
+                        auto poBand = std::make_unique<GDALEXRRasterBand>(
+                            poOvrDS.get(), i + 1, iter.name(), channel.type,
+                            nBlockXSize, nBlockYSize);
+                        poOvrDS->SetBand(i + 1, std::move(poBand));
                     }
+                    poDS->AddOverview(std::move(poOvrDS));
                 }
             }
 
@@ -754,12 +764,12 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                          strcmp(iter.name(), "gdal:geoTransform") == 0)
                 {
                     poDS->m_bHasGT = true;
-                    poDS->m_adfGT[0] = m33DAttr->value()[0][2];
-                    poDS->m_adfGT[1] = m33DAttr->value()[0][0];
-                    poDS->m_adfGT[2] = m33DAttr->value()[0][1];
-                    poDS->m_adfGT[3] = m33DAttr->value()[1][2];
-                    poDS->m_adfGT[4] = m33DAttr->value()[1][0];
-                    poDS->m_adfGT[5] = m33DAttr->value()[1][1];
+                    poDS->m_gt[0] = m33DAttr->value()[0][2];
+                    poDS->m_gt[1] = m33DAttr->value()[0][0];
+                    poDS->m_gt[2] = m33DAttr->value()[0][1];
+                    poDS->m_gt[3] = m33DAttr->value()[1][2];
+                    poDS->m_gt[4] = m33DAttr->value()[1][0];
+                    poDS->m_gt[5] = m33DAttr->value()[1][1];
                 }
                 else if (stringAttr && STARTS_WITH(iter.name(), "gdal:"))
                 {
@@ -863,15 +873,16 @@ static void WriteSRSInHeader(Header &header, const OGRSpatialReference *poSRS)
     }
 }
 
-static void WriteGeoTransformInHeader(Header &header, const double *padfGT)
+static void WriteGeoTransformInHeader(Header &header,
+                                      const GDALGeoTransform &gtIn)
 {
     M33d gt;
-    gt[0][0] = padfGT[1];
-    gt[0][1] = padfGT[2];
-    gt[0][2] = padfGT[0];
-    gt[1][0] = padfGT[4];
-    gt[1][1] = padfGT[5];
-    gt[1][2] = padfGT[3];
+    gt[0][0] = gtIn[1];
+    gt[0][1] = gtIn[2];
+    gt[0][2] = gtIn[0];
+    gt[1][0] = gtIn[4];
+    gt[1][1] = gtIn[5];
+    gt[1][2] = gtIn[3];
     gt[2][0] = 0;
     gt[2][1] = 0;
     gt[2][2] = 1;
@@ -901,10 +912,10 @@ static void FillHeaderFromDataset(Header &header, GDALDataset *poDS)
         WriteSRSInHeader(header, poSRS);
     }
 
-    double adfGT[6];
-    if (poDS->GetGeoTransform(adfGT) == CE_None)
+    GDALGeoTransform gt;
+    if (poDS->GetGeoTransform(gt) == CE_None)
     {
-        WriteGeoTransformInHeader(header, adfGT);
+        WriteGeoTransformInHeader(header, gt);
     }
 
     WriteMetadataInHeader(header, poDS->GetMetadata());
@@ -1427,7 +1438,7 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     char *m_pSliceBuffer = nullptr;
 
     OGRSpatialReference m_oSRS{};
-    double m_adfGT[6] = {0, 1, 0, 0, 0, 1};
+    GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
 
     CPLStringList m_aosMetadata{};
@@ -1441,6 +1452,8 @@ class GDALEXRWritableDataset final : public GDALPamDataset
 
     void WriteHeader();
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALEXRWritableDataset)
+
   public:
     GDALEXRWritableDataset(int nXSize, int nYSize) : m_header(nXSize, nYSize)
     {
@@ -1450,11 +1463,11 @@ class GDALEXRWritableDataset final : public GDALPamDataset
 
     ~GDALEXRWritableDataset() override;
 
-    CPLErr SetGeoTransform(double *adfGT) override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *adfGT) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     CPLErr SetMetadata(char **, const char * = "") override;
     CPLErr SetMetadataItem(const char *, const char *,
@@ -1479,17 +1492,17 @@ GDALEXRWritableDataset::~GDALEXRWritableDataset()
 /*                            SetGeoTransform()                         */
 /************************************************************************/
 
-CPLErr GDALEXRWritableDataset::SetGeoTransform(double *adfGT)
+CPLErr GDALEXRWritableDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (m_bTriedWritingHeader)
     {
         CPLError(
             CE_Warning, CPLE_AppDefined,
             "SetGeoTransform() called after writing pixels. Will go to PAM");
-        return GDALPamDataset::SetGeoTransform(adfGT);
+        return GDALPamDataset::SetGeoTransform(gt);
     }
     m_bHasGT = true;
-    memcpy(m_adfGT, adfGT, 6 * sizeof(double));
+    m_gt = gt;
     return CE_None;
 }
 
@@ -1604,13 +1617,13 @@ const OGRSpatialReference *GDALEXRWritableDataset::GetSpatialRef() const
 /*                         GetGeoTransform()                            */
 /************************************************************************/
 
-CPLErr GDALEXRWritableDataset::GetGeoTransform(double *adfGT)
+CPLErr GDALEXRWritableDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (GDALPamDataset::GetGeoTransform(adfGT) == CE_None)
+    if (GDALPamDataset::GetGeoTransform(gt) == CE_None)
     {
         return CE_None;
     }
-    memcpy(adfGT, m_adfGT, 6 * sizeof(double));
+    gt = m_gt;
     return m_bHasGT ? CE_None : CE_Failure;
 }
 

@@ -129,6 +129,8 @@ Msg_reader_core::Msg_reader_core(VSILFILE *fp)
     read_metadata_block(fp);
 }
 
+Msg_reader_core::~Msg_reader_core() = default;
+
 void Msg_reader_core::read_metadata_block(VSILFILE *fin)
 {
     _open_success = true;
@@ -142,7 +144,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
 
 #ifdef DEBUG
     // print out all the fields in the header
-    PH_DATA *hd = (PH_DATA *)&_main_header;
+    PH_DATA *hd = reinterpret_cast<PH_DATA *>(&_main_header);
     for (i = 0; i < 6; i++)
     {
         to_string(*hd);

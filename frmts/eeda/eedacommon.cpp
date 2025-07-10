@@ -165,7 +165,7 @@ BuildBandDescArray(json_object *poBands,
         {
             continue;
         }
-        std::vector<double> adfGeoTransform{
+        GDALGeoTransform gt{
             json_object_get_double(
                 CPL_json_object_object_get(poAT, "translateX")),
             json_object_get_double(CPL_json_object_object_get(poAT, "scaleX")),
@@ -222,7 +222,7 @@ BuildBandDescArray(json_object *poBands,
         oDesc.osName = pszBandId;
         oDesc.osWKT = std::move(osWKT);
         oDesc.eDT = eDT;
-        oDesc.adfGeoTransform = std::move(adfGeoTransform);
+        oDesc.gt = std::move(gt);
         oDesc.nWidth = nWidth;
         oDesc.nHeight = nHeight;
         aoBandDesc.emplace_back(std::move(oDesc));
@@ -451,8 +451,12 @@ char **GDALEEDABaseDataset::GetBaseHTTPOptions()
 /* Add a small amount of random jitter to avoid cyclic server stampedes */
 static double EEDABackoffFactor(double base)
 {
-    // coverity[dont_call]
-    return base + rand() * 0.5 / RAND_MAX;
+    // We don't need cryptographic quality randomness...
+    return base
+#ifndef __COVERITY__
+           + rand() * 0.5 / RAND_MAX
+#endif
+        ;
 }
 
 /************************************************************************/

@@ -13,18 +13,28 @@
 #include "gdalalgorithm.h"
 
 #include "gdalalg_vector_info.h"
+#include "gdalalg_vector_buffer.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_convert.h"
 #include "gdalalg_vector_edit.h"
+#include "gdalalg_vector_explode_collections.h"
 #include "gdalalg_vector_geom.h"
 #include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_index.h"
+#include "gdalalg_vector_layer_algebra.h"
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_rasterize.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_reproject.h"
+#include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
+#include "gdalalg_vector_set_geom_type.h"
+#include "gdalalg_vector_simplify.h"
+#include "gdalalg_vector_simplify_coverage.h"
 #include "gdalalg_vector_sql.h"
+#include "gdalalg_vector_make_valid.h"
+#include "gdalalg_vector_swap_xy.h"
 
 #include "gdal_priv.h"
 
@@ -52,40 +62,51 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         AddOutputStringArg(&m_output);
 
         RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
         RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
-        RegisterSubAlgorithm<GDALVectorGridAlgorithm>();
-        RegisterSubAlgorithm<GDALVectorRasterizeAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorRasterizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorGeomAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorIndexAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSetGeomTypeAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSimplifyAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSimplifyCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorSQLAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorSwapXYAlgorithmStandalone>();
     }
 
   private:
     std::string m_output{};
     bool m_drivers = false;
 
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        if (m_drivers)
-        {
-            m_output = GDALPrintDriverList(GDAL_OF_VECTOR, true);
-            return true;
-        }
-        else
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "The Run() method should not be called directly on the \"gdal "
-                "vector\" program.");
-            return false;
-        }
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
+
+bool GDALVectorAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    if (m_drivers)
+    {
+        m_output = GDALPrintDriverList(GDAL_OF_VECTOR, true);
+        return true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The Run() method should not be called directly on the \"gdal "
+                 "vector\" program.");
+        return false;
+    }
+}
 
 GDAL_STATIC_REGISTER_ALG(GDALVectorAlgorithm);

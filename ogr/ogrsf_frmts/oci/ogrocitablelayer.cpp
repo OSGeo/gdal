@@ -257,7 +257,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
         ub4 nOCILen;
 
         nStatus = OCIParamGet(hAttrList, OCI_DTYPE_PARAM, poSession->hError,
-                              (dvoid **)&hParamDesc, (ub4)iRawFld + 1);
+                              reinterpret_cast<dvoid **>(&hParamDesc),
+                              (ub4)iRawFld + 1);
         if (nStatus != OCI_SUCCESS)
             break;
 
@@ -1232,9 +1233,9 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
             if (poSession->Failed(
                     OCIObjectNew(poSession->hEnv, poSession->hError,
                                  poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
-                                 poSession->hElemInfoTDO, (dvoid *)nullptr,
+                                 poSession->hElemInfoTDO, nullptr,
                                  OCI_DURATION_SESSION, FALSE,
-                                 (dvoid **)&hElemInfoVARRAY),
+                                 reinterpret_cast<dvoid **>(&hElemInfoVARRAY)),
                     "OCIObjectNew(hElemInfoVARRAY)"))
                 return OGRERR_FAILURE;
         }
@@ -1252,15 +1253,16 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
         for (i = 0; i < nElemInfoCount; i++)
         {
             if (poSession->Failed(
-                    OCINumberFromInt(
-                        poSession->hError, (dvoid *)(panElemInfo + i),
-                        (uword)sizeof(int), OCI_NUMBER_SIGNED, &oci_number),
+                    OCINumberFromInt(poSession->hError,
+                                     static_cast<dvoid *>(panElemInfo + i),
+                                     (uword)sizeof(int), OCI_NUMBER_SIGNED,
+                                     &oci_number),
                     "OCINumberFromInt"))
                 return OGRERR_FAILURE;
 
             if (poSession->Failed(
                     OCICollAppend(poSession->hEnv, poSession->hError,
-                                  (dvoid *)&oci_number, (dvoid *)nullptr,
+                                  static_cast<dvoid *>(&oci_number), nullptr,
                                   hElemInfoVARRAY),
                     "OCICollAppend"))
                 return OGRERR_FAILURE;
@@ -1268,20 +1270,20 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 
         // Do the binding.
         if (poSession->Failed(
-                OCIBindByName(oInsert.GetStatement(), &hBindOrd,
-                              poSession->hError, (text *)":elem_info", (sb4)-1,
-                              (dvoid *)nullptr, (sb4)0, SQLT_NTY,
-                              (dvoid *)nullptr, (ub2 *)nullptr, (ub2 *)nullptr,
-                              (ub4)0, (ub4 *)nullptr, (ub4)OCI_DEFAULT),
+                OCIBindByName(
+                    oInsert.GetStatement(), &hBindOrd, poSession->hError,
+                    reinterpret_cast<text *>(const_cast<char *>(":elem_info")),
+                    (sb4)-1, nullptr, 0, SQLT_NTY, nullptr, nullptr, nullptr,
+                    (ub4)0, nullptr, (ub4)OCI_DEFAULT),
                 "OCIBindByName(:elem_info)"))
             return OGRERR_FAILURE;
 
-        if (poSession->Failed(OCIBindObject(hBindOrd, poSession->hError,
-                                            poSession->hElemInfoTDO,
-                                            (dvoid **)&hElemInfoVARRAY,
-                                            (ub4 *)nullptr, (dvoid **)nullptr,
-                                            (ub4 *)nullptr),
-                              "OCIBindObject(:elem_info)"))
+        if (poSession->Failed(
+                OCIBindObject(hBindOrd, poSession->hError,
+                              poSession->hElemInfoTDO,
+                              reinterpret_cast<dvoid **>(&hElemInfoVARRAY),
+                              nullptr, nullptr, nullptr),
+                "OCIBindObject(:elem_info)"))
             return OGRERR_FAILURE;
     }
 
@@ -1300,9 +1302,9 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
             if (poSession->Failed(
                     OCIObjectNew(poSession->hEnv, poSession->hError,
                                  poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
-                                 poSession->hOrdinatesTDO, (dvoid *)nullptr,
+                                 poSession->hOrdinatesTDO, nullptr,
                                  OCI_DURATION_SESSION, FALSE,
-                                 (dvoid **)&hOrdVARRAY),
+                                 reinterpret_cast<dvoid **>(&hOrdVARRAY)),
                     "OCIObjectNew(hOrdVARRAY)"))
                 return OGRERR_FAILURE;
         }
@@ -1319,37 +1321,36 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
         // Prepare the VARRAY of ordinate values.
         for (i = 0; i < nOrdinalCount; i++)
         {
-            if (poSession->Failed(OCINumberFromReal(poSession->hError,
-                                                    (dvoid *)(padfOrdinals + i),
-                                                    (uword)sizeof(double),
-                                                    &oci_number),
-                                  "OCINumberFromReal"))
+            if (poSession->Failed(
+                    OCINumberFromReal(poSession->hError,
+                                      static_cast<dvoid *>(padfOrdinals + i),
+                                      (uword)sizeof(double), &oci_number),
+                    "OCINumberFromReal"))
                 return OGRERR_FAILURE;
 
-            if (poSession->Failed(OCICollAppend(poSession->hEnv,
-                                                poSession->hError,
-                                                (dvoid *)&oci_number,
-                                                (dvoid *)nullptr, hOrdVARRAY),
-                                  "OCICollAppend"))
+            if (poSession->Failed(
+                    OCICollAppend(poSession->hEnv, poSession->hError,
+                                  (dvoid *)&oci_number, nullptr, hOrdVARRAY),
+                    "OCICollAppend"))
                 return OGRERR_FAILURE;
         }
 
         // Do the binding.
         if (poSession->Failed(
-                OCIBindByName(oInsert.GetStatement(), &hBindOrd,
-                              poSession->hError, (text *)":ordinates", (sb4)-1,
-                              (dvoid *)nullptr, (sb4)0, SQLT_NTY,
-                              (dvoid *)nullptr, (ub2 *)nullptr, (ub2 *)nullptr,
-                              (ub4)0, (ub4 *)nullptr, (ub4)OCI_DEFAULT),
+                OCIBindByName(
+                    oInsert.GetStatement(), &hBindOrd, poSession->hError,
+                    reinterpret_cast<text *>(const_cast<char *>(":ordinates")),
+                    (sb4)-1, nullptr, 0, SQLT_NTY, nullptr, nullptr, nullptr, 0,
+                    nullptr, (ub4)OCI_DEFAULT),
                 "OCIBindByName(:ordinates)"))
             return OGRERR_FAILURE;
 
-        if (poSession->Failed(OCIBindObject(hBindOrd, poSession->hError,
-                                            poSession->hOrdinatesTDO,
-                                            (dvoid **)&hOrdVARRAY,
-                                            (ub4 *)nullptr, (dvoid **)nullptr,
-                                            (ub4 *)nullptr),
-                              "OCIBindObject(:ordinates)"))
+        if (poSession->Failed(
+                OCIBindObject(hBindOrd, poSession->hError,
+                              poSession->hOrdinatesTDO,
+                              reinterpret_cast<dvoid **>(&hOrdVARRAY), nullptr,
+                              nullptr, nullptr),
+                "OCIBindObject(:ordinates)"))
             return OGRERR_FAILURE;
     }
 
@@ -1785,18 +1786,20 @@ int OGROCITableLayer::AllocAndBindForWrite()
             if (poSession->Failed(
                     OCIObjectNew(poSession->hEnv, poSession->hError,
                                  poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
-                                 poSession->hElemInfoTDO, (dvoid *)nullptr,
+                                 poSession->hElemInfoTDO, nullptr,
                                  OCI_DURATION_SESSION, FALSE,
-                                 (dvoid **)&(pasWriteGeoms[i].sdo_elem_info)),
+                                 reinterpret_cast<dvoid **>(
+                                     &(pasWriteGeoms[i].sdo_elem_info))),
                     "OCIObjectNew(elem_info)"))
                 return FALSE;
 
             if (poSession->Failed(
                     OCIObjectNew(poSession->hEnv, poSession->hError,
                                  poSession->hSvcCtx, OCI_TYPECODE_VARRAY,
-                                 poSession->hOrdinatesTDO, (dvoid *)nullptr,
+                                 poSession->hOrdinatesTDO, nullptr,
                                  OCI_DURATION_SESSION, FALSE,
-                                 (dvoid **)&(pasWriteGeoms[i].sdo_ordinates)),
+                                 reinterpret_cast<dvoid **>(
+                                     &(pasWriteGeoms[i].sdo_ordinates))),
                     "OCIObjectNew(ordinates)"))
                 return FALSE;
         }
@@ -2010,12 +2013,12 @@ OGRErr OGROCITableLayer::BoundCreateFeature(OGRFeature *poFeature)
             // Prepare the VARRAY of element values.
             for (i = 0; i < nElemInfoCount; i++)
             {
-                OCINumberFromInt(poSession->hError, (dvoid *)(panElemInfo + i),
-                                 (uword)sizeof(int), OCI_NUMBER_SIGNED,
-                                 &oci_number);
+                OCINumberFromInt(
+                    poSession->hError, static_cast<dvoid *>(panElemInfo + i),
+                    (uword)sizeof(int), OCI_NUMBER_SIGNED, &oci_number);
 
                 OCICollAppend(poSession->hEnv, poSession->hError,
-                              (dvoid *)&oci_number, (dvoid *)nullptr,
+                              static_cast<dvoid *>(&oci_number), nullptr,
                               psGeom->sdo_elem_info);
             }
 
@@ -2023,10 +2026,10 @@ OGRErr OGROCITableLayer::BoundCreateFeature(OGRFeature *poFeature)
             for (i = 0; i < nOrdinalCount; i++)
             {
                 OCINumberFromReal(poSession->hError,
-                                  (dvoid *)(padfOrdinals + i),
+                                  static_cast<dvoid *>(padfOrdinals + i),
                                   (uword)sizeof(double), &oci_number);
                 OCICollAppend(poSession->hEnv, poSession->hError,
-                              (dvoid *)&oci_number, (dvoid *)nullptr,
+                              static_cast<dvoid *>(&oci_number), nullptr,
                               psGeom->sdo_ordinates);
             }
         }

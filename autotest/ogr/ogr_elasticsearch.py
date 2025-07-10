@@ -53,6 +53,8 @@ def startup_and_cleanup():
 
         yield
 
+    ogrtest.srs_wgs84 = None
+
 
 ###############################################################################
 # Test writing into an nonexistent Elasticsearch datastore.

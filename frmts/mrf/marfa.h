@@ -68,8 +68,16 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+
 #if defined(ZSTD_SUPPORT)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
 #include <zstd.h>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 #define NAMESPACE_MRF_START                                                    \
@@ -396,19 +404,19 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLString const &GetPhotometricInterpretation()
+    CPLString const &GetPhotometricInterpretation()
     {
         return photometric;
     }
 
-    virtual CPLErr SetPhotometricInterpretation(const char *photo)
+    CPLErr SetPhotometricInterpretation(const char *photo)
     {
         photometric = photo;
         return CE_None;
     }
 
-    virtual CPLErr GetGeoTransform(double *gt) override;
-    virtual CPLErr SetGeoTransform(double *gt) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     virtual char **GetFileList() override;
 
@@ -434,10 +442,9 @@ class MRFDataset final : public GDALPamDataset
 
     // Patches a region of all the next overview, argument counts are in blocks
     // Exported for mrf_insert utility
-    virtual CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width,
-                                         int Height, int srcLevel = 0,
-                                         int recursive = false,
-                                         int sampling_mode = SAMPLING_Avg);
+    CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
+                                 int srcLevel = 0, int recursive = false,
+                                 int sampling_mode = SAMPLING_Avg);
 
     // Creates an XML tree from the current MRF.  If written to a file it
     // becomes an MRF
@@ -480,6 +487,8 @@ class MRFDataset final : public GDALPamDataset
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
+    using GDALDataset::AddOverviews;
+
     GIntBig AddOverviews(int scale);
 
     // Late allocation buffer
@@ -504,8 +513,7 @@ class MRFDataset final : public GDALPamDataset
     virtual int CloseDependentDatasets() override;
 
     // Write a tile, the infooffset is the relative position in the index file
-    virtual CPLErr WriteTile(void *buff, GUIntBig infooffset,
-                             GUIntBig size = 0);
+    CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
 
     // Custom CopyWholeRaster for Zen JPEG
     CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
@@ -595,8 +603,8 @@ class MRFDataset final : public GDALPamDataset
         bdirty;  // Holds bits, to be used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
-    double GeoTransform[6];
-    int bGeoTransformValid;
+    GDALGeoTransform m_gt{};
+    mutable int bGeoTransformValid;
 
     // CRS
     OGRSpatialReference m_oSRS{};
@@ -799,7 +807,7 @@ class PNG_Codec
     {
     }
 
-    virtual ~PNG_Codec()
+    ~PNG_Codec()
     {
         CPLFree(PNGColors);
         CPLFree(PNGAlpha);
@@ -917,19 +925,8 @@ class Raw_Band final : public MRFRasterBand
     {
     }
 
-    virtual ~Raw_Band()
-    {
-    }
-
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override
-    {
-        if (src.size > dst.size)
-            return CE_Failure;
-        memcpy(dst.buffer, src.buffer, src.size);
-        dst.size = src.size;
-        return CE_None;
-    }
+    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
 
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override
     {
@@ -1003,6 +1000,8 @@ class QB3_Band final : public MRFRasterBand
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+
+    std::vector<size_t> coreband;
 };
 #endif
 
@@ -1025,10 +1024,7 @@ class MRFLRasterBand final : public GDALPamRasterBand
         nRasterYSize = b->GetYSize();
     }
 
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override
-    {
-        return pBand->IReadBlock(xblk, yblk, buffer);
-    }
+    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override
     {

@@ -3,7 +3,7 @@
     <Metadata/>
     <ColorInterp>Red</ColorInterp>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">../tmp/test_mosaic2.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">test_mosaic2.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="100" ySize="100"/>
       <DstRect xOff="0" yOff="0" xSize="100" ySize="100"/>

@@ -23,7 +23,13 @@
 
 #include "gtest_include.h"
 
+#include <algorithm>
 #include <limits>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif
 
 namespace test_gdal_algorithm
 {
@@ -2144,6 +2150,24 @@ TEST_F(test_gdal_algorithm, vector_int)
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
 }
 
 TEST_F(test_gdal_algorithm, vector_int_validation_fails)
@@ -2200,6 +2224,24 @@ TEST_F(test_gdal_algorithm, vector_double)
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=1,foo"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3, ,4"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(alg.m_val.empty());
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=3,,4"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         EXPECT_TRUE(alg.m_val.empty());
     }
@@ -3206,6 +3248,93 @@ TEST_F(test_gdal_algorithm,
     }
 }
 
+TEST_F(test_gdal_algorithm,
+       positional_required_then_unlimited_required_then_positional_required)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::string m_input_value{};
+        std::vector<std::string> m_something{};
+        std::string m_output_value{};
+
+        MyAlgorithm()
+        {
+            AddArg("input", 'i', "input value", &m_input_value)
+                .SetMinCharCount(2)
+                .SetPositional()
+                .SetRequired();
+            AddArg("something", 0, "something", &m_something)
+                .SetMinCharCount(2)
+                .SetPositional()
+                .SetMinCount(1);
+            AddArg("output", 'o', "output value", &m_output_value)
+                .SetMinCharCount(2)
+                .SetPositional()
+                .SetRequired();
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments(
+            {"my_input", "something", "my_output"}));
+    }
+
+    {
+        MyAlgorithm alg;
+
+        EXPECT_TRUE(alg.ParseCommandLineArguments(
+            {"my_input", "something", "else", "my_output"}));
+    }
+
+    {
+        MyAlgorithm alg;
+
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"input", "output"}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Not enough positional values.");
+    }
+
+    {
+        MyAlgorithm alg;
+
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(
+            alg.ParseCommandLineArguments({"x", "something", "output"}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Value of argument 'input' is 'x', but should have at "
+                     "least 2 character(s)");
+    }
+
+    {
+        MyAlgorithm alg;
+
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"input", "x", "output"}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Value of argument 'something' is 'x', but should have at "
+                     "least 2 character(s)");
+    }
+
+    {
+        MyAlgorithm alg;
+
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(
+            alg.ParseCommandLineArguments({"input", "something", "x"}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Value of argument 'output' is 'x', but should have at "
+                     "least 2 character(s)");
+    }
+}
+
 TEST_F(test_gdal_algorithm, packed_values_allowed_false)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
@@ -3234,6 +3363,10 @@ TEST_F(test_gdal_algorithm, packed_values_allowed_false)
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--arg=foo", "--arg=bar"}));
         auto expected = std::vector<std::string>{"foo", "bar"};
         EXPECT_EQ(alg.m_arg, expected);
+
+        std::string serialized;
+        EXPECT_TRUE(alg.GetArg("arg")->Serialize(serialized));
+        EXPECT_STREQ(serialized.c_str(), "--arg foo --arg bar");
     }
 
     {
@@ -4415,7 +4548,7 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_set_geo_transform)
             eAccess = GA_Update;
         }
 
-        CPLErr SetGeoTransform(double *) override
+        CPLErr SetGeoTransform(const GDALGeoTransform &) override
         {
             return CE_Failure;
         }
@@ -4661,4 +4794,54 @@ TEST_F(test_gdal_algorithm, AddNumThreadsArg)
     }
 }
 
+TEST_F(test_gdal_algorithm, AddAppendLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddAppendLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(
+            CPLGetLastErrorMsg(),
+            "test: --update argument must exist for --append, even if hidden");
+    }
+}
+
+TEST_F(test_gdal_algorithm, AddOverwriteLayerArg_without_update)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_boolean = false;
+
+        MyAlgorithm()
+        {
+            AddOverwriteLayerArg(&m_boolean);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(alg.ParseCommandLineArguments({}));
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: --update argument must exist for "
+                     "--overwrite-layer, even if hidden");
+    }
+}
+
 }  // namespace test_gdal_algorithm
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

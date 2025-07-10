@@ -761,7 +761,7 @@ int *VSIUnlinkBatch(CSLConstList papszFiles)
  * function is only used to rename files that remain in the same directory.
  *
  * This function only works if the new path is located on the same VSI
- * virtual file system than the old path. I not, use VSIMove() instead.
+ * virtual file system than the old path. If not, use VSIMove() instead.
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory or cloud object storage.
@@ -2238,6 +2238,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                 }
             }
             int iFile = 0;
+            const int nDenom = std::max(1, nFileCount);
             for (auto iter = papszSrcFiles; iter && *iter; ++iter, ++iFile)
             {
                 if (strcmp(*iter, ".") == 0 || strcmp(*iter, "..") == 0)
@@ -2248,9 +2249,8 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                     osSourceWithoutSlash.c_str(), *iter, nullptr));
                 const std::string osSubTarget(
                     CPLFormFilenameSafe(osTargetDir.c_str(), *iter, nullptr));
-                // coverity[divide_by_zero]
                 void *pScaledProgress = GDALCreateScaledProgress(
-                    double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
+                    double(iFile) / nDenom, double(iFile + 1) / nDenom,
                     pProgressFunc, pProgressData);
                 ret = Sync((osSubSource + SOURCE_SEP).c_str(),
                            osSubTarget.c_str(), aosChildOptions.List(),
@@ -2625,11 +2625,10 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
         if (!entry)
             break;
 
-        const CPLString osFilename(osDirnameWithoutEndSlash + SEP +
-                                   entry->pszName);
+        CPLString osFilename(osDirnameWithoutEndSlash + SEP + entry->pszName);
         if ((entry->nMode & S_IFDIR))
         {
-            aosDirs.push_back(osFilename);
+            aosDirs.push_back(std::move(osFilename));
         }
         else
         {

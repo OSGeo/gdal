@@ -82,9 +82,10 @@ GDALRasterSelectAlgorithm::GDALRasterSelectAlgorithm(bool standaloneStep)
 /*              GDALRasterSelectAlgorithm::RunStep()                    */
 /************************************************************************/
 
-bool GDALRasterSelectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -106,8 +107,7 @@ bool GDALRasterSelectAlgorithm::RunStep(GDALProgressFunc, void *)
         GDALTranslateOptionsNew(aosOptions.List(), nullptr);
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
-        GDALTranslate("", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
-                      psOptions, nullptr)));
+        GDALTranslate("", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
     GDALTranslateOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
@@ -117,5 +117,8 @@ bool GDALRasterSelectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterSelectAlgorithmStandalone::~GDALRasterSelectAlgorithmStandalone() =
+    default;
 
 //! @endcond

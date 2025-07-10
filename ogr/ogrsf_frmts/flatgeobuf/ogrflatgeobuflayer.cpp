@@ -980,11 +980,10 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 /*                     ParseDateTime()                                  */
 /************************************************************************/
 
-static inline bool ParseDateTime(const char *pszInput, size_t nLen,
-                                 OGRField *psField)
+static inline bool ParseDateTime(std::string_view sInput, OGRField *psField)
 {
-    return OGRParseDateTimeYYYYMMDDTHHMMSSZ(pszInput, nLen, psField) ||
-           OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(pszInput, nLen, psField);
+    return OGRParseDateTimeYYYYMMDDTHHMMSSZ(sInput, psField) ||
+           OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(sInput, psField);
 }
 
 OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
@@ -1191,7 +1190,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
         {
             if (offset + sizeof(uint16_t) > size)
                 return CPLErrorInvalidSize("property value");
-            uint16_t i = *((uint16_t *)(data + offset));
+            uint16_t i;
+            memcpy(&i, data + offset, sizeof(i));
             CPL_LSBPTR16(&i);
             // CPLDebugOnly("FlatGeobuf", "DEBUG parseFeature: i: %hu", i);
             offset += sizeof(uint16_t);
@@ -1395,8 +1395,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
                     if (!isIgnored)
                     {
                         if (!ParseDateTime(
-                                reinterpret_cast<const char *>(data + offset),
-                                len, ogrField))
+                                std::string_view(reinterpret_cast<const char *>(
+                                                     data + offset),
+                                                 len),
+                                ogrField))
                         {
                             char str[32 + 1];
                             memcpy(str, data + offset, len);
@@ -1664,7 +1666,8 @@ begin:
                     CPLErrorInvalidSize("property value");
                     goto error;
                 }
-                uint16_t i = *((uint16_t *)(data + offset));
+                uint16_t i;
+                memcpy(&i, data + offset, sizeof(i));
                 CPL_LSBPTR16(&i);
                 offset += sizeof(uint16_t);
                 // TODO: use columns from feature if defined
@@ -1888,9 +1891,11 @@ begin:
                             {
                                 OGRField ogrField;
                                 if (ParseDateTime(
-                                        reinterpret_cast<const char *>(data +
-                                                                       offset),
-                                        len, &ogrField))
+                                        std::string_view(
+                                            reinterpret_cast<const char *>(
+                                                data + offset),
+                                            len),
+                                        &ogrField))
                                 {
                                     sHelper.SetDateTime(
                                         psArray, iFeat, brokenDown,

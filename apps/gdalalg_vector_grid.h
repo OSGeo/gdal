@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GRID_INCLUDED
 #define GDALALG_VECTOR_GRID_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 #include <limits>
 
@@ -23,7 +23,7 @@
 /*                      GDALVectorGridAlgorithm                         */
 /************************************************************************/
 
-class GDALVectorGridAlgorithm final : public GDALAlgorithm
+class GDALVectorGridAlgorithm /* non final */ : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "grid";
@@ -31,10 +31,36 @@ class GDALVectorGridAlgorithm final : public GDALAlgorithm
         "Create a regular grid from scattered points.";
     static constexpr const char *HELP_URL = "/programs/gdal_vector_grid.html";
 
-    GDALVectorGridAlgorithm();
+    explicit GDALVectorGridAlgorithm(bool standaloneStep = false);
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+};
+
+/************************************************************************/
+/*                 GDALVectorGridAlgorithmStandalone                    */
+/************************************************************************/
+
+class GDALVectorGridAlgorithmStandalone final : public GDALVectorGridAlgorithm
+{
+  public:
+    GDALVectorGridAlgorithmStandalone()
+        : GDALVectorGridAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorGridAlgorithmStandalone() override;
 };
 
 /************************************************************************/
@@ -42,16 +68,9 @@ class GDALVectorGridAlgorithm final : public GDALAlgorithm
 /************************************************************************/
 
 class GDALVectorGridAbstractAlgorithm /* non final */
-    : public GDALAlgorithm
+    : public GDALPipelineStepAlgorithm
 {
   protected:
-    std::vector<std::string> m_inputFormats{};
-    std::string m_outputFormat{};
-    std::vector<std::string> m_openOptions{};
-    GDALArgDatasetValue m_inputDataset{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite{false};
     std::vector<double> m_targetExtent{};
     std::vector<double>
         m_targetResolution{};  // Mutually exclusive with targetSize
@@ -79,8 +98,25 @@ class GDALVectorGridAbstractAlgorithm /* non final */
 
     GDALVectorGridAbstractAlgorithm(const std::string &name,
                                     const std::string &description,
-                                    const std::string &helpURL);
+                                    const std::string &helpURL,
+                                    bool standaloneStep);
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     GDALInConstructionAlgorithmArg &AddRadiusArg();

@@ -57,19 +57,19 @@ typedef std::vector<EDGEVERTEXPAIR> GNMPATH;
 /** Edge */
 struct GNMStdEdge
 {
-    GNMGFID nSrcVertexFID; /**< Source vertex FID */
-    GNMGFID nTgtVertexFID; /**< Target vertex FID */
-    bool bIsBidir;         /**< Whether the edge is bidirectonal */
-    double dfDirCost;      /**< Direct cost */
-    double dfInvCost;      /**< Inverse cost */
-    bool bIsBlocked;       /**< Whether the edge is blocked */
+    GNMGFID nSrcVertexFID = 0; /**< Source vertex FID */
+    GNMGFID nTgtVertexFID = 0; /**< Target vertex FID */
+    bool bIsBidir = false;     /**< Whether the edge is bidirectonal */
+    double dfDirCost = 0;      /**< Direct cost */
+    double dfInvCost = 0;      /**< Inverse cost */
+    bool bIsBlocked = false;   /**< Whether the edge is blocked */
 };
 
 /** Vertex */
 struct GNMStdVertex
 {
-    GNMVECTOR anOutEdgeFIDs; /**< TODO */
-    bool bIsBlocked;         /**< Whether the vertex is blocked */
+    GNMVECTOR anOutEdgeFIDs{}; /**< TODO */
+    bool bIsBlocked = false;   /**< Whether the vertex is blocked */
 };
 
 /**
@@ -247,8 +247,8 @@ class CPL_DLL GNMGraph
                               GNMPATH &connectedIds);
 
   protected:
-    std::map<GNMGFID, GNMStdVertex> m_mstVertices;
-    std::map<GNMGFID, GNMStdEdge> m_mstEdges;
+    std::map<GNMGFID, GNMStdVertex> m_mstVertices{};
+    std::map<GNMGFID, GNMStdEdge> m_mstEdges{};
     //! @endcond
 };
 

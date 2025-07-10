@@ -53,6 +53,8 @@ class OGRSQLiteGeomFieldDefn final : public OGRGeomFieldDefn
     {
     }
 
+    ~OGRSQLiteGeomFieldDefn() override;
+
     int m_nSRSId = -1;
     int m_iCol; /* ordinal of geometry field in SQL statement */
     bool m_bTriedAsSpatiaLite = false;
@@ -77,6 +79,8 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
         SetGeomType(wkbNone);
     }
 
+    ~OGRSQLiteFeatureDefn() override;
+
     OGRSQLiteGeomFieldDefn *myGetGeomFieldDefn(int i)
     {
         return cpl::down_cast<OGRSQLiteGeomFieldDefn *>(GetGeomFieldDefn(i));
@@ -90,9 +94,7 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
 class IOGRSQLiteGetSpatialWhere
 {
   public:
-    virtual ~IOGRSQLiteGetSpatialWhere()
-    {
-    }
+    virtual ~IOGRSQLiteGetSpatialWhere();
 
     virtual bool HasFastSpatialFilter(int iGeomCol) = 0;
     virtual CPLString GetSpatialWhere(int iGeomCol,
@@ -268,9 +270,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 class IOGRSQLiteSelectLayer
 {
   public:
-    virtual ~IOGRSQLiteSelectLayer()
-    {
-    }
+    virtual ~IOGRSQLiteSelectLayer();
 
     virtual char *&GetAttrQueryString() = 0;
     virtual OGRFeatureQuery *&GetFeatureQuery() = 0;

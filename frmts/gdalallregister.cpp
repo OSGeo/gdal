@@ -550,6 +550,8 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_gsg
+    GDALRegister_GSAG();
+    GDALRegister_GSBG();
     GDALRegister_GS7BG();
 #endif
 

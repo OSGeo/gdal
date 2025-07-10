@@ -767,8 +767,8 @@ bool VFKFeature::LoadGeometryPoint()
 */
 bool VFKFeature::LoadGeometryLineStringSBP()
 {
-    VFKDataBlock *poDataBlockPoints =
-        (VFKDataBlock *)m_poDataBlock->GetReader()->GetDataBlock("SOBR");
+    VFKDataBlock *poDataBlockPoints = cpl::down_cast<VFKDataBlock *>(
+        m_poDataBlock->GetReader()->GetDataBlock("SOBR"));
     if (!poDataBlockPoints)
         return false;
 
@@ -805,7 +805,7 @@ bool VFKFeature::LoadGeometryLineStringSBP()
         const OGRPoint *pt = poPoint->GetGeometry()->toPoint();
         OGRLine.addPoint(pt);
 
-        poLine = (VFKFeature *)m_poDataBlock->GetNextFeature();
+        poLine = cpl::down_cast<VFKFeature *>(m_poDataBlock->GetNextFeature());
         if (!poLine)
             break;
     };
@@ -828,8 +828,8 @@ bool VFKFeature::LoadGeometryLineStringSBP()
 */
 bool VFKFeature::LoadGeometryLineStringHP()
 {
-    VFKDataBlock *poDataBlockLines =
-        (VFKDataBlock *)m_poDataBlock->GetReader()->GetDataBlock("SBP");
+    VFKDataBlock *poDataBlockLines = cpl::down_cast<VFKDataBlock *>(
+        m_poDataBlock->GetReader()->GetDataBlock("SBP"));
     if (!poDataBlockLines)
         return false;
 

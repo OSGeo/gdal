@@ -88,7 +88,7 @@ class ILI2Reader : public IILI2Reader
     SAX2XMLReader *m_poSAXReader;
     int m_bReadStarted;
 
-    std::list<OGRLayer *> m_listLayer;
+    std::vector<std::unique_ptr<OGRLayer>> m_listLayer;
 
     bool m_bXercesInitialized;
 
@@ -101,7 +101,7 @@ class ILI2Reader : public IILI2Reader
                   const char *modelFilename) override;
     int SaveClasses(const char *pszFile) override;
 
-    std::list<OGRLayer *> GetLayers() override;
+    std::vector<std::unique_ptr<OGRLayer>> &GetLayers() override;
     int GetLayerCount() override;
     OGRLayer *GetLayer(const char *pszName);
 

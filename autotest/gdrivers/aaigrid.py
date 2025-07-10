@@ -225,9 +225,10 @@ def test_aaigrid_6bis():
 )
 def test_aaigrid_7():
 
-    tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
+    with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
+        tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
 
-    tst.testCreateCopy(check_gt=1)
+        tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################
@@ -522,3 +523,27 @@ def test_aaigrid_nodata_nan():
     ds = gdal.Open("data/aaigrid/nodata_nan.asc")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
     assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+
+
+###############################################################################
+# Test opening a file with very large advertized size, but which is small
+# (cf https://github.com/OSGeo/gdal/issues/12648)
+
+
+def test_aaigrid_open_file_with_large_dimension_but_small(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.asc",
+        """ncols        10000001
+nrows        1
+xllcorner    0
+yllcorner    -1
+cellsize     1
+0 0
+""",
+    )
+
+    with pytest.raises(
+        Exception, match="Too large raster dimension 10000001 x 1 compared to file size"
+    ):
+        gdal.Open(tmp_vsimem / "test.asc")

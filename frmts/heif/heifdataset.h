@@ -40,7 +40,7 @@ class GDALHEIFDataset final : public GDALPamDataset
     bool m_bIsThumbnail = false;
 
 #ifdef LIBHEIF_SUPPORTS_TILES
-    heif_image_tiling m_tiling;
+    heif_image_tiling m_tiling{};
 #endif
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
@@ -52,12 +52,18 @@ class GDALHEIFDataset final : public GDALPamDataset
     heif_reader m_oReader{};
     VSILFILE *m_fpL = nullptr;
     vsi_l_offset m_nSize = 0;
+    vsi_l_offset m_nAdviseReadStartPos = 0;
+    size_t m_nAdviseReadSize = 0;
 
     static int64_t GetPositionCbk(void *userdata);
     static int ReadCbk(void *data, size_t size, void *userdata);
     static int SeekCbk(int64_t position, void *userdata);
     static enum heif_reader_grow_status WaitForFileSizeCbk(int64_t target_size,
                                                            void *userdata);
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    static struct heif_reader_range_request_result
+    RequestRangeCbk(uint64_t start_pos, uint64_t end_pos, void *userdata);
+#endif
 #endif
 
     bool Init(GDALOpenInfo *poOpenInfo);
@@ -69,6 +75,8 @@ class GDALHEIFDataset final : public GDALPamDataset
                                          const void *data, size_t size,
                                          void *userdata);
 #endif
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALHEIFDataset)
 
   public:
     GDALHEIFDataset();
@@ -82,7 +90,7 @@ class GDALHEIFDataset final : public GDALPamDataset
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
     void ReadUserDescription();
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

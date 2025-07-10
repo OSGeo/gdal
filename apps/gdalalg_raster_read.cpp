@@ -21,25 +21,27 @@
 /*          GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()          */
 /************************************************************************/
 
-GDALRasterReadAlgorithm::GDALRasterReadAlgorithm()
-    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+GDALRasterReadAlgorithm::GDALRasterReadAlgorithm(bool openForMixedRasterVector)
+    : GDALRasterPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
-    AddInputArgs(/* openForMixedRasterVector = */ false,
-                 /* hiddenForCLI = */ false);
+    AddRasterInputArgs(openForMixedRasterVector,
+                       /* hiddenForCLI = */ false);
 }
 
 /************************************************************************/
 /*                  GDALRasterReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterReadAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterReadAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+    m_outputDataset.Set(poSrcDS);
 
     return true;
 }

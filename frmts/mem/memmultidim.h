@@ -408,7 +408,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
 class CPL_DLL MEMAttribute CPL_NON_FINAL : public MEMAbstractMDArray,
                                            public GDALAttribute
 {
-    std::weak_ptr<MEMAttributeHolder> m_poParent;
+    std::weak_ptr<MEMAttributeHolder> m_poParent{};
 
   protected:
     MEMAttribute(const std::string &osParentName, const std::string &osName,
@@ -447,7 +447,7 @@ class CPL_DLL MEMAttribute CPL_NON_FINAL : public MEMAbstractMDArray,
 class MEMDimension CPL_NON_FINAL : public GDALDimensionWeakIndexingVar
 {
     std::set<MEMMDArray *> m_oSetArrays{};
-    std::weak_ptr<MEMGroup> m_poParentGroup;
+    std::weak_ptr<MEMGroup> m_poParentGroup{};
 
   public:
     MEMDimension(const std::string &osParentName, const std::string &osName,

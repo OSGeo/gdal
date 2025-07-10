@@ -78,7 +78,7 @@ See :cpp:func:`OGRSpatialReference::exportToPROJJSON`.
 Parameters
 ----------
 options : list/dict
-    Options to control the format of the output. See :cpp:func:`OGRSpatialReference::ExportToPROJJSON`.
+    Options to control the format of the output. See :cpp:func:`OGRSpatialReference::exportToPROJJSON`.
 
 Returns
 -------

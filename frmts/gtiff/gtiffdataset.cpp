@@ -529,7 +529,7 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     else if (eRWFlag == GF_Write && nBands > 1 &&
              m_nPlanarConfig == PLANARCONFIG_CONTIG &&
              // Could be extended to "odd bit" case, but more work
-             m_nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+             m_nBitsPerSample == GDALGetDataTypeSizeBits(eDataType) &&
              nXSize == nBufXSize && nYSize == nBufYSize &&
              nBandCount == nBands && !m_bLoadedBlockDirty &&
              (nXOff % m_nBlockXSize) == 0 && (nYOff % m_nBlockYSize) == 0 &&
@@ -1400,10 +1400,12 @@ void GTiffDataset::ScanDirectories()
 /*                         GetInternalHandle()                          */
 /************************************************************************/
 
-void *GTiffDataset::GetInternalHandle(const char * /* pszHandleName */)
+void *GTiffDataset::GetInternalHandle(const char *pszHandleName)
 
 {
-    return m_hTIFF;
+    if (pszHandleName && EQUAL(pszHandleName, "TIFF_HANDLE"))
+        return m_hTIFF;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1443,6 +1445,13 @@ char **GTiffDataset::GetFileList()
         CSLFindString(papszFileList, m_pszXMLFilename) == -1)
     {
         papszFileList = CSLAddString(papszFileList, m_pszXMLFilename);
+    }
+
+    const std::string osVATDBF = std::string(m_pszFilename) + ".vat.dbf";
+    VSIStatBufL sStat;
+    if (VSIStatL(osVATDBF.c_str(), &sStat) == 0)
+    {
+        papszFileList = CSLAddString(papszFileList, osVATDBF.c_str());
     }
 
     return papszFileList;

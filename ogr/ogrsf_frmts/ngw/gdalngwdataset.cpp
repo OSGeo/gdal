@@ -16,6 +16,7 @@
 #include "cpl_http.h"
 #include "gdal_proxy.h"
 
+#include <array>
 #include <limits>
 
 class NGWWrapperRasterBand : public GDALProxyRasterBand
@@ -24,10 +25,7 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit NGWWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -36,11 +34,13 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    virtual ~NGWWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+NGWWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 static const char *FormGDALTMSConnectionString(const std::string &osUrl,
                                                const std::string &osResourceId,
@@ -369,23 +369,19 @@ void OGRNGWDataset::SetupRasterDSWrapper(const OGREnvelope &stExtent)
         {
             // Set pixel limits.
             bool bHasTransform = false;
-            double geoTransform[6] = {0.0};
-            double invGeoTransform[6] = {0.0};
-            if (poRasterDS->GetGeoTransform(geoTransform) == CE_None)
+            GDALGeoTransform gt, invGT;
+            if (poRasterDS->GetGeoTransform(gt) == CE_None)
             {
-                bHasTransform =
-                    GDALInvGeoTransform(geoTransform, invGeoTransform) == TRUE;
+                bHasTransform = gt.GetInverse(invGT);
             }
 
             if (bHasTransform)
             {
-                GDALApplyGeoTransform(invGeoTransform, stExtent.MinX,
-                                      stExtent.MinY, &stPixelExtent.MinX,
-                                      &stPixelExtent.MaxY);
+                invGT.Apply(stExtent.MinX, stExtent.MinY, &stPixelExtent.MinX,
+                            &stPixelExtent.MaxY);
 
-                GDALApplyGeoTransform(invGeoTransform, stExtent.MaxX,
-                                      stExtent.MaxY, &stPixelExtent.MaxX,
-                                      &stPixelExtent.MinY);
+                invGT.Apply(stExtent.MaxX, stExtent.MaxY, &stPixelExtent.MaxX,
+                            &stPixelExtent.MinY);
 
                 CPLDebug("NGW", "Raster extent in px is: %f, %f, %f, %f",
                          stPixelExtent.MinX, stPixelExtent.MinY,
@@ -646,7 +642,7 @@ bool OGRNGWDataset::FillResources(const CPLStringList &aosHTTPOptions,
             OGRNGWCodedFieldDomain oDomain(oChild);
             if (oDomain.GetID() > 0)
             {
-                moDomains[oDomain.GetID()] = oDomain;
+                moDomains[oDomain.GetID()] = std::move(oDomain);
             }
         }
     }
@@ -1480,13 +1476,13 @@ const OGRSpatialReference *OGRNGWDataset::GetSpatialRef() const
 /*
  * GetGeoTransform()
  */
-CPLErr OGRNGWDataset::GetGeoTransform(double *padfTransform)
+CPLErr OGRNGWDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (poRasterDS != nullptr)
     {
-        return poRasterDS->GetGeoTransform(padfTransform);
+        return poRasterDS->GetGeoTransform(gt);
     }
-    return GDALDataset::GetGeoTransform(padfTransform);
+    return GDALDataset::GetGeoTransform(gt);
 }
 
 /*
@@ -1764,7 +1760,7 @@ bool OGRNGWDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 
@@ -1826,7 +1822,7 @@ bool OGRNGWDataset::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "Failed to parse domain detailes from NGW";
         return false;
     }
-    moDomains[oDomain.GetID()] = oDomain;
+    moDomains[oDomain.GetID()] = std::move(oDomain);
     return true;
 }
 

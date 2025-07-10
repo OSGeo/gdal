@@ -26,7 +26,7 @@ enum ph_format
 
 class PhPrfBand final : public VRTSourcedRasterBand
 {
-    std::vector<GDALRasterBand *> osOverview;
+    std::vector<GDALRasterBand *> osOverview{};
 
   public:
     PhPrfBand(GDALDataset *poDataset, int nBandCount, GDALDataType eType,
@@ -40,17 +40,7 @@ class PhPrfBand final : public VRTSourcedRasterBand
         osOverview.push_back(ov);
     }
 
-    int GetOverviewCount() override
-    {
-        if (!osOverview.empty())
-        {
-            return static_cast<int>(osOverview.size());
-        }
-        else
-        {
-            return VRTSourcedRasterBand::GetOverviewCount();
-        }
-    }
+    int GetOverviewCount() override;
 
     GDALRasterBand *GetOverview(int i) override
     {
@@ -66,14 +56,26 @@ class PhPrfBand final : public VRTSourcedRasterBand
     }
 };
 
+int PhPrfBand::GetOverviewCount()
+{
+    if (!osOverview.empty())
+    {
+        return static_cast<int>(osOverview.size());
+    }
+    else
+    {
+        return VRTSourcedRasterBand::GetOverviewCount();
+    }
+}
+
 class PhPrfDataset final : public VRTDataset
 {
-    std::vector<GDALDataset *> osSubTiles;
+    std::vector<GDALDataset *> osSubTiles{};
 
   public:
     PhPrfDataset(GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount,
                  GDALDataType eType, const char *pszName);
-    ~PhPrfDataset();
+    ~PhPrfDataset() override;
     bool AddTile(const char *pszPartName, GDALAccess eAccess, int nWidth,
                  int nHeight, int nOffsetX, int nOffsetY, int nScale);
     int CloseDependentDatasets() override;
@@ -86,7 +88,7 @@ PhPrfDataset::PhPrfDataset(GDALAccess _eAccess, int nSizeX, int nSizeY,
                            const char *pszName)
     : VRTDataset(nSizeX, nSizeY)
 {
-    poDriver = (GDALDriver *)GDALGetDriverByName(PH_PRF_DRIVER);
+    poDriver = GetGDALDriverManager()->GetDriverByName(PH_PRF_DRIVER);
     eAccess = _eAccess;
     SetWritable(FALSE);  // Avoid rewrite of *.prf file with 'vrt' file
     SetDescription(pszName);
@@ -223,7 +225,7 @@ static CPLString GetXmlAttribute(const CPLXMLNode *psElt,
     return osDef;
 }
 
-static bool ParseGeoref(const CPLXMLNode *psGeorefElt, double *padfGeoTrans)
+static bool ParseGeoref(const CPLXMLNode *psGeorefElt, GDALGeoTransform &gt)
 {
     bool abOk[6] = {false, false, false, false, false, false};
     static const char *const apszGeoKeys[6] = {"A_0", "A_1", "A_2",
@@ -238,7 +240,7 @@ static bool ParseGeoref(const CPLXMLNode *psGeorefElt, double *padfGeoTrans)
         {
             if (EQUAL(osName, apszGeoKeys[k]))
             {
-                padfGeoTrans[k] = CPLAtof(osValue);
+                gt[k] = CPLAtof(osValue);
                 abOk[k] = true;
             }
         }
@@ -252,8 +254,8 @@ static bool ParseGeoref(const CPLXMLNode *psGeorefElt, double *padfGeoTrans)
         }
         if (k == 5)
         {
-            padfGeoTrans[3] -= PH_GEOREF_SHIFT_Y * padfGeoTrans[4];
-            padfGeoTrans[3] -= PH_GEOREF_SHIFT_Y * padfGeoTrans[5];
+            gt[3] -= PH_GEOREF_SHIFT_Y * gt[4];
+            gt[3] -= PH_GEOREF_SHIFT_Y * gt[5];
             return true;
         }
     }
@@ -389,7 +391,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString osPartsPath(osPartsBasePath + "/" +
                           CPLGetBasenameSafe(poOpenInfo->pszFilename));
     CPLString osPartsExt;
-    double adfGeoTrans[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    GDALGeoTransform gt{0, 0, 0, 0, 0, 0};
     bool bGeoTransOk = false;
 
     double adfDemShift[3] = {0.0, 0.0, 0.0};
@@ -454,7 +456,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (EQUAL(osName, "GeoRef"))
         {
-            bGeoTransOk = ParseGeoref(psElt, adfGeoTrans);
+            bGeoTransOk = ParseGeoref(psElt, gt);
         }
         else if (EQUAL(osName, "DemShift"))
         {
@@ -553,7 +555,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (eFormat == ph_megatiff && bGeoTransOk)
     {
-        poDataset->SetGeoTransform(adfGeoTrans);
+        poDataset->SetGeoTransform(gt);
     }
 
     if (eFormat == ph_xdem)
@@ -568,25 +570,23 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         if (abDemMetadataOk[0] && abDemMetadataOk[1] && abDemMetadataOk[2] &&
             abDemMetadataOk[3] && nSizeX > 1 && nSizeY > 1)
         {
-            adfGeoTrans[0] = adfDemMetadata[0];
-            adfGeoTrans[1] =
-                (adfDemMetadata[1] - adfDemMetadata[0]) / (nSizeX - 1);
-            adfGeoTrans[2] = 0;
-            adfGeoTrans[3] = adfDemMetadata[3];
-            adfGeoTrans[4] = 0;
-            adfGeoTrans[5] =
-                (adfDemMetadata[2] - adfDemMetadata[3]) / (nSizeY - 1);
+            gt[0] = adfDemMetadata[0];
+            gt[1] = (adfDemMetadata[1] - adfDemMetadata[0]) / (nSizeX - 1);
+            gt[2] = 0;
+            gt[3] = adfDemMetadata[3];
+            gt[4] = 0;
+            gt[5] = (adfDemMetadata[2] - adfDemMetadata[3]) / (nSizeY - 1);
 
-            adfGeoTrans[0] -= 0.5 * adfGeoTrans[1];
-            adfGeoTrans[3] -= 0.5 * adfGeoTrans[5];
+            gt[0] -= 0.5 * gt[1];
+            gt[3] -= 0.5 * gt[5];
 
             if (bDemShiftOk)
             {
-                adfGeoTrans[0] += adfDemShift[0];
-                adfGeoTrans[3] += adfDemShift[1];
+                gt[0] += adfDemShift[0];
+                gt[3] += adfDemShift[1];
             }
 
-            poDataset->SetGeoTransform(adfGeoTrans);
+            poDataset->SetGeoTransform(gt);
         }
 
         if (abDemMetadataOk[4] && abDemMetadataOk[5])
@@ -649,5 +649,5 @@ void GDALRegister_PRF()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/prf.html");
     poDriver->pfnIdentify = PhPrfDataset::Identify;
     poDriver->pfnOpen = PhPrfDataset::Open;
-    GDALRegisterDriver((GDALDriverH)poDriver);
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

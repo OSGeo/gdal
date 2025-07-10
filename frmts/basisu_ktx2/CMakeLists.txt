@@ -7,7 +7,6 @@ add_gdal_driver(TARGET gdal_BASISU_KTX2
                     basisudrivercore.cpp
                     ktx2drivercore.cpp
                     commoncore.cpp
-                STRONG_CXX_WFLAGS
                 PLUGIN_CAPABLE
                 NO_SHARED_SYMBOL_WITH_CORE)
 

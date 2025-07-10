@@ -34,7 +34,7 @@ class GDALVectorClipAlgorithm /* non final */
     explicit GDALVectorClipAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
 };
@@ -50,6 +50,8 @@ class GDALVectorClipAlgorithmStandalone final : public GDALVectorClipAlgorithm
         : GDALVectorClipAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALVectorClipAlgorithmStandalone() override;
 };
 
 //! @endcond

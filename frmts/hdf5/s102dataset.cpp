@@ -39,8 +39,12 @@ class S102Dataset final : public S100BaseDataset
     {
     }
 
+    ~S102Dataset() override;
+
     static GDALDataset *Open(GDALOpenInfo *);
 };
+
+S102Dataset::~S102Dataset() = default;
 
 /************************************************************************/
 /*                            S102RasterBand                            */
@@ -54,6 +58,8 @@ class S102RasterBand : public GDALProxyRasterBand
     double m_dfMinimum = std::numeric_limits<double>::quiet_NaN();
     double m_dfMaximum = std::numeric_limits<double>::quiet_NaN();
 
+    CPL_DISALLOW_COPY_ASSIGN(S102RasterBand)
+
   public:
     explicit S102RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
         : m_poDS(std::move(poDSIn)),
@@ -64,10 +70,7 @@ class S102RasterBand : public GDALProxyRasterBand
     }
 
     GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override
-    {
-        return m_poUnderlyingBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override;
 
     double GetMinimum(int *pbSuccess = nullptr) override
     {
@@ -89,6 +92,12 @@ class S102RasterBand : public GDALProxyRasterBand
     }
 };
 
+GDALRasterBand *
+S102RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return m_poUnderlyingBand;
+}
+
 /************************************************************************/
 /*                   S102GeoreferencedMetadataRasterBand                */
 /************************************************************************/
@@ -100,6 +109,8 @@ class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
     std::unique_ptr<GDALDataset> m_poDS{};
     GDALRasterBand *m_poUnderlyingBand = nullptr;
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
+
+    CPL_DISALLOW_COPY_ASSIGN(S102GeoreferencedMetadataRasterBand)
 
   public:
     explicit S102GeoreferencedMetadataRasterBand(
@@ -114,16 +125,19 @@ class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
     }
 
     GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override
-    {
-        return m_poUnderlyingBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override;
 
     GDALRasterAttributeTable *GetDefaultRAT() override
     {
         return m_poRAT.get();
     }
 };
+
+GDALRasterBand *S102GeoreferencedMetadataRasterBand::RefUnderlyingRasterBand(
+    bool /*bForceOpen*/) const
+{
+    return m_poUnderlyingBand;
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -199,7 +213,11 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     auto poBathymetryCoverage01 = poRootGroup->OpenGroupFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01");
     if (!poBathymetryCoverage01)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Cannot find /BathymetryCoverage/BathymetryCoverage.01");
         return nullptr;
+    }
 
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
@@ -220,23 +238,39 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverage01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
+    poDS->m_bHasGT =
+        S100GetGeoTransform(poBathymetryCoverage01.get(), poDS->m_gt, bNorthUp);
 
     auto poGroup001 = poBathymetryCoverage01->OpenGroup("Group_001");
     if (!poGroup001)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Cannot find "
+                 "/BathymetryCoverage/BathymetryCoverage.01/Group_001");
         return nullptr;
+    }
     auto poValuesArray = poGroup001->OpenMDArray("values");
     if (!poValuesArray || poValuesArray->GetDimensionCount() != 2)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Cannot find "
+                 "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values");
         return nullptr;
-
+    }
     const auto &oType = poValuesArray->GetDataType();
     if (oType.GetClass() != GEDTC_COMPOUND)
-        return nullptr;
-    const auto &oComponents = oType.GetComponents();
-    if (oComponents.size() != 2 || oComponents[0]->GetName() != "depth" ||
-        oComponents[1]->GetName() != "uncertainty")
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Wrong type for "
+                 "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values");
+        return nullptr;
+    }
+    const auto &oComponents = oType.GetComponents();
+    if (oComponents.size() == 0 || oComponents[0]->GetName() != "depth")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "S102: Wrong type for "
+                 "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values");
         return nullptr;
     }
 
@@ -288,11 +322,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }();
 
-    auto poUncertainty = poValuesArray->GetView("[\"uncertainty\"]");
-    const double dfUncertaintyNoData = poUncertainty->GetNoDataValueAsDouble();
-    auto poUncertaintyDS =
-        std::unique_ptr<GDALDataset>(poUncertainty->AsClassicDataset(1, 0));
-
     poDS->nRasterXSize = poDepthDS->GetRasterXSize();
     poDS->nRasterYSize = poDepthDS->GetRasterYSize();
 
@@ -330,33 +359,46 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->SetBand(1, poDepthBand);
 
-    // Create uncertainty band
-    auto poUncertaintyBand = new S102RasterBand(std::move(poUncertaintyDS));
-    poUncertaintyBand->SetDescription("uncertainty");
-
-    auto poMinimumUncertainty = poGroup001->GetAttribute("minimumUncertainty");
-    if (poMinimumUncertainty &&
-        poMinimumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
+    const bool bHasUncertainty =
+        oComponents.size() >= 2 && oComponents[1]->GetName() == "uncertainty";
+    if (bHasUncertainty)
     {
-        const double dfVal = poMinimumUncertainty->ReadAsDouble();
-        if (dfVal != dfUncertaintyNoData)
-        {
-            poUncertaintyBand->m_dfMinimum = dfVal;
-        }
-    }
+        // Create uncertainty band
+        auto poUncertainty = poValuesArray->GetView("[\"uncertainty\"]");
+        const double dfUncertaintyNoData =
+            poUncertainty->GetNoDataValueAsDouble();
+        auto poUncertaintyDS =
+            std::unique_ptr<GDALDataset>(poUncertainty->AsClassicDataset(1, 0));
 
-    auto poMaximumUncertainty = poGroup001->GetAttribute("maximumUncertainty");
-    if (poMaximumUncertainty &&
-        poMaximumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
-    {
-        const double dfVal = poMaximumUncertainty->ReadAsDouble();
-        if (dfVal != dfUncertaintyNoData)
-        {
-            poUncertaintyBand->m_dfMaximum = dfVal;
-        }
-    }
+        auto poUncertaintyBand = new S102RasterBand(std::move(poUncertaintyDS));
+        poUncertaintyBand->SetDescription("uncertainty");
 
-    poDS->SetBand(2, poUncertaintyBand);
+        auto poMinimumUncertainty =
+            poGroup001->GetAttribute("minimumUncertainty");
+        if (poMinimumUncertainty &&
+            poMinimumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const double dfVal = poMinimumUncertainty->ReadAsDouble();
+            if (dfVal != dfUncertaintyNoData)
+            {
+                poUncertaintyBand->m_dfMinimum = dfVal;
+            }
+        }
+
+        auto poMaximumUncertainty =
+            poGroup001->GetAttribute("maximumUncertainty");
+        if (poMaximumUncertainty &&
+            poMaximumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const double dfVal = poMaximumUncertainty->ReadAsDouble();
+            if (dfVal != dfUncertaintyNoData)
+            {
+                poUncertaintyBand->m_dfMaximum = dfVal;
+            }
+        }
+
+        poDS->SetBand(2, poUncertaintyBand);
+    }
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
@@ -458,8 +500,7 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
     }
 
     // Compute geotransform
-    m_bHasGT = S100GetGeoTransform(poGroupQuality01.get(), m_adfGeoTransform,
-                                   bNorthUp);
+    m_bHasGT = S100GetGeoTransform(poGroupQuality01.get(), m_gt, bNorthUp);
 
     auto poGroup001 = poGroupQuality01->OpenGroup("Group_001");
     if (!poGroup001)

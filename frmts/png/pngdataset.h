@@ -43,6 +43,7 @@
 #include <csetjmp>
 
 #include <algorithm>
+#include <array>
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4611)
@@ -80,43 +81,48 @@ class PNGDataset final : public GDALPamDataset
 {
     friend class PNGRasterBand;
 
-    VSILFILE *fpImage;
-    png_structp hPNG;
-    png_infop psPNGInfo;
-    int nBitDepth;
-    int nColorType;  // PNG_COLOR_TYPE_*
-    int bInterlaced;
+    VSILFILE *fpImage{};
+    png_structp hPNG{};
+    png_infop psPNGInfo{};
+    int nBitDepth{8};
+    int nColorType{};  // PNG_COLOR_TYPE_*
+    int bInterlaced{};
 
-    int nBufferStartLine;
-    int nBufferLines;
-    int nLastLineRead;
-    GByte *pabyBuffer;
+    int nBufferStartLine{};
+    int nBufferLines{};
+    int nLastLineRead{-1};
+    GByte *pabyBuffer{};
 
-    GDALColorTable *poColorTable;
+    GDALColorTable *poColorTable{};
 
-    int bGeoTransformValid;
-    double adfGeoTransform[6];
+    int bGeoTransformValid{};
+    GDALGeoTransform m_gt{};
 
     void CollectMetadata();
 
-    int bHasReadXMPMetadata;
+    int bHasReadXMPMetadata{};
     void CollectXMPMetadata();
 
     CPLErr LoadScanline(int);
     CPLErr LoadInterlacedChunk(int);
     void Restart();
 
-    int bHasTriedLoadWorldFile;
+    int bHasTriedLoadWorldFile{};
     void LoadWorldFile();
-    CPLString osWldFilename;
+    CPLString osWldFilename{};
 
-    int bHasReadICCMetadata;
+    int bHasReadICCMetadata{};
     void LoadICCProfile();
+
+    bool m_bByteOrderIsLittleEndian = false;
+    bool m_bHasRewind = false;
 
     static void WriteMetadataAsText(jmp_buf sSetJmpContext, png_structp hPNG,
                                     png_infop psPNGInfo, const char *pszKey,
                                     const char *pszValue);
     static GDALDataset *OpenStage2(GDALOpenInfo *, PNGDataset *&);
+
+    CPL_DISALLOW_COPY_ASSIGN(PNGDataset)
 
   public:
     PNGDataset();
@@ -131,7 +137,7 @@ class PNGDataset final : public GDALPamDataset
 
     virtual char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual char **GetMetadataDomainList() override;
@@ -153,7 +159,7 @@ class PNGDataset final : public GDALPamDataset
                           void *apabyBuffers[4]);
 #endif
 
-    jmp_buf sSetJmpContext;  // Semi-private.
+    jmp_buf sSetJmpContext{};  // Semi-private.
 
 #ifdef SUPPORT_CREATE
     int m_nBitDepth;

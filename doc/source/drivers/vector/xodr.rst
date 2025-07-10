@@ -21,7 +21,7 @@ Driver capabilities
 Specification version
 ---------------------
 
-The currently supported OpenDRIVE version is 1.4 and depends on what is provided by libOpenDRIVE_. 
+The currently supported OpenDRIVE version is 1.4 and depends on what is provided by libOpenDRIVE_.
 
 .. _libOpenDRIVE: https://github.com/pageldev/libOpenDRIVE/
 
@@ -48,7 +48,7 @@ By definition, OpenDRIVE geometries are always referenced in a Cartesian coordin
     <geoReference><![CDATA[+proj=tmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs]]></geoReference>
   </header>
 
-The XODR driver uses this PROJ definition as spatial reference for creation of all OGR geometry layers. 
+The XODR driver uses this PROJ definition as spatial reference for creation of all OGR geometry layers.
 
 Limitations
 -----------
@@ -71,13 +71,13 @@ The following open options can be specified
       :choices: YES, NO
       :default: NO
 
-      Whether to dissolve triangulated surfaces. By setting this option to YES, the TIN layers *Lane* and *RoadMark* of geometry type :cpp:class:`OGRTriangulatedSurface` will be simplified to single, simple :cpp:class:`OGRPolygon` geometries. This performs a :cpp:func:`UnaryUnion` which dissolves boundaries of all touching triangle patches and thus yields a slimmer dataset which often suffices for basic GIS usage. Be aware that this dissolving step increases processing time significantly.
+      Whether to dissolve triangulated surfaces. By setting this option to YES, the TIN layers *Lane* and *RoadMark* of geometry type :cpp:class:`OGRTriangulatedSurface` will be simplified to single, simple :cpp:class:`OGRPolygon` geometries. This performs a :cpp:func:`OGRGeometry::UnaryUnion` which dissolves boundaries of all touching triangle patches and thus yields a slimmer dataset which often suffices for basic GIS usage. Be aware that this dissolving step increases processing time significantly.
       Layer *RoadSignal* will be dissolved to a simple :cpp:class:`OGRPoint`.
 
 Examples
 --------
 
-- Translate OpenDRIVE road *ReferenceLine* elements (``<planView>``) to :ref:`Shapefile <vector.shapefile>` using :program:`ogr2ogr`. The desired :ref:`layer type <layer types>` which is to be extracted from the dataset is specified as the last parameter of the function call. 
+- Translate OpenDRIVE road *ReferenceLine* elements (``<planView>``) to :ref:`Shapefile <vector.shapefile>` using :program:`ogr2ogr`. The desired :ref:`layer type <layer types>` which is to be extracted from the dataset is specified as the last parameter of the function call.
 
   ::
 
@@ -95,11 +95,11 @@ Examples
 
     ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr -oo EPSILON=0.9 -oo DISSOLVE_TIN=YES
 
-Convenient usage through docker image 
+Convenient usage through docker image
 -------------------------------------
 
-To use the XODR driver through a docker image, first build the image from the corresponding docker directory 
-    
+To use the XODR driver through a docker image, first build the image from the corresponding docker directory
+
   ::
 
     cd <gdal>/docker/ubuntu-full/
@@ -108,20 +108,20 @@ To use the XODR driver through a docker image, first build the image from the co
 For general usage information refer to `GDAL Docker images <https://github.com/OSGeo/gdal/tree/master/docker#usage>`__. Usage examples:
 
 - Use :program:`ogrinfo` to extract detailed information about a local `xodr` file by mounting your current working directory (`$PWD`) containing the file into the Docker container:
-  
+
   ::
 
     docker run --rm -v ${PWD}:/home -it gdal/xodr ogrinfo /home/<file>.xodr
 
-- Use :program:`ogr2ogr` to convert a local `xodr` file into any other supported OGR output format. The result will be automatically available in your host machine's working directory which is mounted into the container: 
-  
+- Use :program:`ogr2ogr` to convert a local `xodr` file into any other supported OGR output format. The result will be automatically available in your host machine's working directory which is mounted into the container:
+
   ::
 
     docker run --rm -v ${PWD}:/home -it gdal/xodr ogr2ogr -f "GPKG" /home/<file>.gpkg /home/<file>.xodr
 
 
-Alternatively, you can run a docker container that enables using the XODR driver in an isolated workspace from within the container 
-    
+Alternatively, you can run a docker container that enables using the XODR driver in an isolated workspace from within the container
+
     ::
 
       docker run --name <container_name> -it gdal/xodr /bin/bash
@@ -172,7 +172,7 @@ Verifying a successful build
 Check if XODR driver is found:
 
   ::
-    
+
     cd <gdal>/build/
     ./apps/ogrinfo --format XODR
 
@@ -189,7 +189,7 @@ This should print basic capabilities of the driver:
       ...
     </OpenOptionList>
 
-If you are on Linux, depending on your environment, you might experience linker errors like: 
+If you are on Linux, depending on your environment, you might experience linker errors like:
 
   ::
 

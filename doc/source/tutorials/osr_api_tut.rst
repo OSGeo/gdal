@@ -212,9 +212,9 @@ longitude, latitude. For that, the following must be called
 The argument passed to :cpp:func:`OGRSpatialReference::SetAxisMappingStrategy` is the
 data axis to CRS axis mapping strategy.
 
-- :c:macro:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
-- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the default value when instantiating OGRSpatialReference.
-- :c:macro:`OAMS_CUSTOM` means that the data axes are customly defined with SetDataAxisToSRSAxisMapping().
+- :c:enumerator:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
+- :c:enumerator:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the default value when instantiating OGRSpatialReference.
+- :c:enumerator:`OAMS_CUSTOM` means that the data axes are customly defined with SetDataAxisToSRSAxisMapping().
 
 What has been discussed in this section for the particular case of Geographic
 CRS also applies to Projected CRS. While most of them use Easting first, Northing
@@ -622,6 +622,6 @@ Consequently the OGRSpatialReference class has been modified to act mostly as
 a wrapper on top of PROJ PJ* CRS objects, and tries to abstract away from
 the OGC WKT 1 representation as much as possible. However, for backward compatibility,
 some methods still expect arguments or return values that are specific of OGC WKT 1.
-The design of th OGRSpatialReference class is also still monolithic. Users wanting
+The design of the OGRSpatialReference class is also still monolithic. Users wanting
 direct and fine grained access to CRS representations might want to directly use
 the PROJ 6 C or C++ API.

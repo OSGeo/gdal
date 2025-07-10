@@ -18,7 +18,10 @@ add_gdal_driver(
           ogravce00layer.cpp
           ogravclayer.cpp
           # avc_binwr.cpp avc_e00write.cpp
-  BUILTIN)
+  BUILTIN
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_AVC)
 
 if (NOT OGR_ENABLE_DRIVER_SHAPE OR OGR_ENABLE_DRIVER_SHAPE_PLUGIN)

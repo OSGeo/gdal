@@ -67,7 +67,12 @@ typedef enum
     GDT_TypeCount = 17 /* maximum type # + 1 */
 } GDALDataType;
 
-int CPL_DLL CPL_STDCALL GDALGetDataTypeSize(GDALDataType);  // Deprecated.
+int CPL_DLL CPL_STDCALL GDALGetDataTypeSize(GDALDataType)
+    /*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetDataTypeSizeBits() or "
+                        "GDALGetDataTypeSizeBytes() * 8 instead")
+    /*! @endcond */
+    ;
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits(GDALDataType eDataType);
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType);
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex(GDALDataType);
@@ -154,7 +159,8 @@ typedef enum
     /*! @endcond */
 } GDALRIOResampleAlg;
 
-/* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG
+/* NOTE to developers: if required, only add members at the end of the
+ * structure, and when doing so increase RASTERIO_EXTRA_ARG_CURRENT_VERSION
  */
 /** Structure to pass extra arguments to RasterIO() method,
  * must be initialized with INIT_RASTERIO_EXTRA_ARG
@@ -191,10 +197,16 @@ typedef struct
     /*! Height in pixels of the area of interest. Only valid if
      * bFloatingPointWindowValidity = TRUE */
     double dfYSize;
+    /*! Indicate if overviews should be considered. Tested in
+        GDALBandGetBestOverviewLevel(), mostly reserved for use by
+        GDALRegenerateOverviewsMultiBand()
+        Only available if RASTERIO_EXTRA_ARG_CURRENT_VERSION >= 2
+    */
+    int bUseOnlyThisScale;
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
-#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 1
+#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 2
 #endif
 
 /** Macro to initialize an instance of GDALRasterIOExtraArg structure.
@@ -208,6 +220,7 @@ typedef struct
         (s).pfnProgress = CPL_NULLPTR;                                         \
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
+        (s).bUseOnlyThisScale = FALSE;                                         \
     } while (0)
 
 /** Value indicating the start of the range for color interpretations belonging
@@ -485,6 +498,19 @@ typedef enum
  * @since GDAL 2.3
  * */
 #define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
+
+/** Maximum size of a String field that can be created (OGRFieldDefn.GetWidth()).
+ *
+ * It is undefined whether this is a number of bytes or Unicode character count.
+ * Most of the time, this will be a number of bytes, so a Unicode string whose
+ * character count is the maximum size could not fit.
+ *
+ * This metadata item is set only on a small number of drivers, in particular
+ * "ESRI Shapefile" and "MapInfo File", which use fixed-width storage of strings.
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DMD_MAX_STRING_LENGTH "DMD_MAX_STRING_LENGTH"
 
 /** List of (space separated) capability flags supported by the CreateField() API.
  *
@@ -973,6 +999,18 @@ typedef enum
     "UpdateRelationship" /**< Dataset capability for supporting                \
                             UpdateRelationship()*/
 
+/** Dataset capability if GDALDataset::GetExtent() is fast.
+ *
+ * @since 3.12
+ */
+#define GDsCFastGetExtent "FastGetExtent"
+
+/** Dataset capability if GDALDataset::GetExtentWGS84LongLat() is fast.
+ *
+ * @since 3.12
+ */
+#define GDsCFastGetExtentWGS84LongLat "FastGetExtentWGS84LongLat"
+
 void CPL_DLL CPL_STDCALL GDALAllRegister(void);
 void CPL_DLL GDALRegisterPlugins(void);
 CPLErr CPL_DLL GDALRegisterPlugin(const char *name);
@@ -1292,7 +1330,11 @@ OGRSpatialReferenceH CPL_DLL GDALGetSpatialRef(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALSetProjection(GDALDatasetH, const char *);
 CPLErr CPL_DLL GDALSetSpatialRef(GDALDatasetH, OGRSpatialReferenceH);
 CPLErr CPL_DLL CPL_STDCALL GDALGetGeoTransform(GDALDatasetH, double *);
-CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, double *);
+CPLErr CPL_DLL CPL_STDCALL GDALSetGeoTransform(GDALDatasetH, const double *);
+
+CPLErr CPL_DLL GDALGetExtent(GDALDatasetH, OGREnvelope *,
+                             OGRSpatialReferenceH hCRS);
+CPLErr CPL_DLL GDALGetExtentWGS84LongLat(GDALDatasetH, OGREnvelope *);
 
 CPLErr CPL_DLL GDALDatasetGeolocationToPixelLine(
     GDALDatasetH, double dfGeolocX, double dfGeolocY, OGRSpatialReferenceH hSRS,
@@ -1911,6 +1953,76 @@ int CPL_DLL CPL_STDCALL GDALGetDataCoverageStatus(GDALRasterBandH hBand,
                                                   int nMaskFlagStop,
                                                   double *pdfDataPct);
 
+void CPL_DLL GDALComputedRasterBandRelease(GDALComputedRasterBandH hBand);
+
+/** Raster algebra unary operation */
+typedef enum
+{
+    /** Logical not */
+    GRAUO_LOGICAL_NOT,
+} GDALRasterAlgebraUnaryOperation;
+
+GDALComputedRasterBandH CPL_DLL GDALRasterBandUnaryOp(
+    GDALRasterBandH hBand,
+    GDALRasterAlgebraUnaryOperation eOp) CPL_WARN_UNUSED_RESULT;
+
+/** Raster algebra binary operation */
+typedef enum
+{
+    /** Addition */
+    GRABO_ADD,
+    /** Subtraction */
+    GRABO_SUB,
+    /** Multiplication */
+    GRABO_MUL,
+    /** Division */
+    GRABO_DIV,
+    /** Strictly greater than test*/
+    GRABO_GT,
+    /** Greater or equal to test */
+    GRABO_GE,
+    /** Strictly lesser than test */
+    GRABO_LT,
+    /** Lesser or equal to test */
+    GRABO_LE,
+    /** Equality test */
+    GRABO_EQ,
+    /** Non-equality test */
+    GRABO_NE,
+    /** Logical and */
+    GRABO_LOGICAL_AND,
+    /** Logical or */
+    GRABO_LOGICAL_OR
+} GDALRasterAlgebraBinaryOperation;
+
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpBand(
+    GDALRasterBandH hBand, GDALRasterAlgebraBinaryOperation eOp,
+    GDALRasterBandH hOtherBand) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpDouble(
+    GDALRasterBandH hBand, GDALRasterAlgebraBinaryOperation eOp,
+    double constant) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandBinaryOpDoubleToBand(
+    double constant, GDALRasterAlgebraBinaryOperation eOp,
+    GDALRasterBandH hBand) CPL_WARN_UNUSED_RESULT;
+
+GDALComputedRasterBandH CPL_DLL
+GDALRasterBandIfThenElse(GDALRasterBandH hCondBand, GDALRasterBandH hThenBand,
+                         GDALRasterBandH hElseBand) CPL_WARN_UNUSED_RESULT;
+
+GDALComputedRasterBandH CPL_DLL GDALRasterBandAsDataType(
+    GDALRasterBandH hBand, GDALDataType eDT) CPL_WARN_UNUSED_RESULT;
+
+GDALComputedRasterBandH CPL_DLL GDALMaximumOfNBands(
+    size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandMaxConstant(
+    GDALRasterBandH hBand, double dfConstant) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALMinimumOfNBands(
+    size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALRasterBandMinConstant(
+    GDALRasterBandH hBand, double dfConstant) CPL_WARN_UNUSED_RESULT;
+GDALComputedRasterBandH CPL_DLL GDALMeanOfNBands(
+    size_t nBandCount, GDALRasterBandH *pahBands) CPL_WARN_UNUSED_RESULT;
+
 /* ==================================================================== */
 /*     GDALAsyncReader                                                  */
 /* ==================================================================== */
@@ -2417,6 +2529,8 @@ int CPL_DLL GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
                                        GDALExtendedDataTypeH hSecondEDT);
 GDALExtendedDataTypeSubType CPL_DLL
 GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT);
+GDALRasterAttributeTableH CPL_DLL
+GDALExtendedDataTypeGetRAT(GDALExtendedDataTypeH hEDT) CPL_WARN_UNUSED_RESULT;
 
 GDALEDTComponentH CPL_DLL
 GDALEDTComponentCreate(const char *pszName, size_t nOffset,
@@ -2495,6 +2609,9 @@ bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
 GDALGroupH CPL_DLL GDALGroupSubsetDimensionFromSelection(
     GDALGroupH hGroup, const char *pszSelection, CSLConstList papszOptions);
+size_t CPL_DLL GDALGroupGetDataTypeCount(GDALGroupH hGroup);
+GDALExtendedDataTypeH CPL_DLL GDALGroupGetDataType(GDALGroupH hGroup,
+                                                   size_t nIdx);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);

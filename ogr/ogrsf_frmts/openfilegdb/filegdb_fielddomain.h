@@ -419,45 +419,43 @@ inline std::string BuildXMLFieldDomainDef(const OGRFieldDomain *poDomain,
                 [&AddFieldTypeAsXSIType, &poDomain,
                  psRoot](const char *pszElementName, const OGRField &oValue)
             {
-                if (!OGR_RawField_IsUnset(&oValue))
+                auto psValue =
+                    CPLCreateXMLNode(psRoot, CXT_Element, pszElementName);
+                AddFieldTypeAsXSIType(psValue);
+                if (poDomain->GetFieldType() == OFTInteger)
                 {
-                    auto psValue =
-                        CPLCreateXMLNode(psRoot, CXT_Element, pszElementName);
-                    AddFieldTypeAsXSIType(psValue);
-                    if (poDomain->GetFieldType() == OFTInteger)
-                    {
-                        CPLCreateXMLNode(psValue, CXT_Text,
-                                         CPLSPrintf("%d", oValue.Integer));
-                    }
-                    else if (poDomain->GetFieldType() == OFTReal)
-                    {
-                        CPLCreateXMLNode(psValue, CXT_Text,
-                                         CPLSPrintf("%.18g", oValue.Real));
-                    }
-                    else if (poDomain->GetFieldType() == OFTString)
-                    {
-                        CPLCreateXMLNode(psValue, CXT_Text, oValue.String);
-                    }
-                    else if (poDomain->GetFieldType() == OFTDateTime)
-                    {
-                        CPLCreateXMLNode(
-                            psValue, CXT_Text,
-                            CPLSPrintf(
-                                "%04d-%02d-%02dT%02d:%02d:%02d",
-                                oValue.Date.Year, oValue.Date.Month,
-                                oValue.Date.Day, oValue.Date.Hour,
-                                oValue.Date.Minute,
-                                static_cast<int>(oValue.Date.Second + 0.5)));
-                    }
+                    CPLCreateXMLNode(psValue, CXT_Text,
+                                     CPLSPrintf("%d", oValue.Integer));
+                }
+                else if (poDomain->GetFieldType() == OFTReal)
+                {
+                    CPLCreateXMLNode(psValue, CXT_Text,
+                                     CPLSPrintf("%.18g", oValue.Real));
+                }
+                else if (poDomain->GetFieldType() == OFTDateTime)
+                {
+                    CPLCreateXMLNode(
+                        psValue, CXT_Text,
+                        CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                                   oValue.Date.Year, oValue.Date.Month,
+                                   oValue.Date.Day, oValue.Date.Hour,
+                                   oValue.Date.Minute,
+                                   static_cast<int>(oValue.Date.Second + 0.5)));
                 }
             };
 
             bool bIsInclusiveOut = false;
-            const OGRField &oMax = poRangeDomain->GetMax(bIsInclusiveOut);
-            SerializeMinOrMax("MaxValue", oMax);
-
-            bIsInclusiveOut = false;
             const OGRField &oMin = poRangeDomain->GetMin(bIsInclusiveOut);
+            const OGRField &oMax = poRangeDomain->GetMax(bIsInclusiveOut);
+            if (OGR_RawField_IsUnset(&oMin) || OGR_RawField_IsUnset(&oMax))
+            {
+                failureReason =
+                    "FileGeoDatabase requires that both minimum and maximum "
+                    "values of a range field domain are set.";
+                return std::string();
+            }
+
+            SerializeMinOrMax("MaxValue", oMax);
             SerializeMinOrMax("MinValue", oMin);
 
             break;
@@ -471,7 +469,7 @@ inline std::string BuildXMLFieldDomainDef(const OGRFieldDomain *poDomain,
     }
 
     char *pszXML = CPLSerializeXMLTree(oTree.get());
-    const std::string osXML(pszXML);
+    std::string osXML(pszXML);
     CPLFree(pszXML);
     return osXML;
 }

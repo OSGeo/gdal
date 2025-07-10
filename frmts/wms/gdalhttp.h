@@ -19,38 +19,39 @@
 
 struct WMSHTTPRequest
 {
-    WMSHTTPRequest()
-        : options(nullptr), nStatus(0), pabyData(nullptr), nDataLen(0),
-          nDataAlloc(0), m_curl_handle(nullptr), m_headers(nullptr), x(0), y(0)
-    {
-    }
+    WMSHTTPRequest() = default;
 
     ~WMSHTTPRequest();
+    WMSHTTPRequest(const WMSHTTPRequest &) = delete;
+    WMSHTTPRequest &operator=(const WMSHTTPRequest &) = delete;
+    WMSHTTPRequest(WMSHTTPRequest &&) = delete;
+    WMSHTTPRequest &operator=(WMSHTTPRequest &&) = delete;
 
     /* Input */
-    CPLString URL;
+    CPLString URL{};
     // Not owned, do not release
-    const char *const *options;
-    CPLString Range;
+    const char *const *options{nullptr};
+    CPLString Range{};
 
     /* Output */
-    CPLString ContentType;
-    CPLString Error;
+    CPLString ContentType{};
+    CPLString Error{};
 
-    int nStatus; /* 200 = success, 404 = not found, 0 = no response / error */
-    GByte *pabyData;
-    size_t nDataLen;
-    size_t nDataAlloc;
+    int nStatus =
+        0; /* 200 = success, 404 = not found, 0 = no response / error */
+    GByte *pabyData{nullptr};
+    size_t nDataLen{};
+    size_t nDataAlloc{};
 
     /* curl internal stuff */
-    CURL *m_curl_handle;
-    struct curl_slist *m_headers;
+    CURL *m_curl_handle{nullptr};
+    struct curl_slist *m_headers{nullptr};
     // Which tile is being requested
-    int x, y;
+    int x{}, y{};
 
     // Space for error message, doesn't seem to be used by the multi-request
     // interface
-    std::vector<char> m_curl_error;
+    std::vector<char> m_curl_error{};
 };
 
 // Not public, only for use within WMS

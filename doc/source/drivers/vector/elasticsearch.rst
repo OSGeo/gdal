@@ -132,7 +132,7 @@ The following open options are supported:
       typically for authentication purposes, that must be passed to Elasticsearch.
       The value of string is a comma separated list of http_header_name=env_variable_name,
       where http_header_name is the name of a HTTP header and env_variable_name
-      the name of the environment variable / configuration option from which th value
+      the name of the environment variable / configuration option from which the value
       of the HTTP header should be retrieved. This is intended for a use case where
       the OGR Elasticsearch driver is invoked from a web server that stores the HTTP
       headers of incoming request into environment variables.

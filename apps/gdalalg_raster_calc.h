@@ -21,28 +21,48 @@
 /*                       GDALRasterCalcAlgorithm                        */
 /************************************************************************/
 
-class GDALRasterCalcAlgorithm : public GDALAlgorithm
+class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
 {
   public:
-    explicit GDALRasterCalcAlgorithm() noexcept;
+    explicit GDALRasterCalcAlgorithm(bool standaloneStep = false) noexcept;
 
     static constexpr const char *NAME = "calc";
     static constexpr const char *DESCRIPTION = "Perform raster algebra";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_calc.html";
 
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    std::vector<std::string> m_inputs{};
-    GDALArgDatasetValue m_dataset{};
     std::vector<std::string> m_expr{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::string m_format{};
+    std::string m_dialect{"muparser"};
+    bool m_flatten{false};
     std::string m_type{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite{false};
-    bool m_NoCheckSRS{false};
-    bool m_NoCheckExtent{false};
+    std::string m_nodata{};
+    bool m_noCheckSRS{false};
+    bool m_noCheckExtent{false};
+    bool m_noCheckExpression{false};
+    bool m_propagateNoData{false};
+};
+
+/************************************************************************/
+/*                   GDALRasterCalcAlgorithmStandalone                  */
+/************************************************************************/
+
+class GDALRasterCalcAlgorithmStandalone final : public GDALRasterCalcAlgorithm
+{
+  public:
+    GDALRasterCalcAlgorithmStandalone()
+        : GDALRasterCalcAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterCalcAlgorithmStandalone() override;
 };
 
 //! @endcond

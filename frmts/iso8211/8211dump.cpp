@@ -177,7 +177,7 @@ int main(int nArgc, char **papszArgv)
             printf(">\n");
             for (int iSubField = 0; iSubField < nSubfieldCount; iSubField++)
             {
-                DDFSubfieldDefn *poSubFieldDefn =
+                const DDFSubfieldDefn *poSubFieldDefn =
                     poFieldDefn->GetSubfield(iSubField);
                 printf("  <DDFSubfieldDefn name=\"%s\" format=\"%s\"/>\n",
                        poSubFieldDefn->GetName(), poSubFieldDefn->GetFormat());
@@ -204,8 +204,8 @@ int main(int nArgc, char **papszArgv)
             int nFieldCount = poRecord->GetFieldCount();
             for (int iField = 0; iField < nFieldCount; iField++)
             {
-                DDFField *poField = poRecord->GetField(iField);
-                DDFFieldDefn *poDefn = poField->GetFieldDefn();
+                const DDFField *poField = poRecord->GetField(iField);
+                const DDFFieldDefn *poDefn = poField->GetFieldDefn();
                 const char *pszFieldName = poDefn->GetName();
                 printf("  <DDFField name=\"%s\"", pszFieldName);
                 if (poField->GetRepeatCount() > 1)
@@ -229,7 +229,7 @@ int main(int nArgc, char **papszArgv)
                          iSubField < poDefn->GetSubfieldCount(); iSubField++)
                     {
                         int nBytesConsumed;
-                        DDFSubfieldDefn *poSubFieldDefn =
+                        const DDFSubfieldDefn *poSubFieldDefn =
                             poDefn->GetSubfield(iSubField);
                         const char *pszSubFieldName = poSubFieldDefn->GetName();
                         printf("    <DDFSubfield name=\"%s\" ",

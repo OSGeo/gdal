@@ -16,6 +16,8 @@
 #include "ogrwarpedlayer.h"
 #include "ogr_p.h"
 
+#include <limits>
+
 /************************************************************************/
 /*                      OGRUnionLayerGeomFieldDefn()                    */
 /************************************************************************/
@@ -1106,7 +1108,11 @@ GIntBig OGRUnionLayer::GetFeatureCount(int bForce)
         AutoWarpLayerIfNecessary(i);
         ApplyAttributeFilterToSrcLayer(i);
         SetSpatialFilterToSourceLayer(m_apoSrcLayers[i].poLayer);
-        nRet += m_apoSrcLayers[i]->GetFeatureCount(bForce);
+        const GIntBig nThisLayerFC = m_apoSrcLayers[i]->GetFeatureCount(bForce);
+        if (nThisLayerFC < 0 ||
+            nThisLayerFC > std::numeric_limits<GIntBig>::max() - nRet)
+            return 0;
+        nRet += nThisLayerFC;
     }
     ResetReading();
     return nRet;

@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <set>
 #include <queue>
 #include <string>
@@ -2350,7 +2351,7 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
         pImageNC = static_cast<GByte *>(pImage) +
                    ((static_cast<size_t>(nBlockXSize) * nBlockYSize -
                      edge[nBandXPos] * nYChunkSize) *
-                    (GDALGetDataTypeSize(eDataType) / 8));
+                    GDALGetDataTypeSizeBytes(eDataType));
     }
 
     // Read data according to type.
@@ -2839,14 +2840,6 @@ netCDFDataset::netCDFDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    // Projection/GT.
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
-
     // Set buffers
     bufManager.addBuffer(&(GeometryScribe.getMemBuffer()));
     bufManager.addBuffer(&(FieldScribe.getMemBuffer()));
@@ -3215,7 +3208,7 @@ void netCDFDataset::SetProjectionFromVar(
     // Get x/y range information.
 
     // Temp variables to use in SetGeoTransform() and SetProjection().
-    double adfTempGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    GDALGeoTransform tmpGT;
 
     // Look for grid_mapping metadata.
     const char *pszValue = pszGivenGM;
@@ -4043,33 +4036,31 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             }
 
-            adfTempGeoTransform[0] = xMinMax[0];
-            adfTempGeoTransform[1] = (xMinMax[1] - xMinMax[0]) /
-                                     (poDS->nRasterXSize + (node_offset - 1));
-            adfTempGeoTransform[2] = 0;
+            tmpGT[0] = xMinMax[0];
+            tmpGT[1] = (xMinMax[1] - xMinMax[0]) /
+                       (poDS->nRasterXSize + (node_offset - 1));
+            tmpGT[2] = 0;
             if (bSwitchedXY)
             {
-                adfTempGeoTransform[3] = yMinMax[0];
-                adfTempGeoTransform[4] = 0;
-                adfTempGeoTransform[5] =
-                    (yMinMax[1] - yMinMax[0]) /
-                    (poDS->nRasterYSize + (node_offset - 1));
+                tmpGT[3] = yMinMax[0];
+                tmpGT[4] = 0;
+                tmpGT[5] = (yMinMax[1] - yMinMax[0]) /
+                           (poDS->nRasterYSize + (node_offset - 1));
             }
             else
             {
-                adfTempGeoTransform[3] = yMinMax[1];
-                adfTempGeoTransform[4] = 0;
-                adfTempGeoTransform[5] =
-                    (yMinMax[0] - yMinMax[1]) /
-                    (poDS->nRasterYSize + (node_offset - 1));
+                tmpGT[3] = yMinMax[1];
+                tmpGT[4] = 0;
+                tmpGT[5] = (yMinMax[0] - yMinMax[1]) /
+                           (poDS->nRasterYSize + (node_offset - 1));
             }
 
             // Compute the center of the pixel.
             if (!node_offset)
             {
                 // Otherwise its already the pixel center.
-                adfTempGeoTransform[0] -= (adfTempGeoTransform[1] / 2);
-                adfTempGeoTransform[3] -= (adfTempGeoTransform[5] / 2);
+                tmpGT[0] -= (tmpGT[1] / 2);
+                tmpGT[3] -= (tmpGT[5] / 2);
             }
         }
 
@@ -4110,7 +4101,7 @@ void netCDFDataset::SetProjectionFromVar(
         if (dfLinearUnitsConvFactor != 1.0)
         {
             for (int i = 0; i < 6; ++i)
-                adfTempGeoTransform[i] *= dfLinearUnitsConvFactor;
+                tmpGT[i] *= dfLinearUnitsConvFactor;
 
             if (paosRemovedMDItems)
             {
@@ -4161,11 +4152,10 @@ void netCDFDataset::SetProjectionFromVar(
                 CSLTokenizeString2(pszGeoTransform, " ", CSLT_HONOURSTRINGS));
             if (aosGeoTransform.size() == 6)
             {
-                std::array<double, 6> adfGeoTransformFromAttribute;
+                GDALGeoTransform gtFromAttribute;
                 for (int i = 0; i < 6; i++)
                 {
-                    adfGeoTransformFromAttribute[i] =
-                        CPLAtof(aosGeoTransform[i]);
+                    gtFromAttribute[i] = CPLAtof(aosGeoTransform[i]);
                 }
 
                 if (bGotCfGT)
@@ -4175,10 +4165,9 @@ void netCDFDataset::SetProjectionFromVar(
                     for (int i = 0; i < 6; i++)
                     {
                         double dfAbsoluteError =
-                            std::abs(adfTempGeoTransform[i] -
-                                     adfGeoTransformFromAttribute[i]);
+                            std::abs(tmpGT[i] - gtFromAttribute[i]);
                         if (dfAbsoluteError >
-                            std::abs(adfGeoTransformFromAttribute[i] *
+                            std::abs(gtFromAttribute[i] *
                                      GT_RELERROR_WARN_THRESHOLD))
                         {
                             dfMaxAbsoluteError =
@@ -4197,9 +4186,7 @@ void netCDFDataset::SetProjectionFromVar(
                     }
                 }
 
-                std::copy(adfGeoTransformFromAttribute.begin(),
-                          adfGeoTransformFromAttribute.end(),
-                          adfTempGeoTransform);
+                tmpGT = std::move(gtFromAttribute);
                 bGotGdalGT = true;
             }
         }
@@ -4229,17 +4216,15 @@ void netCDFDataset::SetProjectionFromVar(
             {
                 bGotGdalGT = true;
 
-                adfTempGeoTransform[0] = dfWE;
-                adfTempGeoTransform[1] =
-                    (dfEE - dfWE) / (poDS->GetRasterXSize() - 1);
-                adfTempGeoTransform[2] = 0.0;
-                adfTempGeoTransform[3] = dfNN;
-                adfTempGeoTransform[4] = 0.0;
-                adfTempGeoTransform[5] =
-                    (dfSN - dfNN) / (poDS->GetRasterYSize() - 1);
+                tmpGT[0] = dfWE;
+                tmpGT[1] = (dfEE - dfWE) / (poDS->GetRasterXSize() - 1);
+                tmpGT[2] = 0.0;
+                tmpGT[3] = dfNN;
+                tmpGT[4] = 0.0;
+                tmpGT[5] = (dfSN - dfNN) / (poDS->GetRasterYSize() - 1);
                 // Compute the center of the pixel.
-                adfTempGeoTransform[0] = dfWE - (adfTempGeoTransform[1] / 2);
-                adfTempGeoTransform[3] = dfNN - (adfTempGeoTransform[5] / 2);
+                tmpGT[0] = dfWE - (tmpGT[1] / 2);
+                tmpGT[3] = dfNN - (tmpGT[5] / 2);
             }
         }  // (pszGeoTransform != NULL)
 
@@ -4374,7 +4359,7 @@ void netCDFDataset::SetProjectionFromVar(
     {
         m_bAddedProjectionVarsDefs = true;
         m_bAddedProjectionVarsData = true;
-        SetGeoTransformNoUpdate(adfTempGeoTransform);
+        SetGeoTransformNoUpdate(tmpGT);
     }
 
     // Debugging reports.
@@ -4401,13 +4386,10 @@ void netCDFDataset::SetProjectionFromVar(
                 papszOpenOptions, "ASSUME_LONGLAT",
                 CPLGetConfigOption("GDAL_NETCDF_ASSUME_LONGLAT", "NO")));
 
-            if (bAssumedLongLat && adfTempGeoTransform[0] >= -180 &&
-                adfTempGeoTransform[0] < 360 &&
-                (adfTempGeoTransform[0] +
-                 adfTempGeoTransform[1] * poDS->GetRasterXSize()) <= 360 &&
-                adfTempGeoTransform[3] <= 90 && adfTempGeoTransform[3] > -90 &&
-                (adfTempGeoTransform[3] +
-                 adfTempGeoTransform[5] * poDS->GetRasterYSize()) >= -90)
+            if (bAssumedLongLat && tmpGT[0] >= -180 && tmpGT[0] < 360 &&
+                (tmpGT[0] + tmpGT[1] * poDS->GetRasterXSize()) <= 360 &&
+                tmpGT[3] <= 90 && tmpGT[3] > -90 &&
+                (tmpGT[3] + tmpGT[5] * poDS->GetRasterYSize()) >= -90)
             {
 
                 poDS->bIsGeographic = true;
@@ -5055,9 +5037,9 @@ CPLErr netCDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /*                     SetGeoTransformNoUpdate()                        */
 /************************************************************************/
 
-void netCDFDataset::SetGeoTransformNoUpdate(double *padfTransform)
+void netCDFDataset::SetGeoTransformNoUpdate(const GDALGeoTransform &gt)
 {
-    memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
     m_bHasGeoTransform = true;
 }
 
@@ -5065,7 +5047,7 @@ void netCDFDataset::SetGeoTransformNoUpdate(double *padfTransform)
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr netCDFDataset::SetGeoTransform(double *padfTransform)
+CPLErr netCDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -5077,13 +5059,13 @@ CPLErr netCDFDataset::SetGeoTransform(double *padfTransform)
         return CE_Failure;
     }
 
-    CPLDebug("GDAL_netCDF", "SetGeoTransform(%f,%f,%f,%f,%f,%f)",
-             padfTransform[0], padfTransform[1], padfTransform[2],
-             padfTransform[3], padfTransform[4], padfTransform[5]);
+    CPLDebug("GDAL_netCDF", "SetGeoTransform(%f,%f,%f,%f,%f,%f)", gt[0], gt[1],
+             gt[2], gt[3], gt[4], gt[5]);
+
+    SetGeoTransformNoUpdate(gt);
 
     if (m_bHasProjection)
     {
-        SetGeoTransformNoUpdate(padfTransform);
 
         // For NC4/NC4C, writing both projection variables and data,
         // followed by redefining nodata value, cancels the projection
@@ -5093,7 +5075,6 @@ CPLErr netCDFDataset::SetGeoTransform(double *padfTransform)
         return AddProjectionVars(true, nullptr, nullptr);
     }
 
-    SetGeoTransformNoUpdate(padfTransform);
     return CE_None;
 }
 
@@ -5310,7 +5291,7 @@ std::string NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 {
     char *pszUnitsToWrite = nullptr;
     poSRS->exportToCF1(nullptr, nullptr, &pszUnitsToWrite, nullptr);
-    const std::string osRet = pszUnitsToWrite ? pszUnitsToWrite : std::string();
+    std::string osRet = pszUnitsToWrite ? pszUnitsToWrite : std::string();
     CPLFree(pszUnitsToWrite);
     return osRet;
 }
@@ -5593,8 +5574,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 CPLString osGeoTransform;
                 for (int i = 0; i < 6; i++)
                 {
-                    osGeoTransform +=
-                        CPLSPrintf("%.17g ", m_adfGeoTransform[i]);
+                    osGeoTransform += CPLSPrintf("%.17g ", m_gt[i]);
                 }
                 CPLDebug("GDAL_netCDF", "szGeoTransform = %s",
                          osGeoTransform.c_str());
@@ -5855,11 +5835,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 static_cast<double *>(CPLMalloc(nRasterYSize * sizeof(double)));
 
             // Get Y values.
-            const double dfY0 = (!bBottomUp) ? m_adfGeoTransform[3] :
+            const double dfY0 = (!bBottomUp) ? m_gt[3] :
                                              // Invert latitude values.
-                                    m_adfGeoTransform[3] +
-                                        (m_adfGeoTransform[5] * nRasterYSize);
-            const double dfDY = m_adfGeoTransform[5];
+                                    m_gt[3] + (m_gt[5] * nRasterYSize);
+            const double dfDY = m_gt[5];
 
             for (int j = 0; j < nRasterYSize; j++)
             {
@@ -5873,8 +5852,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             countX[0] = nRasterXSize;
 
             // Get X values.
-            const double dfX0 = m_adfGeoTransform[0];
-            const double dfDX = m_adfGeoTransform[1];
+            const double dfX0 = m_gt[0];
+            const double dfDX = m_gt[1];
 
             for (int i = 0; i < nRasterXSize; i++)
             {
@@ -6121,11 +6100,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
         else if (bWriteLonLat)
         {
             // Get latitude values.
-            const double dfY0 = (!bBottomUp) ? m_adfGeoTransform[3] :
+            const double dfY0 = (!bBottomUp) ? m_gt[3] :
                                              // Invert latitude values.
-                                    m_adfGeoTransform[3] +
-                                        (m_adfGeoTransform[5] * nRasterYSize);
-            const double dfDY = m_adfGeoTransform[5];
+                                    m_gt[3] + (m_gt[5] * nRasterYSize);
+            const double dfDY = m_gt[5];
 
             // Override lat values with the ones in GEOLOCATION/Y_VALUES.
             if (netCDFDataset::GetMetadataItem("Y_VALUES", "GEOLOCATION") !=
@@ -6173,8 +6151,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             size_t countLat[1] = {static_cast<size_t>(nRasterYSize)};
 
             // Get longitude values.
-            const double dfX0 = m_adfGeoTransform[0];
-            const double dfDX = m_adfGeoTransform[1];
+            const double dfX0 = m_gt[0];
+            const double dfDX = m_gt[1];
 
             padLonVal =
                 static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
@@ -6277,14 +6255,14 @@ bool netCDFDataset::AddGridMappingRef()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr netCDFDataset::GetGeoTransform(double *padfTransform)
+CPLErr netCDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     if (m_bHasGeoTransform)
         return CE_None;
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -8611,7 +8589,84 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_VERIFY_DIMS", "YES")) &&
         STARTS_WITH_CI(szConventions, "CF");
 
-    if (nd >= 2 && bCheckDims)
+    bool bYXBandOrder = false;
+    if (nd == 3)
+    {
+        // If there's a coordinates attributes, and the variable it points to
+        // are 2D variables indexed by the same first and second dimension than
+        // our variable of interest, then it is Y,X,Band order.
+        char *pszCoordinates = nullptr;
+        if (NCDFGetAttr(cdfid, var, "coordinates", &pszCoordinates) ==
+                CE_None &&
+            pszCoordinates)
+        {
+            const CPLStringList aosCoordinates(
+                NCDFTokenizeCoordinatesAttribute(pszCoordinates));
+            if (aosCoordinates.size() == 2)
+            {
+                // Test that each variable is longitude/latitude.
+                for (int i = 0; i < aosCoordinates.size(); i++)
+                {
+                    if (NCDFIsVarLongitude(cdfid, -1, aosCoordinates[i]) ||
+                        NCDFIsVarLatitude(cdfid, -1, aosCoordinates[i]))
+                    {
+                        int nOtherGroupId = -1;
+                        int nOtherVarId = -1;
+                        if (NCDFResolveVar(cdfid, aosCoordinates[i],
+                                           &nOtherGroupId,
+                                           &nOtherVarId) == CE_None)
+                        {
+                            int coordDimCount = 0;
+                            nc_inq_varndims(nOtherGroupId, nOtherVarId,
+                                            &coordDimCount);
+                            if (coordDimCount == 2)
+                            {
+                                int coordDimIds[2] = {0, 0};
+                                nc_inq_vardimid(nOtherGroupId, nOtherVarId,
+                                                coordDimIds);
+                                if (coordDimIds[0] == poDS->m_anDimIds[0] &&
+                                    coordDimIds[1] == poDS->m_anDimIds[1])
+                                {
+                                    bYXBandOrder = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        CPLFree(pszCoordinates);
+
+        if (!bYXBandOrder)
+        {
+            char szDim0Name[NC_MAX_NAME + 1] = {};
+            char szDim1Name[NC_MAX_NAME + 1] = {};
+            status = nc_inq_dimname(cdfid, poDS->m_anDimIds[0], szDim0Name);
+            NCDF_ERR(status);
+            status = nc_inq_dimname(cdfid, poDS->m_anDimIds[1], szDim1Name);
+            NCDF_ERR(status);
+
+            if (strcmp(szDim0Name, "number_of_lines") == 0 &&
+                strcmp(szDim1Name, "pixels_per_line") == 0)
+            {
+                // Like in PACE OCI products
+                bYXBandOrder = true;
+            }
+            else
+            {
+                // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
+                // dimension order is downtrack, crosstrack, bands
+                char szDim2Name[NC_MAX_NAME + 1] = {};
+                status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDim2Name);
+                NCDF_ERR(status);
+                bYXBandOrder = strcmp(szDim2Name, "bands") == 0 ||
+                               strcmp(szDim2Name, "band") == 0;
+            }
+        }
+    }
+
+    if (nd >= 2 && bCheckDims && !bYXBandOrder)
     {
         char szDimName1[NC_MAX_NAME + 1] = {};
         char szDimName2[NC_MAX_NAME + 1] = {};
@@ -8677,18 +8732,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-    }
-
-    // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
-    // dimension order is downtrack, crosstrack, bands
-    bool bYXBandOrder = false;
-    if (nd == 3)
-    {
-        char szDimName[NC_MAX_NAME + 1] = {};
-        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDimName);
-        NCDF_ERR(status);
-        bYXBandOrder =
-            strcmp(szDimName, "bands") == 0 || strcmp(szDimName, "band") == 0;
     }
 
     // Get X dimensions information.
@@ -9206,8 +9249,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     poDS->nBlockXSize = nXSize;
     poDS->nBlockYSize = 1;
     poDS->nBlocksPerBand =
-        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
-        * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
+        DIV_ROUND_UP((nYSize, poDS->nBlockYSize))
+        * DIV_ROUND_UP((nXSize, poDS->nBlockXSize));
         */
 
     // process options.
@@ -9702,11 +9745,11 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     // Copy geotransform.
     bool bGotGeoTransform = false;
-    double adfGeoTransform[6];
-    CPLErr eErr = poSrcDS->GetGeoTransform(adfGeoTransform);
+    GDALGeoTransform gt;
+    CPLErr eErr = poSrcDS->GetGeoTransform(gt);
     if (eErr == CE_None)
     {
-        poDS->SetGeoTransform(adfGeoTransform);
+        poDS->SetGeoTransform(gt);
         // Disable AddProjectionVars() from being called.
         bGotGeoTransform = true;
         poDS->m_bHasGeoTransform = false;
@@ -10206,22 +10249,17 @@ class GDALnetCDFDriver final : public GDALDriver
     GDALnetCDFDriver() = default;
 
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
-    {
-        if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
-        {
-            InitializeDCAPVirtualIO();
-        }
-        return GDALDriver::GetMetadataItem(pszName, pszDomain);
-    }
+                                const char *pszDomain) override;
 
     char **GetMetadata(const char *pszDomain) override
     {
+        std::lock_guard oLock(m_oMutex);
         InitializeDCAPVirtualIO();
         return GDALDriver::GetMetadata(pszDomain);
     }
 
   private:
+    std::mutex m_oMutex{};
     bool m_bInitialized = false;
 
     void InitializeDCAPVirtualIO()
@@ -10239,6 +10277,17 @@ class GDALnetCDFDriver final : public GDALDriver
         }
     }
 };
+
+const char *GDALnetCDFDriver::GetMetadataItem(const char *pszName,
+                                              const char *pszDomain)
+{
+    std::lock_guard oLock(m_oMutex);
+    if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
+    {
+        InitializeDCAPVirtualIO();
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
 
 void GDALRegister_netCDF()
 

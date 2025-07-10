@@ -239,7 +239,7 @@ def test_ogr_geom_polyhedral_surface():
     #        print(wkt_geom)
     #        return 'fail'
 
-    if ogrtest.have_geos() or ogrtest.have_sfcgal():
+    if ogrtest.have_geos():
         geom = ogr.CreateGeometryFromWkb(wkb_string)
         assert ps.Contains(geom), "Failure in Contains() of PolyhedralSurface"
 
@@ -349,7 +349,7 @@ def test_ogr_geom_tin():
         tin.GetGeometryCount() == geom_count
     ), "Added wrong geometry in TIN, error has code " + str(x)
 
-    if ogrtest.have_geos() or ogrtest.have_sfcgal():
+    if ogrtest.have_geos():
         point = tin.PointOnSurface()
         point_wkt = point.ExportToWkt()
         point_correct_wkt = "POINT EMPTY"
@@ -4905,3 +4905,16 @@ def test_ogr_subgeom_use_after_parent_free():
     del g
 
     assert exterior_ring.GetPointCount() > 0  # does not crash
+
+
+def test_ogr_geom_create_from_envelope():
+
+    srs = osr.SpatialReference(epsg=32145)
+    g = ogr.CreateGeometryFromEnvelope(424788, 25211, 581555, 279799, srs)
+
+    assert g.GetSpatialReference().IsSame(srs)
+
+    assert (
+        g.ExportToWkt()
+        == "POLYGON ((424788 25211,424788 279799,581555 279799,581555 25211,424788 25211))"
+    )

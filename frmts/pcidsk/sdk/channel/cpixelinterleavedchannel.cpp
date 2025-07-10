@@ -97,8 +97,8 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     else
     {
         int i;
-        uint8  *src = ((uint8 *)pixel_buffer) + image_offset;
-        uint8  *dst = (uint8 *) buffer;
+        const uint8  *src = pixel_buffer + image_offset;
+        uint8  *dst = static_cast<uint8 *>(buffer);
 
         if( pixel_size == 1 )
         {
@@ -218,8 +218,8 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
     else
     {
         int i;
-        uint8  *dst = ((uint8 *)pixel_buffer) + image_offset;
-        uint8  *src = (uint8 *) buffer;
+        uint8  *dst = pixel_buffer + image_offset;
+        const uint8  *src = static_cast<uint8 *>(buffer);
 
         if( pixel_size == 1 )
         {

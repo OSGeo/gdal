@@ -1024,3 +1024,87 @@ def test_create_numpy_types():
 
     with pytest.raises(Exception, match="must be a GDAL data type code or NumPy type"):
         drv.Create("", 1, 1, eType=[1, 2, 3])
+
+
+@pytest.mark.require_curl()
+@gdaltest.enable_exceptions()
+def test_gdal_open_non_accessible_object_on_cloud_storage():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            gdal.Open("/vsioss/i_do_not/exist.bin")
+
+
+def test_basic_test_create_copy_band():
+    mem_driver = gdal.GetDriverByName("MEM")
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).Fill(1)
+
+    out_ds = mem_driver.CreateCopy("", src_ds.GetRasterBand(1))
+    assert out_ds.GetRasterBand(1).Checksum() == 1
+
+
+def test_basic_window_type():
+
+    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    w1 = gdal.Window(10, 20, 30, 40)
+    assert w1 == (10, 20, 30, 40)
+
+    w2 = gdal.Window(10, 20, 30, 40)
+    assert w1 == w2
+
+    with gdal.Open("data/byte.tif") as ds:
+        w = gdal.Window(5, 6, 7, 8)
+        window_data = ds.ReadAsArray(*w)
+        assert window_data.shape == (w.ysize, w.xsize)
+
+    import copy
+
+    w3 = copy.copy(w2)
+    w3.xoff = 24
+    w3.yoff = 48
+    w3.xsize = 12
+    w3.ysize = 24
+    assert w3 == (24, 48, 12, 24)
+
+    w3[0] = 48
+    assert w3 == (48, 48, 12, 24)
+
+    assert w2.xoff == 10
+
+
+def test_basic_block_windows(tmp_vsimem):
+
+    windows = []
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif",
+        1050,
+        600,
+        options={"TILED": True, "BLOCKXSIZE": 512, "BLOCKYSIZE": 256},
+    ) as ds:
+        for window in ds.GetRasterBand(1).BlockWindows():
+            windows.append(window)
+
+        assert len(windows) == 9
+        assert all(type(x) is int for x in windows[0])
+
+        # equality between Window and tuple
+        assert windows[0] == (0, 0, 512, 256)
+        assert windows[1] == (512, 0, 512, 256)
+        assert windows[2] == (1024, 0, 1050 - 1024, 256)
+
+        assert windows[3] == gdal.Window(0, 256, 512, 256)
+        assert windows[4] == gdal.Window(512, 256, 512, 256)
+        assert windows[5] == gdal.Window(1024, 256, 1050 - 1024, 256)
+
+        assert windows[6] == [0, 512, 512, 600 - 512]
+        assert windows[7] == [512, 512, 512, 600 - 512]
+        assert windows[8] == [1024, 512, 1050 - 1024, 600 - 512]
+
+        assert windows[8].xoff == 1024
+        assert windows[8].yoff == 512
+        assert windows[8].xsize == 1050 - 1024
+        assert windows[8].ysize == 600 - 512

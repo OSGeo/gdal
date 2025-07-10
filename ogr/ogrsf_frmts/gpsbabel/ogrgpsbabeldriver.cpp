@@ -49,8 +49,9 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
              strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                     "$GPGGA") != nullptr)
         pszGPSBabelDriverName = "nmea";
-    else if (STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
-                            "OziExplorer"))
+    else if (STARTS_WITH_CI(
+                 reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                 "OziExplorer"))
         pszGPSBabelDriverName = "ozi";
     else if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                     "Grid") &&

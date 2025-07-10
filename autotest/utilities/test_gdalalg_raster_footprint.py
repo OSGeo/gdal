@@ -74,6 +74,18 @@ def test_gdalalg_raster_footprint_existing_output(tmp_vsimem):
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
     assert alg.Finalize()
+    ds.Close()
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    out_ds = gdal.OpenEx(out_filename, gdal.OF_UPDATE)
+    alg["output"] = out_ds
+    alg["append"] = True
+    assert alg.Run()
+    lyr = out_ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+    assert alg.Finalize()
+    out_ds.Close()
 
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"

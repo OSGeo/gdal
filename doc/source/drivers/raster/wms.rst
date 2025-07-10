@@ -81,7 +81,7 @@ other content before the ``<GDAL_WMS>`` element.
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
 <ClampRequests>false</ClampRequests>                                       Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)
-<UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+<UserAgent>GDAL WMS driver (https://gdal.org/frmt_wms.html)</UserAgent>    HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (https://gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
 <Accept>mimetype>/Accept>                                                  HTTP Accept header to specify the MIME type of the expected output of the server. Empty by default
 <UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
 <UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false).
@@ -293,8 +293,8 @@ band object.
    gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>" -75.704 39.75
 
 
-Internet Imaging Protocol (IIP) (GDAL 2.1 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Internet Imaging Protocol (IIP)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Access to images served through `IIP
 protocol <https://en.wikipedia.org/wiki/Internet_Imaging_Protocol>`__.
@@ -309,6 +309,24 @@ the full resolution dimension and the number of resolutions.
 
 The XML definition can then be generated with "gdal_translate
 IIP:http://foo.com/FIF=image_name out.xml -of WMS"
+
+
+International Image Interoperability Framework Image API (IIIF)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.12
+
+Access to images served through `IIIF Image API 3.0 <https://iiif.io/api/image/3.0>`__.
+
+If using the XML syntax, the ServerURL must point to the image identifier URL,
+such that :file:`{url}/info.json` exists.
+
+Otherwise it is also possible to use "IIIF:https://path/to/image/identifier"
+syntax as connection string, to retrieve from the server information on
+the full resolution dimension and the number of resolutions.
+
+The XML definition can then be generated with "gdal_translate
+IIIF:https://path/to/image/identifier out.xml -of WMS"
 
 Caching
 -------
@@ -352,7 +370,7 @@ Examples
     time. They are just here to demonstrate how to use the various services.
 
 
--  | `onearth_global_mosaic.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_onearth_global_mosaic.xml>`__
+-  | :source_file:`frmts/wms/frmt_wms_onearth_global_mosaic.xml`
      - Landsat mosaic from a `OnEarth <http://onearth.jpl.nasa.gov/>`__
      WMS server
 
@@ -367,20 +385,20 @@ Examples
    *Note : this particular server does no longer accept regular WMS
    queries.*
 
--  `metacarta_wmsc.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_metacarta_wmsc.xml>`__ - It is possible
+-  :source_file:`frmts/wms/frmt_wms_metacarta_wmsc.xml` - It is possible
    to configure a WMS Service conforming to a WMS-C cache by specifying
    a number of overviews and specifying the 'block size' as the tile
    size of the cache. The following example is a sample set up for a
    19-level "Global Profile" WMS-C cache.
 
--  | `tileservice_bmng.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_tileservice_bmng.xml>`__ -
+-  | :source_file:`frmts/wms/frmt_wms_tileservice_bmng.xml` -
      - TileService, Blue Marble NG (January)
 
--  | `tileservice_nysdop2004.xml <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_tileservice_nysdop2004.xml>`__
+-  | :source_file:`frmts/wms/frmt_wms_tileservice_nysdop2004.xml`
      - TileService, NYSDOP 2004
 
--  | `OpenStreetMap TMS Service
-     Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
+-  | OpenStreetMap TMS Service
+     Example :source_file:`frmts/wms/frmt_wms_openstreetmap_tms.xml`: Connect to
      OpenStreetMap tile service. Note that this file takes advantage of
      the tile cache; more information about configuring the tile cache
      settings is available above. Please also change the <UserAgent>, to avoid the
@@ -388,31 +406,34 @@ Examples
      big usage of it would be seen.
    | ``gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png``
 
--  | `MetaCarta TMS Layer Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_metacarta_tms.xml>`__,
+-  | MetaCarta TMS Layer Example :source_file:`frmts/wms/frmt_wms_metacarta_tms.xml`,
      accessing the default MetaCarta TMS layer.
    | ``gdal_translate -of PNG -outsize 512 256 frmt_wms_metacarta_tms.xml metacarta.png``
 
--  `BlueMarble Amazon S3 Example <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_bluemarble_s3_tms.xml>`__
+-  BlueMarble Amazon S3 Example :source_file:`frmts/wms/frmt_wms_bluemarble_s3_tms.xml`
    accessed with the TMS minidriver.
 
--  `Google Maps <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_googlemaps_tms.xml>`__ accessed with the TMS
+-  Google Maps :source_file:`frmts/wms/frmt_wms_googlemaps_tms.xml` accessed with the TMS
    minidriver.
 
--  `ArcGIS MapServer Tiles <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_arcgis_mapserver_tms.xml>`__
+-  ArcGIS MapServer Tiles :source_file:`frmts/wms/frmt_wms_arcgis_mapserver_tms.xml`
    accessed with the TMS minidriver.
 
--  OnEarth Tiled WMS `Clementine <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_twms_Clementine.xml>`__,
-   `daily <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_twms_daily.xml>`__, and `srtm <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_twms_srtm.xml>`__
+-  OnEarth Tiled WMS Clementine :source_file:`frmts/wms/frmt_twms_Clementine.xml`,
+   daily :source_file:`frmts/wms/frmt_twms_daily.xml`, and ``STRM`` :source_file:`frmts/wms/frmt_twms_srtm.xml`
    examples.
 
--  `VirtualEarth Aerial Layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_virtualearth.xml>`__ accessed
+-  VirtualEarth Aerial Layer :source_file:`frmts/wms/frmt_wms_virtualearth.xml` accessed
    with the VirtualEarth minidriver.
 
--  `ArcGIS online sample server layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_ags_arcgisonline.xml>`__
+-  ArcGIS online sample server layer :source_file:`frmts/wms/frmt_ags_arcgisonline.xml`
    accessed with the ArcGIS Server REST API minidriver.
 
--  `IIP online sample server layer <https://github.com/OSGeo/gdal/blob/master/frmts/wms/frmt_wms_iip.xml>`__ accessed with
+-  IIP online sample server layer :source_file:`frmts/wms/frmt_wms_iip.xml` accessed with
    the IIP minidriver.
+
+-  IIIF online sample server layer :source_file:`frmts/wms/frmt_wms_iiif.xml` accessed with
+   the IIIF minidriver.
 
 Open syntax
 -----------

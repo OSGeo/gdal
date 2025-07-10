@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -658,7 +659,8 @@ def test_hfa_vsimem():
 def test_hfa_proName():
 
     drv = gdal.GetDriverByName("HFA")
-    src_ds = gdal.Open("data/hfa/stateplane.vrt")
+    with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
+        src_ds = gdal.Open("data/hfa/stateplane.vrt")
     dst_ds = drv.CreateCopy("tmp/proname.img", src_ds)
 
     del dst_ds
@@ -1274,3 +1276,17 @@ def test_hfa_read_elevation_units():
 
 ###############################################################################
 #
+
+
+def test_hfa_read_nan_nodata(tmp_vsimem):
+
+    filename = tmp_vsimem / "test.img"
+    ds = gdal.GetDriverByName("HFA").Create(filename, 1, 1, 1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(float("nan"))
+    ds.Close()
+
+    with gdaltest.disable_exceptions():
+        gdal.ErrorReset()
+        with gdal.Open(filename) as ds:
+            assert gdal.GetLastErrorMsg() == ""
+            assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())

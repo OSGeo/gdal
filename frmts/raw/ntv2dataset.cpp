@@ -88,7 +88,7 @@ class NTv2Dataset final : public RawDataset
     vsi_l_offset nGridOffset = 0;
 
     OGRSpatialReference m_oSRS{};
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     void CaptureMetadataItem(const char *pszItem);
 
@@ -102,7 +102,7 @@ class NTv2Dataset final : public RawDataset
     NTv2Dataset();
     ~NTv2Dataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -127,13 +127,6 @@ NTv2Dataset::NTv2Dataset()
 {
     m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 0.0;  // TODO(schwehr): Should this be 1.0?
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 0.0;  // TODO(schwehr): Should this be 1.0?
 }
 
 /************************************************************************/
@@ -514,12 +507,12 @@ bool NTv2Dataset::OpenGrid(const char *pachHeader, vsi_l_offset nGridOffsetIn)
     /* -------------------------------------------------------------------- */
     /*      Setup georeferencing.                                           */
     /* -------------------------------------------------------------------- */
-    adfGeoTransform[0] = (w_long - long_inc * 0.5) / 3600.0;
-    adfGeoTransform[1] = long_inc / 3600.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = (n_lat + lat_inc * 0.5) / 3600.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = (-1 * lat_inc) / 3600.0;
+    m_gt[0] = (w_long - long_inc * 0.5) / 3600.0;
+    m_gt[1] = long_inc / 3600.0;
+    m_gt[2] = 0.0;
+    m_gt[3] = (n_lat + lat_inc * 0.5) / 3600.0;
+    m_gt[4] = 0.0;
+    m_gt[5] = (-1 * lat_inc) / 3600.0;
 
     return true;
 }
@@ -544,10 +537,10 @@ void NTv2Dataset::CaptureMetadataItem(const char *pszItem)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NTv2Dataset::GetGeoTransform(double *padfTransform)
+CPLErr NTv2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 

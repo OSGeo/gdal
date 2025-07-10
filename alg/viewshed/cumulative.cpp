@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "cpl_worker_thread_pool.h"
+#include "memdataset.h"
 
 #include "combiner.h"
 #include "cumulative.h"
@@ -144,12 +145,8 @@ void Cumulative::runExecutor(const std::string &srcFilename, Progress &progress,
         Location loc;
         while (!err && m_observerQueue.pop(loc))
         {
-            GDALDriver *memDriver =
-                GetGDALDriverManager()->GetDriverByName("MEM");
-            DatasetPtr dstDs(memDriver ? memDriver->Create("", m_extent.xSize(),
-                                                           m_extent.ySize(), 1,
-                                                           GDT_Byte, nullptr)
-                                       : nullptr);
+            DatasetPtr dstDs(MEMDataset::Create(
+                "", m_extent.xSize(), m_extent.ySize(), 1, GDT_Byte, nullptr));
             if (!dstDs)
             {
                 err = true;

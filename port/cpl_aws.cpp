@@ -62,6 +62,8 @@ static std::string gosSSOStartURL;
 static std::string gosSSOAccountID;
 static std::string gosSSORoleName;
 
+constexpr const char *AWS_DEBUG_KEY = "AWS";
+
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
 /************************************************************************/
@@ -212,7 +214,8 @@ std::string CPLGetAWS_SIGN4_Signature(
     osCanonicalRequest += osXAMZContentSHA256;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osCanonicalRequest='%s'", osCanonicalRequest.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "osCanonicalRequest='%s'",
+             osCanonicalRequest.c_str());
 #endif
 
     /* -------------------------------------------------------------------- */
@@ -233,7 +236,7 @@ std::string CPLGetAWS_SIGN4_Signature(
     osStringToSign += CPLGetLowerCaseHexSHA256(osCanonicalRequest);
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osStringToSign='%s'", osStringToSign.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "osStringToSign='%s'", osStringToSign.c_str());
 #endif
 
     /* -------------------------------------------------------------------- */
@@ -262,7 +265,7 @@ std::string CPLGetAWS_SIGN4_Signature(
 #ifdef DEBUG_VERBOSE
     std::string osSigningKey(
         CPLGetLowerCaseHex(abySigningKeyIn, CPL_SHA256_HASH_SIZE));
-    CPLDebug("S3", "osSigningKey='%s'", osSigningKey.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "osSigningKey='%s'", osSigningKey.c_str());
 #endif
 
     /* -------------------------------------------------------------------- */
@@ -276,7 +279,7 @@ std::string CPLGetAWS_SIGN4_Signature(
         CPLGetLowerCaseHex(abySignature, CPL_SHA256_HASH_SIZE));
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osSignature='%s'", osSignature.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "osSignature='%s'", osSignature.c_str());
 #endif
 
     return osSignature;
@@ -328,7 +331,7 @@ std::string CPLGetAWS_SIGN4_Authorization(
     osAuthorization += osSignature;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osAuthorization='%s'", osAuthorization.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "osAuthorization='%s'", osAuthorization.c_str());
 #endif
 
     return osAuthorization;
@@ -414,6 +417,10 @@ void VSIS3HandleHelper::RebuildURL()
                        m_bUseVirtualHosting);
     m_osURL += GetQueryString(false);
 }
+
+IVSIS3LikeHandleHelper::IVSIS3LikeHandleHelper() = default;
+
+IVSIS3LikeHandleHelper::~IVSIS3LikeHandleHelper() = default;
 
 /************************************************************************/
 /*                        GetBucketAndObjectKey()                       */
@@ -599,8 +606,9 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
             CPLGetConfigOption("CPL_AWS_CHECK_HYPERVISOR_UUID", "");
         if (opt[0])
         {
-            CPLDebug("AWS", "CPL_AWS_CHECK_HYPERVISOR_UUID is deprecated. Use "
-                            "CPL_AWS_AUTODETECT_EC2 instead");
+            CPLDebug(AWS_DEBUG_KEY,
+                     "CPL_AWS_CHECK_HYPERVISOR_UUID is deprecated. Use "
+                     "CPL_AWS_AUTODETECT_EC2 instead");
             if (!CPLTestBool(opt))
             {
                 return EC2InstanceCertainty::MAYBE;
@@ -704,7 +712,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
                                                         "AWS_ROLE_ARN", "");
     if (roleArn.empty())
     {
-        CPLDebug("AWS", "AWS_ROLE_ARN configuration option not defined");
+        CPLDebug(AWS_DEBUG_KEY,
+                 "AWS_ROLE_ARN configuration option not defined");
         return false;
     }
 
@@ -716,7 +725,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
     if (webIdentityTokenFile.empty())
     {
         CPLDebug(
-            "AWS",
+            AWS_DEBUG_KEY,
             "AWS_WEB_IDENTITY_TOKEN_FILE configuration option not defined");
         return false;
     }
@@ -743,7 +752,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
     std::string webIdentityToken;
     if (!ReadAWSTokenFile(webIdentityTokenFile, webIdentityToken))
     {
-        CPLDebug("AWS", "%s is empty", webIdentityTokenFile.c_str());
+        CPLDebug(AWS_DEBUG_KEY, "%s is empty", webIdentityTokenFile.c_str());
         return false;
     }
 
@@ -800,7 +809,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
         gnGlobalExpiration = nExpirationUnix;
-        CPLDebug("AWS", "Storing AIM credentials until %s",
+        CPLDebug(AWS_DEBUG_KEY, "Storing AIM credentials until %s",
                  osExpiration.c_str());
     }
     return !osAccessKeyId.empty() && !osSecretAccessKey.empty() &&
@@ -839,7 +848,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
         osPathForOption.c_str(), "CPL_AWS_EC2_API_ROOT_URL",
         osEC2DefaultURL.c_str()));
     // coverity[tainted_data]
-    const std::string osECSFullURI(VSIGetPathSpecificOption(
+    std::string osECSFullURI(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_FULL_URI", ""));
     // coverity[tainted_data]
     const std::string osECSRelativeURI(
@@ -856,7 +865,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                                        ""));
 
     // coverity[tainted_data]
-    const std::string osECSTokenValue(
+    std::string osECSTokenValue(
         (osECSFullURI.empty() && osECSRelativeURI.empty() &&
          !osECSTokenFile.empty())
             ? std::string()
@@ -869,19 +878,19 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     {
         if (!ReadAWSTokenFile(osECSTokenFile, osECSToken))
         {
-            CPLDebug("AWS", "%s is empty", osECSTokenFile.c_str());
+            CPLDebug(AWS_DEBUG_KEY, "%s is empty", osECSTokenFile.c_str());
         }
     }
     else if (!osECSTokenValue.empty())
     {
-        osECSToken = osECSTokenValue;
+        osECSToken = std::move(osECSTokenValue);
     }
 
     std::string osToken;
     if (!osECSFullURI.empty())
     {
         // Cf https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
-        osURLRefreshCredentials = osECSFullURI;
+        osURLRefreshCredentials = std::move(osECSFullURI);
     }
     else if (osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty())
     {
@@ -942,7 +951,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                             if (psResult2->nStatus == 0 &&
                                 psResult2->pabyData != nullptr)
                             {
-                                CPLDebug("AWS",
+                                CPLDebug(AWS_DEBUG_KEY,
                                          "/latest/api/token EC2 IMDSv2 request "
                                          "timed out, but /latest/metadata "
                                          "succeeded. "
@@ -1046,7 +1055,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
         gnGlobalExpiration = nExpirationUnix;
-        CPLDebug("AWS", "Storing AIM credentials until %s",
+        CPLDebug(AWS_DEBUG_KEY, "Storing AIM credentials until %s",
                  osExpiration.c_str());
     }
     return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
@@ -1192,7 +1201,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     const std::string osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
-    const std::string osDotAws(GetAWSRootDirectory());
+    std::string osDotAws(GetAWSRootDirectory());
 
     // Read first ~/.aws/credential file
 
@@ -1224,7 +1233,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     else
     {
-        osConfig = osDotAws;
+        osConfig = std::move(osDotAws);
         osConfig += GetDirSeparator();
         osConfig += "config";
     }
@@ -1255,7 +1264,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                 const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if (pszKey && pszValue)
                 {
-                    // CPLDebugOnly("S3", "oMapSSOSessions[%s][%s] = %s",
+                    // CPLDebugOnly(AWS_DEBUG_KEY, "oMapSSOSessions[%s][%s] = %s",
                     //              osSSOSession.c_str(), pszKey, pszValue);
                     oMapSSOSessions[osSSOSession][pszKey] = pszValue;
                 }
@@ -1485,7 +1494,7 @@ static bool GetTemporaryCredentialsForRole(
                 }
                 else
                 {
-                    CPLDebug("S3", "%s",
+                    CPLDebug(AWS_DEBUG_KEY, "%s",
                              reinterpret_cast<char *>(psResult->pabyData));
                 }
             }
@@ -1762,7 +1771,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                                      "AWS_ACCESS_KEY_ID", ""));
         if (osAccessKeyId.empty())
         {
-            VSIError(VSIE_AWSInvalidCredentials,
+            VSIError(VSIE_InvalidCredentials,
                      "AWS_ACCESS_KEY_ID configuration option not defined");
             return false;
         }
@@ -1866,7 +1875,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                                         osSessionToken))
                 {
                     VSIError(
-                        VSIE_AWSInvalidCredentials,
+                        VSIE_InvalidCredentials,
                         "Cannot retrieve credentials for source profile %s",
                         osSourceProfile.c_str());
                     return false;
@@ -1883,7 +1892,8 @@ bool VSIS3HandleHelper::GetConfiguration(
                     osTempSecretAccessKey, osTempAccessKeyId,
                     osTempSessionToken, osExpiration))
             {
-                CPLDebug("S3", "Using assumed role %s", osRoleArn.c_str());
+                CPLDebug(AWS_DEBUG_KEY, "Using assumed role %s",
+                         osRoleArn.c_str());
                 {
                     // Store global variables to be able to reuse the
                     // temporary credentials
@@ -1923,7 +1933,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                     osTempSecretAccessKey, osTempAccessKeyId,
                     osTempSessionToken, osExpirationEpochInMS))
             {
-                CPLDebug("S3", "Using SSO %s", osSSOStartURL.c_str());
+                CPLDebug(AWS_DEBUG_KEY, "Using SSO %s", osSSOStartURL.c_str());
                 {
                     // Store global variables to be able to reuse the
                     // temporary credentials
@@ -1984,8 +1994,8 @@ bool VSIS3HandleHelper::GetConfiguration(
         "For unauthenticated requests on public resources, set the "
         "AWS_NO_SIGN_REQUEST configuration option to YES.",
         osCredentials.c_str());
-    CPLDebug("GS", "%s", osMsg.c_str());
-    VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
+    CPLDebug(AWS_DEBUG_KEY, "%s", osMsg.c_str());
+    VSIError(VSIE_InvalidCredentials, "%s", osMsg.c_str());
 
     return false;
 }
@@ -2058,13 +2068,13 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
     // This variable overrides the default region of the in-use profile, if
     // set."
-    const std::string osDefaultRegion = CSLFetchNameValueDef(
+    std::string osDefaultRegion = CSLFetchNameValueDef(
         papszOptions, "AWS_DEFAULT_REGION",
         VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_REGION",
                                  ""));
     if (!osDefaultRegion.empty())
     {
-        osRegion = osDefaultRegion;
+        osRegion = std::move(osDefaultRegion);
     }
 
     std::string osEndpoint = VSIGetPathSpecificOption(
@@ -2312,8 +2322,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
                                           bool bSetError)
 {
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "%s", pszErrorMsg);
-    CPLDebug("S3", "%s", pszHeaders ? pszHeaders : "");
+    CPLDebug(AWS_DEBUG_KEY, "%s", pszErrorMsg);
+    CPLDebug(AWS_DEBUG_KEY, "%s", pszHeaders ? pszHeaders : "");
 #endif
 
     if (!STARTS_WITH(pszErrorMsg, "<?xml") &&
@@ -2321,7 +2331,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "Invalid AWS response: %s",
+                     pszErrorMsg);
         }
         return false;
     }
@@ -2331,8 +2342,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
     {
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed AWS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -2343,8 +2354,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         CPLDestroyXMLNode(psTree);
         if (bSetError)
         {
-            VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                     pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError,
+                     "Malformed AWS XML response: %s", pszErrorMsg);
         }
         return false;
     }
@@ -2358,13 +2369,13 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             CPLDestroyXMLNode(psTree);
             if (bSetError)
             {
-                VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                         pszErrorMsg);
+                VSIError(VSIE_ObjectStorageGenericError,
+                         "Malformed AWS XML response: %s", pszErrorMsg);
             }
             return false;
         }
         SetRegion(pszRegion);
-        CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
+        CPLDebug(AWS_DEBUG_KEY, "Switching to region %s", m_osRegion.c_str());
         CPLDestroyXMLNode(psTree);
 
         VSIS3UpdateParams::UpdateMapFromHandle(this);
@@ -2386,8 +2397,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             CPLDestroyXMLNode(psTree);
             if (bSetError)
             {
-                VSIError(VSIE_AWSError, "Malformed AWS XML response: %s",
-                         pszErrorMsg);
+                VSIError(VSIE_ObjectStorageGenericError,
+                         "Malformed AWS XML response: %s", pszErrorMsg);
             }
             return false;
         }
@@ -2420,9 +2431,10 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
                 SetEndpoint(
                     CPLSPrintf("s3.%s.amazonaws.com", osRegion.c_str()));
                 SetRegion(osRegion.c_str());
-                CPLDebug("S3", "Switching to endpoint %s",
+                CPLDebug(AWS_DEBUG_KEY, "Switching to endpoint %s",
                          m_osEndpoint.c_str());
-                CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
+                CPLDebug(AWS_DEBUG_KEY, "Switching to region %s",
+                         m_osRegion.c_str());
                 CPLDestroyXMLNode(psTree);
                 if (!bIsTemporaryRedirect)
                     VSIS3UpdateParams::UpdateMapFromHandle(this);
@@ -2430,11 +2442,12 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             }
 
             m_bUseVirtualHosting = true;
-            CPLDebug("S3", "Switching to virtual hosting");
+            CPLDebug(AWS_DEBUG_KEY, "Switching to virtual hosting");
         }
         SetEndpoint(m_bUseVirtualHosting ? pszEndpoint + m_osBucket.size() + 1
                                          : pszEndpoint);
-        CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
+        CPLDebug(AWS_DEBUG_KEY, "Switching to endpoint %s",
+                 m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
 
         if (!bIsTemporaryRedirect)
@@ -2451,27 +2464,27 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
 
         if (pszMessage == nullptr)
         {
-            VSIError(VSIE_AWSError, "%s", pszErrorMsg);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszErrorMsg);
         }
         else if (EQUAL(pszCode, "AccessDenied"))
         {
-            VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);
+            VSIError(VSIE_AccessDenied, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchBucket"))
         {
-            VSIError(VSIE_AWSBucketNotFound, "%s", pszMessage);
+            VSIError(VSIE_BucketNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "NoSuchKey"))
         {
-            VSIError(VSIE_AWSObjectNotFound, "%s", pszMessage);
+            VSIError(VSIE_ObjectNotFound, "%s", pszMessage);
         }
         else if (EQUAL(pszCode, "SignatureDoesNotMatch"))
         {
-            VSIError(VSIE_AWSSignatureDoesNotMatch, "%s", pszMessage);
+            VSIError(VSIE_SignatureDoesNotMatch, "%s", pszMessage);
         }
         else
         {
-            VSIError(VSIE_AWSError, "%s", pszMessage);
+            VSIError(VSIE_ObjectStorageGenericError, "%s", pszMessage);
         }
     }
 

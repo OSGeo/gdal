@@ -22,10 +22,7 @@
 /*                    OGRGPSBabelWriteDataSource()                      */
 /************************************************************************/
 
-OGRGPSBabelWriteDataSource::OGRGPSBabelWriteDataSource()
-    : pszGPSBabelDriverName(nullptr), pszFilename(nullptr), poGPXDS(nullptr)
-{
-}
+OGRGPSBabelWriteDataSource::OGRGPSBabelWriteDataSource() = default;
 
 /************************************************************************/
 /*                  ~OGRGPSBabelWriteDataSource()                       */
@@ -159,7 +156,9 @@ int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
         }
 
         pszGPSBabelDriverName = CPLStrdup(pszNameIn + 9);
-        *(strchr(pszGPSBabelDriverName, ':')) = '\0';
+        char *nextColon = strchr(pszGPSBabelDriverName, ':');
+        if (nextColon)
+            *nextColon = 0;
 
         pszFilename = CPLStrdup(pszSep + 1);
     }

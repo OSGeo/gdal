@@ -370,7 +370,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                                                  "GS_ACCESS_KEY_ID", "");
         if (osAccessKeyId.empty())
         {
-            VSIError(VSIE_AWSInvalidCredentials,
+            VSIError(VSIE_InvalidCredentials,
                      "GS_ACCESS_KEY_ID configuration option not defined");
             bFirstTimeForDebugMessage = false;
             return false;
@@ -720,7 +720,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
         osCredentials.c_str());
 
     CPLDebug("GS", "%s", osMsg.c_str());
-    VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
+    VSIError(VSIE_InvalidCredentials, "%s", osMsg.c_str());
     return false;
 }
 

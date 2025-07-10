@@ -909,3 +909,31 @@ def test_gdalalg_vector_pipeline_geom_set_type():
     assert out_lyr.GetGeomType() == ogr.wkbPoint25D
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(out_f, "POINT Z (3 0 0)")
+
+
+def test_gdalalg_vector_pipeline_help():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} vector pipeline --help")
+    assert out.startswith("Usage: gdal vector pipeline [OPTIONS] <PIPELINE>")
+    assert "* read [OPTIONS] <INPUT>" in out
+    assert "* write [OPTIONS] <OUTPUT>" in out
+
+    out = gdaltest.runexternal(f"{gdal_path} vector pipeline --progress --help")
+    assert out.startswith("Usage: gdal vector pipeline [OPTIONS] <PIPELINE>")
+    assert "* read [OPTIONS] <INPUT>" in out
+    assert "* write [OPTIONS] <OUTPUT>" in out
+
+    out = gdaltest.runexternal(f"{gdal_path} vector pipeline read --help")
+    assert out.startswith("Usage: read [OPTIONS] <INPUT>")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} vector pipeline read foo.shp ! select --help"
+    )
+    assert out.startswith("Usage: select [OPTIONS] <FIELDS>")

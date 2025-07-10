@@ -69,7 +69,7 @@ class SRPDataset final : public GDALPamDataset
     ~SRPDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     char **GetMetadata(const char *pszDomain = "") override;
 
@@ -138,7 +138,7 @@ double SRPRasterBand::GetNoDataValue(int *pbSuccess)
 GDALColorInterp SRPRasterBand::GetColorInterpretation()
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
 
     if (l_poDS->oCT.GetColorEntryCount() > 0)
         return GCI_PaletteIndex;
@@ -153,7 +153,7 @@ GDALColorInterp SRPRasterBand::GetColorInterpretation()
 GDALColorTable *SRPRasterBand::GetColorTable()
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
 
     if (l_poDS->oCT.GetColorEntryCount() > 0)
         return &(l_poDS->oCT);
@@ -168,7 +168,7 @@ GDALColorTable *SRPRasterBand::GetColorTable()
 CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    SRPDataset *l_poDS = (SRPDataset *)this->poDS;
+    SRPDataset *l_poDS = cpl::down_cast<SRPDataset *>(poDS);
     vsi_l_offset offset;
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
@@ -376,7 +376,7 @@ const OGRSpatialReference *SRPDataset::GetSpatialRef() const
 /*                        GetGeoTransform()                             */
 /************************************************************************/
 
-CPLErr SRPDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (EQUAL(osProduct, "ASRP"))
     {
@@ -385,49 +385,49 @@ CPLErr SRPDataset::GetGeoTransform(double *padfGeoTransform)
         if (ZNA == 9)
         {
             // North Polar Case
-            padfGeoTransform[0] = 111319.4907933 * (90.0 - PSO / 3600.0) *
-                                  sin(LSO * M_PI / 648000.0);
-            padfGeoTransform[1] = 40075016.68558 / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = -111319.4907933 * (90.0 - PSO / 3600.0) *
-                                  cos(LSO * M_PI / 648000.0);
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -40075016.68558 / ARV;
+            gt[0] = 111319.4907933 * (90.0 - PSO / 3600.0) *
+                    sin(LSO * M_PI / 648000.0);
+            gt[1] = 40075016.68558 / ARV;
+            gt[2] = 0.0;
+            gt[3] = -111319.4907933 * (90.0 - PSO / 3600.0) *
+                    cos(LSO * M_PI / 648000.0);
+            gt[4] = 0.0;
+            gt[5] = -40075016.68558 / ARV;
         }
         else if (ZNA == 18)
         {
             // South Polar Case
-            padfGeoTransform[0] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                                  sin(LSO * M_PI / 648000.0);
-            padfGeoTransform[1] = 40075016.68558 / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                                  cos(LSO * M_PI / 648000.0);
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -40075016.68558 / ARV;
+            gt[0] = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                    sin(LSO * M_PI / 648000.0);
+            gt[1] = 40075016.68558 / ARV;
+            gt[2] = 0.0;
+            gt[3] = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                    cos(LSO * M_PI / 648000.0);
+            gt[4] = 0.0;
+            gt[5] = -40075016.68558 / ARV;
         }
         else
         {
             if (BRV == 0)
                 return CE_Failure;
-            padfGeoTransform[0] = LSO / 3600.0;
-            padfGeoTransform[1] = 360. / ARV;
-            padfGeoTransform[2] = 0.0;
-            padfGeoTransform[3] = PSO / 3600.0;
-            padfGeoTransform[4] = 0.0;
-            padfGeoTransform[5] = -360. / BRV;
+            gt[0] = LSO / 3600.0;
+            gt[1] = 360. / ARV;
+            gt[2] = 0.0;
+            gt[3] = PSO / 3600.0;
+            gt[4] = 0.0;
+            gt[5] = -360. / BRV;
         }
 
         return CE_None;
     }
     else if (EQUAL(osProduct, "USRP"))
     {
-        padfGeoTransform[0] = LSO;
-        padfGeoTransform[1] = LOD;
-        padfGeoTransform[2] = 0.0;
-        padfGeoTransform[3] = PSO;
-        padfGeoTransform[4] = 0.0;
-        padfGeoTransform[5] = -LAD;
+        gt[0] = LSO;
+        gt[1] = LOD;
+        gt[2] = 0.0;
+        gt[3] = PSO;
+        gt[4] = 0.0;
+        gt[5] = -LAD;
         return CE_None;
     }
 
@@ -537,8 +537,9 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
         if (field == nullptr)
             return false;
 
-        DDFFieldDefn *fieldDefn = field->GetFieldDefn();
-        DDFSubfieldDefn *subfieldDefn = fieldDefn->FindSubfieldDefn("TSI");
+        const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+        const DDFSubfieldDefn *subfieldDefn =
+            fieldDefn->FindSubfieldDefn("TSI");
         if (subfieldDefn == nullptr)
             return false;
 
@@ -1394,7 +1395,7 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             const char *pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
             if (pszBAD == nullptr || strlen(pszBAD) != 12)
                 continue;
-            CPLString osBAD = pszBAD;
+            std::string osBAD = pszBAD;
             {
                 char *c = (char *)strchr(osBAD.c_str(), ' ');
                 if (c)
@@ -1405,12 +1406,12 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             /* Build full IMG file name from BAD value */
             const CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
 
-            const CPLString osFileName =
+            std::string osFileName =
                 CPLFormFilenameSafe(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
-            if (VSIStatL(osFileName, &sStatBuf) == 0)
+            if (VSIStatL(osFileName.c_str(), &sStatBuf) == 0)
             {
-                osBAD = osFileName;
+                osBAD = std::move(osFileName);
                 CPLDebug("SRP", "Building IMG full file name : %s",
                          osBAD.c_str());
             }

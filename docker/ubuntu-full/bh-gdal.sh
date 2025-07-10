@@ -23,7 +23,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/"
+        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/" || /bin/true
         echo "Finished"
     fi
     if [ -n "${WITH_CCACHE:-}" ]; then
@@ -99,7 +99,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" || /bin/true
         echo "Finished"
     fi
     if [ -n "${WITH_CCACHE:-}" ]; then

@@ -49,14 +49,15 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer(
             SQLCHAR szTableName[256];
             SQLSMALLINT nTableNameLength = 0;
 
-            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1),
+            SQLColAttribute(poStmt->GetStatement(),
+                            static_cast<SQLSMALLINT>(iColumn + 1),
                             SQL_DESC_TABLE_NAME, szTableName,
                             sizeof(szTableName), &nTableNameLength, nullptr);
 
             if (nTableNameLength > 0)
             {
                 OGRLayer *poBaseLayer =
-                    poDS->GetLayerByName((const char *)szTableName);
+                    poDS->GetLayerByName(reinterpret_cast<char *>(szTableName));
                 if (poBaseLayer != nullptr &&
                     EQUAL(poBaseLayer->GetGeometryColumn(),
                           poStmt->GetColName(iColumn)))
@@ -89,20 +90,21 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer(
             SQLCHAR szUDTTypeName[256];
             SQLSMALLINT nUDTTypeNameLength = 0;
 
-            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1),
-                            SQL_CA_SS_UDT_TYPE_NAME, szUDTTypeName,
-                            sizeof(szUDTTypeName), &nUDTTypeNameLength,
-                            nullptr);
+            SQLColAttribute(
+                poStmt->GetStatement(), static_cast<SQLSMALLINT>(iColumn + 1),
+                SQL_CA_SS_UDT_TYPE_NAME, szUDTTypeName, sizeof(szUDTTypeName),
+                &nUDTTypeNameLength, nullptr);
 
             // For some reason on unixODBC, a UCS2 string is returned
-            if (EQUAL((char *)szUDTTypeName, "geometry") ||
+            if (EQUAL(reinterpret_cast<char *>(szUDTTypeName), "geometry") ||
                 (nUDTTypeNameLength == 16 &&
                  memcmp(szUDTTypeName, "g\0e\0o\0m\0e\0t\0r\0y", 16) == 0))
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
                 pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             }
-            else if (EQUAL((char *)szUDTTypeName, "geography") ||
+            else if (EQUAL(reinterpret_cast<char *>(szUDTTypeName),
+                           "geography") ||
                      (nUDTTypeNameLength == 18 &&
                       memcmp(szUDTTypeName, "g\0e\0o\0g\0r\0a\0p\0h\0y", 18) ==
                           0))

@@ -21,7 +21,6 @@ add_gdal_driver(TARGET ogr_Parquet
                 CORE_SOURCES
                         ogrparquetdrivercore.cpp
                 PLUGIN_CAPABLE
-                STRONG_CXX_WFLAGS
                 NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_Parquet)
@@ -70,4 +69,13 @@ if (GDAL_USE_ARROWDATASET)
         endif()
     endif()
     target_sources(ogr_Parquet PRIVATE ogrparquetdatasetlayer.cpp)
+endif()
+
+if (GDAL_USE_ARROWCOMPUTE)
+    target_compile_definitions(ogr_Parquet PRIVATE -DGDAL_USE_ARROWCOMPUTE)
+    if(ARROW_USE_STATIC_LIBRARIES)
+        gdal_target_link_libraries(ogr_Parquet PRIVATE ArrowCompute::arrow_compute_static)
+    else()
+        gdal_target_link_libraries(ogr_Parquet PRIVATE ArrowCompute::arrow_compute_shared)
+    endif()
 endif()

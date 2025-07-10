@@ -22,7 +22,7 @@ namespace PCIDSK
     class Mutex
     {
     public:
-        virtual ~Mutex() {}
+        virtual ~Mutex();
 
         virtual int  Acquire() = 0;
         virtual int  Release() = 0;

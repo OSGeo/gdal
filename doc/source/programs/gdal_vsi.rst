@@ -12,7 +12,7 @@
 
 .. Index:: gdal vsi
 
-The subcommands of :program:`gdal vs` allow manipulation of files located
+The subcommands of :program:`gdal vsi` allow manipulation of files located
 on the :ref:`virtual_file_systems`.
 
 Synopsis

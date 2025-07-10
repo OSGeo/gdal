@@ -13,6 +13,7 @@
 
 #ifdef ENABLE_UFFD
 
+#include <algorithm>
 #include <cstdlib>
 #include <cinttypes>
 #include <cstring>
@@ -292,8 +293,10 @@ static void cpl_uffd_fault_handler(void *ptr)
                 // any such threads have been handled by them, so sleep for
                 // 1/100th of a second.
                 // Coverity complains about sleeping under a mutex
+#ifndef __COVERITY__
                 // coverity[sleep]
                 usleep(10000);
+#endif
                 if (sigaction(SIGSEGV, &old_segv, nullptr) == -1)
                 {
                     CPLError(
@@ -457,7 +460,7 @@ cpl_uffd_context *CPLCreateUserFaultMapping(const char *pszFilename,
     ctx->page_limit = get_page_limit();
     ctx->pages_used = 0;
     ctx->file_size = static_cast<size_t>(statbuf.st_size);
-    ctx->page_size = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+    ctx->page_size = static_cast<size_t>(std::max(1L, sysconf(_SC_PAGESIZE)));
     ctx->vma_size = static_cast<size_t>(
         ((static_cast<vsi_l_offset>(statbuf.st_size) / ctx->page_size) + 1) *
         ctx->page_size);

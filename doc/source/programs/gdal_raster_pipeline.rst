@@ -12,14 +12,22 @@
 
 .. Index:: gdal raster pipeline
 
+Description
+-----------
+
+:program:`gdal raster pipeline` can be used to process a raster dataset and
+perform various processing steps that accept raster and generate raster.
+
+For pipelines mixing raster and vector, consult :ref:`gdal_pipeline`.
+
 Synopsis
 --------
 
 .. program-output:: gdal raster pipeline --help-doc=main
 
-A pipeline chains several steps, separated with the `!` (quotation mark) character.
-The first step must be ``read``, and the last one ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read`` and ``write``,
+A pipeline chains several steps, separated with the `!` (exclamation mark) character.
+The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+own positional or non-positional arguments. Apart from ``read``, ``calc``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -27,6 +35,24 @@ Potential steps are:
 * read
 
 .. program-output:: gdal raster pipeline --help-doc=read
+
+* calc
+
+.. program-output:: gdal raster pipeline --help-doc=calc
+
+Details for options can be found in :ref:`gdal_raster_calc`.
+
+* mosaic
+
+.. program-output:: gdal raster pipeline --help-doc=mosaic
+
+Details for options can be found in :ref:`gdal_raster_mosaic`.
+
+* stack
+
+.. program-output:: gdal raster pipeline --help-doc=stack
+
+Details for options can be found in :ref:`gdal_raster_stack`.
 
 * aspect
 
@@ -46,17 +72,47 @@ Details for options can be found in :ref:`gdal_raster_clip`.
 
 Details for options can be found in :ref:`gdal_raster_color_map`.
 
+* color-merge
+
+.. program-output:: gdal raster pipeline --help-doc=color-merge
+
+Details for options can be found in :ref:`gdal_raster_color_merge`.
+
 * edit
 
 .. program-output:: gdal raster pipeline --help-doc=edit
 
 Details for options can be found in :ref:`gdal_raster_edit`.
 
+* fill-nodata
+
+.. program-output:: gdal raster pipeline --help-doc=fill-nodata
+
+Details for options can be found in :ref:`gdal_raster_fill_nodata`.
+
 * hillshade
 
 .. program-output:: gdal raster pipeline --help-doc=hillshade
 
 Details for options can be found in :ref:`gdal_raster_hillshade`.
+
+* nodata-to-alpha
+
+.. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
+
+Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
+
+* pansharpen
+
+.. program-output:: gdal raster pipeline --help-doc=pansharpen
+
+Details for options can be found in :ref:`gdal_raster_pansharpen`.
+
+* proximity
+
+.. program-output:: gdal raster pipeline --help-doc=proximity
+
+Details for options can be found in :ref:`gdal_raster_proximity`.
 
 * reproject
 
@@ -69,6 +125,12 @@ Details for options can be found in :ref:`gdal_raster_reproject`.
 .. program-output:: gdal raster pipeline --help-doc=resize
 
 Details for options can be found in :ref:`gdal_raster_resize`.
+
+* rgb-to-palette
+
+.. program-output:: gdal raster pipeline --help-doc=rgb-to-palette
+
+Details for options can be found in :ref:`gdal_raster_rgb_to_palette`.
 
 * roughness
 
@@ -94,6 +156,12 @@ Details for options can be found in :ref:`gdal_raster_select`.
 
 Details for options can be found in :ref:`gdal_raster_set_type`.
 
+* sieve
+
+.. program-output:: gdal raster pipeline --help-doc=sieve
+
+Details for options can be found in :ref:`gdal_raster_sieve`.
+
 * slope
 
 .. program-output:: gdal raster pipeline --help-doc=slope
@@ -118,15 +186,15 @@ Details for options can be found in :ref:`gdal_raster_tri`.
 
 Details for options can be found in :ref:`gdal_raster_unscale`.
 
+* viewshed
+
+.. program-output:: gdal raster pipeline --help-doc=viewshed
+
+Details for options can be found in :ref:`gdal_raster_viewshed`.
+
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write
-
-Description
------------
-
-:program:`gdal raster pipeline` can be used to process a raster dataset and
-perform various processing steps.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------

@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 def get_edit_alg():
@@ -373,3 +373,151 @@ def test_gdalalg_raster_pipeline_edit_metadata(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
+
+
+def test_gdalalg_raster_edit_gcp_from_list_of_values():
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    gdal.Run(
+        "raster",
+        "edit",
+        dataset=mem_ds,
+        crs="EPSG:4326",
+        gcp=[[1.5, 2.5, 3.5, 4.5], [5.5, 6.5, 7.5, 8.5, 9.5]],
+    )
+
+    assert mem_ds.GetGCPCount() == 2
+    assert mem_ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
+
+    assert mem_ds.GetGCPs()[0].GCPPixel == 1.5
+    assert mem_ds.GetGCPs()[0].GCPLine == 2.5
+    assert mem_ds.GetGCPs()[0].GCPX == 3.5
+    assert mem_ds.GetGCPs()[0].GCPY == 4.5
+
+    assert mem_ds.GetGCPs()[1].GCPPixel == 5.5
+    assert mem_ds.GetGCPs()[1].GCPLine == 6.5
+    assert mem_ds.GetGCPs()[1].GCPX == 7.5
+    assert mem_ds.GetGCPs()[1].GCPY == 8.5
+    assert mem_ds.GetGCPs()[1].GCPZ == 9.5
+
+
+def test_gdalalg_raster_edit_gcp_from_list_of_gdal_GCP():
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    gdal.Run(
+        "raster",
+        "edit",
+        dataset=mem_ds,
+        gcp=[gdal.GCP(3.5, 4.5, 0, 1.5, 2.5), gdal.GCP(7.5, 8.5, 9.5, 5.5, 6.5)],
+    )
+
+    assert mem_ds.GetGCPCount() == 2
+    assert mem_ds.GetGCPSpatialRef() is None
+
+    assert mem_ds.GetGCPs()[0].GCPPixel == 1.5
+    assert mem_ds.GetGCPs()[0].GCPLine == 2.5
+    assert mem_ds.GetGCPs()[0].GCPX == 3.5
+    assert mem_ds.GetGCPs()[0].GCPY == 4.5
+
+    assert mem_ds.GetGCPs()[1].GCPPixel == 5.5
+    assert mem_ds.GetGCPs()[1].GCPLine == 6.5
+    assert mem_ds.GetGCPs()[1].GCPX == 7.5
+    assert mem_ds.GetGCPs()[1].GCPY == 8.5
+    assert mem_ds.GetGCPs()[1].GCPZ == 9.5
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_raster_edit_gcp_from_vector_dataset(tmp_vsimem):
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    with gdal.GetDriverByName("CSV").CreateVector(tmp_vsimem / "gcps.csv") as gcp_ds:
+        lyr = gcp_ds.CreateLayer("gcps")
+        lyr.CreateField(ogr.FieldDefn("id"))
+        lyr.CreateField(ogr.FieldDefn("info"))
+        lyr.CreateField(ogr.FieldDefn("column"))
+        lyr.CreateField(ogr.FieldDefn("line"))
+        lyr.CreateField(ogr.FieldDefn("x"))
+        lyr.CreateField(ogr.FieldDefn("y"))
+        lyr.CreateField(ogr.FieldDefn("z"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["id"] = "my_id"
+        f["info"] = "my_info"
+        f["column"] = 1.5
+        f["line"] = 2.5
+        f["x"] = 3.5
+        f["y"] = 4.5
+        f["z"] = 5.5
+        lyr.CreateFeature(f)
+
+    gdal.Run("raster", "edit", dataset=mem_ds, gcp=f"@{tmp_vsimem}/gcps.csv")
+
+    assert mem_ds.GetGCPCount() == 1
+    assert mem_ds.GetGCPSpatialRef() is None
+
+    assert mem_ds.GetGCPs()[0].Id == "my_id"
+    assert mem_ds.GetGCPs()[0].Info == "my_info"
+    assert mem_ds.GetGCPs()[0].GCPPixel == 1.5
+    assert mem_ds.GetGCPs()[0].GCPLine == 2.5
+    assert mem_ds.GetGCPs()[0].GCPX == 3.5
+    assert mem_ds.GetGCPs()[0].GCPY == 4.5
+    assert mem_ds.GetGCPs()[0].GCPZ == 5.5
+
+
+def test_gdalalg_raster_edit_gcp_bad_format():
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    with pytest.raises(Exception, match=" Bad format for 1,2,3"):
+        gdal.Run("raster", "edit", dataset=mem_ds, gcp="1,2,3")
+
+    with pytest.raises(Exception, match=" Bad format for 1,2,3,foo"):
+        gdal.Run("raster", "edit", dataset=mem_ds, gcp="1,2,3,foo")
+
+
+def test_gdalalg_raster_edit_gcp_from_vector_dataset_cannot_be_opened():
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with pytest.raises(Exception, match="/i_do/not/exist.csv"):
+        gdal.Run("raster", "edit", dataset=mem_ds, gcp="@/i_do/not/exist.csv")
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_edit_gcp_from_vector_dataset_two_layers(tmp_vsimem):
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "gcps.gpkg") as gcp_ds:
+        gcp_ds.CreateLayer("a")
+        gcp_ds.CreateLayer("b")
+
+    with pytest.raises(
+        Exception, match="GCPs can only be specified for single-layer datasets"
+    ):
+        gdal.Run("raster", "edit", dataset=mem_ds, gcp=f"@{tmp_vsimem}/gcps.gpkg")
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_edit_gcp_from_vector_dataset_missing_column_field(tmp_vsimem):
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "gcps.gpkg") as gcp_ds:
+        lyr = gcp_ds.CreateLayer("gcps")
+        lyr.CreateField(ogr.FieldDefn("line"))
+        lyr.CreateField(ogr.FieldDefn("x"))
+        lyr.CreateField(ogr.FieldDefn("y"))
+
+    with pytest.raises(Exception, match="Field 'column' cannot be found in"):
+        gdal.Run("raster", "edit", dataset=mem_ds, gcp=f"@{tmp_vsimem}/gcps.gpkg")
+
+
+@pytest.mark.require_driver("Zarr")
+def test_gdalalg_raster_edit_gcp_output_fromat_does_not_support(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("ZARR").Create(tmp_vsimem / "test.zarr", 1, 1)
+
+    with pytest.raises(Exception, match="Setting GCPs failed"):
+        gdal.Run("raster", "edit", dataset=ds, gcp=[[1.5, 2.5, 3.5, 4.5]])

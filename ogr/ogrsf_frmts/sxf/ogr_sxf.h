@@ -35,16 +35,16 @@ class OGRSXFLayer final : public OGRLayer
     OGRFeatureDefn *poFeatureDefn;
     VSILFILE *fpSXF;
     GByte nLayerID;
-    std::map<unsigned, CPLString> mnClassificators;
-    std::map<long, vsi_l_offset> mnRecordDesc;
-    std::map<long, vsi_l_offset>::const_iterator oNextIt;
+    std::map<unsigned, CPLString> mnClassificators{};
+    std::map<long, vsi_l_offset> mnRecordDesc{};
+    std::map<long, vsi_l_offset>::const_iterator oNextIt{};
     SXFMapDescription stSXFMapDescription;
-    std::set<GUInt16> snAttributeCodes;
+    std::set<GUInt16> snAttributeCodes{};
     int m_nSXFFormatVer;
-    CPLString sFIDColumn_;
+    CPLString sFIDColumn_{};
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
-    virtual OGRFeature *GetNextRawFeature(long nFID);
+    OGRFeature *GetNextRawFeature(long nFID);
 
     GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
                          const char *psBuff, GUInt32 nBufLen, double *dfX,
@@ -60,6 +60,8 @@ class OGRSXFLayer final : public OGRLayer
                               const char *psBuff, GUInt32 nBufLen);
     OGRFeature *TranslateVetorAngle(const SXFRecordDescription &certifInfo,
                                     const char *psBuff, GUInt32 nBufLen);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSXFLayer)
 
   public:
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
@@ -86,15 +88,14 @@ class OGRSXFLayer final : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
     virtual const char *GetFIDColumn() override;
 
-    virtual GByte GetId() const
+    GByte GetId() const
     {
         return nLayerID;
     }
 
-    virtual void AddClassifyCode(unsigned nClassCode,
-                                 const char *szName = nullptr);
-    virtual bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
-                           bool bHasSemantic, size_t nSemanticsSize);
+    void AddClassifyCode(unsigned nClassCode, const char *szName = nullptr);
+    bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
+                   bool bHasSemantic, size_t nSemanticsSize);
 
   private:
     static int CanRecode(const char *pszEncoding);
@@ -106,7 +107,7 @@ class OGRSXFLayer final : public OGRLayer
 
 class OGRSXFDataSource final : public GDALDataset
 {
-    SXFPassport oSXFPassport;
+    SXFPassport oSXFPassport{};
 
     std::vector<std::unique_ptr<OGRSXFLayer>> m_apoLayers{};
 
@@ -123,6 +124,8 @@ class OGRSXFDataSource final : public GDALDataset
     static OGRErr ReadSXFMapDescription(VSILFILE *fpSXF, SXFPassport &passport,
                                         const char *const *papszOpenOpts);
     OGRSXFLayer *GetLayerById(GByte);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSXFDataSource)
 
   public:
     OGRSXFDataSource();

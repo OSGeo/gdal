@@ -15,7 +15,7 @@ add_gdal_driver(TARGET gdal_AVIF
                 CORE_SOURCES avifdrivercore.cpp
                 PLUGIN_CAPABLE
                 NO_SHARED_SYMBOL_WITH_CORE
-                STRONG_CXX_WFLAGS)
+)
 
 if(NOT TARGET gdal_AVIF)
     return()

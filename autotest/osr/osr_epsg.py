@@ -456,6 +456,16 @@ def test_osr_epsg_area_of_use():
 ###############################################################################
 
 
+def test_osr_epsg_celestial_body_name():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2154)
+    assert srs.GetCelestialBodyName() == "Earth"
+
+
+###############################################################################
+
+
 def test_osr_GetCRSInfoListFromDatabase():
 
     l = osr.GetCRSInfoListFromDatabase("EPSG")
@@ -472,6 +482,7 @@ def test_osr_GetCRSInfoListFromDatabase():
             assert record.north_lat_degree == 51.56
             assert "France" in record.area_name
             assert record.projection_method == "Lambert Conic Conformal (2SP)"
+            assert record.celestial_body_name == "Earth"
             found = True
     assert found
 

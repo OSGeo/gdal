@@ -2512,7 +2512,7 @@ def test_gti_xml(tmp_vsimem):
   <IndexDataset>{index_filename}</IndexDataset>
   <Filter>invalid</Filter>
 </GDALTileIndexDataset>"""
-    with pytest.raises(Exception, match="failed to prepare SQL"):
+    with pytest.raises(Exception, match="no such column: invalid"):
         gdal.Open(xml_content)
 
     xml_content = f"""<GDALTileIndexDataset>

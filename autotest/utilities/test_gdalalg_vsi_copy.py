@@ -20,20 +20,6 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vsi"]["copy"]
 
 
-def test_gdalalg_vsi_copy_empty_source():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Source filename cannot be empty"):
-        alg["source"] = ""
-
-
-def test_gdalalg_vsi_copy_empty_destination():
-
-    alg = get_alg()
-    with pytest.raises(Exception, match="Destination filename cannot be empty"):
-        alg["destination"] = ""
-
-
 def test_gdalalg_vsi_copy_single_dir_destination(tmp_vsimem):
 
     alg = get_alg()
@@ -73,8 +59,43 @@ def test_gdalalg_vsi_copy_single_source_does_not_exist():
     alg = get_alg()
     alg["source"] = "/i_do/not/exist.bin"
     alg["destination"] = "/vsimem/"
-    with pytest.raises(Exception, match="does not exist"):
+    with pytest.raises(Exception, match="cannot be accessed"):
         alg.Run()
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_copy_single_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["source"] = "/vsioss/i_do_not/exist.bin"
+        alg["destination"] = "/vsimem/"
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_copy_recursive_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["source"] = "/vsioss/i_do_not/exist.bin"
+        alg["destination"] = "/vsimem/"
+        alg["recursive"] = True
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()
+
+
+@pytest.mark.require_curl()
+def test_gdalalg_vsi_copy_recursive_slash_star_source_does_not_exist_vsi():
+
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
+        alg = get_alg()
+        alg["source"] = "/vsioss/i_do_not/exist.bin/*"
+        alg["destination"] = "/vsimem/"
+        alg["recursive"] = True
+        with pytest.raises(Exception, match="InvalidCredentials"):
+            alg.Run()
 
 
 def test_gdalalg_vsi_copy_single_source_is_directory():

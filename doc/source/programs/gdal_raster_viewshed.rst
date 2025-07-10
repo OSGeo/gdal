@@ -27,10 +27,13 @@ create a minimum visible height raster of type Float64.
 
 It uses the method defined in [Wang2000]_ for a user defined point.
 
+This subcommand is also available as a potential step of :ref:`gdal_raster_pipeline`
+(since GDAL 3.12)
+
 Standard options
 ++++++++++++++++
 
-.. include:: gdal_options/of_raster_create.rst
+.. include:: gdal_options/of_raster_create_copy.rst
 
 .. include:: gdal_options/co.rst
 
@@ -66,6 +69,46 @@ Standard options
 
    Maximum distance from observer to compute visibility.
    It is also used to clamp the extent of the output raster.
+   (Not supported in cumulative mode)
+
+.. option:: --min-distance <value>
+
+   .. versionadded:: 3.12
+
+   Minimum distance from observer to compute visibility.
+   Must be less than '--max-distance'
+   (Not supported in cumulative mode)
+
+.. option:: --start-angle <value>
+
+   .. versionadded:: 3.12
+
+   Start angle for visibility. Measured clockwise from 0 North, in degree.
+   (Not supported in cumulative mode)
+
+.. option:: --end-angle <value>
+
+   .. versionadded:: 3.12
+
+   End angle for visibility. Measured clockwise from 0 North, in degree.
+   (Not supported in cumulative mode)
+
+.. option:: --high-pitch <value>
+
+   .. versionadded:: 3.12
+
+   High angle for visibility. Measured up from 0 horizontal, in degree.
+   Values above the high pitch are marked out of range.
+   Must be greater than '--low-pitch'.
+   (Not supported in cumulative mode)
+
+.. option:: --low-pitch <value>
+
+   .. versionadded:: 3.12
+
+   Low angle for visibility. Measured up from 0 horizontal, in degree.
+   Cell values are clamped to be no lower than the intersection
+   of the angle.  Must be less than '--high-pitch'.
    (Not supported in cumulative mode)
 
 .. option:: --curvature-coefficient <value>
@@ -152,6 +195,13 @@ Standard options
 
    Number of jobs to run at once. (only supported in cumulative mode).
    Default: 3
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
 Examples
 --------

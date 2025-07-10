@@ -406,7 +406,7 @@ L1BMaskBand::L1BMaskBand(L1BDataset *poDSIn)
 CPLErr L1BMaskBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                void *pImage)
 {
-    L1BDataset *poGDS = (L1BDataset *)poDS;
+    L1BDataset *poGDS = cpl::down_cast<L1BDataset *>(poDS);
 
     CPL_IGNORE_RET_VAL(
         VSIFSeekL(poGDS->fp, poGDS->GetLineOffset(nBlockYOff) + 24, SEEK_SET));
@@ -444,7 +444,7 @@ L1BRasterBand::L1BRasterBand(L1BDataset *poDSIn, int nBandIn)
 
 GDALRasterBand *L1BRasterBand::GetMaskBand()
 {
-    L1BDataset *poGDS = (L1BDataset *)poDS;
+    L1BDataset *poGDS = cpl::down_cast<L1BDataset *>(poDS);
     if (poGDS->poMaskBand)
         return poGDS->poMaskBand;
     return GDALPamRasterBand::GetMaskBand();
@@ -456,7 +456,7 @@ GDALRasterBand *L1BRasterBand::GetMaskBand()
 
 int L1BRasterBand::GetMaskFlags()
 {
-    L1BDataset *poGDS = (L1BDataset *)poDS;
+    L1BDataset *poGDS = cpl::down_cast<L1BDataset *>(poDS);
     if (poGDS->poMaskBand)
         return GMF_PER_DATASET;
     return GDALPamRasterBand::GetMaskFlags();
@@ -469,7 +469,7 @@ int L1BRasterBand::GetMaskFlags()
 CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                  void *pImage)
 {
-    L1BDataset *poGDS = (L1BDataset *)poDS;
+    L1BDataset *poGDS = cpl::down_cast<L1BDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Seek to data.                                                   */
@@ -1044,6 +1044,7 @@ void L1BDataset::FetchMetadata()
             .append("/")
             .append(CPLGetFilename(GetDescription()))
             .append("_metadata.csv");
+    CPL_IGNORE_RET_VAL(osDir);
     VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {
@@ -1153,6 +1154,7 @@ void L1BDataset::FetchMetadataNOAA15()
             .append("/")
             .append(CPLGetFilename(GetDescription()))
             .append("_metadata.csv");
+    CPL_IGNORE_RET_VAL(osDir);
     VSILFILE *fpCSV = VSIFOpenL(osMetadataFile.c_str(), "wb");
     if (fpCSV == nullptr)
     {
@@ -2570,7 +2572,7 @@ static void L1BInterpol(
 CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                        int nBlockYOff, void *pData)
 {
-    L1BGeolocDataset *poGDS = (L1BGeolocDataset *)poDS;
+    L1BGeolocDataset *poGDS = cpl::down_cast<L1BGeolocDataset *>(poDS);
     L1BDataset *poL1BDS = poGDS->poL1BDS;
     GDAL_GCP *pasGCPList =
         (GDAL_GCP *)CPLCalloc(poL1BDS->nGCPsPerLine, sizeof(GDAL_GCP));
@@ -2754,7 +2756,8 @@ L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(
 CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                                   int nBlockYOff, void *pData)
 {
-    L1BSolarZenithAnglesDataset *poGDS = (L1BSolarZenithAnglesDataset *)poDS;
+    L1BSolarZenithAnglesDataset *poGDS =
+        cpl::down_cast<L1BSolarZenithAnglesDataset *>(poDS);
     L1BDataset *poL1BDS = poGDS->poL1BDS;
     int i;
 
@@ -2972,7 +2975,8 @@ L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(
 CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                              int nBlockYOff, void *pData)
 {
-    L1BNOAA15AnglesDataset *poGDS = (L1BNOAA15AnglesDataset *)poDS;
+    L1BNOAA15AnglesDataset *poGDS =
+        cpl::down_cast<L1BNOAA15AnglesDataset *>(poDS);
     L1BDataset *poL1BDS = poGDS->poL1BDS;
     int i;
 
@@ -3095,7 +3099,7 @@ L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset *poDSIn, int nBandIn)
 CPLErr L1BCloudsRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                        int nBlockYOff, void *pData)
 {
-    L1BCloudsDataset *poGDS = (L1BCloudsDataset *)poDS;
+    L1BCloudsDataset *poGDS = cpl::down_cast<L1BCloudsDataset *>(poDS);
     L1BDataset *poL1BDS = poGDS->poL1BDS;
     int i;
 

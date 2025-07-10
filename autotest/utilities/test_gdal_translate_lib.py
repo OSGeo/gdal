@@ -1589,3 +1589,46 @@ def test_gdal_translate_lib_raster_uint16_ct_0_255_range():
     assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     assert out_ds.GetRasterBand(2).DataType == gdal.GDT_Byte
     assert out_ds.GetRasterBand(3).DataType == gdal.GDT_Byte
+
+
+###############################################################################
+
+
+def test_gdal_translate_lib_int_max_sized_raster(tmp_vsimem):
+
+    content = """<VRTDataset rasterXSize="2147483647" rasterYSize="2147483647">
+  <VRTRasterBand dataType="Byte" band="1" />
+</VRTDataset>"""
+    with pytest.raises(Exception):
+        gdal.Translate(tmp_vsimem / "out.tif", content)
+
+
+###############################################################################
+
+
+def test_gdal_translate_lib_unset_NODATA_VALUES():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    src_ds.SetMetadataItem("NODATA_VALUES", "1 2")
+
+    out_ds = gdal.Translate("", src_ds, format="VRT", metadataOptions={"FOO": "BAR"})
+    assert out_ds.GetMetadataItem("NODATA_VALUES") == "1 2"
+    assert out_ds.GetMetadataItem("FOO") == "BAR"
+
+    out_ds = gdal.Translate(
+        "", src_ds, bandList=[1], format="VRT", metadataOptions={"FOO": "BAR"}
+    )
+    assert "NODATA_VALUES" not in out_ds.GetMetadata_Dict()
+    assert out_ds.GetMetadataItem("FOO") == "BAR"
+
+    out_ds = gdal.Translate(
+        "", src_ds, bandList=[2, 1], format="VRT", metadataOptions={"FOO": "BAR"}
+    )
+    assert "NODATA_VALUES" not in out_ds.GetMetadata_Dict()
+    assert out_ds.GetMetadataItem("FOO") == "BAR"
+
+    out_ds = gdal.Translate(
+        "", src_ds, bandList=[1, 2, 1], format="VRT", metadataOptions={"FOO": "BAR"}
+    )
+    assert "NODATA_VALUES" not in out_ds.GetMetadata_Dict()
+    assert out_ds.GetMetadataItem("FOO") == "BAR"

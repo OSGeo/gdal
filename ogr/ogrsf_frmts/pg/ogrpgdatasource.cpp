@@ -19,6 +19,8 @@
 #include <cctype>
 #include <set>
 
+#include "memdataset.h"
+
 #define PQexec this_is_an_error
 
 static void OGRPGNoticeProcessor(void *arg, const char *pszMessage);
@@ -1399,7 +1401,7 @@ void OGRPGDataSource::LoadTables()
         }
         if (osRegisteredLayers.find(osDefnName) != osRegisteredLayers.end())
             continue;
-        osRegisteredLayers.insert(osDefnName);
+        osRegisteredLayers.insert(std::move(osDefnName));
 
         OGRPGTableLayer *poLayer = OpenTable(
             osCurrentSchema, papsTables[iRecord]->pszTableName,
@@ -2940,10 +2942,7 @@ class OGRPGMemLayerWrapper final : public OGRLayer
         poMemLayer = poMemDS->GetLayer(0);
     }
 
-    virtual ~OGRPGMemLayerWrapper()
-    {
-        delete poMemDS;
-    }
+    ~OGRPGMemLayerWrapper() override;
 
     virtual void ResetReading() override
     {
@@ -2965,6 +2964,11 @@ class OGRPGMemLayerWrapper final : public OGRLayer
         return FALSE;
     }
 };
+
+OGRPGMemLayerWrapper::~OGRPGMemLayerWrapper()
+{
+    delete poMemDS;
+}
 
 /************************************************************************/
 /*                           GetMetadataItem()                          */
@@ -3060,22 +3064,15 @@ OGRLayer *OGRPGDataSource::ExecuteSQL(const char *pszSQLCommand,
         {
             CPLDebug("PG", "Command Results Tuples = %d", PQntuples(hResult));
 
-            GDALDriver *poMemDriver =
-                GetGDALDriverManager()->GetDriverByName("MEM");
-            if (poMemDriver)
-            {
-                OGRPGLayer *poResultLayer =
-                    new OGRPGNoResetResultLayer(this, hResult);
-                GDALDataset *poMemDS =
-                    poMemDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr);
-                poMemDS->CopyLayer(poResultLayer, "sql_statement");
-                OGRPGMemLayerWrapper *poResLayer =
-                    new OGRPGMemLayerWrapper(poMemDS);
-                delete poResultLayer;
-                return poResLayer;
-            }
-            else
-                return nullptr;
+            OGRPGLayer *poResultLayer =
+                new OGRPGNoResetResultLayer(this, hResult);
+            auto poMemDS = std::unique_ptr<GDALDataset>(
+                MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr));
+            poMemDS->CopyLayer(poResultLayer, "sql_statement");
+            OGRPGMemLayerWrapper *poResLayer =
+                new OGRPGMemLayerWrapper(poMemDS.release());
+            delete poResultLayer;
+            return poResLayer;
         }
     }
     else

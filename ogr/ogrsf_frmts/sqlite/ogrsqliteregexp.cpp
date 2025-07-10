@@ -184,6 +184,9 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
+
+    pcre2_match_data_free(md);
+
     sqlite3_result_int(ctx, rc >= 0);
 }
 

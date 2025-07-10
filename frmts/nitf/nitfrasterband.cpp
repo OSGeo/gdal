@@ -367,8 +367,7 @@ void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(
 /************************************************************************/
 
 NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
-    : psImage(poDSIn->psImage), poColorTable(nullptr), pUnpackData(nullptr),
-      bScanlineAccess(FALSE)
+    : psImage(poDSIn->psImage)
 {
     NITFBandInfo *psBandInfo = poDSIn->psImage->pasBandInfo + nBandIn - 1;
 
@@ -726,8 +725,7 @@ CPLErr NITFRasterBand::SetColorTable(GDALColorTable *poNewCT)
     if (poNewCT == nullptr)
         return CE_Failure;
 
-    GByte abyNITFLUT[768];
-    memset(abyNITFLUT, 0, 768);
+    std::vector<GByte> abyNITFLUT(768);
 
     const int nCount = std::min(256, poNewCT->GetColorEntryCount());
     for (int i = 0; i < nCount; i++)
@@ -735,12 +733,12 @@ CPLErr NITFRasterBand::SetColorTable(GDALColorTable *poNewCT)
         GDALColorEntry sEntry;
 
         poNewCT->GetColorEntryAsRGB(i, &sEntry);
-        abyNITFLUT[i] = (GByte)sEntry.c1;
-        abyNITFLUT[i + 256] = (GByte)sEntry.c2;
-        abyNITFLUT[i + 512] = (GByte)sEntry.c3;
+        abyNITFLUT[i + 256 * 0] = static_cast<GByte>(sEntry.c1);
+        abyNITFLUT[i + 256 * 1] = static_cast<GByte>(sEntry.c2);
+        abyNITFLUT[i + 256 * 2] = static_cast<GByte>(sEntry.c3);
     }
 
-    if (NITFWriteLUT(psImage, nBand, nCount, abyNITFLUT))
+    if (NITFWriteLUT(psImage, nBand, nCount, abyNITFLUT.data()))
         return CE_None;
 
     return CE_Failure;
@@ -781,7 +779,9 @@ void NITFRasterBand::Unpack(GByte *pData)
             // DANGER: Non-standard decrement of counter in the test section of
             // for.
             for (int i = n; --i >= 0;)
-                pData[i] = (pData[i >> 2] >> (GByte)s_Shift2[i & 3]) & 0x03;
+                pData[i] =
+                    (pData[i >> 2] >> static_cast<GByte>(s_Shift2[i & 3])) &
+                    0x03;
 
             break;
         }
@@ -792,7 +792,9 @@ void NITFRasterBand::Unpack(GByte *pData)
             // DANGER: Non-standard decrement of counter in the test section of
             // for.
             for (int i = n; --i >= 0;)
-                pData[i] = (pData[i >> 1] >> (GByte)s_Shift4[i & 1]) & 0x0f;
+                pData[i] =
+                    (pData[i >> 1] >> static_cast<GByte>(s_Shift4[i & 1])) &
+                    0x0f;
 
             break;
         }
@@ -992,8 +994,7 @@ void NITFRasterBand::Unpack(GByte *pData)
 NITFWrapperRasterBand::NITFWrapperRasterBand(NITFDataset *poDSIn,
                                              GDALRasterBand *poBaseBandIn,
                                              int nBandIn)
-    : poBaseBand(poBaseBandIn), poColorTable(nullptr),
-      eInterp(poBaseBandIn->GetColorInterpretation()),
+    : poBaseBand(poBaseBandIn), eInterp(poBaseBandIn->GetColorInterpretation()),
       bIsJPEG(poBaseBandIn->GetDataset() != nullptr &&
               poBaseBandIn->GetDataset()->GetDriver() != nullptr &&
               EQUAL(poBaseBandIn->GetDataset()->GetDriver()->GetDescription(),

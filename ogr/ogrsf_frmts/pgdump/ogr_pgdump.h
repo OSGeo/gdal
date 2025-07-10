@@ -76,6 +76,8 @@ class OGRPGDumpGeomFieldDefn final : public OGRGeomFieldDefn
     {
     }
 
+    ~OGRPGDumpGeomFieldDefn() override;
+
     int m_nSRSId;
     int m_nGeometryTypeFlags;
 };
@@ -107,6 +109,7 @@ class OGRPGDumpLayer final : public OGRLayer
     bool m_bCopyActive = false;
     bool m_bFIDColumnInCopyFields = false;
     int m_bCreateTable = false;
+    bool m_bSkipConflicts = false;
     int m_nUnknownSRSId = -1;
     int m_nForcedSRSId = -1;
     int m_nForcedGeometryTypeFlags = -2;
@@ -139,7 +142,7 @@ class OGRPGDumpLayer final : public OGRLayer
   public:
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
                    const char *pszLayerName, const char *pszFIDColumn,
-                   int bWriteAsHexIn, int bCreateTable);
+                   int bWriteAsHexIn, int bCreateTable, bool bSkipConflicts);
     virtual ~OGRPGDumpLayer();
 
     virtual OGRFeatureDefn *GetLayerDefn() override
@@ -159,8 +162,8 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual int TestCapability(const char *) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
-    virtual OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
+    OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
+    OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

@@ -464,7 +464,8 @@ For more details: :cpp:func:`OGR_G_IsRing`
 Returns
 --------
 int:
-    True if the geometry has no points, otherwise False.
+    True if the coordinates of the geometry form a ring, by checking length
+    and closure (self-intersection is not checked), otherwise False.
 ";
 
 

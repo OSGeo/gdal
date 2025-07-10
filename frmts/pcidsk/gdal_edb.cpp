@@ -206,14 +206,13 @@ int GDAL_EDBFile::ReadBlock(int channel, int block_index, void *buffer,
     int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    const int nWidthInBlocks =
-        (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    const int nWidthInBlocks = DIV_ROUND_UP(poBand->GetXSize(), nBlockXSize);
 
     const int nBlockX = block_index % nWidthInBlocks;
     const int nBlockY = block_index / nWidthInBlocks;
 
     const int nPixelOffset =
-        GDALGetDataTypeSize(poBand->GetRasterDataType()) / 8;
+        GDALGetDataTypeSizeBytes(poBand->GetRasterDataType());
     const int nLineOffset = win_xsize * nPixelOffset;
 
     /* -------------------------------------------------------------------- */
@@ -258,8 +257,7 @@ int GDAL_EDBFile::WriteBlock(int channel, int block_index, void *buffer)
     int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    const int nWidthInBlocks =
-        (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    const int nWidthInBlocks = DIV_ROUND_UP(poBand->GetXSize(), nBlockXSize);
 
     const int nBlockX = block_index % nWidthInBlocks;
     const int nBlockY = block_index / nWidthInBlocks;

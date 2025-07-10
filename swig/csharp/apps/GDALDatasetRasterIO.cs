@@ -12,6 +12,8 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
+#pragma warning disable CA1416 // Validate platform compatibility
+
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -34,13 +36,13 @@ using OSGeo.GDAL;
 /// </summary> 
 
 class GDALReadDirect {
-	
-	public static void usage() 
+    
+    public static void usage() 
 
-	{
+    {
         Console.WriteLine("usage: GDALDatasetRasterIO {GDAL dataset name} {output file name}");
-		System.Environment.Exit(-1);
-	}
+        System.Environment.Exit(-1);
+    }
  
     public static void Main(string[] args) 
     {
@@ -60,7 +62,7 @@ class GDALReadDirect {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-		
+        
             if (ds == null) 
             {
                 Console.WriteLine("Can't open " + args[0]);
@@ -270,3 +272,4 @@ class GDALReadDirect {
         bitmap.Save(filename);
     }
 }
+#pragma warning restore CA1416 // Validate platform compatibility

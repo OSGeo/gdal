@@ -1062,6 +1062,8 @@ void OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb, size_t nWKBSize)
 
 OGRWKBPointUpdater::OGRWKBPointUpdater() = default;
 
+OGRWKBPointUpdater::~OGRWKBPointUpdater() = default;
+
 /************************************************************************/
 /*              OGRWKBIntersectsPointSequencePessimistic()              */
 /************************************************************************/

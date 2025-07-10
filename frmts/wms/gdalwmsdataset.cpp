@@ -700,7 +700,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     {
         if (m_oSRS.IsEmpty())
         {
-            const auto oSRS = m_mini_driver->GetSpatialRef();
+            const auto &oSRS = m_mini_driver->GetSpatialRef();
             if (!oSRS.IsEmpty())
             {
                 m_oSRS = oSRS;
@@ -770,16 +770,11 @@ CPLErr GDALWMSDataset::SetSpatialRef(const OGRSpatialReference *)
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
-CPLErr GDALWMSDataset::GetGeoTransform(double *gt)
+CPLErr GDALWMSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (!(m_mini_driver_caps.m_has_geotransform))
     {
-        gt[0] = 0;
-        gt[1] = 1;
-        gt[2] = 0;
-        gt[3] = 0;
-        gt[4] = 0;
-        gt[5] = 1;
+        gt = GDALGeoTransform();
         return CE_Failure;
     }
     gt[0] = m_data_window.m_x0;
@@ -796,7 +791,7 @@ CPLErr GDALWMSDataset::GetGeoTransform(double *gt)
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
-CPLErr GDALWMSDataset::SetGeoTransform(CPL_UNUSED double *gt)
+CPLErr GDALWMSDataset::SetGeoTransform(const GDALGeoTransform &)
 {
     return CE_Failure;
 }
@@ -860,8 +855,7 @@ const char *const *GDALWMSDataset::GetHTTPRequestOpts()
         opts = CSLAddNameValue(opts, "USERAGENT", m_osUserAgent);
     else
         opts = CSLAddString(
-            opts,
-            "USERAGENT=GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
+            opts, "USERAGENT=GDAL WMS driver (https://gdal.org/frmt_wms.html)");
 
     if (!m_osReferer.empty())
         opts = CSLAddNameValue(opts, "REFERER", m_osReferer);

@@ -37,12 +37,6 @@ GeoRasterDataset::GeoRasterDataset()
     bForcedSRID = false;
     poGeoRaster = nullptr;
     papszSubdatasets = nullptr;
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poMaskBand = nullptr;
     bApplyNoDataArray = false;
@@ -154,12 +148,12 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poGRW->bIsReferenced)
     {
-        poGRD->adfGeoTransform[1] = poGRW->dfXCoefficient[0];
-        poGRD->adfGeoTransform[2] = poGRW->dfXCoefficient[1];
-        poGRD->adfGeoTransform[0] = poGRW->dfXCoefficient[2];
-        poGRD->adfGeoTransform[4] = poGRW->dfYCoefficient[0];
-        poGRD->adfGeoTransform[5] = poGRW->dfYCoefficient[1];
-        poGRD->adfGeoTransform[3] = poGRW->dfYCoefficient[2];
+        poGRD->m_gt[1] = poGRW->dfXCoefficient[0];
+        poGRD->m_gt[2] = poGRW->dfXCoefficient[1];
+        poGRD->m_gt[0] = poGRW->dfXCoefficient[2];
+        poGRD->m_gt[4] = poGRW->dfYCoefficient[0];
+        poGRD->m_gt[5] = poGRW->dfYCoefficient[1];
+        poGRD->m_gt[3] = poGRW->dfYCoefficient[2];
     }
 
     //  -------------------------------------------------------------------
@@ -1083,9 +1077,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         }
 
         // There is a limit on how big a compressed block can be.
-        if ((poGRW->nColumnBlockSize * poGRW->nRowBlockSize *
-             poGRW->nBandBlockSize * (GDALGetDataTypeSize(eType) / 8)) >
-            (50 * 1024 * 1024))
+        if ((static_cast<uint64_t>(poGRW->nColumnBlockSize) *
+             poGRW->nRowBlockSize * poGRW->nBandBlockSize *
+             GDALGetDataTypeSizeBytes(eType)) > (50 * 1024 * 1024))
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,
@@ -1099,9 +1093,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (EQUAL(poGRW->sCompressionType.c_str(), "DEFLATE"))
     {
-        if ((poGRW->nColumnBlockSize * poGRW->nRowBlockSize *
-             poGRW->nBandBlockSize * (GDALGetDataTypeSize(eType) / 8)) >
-            (1024 * 1024 * 1024))
+        if ((static_cast<uint64_t>(poGRW->nColumnBlockSize) *
+             poGRW->nRowBlockSize * poGRW->nBandBlockSize *
+             GDALGetDataTypeSizeBytes(eType)) > (1024 * 1024 * 1024))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "For (COMPRESS=%s) each data block must not exceed 1Gb. "
@@ -1383,9 +1377,10 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //  Create a GeoRaster on the server or select one to overwrite
     //  -----------------------------------------------------------
 
-    GeoRasterDataset *poDstDS = (GeoRasterDataset *)GeoRasterDataset::Create(
-        pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-        poSrcDS->GetRasterCount(), eType, papszOptions);
+    GeoRasterDataset *poDstDS =
+        cpl::down_cast<GeoRasterDataset *>(GeoRasterDataset::Create(
+            pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(), eType, papszOptions));
 
     if (poDstDS == nullptr)
     {
@@ -1396,15 +1391,12 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //  Copy information to the dataset
     //  -----------------------------------------------------------
 
-    double adfTransform[6];
-
-    if (poSrcDS->GetGeoTransform(adfTransform) == CE_None)
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
     {
-        if (!(adfTransform[0] == 0.0 && adfTransform[1] == 1.0 &&
-              adfTransform[2] == 0.0 && adfTransform[3] == 0.0 &&
-              adfTransform[4] == 0.0 && adfTransform[5] == 1.0))
+        if (gt != GDALGeoTransform())
         {
-            poDstDS->SetGeoTransform(adfTransform);
+            poDstDS->SetGeoTransform(gt);
 
             if (!poDstDS->bForcedSRID) /* forced by create option SRID */
             {
@@ -1444,8 +1436,8 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     for (int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++)
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand);
-        GeoRasterRasterBand *poDstBand =
-            (GeoRasterRasterBand *)poDstDS->GetRasterBand(iBand);
+        GeoRasterRasterBand *poDstBand = cpl::down_cast<GeoRasterRasterBand *>(
+            poDstDS->GetRasterBand(iBand));
 
         // ----------------------------------------------------------------
         //  Copy Color Table
@@ -1592,8 +1584,8 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
 
     CPLErr eErr = CE_None;
 
-    int nPixelSize =
-        GDALGetDataTypeSize(poSrcDS->GetRasterBand(1)->GetRasterDataType()) / 8;
+    const int nPixelSize = GDALGetDataTypeSizeBytes(
+        poSrcDS->GetRasterBand(1)->GetRasterDataType());
 
     if (EQUAL(poDstDS->poGeoRaster->sCompressionType.c_str(), "JPEG-F") &&
         nBlockXSize == nXSize && nBlockYSize == nYSize)
@@ -1836,7 +1828,7 @@ CPLErr GeoRasterDataset::IRasterIO(
 //                                                            GetGeoTransform()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::GetGeoTransform(double *padfTransform)
+CPLErr GeoRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     if (poGeoRaster->phRPC)
     {
@@ -1848,9 +1840,7 @@ CPLErr GeoRasterDataset::GetGeoTransform(double *padfTransform)
         return CE_Failure;
     }
 
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
-
-    bGeoTransform = true;
+    gt = m_gt;
 
     return CE_None;
 }
@@ -2041,16 +2031,16 @@ const OGRSpatialReference *GeoRasterDataset::GetSpatialRef() const
 //                                                            SetGeoTransform()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::SetGeoTransform(double *padfTransform)
+CPLErr GeoRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    memcpy(adfGeoTransform, padfTransform, sizeof(double) * 6);
+    m_gt = gt;
 
-    poGeoRaster->dfXCoefficient[0] = adfGeoTransform[1];
-    poGeoRaster->dfXCoefficient[1] = adfGeoTransform[2];
-    poGeoRaster->dfXCoefficient[2] = adfGeoTransform[0];
-    poGeoRaster->dfYCoefficient[0] = adfGeoTransform[4];
-    poGeoRaster->dfYCoefficient[1] = adfGeoTransform[5];
-    poGeoRaster->dfYCoefficient[2] = adfGeoTransform[3];
+    poGeoRaster->dfXCoefficient[0] = m_gt[1];
+    poGeoRaster->dfXCoefficient[1] = m_gt[2];
+    poGeoRaster->dfXCoefficient[2] = m_gt[0];
+    poGeoRaster->dfYCoefficient[0] = m_gt[4];
+    poGeoRaster->dfYCoefficient[1] = m_gt[5];
+    poGeoRaster->dfYCoefficient[2] = m_gt[3];
 
     bGeoTransform = true;
 
@@ -2855,7 +2845,8 @@ CPLErr GeoRasterDataset::IBuildOverviews(
 
     for (i = 0; i < nBands; i++)
     {
-        GeoRasterRasterBand *poBand = (GeoRasterRasterBand *)papoBands[i];
+        GeoRasterRasterBand *poBand =
+            cpl::down_cast<GeoRasterRasterBand *>(papoBands[i]);
 
         //  -------------------------------------------------------
         //  Clean up previous overviews
@@ -2893,7 +2884,8 @@ CPLErr GeoRasterDataset::IBuildOverviews(
 
     for (i = 0; i < nBands; i++)
     {
-        GeoRasterRasterBand *poBand = (GeoRasterRasterBand *)papoBands[i];
+        GeoRasterRasterBand *poBand =
+            cpl::down_cast<GeoRasterRasterBand *>(papoBands[i]);
 
         void *pScaledProgressData = GDALCreateScaledProgress(
             i / (double)nBands, (i + 1) / (double)nBands, pfnProgress,

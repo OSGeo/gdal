@@ -44,6 +44,17 @@ Raster commands
     gdal raster reproject --dst-crs=EPSG:4326 --co=TILED=YES,COMPRESS=DEFLATE --overwrite in.tif out.tif
 
 
+* Update existing out.tif with content of in.tif using cubic interpolation
+
+.. code-block::
+
+    gdalwarp -r cubic in.tif out.tif
+
+    ==>
+
+    gdal raster update -r cubic in.tif out.tif
+
+
 * Converting a PNG file to a tiled GeoTIFF file, adding georeferencing for world coverage in WGS 84 and metadata
 
 .. code-block::
@@ -259,3 +270,13 @@ Vector commands
     ==>
 
     gdal vector concat --mode=stack *.shp merged.gpkg
+
+* Modify in-place a GeoPackage dataset by running a SQL command.
+
+.. code-block::
+
+    ogrinfo my.gpkg -sql "DELETE FROM countries WHERE pop > 1e6"
+
+    ==>
+
+    gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"

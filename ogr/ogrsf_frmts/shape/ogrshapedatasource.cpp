@@ -276,7 +276,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             std::string osFilename =
                 CPLFormFilenameSafe(pszNewName, pszCandidate, nullptr);
 
-            osLayerNameSet.insert(osLayerName);
+            osLayerNameSet.insert(std::move(osLayerName));
 #ifdef IMMEDIATE_OPENING
             if (!OpenFile(osFilename.c_str(), bUpdate) && !bTestOpen)
             {
@@ -334,7 +334,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             std::string osFilename =
                 CPLFormFilenameSafe(pszNewName, pszCandidate, nullptr);
 
-            osLayerNameSet.insert(osLayerName);
+            osLayerNameSet.insert(std::move(osLayerName));
 
 #ifdef IMMEDIATE_OPENING
             if (!OpenFile(osFilename.c_str(), bUpdate) && !bTestOpen)

@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import struct
+import sys
+
 import gdaltest
 import pytest
 
@@ -673,6 +676,168 @@ def test_gdalalg_raster_tile_multithread(tmp_vsimem):
     assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
 
 
+def test_gdalalg_raster_tile_multithread_spawn_auto(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        alg.Run()
+
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_incompatible_source(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate("", "../gdrivers/data/small_world.tif", format="MEM")
+    alg["output"] = tmp_path / "subdir"
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception,
+        match="Unnamed or memory dataset sources are not supported with spawn parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_incompatible_output(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_vsimem
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception,
+        match="/vsimem/ output directory not supported with spawn parallelization method",
+    ):
+        alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_gdal_not_found(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    with pytest.raises(
+        Exception, match="No 'gdal' binary can be found in '/i_do/not/exist'"
+    ):
+        with gdal.config_option("GDAL_PATH", "/i_do/not/exist"):
+            alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn_error_in_child(tmp_path):
+
+    input_filename = tmp_path / "in.tif"
+    gdal.Translate(input_filename, "../gdrivers/data/small_world.tif")
+    f = gdal.VSIFOpenL(input_filename, "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, 4096)
+    gdal.VSIFCloseL(f)
+
+    alg = get_alg()
+    alg["input"] = input_filename
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    alg["max-zoom"] = 3
+    alg["num-threads"] = 2
+    with pytest.raises(Exception, match="Child process.*failed"):
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+            alg.Run()
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 2, reason="needs more than 2 CPUs")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows not supported for this test"
+)
+def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
+
+    import resource
+
+    if resource.getrlimit(resource.RLIMIT_NOFILE)[0] > 4096:
+        pytest.skip("Limit for number of opened files is too high")
+
+    fd = []
+    while True:
+        try:
+            fd.append(open("/dev/null", "rb"))
+        except Exception:
+            break
+    for i in range(8):
+        fd.pop()
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path
+    alg["parallel-method"] = "spawn"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["num-threads"] = 3
+    try:
+        with gdal.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+            with gdaltest.error_raised(
+                gdal.CE_Warning, "Limiting the number of child workers to"
+            ):
+                alg.Run()
+    finally:
+        del fd
+
+    assert len(gdal.ReadDirRecursive(tmp_path)) == 107
+
+
+@pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
+def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
+
+    last_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= last_pct[0]
+        last_pct[0] = pct
+        return True
+
+    got_spurious = [False]
+
+    def my_handler(errorClass, errno, msg):
+        if "Spurious" in msg:
+            got_spurious[0] = True
+        return
+
+    alg = get_alg()
+    alg["input"] = "../gdrivers/data/small_world.tif"
+    alg["output"] = tmp_path / "subdir"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 3
+    alg["parallel-method"] = "spawn"
+    alg["metadata"] = {"foo": "bar"}
+    with gdaltest.config_options(
+        {
+            "CPL_DEBUG": "ON",
+            "CPL_LOG": str(tmp_path / "log.txt"),
+            "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS": "YES",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        with gdaltest.error_handler(my_handler):
+            alg.Run(my_progress)
+
+    assert last_pct[0] == 1.0
+
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+    assert gdal.VSIStatL(tmp_path / "log.txt") is not None
+    assert got_spurious[0]
+
+
 def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
 
     last_pct = [0]
@@ -686,7 +851,8 @@ def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
     alg["output"] = tmp_vsimem
     alg["min-zoom"] = 0
     alg["max-zoom"] = 3
-    alg.Run(my_progress)
+    with gdaltest.config_option("GDAL_THRESHOLD_MIN_TILES_PER_JOB", "1"):
+        alg.Run(my_progress)
 
     assert last_pct[0] == 1.0
 
@@ -1319,7 +1485,6 @@ def test_gdalalg_raster_tile_raster(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1370,7 +1535,6 @@ def test_gdalalg_raster_tile_raster_ungeoreferenced(tmp_vsimem):
         "0/",
         "0/0/",
         "0/0/0.tif",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1412,7 +1576,6 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
         "2/0/0.png",
         "2/1/",
         "2/1/0.png",
-        "mapml.mapml",
         "openlayers.html",
     ]
 
@@ -1448,3 +1611,233 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
         assert ds.ReadRaster(0, 0, 200, 100, band_list=[1, 2, 3]) == src_ds.ReadRaster(
             buf_xsize=200, buf_ysize=100
         )
+
+
+def test_gdalalg_raster_tile_raster_kml(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate(
+        "", "../gcore/data/byte.tif", format="MEM", outputSRS="EPSG:32611"
+    )
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = 10
+    alg["max-zoom"] = 11
+    alg["resampling"] = "nearest"
+    alg["kml"] = True
+    with gdal.config_option("GDAL_RASTER_TILE_KML_PREC", "10"):
+        assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "10/",
+        "10/177/",
+        "10/177/409.kml",
+        "10/177/409.png",
+        "11/",
+        "11/354/",
+        "11/354/818.kml",
+        "11/354/818.png",
+        "doc.kml",
+        "leaflet.html",
+        "mapml.mapml",
+        "openlayers.html",
+    ]
+
+    with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_doc.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_10_11_doc.kml", "rb").read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "10" / "177" / "409.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_10_177_409.kml", "wb").write(got)
+        assert (
+            got
+            == open(
+                "data/gdal_raster_tile_expected_byte_10_11_10_177_409.kml", "rb"
+            ).read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "11" / "354" / "818.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_10_11_11_354_818.kml", "wb").write(got)
+        assert (
+            got
+            == open(
+                "data/gdal_raster_tile_expected_byte_10_11_11_354_818.kml", "rb"
+            ).read()
+        )
+
+    if gdal.GetDriverByName("KMLSuperOverlay"):
+        ds = gdal.Open(tmp_vsimem / "doc.kml")
+        assert ds.GetRasterBand(1).Checksum() == 4215
+
+
+def test_gdalalg_raster_tile_raster_kml_with_gx_latlonquad(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = gdal.Translate(
+        "", "../gcore/data/byte.tif", format="MEM", outputSRS="EPSG:32611"
+    )
+    alg["output"] = tmp_vsimem
+    alg["tiling-scheme"] = "raster"
+    alg["resampling"] = "nearest"
+    alg["kml"] = True
+    with gdal.config_option("GDAL_RASTER_TILE_KML_PREC", "10"):
+        assert alg.Run()
+
+    assert gdal.ReadDirRecursive(tmp_vsimem) == [
+        "0/",
+        "0/0/",
+        "0/0/0.kml",
+        "0/0/0.png",
+        "doc.kml",
+        "openlayers.html",
+    ]
+
+    with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_raster_doc.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_raster_doc.kml", "rb").read()
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "0" / "0" / "0.kml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/gdal_raster_tile_expected_byte_raster_0_0_0.kml", "wb").write(got)
+        assert (
+            got
+            == open("data/gdal_raster_tile_expected_byte_raster_0_0_0.kml", "rb").read()
+        )
+
+
+def test_gdalalg_raster_tile_excluded_values_error(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = tmp_vsimem
+    alg["excluded-values"] = "0"
+    with pytest.raises(
+        Exception,
+        match="'excluded-values' can only be specified if 'resampling' is set to 'average'",
+    ):
+        alg.Run()
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = tmp_vsimem
+    alg["excluded-values"] = "0"
+    alg["resampling"] = "average"
+    alg["overview-resampling"] = "near"
+    with pytest.raises(
+        Exception,
+        match="'excluded-values' can only be specified if 'overview-resampling' is set to 'average'",
+    ):
+        alg.Run()
+
+
+def test_gdalalg_raster_tile_excluded_values(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+    )
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 11, 21, 31, 41)
+    )
+    src_ds.GetRasterBand(3).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 12, 22, 32, 42)
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    RES_Z1 = RES_Z0 / 2
+    # Spatial extent of tile (0,0) at zoom level 1
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z1, 0, MAX_GM, 0, -RES_Z1])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["excluded-values"] = "30,31,32"
+    alg["excluded-values-pct-threshold"] = 50
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 4, ds.ReadRaster(0, 0, 1, 1)) == (
+        (10 + 20 + 40) // 3,
+        (11 + 21 + 41) // 3,
+        (12 + 22 + 42) // 3,
+        255,
+    )
+
+
+def test_gdalalg_raster_tile_nodata_values_pct_threshold(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    for i in range(3):
+        src_ds.GetRasterBand(i + 1).SetNoDataValue(20)
+        src_ds.GetRasterBand(i + 1).WriteRaster(
+            0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+        )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    RES_Z1 = RES_Z0 / 2
+    # Spatial extent of tile (0,0) at zoom level 1
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z1, 0, MAX_GM, 0, -RES_Z1])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
+        round((10 + 30 + 40) / 3),
+        191,
+    )
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["nodata-values-pct-threshold"] = 50
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
+        round((10 + 30 + 40) / 3),
+        255,
+    )
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["resampling"] = "average"
+    alg["nodata-values-pct-threshold"] = 25
+    alg["min-zoom"] = 0
+    alg["max-zoom"] = 1
+    assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)

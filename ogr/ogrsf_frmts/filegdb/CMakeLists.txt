@@ -10,8 +10,10 @@ add_gdal_driver(
   CORE_SOURCES
           FGdbDriverCore.cpp
   PLUGIN_CAPABLE
-  NO_SHARED_SYMBOL_WITH_CORE)
-
+  NO_SHARED_SYMBOL_WITH_CORE
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 if(NOT TARGET ogr_FileGDB)
     return()
 endif()

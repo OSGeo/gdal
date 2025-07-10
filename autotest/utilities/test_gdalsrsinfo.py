@@ -254,7 +254,7 @@ def test_gdalsrsinfo_15(gdalsrsinfo_path):
 
     assert (
         ret.strip()
-        == "+proj=lcc +lat_0=33.75 +lon_0=-79 +lat_1=34.3333333333333 +lat_2=36.1666666666667 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs"
+        == "+proj=lcc +lat_0=33.75 +lon_0=-79 +lat_1=36.1666666666667 +lat_2=34.3333333333333 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs"
     )
 
 

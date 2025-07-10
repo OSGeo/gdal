@@ -91,13 +91,19 @@ GDALManageAppOptionsGetParser(GDALManageOptions *psOptions)
                             "for the gdalmanage utility "
                             "https://gdal.org/programs/gdalmanage.html"));
 
-    auto addCommonOptions = [psOptions](GDALArgumentParser *subParser)
+    auto addCommonOptions =
+        [psOptions](GDALArgumentParser *subParser, const char *helpMessageSrc)
     {
         subParser->add_argument("-f")
             .metavar("<format>")
             .store_into(psOptions->osDriverName)
             .help(_("Specify format of raster file if unknown by the "
                     "application."));
+
+        subParser->add_argument("datasetname")
+            .metavar("<datasetname>")
+            .store_into(psOptions->osDatasetName)
+            .help(helpMessageSrc);
 
         subParser->add_argument("newdatasetname")
             .metavar("<newdatasetname>")
@@ -141,12 +147,7 @@ GDALManageAppOptionsGetParser(GDALManageOptions *psOptions)
     copyParser->add_description(
         _("Create a copy of the raster file with a new name."));
 
-    addCommonOptions(copyParser);
-
-    copyParser->add_argument("datasetname")
-        .metavar("<datasetname>")
-        .store_into(psOptions->osDatasetName)
-        .help(_("Name of the file to copy."));
+    addCommonOptions(copyParser, _("Name of the file to copy."));
 
     // Rename
 
@@ -154,12 +155,7 @@ GDALManageAppOptionsGetParser(GDALManageOptions *psOptions)
         argParser->add_subparser("rename", /* bForBinary */ true);
     renameParser->add_description(_("Change the name of the raster file."));
 
-    addCommonOptions(renameParser);
-
-    renameParser->add_argument("datasetname")
-        .metavar("<datasetname>")
-        .store_into(psOptions->osDatasetName)
-        .help(_("Name of the file to rename."));
+    addCommonOptions(renameParser, _("Name of the file to rename."));
 
     // Delete
 
@@ -274,13 +270,13 @@ MAIN_START(argc, argv)
     }
     else if (argParser->is_subcommand_used("copy"))
     {
-        GDALCopyDatasetFiles(hDriver, psOptions.osDatasetName.c_str(),
-                             psOptions.osNewName.c_str());
+        GDALCopyDatasetFiles(hDriver, psOptions.osNewName.c_str(),
+                             psOptions.osDatasetName.c_str());
     }
     else if (argParser->is_subcommand_used("rename"))
     {
-        GDALRenameDataset(hDriver, psOptions.osDatasetName.c_str(),
-                          psOptions.osNewName.c_str());
+        GDALRenameDataset(hDriver, psOptions.osNewName.c_str(),
+                          psOptions.osDatasetName.c_str());
     }
     else if (argParser->is_subcommand_used("delete"))
     {

@@ -196,7 +196,7 @@ static void OGR2SQLITEAddLayer(const char *&pszStart, int &nNum,
     }
     if (bInsert)
     {
-        oSet.insert(oLayerDesc);
+        oSet.insert(std::move(oLayerDesc));
     }
     pszStart = pszSQLCommand;
 }

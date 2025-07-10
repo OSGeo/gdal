@@ -53,9 +53,10 @@ GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm(bool standaloneStep)
 /*                GDALRasterAspectAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALRasterAspectAlgorithm::RunStep(GDALProgressFunc, void *)
+bool GDALRasterAspectAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
@@ -76,10 +77,9 @@ bool GDALRasterAspectAlgorithm::RunStep(GDALProgressFunc, void *)
     GDALDEMProcessingOptions *psOptions =
         GDALDEMProcessingOptionsNew(aosOptions.List(), nullptr);
 
-    auto poOutDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALDEMProcessing(
-            "", GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()), "aspect",
-            nullptr, psOptions, nullptr)));
+    auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
+        GDALDEMProcessing("", GDALDataset::ToHandle(poSrcDS), "aspect", nullptr,
+                          psOptions, nullptr)));
     GDALDEMProcessingOptionsFree(psOptions);
     const bool bRet = poOutDS != nullptr;
     if (poOutDS)
@@ -89,5 +89,8 @@ bool GDALRasterAspectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterAspectAlgorithmStandalone::~GDALRasterAspectAlgorithmStandalone() =
+    default;
 
 //! @endcond

@@ -14,6 +14,7 @@
 #include "cpl_port.h"
 #include "nitflib.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "gdal.h"
@@ -427,7 +428,8 @@ int NITFUncompressARIDPCM(NITFImage *psImage, GByte *pabyInputData,
             CPLFree(full_image);
             return FALSE;
         }
-        L00[i] = (unsigned char)get_bits(pabyInputData, block_offset[i], 8);
+        L00[i] = static_cast<unsigned char>(
+            get_bits(pabyInputData, block_offset[i], 8));
 
         total += block_size[i];
     }
@@ -492,14 +494,9 @@ int NITFUncompressARIDPCM(NITFImage *psImage, GByte *pabyInputData,
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    int value = L[i][j];
-                    if (value < 0)
-                        value = 0;
-                    if (value > 255)
-                        value = 255;
-
-                    full_tl[8 - j - 1 + (8 - i - 1) * rowlen] =
-                        (unsigned char)value;
+                    const unsigned char value =
+                        static_cast<unsigned char>(std::clamp(L[i][j], 0, 255));
+                    full_tl[8 - j - 1 + (8 - i - 1) * rowlen] = value;
                 }
             }
         }

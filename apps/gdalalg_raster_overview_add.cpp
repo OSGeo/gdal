@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdalalg_raster_overview.h"
 #include "gdalalg_raster_overview_add.h"
 
 #include "cpl_string.h"
@@ -20,6 +21,14 @@
 #ifndef _
 #define _(x) (x)
 #endif
+
+bool GDALRasterOverviewAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "raster overview\" program.");
+    return false;
+}
 
 /************************************************************************/
 /*                    GDALRasterOverviewAlgorithmAdd()                  */
@@ -35,6 +44,15 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
            GDAL_OF_RASTER | GDAL_OF_UPDATE)
         .SetPositional()
         .SetRequired();
+
+    constexpr const char *OVERVIEW_SRC_LEVELS_MUTEX = "overview-src-levels";
+
+    auto &overviewSrcArg =
+        AddArg("overview-src", 0, _("Source overview dataset"),
+               &m_overviewSources, GDAL_OF_RASTER)
+            .SetMutualExclusionGroup(OVERVIEW_SRC_LEVELS_MUTEX);
+    SetAutoCompleteFunctionForFilename(overviewSrcArg, GDAL_OF_RASTER);
+
     AddArg("external", 0, _("Add external overviews"), &m_readOnly)
         .AddHiddenAlias("ro")
         .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
@@ -42,10 +60,11 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd()
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("nearest", "average", "cubic", "cubicspline", "lanczos",
                     "bilinear", "gauss", "average_magphase", "rms", "mode")
-        .SetHiddenChoices("near");
+        .SetHiddenChoices("near", "none");
 
     AddArg("levels", 0, _("Levels / decimation factors"), &m_levels)
-        .SetMinValueIncluded(2);
+        .SetMinValueIncluded(2)
+        .SetMutualExclusionGroup(OVERVIEW_SRC_LEVELS_MUTEX);
     AddArg("min-size", 0,
            _("Maximum width or height of the smallest overview level."),
            &m_minSize)
@@ -82,6 +101,18 @@ bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,
     }
     if (resampling.empty())
         resampling = "nearest";
+
+    if (!m_overviewSources.empty())
+    {
+        std::vector<GDALDataset *> apoDS;
+        for (auto &val : m_overviewSources)
+        {
+            CPLAssert(val.GetDatasetRef());
+            apoDS.push_back(val.GetDatasetRef());
+        }
+        return poDS->AddOverviews(apoDS, pfnProgress, pProgressData, nullptr) ==
+               CE_None;
+    }
 
     std::vector<int> levels = m_levels;
 

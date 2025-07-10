@@ -4,7 +4,7 @@
 Configuration options
 ================================================================================
 
-This page discusses runtime configuration options for GDAL. These are distinct from
+This page discusses :term:`runtime` configuration options for GDAL. These are distinct from
 options to the build-time configure script. Runtime configuration options apply
 on all platforms, and are evaluated at runtime. They can be set programmatically,
 by commandline switches or in the environment by the user.
@@ -18,7 +18,7 @@ How to set configuration options?
 
 One example of a configuration option is the :config:`GDAL_CACHEMAX`
 option. It controls the size
-of the GDAL block cache, in megabytes. It can be set in the environment on Unix
+of the GDAL :term:`block cache`, in megabytes. It can be set in the environment on Unix
 (bash/bourne) shell like this:
 
 ::
@@ -292,7 +292,7 @@ Performance and caching
 
       Used by :source_file:`gcore/rasterio.cpp`
 
-      Size of the swath when copying raster data from one dataset to another one (in
+      Size of the :term:`swath` when copying raster data from one dataset to another one (in
       bytes). Should not be smaller than :config:`GDAL_CACHEMAX`.
 
 -  .. config:: GDAL_DISABLE_READDIR_ON_OPEN
@@ -301,7 +301,7 @@ Performance and caching
 
       By default (FALSE), GDAL establishes a list of all the files in the
       directory of the file passed to :cpp:func:`GDALOpen`. This can result in
-      speed-ups in some use cases, but also to major slow downswhen the
+      speed-ups in some use cases, but also to major slow-downs when the
       directory contains thousands of other files. When set to TRUE, GDAL will
       not try to establish the list of files. The number of files read can
       also be limited by :config:`GDAL_READDIR_LIMIT_ON_OPEN`.
@@ -949,7 +949,7 @@ Networking options
 -  .. config:: GDAL_PROXY_AUTH
       :choices: BASIC, NTLM, NEGOTIATE, DIGEST, ANY, ANYSAFE
 
-      Set value to  to tell libcurl which authentication method(s) you want it to use
+      Set value to tell libcurl which authentication method(s) you want it to use
       for your proxy authentication. See
       http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXYAUTH for more
       information.

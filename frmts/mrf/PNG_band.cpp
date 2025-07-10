@@ -57,9 +57,18 @@
 #include <cassert>
 #include <algorithm>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#endif
+
 CPL_C_START
 #include <png.h>
 CPL_C_END
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 NAMESPACE_MRF_START
 
@@ -116,7 +125,8 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
     const buf_mgr src_ori = src;
     png_bytep *png_rowp = nullptr;
-    volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *)&png_rowp;
+    volatile png_bytep *p_volatile_png_rowp =
+        reinterpret_cast<volatile png_bytep *>(&png_rowp);
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
     png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr,
@@ -288,7 +298,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, const buf_mgr &src)
     }
 
     png_set_IHDR(pngp, infop, img.pagesize.x, img.pagesize.y,
-                 GDALGetDataTypeSize(img.dt), png_ctype, PNG_INTERLACE_NONE,
+                 GDALGetDataTypeSizeBits(img.dt), png_ctype, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
     // Optional, force certain filters only.  Makes it somewhat faster but worse

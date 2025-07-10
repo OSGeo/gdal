@@ -17,8 +17,7 @@
 #include "ogr_swq.h"
 #include "ogrwfsfilter.h"
 #include "gmlutils.h"
-
-extern "C" void RegisterOGRCSW();
+#include "memdataset.h"
 
 /************************************************************************/
 /*                             OGRCSWLayer                              */
@@ -537,9 +536,6 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
 
     if (!poDS->GetOutputSchema().empty())
     {
-        GDALDriver *poDrv = GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
-        if (poDrv == nullptr)
-            return nullptr;
         CPLXMLNode *psRoot = CPLParseXMLFile(osTmpFileName);
         if (psRoot == nullptr)
         {
@@ -565,7 +561,7 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
             return nullptr;
         }
 
-        l_poBaseDS = poDrv->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+        l_poBaseDS = MEMDataset::Create("", 0, 0, 0, GDT_Unknown, nullptr);
         OGRLayer *poLyr = l_poBaseDS->CreateLayer("records");
         OGRFieldDefn oField("raw_xml", OFTString);
         poLyr->CreateField(&oField);
@@ -660,7 +656,7 @@ GDALDataset *OGRCSWLayer::FetchGetRecords()
     }
     else
     {
-        l_poBaseDS = (GDALDataset *)OGROpen(osTmpFileName, FALSE, nullptr);
+        l_poBaseDS = GDALDataset::Open(osTmpFileName, GDAL_OF_VECTOR);
         if (l_poBaseDS == nullptr)
         {
             if (strstr((const char *)pabyData, "<csw:GetRecordsResponse") ==

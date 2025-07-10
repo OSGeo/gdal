@@ -17,6 +17,7 @@
 #include "gdal_rat.h"
 #include "gdalalgorithm.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -520,10 +521,11 @@ CPLErr GDALDriver::DefaultCopyMasks(GDALDataset *poSrcDS, GDALDataset *poDstDS,
                 eErr = poDstBand->CreateMaskBand(nMaskFlags);
                 if (eErr == CE_None)
                 {
-                    // coverity[divide_by_zero]
                     void *pScaledData = GDALCreateScaledProgress(
-                        double(iBandWithMask) / nTotalBandsWithMask,
-                        double(iBandWithMask + 1) / nTotalBandsWithMask,
+                        double(iBandWithMask) /
+                            std::max(1, nTotalBandsWithMask),
+                        double(iBandWithMask + 1) /
+                            std::max(1, nTotalBandsWithMask),
                         pfnProgress, pProgressData);
                     eErr = GDALRasterBandCopyWholeRaster(
                         poSrcBand->GetMaskBand(), poDstBand->GetMaskBand(),
@@ -726,19 +728,14 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      Try setting the projection and geotransform if it seems         */
     /*      suitable.                                                       */
     /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6] = {};
-
     if (nDstBands == 0 && !bStrict)
         CPLTurnFailureIntoWarning(true);
 
-    if (eErr == CE_None &&
-        poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
-        // TODO(schwehr): The default value check should be a function.
-        && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-            adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-            adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
+    GDALGeoTransform gt;
+    if (eErr == CE_None && poSrcDS->GetGeoTransform(gt) == CE_None &&
+        gt != GDALGeoTransform())
     {
-        eErr = poDstDS->SetGeoTransform(adfGeoTransform);
+        eErr = poDstDS->SetGeoTransform(gt);
         if (!bStrict)
             eErr = CE_None;
     }
@@ -1072,7 +1069,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                     osFilename.replaceAll('\\', '/');
                     if (cpl::contains(oSetExistingDestFiles, osFilename))
                     {
-                        oSetExistingDestFilesFoundInSource.insert(osFilename);
+                        oSetExistingDestFilesFoundInSource.insert(
+                            std::move(osFilename));
                     }
                 }
             }
@@ -2909,7 +2907,6 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
                                      CPLString(osDriverName).tolower()};
     if (!singleton.HasDeclaredSubAlgorithm(path))
     {
-        // coverity[copy_constructor_call]
         auto lambda = [osDriverName]() -> std::unique_ptr<GDALAlgorithm>
         {
             auto poDriver =
@@ -2933,7 +2930,6 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
 
     path.insert(path.end(), aosPath.begin(), aosPath.end());
 
-    // coverity[copy_constructor_call]
     auto lambda = [osDriverName, aosPath]() -> std::unique_ptr<GDALAlgorithm>
     {
         auto poDriver =
@@ -2945,6 +2941,8 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
     };
 
     singleton.DeclareAlgorithm(path, std::move(lambda));
+
+    CPL_IGNORE_RET_VAL(osDriverName);
 }
 
 //! @endcond
@@ -3043,6 +3041,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
     auto poDM = GetGDALDriverManager();
     const int nDriverCount = poDM->GetDriverCount(true);
     GDALDriver *poMissingPluginDriver = nullptr;
+    std::string osMatchingPrefix;
     for (int i = 0; i < nDriverCount; i++)
     {
         GDALDriver *poDriver = poDM->GetDriver(i, true);
@@ -3083,6 +3082,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
                 {
                     if (poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME"))
                     {
+                        osMatchingPrefix = pszPrefix;
                         poMissingPluginDriver = poDriver;
                         aosMissingDriverNames.AddString(
                             poDriver->GetDescription());
@@ -3143,8 +3143,11 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
             if (bEmitWarning)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Several drivers matching %s extension. Using %s",
-                         osExt.c_str(), aosDriverNames[0]);
+                         "Several drivers matching %s %s. Using %s",
+                         osMatchingPrefix.empty() ? osExt.c_str()
+                                                  : osMatchingPrefix.c_str(),
+                         osMatchingPrefix.empty() ? "extension" : "prefix",
+                         aosDriverNames[0]);
             }
             const std::string osDrvName = aosDriverNames[0];
             aosDriverNames.Clear();
@@ -3155,10 +3158,13 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
     if (aosDriverNames.empty() && bEmitWarning &&
         aosMissingDriverNames.size() == 1 && poMissingPluginDriver)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "No installed driver matching %s extension, but %s driver is "
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "No installed driver matching %s %s, but %s driver is "
                  "known. However plugin %s",
-                 osExt.c_str(), poMissingPluginDriver->GetDescription(),
+                 osMatchingPrefix.empty() ? osExt.c_str()
+                                          : osMatchingPrefix.c_str(),
+                 osMatchingPrefix.empty() ? "extension" : "prefix",
+                 poMissingPluginDriver->GetDescription(),
                  GDALGetMessageAboutMissingPluginDriver(poMissingPluginDriver)
                      .c_str());
     }

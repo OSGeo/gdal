@@ -21,6 +21,7 @@
 
 #include "gdalalg_raster_overview_add.h"
 #include "gdalalg_raster_overview_delete.h"
+#include "gdalalg_raster_overview_refresh.h"
 
 /************************************************************************/
 /*                      GDALRasterOverviewAlgorithm                     */
@@ -39,16 +40,11 @@ class GDALRasterOverviewAlgorithm final : public GDALAlgorithm
     {
         RegisterSubAlgorithm<GDALRasterOverviewAlgorithmAdd>();
         RegisterSubAlgorithm<GDALRasterOverviewAlgorithmDelete>();
+        RegisterSubAlgorithm<GDALRasterOverviewAlgorithmRefresh>();
     }
 
   private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "raster overview\" program.");
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

@@ -2480,7 +2480,8 @@ int OGR_G_IsSimple(OGRGeometryH hGeom)
  * FALSE.
  *
  *
- * @return TRUE if the geometry has no points, otherwise FALSE.
+ * @return TRUE if the coordinates of the geometry form a ring, by checking
+ * length and closure (self-intersection is not checked), otherwise FALSE.
  */
 
 OGRBoolean OGRGeometry::IsRing() const
@@ -2525,7 +2526,8 @@ OGRBoolean OGRGeometry::IsRing() const
  *
  * @param hGeom The Geometry to test.
  *
- * @return TRUE if the geometry has no points, otherwise FALSE.
+ * @return TRUE if the coordinates of the geometry form a ring, by checking
+ * length and closure (self-intersection is not checked), otherwise FALSE.
  */
 
 int OGR_G_IsRing(OGRGeometryH hGeom)
@@ -8114,6 +8116,8 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
         // Set export options with NDR byte order
         OGRwkbExportOptions oOptions;
         oOptions.eByteOrder = wkbNDR;
+        // and ISO to avoid wkb25DBit for Z geometries
+        oOptions.eWkbVariant = wkbVariantIso;
 
         // Export to WKB
         sfcgal_geometry_t *sfcgalGeom = nullptr;
@@ -8884,3 +8888,15 @@ bool OGRGeometry::hasEmptyParts() const
 void OGRGeometry::removeEmptyParts()
 {
 }
+
+/************************************************************************/
+/*                      ~IOGRGeometryVisitor()                          */
+/************************************************************************/
+
+IOGRGeometryVisitor::~IOGRGeometryVisitor() = default;
+
+/************************************************************************/
+/*                    ~IOGRConstGeometryVisitor()                       */
+/************************************************************************/
+
+IOGRConstGeometryVisitor::~IOGRConstGeometryVisitor() = default;

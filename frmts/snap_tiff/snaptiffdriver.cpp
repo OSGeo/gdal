@@ -8,7 +8,7 @@
 #include "rawdataset.h"
 
 #define LIBERTIFF_NS GDAL_libertiff
-#include "../../third_party/libertiff/libertiff.hpp"
+#include "libertiff.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -132,8 +132,9 @@ int SNAPTIFFDataset::Identify(GDALOpenInfo *poOpenInfo)
 #ifdef DEBUG
     // Just to increase coverage testing
     CPLAssert(f->size() == uint64_t(poOpenInfo->nHeaderBytes));
-    char dummy;
+    char dummy = 0;
     CPLAssert(f->read(poOpenInfo->nHeaderBytes, 1, &dummy) == 0);
+    CPL_IGNORE_RET_VAL(dummy);
 #endif
     auto image = LIBERTIFF_NS::open</*acceptBigTIFF = */ false>(std::move(f));
     // Checks that it is a single-band Float32 uncompressed dataset, made
@@ -216,8 +217,9 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
     auto f = std::make_shared<const MyFileReader>(poOpenInfo->fpL);
 #ifdef DEBUG
     // Just to increase coverage testing
-    char dummy;
+    char dummy = 0;
     CPLAssert(f->read(f->size(), 1, &dummy) == 0);
+    CPL_IGNORE_RET_VAL(dummy);
 #endif
 
     auto poDS = std::make_unique<SNAPTIFFDataset>();

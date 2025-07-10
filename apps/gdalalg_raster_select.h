@@ -33,7 +33,7 @@ class GDALRasterSelectAlgorithm /* non final */
     explicit GDALRasterSelectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_bands{};
     std::string m_mask{};
@@ -51,6 +51,8 @@ class GDALRasterSelectAlgorithmStandalone final
         : GDALRasterSelectAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterSelectAlgorithmStandalone() override;
 };
 
 //! @endcond

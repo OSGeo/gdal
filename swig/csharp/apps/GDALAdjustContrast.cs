@@ -13,6 +13,8 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
+#pragma warning disable CA1416 // Validate platform compatibility
+
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -309,3 +311,4 @@ class GDALAdjustContrast {
         }
     }
 }
+#pragma warning restore CA1416 // Validate platform compatibility

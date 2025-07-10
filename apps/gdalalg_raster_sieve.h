@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_SIEVE_INCLUDED
 #define GDALALG_RASTER_SIEVE_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                   GDALRasterSieveAlgorithm                           */
 /************************************************************************/
 
-class GDALRasterSieveAlgorithm final : public GDALAlgorithm
+class GDALRasterSieveAlgorithm /* non final */
+    : public GDALRasterPipelineNonNativelyStreamingAlgorithm
 {
   public:
     static constexpr const char *NAME = "sieve";
@@ -29,24 +30,30 @@ class GDALRasterSieveAlgorithm final : public GDALAlgorithm
         "Remove small polygons from a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_sieve.html";
 
-    explicit GDALRasterSieveAlgorithm();
+    explicit GDALRasterSieveAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-
-    std::string m_format{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     int m_sizeThreshold = 2;
     bool m_connectDiagonalPixels = false;
     GDALArgDatasetValue m_maskDataset{};
+};
+
+/************************************************************************/
+/*                  GDALRasterSieveAlgorithmStandalone                  */
+/************************************************************************/
+
+class GDALRasterSieveAlgorithmStandalone final : public GDALRasterSieveAlgorithm
+{
+  public:
+    GDALRasterSieveAlgorithmStandalone()
+        : GDALRasterSieveAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterSieveAlgorithmStandalone() override;
 };
 
 //! @endcond

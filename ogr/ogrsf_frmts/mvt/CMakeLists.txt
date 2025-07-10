@@ -1,7 +1,10 @@
 add_gdal_driver(
   TARGET ogr_MVT
   SOURCES mvt_tile.cpp mvt_tile.h mvtutils.cpp mvtutils.h ogrmvtdataset.cpp
-  BUILTIN)
+  BUILTIN
+  NO_CXX_WFLAGS_EFFCXX
+  NO_WFLAG_OLD_STYLE_CAST
+)
 gdal_standard_includes(ogr_MVT)
 target_include_directories(ogr_MVT PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/osm)
 if (GDAL_USE_GEOS)

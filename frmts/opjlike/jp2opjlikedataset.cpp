@@ -29,6 +29,8 @@
 
 #include "jp2opjlikedataset.h"
 
+JP2DatasetBase::~JP2DatasetBase() = default;
+
 /************************************************************************/
 /*                        JP2OPJLikeRasterBand()                        */
 /************************************************************************/
@@ -83,12 +85,7 @@ JP2OPJLikeRasterBand<CODEC, BASE>::~JP2OPJLikeRasterBand()
 
 static CPL_INLINE GByte CLAMP_0_255(int val)
 {
-    if (val < 0)
-        return 0;
-    else if (val > 255)
-        return 255;
-    else
-        return (GByte)val;
+    return static_cast<GByte>(std::clamp(val, 0, 255));
 }
 
 /************************************************************************/
@@ -100,7 +97,7 @@ CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IReadBlock(int nBlockXOff,
                                                      int nBlockYOff,
                                                      void *pImage)
 {
-    auto poGDS = (JP2OPJLikeDataset<CODEC, BASE> *)poDS;
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
 
 #ifdef DEBUG_VERBOSE
     int nXOff = nBlockXOff * nBlockXSize;
@@ -139,7 +136,7 @@ CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IRasterIO(
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
-    auto poGDS = (JP2OPJLikeDataset<CODEC, BASE> *)poDS;
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
 
     if (eRWFlag != GF_Read)
         return CE_Failure;
@@ -173,16 +170,16 @@ CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IRasterIO(
     return eErr;
 }
 
-template <typename CODEC, typename BASE> class JP2JobStruct
+template <typename CODEC, typename BASE> struct JP2JobStruct
 {
   public:
-    JP2OPJLikeDataset<CODEC, BASE> *poGDS_;
-    int nBand;
-    std::vector<std::pair<int, int>> oPairs;
-    volatile int nCurPair;
-    int nBandCount;
-    const int *panBandMap;
-    volatile bool bSuccess;
+    JP2OPJLikeDataset<CODEC, BASE> *poGDS_ = nullptr;
+    int nBand = 0;
+    std::vector<std::pair<int, int>> oPairs{};
+    volatile int nCurPair = 0;
+    int nBandCount = 0;
+    const int *panBandMap = nullptr;
+    volatile bool bSuccess = false;
 };
 
 /************************************************************************/
@@ -203,12 +200,12 @@ template <typename CODEC, typename BASE>
 void JP2OPJLikeDataset<CODEC, BASE>::ReadBlockInThread(void *userdata)
 {
     int nPair;
-    auto poJob = (JP2JobStruct<CODEC, BASE> *)userdata;
+    auto poJob = static_cast<JP2JobStruct<CODEC, BASE> *>(userdata);
 
     JP2OPJLikeDataset *poGDS = poJob->poGDS_;
-    int nBand = poJob->nBand;
-    int nPairs = (int)poJob->oPairs.size();
-    int nBandCount = poJob->nBandCount;
+    const int nBand = poJob->nBand;
+    const int nPairs = static_cast<int>(poJob->oPairs.size());
+    const int nBandCount = poJob->nBandCount;
     const int *panBandMap = poJob->panBandMap;
     VSILFILE *fp = VSIFOpenL(poGDS->m_osFilename.c_str(), "rb");
     if (fp == nullptr)
@@ -260,15 +257,16 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
     int nYSize, int nBandCount, const int *panBandMap)
 {
     int bRet = TRUE;
-    int nXStart = nXOff / poBand->nBlockXSize;
-    int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
-    int nYStart = nYOff / poBand->nBlockYSize;
-    int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
-    GIntBig nReqMem = (GIntBig)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
-                      poBand->nBlockXSize * poBand->nBlockYSize *
-                      (GDALGetDataTypeSize(poBand->eDataType) / 8);
+    const int nXStart = nXOff / poBand->nBlockXSize;
+    const int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
+    const int nYStart = nYOff / poBand->nBlockYSize;
+    const int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
+    const GIntBig nReqMem = static_cast<GIntBig>(nXEnd - nXStart + 1) *
+                            (nYEnd - nYStart + 1) * poBand->nBlockXSize *
+                            poBand->nBlockYSize *
+                            GDALGetDataTypeSizeBytes(poBand->eDataType);
 
-    int nMaxThreads = this->GetNumThreads();
+    const int nMaxThreads = this->GetNumThreads();
     if (!this->bUseSetDecodeArea && nMaxThreads > 1)
     {
         if (nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount))
@@ -306,9 +304,8 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
         if (this->m_nBlocksToLoad > 1)
         {
             const int l_nThreads = std::min(this->m_nBlocksToLoad, nMaxThreads);
-            CPLJoinableThread **pahThreads =
-                (CPLJoinableThread **)VSI_CALLOC_VERBOSE(
-                    sizeof(CPLJoinableThread *), l_nThreads);
+            CPLJoinableThread **pahThreads = static_cast<CPLJoinableThread **>(
+                VSI_CALLOC_VERBOSE(sizeof(CPLJoinableThread *), l_nThreads));
             if (pahThreads == nullptr)
             {
                 this->m_nBlocksToLoad = 0;
@@ -415,8 +412,8 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::IRasterIO(
     if (nBandCount < 1)
         return CE_Failure;
 
-    auto poBand =
-        (JP2OPJLikeRasterBand<CODEC, BASE> *)GetRasterBand(panBandMap[0]);
+    auto poBand = cpl::down_cast<JP2OPJLikeRasterBand<CODEC, BASE> *>(
+        GetRasterBand(panBandMap[0]));
 
     /* ==================================================================== */
     /*      Do we have overviews that would be appropriate to satisfy       */
@@ -487,14 +484,15 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
     CPLErr eErr = CE_None;
     CODEC localctx;
 
-    auto poBand = (JP2OPJLikeRasterBand<CODEC, BASE> *)GetRasterBand(nBand);
-    int nBlockXSize = poBand->nBlockXSize;
-    int nBlockYSize = poBand->nBlockYSize;
-    GDALDataType eDataType = poBand->eDataType;
+    auto poBand = cpl::down_cast<JP2OPJLikeRasterBand<CODEC, BASE> *>(
+        GetRasterBand(nBand));
+    const int nBlockXSize = poBand->nBlockXSize;
+    const int nBlockYSize = poBand->nBlockYSize;
+    const GDALDataType eDataType = poBand->eDataType;
 
-    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
 
-    int nTileNumber = nBlockXOff + nBlockYOff * poBand->nBlocksPerRow;
+    const int nTileNumber = nBlockXOff + nBlockYOff * poBand->nBlocksPerRow;
     const int nWidthToRead =
         std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     const int nHeightToRead =
@@ -522,7 +520,8 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
         GDALRasterBlock *poBlock = nullptr;
         int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
         int bPromoteTo8Bit =
-            ((JP2OPJLikeRasterBand<CODEC, BASE> *)GetRasterBand(iBand))
+            (cpl::down_cast<JP2OPJLikeRasterBand<CODEC, BASE> *>(
+                 GetRasterBand(iBand)))
                 ->bPromoteTo8Bit;
 
         void *pDstBuffer = nullptr;
@@ -531,9 +530,9 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
         else
         {
             AcquireMutex();
-            poBlock =
-                ((JP2OPJLikeRasterBand<CODEC, BASE> *)GetRasterBand(iBand))
-                    ->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
+            poBlock = (cpl::down_cast<JP2OPJLikeRasterBand<CODEC, BASE> *>(
+                           GetRasterBand(iBand)))
+                          ->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
             if (poBlock != nullptr)
             {
                 ReleaseMutex();
@@ -554,8 +553,9 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
 
         if (this->bIs420)
         {
-            if ((int)localctx.psImage->comps[0].w < nWidthToRead ||
-                (int)localctx.psImage->comps[0].h < nHeightToRead ||
+            if (static_cast<int>(localctx.psImage->comps[0].w) < nWidthToRead ||
+                static_cast<int>(localctx.psImage->comps[0].h) <
+                    nHeightToRead ||
                 localctx.psImage->comps[1].w !=
                     (localctx.psImage->comps[0].w + 1) / 2 ||
                 localctx.psImage->comps[1].h !=
@@ -565,8 +565,10 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 localctx.psImage->comps[2].h !=
                     (localctx.psImage->comps[0].h + 1) / 2 ||
                 (nBands == 4 &&
-                 ((int)localctx.psImage->comps[3].w < nWidthToRead ||
-                  (int)localctx.psImage->comps[3].h < nHeightToRead)))
+                 (static_cast<int>(localctx.psImage->comps[3].w) <
+                      nWidthToRead ||
+                  static_cast<int>(localctx.psImage->comps[3].h) <
+                      nHeightToRead)))
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
                          "Assertion at line %d of %s failed", __LINE__,
@@ -577,7 +579,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 goto end;
             }
 
-            GByte *pDst = (GByte *)pDstBuffer;
+            GByte *pDst = static_cast<GByte *>(pDstBuffer);
             if (iBand == 4)
             {
                 const auto pSrcA = localctx.psImage->comps[3].data;
@@ -609,15 +611,15 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                                                  localctx.psImage->comps + 2) +
                                    (i / 2)];
                         if (iBand == 1)
-                            pDst[j * nBlockXSize + i] =
-                                CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
+                                static_cast<int>(Y + 1.402 * (Cr - 128)));
                         else if (iBand == 2)
-                            pDst[j * nBlockXSize + i] =
-                                CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) -
-                                                  0.71414 * (Cr - 128)));
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
+                                static_cast<int>(Y - 0.34414 * (Cb - 128) -
+                                                 0.71414 * (Cr - 128)));
                         else if (iBand == 3)
-                            pDst[j * nBlockXSize + i] =
-                                CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
+                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
+                                static_cast<int>(Y + 1.772 * (Cb - 128)));
                     }
                 }
             }
@@ -635,8 +637,10 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
         }
         else
         {
-            if ((int)localctx.psImage->comps[iBand - 1].w < nWidthToRead ||
-                (int)localctx.psImage->comps[iBand - 1].h < nHeightToRead)
+            if (static_cast<int>(localctx.psImage->comps[iBand - 1].w) <
+                    nWidthToRead ||
+                static_cast<int>(localctx.psImage->comps[iBand - 1].h) <
+                    nHeightToRead)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
                          "Assertion at line %d of %s failed", __LINE__,
@@ -661,9 +665,10 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 }
             }
 
-            if ((int)localctx.stride(localctx.psImage->comps + iBand - 1) ==
-                    nBlockXSize &&
-                (int)localctx.psImage->comps[iBand - 1].h == nBlockYSize)
+            if (static_cast<int>(localctx.stride(localctx.psImage->comps +
+                                                 iBand - 1)) == nBlockXSize &&
+                static_cast<int>(localctx.psImage->comps[iBand - 1].h) ==
+                    nBlockYSize)
             {
                 GDALCopyWords64(
                     localctx.psImage->comps[iBand - 1].data, GDT_Int32, 4,
@@ -679,7 +684,8 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                             j * localctx.stride(localctx.psImage->comps +
                                                 iBand - 1),
                         GDT_Int32, 4,
-                        (GByte *)pDstBuffer + j * nBlockXSize * nDataTypeSize,
+                        static_cast<GByte *>(pDstBuffer) +
+                            j * nBlockXSize * nDataTypeSize,
                         eDataType, nDataTypeSize, nWidthToRead);
                 }
             }
@@ -722,7 +728,7 @@ GDALRasterBand *JP2OPJLikeRasterBand<CODEC, BASE>::GetOverview(int iOvrLevel)
     if (GDALPamRasterBand::GetOverviewCount() > 0)
         return GDALPamRasterBand::GetOverview(iOvrLevel);
 
-    auto poGDS = (JP2OPJLikeDataset<CODEC, BASE> *)poDS;
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
     if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
         return nullptr;
 
@@ -736,7 +742,7 @@ GDALRasterBand *JP2OPJLikeRasterBand<CODEC, BASE>::GetOverview(int iOvrLevel)
 template <typename CODEC, typename BASE>
 GDALColorInterp JP2OPJLikeRasterBand<CODEC, BASE>::GetColorInterpretation()
 {
-    auto poGDS = (JP2OPJLikeDataset<CODEC, BASE> *)poDS;
+    auto poGDS = cpl::down_cast<JP2OPJLikeDataset<CODEC, BASE> *>(poDS);
 
     if (poCT)
         return GCI_PaletteIndex;
@@ -856,7 +862,8 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                             if (oSubBox.ReadFirstChild(&oBox) &&
                                 EQUAL(oSubBox.GetType(), "lbl "))
                             {
-                                char *pszLabel = (char *)oSubBox.ReadBoxData();
+                                char *pszLabel = reinterpret_cast<char *>(
+                                    oSubBox.ReadBoxData());
                                 if (pszLabel != nullptr &&
                                     EQUAL(pszLabel, "gml.data"))
                                 {
@@ -921,18 +928,18 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                     VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
                     GByte abyBuffer[8];
                     VSIFReadL(abyBuffer, 1, 8, this->fp_);
-                    if (STARTS_WITH_CI((const char *)abyBuffer + 4, "jp2c") &&
+                    if (memcmp(abyBuffer + 4, "jp2c", 4) == 0 &&
                         abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
                         abyBuffer[2] == 0 && abyBuffer[3] == 0)
                     {
-                        if ((vsi_l_offset)(GUInt32)(nLengthJP2C + 8) ==
-                            (nLengthJP2C + 8))
+                        if (nLengthJP2C + 8 < UINT32_MAX)
                         {
                             CPLDebug(
                                 CODEC::debugId(),
                                 "Patching length of JP2C box with real length");
                             VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
-                            GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
+                            GUInt32 nLength =
+                                static_cast<GUInt32>(nLengthJP2C) + 8;
                             CPL_MSBPTR32(&nLength);
                             if (VSIFWriteL(&nLength, 1, 4, this->fp_) != 1)
                                 eErr = CE_Failure;
@@ -985,7 +992,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                         }
                         if (bGeoTransformValid)
                         {
-                            oJP2MD.SetGeoTransform(adfGeoTransform);
+                            oJP2MD.SetGeoTransform(m_gt);
                         }
                     }
 
@@ -1044,9 +1051,10 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                                                        nullptr};
                     CPLString osTmpFilename(
                         CPLSPrintf("%s.tmp", GetDescription()));
-                    GDALDataset *poOutDS = CreateCopy(
-                        osTmpFilename, this, FALSE, (char **)apszOptions,
-                        GDALDummyProgress, nullptr);
+                    GDALDataset *poOutDS =
+                        CreateCopy(osTmpFilename, this, FALSE,
+                                   const_cast<char **>(apszOptions),
+                                   GDALDummyProgress, nullptr);
                     if (poOutDS)
                     {
                         if (GDALClose(poOutDS) != CE_None)
@@ -1118,20 +1126,18 @@ JP2OPJLikeDataset<CODEC, BASE>::SetSpatialRef(const OGRSpatialReference *poSRS)
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetGeoTransform(double *padfGeoTransform)
+CPLErr
+JP2OPJLikeDataset<CODEC, BASE>::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (eAccess == GA_Update)
     {
         this->bRewrite = TRUE;
-        memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
-        bGeoTransformValid =
-            !(adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0 &&
-              adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0 &&
-              adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0);
+        m_gt = gt;
+        bGeoTransformValid = m_gt != GDALGeoTransform();
         return CE_None;
     }
     else
-        return GDALJP2AbstractDataset::SetGeoTransform(padfGeoTransform);
+        return GDALJP2AbstractDataset::SetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -1345,8 +1351,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        int iBand;
-        for (iBand = 2; iBand <= (int)localctx.psImage->numcomps; iBand++)
+        for (unsigned iBand = 2; iBand <= localctx.psImage->numcomps; iBand++)
         {
             if (localctx.psImage->comps[iBand - 1].w !=
                     localctx.psImage->comps[0].w ||
@@ -1379,15 +1384,15 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     poDS->nCodeStreamStart = nCodeStreamStart;
     poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
-    poDS->bSingleTiled = (poDS->nRasterXSize == (int)nTileW &&
-                          poDS->nRasterYSize == (int)nTileH);
+    poDS->bSingleTiled = (poDS->nRasterXSize == static_cast<int>(nTileW) &&
+                          poDS->nRasterYSize == static_cast<int>(nTileH));
     poDS->m_nX0 = localctx.psImage->x0;
     poDS->m_nY0 = localctx.psImage->y0;
     poDS->m_nTileWidth = nTileW;
     poDS->m_nTileHeight = nTileH;
 
-    int nBlockXSize = (int)nTileW;
-    int nBlockYSize = (int)nTileH;
+    int nBlockXSize = static_cast<int>(nTileW);
+    int nBlockYSize = static_cast<int>(nTileH);
 
     if (CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false))
     {
@@ -1419,8 +1424,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
              * but they */
             /* are tiled with tile dimensions 2048x2048. It would be a waste of */
             /* memory to allocate such big blocks */
-            if (poDS->nRasterXSize < (int)nTileW &&
-                poDS->nRasterYSize < (int)nTileH)
+            if (poDS->nRasterXSize < static_cast<int>(nTileW) &&
+                poDS->nRasterYSize < static_cast<int>(nTileH))
             {
                 poDS->bUseSetDecodeArea = TRUE;
                 nBlockXSize = poDS->nRasterXSize;
@@ -1737,9 +1742,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         nW = (nW + 1) / 2;
         nH = (nH + 1) / 2;
 
-        poDS->papoOverviewDS = (JP2OPJLikeDataset<CODEC, BASE> **)CPLRealloc(
-            poDS->papoOverviewDS, (poDS->nOverviewCount + 1) *
-                                      sizeof(JP2OPJLikeDataset<CODEC, BASE> *));
+        poDS->papoOverviewDS = static_cast<JP2OPJLikeDataset<CODEC, BASE> **>(
+            CPLRealloc(poDS->papoOverviewDS,
+                       (poDS->nOverviewCount + 1) *
+                           sizeof(JP2OPJLikeDataset<CODEC, BASE> *)));
         JP2OPJLikeDataset *poODS = new JP2OPJLikeDataset();
         poODS->m_osFilename = poDS->m_osFilename;
         poODS->nParentXSize = poDS->nRasterXSize;
@@ -1756,13 +1762,13 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         {
             nTileW /= 2;
             nTileH /= 2;
-            nBlockXSize = (int)nTileW;
-            nBlockYSize = (int)nTileH;
+            nBlockXSize = static_cast<int>(nTileW);
+            nBlockYSize = static_cast<int>(nTileH);
         }
         else
         {
-            nBlockXSize = std::min(nW, (int)nTileW);
-            nBlockYSize = std::min(nH, (int)nTileH);
+            nBlockXSize = std::min(nW, static_cast<int>(nTileW));
+            nBlockYSize = std::min(nH, static_cast<int>(nTileH));
         }
 
         poODS->eColorSpace = poDS->eColorSpace;
@@ -1877,15 +1883,15 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
     if (poBox == nullptr)
         return true;
 
-    nLBox = (int)poBox->GetDataLength() + 8;
+    nLBox = static_cast<int>(poBox->GetDataLength()) + 8;
     nLBox = CPL_MSBWORD32(nLBox);
 
     memcpy(&nTBox, poBox->GetType(), 4);
 
     return VSIFWriteL(&nLBox, 4, 1, fp) == 1 &&
            VSIFWriteL(&nTBox, 4, 1, fp) == 1 &&
-           VSIFWriteL(poBox->GetWritableData(), (int)poBox->GetDataLength(), 1,
-                      fp) == 1;
+           VSIFWriteL(poBox->GetWritableData(),
+                      static_cast<int>(poBox->GetDataLength()), 1, fp) == 1;
 }
 
 /************************************************************************/
@@ -2007,7 +2013,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     if (eDataType != GDT_Byte && eDataType != GDT_Int16 &&
         eDataType != GDT_UInt16 && eDataType != GDT_Int32 &&
         eDataType != GDT_UInt32)
@@ -2369,6 +2375,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /*      Work out the precision.                                         */
     /* -------------------------------------------------------------------- */
     int nBits;
+    const int nDTBits = GDALGetDataTypeSizeBits(eDataType);
+
     if (CSLFetchNameValue(papszOptions, "NBITS") != nullptr)
     {
         nBits = atoi(CSLFetchNameValue(papszOptions, "NBITS"));
@@ -2392,21 +2400,20 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             /* Implements "NOTE If the original data do not satisfy this "
                "requirement, they will be converted in a representation using "
                "the next higher power of 2" */
-            nBits = GDALGetDataTypeSize(eDataType);
+            nBits = nDTBits;
         }
     }
     else
     {
-        nBits = GDALGetDataTypeSize(eDataType);
+        nBits = nDTBits;
     }
 
-    if ((GDALGetDataTypeSize(eDataType) == 8 && nBits > 8) ||
-        (GDALGetDataTypeSize(eDataType) == 16 && (nBits <= 8 || nBits > 16)) ||
-        (GDALGetDataTypeSize(eDataType) == 32 && (nBits <= 16 || nBits > 32)))
+    if ((nDTBits == 8 && nBits > 8) ||
+        (nDTBits == 16 && (nBits <= 8 || nBits > 16)) ||
+        (nDTBits == 32 && (nBits <= 16 || nBits > 32)))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "Inconsistent NBITS value with data type. Using %d",
-                 GDALGetDataTypeSize(eDataType));
+                 "Inconsistent NBITS value with data type. Using %d", nDTBits);
     }
 
     /* -------------------------------------------------------------------- */
@@ -2451,11 +2458,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetSpatialRef(poSRS);
             }
-            double adfGeoTransform[6];
-            if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            GDALGeoTransform gt;
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
-                oJP2MD.SetGeoTransform(adfGeoTransform);
+                oJP2MD.SetGeoTransform(gt);
                 if (poSRS && !poSRS->IsEmpty())
                 {
                     bGeoreferencingCompatOfGMLJP2 =
@@ -2602,11 +2609,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             VSIFSeekL(fpBlob, 0, SEEK_END);
 
             size_t nBlobSize = static_cast<size_t>(VSIFTellL(fpBlob));
-            size_t nChunk = (size_t)(GDALGetCacheMax() * 0.25);
+            size_t nChunk = GDALGetCacheMax() / 4;
             size_t nSize = 0;
             size_t nCount = 0;
 
-            void *pBuffer = (GByte *)VSI_MALLOC_VERBOSE(nChunk);
+            void *pBuffer = VSI_MALLOC_VERBOSE(nChunk);
             if (pBuffer == nullptr)
             {
                 delete poGMLJP2Box;
@@ -2621,8 +2628,9 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             {
                 VSIFWriteL(pBuffer, 1, nSize, fp);
                 nCount += nSize;
-                pfnProgress((float)nCount / (float)nBlobSize, nullptr,
-                            pProgressData);
+                pfnProgress(static_cast<double>(nCount) /
+                                static_cast<double>(nBlobSize),
+                            nullptr, pProgressData);
             }
 
             CPLFree(pBuffer);
@@ -2637,11 +2645,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
             /* Copy essential metadata */
 
-            double adfGeoTransform[6];
-
-            if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            GDALGeoTransform gt;
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
-                poDS->SetGeoTransform(adfGeoTransform);
+                poDS->SetGeoTransform(gt);
             }
 
             const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
@@ -2929,11 +2936,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             for (int i = 0; i < nEntries; i++)
             {
                 const GDALColorEntry *psEntry = poCT->GetColorEntry(i);
-                pclrBox.AppendUInt8((GByte)psEntry->c1);
-                pclrBox.AppendUInt8((GByte)psEntry->c2);
-                pclrBox.AppendUInt8((GByte)psEntry->c3);
+                pclrBox.AppendUInt8(static_cast<GByte>(psEntry->c1));
+                pclrBox.AppendUInt8(static_cast<GByte>(psEntry->c2));
+                pclrBox.AppendUInt8(static_cast<GByte>(psEntry->c3));
                 if (nCTComponentCount == 4)
-                    pclrBox.AppendUInt8((GByte)psEntry->c4);
+                    pclrBox.AppendUInt8(static_cast<GByte>(psEntry->c4));
             }
 
             cmapBox.SetType("cmap");
@@ -3049,10 +3056,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                     nXDenom *= 2;
                 }
 
-                oResd.AppendUInt16((GUInt16)dfYRes);
-                oResd.AppendUInt16((GUInt16)nYDenom);
-                oResd.AppendUInt16((GUInt16)dfXRes);
-                oResd.AppendUInt16((GUInt16)nXDenom);
+                oResd.AppendUInt16(static_cast<GUInt16>(dfYRes));
+                oResd.AppendUInt16(static_cast<GUInt16>(nYDenom));
+                oResd.AppendUInt16(static_cast<GUInt16>(dfXRes));
+                oResd.AppendUInt16(static_cast<GUInt16>(nXDenom));
                 oResd.AppendUInt8(2); /* vertical exponent */
                 oResd.AppendUInt8(2); /* horizontal exponent */
 
@@ -3124,10 +3131,14 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         if (poSrcDS->GetDriver() != nullptr &&
             poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
         {
-            VRTDataset *poVRTDS = (VRTDataset *)poSrcDS;
-            GDALDataset *poSimpleSourceDS = poVRTDS->GetSingleSimpleSource();
-            if (poSimpleSourceDS)
-                osSrcFilename = poSimpleSourceDS->GetDescription();
+            VRTDataset *poVRTDS = dynamic_cast<VRTDataset *>(poSrcDS);
+            if (poVRTDS)
+            {
+                GDALDataset *poSimpleSourceDS =
+                    poVRTDS->GetSingleSimpleSource();
+                if (poSimpleSourceDS)
+                    osSrcFilename = poSimpleSourceDS->GetDescription();
+            }
         }
 
         fpSrc = VSIFOpenL(osSrcFilename, "rb");
@@ -3148,13 +3159,12 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
         if (nCodeStreamLength)
-            bUseXLBoxes =
-                ((vsi_l_offset)(GUInt32)nCodeStreamLength != nCodeStreamLength);
+            bUseXLBoxes = nCodeStreamLength > UINT_MAX;
         else
             bUseXLBoxes = CPLFetchBool(papszOptions, "JP2C_XLBOX",
                                        false) || /* For debugging */
-                          (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
-                                  adfRates.back() >
+                          static_cast<GIntBig>(nXSize) * nYSize * nBands *
+                                  nDataTypeSize / adfRates.back() >
                               4e9;
         GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
         CPL_MSBPTR32(&nLBox);
@@ -3205,10 +3215,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         /* coverity[tainted_data] */
         while (nRead < nCodeStreamLength)
         {
-            int nToRead = (nCodeStreamLength - nRead > 4096)
-                              ? 4096
-                              : (int)(nCodeStreamLength - nRead);
-            if ((int)VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead)
+            const size_t nToRead =
+                (nCodeStreamLength - nRead > 4096)
+                    ? 4096
+                    : static_cast<size_t>(nCodeStreamLength - nRead);
+            if (VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead)
             {
                 VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
@@ -3231,7 +3242,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                     abyBuffer[7] = 2;
                 }
             }
-            if ((int)VSIFWriteL(abyBuffer, 1, nToRead, fp) != nToRead ||
+            if (VSIFWriteL(abyBuffer, 1, nToRead, fp) != nToRead ||
                 !pfnProgress((nRead + nToRead) * 1.0 / nCodeStreamLength,
                              nullptr, pProgressData))
             {
@@ -3263,8 +3274,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         const int nTilesX = DIV_ROUND_UP(nXSize, nBlockXSize);
         const int nTilesY = DIV_ROUND_UP(nYSize, nBlockYSize);
 
-        const GUIntBig nTileSize =
-            (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+        const GUIntBig nTileSize = static_cast<GUIntBig>(nBlockXSize) *
+                                   nBlockYSize * nBands * nDataTypeSize;
         GByte *pTempBuffer = nullptr;
 
         const bool bUseIOThread =
@@ -3284,7 +3295,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             // Double memory buffer when using threaded I/O
             const size_t nBufferSize =
                 static_cast<size_t>(bUseIOThread ? nTileSize * 2 : nTileSize);
-            pTempBuffer = (GByte *)VSIMalloc(nBufferSize);
+            pTempBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBufferSize));
         }
         if (pTempBuffer == nullptr)
         {
@@ -3297,9 +3308,9 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         GByte *pYUV420Buffer = nullptr;
         if (bYCBCR420)
         {
-            pYUV420Buffer = (GByte *)VSIMalloc(
-                3 * nBlockXSize * nBlockYSize / 2 +
-                ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
+            pYUV420Buffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(
+                nBlockXSize * nBlockYSize + nBlockXSize * nBlockYSize / 2 +
+                ((nBands == 4) ? nBlockXSize * nBlockYSize : 0)));
             if (pYUV420Buffer == nullptr)
             {
                 localctx.free();
@@ -3443,42 +3454,45 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                 {
                     if (bYCBCR420)
                     {
-                        int j, i;
-                        for (j = 0; j < nHeightToRead; j++)
+                        for (int j = 0; j < nHeightToRead; j++)
                         {
-                            for (i = 0; i < nWidthToRead; i++)
+                            for (int i = 0; i < nWidthToRead; i++)
                             {
-                                int R = pabyActiveBuffer[j * nWidthToRead + i];
-                                int G = pabyActiveBuffer[nHeightToRead *
-                                                             nWidthToRead +
-                                                         j * nWidthToRead + i];
-                                int B = pabyActiveBuffer[2 * nHeightToRead *
-                                                             nWidthToRead +
-                                                         j * nWidthToRead + i];
-                                int Y =
-                                    (int)(0.299 * R + 0.587 * G + 0.114 * B);
-                                int Cb =
-                                    CLAMP_0_255((int)(-0.1687 * R - 0.3313 * G +
-                                                      0.5 * B + 128));
-                                int Cr =
-                                    CLAMP_0_255((int)(0.5 * R - 0.4187 * G -
-                                                      0.0813 * B + 128));
-                                pYUV420Buffer[j * nWidthToRead + i] = (GByte)Y;
+                                const int R =
+                                    pabyActiveBuffer[j * nWidthToRead + i];
+                                const int G =
+                                    pabyActiveBuffer[nHeightToRead *
+                                                         nWidthToRead +
+                                                     j * nWidthToRead + i];
+                                const int B =
+                                    pabyActiveBuffer[2 * nHeightToRead *
+                                                         nWidthToRead +
+                                                     j * nWidthToRead + i];
+                                const int Y = static_cast<int>(
+                                    0.299 * R + 0.587 * G + 0.114 * B);
+                                const int Cb = CLAMP_0_255(static_cast<int>(
+                                    -0.1687 * R - 0.3313 * G + 0.5 * B + 128));
+                                const int Cr = CLAMP_0_255(static_cast<int>(
+                                    0.5 * R - 0.4187 * G - 0.0813 * B + 128));
+                                pYUV420Buffer[j * nWidthToRead + i] =
+                                    static_cast<GByte>(Y);
                                 pYUV420Buffer[nHeightToRead * nWidthToRead +
                                               ((j / 2) * ((nWidthToRead) / 2) +
-                                               i / 2)] = (GByte)Cb;
+                                               i / 2)] = static_cast<GByte>(Cb);
                                 pYUV420Buffer[5 * nHeightToRead * nWidthToRead /
                                                   4 +
                                               ((j / 2) * ((nWidthToRead) / 2) +
-                                               i / 2)] = (GByte)Cr;
+                                               i / 2)] = static_cast<GByte>(Cr);
                                 if (nBands == 4)
                                 {
                                     pYUV420Buffer[3 * nHeightToRead *
                                                       nWidthToRead / 2 +
                                                   j * nWidthToRead + i] =
-                                        (GByte)pabyActiveBuffer
-                                            [3 * nHeightToRead * nWidthToRead +
-                                             j * nWidthToRead + i];
+                                        static_cast<GByte>(
+                                            pabyActiveBuffer[3 * nHeightToRead *
+                                                                 nWidthToRead +
+                                                             j * nWidthToRead +
+                                                             i]);
                                 }
                             }
                         }
@@ -3565,8 +3579,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
         else
         {
-            GUInt32 nBoxSize32 = (GUInt32)nBoxSize;
-            if ((vsi_l_offset)nBoxSize32 != nBoxSize)
+            if (nBoxSize > UINT_MAX)
             {
                 /*  Should not happen hopefully */
                 if ((bGeoreferencingCompatOfGeoJP2 || poGMLJP2Box) &&
@@ -3583,6 +3596,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             else
             {
                 VSIFSeekL(fp, nStartJP2C, SEEK_SET);
+                GUInt32 nBoxSize32 = static_cast<GUInt32>(nBoxSize);
                 CPL_MSBPTR32(&nBoxSize32);
                 if (VSIFWriteL(&nBoxSize32, 4, 1, fp) != 1)
                     bRet = false;
@@ -3643,7 +3657,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /* -------------------------------------------------------------------- */
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    auto poDS = (JP2OPJLikeDataset *)JP2OPJLikeDataset::Open(&oOpenInfo);
+    auto poDS =
+        dynamic_cast<JP2OPJLikeDataset *>(JP2OPJLikeDataset::Open(&oOpenInfo));
 
     if (poDS)
     {

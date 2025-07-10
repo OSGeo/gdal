@@ -29,6 +29,9 @@ Contributors:  Lucian Plesea
 #include "Packer_RLE.h"
 
 NAMESPACE_MRF_START
+
+Packer::~Packer() = default;
+
 //
 // RLE yarn codec, uses a dedicated code as marker, default value is 0xC3
 // This is the C implementation, there is also a C++ one

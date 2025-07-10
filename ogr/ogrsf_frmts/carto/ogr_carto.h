@@ -26,7 +26,7 @@ CPLString OGRCARTOEscapeLiteral(const char *pszStr);
 CPLString OGRCARTOEscapeLiteralCopy(const char *pszStr);
 
 /************************************************************************/
-/*                      OGRCartoGeomFieldDefn                         */
+/*                      OGRCartoGeomFieldDefn                           */
 /************************************************************************/
 
 class OGRCartoGeomFieldDefn final : public OGRGeomFieldDefn
@@ -38,6 +38,8 @@ class OGRCartoGeomFieldDefn final : public OGRGeomFieldDefn
         : OGRGeomFieldDefn(pszNameIn, eType), nSRID(0)
     {
     }
+
+    ~OGRCartoGeomFieldDefn() override;
 };
 
 /************************************************************************/

@@ -121,7 +121,14 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
 
     memset(&sCInfo, 0, sizeof(sCInfo));
     sCInfo.err = jpeg_std_error(&sJErr);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
     jpeg_create_compress(&sCInfo);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     jpeg_vsiio_dest(&sCInfo, fp);
 
@@ -188,7 +195,8 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
     if (pabyAPP6)
     {
         /* 0xe6 = APP6 marker */
-        jpeg_write_marker(&sCInfo, 0xe6, (const JOCTET *)pabyAPP6, 23);
+        jpeg_write_marker(&sCInfo, 0xe6,
+                          reinterpret_cast<const JOCTET *>(pabyAPP6), 23);
     }
 
     /* -------------------------------------------------------------------- */

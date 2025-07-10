@@ -371,7 +371,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
 
 GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
                                              int nLines,
-                                             double *padfGeoTransform,
+                                             const double *padfGeoTransform,
                                              GDALWarpOptions *psOptions)
 
 {
@@ -387,7 +387,7 @@ GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
     GDALWarpResolveWorkingDataType(psOptions);
 
     psOptions->hDstDS = poDS;
-    poDS->SetGeoTransform(padfGeoTransform);
+    poDS->SetGeoTransform(GDALGeoTransform(padfGeoTransform));
 
     for (int i = 0; i < psOptions->nBandCount; i++)
     {
@@ -631,8 +631,12 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 
 class GDALWarpCoordRescaler : public OGRCoordinateTransformation
 {
-    double m_dfRatioX;
-    double m_dfRatioY;
+    const double m_dfRatioX;
+    const double m_dfRatioY;
+
+    GDALWarpCoordRescaler &operator=(const GDALWarpCoordRescaler &) = delete;
+    GDALWarpCoordRescaler(GDALWarpCoordRescaler &&) = delete;
+    GDALWarpCoordRescaler &operator=(GDALWarpCoordRescaler &&) = delete;
 
   public:
     GDALWarpCoordRescaler(double dfRatioX, double dfRatioY)
@@ -640,9 +644,9 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
     {
     }
 
-    virtual ~GDALWarpCoordRescaler()
-    {
-    }
+    GDALWarpCoordRescaler(const GDALWarpCoordRescaler &) = default;
+
+    ~GDALWarpCoordRescaler() override;
 
     virtual const OGRSpatialReference *GetSourceCS() const override
     {
@@ -677,6 +681,8 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
         return nullptr;
     }
 };
+
+GDALWarpCoordRescaler::~GDALWarpCoordRescaler() = default;
 
 /************************************************************************/
 /*                        RescaleDstGeoTransform()                      */

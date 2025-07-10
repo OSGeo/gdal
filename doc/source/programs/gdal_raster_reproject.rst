@@ -81,46 +81,7 @@ Standard options
 
     .. include:: options/srs_def_gdalwarp.rst
 
-.. option:: -r, --resampling <RESAMPLING>
-
-    Resampling method to use. Available methods are:
-
-    ``near``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
-
-    ``bilinear``: bilinear resampling.
-
-    ``cubic``: cubic resampling.
-
-    ``cubicspline``: cubic spline resampling.
-
-    ``lanczos``: Lanczos windowed sinc resampling.
-
-    ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
-
-    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
-
-    ``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
-
-    ``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.
-
-    ``min``: minimum resampling, selects the minimum value from all non-NODATA contributing pixels.
-
-    ``med``: median resampling, selects the median value of all non-NODATA contributing pixels.
-
-    ``q1``: first quartile resampling, selects the first quartile value of all non-NODATA contributing pixels.
-
-    ``q3``: third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels.
-
-    ``sum``: compute the weighted sum of all non-NODATA contributing pixels (since GDAL 3.1)
-
-    .. note::
-
-        When downsampling is performed (use of :option:`--resolution` or :option:`--size`), existing
-        overviews (either internal/implicit or external ones) on the source image
-        will be used by default by selecting the closest overview to the desired output
-        resolution.
-        The resampling method used to create those overviews is generally not the one you
-        specify through the :option:`-r` option.
+.. include:: gdal_options/warp_resampling.rst
 
 .. option:: --resolution <xres>,<yres>
 
@@ -163,6 +124,13 @@ Standard options
     blank, before actual warping, will be removed).
     Alignment means that xmin / resx, ymin / resy,
     xmax / resx and ymax / resy are integer values.
+
+.. option:: -j, --num-threads <value>
+
+    .. versionadded:: 3.12
+
+    Number of jobs to run at once.
+    Default: number of CPUs detected.
 
 Advanced options
 ++++++++++++++++
@@ -210,7 +178,7 @@ Advanced options
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple options may be listed.
 
-.. option:: -to <NAME>=<VALUE>
+.. option:: --to <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.

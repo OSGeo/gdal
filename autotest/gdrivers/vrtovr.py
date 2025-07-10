@@ -185,9 +185,7 @@ def test_vrtovr_virtual():
 
     tmpfilename = "/vsimem/temp.vrt"
     vrt_ds = gdal.Translate(tmpfilename, src_ds, format="VRT")
-    assert (
-        vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
-    )  # we normally don't create implicit overviews on that small datasets
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
 
     with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
         vrt_ds.BuildOverviews("NEAR", [2, 4, 5, 50])  # level 50 is too big

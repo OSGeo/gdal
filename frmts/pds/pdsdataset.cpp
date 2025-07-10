@@ -2,15 +2,15 @@
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of PDSDataset
- * Author:   Trent Hare (thare@usgs.gov),
- *           Robert Soricone (rsoricone@usgs.gov)
+ * Author:   Trent Hare (thare at usgs.gov),
+ *           Robert Soricone (rsoricone at usgs.gov)
  *
  * NOTE: Original code authored by Trent and Robert and placed in the public
  * domain as per US government policy.  I have (within my rights) appropriated
  * it and placed it under the following license.  This is not intended to
  * diminish Trent and Roberts contribution.
  ******************************************************************************
- * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2007, Frank Warmerdam <warmerdam at pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
@@ -34,6 +34,8 @@ constexpr double PDS_NULL3 = -3.4028226550889044521e+38;
 #include "vicardataset.h"
 #include "pdsdrivercore.h"
 
+#include <array>
+
 enum PDSLayout
 {
     PDS_BSQ,
@@ -49,22 +51,22 @@ enum PDSLayout
 
 class PDSDataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // image data file.
-    GDALDataset *poCompressedDS;
+    VSILFILE *fpImage{};  // image data file.
+    GDALDataset *poCompressedDS{};
 
-    NASAKeywordHandler oKeywords;
+    NASAKeywordHandler oKeywords{};
 
-    int bGotTransform;
-    double adfGeoTransform[6];
+    bool bGotTransform{};
+    GDALGeoTransform m_gt{};
 
     OGRSpatialReference m_oSRS{};
 
-    CPLString osTempResult;
+    CPLString osTempResult{};
 
-    CPLString osExternalCube;
-    CPLString m_osImageFilename;
+    CPLString osExternalCube{};
+    CPLString m_osImageFilename{};
 
-    CPLStringList m_aosPDSMD;
+    CPLStringList m_aosPDSMD{};
 
     void ParseSRS();
     int ParseCompressedImage();
@@ -79,6 +81,8 @@ class PDSDataset final : public RawDataset
     const char *GetKeywordUnit(const char *pszPath, int iSubscript,
                                const char *pszDefault = "");
 
+    CPL_DISALLOW_COPY_ASSIGN(PDSDataset)
+
   protected:
     virtual int CloseDependentDatasets() override;
 
@@ -88,7 +92,7 @@ class PDSDataset final : public RawDataset
     PDSDataset();
     virtual ~PDSDataset();
 
-    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetFileList(void) override;
@@ -119,15 +123,8 @@ class PDSDataset final : public RawDataset
 /************************************************************************/
 
 PDSDataset::PDSDataset()
-    : fpImage(nullptr), poCompressedDS(nullptr), bGotTransform(FALSE)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -274,16 +271,16 @@ const OGRSpatialReference *PDSDataset::GetSpatialRef() const
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr PDSDataset::GetGeoTransform(double *padfTransform)
+CPLErr PDSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
     if (bGotTransform)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/
@@ -591,7 +588,7 @@ void PDSDataset::ParseSRS()
     if (bProjectionSet)
     {
         // Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
-        const CPLString proj_target_name = map_proj_name + " " + target_name;
+        CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name);  // set ProjCS keyword
 
         // The geographic/geocentric name will be the same basic name as the
@@ -600,8 +597,8 @@ void PDSDataset::ParseSRS()
 
         // The datum and sphere names will be the same basic name aas the planet
         const CPLString datum_name = "D_" + target_name;
-        // Might not be IAU defined so don't add.
-        CPLString sphere_name = target_name;  // + "_IAU_IAG");
+
+        CPLString sphere_name = std::move(target_name);
 
         // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening;
@@ -699,12 +696,12 @@ void PDSDataset::ParseSRS()
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         bGotTransform = TRUE;
-        adfGeoTransform[0] = dfULXMap;
-        adfGeoTransform[1] = dfXDim;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfULYMap;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = dfYDim;
+        m_gt[0] = dfULXMap;
+        m_gt[1] = dfXDim;
+        m_gt[2] = 0.0;
+        m_gt[3] = dfULYMap;
+        m_gt[4] = 0.0;
+        m_gt[5] = dfYDim;
 
         const double rotation = CPLAtof(GetKeyword(
             osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_ROTATION"));
@@ -714,32 +711,26 @@ void PDSDataset::ParseSRS()
                 rotation == 90 ? 1.0 : sin(rotation / 180 * M_PI);
             const double cos_rot =
                 rotation == 90 ? 0.0 : cos(rotation / 180 * M_PI);
-            const double gt_1 =
-                cos_rot * adfGeoTransform[1] - sin_rot * adfGeoTransform[4];
-            const double gt_2 =
-                cos_rot * adfGeoTransform[2] - sin_rot * adfGeoTransform[5];
-            const double gt_0 =
-                cos_rot * adfGeoTransform[0] - sin_rot * adfGeoTransform[3];
-            const double gt_4 =
-                sin_rot * adfGeoTransform[1] + cos_rot * adfGeoTransform[4];
-            const double gt_5 =
-                sin_rot * adfGeoTransform[2] + cos_rot * adfGeoTransform[5];
-            const double gt_3 =
-                sin_rot * adfGeoTransform[0] + cos_rot * adfGeoTransform[3];
-            adfGeoTransform[1] = gt_1;
-            adfGeoTransform[2] = gt_2;
-            adfGeoTransform[0] = gt_0;
-            adfGeoTransform[4] = gt_4;
-            adfGeoTransform[5] = gt_5;
-            adfGeoTransform[3] = gt_3;
+            const double gt_1 = cos_rot * m_gt[1] - sin_rot * m_gt[4];
+            const double gt_2 = cos_rot * m_gt[2] - sin_rot * m_gt[5];
+            const double gt_0 = cos_rot * m_gt[0] - sin_rot * m_gt[3];
+            const double gt_4 = sin_rot * m_gt[1] + cos_rot * m_gt[4];
+            const double gt_5 = sin_rot * m_gt[2] + cos_rot * m_gt[5];
+            const double gt_3 = sin_rot * m_gt[0] + cos_rot * m_gt[3];
+            m_gt[1] = gt_1;
+            m_gt[2] = gt_2;
+            m_gt[0] = gt_0;
+            m_gt[4] = gt_4;
+            m_gt[5] = gt_5;
+            m_gt[3] = gt_3;
         }
     }
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "psw", adfGeoTransform);
+        bGotTransform = GDALReadWorldFile(pszFilename, "psw", m_gt.data());
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "wld", adfGeoTransform);
+        bGotTransform = GDALReadWorldFile(pszFilename, "wld", m_gt.data());
 }
 
 /************************************************************************/
@@ -1194,7 +1185,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     /* -------------------------------------------------------------------- */
     /*      Compute the line offset.                                        */
     /* -------------------------------------------------------------------- */
-    const int nItemSize = GDALGetDataTypeSize(eDataType) / 8;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
 
     // Needed for N1349177584_2.LBL from
     // https://trac.osgeo.org/gdal/attachment/ticket/3355/PDS-TestFiles.zip
@@ -1300,14 +1291,13 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 /************************************************************************/
 class PDSWrapperRasterBand final : public GDALProxyRasterBand
 {
-    GDALRasterBand *poBaseBand;
+    GDALRasterBand *poBaseBand{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PDSWrapperRasterBand)
 
   protected:
     virtual GDALRasterBand *
-    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
-    {
-        return poBaseBand;
-    }
+    RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
     explicit PDSWrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -1316,11 +1306,13 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
-
-    ~PDSWrapperRasterBand()
-    {
-    }
 };
+
+GDALRasterBand *
+PDSWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
+{
+    return poBaseBand;
+}
 
 /************************************************************************/
 /*                       ParseCompressedImage()                         */

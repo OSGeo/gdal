@@ -199,7 +199,7 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
     {
         bShouldFallbackToNormalCopyIfFail = false;
 
-        TIFF *hTIFF = (TIFF *)poDS->GetInternalHandle(NULL);
+        TIFF *hTIFF = (TIFF *)poDS->GetInternalHandle("TIFF_HANDLE");
         if (TIFFWriteRawStrip(hTIFF, 0, pabyJPEGData, nSize) != nSize)
             eErr = CE_Failure;
 
@@ -649,10 +649,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs *psArgs)
             h_samp_factor = compptr->h_samp_factor;
             v_samp_factor = compptr->v_samp_factor;
         }
-        int width_in_iMCUs =
-            (nJPEGWidth + iMCU_sample_width - 1) / iMCU_sample_width;
-        int height_in_iMCUs =
-            (nJPEGHeight + iMCU_sample_height - 1) / iMCU_sample_height;
+        int width_in_iMCUs = DIV_ROUND_UP(nJPEGWidth, iMCU_sample_width);
+        int height_in_iMCUs = DIV_ROUND_UP(nJPEGHeight, iMCU_sample_height);
         int nWidth_in_blocks = width_in_iMCUs * h_samp_factor;
         int nHeight_in_blocks = height_in_iMCUs * v_samp_factor;
         pDstCoeffs[ci] = (*sCInfo.mem->request_virt_barray)(
@@ -862,7 +860,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
     // mechanism that can expose a pseudo one-line-strip whereas the
     // real layout is a single big strip.
 
-    TIFF *hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle(nullptr));
+    TIFF *hTIFF = static_cast<TIFF *>(poDS->GetInternalHandle("TIFF_HANDLE"));
     if (TIFFIsTiled(hTIFF))
     {
         TIFFGetField(hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize));
@@ -888,8 +886,8 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
         nBlockYSize = nRowsPerStrip;
     }
 
-    const int nXBlocks = (nXSize + nBlockXSize - 1) / nBlockXSize;
-    const int nYBlocks = (nYSize + nBlockYSize - 1) / nBlockYSize;
+    const int nXBlocks = DIV_ROUND_UP(nXSize, nBlockXSize);
+    const int nYBlocks = DIV_ROUND_UP(nYSize, nBlockYSize);
 
     /* -------------------------------------------------------------------- */
     /*      Copy blocks.                                                    */

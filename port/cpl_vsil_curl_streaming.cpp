@@ -1376,17 +1376,17 @@ retry:
         nRemaining < nBufferRequestSize)
     {
         const size_t nErrorBufferMaxSize = 4096;
-        GByte *pabyErrorBuffer =
-            static_cast<GByte *>(CPLMalloc(nErrorBufferMaxSize + 1));
+        std::unique_ptr<GByte, VSIFreeReleaser> pabyErrorBuffer(
+            static_cast<GByte *>(CPLMalloc(nErrorBufferMaxSize + 1)));
         size_t nRead = nBufferRequestSize - nRemaining;
         size_t nErrorBufferSize = std::min(nErrorBufferMaxSize, nRead);
-        memcpy(pabyErrorBuffer, pBuffer, nErrorBufferSize);
+        memcpy(pabyErrorBuffer.get(), pBuffer, nErrorBufferSize);
         if (nRead < nErrorBufferMaxSize)
-            nErrorBufferSize +=
-                Read(pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead);
-        pabyErrorBuffer[nErrorBufferSize] = 0;
+            nErrorBufferSize += Read(pabyErrorBuffer.get() + nRead, 1,
+                                     nErrorBufferMaxSize - nRead);
+        (pabyErrorBuffer.get())[nErrorBufferSize] = 0;
         StopDownload();
-        if (CanRestartOnError(reinterpret_cast<char *>(pabyErrorBuffer),
+        if (CanRestartOnError(reinterpret_cast<char *>(pabyErrorBuffer.get()),
                               reinterpret_cast<char *>(pabyHeaderData), true))
         {
             curOffset = 0;
@@ -1410,11 +1410,9 @@ retry:
         else
         {
             CPLDebug("VSICURL", "Error buffer: %s",
-                     reinterpret_cast<char *>(pabyErrorBuffer));
+                     reinterpret_cast<char *>(pabyErrorBuffer.get()));
             nRet = 0;
         }
-
-        CPLFree(pabyErrorBuffer);
     }
 
     if (bErrorOccurred)
@@ -1742,23 +1740,26 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
   public:
     IVSIS3LikeStreamingFSHandler() = default;
 
-    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override
-    {
-        if (STARTS_WITH(pszDirname, GetFSPrefix()))
-        {
-            return VSIReadDirEx(
-                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
-                    .c_str(),
-                nMaxFiles);
-        }
-        return nullptr;
-    }
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
     const char *GetOptions() override
     {
         return VSIGetFileSystemOptions(GetNonStreamingPrefix().c_str());
     }
 };
+
+char **IVSIS3LikeStreamingFSHandler::ReadDirEx(const char *pszDirname,
+                                               int nMaxFiles)
+{
+    if (STARTS_WITH(pszDirname, GetFSPrefix()))
+    {
+        return VSIReadDirEx(
+            (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
+                .c_str(),
+            nMaxFiles);
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */

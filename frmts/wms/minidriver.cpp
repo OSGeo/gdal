@@ -37,7 +37,9 @@ class WMSMiniDriverManager
     WMSMiniDriverFactory *Find(const CPLString &name);
 
   protected:
-    std::vector<WMSMiniDriverFactory *> m_mdfs;
+    std::vector<WMSMiniDriverFactory *> m_mdfs{};
+
+    CPL_DISALLOW_COPY_ASSIGN(WMSMiniDriverManager)
 };
 
 // Called by WMS driver deregister, also by destructor

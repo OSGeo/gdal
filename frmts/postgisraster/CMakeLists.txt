@@ -9,7 +9,6 @@ add_gdal_driver(
           postgisrastertools.cpp
   CORE_SOURCES
           postgisrasterdrivercore.cpp
-  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 

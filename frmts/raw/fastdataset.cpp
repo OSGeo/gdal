@@ -88,7 +88,7 @@ constexpr int MAX_FILES = 7;
 
 class FASTDataset final : public GDALPamDataset
 {
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
     VSILFILE *fpHeader;
@@ -109,7 +109,7 @@ class FASTDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
@@ -137,12 +137,6 @@ FASTDataset::FASTDataset()
       eDataType(GDT_Unknown), iSatellite(FAST_UNKNOWN)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
     // TODO: Why does this not work?
     //   fill( fpChannels, fpChannels + CPL_ARRAYSIZE(fpChannels), NULL );
     for (int i = 0; i < MAX_FILES; ++i)
@@ -170,10 +164,10 @@ FASTDataset::~FASTDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr FASTDataset::GetGeoTransform(double *padfTransform)
+CPLErr FASTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+    gt = m_gt;
     return CE_None;
 }
 
@@ -561,9 +555,9 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 1024 || poOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if (!EQUALN((const char *)poOpenInfo->pabyHeader + 52,
+    if (!EQUALN(reinterpret_cast<const char *>(poOpenInfo->pabyHeader) + 52,
                 "ACQUISITION DATE =", 18) &&
-        !EQUALN((const char *)poOpenInfo->pabyHeader + 36,
+        !EQUALN(reinterpret_cast<const char *>(poOpenInfo->pabyHeader) + 36,
                 "ACQUISITION DATE =", 18))
         return nullptr;
 
@@ -1074,15 +1068,10 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
 
         // Calculate transformation matrix, if accurate
         const bool transform_ok = CPL_TO_BOOL(
-            GDALGCPsToGeoTransform(4, pasGCPList, poDS->adfGeoTransform, 0));
+            GDALGCPsToGeoTransform(4, pasGCPList, poDS->m_gt.data(), 0));
         if (!transform_ok)
         {
-            poDS->adfGeoTransform[0] = 0.0;
-            poDS->adfGeoTransform[1] = 1.0;
-            poDS->adfGeoTransform[2] = 0.0;
-            poDS->adfGeoTransform[3] = 0.0;
-            poDS->adfGeoTransform[4] = 0.0;
-            poDS->adfGeoTransform[5] = 1.0;
+            poDS->m_gt = GDALGeoTransform();
             poDS->m_oSRS.Clear();
         }
 

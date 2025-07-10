@@ -74,7 +74,7 @@ struct DatasetProperty
     int isFileOK = FALSE;
     int nRasterXSize = 0;
     int nRasterYSize = 0;
-    double adfGeoTransform[6];
+    GDALGeoTransform gt{};
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     std::vector<GDALDataType> aeBandType{};
@@ -90,16 +90,6 @@ struct DatasetProperty
     int nMaskBlockXSize = 0;
     int nMaskBlockYSize = 0;
     std::vector<int> anOverviewFactors{};
-
-    DatasetProperty()
-    {
-        adfGeoTransform[0] = 0;
-        adfGeoTransform[1] = 0;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = 0;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = 0;
-    }
 };
 
 struct BandProperty
@@ -138,42 +128,40 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
 
     /* Check that the destination bounding box intersects the source bounding
      * box */
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
-            psDP->nRasterXSize * psDP->adfGeoTransform[GEOTRSFRM_WE_RES] <=
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] +
+            psDP->nRasterXSize * psDP->gt[GEOTRSFRM_WE_RES] <=
         minX)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] >= maxX)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] >= maxX)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-            psDP->nRasterYSize * psDP->adfGeoTransform[GEOTRSFRM_NS_RES] >=
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_Y] +
+            psDP->nRasterYSize * psDP->gt[GEOTRSFRM_NS_RES] >=
         maxY)
         return FALSE;
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] <= minY)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_Y] <= minY)
         return FALSE;
 
-    if (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX)
+    if (psDP->gt[GEOTRSFRM_TOPLEFT_X] < minX)
     {
-        *pdfSrcXOff = (minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
-                      psDP->adfGeoTransform[GEOTRSFRM_WE_RES];
+        *pdfSrcXOff =
+            (minX - psDP->gt[GEOTRSFRM_TOPLEFT_X]) / psDP->gt[GEOTRSFRM_WE_RES];
         *pdfDstXOff = 0.0;
     }
     else
     {
         *pdfSrcXOff = 0.0;
-        *pdfDstXOff =
-            ((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
+        *pdfDstXOff = ((psDP->gt[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
-    if (maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
+    if (maxY < psDP->gt[GEOTRSFRM_TOPLEFT_Y])
     {
-        *pdfSrcYOff = (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
-                      -psDP->adfGeoTransform[GEOTRSFRM_NS_RES];
+        *pdfSrcYOff = (psDP->gt[GEOTRSFRM_TOPLEFT_Y] - maxY) /
+                      -psDP->gt[GEOTRSFRM_NS_RES];
         *pdfDstYOff = 0.0;
     }
     else
     {
         *pdfSrcYOff = 0.0;
-        *pdfDstYOff =
-            ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+        *pdfDstYOff = ((maxY - psDP->gt[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
 
     *pdfSrcXSize = psDP->nRasterXSize;
@@ -183,11 +171,9 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
     if (*pdfSrcYOff > 0)
         *pdfSrcYSize -= *pdfSrcYOff;
 
-    const double dfSrcToDstXSize =
-        psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res;
+    const double dfSrcToDstXSize = psDP->gt[GEOTRSFRM_WE_RES] / we_res;
     *pdfDstXSize = *pdfSrcXSize * dfSrcToDstXSize;
-    const double dfSrcToDstYSize =
-        psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res;
+    const double dfSrcToDstYSize = psDP->gt[GEOTRSFRM_NS_RES] / ns_res;
     *pdfDstYSize = *pdfSrcYSize * dfSrcToDstYSize;
 
     if (*pdfDstXOff + *pdfDstXSize > nTargetXSize)
@@ -247,7 +233,10 @@ class VRTBuilder
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
-    CPLStringList aosCreateOptions{};
+    const CPLStringList aosCreateOptions;
+    std::string osPixelFunction{};
+    const CPLStringList aosPixelFunctionArgs;
+    const bool bWriteAbsolutePath;
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -270,8 +259,8 @@ class VRTBuilder
     std::string AnalyseRaster(GDALDatasetH hDS,
                               DatasetProperty *psDatasetProperties);
 
-    void CreateVRTSeparate(VRTDatasetH hVRTDS);
-    void CreateVRTNonSeparate(VRTDatasetH hVRTDS);
+    void CreateVRTSeparate(VRTDataset *poVTDS);
+    void CreateVRTNonSeparate(VRTDataset *poVRTDS);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTBuilder)
 
@@ -287,12 +276,16 @@ class VRTBuilder
                const char *pszVRTNoData, bool bUseSrcMaskBand,
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
+               const char *pszPixelFunctionName,
+               const CPLStringList &aosPixelFunctionArgs,
                const char *const *papszOpenOptionsIn,
-               const CPLStringList &aosCreateOptionsIn);
+               const CPLStringList &aosCreateOptionsIn,
+               bool bWriteAbsolutePathIn);
 
     ~VRTBuilder();
 
-    GDALDataset *Build(GDALProgressFunc pfnProgress, void *pProgressData);
+    std::unique_ptr<GDALDataset> Build(GDALProgressFunc pfnProgress,
+                                       void *pProgressData);
 
     std::string m_osProgramName{};
 };
@@ -312,13 +305,22 @@ VRTBuilder::VRTBuilder(
     const char *pszSrcNoDataIn, const char *pszVRTNoDataIn,
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
-    const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
-    const CPLStringList &aosCreateOptionsIn)
-    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
+    const char *pszResamplingIn, const char *pszPixelFunctionIn,
+    const CPLStringList &aosPixelFunctionArgsIn,
+    const char *const *papszOpenOptionsIn,
+    const CPLStringList &aosCreateOptionsIn, bool bWriteAbsolutePathIn)
+    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn),
+      aosPixelFunctionArgs(aosPixelFunctionArgsIn),
+      bWriteAbsolutePath(bWriteAbsolutePathIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
     papszOpenOptions = CSLDuplicate(const_cast<char **>(papszOpenOptionsIn));
+
+    if (pszPixelFunctionIn != nullptr)
+    {
+        osPixelFunction = pszPixelFunctionIn;
+    }
 
     if (ppszInputFilenamesIn)
     {
@@ -515,8 +517,8 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     }
 
     const char *proj = poDS->GetProjectionRef();
-    double *padfGeoTransform = psDatasetProperties->adfGeoTransform;
-    int bGotGeoTransform = poDS->GetGeoTransform(padfGeoTransform) == CE_None;
+    auto &gt = psDatasetProperties->gt;
+    int bGotGeoTransform = poDS->GetGeoTransform(gt) == CE_None;
     if (bSeparate)
     {
         std::string osProgramName(m_osProgramName);
@@ -567,13 +569,13 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 
     if (bGotGeoTransform)
     {
-        if (padfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
-            padfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] != 0)
+        if (gt[GEOTRSFRM_ROTATION_PARAM1] != 0 ||
+            gt[GEOTRSFRM_ROTATION_PARAM2] != 0)
         {
             return m_osProgramName +
                    " does not support rotated geo transforms.";
         }
-        if (padfGeoTransform[GEOTRSFRM_NS_RES] >= 0)
+        if (gt[GEOTRSFRM_NS_RES] >= 0)
         {
             return m_osProgramName +
                    " does not support positive NS resolution.";
@@ -588,12 +590,10 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         nRasterYSize = poDS->GetRasterYSize();
     }
 
-    double ds_minX = padfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    double ds_maxY = padfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
-    double ds_maxX =
-        ds_minX + GDALGetRasterXSize(hDS) * padfGeoTransform[GEOTRSFRM_WE_RES];
-    double ds_minY =
-        ds_maxY + GDALGetRasterYSize(hDS) * padfGeoTransform[GEOTRSFRM_NS_RES];
+    double ds_minX = gt[GEOTRSFRM_TOPLEFT_X];
+    double ds_maxY = gt[GEOTRSFRM_TOPLEFT_Y];
+    double ds_maxX = ds_minX + GDALGetRasterXSize(hDS) * gt[GEOTRSFRM_WE_RES];
+    double ds_minY = ds_maxY + GDALGetRasterYSize(hDS) * gt[GEOTRSFRM_NS_RES];
 
     int _nBands = GDALGetRasterCount(hDS);
     if (_nBands == 0)
@@ -980,11 +980,11 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     {
         ++nCountValid;
         {
-            const double dfDelta = padfGeoTransform[GEOTRSFRM_WE_RES] - we_res;
+            const double dfDelta = gt[GEOTRSFRM_WE_RES] - we_res;
             we_res += dfDelta / nCountValid;
         }
         {
-            const double dfDelta = padfGeoTransform[GEOTRSFRM_NS_RES] - ns_res;
+            const double dfDelta = gt[GEOTRSFRM_NS_RES] - ns_res;
             ns_res += dfDelta / nCountValid;
         }
     }
@@ -992,42 +992,39 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     {
         if (bFirst)
         {
-            we_res = padfGeoTransform[GEOTRSFRM_WE_RES];
-            ns_res = padfGeoTransform[GEOTRSFRM_NS_RES];
+            we_res = gt[GEOTRSFRM_WE_RES];
+            ns_res = gt[GEOTRSFRM_NS_RES];
         }
-        else if (we_res != padfGeoTransform[GEOTRSFRM_WE_RES] ||
-                 ns_res != padfGeoTransform[GEOTRSFRM_NS_RES])
+        else if (we_res != gt[GEOTRSFRM_WE_RES] ||
+                 ns_res != gt[GEOTRSFRM_NS_RES])
         {
             return CPLSPrintf("Dataset %s has resolution %f x %f, whereas "
                               "previous sources have resolution %f x %f",
-                              dsFileName, padfGeoTransform[GEOTRSFRM_WE_RES],
-                              padfGeoTransform[GEOTRSFRM_NS_RES], we_res,
-                              ns_res);
+                              dsFileName, gt[GEOTRSFRM_WE_RES],
+                              gt[GEOTRSFRM_NS_RES], we_res, ns_res);
         }
     }
     else if (resolutionStrategy != USER_RESOLUTION)
     {
         if (bFirst)
         {
-            we_res = padfGeoTransform[GEOTRSFRM_WE_RES];
-            ns_res = padfGeoTransform[GEOTRSFRM_NS_RES];
+            we_res = gt[GEOTRSFRM_WE_RES];
+            ns_res = gt[GEOTRSFRM_NS_RES];
         }
         else if (resolutionStrategy == HIGHEST_RESOLUTION)
         {
-            we_res = std::min(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = std::min(we_res, gt[GEOTRSFRM_WE_RES]);
             // ns_res is negative, the highest resolution is the max value.
-            ns_res = std::max(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = std::max(ns_res, gt[GEOTRSFRM_NS_RES]);
         }
         else if (resolutionStrategy == COMMON_RESOLUTION)
         {
-            we_res = CPLGreatestCommonDivisor(
-                we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = CPLGreatestCommonDivisor(we_res, gt[GEOTRSFRM_WE_RES]);
             if (we_res == 0)
             {
                 return "Failed to get common resolution";
             }
-            ns_res = CPLGreatestCommonDivisor(
-                ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = CPLGreatestCommonDivisor(ns_res, gt[GEOTRSFRM_NS_RES]);
             if (ns_res == 0)
             {
                 return "Failed to get common resolution";
@@ -1035,9 +1032,9 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
         }
         else
         {
-            we_res = std::max(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            we_res = std::max(we_res, gt[GEOTRSFRM_WE_RES]);
             // ns_res is negative, the lowest resolution is the min value.
-            ns_res = std::min(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            ns_res = std::min(ns_res, gt[GEOTRSFRM_NS_RES]);
         }
     }
 
@@ -1047,10 +1044,40 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                         WriteAbsolutePath()                          */
+/************************************************************************/
+
+static void WriteAbsolutePath(VRTSimpleSource *poSource, const char *dsFileName)
+{
+    if (dsFileName[0])
+    {
+        if (CPLIsFilenameRelative(dsFileName))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(dsFileName, &sStat) == 0)
+            {
+                if (char *pszCurDir = CPLGetCurrentDir())
+                {
+                    poSource->SetSourceDatasetName(
+                        CPLFormFilenameSafe(pszCurDir, dsFileName, nullptr)
+                            .c_str(),
+                        false);
+                    CPLFree(pszCurDir);
+                }
+            }
+        }
+        else
+        {
+            poSource->SetSourceDatasetName(dsFileName, false);
+        }
+    }
+}
+
+/************************************************************************/
 /*                         CreateVRTSeparate()                          */
 /************************************************************************/
 
-void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
+void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 {
     int iBand = 1;
     for (int i = 0; ppszInputFilenames != nullptr && i < nInputFiles; i++)
@@ -1100,7 +1127,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             GDALProxyPoolDatasetH hProxyDS = GDALProxyPoolDatasetCreate(
                 dsFileName, psDatasetProperties->nRasterXSize,
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
-                pszProjectionRef, psDatasetProperties->adfGeoTransform);
+                pszProjectionRef, psDatasetProperties->gt.data());
             hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
             reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
                 papszOpenOptions);
@@ -1128,33 +1155,29 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                                         ? panSelectedBandList[iBandToIter] - 1
                                         : iBandToIter;
             assert(nSrcBandIdx >= 0);
-            GDALAddBand(hVRTDS, psDatasetProperties->aeBandType[nSrcBandIdx],
-                        nullptr);
-
-            VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
-                GDALGetRasterBand(hVRTDS, iBand));
-
-            if (bHideNoData)
-                GDALSetMetadataItem(hVRTBand, "HideNoDataValue", "1", nullptr);
+            poVRTDS->AddBand(psDatasetProperties->aeBandType[nSrcBandIdx],
+                             nullptr);
 
             VRTSourcedRasterBand *poVRTBand =
-                static_cast<VRTSourcedRasterBand *>(hVRTBand);
+                static_cast<VRTSourcedRasterBand *>(
+                    poVRTDS->GetRasterBand(iBand));
+
+            if (bHideNoData)
+                poVRTBand->SetMetadataItem("HideNoDataValue", "1", nullptr);
 
             if (bAllowVRTNoData)
             {
                 if (nVRTNoDataCount > 0)
                 {
                     if (iBand - 1 < nVRTNoDataCount)
-                        GDALSetRasterNoDataValue(hVRTBand,
-                                                 padfVRTNoData[iBand - 1]);
+                        poVRTBand->SetNoDataValue(padfVRTNoData[iBand - 1]);
                     else
-                        GDALSetRasterNoDataValue(
-                            hVRTBand, padfVRTNoData[nVRTNoDataCount - 1]);
+                        poVRTBand->SetNoDataValue(
+                            padfVRTNoData[nVRTNoDataCount - 1]);
                 }
                 else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
                 {
-                    GDALSetRasterNoDataValue(
-                        hVRTBand,
+                    poVRTBand->SetNoDataValue(
                         psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
                 }
             }
@@ -1200,6 +1223,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                 FALSE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
 
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
+
             if (psDatasetProperties->abHasOffset[nSrcBandIdx])
                 poVRTBand->SetOffset(
                     psDatasetProperties->adfOffset[nSrcBandIdx]);
@@ -1223,12 +1249,36 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 /*                       CreateVRTNonSeparate()                         */
 /************************************************************************/
 
-void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
+void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 {
-    VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(hVRTDS);
+    CPLStringList aosOptions;
+
+    if (!osPixelFunction.empty())
+    {
+        aosOptions.AddNameValue("subclass", "VRTDerivedRasterBand");
+        aosOptions.AddNameValue("PixelFunctionType", osPixelFunction.c_str());
+        aosOptions.AddNameValue("SkipNonContributingSources", "1");
+        CPLString osName;
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(aosPixelFunctionArgs))
+        {
+            osName.Printf("_PIXELFN_ARG_%s", pszKey);
+            aosOptions.AddNameValue(osName.c_str(), pszValue);
+        }
+    }
+
     for (int j = 0; j < nSelectedBands; j++)
     {
-        poVRTDS->AddBand(asBandProperties[j].dataType);
+        const char *pszSourceTransferType = "Float64";
+        if (osPixelFunction == "mean" || osPixelFunction == "min" ||
+            osPixelFunction == "max")
+        {
+            pszSourceTransferType =
+                GDALGetDataTypeName(asBandProperties[j].dataType);
+        }
+        aosOptions.AddNameValue("SourceTransferType", pszSourceTransferType);
+
+        poVRTDS->AddBand(asBandProperties[j].dataType, aosOptions.List());
         GDALRasterBand *poBand = poVRTDS->GetRasterBand(j + 1);
         poBand->SetColorInterpretation(asBandProperties[j].colorInterpretation);
         if (asBandProperties[j].colorInterpretation == GCI_PaletteIndex)
@@ -1297,9 +1347,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 
         if (bCanCollectOverviewFactors)
         {
-            if (std::abs(psDatasetProperties->adfGeoTransform[1] - we_res) >
+            if (std::abs(psDatasetProperties->gt[1] - we_res) >
                     1e-8 * std::abs(we_res) ||
-                std::abs(psDatasetProperties->adfGeoTransform[5] - ns_res) >
+                std::abs(psDatasetProperties->gt[5] - ns_res) >
                     1e-8 * std::abs(ns_res))
             {
                 bCanCollectOverviewFactors = false;
@@ -1329,7 +1379,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             GDALProxyPoolDatasetH hProxyDS = GDALProxyPoolDatasetCreate(
                 dsFileName, psDatasetProperties->nRasterXSize,
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
-                pszProjectionRef, psDatasetProperties->adfGeoTransform);
+                pszProjectionRef, psDatasetProperties->gt.data());
             reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
                 papszOpenOptions);
 
@@ -1415,19 +1465,23 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                                        dfSrcYSize, dfDstXOff, dfDstYOff,
                                        dfDstXSize, dfDstYSize);
 
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSimpleSource, dsFileName);
+
             poVRTBand->AddSource(poSimpleSource);
         }
 
         if (bAddAlpha && !psDatasetProperties->bLastBandIsAlpha)
         {
-            VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
-                GDALGetRasterBand(hVRTDS, nSelectedBands + 1));
+            VRTSourcedRasterBand *poVRTBand =
+                static_cast<VRTSourcedRasterBand *>(
+                    poVRTDS->GetRasterBand(nSelectedBands + 1));
             /* Little trick : we use an offset of 255 and a scaling of 0, so
              * that in areas covered */
             /* by the source, the value of the alpha band will be 255, otherwise
              * it will be 0 */
-            static_cast<VRTSourcedRasterBand *>(hVRTBand)->AddComplexSource(
-                static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
+            poVRTBand->AddComplexSource(
+                GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
                 dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize, 255, 0, VRT_NODATA_UNSET);
         }
@@ -1452,6 +1506,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                 static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
                 TRUE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
+
+            if (bWriteAbsolutePath)
+                WriteAbsolutePath(poSource, dsFileName);
 
             poMaskVRTBand->AddSource(poSource);
         }
@@ -1508,8 +1565,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 /*                             Build()                                  */
 /************************************************************************/
 
-GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
-                               void *pProgressData)
+std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
+                                               void *pProgressData)
 {
     if (bHasRunBuild)
         return nullptr;
@@ -1690,45 +1747,45 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         return nullptr;
     }
 
-    VRTDatasetH hVRTDS = cpl::down_cast<VRTDataset *>(
-        VRTDataset::Create(pszOutputFilename, nRasterXSize, nRasterYSize, 0,
-                           GDT_Unknown, aosCreateOptions.List()));
-    if (!hVRTDS)
+    auto poDS = VRTDataset::CreateVRTDataset(pszOutputFilename, nRasterXSize,
+                                             nRasterYSize, 0, GDT_Unknown,
+                                             aosCreateOptions.List());
+    if (!poDS)
     {
         return nullptr;
     }
 
     if (pszOutputSRS)
     {
-        GDALSetProjection(hVRTDS, pszOutputSRS);
+        poDS->SetProjection(pszOutputSRS);
     }
     else if (pszProjectionRef)
     {
-        GDALSetProjection(hVRTDS, pszProjectionRef);
+        poDS->SetProjection(pszProjectionRef);
     }
 
     if (bHasGeoTransform)
     {
-        double adfGeoTransform[6];
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = minX;
-        adfGeoTransform[GEOTRSFRM_WE_RES] = we_res;
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0;
-        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = maxY;
-        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0;
-        adfGeoTransform[GEOTRSFRM_NS_RES] = ns_res;
-        GDALSetGeoTransform(hVRTDS, adfGeoTransform);
+        GDALGeoTransform gt;
+        gt[GEOTRSFRM_TOPLEFT_X] = minX;
+        gt[GEOTRSFRM_WE_RES] = we_res;
+        gt[GEOTRSFRM_ROTATION_PARAM1] = 0;
+        gt[GEOTRSFRM_TOPLEFT_Y] = maxY;
+        gt[GEOTRSFRM_ROTATION_PARAM2] = 0;
+        gt[GEOTRSFRM_NS_RES] = ns_res;
+        poDS->SetGeoTransform(gt);
     }
 
     if (bSeparate)
     {
-        CreateVRTSeparate(hVRTDS);
+        CreateVRTSeparate(poDS.get());
     }
     else
     {
-        CreateVRTNonSeparate(hVRTDS);
+        CreateVRTNonSeparate(poDS.get());
     }
 
-    return static_cast<GDALDataset *>(hVRTDS);
+    return poDS;
 }
 
 /************************************************************************/
@@ -1833,6 +1890,9 @@ struct GDALBuildVRTOptions
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    bool bWriteAbsolutePath = false;
+    std::string osPixelFunction{};
+    CPLStringList aosPixelFunctionArgs{};
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = true;
@@ -1984,11 +2044,14 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
+        sOptions.osPixelFunction.empty() ? nullptr
+                                         : sOptions.osPixelFunction.c_str(),
+        sOptions.aosPixelFunctionArgs, sOptions.aosOpenOptions.List(),
+        sOptions.aosCreateOptions, sOptions.bWriteAbsolutePath);
     oBuilder.m_osProgramName = sOptions.osProgramName;
 
     return GDALDataset::ToHandle(
-        oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData));
+        oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData).release());
 }
 
 /************************************************************************/
@@ -2151,10 +2214,39 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
             .help(_("Text file with an input filename on each line"));
     }
 
-    argParser->add_argument("-separate")
-        .flag()
-        .store_into(psOptions->bSeparate)
-        .help(_("Place each input file into a separate band."));
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+
+        group.add_argument("-separate")
+            .flag()
+            .store_into(psOptions->bSeparate)
+            .help(_("Place each input file into a separate band."));
+
+        group.add_argument("-pixel-function")
+            .metavar("<function>")
+            .action(
+                [psOptions](const std::string &s)
+                {
+                    auto *poPixFun =
+                        VRTDerivedRasterBand::GetPixelFunction(s.c_str());
+                    if (poPixFun == nullptr)
+                    {
+                        throw std::invalid_argument(
+                            s + " is not a registered pixel function.");
+                    }
+
+                    psOptions->osPixelFunction = s;
+                })
+
+            .help("Function to calculate value from overlapping inputs");
+    }
+
+    argParser->add_argument("-pixel-function-arg")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosPixelFunctionArgs.AddString(s); })
+        .help(_("Pixel function argument(s)"));
 
     argParser->add_argument("-allow_projection_difference")
         .flag()
@@ -2238,6 +2330,12 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
     argParser->add_open_options_argument(&psOptions->aosOpenOptions);
 
     argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    argParser->add_argument("-write_absolute_path")
+        .flag()
+        .store_into(psOptions->bWriteAbsolutePath)
+        .help(_("Write the absolute path of the raster files in the tile index "
+                "file."));
 
     argParser->add_argument("-ignore_srcmaskband")
         .flag()
@@ -2395,6 +2493,13 @@ GDALBuildVRTOptionsNew(char **papszArgv,
             psOptions->ymin = (*oTE)[1];
             psOptions->xmax = (*oTE)[2];
             psOptions->ymax = (*oTE)[3];
+        }
+
+        if (psOptions->osPixelFunction.empty() &&
+            !psOptions->aosPixelFunctionArgs.empty())
+        {
+            throw std::runtime_error(
+                "Pixel function arguments provided without a pixel function");
         }
 
         return psOptions.release();

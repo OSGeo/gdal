@@ -17,7 +17,6 @@ add_gdal_driver(
           ogrgmldatasource.cpp
   PLUGIN_CAPABLE
   NO_DEPS
-  STRONG_CXX_WFLAGS
 )
 gdal_standard_includes(ogr_GML)
 

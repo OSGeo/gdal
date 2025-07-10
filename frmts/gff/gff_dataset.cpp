@@ -131,7 +131,7 @@ GFFRasterBand::GFFRasterBand(GFFDataset *poDSIn, int nBandIn,
 CPLErr GFFRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                  void *pImage)
 {
-    GFFDataset *poGDS = (GFFDataset *)poDS;
+    GFFDataset *poGDS = cpl::down_cast<GFFDataset *>(poDS);
     long nOffset = poGDS->nLength;
 
     VSIFSeekL(poGDS->fp,

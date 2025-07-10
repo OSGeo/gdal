@@ -19,6 +19,7 @@
 #include "kmlutility.h"
 // std
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -79,23 +80,23 @@ class KMLNode
 
   private:
     typedef std::vector<KMLNode *> kml_nodes_t;
-    kml_nodes_t *pvpoChildren_;
+    kml_nodes_t *pvpoChildren_ = nullptr;
 
     typedef std::vector<std::string> kml_content_t;
-    kml_content_t *pvsContent_;
+    kml_content_t *pvsContent_ = nullptr;
 
     typedef std::vector<Attribute *> kml_attributes_t;
-    kml_attributes_t *pvoAttributes_;
+    kml_attributes_t *pvoAttributes_ = nullptr;
 
-    KMLNode *poParent_;
-    std::size_t nLevel_;
-    std::string sName_;
+    KMLNode *poParent_ = nullptr;
+    std::size_t nLevel_ = 0;
+    std::string sName_{};
 
-    Nodetype eType_;
-    bool b25D_;
+    Nodetype eType_ = Unknown;
+    bool b25D_ = false;
 
-    int nLayerNumber_;
-    int nNumFeatures_;
+    int nLayerNumber_ = -1;
+    size_t nNumFeatures_ = std::numeric_limits<size_t>::max();
 
     void unregisterLayerIfMatchingThisNode(KML *poKML);
 };

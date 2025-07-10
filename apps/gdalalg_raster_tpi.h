@@ -35,7 +35,7 @@ class GDALRasterTPIAlgorithm /* non final */
     explicit GDALRasterTPIAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     int m_band = 1;
     bool m_noEdges = false;
@@ -52,6 +52,8 @@ class GDALRasterTPIAlgorithmStandalone final : public GDALRasterTPIAlgorithm
         : GDALRasterTPIAlgorithm(/* standaloneStep = */ true)
     {
     }
+
+    ~GDALRasterTPIAlgorithmStandalone() override;
 };
 
 //! @endcond

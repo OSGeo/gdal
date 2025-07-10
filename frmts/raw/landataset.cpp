@@ -125,7 +125,7 @@ class LANDataset final : public RawDataset
 
     OGRSpatialReference *m_poSRS = nullptr;
 
-    double adfGeoTransform[6];
+    GDALGeoTransform m_gt{};
 
     CPLString osSTAFilename{};
     void CheckForStatistics(void);
@@ -138,7 +138,7 @@ class LANDataset final : public RawDataset
     LANDataset();
     ~LANDataset() override;
 
-    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
@@ -297,12 +297,6 @@ GDALColorInterp LAN4BitRasterBand::GetColorInterpretation()
 LANDataset::LANDataset() : fpImage(nullptr)
 {
     memset(pachHeader, 0, sizeof(pachHeader));
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 0.0;  // TODO(schwehr): Should this be 1.0?
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 0.0;  // TODO(schwehr): Should this be 1.0?
 }
 
 /************************************************************************/
@@ -514,29 +508,29 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     float fTmp = 0.0;
 
     memcpy(&fTmp, poDS->pachHeader + 112, 4);
-    poDS->adfGeoTransform[0] = fTmp;
+    poDS->m_gt[0] = fTmp;
     memcpy(&fTmp, poDS->pachHeader + 120, 4);
-    poDS->adfGeoTransform[1] = fTmp;
-    poDS->adfGeoTransform[2] = 0.0;
+    poDS->m_gt[1] = fTmp;
+    poDS->m_gt[2] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 116, 4);
-    poDS->adfGeoTransform[3] = fTmp;
-    poDS->adfGeoTransform[4] = 0.0;
+    poDS->m_gt[3] = fTmp;
+    poDS->m_gt[4] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 124, 4);
-    poDS->adfGeoTransform[5] = -fTmp;
+    poDS->m_gt[5] = -fTmp;
 
     // adjust for center of pixel vs. top left corner of pixel.
-    poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
-    poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;
+    poDS->m_gt[0] -= poDS->m_gt[1] * 0.5;
+    poDS->m_gt[3] -= poDS->m_gt[5] * 0.5;
 
     /* -------------------------------------------------------------------- */
     /*      If we didn't get any georeferencing, try for a worldfile.       */
     /* -------------------------------------------------------------------- */
-    if (poDS->adfGeoTransform[1] == 0.0 || poDS->adfGeoTransform[5] == 0.0)
+    if (poDS->m_gt[1] == 0.0 || poDS->m_gt[5] == 0.0)
     {
         if (!GDALReadWorldFile(poOpenInfo->pszFilename, nullptr,
-                               poDS->adfGeoTransform))
+                               poDS->m_gt.data()))
             GDALReadWorldFile(poOpenInfo->pszFilename, ".wld",
-                              poDS->adfGeoTransform);
+                              poDS->m_gt.data());
     }
 
     /* -------------------------------------------------------------------- */
@@ -616,16 +610,16 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr LANDataset::GetGeoTransform(double *padfTransform)
+CPLErr LANDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (adfGeoTransform[1] != 0.0 && adfGeoTransform[5] != 0.0)
+    if (m_gt[1] != 0.0 && m_gt[5] != 0.0)
     {
-        memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
+        gt = m_gt;
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform(padfTransform);
+    return GDALPamDataset::GetGeoTransform(gt);
 }
 
 /************************************************************************/

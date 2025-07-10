@@ -67,7 +67,8 @@
 #define JSONBOID 3802
 
 CPLString OGRPGEscapeString(void *hPGConn, const char *pszStrValue,
-                            int nMaxLength = -1, const char *pszTableName = "",
+                            int nMaxLengthUnused = -1,
+                            const char *pszTableName = "",
                             const char *pszFieldName = "");
 CPLString OGRPGEscapeColumnName(const char *pszColumnName);
 
@@ -140,13 +141,7 @@ class OGRPGFeatureDefn CPL_NON_FINAL : public OGRFeatureDefn
         SetGeomType(wkbNone);
     }
 
-    virtual void UnsetLayer()
-    {
-        const int nGeomFieldCount = GetGeomFieldCount();
-        for (int i = 0; i < nGeomFieldCount; i++)
-            cpl::down_cast<OGRPGGeomFieldDefn *>(apoGeomFieldDefn[i].get())
-                ->UnsetLayer();
-    }
+    virtual void UnsetLayer();
 
     OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) override
     {

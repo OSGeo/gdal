@@ -37,7 +37,7 @@ class EEDAIBandDesc
     CPLString osName{};
     CPLString osWKT{};
     GDALDataType eDT{GDT_Unknown};
-    std::vector<double> adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    GDALGeoTransform gt{};
     int nWidth{0};
     int nHeight{0};
 
@@ -45,8 +45,7 @@ class EEDAIBandDesc
     /* GDAL band in the same dataset */
     bool IsSimilar(const EEDAIBandDesc &oOther) const
     {
-        return osWKT == oOther.osWKT &&
-               adfGeoTransform == oOther.adfGeoTransform &&
+        return osWKT == oOther.osWKT && gt == oOther.gt &&
                nWidth == oOther.nWidth && nHeight == oOther.nHeight;
     }
 };

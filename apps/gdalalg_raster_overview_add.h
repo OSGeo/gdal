@@ -35,6 +35,7 @@ class GDALRasterOverviewAlgorithmAdd final : public GDALAlgorithm
     bool RunImpl(GDALProgressFunc, void *) override;
 
     GDALArgDatasetValue m_dataset{};
+    std::vector<GDALArgDatasetValue> m_overviewSources{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
     std::string m_resampling{};

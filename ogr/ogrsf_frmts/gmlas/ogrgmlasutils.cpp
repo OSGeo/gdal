@@ -66,7 +66,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
             if (bIsCamelCase)
             {
                 if (!osCurrentPart.empty())
-                    aoParts.push_back(osCurrentPart);
+                    aoParts.push_back(std::move(osCurrentPart));
                 for (size_t k = 0; k < aoParts.size(); ++k)
                 {
                     achDelimiters.push_back((j > 0 && k == 0) ? '_' : '\0');

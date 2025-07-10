@@ -79,6 +79,7 @@ class GIFDataset final : public GIFAbstractDataset
 
   public:
     GIFDataset();
+    ~GIFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -88,6 +89,8 @@ class GIFDataset final : public GIFAbstractDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
+
+GIFDataset::~GIFDataset() = default;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -610,10 +613,9 @@ GDALDataset *GIFDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     if (CPLFetchBool(papszOptions, "WORLDFILE", false))
     {
-        double adfGeoTransform[6] = {};
-
-        if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
-            GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+        GDALGeoTransform gt;
+        if (poSrcDS->GetGeoTransform(gt) == CE_None)
+            GDALWriteWorldFile(pszFilename, "wld", gt.data());
     }
 
     /* -------------------------------------------------------------------- */

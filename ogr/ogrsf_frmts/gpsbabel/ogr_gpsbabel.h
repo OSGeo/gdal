@@ -31,6 +31,8 @@ class OGRGPSBabelDataSource final : public GDALDataset
     CPLString osTmpFileName{};
     GDALDataset *poGPXDS = nullptr;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRGPSBabelDataSource)
+
   public:
     OGRGPSBabelDataSource();
     virtual ~OGRGPSBabelDataSource();
@@ -57,12 +59,14 @@ class OGRGPSBabelDataSource final : public GDALDataset
 
 class OGRGPSBabelWriteDataSource final : public GDALDataset
 {
-    char *pszGPSBabelDriverName;
-    char *pszFilename;
-    CPLString osTmpFileName;
-    GDALDataset *poGPXDS;
+    char *pszGPSBabelDriverName{};
+    char *pszFilename{};
+    CPLString osTmpFileName{};
+    GDALDataset *poGPXDS{};
 
     bool Convert();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGPSBabelWriteDataSource)
 
   public:
     OGRGPSBabelWriteDataSource();

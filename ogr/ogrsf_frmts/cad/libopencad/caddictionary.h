@@ -24,12 +24,14 @@
 class OCAD_EXTERN CADDictionaryRecord
 {
 public:
-    CADDictionaryRecord();
-    virtual ~CADDictionaryRecord(){}
-
+    virtual ~CADDictionaryRecord();
     CADObject::ObjectType getType() const;
 
 protected:
+    CADDictionaryRecord();
+    CADDictionaryRecord(const CADDictionaryRecord&) = default;
+    CADDictionaryRecord(CADDictionaryRecord&&)=default;
+
     CADObject::ObjectType objType;
 };
 
@@ -40,13 +42,17 @@ class OCAD_EXTERN CADXRecord : public CADDictionaryRecord
 {
 public:
     CADXRecord();
-    virtual ~CADXRecord(){}
+    ~CADXRecord() override;
+    CADXRecord(const CADXRecord&) = default;
+    CADXRecord(CADXRecord&&)=default;
 
     const std::string getRecordData() const;
     void              setRecordData( const std::string& data );
 
 private:
     std::string sRecordData;
+    CADXRecord& operator=(const CADXRecord&) =delete;
+    CADXRecord& operator=(CADXRecord&&)= delete;
 };
 
 /*
@@ -57,7 +63,9 @@ class OCAD_EXTERN CADDictionary : public CADDictionaryRecord
 {
 public:
     CADDictionary();
-    virtual ~CADDictionary();
+    ~CADDictionary() override;
+    CADDictionary(const CADDictionary&) = default;
+    CADDictionary(CADDictionary&&)=default;
 
     size_t getRecordsCount();
     void   addRecord( CADDictionaryItem );
@@ -65,6 +73,8 @@ public:
     std::string getRecordByName(const std::string& name) const;
 private:
     std::vector< CADDictionaryItem > astXRecords;
+    CADDictionary& operator=(const CADDictionary&) =delete;
+    CADDictionary& operator=(CADDictionary&&)= delete;
 };
 
 #endif // CADDICTIONARY_H

@@ -2,7 +2,7 @@
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WCS.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Frank Warmerdam, warmerdam at pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam
@@ -11,5 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_minixml.h"
+#include "gdal_priv.h"
+
 CPLErr WCSParseGMLCoverage(CPLXMLNode *psTree, int *pnXSize, int *pnYSize,
-                           double *padfGeoTransform, char **ppszProjection);
+                           GDALGeoTransform &gt, char **ppszProjection);
