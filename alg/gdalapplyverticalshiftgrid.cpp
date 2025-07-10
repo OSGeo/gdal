@@ -160,7 +160,7 @@ const OGRSpatialReference *GDALApplyVSGDataset::GetSpatialRef() const
 bool GDALApplyVSGDataset::IsInitOK()
 {
     GDALApplyVSGRasterBand *poBand =
-        reinterpret_cast<GDALApplyVSGRasterBand *>(GetRasterBand(1));
+        cpl::down_cast<GDALApplyVSGRasterBand *>(GetRasterBand(1));
     return poBand->m_pafSrcData != nullptr && poBand->m_pafGridData != nullptr;
 }
 

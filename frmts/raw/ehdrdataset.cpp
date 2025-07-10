@@ -369,7 +369,7 @@ CPLErr EHdrDataset::Close()
         {
             int bNoDataSet;
             RawRasterBand *poBand =
-                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+                cpl::down_cast<RawRasterBand *>(GetRasterBand(1));
 
             const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
             if (bNoDataSet)

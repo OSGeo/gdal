@@ -1291,7 +1291,7 @@ CPLErr ISIS3Dataset::Close()
         if (m_poExternalDS && m_bGeoTIFFAsRegularExternal &&
             !m_bGeoTIFFInitDone)
         {
-            reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+            cpl::down_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
                 ->InitFile();
         }
         if (ISIS3Dataset::FlushCache(true) != CE_None)
@@ -2565,7 +2565,7 @@ void ISIS3Dataset::BuildLabel()
         {
             if (!m_bGeoTIFFInitDone)
             {
-                reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+                cpl::down_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
                     ->InitFile();
             }
 

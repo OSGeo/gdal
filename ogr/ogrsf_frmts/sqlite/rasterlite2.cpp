@@ -874,9 +874,9 @@ void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
     }
     for (int iBand = 1; iBand <= nBands; ++iBand)
     {
-        poOvrDS->SetBand(iBand,
-                         new RL2RasterBand(reinterpret_cast<RL2RasterBand *>(
-                             GetRasterBand(iBand))));
+        poOvrDS->SetBand(
+            iBand, new RL2RasterBand(
+                       cpl::down_cast<RL2RasterBand *>(GetRasterBand(iBand))));
     }
     m_apoOverviewDS.push_back(poOvrDS);
 }
@@ -1129,7 +1129,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                 continue;
 
             GDALRasterBlock *poBlock =
-                reinterpret_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
+                cpl::down_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
                     ->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
             if (poBlock != nullptr)
             {
@@ -1137,7 +1137,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                 continue;
             }
             poBlock =
-                reinterpret_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
+                cpl::down_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
                     ->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
             if (poBlock == nullptr)
                 continue;

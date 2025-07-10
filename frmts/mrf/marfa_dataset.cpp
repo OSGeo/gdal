@@ -2528,7 +2528,7 @@ bool MRFDataset::IsSingleTile()
 {
     if (current.pagecount.l != 1 || !source.empty() || nullptr == DataFP())
         return FALSE;
-    return 0 == reinterpret_cast<MRFRasterBand *>(GetRasterBand(1))
+    return 0 == cpl::down_cast<MRFRasterBand *>(GetRasterBand(1))
                     ->GetOverviewCount();
 }
 
