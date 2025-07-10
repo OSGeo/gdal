@@ -1693,8 +1693,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
         }
         CPLDebug("XYZ", "Setting precision format: %s", szFormat);
     }
-    void *pLineBuffer =
-        reinterpret_cast<void *>(CPLMalloc(nXSize * sizeof(int)));
+    void *pLineBuffer = static_cast<void *>(CPLMalloc(nXSize * sizeof(int)));
     CPLErr eErr = CE_None;
     for (int j = 0; j < nYSize && eErr == CE_None; j++)
     {

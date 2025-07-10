@@ -620,8 +620,7 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt16 *panData =
-        reinterpret_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
+    GInt16 *panData = static_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
 
     int bSrcBandHasNoData;

@@ -1386,7 +1386,7 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     if (pabyBuffer == nullptr)
     {
-        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+        pabyBuffer = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
             nPixelOffset, GetRasterXSize(), nMaxChunkLines));
 
         if (pabyBuffer == nullptr)
@@ -2627,7 +2627,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         if (bFoundTrans || bHaveNoData)
         {
             unsigned char *pabyAlpha =
-                reinterpret_cast<unsigned char *>(CPLMalloc(nEntryCount));
+                static_cast<unsigned char *>(CPLMalloc(nEntryCount));
 
             for (int iColor = 0; iColor < nEntryCount; iColor++)
             {

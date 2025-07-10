@@ -340,8 +340,7 @@ void PAuxDataset::ScanForGCPs()
 
     nGCPCount = 0;
     CPLAssert(pasGCPList == nullptr);
-    pasGCPList =
-        reinterpret_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), MAX_GCP));
+    pasGCPList = static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), MAX_GCP));
 
     /* -------------------------------------------------------------------- */
     /*      Get the GCP coordinate system.                                  */

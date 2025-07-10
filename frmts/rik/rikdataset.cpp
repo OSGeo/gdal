@@ -295,8 +295,7 @@ CPLErr RIKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     }
 
     // Read block to memory
-    GByte *blockData =
-        reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nBlockSize));
+    GByte *blockData = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBlockSize));
     if (blockData == nullptr)
         return CE_Failure;
     if (VSIFReadL(blockData, 1, nBlockSize, poRDS->fp) != nBlockSize)

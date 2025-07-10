@@ -370,7 +370,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     Buffer sBuffer;
     sBuffer.max_size = 32768;
-    sBuffer.buffer = reinterpret_cast<char *>(CPLMalloc(sBuffer.max_size + 1));
+    sBuffer.buffer = static_cast<char *>(CPLMalloc(sBuffer.max_size + 1));
     sBuffer.fp = poGDS->fp;
     sBuffer.buffer_size = 0;
     sBuffer.cur_index = 0;

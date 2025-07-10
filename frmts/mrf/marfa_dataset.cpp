@@ -1997,8 +1997,7 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, dts);
     GByte *buffer_mask = nullptr;
     if (buffer)
-        buffer_mask =
-            reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
+        buffer_mask = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
 
     if (!buffer || !buffer_mask)
     {

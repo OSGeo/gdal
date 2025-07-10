@@ -429,7 +429,7 @@ NWT_GRID *nwtOpenGrid(char *filename)
         return nullptr;
     }
 
-    NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
+    NWT_GRID *pGrd = static_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
     if (!pGrd)
     {
         VSIFCloseL(fp);
