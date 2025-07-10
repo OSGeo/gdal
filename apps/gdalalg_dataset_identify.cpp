@@ -88,6 +88,9 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
                                            void *pProgressData)
 
 {
+    if (IsCalledFromCommandLine())
+        pfnProgress = nullptr;
+
     GDALDriverH hDriver = nullptr;
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
