@@ -104,7 +104,7 @@ def test_gdal_success(gdal_path):
 
     out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} data/utmsmall.tif")
     assert err == ""
-    assert "description" in json.loads(out)
+    assert out.startswith("Driver: GTiff/GeoTIFF")
 
 
 def test_gdal_failure_during_finalize(gdal_path):

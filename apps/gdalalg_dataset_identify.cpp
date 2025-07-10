@@ -34,7 +34,7 @@ GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
                     .SetRequired();
     SetAutoCompleteFunctionForFilename(arg, 0);
 
-    AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
 
     AddArg("recursive", 'r', _("Recursively scan files/folders for datasets"),
            &m_recursive);
@@ -90,6 +90,9 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
 {
     if (IsCalledFromCommandLine())
         pfnProgress = nullptr;
+
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     GDALDriverH hDriver = nullptr;
     {
@@ -166,6 +169,9 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
 bool GDALDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                            void *pProgressData)
 {
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
+
     if (m_format == "json")
         m_oWriter.StartArray();
     int i = 0;

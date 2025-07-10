@@ -29,7 +29,7 @@
 GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddArg("min-max", 0, _("Compute minimum and maximum value"), &m_minMax)
         .AddAlias("mm");
     AddArg("stats", 0, _("Retrieve or compute statistics, using all pixels"),
@@ -97,6 +97,9 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
 bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     CPLAssert(m_dataset.GetDatasetRef());
+
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     CPLStringList aosOptions;
     if (m_format == "json")
