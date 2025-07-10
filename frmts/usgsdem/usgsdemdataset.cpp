@@ -348,7 +348,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
 {
     /* int bad = FALSE; */
-    USGSDEMDataset *poGDS = reinterpret_cast<USGSDEMDataset *>(poDS);
+    USGSDEMDataset *poGDS = cpl::down_cast<USGSDEMDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Initialize image buffer to nodata value.                        */
@@ -532,7 +532,7 @@ double USGSDEMRasterBand::GetNoDataValue(int *pbSuccess)
 /************************************************************************/
 const char *USGSDEMRasterBand::GetUnitType()
 {
-    USGSDEMDataset *poGDS = reinterpret_cast<USGSDEMDataset *>(poDS);
+    USGSDEMDataset *poGDS = cpl::down_cast<USGSDEMDataset *>(poDS);
 
     return poGDS->pszUnits;
 }

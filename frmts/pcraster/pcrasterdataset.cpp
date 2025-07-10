@@ -266,8 +266,8 @@ PCRasterDataset::createCopy(char const *filename, GDALDataset *source,
     /* -------------------------------------------------------------------- */
     /*      Re-open dataset, and copy any auxiliary pam information.        */
     /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS =
-        reinterpret_cast<GDALPamDataset *>(GDALOpen(filename, GA_Update));
+    GDALPamDataset *poDS = cpl::down_cast<GDALPamDataset *>(
+        GDALDataset::Open(filename, GDAL_OF_RASTER | GDAL_OF_UPDATE));
 
     if (poDS)
         poDS->CloneInfo(source, GCIF_PAM_DEFAULT);
@@ -492,13 +492,7 @@ GDALDataset *PCRasterDataset::create(const char *filename, int nr_cols,
     Mclose(map);
     map = nullptr;
 
-    /* -------------------------------------------------------------------- */
-    /*      Re-open dataset, and copy any auxiliary pam information.        */
-    /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS =
-        reinterpret_cast<GDALPamDataset *>(GDALOpen(filename, GA_Update));
-
-    return poDS;
+    return GDALDataset::Open(filename, GDAL_OF_RASTER | GDAL_OF_UPDATE);
 }
 
 CPLErr PCRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)

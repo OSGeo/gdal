@@ -266,7 +266,7 @@ CPLErr HDF4ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pImage)
 {
     CPLAssert(nBlockXOff == 0);
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     CPLMutexHolderD(&hHDF4Mutex);
 
@@ -544,7 +544,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockYOff >= 0);
     CPLAssert(pImage != nullptr);
 
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
     CPLAssert(poGDS != nullptr);
 
     int32 aiStart[H4_MAX_NC_DIMS] = {};
@@ -617,7 +617,7 @@ CPLErr HDF4ImageRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 GDALColorTable *HDF4ImageRasterBand::GetColorTable()
 {
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     return poGDS->poColorTable;
 }
@@ -628,7 +628,7 @@ GDALColorTable *HDF4ImageRasterBand::GetColorTable()
 
 GDALColorInterp HDF4ImageRasterBand::GetColorInterpretation()
 {
-    HDF4ImageDataset *poGDS = reinterpret_cast<HDF4ImageDataset *>(poDS);
+    HDF4ImageDataset *poGDS = cpl::down_cast<HDF4ImageDataset *>(poDS);
 
     if (poGDS->iDatasetType == HDF4_SDS)
     {

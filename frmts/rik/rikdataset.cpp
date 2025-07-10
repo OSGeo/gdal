@@ -253,7 +253,7 @@ static void OutputPixel(GByte pixel, void *image, GUInt32 imageWidth,
 CPLErr RIKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    RIKDataset *poRDS = reinterpret_cast<RIKDataset *>(poDS);
+    RIKDataset *poRDS = cpl::down_cast<RIKDataset *>(poDS);
 
     const GUInt32 blocks = poRDS->nHorBlocks * poRDS->nVertBlocks;
     const GUInt32 nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
@@ -578,7 +578,7 @@ GDALColorInterp RIKRasterBand::GetColorInterpretation()
 GDALColorTable *RIKRasterBand::GetColorTable()
 
 {
-    RIKDataset *poRDS = reinterpret_cast<RIKDataset *>(poDS);
+    RIKDataset *poRDS = cpl::down_cast<RIKDataset *>(poDS);
 
     return poRDS->poColorTable;
 }

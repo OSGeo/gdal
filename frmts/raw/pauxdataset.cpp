@@ -110,7 +110,7 @@ PAuxRasterBand::PAuxRasterBand(GDALDataset *poDSIn, int nBandIn,
                     nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
                     RawRasterBand::OwnFP::NO)
 {
-    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>(poDS);
+    PAuxDataset *poPDS = cpl::down_cast<PAuxDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Does this channel have a description?                           */
@@ -178,7 +178,7 @@ double PAuxRasterBand::GetNoDataValue(int *pbSuccess)
     snprintf(szTarget, sizeof(szTarget), "METADATA_IMG_%d_NO_DATA_VALUE",
              nBand);
 
-    PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>(poDS);
+    PAuxDataset *poPDS = cpl::down_cast<PAuxDataset *>(poDS);
     const char *pszLine = CSLFetchNameValue(poPDS->papszAuxLines, szTarget);
 
     if (pbSuccess != nullptr)

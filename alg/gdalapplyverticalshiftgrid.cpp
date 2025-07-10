@@ -195,7 +195,7 @@ GDALApplyVSGRasterBand::~GDALApplyVSGRasterBand()
 
 double GDALApplyVSGRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    GDALApplyVSGDataset *poGDS = reinterpret_cast<GDALApplyVSGDataset *>(poDS);
+    GDALApplyVSGDataset *poGDS = cpl::down_cast<GDALApplyVSGDataset *>(poDS);
     return poGDS->m_poSrcDataset->GetRasterBand(1)->GetNoDataValue(pbSuccess);
 }
 
@@ -206,7 +206,7 @@ double GDALApplyVSGRasterBand::GetNoDataValue(int *pbSuccess)
 CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                           void *pData)
 {
-    GDALApplyVSGDataset *poGDS = reinterpret_cast<GDALApplyVSGDataset *>(poDS);
+    GDALApplyVSGDataset *poGDS = cpl::down_cast<GDALApplyVSGDataset *>(poDS);
 
     const int nXOff = nBlockXOff * nBlockXSize;
     const int nReqXSize = (nXOff > nRasterXSize - nBlockXSize)

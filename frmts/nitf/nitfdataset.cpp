@@ -589,7 +589,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             if (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
             {
-                reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
+                cpl::down_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
                     ->SetPamFlags(reinterpret_cast<GDALPamDataset *>(
                                       poDS->poJ2KDataset.get())
                                       ->GetPamFlags() |
@@ -716,7 +716,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
         {
-            (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
+            (cpl::down_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
                 ->SetPamFlags((reinterpret_cast<GDALPamDataset *>(
                                    poDS->poJPEGDataset.get()))
                                   ->GetPamFlags() |
