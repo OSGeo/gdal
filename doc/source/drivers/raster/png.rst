@@ -45,6 +45,18 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Transparency color
+------------------
+
+.. versionadded:: 3.12
+
+On reading, transparency color`(or index) is reported in the ``BACKGROUND_COLOR``
+dataset metadata item.
+
+On writing, the ``BACKGROUND_COLOR`` dataset metadata item is used, when present,
+to set the PNG background color. For RGB/RGBA, the 3 components must be comma
+separated: ``<red>,<green>,<blue>``.
+
 Color Profile Metadata
 ----------------------
 

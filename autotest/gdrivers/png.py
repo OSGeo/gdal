@@ -419,6 +419,90 @@ def test_png_whole_image_optim(options, nbands, xsize, ysize):
 
 
 ###############################################################################
+
+
+def test_png_background_color_gray(tmp_vsimem):
+
+    filename = tmp_vsimem / "out.png"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetMetadataItem("BACKGROUND_COLOR", "123")
+
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    gdal.Unlink(str(filename) + ".aux.xml")
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("BACKGROUND_COLOR") == "123"
+
+
+###############################################################################
+
+
+def test_png_background_color_gray_alpha(tmp_vsimem):
+
+    filename = tmp_vsimem / "out.png"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    src_ds.SetMetadataItem("BACKGROUND_COLOR", "123")
+
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    gdal.Unlink(str(filename) + ".aux.xml")
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("BACKGROUND_COLOR") == "123"
+
+
+###############################################################################
+
+
+def test_png_background_color_index(tmp_vsimem):
+
+    filename = tmp_vsimem / "out.png"
+
+    ct_ds = gdal.Open("data/png/test.png")
+    ct = ct_ds.GetRasterBand(1).GetRasterColorTable()
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).SetColorTable(ct)
+    src_ds.SetMetadataItem("BACKGROUND_COLOR", "3")
+
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    gdal.Unlink(str(filename) + ".aux.xml")
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("BACKGROUND_COLOR") == "3"
+
+
+###############################################################################
+
+
+def test_png_background_color_rgb(tmp_vsimem):
+
+    filename = tmp_vsimem / "out.png"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.SetMetadataItem("BACKGROUND_COLOR", "123,234,67")
+
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    gdal.Unlink(str(filename) + ".aux.xml")
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("BACKGROUND_COLOR") == "123,234,67"
+
+
+###############################################################################
+
+
+def test_png_background_color_rgba(tmp_vsimem):
+
+    filename = tmp_vsimem / "out.png"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    src_ds.SetMetadataItem("BACKGROUND_COLOR", "123,234,67")
+
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    gdal.Unlink(str(filename) + ".aux.xml")
+    with gdal.Open(filename) as ds:
+        assert ds.GetMetadataItem("BACKGROUND_COLOR") == "123,234,67"
+
+
+###############################################################################
 def test_png_copy_mdd():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
