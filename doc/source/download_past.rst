@@ -5,6 +5,12 @@
 Past Releases
 =============
 
+* **2025-06-26** `gdal-3.11.1.tar.gz`_ `3.11.1 Release Notes`_ (`3.11.1 md5`_)
+
+.. _`3.11.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.11.1/NEWS.md
+.. _`gdal-3.11.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.11.1/gdal-3.11.1.tar.gz
+.. _`3.11.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.11.1/gdal-3.11.1.tar.gz.md5
+
 * **2025-05-06** `gdal-3.11.0.tar.gz`_ `3.11.0 "Eganville" Release Notes`_ (`3.11.0 md5`_)
 
 .. _`3.11.0 "Eganville" Release Notes`: https://github.com/OSGeo/gdal/blob/v3.11.0/NEWS.md
