@@ -825,6 +825,9 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         currentTiles;
     std::pair<int, int> childXYKey;
     std::pair<int, int> parentXYKey;
+
+    const char *pszPathSep = VSIGetDirectorySeparator(outDir.c_str());
+
     for (zoom = maxzoom; zoom >= 0; --zoom)
     {
         const int rmaxxsize = tilexsize * (1 << (maxzoom - zoom));
@@ -837,7 +840,8 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         zoomStr << zoom;
 
         std::string zoomDir = outDir;
-        zoomDir += "/" + zoomStr.str();
+        zoomDir += pszPathSep;
+        zoomDir += zoomStr.str();
         VSIMkdir(zoomDir.c_str(), 0775);
 
         for (int ix = 0; ix < xloop; ix++)
@@ -850,8 +854,10 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             ixStr << ix;
 
             zoomDir = outDir;
-            zoomDir += "/" + zoomStr.str();
-            zoomDir += "/" + ixStr.str();
+            zoomDir += pszPathSep;
+            zoomDir += zoomStr.str();
+            zoomDir += pszPathSep;
+            zoomDir += ixStr.str();
             VSIMkdir(zoomDir.c_str(), 0775);
 
             for (int iy = 0; iy < yloop; iy++)
@@ -896,7 +902,10 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 {
                     fileExt = ".png";
                 }
-                std::string filename = zoomDir + "/" + iyStr.str() + fileExt;
+                std::string filename = zoomDir;
+                filename += pszPathSep;
+                filename += iyStr.str();
+                filename += fileExt;
                 if (isKmz)
                 {
                     fileVector.push_back(filename);
@@ -905,7 +914,11 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 GenerateTiles(filename, zoom, rxsize, rysize, ix, iy, rx, ry,
                               dxsize, dysize, bands, poSrcDS,
                               poOutputTileDriver, poMemDriver, isJpegDriver);
-                std::string childKmlfile = zoomDir + "/" + iyStr.str() + ".kml";
+
+                std::string childKmlfile = zoomDir;
+                childKmlfile += pszPathSep;
+                childKmlfile += iyStr.str();
+                childKmlfile += ".kml";
                 if (isKmz)
                 {
                     fileVector.push_back(childKmlfile);
