@@ -225,13 +225,6 @@ Standard options
 
     For example: ``--fetched-metadata TIFFTAG_DATETIME,creation_date,DateTime``
 
-Advanced options
-++++++++++++++++
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
-
 Examples
 --------
 
