@@ -412,9 +412,8 @@ static bool LoadPythonAPI()
             "libpython3.8." SO_EXT,  "libpython3.9." SO_EXT,
             "libpython3.10." SO_EXT, "libpython3.11." SO_EXT,
             "libpython3.12." SO_EXT, "libpython3.13." SO_EXT,
-            "libpython3.7m." SO_EXT, "libpython3.6m." SO_EXT,
-            "libpython3.5m." SO_EXT, "libpython3.4m." SO_EXT,
-            "libpython3.3." SO_EXT,  "libpython3.2." SO_EXT};
+            "libpython3.14." SO_EXT, "libpython3.7m." SO_EXT,
+            "libpython3.6m." SO_EXT, "libpython3.5m." SO_EXT};
         for (size_t i = 0;
              libHandle == nullptr && i < CPL_ARRAYSIZE(apszPythonSO); ++i)
         {
@@ -610,8 +609,8 @@ static bool LoadPythonAPI()
     {
         const char *const apszPythonSO[] = {
             "python38.dll",  "python39.dll",  "python310.dll", "python311.dll",
-            "python312.dll", "python313.dll", "python37.dll",  "python36.dll",
-            "python35.dll",  "python34.dll",  "python33.dll",  "python32.dll"};
+            "python312.dll", "python313.dll", "python314.dll", "python37.dll",
+            "python36.dll",  "python35.dll"};
         UINT uOldErrorMode;
         uOldErrorMode =
             SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
