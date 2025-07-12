@@ -1,3 +1,10 @@
+# GDAL/OGR 3.11.3 Release Notes
+
+GDAL 3.11.3 is a bugfix release.
+
+PG driver:
+ * restore string truncation that was broken in 3.11.1
+
 # GDAL/OGR 3.11.2 Release Notes
 
 GDAL 3.11.2 is a bugfix release.
