@@ -11,8 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import json
-
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -55,8 +53,7 @@ def test_gdalalg_dataset_identify_stdout():
     if gdal_path is None:
         pytest.skip("gdal binary missing")
     out = gdaltest.runexternal(f"{gdal_path} dataset identify data/utmsmall.tif")
-    j = json.loads(out)
-    assert j == [{"driver": "GTiff", "name": "data/utmsmall.tif"}]
+    assert out.startswith("data/utmsmall.tif: GTiff")
 
 
 def test_gdalalg_dataset_identify_complete():

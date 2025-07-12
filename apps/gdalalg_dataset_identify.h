@@ -36,7 +36,7 @@ class GDALDatasetIdentifyAlgorithm final : public GDALAlgorithm
 
   private:
     std::vector<std::string> m_filename{};
-    std::string m_format = "json";
+    std::string m_format{};
     CPLJSonStreamingWriter m_oWriter;
     std::string m_output{};
     bool m_recursive = false;

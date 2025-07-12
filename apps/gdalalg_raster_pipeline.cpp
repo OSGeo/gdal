@@ -237,7 +237,7 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         if (arg.find("--pipeline") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
 
-        // gdal raster pipeline [--progress] "read in.tif ..."
+        // gdal raster pipeline [--quiet] "read in.tif ..."
         if (arg.find("read ") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
     }
@@ -264,6 +264,12 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         if (arg == "--progress")
         {
             m_progressBarRequested = true;
+            continue;
+        }
+        if (arg == "--quiet")
+        {
+            m_quiet = true;
+            m_progressBarRequested = false;
             continue;
         }
 

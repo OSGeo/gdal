@@ -39,7 +39,6 @@ class GDALVectorSQLAlgorithm /* non final */
     std::vector<std::string> m_sql{};
     std::vector<std::string> m_outputLayer{};
     std::string m_dialect{};
-    bool m_quiet = false;
 };
 
 /************************************************************************/
