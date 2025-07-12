@@ -20,7 +20,14 @@
 #include "gdal_adbc.h"
 
 #if defined(OGR_ADBC_HAS_DRIVER_MANAGER)
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <arrow-adbc/adbc_driver_manager.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #endif
 
 #define OGR_ADBC_VERSION ADBC_VERSION_1_1_0
