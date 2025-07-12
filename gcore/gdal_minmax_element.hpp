@@ -19,6 +19,7 @@
 // at https://github.com/OSGeo/gdal/blob/master/gcore/gdal_minmax_element.hpp
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -71,6 +72,74 @@ template <class T, bool IS_MAX> inline static bool compScalar(T x, T y)
         return x < y;
 }
 
+template <typename T> inline static bool IsNan(T x)
+{
+    // We need to write `using std::isnan` instead of directly using
+    // `std::isnan` because `std::isnan` only supports the types
+    // `float` and `double`. The `isnan` for `cpl::Float16` is found in the
+    // `cpl` namespace via argument-dependent lookup
+    // <https://en.cppreference.com/w/cpp/language/adl>.
+    using std::isnan;
+    return isnan(x);
+}
+
+template <class T> inline static bool compEqual(T x, T y)
+{
+    return x == y;
+}
+
+// On Intel/Neon, we do comparisons on uint16_t instead of casting to float for
+// faster execution, unless AVX512FP16 is available, which has native float16
+// comparisons.
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0) && defined(GDAL_MINMAX_ELEMENT_USE_SSE2) && !defined(__AVX512FP16__)
+template <> bool IsNan<GFloat16>(GFloat16 x)
+{
+    uint16_t iX;
+    memcpy(&iX, &x, sizeof(x));
+    // Check that the 5 bits of the exponent are set and the mantissa is not zero.
+    return (iX & 0x7fff) > 0x7c00;
+}
+
+template <> bool compEqual<GFloat16>(GFloat16 x, GFloat16 y)
+{
+    uint16_t iX, iY;
+    memcpy(&iX, &x, sizeof(x));
+    memcpy(&iY, &y, sizeof(y));
+    // Given our usage where y cannot be NaN we can skip the IsNan tests
+    assert(!IsNan(y));
+    return (iX == iY ||
+            // Also check +0 == -0
+            ((iX | iY) == (1 << 15)));
+}
+
+template <> bool compScalar<GFloat16, true>(GFloat16 x, GFloat16 y)
+{
+    uint16_t iX, iY;
+    memcpy(&iX, &x, sizeof(x));
+    memcpy(&iY, &y, sizeof(y));
+    bool ret;
+    if (IsNan(x) || IsNan(y))
+    {
+        ret = false;
+    }
+    else if (!(iX >> 15))
+    {
+        // +0 considered > -0. We don't really care
+        ret = (iY >> 15) || iX > iY;
+    }
+    else
+    {
+        ret = (iY >> 15) && iX < iY;
+    }
+    return ret;
+}
+
+template <> bool compScalar<GFloat16, false>(GFloat16 x, GFloat16 y)
+{
+    return compScalar<GFloat16, true>(y, x);
+}
+#endif
+
 /************************************************************************/
 /*                 extremum_element_with_nan_generic()                  */
 /************************************************************************/
@@ -82,12 +151,12 @@ inline size_t extremum_element_with_nan_generic(const T *v, size_t size)
         return 0;
     size_t idx_of_extremum = 0;
     auto extremum = v[0];
-    bool extremum_is_nan = CPLIsNan(extremum);
+    bool extremum_is_nan = IsNan(extremum);
     size_t i = 1;
     for (; i < size; ++i)
     {
         if (compScalar<T, IS_MAX>(v[i], extremum) ||
-            (extremum_is_nan && !CPLIsNan(v[i])))
+            (extremum_is_nan && !IsNan(v[i])))
         {
             extremum = v[i];
             idx_of_extremum = i;
@@ -105,20 +174,20 @@ template <class T, bool IS_MAX>
 inline size_t extremum_element_with_nan_generic(const T *v, size_t size,
                                                 T noDataValue)
 {
-    if (CPLIsNan(noDataValue))
+    if (IsNan(noDataValue))
         return extremum_element_with_nan_generic<T, IS_MAX>(v, size);
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
     auto extremum = v[0];
     bool extremum_is_nan_or_nodata =
-        CPLIsNan(extremum) || (extremum == noDataValue);
+        IsNan(extremum) || compEqual(extremum, noDataValue);
     size_t i = 1;
     for (; i < size; ++i)
     {
-        if (v[i] != noDataValue &&
+        if (!compEqual(v[i], noDataValue) &&
             (compScalar<T, IS_MAX>(v[i], extremum) ||
-             (extremum_is_nan_or_nodata && !CPLIsNan(v[i]))))
+             (extremum_is_nan_or_nodata && !IsNan(v[i]))))
         {
             extremum = v[i];
             idx_of_extremum = i;
@@ -144,15 +213,15 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
 #endif
         )
         {
-            if (CPLIsNan(noDataValue))
+            if (IsNan(noDataValue))
             {
                 if constexpr (IS_MAX)
                 {
                     return std::max_element(buffer, buffer + size,
                                             [](T a, T b) {
-                                                return CPLIsNan(b)   ? false
-                                                       : CPLIsNan(a) ? true
-                                                                     : a < b;
+                                                return IsNan(b)   ? false
+                                                       : IsNan(a) ? true
+                                                                  : a < b;
                                             }) -
                            buffer;
                 }
@@ -160,9 +229,9 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
                 {
                     return std::min_element(buffer, buffer + size,
                                             [](T a, T b) {
-                                                return CPLIsNan(b)   ? true
-                                                       : CPLIsNan(a) ? false
-                                                                     : a < b;
+                                                return IsNan(b)   ? true
+                                                       : IsNan(a) ? false
+                                                                  : a < b;
                                             }) -
                            buffer;
                 }
@@ -174,8 +243,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
                     return std::max_element(buffer, buffer + size,
                                             [noDataValue](T a, T b)
                                             {
-                                                return CPLIsNan(b)   ? false
-                                                       : CPLIsNan(a) ? true
+                                                return IsNan(b)   ? false
+                                                       : IsNan(a) ? true
                                                        : (b == noDataValue)
                                                            ? false
                                                        : (a == noDataValue)
@@ -189,8 +258,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
                     return std::min_element(buffer, buffer + size,
                                             [noDataValue](T a, T b)
                                             {
-                                                return CPLIsNan(b)   ? true
-                                                       : CPLIsNan(a) ? false
+                                                return IsNan(b)   ? true
+                                                       : IsNan(a) ? false
                                                        : (b == noDataValue)
                                                            ? true
                                                        : (a == noDataValue)
@@ -237,9 +306,9 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             {
                 return std::max_element(buffer, buffer + size,
                                         [](T a, T b) {
-                                            return CPLIsNan(b)   ? false
-                                                   : CPLIsNan(a) ? true
-                                                                 : a < b;
+                                            return IsNan(b)   ? false
+                                                   : IsNan(a) ? true
+                                                              : a < b;
                                         }) -
                        buffer;
             }
@@ -247,9 +316,9 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             {
                 return std::min_element(buffer, buffer + size,
                                         [](T a, T b) {
-                                            return CPLIsNan(b)   ? true
-                                                   : CPLIsNan(a) ? false
-                                                                 : a < b;
+                                            return IsNan(b)   ? true
+                                                   : IsNan(a) ? false
+                                                              : a < b;
                                         }) -
                        buffer;
             }
@@ -565,7 +634,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
     [[maybe_unused]] bool extremum_is_invalid = false;
     if constexpr (std::is_floating_point_v<T>)
     {
-        extremum_is_invalid = CPLIsNan(extremum);
+        extremum_is_invalid = IsNan(extremum);
     }
     if constexpr (HAS_NODATA)
     {
@@ -592,7 +661,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
             {
                 if constexpr (std::is_floating_point_v<T>)
                 {
-                    if (CPLIsNan(v[idx]))
+                    if (IsNan(v[idx]))
                         return;
                 }
                 extremum = v[idx];
@@ -613,7 +682,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
         }
         else if constexpr (std::is_floating_point_v<T>)
         {
-            if (extremum_is_invalid && !CPLIsNan(v[idx]))
+            if (extremum_is_invalid && !IsNan(v[idx]))
             {
                 extremum = v[idx];
                 idx_of_extremum = idx;
@@ -1226,11 +1295,11 @@ inline std::pair<size_t, size_t> minmax_element_with_nan(const T *v,
     T vmin = v[0];
     T vmax = v[0];
     size_t i = 1;
-    if (CPLIsNan(v[0]))
+    if (IsNan(v[0]))
     {
         for (; i < size; ++i)
         {
-            if (!CPLIsNan(v[i]))
+            if (!IsNan(v[i]))
             {
                 vmin = v[i];
                 idx_of_min = i;

@@ -124,7 +124,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                 gdal::min_element(x.data(), x.size(), eDT, false, 0));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (optimized)\n", idx);
+        printf("min at idx %d (optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -143,8 +144,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
         }
         idx /= N_ITERS;
         printf("min at idx %d (using std::min_element with NaN aware "
-               "comparison)\n",
-               idx);
+               "comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -157,7 +158,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                 gdal::min_element(x.data(), x.size(), eDT, true, noData));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (nodata case, optimized)\n", idx);
+        printf("min at idx %d (nodata case, optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -179,8 +181,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
         }
         idx /= N_ITERS;
         printf("min at idx %d (nodata case, using std::min_element with "
-               "nodata aware and NaN aware comparison)\n",
-               idx);
+               "nodata aware and NaN aware comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -205,7 +207,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                 gdal::min_element(x.data(), x.size(), eDT, false, 0));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (optimized)\n", idx);
+        printf("min at idx %d (optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -218,7 +221,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                 std::distance(x.begin(), std::min_element(x.begin(), x.end())));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (using std::min_element)\n", idx);
+        printf("min at idx %d (using std::min_element), val = %g\n", idx,
+               static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -231,7 +235,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                 gdal::min_element(x.data(), x.size(), eDT, true, noData));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (nodata case, optimized)\n", idx);
+        printf("min at idx %d (nodata case, optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -250,8 +255,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
         }
         idx /= N_ITERS;
         printf("min at idx %d (nodata case, using std::min_element with "
-               "nodata aware comparison)\n",
-               idx);
+               "nodata aware comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }

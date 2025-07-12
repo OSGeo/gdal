@@ -660,7 +660,7 @@ TEST_F(test_gdal_minmax_element, float16)
 {
     using T = GFloat16;
     constexpr GDALDataType eDT = GDT_Float16;
-    T min_v = static_cast<T>(1.0f);
+    T min_v = static_cast<T>(-10.0f);
     T max_v = static_cast<T>(1.5f);
     {
         T nodata = static_cast<T>(2.0f);
