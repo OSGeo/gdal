@@ -331,6 +331,7 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
         GByte nVal = 0;
         bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == 1;
         CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
     }
     else if ((nCode >= 60 && nCode < 80) || (nCode >= 170 && nCode < 180) ||
              (nCode >= 270 && nCode < 290) || (nCode >= 370 && nCode < 390) ||
@@ -340,6 +341,7 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
         bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
         CPL_LSBPTR16(&nVal);
         CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
     }
     else if ((nCode >= 90 && nCode < 100) || (nCode >= 420 && nCode < 430) ||
              (nCode >= 440 && nCode < 460) || (nCode == 1071))
@@ -348,6 +350,7 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
         bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
         CPL_LSBPTR32(&nVal);
         CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
     }
     else if (nCode >= 160 && nCode < 170)
     {
@@ -355,6 +358,7 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
         bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
         CPL_LSBPTR64(&nVal);
         CPLsnprintf(pszValueBuffer, nValueBufferSize, "%" PRId64, nVal);
+        // CPLDebug("DXF", "Read %d: %" PRId64, nCode, nVal);
     }
     else if ((nCode >= 10 && nCode < 60) || (nCode >= 110 && nCode < 150) ||
              (nCode >= 210 && nCode < 240) || (nCode >= 460 && nCode < 470) ||
@@ -364,6 +368,29 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
         bRet = VSIFReadL(&dfVal, 1, sizeof(dfVal), fp) == sizeof(dfVal);
         CPL_LSBPTR64(&dfVal);
         CPLsnprintf(pszValueBuffer, nValueBufferSize, "%.17g", dfVal);
+        // CPLDebug("DXF", "Read %d: %g", nCode, dfVal);
+    }
+    else if ((nCode >= 310 && nCode < 320) || nCode == 1004)
+    {
+        // Binary
+        GByte nChunkLength = 0;
+        bRet = VSIFReadL(&nChunkLength, 1, sizeof(nChunkLength), fp) ==
+               sizeof(nChunkLength);
+        std::vector<GByte> abyData(nChunkLength);
+        bRet &= VSIFReadL(abyData.data(), 1, nChunkLength, fp) == nChunkLength;
+        if (2 * nChunkLength + 1 > nValueBufferSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Provided buffer too small to store string");
+            return -1;
+        }
+        for (int i = 0; i < nChunkLength; ++i)
+        {
+            snprintf(pszValueBuffer + 2 * i, nValueBufferSize - 2 * i, "%02X",
+                     abyData[i]);
+        }
+        pszValueBuffer[2 * nChunkLength] = 0;
+        // CPLDebug("DXF", "Read %d: '%s'", nCode, pszValueBuffer);
     }
     else
     {
@@ -376,6 +403,7 @@ int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
             pszValueBuffer[i] = ch;
             if (ch == 0)
             {
+                // CPLDebug("DXF", "Read %d: '%s'", nCode, pszValueBuffer);
                 bEOS = true;
                 break;
             }

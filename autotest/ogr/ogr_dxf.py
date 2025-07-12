@@ -4369,3 +4369,25 @@ def test_ogr_dxf_convert_from_binary_dxf_r2000(tmp_vsimem):
     with ogr.Open(tmp_vsimem / "out.dxf") as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_dxf_read_wipeout_binary():
+
+    ds = ogr.Open("data/dxf/BINARY_wipeout.dxf")
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((448381.028869725 6913933.17804321,448381.232017696 6913933.39891582,448380.807997101 6913933.38119118,448381.028869725 6913933.17804321,448381.011145071 6913933.6020638,448381.232017696 6913933.39891582,448381.028869725 6913933.17804321))",
+    )
+
+    feat = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((448380.538954307 6913930.73282502,448380.538954307 6913930.73282502,448380.538954307 6913931.73282502,448381.538954307 6913931.73282502,448381.538954307 6913930.73282502,448380.538954307 6913930.73282502))",
+    )
