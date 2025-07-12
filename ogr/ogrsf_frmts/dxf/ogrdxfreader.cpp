@@ -16,30 +16,19 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-/************************************************************************/
-/*                            OGRDXFReader()                            */
-/************************************************************************/
-
-OGRDXFReader::OGRDXFReader()
-    : fp(nullptr), iSrcBufferOffset(0), nSrcBufferBytes(0),
-      iSrcBufferFileOffset(0), achSrcBuffer{}, nLastValueSize(0), nLineNumber(0)
-{
-}
+#include <cinttypes>
 
 /************************************************************************/
-/*                           ~OGRDXFReader()                            */
+/*                       ~OGRDXFReaderBase()                            */
 /************************************************************************/
 
-OGRDXFReader::~OGRDXFReader()
-
-{
-}
+OGRDXFReaderBase::~OGRDXFReaderBase() = default;
 
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
-void OGRDXFReader::Initialize(VSILFILE *fpIn)
+void OGRDXFReaderBase::Initialize(VSILFILE *fpIn)
 
 {
     fp = fpIn;
@@ -49,8 +38,8 @@ void OGRDXFReader::Initialize(VSILFILE *fpIn)
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFReader::ResetReadPointer(unsigned int iNewOffset,
-                                    int nNewLineNumber /* = 0 */)
+void OGRDXFReaderASCII::ResetReadPointer(uint64_t iNewOffset,
+                                         int nNewLineNumber /* = 0 */)
 
 {
     nSrcBufferBytes = 0;
@@ -69,7 +58,7 @@ void OGRDXFReader::ResetReadPointer(unsigned int iNewOffset,
 /*      file.                                                           */
 /************************************************************************/
 
-void OGRDXFReader::LoadDiskChunk()
+void OGRDXFReaderASCII::LoadDiskChunk()
 
 {
     if (nSrcBufferBytes - iSrcBufferOffset > 511)
@@ -80,15 +69,15 @@ void OGRDXFReader::LoadDiskChunk()
         CPLAssert(nSrcBufferBytes <= 1024);
         CPLAssert(iSrcBufferOffset <= nSrcBufferBytes);
 
-        memmove(achSrcBuffer, achSrcBuffer + iSrcBufferOffset,
+        memmove(achSrcBuffer.data(), achSrcBuffer.data() + iSrcBufferOffset,
                 nSrcBufferBytes - iSrcBufferOffset);
         iSrcBufferFileOffset += iSrcBufferOffset;
         nSrcBufferBytes -= iSrcBufferOffset;
         iSrcBufferOffset = 0;
     }
 
-    nSrcBufferBytes +=
-        static_cast<int>(VSIFReadL(achSrcBuffer + nSrcBufferBytes, 1, 512, fp));
+    nSrcBufferBytes += static_cast<int>(
+        VSIFReadL(achSrcBuffer.data() + nSrcBufferBytes, 1, 512, fp));
     achSrcBuffer[nSrcBufferBytes] = '\0';
 
     CPLAssert(nSrcBufferBytes <= 1024);
@@ -101,7 +90,7 @@ void OGRDXFReader::LoadDiskChunk()
 /*      Read one type code and value line pair from the DXF file.       */
 /************************************************************************/
 
-int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
+int OGRDXFReaderASCII::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
 
 {
     /* -------------------------------------------------------------------- */
@@ -114,7 +103,7 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     /*      Capture the value code, and skip past it.                       */
     /* -------------------------------------------------------------------- */
     unsigned int iStartSrcBufferOffset = iSrcBufferOffset;
-    int nValueCode = atoi(achSrcBuffer + iSrcBufferOffset);
+    int nValueCode = atoi(achSrcBuffer.data() + iSrcBufferOffset);
 
     nLineNumber++;
 
@@ -169,8 +158,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
         }
 
         osValue.resize(nValueLength + iEOL - iSrcBufferOffset, '\0');
-        std::copy(achSrcBuffer + iSrcBufferOffset, achSrcBuffer + iEOL,
-                  osValue.begin() + nValueLength);
+        std::copy(achSrcBuffer.data() + iSrcBufferOffset,
+                  achSrcBuffer.data() + iEOL, osValue.begin() + nValueLength);
 
         iSrcBufferOffset = iEOL;
         LoadDiskChunk();
@@ -208,7 +197,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     if (static_cast<int>(iEOL - iSrcBufferOffset) >
         nValueBufSize - static_cast<int>(nValueBufLen) - 1)
     {
-        strncpy(pszValueBuf + nValueBufLen, achSrcBuffer + iSrcBufferOffset,
+        strncpy(pszValueBuf + nValueBufLen,
+                achSrcBuffer.data() + iSrcBufferOffset,
                 nValueBufSize - static_cast<int>(nValueBufLen) - 1);
         pszValueBuf[nValueBufSize - 1] = '\0';
 
@@ -217,7 +207,8 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     }
     else
     {
-        strncpy(pszValueBuf + nValueBufLen, achSrcBuffer + iSrcBufferOffset,
+        strncpy(pszValueBuf + nValueBufLen,
+                achSrcBuffer.data() + iSrcBufferOffset,
                 iEOL - iSrcBufferOffset);
         pszValueBuf[nValueBufLen + iEOL - iSrcBufferOffset] = '\0';
     }
@@ -247,7 +238,7 @@ int OGRDXFReader::ReadValueRaw(char *pszValueBuf, int nValueBufSize)
     return nValueCode;
 }
 
-int OGRDXFReader::ReadValue(char *pszValueBuf, int nValueBufSize)
+int OGRDXFReaderASCII::ReadValue(char *pszValueBuf, int nValueBufSize)
 {
     int nValueCode;
     while (true)
@@ -270,7 +261,7 @@ int OGRDXFReader::ReadValue(char *pszValueBuf, int nValueBufSize)
 /*      read pointer.                                                   */
 /************************************************************************/
 
-void OGRDXFReader::UnreadValue()
+void OGRDXFReaderASCII::UnreadValue()
 
 {
     if (nLastValueSize == 0)
@@ -285,4 +276,179 @@ void OGRDXFReader::UnreadValue()
     iSrcBufferOffset -= nLastValueSize;
     nLineNumber -= 2;
     nLastValueSize = 0;
+}
+
+int OGRDXFReaderBinary::ReadValue(char *pszValueBuffer, int nValueBufferSize)
+{
+    if (VSIFTellL(fp) == 0)
+    {
+        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+    }
+    if (VSIFTellL(fp) == AUTOCAD_BINARY_DXF_SIGNATURE.size())
+    {
+        // Detect if the file is AutoCAD Binary r12
+        GByte abyZeroSection[8] = {0};
+        if (VSIFReadL(abyZeroSection, 1, sizeof(abyZeroSection), fp) !=
+            sizeof(abyZeroSection))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        m_bIsR12 = memcmp(abyZeroSection, "\x00SECTION", 8) == 0;
+        VSIFSeekL(fp, AUTOCAD_BINARY_DXF_SIGNATURE.size(), SEEK_SET);
+    }
+
+    m_nPrevPos = VSIFTellL(fp);
+
+    uint16_t nCode = 0;
+    bool bReadCodeUINT16 = true;
+    if (m_bIsR12)
+    {
+        GByte nCodeByte = 0;
+        if (VSIFReadL(&nCodeByte, 1, 1, fp) != 1)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        bReadCodeUINT16 = (nCodeByte == 255);
+        if (!bReadCodeUINT16)
+            nCode = nCodeByte;
+    }
+    if (bReadCodeUINT16)
+    {
+        if (VSIFReadL(&nCode, 1, sizeof(uint16_t), fp) != sizeof(uint16_t))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            return -1;
+        }
+        CPL_LSBPTR16(&nCode);
+    }
+
+    // Credits to ezdxf for the ranges
+    bool bRet = true;
+    if (nCode >= 290 && nCode < 300)
+    {
+        GByte nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == 1;
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
+    }
+    else if ((nCode >= 60 && nCode < 80) || (nCode >= 170 && nCode < 180) ||
+             (nCode >= 270 && nCode < 290) || (nCode >= 370 && nCode < 390) ||
+             (nCode >= 400 && nCode < 410) || (nCode >= 1060 && nCode < 1071))
+    {
+        int16_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR16(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
+    }
+    else if ((nCode >= 90 && nCode < 100) || (nCode >= 420 && nCode < 430) ||
+             (nCode >= 440 && nCode < 460) || (nCode == 1071))
+    {
+        int32_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR32(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%d", nVal);
+        // CPLDebug("DXF", "Read %d: %d", nCode, nVal);
+    }
+    else if (nCode >= 160 && nCode < 170)
+    {
+        int64_t nVal = 0;
+        bRet = VSIFReadL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
+        CPL_LSBPTR64(&nVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%" PRId64, nVal);
+        // CPLDebug("DXF", "Read %d: %" PRId64, nCode, nVal);
+    }
+    else if ((nCode >= 10 && nCode < 60) || (nCode >= 110 && nCode < 150) ||
+             (nCode >= 210 && nCode < 240) || (nCode >= 460 && nCode < 470) ||
+             (nCode >= 1010 && nCode < 1060))
+    {
+        double dfVal = 0;
+        bRet = VSIFReadL(&dfVal, 1, sizeof(dfVal), fp) == sizeof(dfVal);
+        CPL_LSBPTR64(&dfVal);
+        CPLsnprintf(pszValueBuffer, nValueBufferSize, "%.17g", dfVal);
+        // CPLDebug("DXF", "Read %d: %g", nCode, dfVal);
+    }
+    else if ((nCode >= 310 && nCode < 320) || nCode == 1004)
+    {
+        // Binary
+        GByte nChunkLength = 0;
+        bRet = VSIFReadL(&nChunkLength, 1, sizeof(nChunkLength), fp) ==
+               sizeof(nChunkLength);
+        std::vector<GByte> abyData(nChunkLength);
+        bRet &= VSIFReadL(abyData.data(), 1, nChunkLength, fp) == nChunkLength;
+        if (2 * nChunkLength + 1 > nValueBufferSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Provided buffer too small to store string");
+            return -1;
+        }
+        for (int i = 0; i < nChunkLength; ++i)
+        {
+            snprintf(pszValueBuffer + 2 * i, nValueBufferSize - 2 * i, "%02X",
+                     abyData[i]);
+        }
+        pszValueBuffer[2 * nChunkLength] = 0;
+        // CPLDebug("DXF", "Read %d: '%s'", nCode, pszValueBuffer);
+    }
+    else
+    {
+        // Zero terminated string
+        bool bEOS = false;
+        for (int i = 0; bRet && i < nValueBufferSize; ++i)
+        {
+            char ch = 0;
+            bRet = VSIFReadL(&ch, 1, 1, fp) == 1;
+            pszValueBuffer[i] = ch;
+            if (ch == 0)
+            {
+                // CPLDebug("DXF", "Read %d: '%s'", nCode, pszValueBuffer);
+                bEOS = true;
+                break;
+            }
+        }
+        if (!bEOS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Provided buffer too small to store string");
+            while (bRet)
+            {
+                char ch = 0;
+                bRet = VSIFReadL(&ch, 1, 1, fp) == 1;
+                if (ch == 0)
+                {
+                    break;
+                }
+            }
+            return -1;
+        }
+    }
+
+    if (!bRet)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "File too short");
+        return -1;
+    }
+    return nCode;
+}
+
+void OGRDXFReaderBinary::UnreadValue()
+{
+    if (m_nPrevPos == static_cast<uint64_t>(-1))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "UnreadValue() can be called just once after ReadValue()");
+    }
+    else
+    {
+        VSIFSeekL(fp, m_nPrevPos, SEEK_SET);
+        m_nPrevPos = static_cast<uint64_t>(-1);
+    }
+}
+
+void OGRDXFReaderBinary::ResetReadPointer(uint64_t nPos, int nNewLineNumber)
+{
+    VSIFSeekL(fp, nPos, SEEK_SET);
+    nLineNumber = nNewLineNumber;
 }

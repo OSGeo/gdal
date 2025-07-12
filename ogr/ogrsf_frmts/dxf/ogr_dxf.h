@@ -18,6 +18,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_autocad_services.h"
 #include "cpl_conv.h"
+#include <array>
 #include <vector>
 #include <map>
 #include <set>
@@ -26,6 +27,10 @@
 
 class OGRDXFDataSource;
 class OGRDXFFeature;
+
+constexpr std::array<char, 22> AUTOCAD_BINARY_DXF_SIGNATURE = {
+    'A', 'u', 't', 'o', 'C', 'A', 'D', ' ',  'B',  'i',    'n',
+    'a', 'r', 'y', ' ', 'D', 'X', 'F', '\r', '\n', '\x1A', '\x00'};
 
 /************************************************************************/
 /*                          DXFBlockDefinition                          */
@@ -583,30 +588,67 @@ class OGRDXFLayer final : public OGRLayer
                  poDS->GetLineNumber(), poDS->GetDescription());               \
     } while (0)
 
-class OGRDXFReader
+class OGRDXFReaderBase
 {
-    int ReadValueRaw(char *pszValueBuffer, int nValueBufferSize);
+  protected:
+    OGRDXFReaderBase() = default;
 
   public:
-    OGRDXFReader();
-    ~OGRDXFReader();
+    virtual ~OGRDXFReaderBase();
 
     void Initialize(VSILFILE *fp);
 
-    VSILFILE *fp;
+    VSILFILE *fp = nullptr;
 
-    unsigned int iSrcBufferOffset;
-    unsigned int nSrcBufferBytes;
-    unsigned int iSrcBufferFileOffset;
-    char achSrcBuffer[1025];
+    unsigned int nLastValueSize = 0;
+    int nLineNumber = 0;
 
-    unsigned int nLastValueSize;
-    int nLineNumber;
+    virtual uint64_t GetCurrentFilePos() const = 0;
+    virtual int ReadValue(char *pszValueBuffer, int nValueBufferSize = 81) = 0;
+    virtual void UnreadValue() = 0;
+    virtual void ResetReadPointer(uint64_t iNewOffset,
+                                  int nNewLineNumber = 0) = 0;
+};
 
-    int ReadValue(char *pszValueBuffer, int nValueBufferSize = 81);
-    void UnreadValue();
+class OGRDXFReaderASCII final : public OGRDXFReaderBase
+{
+    int ReadValueRaw(char *pszValueBuffer, int nValueBufferSize);
     void LoadDiskChunk();
-    void ResetReadPointer(unsigned int iNewOffset, int nNewLineNumber = 0);
+
+    unsigned int iSrcBufferOffset = 0;
+    unsigned int nSrcBufferBytes = 0;
+    uint64_t iSrcBufferFileOffset = 0;
+    std::array<char, 1025> achSrcBuffer{};
+
+  public:
+    OGRDXFReaderASCII() = default;
+
+    uint64_t GetCurrentFilePos() const override
+    {
+        return iSrcBufferFileOffset + iSrcBufferOffset;
+    }
+
+    int ReadValue(char *pszValueBuffer, int nValueBufferSize) override;
+    void UnreadValue() override;
+    void ResetReadPointer(uint64_t, int nNewLineNumber) override;
+};
+
+class OGRDXFReaderBinary final : public OGRDXFReaderBase
+{
+    bool m_bIsR12 = false;
+    uint64_t m_nPrevPos = static_cast<uint64_t>(-1);
+
+  public:
+    OGRDXFReaderBinary() = default;
+
+    uint64_t GetCurrentFilePos() const override
+    {
+        return VSIFTellL(fp);
+    }
+
+    int ReadValue(char *pszValueBuffer, int nValueBufferSize) override;
+    void UnreadValue() override;
+    void ResetReadPointer(uint64_t, int nNewLineNumber) override;
 };
 
 /************************************************************************/
@@ -633,7 +675,7 @@ class OGRDXFDataSource final : public GDALDataset
 
     std::vector<OGRLayer *> apoLayers;
 
-    unsigned int iEntitiesOffset;
+    uint64_t iEntitiesOffset;
     int iEntitiesLineNumber;
 
     std::map<CPLString, DXFBlockDefinition> oBlockMap;
@@ -665,7 +707,7 @@ class OGRDXFDataSource final : public GDALDataset
     bool bHaveReadSolidData;
     std::map<CPLString, std::vector<GByte>> oSolidBinaryData;
 
-    OGRDXFReader oReader;
+    std::unique_ptr<OGRDXFReaderBase> poReader{};
 
     std::vector<CPLString> aosBlockInsertionStack;
 
@@ -673,8 +715,8 @@ class OGRDXFDataSource final : public GDALDataset
     OGRDXFDataSource();
     ~OGRDXFDataSource();
 
-    int Open(const char *pszFilename, bool bHeaderOnly,
-             CSLConstList papszOptionsIn);
+    bool Open(const char *pszFilename, VSILFILE *fpIn, bool bHeaderOnly,
+              CSLConstList papszOptionsIn);
 
     int GetLayerCount() override
     {
@@ -779,29 +821,29 @@ class OGRDXFDataSource final : public GDALDataset
     }
 
     // reader related.
-    int GetLineNumber()
+    int GetLineNumber() const
     {
-        return oReader.nLineNumber;
+        return poReader->nLineNumber;
     }
 
     int ReadValue(char *pszValueBuffer, int nValueBufferSize = 81)
     {
-        return oReader.ReadValue(pszValueBuffer, nValueBufferSize);
+        return poReader->ReadValue(pszValueBuffer, nValueBufferSize);
     }
 
     void RestartEntities()
     {
-        oReader.ResetReadPointer(iEntitiesOffset, iEntitiesLineNumber);
+        poReader->ResetReadPointer(iEntitiesOffset, iEntitiesLineNumber);
     }
 
     void UnreadValue()
     {
-        oReader.UnreadValue();
+        poReader->UnreadValue();
     }
 
-    void ResetReadPointer(int iNewOffset)
+    void ResetReadPointer(uint64_t iNewOffset)
     {
-        oReader.ResetReadPointer(iNewOffset);
+        poReader->ResetReadPointer(iNewOffset);
     }
 };
 
