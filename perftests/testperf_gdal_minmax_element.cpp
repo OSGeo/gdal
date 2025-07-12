@@ -22,11 +22,11 @@ template <class T> void randomFill(T *v, size_t size, bool withNaN = true)
     for (size_t i = 0; i < size; i++)
     {
         v[i] = static_cast<T>(dist(gen));
-        if constexpr (std::is_same<T, float>::value ||
-                      std::is_same<T, double>::value)
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double> ||
+                      std::is_same_v<T, GFloat16>)
         {
             if (withNaN && (i == 0 || (i > 10 && ((i + 1) % 1024) <= 4)))
-                v[i] = std::numeric_limits<float>::quiet_NaN();
+                v[i] = cpl::NumericLimits<T>::quiet_NaN();
         }
     }
 }
@@ -136,9 +136,9 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
             idx += static_cast<int>(std::distance(
                 x.begin(), std::min_element(x.begin(), x.end(),
                                             [](T a, T b) {
-                                                return std::isnan(b)   ? true
-                                                       : std::isnan(a) ? false
-                                                                       : a < b;
+                                                return CPLIsNan(b)   ? true
+                                                       : CPLIsNan(a) ? false
+                                                                     : a < b;
                                             })));
         }
         idx /= N_ITERS;
@@ -170,11 +170,11 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                 x.begin(), std::min_element(x.begin(), x.end(),
                                             [noData](T a, T b)
                                             {
-                                                return std::isnan(b)   ? true
-                                                       : std::isnan(a) ? false
-                                                       : b == noData   ? true
-                                                       : a == noData   ? false
-                                                                       : a < b;
+                                                return CPLIsNan(b)   ? true
+                                                       : CPLIsNan(a) ? false
+                                                       : b == noData ? true
+                                                       : a == noData ? false
+                                                                     : a < b;
                                             })));
         }
         idx /= N_ITERS;
@@ -299,6 +299,20 @@ int main(int /* argc */, char * /* argv */[])
         constexpr GDALDataType eDT = GDT_Int32;
         printf("int32:\n");
         benchIntegers<T>(eDT, 0);
+    }
+    printf("--------------------\n");
+    {
+        using T = GFloat16;
+        constexpr GDALDataType eDT = GDT_Float16;
+        printf("float16 (*with* NaN):\n");
+        benchFloatingPointsWithNaN<T>(eDT, 0);
+    }
+    printf("--------------------\n");
+    {
+        using T = GFloat16;
+        constexpr GDALDataType eDT = GDT_Float16;
+        printf("float16 (without NaN):\n");
+        benchFloatingPointsWithoutNaN<T>(eDT, 0);
     }
     printf("--------------------\n");
     {
