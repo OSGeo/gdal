@@ -328,6 +328,10 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
                     }
                 }
             }
+
+            if (IsMarkedSuppressOnClose())
+                m_fpL->CancelCreation();
+
             if (VSIFCloseL(m_fpL) != 0)
             {
                 eErr = CE_Failure;

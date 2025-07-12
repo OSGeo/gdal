@@ -17,6 +17,7 @@
 
 #include <windows.h>
 #include <winioctl.h>  // for FSCTL_SET_SPARSE
+#include <winternl.h>  // for NtCreateFile
 
 #include "cpl_string.h"
 
@@ -40,6 +41,8 @@
 #undef GetDiskFreeSpace
 #endif
 
+static void VSIWin32TryLongFilename(wchar_t *&pwszFilename);
+
 struct VSIDIRWin32;
 
 class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
@@ -55,6 +58,12 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual VSIVirtualHandle *Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList /* papszOptions */) override;
+
+    VSIVirtualHandle *
+    CreateOnlyVisibleAtCloseTime(const char *pszFilename,
+                                 bool bEmulationAllowed,
+                                 CSLConstList papszOptions) override;
+
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) override;
     virtual int Unlink(const char *pszFilename) override;
@@ -108,6 +117,9 @@ class VSIWin32Handle final : public VSIVirtualHandle
     bool bError = false;
     bool m_bWriteThrough = false;
 
+    bool m_bCancelCreation = false;
+    std::string m_osFilenameToSetAtCloseTime{};
+
     VSIWin32Handle() = default;
     ~VSIWin32Handle() override;
 
@@ -129,6 +141,11 @@ class VSIWin32Handle final : public VSIVirtualHandle
 
     VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
                                   vsi_l_offset nLength) override;
+
+    void CancelCreation() override
+    {
+        m_bCancelCreation = true;
+    }
 };
 
 /************************************************************************/
@@ -250,8 +267,93 @@ int VSIWin32Handle::Close()
 {
     if (!hFile)
         return 0;
-    int ret = CloseHandle(hFile) ? 0 : -1;
+
+    int ret = 0;
+
+    if (!m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+    {
+        // Rename the file
+        wchar_t *finalPath =
+            CPLRecodeToWChar(CPLString(m_osFilenameToSetAtCloseTime)
+                                 .replaceAll('/', '\\')
+                                 .c_str(),
+                             CPL_ENC_UTF8, CPL_ENC_UCS2);
+
+        if (!cpl::starts_with(m_osFilenameToSetAtCloseTime, "\\\\?\\"))
+            VSIWin32TryLongFilename(finalPath);
+
+#ifdef DEBUG_VERBOSE
+        {
+            char *pszWin32Filename =
+                CPLRecodeFromWChar(finalPath, CPL_ENC_UCS2, CPL_ENC_UTF8);
+            CPLDebug("CPL", "FileRenameInfo('%s')", pszWin32Filename);
+            CPLFree(pszWin32Filename);
+        }
+#endif
+        const size_t renameLen =
+            sizeof(FILE_RENAME_INFO) + wcslen(finalPath) * sizeof(WCHAR);
+        FILE_RENAME_INFO *renameInfo =
+            static_cast<FILE_RENAME_INFO *>(CPLCalloc(1, renameLen));
+        renameInfo->ReplaceIfExists = TRUE;
+        renameInfo->FileNameLength =
+            static_cast<DWORD>(wcslen(finalPath) * sizeof(WCHAR));
+        wcscpy(renameInfo->FileName, finalPath);
+        CPLFree(finalPath);
+
+        const bool bRet = SetFileInformationByHandle(
+            hFile, FileRenameInfo, renameInfo, static_cast<DWORD>(renameLen));
+        CPLFree(renameInfo);
+
+        if (!bRet)
+        {
+            CPLDebug("CPL",
+                     "SetFileInformationByHandle FileRenameInfo failed: %lu",
+                     GetLastError());
+            ret = -1;
+        }
+
+        // Unhide the file
+        FILE_BASIC_INFO basicInfo;
+        if (ret == 0 &&
+            !GetFileInformationByHandleEx(hFile, FileBasicInfo, &basicInfo,
+                                          sizeof(basicInfo)))
+        {
+            CPLDebug("CPL", "GetFileInformationByHandleEx failed: %lu",
+                     GetLastError());
+            ret = -1;
+        }
+        basicInfo.FileAttributes = FILE_ATTRIBUTE_NORMAL;
+        if (ret == 0 &&
+            !SetFileInformationByHandle(hFile, FileBasicInfo, &basicInfo,
+                                        sizeof(basicInfo)))
+        {
+            CPLDebug("CPL",
+                     "SetFileInformationByHandle FileBasicInfo failed: %lu",
+                     GetLastError());
+            ret = -1;
+        }
+
+        // Remove FILE_DELETE_ON_CLOSE
+        FILE_DISPOSITION_INFO info = {FALSE};
+        if (ret == 0 && !SetFileInformationByHandle(hFile, FileDispositionInfo,
+                                                    &info, sizeof(info)))
+        {
+            CPLDebug(
+                "CPL",
+                "SetFileInformationByHandle FileDispositionInfo failed: %lu",
+                GetLastError());
+            ret = -1;
+        }
+    }
+
+    int ret2 = CloseHandle(hFile) ? 0 : -1;
+    if (ret == 0 && ret2 != 0)
+        ret = ret2;
     hFile = nullptr;
+
+    if (m_bCancelCreation && !m_osFilenameToSetAtCloseTime.empty())
+        VSIUnlink(m_osFilenameToSetAtCloseTime.c_str());
+
     return ret;
 }
 
@@ -884,6 +986,239 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     {
         return poHandle;
     }
+}
+
+/************************************************************************/
+/*                        GetNTStatusMessage()                          */
+/************************************************************************/
+
+static std::string GetNTStatusMessage(NTSTATUS status)
+{
+    typedef ULONG(WINAPI * CPLRtlNtStatusToDosError_t)(NTSTATUS Status);
+
+    HMODULE ntdll = GetModuleHandle("ntdll.dll");
+    if (!ntdll)
+    {
+        CPLDebugOnce("CPL", "ntdll.dll not found");
+        return CPLSPrintf("NTSTATUS %ld", status);
+    }
+
+    CPLRtlNtStatusToDosError_t hRtlNtStatusToDosError;
+    auto handle = GetProcAddress(ntdll, "RtlNtStatusToDosError");
+    static_assert(sizeof(hRtlNtStatusToDosError) == sizeof(handle));
+    memcpy(&hRtlNtStatusToDosError, &handle, sizeof(handle));
+    if (!hRtlNtStatusToDosError)
+    {
+        CPLDebugOnce("CPL", "hRtlNtStatusToDosError not found");
+        return CPLSPrintf("NTSTATUS %ld", status);
+    }
+
+    const DWORD winError = hRtlNtStatusToDosError(status);
+
+    wchar_t *msg = NULL;
+    const DWORD len = FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, winError,
+        0,  // use system default language
+        reinterpret_cast<LPWSTR>(&msg), 0, nullptr);
+
+    if (len && msg)
+    {
+        char *pszMsg = CPLRecodeFromWChar(msg, CPL_ENC_UCS2, CPL_ENC_UTF8);
+        std::string ret = pszMsg;
+        CPLFree(pszMsg);
+        LocalFree(msg);
+        return ret;
+    }
+    else
+    {
+        return CPLSPrintf("NTSTATUS %ld, WinError %lu", status, winError);
+    }
+}
+
+/************************************************************************/
+/*                            IsPathNTFS()                              */
+/************************************************************************/
+
+static bool IsPathNTFS(const char *pszPath)
+{
+    wchar_t volumePath[32];
+
+    wchar_t *pszWPath = CPLRecodeToWChar(pszPath, CPL_ENC_UTF8, CPL_ENC_UCS2);
+    if (!GetVolumePathNameW(pszWPath, volumePath,
+                            static_cast<DWORD>(sizeof(volumePath))))
+    {
+        CPLFree(pszWPath);
+        wprintf(L"GetVolumePathNameW failed: %lu\n", GetLastError());
+        return false;
+    }
+    CPLFree(pszWPath);
+
+    // Get the filesystem name
+    wchar_t fileSystemName[32];
+    if (!GetVolumeInformationW(volumePath, nullptr, 0, nullptr, nullptr,
+                               nullptr, fileSystemName,
+                               static_cast<DWORD>(sizeof(fileSystemName))))
+    {
+        CPLDebug("CPL", "GetVolumeInformationW failed: %lu", GetLastError());
+        return false;
+    }
+
+    return _wcsicmp(fileSystemName, L"NTFS") == 0;
+}
+
+/************************************************************************/
+/*                      CreateOnlyVisibleAtCloseTime()                  */
+/************************************************************************/
+
+VSIVirtualHandle *VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
+    const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
+{
+    typedef NTSTATUS(WINAPI * CPLNtCreateFile_t)(
+        PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+        POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+        PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
+        ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer,
+        ULONG EaLength);
+
+    typedef void(WINAPI * CPLRtlInitUnicodeString_t)(
+        PUNICODE_STRING DestinationString, PCWSTR SourceString);
+
+    std::string osFullFilename;
+    if ((pszFilename[0] && pszFilename[1] == ':' &&
+         (pszFilename[2] == '\\' || pszFilename[2] == '/')) ||
+        STARTS_WITH(pszFilename, "\\\\"))
+    {
+        osFullFilename = pszFilename;
+    }
+    else
+    {
+        WCHAR wszCWD[MAX_PATH];
+        DWORD length = GetCurrentDirectoryW(MAX_PATH, wszCWD);
+        if (length > 0 && length < MAX_PATH)
+        {
+            char *pszCWD =
+                CPLRecodeFromWChar(wszCWD, CPL_ENC_UCS2, CPL_ENC_UTF8);
+            osFullFilename =
+                std::string(pszCWD).append("\\").append(pszFilename);
+            CPLFree(pszCWD);
+        }
+    }
+
+    if (!osFullFilename.empty() && IsPathNTFS(osFullFilename.c_str()))
+    {
+        do
+        {
+            HMODULE ntdll = GetModuleHandle("ntdll.dll");
+            if (!ntdll)
+            {
+                CPLDebugOnce("CPL", "ntdll.dll not found");
+                break;
+            }
+
+            CPLNtCreateFile_t hNtCreateFile;
+            {
+                auto handle = GetProcAddress(ntdll, "NtCreateFile");
+                static_assert(sizeof(hNtCreateFile) == sizeof(handle));
+                memcpy(&hNtCreateFile, &handle, sizeof(handle));
+            }
+
+            CPLRtlInitUnicodeString_t hRtlInitUnicodeString;
+            {
+                auto handle = GetProcAddress(ntdll, "RtlInitUnicodeString");
+                static_assert(sizeof(hRtlInitUnicodeString) == sizeof(handle));
+                memcpy(&hRtlInitUnicodeString, &handle, sizeof(handle));
+            }
+
+            if (!hNtCreateFile || !hRtlInitUnicodeString)
+            {
+                CPLDebugOnce("CPL",
+                             "NtCreateFile or RtlInitUnicodeString not found");
+                break;
+            }
+
+            wchar_t *pwszFilename = CPLRecodeToWChar(
+                CPLString(osFullFilename).replaceAll('/', '\\').c_str(),
+                CPL_ENC_UTF8, CPL_ENC_UCS2);
+
+            std::vector<WCHAR> fileNameBuffer;
+            fileNameBuffer.resize(wcslen(pwszFilename) +
+                                  strlen("\\??\\.tmp_hidden") + 1);
+            // Use NT Kernel long filename convention whose prefix is
+            // "backslash question_mark question_mark backslash",
+            // whereas Win32 API long filename convention is
+            // "backslash backslash question_mark backslash" ...
+            if (pwszFilename[0] == '\\' && pwszFilename[1] == '\\' &&
+                pwszFilename[2] == '?' && pwszFilename[3] == '\\')
+            {
+                swprintf(fileNameBuffer.data(), fileNameBuffer.size(),
+                         L"\\??\\%s.tmp_hidden",
+                         pwszFilename + strlen("\\\\?\\"));
+            }
+            else
+            {
+                swprintf(fileNameBuffer.data(), fileNameBuffer.size(),
+                         L"\\??\\%s.tmp_hidden", pwszFilename);
+            }
+            CPLFree(pwszFilename);
+            fileNameBuffer.resize(wcslen(fileNameBuffer.data()));
+
+#ifdef DEBUG_VERBOSE
+            {
+                char *pszNtFilename = CPLRecodeFromWChar(
+                    fileNameBuffer.data(), CPL_ENC_UCS2, CPL_ENC_UTF8);
+                CPLDebug("CPL", "NtCreateFile('%s')", pszNtFilename);
+                CPLFree(pszNtFilename);
+            }
+#endif
+
+            // Define NT path
+            UNICODE_STRING fileName;
+            hRtlInitUnicodeString(&fileName, fileNameBuffer.data());
+
+            OBJECT_ATTRIBUTES fileAttr;
+            InitializeObjectAttributes(&fileAttr, &fileName,
+                                       OBJ_CASE_INSENSITIVE, nullptr, nullptr);
+
+            HANDLE hFile = nullptr;
+            IO_STATUS_BLOCK ioStatus;
+            memset(&ioStatus, 0, sizeof(ioStatus));
+
+            DWORD creationOptions =
+                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT;
+            const bool bWriteThrough = CPLTestBool(
+                CSLFetchNameValueDef(papszOptions, "WRITE_THROUGH", "NO"));
+            if (bWriteThrough)
+            {
+                creationOptions |= FILE_WRITE_THROUGH;
+            }
+
+            NTSTATUS status = hNtCreateFile(
+                &hFile, FILE_GENERIC_READ | FILE_GENERIC_WRITE | DELETE,
+                &fileAttr, &ioStatus, nullptr,
+                FILE_ATTRIBUTE_HIDDEN | FILE_DELETE_ON_CLOSE, 0, FILE_SUPERSEDE,
+                creationOptions, nullptr, 0);
+
+            if (status != 0)
+            {
+                CPLDebug("CPL", "NtCreateFile() failed: %s",
+                         GetNTStatusMessage(status).c_str());
+                break;
+            }
+
+            VSIWin32Handle *poHandle = new VSIWin32Handle;
+
+            poHandle->hFile = hFile;
+            poHandle->m_bWriteThrough = bWriteThrough;
+            poHandle->m_osFilenameToSetAtCloseTime = osFullFilename;
+
+            return poHandle;
+
+        } while (false);
+    }
+    return VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+        pszFilename, bEmulationAllowed, papszOptions);
 }
 
 /************************************************************************/
