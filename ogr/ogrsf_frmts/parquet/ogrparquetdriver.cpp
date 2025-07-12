@@ -697,7 +697,12 @@ void OGRParquetDriver::InitMetadata()
                 osCompressionLevelDesc += ',';
                 osCompressionLevelDesc += std::to_string(*maxCompressLevelRes);
                 osCompressionLevelDesc += "], default=";
-                osCompressionLevelDesc += std::to_string(*defCompressLevelRes);
+                if (EQUAL(pszMethod, "ZSTD"))
+                    osCompressionLevelDesc += std::to_string(
+                        OGR_PARQUET_ZSTD_DEFAULT_COMPRESSION_LEVEL);
+                else
+                    osCompressionLevelDesc +=
+                        std::to_string(*defCompressLevelRes);
                 osCompressionLevelDesc += '.';
             }
         }

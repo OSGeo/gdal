@@ -25,6 +25,7 @@
 #include "ogr_include_parquet.h"
 
 constexpr int DEFAULT_COMPRESSION_LEVEL = -1;
+constexpr int OGR_PARQUET_ZSTD_DEFAULT_COMPRESSION_LEVEL = 9;
 
 /************************************************************************/
 /*                       OGRParquetLayerBase                            */
