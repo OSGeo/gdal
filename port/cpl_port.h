@@ -822,32 +822,6 @@ extern "C++"
 #endif /* UNREFERENCED_PARAM */
 /*! @endcond */
 
-/***********************************************************************
- * Define CPL_CVSID() macro.  It can be disabled during a build by
- * defining DISABLE_CVSID in the compiler options.
- *
- * The cvsid_aw() function is just there to prevent reports of cpl_cvsid()
- * being unused.
- */
-
-/*! @cond Doxygen_Suppress */
-#ifndef DISABLE_CVSID
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define CPL_CVSID(string)                                                      \
-    static const char cpl_cvsid[] __attribute__((used)) = string;
-#else
-#define CPL_CVSID(string)                                                      \
-    static const char cpl_cvsid[] = string;                                    \
-    static const char *cvsid_aw()                                              \
-    {                                                                          \
-        return (cvsid_aw() ? NULL : cpl_cvsid);                                \
-    }
-#endif
-#else
-#define CPL_CVSID(string)
-#endif
-/*! @endcond */
-
 /* We exclude mingw64 4.6 which seems to be broken regarding this */
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP) &&            \
     !(defined(__MINGW64__) && __GNUC__ == 4 && __GNUC_MINOR__ == 6)
