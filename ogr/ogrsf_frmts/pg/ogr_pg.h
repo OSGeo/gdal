@@ -67,8 +67,7 @@
 #define JSONBOID 3802
 
 CPLString OGRPGEscapeString(void *hPGConn, const char *pszStrValue,
-                            int nMaxLengthUnused = -1,
-                            const char *pszTableName = "",
+                            int nMaxLength = -1, const char *pszTableName = "",
                             const char *pszFieldName = "");
 CPLString OGRPGEscapeColumnName(const char *pszColumnName);
 

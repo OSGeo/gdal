@@ -6352,3 +6352,27 @@ def test_ogr_pg_gdal_vector_pipeline(pg_ds):
         },
     ) as alg:
         assert alg.Output().GetLayerCount() == 1
+
+
+###############################################################################
+# Test field content truncation related to SetWidth()
+
+
+@gdaltest.enable_exceptions()
+@only_without_postgis
+def test_ogr_pg_field_truncation(pg_ds):
+
+    lyr = pg_ds.CreateLayer("test")
+    fld_defn = ogr.FieldDefn("field", ogr.OFTString)
+    fld_defn.SetWidth(5)
+    lyr.CreateField(fld_defn)
+
+    ds = reconnect(pg_ds, update=1)
+    lyr = ds.GetLayerByName("test")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["field"] = b"abcd\xc3\xa9f".decode("UTF-8")
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["field"] == b"abcd\xc3\xa9".decode("UTF-8")
