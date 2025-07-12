@@ -16,6 +16,16 @@ from C++ and Python:
 - subtraction, with ``*`` operator
 - multiplication, with ``-`` operator
 - division, with ``/`` operator
+- absolute value / module, with :cpp:func:`gdal::abs` in C++ an
+  :py:meth:`osgeo.gdal.abs` in Python
+- square root, with :cpp:func:`gdal::sqrt` in C++ an
+  :py:meth:`osgeo.gdal.sqrt` in Python
+- logarithm base 10, with :cpp:func:`gdal::log10` in C++ an
+  :py:meth:`osgeo.gdal.log10` in Python
+- natural logarithm, with :cpp:func:`gdal::log` in C++ an
+  :py:meth:`osgeo.gdal.log` in Python
+- raising to the power, with :cpp:func:`gdal::pow` in C++ an
+  :py:meth:`osgeo.gdal.pow` in Python
 - strictly greater than comparison, with ``>`` operator
 - greater or equal to comparison, with ``>=`` operator
 - strictly lesser than comparison, with ``<`` operator
