@@ -874,9 +874,9 @@ void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
     }
     for (int iBand = 1; iBand <= nBands; ++iBand)
     {
-        poOvrDS->SetBand(iBand,
-                         new RL2RasterBand(reinterpret_cast<RL2RasterBand *>(
-                             GetRasterBand(iBand))));
+        poOvrDS->SetBand(
+            iBand, new RL2RasterBand(
+                       cpl::down_cast<RL2RasterBand *>(GetRasterBand(iBand))));
     }
     m_apoOverviewDS.push_back(poOvrDS);
 }
@@ -952,7 +952,7 @@ RL2RasterBand::~RL2RasterBand()
 
 GDALColorTable *RL2RasterBand::GetColorTable()
 {
-    OGRSQLiteDataSource *poGDS = reinterpret_cast<OGRSQLiteDataSource *>(poDS);
+    OGRSQLiteDataSource *poGDS = cpl::down_cast<OGRSQLiteDataSource *>(poDS);
     if (m_poCT == nullptr && m_eColorInterp == GCI_PaletteIndex)
     {
         rl2PalettePtr palettePtr = rl2_get_dbms_palette(
@@ -994,7 +994,7 @@ GDALColorTable *RL2RasterBand::GetColorTable()
 
 int RL2RasterBand::GetOverviewCount()
 {
-    OGRSQLiteDataSource *poGDS = reinterpret_cast<OGRSQLiteDataSource *>(poDS);
+    OGRSQLiteDataSource *poGDS = cpl::down_cast<OGRSQLiteDataSource *>(poDS);
     int nRet = static_cast<int>(poGDS->GetOverviews().size());
     if (nRet > 0)
         return nRet;
@@ -1007,7 +1007,7 @@ int RL2RasterBand::GetOverviewCount()
 
 GDALRasterBand *RL2RasterBand::GetOverview(int nIdx)
 {
-    OGRSQLiteDataSource *poGDS = reinterpret_cast<OGRSQLiteDataSource *>(poDS);
+    OGRSQLiteDataSource *poGDS = cpl::down_cast<OGRSQLiteDataSource *>(poDS);
     int nOvr = static_cast<int>(poGDS->GetOverviews().size());
     if (nOvr > 0)
     {
@@ -1039,7 +1039,7 @@ double RL2RasterBand::GetNoDataValue(int *pbSuccess)
 
 CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 {
-    OGRSQLiteDataSource *poGDS = reinterpret_cast<OGRSQLiteDataSource *>(poDS);
+    OGRSQLiteDataSource *poGDS = cpl::down_cast<OGRSQLiteDataSource *>(poDS);
 #ifdef DEBUG_VERBOSE
     CPLDebug("SQLite", "IReadBlock(ds=%p, band=%d, x=%d, y=%d)", poGDS, nBand,
              nBlockXOff, nBlockYOff);
@@ -1129,7 +1129,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                 continue;
 
             GDALRasterBlock *poBlock =
-                reinterpret_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
+                cpl::down_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
                     ->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
             if (poBlock != nullptr)
             {
@@ -1137,7 +1137,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                 continue;
             }
             poBlock =
-                reinterpret_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
+                cpl::down_cast<RL2RasterBand *>(poGDS->GetRasterBand(iBand))
                     ->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
             if (poBlock == nullptr)
                 continue;

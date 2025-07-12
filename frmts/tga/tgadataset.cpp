@@ -107,7 +107,7 @@ class GDALTGARasterBand final : public GDALPamRasterBand
     {
         if (m_poColorTable)
             return GCI_PaletteIndex;
-        GDALTGADataset *poGDS = reinterpret_cast<GDALTGADataset *>(poDS);
+        GDALTGADataset *poGDS = cpl::down_cast<GDALTGADataset *>(poDS);
         if (poGDS->GetRasterCount() == 1)
             return GCI_GrayIndex;
         if (nBand == 4)
@@ -279,7 +279,7 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset *poDSIn, int nBandIn,
 CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                      void *pImage)
 {
-    GDALTGADataset *poGDS = reinterpret_cast<GDALTGADataset *>(poDS);
+    GDALTGADataset *poGDS = cpl::down_cast<GDALTGADataset *>(poDS);
 
     const int nBands = poGDS->GetRasterCount();
     const int nLine = (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5))

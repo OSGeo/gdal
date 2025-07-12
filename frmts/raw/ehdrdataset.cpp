@@ -68,7 +68,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
 {
     m_bValid = RawRasterBand::IsValid();
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     if (nBits < 8)
     {
@@ -369,7 +369,7 @@ CPLErr EHdrDataset::Close()
         {
             int bNoDataSet;
             RawRasterBand *poBand =
-                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+                cpl::down_cast<RawRasterBand *>(GetRasterBand(1));
 
             const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
             if (bNoDataSet)
@@ -1886,7 +1886,7 @@ CPLErr EHdrRasterBand::GetStatistics(int bApproxOK, int bForce, double *pdfMin,
     if (eErr != CE_None)
         return eErr;
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     minmaxmeanstddev = HAS_ALL_FLAGS;
 
@@ -1925,7 +1925,7 @@ CPLErr EHdrRasterBand::SetStatistics(double dfMinIn, double dfMaxIn,
     // marks stats valid
     minmaxmeanstddev = HAS_ALL_FLAGS;
 
-    EHdrDataset *poEDS = reinterpret_cast<EHdrDataset *>(poDS);
+    EHdrDataset *poEDS = cpl::down_cast<EHdrDataset *>(poDS);
 
     if (GetMetadataItem("STATISTICS_APPROXIMATE") == nullptr)
     {
@@ -1962,7 +1962,7 @@ CPLErr EHdrRasterBand::SetColorTable(GDALColorTable *poNewCT)
     else
         m_poColorTable.reset(poNewCT->Clone());
 
-    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
+    cpl::down_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
     return CE_None;
 }
@@ -2006,7 +2006,7 @@ CPLErr EHdrRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
     else
         m_poRAT.reset(poRAT->Clone());
 
-    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
+    cpl::down_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
     return CE_None;
 }

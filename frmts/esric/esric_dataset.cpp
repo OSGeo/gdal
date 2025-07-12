@@ -823,7 +823,7 @@ ECBand::ECBand(ECDataset *parent, int b, int level)
 
 void ECBand::AddOverviews()
 {
-    auto parent = reinterpret_cast<ECDataset *>(poDS);
+    auto parent = cpl::down_cast<ECDataset *>(poDS);
     for (size_t i = 1; i < parent->resolutions.size(); i++)
     {
         ECBand *ovl = new ECBand(parent, nBand, int(i));
@@ -835,7 +835,7 @@ void ECBand::AddOverviews()
 
 CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 {
-    auto parent = reinterpret_cast<ECDataset *>(poDS);
+    auto parent = cpl::down_cast<ECDataset *>(poDS);
     auto &buffer = parent->tilebuffer;
     auto TSZ = parent->TSZ;
     auto BSZ = parent->BSZ;

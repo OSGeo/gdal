@@ -124,7 +124,7 @@ XYZRasterBand::XYZRasterBand(XYZDataset *poDSIn, int nBandIn, GDALDataType eDT)
 CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                  void *pImage)
 {
-    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>(poDS);
+    XYZDataset *poGDS = cpl::down_cast<XYZDataset *>(poDS);
 
     if (poGDS->fp == nullptr)
         return CE_Failure;
@@ -593,7 +593,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
 double XYZRasterBand::GetMinimum(int *pbSuccess)
 {
-    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>(poDS);
+    XYZDataset *poGDS = cpl::down_cast<XYZDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = TRUE;
     return poGDS->dfMinZ;
@@ -605,7 +605,7 @@ double XYZRasterBand::GetMinimum(int *pbSuccess)
 
 double XYZRasterBand::GetMaximum(int *pbSuccess)
 {
-    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>(poDS);
+    XYZDataset *poGDS = cpl::down_cast<XYZDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = TRUE;
     return poGDS->dfMaxZ;
@@ -617,7 +617,7 @@ double XYZRasterBand::GetMaximum(int *pbSuccess)
 
 double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    XYZDataset *poGDS = reinterpret_cast<XYZDataset *>(poDS);
+    XYZDataset *poGDS = cpl::down_cast<XYZDataset *>(poDS);
     if (!poGDS->bSameNumberOfValuesPerLine && poGDS->dfMinZ > -32768 &&
         eDataType != GDT_Byte)
     {
@@ -1693,8 +1693,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
         }
         CPLDebug("XYZ", "Setting precision format: %s", szFormat);
     }
-    void *pLineBuffer =
-        reinterpret_cast<void *>(CPLMalloc(nXSize * sizeof(int)));
+    void *pLineBuffer = static_cast<void *>(CPLMalloc(nXSize * sizeof(int)));
     CPLErr eErr = CE_None;
     for (int j = 0; j < nYSize && eErr == CE_None; j++)
     {

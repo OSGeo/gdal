@@ -110,7 +110,7 @@ CPLErr GenBinBitRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                        void *pImage)
 
 {
-    GenBinDataset *poGDS = reinterpret_cast<GenBinDataset *>(poDS);
+    GenBinDataset *poGDS = cpl::down_cast<GenBinDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Establish desired position.                                     */

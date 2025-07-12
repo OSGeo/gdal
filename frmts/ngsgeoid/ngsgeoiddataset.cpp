@@ -96,7 +96,7 @@ CPLErr NGSGEOIDRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 
 {
-    NGSGEOIDDataset *poGDS = reinterpret_cast<NGSGEOIDDataset *>(poDS);
+    NGSGEOIDDataset *poGDS = cpl::down_cast<NGSGEOIDDataset *>(poDS);
 
     /* First values in the file corresponds to the south-most line of the
      * imagery */

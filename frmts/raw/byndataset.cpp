@@ -74,7 +74,7 @@ double BYNRasterBand::GetNoDataValue(int *pbSuccess)
         return dfNoData;
     }
     const double dfFactor =
-        reinterpret_cast<BYNDataset *>(poDS)->hHeader.dfFactor;
+        cpl::down_cast<BYNDataset *>(poDS)->hHeader.dfFactor;
     return eDataType == GDT_Int16 ? 32767.0 : 9999.0 * dfFactor;
 }
 
@@ -87,7 +87,7 @@ double BYNRasterBand::GetScale(int *pbSuccess)
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
     const double dfFactor =
-        reinterpret_cast<BYNDataset *>(poDS)->hHeader.dfFactor;
+        cpl::down_cast<BYNDataset *>(poDS)->hHeader.dfFactor;
     return (dfFactor != 0.0) ? 1.0 / dfFactor : 0.0;
 }
 

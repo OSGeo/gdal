@@ -185,7 +185,7 @@ CPLErr LAN4BitRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                      void *pImage)
 
 {
-    LANDataset *poLAN_DS = reinterpret_cast<LANDataset *>(poDS);
+    LANDataset *poLAN_DS = cpl::down_cast<LANDataset *>(poDS);
     CPLAssert(nBlockXOff == 0);
 
     /* -------------------------------------------------------------------- */
