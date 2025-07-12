@@ -62,17 +62,17 @@ Standard options
     this number of pixels.
     Defaults to 2.
 
-.. option:: --addalpha
+.. option:: --add-alpha
 
     Adds an alpha band to the output file.
     The alpha band is set to 0 in the image collar and to 255 elsewhere.
-    This option is mutually exclusive with :option:`--addmask`.
+    This option is mutually exclusive with :option:`--add-mask`.
 
-.. option:: --addmask
+.. option:: --add-mask
 
     Adds a mask band to the output file,
     The mask band is set to 0 in the image collar and to 255 elsewhere.
-    This option is mutually exclusive with :option:`--addalpha`.
+    This option is mutually exclusive with :option:`--add-alpha`.
 
 .. option:: --algorithm floodfill|twopasses
 
@@ -108,4 +108,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster clean-collar --addalpha --color=black --color=white --color-threshold=5 in.tif out.tif
+        $ gdal raster clean-collar --add-alpha --color=black --color=white --color-threshold=5 in.tif out.tif
