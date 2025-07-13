@@ -511,11 +511,10 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmpgt_epi32(x, y);
-        // We could use _mm_cmpgt_pX() if there was no NaN values
         else if constexpr (std::is_same_v<T, float>)
-            return _mm_castps_si128(_mm_cmpnle_ps(x, y));
+            return _mm_castps_si128(_mm_cmpgt_ps(x, y));
         else
-            return _mm_castpd_si128(_mm_cmpnle_pd(x, y));
+            return _mm_castpd_si128(_mm_cmpgt_pd(x, y));
     }
     else
     {
@@ -540,11 +539,10 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmplt_epi32(x, y);
-        // We could use _mm_cmplt_pX() if there was no NaN values
         else if constexpr (std::is_same_v<T, float>)
-            return _mm_castps_si128(_mm_cmpnge_ps(x, y));
+            return _mm_castps_si128(_mm_cmplt_ps(x, y));
         else
-            return _mm_castpd_si128(_mm_cmpnge_pd(x, y));
+            return _mm_castpd_si128(_mm_cmplt_pd(x, y));
     }
 }
 
@@ -698,7 +696,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 
     [[maybe_unused]] auto sse_neutral = set1_unshifted(static_cast<T>(0));
     [[maybe_unused]] auto sse_nodata = set1_unshifted(noDataValue);
-    if constexpr (HAS_NODATA)
+    if constexpr (HAS_NODATA || std::is_floating_point_v<T>)
     {
         for (; i < size && extremum_is_invalid; ++i)
         {
