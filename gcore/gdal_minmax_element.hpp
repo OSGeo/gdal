@@ -345,56 +345,6 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
 #ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 
 /************************************************************************/
-/*                         extremum_element()                           */
-/************************************************************************/
-
-template <class T, bool IS_MAX>
-size_t extremum_element(const T *v, size_t size, T noDataValue)
-{
-    static_assert(!(is_floating_point_v<T>));
-    if (size == 0)
-        return 0;
-    size_t idx_of_extremum = 0;
-    T extremum = v[0];
-    bool extremum_is_nodata = extremum == noDataValue;
-    size_t i = 1;
-    for (; i < size; ++i)
-    {
-        if (v[i] != noDataValue &&
-            (compScalar<T, IS_MAX>(v[i], extremum) || extremum_is_nodata))
-        {
-            extremum = v[i];
-            idx_of_extremum = i;
-            extremum_is_nodata = false;
-        }
-    }
-    return idx_of_extremum;
-}
-
-/************************************************************************/
-/*                         extremum_element()                           */
-/************************************************************************/
-
-template <class T, bool IS_MAX> size_t extremum_element(const T *v, size_t size)
-{
-    static_assert(!(is_floating_point_v<T>));
-    if (size == 0)
-        return 0;
-    size_t idx_of_extremum = 0;
-    T extremum = v[0];
-    size_t i = 1;
-    for (; i < size; ++i)
-    {
-        if (compScalar<T, IS_MAX>(v[i], extremum))
-        {
-            extremum = v[i];
-            idx_of_extremum = i;
-        }
-    }
-    return idx_of_extremum;
-}
-
-/************************************************************************/
 /*                     extremum_element_sse2()                          */
 /************************************************************************/
 
@@ -765,7 +715,7 @@ template <class T, bool IS_MAX, bool HAS_NODATA>
 __attribute__((noinline))
 #endif
 size_t
-extremum_element_with_nan(const T *v, size_t size, T noDataValue)
+extremum_element_sse2(const T *v, size_t size, T noDataValue)
 {
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
                   std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
@@ -783,7 +733,7 @@ extremum_element_with_nan(const T *v, size_t size, T noDataValue)
         {
             if (IsNan(noDataValue))
             {
-                return extremum_element_with_nan<T, IS_MAX, false>(
+                return extremum_element_sse2<T, IS_MAX, false>(
                     v, size, static_cast<T>(0));
             }
         }
@@ -941,302 +891,17 @@ extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 /*                         extremum_element()                           */
 /************************************************************************/
 
-template <>
-size_t extremum_element<uint8_t, true>(const uint8_t *v, size_t size,
-                                       uint8_t noDataValue)
+template <class T, bool IS_MAX>
+inline size_t extremum_element(const T *buffer, size_t size, T noDataValue)
 {
-    return extremum_element_with_nan<uint8_t, true, true>(v, size, noDataValue);
+    return extremum_element_sse2<T, IS_MAX, true>(buffer, size, noDataValue);
 }
 
-template <>
-size_t extremum_element<uint8_t, false>(const uint8_t *v, size_t size,
-                                        uint8_t noDataValue)
+template <class T, bool IS_MAX>
+inline size_t extremum_element(const T *buffer, size_t size)
 {
-    return extremum_element_with_nan<uint8_t, false, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<uint8_t, true>(const uint8_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint8_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint8_t, false>(const uint8_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint8_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int8_t, true>(const int8_t *v, size_t size,
-                                      int8_t noDataValue)
-{
-    return extremum_element_with_nan<int8_t, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<int8_t, false>(const int8_t *v, size_t size,
-                                       int8_t noDataValue)
-{
-    return extremum_element_with_nan<int8_t, false, true>(v, size, noDataValue);
-}
-
-template <> size_t extremum_element<int8_t, true>(const int8_t *v, size_t size)
-{
-    return extremum_element_with_nan<int8_t, true, false>(v, size, 0);
-}
-
-template <> size_t extremum_element<int8_t, false>(const int8_t *v, size_t size)
-{
-    return extremum_element_with_nan<int8_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint16_t, true>(const uint16_t *v, size_t size,
-                                        uint16_t noDataValue)
-{
-    return extremum_element_with_nan<uint16_t, true, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<uint16_t, false>(const uint16_t *v, size_t size,
-                                         uint16_t noDataValue)
-{
-    return extremum_element_with_nan<uint16_t, false, true>(v, size,
-                                                            noDataValue);
-}
-
-template <>
-size_t extremum_element<uint16_t, true>(const uint16_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint16_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint16_t, false>(const uint16_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint16_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int16_t, true>(const int16_t *v, size_t size,
-                                       int16_t noDataValue)
-{
-    return extremum_element_with_nan<int16_t, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<int16_t, false>(const int16_t *v, size_t size,
-                                        int16_t noDataValue)
-{
-    return extremum_element_with_nan<int16_t, false, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<int16_t, true>(const int16_t *v, size_t size)
-{
-    return extremum_element_with_nan<int16_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int16_t, false>(const int16_t *v, size_t size)
-{
-    return extremum_element_with_nan<int16_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint32_t, true>(const uint32_t *v, size_t size,
-                                        uint32_t noDataValue)
-{
-    return extremum_element_with_nan<uint32_t, true, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<uint32_t, false>(const uint32_t *v, size_t size,
-                                         uint32_t noDataValue)
-{
-    return extremum_element_with_nan<uint32_t, false, true>(v, size,
-                                                            noDataValue);
-}
-
-template <>
-size_t extremum_element<uint32_t, true>(const uint32_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint32_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint32_t, false>(const uint32_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint32_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int32_t, true>(const int32_t *v, size_t size,
-                                       int32_t noDataValue)
-{
-    return extremum_element_with_nan<int32_t, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<int32_t, false>(const int32_t *v, size_t size,
-                                        int32_t noDataValue)
-{
-    return extremum_element_with_nan<int32_t, false, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<int32_t, true>(const int32_t *v, size_t size)
-{
-    return extremum_element_with_nan<int32_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int32_t, false>(const int32_t *v, size_t size)
-{
-    return extremum_element_with_nan<int32_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint64_t, true>(const uint64_t *v, size_t size,
-                                        uint64_t noDataValue)
-{
-    return extremum_element_with_nan<uint64_t, true, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<uint64_t, false>(const uint64_t *v, size_t size,
-                                         uint64_t noDataValue)
-{
-    return extremum_element_with_nan<uint64_t, false, true>(v, size,
-                                                            noDataValue);
-}
-
-template <>
-size_t extremum_element<uint64_t, true>(const uint64_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint64_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<uint64_t, false>(const uint64_t *v, size_t size)
-{
-    return extremum_element_with_nan<uint64_t, false, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int64_t, true>(const int64_t *v, size_t size,
-                                       int64_t noDataValue)
-{
-    return extremum_element_with_nan<int64_t, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<int64_t, false>(const int64_t *v, size_t size,
-                                        int64_t noDataValue)
-{
-    return extremum_element_with_nan<int64_t, false, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<int64_t, true>(const int64_t *v, size_t size)
-{
-    return extremum_element_with_nan<int64_t, true, false>(v, size, 0);
-}
-
-template <>
-size_t extremum_element<int64_t, false>(const int64_t *v, size_t size)
-{
-    return extremum_element_with_nan<int64_t, false, false>(v, size, 0);
-}
-
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-template <>
-size_t extremum_element<GFloat16, true>(const GFloat16 *v, size_t size,
-                                        GFloat16 noDataValue)
-{
-    return extremum_element_with_nan<GFloat16, true, true>(v, size,
-                                                           noDataValue);
-}
-
-template <>
-size_t extremum_element<GFloat16, false>(const GFloat16 *v, size_t size,
-                                         GFloat16 noDataValue)
-{
-    return extremum_element_with_nan<GFloat16, false, true>(v, size,
-                                                            noDataValue);
-}
-#endif
-
-template <>
-size_t extremum_element<float, true>(const float *v, size_t size,
-                                     float noDataValue)
-{
-    return extremum_element_with_nan<float, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<float, false>(const float *v, size_t size,
-                                      float noDataValue)
-{
-    return extremum_element_with_nan<float, false, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<double, true>(const double *v, size_t size,
-                                      double noDataValue)
-{
-    return extremum_element_with_nan<double, true, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<double, false>(const double *v, size_t size,
-                                       double noDataValue)
-{
-    return extremum_element_with_nan<double, false, true>(v, size, noDataValue);
-}
-
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-template <>
-size_t extremum_element<GFloat16, true>(const GFloat16 *v, size_t size)
-{
-    return extremum_element_with_nan<GFloat16, true, false>(v, size, 0);
-}
-#endif
-
-template <> size_t extremum_element<float, true>(const float *v, size_t size)
-{
-    return extremum_element_with_nan<float, true, false>(v, size, 0);
-}
-
-template <> size_t extremum_element<double, true>(const double *v, size_t size)
-{
-    return extremum_element_with_nan<double, true, false>(v, size, 0);
-}
-
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-template <>
-size_t extremum_element<GFloat16, false>(const GFloat16 *v, size_t size)
-{
-    return extremum_element_with_nan<GFloat16, false, false>(v, size, 0);
-}
-#endif
-
-template <> size_t extremum_element<float, false>(const float *v, size_t size)
-{
-    return extremum_element_with_nan<float, false, false>(v, size, 0);
-}
-
-template <> size_t extremum_element<double, false>(const double *v, size_t size)
-{
-    return extremum_element_with_nan<double, false, false>(v, size, 0);
+    return extremum_element_sse2<T, IS_MAX, false>(buffer, size,
+                                                   static_cast<T>(0));
 }
 
 #else
@@ -1290,9 +955,18 @@ inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,
         return extremum_element<T, IS_MAX>(buffer, size);
 }
 
+template <class T, class NODATAType>
+inline bool IsValueExactAs([[maybe_unused]] NODATAType noDataValue)
+{
+    if constexpr (std::is_same_v<T, NODATAType>)
+        return true;
+    else
+        return GDALIsValueExactAs<T>(static_cast<double>(noDataValue));
+}
+
 template <bool IS_MAX, class NODATAType>
 size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
-                        bool bHasNoData, NODATAType dfNoDataValue)
+                        bool bHasNoData, NODATAType noDataValue)
 {
     switch (eDT)
     {
@@ -1300,95 +974,95 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Int8:
         {
             using T = int8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #endif
         case GDT_Byte:
         {
             using T = uint8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Int16:
         {
             using T = int16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt16:
         {
             using T = uint16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Int32:
         {
             using T = int32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt32:
         {
             using T = uint32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 5, 0)
         case GDT_Int64:
         {
             using T = int64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt64:
         {
             using T = uint64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #endif
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
         case GDT_Float16:
         {
             using T = GFloat16;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : static_cast<T>(0));
+                bHasNoData ? static_cast<T>(noDataValue) : static_cast<T>(0));
         }
 #endif
         case GDT_Float32:
         {
             using T = float;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Float64:
         {
             using T = double;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && IsValueExactAs<T>(noDataValue);
             return extremum_element<T, IS_MAX>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_CInt16:
         case GDT_CInt32:
@@ -1675,7 +1349,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Int8:
         {
             using T = int8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1684,7 +1358,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Byte:
         {
             using T = uint8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1692,7 +1366,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Int16:
         {
             using T = int16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1700,7 +1374,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_UInt16:
         {
             using T = uint16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1708,7 +1382,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Int32:
         {
             using T = int32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1716,7 +1390,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_UInt32:
         {
             using T = uint32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1725,7 +1399,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Int64:
         {
             using T = int64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1733,7 +1407,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_UInt64:
         {
             using T = uint64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1743,7 +1417,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Float16:
         {
             using T = GFloat16;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : static_cast<T>(0));
@@ -1752,7 +1426,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Float32:
         {
             using T = float;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
@@ -1760,7 +1434,7 @@ minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
         case GDT_Float64:
         {
             using T = double;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
+            bHasNoData = bHasNoData && detail::IsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(noDataValue) : 0);
