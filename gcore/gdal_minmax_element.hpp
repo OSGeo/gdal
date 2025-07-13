@@ -680,7 +680,7 @@ template <> __m128i compeq<GFloat16>(__m128i a, __m128i b)
 {
     // !isnan(a) && !isnan(b) && (a == b || (a|b) == 0x8000)
     return _mm_andnot_si128(
-        _mm_or_si128(IsNanGFloat16(a), IsNanGFloat16(b)),
+        IsNanGFloat16(a),  // b cannot be NaN given how we use this method
         _mm_or_si128(_mm_cmpeq_epi16(a, b),
                      _mm_cmpeq_epi16(
                          _mm_or_si128(a, b),
@@ -707,6 +707,14 @@ extremum_element_with_nan(const T *v, size_t size, T noDataValue)
     [[maybe_unused]] bool extremum_is_invalid = false;
     if constexpr (is_floating_point_v<T>)
     {
+        if constexpr (HAS_NODATA)
+        {
+            if (IsNan(noDataValue))
+            {
+                return extremum_element_with_nan<T, IS_MAX, false>(
+                    v, size, static_cast<T>(0));
+            }
+        }
         extremum_is_invalid = IsNan(extremum);
     }
     if constexpr (HAS_NODATA)
