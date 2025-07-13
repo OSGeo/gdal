@@ -60,6 +60,19 @@ namespace GDAL_MINMAXELT_NS
 {
 namespace detail
 {
+
+template <class T> struct is_floating_point
+{
+    static constexpr bool value = std::is_floating_point_v<T>
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+                                  || std::is_same_v<T, GFloat16>
+#endif
+        ;
+};
+
+template <class T>
+constexpr bool is_floating_point_v = is_floating_point<T>::value;
+
 /************************************************************************/
 /*                            compScalar()                              */
 /************************************************************************/
@@ -89,9 +102,9 @@ template <class T> inline static bool compEqual(T x, T y)
 }
 
 // On Intel/Neon, we do comparisons on uint16_t instead of casting to float for
-// faster execution, unless AVX512FP16 is available, which has native float16
-// comparisons.
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0) && defined(GDAL_MINMAX_ELEMENT_USE_SSE2) && !defined(__AVX512FP16__)
+// faster execution.
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0) &&                      \
+    defined(GDAL_MINMAX_ELEMENT_USE_SSE2)
 template <> bool IsNan<GFloat16>(GFloat16 x)
 {
     uint16_t iX;
@@ -207,11 +220,7 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
 {
     if (bHasNoData)
     {
-        if constexpr (std::is_floating_point_v<T>
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-                      || std::is_same_v<T, GFloat16>
-#endif
-        )
+        if constexpr (is_floating_point_v<T>)
         {
             if (IsNan(noDataValue))
             {
@@ -296,11 +305,7 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
     }
     else
     {
-        if constexpr (std::is_floating_point_v<T>
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-                      || std::is_same_v<T, GFloat16>
-#endif
-        )
+        if constexpr (is_floating_point_v<T>)
         {
             if constexpr (IS_MAX)
             {
@@ -346,10 +351,7 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
 template <class T, bool IS_MAX>
 size_t extremum_element(const T *v, size_t size, T noDataValue)
 {
-    static_assert(!(std::is_floating_point_v<T>));
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-    static_assert(!std::is_same_v<T, GFloat16>);
-#endif
+    static_assert(!(is_floating_point_v<T>));
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
@@ -375,10 +377,7 @@ size_t extremum_element(const T *v, size_t size, T noDataValue)
 
 template <class T, bool IS_MAX> size_t extremum_element(const T *v, size_t size)
 {
-    static_assert(!(std::is_floating_point_v<T>));
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-    static_assert(!std::is_same_v<T, GFloat16>);
-#endif
+    static_assert(!(is_floating_point_v<T>));
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
@@ -433,6 +432,14 @@ template <class T> static inline auto set1(T x)
         return _mm_set1_epi32(Shift32(x));
     else if constexpr (std::is_same_v<T, int32_t>)
         return _mm_set1_epi32(x);
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+    else if constexpr (std::is_same_v<T, GFloat16>)
+    {
+        int16_t iX;
+        memcpy(&iX, &x, sizeof(x));
+        return _mm_set1_epi16(iX);
+    }
+#endif
     else if constexpr (std::is_same_v<T, float>)
         return _mm_set1_ps(x);
     else
@@ -466,6 +473,14 @@ template <class T> static inline auto set1_unshifted(T x)
     }
     else if constexpr (std::is_same_v<T, int32_t>)
         return _mm_set1_epi32(x);
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+    else if constexpr (std::is_same_v<T, GFloat16>)
+    {
+        int16_t iX;
+        memcpy(&iX, &x, sizeof(x));
+        return _mm_set1_epi16(iX);
+    }
+#endif
     else if constexpr (std::is_same_v<T, float>)
         return _mm_set1_ps(x);
     else
@@ -481,6 +496,66 @@ template <class T> static inline auto loadv(const T *x)
         return _mm_loadu_pd(x);
     else
         return _mm_loadu_si128(reinterpret_cast<const __m128i *>(x));
+}
+
+inline __m128i IsNanGFloat16(__m128i x)
+{
+    // (iX & 0x7fff) > 0x7c00
+    return _mm_cmpgt_epi16(_mm_and_si128(x, _mm_set1_epi16(0x7fff)),
+                           _mm_set1_epi16(0x7c00));
+}
+
+template <class T, class SSE_T>
+static inline SSE_T blendv(SSE_T a, SSE_T b, SSE_T mask)
+{
+    if constexpr (std::is_same_v<T, float>)
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_blendv_ps(a, b, mask);
+#else
+        return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+    }
+    else if constexpr (std::is_same_v<T, double>)
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_blendv_pd(a, b, mask);
+#else
+        return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
+#endif
+    }
+    else
+    {
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+        return _mm_blendv_epi8(a, b, mask);
+#else
+        return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
+#endif
+    }
+}
+
+inline __m128i cmpgt_ph(__m128i x, __m128i y)
+{
+#ifdef slow
+    GFloat16 vx[8], vy[8];
+    int16_t res[8];
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(vx), x);
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(vy), y);
+    for (int i = 0; i < 8; ++i)
+    {
+        res[i] = vx[i] > vy[i] ? -1 : 0;
+    }
+    return _mm_loadu_si128(reinterpret_cast<const __m128i *>(res));
+#else
+    const auto x_is_negative = _mm_srai_epi16(x, 15);
+    const auto y_is_negative = _mm_srai_epi16(y, 15);
+    return _mm_andnot_si128(
+        // only x can be NaN given how we use this method
+        IsNanGFloat16(x),
+        blendv<int16_t>(_mm_or_si128(y_is_negative, _mm_cmpgt_epi16(x, y)),
+                        _mm_and_si128(y_is_negative, _mm_cmpgt_epi16(y, x)),
+                        x_is_negative));
+#endif
 }
 
 // Return a __m128i register with bits set when x[i] < y[i] when !IS_MAX
@@ -511,6 +586,12 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmpgt_epi32(x, y);
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+        else if constexpr (std::is_same_v<T, GFloat16>)
+        {
+            return cmpgt_ph(x, y);
+        }
+#endif
         else if constexpr (std::is_same_v<T, float>)
             return _mm_castps_si128(_mm_cmpgt_ps(x, y));
         else
@@ -539,6 +620,12 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmplt_epi32(x, y);
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+        else if constexpr (std::is_same_v<T, GFloat16>)
+        {
+            return cmpgt_ph(y, x);
+        }
+#endif
         else if constexpr (std::is_same_v<T, float>)
             return _mm_castps_si128(_mm_cmplt_ps(x, y));
         else
@@ -588,55 +675,43 @@ template <> __m128d compeq<double>(__m128d a, __m128d b)
     return _mm_cmpeq_pd(a, b);
 }
 
-template <class T, class SSE_T>
-static inline SSE_T blendv(SSE_T a, SSE_T b, SSE_T mask)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+template <> __m128i compeq<GFloat16>(__m128i a, __m128i b)
 {
-    if constexpr (std::is_same_v<T, float>)
-    {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-        return _mm_blendv_ps(a, b, mask);
-#else
-        return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
-#endif
-    }
-    else if constexpr (std::is_same_v<T, double>)
-    {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-        return _mm_blendv_pd(a, b, mask);
-#else
-        return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
-#endif
-    }
-    else
-    {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-        return _mm_blendv_epi8(a, b, mask);
-#else
-        return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
-#endif
-    }
+    // !isnan(a) && !isnan(b) && (a == b || (a|b) == 0x8000)
+    return _mm_andnot_si128(
+        _mm_or_si128(IsNanGFloat16(a), IsNanGFloat16(b)),
+        _mm_or_si128(_mm_cmpeq_epi16(a, b),
+                     _mm_cmpeq_epi16(
+                         _mm_or_si128(a, b),
+                         _mm_set1_epi16(std::numeric_limits<int16_t>::min()))));
 }
+#endif
 
 // Using SSE2
 template <class T, bool IS_MAX, bool HAS_NODATA>
-inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+size_t
+extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 {
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
                   std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
                   std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
-                  std::is_floating_point_v<T>);
+                  is_floating_point_v<T>);
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
     T extremum = v[0];
     [[maybe_unused]] bool extremum_is_invalid = false;
-    if constexpr (std::is_floating_point_v<T>)
+    if constexpr (is_floating_point_v<T>)
     {
         extremum_is_invalid = IsNan(extremum);
     }
     if constexpr (HAS_NODATA)
     {
-        if (extremum == noDataValue)
+        if (compEqual(extremum, noDataValue))
             extremum_is_invalid = true;
     }
     size_t i = 1;
@@ -653,11 +728,11 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
     {
         if constexpr (HAS_NODATA)
         {
-            if (v[idx] == noDataValue)
+            if (compEqual(v[idx], noDataValue))
                 return;
             if (extremum_is_invalid)
             {
-                if constexpr (std::is_floating_point_v<T>)
+                if constexpr (is_floating_point_v<T>)
                 {
                     if (IsNan(v[idx]))
                         return;
@@ -678,7 +753,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
             idx_of_extremum = idx;
             extremum_is_invalid = false;
         }
-        else if constexpr (std::is_floating_point_v<T>)
+        else if constexpr (is_floating_point_v<T>)
         {
             if (extremum_is_invalid && !IsNan(v[idx]))
             {
@@ -696,7 +771,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 
     [[maybe_unused]] auto sse_neutral = set1_unshifted(static_cast<T>(0));
     [[maybe_unused]] auto sse_nodata = set1_unshifted(noDataValue);
-    if constexpr (HAS_NODATA || std::is_floating_point_v<T>)
+    if constexpr (HAS_NODATA || is_floating_point_v<T>)
     {
         for (; i < size && extremum_is_invalid; ++i)
         {
@@ -767,6 +842,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
             {
                 update(i + j);
             }
+
             sse_extremum = set1(extremum);
             if constexpr (HAS_NODATA)
             {
@@ -946,6 +1022,24 @@ size_t extremum_element<int32_t, false>(const int32_t *v, size_t size)
     return extremum_element_with_nan<int32_t, false, false>(v, size, 0);
 }
 
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+template <>
+size_t extremum_element<GFloat16, true>(const GFloat16 *v, size_t size,
+                                        GFloat16 noDataValue)
+{
+    return extremum_element_with_nan<GFloat16, true, true>(v, size,
+                                                           noDataValue);
+}
+
+template <>
+size_t extremum_element<GFloat16, false>(const GFloat16 *v, size_t size,
+                                         GFloat16 noDataValue)
+{
+    return extremum_element_with_nan<GFloat16, false, true>(v, size,
+                                                            noDataValue);
+}
+#endif
+
 template <>
 size_t extremum_element<float, true>(const float *v, size_t size,
                                      float noDataValue)
@@ -974,6 +1068,14 @@ size_t extremum_element<double, false>(const double *v, size_t size,
     return extremum_element_with_nan<double, false, true>(v, size, noDataValue);
 }
 
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+template <>
+size_t extremum_element<GFloat16, true>(const GFloat16 *v, size_t size)
+{
+    return extremum_element_with_nan<GFloat16, true, false>(v, size, 0);
+}
+#endif
+
 template <> size_t extremum_element<float, true>(const float *v, size_t size)
 {
     return extremum_element_with_nan<float, true, false>(v, size, 0);
@@ -983,6 +1085,14 @@ template <> size_t extremum_element<double, true>(const double *v, size_t size)
 {
     return extremum_element_with_nan<double, true, false>(v, size, 0);
 }
+
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+template <>
+size_t extremum_element<GFloat16, false>(const GFloat16 *v, size_t size)
+{
+    return extremum_element_with_nan<GFloat16, false, false>(v, size, 0);
+}
+#endif
 
 template <> size_t extremum_element<float, false>(const float *v, size_t size)
 {
@@ -999,7 +1109,7 @@ template <> size_t extremum_element<double, false>(const double *v, size_t size)
 template <class T, bool IS_MAX>
 inline size_t extremum_element(const T *buffer, size_t size, T noDataValue)
 {
-    if constexpr (std::is_floating_point_v<T>)
+    if constexpr (is_floating_point_v<T>)
         return extremum_element_with_nan_generic<T, IS_MAX>(buffer, size,
                                                             noDataValue);
     else
@@ -1010,7 +1120,7 @@ inline size_t extremum_element(const T *buffer, size_t size, T noDataValue)
 template <class T, bool IS_MAX>
 inline size_t extremum_element(const T *buffer, size_t size)
 {
-    if constexpr (std::is_floating_point_v<T>)
+    if constexpr (is_floating_point_v<T>)
         return extremum_element_with_nan_generic<T, IS_MAX>(buffer, size);
     else
         return extremum_element_generic<T, IS_MAX>(buffer, size, false,
@@ -1027,7 +1137,8 @@ template <class T, bool IS_MAX>
 inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,
                                T noDataValue)
 {
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0) &&                      \
+    !defined(GDAL_MINMAX_ELEMENT_USE_SSE2)
     if constexpr (std::is_same_v<T, GFloat16>)
     {
         if (bHasNoData)

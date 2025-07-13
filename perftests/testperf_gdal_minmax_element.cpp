@@ -18,7 +18,8 @@ template <class T> void randomFill(T *v, size_t size, bool withNaN = true)
 {
     std::random_device rd;
     std::mt19937 gen{rd()};
-    std::normal_distribution<> dist{127, 30};
+    std::normal_distribution<> dist{
+        cpl::NumericLimits<T>::is_signed ? -63 : 127, 30};
     for (size_t i = 0; i < size; i++)
     {
         v[i] = static_cast<T>(dist(gen));
@@ -186,6 +187,78 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
+
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, false, 0));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(std::distance(
+                x.begin(), std::max_element(x.begin(), x.end(),
+                                            [](T a, T b) {
+                                                return CPLIsNan(a)   ? true
+                                                       : CPLIsNan(b) ? false
+                                                                     : a < b;
+                                            })));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (using std::max_element with NaN aware "
+               "comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, true, noData));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(std::distance(
+                x.begin(), std::max_element(x.begin(), x.end(),
+                                            [noData](T a, T b)
+                                            {
+                                                return CPLIsNan(a)   ? true
+                                                       : CPLIsNan(b) ? false
+                                                       : a == noData ? true
+                                                       : b == noData ? false
+                                                                     : a < b;
+                                            })));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, using std::max_element with "
+               "nodata aware and NaN aware comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
 }
 
 template <class T>
@@ -255,6 +328,69 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
         }
         idx /= N_ITERS;
         printf("min at idx %d (nodata case, using std::min_element with "
+               "nodata aware comparison), val = %g\n",
+               idx, static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, false, 0));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                std::distance(x.begin(), std::max_element(x.begin(), x.end())));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (using std::max_element), val = %g\n", idx,
+               static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, true, noData));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, optimized), val = %g\n", idx,
+               static_cast<double>(x[idx]));
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(std::distance(
+                x.begin(), std::max_element(x.begin(), x.end(),
+                                            [noData](T a, T b) {
+                                                return a == noData   ? true
+                                                       : b == noData ? false
+                                                                     : a < b;
+                                            })));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, using std::max_element with "
                "nodata aware comparison), val = %g\n",
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
