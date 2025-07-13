@@ -92,8 +92,8 @@ benchIntegers(GDALDataType eDT, T noData)
         int idx = 0;
         for (int i = 0; i < N_ITERS; ++i)
         {
-            idx += static_cast<int>(gdal::min_element(
-                x.data(), x.size(), eDT, true, static_cast<double>(noData)));
+            idx += static_cast<int>(
+                gdal::min_element(x.data(), x.size(), eDT, true, noData));
         }
         idx /= N_ITERS;
         printf("min at idx %d (nodata case, optimized), val=%s\n", idx,
@@ -162,8 +162,8 @@ benchIntegers(GDALDataType eDT, T noData)
         int idx = 0;
         for (int i = 0; i < N_ITERS; ++i)
         {
-            idx += static_cast<int>(gdal::max_element(
-                x.data(), x.size(), eDT, true, static_cast<double>(noData)));
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, true, noData));
         }
         idx /= N_ITERS;
         printf("max at idx %d (nodata case, optimized), val=%s\n", idx,

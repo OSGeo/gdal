@@ -1290,9 +1290,9 @@ inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,
         return extremum_element<T, IS_MAX>(buffer, size);
 }
 
-template <bool IS_MAX>
+template <bool IS_MAX, class NODATAType>
 size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
-                        bool bHasNoData, double dfNoDataValue)
+                        bool bHasNoData, NODATAType dfNoDataValue)
 {
     switch (eDT)
     {
@@ -1420,16 +1420,17 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
  * @param buffer Vector of nElts elements of type eDT.
  * @param nElts Number of elements in buffer.
  * @param eDT Data type of the elements of buffer.
- * @param bHasNoData Whether dfNoDataValue is valid.
- * @param dfNoDataValue Nodata value, only taken into account if bHasNoData == true
+ * @param bHasNoData Whether noDataValue is valid.
+ * @param noDataValue Nodata value, only taken into account if bHasNoData == true
  *
  * @since GDAL 3.11
  */
+template <class NODATAType>
 inline size_t max_element(const void *buffer, size_t nElts, GDALDataType eDT,
-                          bool bHasNoData, double dfNoDataValue)
+                          bool bHasNoData, NODATAType noDataValue)
 {
     return detail::extremum_element<true>(buffer, nElts, eDT, bHasNoData,
-                                          dfNoDataValue);
+                                          noDataValue);
 }
 
 /************************************************************************/
@@ -1444,16 +1445,17 @@ inline size_t max_element(const void *buffer, size_t nElts, GDALDataType eDT,
  * @param buffer Vector of nElts elements of type eDT.
  * @param nElts Number of elements in buffer.
  * @param eDT Data type of the elements of buffer.
- * @param bHasNoData Whether dfNoDataValue is valid.
- * @param dfNoDataValue Nodata value, only taken into account if bHasNoData == true
+ * @param bHasNoData Whether noDataValue is valid.
+ * @param noDataValue Nodata value, only taken into account if bHasNoData == true
  *
  * @since GDAL 3.11
  */
+template <class NODATAType>
 inline size_t min_element(const void *buffer, size_t nElts, GDALDataType eDT,
-                          bool bHasNoData, double dfNoDataValue)
+                          bool bHasNoData, NODATAType noDataValue)
 {
     return detail::extremum_element<false>(buffer, nElts, eDT, bHasNoData,
-                                           dfNoDataValue);
+                                           noDataValue);
 }
 
 namespace detail
@@ -1657,15 +1659,15 @@ inline std::pair<size_t, size_t> minmax_element(const T *buffer, size_t size,
  * @param buffer Vector of nElts elements of type eDT.
  * @param nElts Number of elements in buffer.
  * @param eDT Data type of the elements of buffer.
- * @param bHasNoData Whether dfNoDataValue is valid.
- * @param dfNoDataValue Nodata value, only taken into account if bHasNoData == true
+ * @param bHasNoData Whether noDataValue is valid.
+ * @param noDataValue Nodata value, only taken into account if bHasNoData == true
  *
  * @since GDAL 3.11
  */
-inline std::pair<size_t, size_t> minmax_element(const void *buffer,
-                                                size_t nElts, GDALDataType eDT,
-                                                bool bHasNoData,
-                                                double dfNoDataValue)
+template <class NODATAType>
+inline std::pair<size_t, size_t>
+minmax_element(const void *buffer, size_t nElts, GDALDataType eDT,
+               bool bHasNoData, NODATAType noDataValue)
 {
     switch (eDT)
     {
@@ -1673,95 +1675,95 @@ inline std::pair<size_t, size_t> minmax_element(const void *buffer,
         case GDT_Int8:
         {
             using T = int8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #endif
         case GDT_Byte:
         {
             using T = uint8_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Int16:
         {
             using T = int16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt16:
         {
             using T = uint16_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Int32:
         {
             using T = int32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt32:
         {
             using T = uint32_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 5, 0)
         case GDT_Int64:
         {
             using T = int64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_UInt64:
         {
             using T = uint64_t;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
 #endif
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
         case GDT_Float16:
         {
             using T = GFloat16;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : static_cast<T>(0));
+                bHasNoData ? static_cast<T>(noDataValue) : static_cast<T>(0));
         }
 #endif
         case GDT_Float32:
         {
             using T = float;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_Float64:
         {
             using T = double;
-            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(dfNoDataValue);
+            bHasNoData = bHasNoData && GDALIsValueExactAs<T>(noDataValue);
             return detail::minmax_element<T>(
                 static_cast<const T *>(buffer), nElts, bHasNoData,
-                bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
+                bHasNoData ? static_cast<T>(noDataValue) : 0);
         }
         case GDT_CInt16:
         case GDT_CInt32:
