@@ -45,6 +45,11 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
     AddArg("summary", 0, _("List the layer names and the geometry type"),
            &m_summaryOnly)
         .SetMutualExclusionGroup("summary-features");
+    AddArg("check-valid-geometry", 0, _("Check the validity of geometries"),
+           &m_checkValidGeometry);
+    AddArg("check-valid-coverage", 0,
+           _("Check whether layer geometries form a valid polygonal coverage"),
+           &m_checkValidCoverage);
     AddArg("sql", 0,
            _("Execute the indicated SQL statement and return the result"),
            &m_sql)
@@ -125,6 +130,16 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     if (m_stdout)
     {
         aosOptions.AddString("-stdout");
+    }
+
+    if (m_checkValidGeometry)
+    {
+        aosOptions.AddString("-check-valid-geometry");
+    }
+
+    if (m_checkValidCoverage)
+    {
+        aosOptions.AddString("-check-valid-coverage");
     }
 
     // Must be last, as positional

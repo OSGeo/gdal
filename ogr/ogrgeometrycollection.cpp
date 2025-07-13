@@ -25,6 +25,7 @@
 #include "cpl_vsi.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
+#include "ogr_geos.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
@@ -569,6 +570,58 @@ void OGRGeometryCollection::removeEmptyParts()
         if (papoGeoms[i]->IsEmpty())
             removeGeometry(i, true);
     }
+}
+
+/************************************************************************/
+/*                         IsValidCoverage()                            */
+/************************************************************************/
+
+/**
+ * \brief Determine if this GeometryCollection represents a valid polygonal
+ *        coverage.
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always return
+ * false.
+ *
+ * @return true if the geometry forms a valid polygonal coverage, otherwise false.
+ * @since 3.12
+ */
+
+bool OGRGeometryCollection::IsValidCoverage() const
+{
+#if defined HAVE_GEOS &&                                                       \
+    (GEOS_VERSION_MAJOR > 3 ||                                                 \
+     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
+
+    for (const auto &poSubGeom : *this)
+    {
+        auto eTyp = wkbFlatten(poSubGeom->getGeometryType());
+        if (eTyp != wkbPolygon && eTyp != wkbMultiPolygon)
+        {
+            return false;
+        }
+        // TODO check component validity?
+    }
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+
+    // iRet == 0 : invalidity detected
+    // iRet == 2 : exception occurred
+    int iRet = GEOSCoverageIsValid_r(hGEOSCtxt, hGeosGeom, 0, nullptr);
+
+    GEOSGeom_destroy_r(hGEOSCtxt, hGeosGeom);
+    finishGEOS_r(hGEOSCtxt);
+
+    return (iRet == 1);
+#else
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Coverage validity checking requires a GDAL build with GEOS "
+             "version >= 3.12.");
+    return false;
+#endif
 }
 
 /************************************************************************/
