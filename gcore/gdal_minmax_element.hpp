@@ -395,7 +395,7 @@ template <class T, bool IS_MAX> size_t extremum_element(const T *v, size_t size)
 }
 
 /************************************************************************/
-/*                   extremum_element_with_nan()                        */
+/*                     extremum_element_sse2()                          */
 /************************************************************************/
 
 static inline int8_t Shift8(uint8_t x)
@@ -417,6 +417,15 @@ static inline int32_t Shift32(uint32_t x)
     return ret;
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static inline int64_t Shift64(uint64_t x)
+{
+    x += static_cast<uint64_t>(std::numeric_limits<int64_t>::min());
+    int64_t ret;
+    memcpy(&ret, &x, sizeof(x));
+    return ret;
+}
+
 // Return a _mm128[i|d] register with all its elements set to x
 template <class T> static inline auto set1(T x)
 {
@@ -432,6 +441,10 @@ template <class T> static inline auto set1(T x)
         return _mm_set1_epi32(Shift32(x));
     else if constexpr (std::is_same_v<T, int32_t>)
         return _mm_set1_epi32(x);
+    else if constexpr (std::is_same_v<T, uint64_t>)
+        return _mm_set1_epi64x(Shift64(x));
+    else if constexpr (std::is_same_v<T, int64_t>)
+        return _mm_set1_epi64x(x);
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
     else if constexpr (std::is_same_v<T, GFloat16>)
     {
@@ -473,6 +486,14 @@ template <class T> static inline auto set1_unshifted(T x)
     }
     else if constexpr (std::is_same_v<T, int32_t>)
         return _mm_set1_epi32(x);
+    else if constexpr (std::is_same_v<T, uint64_t>)
+    {
+        int64_t xSigned;
+        memcpy(&xSigned, &x, sizeof(xSigned));
+        return _mm_set1_epi64x(xSigned);
+    }
+    else if constexpr (std::is_same_v<T, int64_t>)
+        return _mm_set1_epi64x(x);
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
     else if constexpr (std::is_same_v<T, GFloat16>)
     {
@@ -558,6 +579,19 @@ inline __m128i cmpgt_ph(__m128i x, __m128i y)
 #endif
 }
 
+inline __m128i cmpgt_epi64(__m128i x, __m128i y)
+{
+#if defined(__SSE4_2__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_cmpgt_epi64(x, y);
+#else
+    auto tmp = _mm_and_si128(_mm_sub_epi64(y, x), _mm_cmpeq_epi32(x, y));
+    tmp = _mm_or_si128(tmp, _mm_cmpgt_epi32(x, y));
+    // Replicate the 2 odd-indexed (hi) 32-bit word into the 2 even-indexed (lo)
+    // ones
+    return _mm_shuffle_epi32(tmp, _MM_SHUFFLE(3, 3, 1, 1));
+#endif
+}
+
 // Return a __m128i register with bits set when x[i] < y[i] when !IS_MAX
 // or x[i] > y[i] when IS_MAX
 template <class T, bool IS_MAX, class SSE_T>
@@ -586,6 +620,17 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmpgt_epi32(x, y);
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            return cmpgt_epi64(
+                _mm_add_epi64(
+                    x, _mm_set1_epi64x(std::numeric_limits<int64_t>::min())),
+                y);
+        }
+        else if constexpr (std::is_same_v<T, int64_t>)
+        {
+            return cmpgt_epi64(x, y);
+        }
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
         else if constexpr (std::is_same_v<T, GFloat16>)
         {
@@ -620,6 +665,16 @@ static inline __m128i comp(SSE_T x, SSE_T y)
                 y);
         else if constexpr (std::is_same_v<T, int32_t>)
             return _mm_cmplt_epi32(x, y);
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            return cmpgt_epi64(
+                y, _mm_add_epi64(x, _mm_set1_epi64x(
+                                        std::numeric_limits<int64_t>::min())));
+        }
+        else if constexpr (std::is_same_v<T, int64_t>)
+        {
+            return cmpgt_epi64(y, x);
+        }
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
         else if constexpr (std::is_same_v<T, GFloat16>)
         {
@@ -665,6 +720,22 @@ template <> __m128i compeq<int32_t>(__m128i a, __m128i b)
     return _mm_cmpeq_epi32(a, b);
 }
 
+template <> __m128i compeq<uint64_t>(__m128i a, __m128i b)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_cmpeq_epi64(a, b);
+#else
+    auto tmp = _mm_cmpeq_epi32(a, b);
+    // The shuffle swaps hi-lo 32-bit words
+    return _mm_and_si128(tmp, _mm_shuffle_epi32(tmp, _MM_SHUFFLE(2, 3, 0, 1)));
+#endif
+}
+
+template <> __m128i compeq<int64_t>(__m128i a, __m128i b)
+{
+    return compeq<uint64_t>(a, b);
+}
+
 template <> __m128 compeq<float>(__m128 a, __m128 b)
 {
     return _mm_cmpeq_ps(a, b);
@@ -699,6 +770,7 @@ extremum_element_with_nan(const T *v, size_t size, T noDataValue)
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
                   std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
                   std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
+                  std::is_same_v<T, uint64_t> || std::is_same_v<T, int64_t> ||
                   is_floating_point_v<T>);
     if (size == 0)
         return 0;
@@ -1028,6 +1100,61 @@ template <>
 size_t extremum_element<int32_t, false>(const int32_t *v, size_t size)
 {
     return extremum_element_with_nan<int32_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<uint64_t, true>(const uint64_t *v, size_t size,
+                                        uint64_t noDataValue)
+{
+    return extremum_element_with_nan<uint64_t, true, true>(v, size,
+                                                           noDataValue);
+}
+
+template <>
+size_t extremum_element<uint64_t, false>(const uint64_t *v, size_t size,
+                                         uint64_t noDataValue)
+{
+    return extremum_element_with_nan<uint64_t, false, true>(v, size,
+                                                            noDataValue);
+}
+
+template <>
+size_t extremum_element<uint64_t, true>(const uint64_t *v, size_t size)
+{
+    return extremum_element_with_nan<uint64_t, true, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<uint64_t, false>(const uint64_t *v, size_t size)
+{
+    return extremum_element_with_nan<uint64_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<int64_t, true>(const int64_t *v, size_t size,
+                                       int64_t noDataValue)
+{
+    return extremum_element_with_nan<int64_t, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<int64_t, false>(const int64_t *v, size_t size,
+                                        int64_t noDataValue)
+{
+    return extremum_element_with_nan<int64_t, false, true>(v, size,
+                                                           noDataValue);
+}
+
+template <>
+size_t extremum_element<int64_t, true>(const int64_t *v, size_t size)
+{
+    return extremum_element_with_nan<int64_t, true, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<int64_t, false>(const int64_t *v, size_t size)
+{
+    return extremum_element_with_nan<int64_t, false, false>(v, size, 0);
 }
 
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)

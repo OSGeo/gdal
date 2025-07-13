@@ -54,7 +54,8 @@ benchIntegers(GDALDataType eDT, T noData)
                 gdal::min_element(x.data(), x.size(), eDT, false, 0));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (optimized)\n", idx);
+        printf("min at idx %d (optimized), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -67,7 +68,8 @@ benchIntegers(GDALDataType eDT, T noData)
                 std::distance(x.begin(), std::min_element(x.begin(), x.end())));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (using std::min_element)\n", idx);
+        printf("min at idx %d (using std::min_element), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -76,11 +78,12 @@ benchIntegers(GDALDataType eDT, T noData)
         int idx = 0;
         for (int i = 0; i < N_ITERS; ++i)
         {
-            idx += static_cast<int>(
-                gdal::min_element(x.data(), x.size(), eDT, true, noData));
+            idx += static_cast<int>(gdal::min_element(
+                x.data(), x.size(), eDT, true, static_cast<double>(noData)));
         }
         idx /= N_ITERS;
-        printf("min at idx %d (nodata case, optimized)\n", idx);
+        printf("min at idx %d (nodata case, optimized), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -99,8 +102,71 @@ benchIntegers(GDALDataType eDT, T noData)
         }
         idx /= N_ITERS;
         printf("min at idx %d (nodata case, using std::min_element with "
-               "nodata aware comparison)\n",
-               idx);
+               "nodata aware comparison), val=%s\n",
+               idx, std::to_string(x[idx]).c_str());
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                gdal::max_element(x.data(), x.size(), eDT, false, 0));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (optimized), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(
+                std::distance(x.begin(), std::max_element(x.begin(), x.end())));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (using std::max_element), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(gdal::max_element(
+                x.data(), x.size(), eDT, true, static_cast<double>(noData)));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, optimized), val=%s\n", idx,
+               std::to_string(x[idx]).c_str());
+        auto end = std::chrono::steady_clock::now();
+        printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+    }
+    {
+        auto start = std::chrono::steady_clock::now();
+        int idx = 0;
+        for (int i = 0; i < N_ITERS; ++i)
+        {
+            idx += static_cast<int>(std::distance(
+                x.begin(), std::max_element(x.begin(), x.end(),
+                                            [noData](T a, T b) {
+                                                return a == noData   ? true
+                                                       : b == noData ? false
+                                                                     : a < b;
+                                            })));
+        }
+        idx /= N_ITERS;
+        printf("max at idx %d (nodata case, using std::max_element with "
+               "nodata aware comparison), val=%s\n",
+               idx, std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
     }
@@ -439,6 +505,20 @@ int main(int /* argc */, char * /* argv */[])
         using T = int32_t;
         constexpr GDALDataType eDT = GDT_Int32;
         printf("int32:\n");
+        benchIntegers<T>(eDT, 0);
+    }
+    printf("--------------------\n");
+    {
+        using T = uint64_t;
+        constexpr GDALDataType eDT = GDT_UInt64;
+        printf("uint64:\n");
+        benchIntegers<T>(eDT, 0);
+    }
+    printf("--------------------\n");
+    {
+        using T = int64_t;
+        constexpr GDALDataType eDT = GDT_Int64;
+        printf("int64:\n");
         benchIntegers<T>(eDT, 0);
     }
     printf("--------------------\n");
