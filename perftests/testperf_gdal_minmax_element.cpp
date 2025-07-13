@@ -35,6 +35,15 @@ template <class T> void randomFill(T *v, size_t size, bool withNaN = true)
 constexpr size_t SIZE = 10 * 1000 * 1000 + 1;
 constexpr int N_ITERS = 1;
 
+template <class T> inline void ASSERT_EQ(T v_optim, T v_ref)
+{
+    if (v_optim != v_ref)
+    {
+        fprintf(stderr, "Optim value != ref value\n");
+        exit(1);
+    }
+}
+
 template <class T>
 #if defined(__GNUC__)
 __attribute__((noinline))
@@ -45,6 +54,7 @@ benchIntegers(GDALDataType eDT, T noData)
     std::vector<T> x;
     x.resize(SIZE);
     randomFill(x.data(), x.size());
+    T v_optim, v_ref;
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -58,6 +68,7 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -72,7 +83,10 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -86,6 +100,7 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -106,7 +121,9 @@ benchIntegers(GDALDataType eDT, T noData)
                idx, std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 
     {
         auto start = std::chrono::steady_clock::now();
@@ -121,6 +138,7 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -135,7 +153,10 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -149,6 +170,7 @@ benchIntegers(GDALDataType eDT, T noData)
                std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -169,7 +191,9 @@ benchIntegers(GDALDataType eDT, T noData)
                idx, std::to_string(x[idx]).c_str());
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 }
 
 template <class T>
@@ -182,6 +206,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
     std::vector<T> x;
     x.resize(SIZE);
     randomFill(x.data(), x.size());
+    T v_optim, v_ref;
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -195,6 +221,7 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -215,7 +242,10 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -229,6 +259,7 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -252,7 +283,9 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 
     {
         auto start = std::chrono::steady_clock::now();
@@ -267,6 +300,7 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -287,7 +321,10 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -301,6 +338,7 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -324,7 +362,9 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 }
 
 template <class T>
@@ -337,6 +377,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
     std::vector<T> x;
     x.resize(SIZE);
     randomFill(x.data(), x.size(), false);
+    T v_optim, v_ref;
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -350,6 +392,7 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -364,7 +407,10 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -378,6 +424,7 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -398,7 +445,9 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 
     {
         auto start = std::chrono::steady_clock::now();
@@ -413,6 +462,7 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -427,7 +477,10 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
+
     {
         auto start = std::chrono::steady_clock::now();
         int idx = 0;
@@ -441,6 +494,7 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_optim = x[idx];
     }
     {
         auto start = std::chrono::steady_clock::now();
@@ -461,7 +515,9 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
                idx, static_cast<double>(x[idx]));
         auto end = std::chrono::steady_clock::now();
         printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        v_ref = x[idx];
     }
+    ASSERT_EQ(v_optim, v_ref);
 }
 
 int main(int /* argc */, char * /* argv */[])
