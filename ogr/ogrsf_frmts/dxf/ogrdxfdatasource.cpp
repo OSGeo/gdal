@@ -1115,7 +1115,8 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
             while (ReadValue(szLineBuf, sizeof(szLineBuf)) == 310)
             {
                 int nBytesRead;
-                GByte *pabyHex = CPLHexToBinary(szLineBuf, &nBytesRead);
+                std::unique_ptr<GByte, VSIFreeReleaser> pabyHex(
+                    CPLHexToBinary(szLineBuf, &nBytesRead));
 
                 if (nPos + nBytesRead > nLen)
                 {
@@ -1127,12 +1128,10 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
                 }
                 else
                 {
-                    std::copy_n(pabyHex, nBytesRead,
+                    std::copy_n(pabyHex.get(), nBytesRead,
                                 oSolidBinaryData[osThisHandle].begin() + nPos);
                     nPos += nBytesRead;
                 }
-
-                CPLFree(pabyHex);
             }
         }
     }
