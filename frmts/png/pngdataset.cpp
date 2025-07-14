@@ -139,18 +139,13 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 #endif
 
     PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
-    int nPixelSize;
     CPLAssert(nBlockXOff == 0);
 
-    if (poGDS->nBitDepth == 16)
-        nPixelSize = 2;
-    else
-        nPixelSize = 1;
+    const int nPixelSize = (poGDS->nBitDepth == 16) ? 2 : 1;
 
-    const int nXSize = GetXSize();
     if (poGDS->fpImage == nullptr)
     {
-        memset(pImage, 0, cpl::fits_on<int>(nPixelSize * nXSize));
+        memset(pImage, 0, cpl::fits_on<int>(nPixelSize * nRasterXSize));
         return CE_None;
     }
 
@@ -161,38 +156,64 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     const int nPixelOffset = poGDS->nBands * nPixelSize;
 
-    GByte *pabyScanline =
-        poGDS->pabyBuffer +
-        (nBlockYOff - poGDS->nBufferStartLine) * nPixelOffset * nXSize +
-        nPixelSize * (nBand - 1);
-
-    // Transfer between the working buffer and the caller's buffer.
-    if (nPixelSize == nPixelOffset)
-        memcpy(pImage, pabyScanline, cpl::fits_on<int>(nPixelSize * nXSize));
-    else if (nPixelSize == 1)
+    const auto CopyToDstBuffer =
+        [this, nPixelOffset, nPixelSize](const GByte *pabyScanline, void *pDest)
     {
-        for (int i = 0; i < nXSize; i++)
-            reinterpret_cast<GByte *>(pImage)[i] =
-                pabyScanline[i * nPixelOffset];
-    }
-    else
-    {
-        CPLAssert(nPixelSize == 2);
-        for (int i = 0; i < nXSize; i++)
+        // Transfer between the working buffer and the caller's buffer.
+        if (nPixelSize == nPixelOffset)
+            memcpy(pDest, pabyScanline,
+                   cpl::fits_on<int>(nPixelSize * nRasterXSize));
+        else if (nPixelSize == 1)
         {
-            reinterpret_cast<GUInt16 *>(pImage)[i] =
-                *reinterpret_cast<GUInt16 *>(pabyScanline + i * nPixelOffset);
+            for (int i = 0; i < nRasterXSize; i++)
+                reinterpret_cast<GByte *>(pDest)[i] =
+                    pabyScanline[i * nPixelOffset];
         }
-    }
+        else
+        {
+            CPLAssert(nPixelSize == 2);
+            for (int i = 0; i < nRasterXSize; i++)
+            {
+                reinterpret_cast<GUInt16 *>(pDest)[i] =
+                    *reinterpret_cast<const GUInt16 *>(pabyScanline +
+                                                       i * nPixelOffset);
+            }
+        }
+    };
+
+    const GByte *const pabySrcBufferFirstBand =
+        poGDS->pabyBuffer +
+        (nBlockYOff - poGDS->nBufferStartLine) * nPixelOffset * nRasterXSize;
+    CopyToDstBuffer(pabySrcBufferFirstBand + nPixelSize * (nBand - 1), pImage);
 
     // Forcibly load the other bands associated with this scanline.
-    for (int iBand = 1; iBand < poGDS->GetRasterCount(); iBand++)
+    for (int iBand = 1; iBand <= poGDS->GetRasterCount(); iBand++)
     {
-        GDALRasterBlock *poBlock =
-            poGDS->GetRasterBand(iBand + 1)->GetLockedBlockRef(nBlockXOff,
-                                                               nBlockYOff);
-        if (poBlock != nullptr)
+        if (iBand != nBand)
+        {
+            auto poIterBand = poGDS->GetRasterBand(iBand);
+            GDALRasterBlock *poBlock =
+                poIterBand->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
+            if (poBlock != nullptr)
+            {
+                // Block already cached
+                poBlock->DropLock();
+                continue;
+            }
+
+            // Instantiate the block
+            poBlock =
+                poIterBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
+            if (poBlock == nullptr)
+            {
+                continue;
+            }
+
+            CopyToDstBuffer(pabySrcBufferFirstBand + nPixelSize * (iBand - 1),
+                            poBlock->GetDataRef());
+
             poBlock->DropLock();
+        }
     }
 
     return CE_None;
@@ -1292,6 +1313,12 @@ static void PNGDatasetDisableCRCCheck(png_structp hPNG)
 void PNGDataset::Restart()
 
 {
+    if (!m_bHasRewind)
+    {
+        m_bHasRewind = true;
+        CPLDebug("PNG", "Restart decompression from top (emitted once)");
+    }
+
     png_destroy_read_struct(&hPNG, &psPNGInfo, nullptr);
 
     hPNG =

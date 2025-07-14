@@ -168,6 +168,29 @@ Deregister the driver.
 See :cpp:func:`GDALDriverManager::DeregisterDriver`.
 ";
 
+%feature("docstring") HasOpenOption "
+
+Reports whether the driver supports a specified open option.
+
+Parameters
+----------
+openOptionName : str
+   The name of the option to test
+
+Returns
+-------
+bool:
+   ``True``, if the option is supported by this driver, ``False`` otherwise.
+
+Examples
+--------
+>>> gdal.GetDriverByName('GPKG').HasOpenOption('PRELUDE_STATEMENTS')
+True
+>>> gdal.GetDriverByName('GPKG').HasOpenOption('CLOSING_STATEMENTS')
+False
+
+";
+
 %feature("docstring") HelpTopic "
 The URL for driver documentation, relative to the GDAL documentation directory.
 See :cpp:func:`GDALGetDriverHelpTopic`.
@@ -204,6 +227,31 @@ int:
 The short name of a :py:class:`Driver` that can be passed to
 :py:func:`GetDriverByName`.
 See :cpp:func:`GDALGetDriverShortName`.
+";
+
+%feature("docstring") TestCapability "
+
+Check whether the driver supports a specified capability
+(:py:const:`ogr.ODrCCreateDataSource` or
+:py:const:`ogr.ODrCDeleteDataSource`)`.
+
+Parameters
+----------
+cap : str
+    The name of the capability to test
+
+Returns
+-------
+bool:
+   ``True`` if the driver supports the capability, ``False`` otherwise.
+
+Examples
+--------
+>>> gdal.GetDriverByName('ESRI Shapefile').TestCapability(ogr.ODrCCreateDataSource)
+True
+>>> gdal.GetDriverByName('GTiff').TestCapability(ogr.ODrCCreateDataSource)
+True
+
 ";
 
 };

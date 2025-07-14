@@ -4905,3 +4905,16 @@ def test_ogr_subgeom_use_after_parent_free():
     del g
 
     assert exterior_ring.GetPointCount() > 0  # does not crash
+
+
+def test_ogr_geom_create_from_envelope():
+
+    srs = osr.SpatialReference(epsg=32145)
+    g = ogr.CreateGeometryFromEnvelope(424788, 25211, 581555, 279799, srs)
+
+    assert g.GetSpatialReference().IsSame(srs)
+
+    assert (
+        g.ExportToWkt()
+        == "POLYGON ((424788 25211,424788 279799,581555 279799,581555 25211,424788 25211))"
+    )

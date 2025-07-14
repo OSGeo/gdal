@@ -82,6 +82,34 @@ OGRErrMessages( int rc ) {
 }
 %}
 
+/*
+ * Helper to marshal utf8 strings.
+ */
+
+%pragma(csharp) modulecode=%{
+  internal static byte[] StringToUtf8Bytes(string str)
+  {
+    if (str == null)
+      return null;
+
+    int bytecount = System.Text.Encoding.UTF8.GetMaxByteCount(str.Length);
+    byte[] bytes = new byte[bytecount + 1];
+    System.Text.Encoding.UTF8.GetBytes(str, 0, str.Length, bytes, 0);
+    return bytes;
+  }
+
+  internal unsafe static string Utf8BytesToString(IntPtr pNativeData)
+  {
+    if (pNativeData == IntPtr.Zero)
+        return null;
+
+    byte* pStringUtf8 = (byte*) pNativeData;
+    int len = 0;
+    while (pStringUtf8[len] != 0) len++;
+    return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
+  }
+%}
+
 %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
 {
   /* %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr */
@@ -193,7 +221,7 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
     public StringListMarshal(string[] ar) {
       _ar = new IntPtr[ar.Length+1];
       for (int cx = 0; cx < ar.Length; cx++) {
-	      _ar[cx] = System.Runtime.InteropServices.Marshal.StringToHGlobalAnsi(ar[cx]);
+	      _ar[cx] = StringToUtf8Unmanaged(ar[cx]);
       }
       _ar[ar.Length] = IntPtr.Zero;
     }
@@ -202,6 +230,27 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
           System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
       }
       GC.SuppressFinalize(this);
+    }
+
+    static IntPtr StringToUtf8Unmanaged(string str) {
+        if (str == null)
+            return IntPtr.Zero;
+
+        int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
+        IntPtr unmanagedString = Marshal.AllocHGlobal(byteCount + 1);
+
+        unsafe
+        {
+            byte* ptr = (byte*)unmanagedString.ToPointer();
+            fixed (char *pStr = str)
+            {
+                System.Text.Encoding.UTF8.GetBytes(pStr, str.Length, ptr, byteCount);
+                // null-terminate
+                ptr[byteCount] = 0;
+            }
+        }
+
+        return unmanagedString;
     }
   }
 %}
@@ -426,34 +475,6 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 }
 
 %apply (int inout[ANY]) {int *pList};
-
-/*
- * Helper to marshal utf8 strings.
- */
-
-%pragma(csharp) modulecode=%{
-  internal static byte[] StringToUtf8Bytes(string str)
-  {
-    if (str == null)
-      return null;
-
-    int bytecount = System.Text.Encoding.UTF8.GetMaxByteCount(str.Length);
-    byte[] bytes = new byte[bytecount + 1];
-    System.Text.Encoding.UTF8.GetBytes(str, 0, str.Length, bytes, 0);
-    return bytes;
-  }
-
-  internal unsafe static string Utf8BytesToString(IntPtr pNativeData)
-  {
-    if (pNativeData == IntPtr.Zero)
-        return null;
-
-    byte* pStringUtf8 = (byte*) pNativeData;
-    int len = 0;
-    while (pStringUtf8[len] != 0) len++;
-    return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
-  }
-%}
 
 /*
  * Typemap for const char *utf8_path.

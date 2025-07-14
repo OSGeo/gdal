@@ -577,11 +577,25 @@ MAIN_START(argc, argv)
             const bool bIsComplex = CPL_TO_BOOL(
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
-            CPLErr err;
-            err = GDALRasterInterpolateAtPoint(hBand, dfPixelToQuery,
-                                               dfLineToQuery, eInterpolation,
-                                               &adfPixel[0], &adfPixel[1]);
+            CPLErrorReset();
+            CPLErr err = GDALRasterInterpolateAtPoint(
+                hBand, dfPixelToQuery, dfLineToQuery, eInterpolation,
+                &adfPixel[0], &adfPixel[1]);
 
+            // GDALRasterInterpolateAtPoint() returns false on nodata
+            bool bIsNoData = false;
+            if (err != CE_None && CPLGetLastErrorType() == CE_None)
+            {
+                int bHasNoData = FALSE;
+                const double dfNoData =
+                    GDALGetRasterNoDataValue(hBand, &bHasNoData);
+                if (bHasNoData)
+                {
+                    bIsNoData = true;
+                    adfPixel[0] = adfPixel[1] = dfNoData;
+                    err = CE_None;
+                }
+            }
             if (err == CE_None)
             {
                 CPLString osValue;
@@ -628,7 +642,7 @@ MAIN_START(argc, argv)
                               "Unable to get raster scale." );
                 }
 #endif
-                if (dfOffset != 0.0 || dfScale != 1.0)
+                if (!bIsNoData && (dfOffset != 0.0 || dfScale != 1.0))
                 {
                     adfPixel[0] = adfPixel[0] * dfScale + dfOffset;
 
@@ -651,7 +665,19 @@ MAIN_START(argc, argv)
                         printf("    Descaled Value: %s\n", osValue.c_str());
                 }
             }
-
+            else
+            {
+                nRetCode = 1;
+                if (bAsXML)
+                {
+                    osXML += "<IOError/>";
+                }
+                else if (bValOnly)
+                {
+                    if (i > 0)
+                        printf("%s", osFieldSep.c_str());
+                }
+            }
             if (bAsXML)
                 osXML += "</BandReport>";
         }

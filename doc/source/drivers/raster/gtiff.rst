@@ -801,7 +801,7 @@ This driver supports the following creation options:
       :choices: YES, NO
       :default: NO
 
-      Used by (:cpp:func:`CreateCopy` only)
+      Used by (:cpp:func:`GDALDriver::CreateCopy` only)
       By setting this to YES, the potential existing
       overviews of the source dataset will be copied to the target dataset
       without being recomputed. This option is typically used to generate

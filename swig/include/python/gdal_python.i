@@ -396,11 +396,11 @@ static void readraster_releasebuffer(CPLErr eErr,
           return Window(*self.data)
 
       def __getitem__(self, i):
-          return self.data[i]    
+          return self.data[i]
 
       def __setitem__(self, i, value):
           self.data[i] = value
-      
+
       def __iter__(self):
           return iter(self.data)
 
@@ -420,7 +420,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @xoff.setter
       def xoff(self, value):
-          self.data[0] = value 
+          self.data[0] = value
 
       @property
       def yoff(self):
@@ -428,7 +428,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @yoff.setter
       def yoff(self, value):
-          self.data[1] = value 
+          self.data[1] = value
 
       @property
       def xsize(self):
@@ -436,7 +436,7 @@ static void readraster_releasebuffer(CPLErr eErr,
 
       @xsize.setter
       def xsize(self, value):
-          self.data[2] = value 
+          self.data[2] = value
 
       @property
       def ysize(self):
@@ -1221,7 +1221,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         return gdal_array.VirtualMemGetArray( virtualmem )
 
   def BlockWindows(self):
-       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to 
+       """Yield a window ``(xOff, yOff, xSize, ySize)`` corresponding to
        each block in this ``Band``. Iteration order is from left to right,
        then from top to bottom.
 
@@ -2719,22 +2719,47 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 %pythoncode %{
 
 def CreateDataSource(self, utf8_path, options=None):
+    """
+    Synonym for :py:meth:`CreateVector`.
+    """
     return self.Create(utf8_path, 0, 0, 0, GDT_Unknown, options or [])
 
 def CopyDataSource(self, ds, utf8_path, options=None):
+    """
+    Synonym for :py:meth:`CreateCopy`.
+    """
     return self.CreateCopy(utf8_path, ds, options = options or [])
 
 def DeleteDataSource(self, utf8_path):
+    """
+    Synonym for :py:meth:`Delete`.
+    """
     return self.Delete(utf8_path)
 
 def Open(self, utf8_path, update=False):
+    """
+    Attempt to open a specified path with this driver.
+
+    Parameters
+    ----------
+    utf8_path : str
+       The path to open
+    update : bool, default = False
+       Whether to open the dataset in update mode.
+       
+    Returns
+    -------
+    Dataset, or None on error 
+    """
     return OpenEx(utf8_path,
                   OF_VECTOR | (OF_UPDATE if update else 0),
                   [self.GetDescription()])
 
 def GetName(self):
+    """
+    Synonym for :py:meth:`GetDescription`.
+    """
     return self.GetDescription()
-
 %}
 
 }
@@ -5866,7 +5891,7 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
        When srs is set to a non-None value, (geolocX, geolocY) must be
        expressed in that CRS, and that tuple must be conformant with the
        data-axis-to-crs-axis setting of srs, that is the one returned by
-       the :py:func:`osgeo.osr.SpatialReference.GetDataAxisToSRSAxisMapping().
+       the :py:func:`osgeo.osr.SpatialReference.GetDataAxisToSRSAxisMapping`.
        If you want to be sure of the axis order, then make sure to call
        ``srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)``
        before calling this method, and in that case, geolocX must be a longitude

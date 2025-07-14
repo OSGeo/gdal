@@ -2780,6 +2780,18 @@ def test_gdalwarp_lib_to_cog_reprojection_options(tmp_vsimem):
         options="-f COG -co TILING_SCHEME=GoogleMapsCompatible",
     )
     assert ds.RasterCount == 2
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 256
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -13110479.09147343,
+            76.43702828517416,
+            0.0,
+            4030983.1236470547,
+            0.0,
+            -76.43702828517416,
+        )
+    )
     assert ds.GetRasterBand(1).Checksum() in (
         4187,
         4300,
@@ -2805,6 +2817,58 @@ def test_gdalwarp_lib_to_cog_reprojection_options_and_te(tmp_vsimem):
     assert ds.GetRasterBand(1).Checksum() != 0
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalwarp_to_cog_with_s_srs_and_t_srs(tmp_vsimem):
+
+    out_ds = gdal.Warp(
+        tmp_vsimem / "out.tif",
+        "../gcore/data/byte.tif",
+        options="-s_srs EPSG:32611 -t_srs EPSG:4326 -of COG",
+    )
+    assert out_ds.RasterXSize == 22
+    assert out_ds.RasterYSize == 18
+    assert out_ds.GetGeoTransform() == pytest.approx(
+        (
+            -117.64116991516866,
+            0.0005981056256842434,
+            0.0,
+            33.9006687039261,
+            0.0,
+            -0.0005981056256842434,
+        )
+    )
+    assert out_ds.GetRasterBand(1).Checksum() != 0
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalwarp_to_cog_with_s_srs_and_tiling_scheme(tmp_vsimem):
+
+    out_ds = gdal.Warp(
+        tmp_vsimem / "out.tif",
+        "../gcore/data/byte.tif",
+        options="-s_srs EPSG:32611 -co TILING_SCHEME=GoogleMapsCompatible -of COG",
+    )
+    assert out_ds.RasterXSize == 256
+    assert out_ds.RasterYSize == 256
+    assert out_ds.GetGeoTransform() == pytest.approx(
+        (
+            -13110479.09147343,
+            76.43702828517416,
+            0.0,
+            4030983.1236470547,
+            0.0,
+            -76.43702828517416,
+        )
+    )
+    assert out_ds.GetRasterBand(1).Checksum() != 0
 
 
 ###############################################################################

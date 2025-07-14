@@ -1,3 +1,97 @@
+# GDAL/OGR 3.11.3 Release Notes
+
+GDAL 3.11.3 is a bugfix release.
+
+PG driver:
+ * restore string truncation that was broken in 3.11.1
+
+# GDAL/OGR 3.11.2 Release Notes
+
+GDAL 3.11.2 is a bugfix release.
+
+## Build
+
+* sqlite_rtree_bulk_load.c: add missing stdlib.h include
+
+## GDAL 3.11.2
+
+### Port
+
+* Unix/Win32/Sparse/Archive VSI: make sure that Close() can be called multiple
+  times, and is called by destructor
+* /vsizip/: fix memory leak when opening a SOZip-enabled file (pyogrio#545)
+
+### Core
+
+* GDALAlgorithmArg::Serialize(): fix serialization of list arguments with
+  SetPackedValuesAllowed(false)
+* GetHistogram(), ComputeRasterMinMax(), ComputeStatistics(): fix wrong use of
+  GetLockedBlockRef() that could cause crashes with the MEM driver
+* Statistics computation: avoid warnings with large Int64/UInt64 nodata value
+  not exactly representable as double (#12628)
+
+### Raster utilities
+
+* gdalwarp: fix reprojecting to COG (3.11.0 regression)
+* gdallocationinfo: handle properly nodata values (3.10.0 regression fix)
+
+### Raster drivers
+
+AAIGrid/GRASSASCII/ISG drivers:
+ * avoid excessive memory allocation on truncated/corrupted/hostile file
+   (#12648)
+
+BMP driver:
+ * Create(): avoid nullptr dereference on too wide image
+
+GSAG driver:
+ * re-added (#12695)
+
+GSBG/GS7BG drivers:
+ * Create/CreateCopy(): stricter validation of raster dimension, to avoid int
+   overflow (GS7BG), or floating-point division by zero (both)
+
+LIBERTIFF driver:
+ * fix reading WEBP-compressed RGBA images where at least one tile/
+   strip has the alpha component omitted due to being fully opaque
+
+netCDF driver:
+ * properly recognize axis of 'rhos' variable for PACE OCI products
+ * improve detection of X,Y axis in 3D variables thanks to the presence of a
+   geolocation array
+
+PNG driver:
+ * fix caching of other bands that only worked if reading band 1 (#12713)
+
+VRT driver:
+ * expose all overviews of a single-source dataset, whatever their size
+   (#12690)
+ * VRTPansharpen: make virtual overview generation more tolerant to different
+   number of overviews in source bands
+
+## OGR 3.11.2
+
+### Core
+
+* OGRParseDate(): do not round second=59.999999 to 60.0 but 59.999
+* OGRParseDate(): avoid potential out-of-bounds read in OGRPARSEDATE_OPTION_LAX
+  mode (#12720)
+
+### OGRSpatialReference
+
+* Coordinate transformation: fix when one of the CRS has an EPSG code that is
+  actually a ESRI one
+
+### Vector utilities
+
+* ogrinfo/ogr2ogr/gdal vector sql/etc.: raise the max size of a @filename
+  argument from 1 MB to 10 MB (#12672)
+
+### Vector drivers
+
+S57 driver:
+ * fix nullptr dereference on invalid dataset when GDAL_DATA not set
+
 # GDAL/OGR 3.11.1 Release Notes
 
 GDAL 3.11.1 is a bugfix release.
