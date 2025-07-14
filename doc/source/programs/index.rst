@@ -175,6 +175,7 @@ Vector commands
 
    gdal_vector
    gdal_vector_buffer
+   gdal_vector_clean_coverage
    gdal_vector_clip
    gdal_vector_concat
    gdal_vector_convert
@@ -201,6 +202,7 @@ Vector commands
 
     - :ref:`gdal_vector`: Entry point for vector commands
     - :ref:`gdal_vector_buffer`: Compute a buffer around geometries of a vector dataset
+    - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
