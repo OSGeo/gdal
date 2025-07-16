@@ -25,7 +25,8 @@ OGRDXFDataSource::OGRDXFDataSource()
     : fp(nullptr), iEntitiesOffset(0), iEntitiesLineNumber(0),
       bInlineBlocks(false), bMergeBlockGeometries(false),
       bTranslateEscapeSequences(false), bIncludeRawCodeValues(false),
-      b3DExtensibleMode(false), bHaveReadSolidData(false)
+      b3DExtensibleMode(false), bHaveReadSolidData(false),
+      poReader(std::make_unique<OGRDXFReaderASCII>())
 {
 }
 
@@ -84,8 +85,8 @@ OGRLayer *OGRDXFDataSource::GetLayer(int iLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
-                           CSLConstList papszOptionsIn)
+bool OGRDXFDataSource::Open(const char *pszFilename, VSILFILE *fpIn,
+                            bool bHeaderOnly, CSLConstList papszOptionsIn)
 
 {
     SetDescription(pszFilename);
@@ -126,11 +127,28 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */
     /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL(pszFilename, "r");
+    fp = fpIn;
     if (fp == nullptr)
-        return FALSE;
+        fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == nullptr)
+        return false;
 
-    oReader.Initialize(fp);
+    VSIFSeekL(fp, 0, SEEK_SET);
+    std::string osBuffer;
+    constexpr size_t nBinarySignatureLen = AUTOCAD_BINARY_DXF_SIGNATURE.size();
+    osBuffer.resize(nBinarySignatureLen);
+    VSIFReadL(osBuffer.data(), 1, osBuffer.size(), fp);
+    if (memcmp(osBuffer.data(), AUTOCAD_BINARY_DXF_SIGNATURE.data(),
+               nBinarySignatureLen) == 0)
+    {
+        poReader = std::make_unique<OGRDXFReaderBinary>();
+    }
+    else
+    {
+        VSIFSeekL(fp, 0, SEEK_SET);
+    }
+
+    poReader->Initialize(fp);
 
     /* -------------------------------------------------------------------- */
     /*      Confirm we have a header section.                               */
@@ -139,12 +157,12 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
     bool bEntitiesOnly = false;
 
     if (ReadValue(szLineBuf) != 0 || !EQUAL(szLineBuf, "SECTION"))
-        return FALSE;
+        return false;
 
     if (ReadValue(szLineBuf) != 2 ||
         (!EQUAL(szLineBuf, "HEADER") && !EQUAL(szLineBuf, "ENTITIES") &&
          !EQUAL(szLineBuf, "TABLES")))
-        return FALSE;
+        return false;
 
     if (EQUAL(szLineBuf, "ENTITIES"))
         bEntitiesOnly = true;
@@ -158,11 +176,11 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             CPLGetConfigOption("DXF_ENCODING", osEncoding));
 
         if (!ReadTablesSection())
-            return FALSE;
+            return false;
         if (ReadValue(szLineBuf) < 0)
         {
             DXF_READER_ERROR();
-            return FALSE;
+            return false;
         }
     }
 
@@ -173,11 +191,11 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
     else /* if( EQUAL(szLineBuf,"HEADER") ) */
     {
         if (!ReadHeaderSection())
-            return FALSE;
+            return false;
         if (ReadValue(szLineBuf) < 0)
         {
             DXF_READER_ERROR();
-            return FALSE;
+            return false;
         }
 
         /* --------------------------------------------------------------------
@@ -190,7 +208,7 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
@@ -199,7 +217,7 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
@@ -224,7 +242,7 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
@@ -233,18 +251,18 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
         if (EQUAL(szLineBuf, "TABLES"))
         {
             if (!ReadTablesSection())
-                return FALSE;
+                return false;
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
     }
@@ -271,7 +289,7 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
@@ -280,24 +298,24 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
 
         if (EQUAL(szLineBuf, "BLOCKS"))
         {
             if (!ReadBlocksSection())
-                return FALSE;
+                return false;
             if (ReadValue(szLineBuf) < 0)
             {
                 DXF_READER_ERROR();
-                return FALSE;
+                return false;
             }
         }
     }
 
     if (bHeaderOnly)
-        return TRUE;
+        return true;
 
     /* -------------------------------------------------------------------- */
     /*      Now we are at the entities section, hopefully.  Confirm.        */
@@ -307,21 +325,21 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
         if (ReadValue(szLineBuf) < 0)
         {
             DXF_READER_ERROR();
-            return FALSE;
+            return false;
         }
     }
 
     if (!EQUAL(szLineBuf, "ENTITIES"))
     {
         DXF_READER_ERROR();
-        return FALSE;
+        return false;
     }
 
-    iEntitiesOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    iEntitiesLineNumber = oReader.nLineNumber;
+    iEntitiesOffset = poReader->GetCurrentFilePos();
+    iEntitiesLineNumber = poReader->nLineNumber;
     apoLayers[0]->ResetReading();
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1017,9 +1035,8 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
 
     // Keep track of our current position and line number in the file so we can
     // return here later
-    unsigned int iPrevOffset =
-        oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
-    int nPrevLineNumber = oReader.nLineNumber;
+    uint64_t iPrevOffset = poReader->GetCurrentFilePos();
+    int nPrevLineNumber = poReader->nLineNumber;
 
     char szLineBuf[4096];
     int nCode = 0;
@@ -1046,7 +1063,7 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
 
     if (!bFound)
     {
-        oReader.ResetReadPointer(iPrevOffset, nPrevLineNumber);
+        poReader->ResetReadPointer(iPrevOffset, nPrevLineNumber);
         return 0;
     }
 
@@ -1098,7 +1115,8 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
             while (ReadValue(szLineBuf, sizeof(szLineBuf)) == 310)
             {
                 int nBytesRead;
-                GByte *pabyHex = CPLHexToBinary(szLineBuf, &nBytesRead);
+                std::unique_ptr<GByte, VSIFreeReleaser> pabyHex(
+                    CPLHexToBinary(szLineBuf, &nBytesRead));
 
                 if (nPos + nBytesRead > nLen)
                 {
@@ -1110,17 +1128,15 @@ OGRDXFDataSource::GetEntryFromAcDsDataSection(const char *pszEntityHandle,
                 }
                 else
                 {
-                    std::copy_n(pabyHex, nBytesRead,
+                    std::copy_n(pabyHex.get(), nBytesRead,
                                 oSolidBinaryData[osThisHandle].begin() + nPos);
                     nPos += nBytesRead;
                 }
-
-                CPLFree(pabyHex);
             }
         }
     }
 
-    oReader.ResetReadPointer(iPrevOffset, nPrevLineNumber);
+    poReader->ResetReadPointer(iPrevOffset, nPrevLineNumber);
 
     bHaveReadSolidData = true;
 

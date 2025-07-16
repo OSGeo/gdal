@@ -123,13 +123,6 @@ Standard options
     metadata.
     This option may be repeated.
 
-Advanced options
-++++++++++++++++
-
-.. include:: gdal_options/oo.rst
-
-.. include:: gdal_options/if.rst
-
 Examples
 --------
 
