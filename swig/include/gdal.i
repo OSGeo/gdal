@@ -270,7 +270,15 @@ typedef enum {
 typedef enum
 {
     /** Logical not */
-    GRAUO_LOGICAL_NOT = 0
+    GRAUO_LOGICAL_NOT = 0,
+    /** Absolute value (module for complex data type) */
+    GRAUO_ABS = 1,
+    /** Square root */
+    GRAUO_SQRT = 2,
+    /** Natural logarithm (ln) */
+    GRAUO_LOG = 3,
+    /** Logarithm base 10 */
+    GRAUO_LOG10 = 4
 } GDALRasterAlgebraUnaryOperation;
 
 /*! Raster algebra binary operation */
@@ -285,22 +293,24 @@ typedef enum
     GRABO_MUL = 2,
     /** Division */
     GRABO_DIV = 3,
+    /** Power */
+    GRABO_POW = 4,
     /** Strictly greater than test*/
-    GRABO_GT = 4,
+    GRABO_GT = 5,
     /** Greater or equal to test */
-    GRABO_GE = 5,
+    GRABO_GE = 6,
     /** Strictly lesser than test */
-    GRABO_LT = 6,
+    GRABO_LT = 7,
     /** Lesser or equal to test */
-    GRABO_LE = 7,
+    GRABO_LE = 8,
     /** Equality test */
-    GRABO_EQ = 8,
+    GRABO_EQ = 9,
     /** Non-equality test */
-    GRABO_NE = 9,
+    GRABO_NE = 10,
     /** Logical and */
-    GRABO_LOGICAL_AND = 10,
+    GRABO_LOGICAL_AND = 11,
     /** Logical or */
-    GRABO_LOGICAL_OR = 11
+    GRABO_LOGICAL_OR = 12
 } GDALRasterAlgebraBinaryOperation;
 
 #if defined(SWIGPYTHON)
