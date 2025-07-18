@@ -1793,10 +1793,31 @@ void GDALDataset::MarkAsShared()
 /*                        MarkSuppressOnClose()                         */
 /************************************************************************/
 
-/** Set that the dataset must be deleted on close. */
+/** Set that the dataset must be deleted on close.
+ *
+ * This is the same as C function GDALDatasetMarkSuppressOnClose()
+ */
 void GDALDataset::MarkSuppressOnClose()
 {
     bSuppressOnClose = true;
+}
+
+/************************************************************************/
+/*                   GDALDatasetMarkSuppressOnClose()                   */
+/************************************************************************/
+
+/** Set that the dataset must be deleted on close.
+ *
+ * This is the same as C++ method GDALDataset::MarkSuppressOnClose()
+ *
+ * @since GDAL 3.12
+ */
+
+void GDALDatasetMarkSuppressOnClose(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER0(hDS, "GDALDatasetMarkSuppressOnClose");
+
+    return GDALDataset::FromHandle(hDS)->MarkSuppressOnClose();
 }
 
 /************************************************************************/

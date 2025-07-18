@@ -132,8 +132,15 @@ struct CPL_DLL VSIVirtualHandle
     {
     }
 
+    /** For a file created with CreateOnlyVisibleAtCloseTime(), ask for the
+     * file to not be created at all (if possible)
+     */
+    virtual void CancelCreation()
+    {
+    }
+
     // NOTE: when adding new methods, besides the "actual" implementations,
-    // also consider the VSICachedFile one.
+    // also consider the VSICachedFile and VSIVirtualHandleOnlyVisibleAtCloseTime one.
 
     virtual ~VSIVirtualHandle()
     {
@@ -147,6 +154,7 @@ struct CPL_DLL VSIVirtualHandle
 /** Helper close to use with a std:unique_ptr<VSIVirtualHandle>,
  *  such as VSIVirtualHandleUniquePtr. */
 struct VSIVirtualHandleCloser
+
 {
     /** Operator () that closes and deletes the file handle. */
     void operator()(VSIVirtualHandle *poHandle)
@@ -162,6 +170,122 @@ struct VSIVirtualHandleCloser
 /** Unique pointer of VSIVirtualHandle that calls the Close() method */
 typedef std::unique_ptr<VSIVirtualHandle, VSIVirtualHandleCloser>
     VSIVirtualHandleUniquePtr;
+
+/************************************************************************/
+/*                        VSIProxyFileHandle                            */
+/************************************************************************/
+
+#ifndef DOXYGEN_SKIP
+class VSIProxyFileHandle /* non final */ : public VSIVirtualHandle
+{
+  protected:
+    VSIVirtualHandleUniquePtr m_nativeHandle{};
+
+  public:
+    explicit VSIProxyFileHandle(VSIVirtualHandleUniquePtr &&nativeHandle)
+        : m_nativeHandle(std::move(nativeHandle))
+    {
+    }
+
+    int Seek(vsi_l_offset nOffset, int nWhence) override
+    {
+        return m_nativeHandle->Seek(nOffset, nWhence);
+    }
+
+    vsi_l_offset Tell() override
+    {
+        return m_nativeHandle->Tell();
+    }
+
+    size_t Read(void *pBuffer, size_t nSize, size_t nCount) override
+    {
+        return m_nativeHandle->Read(pBuffer, nSize, nCount);
+    }
+
+    int ReadMultiRange(int nRanges, void **ppData,
+                       const vsi_l_offset *panOffsets,
+                       const size_t *panSizes) override
+    {
+        return m_nativeHandle->ReadMultiRange(nRanges, ppData, panOffsets,
+                                              panSizes);
+    }
+
+    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+                    const size_t *panSizes) override
+    {
+        return m_nativeHandle->AdviseRead(nRanges, panOffsets, panSizes);
+    }
+
+    size_t GetAdviseReadTotalBytesLimit() const override
+    {
+        return m_nativeHandle->GetAdviseReadTotalBytesLimit();
+    }
+
+    size_t Write(const void *pBuffer, size_t nSize, size_t nCount) override
+    {
+        return m_nativeHandle->Write(pBuffer, nSize, nCount);
+    }
+
+    void ClearErr() override
+    {
+        return m_nativeHandle->ClearErr();
+    }
+
+    int Eof() override
+    {
+        return m_nativeHandle->Eof();
+    }
+
+    int Error() override
+    {
+        return m_nativeHandle->Error();
+    }
+
+    int Flush() override
+    {
+        return m_nativeHandle->Flush();
+    }
+
+    int Close() override
+    {
+        return m_nativeHandle->Close();
+    }
+
+    int Truncate(vsi_l_offset nNewSize) override
+    {
+        return m_nativeHandle->Truncate(nNewSize);
+    }
+
+    void *GetNativeFileDescriptor() override
+    {
+        return m_nativeHandle->GetNativeFileDescriptor();
+    }
+
+    VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
+                                  vsi_l_offset nLength) override
+    {
+        return m_nativeHandle->GetRangeStatus(nOffset, nLength);
+    }
+
+    bool HasPRead() const override
+    {
+        return m_nativeHandle->HasPRead();
+    }
+
+    size_t PRead(void *pBuffer, size_t nSize,
+                 vsi_l_offset nOffset) const override
+    {
+        return m_nativeHandle->PRead(pBuffer, nSize, nOffset);
+    }
+
+    void Interrupt() override
+    {
+        m_nativeHandle->Interrupt();
+    }
+
+    void CancelCreation() override;
+};
+#endif
 
 /************************************************************************/
 /*                         VSIFilesystemHandler                         */
@@ -181,6 +305,12 @@ class CPL_DLL VSIFilesystemHandler
     virtual VSIVirtualHandle *Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList papszOptions) = 0;
+
+    virtual VSIVirtualHandle *
+    CreateOnlyVisibleAtCloseTime(const char *pszFilename,
+                                 bool bEmulationAllowed,
+                                 CSLConstList papszOptions);
+
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) = 0;
 
@@ -381,7 +511,8 @@ class CPL_DLL VSIFilesystemHandler
     virtual VSIFilesystemHandler *Duplicate(const char * /* pszPrefix */)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Duplicate() not supported on this file system");
+                 "Duplicate() not supported on this file "
+                 "system");
         return nullptr;
     }
 

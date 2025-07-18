@@ -27,6 +27,7 @@
 #include "pngdrivercore.h"
 
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
@@ -2241,7 +2242,12 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
 
     // Create the dataset.
-    VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+    VSIVirtualHandleUniquePtr fpImage(
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
+            ? VSIFileManager::GetHandler(pszFilename)
+                  ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
+            : VSIFOpenL(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -2309,7 +2315,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    png_set_write_fn(hPNG, fpImage, png_vsi_write_data, png_vsi_flush);
+    png_set_write_fn(hPNG, fpImage.get(), png_vsi_write_data, png_vsi_flush);
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -2318,7 +2324,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                            nBitDepth, nColorType, PNG_INTERLACE_NONE,
                            PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE))
     {
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         png_destroy_write_struct(&hPNG, &psPNGInfo);
         return nullptr;
     }
@@ -2333,14 +2339,14 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Illegal ZLEVEL value '%s', should be 1-9.", pszLevel);
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
 
         if (!safe_png_set_compression_level(sSetJmpContext, hPNG, nLevel))
         {
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2363,7 +2369,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
             if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr, 0,
                                    &sTRNSColor))
             {
-                VSIFCloseL(fpImage);
+                fpImage->CancelCreation();
                 png_destroy_write_struct(&hPNG, &psPNGInfo);
                 return nullptr;
             }
@@ -2389,7 +2395,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr,
                                        0, &sTRNSColor))
                 {
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     png_destroy_write_struct(&hPNG, &psPNGInfo);
                     CSLDestroy(papszValues);
                     return nullptr;
@@ -2426,7 +2432,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 if (!safe_png_set_tRNS(sSetJmpContext, hPNG, psPNGInfo, nullptr,
                                        0, &sTRNSColor))
                 {
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     png_destroy_write_struct(&hPNG, &psPNGInfo);
                     return nullptr;
                 }
@@ -2468,7 +2474,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                 reinterpret_cast<png_const_bytep>(pEmbedBuffer), nEmbedLen))
         {
             CPLFree(pEmbedBuffer);
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2615,7 +2621,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                nEntryCount))
         {
             CPLFree(pasPNGColors);
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
@@ -2642,7 +2648,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                    nEntryCount, nullptr))
             {
                 CPLFree(pabyAlpha);
-                VSIFCloseL(fpImage);
+                fpImage->CancelCreation();
                 png_destroy_write_struct(&hPNG, &psPNGInfo);
                 return nullptr;
             }
@@ -2697,7 +2703,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     // Write the PNG info.
     if (!safe_png_write_info(sSetJmpContext, hPNG, psPNGInfo))
     {
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         png_destroy_write_struct(&hPNG, &psPNGInfo);
         return nullptr;
     }
@@ -2755,7 +2761,21 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
     png_destroy_write_struct(&hPNG, &psPNGInfo);
 
-    VSIFCloseL(fpImage);
+    if (eErr == CE_None)
+    {
+        if (fpImage->Close() != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Error at file closing of '%s': %s", pszFilename,
+                     VSIStrerror(errno));
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        fpImage->CancelCreation();
+        fpImage.reset();
+    }
 
     if (eErr != CE_None)
         return nullptr;
