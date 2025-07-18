@@ -385,7 +385,7 @@ following style string parameters are understood:
      - color (c); width (w); dash pattern (p)
    * - BRUSH
      - (Multi)Polygon, Triangle
-     - foreground color (fc)
+     - foreground color (fc), background color (bc), brush id (id), angle (a), scaling factor (s)
    * - SYMBOL
      - Point
      - color (c)
@@ -394,6 +394,8 @@ following style string parameters are understood:
      - text (t); font name (f); font size (s), treated as cap
        height; bold (bo); italic (it); text color (c); x and y offsets (dx,
        dy); angle (a); anchor point (p); stretch (w)
+
+Note: for BRUSH, only foreground color is supported before GDAL 3.12.
 
 |about-dataset-creation-options|
 The driver supports the following dataset creation options:

@@ -447,6 +447,10 @@ bool OGRDXFDataSource::ReadLayerDefinition()
                 oLayerProperties["TrueColor"] = szLineBuf;
                 break;
 
+            case 440:
+                oLayerProperties["Transparency"] = szLineBuf;
+                break;
+
             case 70:
                 oLayerProperties["Flags"] = szLineBuf;
 
@@ -482,21 +486,23 @@ bool OGRDXFDataSource::ReadLayerDefinition()
 /*                        LookupLayerProperty()                         */
 /************************************************************************/
 
-const char *OGRDXFDataSource::LookupLayerProperty(const char *pszLayer,
-                                                  const char *pszProperty)
+std::optional<CPLString>
+OGRDXFDataSource::LookupLayerProperty(const char *pszLayer,
+                                      const char *pszProperty) const
 
 {
-    if (pszLayer == nullptr)
-        return nullptr;
-
-    try
+    if (pszLayer)
     {
-        return (oLayerTable[pszLayer])[pszProperty];
+        const auto oIterLayer = oLayerTable.find(pszLayer);
+        if (oIterLayer != oLayerTable.end())
+        {
+            const auto &oTable = oIterLayer->second;
+            const auto oIterProperty = oTable.find(pszProperty);
+            if (oIterProperty != oTable.end())
+                return oIterProperty->second;
+        }
     }
-    catch (...)
-    {
-        return nullptr;
-    }
+    return std::nullopt;
 }
 
 /************************************************************************/
