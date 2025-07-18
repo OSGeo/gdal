@@ -2618,6 +2618,7 @@ class CPL_DLL GDALAlgorithmRegistry
     {
         target->m_calledFromCommandLine = m_calledFromCommandLine;
         target->m_progressBarRequested = m_progressBarRequested;
+        target->m_quiet = m_quiet;
         if (m_specialActionRequested)
         {
             target->m_specialActionRequested = m_specialActionRequested;
@@ -2672,7 +2673,10 @@ class CPL_DLL GDALAlgorithmRegistry
     std::string m_longDescription{};
 
     /** Whether a progress bar is requested (value of \--progress argument) */
-    bool m_progressBarRequested = false;
+    bool m_progressBarRequested = true;
+
+    /** Whether a progress bar is disabled (value of \--quiet argument) */
+    bool m_quiet = false;
 
     friend class GDALVectorPipelineAlgorithm;
     /** Whether ValidateArguments() should be skipped during ParseCommandLineArguments() */
@@ -2908,8 +2912,8 @@ class CPL_DLL GDALAlgorithmRegistry
     AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
                             const char *helpMessage = nullptr);
 
-    /** Add \--progress argument. */
-    GDALInConstructionAlgorithmArg &AddProgressArg();
+    /** Add \--quiet (and hidden \--progress) argument. */
+    void AddProgressArg();
 
     /** Register an action that is executed by the ValidateArguments()
      * method. If the provided function returns false, validation fails.

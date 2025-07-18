@@ -172,8 +172,8 @@ VRTSource *VRTDriver::ParseSource(const CPLXMLNode *psSrc,
 
 static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                   int /* bStrict */, char **papszOptions,
-                                  GDALProgressFunc /* pfnProgress */,
-                                  void * /* pProgressData */)
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressData)
 {
     CPLAssert(nullptr != poSrcDS);
 
@@ -269,6 +269,8 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 poSrcDS, poDstDS.get(), false, nullptr, nullptr, nullptr) !=
             CE_None)
             return nullptr;
+        if (pfnProgress)
+            pfnProgress(1.0, "", pProgressData);
         return poDstDS.release();
     }
 
@@ -489,6 +491,9 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             poVRTDS.reset();
         }
     }
+
+    if (pfnProgress)
+        pfnProgress(1.0, "", pProgressData);
 
     return poVRTDS.release();
 }

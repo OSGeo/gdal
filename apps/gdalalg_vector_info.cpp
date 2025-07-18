@@ -29,7 +29,7 @@
 GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
@@ -88,6 +88,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
 bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     CPLAssert(m_dataset.GetDatasetRef());
+
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     CPLStringList aosOptions;
 

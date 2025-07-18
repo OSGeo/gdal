@@ -51,15 +51,26 @@ def get_info_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["info"]
 
 
-def test_gdalalg_vector_info_stdout():
+def test_gdalalg_vector_info_stdout_text_default_format():
     import gdaltest
     import test_cli_utilities
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out, err = gdaltest.runexternal_out_and_err(
-        f"{gdal_path} vector info data/path.shp"
+    out, _ = gdaltest.runexternal_out_and_err(f"{gdal_path} vector info data/path.shp")
+    assert out.startswith("INFO: Open of")
+
+
+def test_gdalalg_vector_info_stdout_json():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out, _ = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} vector info --format json data/path.shp"
     )
     j = json.loads(out)
     assert j["layers"][0]["name"] == "path"

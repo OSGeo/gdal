@@ -9,6 +9,10 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
     will be definitely removed in 3.13.
   * Furthermore, sub-command "set-type" of "gdal vector geom" is renamed as
     "set-geom-type" and also placed under "gdal vector".
+  * Progress bar is emitted to stdout by default unless --quiet/-q is specified.
+  * For gdal raster info, gdal vector info and gdal vsi list, --format=text is
+    now the default when those utilities are invoked from the command line.
+    When they are invoked from the API, the default is still JSON.
 
 - The raw file capabilities (VRTRawRasterBand) of the VRT raster driver have
   been limited by default for security reasons. Consult
