@@ -14,6 +14,7 @@
 
 import os
 import shutil
+import sys
 
 import gdaltest
 import pytest
@@ -67,14 +68,17 @@ def test_kmlsuperoverlay_2():
 # Test CreateCopy() to a KML file
 
 
-def test_kmlsuperoverlay_3():
+def test_kmlsuperoverlay_3(tmp_path):
 
     src_ds = gdal.Open("data/utm.tif")
-    ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy("tmp/tmp.kml", src_ds)
+    out_filename = tmp_path / "tmp.kml"
+    if sys.platform == "win32" and "\\" in str(out_filename):
+        out_filename = "\\\\?\\" + str(out_filename)
+    ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(out_filename, src_ds)
     del ds
     src_ds = None
 
-    f = gdal.VSIFOpenL("tmp/tmp.kml", "rb")
+    f = gdal.VSIFOpenL(out_filename, "rb")
     if f:
         data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
         gdal.VSIFCloseL(f)
@@ -83,27 +87,27 @@ def test_kmlsuperoverlay_3():
     assert "<east>-117.309" in data, data
     assert "<west>-117.639" in data, data
 
-    filelist = [
-        "tmp/0/0/0.jpg",
-        "tmp/0/0/0.kml",
-        "tmp/1/0/0.jpg",
-        "tmp/1/0/0.kml",
-        "tmp/1/0/1.jpg",
-        "tmp/1/0/1.kml",
-        "tmp/1/1/0.jpg",
-        "tmp/1/1/0.kml",
-        "tmp/1/1/1.jpg",
-        "tmp/1/1/1.kml",
-        "tmp/tmp.kml",
-    ]
-    for filename in filelist:
-        try:
-            os.remove(filename)
-        except OSError:
-            pytest.fail("Missing file: %s" % filename)
-
-    shutil.rmtree("tmp/0")
-    shutil.rmtree("tmp/1")
+    lst = [x.replace("\\", "/") for x in gdal.ReadDirRecursive(tmp_path)]
+    assert set(lst) == set(
+        [
+            "0/",
+            "0/0/",
+            "0/0/0.jpg",
+            "0/0/0.kml",
+            "1/",
+            "1/0/",
+            "1/0/0.jpg",
+            "1/0/0.kml",
+            "1/0/1.jpg",
+            "1/0/1.kml",
+            "1/1/",
+            "1/1/0.jpg",
+            "1/1/0.kml",
+            "1/1/1.jpg",
+            "1/1/1.kml",
+            "tmp.kml",
+        ]
+    )
 
 
 ###############################################################################
