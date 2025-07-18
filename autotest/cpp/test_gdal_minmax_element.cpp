@@ -656,6 +656,134 @@ TEST_F(test_gdal_minmax_element, int64)
     }
 }
 
+TEST_F(test_gdal_minmax_element, float16)
+{
+    using T = GFloat16;
+    constexpr GDALDataType eDT = GDT_Float16;
+    T min_v = static_cast<T>(-10.0f);
+    T max_v = static_cast<T>(1.5f);
+    {
+        T nodata = static_cast<T>(2.0f);
+        std::vector<T> v{max_v, nodata, min_v};
+        {
+            auto idx_min = gdal::min_element(v.data(), 0, eDT, true, nodata);
+            EXPECT_EQ(idx_min, 0);
+        }
+        {
+            auto idx_min = gdal::min_element(v.data(), 0, eDT, false, 0);
+            EXPECT_EQ(idx_min, 0);
+        }
+        {
+            auto idx_min =
+                gdal::min_element(v.data(), v.size(), eDT, true, nodata);
+            EXPECT_EQ(v[idx_min], min_v);
+            auto idx_max =
+                gdal::max_element(v.data(), v.size(), eDT, true, nodata);
+            EXPECT_EQ(v[idx_max], max_v);
+        }
+        {
+            auto [idx_min, idx_max] =
+                gdal::minmax_element(v.data(), v.size(), eDT, true, nodata);
+            EXPECT_EQ(v[idx_min], min_v);
+            EXPECT_EQ(v[idx_max], max_v);
+        }
+    }
+    {
+        T nodata = static_cast<T>(2.0f);
+        std::vector<T> v{nodata, max_v, min_v};
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        T nodata = static_cast<T>(2.0f);
+        std::vector<T> v{cpl::NumericLimits<T>::quiet_NaN(),
+                         cpl::NumericLimits<T>::quiet_NaN(), nodata, max_v,
+                         min_v};
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(static_cast<float>(v[idx_min]), static_cast<float>(min_v));
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        T nodata = cpl::NumericLimits<T>::quiet_NaN();
+        std::vector<T> v{cpl::NumericLimits<T>::quiet_NaN(),
+                         cpl::NumericLimits<T>::quiet_NaN(), nodata, max_v,
+                         min_v};
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, true, nodata);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v{cpl::NumericLimits<T>::quiet_NaN(),
+                         cpl::NumericLimits<T>::quiet_NaN(),
+                         max_v,
+                         cpl::NumericLimits<T>::quiet_NaN(),
+                         min_v,
+                         cpl::NumericLimits<T>::quiet_NaN()};
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v{max_v, cpl::NumericLimits<T>::quiet_NaN(), min_v};
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, cpl::NumericLimits<T>::quiet_NaN());
+        v[125] = static_cast<T>(min_v + 0.1f);
+        v[126] = min_v;
+        v[127] = static_cast<T>(min_v + 0.1f);
+        v[128] = static_cast<T>(max_v - 0.1f);
+        v[129] = max_v;
+        v[130] = static_cast<T>(max_v - 0.1f);
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(33, static_cast<T>(1.2f));
+        v[5] = min_v;
+        v[15] = max_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(255, cpl::NumericLimits<T>::quiet_NaN());
+        v[v.size() - 2] = min_v;
+        v.back() = max_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 0.2f));
+        v[128] = static_cast<T>(min_v + 0.1f);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 0.1f));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(max_v - 0.2f));
+        v[128] = static_cast<T>(max_v - 0.1f);
+        v[256] = max_v;
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(max_v - 0.1f));
+        EXPECT_EQ(v[idx_max], max_v);
+    }
+}
+
 TEST_F(test_gdal_minmax_element, float32)
 {
     using T = float;
