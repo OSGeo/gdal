@@ -181,8 +181,9 @@ void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
 {
     if (oOpts.outputMode != OutputMode::Normal)
     {
-        dfResult += (dfZ - dfCellVal);
-        dfResult = std::max(0.0, dfResult);
+        double adjustment = dfZ - dfCellVal;
+        if (adjustment > 0)
+            dfResult += adjustment;
     }
     else
         dfResult = (dfCellVal + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal
