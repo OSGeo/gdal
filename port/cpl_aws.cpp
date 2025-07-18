@@ -1187,7 +1187,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     std::string &osSourceProfile, std::string &osExternalId,
     std::string &osMFASerial, std::string &osRoleSessionName,
     std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
-    std::string &osSSOAccountID, std::string &osSSORoleName)
+    std::string &osSSOAccountID, std::string &osSSORoleName,
+    std::string &osSSOSession)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1247,7 +1248,6 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         const char *pszLine;
         std::map<std::string, std::map<std::string, std::string>>
             oMapSSOSessions;
-        std::string osSSOSession;
         while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
             if (STARTS_WITH(pszLine, "[sso-session ") &&
@@ -1516,13 +1516,11 @@ static bool GetTemporaryCredentialsForRole(
 /************************************************************************/
 
 // Issue a GetRoleCredentials request
-static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
-                                          const std::string &osSSOAccountID,
-                                          const std::string &osSSORoleName,
-                                          std::string &osTempSecretAccessKey,
-                                          std::string &osTempAccessKeyId,
-                                          std::string &osTempSessionToken,
-                                          std::string &osExpirationEpochInMS)
+static bool GetTemporaryCredentialsForSSO(
+    const std::string &osSSOStartURL, const std::string &osSSOSession,
+    const std::string &osSSOAccountID, const std::string &osSSORoleName,
+    std::string &osTempSecretAccessKey, std::string &osTempAccessKeyId,
+    std::string &osTempSessionToken, std::string &osExpirationEpochInMS)
 {
     std::string osSSOFilename = GetAWSRootDirectory();
     osSSOFilename += GetDirSeparator();
@@ -1531,8 +1529,14 @@ static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
     osSSOFilename += "cache";
     osSSOFilename += GetDirSeparator();
 
+    std::string hashValue = osSSOStartURL;
+    if (!osSSOSession.empty())
+    {
+        hashValue = osSSOSession;
+    }
+
     GByte hash[CPL_SHA1_HASH_SIZE];
-    CPL_SHA1(osSSOStartURL.data(), osSSOStartURL.size(), hash);
+    CPL_SHA1(hashValue.data(), hashValue.size(), hash);
     osSSOFilename += CPLGetLowerCaseHex(hash, sizeof(hash));
     osSSOFilename += ".json";
 
@@ -1587,9 +1591,13 @@ static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
     headers += "x-amz-sso_bearer_token: " + osAccessToken;
     aosOptions.AddNameValue("HEADERS", headers.c_str());
 
+    const std::string osRegion = oRoot.GetString("region", "us-east-1");
+    const std::string osDefaultHost("portal.sso." + osRegion +
+                                    ".amazonaws.com");
+
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
-    const std::string osHost(CPLGetConfigOption(
-        "CPL_AWS_SSO_ENDPOINT", "portal.sso.us-east-1.amazonaws.com"));
+    const std::string osHost(
+        CPLGetConfigOption("CPL_AWS_SSO_ENDPOINT", osDefaultHost.c_str()));
 
     const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost +
                               osResourceAndQueryString;
@@ -1721,7 +1729,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
         gosGlobalAccessKeyId.clear();
         gosGlobalSessionToken.clear();
         if (GetTemporaryCredentialsForSSO(
-                gosSSOStartURL, gosSSOAccountID, gosSSORoleName,
+                gosSSOStartURL, "", gosSSOAccountID, gosSSORoleName,
                 gosGlobalSecretAccessKey, gosGlobalAccessKeyId,
                 gosGlobalSessionToken, osExpirationEpochInMS))
         {
@@ -1824,6 +1832,7 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string osSSOStartURL;
     std::string osSSOAccountID;
     std::string osSSORoleName;
+    std::string osSSOSession;
     // coverity[tainted_data]
     if (GetConfigurationFromAWSConfigFiles(
             osPathForOption,
@@ -1831,7 +1840,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
             osExternalId, osMFASerial, osRoleSessionName,
             osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
-            osSSORoleName))
+            osSSORoleName, osSSOSession))
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1858,7 +1867,8 @@ bool VSIS3HandleHelper::GetConfiguration(
                         osRegionSP, osCredentialsSP, osRoleArnSP,
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
                         osRoleSessionNameSP, osWebIdentityTokenFile,
-                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP))
+                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP,
+                        osSSOSession))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
@@ -1929,14 +1939,14 @@ bool VSIS3HandleHelper::GetConfiguration(
             return false;
         }
 
-        if (!osSSOStartURL.empty())
+        if (!osSSOStartURL.empty() || !osSSOSession.empty())
         {
             std::string osTempSecretAccessKey;
             std::string osTempAccessKeyId;
             std::string osTempSessionToken;
             std::string osExpirationEpochInMS;
             if (GetTemporaryCredentialsForSSO(
-                    osSSOStartURL, osSSOAccountID, osSSORoleName,
+                    osSSOStartURL, osSSOSession, osSSOAccountID, osSSORoleName,
                     osTempSecretAccessKey, osTempAccessKeyId,
                     osTempSessionToken, osExpirationEpochInMS))
             {
