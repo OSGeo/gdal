@@ -3194,7 +3194,9 @@ std::string GDALTranslateGetParserUsage()
     try
     {
         GDALTranslateOptions sOptions;
-        auto argParser = GDALTranslateOptionsGetParser(&sOptions, nullptr);
+        GDALTranslateOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALTranslateOptionsGetParser(&sOptions, &sOptionsForBinary);
         return argParser->usage();
     }
     catch (const std::exception &err)
