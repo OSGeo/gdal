@@ -57,6 +57,8 @@ class GDALVectorInfoAlgorithm final : public GDALAlgorithm
     std::string m_where{};
     std::string m_dialect{};
     std::string m_output{};
+    bool m_checkValidGeometry{false};
+    bool m_checkValidCoverage{false};
 };
 
 //! @endcond
