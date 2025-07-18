@@ -1,0 +1,127 @@
+{
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/tiled-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
+  ],
+  "id": "my title",
+  "type": "Feature",
+  "bbox": [
+    -117.64116991516866,
+    33.889871571279038,
+    -117.62816223564604,
+    33.900668703926094
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -117.64116991516866,
+          33.889871571279038
+        ],
+        [
+          -117.64116991516866,
+          33.900668703926094
+        ],
+        [
+          -117.62816223564604,
+          33.900668703926094
+        ],
+        [
+          -117.62816223564604,
+          33.889871571279038
+        ],
+        [
+          -117.64116991516866,
+          33.889871571279038
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "1970-01-01T00:00:00.000Z",
+    "start_datetime": "0001-01-01T00:00:00.000Z",
+    "end_datetime": "9999-12-31T23:59:59.999Z",
+    "tiles:tile_matrix_sets": {
+      "GoogleMapsCompatible": {
+        "type": "TileMatrixSetType",
+        "title": "GoogleMapsCompatible",
+        "identifier": "GoogleMapsCompatible",
+        "boundingBox": {
+          "type": "BoundingBoxType",
+          "crs": "http://www.opengis.net/def/crs/EPSG/0/3857",
+          "lowerCorner": [
+            -20037508.342789244,
+            -20037508.342789244
+          ],
+          "upperCorner": [
+            20037508.342789244,
+            20037508.342789244
+          ]
+        },
+        "supportedCRS": "http://www.opengis.net/def/crs/EPSG/0/3857",
+        "wellKnownScaleSet": "http://www.opengis.net/def/wkss/OGC/1.0/GoogleMapsCompatible",
+        "tileMatrix": [
+          {
+            "type": "TileMatrixType",
+            "identifier": "11",
+            "scaleDenominator": 272989.38673277234,
+            "topLeftCorner": [
+              -20037508.342789244,
+              20037508.342789244
+            ],
+            "tileWidth": 256,
+            "tileHeight": 256,
+            "matrixWidth": 2048,
+            "matrixHeight": 2048
+          }
+        ]
+      }
+    },
+    "tiles:tile_matrix_links": {
+      "GoogleMapsCompatible": {
+        "url": "#GoogleMapsCompatible",
+        "limits": {
+          "11": {
+            "min_tile_col": 354,
+            "max_tile_col": 354,
+            "min_tile_row": 818,
+            "max_tile_row": 818
+          }
+        }
+      }
+    },
+    "proj:code": "EPSG:3857",
+    "proj:shape": [
+      256,
+      256
+    ],
+    "proj:transform": [
+      76.437028285176254,
+      0.0,
+      -13110479.09147343,
+      0.0,
+      -76.437028285176254,
+      36044033.561931431,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "asset_templates": {
+    "bands": {
+      "href": "http://example.com/test_gdalalg_raster_tile_basic_mercator_256_/{TileMatrix}/{TileCol}/{TileRow}.png",
+      "type": "image/png",
+      "bands": [
+        {
+          "name": "Band1",
+          "data_type": "uint8"
+        }
+      ]
+    }
+  },
+  "assets": {},
+  "links": [
+  ]
+}
