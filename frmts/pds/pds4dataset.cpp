@@ -94,7 +94,7 @@ CPLErr PDS4WrapperRasterBand::SetOffset(double dfNewOffset)
     m_dfOffset = dfNewOffset;
     m_bHasOffset = true;
 
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetOffset(dfNewOffset);
 
@@ -110,7 +110,7 @@ CPLErr PDS4WrapperRasterBand::SetScale(double dfNewScale)
     m_dfScale = dfNewScale;
     m_bHasScale = true;
 
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetScale(dfNewScale);
 
@@ -137,7 +137,7 @@ CPLErr PDS4WrapperRasterBand::SetNoDataValue(double dfNewNoData)
     m_dfNoData = dfNewNoData;
     m_bHasNoData = true;
 
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValue(
             dfNewNoData);
@@ -151,7 +151,7 @@ CPLErr PDS4WrapperRasterBand::SetNoDataValue(double dfNewNoData)
 
 CPLErr PDS4WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 {
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_bMustInitImageFile)
     {
         if (!poGDS->InitImageFile())
@@ -168,7 +168,7 @@ CPLErr PDS4WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
                                           void *pImage)
 
 {
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_bMustInitImageFile)
     {
         if (!poGDS->InitImageFile())
@@ -187,7 +187,7 @@ CPLErr PDS4WrapperRasterBand::IRasterIO(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (eRWFlag == GF_Write && poGDS->m_bMustInitImageFile)
     {
         if (!poGDS->InitImageFile())
@@ -299,7 +299,7 @@ CPLErr PDS4RawRasterBand::SetNoDataValue(double dfNewNoData)
 CPLErr PDS4RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (poGDS->m_bMustInitImageFile)
     {
         if (!poGDS->InitImageFile())
@@ -321,7 +321,7 @@ CPLErr PDS4RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {
-    PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
     if (eRWFlag == GF_Write && poGDS->m_bMustInitImageFile)
     {
         if (!poGDS->InitImageFile())
@@ -4636,7 +4636,7 @@ static GDALDataset *PDS4GetUnderlyingDataset(GDALDataset *poSrcDS)
     if (poSrcDS->GetDriver() != nullptr &&
         poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
     {
-        VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(poSrcDS);
+        VRTDataset *poVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
         poSrcDS = poVRTDS->GetSingleSimpleSource();
     }
 

@@ -93,7 +93,7 @@ CPLErr EIRDataset::Close()
         if (nBands > 0 && GetAccess() == GA_Update)
         {
             RawRasterBand *poBand =
-                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+                cpl::down_cast<RawRasterBand *>(GetRasterBand(1));
 
             int bNoDataSet = FALSE;
             const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);

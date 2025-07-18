@@ -178,7 +178,7 @@ PLMosaicRasterBand::PLMosaicRasterBand(PLMosaicDataset *poDSIn, int nBandIn,
 CPLErr PLMosaicRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 {
-    PLMosaicDataset *poMOSDS = reinterpret_cast<PLMosaicDataset *>(poDS);
+    PLMosaicDataset *poMOSDS = cpl::down_cast<PLMosaicDataset *>(poDS);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PLMOSAIC", "IReadBlock(band=%d, x=%d, y=%d)", nBand, nBlockYOff,
@@ -225,7 +225,7 @@ CPLErr PLMosaicRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      GSpacing nPixelSpace, GSpacing nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
-    PLMosaicDataset *poMOSDS = reinterpret_cast<PLMosaicDataset *>(poDS);
+    PLMosaicDataset *poMOSDS = cpl::down_cast<PLMosaicDataset *>(poDS);
     if (poMOSDS->bUseTMSForMain && !poMOSDS->apoTMSDS.empty())
         return poMOSDS->apoTMSDS[0]->GetRasterBand(nBand)->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
@@ -243,7 +243,7 @@ CPLErr PLMosaicRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 const char *PLMosaicRasterBand::GetMetadataItem(const char *pszName,
                                                 const char *pszDomain)
 {
-    PLMosaicDataset *poMOSDS = reinterpret_cast<PLMosaicDataset *>(poDS);
+    PLMosaicDataset *poMOSDS = cpl::down_cast<PLMosaicDataset *>(poDS);
     int nPixel, nLine;
     if (poMOSDS->bQuadDownload && pszName != nullptr && pszDomain != nullptr &&
         EQUAL(pszDomain, "LocationInfo") &&
@@ -261,7 +261,7 @@ const char *PLMosaicRasterBand::GetMetadataItem(const char *pszName,
 
 int PLMosaicRasterBand::GetOverviewCount()
 {
-    PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>(poDS);
+    PLMosaicDataset *poGDS = cpl::down_cast<PLMosaicDataset *>(poDS);
     return std::max(0, static_cast<int>(poGDS->apoTMSDS.size()) - 1);
 }
 
@@ -271,7 +271,7 @@ int PLMosaicRasterBand::GetOverviewCount()
 
 GDALRasterBand *PLMosaicRasterBand::GetOverview(int iOvrLevel)
 {
-    PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>(poDS);
+    PLMosaicDataset *poGDS = cpl::down_cast<PLMosaicDataset *>(poDS);
     if (iOvrLevel < 0 ||
         iOvrLevel >= static_cast<int>(poGDS->apoTMSDS.size()) - 1)
         return nullptr;
@@ -630,7 +630,7 @@ GDALDataset *PLMosaicDataset::Open(GDALOpenInfo *poOpenInfo)
             GDALOpenInfo oOpenInfo(osMosaicConnectionString.c_str(),
                                    GA_ReadOnly);
             oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
-            poDS = reinterpret_cast<PLMosaicDataset *>(Open(&oOpenInfo));
+            poDS = cpl::down_cast<PLMosaicDataset *>(Open(&oOpenInfo));
             if (poDS)
                 poDS->SetDescription(osOldFilename);
         }

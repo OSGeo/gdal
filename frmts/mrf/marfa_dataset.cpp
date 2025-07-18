@@ -1997,8 +1997,7 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, dts);
     GByte *buffer_mask = nullptr;
     if (buffer)
-        buffer_mask =
-            reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
+        buffer_mask = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
 
     if (!buffer || !buffer_mask)
     {
@@ -2529,7 +2528,7 @@ bool MRFDataset::IsSingleTile()
 {
     if (current.pagecount.l != 1 || !source.empty() || nullptr == DataFP())
         return FALSE;
-    return 0 == reinterpret_cast<MRFRasterBand *>(GetRasterBand(1))
+    return 0 == cpl::down_cast<MRFRasterBand *>(GetRasterBand(1))
                     ->GetOverviewCount();
 }
 

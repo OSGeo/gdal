@@ -486,7 +486,7 @@ NITFRasterBand::~NITFRasterBand()
 CPLErr NITFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
+    NITFDataset *poGDS = cpl::down_cast<NITFDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Special case for JPEG blocks.                                   */
@@ -718,7 +718,7 @@ GDALColorTable *NITFRasterBand::GetColorTable()
 CPLErr NITFRasterBand::SetColorTable(GDALColorTable *poNewCT)
 
 {
-    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
+    NITFDataset *poGDS = cpl::down_cast<NITFDataset *>(poDS);
     if (poGDS->bInLoadXML)
         return GDALPamRasterBand::SetColorTable(poNewCT);
 
@@ -1041,7 +1041,7 @@ GDALColorTable *NITFWrapperRasterBand::GetColorTable()
 
 void NITFWrapperRasterBand::SetColorTableFromNITFBandInfo()
 {
-    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
+    NITFDataset *poGDS = cpl::down_cast<NITFDataset *>(poDS);
     poColorTable = NITFMakeColorTable(poGDS->psImage,
                                       poGDS->psImage->pasBandInfo + nBand - 1);
 }
@@ -1078,7 +1078,7 @@ int NITFWrapperRasterBand::GetOverviewCount()
 {
     if (bIsJPEG)
     {
-        if ((reinterpret_cast<NITFDataset *>(poDS))
+        if ((cpl::down_cast<NITFDataset *>(poDS))
                 ->ExposeUnderlyingJPEGDatasetOverviews())
             return NITFProxyPamRasterBand::GetOverviewCount();
 
@@ -1096,7 +1096,7 @@ GDALRasterBand *NITFWrapperRasterBand::GetOverview(int iOverview)
 {
     if (bIsJPEG)
     {
-        if ((reinterpret_cast<NITFDataset *>(poDS))
+        if ((cpl::down_cast<NITFDataset *>(poDS))
                 ->ExposeUnderlyingJPEGDatasetOverviews())
             return NITFProxyPamRasterBand::GetOverview(iOverview);
 

@@ -1040,7 +1040,7 @@ CPLErr RMFDataset::WriteHeader()
             return CE_Failure;
         }
         GByte *pabyExtHeader =
-            reinterpret_cast<GByte *>(CPLCalloc(sHeader.nExtHdrSize, 1));
+            static_cast<GByte *>(CPLCalloc(sHeader.nExtHdrSize, 1));
 
         RMF_WRITE_LONG(pabyExtHeader, sExtHeader.nEllipsoid, 24);
         RMF_WRITE_LONG(pabyExtHeader, sExtHeader.nVertDatum, 28);
@@ -1065,8 +1065,7 @@ CPLErr RMFDataset::WriteHeader()
 
     if (sHeader.nROIOffset && sHeader.nROISize)
     {
-        GByte *pabyROI =
-            reinterpret_cast<GByte *>(CPLCalloc(sHeader.nROISize, 1));
+        GByte *pabyROI = static_cast<GByte *>(CPLCalloc(sHeader.nROISize, 1));
         memset(pabyROI, 0, sHeader.nROISize);
 
         auto nPointCount = astFrameCoords.size();
@@ -1100,7 +1099,7 @@ CPLErr RMFDataset::WriteHeader()
     if (sHeader.nFlagsTblOffset && sHeader.nFlagsTblSize)
     {
         GByte *pabyFlagsTbl =
-            reinterpret_cast<GByte *>(CPLCalloc(sHeader.nFlagsTblSize, 1));
+            static_cast<GByte *>(CPLCalloc(sHeader.nFlagsTblSize, 1));
 
         if (sHeader.iFrameFlag == 0)
         {
@@ -1133,7 +1132,7 @@ CPLErr RMFDataset::WriteHeader()
 
 #ifdef CPL_MSB
     GUInt32 *paiTilesSwapped =
-        reinterpret_cast<GUInt32 *>(CPLMalloc(sHeader.nTileTblSize));
+        static_cast<GUInt32 *>(CPLMalloc(sHeader.nTileTblSize));
     if (!paiTilesSwapped)
         return CE_Failure;
 
@@ -1479,7 +1478,7 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
             return nullptr;
         }
         GByte *pabyExtHeader =
-            reinterpret_cast<GByte *>(CPLCalloc(poDS->sHeader.nExtHdrSize, 1));
+            static_cast<GByte *>(CPLCalloc(poDS->sHeader.nExtHdrSize, 1));
         if (pabyExtHeader == nullptr)
         {
             delete poDS;
@@ -2287,7 +2286,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     poDS->sHeader.nTileTblSize =
         2 * sizeof(GUInt32) * poDS->sHeader.nXTiles * poDS->sHeader.nYTiles;
     poDS->paiTiles =
-        reinterpret_cast<GUInt32 *>(CPLCalloc(poDS->sHeader.nTileTblSize, 1));
+        static_cast<GUInt32 *>(CPLCalloc(poDS->sHeader.nTileTblSize, 1));
     // nCurPtr += poDS->sHeader.nTileTblSize;
     const GUInt32 nTileSize = poDS->sHeader.nTileWidth *
                               poDS->sHeader.nTileHeight *

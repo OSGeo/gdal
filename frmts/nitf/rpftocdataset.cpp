@@ -1000,7 +1000,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
          * cache of opened */
         /* underlying datasets */
         RPFTOCProxyRasterDataSet *ds = new RPFTOCProxyRasterDataSet(
-            reinterpret_cast<RPFTOCSubDataset *>(poVirtualDS),
+            cpl::down_cast<RPFTOCSubDataset *>(poVirtualDS),
             entry->frameEntries[i].fullFilePath, sizeX, sizeY, nBlockXSize,
             nBlockYSize, poVirtualDS->GetProjectionRef(),
             entry->nwLong +

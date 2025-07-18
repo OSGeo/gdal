@@ -1526,7 +1526,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews(
 
     int nNewOverviews = 0;
     int *panNewOverviewList =
-        reinterpret_cast<int *>(CPLCalloc(sizeof(int), nOverviews));
+        static_cast<int *>(CPLCalloc(sizeof(int), nOverviews));
     std::vector<bool> abFoundOverviewFactor(nOverviews);
     for (int i = 0; i < nOverviews && poBand != nullptr; i++)
     {

@@ -1161,7 +1161,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         return nullptr;
 
     GDALOpenInfo oOpenInfo(osFilename.c_str(), GA_ReadOnly);
-    HF2Dataset *poDS = reinterpret_cast<HF2Dataset *>(Open(&oOpenInfo));
+    HF2Dataset *poDS = cpl::down_cast<HF2Dataset *>(Open(&oOpenInfo));
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

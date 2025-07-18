@@ -1582,7 +1582,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     // a fake dataset to make the caller happy.
     CPLPushErrorHandler(CPLQuietErrorHandler);
     GDALPamDataset *poDS =
-        reinterpret_cast<GDALPamDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+        cpl::down_cast<GDALPamDataset *>(GDALDataset::Open(pszFilename));
     CPLPopErrorHandler();
     if (poDS)
     {

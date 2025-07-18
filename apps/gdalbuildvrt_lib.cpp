@@ -1129,8 +1129,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
                 pszProjectionRef, psDatasetProperties->gt.data());
             hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
-            reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
-                papszOpenOptions);
+            cpl::down_cast<GDALProxyPoolDataset *>(
+                GDALDataset::FromHandle(hProxyDS))
+                ->SetOpenOptions(papszOpenOptions);
 
             for (int jBand = 0;
                  jBand <
@@ -1380,8 +1381,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
                 dsFileName, psDatasetProperties->nRasterXSize,
                 psDatasetProperties->nRasterYSize, GA_ReadOnly, TRUE,
                 pszProjectionRef, psDatasetProperties->gt.data());
-            reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
-                papszOpenOptions);
+            cpl::down_cast<GDALProxyPoolDataset *>(
+                GDALDataset::FromHandle(hProxyDS))
+                ->SetOpenOptions(papszOpenOptions);
 
             for (int j = 0;
                  j < nMaxSelectedBandNo +
@@ -1401,7 +1403,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
             if (bHasDatasetMask && !bAddAlpha)
             {
                 static_cast<GDALProxyPoolRasterBand *>(
-                    reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)
+                    cpl::down_cast<GDALProxyPoolDataset *>(
+                        GDALDataset::FromHandle(hProxyDS))
                         ->GetRasterBand(1))
                     ->AddSrcMaskBandDescription(
                         GDT_Byte, psDatasetProperties->nMaskBlockXSize,

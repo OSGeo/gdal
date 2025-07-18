@@ -3650,7 +3650,7 @@ int GDALGeoPackageRasterBand::GetOverviewCount()
 GDALRasterBand *GDALGeoPackageRasterBand::GetOverview(int nIdx)
 {
     GDALGeoPackageDataset *poGDS =
-        reinterpret_cast<GDALGeoPackageDataset *>(poDS);
+        cpl::down_cast<GDALGeoPackageDataset *>(poDS);
     if (nIdx < 0 || nIdx >= static_cast<int>(poGDS->m_apoOverviewDS.size()))
         return nullptr;
     return poGDS->m_apoOverviewDS[nIdx]->GetRasterBand(nBand);
@@ -3832,7 +3832,7 @@ void GDALGeoPackageRasterBand::LoadBandMetadata()
 char **GDALGeoPackageRasterBand::GetMetadata(const char *pszDomain)
 {
     GDALGeoPackageDataset *poGDS =
-        reinterpret_cast<GDALGeoPackageDataset *>(poDS);
+        cpl::down_cast<GDALGeoPackageDataset *>(poDS);
     LoadBandMetadata(); /* force loading from storage if needed */
 
     if (poGDS->eAccess == GA_ReadOnly && eDataType != GDT_Byte &&
