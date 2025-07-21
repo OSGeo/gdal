@@ -6,7 +6,6 @@ set(PROGRAMS
     gdaladdo
     gdalbuildvrt
     gdal_calc.py
-    gdalchksum.py
     gdalcompare.py
     gdal-config
     gdal_contour
@@ -15,8 +14,6 @@ set(PROGRAMS
     gdalenhance
     gdal_fillnodata.py
     gdal_grid
-    gdalident.py
-    gdalimport.py
     gdallocationinfo
     gdalmanage
     gdal_merge.py
