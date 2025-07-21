@@ -29,6 +29,7 @@ set(PROGRAMS
     gdalsrsinfo
     gdaltindex
     gdaltransform
+    gdal_footprint
     gdal_translate
     gdalwarp
     ogr2ogr
@@ -36,8 +37,10 @@ set(PROGRAMS
     ogrlineref
     ogrmerge.py
     ogrtindex
+    ogr_layer_algebra.py
     gdal_viewshed
-    gdal_create)
+    gdal_create
+    sozip)
 
 set(INSTALL_DIR "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@BASH_COMPLETIONS_DIR@")
 
