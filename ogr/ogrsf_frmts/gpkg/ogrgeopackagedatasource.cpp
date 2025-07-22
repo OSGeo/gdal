@@ -2898,8 +2898,7 @@ bool GDALGeoPackageDataset::OpenRaster(
         return false;
     }
 
-    auto poBand =
-        reinterpret_cast<GDALGeoPackageRasterBand *>(GetRasterBand(1));
+    auto poBand = cpl::down_cast<GDALGeoPackageRasterBand *>(GetRasterBand(1));
     if (!osDataNull.empty())
     {
         double dfGPKGNoDataValue = CPLAtof(osDataNull);

@@ -154,7 +154,7 @@ GS7BGRasterBand::~GS7BGRasterBand()
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
 
 {
-    GS7BGDataset *poGDS = reinterpret_cast<GS7BGDataset *>(poDS);
+    GS7BGDataset *poGDS = cpl::down_cast<GS7BGDataset *>(poDS);
     double *pafRowVals =
         (double *)VSI_MALLOC2_VERBOSE(nRasterXSize, sizeof(double));
 
@@ -429,7 +429,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 double GS7BGRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    GS7BGDataset *poGDS = reinterpret_cast<GS7BGDataset *>(poDS);
+    GS7BGDataset *poGDS = cpl::down_cast<GS7BGDataset *>(poDS);
     if (pbSuccess)
         *pbSuccess = TRUE;
 

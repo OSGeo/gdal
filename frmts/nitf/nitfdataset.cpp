@@ -589,7 +589,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             if (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
             {
-                reinterpret_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
+                cpl::down_cast<GDALPamDataset *>(poDS->poJ2KDataset.get())
                     ->SetPamFlags(reinterpret_cast<GDALPamDataset *>(
                                       poDS->poJ2KDataset.get())
                                       ->GetPamFlags() |
@@ -716,7 +716,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
         {
-            (reinterpret_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
+            (cpl::down_cast<GDALPamDataset *>(poDS->poJPEGDataset.get()))
                 ->SetPamFlags((reinterpret_cast<GDALPamDataset *>(
                                    poDS->poJPEGDataset.get()))
                                   ->GetPamFlags() |
@@ -2637,7 +2637,7 @@ void NITFDataset::InitializeNITFTREs()
                                              CPLES_BackslashQuotable);
 
             const size_t nLineLen = strlen(szTag) + strlen(pszEscapedData) + 2;
-            char *pszLine = reinterpret_cast<char *>(CPLMalloc(nLineLen));
+            char *pszLine = static_cast<char *>(CPLMalloc(nLineLen));
             snprintf(pszLine, nLineLen, "%s=%s", szTag, pszEscapedData);
             aosList.AddString(pszLine);
             CPLFree(pszLine);
@@ -3718,7 +3718,7 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     /* -------------------------------------------------------------------- */
     /*      Allocate offset array                                           */
     /* -------------------------------------------------------------------- */
-    panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
+    panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
         sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
                              psImage->nBlocksPerColumn));
     if (panJPEGBlockOffset == nullptr)
@@ -3849,7 +3849,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
              */
             /* --------------------------------------------------------------------
              */
-            panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
+            panJPEGBlockOffset = static_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
                 sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
                                      psImage->nBlocksPerColumn));
             if (panJPEGBlockOffset == nullptr)
@@ -3898,7 +3898,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
     if (pabyJPEGBlock == nullptr)
     {
         /* Allocate enough memory to hold 12bit JPEG data */
-        pabyJPEGBlock = reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(
+        pabyJPEGBlock = static_cast<GByte *>(VSI_CALLOC_VERBOSE(
             psImage->nBands, static_cast<size_t>(psImage->nBlockWidth) *
                                  psImage->nBlockHeight * 2));
         if (pabyJPEGBlock == nullptr)
@@ -5954,7 +5954,7 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     // allocate space for graphic header.
     // Size of LS = 4, size of LSSH = 6, and 1 for null character
     char *pachLS =
-        reinterpret_cast<char *>(CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1));
+        static_cast<char *>(CPLCalloc(nNUMS * nCgmHdrEntrySz + 1, 1));
 
     /* -------------------------------------------------------------------- */
     /*  Assume no extended data such as SXSHDL, SXSHD                       */
@@ -6168,7 +6168,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     /*      segment header/data size info is blank.                         */
     /* -------------------------------------------------------------------- */
     char achNUMT[4];
-    char *pachLT = reinterpret_cast<char *>(CPLCalloc(nNUMT * 9 + 1, 1));
+    char *pachLT = static_cast<char *>(CPLCalloc(nNUMT * 9 + 1, 1));
 
     bOK &= VSIFSeekL(fpVSIL, nNumTOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMT, 3, 1, fpVSIL) == 1;

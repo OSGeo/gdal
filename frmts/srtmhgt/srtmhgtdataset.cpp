@@ -108,7 +108,7 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset *poDSIn, int nBandIn,
 CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                                      void *pImage)
 {
-    SRTMHGTDataset *poGDS = reinterpret_cast<SRTMHGTDataset *>(poDS);
+    SRTMHGTDataset *poGDS = cpl::down_cast<SRTMHGTDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Load the desired data into the working buffer.                  */
@@ -132,7 +132,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
                                       void *pImage)
 {
-    SRTMHGTDataset *poGDS = reinterpret_cast<SRTMHGTDataset *>(poDS);
+    SRTMHGTDataset *poGDS = cpl::down_cast<SRTMHGTDataset *>(poDS);
 
     if (poGDS->eAccess != GA_Update)
         return CE_Failure;
@@ -620,8 +620,7 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt16 *panData =
-        reinterpret_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
+    GInt16 *panData = static_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
 
     int bSrcBandHasNoData;

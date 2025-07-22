@@ -3298,10 +3298,10 @@ void GMLASReader::characters(const XMLCh *const chars, const XMLSize_t length)
         else
         {
             CPLXMLNode *psNode =
-                reinterpret_cast<CPLXMLNode *>(CPLMalloc(sizeof(CPLXMLNode)));
+                static_cast<CPLXMLNode *>(CPLMalloc(sizeof(CPLXMLNode)));
             psNode->eType = CXT_Text;
             psNode->pszValue =
-                reinterpret_cast<char *>(CPLMalloc(osText.size() + 1));
+                static_cast<char *>(CPLMalloc(osText.size() + 1));
             memcpy(psNode->pszValue, osText.c_str(), osText.size() + 1);
             psNode->psNext = nullptr;
             psNode->psChild = nullptr;

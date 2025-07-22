@@ -244,7 +244,7 @@ CPLErr TerragenRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pImage != nullptr);
 
-    TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
+    TerragenDataset &ds = *cpl::down_cast<TerragenDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Seek to scanline.
@@ -291,7 +291,7 @@ const char *TerragenRasterBand::GetUnitType()
 {
     // todo: Return elevation units.
     // For Terragen documents, it is the same as the ground units.
-    TerragenDataset *poGDS = reinterpret_cast<TerragenDataset *>(poDS);
+    TerragenDataset *poGDS = cpl::down_cast<TerragenDataset *>(poDS);
 
     return poGDS->m_szUnits;
 }
@@ -302,7 +302,7 @@ const char *TerragenRasterBand::GetUnitType()
 
 double TerragenRasterBand::GetScale(int *pbSuccess)
 {
-    const TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
+    const TerragenDataset &ds = *cpl::down_cast<TerragenDataset *>(poDS);
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
@@ -315,7 +315,7 @@ double TerragenRasterBand::GetScale(int *pbSuccess)
 
 double TerragenRasterBand::GetOffset(int *pbSuccess)
 {
-    const TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
+    const TerragenDataset &ds = *cpl::down_cast<TerragenDataset *>(poDS);
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
@@ -335,7 +335,7 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
 
     const size_t pixelsize = sizeof(GInt16);
 
-    TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
+    TerragenDataset &ds = *cpl::down_cast<TerragenDataset *>(poDS);
     if (m_bFirstTime)
     {
         m_bFirstTime = false;
@@ -375,7 +375,7 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
 
 CPLErr TerragenRasterBand::SetUnitType(const char *psz)
 {
-    TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
+    TerragenDataset &ds = *cpl::down_cast<TerragenDataset *>(poDS);
 
     if (EQUAL(psz, "m"))
         ds.m_dMetersPerElevUnit = 1.0;

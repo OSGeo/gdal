@@ -212,7 +212,7 @@ GDALEEDAIRasterBand::~GDALEEDAIRasterBand()
 
 int GDALEEDAIRasterBand::GetOverviewCount()
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     return static_cast<int>(poGDS->m_apoOverviewDS.size());
 }
 
@@ -222,7 +222,7 @@ int GDALEEDAIRasterBand::GetOverviewCount()
 
 GDALRasterBand *GDALEEDAIRasterBand::GetOverview(int iIndex)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     if (iIndex >= 0 && iIndex < static_cast<int>(poGDS->m_apoOverviewDS.size()))
     {
         return poGDS->m_apoOverviewDS[iIndex]->GetRasterBand(nBand);
@@ -240,7 +240,7 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
                                          int nXBlocks, int nYBlocks,
                                          int nReqXSize, int nReqYSize) const
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     // See https://docs.scipy.org/doc/numpy-1.13.0/neps/npy-format.html
     // for description of NPY array serialization format
@@ -406,7 +406,7 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
                                             int nYBlocks, int nReqXSize,
                                             int nReqYSize)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("eedai"));
     VSIFCloseL(VSIFileFromMemBuffer(
@@ -520,7 +520,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                                       int nXBlocks, int nYBlocks,
                                       bool bQueryAllBands, void *pBuffer)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 
     // Build request content
     json_object *poReq = json_object_new_object();
@@ -668,7 +668,7 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 CPLErr GDALEEDAIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pBuffer)
 {
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
 #ifdef DEBUG_VERBOSE
     CPLDebug("EEDAI", "ReadBlock x=%d y=%d band=%d level=%d", nBlockXOff,
              nBlockYOff, nBand, poGDS->m_iOvrLevel);
@@ -692,7 +692,7 @@ GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
     CPL_IGNORE_RET_VAL(nBufXSize);
     CPL_IGNORE_RET_VAL(nBufYSize);
 
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     int nBlockXOff = nXOff / nBlockXSize;
     int nBlockYOff = nYOff / nBlockYSize;
     int nXBlocks = (nXOff + nXSize - 1) / nBlockXSize - nBlockXOff + 1;
@@ -862,7 +862,7 @@ CPLErr GDALEEDAIRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
+    GDALEEDAIDataset *poGDS = cpl::down_cast<GDALEEDAIDataset *>(poDS);
     GUInt32 nRetryFlags =
         PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        poGDS->m_bQueryMultipleBands);

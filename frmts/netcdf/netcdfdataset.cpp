@@ -1452,7 +1452,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSet &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to %.17g (previously set to %.17g) "
@@ -1468,7 +1468,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_Byte)
@@ -1506,7 +1506,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
                                       1, &fNoDataValue);
         }
         else if (eDataType == GDT_UInt16 &&
-                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 cpl::down_cast<netCDFDataset *>(poDS)->eFormat ==
                      NCDF_FORMAT_NC4)
         {
             unsigned short usNoDataValue =
@@ -1515,7 +1515,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
                                        1, &usNoDataValue);
         }
         else if (eDataType == GDT_UInt32 &&
-                 reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
+                 cpl::down_cast<netCDFDataset *>(poDS)->eFormat ==
                      NCDF_FORMAT_NC4)
         {
             unsigned int unNoDataValue = static_cast<unsigned int>(dfNoData);
@@ -1576,7 +1576,7 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSetAsInt64 &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to " CPL_FRMT_GIB
@@ -1595,11 +1595,11 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_Int64 &&
-            reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+            cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             long long tmp = static_cast<long long>(nNoData);
             status = nc_put_att_longlong(cdfid, nZId, NCDF_FillValue,
@@ -1660,7 +1660,7 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSetAsUInt64 &&
-            !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
+            !cpl::down_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
                      "Setting NoDataValue to " CPL_FRMT_GUIB
@@ -1679,11 +1679,11 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
         }
 #endif
         // Make sure we are in define mode.
-        reinterpret_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         int status;
         if (eDataType == GDT_UInt64 &&
-            reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+            cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             unsigned long long tmp = static_cast<long long>(nNoData);
             status = nc_put_att_ulonglong(cdfid, nZId, NCDF_FillValue,
@@ -1950,7 +1950,7 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
     CPLAssert(!m_bCreateMetadataFromOtherVarsDone);
     m_bCreateMetadataFromOtherVarsDone = true;
 
-    netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
+    netCDFDataset *l_poDS = cpl::down_cast<netCDFDataset *>(poDS);
     const int nPamFlagsBackup = l_poDS->nPamFlags;
 
     // Compute all dimensions from Band number and save in Metadata.
@@ -11872,7 +11872,7 @@ static char **NCDFTokenizeArray(const char *pszValue)
     }
     else
     {
-        papszValues = reinterpret_cast<char **>(CPLCalloc(2, sizeof(char *)));
+        papszValues = static_cast<char **>(CPLCalloc(2, sizeof(char *)));
         papszValues[0] = CPLStrdup(pszValue);
         papszValues[1] = nullptr;
     }

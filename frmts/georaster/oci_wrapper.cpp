@@ -1386,7 +1386,7 @@ char *OWRemoveQuotes(const char *pszText)
         return CPLStrdup(pszText);
     }
 
-    char *pszResult = reinterpret_cast<char *>(CPLMalloc(nSize - 1));
+    char *pszResult = static_cast<char *>(CPLMalloc(nSize - 1));
 
     CPLStrlcpy(pszResult, &pszText[1], nSize - 1);
 

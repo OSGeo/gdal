@@ -110,7 +110,7 @@ WEBPRasterBand::WEBPRasterBand(WEBPDataset *poDSIn, int)
 CPLErr WEBPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void *pImage)
 {
-    WEBPDataset *poGDS = reinterpret_cast<WEBPDataset *>(poDS);
+    WEBPDataset *poGDS = cpl::down_cast<WEBPDataset *>(poDS);
 
     if (poGDS->Uncompress() != CE_None)
         return CE_Failure;
@@ -910,7 +910,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /*      Allocate memory                                                 */
     /* -------------------------------------------------------------------- */
     GByte *pabyBuffer =
-        reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(nBands, nXSize, nYSize));
+        static_cast<GByte *>(VSI_MALLOC3_VERBOSE(nBands, nXSize, nYSize));
     if (pabyBuffer == nullptr)
     {
         return nullptr;

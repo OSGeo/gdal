@@ -212,7 +212,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         return nullptr;
     }
 
-    RPFToc *toc = reinterpret_cast<RPFToc *>(CPLMalloc(sizeof(RPFToc)));
+    RPFToc *toc = static_cast<RPFToc *>(CPLMalloc(sizeof(RPFToc)));
     toc->nEntries = boundaryRectangleCount;
     toc->entries = reinterpret_cast<RPFTocEntry *>(
         CPLMalloc(boundaryRectangleCount * sizeof(RPFTocEntry)));
@@ -376,7 +376,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         else
         {
             toc->entries[i].frameEntries =
-                reinterpret_cast<RPFTocFrameEntry *>(VSI_CALLOC_VERBOSE(
+                static_cast<RPFTocFrameEntry *>(VSI_CALLOC_VERBOSE(
                     static_cast<size_t>(toc->entries[i].nVertFrames) *
                         toc->entries[i].nHorizFrames,
                     sizeof(RPFTocFrameEntry)));
@@ -639,8 +639,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             return nullptr;
         }
 
-        frameEntry->directory =
-            reinterpret_cast<char *>(CPLMalloc(pathLength + 1));
+        frameEntry->directory = static_cast<char *>(CPLMalloc(pathLength + 1));
         bOK &=
             VSIFReadL(frameEntry->directory, 1, pathLength, fp) == pathLength;
         if (!bOK)

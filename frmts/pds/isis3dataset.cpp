@@ -451,7 +451,7 @@ ISISTiledBand::ISISTiledBand(GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_osExternalFilename.empty())
     {
         if (!poGDS->m_bIsLabelWritten)
@@ -541,7 +541,7 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
 CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_osExternalFilename.empty())
     {
         if (!poGDS->m_bIsLabelWritten)
@@ -711,7 +711,7 @@ ISIS3RawRasterBand::ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 CPLErr ISIS3RawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_osExternalFilename.empty())
     {
         if (!poGDS->m_bIsLabelWritten)
@@ -727,7 +727,7 @@ CPLErr ISIS3RawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr ISIS3RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_osExternalFilename.empty())
     {
         if (!poGDS->m_bIsLabelWritten)
@@ -755,7 +755,7 @@ CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_osExternalFilename.empty())
     {
         if (!poGDS->m_bIsLabelWritten)
@@ -926,7 +926,7 @@ CPLErr ISIS3WrapperRasterBand::SetOffset(double dfNewOffset)
     m_dfOffset = dfNewOffset;
     m_bHasOffset = true;
 
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetOffset(dfNewOffset);
 
@@ -942,7 +942,7 @@ CPLErr ISIS3WrapperRasterBand::SetScale(double dfNewScale)
     m_dfScale = dfNewScale;
     m_bHasScale = true;
 
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetScale(dfNewScale);
 
@@ -968,7 +968,7 @@ CPLErr ISIS3WrapperRasterBand::SetNoDataValue(double dfNewNoData)
 {
     m_dfNoData = dfNewNoData;
 
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValue(
             dfNewNoData);
@@ -982,7 +982,7 @@ CPLErr ISIS3WrapperRasterBand::SetNoDataValue(double dfNewNoData)
 
 void ISIS3WrapperRasterBand::InitFile()
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone)
     {
         poGDS->m_bGeoTIFFInitDone = true;
@@ -1051,7 +1051,7 @@ void ISIS3WrapperRasterBand::InitFile()
 
 CPLErr ISIS3WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData == dfRealValue)
     {
         dfRealValue = m_dfNoData;
@@ -1072,7 +1072,7 @@ CPLErr ISIS3WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
                                            void *pImage)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData)
     {
         RemapNoData(eDataType, pImage, nBlockXSize * nBlockYSize,
@@ -1096,7 +1096,7 @@ CPLErr ISIS3WrapperRasterBand::IRasterIO(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
-    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    ISIS3Dataset *poGDS = cpl::down_cast<ISIS3Dataset *>(poDS);
     if (eRWFlag == GF_Write && poGDS->m_bGeoTIFFAsRegularExternal &&
         !poGDS->m_bGeoTIFFInitDone)
     {
@@ -1291,7 +1291,7 @@ CPLErr ISIS3Dataset::Close()
         if (m_poExternalDS && m_bGeoTIFFAsRegularExternal &&
             !m_bGeoTIFFInitDone)
         {
-            reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+            cpl::down_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
                 ->InitFile();
         }
         if (ISIS3Dataset::FlushCache(true) != CE_None)
@@ -2565,7 +2565,7 @@ void ISIS3Dataset::BuildLabel()
         {
             if (!m_bGeoTIFFInitDone)
             {
-                reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+                cpl::down_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
                     ->InitFile();
             }
 
@@ -4162,7 +4162,7 @@ static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
     if (poSrcDS->GetDriver() != nullptr &&
         poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
     {
-        VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(poSrcDS);
+        VRTDataset *poVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
         poSrcDS = poVRTDS->GetSingleSimpleSource();
     }
 

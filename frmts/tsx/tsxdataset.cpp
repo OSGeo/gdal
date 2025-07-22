@@ -364,7 +364,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
         nGCPCount = MAX_GCPS;
     // allocate memory for the gcps
     pasGCPList =
-        reinterpret_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), nGCPCount));
+        static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), nGCPCount));
 
     // loop through all gcps and set info
 

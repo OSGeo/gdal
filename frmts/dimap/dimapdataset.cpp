@@ -177,7 +177,7 @@ char **DIMAPDataset::GetMetadata(const char *pszDomain)
         if (papszXMLDimapMetadata == nullptr)
         {
             papszXMLDimapMetadata =
-                reinterpret_cast<char **>(CPLCalloc(sizeof(char *), 2));
+                static_cast<char **>(CPLCalloc(sizeof(char *), 2));
             papszXMLDimapMetadata[0] = CPLSerializeXMLTree(psProduct);
         }
         return papszXMLDimapMetadata;

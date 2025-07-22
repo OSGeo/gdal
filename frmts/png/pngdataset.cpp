@@ -226,7 +226,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 GDALColorInterp PNGRasterBand::GetColorInterpretation()
 
 {
-    PNGDataset *poGDS = reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
 
     if (poGDS->nColorType == PNG_COLOR_TYPE_GRAY)
         return GCI_GrayIndex;
@@ -265,7 +265,7 @@ GDALColorInterp PNGRasterBand::GetColorInterpretation()
 GDALColorTable *PNGRasterBand::GetColorTable()
 
 {
-    PNGDataset *poGDS = reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset *poGDS = cpl::down_cast<PNGDataset *>(poDS);
 
     if (nBand == 1)
         return poGDS->poColorTable;
@@ -1386,7 +1386,7 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     if (pabyBuffer == nullptr)
     {
-        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+        pabyBuffer = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
             nPixelOffset, GetRasterXSize(), nMaxChunkLines));
 
         if (pabyBuffer == nullptr)
@@ -2710,7 +2710,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         if (bFoundTrans || bHaveNoData)
         {
             unsigned char *pabyAlpha =
-                reinterpret_cast<unsigned char *>(CPLMalloc(nEntryCount));
+                static_cast<unsigned char *>(CPLMalloc(nEntryCount));
 
             for (int iColor = 0; iColor < nEntryCount; iColor++)
             {
@@ -2860,7 +2860,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
         PNGDataset *poDS =
-            reinterpret_cast<PNGDataset *>(PNGDataset::Open(&oOpenInfo));
+            cpl::down_cast<PNGDataset *>(PNGDataset::Open(&oOpenInfo));
         CPLPopErrorHandler();
         if (poDS)
         {
@@ -2988,7 +2988,7 @@ void GDALRegister_PNG()
 
 CPLErr PNGRasterBand::IWriteBlock(int x, int y, void *pvData)
 {
-    PNGDataset &ds = *reinterpret_cast<PNGDataset *>(poDS);
+    PNGDataset &ds = *cpl::down_cast<PNGDataset *>(poDS);
 
     // Write the block (or consolidate into multichannel block) and then write.
 
@@ -3068,7 +3068,7 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable *poCT)
             if (err != CE_None)
                 return err;
 
-            PNGDataset &ds = *reinterpret_cast<PNGDataset *>(poDS);
+            PNGDataset &ds = *cpl::down_cast<PNGDataset *>(poDS);
             ds.m_nColorType = PNG_COLOR_TYPE_PALETTE;
             break;
             // band::IWriteBlock will emit color table as part of the header
