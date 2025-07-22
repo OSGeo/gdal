@@ -36,26 +36,6 @@ std::string CPLAWSURLEncode(const std::string &osURL, bool bEncodeSlash = true);
 std::string CPLAWSGetHeaderVal(const struct curl_slist *psExistingHeaders,
                                const char *pszKey);
 
-std::string CPLGetAWS_SIGN4_Signature(
-    const std::string &osSecretAccessKey, const std::string &osAccessToken,
-    const std::string &osRegion, const std::string &osRequestPayer,
-    const std::string &osService, const std::string &osVerb,
-    const struct curl_slist *psExistingHeaders, const std::string &osHost,
-    const std::string &osCanonicalURI,
-    const std::string &osCanonicalQueryString,
-    const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
-    const std::string &osTimestamp, std::string &osSignedHeaders);
-
-std::string CPLGetAWS_SIGN4_Authorization(
-    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
-    const std::string &osAccessToken, const std::string &osRegion,
-    const std::string &osRequestPayer, const std::string &osService,
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
-    const std::string &osHost, const std::string &osCanonicalURI,
-    const std::string &osCanonicalQueryString,
-    const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
-    const std::string &osTimestamp);
-
 class IVSIS3LikeHandleHelper
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeHandleHelper)
@@ -75,8 +55,7 @@ class IVSIS3LikeHandleHelper
                            const std::string &osValue);
 
     virtual struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders,
+    GetCurlHeaders(const std::string &osVerb, struct curl_slist *psHeaders,
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const = 0;
 
@@ -216,11 +195,10 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
                                 const std::string &osObjectKey, bool bUseHTTPS,
                                 bool bUseVirtualHosting);
 
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders,
-                   const void *pabyDataContent = nullptr,
-                   size_t nBytesContent = 0) const override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerb,
+                                      struct curl_slist *psHeaders,
+                                      const void *pabyDataContent = nullptr,
+                                      size_t nBytesContent = 0) const override;
 
     bool AllowAutomaticRedirection() override
     {

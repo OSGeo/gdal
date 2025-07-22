@@ -49,9 +49,9 @@ static std::string g_osLastAuthToken;
 /*                          GetSwiftHeaders()                           */
 /************************************************************************/
 
-static struct curl_slist *GetSwiftHeaders(const std::string &osAuthToken)
+static struct curl_slist *GetSwiftHeaders(const std::string &osAuthToken,
+                                          struct curl_slist *headers)
 {
-    struct curl_slist *headers = nullptr;
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(
         headers, CPLSPrintf("x-auth-token: %s", osAuthToken.c_str()));
@@ -647,9 +647,9 @@ void VSISwiftHandleHelper::RebuildURL()
 /************************************************************************/
 
 struct curl_slist *VSISwiftHandleHelper::GetCurlHeaders(
-    const std::string &, const struct curl_slist *, const void *, size_t) const
+    const std::string &, struct curl_slist *headers, const void *, size_t) const
 {
-    return GetSwiftHeaders(m_osAuthToken);
+    return GetSwiftHeaders(m_osAuthToken, headers);
 }
 
 /************************************************************************/

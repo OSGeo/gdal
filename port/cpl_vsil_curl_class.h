@@ -50,8 +50,6 @@ void VSICurlStreamingClearCache(void);  // from cpl_vsil_curl_streaming.cpp
 
 struct curl_slist *VSICurlSetOptions(CURL *hCurlHandle, const char *pszURL,
                                      const char *const *papszOptions);
-struct curl_slist *VSICurlMergeHeaders(struct curl_slist *poDest,
-                                       struct curl_slist *poSrcToDestroy);
 
 struct curl_slist *VSICurlSetContentTypeFromExt(struct curl_slist *polist,
                                                 const char *pszPath);
@@ -443,11 +441,10 @@ class VSICurlHandle : public VSIVirtualHandle
     CURLM *m_hCurlMultiHandleForAdviseRead = nullptr;
 
   protected:
-    virtual struct curl_slist *
-    GetCurlHeaders(const std::string & /*osVerb*/,
-                   const struct curl_slist * /* psExistingHeaders */)
+    virtual struct curl_slist *GetCurlHeaders(const std::string & /*osVerb*/,
+                                              struct curl_slist *psHeaders)
     {
-        return nullptr;
+        return psHeaders;
     }
 
     virtual bool AllowAutomaticRedirection()

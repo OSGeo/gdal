@@ -263,9 +263,8 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
     VSISwiftHandleHelper *m_poHandleHelper = nullptr;
 
   protected:
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerb,
+                                      struct curl_slist *psHeaders) override;
     virtual bool Authenticate(const char *pszFilename) override;
 
   public:
@@ -589,8 +588,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
                                        szCurlErrBuf);
 
-            headers = VSICurlMergeHeaders(
-                headers, poS3HandleHelper->GetCurlHeaders("GET", headers));
+            headers = poS3HandleHelper->GetCurlHeaders("GET", headers);
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
@@ -688,11 +686,10 @@ VSISwiftHandle::~VSISwiftHandle()
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist *
-VSISwiftHandle::GetCurlHeaders(const std::string &osVerb,
-                               const struct curl_slist *psExistingHeaders)
+struct curl_slist *VSISwiftHandle::GetCurlHeaders(const std::string &osVerb,
+                                                  struct curl_slist *psHeaders)
 {
-    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poHandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/

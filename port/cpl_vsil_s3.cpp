@@ -506,8 +506,7 @@ bool VSIDIRS3::IssueListDir()
         struct curl_slist *headers = VSICurlSetOptions(
             hCurlHandle, poHandleHelper->GetURL().c_str(), nullptr);
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("GET", headers));
+        headers = poHandleHelper->GetCurlHeaders("GET", headers);
         // Disable automatic redirection
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
@@ -736,9 +735,8 @@ class VSIS3Handle final : public IVSIS3LikeHandle
     VSIS3HandleHelper *m_poS3HandleHelper = nullptr;
 
   protected:
-    struct curl_slist *
-    GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+    struct curl_slist *GetCurlHeaders(const std::string &osVerb,
+                                      struct curl_slist *psHeaders) override;
     bool CanRestartOnError(const char *, const char *, bool) override;
 
     bool AllowAutomaticRedirection() override
@@ -931,8 +929,7 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
                               aosHTTPOptions.List()));
         headers = VSICurlSetCreationHeadersFromOptions(headers, papszOptions,
                                                        osFilename.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("POST", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers);
         headers = curl_slist_append(
             headers, "Content-Length: 0");  // Required by GCS in HTTP 1.1
 
@@ -1079,9 +1076,8 @@ std::string IVSIS3LikeFSHandlerWithMultipartUpload::UploadPart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers,
-                                                      pabyBuffer, nBufferSize));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers, pabyBuffer,
+                                                   nBufferSize);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1252,9 +1248,8 @@ bool VSIMultipartWriteHandle::DoSinglePartPUT()
                               m_aosHTTPOptions.List()));
         headers = VSICurlSetCreationHeadersFromOptions(
             headers, m_aosOptions.List(), m_osFilename.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, m_poS3HandleHelper->GetCurlHeaders(
-                         "PUT", headers, m_pabyBuffer, m_nBufferOff));
+        headers = m_poS3HandleHelper->GetCurlHeaders(
+            "PUT", headers, m_pabyBuffer, m_nBufferOff);
         headers = curl_slist_append(headers, "Expect: 100-continue");
 
         CurlRequestHelper requestHelper;
@@ -1389,9 +1384,8 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::CompleteMultipart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders(
-                         "POST", headers, osXML.c_str(), osXML.size()));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers,
+                                                   osXML.c_str(), osXML.size());
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1474,8 +1468,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortMultipart(
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -1602,8 +1595,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
             struct curl_slist *headers = static_cast<struct curl_slist *>(
                 CPLHTTPSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                                   aosHTTPOptions.List()));
-            headers = VSICurlMergeHeaders(
-                headers, poHandleHelper->GetCurlHeaders("GET", headers));
+            headers = poHandleHelper->GetCurlHeaders("GET", headers);
 
             CurlRequestHelper requestHelper;
             const long response_code = requestHelper.perform(
@@ -2225,9 +2217,8 @@ std::set<std::string> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Type: application/xml");
         headers = curl_slist_append(headers, osContentMD5.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("POST", headers, pszXML,
-                                                      strlen(pszXML)));
+        headers = poS3HandleHelper->GetCurlHeaders("POST", headers, pszXML,
+                                                   strlen(pszXML));
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -2350,8 +2341,7 @@ char **VSIS3FSHandler::GetFileMetadata(const char *pszFilename,
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("GET", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("GET", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -2537,15 +2527,13 @@ bool VSIS3FSHandler::SetFileMetadata(const char *pszFilename,
             headers =
                 curl_slist_append(headers, "Content-Type: application/xml");
             headers = curl_slist_append(headers, osContentMD5.c_str());
-            headers = VSICurlMergeHeaders(
-                headers, poS3HandleHelper->GetCurlHeaders(
-                             "PUT", headers, osXML.c_str(), osXML.size()));
+            headers = poS3HandleHelper->GetCurlHeaders(
+                "PUT", headers, osXML.c_str(), osXML.size());
             NetworkStatisticsLogger::LogPUT(osXML.size());
         }
         else
         {
-            headers = VSICurlMergeHeaders(
-                headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+            headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
             NetworkStatisticsLogger::LogDELETE();
         }
 
@@ -3056,8 +3044,7 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
             }
         }
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("PUT", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -3155,8 +3142,7 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poS3HandleHelper->GetCurlHeaders("DELETE", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code =
@@ -5167,11 +5153,10 @@ VSIS3Handle::~VSIS3Handle()
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist *
-VSIS3Handle::GetCurlHeaders(const std::string &osVerb,
-                            const struct curl_slist *psExistingHeaders)
+struct curl_slist *VSIS3Handle::GetCurlHeaders(const std::string &osVerb,
+                                               struct curl_slist *psHeaders)
 {
-    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/
