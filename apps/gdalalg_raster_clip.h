@@ -37,6 +37,7 @@ class GDALRasterClipAlgorithm /* non final */
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::vector<int> m_window{};
     bool m_onlyBBOX{false};
     bool m_allowExtentOutsideSource{false};
     bool m_addAlpha{false};

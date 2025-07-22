@@ -313,3 +313,44 @@ def test_gdalalg_raster_clip_geometry_outside_extent(allow_bbox_outside_source):
             match="Clipping geometry is partially or totally outside the extent of the raster",
         ):
             alg.Run()
+
+
+def test_gdalalg_raster_clip_window():
+
+    alg = get_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output-format"] = "MEM"
+    alg["window"] = [1, 2, 3, 4]
+    alg.Run()
+    ds = alg["output"].GetDataset()
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.GetRasterBand(1).Checksum() == 105
+
+
+def test_gdalalg_raster_clip_window_invalid():
+
+    alg = get_alg()
+
+    with pytest.raises(
+        Exception,
+        match="Value of 'window' should be col,line,width,height with width > 0 and height > 0",
+    ):
+        alg["window"] = [1, 2, 0, 4]
+
+    with pytest.raises(
+        Exception,
+        match="Value of 'window' should be col,line,width,height with width > 0 and height > 0",
+    ):
+        alg["window"] = [1, 2, 3, 0]
+
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output-format"] = "MEM"
+    alg["window"] = [1, 2, 3, 4]
+    alg["add-alpha"] = True
+
+    with pytest.raises(
+        Exception,
+        match="clip: 'alpha' argument is not supported with 'window'",
+    ):
+        alg.Run()
