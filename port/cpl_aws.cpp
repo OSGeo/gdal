@@ -356,18 +356,22 @@ std::string CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp)
 /*                         VSIS3HandleHelper()                          */
 /************************************************************************/
 VSIS3HandleHelper::VSIS3HandleHelper(
-    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
-    const std::string &osSessionToken, const std::string &osEndpoint,
+    const std::string &osService, const std::string &osSecretAccessKey,
+    const std::string &osAccessKeyId, const std::string &osSessionToken,
+    const std::string &osS3SessionToken, const std::string &osEndpoint,
     const std::string &osRegion, const std::string &osRequestPayer,
     const std::string &osBucket, const std::string &osObjectKey, bool bUseHTTPS,
-    bool bUseVirtualHosting, AWSCredentialsSource eCredentialsSource)
+    bool bUseVirtualHosting, AWSCredentialsSource eCredentialsSource,
+    bool bIsDirectoryBucket)
     : m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, bUseHTTPS,
                        bUseVirtualHosting)),
-      m_osSecretAccessKey(osSecretAccessKey), m_osAccessKeyId(osAccessKeyId),
-      m_osSessionToken(osSessionToken), m_osEndpoint(osEndpoint),
+      m_osService(osService), m_osSecretAccessKey(osSecretAccessKey),
+      m_osAccessKeyId(osAccessKeyId), m_osSessionToken(osSessionToken),
+      m_osS3SessionToken(osS3SessionToken), m_osEndpoint(osEndpoint),
       m_osRegion(osRegion), m_osRequestPayer(osRequestPayer),
       m_osBucket(osBucket), m_osObjectKey(osObjectKey), m_bUseHTTPS(bUseHTTPS),
       m_bUseVirtualHosting(bUseVirtualHosting),
+      m_bIsDirectoryBucket(bIsDirectoryBucket),
       m_eCredentialsSource(eCredentialsSource)
 {
     VSIS3UpdateParams::UpdateHandleFromMap(this);
@@ -2097,10 +2101,6 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     if (!osEndpoint.empty() && osEndpoint.back() == '/')
         osEndpoint.pop_back();
 
-    if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
-    {
-        osEndpoint = "s3." + osRegion + ".amazonaws.com";
-    }
     const std::string osRequestPayer = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_REQUEST_PAYER", "");
     std::string osBucket;
@@ -2111,6 +2111,44 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
     {
         return nullptr;
     }
+
+    // Detect if this is a directory bucket
+    // Cf https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html
+    std::string osZoneId;
+    constexpr const char *DIR_BUCKET_SUFFIX = "--x-s3";
+    if (osBucket.size() > strlen(DIR_BUCKET_SUFFIX) &&
+        cpl::ends_with(osBucket, DIR_BUCKET_SUFFIX))
+    {
+        const auto posEndZoneId = osBucket.size() - strlen(DIR_BUCKET_SUFFIX);
+        auto posZoneId = osBucket.rfind("--", posEndZoneId - 1);
+        if (posZoneId != std::string::npos)
+        {
+            posZoneId += strlen("--");
+            osZoneId = osBucket.substr(posZoneId, posEndZoneId - posZoneId);
+        }
+    }
+
+    std::string osService = "s3";
+
+    if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
+    {
+        if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                             "LIST_DIRECTORY_BUCKETS", "NO")))
+        {
+            osService = "s3express";
+            osEndpoint = "s3express-control." + osRegion + ".amazonaws.com";
+        }
+        else if (!osZoneId.empty())
+        {
+            osEndpoint =
+                "s3express-" + osZoneId + "." + osRegion + ".amazonaws.com";
+        }
+        else
+        {
+            osEndpoint = "s3." + osRegion + ".amazonaws.com";
+        }
+    }
+
     const bool bUseHTTPS =
         bForceHTTPS ||
         (!bForceHTTP && CPLTestBool(VSIGetPathSpecificOption(
@@ -2122,10 +2160,14 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
         VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_VIRTUAL_HOSTING",
                                  bIsValidNameForVirtualHosting ? "TRUE"
                                                                : "FALSE")));
-    return new VSIS3HandleHelper(
-        osSecretAccessKey, osAccessKeyId, osSessionToken, osEndpoint, osRegion,
-        osRequestPayer, osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting,
-        eCredentialsSource);
+    const std::string osS3SessionToken = VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AWS_S3SESSION_TOKEN", "");
+
+    return new VSIS3HandleHelper(osService, osSecretAccessKey, osAccessKeyId,
+                                 osSessionToken, osS3SessionToken, osEndpoint,
+                                 osRegion, osRequestPayer, osBucket,
+                                 osObjectKey, bUseHTTPS, bUseVirtualHosting,
+                                 eCredentialsSource, !osZoneId.empty());
 }
 
 /************************************************************************/
@@ -2283,6 +2325,12 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
         psHeaders =
             curl_slist_append(psHeaders, CPLSPrintf("X-Amz-Security-Token: %s",
                                                     m_osSessionToken.c_str()));
+
+    if (!m_osS3SessionToken.empty())
+        psHeaders = curl_slist_append(psHeaders,
+                                      CPLSPrintf("x-amz-s3session-token: %s",
+                                                 m_osS3SessionToken.c_str()));
+
     if (!m_osRequestPayer.empty())
         psHeaders =
             curl_slist_append(psHeaders, CPLSPrintf("x-amz-request-payer: %s",
@@ -2291,7 +2339,7 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
         m_osSecretAccessKey.empty()
             ? std::string()
             : CPLGetAWS_SIGN4_Authorization(
-                  m_osSecretAccessKey, m_osAccessKeyId, m_osRegion, "s3",
+                  m_osSecretAccessKey, m_osAccessKeyId, m_osRegion, m_osService,
                   osVerb, psHeaders, osHost,
                   m_bUseVirtualHosting
                       ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str()
