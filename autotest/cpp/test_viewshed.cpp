@@ -381,11 +381,11 @@ TEST(Viewshed, simple_height)
 
     std::array<double, xlen * ylen> observable
     {
-        4, 2, 0, 4, 8,
+        4, 2, 1, 4, 8,
         3, 2, 0, 4, 3,
-        2, 1, 0, -1, -2,
+        2, 1, 0, -1, -1,
         4, 3, 0, 2, 1,
-        6, 3, 0, 2, 4
+        6, 3, 0, 3, 4
     };
     // clang-format on
 
@@ -423,11 +423,7 @@ TEST(Viewshed, simple_height)
                                     ylen, GDT_Float64, 0, 0, nullptr);
         EXPECT_EQ(err, CE_None);
 
-        // DEM values are observable values clamped at 0. Not sure why.
         std::array<double, xlen *ylen> expected = observable;
-        for (double &d : expected)
-            d = std::max(0.0, d);
-
         // Double equality is fine here as all the values are small integers.
         EXPECT_EQ(dem, expected);
     }
@@ -489,18 +485,18 @@ TEST(Viewshed, dem_vs_ground)
             EXPECT_DOUBLE_EQ(out[i], dem[i]);
     };
 
-    // Input / Observer / Minimum expected above ground / Minimum expected above zero
+    // Input / Observer / Minimum expected above ground / Minimum expected  above zero (DEM)
     run({0, 0, 0, 1, 0, 0, 0, 0}, {2, 0}, {0, 0, 0, 0, 2, 3, 4, 5},
         {0, 0, 0, 1, 2, 3, 4, 5});
     run({1, 1, 0, 1, 0, 1, 2, 2}, {3, 0}, {0, 0, 0, 0, 0, 0, 0, 1 / 3.0},
-        {1, 0, 0, 1, 0, 0, 1, 7 / 3.0});
+        {1, 1, 0, 1, 0, 1, 2, 7 / 3.0});
     run({0, 0, 0, 1, 1, 0, 0, 0}, {0, 0},
         {0, 0, 0, 0, 1 / 3.0, 5 / 3.0, 6 / 3.0, 7 / 3.0},
-        {0, 0, 0, 0, 4 / 3.0, 5 / 3.0, 6 / 3.0, 7 / 3.0});
+        {0, 0, 0, 1, 4 / 3.0, 5 / 3.0, 6 / 3.0, 7 / 3.0});
     run({0, 0, 1, 2, 3, 4, 5, 6}, {0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 3 / 2.0, 8 / 3.0, 15 / 4.0, 24 / 5.0, 35 / 6.0});
+        {0, 0, 1, 2, 3, 4, 5, 6});
     run({0, 0, 1, 1, 3, 4, 5, 4}, {0, 0}, {0, 0, 0, .5, 0, 0, 0, 11 / 6.0},
-        {0, 0, 0, 3 / 2.0, 2, 15 / 4.0, 24 / 5.0, 35 / 6.0});
+        {0, 0, 1, 1.5, 3, 4, 5, 35 / 6.0});
 }
 
 // Test an observer to the right of the raster.
@@ -530,8 +526,8 @@ TEST(Viewshed, oor_right)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            16 / 3.0, 29 / 6.0, 13 / 3.0, 1, 1,
-            3,        2.5,      4 / 3.0,  0, 0,
+            16 / 3.0, 29 / 6.0, 13 / 3.0, 4, 1,
+            3,        2.5,      2,  1, 0,
             13 / 3.0, 23 / 6.0, 10 / 3.0, 3, 3
         };
         // clang-format on
@@ -553,7 +549,7 @@ TEST(Viewshed, oor_right)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            26 / 5.0, 17 / 4.0, 11 / 3.0, .5,  1,
+            26 / 5.0, 17 / 4.0, 11 / 3.0, 4,  1,
             6,        4.5,      3,        1.5, 0,
             9,        7.5,      6,        4.5, 3
         };
@@ -591,9 +587,9 @@ TEST(Viewshed, oor_left)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            1, 1, 2, 2.5, 4.5,
-            0, 0, 0, 2.5, 3,
-            1, 1, 1, 1.5, 3.5
+            1, 2, 2, 4, 4.5,
+            0, 0, 2, 2.5, 3,
+            1, 1, 1, 3, 3.5
         };
         // clang-format on
 
@@ -614,9 +610,9 @@ TEST(Viewshed, oor_left)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            1, .5,  5 / 3.0, 2.25, 4.2,
-            0, .5,  1,       2.5,  3.1,
-            1, 1.5, 2,       2.5,  3.6
+            1, 2,   5 / 3.0, 4,   4.2,
+            0, .5,  2,       2.5, 3.1,
+            1, 1.5, 2,       3,   3.6
         };
         // clang-format on
 
@@ -654,7 +650,7 @@ TEST(Viewshed, oor_above)
         std::array<double, xlen * ylen> expected
         {
             1,   2,       0,       4,        1,
-            2.5, 2,       0,       4,        4.5,
+            2.5, 2,       2,       4,        4.5,
             3,   8 / 3.0, 8 / 3.0, 14 / 3.0, 17 / 3.0
         };
         // clang-format on
@@ -678,7 +674,7 @@ TEST(Viewshed, oor_above)
         {
             1, 2,   0,   4,    1,
             0, 1.5, 2.5, 1.25, 3.15,
-            1, 0.5, 2,   3,    2.2
+            1, 0.5, 2,   3,    3
         };
         // clang-format on
 
@@ -715,9 +711,9 @@ TEST(Viewshed, oor_below)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            1 / 3.0, 2 / 3.0, 8 / 3.0, 11 / 3.0, 5,
-            0.5,     0,       0,       3,        4.5,
-            1,       0,       0,       3,        3
+            1,    2,  8 / 3.0,  4,  5,
+            0.5,  0,  2,        3,  4.5,
+            1,    0,  0,        3,  3
         };
         // clang-format on
 
@@ -738,7 +734,7 @@ TEST(Viewshed, oor_below)
         // clang-format off
         std::array<double, xlen * ylen> expected
         {
-            4.2,  6,    6,   1.5, 1,
+            4.2,  6,    6,   4,   1,
             1.35, 2.25, 4.5, 4.5, 0,
             1,    0,    0,   3,   3
         };
