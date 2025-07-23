@@ -137,7 +137,8 @@ static pcre2_code *re_compile_with_cache(sqlite3_context *ctx, const char *re)
 /*                         OGRSQLiteREGEXPFunction()                    */
 /************************************************************************/
 
-static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
+static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx,
+                                    [[maybe_unused]] int argc,
                                     sqlite3_value **argv)
 {
     CPLAssert(argc == 2);
@@ -146,13 +147,14 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
     if (!re)
     {
-        sqlite3_result_error(ctx, "no regexp", -1);
+        CPLDebug("SQLITE", "REGEXP: no regexp");
+        sqlite3_result_null(ctx);
         return;
     }
 
     if (sqlite3_value_type(argv[1]) == SQLITE_NULL)
     {
-        sqlite3_result_int(ctx, 0);
+        sqlite3_result_null(ctx);
         return;
     }
 
@@ -160,7 +162,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     if (!str)
     {
-        sqlite3_result_error(ctx, "no string", -1);
+        CPLDebug("SQLITE", "REGEXP: no string");
+        sqlite3_result_null(ctx);
         return;
     }
 
@@ -207,7 +210,8 @@ constexpr int CACHE_SIZE = 16;
 /*                         OGRSQLiteREGEXPFunction()                    */
 /************************************************************************/
 
-static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
+static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx,
+                                    [[maybe_unused]] int argc,
                                     sqlite3_value **argv)
 {
     CPLAssert(argc == 2);
@@ -216,13 +220,14 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
     if (!re)
     {
-        sqlite3_result_error(ctx, "no regexp", -1);
+        CPLDebug("SQLITE", "REGEXP: no regexp");
+        sqlite3_result_null(ctx);
         return;
     }
 
     if (sqlite3_value_type(argv[1]) == SQLITE_NULL)
     {
-        sqlite3_result_int(ctx, 0);
+        sqlite3_result_null(ctx);
         return;
     }
 
@@ -230,7 +235,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     if (!str)
     {
-        sqlite3_result_error(ctx, "no string", -1);
+        CPLDebug("SQLITE", "REGEXP: no string");
+        sqlite3_result_null(ctx);
         return;
     }
 
