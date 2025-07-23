@@ -5311,6 +5311,41 @@ def test_tiff_write_123():
 
 
 ###############################################################################
+# Test implicit photometric interpretation
+
+
+def test_tiff_write_RGBNir(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "test_tiff_write_RGBNir.tif"
+    ds = gdaltest.tiff_drv.Create(out_filename, 1, 1, 4, gdal.GDT_Int16)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_NIRBand)
+
+    errors = []
+
+    def handler(lvl, no, msg):
+        errors.append({"level": lvl, "number": no, "message": msg})
+
+    with gdaltest.error_handler(handler):
+        ds.Close()
+
+    assert len(errors) == 0
+
+    statBuf = gdal.VSIStatL(
+        str(out_filename) + ".aux.xml",
+        gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG,
+    )
+    assert statBuf is None, "did not expect PAM file"
+    src_ds = gdal.Open(out_filename)
+    assert src_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert src_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert src_ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert src_ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_NIRBand
+
+
+###############################################################################
 # Test error cases with palette creation
 
 
