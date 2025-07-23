@@ -4126,6 +4126,7 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
 
 @gdaltest.enable_exceptions()
 @pytest.mark.require_driver("ARROW")
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
 def test_ogr_parquet_vsi_arrow_file_system():
 
     version = int(
