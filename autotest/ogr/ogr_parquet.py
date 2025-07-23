@@ -4215,6 +4215,7 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
 
 @gdaltest.enable_exceptions()
 @pytest.mark.require_driver("ARROW")
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
 def test_ogr_parquet_vsi_arrow_file_system():
 
     version = int(
@@ -4398,17 +4399,18 @@ def test_ogr_parquet_read_parquet_geometry(filename, crs_name):
     lyr.SetSpatialFilterRect(xmax + 1, ymin, xmax + 2, ymax)
     assert lyr.GetFeatureCount() == 0
 
-    ds = ogr.Open("PARQUET:data/parquet/" + filename)
-    lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == ogr.wkbUnknown
-    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
-    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
-    assert lyr.GetSpatialRef().GetName() == crs_name
+    if _has_arrow_dataset():
+        ds = ogr.Open("PARQUET:data/parquet/" + filename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbUnknown
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 0
+        assert lyr.GetSpatialRef().GetName() == crs_name
 
-    if "crs-geography" in filename:
-        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
-    else:
-        assert lyr.GetMetadataItem("EDGES") is None
+        if "crs-geography" in filename:
+            assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+        else:
+            assert lyr.GetMetadataItem("EDGES") is None
 
 
 ###############################################################################

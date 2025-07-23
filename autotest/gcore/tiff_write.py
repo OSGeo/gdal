@@ -10641,18 +10641,9 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
 ###############################################################################
 # Test JXL compression
 @pytest.mark.require_creation_option("GTiff", "JXL")
-def test_tiff_write_jpegxl_band_combinations():
-
-    tmpfilename = "/vsimem/test_tiff_write_jpegxl_band_combinations.tif"
-
-    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
-    for b in range(6):
-        bnd = src_ds.GetRasterBand(b + 1)
-        bnd.Fill(b + 1)
-        bnd.FlushCache()
-        assert bnd.Checksum() != 0, "bnd.Fill failed"
-
-    cilists = [
+@pytest.mark.parametrize(
+    "cilist",
+    [
         [gdal.GCI_RedBand],
         [gdal.GCI_RedBand, gdal.GCI_Undefined],
         [gdal.GCI_RedBand, gdal.GCI_AlphaBand],
@@ -10687,99 +10678,89 @@ def test_tiff_write_jpegxl_band_combinations():
             gdal.GCI_Undefined,
             gdal.GCI_BlueBand,
         ],
-    ]
-
-    types = [
-        gdal.GDT_Byte,
-        gdal.GDT_UInt16,
-        gdal.GDT_Float32,
-    ]
-
-    creationOptions = [
+    ],
+)
+@pytest.mark.parametrize("dtype", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Float32])
+@pytest.mark.parametrize(
+    "copts",
+    [
         ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=BAND"],
         ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=PIXEL"],
-    ]
+    ],
+)
+def test_tiff_write_jpegxl_band_combinations(cilist, dtype, copts, tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_tiff_write_jpegxl_band_combinations.tif"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
+    for b in range(6):
+        bnd = src_ds.GetRasterBand(b + 1)
+        if dtype == gdal.GDT_Float32:
+            # using bnd.Fill(b+1) fails since https://github.com/libjxl/libjxl/issues/4358
+            bnd.Fill((b + 1) / 6.0)
+        else:
+            bnd.Fill(b + 1)
+        bnd.FlushCache()
 
     jpegxl_drv = gdal.GetDriverByName("JPEGXL")
 
-    for dtype in types:
-        for copts in creationOptions:
-            for cilist in cilists:
-                bandlist = [idx + 1 for idx in range(len(cilist))]
-                vrtds = gdal.Translate(
-                    "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+    bandlist = [idx + 1 for idx in range(len(cilist))]
+    vrtds = gdal.Translate(
+        "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+    )
+    for idx, ci in enumerate(cilist):
+        vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
+
+    ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    for idx in range(len(cilist)):
+        gdal.ErrorReset()
+        got_cs = ds.GetRasterBand(idx + 1).Checksum()
+        assert gdal.GetLastErrorMsg() == ""
+        assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+            dtype,
+            copts,
+            cilist,
+            idx,
+        )
+
+    # Check that color interpretation inside JXL data is properly encoded
+    if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
+        jxl_offset = ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF")
+        jxl_ds = gdal.Open("/vsisubfile/%s_-1,%s" % (jxl_offset, tmpfilename))
+        assert jxl_ds
+        for idx in range(len(cilist)):
+            got_cs = jxl_ds.GetRasterBand(idx + 1).Checksum()
+            assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+                dtype,
+                copts,
+                cilist,
+                idx,
+            )
+
+        if (
+            vrtds.RasterCount >= 3
+            and vrtds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+            and vrtds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+            and vrtds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        ):
+            assert jxl_ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+            assert (
+                jxl_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+            )
+            assert jxl_ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+        # Check that alpha band is preserved
+        for idx in range(len(cilist)):
+            if (
+                vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
+                == gdal.GCI_AlphaBand
+            ):
+                assert (
+                    jxl_ds.GetRasterBand(idx + 1).GetColorInterpretation()
+                    == gdal.GCI_AlphaBand
                 )
-                for idx, ci in enumerate(cilist):
-                    vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
-
-                ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
-                ds = None
-                # print(dtype, copts, cilist)
-                ds = gdal.Open(tmpfilename)
-                for idx in range(len(cilist)):
-                    gdal.ErrorReset()
-                    got_cs = ds.GetRasterBand(idx + 1).Checksum()
-                    assert gdal.GetLastErrorMsg() == ""
-                    assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
-                        dtype,
-                        copts,
-                        cilist,
-                        idx,
-                    )
-
-                # Check that color interpretation inside JXL data is properly encoded
-                if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
-                    jxl_offset = ds.GetRasterBand(1).GetMetadataItem(
-                        "BLOCK_OFFSET_0_0", "TIFF"
-                    )
-                    jxl_ds = gdal.Open(
-                        "/vsisubfile/%s_-1,%s" % (jxl_offset, tmpfilename)
-                    )
-                    assert jxl_ds
-                    for idx in range(len(cilist)):
-                        got_cs = jxl_ds.GetRasterBand(idx + 1).Checksum()
-                        assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
-                            dtype,
-                            copts,
-                            cilist,
-                            idx,
-                        )
-
-                    if (
-                        vrtds.RasterCount >= 3
-                        and vrtds.GetRasterBand(1).GetColorInterpretation()
-                        == gdal.GCI_RedBand
-                        and vrtds.GetRasterBand(2).GetColorInterpretation()
-                        == gdal.GCI_GreenBand
-                        and vrtds.GetRasterBand(3).GetColorInterpretation()
-                        == gdal.GCI_BlueBand
-                    ):
-                        assert (
-                            jxl_ds.GetRasterBand(1).GetColorInterpretation()
-                            == gdal.GCI_RedBand
-                        )
-                        assert (
-                            jxl_ds.GetRasterBand(2).GetColorInterpretation()
-                            == gdal.GCI_GreenBand
-                        )
-                        assert (
-                            jxl_ds.GetRasterBand(3).GetColorInterpretation()
-                            == gdal.GCI_BlueBand
-                        )
-                    # Check that alpha band is preserved
-                    for idx in range(len(cilist)):
-                        if (
-                            vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
-                            == gdal.GCI_AlphaBand
-                        ):
-                            assert (
-                                jxl_ds.GetRasterBand(idx + 1).GetColorInterpretation()
-                                == gdal.GCI_AlphaBand
-                            )
-
-                vrtds = None
-                ds = None
-                gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
