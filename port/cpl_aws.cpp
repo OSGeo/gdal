@@ -1509,14 +1509,11 @@ static bool GetTemporaryCredentialsForRole(
 /************************************************************************/
 
 // Issue a GetRoleCredentials request
-static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
-                                          const std::string &osSSOSession,
-                                          const std::string &osSSOAccountID,
-                                          const std::string &osSSORoleName,
-                                          std::string &osTempSecretAccessKey,
-                                          std::string &osTempAccessKeyId,
-                                          std::string &osTempSessionToken,
-                                          std::string &osExpirationEpochInMS)
+static bool GetTemporaryCredentialsForSSO(
+    const std::string &osSSOStartURL, const std::string &osSSOSession,
+    const std::string &osSSOAccountID, const std::string &osSSORoleName,
+    std::string &osTempSecretAccessKey, std::string &osTempAccessKeyId,
+    std::string &osTempSessionToken, std::string &osExpirationEpochInMS)
 {
     std::string osSSOFilename = GetAWSRootDirectory();
     osSSOFilename += GetDirSeparator();
@@ -1589,11 +1586,11 @@ static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
 
     const std::string osRegion = oRoot.GetString("region", "us-east-1");
     const std::string osDefaultHost("portal.sso." + osRegion +
-        ".amazonaws.com");
+                                    ".amazonaws.com");
 
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
-    const std::string osHost(CPLGetConfigOption(
-        "CPL_AWS_SSO_ENDPOINT", osDefaultHost.c_str()));
+    const std::string osHost(
+        CPLGetConfigOption("CPL_AWS_SSO_ENDPOINT", osDefaultHost.c_str()));
 
     const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost +
                               osResourceAndQueryString;
@@ -1863,7 +1860,7 @@ bool VSIS3HandleHelper::GetConfiguration(
                         osRegionSP, osCredentialsSP, osRoleArnSP,
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
                         osRoleSessionNameSP, osWebIdentityTokenFile,
-                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP, 
+                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP,
                         osSSOSession))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(

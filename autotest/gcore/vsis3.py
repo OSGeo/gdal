@@ -26,6 +26,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_curl()
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -65,9 +66,11 @@ general_s3_options = {
 def aws_test_config_as_config_options_or_credentials(request):
     options = general_s3_options
 
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if request.param else gdaltest.credentials("/vsis3/", options):
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if request.param
+        else gdaltest.credentials("/vsis3/", options)
+    ):
         yield request.param
 
 
@@ -84,7 +87,6 @@ def aws_test_config():
 # set AWS_S3_ENDPOINT for tests that are using it.
 @pytest.fixture(scope="module")
 def webserver_launch():
-
     process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
 
     yield process, port
@@ -94,7 +96,6 @@ def webserver_launch():
 
 @pytest.fixture(scope="function")
 def webserver_port(webserver_launch):
-
     webserver_process, webserver_port = webserver_launch
 
     try:
@@ -112,7 +113,6 @@ def webserver_port(webserver_launch):
 
 
 def test_vsis3_init(aws_test_config):
-
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -126,7 +126,6 @@ def test_vsis3_init(aws_test_config):
 
 
 def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials):
-
     options = {
         "AWS_S3_ENDPOINT": "https://s3.amazonaws.com",
         "AWS_NO_SIGN_REQUEST": "YES",
@@ -138,10 +137,10 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
     vsis3_path = "/vsis3/" + bucket + "/" + obj
     url = "https://" + bucket + ".s3.us-east-1.amazonaws.com/" + obj
 
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/" + bucket, options
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials("/vsis3/" + bucket, options)
     ):
         actual_url = gdal.GetActualURL(vsis3_path)
         assert actual_url == url
@@ -179,10 +178,10 @@ def test_vsis3_sync_multithreaded_download(
         "AWS_VIRTUAL_HOSTING": "FALSE",
     }
     # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/cdn.proj.org", options
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials("/vsis3/cdn.proj.org", options)
     ):
         assert gdal.Sync(
             "/vsis3/cdn.proj.org/test_dummy",
@@ -251,7 +250,6 @@ def test_vsis3_sync_multithreaded_download_chunk_size(tmp_vsimem, aws_test_confi
 
 
 def test_vsis3_1(aws_test_config):
-
     # Missing AWS_SECRET_ACCESS_KEY
     with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}, thread_local=False):
         gdal.ErrorReset()
@@ -388,7 +386,6 @@ def get_s3_fake_bucket_resource_method_with_security_token(request):
 
 
 def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_port):
-
     gdal.VSICurlClearCache()
 
     signed_url = gdal.GetSignedURL("/vsis3/s3_fake_bucket/resource")
@@ -506,11 +503,15 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
 
     # Test with temporary credentials
-    with gdaltest.config_option(
-        "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN", thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/s3_fake_bucket_with_session_token",
-        {"AWS_SESSION_TOKEN": "AWS_SESSION_TOKEN"},
+    with (
+        gdaltest.config_option(
+            "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN", thread_local=False
+        )
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials(
+            "/vsis3/s3_fake_bucket_with_session_token",
+            {"AWS_SESSION_TOKEN": "AWS_SESSION_TOKEN"},
+        )
     ):
         with webserver.install_http_handler(handler):
             f = open_for_read("/vsis3/s3_fake_bucket_with_session_token/resource")
@@ -655,7 +656,6 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         gdal.VSIFCloseL(f)
 
     if data != "foo":
-
         if gdaltest.is_travis_branch("trusty"):
             pytest.skip("Skipped on trusty branch, but should be investigated")
 
@@ -789,8 +789,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     with webserver.install_http_handler(handler):
         with gdal.quiet_errors():
             f = open_for_read(
-                "/vsis3_streaming/s3_fake_bucket"
-                "/no_endpoint_in_PermanentRedirect_error"
+                "/vsis3_streaming/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error"
             )
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error>") >= 0
 
@@ -874,10 +873,13 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         "GET", "/s3_fake_bucket_with_requester_pays/resource", custom_method=method
     )
 
-    with gdaltest.config_option(
-        "AWS_REQUEST_PAYER", "requester", thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/s3_fake_bucket_with_requester_pays", {"AWS_REQUEST_PAYER": "requester"}
+    with (
+        gdaltest.config_option("AWS_REQUEST_PAYER", "requester", thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials(
+            "/vsis3/s3_fake_bucket_with_requester_pays",
+            {"AWS_REQUEST_PAYER": "requester"},
+        )
     ):
         with webserver.install_http_handler(handler):
             with gdal.quiet_errors():
@@ -1146,7 +1148,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     handler.add(
         "GET",
-        ("/s3_fake_bucket2/" "?delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F"),
+        ("/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F"),
         custom_method=method,
     )
 
@@ -1155,7 +1157,6 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             "/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin"
         )
     if f is None:
-
         if gdaltest.is_travis_branch("trusty"):
             pytest.skip("Skipped on trusty branch, but should be investigated")
 
@@ -1352,7 +1353,6 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         with gdaltest.config_option(
             "CPL_VSIL_CURL_NON_CACHED", config_option_value, thread_local=False
         ):
-
             handler = webserver.SequentialHandler()
             handler.add("GET", "/s3_non_cached/test.txt", 200, {}, "foo")
             handler.add("GET", "/s3_non_cached/test.txt", 200, {}, "foo")
@@ -1396,7 +1396,6 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         with gdaltest.config_option(
             "CPL_VSIL_CURL_NON_CACHED", config_option_value, thread_local=False
         ):
-
             handler = webserver.SequentialHandler()
             if config_option_value is None:
                 handler.add(
@@ -1955,7 +1954,6 @@ def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_p
 
 
 def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -2018,7 +2016,6 @@ def test_vsis3_opendir_from_prefix(aws_test_config, webserver_port):
         d = gdal.OpenDir("/vsis3/")
         assert d is not None
         try:
-
             entry = gdal.GetNextDirEntry(d)
             assert entry.name == "bucket1"
             assert entry.mode == 16384
@@ -2281,7 +2278,6 @@ def test_vsis3_4(aws_test_config, webserver_port):
 
 
 def test_vsis3_put_invalidate(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -2335,7 +2331,6 @@ def test_vsis3_put_invalidate(aws_test_config, webserver_port):
 
 
 def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -2363,8 +2358,9 @@ def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
     handler = webserver.SequentialHandler()
     handler.add("PUT", "/s3_fake_bucket3/test_put_invalidate.bin", 200)
     memfilename = str(tmp_vsimem / "tmp.bin")
-    with webserver.install_http_handler(handler), gdaltest.tempfile(
-        memfilename, b"barbaw"
+    with (
+        webserver.install_http_handler(handler),
+        gdaltest.tempfile(memfilename, b"barbaw"),
     ):
         gdal.CopyFile(memfilename, "/vsis3/s3_fake_bucket3/test_put_invalidate.bin")
 
@@ -2391,7 +2387,6 @@ def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
         {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
         thread_local=False,
     ):
-
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/put_with_retry.bin", "wb")
             assert f is not None
@@ -2519,7 +2514,6 @@ def test_vsis3_5(aws_test_config, webserver_port):
 
 
 def test_vsis3_unlink_batch(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add(
         "POST",
@@ -2686,7 +2680,6 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
 
 
 def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -2913,7 +2906,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
     )
     handler.add(
         "DELETE",
-        ("/s3_fake_bucket4/large_file_upload_part_403_error.bin" "?uploadId=my_id"),
+        ("/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploadId=my_id"),
         204,
     )
 
@@ -2981,7 +2974,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
     )
     handler.add(
         "DELETE",
-        ("/s3_fake_bucket4/large_file_abortmultipart_403_error.bin" "?uploadId=my_id"),
+        ("/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploadId=my_id"),
         403,
     )
 
@@ -3034,10 +3027,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
     )
     handler.add(
         "POST",
-        (
-            "/s3_fake_bucket4/large_file_completemultipart_403_error.bin"
-            "?uploadId=my_id"
-        ),
+        ("/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id"),
         403,
     )
 
@@ -3062,12 +3052,10 @@ def test_vsis3_6(aws_test_config, webserver_port):
 
 @pytest.mark.skipif(gdaltest.is_ci(), reason="randomly fails on CI")
 def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
-
     with gdaltest.config_options(
         {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
         thread_local=False,
     ):
-
         with gdaltest.config_option(
             "VSIS3_CHUNK_SIZE", "1", thread_local=False
         ):  # 1 MB
@@ -3140,7 +3128,6 @@ def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
 
 def test_vsis3_abort_pending_uploads(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -3191,7 +3178,6 @@ def test_vsis3_abort_pending_uploads(aws_test_config, webserver_port):
 
 
 def test_vsis3_7(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add("GET", "/s3_bucket_test_mkdir/dir/", 404, {"Connection": "close"})
     handler.add(
@@ -3241,7 +3227,7 @@ def test_vsis3_7(aws_test_config, webserver_port):
     handler.add("GET", "/s3_bucket_test_mkdir/dir_nonempty/", 416)
     handler.add(
         "GET",
-        ("/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100" "&prefix=dir_nonempty%2F"),
+        ("/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=100&prefix=dir_nonempty%2F"),
         200,
         {"Content-type": "application/xml"},
         """<?xml version="1.0" encoding="UTF-8"?>
@@ -3361,7 +3347,6 @@ def test_vsis3_7(aws_test_config, webserver_port):
 
 
 def test_vsis3_8(aws_test_config, webserver_port):
-
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -3401,7 +3386,6 @@ def test_vsis3_8(aws_test_config, webserver_port):
 
 
 def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     options = ["SYNC_STRATEGY=ETAG"]
@@ -3558,7 +3542,6 @@ def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
 
 
 def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
-
     options = ["SYNC_STRATEGY=TIMESTAMP"]
 
     gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
@@ -3651,7 +3634,6 @@ def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
 
 @gdaltest.enable_exceptions()
 def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
-
     gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "x" * 30000)
 
     # S3 to local: S3 file is older -> download
@@ -3688,9 +3670,10 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
     # Do not use /vsicurl_streaming/ as source, otherwise errors may be
     # emitted in worker thread, which isn't properly handled (should ideally
     # be fixed)
-    with gdal.config_option(
-        "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "NO"
-    ), webserver.install_http_handler(handler):
+    with (
+        gdal.config_option("VSIS3_COPYFILE_USE_STREAMING_SOURCE", "NO"),
+        webserver.install_http_handler(handler),
+    ):
         with pytest.raises(
             Exception,
             match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 0 bytes were copied whereas 30000 were expected",
@@ -3703,7 +3686,6 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
 
 
 def test_vsis3_sync_overwrite(tmp_vsimem, aws_test_config, webserver_port):
-
     options = ["SYNC_STRATEGY=OVERWRITE"]
 
     gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
@@ -3758,7 +3740,6 @@ def test_vsis3_sync_overwrite(tmp_vsimem, aws_test_config, webserver_port):
 
 
 def test_vsis3_sync_implicit_directories(tmp_path, aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -3816,7 +3797,6 @@ def test_vsis3_sync_implicit_directories(tmp_path, aws_test_config, webserver_po
 
 
 def test_vsis3_sync_source_target_in_vsis3(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add(
@@ -3865,7 +3845,6 @@ def test_vsis3_sync_source_target_in_vsis3(aws_test_config, webserver_port):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
 def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp_path):
-
     options = ["SYNC_STRATEGY=OVERWRITE"]
 
     tmp_path_str = str(tmp_path)
@@ -3995,7 +3974,6 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
 
 
 def test_vsis3_fake_rename(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add(
@@ -4029,7 +4007,6 @@ def test_vsis3_fake_rename(aws_test_config, webserver_port):
 
 
 def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add("GET", "/test/source_dir", 404)
@@ -4095,7 +4072,6 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
 
 
 def test_vsis3_fake_rename_on_existing_dir(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add(
@@ -4118,7 +4094,6 @@ def test_vsis3_fake_rename_on_existing_dir(aws_test_config, webserver_port):
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     def cbk(pct, _, tab):
@@ -4203,7 +4178,6 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     gdal.Mkdir(tmp_vsimem / "test", 0)
@@ -4255,7 +4229,6 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
 def test_vsis3_CopyFileRestartable_no_error(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = str(tmp_vsimem / "foo")
@@ -4299,7 +4272,6 @@ def test_vsis3_CopyFileRestartable_no_error(
 def test_vsis3_CopyFileRestartable_multithreaded(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = str(tmp_vsimem / "foo")
@@ -4357,7 +4329,6 @@ def test_vsis3_CopyFileRestartable_multithreaded(
 def test_vsis3_CopyFileRestartable_with_restart(
     tmp_vsimem, aws_test_config, webserver_port, failure_reason
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = str(tmp_vsimem / "foo")
@@ -4456,7 +4427,6 @@ def test_vsis3_CopyFileRestartable_with_restart(
 def test_vsis3_CopyFileRestartable_src_file_does_not_exist(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     with gdal.quiet_errors():
@@ -4474,7 +4444,6 @@ def test_vsis3_CopyFileRestartable_src_file_does_not_exist(
 def test_vsis3_CopyFileRestartable_InitiateMultipartUpload_failed(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = str(tmp_vsimem / "foo")
@@ -4486,7 +4455,10 @@ def test_vsis3_CopyFileRestartable_InitiateMultipartUpload_failed(
     handler.add("POST", "/test_bucket/foo?uploads", 400)
     with webserver.install_http_handler(handler), gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
+            srcfilename,
+            dstfilename,
+            None,
+            ["NUM_THREADS=1"],  # input payload
         )
     assert ret_code == -1
 
@@ -4498,7 +4470,6 @@ def test_vsis3_CopyFileRestartable_InitiateMultipartUpload_failed(
 def test_vsis3_CopyFileRestartable_CompleteMultipartUpload_failed(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = str(tmp_vsimem / "foo")
@@ -4530,7 +4501,10 @@ def test_vsis3_CopyFileRestartable_CompleteMultipartUpload_failed(
 
     with webserver.install_http_handler(handler), gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
+            srcfilename,
+            dstfilename,
+            None,
+            ["NUM_THREADS=1"],  # input payload
         )
     assert ret_code == -1
 
@@ -4571,7 +4545,6 @@ def test_vsis3_CopyFileRestartable_CompleteMultipartUpload_failed(
 def test_vsis3_CopyFileRestartable_errors_input_payload(
     tmp_vsimem, aws_test_config, key, value, error_msg
 ):
-
     srcfilename = str(tmp_vsimem / "foo")
     gdal.FileFromMemBuffer(srcfilename, "foo\n")
 
@@ -4608,7 +4581,6 @@ def test_vsis3_CopyFileRestartable_errors_input_payload(
 def test_vsis3_CopyFileRestartable_server_side(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     srcfilename = "/vsis3/test_bucket/src"
@@ -4634,7 +4606,6 @@ def test_vsis3_CopyFileRestartable_server_side(
 
 
 def test_vsis3_metadata(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     # Read HEADERS domain
@@ -4727,7 +4698,6 @@ def test_vsis3_metadata(aws_test_config, webserver_port):
 
 
 def test_vsis3_no_useless_requests(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -4755,7 +4725,6 @@ def test_vsis3_no_useless_requests(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     with gdal.quiet_errors():
@@ -4783,7 +4752,6 @@ def test_vsis3_random_write(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     with gdaltest.config_option(
@@ -4804,7 +4772,6 @@ def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     with gdaltest.config_option(
@@ -4827,7 +4794,6 @@ def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -4858,7 +4824,6 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
-
     gdal.VSICurlClearCache()
 
     with gdal.quiet_errors():
@@ -4883,8 +4848,11 @@ def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
     )
     handler.add("GET", "/random_write/test.bin", 200, {}, "f")
     handler.add("PUT", "/random_write/test.bin", 200, {}, expected_body=b"foo")
-    with webserver.install_http_handler(handler), gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with (
+        webserver.install_http_handler(handler),
+        gdaltest.config_option(
+            "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+        ),
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
         assert f
@@ -4900,7 +4868,6 @@ def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
 def test_vsis3_random_write_on_existing_file_that_does_not_exist(
     aws_test_config, webserver_port
 ):
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -4916,8 +4883,11 @@ def test_vsis3_random_write_on_existing_file_that_does_not_exist(
             </ListBucketResult>
             """,
     )
-    with webserver.install_http_handler(handler), gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with (
+        webserver.install_http_handler(handler),
+        gdaltest.config_option(
+            "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+        ),
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
         assert f is None
@@ -4928,7 +4898,6 @@ def test_vsis3_random_write_on_existing_file_that_does_not_exist(
 
 
 def test_vsis3_read_credentials_file(tmp_vsimem, aws_test_config, webserver_port):
-
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -5151,7 +5120,6 @@ aws_secret_access_key = bar
 def test_vsis3_read_credentials_config_file_inconsistent(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -5543,7 +5511,6 @@ def test_vsis3_read_credentials_ec2_imdsv1(aws_test_config, webserver_port):
 # cached credentials
 @pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
 def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
-
     options = {
         "CPL_AWS_CREDENTIALS_FILE": "",
         "AWS_CONFIG_FILE": "",
@@ -5802,7 +5769,6 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN(
 def test_vsis3_read_credentials_assumed_role(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     if webserver_port == 8080:
         expected_signature1 = (
             "3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4"
@@ -5991,7 +5957,6 @@ role_session_name = my_role_session_name
 def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_file(
     tmp_vsimem, aws_test_config, webserver_port
 ):
-
     if webserver_port == 8080:
         expected_signature1 = (
             "d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403"
@@ -6187,7 +6152,6 @@ source_profile = foo
 
 
 def test_vsis3_read_credentials_sso(tmp_vsimem, aws_test_config, webserver_port):
-
     if webserver_port != 8080:
         pytest.skip("only works for webserver on port 8080")
 
@@ -6218,7 +6182,7 @@ region = eu-east-1
     )
 
     gdal.FileFromMemBuffer(
-        tmp_vsimem / "sso" / "cache" / "327c3fda87ce286848a574982ddd0b7c7487f816.json",
+        tmp_vsimem / "sso" / "cache" / "0ad374308c5a4e22f723adf10145eafad7c4031c.json",
         '{"startUrl": "https://example.com", "region": "us-east-1", "accessToken": "sso-accessToken", "expiresAt": "9999-01-01T00:00:00Z"}',
     )
 
@@ -6354,7 +6318,6 @@ def test_vsis3_DISABLE_READDIR_ON_OPEN_option(aws_test_config, webserver_port):
 
 
 def test_vsis3_MultipartUpload(aws_test_config, webserver_port):
-
     # Test MultipartUploadGetCapabilities()
     info = gdal.MultipartUploadGetCapabilities("/vsis3/")
     assert info.non_sequential_upload_supported
@@ -6461,7 +6424,6 @@ def test_vsis3_MultipartUpload(aws_test_config, webserver_port):
 
 
 def test_vsis3_MultipartUpload_unauthenticated():
-
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -6487,7 +6449,6 @@ def test_vsis3_MultipartUpload_unauthenticated():
 
 
 def test_vsis3_extra_1():
-
     credentials_filename = (
         gdal.GetConfigOption("HOME", gdal.GetConfigOption("USERPROFILE", ""))
         + "/.aws/credentials"
