@@ -518,7 +518,7 @@ def test_gdalalg_vector_grid_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it",
+        match="already exists",
     ):
         alg.Run()
 

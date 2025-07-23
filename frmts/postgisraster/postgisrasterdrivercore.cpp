@@ -185,6 +185,7 @@ void PostGISRasterDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "PostGIS Raster driver");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "PG:");
 
     poDriver->pfnIdentify = PostGISRasterDriverIdentify;
     poDriver->pfnGetSubdatasetInfoFunc = PostGISRasterDriverGetSubdatasetInfo;
