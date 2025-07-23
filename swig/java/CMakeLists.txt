@@ -5,6 +5,14 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 
+# Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
+# http://trac.osgeo.org/gdal/changeset/16006
+#
+# https://swig.org//Doc4.3/Java.html#Java_compiling_dynamic
+if (NOT MSVC)
+  add_compile_options("-fno-strict-aliasing")
+endif()
+
 list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
    ${PROJECT_SOURCE_DIR}/swig/include/java/callback.i
    ${PROJECT_SOURCE_DIR}/swig/include/java/gdalconst_java.i
