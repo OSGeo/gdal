@@ -5025,3 +5025,87 @@ def test_ogr_gml_write_error(tmp_vsimem):
     with pytest.raises(Exception, match="Could not write line"):
         lyr.CreateFeature(f)
     ds.Close()
+
+
+# Test open option SKIP_CORRUPTED_FEATURES
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gml_skip_corrupted_features(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml")
+    gdal.FileFromMemBuffer(
+        filename,
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation=""
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:boundedBy>
+    <gml:Box>
+      <gml:coord><gml:X>0</gml:X><gml:Y>-5</gml:Y></gml:coord>
+      <gml:coord><gml:X>8</gml:X><gml:Y>3</gml:Y></gml:coord>
+    </gml:Box>
+  </gml:boundedBy>
+
+  <gml:featureMember>
+    <ogr:solids fid="solids.1">
+    <boundary>
+            <ClosureSurface>
+              <lod2MultiSurface>
+                <gml:MultiSurface>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="UUID_da310e81-cd4a-4167-94a0-3ea04f39ebd0">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList srsDimension="3">646102.957 5667459.848 146.668 646102.957 5667459.848 142.56 646107.611 5667459.649 142.56 646107.611 5667459.649 146.696 646102.957 5667459.848 146.668</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </lod2MultiSurface>
+            </ClosureSurface>
+          </boundary>
+      <gml:Solid>
+        <gml:exterior>
+          <gml:Shell>
+            <gml:surfaceMember xlink:href="#UUID_da310e81-cd4a-4167-94a0-3ea04f39ebd0"/>
+          </gml:Shell>
+        </gml:exterior>
+      </gml:Solid>
+    </ogr:solids>
+  </gml:featureMember>
+</ogr:FeatureCollection>""",
+    )
+
+    with gdal.config_option("GML_SKIP_CORRUPTED_FEATURES", "NO"):
+        with pytest.raises(
+            Exception,
+            match="You may set the GML_SKIP_CORRUPTED_FEATURES configuration option to YES to skip to the next feature",
+        ):
+            ds = ogr.Open(filename)
+            layer = ds.GetLayer(0)
+            layer.GetNextFeature()
+
+    with gdal.config_option("GML_SKIP_CORRUPTED_FEATURES", "YES"):
+        ds = ogr.Open(filename)
+        layer = ds.GetLayer(0)
+        f = layer.GetNextFeature()
+        assert f is None
+
+    with gdal.config_option("GML_SKIP_CORRUPTED_FEATURES", "NO"):
+        ds = gdal.OpenEx(filename, open_options=["SKIP_CORRUPTED_FEATURES=YES"])
+        layer = ds.GetLayer(0)
+        f = layer.GetNextFeature()
+        assert f is None
+
+    with gdal.config_option("GML_SKIP_CORRUPTED_FEATURES", "NO"):
+        with pytest.raises(
+            Exception,
+            match="You may set the GML_SKIP_CORRUPTED_FEATURES configuration option to YES to skip to the next feature",
+        ):
+            ds = gdal.OpenEx(filename, open_options=["SKIP_CORRUPTED_FEATURES=NO"])
+            layer = ds.GetLayer(0)
+            layer.GetNextFeature()

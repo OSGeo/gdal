@@ -212,6 +212,11 @@ void RegisterOGRGML()
         "  <Option name='USE_SCHEMA_IMPORT' type='boolean' "
         "description='Whether "
         "to read schema for imports along with includes or not' default='NO'/>"
+        "  <Option name='SKIP_CORRUPTED_FEATURES' type='boolean' "
+        "description='Whether to skip features that cannot be parsed instead "
+        "of "
+        "failing' "
+        "default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

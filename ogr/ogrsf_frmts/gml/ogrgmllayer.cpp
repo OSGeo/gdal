@@ -129,6 +129,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         poDS->SetLastReadLayer(this);
     }
 
+    const bool bSkipCorruptedFeatures = CPLFetchBool(
+        poDS->GetOpenOptions(), "SKIP_CORRUPTED_FEATURES",
+        CPLTestBool(CPLGetConfigOption("GML_SKIP_CORRUPTED_FEATURES", "NO")));
+
     /* ==================================================================== */
     /*      Loop till we find and translate a feature meeting all our       */
     /*      requirements.                                                   */
@@ -357,21 +361,20 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             {
                 const CPLString osLastErrorMsg(CPLGetLastErrorMsg());
 
-                const bool bGoOn = CPLTestBool(
-                    CPLGetConfigOption("GML_SKIP_CORRUPTED_FEATURES", "NO"));
-
                 CPLError(
-                    bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                    bSkipCorruptedFeatures ? CE_Warning : CE_Failure,
+                    CPLE_AppDefined,
                     "Geometry of feature " CPL_FRMT_GIB
                     " %scannot be parsed: %s%s",
                     nFID, pszGML_FID ? CPLSPrintf("%s ", pszGML_FID) : "",
                     osLastErrorMsg.c_str(),
-                    bGoOn ? ". Skipping to next feature."
-                          : ". You may set the GML_SKIP_CORRUPTED_FEATURES "
-                            "configuration option to YES to skip to the next "
-                            "feature");
+                    bSkipCorruptedFeatures
+                        ? ". Skipping to next feature."
+                        : ". You may set the GML_SKIP_CORRUPTED_FEATURES "
+                          "configuration option to YES to skip to the next "
+                          "feature");
                 delete poGMLFeature;
-                if (bGoOn)
+                if (bSkipCorruptedFeatures)
                     continue;
                 return nullptr;
             }
