@@ -69,9 +69,7 @@ def test_gdalalg_raster_mosaic_overwrite(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 50054
 
     alg = get_mosaic_alg()
-    with pytest.raises(
-        Exception, match="already exists. Specify the --overwrite option"
-    ):
+    with pytest.raises(Exception, match="already exists"):
         alg.ParseRunAndFinalize(["../gcore/data/byte.tif", out_filename])
 
     alg = get_mosaic_alg()

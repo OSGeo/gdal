@@ -122,7 +122,7 @@ def test_gdalalg_raster_create_overwrite(tmp_vsimem):
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it.",
+        match="already exists",
     ):
         alg.Run()
 

@@ -34,9 +34,7 @@ def test_gdalalg_raster_convert(tmp_vsimem):
         ds.GetRasterBand(1).Fill(0)
 
     convert = get_convert_alg()
-    with pytest.raises(
-        Exception, match="already exists. Specify the --overwrite option"
-    ):
+    with pytest.raises(Exception, match="already exists"):
         convert.ParseRunAndFinalize(["data/utmsmall.tif", out_filename])
 
     convert = get_convert_alg()

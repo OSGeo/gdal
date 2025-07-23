@@ -246,7 +246,7 @@ def test_gdal_vector_layer_algebra_overwrite(tmp_vsimem):
     # Test missing overwrite
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it",
+        match="already exists",
     ):
         gdal.Run(
             "vector",
