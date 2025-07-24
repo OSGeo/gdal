@@ -234,7 +234,7 @@ Now we'll create an image showing terrain aspect using :ref:`gdaldem` and ``aspe
 
 Next, we'll apply color to the DTM based on elevation values. First, create a file named ``color-map-percentage.txt`` in the same folder as your ``clipped.tif`` file,
 and copy in the contents below. The file defines :term:`RGB` values for elevation ranges, grouped by percentage. GDAL maps these percentage
-ranges to RGB colours when rendering the DTM. The ``nv`` value specifies the RGB colour for any ``NoData`` values.
+ranges to RGB colors when rendering the DTM. The ``nv`` value specifies the RGB colour for any ``NoData`` values.
 
 .. literalinclude:: code/color-map-percentage.txt
 
@@ -265,6 +265,7 @@ This command is available only through the new GDAL CLI.
 
 .. spelling:word-list::
     Institut
+    l'information
     géographique
     forestière
     Territoire

@@ -190,7 +190,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     OGC
 
-        Open Geospatial Consortium. An international, non-profit organisation that develops and promotes open standards
+        Open Geospatial Consortium. An international, non-profit organization that develops and promotes open standards
         for geospatial data and services.
 
         .. seealso::
