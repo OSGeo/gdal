@@ -395,6 +395,10 @@ static void DumpAttrValue(const std::shared_ptr<GDALAttribute> &attr,
                         serializer.Add(pszStr);
                     }
                 }
+                else
+                {
+                    serializer.AddNull();
+                }
             }
             else
             {
