@@ -193,12 +193,15 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
         Open Geospatial Consortium. An international, non-profit organisation that develops and promotes open standards
         for geospatial data and services.
 
+        .. seealso::
+            https://www.ogc.org/
+
     OSR
 
         OGR Spatial Reference (OSR) - module that handles spatial reference systems and coordinate transformations.
 
         .. seealso::
-            https://www.ogc.org/
+            :ref:`osr_api_tut`.
 
     PAM
 
