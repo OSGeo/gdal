@@ -89,6 +89,14 @@ The following configuration options are available:
 
      Control the gml:xlink resolving. See `gml:xlink resolving`_.
 
+- .. config:: GML_SKIP_CORRUPTED_FEATURES
+     :choices: YES, NO
+     :default: NO
+
+     If set to **YES**, skip features that cannot be parsed correctly.
+     If set to **NO**, the driver will fail with an error when it encounters
+     a feature that cannot be parsed correctly.
+
 - .. config:: GML_SAVE_RESOLVED_TO
      :choices: SAME, <filename>
 
@@ -584,6 +592,14 @@ The following open options are supported:
 
        Whether to
        consider srsName like EPSG:XXXX as respecting EPSG axis order.
+
+-  .. oo:: SKIP_CORRUPTED_FEATURES
+      :choices: YES, NO
+      :default: NO
+
+      If set to **YES**, skip features that cannot be parsed correctly.
+      If set to **NO**, the driver will fail with an error when it encounters
+      a feature that cannot be parsed correctly.
 
 -  .. oo:: SWAP_COORDINATES
       :choices: AUTO, YES, NO
