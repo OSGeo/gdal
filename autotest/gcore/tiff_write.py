@@ -10695,11 +10695,7 @@ def test_tiff_write_jpegxl_band_combinations(cilist, dtype, copts, tmp_vsimem):
     src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
     for b in range(6):
         bnd = src_ds.GetRasterBand(b + 1)
-        if dtype == gdal.GDT_Float32:
-            # using bnd.Fill(b+1) fails since https://github.com/libjxl/libjxl/issues/4358
-            bnd.Fill((b + 1) / 6.0)
-        else:
-            bnd.Fill(b + 1)
+        bnd.Fill(b + 1)
         bnd.FlushCache()
 
     jpegxl_drv = gdal.GetDriverByName("JPEGXL")
