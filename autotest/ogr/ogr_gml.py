@@ -5057,9 +5057,9 @@ def test_ogr_gml_write_error(tmp_vsimem):
     ds.Close()
 
 
-
 ###############################################################################
 # Test open option SKIP_CORRUPTED_FEATURES
+
 
 @gdaltest.enable_exceptions()
 def test_ogr_gml_skip_corrupted_features(tmp_vsimem):
@@ -5083,27 +5083,27 @@ def test_ogr_gml_skip_corrupted_features(tmp_vsimem):
   <gml:featureMember>
     <ogr:solids fid="solids.1">
     <boundary>
-            <ClosureSurface>
-              <lod2MultiSurface>
-                <gml:MultiSurface>
-                  <gml:surfaceMember>
-                    <gml:Polygon gml:id="UUID_da310e81-cd4a-4167-94a0-3ea04f39ebd0">
-                      <gml:exterior>
-                        <gml:LinearRing>
-                          <gml:posList srsDimension="3">646102.957 5667459.848 146.668 646102.957 5667459.848 142.56 646107.611 5667459.649 142.56 646107.611 5667459.649 146.696 646102.957 5667459.848 146.668</gml:posList>
-                        </gml:LinearRing>
-                      </gml:exterior>
-                    </gml:Polygon>
-                  </gml:surfaceMember>
-                </gml:MultiSurface>
-              </lod2MultiSurface>
-            </ClosureSurface>
-          </boundary>
+    <ClosureSurface>
+        <lod2MultiSurface>
+        <gml:MultiSurface>
+            <gml:surfaceMember>
+            <gml:Polygon gml:id="UUID_da310e81-cd4a-4167-94a0-3ea04f39ebd0">
+                <gml:exterior>
+                <gml:LinearRing>
+                    <gml:posList srsDimension="3">646102.957 5667459.848 146.668 646102.957 5667459.848 142.56 646107.611 5667459.649 142.56 646107.611 5667459.649 146.696 646102.957 5667459.848 146.668</gml:posList>
+                </gml:LinearRing>
+                </gml:exterior>
+            </gml:Polygon>
+            </gml:surfaceMember>
+        </gml:MultiSurface>
+        </lod2MultiSurface>
+    </ClosureSurface>
+    </boundary>
       <gml:Solid>
         <gml:exterior>
-          <gml:Shell>
+          <gml:XXXX>
             <gml:surfaceMember xlink:href="#UUID_da310e81-cd4a-4167-94a0-3ea04f39ebd0"/>
-          </gml:Shell>
+          </gml:XXXX>
         </gml:exterior>
       </gml:Solid>
     </ogr:solids>

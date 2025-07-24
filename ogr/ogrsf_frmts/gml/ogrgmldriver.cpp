@@ -214,7 +214,7 @@ void RegisterOGRGML()
         "to read schema for imports along with includes or not' default='NO'/>"
         "  <Option name='SKIP_CORRUPTED_FEATURES' type='boolean' "
         "description='Whether to skip features that cannot be parsed instead "
-        "of failing' "default='NO'/>"
+        "of failing' default='NO'/>"
         "  <Option name='SKIP_RESOLVE_ELEMS' type='string-select' "
         "description='Configure xlink element resolution. Set to NONE to "
         "resolve all elements, set to ALL to skip all xlink elements, "
