@@ -2242,7 +2242,7 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
  * The following GML3 elements are parsed : Surface,
  * MultiSurface, PolygonPatch, Triangle, Rectangle, Curve, MultiCurve,
  * LineStringSegment, Arc, Circle, CompositeSurface, OrientableSurface, Solid,
- * Tin, TriangulatedSurface.
+ * Shell, Tin, TriangulatedSurface.
  *
  * Arc and Circle elements are returned as curves by default. Stroking to
  * linestrings can be done with
