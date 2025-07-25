@@ -313,6 +313,7 @@ will be also interpreted as being potential non-linear geometries, and
 corresponding OGR geometry type will be used for the layer geometry
 type.
 
+
 gml:xlink resolving
 -------------------
 
@@ -613,6 +614,12 @@ The following open options are supported:
       :oo:`INVERT_AXIS_ORDER_IF_LAT_LONG`. When :oo:`SWAP_COORDINATES` is set to YES,
       coordinates will be always swapped regarding the order they appear in
       the GML, and when it set to NO, they will be kept in the same order.
+
+-  .. oo:: SKIP_RESOLVE_ELEMS
+        :choices: NONE, ALL, HUGE, <list>
+        :default: ALL
+
+        Control the gml:xlink resolving. See `gml:xlink resolving`_.
 
 -  .. oo:: READ_MODE
       :choices: AUTO, STANDARD, SEQUENTIAL_LAYERS, INTERLEAVED_LAYERS
