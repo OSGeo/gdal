@@ -3864,17 +3864,18 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
                              m_aoSourceDesc.begin() + i);
     }
 
-    // Truncate the array when its last elements have no dataset
-    i = m_aoSourceDesc.size();
-    while (i > 0)
+    // Remove elements that have no dataset
+    size_t j = 0;
+    for (i = 0; i < m_aoSourceDesc.size(); ++i)
     {
-        --i;
-        if (!m_aoSourceDesc[i].poDS)
+        if (m_aoSourceDesc[i].poDS)
         {
-            m_aoSourceDesc.resize(i);
-            break;
+            if (j < i)
+                m_aoSourceDesc[j] = std::move(m_aoSourceDesc[i]);
+            ++j;
         }
     }
+    m_aoSourceDesc.resize(j);
 
     return true;
 }
