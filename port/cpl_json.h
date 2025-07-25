@@ -16,6 +16,7 @@
 #include "cpl_string.h"
 
 #include <cstdint>
+#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -28,9 +29,23 @@
 /*! @cond Doxygen_Suppress */
 typedef void *JSONObjectH;
 
-CPL_C_START
-
+class CPLJSONObject;
 class CPLJSONArray;
+
+class CPLJSONObjectProxy
+{
+    CPLJSONObject &oObj;
+    const std::string osName;
+
+  public:
+    explicit inline CPLJSONObjectProxy(CPLJSONObject &oObjIn,
+                                       const std::string &osNameIn)
+        : oObj(oObjIn), osName(osNameIn)
+    {
+    }
+
+    template <class T> inline CPLJSONObjectProxy &operator=(const T &val);
+};
 
 /*! @endcond */
 
@@ -87,6 +102,7 @@ class CPL_DLL CPLJSONObject
     CPLJSONObject(CPLJSONObject &&other);
     CPLJSONObject &operator=(const CPLJSONObject &other);
     CPLJSONObject &operator=(CPLJSONObject &&other);
+    CPLJSONObject &operator=(CPLJSONArray &&other);
 
     // This method is not thread-safe
     CPLJSONObject Clone() const;
@@ -109,16 +125,40 @@ class CPL_DLL CPLJSONObject
     void Add(const std::string &osName, bool bValue);
     void AddNull(const std::string &osName);
 
-    void Set(const std::string &osName, const std::string &osValue);
-    void Set(const std::string &osName, const char *pszValue);
-    void Set(const std::string &osName, double dfValue);
-    void Set(const std::string &osName, int nValue);
-    void Set(const std::string &osName, GInt64 nValue);
-    void Set(const std::string &osName, uint64_t nValue);
-    void Set(const std::string &osName, bool bValue);
+    /** Change value by key */
+    template <class T> void Set(const std::string &osName, const T &val)
+    {
+        Delete(osName);
+        Add(osName, val);
+    }
+
     void SetNull(const std::string &osName);
 
-    /*! @cond Doxygen_Suppress */
+    CPLJSONObject operator[](const std::string &osName);
+
+/*! @cond Doxygen_Suppress */
+
+// GCC 9.4 seems to be confused by the template and doesn't realize it
+// returns *this
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+    template <class T> inline CPLJSONObject &operator=(const T &val)
+    {
+        CPLAssert(!m_osKeyForSet.empty());
+        std::string osKeyForSet = m_osKeyForSet;
+        m_osKeyForSet.clear();
+        Set(osKeyForSet, val);
+        return *this;
+    }
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+    template <class T>
+    inline CPLJSONObject &operator=(std::initializer_list<T> list);
+
     JSONObjectH GetInternalHandle() const
     {
         return m_poJsonObject;
@@ -170,6 +210,7 @@ class CPL_DLL CPLJSONObject
   private:
     JSONObjectH m_poJsonObject = nullptr;
     std::string m_osKey{};
+    std::string m_osKeyForSet{};
 };
 
 /**
@@ -185,6 +226,15 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     CPLJSONArray();
     explicit CPLJSONArray(const std::string &osName);
     explicit CPLJSONArray(const CPLJSONObject &other);
+
+    /** Constructor from a list of initial values */
+    template <class T> static CPLJSONArray Build(std::initializer_list<T> list)
+    {
+        CPLJSONArray oArray;
+        for (const auto &val : list)
+            oArray.Add(val);
+        return oArray;
+    }
 
   private:
     explicit CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject);
@@ -238,6 +288,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     void Add(GInt64 nValue);
     void Add(uint64_t nValue);
     void Add(bool bValue);
+
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
 
@@ -289,13 +340,15 @@ class CPL_DLL CPLJSONDocument
     mutable JSONObjectH m_poRootJsonObject;
 };
 
-CPL_C_END
-
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-extern "C++"
+/*! @cond Doxygen_Suppress */
+template <class T>
+inline CPLJSONObject &CPLJSONObject::operator=(std::initializer_list<T> list)
 {
-    CPLStringList CPLParseKeyValueJson(const char *pszJson);
+    return operator=(CPLJSONArray::Build(list));
 }
-#endif
+
+/*! @endcond */
+
+CPLStringList CPLParseKeyValueJson(const char *pszJson);
 
 #endif  // CPL_JSON_H_INCLUDED

@@ -86,6 +86,11 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Creation
+--------
+
+STACTA JSON files can be created by the :ref:`gdal_raster_tile` program.
+
 See Also
 --------
 

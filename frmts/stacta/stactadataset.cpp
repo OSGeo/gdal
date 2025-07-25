@@ -32,6 +32,25 @@ extern "C" void GDALRegister_STACTA();
 // https://github.com/stac-extensions/tiled-assets
 
 /************************************************************************/
+/*                         GetAllowedDrivers()                          */
+/************************************************************************/
+
+static CPLStringList GetAllowedDrivers()
+{
+    CPLStringList aosAllowedDrivers;
+    aosAllowedDrivers.AddString("GTiff");
+    aosAllowedDrivers.AddString("PNG");
+    aosAllowedDrivers.AddString("JPEG");
+    aosAllowedDrivers.AddString("JPEGXL");
+    aosAllowedDrivers.AddString("WEBP");
+    aosAllowedDrivers.AddString("JP2KAK");
+    aosAllowedDrivers.AddString("JP2ECW");
+    aosAllowedDrivers.AddString("JP2MrSID");
+    aosAllowedDrivers.AddString("JP2OpenJPEG");
+    return aosAllowedDrivers;
+}
+
+/************************************************************************/
 /*                         STACTARasterBand()                           */
 /************************************************************************/
 
@@ -285,6 +304,45 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
+/*                     DoVSICLOUDSubstitution()                         */
+/************************************************************************/
+
+static std::string DoVSICLOUDSubstitution(const std::string &osFilename)
+{
+    std::string ret;
+    constexpr const char *HTTPS_PROTOCOL = "https://";
+    if (cpl::starts_with(osFilename, HTTPS_PROTOCOL))
+    {
+        constexpr const char *AZURE_BLOB = ".blob.core.windows.net/";
+        constexpr const char *AWS = ".amazonaws.com/";
+        constexpr const char *GOOGLE_CLOUD_STORAGE =
+            "https://storage.googleapis.com/";
+        size_t nPos;
+        if ((nPos = osFilename.find(AZURE_BLOB)) != std::string::npos)
+        {
+            ret = "/vsiaz/" + osFilename.substr(nPos + strlen(AZURE_BLOB));
+        }
+        else if ((nPos = osFilename.find(AWS)) != std::string::npos)
+        {
+            constexpr const char *DOT_S3_DOT = ".s3.";
+            const auto nPos2 = osFilename.find(DOT_S3_DOT);
+            if (nPos2 != std::string::npos)
+            {
+                ret = "/vsis3/" +
+                      osFilename.substr(strlen(HTTPS_PROTOCOL),
+                                        nPos2 - strlen(HTTPS_PROTOCOL)) +
+                      "/" + osFilename.substr(nPos + strlen(AWS));
+            }
+        }
+        else if (cpl::starts_with(osFilename, GOOGLE_CLOUD_STORAGE))
+        {
+            ret = "/vsigs/" + osFilename.substr(strlen(GOOGLE_CLOUD_STORAGE));
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -412,6 +470,8 @@ CPLErr STACTARawDataset::IRasterIO(
                              CPLSPrintf("%d", iY + m_nMinMetaTileRow));
             osURL.replaceAll("{TileCol}",
                              CPLSPrintf("%d", iX + m_nMinMetaTileCol));
+            if (m_poMasterDS->m_bVSICLOUDSubstitutionOK)
+                osURL = DoVSICLOUDSubstitution(osURL);
 
             const int nTileXOff = std::max(0, nXOff - iX * m_nMetaTileWidth);
             const int nTileXSize =
@@ -436,14 +496,7 @@ CPLErr STACTARawDataset::IRasterIO(
                         "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR",
                         /* bSetOnlyIfUndefined = */ true);
 
-                    CPLStringList aosAllowedDrivers;
-                    aosAllowedDrivers.AddString("GTiff");
-                    aosAllowedDrivers.AddString("PNG");
-                    aosAllowedDrivers.AddString("JPEG");
-                    aosAllowedDrivers.AddString("JP2KAK");
-                    aosAllowedDrivers.AddString("JP2ECW");
-                    aosAllowedDrivers.AddString("JP2MrSID");
-                    aosAllowedDrivers.AddString("JP2OpenJPEG");
+                    CPLStringList aosAllowedDrivers(GetAllowedDrivers());
                     std::unique_ptr<GDALDataset> poTileDS;
                     if (bDownloadWholeMetaTile && !VSIIsLocal(osURL.c_str()))
                     {
@@ -452,6 +505,35 @@ CPLErr STACTARawDataset::IRasterIO(
                         VSILFILE *fp = VSIFOpenL(osURL, "rb");
                         if (m_poMasterDS->m_bSkipMissingMetaTile)
                             CPLPopErrorHandler();
+                        if (fp == nullptr)
+                        {
+                            if (!m_poMasterDS->m_bTriedVSICLOUDSubstitution &&
+                                cpl::starts_with(osURL, "https://"))
+                            {
+                                m_poMasterDS->m_bTriedVSICLOUDSubstitution =
+                                    true;
+                                std::string osNewURL =
+                                    DoVSICLOUDSubstitution(osURL);
+                                if (!osNewURL.empty())
+                                {
+                                    CPLDebug("STACTA", "Retrying with %s",
+                                             osNewURL.c_str());
+                                    if (m_poMasterDS->m_bSkipMissingMetaTile)
+                                        CPLPushErrorHandler(
+                                            CPLQuietErrorHandler);
+                                    fp = VSIFOpenL(osNewURL.c_str(), "rb");
+                                    if (m_poMasterDS->m_bSkipMissingMetaTile)
+                                        CPLPopErrorHandler();
+                                    if (fp != nullptr)
+                                    {
+                                        m_poMasterDS
+                                            ->m_bVSICLOUDSubstitutionOK = true;
+                                        osURL = std::move(osNewURL);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (fp == nullptr)
                         {
                             if (m_poMasterDS->m_bSkipMissingMetaTile)
@@ -515,6 +597,42 @@ CPLErr STACTARawDataset::IRasterIO(
                                               aosAllowedDrivers.List()));
                         if (m_poMasterDS->m_bSkipMissingMetaTile)
                             CPLPopErrorHandler();
+                        if (poTileDS == nullptr)
+                        {
+                            if (!m_poMasterDS->m_bTriedVSICLOUDSubstitution &&
+                                cpl::starts_with(osURL, "https://"))
+                            {
+                                m_poMasterDS->m_bTriedVSICLOUDSubstitution =
+                                    true;
+                                std::string osNewURL =
+                                    DoVSICLOUDSubstitution(osURL);
+                                if (!osNewURL.empty())
+                                {
+                                    CPLDebug("STACTA", "Retrying with %s",
+                                             osNewURL.c_str());
+                                    if (m_poMasterDS->m_bSkipMissingMetaTile)
+                                        CPLPushErrorHandler(
+                                            CPLQuietErrorHandler);
+                                    poTileDS = std::unique_ptr<GDALDataset>(
+                                        GDALDataset::Open(
+                                            osNewURL.c_str(),
+                                            GDAL_OF_INTERNAL | GDAL_OF_RASTER,
+                                            aosAllowedDrivers.List()));
+                                    if (m_poMasterDS->m_bSkipMissingMetaTile)
+                                        CPLPopErrorHandler();
+                                    if (poTileDS)
+                                    {
+                                        m_poMasterDS
+                                            ->m_bVSICLOUDSubstitutionOK = true;
+                                        osURL = std::move(osNewURL);
+                                        m_osURLTemplate =
+                                            DoVSICLOUDSubstitution(
+                                                m_osURLTemplate);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                     if (poTileDS == nullptr)
                     {
@@ -671,6 +789,10 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
 
         if (strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
             (strstr(pszHeader, "\"tiled-assets\"") != nullptr ||
+             strstr(
+                 pszHeader,
+                 "https:\\/\\/stac-extensions.github.io\\/tiled-assets\\/") !=
+                 nullptr ||
              strstr(pszHeader,
                     "https://stac-extensions.github.io/tiled-assets/") !=
                  nullptr))
@@ -844,17 +966,37 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                  osAssetName.c_str());
     }
     osURLTemplate.replaceAll("{TileMatrixSet}", osTMS);
-    if (STARTS_WITH(osURLTemplate, "file://"))
+
+    // UPDATE oMapVSIToURIPrefix in apps/gdalalg_raster_tile if updating below
+    const std::map<std::string, std::string> oMapURIPrefixToVSI = {
+        {"s3", "/vsis3/"},
+        {"gs", "/vsigs/"},
+        {"az", "/vsiaz/"},     // Not universally recognized
+        {"azure", "/vsiaz/"},  // Not universally recognized
+    };
+
+    if (cpl::starts_with(osURLTemplate, "file://"))
     {
         osURLTemplate = osURLTemplate.substr(strlen("file://"));
     }
-    else if (STARTS_WITH(osURLTemplate, "s3://"))
+    else
     {
-        osURLTemplate = "/vsis3/" + osURLTemplate.substr(strlen("s3://"));
+        const auto nPosColonSlashSlash = osURLTemplate.find("://");
+        if (nPosColonSlashSlash != std::string::npos)
+        {
+            const auto oIter = oMapURIPrefixToVSI.find(
+                osURLTemplate.substr(0, nPosColonSlashSlash));
+            if (oIter != oMapURIPrefixToVSI.end())
+            {
+                osURLTemplate = std::string(oIter->second)
+                                    .append(osURLTemplate.substr(
+                                        nPosColonSlashSlash + strlen("://")));
+            }
+        }
     }
 
-    if (!STARTS_WITH(osURLTemplate, "http://") &&
-        !STARTS_WITH(osURLTemplate, "https://"))
+    if (!cpl::starts_with(osURLTemplate, "http://") &&
+        !cpl::starts_with(osURLTemplate, "https://"))
     {
         if (STARTS_WITH(osURLTemplate, "./"))
             osURLTemplate = osURLTemplate.substr(2);
@@ -1063,13 +1205,39 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                                           /* bSetOnlyIfUndefined = */ true);
             if (m_bSkipMissingMetaTile)
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-            poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str()));
+            poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str(),
+                                              GDAL_OF_RASTER,
+                                              GetAllowedDrivers().List()));
             if (m_bSkipMissingMetaTile)
                 CPLPopErrorHandler();
             if (poProtoDS != nullptr)
             {
                 break;
             }
+
+            if (!m_bTriedVSICLOUDSubstitution &&
+                cpl::starts_with(osURL, "https://"))
+            {
+                m_bTriedVSICLOUDSubstitution = true;
+                std::string osNewURL = DoVSICLOUDSubstitution(osURL);
+                if (!osNewURL.empty())
+                {
+                    CPLDebug("STACTA", "Retrying with %s", osNewURL.c_str());
+                    if (m_bSkipMissingMetaTile)
+                        CPLPushErrorHandler(CPLQuietErrorHandler);
+                    poProtoDS.reset(
+                        GDALDataset::Open(osNewURL.c_str(), GDAL_OF_RASTER,
+                                          GetAllowedDrivers().List()));
+                    if (m_bSkipMissingMetaTile)
+                        CPLPopErrorHandler();
+                    if (poProtoDS != nullptr)
+                    {
+                        osURLTemplate = DoVSICLOUDSubstitution(osURLTemplate);
+                        break;
+                    }
+                }
+            }
+
             if (!m_bSkipMissingMetaTile)
             {
                 CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
@@ -1079,11 +1247,17 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (poProtoDS == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find prototype dataset");
-            return false;
+            if (m_bSkipMissingMetaTile)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find prototype dataset");
+                return false;
+            }
         }
-        nExpectedBandCount = poProtoDS->GetRasterCount();
+        else
+        {
+            nExpectedBandCount = poProtoDS->GetRasterCount();
+        }
     }
 
     // Iterate over tile matrices to create corresponding STACTARawDataset
@@ -1250,7 +1424,8 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const auto osName = oItem.GetName();
         if (osName != "tiles:tile_matrix_links" &&
-            osName != "tiles:tile_matrix_sets")
+            osName != "tiles:tile_matrix_sets" &&
+            !cpl::starts_with(osName, "proj:"))
         {
             GDALDataset::SetMetadataItem(osName.c_str(),
                                          oItem.ToString().c_str());

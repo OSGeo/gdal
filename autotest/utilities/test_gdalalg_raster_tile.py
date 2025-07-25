@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import struct
 import sys
 
@@ -58,6 +59,7 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
         "leaflet.html",
         "mapml.mapml",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.Open(tmp_vsimem / "11/354/818.png") as ds:
@@ -88,6 +90,58 @@ def test_gdalalg_raster_tile_basic(tmp_vsimem, tiling_scheme, tilesize):
         assert (
             got == open("data/gdal_raster_tile_expected_openlayers.html", "rb").read()
         )
+
+    if tiling_scheme == "mercator":
+        with gdal.VSIFile(tmp_vsimem / "stacta.json", "rb") as f:
+            got = f.read()
+            # Uncomment below line to regenerate expected file
+            # open("data/gdal_raster_tile_expected_stacta.json", "wb").write(got)
+            got = json.loads(got)
+            expected = json.loads(
+                open("data/gdal_raster_tile_expected_stacta.json", "rb").read()
+            )
+            assert got["bbox"] == pytest.approx(expected["bbox"])
+            assert len(got["geometry"]["coordinates"]) == 1
+            assert len(got["geometry"]["coordinates"][0]) == 5
+            for i in range(5):
+                assert got["geometry"]["coordinates"][0][i] == pytest.approx(
+                    expected["geometry"]["coordinates"][0][i]
+                )
+            assert got["properties"]["proj:transform"] == pytest.approx(
+                expected["properties"]["proj:transform"]
+            )
+            got["bbox"] = expected["bbox"]
+            got["geometry"]["coordinates"] = expected["geometry"]["coordinates"]
+            got["properties"]["proj:transform"] = expected["properties"][
+                "proj:transform"
+            ]
+            assert got == expected, (got, expected)
+
+    drv = gdal.GetDriverByName("STACTA")
+    if drv:
+        ds = gdal.Open(tmp_vsimem / "stacta.json")
+        assert ds.RasterXSize == 256
+        assert ds.RasterYSize == 256
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+        assert ds.GetGeoTransform() == pytest.approx(
+            (
+                -13110479.09147343,
+                76.43702828517625,
+                0.0,
+                4030983.1236470547,
+                0.0,
+                -76.43702828517625,
+            )
+        )
+        assert ds.GetMetadata_Dict() == {
+            "datetime": "1970-01-01T00:00:00.000Z",
+            "end_datetime": "9999-12-31T23:59:59.999Z",
+            "start_datetime": "0001-01-01T00:00:00.000Z",
+        }
+        with pytest.raises(
+            Exception, match=r"Cannot open http://example.com/.*/11/354/818.png"
+        ):
+            ds.GetRasterBand(1).Checksum()
 
 
 @pytest.mark.parametrize(
@@ -122,6 +176,7 @@ def test_gdalalg_raster_tile_small_world_geodetic(
             "0/1/0.png",
             "mapml.mapml",
             "openlayers.html",
+            "stacta.json",
         ]
         if xyz
         else [
@@ -131,6 +186,7 @@ def test_gdalalg_raster_tile_small_world_geodetic(
             "0/1/",
             "0/1/0.png",
             "openlayers.html",
+            "stacta.json",
         ]
     )
 
@@ -555,6 +611,7 @@ def test_gdalalg_raster_tile_palette_nearest(tmp_vsimem):
         "leaflet.html",
         "mapml.mapml",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.Open(tmp_vsimem / "11/354/818.png") as ds:
@@ -673,7 +730,7 @@ def test_gdalalg_raster_tile_multithread(tmp_vsimem):
     alg["max-zoom"] = 3
     alg.Run()
 
-    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 108
 
 
 def test_gdalalg_raster_tile_multithread_spawn_auto(tmp_vsimem):
@@ -691,7 +748,7 @@ def test_gdalalg_raster_tile_multithread_spawn_auto(tmp_vsimem):
     ):
         alg.Run()
 
-    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 108
 
 
 @pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
@@ -793,7 +850,7 @@ def test_gdalalg_raster_tile_multithread_spawn_limit(tmp_path):
     finally:
         del fd
 
-    assert len(gdal.ReadDirRecursive(tmp_path)) == 107
+    assert len(gdal.ReadDirRecursive(tmp_path)) == 108
 
 
 @pytest.mark.skipif(gdal.GetNumCPUs() <= 1, reason="needs more than one CPU")
@@ -833,7 +890,7 @@ def test_gdalalg_raster_tile_multithread_spawn(tmp_path):
 
     assert last_pct[0] == 1.0
 
-    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 107
+    assert len(gdal.ReadDirRecursive(tmp_path / "subdir")) == 108
     assert gdal.VSIStatL(tmp_path / "log.txt") is not None
     assert got_spurious[0]
 
@@ -856,7 +913,7 @@ def test_gdalalg_raster_tile_multithread_progress(tmp_vsimem):
 
     assert last_pct[0] == 1.0
 
-    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 107
+    assert len(gdal.ReadDirRecursive(tmp_vsimem)) == 108
 
 
 def check_12_bit_jpeg():
@@ -1080,7 +1137,7 @@ def test_gdalalg_raster_tile_rgba_all_opaque(tmp_vsimem):
             [
                 25111,
                 24737,
-                16107,
+                16108,
             ],
             abs=10,
         )
@@ -1486,6 +1543,7 @@ def test_gdalalg_raster_tile_raster(tmp_vsimem):
         "0/0/",
         "0/0/0.tif",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.Open(tmp_vsimem / "0/0/0.tif") as ds:
@@ -1536,6 +1594,7 @@ def test_gdalalg_raster_tile_raster_ungeoreferenced(tmp_vsimem):
         "0/0/",
         "0/0/0.tif",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.Open(tmp_vsimem / "0/0/0.tif") as ds:
@@ -1577,6 +1636,7 @@ def test_gdalalg_raster_tile_raster_min_max_zoom(tmp_vsimem):
         "2/1/",
         "2/1/0.png",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.Open(tmp_vsimem / "2/0/0.png") as ds:
@@ -1640,6 +1700,7 @@ def test_gdalalg_raster_tile_raster_kml(tmp_vsimem):
         "leaflet.html",
         "mapml.mapml",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
@@ -1698,6 +1759,7 @@ def test_gdalalg_raster_tile_raster_kml_with_gx_latlonquad(tmp_vsimem):
         "0/0/0.png",
         "doc.kml",
         "openlayers.html",
+        "stacta.json",
     ]
 
     with gdal.VSIFile(tmp_vsimem / "doc.kml", "rb") as f:
