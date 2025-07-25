@@ -29,7 +29,7 @@ Options
 
 .. option:: -f, --of, --format, --output-format json|text
 
-    Which output format to use. Default is JSON.
+    Which output format to use. Default is JSON, or text when invoked from command line.
 
 .. option:: -r, --recursive
 

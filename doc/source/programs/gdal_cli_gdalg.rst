@@ -54,7 +54,7 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector pipeline --progress ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
+        $ gdal vector pipeline ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal vector info in_epsg_32632.gdalg.json
 
     The content of :file:`in_epsg_32632.gdalg.json` is:
