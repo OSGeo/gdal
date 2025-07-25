@@ -606,11 +606,11 @@ class OGRGeoArrowWkbExtensionType final : public arrow::ExtensionType
         return std::make_shared<arrow::ExtensionArray>(data);
     }
 
-    static bool IsSupportedStorageType(arrow::Type::type type_id)
+    static bool IsSupportedStorageType(arrow::Type::type typeId)
     {
         // TODO: also add BINARY_VIEW if we support it some day.
-        return type_id == arrow::Type::BINARY ||
-               type_id == arrow::Type::LARGE_BINARY;
+        return typeId == arrow::Type::BINARY ||
+               typeId == arrow::Type::LARGE_BINARY;
     }
 
     static arrow::Result<std::shared_ptr<arrow::DataType>>
