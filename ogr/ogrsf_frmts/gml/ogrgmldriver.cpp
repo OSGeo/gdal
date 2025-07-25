@@ -220,7 +220,7 @@ void RegisterOGRGML()
         "resolve all elements, set to ALL to skip all xlink elements, "
         "set to HUGE to store linked elements in a temporary SQLite DB, "
         "set to a comma separated list of names of specific elements to be "
-        "skipped.'"
+        "skipped.' "
         "default='ALL'/>"
         "</OpenOptionList>");
 
