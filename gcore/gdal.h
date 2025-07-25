@@ -1960,6 +1960,14 @@ typedef enum
 {
     /** Logical not */
     GRAUO_LOGICAL_NOT,
+    /** Absolute value (module for complex data type) */
+    GRAUO_ABS,
+    /** Square root */
+    GRAUO_SQRT,
+    /** Natural logarithm (``ln``) */
+    GRAUO_LOG,
+    /** Logarithm base 10 */
+    GRAUO_LOG10,
 } GDALRasterAlgebraUnaryOperation;
 
 GDALComputedRasterBandH CPL_DLL GDALRasterBandUnaryOp(
@@ -1977,6 +1985,8 @@ typedef enum
     GRABO_MUL,
     /** Division */
     GRABO_DIV,
+    /** Power */
+    GRABO_POW,
     /** Strictly greater than test*/
     GRABO_GT,
     /** Greater or equal to test */
