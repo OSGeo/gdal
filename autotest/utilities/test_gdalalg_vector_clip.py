@@ -40,9 +40,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
             ds.GetLayer(0).DeleteFeature(i + 1)
 
     clip = get_clip_alg()
-    with pytest.raises(
-        Exception, match="already exists. Specify the --overwrite option"
-    ):
+    with pytest.raises(Exception, match="already exists"):
         clip.ParseRunAndFinalize(
             ["--bbox", "-1e10,-1e10,1e10,1e10", "../ogr/data/poly.shp", out_filename]
         )

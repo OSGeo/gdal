@@ -284,7 +284,7 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     pipeline = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it",
+        match="already exists",
     ):
         pipeline.ParseRunAndFinalize(
             [

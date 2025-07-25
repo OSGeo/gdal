@@ -2608,16 +2608,67 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     if (!overwrite)
                     {
+                        std::string options;
+                        if (algForOutput->GetArg(GDAL_ARG_NAME_OVERWRITE_LAYER))
+                        {
+                            options += "--";
+                            options += GDAL_ARG_NAME_OVERWRITE_LAYER;
+                        }
+                        if (hasAppendArg)
+                        {
+                            if (!options.empty())
+                                options += '/';
+                            options += "--";
+                            options += GDAL_ARG_NAME_APPEND;
+                        }
+                        if (hasUpdateArg)
+                        {
+                            if (!options.empty())
+                                options += '/';
+                            options += "--";
+                            options += GDAL_ARG_NAME_UPDATE;
+                        }
+
+                        if (poDriver)
+                        {
+                            const char *pszPrefix = poDriver->GetMetadataItem(
+                                GDAL_DMD_CONNECTION_PREFIX);
+                            if (pszPrefix &&
+                                STARTS_WITH_CI(val.GetName().c_str(),
+                                               pszPrefix))
+                            {
+                                bool bExists = false;
+                                {
+                                    CPLErrorStateBackuper oBackuper(
+                                        CPLQuietErrorHandler);
+                                    bExists = std::unique_ptr<GDALDataset>(
+                                                  GDALDataset::Open(
+                                                      val.GetName().c_str())) !=
+                                              nullptr;
+                                }
+                                if (bExists)
+                                {
+                                    if (!options.empty())
+                                        options = " You may specify the " +
+                                                  options + " option.";
+                                    ReportError(CE_Failure, CPLE_AppDefined,
+                                                "%s '%s' already exists.%s",
+                                                pszType, val.GetName().c_str(),
+                                                options.c_str());
+                                    return false;
+                                }
+
+                                return true;
+                            }
+                        }
+
+                        if (!options.empty())
+                            options = '/' + options;
                         ReportError(
                             CE_Failure, CPLE_AppDefined,
-                            "%s '%s' already exists. Specify the --overwrite "
-                            "option to overwrite it%s.",
-                            pszType, val.GetName().c_str(),
-                            hasAppendArg
-                                ? " or the --append option to append to it"
-                            : hasUpdateArg
-                                ? " or the --update option to update it"
-                                : "");
+                            "%s '%s' already exists. You may specify the "
+                            "--overwrite%s option.",
+                            pszType, val.GetName().c_str(), options.c_str());
                         return false;
                     }
                     else if (EQUAL(pszType, "File"))
