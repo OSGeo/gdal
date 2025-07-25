@@ -172,6 +172,138 @@ def test_gdalalg_mdim_info_all_options():
     }
 
 
+def test_gdalalg_mdim_info_binary(gdal_path):
+
+    out = gdaltest.runexternal(f"{gdal_path} mdim info ../gdrivers/data/netcdf/byte.nc")
+    assert json.loads(out) == {
+        "arrays": {
+            "Band1": {
+                "attributes": {
+                    "long_name": "GDAL Band Number 1",
+                    "valid_range": [
+                        0,
+                        255,
+                    ],
+                },
+                "datatype": "Byte",
+                "dimension_size": [
+                    20,
+                    20,
+                ],
+                "dimensions": [
+                    "/y",
+                    "/x",
+                ],
+                "srs": {
+                    "data_axis_to_srs_axis_mapping": [
+                        2,
+                        1,
+                    ],
+                    "wkt": 'PROJCRS["NAD27 / UTM zone '
+                    '11N",BASEGEOGCRS["NAD27",DATUM["North American Datum '
+                    '1927",ELLIPSOID["Clarke '
+                    '1866",6378206.4,294.978698213898,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4267]],CONVERSION["UTM '
+                    'zone 11N",METHOD["Transverse '
+                    'Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural '
+                    'origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude '
+                    "of natural "
+                    'origin",-117,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale '
+                    "factor at natural "
+                    'origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False '
+                    'easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False '
+                    'northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["easting",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["northing",north,ORDER[2],LENGTHUNIT["metre",1]],ID["EPSG",26711]]',
+                },
+            },
+            "x": {
+                "attributes": {
+                    "long_name": "x coordinate of projection",
+                    "standard_name": "projection_x_coordinate",
+                },
+                "datatype": "Float64",
+                "dimension_size": [
+                    20,
+                ],
+                "dimensions": [
+                    "/x",
+                ],
+                "unit": "m",
+            },
+            "y": {
+                "attributes": {
+                    "long_name": "y coordinate of projection",
+                    "standard_name": "projection_y_coordinate",
+                },
+                "datatype": "Float64",
+                "dimension_size": [
+                    20,
+                ],
+                "dimensions": [
+                    "/y",
+                ],
+                "unit": "m",
+            },
+        },
+        "attributes": {
+            "Conventions": "CF-1.5",
+            "GDAL": "GDAL 3.8.0dev-refs/heads-dirty, released 2023/10/09 (debug build)",
+            "GDAL_AREA_OR_POINT": "Area",
+            "history": "Mon Oct 09 18:27:35 2023: GDAL CreateCopy( byte.nc, ... )",
+        },
+        "dimensions": [
+            {
+                "full_name": "/x",
+                "indexing_variable": {
+                    "x": {
+                        "attributes": {
+                            "long_name": "x coordinate of projection",
+                            "standard_name": "projection_x_coordinate",
+                        },
+                        "datatype": "Float64",
+                        "dimension_size": [
+                            20,
+                        ],
+                        "dimensions": [
+                            "/x",
+                        ],
+                        "unit": "m",
+                    },
+                },
+                "name": "x",
+                "size": 20,
+                "type": "HORIZONTAL_X",
+            },
+            {
+                "full_name": "/y",
+                "indexing_variable": {
+                    "y": {
+                        "attributes": {
+                            "long_name": "y coordinate of projection",
+                            "standard_name": "projection_y_coordinate",
+                        },
+                        "datatype": "Float64",
+                        "dimension_size": [
+                            20,
+                        ],
+                        "dimensions": [
+                            "/y",
+                        ],
+                        "unit": "m",
+                    },
+                },
+                "name": "y",
+                "size": 20,
+                "type": "HORIZONTAL_Y",
+            },
+        ],
+        "driver": "netCDF",
+        "name": "/",
+        "structural_info": {
+            "NC_FORMAT": "CLASSIC",
+        },
+        "type": "group",
+    }
+
+
 def test_gdalalg_mdim_info_completion_array_invalid_ds(gdal_path):
 
     out = gdaltest.runexternal(

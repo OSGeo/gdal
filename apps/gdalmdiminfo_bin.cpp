@@ -81,17 +81,14 @@ MAIN_START(argc, argv)
     }
 
     char *pszGDALInfoOutput = GDALMultiDimInfo(hDataset, psOptions.get());
-
-    if (pszGDALInfoOutput)
-        printf("%s", pszGDALInfoOutput);
-
+    int nRet = pszGDALInfoOutput != nullptr ? 0 : 1;
     CPLFree(pszGDALInfoOutput);
 
     GDALClose(hDataset);
 
     GDALDestroy();
 
-    return 0;
+    return nRet;
 }
 
 MAIN_END

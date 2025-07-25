@@ -1290,12 +1290,12 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
     if (psOptions->bStdoutOutput)
     {
         printf("\n");
+        return VSIStrdup("ok");
     }
     else
     {
         return VSIStrdup(serializer.GetString().c_str());
     }
-    return nullptr;
 }
 
 /************************************************************************/

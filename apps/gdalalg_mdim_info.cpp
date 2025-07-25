@@ -149,7 +149,7 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     char *ret = GDALMultiDimInfo(hDS, psOptions);
     GDALMultiDimInfoOptionsFree(psOptions);
     const bool bOK = ret != nullptr;
-    if (ret)
+    if (ret && !m_stdout)
     {
         m_output = ret;
     }
