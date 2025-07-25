@@ -517,6 +517,14 @@ The following configuration options are specific to the /vsis3/ handler:
       Session token used for validation of temporary credentials
       (:config:`AWS_ACCESS_KEY_ID` and :config:`AWS_SECRET_ACCESS_KEY`)
 
+-  .. config:: AWS_S3SESSION_TOKEN
+      :since: 3.12
+
+      S3 Express session token (for directory buckets). Can be used by applications
+      handling themselves the CreateSession S3 Express request, in which case
+      they must supply the temporary credentials with :config:`AWS_ACCESS_KEY_ID`
+      and :config:`AWS_SECRET_ACCESS_KEY`
+
 -  .. config:: CPL_AWS_CREDENTIALS_FILE
       :choices: <filename>
 

@@ -56,7 +56,7 @@ static std::string GetSignature(const std::string &osStringToSign,
 static struct curl_slist *
 CPLGetOSSHeaders(const std::string &osSecretAccessKey,
                  const std::string &osAccessKeyId, const std::string &osVerb,
-                 const struct curl_slist *psExistingHeaders,
+                 struct curl_slist *psHeaders,
                  const std::string &osCanonicalizedResource)
 {
     std::string osDate = CPLGetConfigOption("CPL_OSS_TIMESTAMP", "");
@@ -67,15 +67,13 @@ CPLGetOSSHeaders(const std::string &osSecretAccessKey,
 
     std::map<std::string, std::string> oSortedMapHeaders;
     std::string osCanonicalizedHeaders(
-        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
-            oSortedMapHeaders, psExistingHeaders, "x-oss-"));
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(oSortedMapHeaders,
+                                                          psHeaders, "x-oss-"));
 
     std::string osStringToSign;
     osStringToSign += osVerb + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-MD5") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-Type") + "\n";
     osStringToSign += osDate + "\n";
     osStringToSign += osCanonicalizedHeaders;
     osStringToSign += osCanonicalizedResource;
@@ -96,12 +94,11 @@ CPLGetOSSHeaders(const std::string &osSecretAccessKey,
     CPLDebug("OSS", "osAuthorization='%s'", osAuthorization.c_str());
 #endif
 
-    struct curl_slist *headers = nullptr;
-    headers =
-        curl_slist_append(headers, CPLSPrintf("Date: %s", osDate.c_str()));
-    headers = curl_slist_append(
-        headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
-    return headers;
+    psHeaders =
+        curl_slist_append(psHeaders, CPLSPrintf("Date: %s", osDate.c_str()));
+    psHeaders = curl_slist_append(
+        psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    return psHeaders;
 }
 
 /************************************************************************/
@@ -254,7 +251,7 @@ VSIOSSHandleHelper *VSIOSSHandleHelper::BuildFromURI(const char *pszURI,
 /************************************************************************/
 
 struct curl_slist *VSIOSSHandleHelper::GetCurlHeaders(
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osVerb, struct curl_slist *psHeaders,
     const void * /*pabyDataContent*/, size_t /*nBytesContent*/) const
 {
     std::string osCanonicalQueryString;
@@ -269,7 +266,7 @@ struct curl_slist *VSIOSSHandleHelper::GetCurlHeaders(
     osCanonicalizedResource += osCanonicalQueryString;
 
     return CPLGetOSSHeaders(m_osSecretAccessKey, m_osAccessKeyId, osVerb,
-                            psExistingHeaders, osCanonicalizedResource);
+                            psHeaders, osCanonicalizedResource);
 }
 
 /************************************************************************/

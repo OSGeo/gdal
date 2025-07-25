@@ -616,8 +616,7 @@ bool VSIDIRADLS::IssueListDir()
 
     struct curl_slist *headers = VSICurlSetOptions(
         hCurlHandle, poHandleHelper->GetURL().c_str(), aosHTTPOptions.List());
-    headers = VSICurlMergeHeaders(
-        headers, poHandleHelper->GetCurlHeaders("GET", headers));
+    headers = poHandleHelper->GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CurlRequestHelper requestHelper;
@@ -727,7 +726,7 @@ class VSIADLSHandle final : public VSICurlHandle
   protected:
     virtual struct curl_slist *
     GetCurlHeaders(const std::string &osVerb,
-                   const struct curl_slist *psExistingHeaders) override;
+                   struct curl_slist *psHeaders) override;
     bool CanRestartOnError(const char *, const char *, bool) override;
 
   public:
@@ -833,8 +832,7 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
             VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List());
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("HEAD", headers));
+        headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
@@ -933,8 +931,7 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
             VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List());
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("HEAD", headers));
+        headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
@@ -1111,8 +1108,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
             CPLFree(pszKey);
         }
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("PATCH", headers));
+        headers = poHandleHelper->GetCurlHeaders("PATCH", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         NetworkStatisticsLogger::LogPUT(0);
@@ -1345,8 +1341,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath,
         osRenameSource +=
             CPLAWSURLEncode(oldpath + GetFSPrefix().size(), false);
         headers = curl_slist_append(headers, osRenameSource.c_str());
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poHandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1486,8 +1481,7 @@ int VSIADLSFSHandler::MkdirInternal(const char *pszDirname, long nMode,
             headers = curl_slist_append(headers, "If-None-Match: \"*\"");
         }
 
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poHandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1633,8 +1627,7 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
         struct curl_slist *headers = static_cast<struct curl_slist *>(
             CPLHTTPSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders("DELETE", headers));
+        headers = poHandleHelper->GetCurlHeaders("DELETE", headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
@@ -1787,8 +1780,7 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = curl_slist_append(headers, "Content-Length: 0");
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
-        headers = VSICurlMergeHeaders(
-            headers, poAzHandleHelper->GetCurlHeaders("PUT", headers));
+        headers = poAzHandleHelper->GetCurlHeaders("PUT", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -1937,8 +1929,7 @@ bool VSIADLSFSHandler::UploadFile(
 
         const char *pszVerb = (event == Event::CREATE_FILE) ? "PUT" : "PATCH";
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, pszVerb);
-        headers = VSICurlMergeHeaders(
-            headers, poHandleHelper->GetCurlHeaders(pszVerb, headers));
+        headers = poHandleHelper->GetCurlHeaders(pszVerb, headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
@@ -2158,11 +2149,10 @@ VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
 /*                          GetCurlHeaders()                            */
 /************************************************************************/
 
-struct curl_slist *
-VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
-                              const struct curl_slist *psExistingHeaders)
+struct curl_slist *VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
+                                                 struct curl_slist *psHeaders)
 {
-    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    return m_poHandleHelper->GetCurlHeaders(osVerb, psHeaders);
 }
 
 /************************************************************************/

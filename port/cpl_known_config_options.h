@@ -28,6 +28,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_ROLE_ARN", // from cpl_aws.cpp
    "AWS_ROLE_SESSION_NAME", // from cpl_aws.cpp
    "AWS_S3_ENDPOINT", // from cpl_aws.cpp
+   "AWS_S3SESSION_TOKEN", // from cpl_aws.cpp
    "AWS_SECRET_ACCESS_KEY", // from cpl_aws.cpp
    "AWS_SESSION_TOKEN", // from cpl_aws.cpp
    "AWS_STS_ENDPOINT", // from cpl_aws.cpp
