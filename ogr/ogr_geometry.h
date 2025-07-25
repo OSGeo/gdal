@@ -3094,6 +3094,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     bool hasEmptyParts() const override;
     void removeEmptyParts() override;
 
+    bool IsValidCoverage() const;
+
     virtual void
     assignSpatialReference(const OGRSpatialReference *poSR) override;
 

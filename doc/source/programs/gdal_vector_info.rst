@@ -48,6 +48,15 @@ Standard options
     JSON output.
     This option is mutually exclusive with the :option:`--summary` option.
 
+.. option:: --check-valid-geometry
+
+    Report the number of invalid geometries in each inspected layer.
+
+.. option:: --check-valid-coverage
+
+    Report whether each inspected layer forms a valid polygonal coverage.
+    Requires a GDAL build with version 3.12 or later of the GEOS library.
+
 .. option:: --sql <statement>|@<filename>
 
     Execute the indicated SQL statement and return the result. The
