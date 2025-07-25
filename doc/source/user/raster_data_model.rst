@@ -11,6 +11,8 @@ Dataset
 
 A dataset (represented by the :cpp:class:`GDALDataset` class) is an assembly of related raster bands and some information common to them all. In particular the dataset has a concept of the raster size (in pixels and lines) that applies to all the bands. The dataset is also responsible for the georeferencing transform and coordinate system definition of all bands. The dataset itself can also have associated metadata, a list of name/value pairs in string form.
 
+The number of pixels and lines for a raster band is limited to 2,147,483,647 each. The number of bands is also limited to 2,147,483,647, although by default a limitation to 65,536 is applied to avoid excessive RAM consumption.
+
 Note that the GDAL dataset, and raster band data model is loosely based on the OpenGIS Grid Coverages specification.
 
 Coordinate System

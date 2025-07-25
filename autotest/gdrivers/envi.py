@@ -1156,3 +1156,92 @@ fwhm = {0.0003, 0.0002, 0.0001}""",
     assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
     ds = None
     gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+
+
+def test_envi_read_too_large_lines():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+file type = ENVI Standard
+sensor type = Unknown
+byte order = 0
+header offset = 0
+samples = 2
+lines = 2147483648
+bands = 1
+x start = 1
+y start = 1
+interleave = bip
+""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Limiting number of lines from 2147483648 to 2147483647 due to GDAL raster data model limitation",
+    ):
+        ds = gdal.Open("/vsimem/test.bin")
+        assert ds.RasterXSize == 2
+        assert ds.RasterYSize == 2147483647
+
+
+###############################################################################
+
+
+def test_envi_read_too_large_samples():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+file type = ENVI Standard
+sensor type = Unknown
+byte order = 0
+header offset = 0
+samples = 2147483648
+lines = 2
+bands = 1
+x start = 1
+y start = 1
+interleave = bip
+""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    with pytest.raises(
+        Exception,
+        match="Cannot handle samples=2147483648 due to GDAL raster data model limitation",
+    ):
+        gdal.Open("/vsimem/test.bin")
+
+
+###############################################################################
+
+
+def test_envi_read_too_large_bands():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+file type = ENVI Standard
+sensor type = Unknown
+byte order = 0
+header offset = 0
+samples = 1
+lines = 2
+bands = 2147483648
+x start = 1
+y start = 1
+interleave = bip
+""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    with pytest.raises(
+        Exception,
+        match="Cannot handle bands=2147483648 due to GDAL raster data model limitation",
+    ):
+        gdal.Open("/vsimem/test.bin")
