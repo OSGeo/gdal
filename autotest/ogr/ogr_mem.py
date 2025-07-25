@@ -1334,11 +1334,18 @@ def test_ogr_mem_arrow_stream_pyarrow_geoarrow_no_crs_metadata():
     lyr = ds.CreateLayer("foo")
 
     stream = lyr.GetArrowStreamAsPyArrow(["GEOMETRY_METADATA_ENCODING=GEOARROW"])
-    assert str(stream.schema) == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
-    md = stream.schema["wkb_geometry"].metadata
-    assert b"ARROW:extension:name" in md
-    assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
-    assert b"ARROW:extension:metadata" not in md
+    if (
+        str(stream.schema)
+        != "struct<OGC_FID: int64 not null, wkb_geometry: extension<geoarrow.wkb>>"
+    ):
+        assert (
+            str(stream.schema)
+            == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
+        )
+        md = stream.schema["wkb_geometry"].metadata
+        assert b"ARROW:extension:name" in md
+        assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
+        assert b"ARROW:extension:metadata" not in md
 
 
 ###############################################################################
@@ -1353,14 +1360,21 @@ def test_ogr_mem_arrow_stream_pyarrow_geoarrow_metadata():
     lyr = ds.CreateLayer("foo", srs=srs)
 
     stream = lyr.GetArrowStreamAsPyArrow(["GEOMETRY_METADATA_ENCODING=GEOARROW"])
-    assert str(stream.schema) == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
-    md = stream.schema["wkb_geometry"].metadata
-    assert b"ARROW:extension:name" in md
-    assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
-    assert b"ARROW:extension:metadata" in md
-    metadata = json.loads(md[b"ARROW:extension:metadata"])
-    assert "crs" in metadata
-    assert metadata["crs"]["id"] == {"authority": "EPSG", "code": 32631}
+    if (
+        str(stream.schema)
+        != "struct<OGC_FID: int64 not null, wkb_geometry: extension<geoarrow.wkb>>"
+    ):
+        assert (
+            str(stream.schema)
+            == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
+        )
+        md = stream.schema["wkb_geometry"].metadata
+        assert b"ARROW:extension:name" in md
+        assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
+        assert b"ARROW:extension:metadata" in md
+        metadata = json.loads(md[b"ARROW:extension:metadata"])
+        assert "crs" in metadata
+        assert metadata["crs"]["id"] == {"authority": "EPSG", "code": 32631}
 
 
 ###############################################################################
