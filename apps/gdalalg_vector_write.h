@@ -39,6 +39,8 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
   private:
     friend class GDALVectorPipelineStepAlgorithm;
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+
+    bool m_skipErrors = false;
 };
 
 //! @endcond

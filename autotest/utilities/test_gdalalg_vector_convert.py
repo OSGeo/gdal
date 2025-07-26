@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 def get_convert_alg():
@@ -235,3 +235,27 @@ def test_gdalalg_vector_convert_overwrite_non_dataset_file(tmp_vsimem):
     convert["output-format"] = "GPKG"
     convert["overwrite"] = True
     assert convert.Run()
+
+
+def test_gdalalg_vector_convert_skip_errors(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(1 2, 3 4)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(f)
+
+    convert = get_convert_alg()
+    convert["input"] = src_ds
+    convert["output"] = tmp_vsimem / "out.shp"
+    convert["skip-errors"] = True
+    assert convert.Run()
+
+    out_ds = convert["output"].GetDataset()
+    assert out_ds.GetLayer(0).GetFeatureCount() == 2
