@@ -1029,6 +1029,8 @@ struct VSIDIRWithMissingDirSynthesis : public VSIDIR
 
 struct VSIDIRS3Like : public VSIDIRWithMissingDirSynthesis
 {
+    const std::string m_osDirName;
+
     int nRecurseDepth = 0;
 
     std::string osNextMarker{};
@@ -1048,12 +1050,14 @@ struct VSIDIRS3Like : public VSIDIRWithMissingDirSynthesis
     std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> m_subdir{nullptr,
                                                              VSICloseDir};
 
-    explicit VSIDIRS3Like(IVSIS3LikeFSHandler *poFSIn)
-        : poFS(poFSIn), poS3FS(poFSIn)
+    VSIDIRS3Like(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
+        : m_osDirName(osDirName), poFS(poFSIn), poS3FS(poFSIn)
     {
     }
 
-    explicit VSIDIRS3Like(VSICurlFilesystemHandlerBase *poFSIn) : poFS(poFSIn)
+    VSIDIRS3Like(const std::string &osDirName,
+                 VSICurlFilesystemHandlerBase *poFSIn)
+        : m_osDirName(osDirName), poFS(poFSIn)
     {
     }
 
