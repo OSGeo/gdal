@@ -64,12 +64,13 @@ namespace cpl
 
 struct VSIDIRS3 : public VSIDIRS3Like
 {
-    explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn) : VSIDIRS3Like(poFSIn)
+    VSIDIRS3(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
 
-    explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn)
-        : VSIDIRS3Like(poFSIn)
+    VSIDIRS3(const std::string &osDirName, VSICurlFilesystemHandlerBase *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
 
@@ -470,6 +471,9 @@ bool VSIDIRS3::IssueListDir()
     const std::string l_osNextMarker(osNextMarker);
     clear();
 
+    const CPLStringList aosHTTPOptions(
+        CPLHTTPGetOptionsFromEnv(m_osDirName.c_str()));
+
     while (true)
     {
         poHandleHelper->ResetQueryParameters();
@@ -492,8 +496,9 @@ bool VSIDIRS3::IssueListDir()
                 poHandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
         }
 
-        struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, poHandleHelper->GetURL().c_str(), nullptr);
+        struct curl_slist *headers =
+            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                              aosHTTPOptions.List());
 
         headers = VSICurlMergeHeaders(
             headers, poHandleHelper->GetCurlHeaders("GET", headers));
@@ -612,7 +617,7 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
     int nMaxFiles, const std::set<std::string> &oSetIgnoredStorageClasses,
     bool &bIsTruncated)
 {
-    VSIDIRS3 oDir(this);
+    VSIDIRS3 oDir(std::string(), this);
     oDir.nMaxFiles = nMaxFiles;
     bool ret = oDir.AnalyseS3FileList(osBaseURL, pszXML,
                                       oSetIgnoredStorageClasses, bIsTruncated);
@@ -3300,7 +3305,7 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
         return nullptr;
     }
 
-    VSIDIRS3 *dir = new VSIDIRS3(this);
+    VSIDIRS3 *dir = new VSIDIRS3(pszPath, this);
     dir->nRecurseDepth = nRecurseDepth;
     dir->poHandleHelper = std::move(poS3HandleHelper);
     dir->osBucket = std::move(osBucket);
