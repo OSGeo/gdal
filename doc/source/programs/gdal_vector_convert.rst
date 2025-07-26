@@ -60,6 +60,12 @@ Standard options
     Output layer name. Can only be used to rename a layer, if there is a single
     input layer.
 
+.. option:: --skip-errors
+
+    .. versionadded:: 3.12
+
+    Whether failures to write feature(s) should be ignored.
+
 Advanced options
 ++++++++++++++++
 
