@@ -937,3 +937,28 @@ def test_gdalalg_vector_pipeline_help():
         f"{gdal_path} vector pipeline read foo.shp ! select --help"
     )
     assert out.startswith("Usage: select [OPTIONS] <FIELDS>")
+
+
+def test_gdalalg_vector_pipeline_skip_errors(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(1 2, 3 4)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(f)
+
+    alg = get_pipeline_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem / "out.shp"
+
+    assert alg.ParseCommandLineArguments(["read", "!", "write", "--skip-errors"])
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    assert out_ds.GetLayer(0).GetFeatureCount() == 2
