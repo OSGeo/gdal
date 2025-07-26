@@ -139,4 +139,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster stack raster1.tif raster2.tif --output-format VRT result.vrt
+       gdal raster stack raster1.tif raster2.tif result.vrt
