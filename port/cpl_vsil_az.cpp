@@ -61,7 +61,8 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 
 struct VSIDIRAz : public VSIDIRS3Like
 {
-    explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn) : VSIDIRS3Like(poFSIn)
+    VSIDIRAz(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
+        : VSIDIRS3Like(osDirName, poFSIn)
     {
     }
 
@@ -2479,7 +2480,7 @@ VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
         return nullptr;
     }
 
-    VSIDIRAz *dir = new VSIDIRAz(this);
+    VSIDIRAz *dir = new VSIDIRAz(pszPath, this);
     dir->nRecurseDepth = nRecurseDepth;
     dir->poHandleHelper = std::move(poHandleHelper);
     dir->osBucket = std::move(osBucket);
