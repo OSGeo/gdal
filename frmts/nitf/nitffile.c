@@ -692,10 +692,13 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nPixels > 8192 &&
              nNPPBH == nPixels)
     {
+        if (nNPPBV <= 0)
+            nNPPBV = 256;
+
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d */
         nNBPR = 1;
         nNPPBH = 0;
-        nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
+        nNBPC = nLines / nNPPBV + ((nLines % nNPPBV) == 0 ? 0 : 1);
 
         if (nNBPC > 9999)
         {
@@ -715,10 +718,13 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nLines > 8192 &&
              nNPPBV == nLines)
     {
+        if (nNPPBH <= 0)
+            nNPPBH = 256;
+
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d */
         nNBPC = 1;
         nNPPBV = 0;
-        nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
+        nNBPR = nPixels / nNPPBH + ((nPixels % nNPPBH) == 0 ? 0 : 1);
 
         if (nNBPR > 9999)
         {
@@ -740,8 +746,8 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         if (nNPPBH <= 0 || nNPPBV <= 0 || nNPPBH > 9999 || nNPPBV > 9999)
             nNPPBH = nNPPBV = 256;
 
-        nNBPR = (nPixels + nNPPBH - 1) / nNPPBH;
-        nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
+        nNBPR = nPixels / nNPPBH + ((nPixels % nNPPBH) == 0 ? 0 : 1);
+        nNBPC = nLines / nNPPBV + ((nLines % nNPPBV) == 0 ? 0 : 1);
         if (nNBPR > 9999 || nNBPC > 9999)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
