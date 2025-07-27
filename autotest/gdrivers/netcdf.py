@@ -6746,6 +6746,20 @@ def test_netcdf_LIST_ALL_ARRAYS():
     )
 
 
+def test_netcdf_LIST_ALL_ARRAYS_on_dataset_without_2D_arrays(tmp_path):
+
+    gdal.Run(
+        "mdim",
+        "convert",
+        input="data/netcdf/byte.nc",
+        output=tmp_path / "out.nc",
+        array="x",
+    )
+
+    ds = gdal.OpenEx(tmp_path / "out.nc", open_options=["LIST_ALL_ARRAYS=YES"])
+    assert len(ds.GetSubDatasets()) == 1
+
+
 ###############################################################################
 # Test use of GeoTransform attribute to avoid precision loss
 # https://github.com/OSGeo/gdal/issues/11993
