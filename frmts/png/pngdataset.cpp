@@ -2517,7 +2517,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         }
         if (!ret_set_bKGD)
         {
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;
         }
