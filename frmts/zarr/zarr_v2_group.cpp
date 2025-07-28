@@ -1139,7 +1139,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     poArray->SetFilters(oFilters);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
-    if (!poArray->Flush())
+    if (!cpl::starts_with(osZarrayFilename, "/vsi") && !poArray->Flush())
         return nullptr;
     RegisterArray(poArray);
 

@@ -729,7 +729,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         poArray->SetCodecs(std::move(poCodecs));
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
-    if (!poArray->Flush())
+    if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())
         return nullptr;
     RegisterArray(poArray);
 

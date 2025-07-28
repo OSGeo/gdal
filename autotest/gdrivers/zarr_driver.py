@@ -4744,10 +4744,10 @@ def test_zarr_multidim_rename_group_after_reopening(
     "format,create_z_metadata",
     [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
 )
-def test_zarr_multidim_rename_array_at_creation(tmp_vsimem, format, create_z_metadata):
+def test_zarr_multidim_rename_array_at_creation(tmp_path, format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
-    filename = str(tmp_vsimem / "test.zarr")
+    filename = str(tmp_path / "test.zarr")
 
     def test():
         ds = drv.CreateMultiDimensional(
@@ -5799,3 +5799,20 @@ def test_zarr_write_error_at_close_on_array(tmp_path, format):
 
     with pytest.raises(Exception, match="cannot be opened for writing"):
         ds.Close()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_write_vsizip(tmp_vsimem, format):
+    out_filename = "/vsizip/" + str(tmp_vsimem) + "test.zarr.zip/test.zarr"
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        out_filename, gdal.Open("data/byte.tif"), options=["FORMAT=" + format]
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
