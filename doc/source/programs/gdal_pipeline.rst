@@ -103,11 +103,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal pipeline --progress ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
+        $ gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
 
 .. example::
    :title: Rasterize and reproject
 
    .. code-block:: bash
 
-        $ gdal pipeline --progress ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite
+        $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite

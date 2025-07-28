@@ -85,8 +85,8 @@ Examples
        $ gdal vector convert --update --output-layer=lines line.shp output.gpkg
 
 .. example::
-   :title: Append features from from file :file:`poly2.shp` to an existing layer ``poly`` of a GeoPackage, with progress bar
+   :title: Append features from from file :file:`poly2.shp` to an existing layer ``poly`` of a GeoPackage, without a progress bar
 
    .. code-block:: console
 
-       $ gdal vector convert --append --output-layer=poly --progress poly2.shp output.gpkg
+       $ gdal vector convert --quiet --append --output-layer=poly poly2.shp output.gpkg
