@@ -77,16 +77,17 @@ ZarrV2Array::~ZarrV2Array()
 /*                                Flush()                               */
 /************************************************************************/
 
-void ZarrV2Array::Flush()
+bool ZarrV2Array::Flush()
 {
     if (!m_bValid)
-        return;
+        return true;
 
-    ZarrV2Array::FlushDirtyTile();
+    bool ret = ZarrV2Array::FlushDirtyTile();
 
     if (m_bDefinitionModified)
     {
-        Serialize();
+        if (!Serialize())
+            ret = false;
         m_bDefinitionModified = false;
     }
 
@@ -131,9 +132,12 @@ void ZarrV2Array::Flush()
         const std::string osAttrFilename =
             CPLFormFilenameSafe(CPLGetDirnameSafe(m_osFilename.c_str()).c_str(),
                                 ".zattrs", nullptr);
-        oDoc.Save(osAttrFilename);
+        if (!oDoc.Save(osAttrFilename))
+            ret = false;
         m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
     }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -154,7 +158,7 @@ static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 /*                    ZarrV2Array::Serialize()                          */
 /************************************************************************/
 
-void ZarrV2Array::Serialize()
+bool ZarrV2Array::Serialize()
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -254,9 +258,11 @@ void ZarrV2Array::Serialize()
         oRoot.Add("dimension_separator", m_osDimSeparator);
     }
 
-    oDoc.Save(m_osFilename);
+    bool ret = oDoc.Save(m_osFilename);
 
     m_poSharedResource->SetZMetadataItem(m_osFilename, oRoot);
+
+    return ret;
 }
 
 /************************************************************************/

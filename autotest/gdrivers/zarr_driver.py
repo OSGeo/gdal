@@ -5743,3 +5743,59 @@ def test_zarr_read_imagecodecs_tiff_errors(dirname):
     with pytest.raises(Exception):
         with gdal.Open(dirname) as ds:
             ds.ReadRaster()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_write_error_at_close_on_group(tmp_path, format):
+    out_filename = tmp_path / "test.zarr"
+
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        out_filename, options=["FORMAT=" + format]
+    )
+    rg = ds.GetRootGroup()
+    subgroup = rg.CreateGroup("subgroup")
+    attr = subgroup.CreateAttribute(
+        "str_attr", [], gdal.ExtendedDataType.CreateString()
+    )
+    assert attr.Write("my_string") == gdal.CE_None
+    del attr
+    del subgroup
+    del rg
+
+    gdal.RmdirRecursive(out_filename)
+
+    with pytest.raises(Exception, match="cannot be opened for writing"):
+        ds.Close()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_write_error_at_close_on_array(tmp_path, format):
+    out_filename = tmp_path / "test.zarr"
+
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        out_filename, options=["FORMAT=" + format]
+    )
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+
+    ar = rg.CreateMDArray("my_ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    attr = ar.CreateAttribute("str_attr", [], gdal.ExtendedDataType.CreateString())
+    assert attr.Write("my_string") == gdal.CE_None
+    del attr
+    del ar
+    del rg
+
+    gdal.RmdirRecursive(out_filename)
+
+    with pytest.raises(Exception, match="cannot be opened for writing"):
+        ds.Close()
