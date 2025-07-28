@@ -668,6 +668,7 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
         case kmldom::Type_GxTrack:
         {
             GxTrackPtr poKmlGxTrack = AsGxTrack(poKmlGeometry);
+            assert(poKmlGxTrack);
             const size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
             poOgrLineString = new OGRLineString();
             for (size_t i = 0; i < nCoords; i++)
@@ -687,6 +688,7 @@ static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
         case kmldom::Type_GxMultiTrack:
         {
             GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack(poKmlGeometry);
+            assert(poKmlGxMultiTrack);
             const size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size();
             poOgrMultiGeometry = new OGRMultiLineString();
             for (size_t j = 0; j < nGeom; j++)
