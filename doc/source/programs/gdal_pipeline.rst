@@ -24,7 +24,7 @@ Synopsis
 .. program-output:: gdal pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and the last one ``write``. Each step has its
+The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and the last one ``info`` or ``write``. Each step has its
 own positional or non-positional arguments. Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 

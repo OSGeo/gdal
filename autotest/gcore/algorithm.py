@@ -413,7 +413,7 @@ def test_algorithm_arg_set_double_list():
 
 def test_algorithm_arg_set_dataset(tmp_path):
     reg = gdal.GetGlobalAlgorithmRegistry()
-    alg = reg["raster"]["info"]
+    alg = reg["raster"]["convert"]
 
     alg["input"] = tmp_path
     alg["input"] = "foo"

@@ -27,7 +27,7 @@
 /************************************************************************/
 
 GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
-    bool openForMixedRasterVector)
+    bool /* standalone */, bool openForMixedRasterVector)
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();

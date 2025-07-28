@@ -34,7 +34,7 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
         return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
     }
 
-    GDALVectorConvertAlgorithm();
+    explicit GDALVectorConvertAlgorithm(bool /* standaloneStep */ = true);
 
     void SetDataset(GDALDataset *poDS)
     {

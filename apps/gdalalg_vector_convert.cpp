@@ -26,7 +26,8 @@
 /*          GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm()    */
 /************************************************************************/
 
-GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm()
+GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
+    bool /* standaloneStep */)
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
     AddProgressArg();
