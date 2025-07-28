@@ -5605,6 +5605,9 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::IfThenElse(
                          firstBand, (*poOtherDS->GetRasterBand(1)), firstBand)),
                      std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(
+                         gdal::pow(firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
 #endif
     }
 
@@ -5613,11 +5616,17 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         {
             return (0.5 + 2 / gdal::min(c, gdal::max(a, b)) + 3 * a * 2 -
                     a * (1 - b) / c - 2 * a - 3 + 4) /
-                   3;
+                       gdal::pow(3.0, a) * gdal::pow(b, 2.0) +
+                   gdal::abs(-a) + gdal::fabs(-a) + gdal::sqrt(a) +
+                   gdal::log10(a)
+#ifdef HAVE_MUPARSER
+                   + gdal::log(a) + gdal::pow(a, b)
+#endif
+                ;
         };
 
         auto formula = Calc(firstBand, secondBand, thirdBand);
-        constexpr double expectedVal = Calc(FIRST, SECOND, THIRD);
+        const double expectedVal = Calc(FIRST, SECOND, THIRD);
 
         EXPECT_EQ(formula.GetXSize(), WIDTH);
         EXPECT_EQ(formula.GetYSize(), HEIGHT);
