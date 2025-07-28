@@ -32,6 +32,11 @@ class GDALRasterReprojectAlgorithm /* non final */
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_reproject.html";
 
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "warp"};
+    }
+
     explicit GDALRasterReprojectAlgorithm(bool standaloneStep = false);
 
     bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const override;

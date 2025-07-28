@@ -29,6 +29,11 @@ class GDALRasterConvertAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_convert.html";
 
+    static std::vector<std::string> GetAliasesStatic()
+    {
+        return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
+    }
+
     explicit GDALRasterConvertAlgorithm(bool openForMixedRasterVector = false);
 
     GDALDataset *GetDatasetRef()
