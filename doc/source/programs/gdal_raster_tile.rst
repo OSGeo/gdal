@@ -242,9 +242,14 @@ Advanced Resampling Options
 Publication Options
 +++++++++++++++++++
 
-.. option:: --webviewer none|all|leaflet|openlayers|mapml
+.. option:: --webviewer none|all|leaflet|openlayers|mapml|stac
 
-    Web viewer to generate. Defaults to ``all``.
+    Web viewer to generate. Defaults to ``all``. Those web viewers are created
+    at the root of the output directory.
+
+    ``stac`` generates a :file:`stacta.json` file, following the
+    Spatio-Temporal Asset Catalog Tiled Assets specification, and that can
+    be opened by the :ref:`STACTA driver <raster.stacta>`.
 
 .. option:: --url
 
@@ -301,3 +306,10 @@ Examples
    .. code-block:: bash
 
       gdal raster tile --tiling-scheme raster input.tif output_folder
+
+.. example::
+   :title: Creating a tiled dataset, compatible of the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
+
+   .. code-block:: bash
+
+      gdal raster tile --format COG --tile-size 4096 input.tif output_folder

@@ -13,8 +13,10 @@
 #include "gdalalg_raster_tile.h"
 
 #include "cpl_conv.h"
+#include "cpl_json.h"
 #include "cpl_mem_cache.h"
 #include "cpl_spawn.h"
+#include "cpl_time.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
@@ -24,6 +26,7 @@
 #include "ogr_spatialref.h"
 #include "memdataset.h"
 #include "tilematrixset.hpp"
+#include "ogr_p.h"
 
 #include <algorithm>
 #include <array>
@@ -31,6 +34,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <mutex>
+#include <utility>
 
 //! @cond Doxygen_Suppress
 
@@ -41,6 +45,18 @@
 // Unlikely substring to appear in stdout. We do that in case some GDAL
 // driver would output on stdout.
 constexpr const char PROGRESS_MARKER[] = {'!', '.', 'x'};
+
+namespace
+{
+struct BandMetadata
+{
+    std::string osDescription{};
+    GDALDataType eDT{};
+    GDALColorInterp eColorInterp{};
+    std::string osCenterWaveLength{};
+    std::string osFWHM{};
+};
+}  // namespace
 
 /************************************************************************/
 /*                       GetThresholdMinTilesPerJob()                   */
@@ -251,7 +267,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()
     constexpr const char *PUBLICATION_CATEGORY = "Publication";
     AddArg("webviewer", 0, _("Web viewer to generate"), &m_webviewers)
         .SetDefault("all")
-        .SetChoices("none", "all", "leaflet", "openlayers", "mapml")
+        .SetChoices("none", "all", "leaflet", "openlayers", "mapml", "stac")
         .SetCategory(PUBLICATION_CATEGORY);
     AddArg("url", 0,
            _("URL address where the generated tiles are going to be published"),
@@ -1363,6 +1379,354 @@ GenerateMapML(const std::string &osDirectory, const std::string &mapmlTemplate,
                 VSIFCloseL(f);
             }
         }
+    }
+}
+
+/************************************************************************/
+/*                            GenerateSTAC()                            */
+/************************************************************************/
+
+static void
+GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
+             double dfWestLon, double dfSouthLat, double dfEastLon,
+             double dfNorthLat, const std::vector<std::string> &metadata,
+             const std::vector<BandMetadata> &aoBandMetadata, int nMinZoom,
+             int nMaxZoom, const std::string &osExtension,
+             const std::string &osFormat, const std::string &osURL,
+             const std::string &osCopyright, const OGRSpatialReference &oSRS,
+             const gdal::TileMatrixSet &tms, bool bInvertAxisTMS, int tileSize,
+             const double adfExtent[4], const GDALArgDatasetValue &dataset)
+{
+    CPLJSONObject oRoot;
+    oRoot["stac_version"] = "1.1.0";
+    CPLJSONArray oExtensions;
+    oRoot["stac_extensions"] = oExtensions;
+    oRoot["id"] = osTitle;
+    oRoot["type"] = "Feature";
+    oRoot["bbox"] = {dfWestLon, dfSouthLat, dfEastLon, dfNorthLat};
+    CPLJSONObject oGeometry;
+
+    const auto BuildPolygon = [](double x1, double y1, double x2, double y2)
+    {
+        return CPLJSONArray::Build({CPLJSONArray::Build(
+            {CPLJSONArray::Build({x1, y1}), CPLJSONArray::Build({x1, y2}),
+             CPLJSONArray::Build({x2, y2}), CPLJSONArray::Build({x2, y1}),
+             CPLJSONArray::Build({x1, y1})})});
+    };
+
+    if (dfWestLon <= dfEastLon)
+    {
+        oGeometry["type"] = "Polygon";
+        oGeometry["coordinates"] =
+            BuildPolygon(dfWestLon, dfSouthLat, dfEastLon, dfNorthLat);
+    }
+    else
+    {
+        oGeometry["type"] = "MultiPolygon";
+        oGeometry["coordinates"] = {
+            BuildPolygon(dfWestLon, dfSouthLat, 180.0, dfNorthLat),
+            BuildPolygon(-180.0, dfSouthLat, dfEastLon, dfNorthLat)};
+    }
+    oRoot["geometry"] = oGeometry;
+
+    CPLJSONObject oProperties;
+    oRoot["properties"] = oProperties;
+    const CPLStringList aosMD(metadata);
+    std::string osDateTime = "1970-01-01T00:00:00.000Z";
+    if (!dataset.GetName().empty())
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(dataset.GetName().c_str(), &sStat) == 0 &&
+            sStat.st_mtime != 0)
+        {
+            struct tm tm;
+            CPLUnixTimeToYMDHMS(sStat.st_mtime, &tm);
+            osDateTime = CPLSPrintf(
+                "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900,
+                tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+        }
+    }
+    std::string osStartDateTime = "0001-01-01T00:00:00.000Z";
+    std::string osEndDateTime = "9999-12-31T23:59:59.999Z";
+
+    const auto GetDateTimeAsISO8211 = [](const char *pszInput)
+    {
+        std::string osRet;
+        OGRField sField;
+        if (OGRParseDate(pszInput, &sField, 0))
+        {
+            char *pszDT = OGRGetXMLDateTime(&sField);
+            if (pszDT)
+                osRet = pszDT;
+            CPLFree(pszDT);
+        }
+        return osRet;
+    };
+
+    for (const auto &[key, value] : cpl::IterateNameValue(aosMD))
+    {
+        if (EQUAL(key, "datetime"))
+        {
+            std::string osTmp = GetDateTimeAsISO8211(value);
+            if (!osTmp.empty())
+            {
+                osDateTime = std::move(osTmp);
+                continue;
+            }
+        }
+        else if (EQUAL(key, "start_datetime"))
+        {
+            std::string osTmp = GetDateTimeAsISO8211(value);
+            if (!osTmp.empty())
+            {
+                osStartDateTime = std::move(osTmp);
+                continue;
+            }
+        }
+        else if (EQUAL(key, "end_datetime"))
+        {
+            std::string osTmp = GetDateTimeAsISO8211(value);
+            if (!osTmp.empty())
+            {
+                osEndDateTime = std::move(osTmp);
+                continue;
+            }
+        }
+        else if (EQUAL(key, "TIFFTAG_DATETIME"))
+        {
+            int nYear, nMonth, nDay, nHour, nMin, nSec;
+            if (sscanf(value, "%04d:%02d:%02d %02d:%02d:%02d", &nYear, &nMonth,
+                       &nDay, &nHour, &nMin, &nSec) == 6)
+            {
+                osDateTime = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear,
+                                        nMonth, nDay, nHour, nMin, nSec);
+                continue;
+            }
+        }
+
+        oProperties[key] = value;
+    }
+    oProperties["datetime"] = osDateTime;
+    oProperties["start_datetime"] = osStartDateTime;
+    oProperties["end_datetime"] = osEndDateTime;
+    if (!osCopyright.empty())
+        oProperties["copyright"] = osCopyright;
+
+    // Just keep the tile matrix zoom levels we use
+    gdal::TileMatrixSet tmsLimitedToZoomLevelUsed(tms);
+    auto &tileMatrixList = tmsLimitedToZoomLevelUsed.tileMatrixList();
+    tileMatrixList.erase(tileMatrixList.begin() + nMaxZoom + 1,
+                         tileMatrixList.end());
+    tileMatrixList.erase(tileMatrixList.begin(),
+                         tileMatrixList.begin() + nMinZoom);
+
+    CPLJSONObject oLimits;
+    // Patch their definition with the potentially overridden tileSize.
+    for (auto &tm : tileMatrixList)
+    {
+        int nOvrMinTileX = 0;
+        int nOvrMinTileY = 0;
+        int nOvrMaxTileX = 0;
+        int nOvrMaxTileY = 0;
+        bool bIntersects = false;
+        CPL_IGNORE_RET_VAL(GetTileIndices(
+            tm, bInvertAxisTMS, tileSize, adfExtent, nOvrMinTileX, nOvrMinTileY,
+            nOvrMaxTileX, nOvrMaxTileY, /* noIntersectionIsOK = */ true,
+            bIntersects));
+
+        CPLJSONObject oLimit;
+        oLimit["min_tile_col"] = nOvrMinTileX;
+        oLimit["max_tile_col"] = nOvrMaxTileX;
+        oLimit["min_tile_row"] = nOvrMinTileY;
+        oLimit["max_tile_row"] = nOvrMaxTileY;
+        oLimits[tm.mId] = oLimit;
+    }
+
+    CPLJSONObject oTilesTileMatrixSets;
+    {
+        CPLJSONDocument oDoc;
+        CPL_IGNORE_RET_VAL(
+            oDoc.LoadMemory(tmsLimitedToZoomLevelUsed.exportToTMSJsonV1()));
+        oTilesTileMatrixSets[tmsLimitedToZoomLevelUsed.identifier()] =
+            oDoc.GetRoot();
+    }
+    oProperties["tiles:tile_matrix_sets"] = oTilesTileMatrixSets;
+
+    CPLJSONObject oTilesTileMatrixLinks;
+    CPLJSONObject oTilesTileMatrixLink;
+    oTilesTileMatrixLink["url"] =
+        std::string("#").append(tmsLimitedToZoomLevelUsed.identifier());
+    oTilesTileMatrixLink["limits"] = oLimits;
+    oTilesTileMatrixLinks[tmsLimitedToZoomLevelUsed.identifier()] =
+        oTilesTileMatrixLink;
+    oProperties["tiles:tile_matrix_links"] = oTilesTileMatrixLinks;
+
+    const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
+    const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+    if (pszAuthName && pszAuthCode)
+    {
+        oProperties["proj:code"] =
+            std::string(pszAuthName).append(":").append(pszAuthCode);
+    }
+    else
+    {
+        char *pszPROJJSON = nullptr;
+        CPL_IGNORE_RET_VAL(oSRS.exportToPROJJSON(&pszPROJJSON, nullptr));
+        if (pszPROJJSON)
+        {
+            CPLJSONDocument oDoc;
+            CPL_IGNORE_RET_VAL(oDoc.LoadMemory(pszPROJJSON));
+            CPLFree(pszPROJJSON);
+            oProperties["proj:projjson"] = oDoc.GetRoot();
+        }
+    }
+    {
+        auto ovrTileMatrix = tms.tileMatrixList()[nMaxZoom];
+        int nOvrMinTileX = 0;
+        int nOvrMinTileY = 0;
+        int nOvrMaxTileX = 0;
+        int nOvrMaxTileY = 0;
+        bool bIntersects = false;
+        CPL_IGNORE_RET_VAL(GetTileIndices(
+            ovrTileMatrix, bInvertAxisTMS, tileSize, adfExtent, nOvrMinTileX,
+            nOvrMinTileY, nOvrMaxTileX, nOvrMaxTileY,
+            /* noIntersectionIsOK = */ true, bIntersects));
+        oProperties["proj:shape"] = {
+            (nOvrMaxTileY - nOvrMinTileY + 1) * ovrTileMatrix.mTileHeight,
+            (nOvrMaxTileX - nOvrMinTileX + 1) * ovrTileMatrix.mTileWidth};
+
+        oProperties["proj:transform"] = {
+            ovrTileMatrix.mResX,
+            0.0,
+            ovrTileMatrix.mTopLeftX +
+                nOvrMinTileX * ovrTileMatrix.mTileWidth * ovrTileMatrix.mResX,
+            0.0,
+            -ovrTileMatrix.mResY,
+            ovrTileMatrix.mTopLeftY +
+                nOvrMinTileY * ovrTileMatrix.mTileHeight * ovrTileMatrix.mResY,
+            0.0,
+            0.0,
+            0.0};
+    }
+
+    constexpr const char *ASSET_NAME = "bands";
+
+    CPLJSONObject oAssetTemplates;
+    oRoot["asset_templates"] = oAssetTemplates;
+
+    CPLJSONObject oAssetTemplate;
+    oAssetTemplates[ASSET_NAME] = oAssetTemplate;
+
+    std::string osHref = (osURL.empty() ? std::string(".") : std::string(osURL))
+                             .append("/{TileMatrix}/{TileCol}/{TileRow}.")
+                             .append(osExtension);
+
+    const std::map<std::string, std::string> oMapVSIToURIPrefix = {
+        {"vsis3", "s3://"},
+        {"vsigs", "gs://"},
+        {"vsiaz", "az://"},  // Not universally recognized
+    };
+
+    const CPLStringList aosSplitHref(
+        CSLTokenizeString2(osHref.c_str(), "/", 0));
+    if (!aosSplitHref.empty())
+    {
+        const auto oIter = oMapVSIToURIPrefix.find(aosSplitHref[0]);
+        if (oIter != oMapVSIToURIPrefix.end())
+        {
+            // +2 because of 2 slash characters
+            osHref = std::string(oIter->second)
+                         .append(osHref.c_str() + strlen(aosSplitHref[0]) + 2);
+        }
+    }
+    oAssetTemplate["href"] = osHref;
+
+    if (EQUAL(osFormat.c_str(), "COG"))
+        oAssetTemplate["type"] =
+            "image/tiff; application=geotiff; profile=cloud-optimized";
+    else if (osExtension == "tif")
+        oAssetTemplate["type"] = "image/tiff; application=geotiff";
+    else if (osExtension == "png")
+        oAssetTemplate["type"] = "image/png";
+    else if (osExtension == "jpg")
+        oAssetTemplate["type"] = "image/jpeg";
+    else if (osExtension == "webp")
+        oAssetTemplate["type"] = "image/webp";
+
+    const std::map<GDALDataType, const char *> oMapDTToStac = {
+        {GDT_Int8, "int8"},
+        {GDT_Int16, "int16"},
+        {GDT_Int32, "int32"},
+        {GDT_Int64, "int64"},
+        {GDT_Byte, "uint8"},
+        {GDT_UInt16, "uint16"},
+        {GDT_UInt32, "uint32"},
+        {GDT_UInt64, "uint64"},
+        // float16: 16-bit float; unhandled
+        {GDT_Float32, "float32"},
+        {GDT_Float64, "float64"},
+        {GDT_CInt16, "cint16"},
+        {GDT_CInt32, "cint32"},
+        // cfloat16: complex 16-bit float; unhandled
+        {GDT_CFloat32, "cfloat32"},
+        {GDT_CFloat64, "cfloat64"},
+    };
+
+    CPLJSONArray oBands;
+    int iBand = 1;
+    bool bEOExtensionUsed = false;
+    for (const auto &bandMD : aoBandMetadata)
+    {
+        CPLJSONObject oBand;
+        oBand["name"] = bandMD.osDescription.empty()
+                            ? std::string(CPLSPrintf("Band%d", iBand))
+                            : bandMD.osDescription;
+
+        const auto oIter = oMapDTToStac.find(bandMD.eDT);
+        if (oIter != oMapDTToStac.end())
+            oBand["data_type"] = oIter->second;
+
+        if (const char *pszCommonName =
+                GDALGetSTACCommonNameFromColorInterp(bandMD.eColorInterp))
+        {
+            bEOExtensionUsed = true;
+            oBand["eo:common_name"] = pszCommonName;
+        }
+        if (!bandMD.osCenterWaveLength.empty() && !bandMD.osFWHM.empty())
+        {
+            bEOExtensionUsed = true;
+            oBand["eo:center_wavelength"] =
+                CPLAtof(bandMD.osCenterWaveLength.c_str());
+            oBand["eo:full_width_half_max"] = CPLAtof(bandMD.osFWHM.c_str());
+        }
+        ++iBand;
+        oBands.Add(oBand);
+    }
+    oAssetTemplate["bands"] = oBands;
+
+    oRoot.Add("assets", CPLJSONObject());
+    oRoot.Add("links", CPLJSONArray());
+
+    oExtensions.Add(
+        "https://stac-extensions.github.io/tiled-assets/v1.0.0/schema.json");
+    oExtensions.Add(
+        "https://stac-extensions.github.io/projection/v2.0.0/schema.json");
+    if (bEOExtensionUsed)
+        oExtensions.Add(
+            "https://stac-extensions.github.io/eo/v2.0.0/schema.json");
+
+    // Serialize JSON document to file
+    const std::string osJSON =
+        CPLString(oRoot.Format(CPLJSONObject::PrettyFormat::Pretty))
+            .replaceAll("\\/", '/');
+    VSILFILE *f = VSIFOpenL(
+        CPLFormFilenameSafe(osDirectory.c_str(), "stacta.json", nullptr)
+            .c_str(),
+        "wb");
+    if (f)
+    {
+        VSIFWriteL(osJSON.data(), 1, osJSON.size(), f);
+        VSIFCloseL(f);
     }
 }
 
@@ -3023,6 +3387,22 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         m_metadata = aosMD;
     }
 
+    std::vector<BandMetadata> aoBandMetadata;
+    for (int i = 1; i <= m_poSrcDS->GetRasterCount(); ++i)
+    {
+        auto poBand = m_poSrcDS->GetRasterBand(i);
+        BandMetadata bm;
+        bm.osDescription = poBand->GetDescription();
+        bm.eDT = poBand->GetRasterDataType();
+        bm.eColorInterp = poBand->GetColorInterpretation();
+        if (const char *pszCenterWavelength =
+                poBand->GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY"))
+            bm.osCenterWaveLength = pszCenterWavelength;
+        if (const char *pszFWHM = poBand->GetMetadataItem("FWHM_UM", "IMAGERY"))
+            bm.osFWHM = pszFWHM;
+        aoBandMetadata.emplace_back(std::move(bm));
+    }
+
     GDALGeoTransform srcGTModif{0, 1, 0, 0, 0, -1};
 
     if (m_tilingScheme == "mercator")
@@ -4380,6 +4760,41 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                       nMinTileY, nMaxTileX, nMaxTileY, m_minZoomLevel,
                       m_maxZoomLevel, pszExtension, m_url, m_copyright,
                       *(poTMS.get()));
+    }
+
+    if (m_ovrZoomLevel < 0 && bRet && IsWebViewerEnabled("stac") &&
+        m_convention == "xyz")
+    {
+        OGRCoordinateTransformation *poCT = poCTToWGS84.get();
+        std::unique_ptr<OGRCoordinateTransformation> poCTToLongLat;
+        if (!poCTToWGS84)
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            OGRSpatialReference oLongLat;
+            oLongLat.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            oLongLat.CopyGeogCSFrom(&oSRS_TMS);
+            poCTToLongLat.reset(
+                OGRCreateCoordinateTransformation(&oSRS_TMS, &oLongLat));
+            poCT = poCTToLongLat.get();
+        }
+
+        double dfSouthLat = -90;
+        double dfWestLon = -180;
+        double dfNorthLat = 90;
+        double dfEastLon = 180;
+        if (poCT)
+        {
+            poCT->TransformBounds(adfExtent[0], adfExtent[1], adfExtent[2],
+                                  adfExtent[3], &dfWestLon, &dfSouthLat,
+                                  &dfEastLon, &dfNorthLat, 21);
+        }
+
+        GenerateSTAC(m_outputDirectory, m_title, dfWestLon, dfSouthLat,
+                     dfEastLon, dfNorthLat, m_metadata, aoBandMetadata,
+                     m_minZoomLevel, m_maxZoomLevel, pszExtension,
+                     m_outputFormat, m_url, m_copyright, oSRS_TMS,
+                     *(poTMS.get()), bInvertAxisTMS, m_tileSize, adfExtent,
+                     m_dataset);
     }
 
     if (m_ovrZoomLevel < 0 && bRet && m_kml)
