@@ -89,7 +89,7 @@ static std::string CPLAzureGetSignature(const std::string &osStringToSign,
 /************************************************************************/
 
 static struct curl_slist *GetAzureBlobHeaders(
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osVerb, struct curl_slist *psHeaders,
     const std::string &osResource,
     const std::map<std::string, std::string> &oMapQueryParameters,
     const std::string &osStorageAccount, const std::string &osStorageKeyB64,
@@ -106,10 +106,9 @@ static struct curl_slist *GetAzureBlobHeaders(
     }
     if (osStorageKeyB64.empty())
     {
-        struct curl_slist *headers = nullptr;
-        headers = curl_slist_append(
-            headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
-        return headers;
+        psHeaders = curl_slist_append(
+            psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        return psHeaders;
     }
 
     std::string osMsVersion("2019-12-12");
@@ -118,8 +117,8 @@ static struct curl_slist *GetAzureBlobHeaders(
         oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
     std::string osCanonicalizedHeaders(
-        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
-            oSortedMapMSHeaders, psExistingHeaders, "x-ms-"));
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(oSortedMapMSHeaders,
+                                                          psHeaders, "x-ms-"));
 
     std::string osCanonicalizedResource;
     osCanonicalizedResource += "/" + osStorageAccount;
@@ -138,28 +137,22 @@ static struct curl_slist *GetAzureBlobHeaders(
 
     std::string osStringToSign;
     osStringToSign += osVerb + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-Encoding") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-Language") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-Encoding") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-Language") + "\n";
     std::string osContentLength(
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-Length"));
+        CPLAWSGetHeaderVal(psHeaders, "Content-Length"));
     if (osContentLength == "0")
         osContentLength.clear();  // since x-ms-version 2015-02-21
     osStringToSign += osContentLength + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-MD5") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Content-Type") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Date") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "If-Modified-Since") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "If-Match") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "If-None-Match") + "\n";
     osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
-    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Date") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "If-Modified-Since") + "\n";
-    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "If-Match") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "If-None-Match") + "\n";
-    osStringToSign +=
-        CPLAWSGetHeaderVal(psExistingHeaders, "If-Unmodified-Since") + "\n";
-    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Range") + "\n";
+        CPLAWSGetHeaderVal(psHeaders, "If-Unmodified-Since") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psHeaders, "Range") + "\n";
     osStringToSign += osCanonicalizedHeaders;
     osStringToSign += osCanonicalizedResource;
 
@@ -175,17 +168,16 @@ static struct curl_slist *GetAzureBlobHeaders(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
-    struct curl_slist *headers = nullptr;
-    headers =
-        curl_slist_append(headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+    psHeaders = curl_slist_append(psHeaders,
+                                  CPLSPrintf("x-ms-date: %s", osDate.c_str()));
     if (bIncludeMSVersion)
     {
-        headers = curl_slist_append(
-            headers, CPLSPrintf("x-ms-version: %s", osMsVersion.c_str()));
+        psHeaders = curl_slist_append(
+            psHeaders, CPLSPrintf("x-ms-version: %s", osMsVersion.c_str()));
     }
-    headers = curl_slist_append(
-        headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
-    return headers;
+    psHeaders = curl_slist_append(
+        psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    return psHeaders;
 }
 
 /************************************************************************/
@@ -915,9 +907,10 @@ std::string VSIAzureBlobHandleHelper::GetSASQueryString() const
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
-struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
-    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
-    const void *, size_t) const
+struct curl_slist *
+VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
+                                         struct curl_slist *psHeaders,
+                                         const void *, size_t) const
 {
     if (m_bFromManagedIdentities || !m_osAccessToken.empty())
     {
@@ -933,15 +926,13 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
             osAccessToken = m_osAccessToken;
         }
 
-        struct curl_slist *headers = nullptr;
-
         // Do not use CPLSPrintf() as we could get over the 8K character limit
         // with very large SAS tokens
         std::string osAuthorization = "Authorization: Bearer ";
         osAuthorization += osAccessToken;
-        headers = curl_slist_append(headers, osAuthorization.c_str());
-        headers = curl_slist_append(headers, "x-ms-version: 2019-12-12");
-        return headers;
+        psHeaders = curl_slist_append(psHeaders, osAuthorization.c_str());
+        psHeaders = curl_slist_append(psHeaders, "x-ms-version: 2019-12-12");
+        return psHeaders;
     }
 
     std::string osResource;
@@ -956,7 +947,7 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
     if (!m_osObjectKey.empty())
         osResource += "/" + CPLAWSURLEncode(m_osObjectKey, false);
 
-    return GetAzureBlobHeaders(osVerb, psExistingHeaders, osResource,
+    return GetAzureBlobHeaders(osVerb, psHeaders, osResource,
                                m_oMapQueryParameters, m_osStorageAccount,
                                m_osStorageKey, m_bIncludeMSVersion);
 }
