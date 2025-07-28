@@ -3570,6 +3570,34 @@ def test_ogr_csv_do_not_write_header(tmp_vsimem):
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_ogr_csv_open_dir(tmp_vsimem):
+
+    dirname = tmp_vsimem / "my_dir"
+    gdal.Mkdir(dirname, 0o755)
+    gdal.VectorTranslate(
+        dirname / "test.csv", "data/poly.shp", layerCreationOptions=["CREATE_CSVT=YES"]
+    )
+
+    with ogr.Open(dirname) as ds:
+        assert ds.GetLayerCount() == 1
+
+    gdal.FileFromMemBuffer(dirname / "foo", "")
+    gdal.FileFromMemBuffer(dirname / "bar", "")
+
+    with pytest.raises(Exception):
+        ogr.Open(dirname)
+
+    with ogr.Open("CSV:" + str(dirname)) as ds:
+        assert ds.GetLayerCount() == 1
+
+    with gdal.OpenEx(dirname, allowed_drivers=["CSV"]) as ds:
+        assert ds.GetLayerCount() == 1
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:
