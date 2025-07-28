@@ -4218,6 +4218,10 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
         // Empty PRECINCTS option to ask for no custom precincts
         papszJP2Options = CSLAddString(papszJP2Options, "PRECINCTS=");
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic
         // Image Segments of STDI-0006
         std::vector<double> adfBPP = {
@@ -4233,6 +4237,9 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
             // Lossless 5x3 wavelet
             papszJP2Options = CSLAddString(papszJP2Options, "REVERSIBLE=YES");
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
         std::string osQuality;
         for (double dfBPP : adfBPP)
@@ -5295,6 +5302,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             CPLTestBool(
                 CSLFetchNameValueDef(papszFullOptions, "J2KLRA", "YES")))
         {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
             // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic
             // Image Segments of STDI-0006
             std::vector<double> adfBPP = {
@@ -5306,6 +5317,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             {
                 adfBPP.push_back(nABPP);
             }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
             double dfQuality =
                 CPLAtof(CSLFetchNameValueDef(papszFullOptions, "QUALITY", "0"));
