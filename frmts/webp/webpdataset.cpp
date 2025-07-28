@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
@@ -696,7 +697,14 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 
             if (!abyData.empty())
             {
-                VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+                VSIVirtualHandleUniquePtr fpImage(
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
+                        "NO"))
+                        ? VSIFileManager::GetHandler(pszFilename)
+                              ->CreateOnlyVisibleAtCloseTime(pszFilename, true,
+                                                             nullptr)
+                        : VSIFOpenL(pszFilename, "wb"));
                 if (fpImage == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
@@ -704,18 +712,20 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 
                     return nullptr;
                 }
-                if (VSIFWriteL(abyData.data(), 1, abyData.size(), fpImage) !=
+                if (fpImage->Write(abyData.data(), 1, abyData.size()) !=
                     abyData.size())
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Failure writing data: %s", VSIStrerror(errno));
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     return nullptr;
                 }
-                if (VSIFCloseL(fpImage) != 0)
+
+                if (fpImage->Close() != 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                             "Failure writing data: %s", VSIStrerror(errno));
+                             "Error at file closing of '%s': %s", pszFilename,
+                             VSIStrerror(errno));
                     return nullptr;
                 }
 
@@ -919,7 +929,12 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+    VSIVirtualHandleUniquePtr fpImage(
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
+            ? VSIFileManager::GetHandler(pszFilename)
+                  ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
+            : VSIFOpenL(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -929,7 +944,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     }
 
     WebPUserData sUserData;
-    sUserData.fp = fpImage;
+    sUserData.fp = fpImage.get();
     sUserData.pfnProgress = pfnProgress ? pfnProgress : GDALDummyProgress;
     sUserData.pProgressData = pProgressData;
 
@@ -948,7 +963,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "WebPPictureAlloc() failed");
         VSIFree(pabyBuffer);
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         return nullptr;
     }
 
@@ -981,6 +996,9 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined, "WebPPictureImportRGB() failed");
         eErr = CE_Failure;
     }
+
+    if (pfnProgress)
+        pfnProgress(0.5, "", pProgressData);
 
     if (eErr == CE_None && !WebPEncode(&sConfig, &sPicture))
     {
@@ -1041,7 +1059,21 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 
     WebPPictureFree(&sPicture);
 
-    VSIFCloseL(fpImage);
+    if (eErr == CE_None)
+    {
+        if (fpImage->Close() != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Error at file closing of '%s': %s", pszFilename,
+                     VSIStrerror(errno));
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        fpImage->CancelCreation();
+        fpImage.reset();
+    }
 
     if (pfnProgress)
         pfnProgress(1.0, "", pProgressData);

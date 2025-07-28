@@ -599,6 +599,14 @@ typedef enum
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
+/** Capability set by a driver that supports the \@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME
+ * hidden creation option.
+ *
+ * @since GDAL 3.12
+ */
+#define GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME                            \
+    "DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME"
+
 /** Capability set by a driver that implements the VectorTranslateFrom() API.
  *
  * @since GDAL 3.8
@@ -1275,6 +1283,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription(GDALMajorObjectH, const char *);
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver(GDALDatasetH);
 char CPL_DLL **CPL_STDCALL GDALGetFileList(GDALDatasetH);
+void CPL_DLL GDALDatasetMarkSuppressOnClose(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);

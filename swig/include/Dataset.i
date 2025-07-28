@@ -271,6 +271,10 @@ public:
     }
   }
 
+  void MarkSuppressOnClose() {
+    GDALDatasetMarkSuppressOnClose(self);
+  }
+
 #ifdef SWIGJAVA
   %rename (CloseInternal) Close;
   %javamethodmodifiers Close() "private";

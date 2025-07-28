@@ -4328,7 +4328,14 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
             if (!abyJPEG.empty())
             {
-                VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+                VSIVirtualHandleUniquePtr fpImage(
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
+                        "NO"))
+                        ? VSIFileManager::GetHandler(pszFilename)
+                              ->CreateOnlyVisibleAtCloseTime(pszFilename, true,
+                                                             nullptr)
+                        : VSIFOpenL(pszFilename, "wb"));
                 if (fpImage == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
@@ -4336,18 +4343,20 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
                     return nullptr;
                 }
-                if (VSIFWriteL(abyJPEG.data(), 1, abyJPEG.size(), fpImage) !=
+                if (fpImage->Write(abyJPEG.data(), 1, abyJPEG.size()) !=
                     abyJPEG.size())
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Failure writing data: %s", VSIStrerror(errno));
-                    VSIFCloseL(fpImage);
+                    fpImage->CancelCreation();
                     return nullptr;
                 }
-                if (VSIFCloseL(fpImage) != 0)
+
+                if (fpImage->Close() != 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                             "Failure writing data: %s", VSIStrerror(errno));
+                             "Error at file closing of '%s': %s", pszFilename,
+                             VSIStrerror(errno));
                     return nullptr;
                 }
 
@@ -4454,7 +4463,6 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                  "colorspace");
     }
 
-    VSILFILE *fpImage = nullptr;
     GDALJPEGUserData sUserData;
     sUserData.bNonFatalErrorEncountered = false;
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -4519,7 +4527,12 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     }
 
     // Create the dataset.
-    fpImage = VSIFOpenL(pszFilename, "wb");
+    VSIVirtualHandleUniquePtr fpImage(
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
+            ? VSIFileManager::GetHandler(pszFilename)
+                  ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
+            : VSIFOpenL(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -4540,22 +4553,24 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     // Nasty trick to avoid variable clobbering issues with setjmp/longjmp.
     return CreateCopyStage2(pszFilename, poSrcDS, papszOptions, pfnProgress,
-                            pProgressData, fpImage, eDT, nQuality, bAppendMask,
-                            sUserData, sCInfo, sJErr, pabyScanline);
+                            pProgressData, std::move(fpImage), eDT, nQuality,
+                            bAppendMask, sUserData, sCInfo, sJErr,
+                            pabyScanline);
 }
 
 GDALDataset *JPGDataset::CreateCopyStage2(
     const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
-    GDALProgressFunc pfnProgress, void *pProgressData, VSILFILE *fpImage,
-    GDALDataType eDT, int nQuality, bool bAppendMask,
-    GDALJPEGUserData &sUserData, struct jpeg_compress_struct &sCInfo,
-    struct jpeg_error_mgr &sJErr, GByte *&pabyScanline)
+    GDALProgressFunc pfnProgress, void *pProgressData,
+    VSIVirtualHandleUniquePtr fpImage, GDALDataType eDT, int nQuality,
+    bool bAppendMask, GDALJPEGUserData &sUserData,
+    struct jpeg_compress_struct &sCInfo, struct jpeg_error_mgr &sJErr,
+    GByte *&pabyScanline)
 
 {
     if (setjmp(sUserData.setjmp_buffer))
     {
         if (fpImage)
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
         return nullptr;
     }
 
@@ -4582,12 +4597,12 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     if (setjmp(sUserData.setjmp_buffer))
     {
         if (fpImage)
-            VSIFCloseL(fpImage);
+            fpImage->CancelCreation();
         jpeg_destroy_compress(&sCInfo);
         return nullptr;
     }
 
-    jpeg_vsiio_dest(&sCInfo, fpImage);
+    jpeg_vsiio_dest(&sCInfo, fpImage.get());
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -4713,7 +4728,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
     if (setjmp(sUserData.setjmp_buffer))
     {
-        VSIFCloseL(fpImage);
+        fpImage->CancelCreation();
         CPLFree(pabyScanline);
         jpeg_destroy_compress(&sCInfo);
         return nullptr;
@@ -4781,7 +4796,21 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     // cause a longjmp to occur.
     CPLFree(pabyScanline);
 
-    VSIFCloseL(fpImage);
+    if (eErr == CE_None)
+    {
+        if (fpImage->Close() != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Error at file closing of '%s': %s", pszFilename,
+                     VSIStrerror(errno));
+            eErr = CE_Failure;
+        }
+    }
+    else
+    {
+        fpImage->CancelCreation();
+        fpImage.reset();
+    }
 
     if (eErr != CE_None)
     {

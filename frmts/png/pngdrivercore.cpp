@@ -79,6 +79,8 @@ void PNGDriverSetCommonMetadata(GDALDriver *poDriver)
         "</CreationOptionList>\n");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME,
+                              "YES");
 
     poDriver->pfnIdentify = PNGDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
