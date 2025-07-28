@@ -298,6 +298,16 @@ def test_gdal_completion_co(gdal_path):
     assert "9" in out
 
     out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster convert --of CO in.tif out.tif prev=of cur=CO"
+    ).split(" ")
+    assert "COG" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster convert --of=CO in.tif out.tif prev== cur=CO"
+    ).split(" ")
+    assert "COG" in out
+
+    out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster convert --of COG --co="
     ).split(" ")
     assert "COMPRESS=" in out
