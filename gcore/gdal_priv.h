@@ -2556,9 +2556,11 @@ GDALComputedRasterBand CPL_DLL log10(const GDALRasterBand &band);
 
 using std::pow;
 GDALComputedRasterBand CPL_DLL pow(const GDALRasterBand &band, double constant);
+#ifndef DOXYGEN_SKIP
 GDALComputedRasterBand CPL_DLL pow(double constant, const GDALRasterBand &band);
 GDALComputedRasterBand CPL_DLL pow(const GDALRasterBand &band1,
                                    const GDALRasterBand &band2);
+#endif
 
 GDALComputedRasterBand CPL_DLL IfThenElse(const GDALRasterBand &condBand,
                                           const GDALRasterBand &thenBand,

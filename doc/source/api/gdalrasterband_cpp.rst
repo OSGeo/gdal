@@ -34,6 +34,21 @@ GDALRasterBand related functions
 .. doxygenfunction:: gdal::mean
    :project: api
 
+.. doxygenfunction:: gdal::abs
+   :project: api
+
+.. doxygenfunction:: gdal::sqrt
+   :project: api
+
+.. doxygenfunction:: gdal::pow
+   :project: api
+
+.. doxygenfunction:: gdal::log
+   :project: api
+
+.. doxygenfunction:: gdal::log10
+   :project: api
+
 .. doxygenfunction:: gdal::IfThenElse
    :project: api
 

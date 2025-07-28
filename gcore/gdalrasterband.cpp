@@ -12067,6 +12067,7 @@ GDALComputedRasterBand log10(const GDALRasterBand &band)
 namespace gdal
 {
 
+#ifndef DOXYGEN_SKIP
 /** Return a band whose each pixel value is the constant raised to the power of
  * the corresponding pixel value in the input band.
  *
@@ -12080,6 +12081,8 @@ GDALComputedRasterBand pow(double constant, const GDALRasterBand &band)
     return GDALComputedRasterBand(GDALComputedRasterBand::Operation::OP_POW,
                                   constant, band);
 }
+#endif
+
 }  // namespace gdal
 
 /************************************************************************/
@@ -12111,6 +12114,7 @@ GDALComputedRasterBand pow(const GDALRasterBand &band, double constant)
 namespace gdal
 {
 
+#ifndef DOXYGEN_SKIP
 /** Return a band whose each pixel value is the the corresponding pixel value
  * in the input band1 raised to the power of the corresponding pixel value
  * in the input band2
@@ -12134,4 +12138,5 @@ GDALComputedRasterBand pow(const GDALRasterBand &band1,
                                   band1, band2);
 #endif
 }
+#endif
 }  // namespace gdal
