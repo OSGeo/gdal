@@ -474,6 +474,20 @@ inline GByte PNG_AVG(int nVal, int nValPrev, int nValUp)
     return static_cast<GByte>((nVal - (nValPrev + nValUp) / 2) & 0xff);
 }
 
+inline GByte PNG_PAETH(int nVal, int nValPrev, int nValUp, int nValUpPrev)
+{
+    const int p = nValPrev + nValUp - nValUpPrev;
+    const int pa = std::abs(p - nValPrev);
+    const int pb = std::abs(p - nValUp);
+    const int pc = std::abs(p - nValUpPrev);
+    if (pa <= pb && pa <= pc)
+        return static_cast<GByte>((nVal - nValPrev) & 0xff);
+    else if (pb <= pc)
+        return static_cast<GByte>((nVal - nValUp) & 0xff);
+    else
+        return static_cast<GByte>((nVal - nValUpPrev) & 0xff);
+}
+
 static bool GenerateTile(
     GDALDataset *poSrcDS, GDALDriver *m_poDstDriver, const char *pszExtension,
     CSLConstList creationOptions, GDALWarpOperation &oWO,
@@ -550,8 +564,8 @@ static bool GenerateTile(
             GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
 
     const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
-                                           ? osFilename
-                                           : osFilename + ".tmp." + pszExtension;
+                                          ? osFilename
+                                          : osFilename + ".tmp." + pszExtension;
 
     if (!bAuxXML && EQUAL(pszExtension, "png") &&
         eWorkingDataType == GDT_Byte &&
@@ -583,10 +597,18 @@ static bool GenerateTile(
 
         constexpr GByte PNG_FILTER_SUB = 1;  // horizontal diff
         constexpr GByte PNG_FILTER_AVG = 3;  // average with pixel before and up
+        constexpr GByte PNG_FILTER_PAETH = 4;
 
         if (bBlank)
             tmpBuffer.clear();
-        tmpBuffer.resize(cpl::fits_on<int>(nDstBytesPerRow * H));
+        const int tmpBufferSize = cpl::fits_on<int>(nDstBytesPerRow * H);
+        tmpBuffer.resize(tmpBufferSize + nDstBytesPerRow);
+        GByte *paethBuffer = tmpBuffer.data() + tmpBufferSize;
+
+        const char *pszGDAL_RASTER_TILE_PNG_FILTER =
+            CPLGetConfigOption("GDAL_RASTER_TILE_PNG_FILTER", "");
+        const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");
+        const bool bForceAvg = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "AVERAGE");
 
         for (int j = 0; !bBlank && j < H; ++j)
         {
@@ -616,12 +638,51 @@ static bool GenerateTile(
             {
                 if (j > 0)
                 {
+                    int costAvg = 0;
                     for (int i = 1; i < W; ++i)
                     {
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                        const GByte v =
                             PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
                                     dstBuffer[0 * nBPB + j * W + i - 1],
                                     dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] = v;
+
+                        costAvg += (v < 128) ? v : 256 - v;
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[0 * nBPB + j * W + i], 0,
+                                dstBuffer[0 * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[0 * nBPB + j * W + i],
+                                dstBuffer[0 * nBPB + j * W + i - 1],
+                                dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                            paethBuffer[i] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
                     }
                 }
                 else
@@ -638,16 +699,77 @@ static bool GenerateTile(
             {
                 if (j > 0)
                 {
+                    int costAvg = 0;
                     for (int i = 1; i < W; ++i)
                     {
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
-                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
                                     dstBuffer[0 * nBPB + j * W + i - 1],
-                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
-                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
                                     dstBuffer[1 * nBPB + j * W + i - 1],
-                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
                     }
                 }
                 else
@@ -667,20 +789,97 @@ static bool GenerateTile(
             {
                 if (j > 0)
                 {
+                    int costAvg = 0;
                     for (int i = 1; i < W; ++i)
                     {
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
-                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                        dstBuffer[2 * nBPB + j * W + i - 1],
+                                        dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      2] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
                                     dstBuffer[0 * nBPB + j * W + i - 1],
-                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
-                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
                                     dstBuffer[1 * nBPB + j * W + i - 1],
-                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
-                            PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[2 * nBPB + j * W + i],
                                     dstBuffer[2 * nBPB + j * W + i - 1],
-                                    dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 2] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
                     }
                 }
                 else
@@ -703,24 +902,117 @@ static bool GenerateTile(
             {
                 if (j > 0)
                 {
+                    int costAvg = 0;
                     for (int i = 1; i < W; ++i)
                     {
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
-                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                        dstBuffer[2 * nBPB + j * W + i - 1],
+                                        dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      2] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[3 * nBPB + j * W + i],
+                                        dstBuffer[3 * nBPB + j * W + i - 1],
+                                        dstBuffer[3 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      3] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
                                     dstBuffer[0 * nBPB + j * W + i - 1],
-                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
-                            PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
                                     dstBuffer[1 * nBPB + j * W + i - 1],
-                                    dstBuffer[1 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
-                            PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[2 * nBPB + j * W + i],
                                     dstBuffer[2 * nBPB + j * W + i - 1],
-                                    dstBuffer[2 * nBPB + (j - 1) * W + i]);
-                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 3] =
-                            PNG_AVG(dstBuffer[3 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 2] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[3 * nBPB + j * W + i],
                                     dstBuffer[3 * nBPB + j * W + i - 1],
-                                    dstBuffer[3 * nBPB + (j - 1) * W + i]);
+                                    dstBuffer[3 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[3 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 3] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
                     }
                 }
                 else
@@ -745,7 +1037,7 @@ static bool GenerateTile(
         }
         size_t nOutSize = 0;
         // Shouldn't happen given the care we have done to dimension dstBuffer
-        if (CPLZLibDeflate(tmpBuffer.data(), tmpBuffer.size(), -1,
+        if (CPLZLibDeflate(tmpBuffer.data(), tmpBufferSize, -1,
                            dstBuffer.data(), dstBuffer.size(),
                            &nOutSize) == nullptr ||
             nOutSize > static_cast<size_t>(INT32_MAX))

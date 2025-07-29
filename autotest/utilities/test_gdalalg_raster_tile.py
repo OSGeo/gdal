@@ -2157,3 +2157,53 @@ def test_gdalalg_raster_tile_red_tile_with_alpha(tmp_vsimem):
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (255, 255)
     assert ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
     assert ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
+
+
+@pytest.mark.parametrize("GDAL_RASTER_TILE_PNG_FILTER", ["", "AVERAGE", "PAETH"])
+@pytest.mark.parametrize("nbands", [1, 2, 3, 4])
+def test_gdalalg_raster_tile_png_optim(tmp_vsimem, GDAL_RASTER_TILE_PNG_FILTER, nbands):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, nbands, gdal.GDT_Byte)
+    if nbands == 2 or nbands == 4:
+        src_ds.GetRasterBand(nbands).SetColorInterpretation(gdal.GCI_AlphaBand)
+        src_ds.GetRasterBand(nbands).Fill(127)
+        real_bands = nbands - 1
+    else:
+        real_bands = nbands
+
+    for i in range(real_bands):
+        src_ds.GetRasterBand(i + 1).WriteRaster(
+            0,
+            0,
+            256,
+            256,
+            b"".join(
+                [
+                    bytes(
+                        chr((i + j * 257 if (j // 256 % 4) == 3 else 0) % 256),
+                        encoding="latin1",
+                    )
+                    for j in range(256 * 256)
+                ]
+            ),
+        )
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    # Spatial extent of tile (0,0) at zoom level 0
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z0, 0, MAX_GM, 0, -RES_Z0])
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["max-zoom"] = 0
+    with gdal.config_option("GDAL_RASTER_TILE_PNG_FILTER", GDAL_RASTER_TILE_PNG_FILTER):
+        assert alg.Run()
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)
+    ]
