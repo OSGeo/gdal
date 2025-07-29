@@ -275,3 +275,15 @@ def test_gdalalg_vector_convert_to_non_available_db_driver():
             match="Filename MongoDBv3:tmp/foo starts with the connection prefix of driver MongoDBv3, which is not enabled in this GDAL build. If that filename is really intended, explicitly specify its output format",
         ):
             convert.Run()
+
+
+def test_gdalalg_vector_convert_output_format_not_guessed(tmp_vsimem):
+
+    convert = get_convert_alg()
+    convert["input"] = "../ogr/data/poly.shp"
+    convert["output"] = tmp_vsimem / "foo"
+    with pytest.raises(
+        Exception,
+        match="Cannot guess driver for",
+    ):
+        convert.Run()
