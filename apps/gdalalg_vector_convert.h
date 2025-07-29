@@ -62,6 +62,7 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
     bool m_appendLayer = false;
     std::vector<std::string> m_inputLayerNames{};
     std::string m_outputLayerName{};
+    bool m_skipErrors = false;
 };
 
 //! @endcond
