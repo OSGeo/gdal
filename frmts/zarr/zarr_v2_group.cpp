@@ -40,15 +40,28 @@ ZarrV2Group::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 
 ZarrV2Group::~ZarrV2Group()
 {
+    ZarrV2Group::Close();
+}
+
+/************************************************************************/
+/*                            Close()                                   */
+/************************************************************************/
+
+bool ZarrV2Group::Close()
+{
+    bool bRet = ZarrGroupBase::Close();
+
     if (m_bValid && m_oAttrGroup.IsModified())
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oAttrGroup.Serialize());
         const std::string osAttrFilename =
             CPLFormFilenameSafe(m_osDirectoryName.c_str(), ".zattrs", nullptr);
-        oDoc.Save(osAttrFilename);
+        bRet = oDoc.Save(osAttrFilename) && bRet;
         m_poSharedResource->SetZMetadataItem(osAttrFilename, oDoc.GetRoot());
     }
+
+    return bRet;
 }
 
 /************************************************************************/
@@ -1126,7 +1139,8 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     poArray->SetFilters(oFilters);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
-    poArray->Flush();
+    if (!cpl::starts_with(osZarrayFilename, "/vsi") && !poArray->Flush())
+        return nullptr;
     RegisterArray(poArray);
 
     return poArray;

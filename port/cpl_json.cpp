@@ -116,18 +116,18 @@ bool CPLJSONDocument::Save(const std::string &osPath) const
     VSILFILE *fp = VSIFOpenL(osPath.c_str(), "wt");
     if (nullptr == fp)
     {
-        CPLError(CE_Failure, CPLE_NoWriteAccess, "Open file %s to write failed",
-                 osPath.c_str());
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "File %s cannot be opened for writing", osPath.c_str());
         return false;
     }
 
     const char *pabyData = json_object_to_json_string_ext(
         TO_JSONOBJ(m_poRootJsonObject), JSON_C_TO_STRING_PRETTY);
-    VSIFWriteL(pabyData, 1, strlen(pabyData), fp);
+    bool bRet = VSIFWriteL(pabyData, strlen(pabyData), 1, fp) == 1;
 
-    VSIFCloseL(fp);
+    bRet = VSIFCloseL(fp) == 0 && bRet;
 
-    return true;
+    return bRet;
 }
 
 /**

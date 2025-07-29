@@ -74,12 +74,12 @@ ZarrV3Array::~ZarrV3Array()
 /*                                Flush()                               */
 /************************************************************************/
 
-void ZarrV3Array::Flush()
+bool ZarrV3Array::Flush()
 {
     if (!m_bValid)
-        return;
+        return true;
 
-    ZarrV3Array::FlushDirtyTile();
+    bool ret = ZarrV3Array::FlushDirtyTile();
 
     if (!m_aoDims.empty())
     {
@@ -112,16 +112,19 @@ void ZarrV3Array::Flush()
 
     if (m_bDefinitionModified)
     {
-        Serialize(oAttrs);
+        if (!Serialize(oAttrs))
+            ret = false;
         m_bDefinitionModified = false;
     }
+
+    return ret;
 }
 
 /************************************************************************/
 /*                    ZarrV3Array::Serialize()                          */
 /************************************************************************/
 
-void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
+bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -238,7 +241,7 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 
     // TODO: codecs
 
-    oDoc.Save(m_osFilename);
+    return oDoc.Save(m_osFilename);
 }
 
 /************************************************************************/
