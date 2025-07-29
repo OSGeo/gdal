@@ -618,7 +618,7 @@ std::string TileMatrixSet::exportToTMSJsonV1() const
         oBbox["crs"] = mBbox.mCrs;
         oBbox["lowerCorner"] = {mBbox.mLowerCornerX, mBbox.mLowerCornerY};
         oBbox["upperCorner"] = {mBbox.mUpperCornerX, mBbox.mUpperCornerY};
-        oRoot["boundingBox"] = oBbox;
+        oRoot["boundingBox"] = std::move(oBbox);
     }
     oRoot["supportedCRS"] = mCrs;
     if (!mWellKnownScaleSet.empty())

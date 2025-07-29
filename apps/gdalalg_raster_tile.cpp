@@ -1459,7 +1459,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
             BuildPolygon(dfWestLon, dfSouthLat, 180.0, dfNorthLat),
             BuildPolygon(-180.0, dfSouthLat, dfEastLon, dfNorthLat)};
     }
-    oRoot["geometry"] = oGeometry;
+    oRoot["geometry"] = std::move(oGeometry);
 
     CPLJSONObject oProperties;
     oRoot["properties"] = oProperties;
@@ -1571,7 +1571,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         oLimit["max_tile_col"] = nOvrMaxTileX;
         oLimit["min_tile_row"] = nOvrMinTileY;
         oLimit["max_tile_row"] = nOvrMaxTileY;
-        oLimits[tm.mId] = oLimit;
+        oLimits[tm.mId] = std::move(oLimit);
     }
 
     CPLJSONObject oTilesTileMatrixSets;
@@ -1582,16 +1582,16 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         oTilesTileMatrixSets[tmsLimitedToZoomLevelUsed.identifier()] =
             oDoc.GetRoot();
     }
-    oProperties["tiles:tile_matrix_sets"] = oTilesTileMatrixSets;
+    oProperties["tiles:tile_matrix_sets"] = std::move(oTilesTileMatrixSets);
 
     CPLJSONObject oTilesTileMatrixLinks;
     CPLJSONObject oTilesTileMatrixLink;
     oTilesTileMatrixLink["url"] =
         std::string("#").append(tmsLimitedToZoomLevelUsed.identifier());
-    oTilesTileMatrixLink["limits"] = oLimits;
+    oTilesTileMatrixLink["limits"] = std::move(oLimits);
     oTilesTileMatrixLinks[tmsLimitedToZoomLevelUsed.identifier()] =
-        oTilesTileMatrixLink;
-    oProperties["tiles:tile_matrix_links"] = oTilesTileMatrixLinks;
+        std::move(oTilesTileMatrixLink);
+    oProperties["tiles:tile_matrix_links"] = std::move(oTilesTileMatrixLinks);
 
     const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
     const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);

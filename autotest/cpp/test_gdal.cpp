@@ -2531,9 +2531,9 @@ TEST_F(test_gdal, TileMatrixSet)
             EXPECT_EQ(vmw.mCoalesce, 2);
             EXPECT_EQ(vmw.mMinTileRow, 0);
             EXPECT_EQ(vmw.mMaxTileRow, 1);
-        }
 
-        EXPECT_STREQ(poTMS->exportToTMSJsonV1().c_str(), pszJSON);
+            EXPECT_STREQ(poTMS->exportToTMSJsonV1().c_str(), pszJSON);
+        }
     }
 
     {

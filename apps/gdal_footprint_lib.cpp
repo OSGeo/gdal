@@ -1124,10 +1124,13 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                 continue;
         }
 
+        const auto GeomIsNullOrEmpty = [&poGeom]
+        { return !poGeom || poGeom->IsEmpty(); };
+
         if (psOptions->bConvexHull)
         {
             poGeom.reset(poGeom->ConvexHull());
-            if (!poGeom || poGeom->IsEmpty())
+            if (GeomIsNullOrEmpty())
                 continue;
         }
 
@@ -1163,7 +1166,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         {
             if (!DoSimplification(psOptions->dfSimplifyTolerance))
                 return false;
-            if (!poGeom || poGeom->IsEmpty())
+            if (GeomIsNullOrEmpty())
                 continue;
         }
 
@@ -1204,7 +1207,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
 
             if (!DoSimplification(tolMax))
                 return false;
-            if (!poGeom || poGeom->IsEmpty())
+            if (GeomIsNullOrEmpty())
                 continue;
         }
 
