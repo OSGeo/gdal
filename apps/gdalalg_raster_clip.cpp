@@ -252,11 +252,9 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             poClipGeomInSrcSRS->getEnvelope(&env);
         }
 
-        if (!m_allowExtentOutsideSource &&
-            !(env.MinX >= gt[0] &&
-              env.MaxX <= gt[0] + gt[1] * poSrcDS->GetRasterXSize() &&
-              env.MaxY >= gt[3] &&
-              env.MinY <= gt[3] + gt[5] * poSrcDS->GetRasterYSize()))
+        OGREnvelope rasterEnv;
+        poSrcDS->GetExtent(&rasterEnv, nullptr);
+        if (!m_allowExtentOutsideSource && !rasterEnv.Contains(env))
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Clipping geometry is partially or totally outside the "

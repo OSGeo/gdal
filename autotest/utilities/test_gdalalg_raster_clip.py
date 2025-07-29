@@ -169,6 +169,28 @@ def test_gdalalg_raster_clip_bbox_crs():
     )
 
 
+def test_gdalgalg_raster_clip_geometry(tmp_vsimem):
+
+    alg = get_alg()
+
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg[
+        "geometry"
+    ] = "POLYGON ((440885 3750741, 441344 3750294, 441612 3750501, 441773 3751203, 441545 3751254, 441576 3750847, 441576 3750847, 440885 3750741))"
+
+    assert alg.Run()
+
+    ds = alg["output"].GetDataset()
+    assert ds.RasterXSize == 16
+    assert ds.RasterYSize == 17
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetGeoTransform() == pytest.approx(
+        (440840, 60.0, 0.0, 3751260, 0.0, -60.0), rel=1e-8
+    )
+
+
 def test_gdalalg_raster_clip_geometry_add_alpha():
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
