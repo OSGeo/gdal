@@ -37,7 +37,7 @@ GDALVSIListAlgorithm::GDALVSIListAlgorithm()
                     .SetRequired();
     SetAutoCompleteFunctionForFilename(arg, 0);
 
-    AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json", "text");
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
 
     AddArg("long-listing", 'l', _("Use a long listing format"), &m_longListing)
         .AddAlias("long");
@@ -249,6 +249,9 @@ void GDALVSIListAlgorithm::PrintEntry(const VSIDIREntry *entry)
 
 bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
+
     VSIStatBufL sStat;
     VSIErrorReset();
     const auto nOldErrorNum = VSIGetLastErrorNo();

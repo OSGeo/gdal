@@ -93,7 +93,7 @@ jobs:
         wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
         sudo apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
         sudo apt-get update
-        sudo apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev
+        sudo apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev libarrow-compute-dev
         #
         PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 

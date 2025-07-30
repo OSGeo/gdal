@@ -187,7 +187,7 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         if (arg.find("--pipeline") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
 
-        // gdal vector pipeline [--progress] "read poly.gpkg ..."
+        // gdal vector pipeline [--quiet] "read poly.gpkg ..."
         if (arg.find("read ") == 0)
             return GDALAlgorithm::ParseCommandLineArguments(args);
     }
@@ -214,6 +214,12 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         if (arg == "--progress")
         {
             m_progressBarRequested = true;
+            continue;
+        }
+        if (arg == "--quiet")
+        {
+            m_quiet = true;
+            m_progressBarRequested = false;
             continue;
         }
 

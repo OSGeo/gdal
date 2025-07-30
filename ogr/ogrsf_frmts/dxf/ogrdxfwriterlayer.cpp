@@ -159,7 +159,8 @@ int OGRDXFWriterLayer::WriteValue(int nCode, double dfValue)
 /*      Write core fields common to all sorts of elements.              */
 /************************************************************************/
 
-OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
+OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature,
+                                    const CorePropertiesType &oCoreProperties)
 
 {
     /* -------------------------------------------------------------------- */
@@ -202,9 +203,9 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
         osSanitizedLayer.replaceAll('\r', '_');
         osSanitizedLayer.replaceAll('\n', '_');
 
-        const char *pszExists =
+        auto osExists =
             poDS->oHeaderDS.LookupLayerProperty(osSanitizedLayer, "Exists");
-        if ((pszExists == nullptr || strlen(pszExists) == 0) &&
+        if (!osExists &&
             CSLFindString(poDS->papszLayersToCreate, osSanitizedLayer) == -1)
         {
             poDS->papszLayersToCreate =
@@ -212,6 +213,43 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
         }
 
         WriteValue(8, osSanitizedLayer);
+    }
+
+    for (const auto &oProp : oCoreProperties)
+    {
+        if (oProp.first == PROP_RGBA_COLOR)
+        {
+            bool bPerfectMatch = false;
+            const char *pszColor = oProp.second.c_str();
+            const int nColor = ColorStringToDXFColor(pszColor, bPerfectMatch);
+            if (nColor >= 0)
+            {
+                WriteValue(62, nColor);
+
+                unsigned int nRed = 0;
+                unsigned int nGreen = 0;
+                unsigned int nBlue = 0;
+                unsigned int nOpacity = 255;
+
+                const int nCount = sscanf(pszColor, "#%2x%2x%2x%2x", &nRed,
+                                          &nGreen, &nBlue, &nOpacity);
+                if (nCount >= 3 && !bPerfectMatch)
+                {
+                    WriteValue(420, static_cast<int>(nBlue | (nGreen << 8) |
+                                                     (nRed << 16)));
+                }
+                if (nCount == 4)
+                {
+                    WriteValue(440, static_cast<int>(nOpacity | (2 << 24)));
+                }
+            }
+        }
+        else
+        {
+            // If this happens, this is a coding error
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "BUG! Unhandled core property %d", oProp.first);
+        }
     }
 
     return OGRERR_NONE;
@@ -224,10 +262,7 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
 OGRErr OGRDXFWriterLayer::WriteINSERT(OGRFeature *poFeature)
 
 {
-    WriteValue(0, "INSERT");
-    WriteCore(poFeature);
-    WriteValue(100, "AcDbBlockReference");
-    WriteValue(2, poFeature->GetFieldAsString("BlockName"));
+    CorePropertiesType oCoreProperties;
 
     // Write style symbol color
     OGRStyleTool *poTool = nullptr;
@@ -243,11 +278,16 @@ OGRErr OGRDXFWriterLayer::WriteINSERT(OGRFeature *poFeature)
     {
         OGRStyleSymbol *poSymbol = cpl::down_cast<OGRStyleSymbol *>(poTool);
         GBool bDefault;
-
-        if (poSymbol->Color(bDefault) != nullptr && !bDefault)
-            WriteValue(62, ColorStringToDXFColor(poSymbol->Color(bDefault)));
+        const char *pszColor = poSymbol->Color(bDefault);
+        if (pszColor && !bDefault)
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
     }
     delete poTool;
+
+    WriteValue(0, "INSERT");
+    WriteCore(poFeature, oCoreProperties);
+    WriteValue(100, "AcDbBlockReference");
+    WriteValue(2, poFeature->GetFieldAsString("BlockName"));
 
     /* -------------------------------------------------------------------- */
     /*      Write location in OCS.                                          */
@@ -328,9 +368,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT(OGRFeature *poFeature)
 OGRErr OGRDXFWriterLayer::WritePOINT(OGRFeature *poFeature)
 
 {
-    WriteValue(0, "POINT");
-    WriteCore(poFeature);
-    WriteValue(100, "AcDbPoint");
+    CorePropertiesType oCoreProperties;
 
     // Write style pen color
     OGRStyleTool *poTool = nullptr;
@@ -346,11 +384,15 @@ OGRErr OGRDXFWriterLayer::WritePOINT(OGRFeature *poFeature)
     {
         OGRStylePen *poPen = cpl::down_cast<OGRStylePen *>(poTool);
         GBool bDefault;
-
-        if (poPen->Color(bDefault) != nullptr && !bDefault)
-            WriteValue(62, ColorStringToDXFColor(poPen->Color(bDefault)));
+        const char *pszColor = poPen->Color(bDefault);
+        if (pszColor && !bDefault)
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
     }
     delete poTool;
+
+    WriteValue(0, "POINT");
+    WriteCore(poFeature, oCoreProperties);
+    WriteValue(100, "AcDbPoint");
 
     OGRPoint *poPoint = poFeature->GetGeometryRef()->toPoint();
 
@@ -462,9 +504,7 @@ OGRDXFWriterLayer::PrepareTextStyleDefinition(OGRStyleLabel *poLabelTool)
 OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
 
 {
-    WriteValue(0, "MTEXT");
-    WriteCore(poFeature);
-    WriteValue(100, "AcDbMText");
+    CorePropertiesType oCoreProperties;
 
     /* -------------------------------------------------------------------- */
     /*      Do we have styling information?                                 */
@@ -480,6 +520,19 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
             poTool = oSM.GetPart(0);
     }
 
+    if (poTool && poTool->GetType() == OGRSTCLabel)
+    {
+        OGRStyleLabel *poLabel = cpl::down_cast<OGRStyleLabel *>(poTool);
+        GBool bDefault;
+        const char *pszColor = poLabel->ForeColor(bDefault);
+        if (pszColor && !bDefault)
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
+    }
+
+    WriteValue(0, "MTEXT");
+    WriteCore(poFeature, oCoreProperties);
+    WriteValue(100, "AcDbMText");
+
     /* ==================================================================== */
     /*      Process the LABEL tool.                                         */
     /* ==================================================================== */
@@ -490,14 +543,6 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
     {
         OGRStyleLabel *poLabel = cpl::down_cast<OGRStyleLabel *>(poTool);
         GBool bDefault;
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Color */
-        /* --------------------------------------------------------------------
-         */
-        if (poLabel->ForeColor(bDefault) != nullptr && !bDefault)
-            WriteValue(62, ColorStringToDXFColor(poLabel->ForeColor(bDefault)));
 
         /* --------------------------------------------------------------------
          */
@@ -768,8 +813,36 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
         }
     }
 
+    CorePropertiesType oCoreProperties;
+
+    /* -------------------------------------------------------------------- */
+    /*      Do we have styling information?                                 */
+    /* -------------------------------------------------------------------- */
+    OGRStyleTool *poTool = nullptr;
+    OGRStyleMgr oSM;
+
+    if (poFeature->GetStyleString() != nullptr)
+    {
+        oSM.InitFromFeature(poFeature);
+
+        if (oSM.GetPartCount() > 0)
+            poTool = oSM.GetPart(0);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Handle a PEN tool to control drawing color and width.           */
+    /* -------------------------------------------------------------------- */
+    if (poTool && poTool->GetType() == OGRSTCPen)
+    {
+        OGRStylePen *poPen = cpl::down_cast<OGRStylePen *>(poTool);
+        GBool bDefault;
+        const char *pszColor = poPen->Color(bDefault);
+        if (pszColor && !bDefault)
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
+    }
+
     WriteValue(0, bHasDifferentZ ? "POLYLINE" : "LWPOLYLINE");
-    WriteCore(poFeature);
+    WriteCore(poFeature, oCoreProperties);
     if (bHasDifferentZ)
     {
         WriteValue(100, "AcDb3dPolyline");
@@ -789,20 +862,6 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
         WriteValue(66, "1");  // Vertex Flag
 
     /* -------------------------------------------------------------------- */
-    /*      Do we have styling information?                                 */
-    /* -------------------------------------------------------------------- */
-    OGRStyleTool *poTool = nullptr;
-    OGRStyleMgr oSM;
-
-    if (poFeature->GetStyleString() != nullptr)
-    {
-        oSM.InitFromFeature(poFeature);
-
-        if (oSM.GetPartCount() > 0)
-            poTool = oSM.GetPart(0);
-    }
-
-    /* -------------------------------------------------------------------- */
     /*      Handle a PEN tool to control drawing color and width.           */
     /*      Perhaps one day also dottedness, etc.                           */
     /* -------------------------------------------------------------------- */
@@ -810,9 +869,6 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
     {
         OGRStylePen *poPen = cpl::down_cast<OGRStylePen *>(poTool);
         GBool bDefault;
-
-        if (poPen->Color(bDefault) != nullptr && !bDefault)
-            WriteValue(62, ColorStringToDXFColor(poPen->Color(bDefault)));
 
         // we want to fetch the width in ground units.
         poPen->SetUnit(OGRSTUGround, 1.0);
@@ -940,7 +996,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
         if (bHasDifferentZ)
         {
             WriteValue(0, "VERTEX");
-            WriteCore(poFeature);
+            WriteCore(poFeature, CorePropertiesType());
             WriteValue(100, "AcDbVertex");
             WriteValue(100, "AcDb3dPolylineVertex");
         }
@@ -959,7 +1015,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
     if (bHasDifferentZ)
     {
         WriteValue(0, "SEQEND");
-        WriteCore(poFeature);
+        WriteCore(poFeature, CorePropertiesType());
     }
 
     delete poTool;
@@ -1042,28 +1098,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Write as a hatch.                                               */
-    /* -------------------------------------------------------------------- */
-    WriteValue(0, "HATCH");
-    WriteCore(poFeature);
-    WriteValue(100, "AcDbHatch");
-
-    // Figure out "average" elevation
-    OGREnvelope3D oEnv;
-    poGeom->getEnvelope(&oEnv);
-    WriteValue(10, 0);  // elevation point X = 0
-    WriteValue(20, 0);  // elevation point Y = 0
-    // elevation point Z = constant elevation
-    WriteValue(30, oEnv.MinZ + (oEnv.MaxZ - oEnv.MinZ) / 2);
-
-    WriteValue(210, 0);    // extrusion direction X
-    WriteValue(220, 0);    // extrusion direction Y
-    WriteValue(230, 1.0);  // extrusion direction Z
-
-    WriteValue(2, "SOLID");  // fill pattern
-    WriteValue(70, 1);       // solid fill
-    WriteValue(71, 0);       // associativity
+    CorePropertiesType oCoreProperties;
 
     /* -------------------------------------------------------------------- */
     /*      Do we have styling information?                                 */
@@ -1079,15 +1114,128 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
             poTool = oSM.GetPart(0);
     }
     // Write style brush fore color
+    std::string osBrushId;
+    std::string osBackgroundColor;
+    double dfSize = 1.0;
+    double dfAngle = 0.0;
     if (poTool && poTool->GetType() == OGRSTCBrush)
     {
         OGRStyleBrush *poBrush = cpl::down_cast<OGRStyleBrush *>(poTool);
         GBool bDefault;
 
-        if (poBrush->ForeColor(bDefault) != nullptr && !bDefault)
-            WriteValue(62, ColorStringToDXFColor(poBrush->ForeColor(bDefault)));
+        const char *pszBrushId = poBrush->Id(bDefault);
+        if (pszBrushId && !bDefault)
+            osBrushId = pszBrushId;
+
+        // null brush (transparent - no fill, irrespective of fc or bc values
+        if (osBrushId == "ogr-brush-1")
+        {
+            oCoreProperties.emplace_back(PROP_RGBA_COLOR, "#00000000");
+        }
+        else
+        {
+            const char *pszColor = poBrush->ForeColor(bDefault);
+            if (pszColor != nullptr && !bDefault)
+                oCoreProperties.emplace_back(PROP_RGBA_COLOR, pszColor);
+
+            const char *pszBGColor = poBrush->BackColor(bDefault);
+            if (pszBGColor != nullptr && !bDefault)
+                osBackgroundColor = pszBGColor;
+        }
+
+        double dfStyleSize = poBrush->Size(bDefault);
+        if (!bDefault)
+            dfSize = dfStyleSize;
+
+        double dfStyleAngle = poBrush->Angle(bDefault);
+        if (!bDefault)
+            dfAngle = dfStyleAngle;
     }
     delete poTool;
+
+    /* -------------------------------------------------------------------- */
+    /*      Write as a hatch.                                               */
+    /* -------------------------------------------------------------------- */
+    WriteValue(0, "HATCH");
+    WriteCore(poFeature, oCoreProperties);
+    WriteValue(100, "AcDbHatch");
+
+    // Figure out "average" elevation
+    OGREnvelope3D oEnv;
+    poGeom->getEnvelope(&oEnv);
+    WriteValue(10, 0);  // elevation point X = 0
+    WriteValue(20, 0);  // elevation point Y = 0
+    // elevation point Z = constant elevation
+    WriteValue(30, oEnv.MinZ + (oEnv.MaxZ - oEnv.MinZ) / 2);
+
+    WriteValue(210, 0);    // extrusion direction X
+    WriteValue(220, 0);    // extrusion direction Y
+    WriteValue(230, 1.0);  // extrusion direction Z
+
+    const char *pszPatternName = "SOLID";
+    double dfPatternRotation = 0;
+
+    // Cf https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html#predefined-hatch-pattern
+    // for DXF standard hatch pattern names
+
+    if (osBrushId.empty() || osBrushId == "ogr-brush-0")
+    {
+        // solid fill pattern
+    }
+    else if (osBrushId == "ogr-brush-2")
+    {
+        // horizontal line.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = -45;
+    }
+    else if (osBrushId == "ogr-brush-3")
+    {
+        // vertical line.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 45;
+    }
+    else if (osBrushId == "ogr-brush-4")
+    {
+        // top-left to bottom-right diagonal hatch.
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 90;
+    }
+    else if (osBrushId == "ogr-brush-5")
+    {
+        // bottom-left to top-right diagonal hatch
+        pszPatternName = "ANSI31";
+        dfPatternRotation = 0;
+    }
+    else if (osBrushId == "ogr-brush-6")
+    {
+        // cross hatch
+        pszPatternName = "ANSI37";
+        dfPatternRotation = 45;
+    }
+    else if (osBrushId == "ogr-brush-7")
+    {
+        // diagonal cross hatch
+        pszPatternName = "ANSI37";
+        dfPatternRotation = 0;
+    }
+    else
+    {
+        // solid fill pattern as a fallback
+    }
+
+    dfPatternRotation += dfAngle;
+
+    WriteValue(2, pszPatternName);
+
+    if (EQUAL(pszPatternName, "ANSI31") || EQUAL(pszPatternName, "ANSI37"))
+    {
+        WriteValue(70, 0);  // pattern fill
+    }
+    else
+    {
+        WriteValue(70, 1);  // solid fill
+    }
+    WriteValue(71, 0);  // associativity
 
 /* -------------------------------------------------------------------- */
 /*      Handle a PEN tool to control drawing color and width.           */
@@ -1161,7 +1309,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     /*      Process the loops (rings).                                      */
     /* -------------------------------------------------------------------- */
-    OGRPolygon *poPoly = poGeom->toPolygon();
+    const OGRPolygon *poPoly = poGeom->toPolygon();
 
     WriteValue(91, poPoly->getNumInteriorRings() + 1);
 
@@ -1183,7 +1331,126 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
 
     WriteValue(75, 0);  // hatch style = Hatch "odd parity" area (Normal style)
     WriteValue(76, 1);  // hatch pattern type = predefined
+
+    const auto roundIfClose = [](double x)
+    {
+        if (std::fabs(x - std::round(x)) < 1e-12)
+            x = std::round(x);
+        return x == 0 ? 0 : x;  // make sure we return positive zero
+    };
+
+    if (EQUAL(pszPatternName, "ANSI31"))
+    {
+        // Single line. With dfPatternRotation=0, this is a bottom-left to top-right diagonal hatch
+
+        WriteValue(52, dfPatternRotation);  // Hatch pattern angle
+        WriteValue(41, dfSize);             // Hatch pattern scale or spacing
+        WriteValue(77, 0);  // Hatch pattern double flag : 0 = not double
+
+        WriteValue(78, 1);  // Number of pattern definition lines
+
+        const double angle = dfPatternRotation + 45.0;
+        WriteValue(53, angle);  // Pattern line angle
+        WriteValue(43, 0.0);    // Pattern line base point, X component
+        WriteValue(44, 0.0);    // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+    }
+    else if (EQUAL(pszPatternName, "ANSI37"))
+    {
+        // cross hatch. With dfPatternRotation=0, lines are diagonals
+
+        WriteValue(52, dfPatternRotation);  // Hatch pattern angle
+        WriteValue(41, dfSize);             // Hatch pattern scale or spacing
+        WriteValue(77, 0);  // Hatch pattern double flag : 0 = not double
+
+        WriteValue(78, 2);  // Number of pattern definition lines
+
+        const double angle1 = dfPatternRotation + 45;
+        WriteValue(53, angle1);  // Pattern line angle
+        WriteValue(43, 0.0);     // Pattern line base point, X component
+        WriteValue(44, 0.0);     // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle1 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle1 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+
+        const double angle2 = dfPatternRotation + 135;
+        WriteValue(53, angle2);  // Pattern line angle
+        WriteValue(43, 0.0);     // Pattern line base point, X component
+        WriteValue(44, 0.0);     // Pattern line base point, Y component
+        WriteValue(45, dfSize * 3.175 *
+                           roundIfClose(
+                               cos((angle2 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, X component
+        WriteValue(46, dfSize * 3.175 *
+                           roundIfClose(
+                               sin((angle2 + 90.0) / 180 *
+                                   M_PI)));  // Pattern line offset, Y component
+        WriteValue(79, 0);                   // Number of dash items
+    }
+
     WriteValue(98, 0);  // 0 seed points
+
+    // Deal with brush background color
+    if (!osBackgroundColor.empty())
+    {
+        bool bPerfectMatch = false;
+        int nColor =
+            ColorStringToDXFColor(osBackgroundColor.c_str(), bPerfectMatch);
+        if (nColor >= 0)
+        {
+            WriteValue(1001, "HATCHBACKGROUNDCOLOR");
+            if (bPerfectMatch)
+            {
+                // C3 is top 8 bit means an indexed color
+                unsigned nRGBColorUnsigned =
+                    (static_cast<unsigned>(0xC3) << 24) |
+                    ((nColor & 0xff) << 0);
+                // Convert to signed (negative) value
+                int nRGBColorSigned;
+                memcpy(&nRGBColorSigned, &nRGBColorUnsigned,
+                       sizeof(nRGBColorSigned));
+                WriteValue(1071, nRGBColorSigned);
+            }
+            else
+            {
+                unsigned int nRed = 0;
+                unsigned int nGreen = 0;
+                unsigned int nBlue = 0;
+                unsigned int nOpacity = 255;
+
+                const int nCount =
+                    sscanf(osBackgroundColor.c_str(), "#%2x%2x%2x%2x", &nRed,
+                           &nGreen, &nBlue, &nOpacity);
+                if (nCount >= 3)
+                {
+                    // C2 is top 8 bit means a true color
+                    unsigned nRGBColorUnsigned =
+                        (static_cast<unsigned>(0xC2) << 24) |
+                        ((nRed & 0xff) << 16) | ((nGreen & 0xff) << 8) |
+                        ((nBlue & 0xff) << 0);
+                    // Convert to signed (negative) value
+                    int nRGBColorSigned;
+                    memcpy(&nRGBColorSigned, &nRGBColorUnsigned,
+                           sizeof(nRGBColorSigned));
+                    WriteValue(1071, nRGBColorSigned);
+                }
+            }
+        }
+    }
 
     return OGRERR_NONE;
 
@@ -1311,9 +1578,12 @@ OGRErr OGRDXFWriterLayer::ICreateFeature(OGRFeature *poFeature)
 /*                       ColorStringToDXFColor()                        */
 /************************************************************************/
 
-int OGRDXFWriterLayer::ColorStringToDXFColor(const char *pszRGB)
+int OGRDXFWriterLayer::ColorStringToDXFColor(const char *pszRGB,
+                                             bool &bPerfectMatch)
 
 {
+    bPerfectMatch = false;
+
     /* -------------------------------------------------------------------- */
     /*      Parse the RGB string.                                           */
     /* -------------------------------------------------------------------- */
@@ -1323,10 +1593,10 @@ int OGRDXFWriterLayer::ColorStringToDXFColor(const char *pszRGB)
     unsigned int nRed = 0;
     unsigned int nGreen = 0;
     unsigned int nBlue = 0;
-    unsigned int nTransparency = 255;
+    unsigned int nOpacity = 255;
 
     const int nCount =
-        sscanf(pszRGB, "#%2x%2x%2x%2x", &nRed, &nGreen, &nBlue, &nTransparency);
+        sscanf(pszRGB, "#%2x%2x%2x%2x", &nRed, &nGreen, &nBlue, &nOpacity);
 
     if (nCount < 3)
         return -1;
@@ -1349,6 +1619,11 @@ int OGRDXFWriterLayer::ColorStringToDXFColor(const char *pszRGB)
         {
             nBestColor = i;
             nMinDist = nDist;
+            if (nMinDist == 0)
+            {
+                bPerfectMatch = true;
+                break;
+            }
         }
     }
 

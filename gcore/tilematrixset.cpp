@@ -599,6 +599,65 @@ TileMatrixSet::createRaster(int width, int height, int tileSize,
     return poTMS;
 }
 
+/************************************************************************/
+/*                        exportToTMSJsonV1()                           */
+/************************************************************************/
+
+std::string TileMatrixSet::exportToTMSJsonV1() const
+{
+    CPLJSONObject oRoot;
+    oRoot["type"] = "TileMatrixSetType";
+    oRoot["title"] = mTitle;
+    oRoot["identifier"] = mIdentifier;
+    if (!mAbstract.empty())
+        oRoot["abstract"] = mAbstract;
+    if (!std::isnan(mBbox.mLowerCornerX))
+    {
+        CPLJSONObject oBbox;
+        oBbox["type"] = "BoundingBoxType";
+        oBbox["crs"] = mBbox.mCrs;
+        oBbox["lowerCorner"] = {mBbox.mLowerCornerX, mBbox.mLowerCornerY};
+        oBbox["upperCorner"] = {mBbox.mUpperCornerX, mBbox.mUpperCornerY};
+        oRoot["boundingBox"] = std::move(oBbox);
+    }
+    oRoot["supportedCRS"] = mCrs;
+    if (!mWellKnownScaleSet.empty())
+        oRoot["wellKnownScaleSet"] = mWellKnownScaleSet;
+
+    CPLJSONArray oTileMatrices;
+    for (const auto &tm : mTileMatrixList)
+    {
+        CPLJSONObject oTM;
+        oTM["type"] = "TileMatrixType";
+        oTM["identifier"] = tm.mId;
+        oTM["scaleDenominator"] = tm.mScaleDenominator;
+        oTM["topLeftCorner"] = {tm.mTopLeftX, tm.mTopLeftY};
+        oTM["tileWidth"] = tm.mTileWidth;
+        oTM["tileHeight"] = tm.mTileHeight;
+        oTM["matrixWidth"] = tm.mMatrixWidth;
+        oTM["matrixHeight"] = tm.mMatrixHeight;
+
+        if (!tm.mVariableMatrixWidthList.empty())
+        {
+            CPLJSONArray oVariableMatrixWidths;
+            for (const auto &vmw : tm.mVariableMatrixWidthList)
+            {
+                CPLJSONObject oVMW;
+                oVMW["coalesce"] = vmw.mCoalesce;
+                oVMW["minTileRow"] = vmw.mMinTileRow;
+                oVMW["maxTileRow"] = vmw.mMaxTileRow;
+                oVariableMatrixWidths.Add(oVMW);
+            }
+            oTM["variableMatrixWidth"] = oVariableMatrixWidths;
+        }
+
+        oTileMatrices.Add(oTM);
+    }
+    oRoot["tileMatrix"] = oTileMatrices;
+    return CPLString(oRoot.Format(CPLJSONObject::PrettyFormat::Pretty))
+        .replaceAll("\\/", '/');
+}
+
 }  // namespace gdal
 
 //! @endcond

@@ -449,7 +449,7 @@ CPLErr LevellerRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
     */
     const size_t pixelsize = sizeof(float);
 
-    LevellerDataset &ds = *reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset &ds = *cpl::down_cast<LevellerDataset *>(poDS);
     if (m_bFirstTime)
     {
         m_bFirstTime = false;
@@ -482,7 +482,7 @@ CPLErr LevellerRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
 
 CPLErr LevellerRasterBand::SetUnitType(const char *psz)
 {
-    LevellerDataset &ds = *reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset &ds = *cpl::down_cast<LevellerDataset *>(poDS);
 
     if (strlen(psz) >= sizeof(ds.m_szElevUnits))
         return CE_Failure;
@@ -504,7 +504,7 @@ CPLErr LevellerRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pImage != nullptr);
 
-    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset *poGDS = cpl::down_cast<LevellerDataset *>(poDS);
 
     /* -------------------------------------------------------------------- */
     /*      Seek to scanline.                                               */
@@ -567,7 +567,7 @@ const char *LevellerRasterBand::GetUnitType()
 {
     // Return elevation units.
 
-    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset *poGDS = cpl::down_cast<LevellerDataset *>(poDS);
 
     return poGDS->m_szElevUnits;
 }
@@ -578,7 +578,7 @@ const char *LevellerRasterBand::GetUnitType()
 
 double LevellerRasterBand::GetScale(int *pbSuccess)
 {
-    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset *poGDS = cpl::down_cast<LevellerDataset *>(poDS);
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
     return poGDS->m_dElevScale;
@@ -590,7 +590,7 @@ double LevellerRasterBand::GetScale(int *pbSuccess)
 
 double LevellerRasterBand::GetOffset(int *pbSuccess)
 {
-    LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>(poDS);
+    LevellerDataset *poGDS = cpl::down_cast<LevellerDataset *>(poDS);
     if (pbSuccess != nullptr)
         *pbSuccess = TRUE;
     return poGDS->m_dElevBase;

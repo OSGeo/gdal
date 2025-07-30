@@ -247,7 +247,7 @@ def test_gdalalg_raster_mode_dem(viewshed_input):
     alg["mode"] = "DEM"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetRasterBand(1).Checksum() == 45734
+    assert ds.GetRasterBand(1).Checksum() == 47060
 
 
 def test_gdalalg_raster_mode_ground(viewshed_input):

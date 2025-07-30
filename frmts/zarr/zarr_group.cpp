@@ -24,13 +24,27 @@
 
 ZarrGroupBase::~ZarrGroupBase()
 {
-    // We need to explicitly flush arrays so that the _ARRAY_DIMENSIONS
-    // is properly written. As it relies on checking if the dimensions of the
-    // array have an indexing variable, then still need to be all alive.
+    ZarrGroupBase::Close();
+}
+
+/************************************************************************/
+/*                            Close()                                   */
+/************************************************************************/
+
+bool ZarrGroupBase::Close()
+{
+    bool ret = true;
+
+    for (auto &kv : m_oMapGroups)
+    {
+        ret = kv.second->Close() && ret;
+    }
+
     for (auto &kv : m_oMapMDArrays)
     {
-        kv.second->Flush();
+        ret = kv.second->Flush() && ret;
     }
+    return ret;
 }
 
 /************************************************************************/

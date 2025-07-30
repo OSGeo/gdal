@@ -1793,10 +1793,31 @@ void GDALDataset::MarkAsShared()
 /*                        MarkSuppressOnClose()                         */
 /************************************************************************/
 
-/** Set that the dataset must be deleted on close. */
+/** Set that the dataset must be deleted on close.
+ *
+ * This is the same as C function GDALDatasetMarkSuppressOnClose()
+ */
 void GDALDataset::MarkSuppressOnClose()
 {
     bSuppressOnClose = true;
+}
+
+/************************************************************************/
+/*                   GDALDatasetMarkSuppressOnClose()                   */
+/************************************************************************/
+
+/** Set that the dataset must be deleted on close.
+ *
+ * This is the same as C++ method GDALDataset::MarkSuppressOnClose()
+ *
+ * @since GDAL 3.12
+ */
+
+void GDALDatasetMarkSuppressOnClose(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER0(hDS, "GDALDatasetMarkSuppressOnClose");
+
+    return GDALDataset::FromHandle(hDS)->MarkSuppressOnClose();
 }
 
 /************************************************************************/
@@ -10600,7 +10621,7 @@ CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
             if (auto poLayer = poThisDS->GetLayer(0))
                 poThisCRS = poLayer->GetSpatialRef();
         }
-        if (!poThisCRS)
+        if (poCRS && !poThisCRS)
             return CE_Failure;
     }
     if (!poCRS)
@@ -10612,34 +10633,46 @@ CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
     const bool bHasGT = poThisDS->GetGeoTransform(gt) == CE_None;
     if (bHasGT)
     {
-        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-            OGRCreateCoordinateTransformation(poThisCRS, poCRS));
+        std::unique_ptr<OGRCoordinateTransformation> poCT;
+        if (poCRS)
+        {
+            poCT.reset(OGRCreateCoordinateTransformation(poThisCRS, poCRS));
+        }
+
+        constexpr int DENSIFY_POINT_COUNT = 21;
+        double dfULX = gt[0];
+        double dfULY = gt[3];
+        double dfURX = 0, dfURY = 0;
+        gt.Apply(nRasterXSize, 0, &dfURX, &dfURY);
+        double dfLLX = 0, dfLLY = 0;
+        gt.Apply(0, nRasterYSize, &dfLLX, &dfLLY);
+        double dfLRX = 0, dfLRY = 0;
+        gt.Apply(nRasterXSize, nRasterYSize, &dfLRX, &dfLRY);
+        const double xmin =
+            std::min(std::min(dfULX, dfURX), std::min(dfLLX, dfLRX));
+        const double ymin =
+            std::min(std::min(dfULY, dfURY), std::min(dfLLY, dfLRY));
+        const double xmax =
+            std::max(std::max(dfULX, dfURX), std::max(dfLLX, dfLRX));
+        const double ymax =
+            std::max(std::max(dfULY, dfURY), std::max(dfLLY, dfLRY));
         if (poCT)
         {
-            constexpr int DENSIFY_POINT_COUNT = 21;
             OGREnvelope sEnvTmp;
-            double dfULX = gt[0];
-            double dfULY = gt[3];
-            double dfURX = 0, dfURY = 0;
-            gt.Apply(nRasterXSize, 0, &dfURX, &dfURY);
-            double dfLLX = 0, dfLLY = 0;
-            gt.Apply(0, nRasterYSize, &dfLLX, &dfLLY);
-            double dfLRX = 0, dfLRY = 0;
-            gt.Apply(nRasterXSize, nRasterYSize, &dfLRX, &dfLRY);
-            const double xmin =
-                std::min(std::min(dfULX, dfURX), std::min(dfLLX, dfLRX));
-            const double ymin =
-                std::min(std::min(dfULY, dfURY), std::min(dfLLY, dfLRY));
-            const double xmax =
-                std::max(std::max(dfULX, dfURX), std::max(dfLLX, dfLRX));
-            const double ymax =
-                std::max(std::max(dfULY, dfURY), std::max(dfLLY, dfLRY));
-            if (poCT->TransformBounds(xmin, ymin, xmax, ymax, &(sEnvTmp.MinX),
-                                      &(sEnvTmp.MinY), &(sEnvTmp.MaxX),
-                                      &(sEnvTmp.MaxY), DENSIFY_POINT_COUNT))
+            if (!poCT->TransformBounds(xmin, ymin, xmax, ymax, &(sEnvTmp.MinX),
+                                       &(sEnvTmp.MinY), &(sEnvTmp.MaxX),
+                                       &(sEnvTmp.MaxY), DENSIFY_POINT_COUNT))
             {
-                *psExtent = std::move(sEnvTmp);
+                return CE_Failure;
             }
+            *psExtent = sEnvTmp;
+        }
+        else
+        {
+            psExtent->MinX = xmin;
+            psExtent->MinY = ymin;
+            psExtent->MaxX = xmax;
+            psExtent->MaxY = ymax;
         }
     }
 

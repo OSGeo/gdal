@@ -328,7 +328,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 };
 
 /************************************************************************/
-/*                       GRCSVEditableLayer()                           */
+/*                       OGRCSVEditableLayer()                          */
 /************************************************************************/
 
 OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
@@ -517,11 +517,10 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     const CPLString osBaseFilename = CPLGetFilename(pszFilename);
     const CPLString osExt = GetRealExtension(osFilename);
 
-    bool bIgnoreExtension = bSingleDriver;
     bool bUSGeonamesFile = false;
     if (STARTS_WITH_CI(osFilename, "CSV:"))
     {
-        bIgnoreExtension = true;
+        bSingleDriver = true;
         osFilename = osFilename.substr(strlen("CSV:"));
     }
 
@@ -534,7 +533,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     {
         if (bUpdate)
             return FALSE;
-        bIgnoreExtension = true;
+        bSingleDriver = true;
     }
     else if ((STARTS_WITH_CI(osBaseFilename, "NationalFile_") ||
               STARTS_WITH_CI(osBaseFilename, "POP_PLACES_") ||
@@ -555,7 +554,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     {
         if (bUpdate)
             return FALSE;
-        bIgnoreExtension = true;
+        bSingleDriver = true;
         bUSGeonamesFile = true;
 
         if (EQUAL(osExt, "zip") && strstr(osFilename, "/vsizip/") == nullptr)
@@ -568,7 +567,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
     {
         if (bUpdate)
             return FALSE;
-        bIgnoreExtension = true;
+        bSingleDriver = true;
 
         if (EQUAL(osExt, "zip") && strstr(osFilename, "/vsizip/") == nullptr)
         {
@@ -584,7 +583,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
 
     // Is this a single CSV file?
     if (VSI_ISREG(sStatBuf.st_mode) &&
-        (bIgnoreExtension || EQUAL(osExt, "csv") || EQUAL(osExt, "tsv") ||
+        (bSingleDriver || EQUAL(osExt, "csv") || EQUAL(osExt, "tsv") ||
          EQUAL(osExt, "psv")))
     {
         if (EQUAL(CPLGetFilename(osFilename), "NfdcFacilities.xls"))
@@ -649,19 +648,19 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
 
     // Scan through for entries ending in .csv.
     int nNotCSVCount = 0;
-    char **papszNames = VSIReadDir(osFilename);
+    const CPLStringList aosFilenames(VSIReadDir(osFilename));
 
-    for (int i = 0; papszNames != nullptr && papszNames[i] != nullptr; i++)
+    for (int i = 0; i < aosFilenames.size(); i++)
     {
+        if (EQUAL(aosFilenames[i], ".") || EQUAL(aosFilenames[i], ".."))
+            continue;
+
+        const std::string osThisExt = CPLGetExtensionSafe(aosFilenames[i]);
+        if (EQUAL(osThisExt.c_str(), "csvt") || EQUAL(osThisExt.c_str(), "prj"))
+            continue;
+
         const CPLString oSubFilename =
-            CPLFormFilenameSafe(osFilename, papszNames[i], nullptr);
-
-        if (EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], ".."))
-            continue;
-
-        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csvt"))
-            continue;
-
+            CPLFormFilenameSafe(osFilename, aosFilenames[i], nullptr);
         if (VSIStatL(oSubFilename, &sStatBuf) != 0 ||
             !VSI_ISREG(sStatBuf.st_mode))
         {
@@ -669,7 +668,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             continue;
         }
 
-        if (EQUAL(CPLGetExtensionSafe(oSubFilename).c_str(), "csv"))
+        if (EQUAL(osThisExt.c_str(), "csv"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn))
             {
@@ -679,9 +678,9 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             }
         }
         // GNIS specific.
-        else if (strlen(papszNames[i]) > 2 &&
-                 STARTS_WITH_CI(papszNames[i] + 2, "_Features_") &&
-                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
+        else if (strlen(aosFilenames[i]) > 2 &&
+                 STARTS_WITH_CI(aosFilenames[i] + 2, "_Features_") &&
+                 EQUAL(osThisExt.c_str(), "txt"))
         {
             bool bRet =
                 OpenTable(oSubFilename, papszOpenOptionsIn, nullptr, "PRIM");
@@ -695,9 +694,9 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
             }
         }
         // GNIS specific.
-        else if (strlen(papszNames[i]) > 2 &&
-                 STARTS_WITH_CI(papszNames[i] + 2, "_FedCodes_") &&
-                 EQUAL(CPLGetExtensionSafe(papszNames[i]).c_str(), "txt"))
+        else if (strlen(aosFilenames[i]) > 2 &&
+                 STARTS_WITH_CI(aosFilenames[i] + 2, "_FedCodes_") &&
+                 EQUAL(osThisExt.c_str(), "txt"))
         {
             if (!OpenTable(oSubFilename, papszOpenOptionsIn, nullptr,
                            "PRIMARY"))
@@ -714,11 +713,10 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
         }
     }
 
-    CSLDestroy(papszNames);
-
     // We presume that this is indeed intended to be a CSV
     // datasource if over half the files were .csv files.
-    return bForceOpen || nNotCSVCount < GetLayerCount();
+    return bForceOpen || nNotCSVCount < GetLayerCount() ||
+           (bSingleDriver && GetLayerCount() > 0);
 }
 
 const std::vector<int> &OGRCSVDataSource::DeletedFieldIndexes() const

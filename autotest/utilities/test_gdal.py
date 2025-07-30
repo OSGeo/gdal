@@ -74,7 +74,17 @@ def test_gdal_format_as_output_format(gdal_path, tmp_path):
     out, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} raster convert --format GTIFF ../gcore/data/byte.tif {tmp_path}/out.xxx"
     )
-    assert out == ""
+    assert out.startswith("0...10...20...30...40...50...60...70...80...90...100")
+    assert err == ""
+    assert gdal.VSIStatL(f"{tmp_path}/out.xxx") is not None
+
+
+def test_gdal_format_as_output_format_quiet(gdal_path, tmp_path):
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster convert -q --format GTIFF ../gcore/data/byte.tif {tmp_path}/out.xxx"
+    )
+    assert not out.startswith("0...10...20...30...40...50...60...70...80...90...100")
     assert err == ""
     assert gdal.VSIStatL(f"{tmp_path}/out.xxx") is not None
 
@@ -94,7 +104,7 @@ def test_gdal_success(gdal_path):
 
     out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} data/utmsmall.tif")
     assert err == ""
-    assert "description" in json.loads(out)
+    assert out.startswith("Driver: GTiff/GeoTIFF")
 
 
 def test_gdal_failure_during_finalize(gdal_path):
@@ -286,6 +296,16 @@ def test_gdal_completion_co(gdal_path):
     ).split(" ")
     assert "1" in out
     assert "9" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster convert --of CO in.tif out.tif prev=of cur=CO"
+    ).split(" ")
+    assert "COG" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster convert --of=CO in.tif out.tif prev== cur=CO"
+    ).split(" ")
+    assert "COG" in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster convert --of COG --co="

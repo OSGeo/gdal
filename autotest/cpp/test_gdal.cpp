@@ -2456,59 +2456,67 @@ TEST_F(test_gdal, TileMatrixSet)
     }
 
     {
-        auto poTMS = gdal::TileMatrixSet::parse(
-            "{"
-            "    \"type\": \"TileMatrixSetType\","
-            "    \"title\": \"CRS84 for the World\","
-            "    \"identifier\": \"WorldCRS84Quad\","
-            "    \"boundingBox\":"
-            "    {"
-            "        \"type\": \"BoundingBoxType\","
-            "        \"crs\": "
-            "\"http://www.opengis.net/def/crs/OGC/1.X/"
-            "CRS84\","  // 1.3 modified to 1.X to test
-                        // difference with supportedCRS
-            "        \"lowerCorner\": [-180, -90],"
-            "        \"upperCorner\": [180, 90]"
-            "    },"
-            "    \"supportedCRS\": "
-            "\"http://www.opengis.net/def/crs/OGC/1.3/"
-            "CRS84\","
-            "    \"wellKnownScaleSet\": "
-            "\"http://www.opengis.net/def/wkss/OGC/1.0/"
-            "GoogleCRS84Quad\","
-            "    \"tileMatrix\":"
-            "    ["
-            "        {"
-            "            \"type\": \"TileMatrixType\","
-            "            \"identifier\": \"0\","
-            "            \"scaleDenominator\": "
-            "279541132.014358,"
-            "            \"topLeftCorner\": [-180, 90],"
-            "            \"tileWidth\": 256,"
-            "            \"tileHeight\": 256,"
-            "            \"matrixWidth\": 2,"
-            "            \"matrixHeight\": 1"
-            "        },"
-            "        {"
-            "            \"type\": \"TileMatrixType\","
-            "            \"identifier\": \"1\","
-            "            \"scaleDenominator\": 100000000,"
-            "            \"topLeftCorner\": [-123, 90],"
-            "            \"tileWidth\": 128,"
-            "            \"tileHeight\": 256,"
-            "            \"matrixWidth\": 4,"
-            "            \"matrixHeight\": 2,"
-            "            \"variableMatrixWidth\": [{"
-            "               \"type\": "
-            "\"VariableMatrixWidthType\","
-            "               \"coalesce\" : 2,"
-            "               \"minTileRow\": 0,"
-            "               \"maxTileRow\": 1"
-            "            }]"
-            "        }"
-            "    ]"
-            "}");
+        const char *pszJSON =
+            "{\n"
+            "  \"type\":\"TileMatrixSetType\",\n"
+            "  \"title\":\"CRS84 for the World\",\n"
+            "  \"identifier\":\"WorldCRS84Quad\",\n"
+            "  \"boundingBox\":{\n"
+            "    \"type\":\"BoundingBoxType\",\n"
+            // 1.3 modified to 1.X to test difference with supportedCRS
+            "    \"crs\":\"http://www.opengis.net/def/crs/OGC/1.X/CRS84\",\n"
+            "    \"lowerCorner\":[\n"
+            "      -180.0,\n"
+            "      -90.0\n"
+            "    ],\n"
+            "    \"upperCorner\":[\n"
+            "      180.0,\n"
+            "      90.0\n"
+            "    ]\n"
+            "  },\n"
+            "  "
+            "\"supportedCRS\":\"http://www.opengis.net/def/crs/OGC/1.3/"
+            "CRS84\",\n"
+            "  "
+            "\"wellKnownScaleSet\":\"http://www.opengis.net/def/wkss/OGC/1.0/"
+            "GoogleCRS84Quad\",\n"
+            "  \"tileMatrix\":[\n"
+            "    {\n"
+            "      \"type\":\"TileMatrixType\",\n"
+            "      \"identifier\":\"0\",\n"
+            "      \"scaleDenominator\":279541132.01435798,\n"
+            "      \"topLeftCorner\":[\n"
+            "        -180.0,\n"
+            "        90.0\n"
+            "      ],\n"
+            "      \"tileWidth\":256,\n"
+            "      \"tileHeight\":256,\n"
+            "      \"matrixWidth\":2,\n"
+            "      \"matrixHeight\":1\n"
+            "    },\n"
+            "    {\n"
+            "      \"type\":\"TileMatrixType\",\n"
+            "      \"identifier\":\"1\",\n"
+            "      \"scaleDenominator\":100000000.0,\n"
+            "      \"topLeftCorner\":[\n"
+            "        -123.0,\n"
+            "        90.0\n"
+            "      ],\n"
+            "      \"tileWidth\":128,\n"
+            "      \"tileHeight\":256,\n"
+            "      \"matrixWidth\":4,\n"
+            "      \"matrixHeight\":2,\n"
+            "      \"variableMatrixWidth\":[\n"
+            "        {\n"
+            "          \"coalesce\":2,\n"
+            "          \"minTileRow\":0,\n"
+            "          \"maxTileRow\":1\n"
+            "        }\n"
+            "      ]\n"
+            "    }\n"
+            "  ]\n"
+            "}";
+        auto poTMS = gdal::TileMatrixSet::parse(pszJSON);
         EXPECT_TRUE(poTMS != nullptr);
         if (poTMS)
         {
@@ -2523,6 +2531,8 @@ TEST_F(test_gdal, TileMatrixSet)
             EXPECT_EQ(vmw.mCoalesce, 2);
             EXPECT_EQ(vmw.mMinTileRow, 0);
             EXPECT_EQ(vmw.mMaxTileRow, 1);
+
+            EXPECT_STREQ(poTMS->exportToTMSJsonV1().c_str(), pszJSON);
         }
     }
 
@@ -5605,6 +5615,9 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         EXPECT_THROW(CPL_IGNORE_RET_VAL(gdal::IfThenElse(
                          firstBand, (*poOtherDS->GetRasterBand(1)), firstBand)),
                      std::runtime_error);
+        EXPECT_THROW(CPL_IGNORE_RET_VAL(
+                         gdal::pow(firstBand, (*poOtherDS->GetRasterBand(1)))),
+                     std::runtime_error);
 #endif
     }
 
@@ -5613,11 +5626,17 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
         {
             return (0.5 + 2 / gdal::min(c, gdal::max(a, b)) + 3 * a * 2 -
                     a * (1 - b) / c - 2 * a - 3 + 4) /
-                   3;
+                       gdal::pow(3.0, a) * gdal::pow(b, 2.0) +
+                   gdal::abs(-a) + gdal::fabs(-a) + gdal::sqrt(a) +
+                   gdal::log10(a)
+#ifdef HAVE_MUPARSER
+                   + gdal::log(a) + gdal::pow(a, b)
+#endif
+                ;
         };
 
         auto formula = Calc(firstBand, secondBand, thirdBand);
-        constexpr double expectedVal = Calc(FIRST, SECOND, THIRD);
+        const double expectedVal = Calc(FIRST, SECOND, THIRD);
 
         EXPECT_EQ(formula.GetXSize(), WIDTH);
         EXPECT_EQ(formula.GetYSize(), HEIGHT);

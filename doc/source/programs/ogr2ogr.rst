@@ -123,7 +123,9 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -skipfailures
 
-    Continue after a failure, skipping the failed feature.
+    Continue after a failure, skipping the failed feature. Note that this option
+    overrides the value of :option:`-gt` to 1, which may
+    cause severe slowdown when inserting into databases.
 
 .. option:: -spat <xmin> <ymin> <xmax> <ymax>
 

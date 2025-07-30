@@ -426,6 +426,7 @@ static const char *const apszGMLGeometryElements[] = {
     "BoundingBox", /* ows:BoundingBox */
     "CompositeCurve",
     "CompositeSurface",
+    "Shell", /* CityGML 3 */
     "Curve",
     "GeometryCollection", /* OGR < 1.8.0 bug... */
     "LineString",
@@ -1210,7 +1211,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
                         poClass->GetGeometryPropertyCount();
                 }
             }
-
             else
             {
                 if (!poClass->IsSchemaLocked() &&
@@ -1247,13 +1247,16 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
             return startElementGeometry(pszName, nLenName, attr);
         }
     }
-    else if (nLenName == 9 && strcmp(pszName, "boundedBy") == 0 &&
-             // We ignore the UseBBOX() flag for CityGML, since CityGML
-             // has elements like bldg:boundedBy, which are not a simple
-             // rectangular bbox. This is needed to read properly
-             // autotest/ogr/data/gml/citygml_lod2_713_5322.xml
-             // (this is a workaround of not being namespace aware)
-             (eAppSchemaType == APPSCHEMA_CITYGML || m_poReader->UseBBOX()))
+    else if (
+        (nLenName == 9 || nLenName == 8) &&
+        (strcmp(pszName, "boundedBy") == 0 ||
+         strcmp(pszName, "boundary") == 0) &&
+        // We ignore the UseBBOX() flag for CityGML, since CityGML
+        // has elements like bldg:boundedBy or 'boundary', which are not a simple
+        // rectangular bbox. This is needed to read properly
+        // autotest/ogr/data/gml/citygml_lod2_713_5322.xml
+        // (this is a workaround of not being namespace aware)
+        (eAppSchemaType == APPSCHEMA_CITYGML || m_poReader->UseBBOX()))
     {
         m_inBoundedByDepth = m_nDepth;
 

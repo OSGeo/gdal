@@ -212,6 +212,16 @@ void RegisterOGRGML()
         "  <Option name='USE_SCHEMA_IMPORT' type='boolean' "
         "description='Whether "
         "to read schema for imports along with includes or not' default='NO'/>"
+        "  <Option name='SKIP_CORRUPTED_FEATURES' type='boolean' "
+        "description='Whether to skip features that cannot be parsed instead "
+        "of failing' default='NO'/>"
+        "  <Option name='SKIP_RESOLVE_ELEMS' type='string' "
+        "description='Configure xlink element resolution. Set to NONE to "
+        "resolve all elements, set to ALL to skip all xlink elements, "
+        "set to HUGE to store linked elements in a temporary SQLite DB, "
+        "set to a comma separated list of names of specific elements to be "
+        "skipped.' "
+        "default='ALL'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

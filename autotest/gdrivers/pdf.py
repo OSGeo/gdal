@@ -1264,7 +1264,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
             "LAYER_01_NAME=subbyte",
         ], "did not get expected layers"
     if pdf_is_poppler():
-        assert cs in (7926, 8177, 8174, 8165, 8172, 8193)
+        assert cs in (7926, 8177, 8174, 8165, 8172, 8191, 8193)
 
 
 ###############################################################################

@@ -19,7 +19,7 @@ import sys
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 ###############################################################################
@@ -1108,3 +1108,56 @@ def test_basic_block_windows(tmp_vsimem):
         assert windows[8].yoff == 512
         assert windows[8].xsize == 1050 - 1024
         assert windows[8].ysize == 600 - 512
+
+
+###############################################################################
+# Test GetExtent()
+
+
+def test_basic_get_extent():
+
+    with gdal.Open("data/byte.tif") as ds:
+        assert ds.GetExtent() == (440720.0, 441920.0, 3750120.0, 3751320.0)
+
+
+def test_basic_get_extent_reprojected():
+
+    wgs84 = osr.SpatialReference(epsg=4326)
+    wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    with gdal.Open("data/byte.tif") as ds:
+        assert ds.GetExtent(wgs84) == pytest.approx(
+            (-117.642, -117.629, 33.892, 33.902), abs=1e-3
+        )
+
+
+def test_basic_get_extent_no_crs():
+
+    with gdal.GetDriverByName("MEM").Create("", 5, 5) as ds:
+        ds.SetGeoTransform((3, 0.5, 0, 7, 0, -1))
+        assert ds.GetExtent() == (3, 5.5, 2, 7)
+
+
+def test_basic_get_extent_no_crs_reprojected():
+
+    wgs84 = osr.SpatialReference(epsg=4326)
+    wgs84.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    with gdal.GetDriverByName("MEM").Create("", 5, 5) as ds:
+        ds.SetGeoTransform((3, 0.5, 0, 7, 0, -1))
+        assert ds.GetExtent(wgs84) is None
+
+
+def test_basic_get_extent_bottom_up():
+
+    with gdal.GetDriverByName("MEM").Create("", 5, 5) as ds:
+        ds.SetGeoTransform((3, 0.5, 0, 7, 0, 1))
+        assert ds.GetExtent() == (3, 5.5, 7, 12)
+
+
+def test_basic_get_extent_rotated():
+
+    with gdal.Open("data/geomatrix.tif") as ds:
+        assert ds.GetExtent() == pytest.approx(
+            (1840900, 1841030, 1143870, 1144000), abs=4
+        )

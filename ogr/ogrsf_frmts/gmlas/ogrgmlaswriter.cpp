@@ -2405,7 +2405,10 @@ bool GMLASWriter::WriteFieldNoLink(
                 </xs:complexType>
             </xs:element>
             */
-            aoNewInitialContext = std::move(aoLayerComponents);
+            aoNewInitialContext = aoLayerComponents;
+            // so that Coverity doesn't ask to move it, which it won't like
+            // as this is an input argument
+            CPL_IGNORE_RET_VAL(aoLayerComponents);
         }
 
         WriteClosingAndStartingTags(aoCurComponents, aoNewInitialContext,

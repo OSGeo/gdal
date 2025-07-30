@@ -6,7 +6,6 @@ set(PROGRAMS
     gdaladdo
     gdalbuildvrt
     gdal_calc.py
-    gdalchksum.py
     gdalcompare.py
     gdal-config
     gdal_contour
@@ -15,8 +14,6 @@ set(PROGRAMS
     gdalenhance
     gdal_fillnodata.py
     gdal_grid
-    gdalident.py
-    gdalimport.py
     gdallocationinfo
     gdalmanage
     gdal_merge.py
@@ -29,6 +26,7 @@ set(PROGRAMS
     gdalsrsinfo
     gdaltindex
     gdaltransform
+    gdal_footprint
     gdal_translate
     gdalwarp
     ogr2ogr
@@ -36,8 +34,10 @@ set(PROGRAMS
     ogrlineref
     ogrmerge.py
     ogrtindex
+    ogr_layer_algebra.py
     gdal_viewshed
-    gdal_create)
+    gdal_create
+    sozip)
 
 set(INSTALL_DIR "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@BASH_COMPLETIONS_DIR@")
 

@@ -185,7 +185,7 @@ void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
     {
         double adjustment = dfZ - dfCellVal;
         if (adjustment > 0)
-            dfResult += (dfZ - dfCellVal);
+            dfResult += adjustment;
     }
     else
         dfResult = (dfCellVal + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal

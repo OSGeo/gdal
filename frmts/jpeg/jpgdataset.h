@@ -38,6 +38,7 @@
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -341,12 +342,14 @@ class JPGDataset final : public JPGDatasetCommon
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    static GDALDataset *CreateCopyStage2(
-        const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
-        GDALProgressFunc pfnProgress, void *pProgressData, VSILFILE *fpImage,
-        GDALDataType eDT, int nQuality, bool bAppendMask,
-        GDALJPEGUserData &sUserData, struct jpeg_compress_struct &sCInfo,
-        struct jpeg_error_mgr &sJErr, GByte *&pabyScanline);
+    static GDALDataset *
+    CreateCopyStage2(const char *pszFilename, GDALDataset *poSrcDS,
+                     char **papszOptions, GDALProgressFunc pfnProgress,
+                     void *pProgressData, VSIVirtualHandleUniquePtr fpImage,
+                     GDALDataType eDT, int nQuality, bool bAppendMask,
+                     GDALJPEGUserData &sUserData,
+                     struct jpeg_compress_struct &sCInfo,
+                     struct jpeg_error_mgr &sJErr, GByte *&pabyScanline);
     static void ErrorExit(j_common_ptr cinfo);
     static void OutputMessage(j_common_ptr cinfo);
 };

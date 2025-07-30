@@ -190,19 +190,32 @@ Standard options
    Number of jobs to run at once.
    Default: number of CPUs detected.
 
-.. option:: --parallel-method thread|spawn
+.. option:: --parallel-method thread|spawn|fork
 
    .. versionadded:: GDAL 3.12
 
-   Parallelization method. ``thread`` uses multi-threading (i.e. parallelized tasks
-   are run within the same process), whereas ``spawn`` launches child :program:`gdal` sub-processes.
-   ``spawn`` can achieve better "scaling", but requires the :program:`gdal` binary to be
-   available. GDAL will try to locate it, but you can also set the ``GDAL_PATH``
-   configuration option to point to the directory where the :program:`gdal` binary is
-   located. If :option:`--parallel-method` is not specified, GDAL will automatically
+   Parallelization method:
+
+   - ``thread`` uses multi-threading, i.e. parallelized tasks are run within
+     the same process.
+
+   - ``spawn`` launches child :program:`gdal` sub-processes.
+     ``spawn`` can achieve better "scaling", but requires the :program:`gdal` binary to be
+     available. GDAL will try to locate it, but you can also set the ``GDAL_PATH``
+     configuration option to point to the directory where the :program:`gdal` binary is
+     located.
+
+   - ``fork`` is a variant of ``spawn``, using the system call ``fork``, without
+     executing the the :program:`gdal` binary. Such method is not available on
+     Windows. On Unix systems where it is available, this method is not recommended
+     to be used on multithreaded processes, especially the ones where other threads
+     are doing GDAL operation, since it can potentially cause deadlocks.
+
+   If :option:`--parallel-method` is not specified, GDAL will automatically
    decide which of the method is the most appropriate, opting for ``spawn`` if
    the :program:`gdal` binary can be located and a sufficient number of tiles per job
-   are generated, and otherwise falling back to ``thread``.
+   are generated, and otherwise falling back to ``fork`` on Linux, MacOSX or FreeBSD
+   (if no other thread is running), and otherwise to ``thread``.
 
 
 Advanced Resampling Options
@@ -242,9 +255,14 @@ Advanced Resampling Options
 Publication Options
 +++++++++++++++++++
 
-.. option:: --webviewer none|all|leaflet|openlayers|mapml
+.. option:: --webviewer none|all|leaflet|openlayers|mapml|stac
 
-    Web viewer to generate. Defaults to ``all``.
+    Web viewer to generate. Defaults to ``all``. Those web viewers are created
+    at the root of the output directory.
+
+    ``stac`` generates a :file:`stacta.json` file, following the
+    Spatio-Temporal Asset Catalog Tiled Assets specification, and that can
+    be opened by the :ref:`STACTA driver <raster.stacta>`.
 
 .. option:: --url
 
@@ -301,3 +319,10 @@ Examples
    .. code-block:: bash
 
       gdal raster tile --tiling-scheme raster input.tif output_folder
+
+.. example::
+   :title: Creating a tiled dataset, compatible of the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
+
+   .. code-block:: bash
+
+      gdal raster tile --format COG --tile-size 4096 input.tif output_folder

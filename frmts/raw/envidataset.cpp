@@ -2100,11 +2100,42 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Extract required values from the .hdr.
-    int nLines = atoi(poDS->m_aosHeader.FetchNameValueDef("lines", "0"));
+    const char *pszLines = poDS->m_aosHeader.FetchNameValueDef("lines", "0");
+    const auto nLines64 = std::strtoll(pszLines, nullptr, 10);
+    const int nLines = static_cast<int>(std::min<int64_t>(nLines64, INT_MAX));
+    if (nLines < nLines64)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Limiting number of lines from %s to %d due to GDAL raster "
+                 "data model limitation",
+                 pszLines, nLines);
+    }
 
-    int nSamples = atoi(poDS->m_aosHeader.FetchNameValueDef("samples", "0"));
+    const char *pszSamples =
+        poDS->m_aosHeader.FetchNameValueDef("samples", "0");
+    const auto nSamples64 = std::strtoll(pszSamples, nullptr, 10);
+    const int nSamples =
+        static_cast<int>(std::min<int64_t>(nSamples64, INT_MAX));
+    if (nSamples < nSamples64)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot handle samples=%s due to GDAL raster data model limitation",
+            pszSamples);
+        return nullptr;
+    }
 
-    int nBands = atoi(poDS->m_aosHeader.FetchNameValueDef("bands", "0"));
+    const char *pszBands = poDS->m_aosHeader.FetchNameValueDef("bands", "0");
+    const auto nBands64 = std::strtoll(pszBands, nullptr, 10);
+    const int nBands = static_cast<int>(std::min<int64_t>(nBands64, INT_MAX));
+    if (nBands < nBands64)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot handle bands=%s due to GDAL raster data model limitation",
+            pszBands);
+        return nullptr;
+    }
 
     // In case, there is no interleave keyword, we try to derive it from the
     // file extension.
@@ -2316,7 +2347,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines64;
     }
 
     const char *pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];

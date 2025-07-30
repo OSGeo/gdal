@@ -22,15 +22,28 @@ def get_info_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
 
 
-def test_gdalalg_raster_info_stdout():
+def test_gdalalg_raster_info_stdout_text_default_format():
     import gdaltest
     import test_cli_utilities
 
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out, err = gdaltest.runexternal_out_and_err(
+    out, _ = gdaltest.runexternal_out_and_err(
         f"{gdal_path} raster info data/utmsmall.tif"
+    )
+    assert out.startswith("Driver: GTiff/GeoTIFF")
+
+
+def test_gdalalg_raster_info_stdout_json():
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    out, _ = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster info --format json data/utmsmall.tif"
     )
     j = json.loads(out)
     assert len(j["bands"]) == 1

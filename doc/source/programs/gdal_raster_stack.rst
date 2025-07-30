@@ -126,9 +126,17 @@ Examples
 --------
 
 .. example::
-   :title: Make a RGB virtual stack from 3 single-band input files
+   :title: Make a RGB stack from 3 single-band input files
    :id: separate
 
    .. code-block:: bash
 
-       gdal raster stack --separate red.tif green.tif blue.tif rgb.tif
+       gdal raster stack red.tif green.tif blue.tif rgb.tif
+
+.. example::
+   :title: Make a virtual (VRT) stack from 2 single-band input files
+   :id: virtual
+
+   .. code-block:: bash
+
+       gdal raster stack raster1.tif raster2.tif result.vrt

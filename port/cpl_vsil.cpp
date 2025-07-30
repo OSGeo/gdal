@@ -2347,6 +2347,73 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
+/*                  VSIVirtualHandleOnlyVisibleAtCloseTime()            */
+/************************************************************************/
+
+class VSIVirtualHandleOnlyVisibleAtCloseTime final : public VSIProxyFileHandle
+{
+    const std::string m_osTargetName;
+    const std::string m_osTmpName;
+    bool m_bAlreadyClosed = false;
+    bool m_bCancelCreation = false;
+
+  public:
+    VSIVirtualHandleOnlyVisibleAtCloseTime(
+        VSIVirtualHandleUniquePtr &&nativeHandle,
+        const std::string &osTargetName, const std::string &osTmpName)
+        : VSIProxyFileHandle(std::move(nativeHandle)),
+          m_osTargetName(osTargetName), m_osTmpName(osTmpName)
+    {
+    }
+
+    ~VSIVirtualHandleOnlyVisibleAtCloseTime()
+    {
+        VSIVirtualHandleOnlyVisibleAtCloseTime::Close();
+    }
+
+    void CancelCreation() override
+    {
+        VSIProxyFileHandle::CancelCreation();
+        m_bCancelCreation = true;
+    }
+
+    int Close() override;
+};
+
+int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
+{
+    if (m_bAlreadyClosed)
+        return 0;
+    m_bAlreadyClosed = true;
+    int ret = VSIProxyFileHandle::Close();
+    if (ret != 0)
+        return ret;
+    return m_bCancelCreation
+               ? VSIUnlink(m_osTmpName.c_str())
+               : VSIRename(m_osTmpName.c_str(), m_osTargetName.c_str());
+}
+
+/************************************************************************/
+/*                       CreateOnlyVisibleAtCloseTime()                 */
+/************************************************************************/
+
+VSIVirtualHandle *VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+    const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
+{
+    if (!bEmulationAllowed)
+        return nullptr;
+
+    const std::string tmpName = std::string(pszFilename).append(".tmp");
+    VSIVirtualHandleUniquePtr nativeHandle(
+        Open(tmpName.c_str(), "wb+", true, papszOptions));
+    if (!nativeHandle)
+        return nullptr;
+    return std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
+               std::move(nativeHandle), pszFilename, tmpName)
+        .release();
+}
+
+/************************************************************************/
 /*                            VSIDIREntry()                             */
 /************************************************************************/
 
@@ -4345,3 +4412,14 @@ size_t VSIVirtualHandle::PRead(CPL_UNUSED void *pBuffer,
 {
     return 0;
 }
+
+#ifndef DOXYGEN_SKIP
+/************************************************************************/
+/*                  VSIProxyFileHandle::CancelCreation()                */
+/************************************************************************/
+
+void VSIProxyFileHandle::CancelCreation()
+{
+    m_nativeHandle->CancelCreation();
+}
+#endif

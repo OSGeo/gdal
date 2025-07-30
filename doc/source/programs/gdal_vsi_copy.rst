@@ -49,8 +49,8 @@ Examples
        $ gdal vsi copy -r /vsis3/bucket/my_dir .
 
 .. example::
-   :title: Copy recursively files from /vsis3/bucket/my_dir to local directory, *without* creating a my_dir directory, and with progress bar
+   :title: Copy recursively files from /vsis3/bucket/my_dir to local directory, *without* creating a my_dir directory, without progress bar
 
    .. code-block:: console
 
-       $ gdal vsi copy --progress -r /vsis3/bucket/my_dir/* .
+       $ gdal vsi copy --quiet -r /vsis3/bucket/my_dir/* .

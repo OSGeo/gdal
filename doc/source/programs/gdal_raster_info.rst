@@ -52,7 +52,8 @@ Standard options
 
 .. option:: -f, --of, --format, --output-format json|text
 
-    Which output format to use. Default is JSON.
+    Which output format to use. Default is JSON, and starting with GDAL 3.12,
+    text when invoked from command line.
 
 .. option:: --mm, --min-max
 
