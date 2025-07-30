@@ -15,22 +15,7 @@ You'll learn how to create a raster tile index, clip data to a polygon, and gene
 
 Code examples assume a Bash shell on Linux. Where syntax differs, equivalent PowerShell commands are provided for Windows users.
 The tutorial covers both the unified :ref:`gdal command-line interface <programs_gdal>` and the :ref:`traditional <programs_traditional>`
-individual GDAL tools.
-
-Setting Up a Conda Environment
-------------------------------
-
-This tutorial assumes Conda is already installed. We'll start by creating a new Conda environment and installing GDAL.
-
-.. code-block:: console
-
-    $ conda create --yes --name gdal
-    $ conda activate gdal
-    $ conda install --yes -c conda-forge gdal
-    $ conda --version
-    conda 24.3.0
-    $ gdal --version
-    GDAL 3.11.3 "Eganville", released 2025/07/12
+individual GDAL tools. The tutorial uses a Conda environment with GDAL installed, see :ref:`Conda setup <conda>` for setting this up.
 
 Getting the Data
 ----------------
@@ -75,7 +60,9 @@ You can automate the download and extraction using the commands below.
 Creating a Raster Tile Index
 ----------------------------
 
-The archive contains individual tiles in the ASCII raster (``.asc``) format - a plain text format commonly used for gridded spatial data.
+The archive contains individual tiles in the ASCII raster (``.asc``) format - a plain text format commonly used for gridded spatial data. The following commands rely on the
+:ref:`raster.aaigrid` driver being installed (this is typically included in standard GDAL builds).
+
 
 .. image:: ../../images/tutorials/asc-files.png
 
@@ -88,18 +75,18 @@ This creates a vector dataset with one record per raster tile, allowing the tile
    .. code-tab:: bash gdal CLI
 
         files="RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13/RGEALTI/1_DONNEES_LIVRAISON_2021-10-00009/RGEALTI_MNT_5M_ASC_LAMB93_IGN69_D090/*.asc"
-        gdal driver gti create --layer dtm --dst-crs EPSG:2154 --output-format FlatGeobuf $files tileindex.gti.fgb
+        gdal driver gti create --layer dtm --dst-crs EPSG:2154 $files tileindex.gti.fgb
 
    .. code-tab:: bash Traditional
 
         files="RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13/RGEALTI/1_DONNEES_LIVRAISON_2021-10-00009/RGEALTI_MNT_5M_ASC_LAMB93_IGN69_D090/*.asc"
-        gdaltindex -lyr_name dtm -t_srs EPSG:2154 -f FlatGeobuf tileindex.gti.fgb $files
+        gdaltindex -lyr_name dtm -t_srs EPSG:2154 tileindex.gti.fgb $files
 
    .. code-tab:: powershell
 
         # create a GTI from all the asc files
         $files = "RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13/RGEALTI/1_DONNEES_LIVRAISON_2021-10-00009/RGEALTI_MNT_5M_ASC_LAMB93_IGN69_D090/*.asc"
-        gdal driver gti create --layer dtm --dst-crs EPSG:2154 --output-format FlatGeobuf $files tileindex.gti.fgb
+        gdal driver gti create --layer dtm --dst-crs EPSG:2154 $files tileindex.gti.fgb
 
 Clipping the DTM
 ----------------
@@ -108,9 +95,10 @@ Next, we'll clip the DTM using a polygon representing department 90. Instead of 
 to retrieve only the feature we need.
 
 For the traditional approach we'll use :ref:`ogr2ogr` and the :ref:`vector.wfs` driver.
-Starting with GDAL 3.11, the same result can be achieved using the GDAL CLI and the :ref:`gdal_vector_pipeline`.
+Starting with GDAL 3.11, the same result can be achieved using the GDAL CLI and the :ref:`gdal_vector_pipeline`. In both cases, your GDAL installation must include the
+the :ref:`vector.gml` driver.
 
-In both cases, we explicitly set the output layer name to *commune* to avoid the auto-generated name *ADMINEXPRESS-COG.2017:commune*.
+We will explicitly set the output layer name to *commune* to avoid the auto-generated name *ADMINEXPRESS-COG.2017:commune*.
 When using ``ogr2ogr`` it's also important to set the geometry type with ``-nlt POLYGON``, otherwise, clipping the raster will fail with the error:
 ``ERROR 1: Cutline not of polygon type``.
 
@@ -120,6 +108,7 @@ When using ``ogr2ogr`` it's also important to set the geometry type with ``-nlt 
 
         gdal vector pipeline \
             ! read WFS:"https://data.geopf.fr/wfs/ows?version=2.0.0&typename=ADMINEXPRESS-COG.2017:commune" \
+            ! set-geom-type --geometry-type Polygon \
             ! filter --where "insee_com='90065'" \
             ! write --output-layer=commune commune.fgb
 
@@ -135,6 +124,7 @@ When using ``ogr2ogr`` it's also important to set the geometry type with ``-nlt 
 
         gdal vector pipeline `
             ! read WFS:"https://data.geopf.fr/wfs/ows?version=2.0.0&typename=ADMINEXPRESS-COG.2017:commune" `
+            ! set-geom-type --geometry-type Polygon `
             ! filter --where "insee_com='90065'" `
             ! write --output-layer=commune commune.fgb
 
@@ -144,12 +134,11 @@ and :ref:`gdalwarp` for the traditional method.
 
 .. image:: ../../images/tutorials/clip.png
 
-
 .. tabs::
 
    .. code-tab:: bash gdal CLI
 
-        gdal raster clip --like commune.fgb  tileindex.gti.fgb clipped.tif --overwrite --allow-bbox-outside-source
+        gdal raster clip --like commune.fgb  tileindex.gti.fgb clipped.tif --overwrite
 
    .. code-tab:: bash Traditional
 
@@ -157,13 +146,14 @@ and :ref:`gdalwarp` for the traditional method.
 
 .. note::
 
-    To run spatial operations like clipping, your GDAL installation must include the :term:`GEOS` dependency. On UNIX systems
-    you can verify this using the :ref:`gdal-config` program (not available on Windows).
+    To perform spatial operations such as clipping, your GDAL installation must be built with the :term:`GEOS` (Geometry Engine - Open Source) dependency.
+    You can verify this using the GDAL Python library provided in the GDAL Conda environment.
 
     .. code-block:: bash
 
-        gdal-config --dep-libs
-        # the output should include -lgeos_c
+        # if GEOS is installed the following will output the GEOS version number
+        $ python -c "from osgeo import ogr; print(ogr.GetGEOSVersionMajor())"
+        3
 
     If GEOS is not installed, you may encounter errors like the following:
 
@@ -182,18 +172,20 @@ The traditional tools for analyzing and visualizing :term:`DEM` s and :term:`DTM
 under the ``gdal raster`` subcommands.
 
 First we'll create a shaded relief map using :ref:`gdaldem` and ``hillshade`` (traditional approach) or :ref:`gdal_raster_hillshade` with the GDAL CLI.
-Both commands support various parameters, such as light azimuth, altitude, and vertical exaggeration.
+Both commands support various parameters, such as light azimuth, altitude, and vertical exaggeration. In this example, we'll set the vertical exaggeration factor
+to ``2`` (using the ``-z 2`` and ``--zfactor=2`` options) to enhance the shading effect.
+
 Refer to the command help pages for full details, and feel free to experiment with the examples below.
 
 .. tabs::
 
    .. code-tab:: bash gdal CLI
 
-        gdal raster hillshade --zfactor=5 clipped.tif hillshade.tif --overwrite
+        gdal raster hillshade --zfactor=2 clipped.tif hillshade.tif --overwrite
 
    .. code-tab:: bash Traditional
 
-        gdaldem hillshade -z 5 clipped.tif hillshade.tif
+        gdaldem hillshade -z 2 clipped.tif hillshade.tif
 
 The output of this command is shown below. Note that images have been converted to the PNG format and resized for the GDAL documentation.
 
@@ -224,26 +216,27 @@ Now we'll create an image showing terrain aspect using :ref:`gdaldem` and ``aspe
 
         gdaldem aspect clipped.tif aspect.tif
 
-
 .. image:: ../../images/tutorials/aspect.png
 
 Next, we'll apply color to the DTM based on elevation values. First, create a file named ``color-map-percentage.txt`` in the same folder as your ``clipped.tif`` file,
 and copy in the contents below. The file defines :term:`RGB` values for elevation ranges, grouped by percentage. GDAL maps these percentage
-ranges to RGB colors when rendering the DTM. The ``nv`` value specifies the RGB colour for any ``NoData`` values.
+ranges to RGB colors when rendering the DTM. The ``nv`` (no data value) entry specifies the RGB colour for any ``NoData`` values in the raster. In this case it is set to ``255 255 255 0``, where the
+final ``0`` means the no data areas will be fully transparent.
 
 .. literalinclude:: code/color-map-percentage.txt
 
 Now we can apply the color map to the DTM using :ref:`gdaldem` and ``color-relief`` (traditional approach) or :ref:`gdal_raster_color_map` with the GDAL CLI.
+To make the background transparent, include the ``-alpha`` (traditional) or ``--add-alpha`` (CLI) option when running the command.
 
 .. tabs::
 
    .. code-tab:: bash gdal CLI
 
-        gdal raster color-map --color-map=color-map-percentage.txt clipped.tif color.tif --overwrite
+        gdal raster color-map --color-map=color-map-percentage.txt clipped.tif color.tif --add-alpha --overwrite
 
    .. code-tab:: bash Traditional
 
-        gdaldem color-relief clipped.tif color-map-percentage.txt color.tif
+        gdaldem color-relief clipped.tif color-map-percentage.txt color.tif -alpha
 
 .. image:: ../../images/tutorials/color.png
 
@@ -252,9 +245,9 @@ This command is available only through the new GDAL CLI.
 
 .. code-block:: bash
 
-    gdal raster color-merge --grayscale=hillshade.tif color.tif color-hillshade.jpg
+    gdal raster color-merge --grayscale=hillshade.tif color.tif color-hillshade.png --overwrite
 
-.. image:: ../../images/tutorials/color-hillshade.jpg
+.. image:: ../../images/tutorials/color-hillshade.png
 
 .. _`RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13.7z`: https://data.geopf.fr/telechargement/download/RGEALTI/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D090_2021-01-13.7z
 
