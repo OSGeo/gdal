@@ -121,7 +121,7 @@ std::string GDALGetGDALPath()
                 if (VSIStatL(osBinFilename.c_str(), &sStat) == 0)
                 {
                     // Case if osGDALLib=/usr/lib/libgdal.so.xxx
-                    osPath = osBinFilename;
+                    osPath = std::move(osBinFilename);
                 }
                 else
                 {

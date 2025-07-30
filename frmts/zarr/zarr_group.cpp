@@ -24,7 +24,7 @@
 
 ZarrGroupBase::~ZarrGroupBase()
 {
-    ZarrGroupBase::Close();
+    CPL_IGNORE_RET_VAL(ZarrGroupBase::Close());
 }
 
 /************************************************************************/
