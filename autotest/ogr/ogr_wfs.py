@@ -5285,3 +5285,60 @@ def test_ogr_wfs_get_feature_count_issue_11920():
 
         lyr.SetAttributeFilter("FID < 0")
         assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GML")
+def test_ogr_wfs_no_gml_driver(
+    wfs110_onelayer_get_caps_with_bbox_no_hits,
+    wfs110_onelayer_describefeaturetype,
+):
+
+    ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
+    lyr = ds.GetLayer(0)
+
+    with gdaltest.tempfile(
+        "/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer",
+        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""",
+    ):
+        gml_drv = gdal.GetDriverByName("GML")
+        gml_drv.Deregister()
+        try:
+            with pytest.raises(
+                Exception, match="Cannot read features as GML driver is missing"
+            ):
+                lyr.GetNextFeature()
+        finally:
+            gml_drv.Register()

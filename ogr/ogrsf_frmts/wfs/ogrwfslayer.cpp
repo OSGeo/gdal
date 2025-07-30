@@ -166,7 +166,8 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(CPL_UNUSED int bWithNS)
     osURL = CPLURLAddKVP(osURL, "COUNT", nullptr);
     osURL = CPLURLAddKVP(osURL, "FILTER", nullptr);
     osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT",
-                         pszRequiredOutputFormat
+                         pszRequiredOutputFormat &&
+                                 !EQUAL(pszRequiredOutputFormat, "json")
                              ? WFS_EscapeURL(pszRequiredOutputFormat).c_str()
                              : nullptr);
 
@@ -817,7 +818,6 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             bStreamingDS = false;
         }
 
-        if (bStreamingDS)
         {
             /* In case of failure, read directly the content to examine */
             /* it, if it is XML error content */
@@ -834,6 +834,26 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 
             if (nRead != 0)
             {
+                if (strstr(szBuffer, "<wfs:FeatureCollection") != nullptr)
+                {
+                    poDriver =
+                        GDALDriver::FromHandle(GDALGetDriverByName("GML"));
+                    if (poDriver == nullptr)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Cannot read features as GML driver is missing");
+                        return nullptr;
+                    }
+                    else if (poDriver->pfnOpen == nullptr)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot read features as GML driver has no "
+                                 "read support");
+                        return nullptr;
+                    }
+                }
+
                 if (MustRetryIfNonCompliantServer(szBuffer))
                     return FetchGetFeature(nRequestMaxFeatures);
 

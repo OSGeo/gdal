@@ -1139,6 +1139,8 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
             DetectRequiresEnvelopeSpatialFilter(psWFSCapabilities);
     }
 
+    bool bRequestJSON = false;
+
     if (atoi(osVersion) >= 2)
     {
         CPLString osMaxFeatures = CPLURLGetValue(osBaseURL, "COUNT");
@@ -1160,6 +1162,67 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
 
         DetectSupportPagingWFS2(psWFSCapabilities, psConfigurationRoot);
         DetectSupportStandardJoinsWFS2(psWFSCapabilities);
+
+        const CPLXMLNode *psOperationsMetadata =
+            CPLGetXMLNode(psWFSCapabilities, "OperationsMetadata");
+        auto poGMLDriver = GDALDriver::FromHandle(GDALGetDriverByName("GML"));
+        if (psOperationsMetadata && !(poGMLDriver && poGMLDriver->pfnOpen) &&
+            CPLURLGetValue(osBaseURL, "OUTPUTFORMAT").empty())
+        {
+            const CPLXMLNode *psChild = psOperationsMetadata->psChild;
+            while (psChild)
+            {
+                if (psChild->eType == CXT_Element &&
+                    strcmp(psChild->pszValue, "Operation") == 0 &&
+                    strcmp(CPLGetXMLValue(psChild, "name", ""), "GetFeature") ==
+                        0)
+                {
+                    break;
+                }
+                psChild = psChild->psNext;
+            }
+            if (psChild)
+            {
+                psChild = psChild->psChild;
+                while (psChild)
+                {
+                    if (psChild->eType == CXT_Element &&
+                        strcmp(psChild->pszValue, "Parameter") == 0 &&
+                        strcmp(CPLGetXMLValue(psChild, "name", ""),
+                               "outputFormat") == 0)
+                    {
+                        break;
+                    }
+                    psChild = psChild->psNext;
+                }
+                if (psChild)
+                {
+                    const CPLXMLNode *psAllowedValues =
+                        CPLGetXMLNode(psChild, "AllowedValues");
+                    if (psAllowedValues)
+                    {
+                        psChild = psAllowedValues->psChild;
+                        while (psChild)
+                        {
+                            if (psChild->eType == CXT_Element &&
+                                strcmp(psChild->pszValue, "Value") == 0 &&
+                                psChild->psChild &&
+                                psChild->psChild->eType == CXT_Text)
+                            {
+                                CPLDebug("WFS", "Available output format: %s",
+                                         psChild->psChild->pszValue);
+                                if (strcmp(psChild->psChild->pszValue,
+                                           "json") == 0)
+                                {
+                                    bRequestJSON = true;
+                                }
+                            }
+                            psChild = psChild->psNext;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     DetectTransactionSupport(psWFSCapabilities);
@@ -1416,6 +1479,8 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                             osOutputFormat = osFormats[0].c_str();
                     }
                 }
+                if (osOutputFormat.empty() && bRequestJSON)
+                    osOutputFormat = "json";
 
                 OGRSpatialReference *poSRS = nullptr;
                 bool bAxisOrderAlreadyInverted = false;
