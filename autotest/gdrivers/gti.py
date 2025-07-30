@@ -3027,3 +3027,20 @@ def test_gti_stac_geoparquet_sentinel2(filename):
         "CENTRAL_WAVELENGTH_UM": "0.783",
         "FWHM_UM": "0.028",
     }
+
+
+###############################################################################
+# Test case when 2 sources where collected, but erroneously discarded
+
+
+def test_gti_tile_001():
+
+    out_ds = gdal.Warp(
+        "",
+        "vrt://data/gti/tile-001.gti.gpkg?bands=3,2,1",
+        options="-f MEM -t_srs epsg:3857 -dstalpha -ts 256 256 -te -12151653.008664179593 3101508.859699312598 -12141869.069043677300 3111292.799319814891 -r cubic",
+    )
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1000, 1000)
+    assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (1000, 1000)
+    assert out_ds.GetRasterBand(3).ComputeRasterMinMax() == (1000, 1000)
+    assert out_ds.GetRasterBand(4).ComputeRasterMinMax() == (65535, 65535)
