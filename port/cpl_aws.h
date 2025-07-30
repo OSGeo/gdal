@@ -165,7 +165,8 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osSourceProfile, std::string &osExternalId,
         std::string &osMFASerial, std::string &osRoleSessionName,
         std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
-        std::string &osSSOAccountID, std::string &osSSORoleName);
+        std::string &osSSOAccountID, std::string &osSSORoleName,
+        std::string &osSSOSession);
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,
