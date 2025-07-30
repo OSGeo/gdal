@@ -3551,6 +3551,7 @@ class CPL_DLL GDALExtendedDataType
   public:
     ~GDALExtendedDataType();
 
+    GDALExtendedDataType(GDALExtendedDataType &&);
     GDALExtendedDataType(const GDALExtendedDataType &);
 
     GDALExtendedDataType &operator=(const GDALExtendedDataType &);
