@@ -35,8 +35,7 @@ class GDALInfoAlgorithm final
     GDALInfoAlgorithm() : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
         // only for the help message
-        AddOutputFormatArg(&m_format).SetDefault("json").SetChoices("json",
-                                                                    "text");
+        AddOutputFormatArg(&m_format).SetChoices("json", "text");
         AddInputDatasetArg(&m_dataset);
 
         m_longDescription = "For all options, run 'gdal raster info --help' or "
