@@ -783,6 +783,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_clean_coverage",
+        "gdal-vector-clean-coverage",
+        "Remove gaps and overlaps from a polygon dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_clip",
         "gdal-vector-clip",
         "Clip a vector dataset",

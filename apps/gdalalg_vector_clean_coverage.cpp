@@ -1,7 +1,7 @@
 /******************************************************************************
 *
  * Project:  GDAL
- * Purpose:  "gdal vector simplify-coverage" subcommand
+ * Purpose:  "gdal vector clean-coverage" subcommand
  * Author:   Daniel Baston
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_simplify_coverage.h"
+#include "gdalalg_vector_clean_coverage.h"
 
 #include "cpl_error.h"
 #include "gdal_priv.h"
@@ -27,42 +27,117 @@
 
 //! @cond Doxygen_Suppress
 
-GDALVectorSimplifyCoverageAlgorithm::GDALVectorSimplifyCoverageAlgorithm(
+GDALVectorCleanCoverageAlgorithm::GDALVectorCleanCoverageAlgorithm(
     bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
     AddActiveLayerArg(&m_activeLayer);
-    AddArg("tolerance", 0, _("Distance tolerance for simplification."),
-           &m_opts.tolerance)
-        .SetRequired()
+    AddArg("snapping-distance", 0, _("Distance tolerance for snapping nodes"),
+           &m_opts.snappingTolerance)
         .SetMinValueIncluded(0);
-    AddArg("preserve-boundary", 0,
-           _("Whether the exterior boundary should be preserved."),
-           &m_opts.preserveBoundary);
+
+    AddArg("merge-strategy", 0,
+           _("Algorithm to assign overlaps to neighboring polygons"),
+           &m_opts.mergeStrategy)
+        .SetChoices({"longest-border", "max-area", "min-area", "min-index"});
+
+    AddArg("maximum-gap-width", 0, _("Maximum width of a gap to be closed"),
+           &m_opts.maximumGapWidth)
+        .SetMinValueIncluded(0);
 }
 
 #if defined HAVE_GEOS &&                                                       \
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
-     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
+     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14))
 
-class GDALVectorSimplifyCoverageOutputDataset
+class GDALVectorCleanCoverageOutputDataset
     : public GDALVectorNonStreamingAlgorithmDataset
 {
   public:
-    GDALVectorSimplifyCoverageOutputDataset(
-        const GDALVectorSimplifyCoverageAlgorithm::Options &opts)
+    GDALVectorCleanCoverageOutputDataset(
+        const GDALVectorCleanCoverageAlgorithm::Options &opts)
         : m_opts(opts)
     {
+        m_poGeosContext = OGRGeometry::createGEOSContext();
     }
 
-    ~GDALVectorSimplifyCoverageOutputDataset() override;
+    ~GDALVectorCleanCoverageOutputDataset() override;
+
+    GEOSCoverageCleanParams *GetCoverageCleanParams() const
+    {
+        GEOSCoverageCleanParams *params =
+            GEOSCoverageCleanParams_create_r(m_poGeosContext);
+
+        if (!params)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to create coverage clean parameters");
+            return nullptr;
+        }
+
+        if (!GEOSCoverageCleanParams_setSnappingDistance_r(
+                m_poGeosContext, params, m_opts.snappingTolerance))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to set snapping tolerance");
+            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
+            return nullptr;
+        }
+
+        if (!GEOSCoverageCleanParams_setGapMaximumWidth_r(
+                m_poGeosContext, params, m_opts.maximumGapWidth))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to set maximum gap width");
+            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
+            return nullptr;
+        }
+
+        int mergeStrategy;
+        if (m_opts.mergeStrategy == "longest-border")
+        {
+            mergeStrategy = GEOS_MERGE_LONGEST_BORDER;
+        }
+        else if (m_opts.mergeStrategy == "max-area")
+        {
+            mergeStrategy = GEOS_MERGE_MAX_AREA;
+        }
+        else if (m_opts.mergeStrategy == "min-area")
+        {
+            mergeStrategy = GEOS_MERGE_MIN_AREA;
+        }
+        else if (m_opts.mergeStrategy == "min-index")
+        {
+            mergeStrategy = GEOS_MERGE_MIN_INDEX;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unknown overlap merge strategy: %s",
+                     m_opts.mergeStrategy.c_str());
+            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
+            return nullptr;
+        }
+
+        if (!GEOSCoverageCleanParams_setOverlapMergeStrategy_r(
+                m_poGeosContext, params, mergeStrategy))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to set overlap merge strategy");
+            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
+            return nullptr;
+        }
+
+        return params;
+    }
 
     bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override
     {
         std::vector<OGRFeatureUniquePtr> features;
         std::vector<GEOSGeometry *> geoms;
-        m_poGeosContext = OGRGeometry::createGEOSContext();
+
+        GEOSCoverageCleanParams *params = GetCoverageCleanParams();
 
         // Copy features from srcLayer into dstLayer, converting
         // their geometries to GEOS
@@ -70,8 +145,6 @@ class GDALVectorSimplifyCoverageOutputDataset
         {
             const OGRGeometry *fgeom = feature->GetGeometryRef();
 
-            // Avoid segfault with non-polygonal inputs on GEOS < 3.12.2
-            // Later versions produce an error instead
             const auto eFGType =
                 fgeom ? wkbFlatten(fgeom->getGeometryType()) : wkbUnknown;
             if (eFGType != wkbPolygon && eFGType != wkbMultiPolygon &&
@@ -81,8 +154,9 @@ class GDALVectorSimplifyCoverageOutputDataset
                 {
                     GEOSGeom_destroy_r(m_poGeosContext, geom);
                 }
+                GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Coverage simplification can only be performed on "
+                         "Coverage cleaning can only be performed on "
                          "polygonal geometries. Feature %" PRId64
                          " does not have one",
                          static_cast<int64_t>(feature->GetFID()));
@@ -98,6 +172,7 @@ class GDALVectorSimplifyCoverageOutputDataset
                 {
                     GEOSGeom_destroy_r(m_poGeosContext, geom);
                 }
+                GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Geometry of feature %" PRId64
                          " failed to convert to GEOS",
@@ -112,7 +187,7 @@ class GDALVectorSimplifyCoverageOutputDataset
             features.push_back(std::move(feature));
         }
 
-        // Perform coverage simplification
+        // Perform coverage cleaning
         GEOSGeometry *coll = GEOSGeom_createCollection_r(
             m_poGeosContext, GEOS_GEOMETRYCOLLECTION, geoms.data(),
             static_cast<unsigned int>(geoms.size()));
@@ -123,12 +198,14 @@ class GDALVectorSimplifyCoverageOutputDataset
             {
                 GEOSGeom_destroy_r(m_poGeosContext, geom);
             }
+            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
             return false;
         }
 
-        GEOSGeometry *geos_result = GEOSCoverageSimplifyVW_r(
-            m_poGeosContext, coll, m_opts.tolerance, m_opts.preserveBoundary);
+        GEOSGeometry *geos_result =
+            GEOSCoverageCleanWithParams_r(m_poGeosContext, coll, params);
         GEOSGeom_destroy_r(m_poGeosContext, coll);
+        GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
 
         if (geos_result == nullptr)
         {
@@ -171,16 +248,15 @@ class GDALVectorSimplifyCoverageOutputDataset
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorSimplifyCoverageOutputDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputDataset)
 
-    const GDALVectorSimplifyCoverageAlgorithm::Options &m_opts;
+    const GDALVectorCleanCoverageAlgorithm::Options &m_opts;
     GEOSContextHandle_t m_poGeosContext{nullptr};
     GEOSGeometry **m_papoGeosResults{nullptr};
     unsigned int m_nGeosResultSize{0};
 };
 
-GDALVectorSimplifyCoverageOutputDataset::
-    ~GDALVectorSimplifyCoverageOutputDataset()
+GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
 {
     if (m_poGeosContext != nullptr)
     {
@@ -193,11 +269,11 @@ GDALVectorSimplifyCoverageOutputDataset::
     }
 }
 
-bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto poDstDS =
-        std::make_unique<GDALVectorSimplifyCoverageOutputDataset>(m_opts);
+        std::make_unique<GDALVectorCleanCoverageOutputDataset>(m_opts);
 
     bool bFoundActiveLayer = false;
 
@@ -233,17 +309,17 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
 #else
 
-bool GDALVectorSimplifyCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
+bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
     ReportError(CE_Failure, CPLE_AppDefined,
-                "%s requires GDAL to be built against version 3.12 or later of "
+                "%s requires GDAL to be built against version 3.14 or later of "
                 "the GEOS library.",
                 NAME);
     return false;
 }
 #endif  // HAVE_GEOS
 
-GDALVectorSimplifyCoverageAlgorithmStandalone::
-    ~GDALVectorSimplifyCoverageAlgorithmStandalone() = default;
+GDALVectorCleanCoverageAlgorithmStandalone::
+    ~GDALVectorCleanCoverageAlgorithmStandalone() = default;
 
 //! @endcond
