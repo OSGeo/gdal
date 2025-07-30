@@ -8494,8 +8494,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     CSLDestroy(papszIgnoreVars);
 
+    const bool bListAllArrays = CPLTestBool(
+        CSLFetchNameValueDef(poDS->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
+
     // Case where there is no raster variable
-    if (nRasterVars == 0 && !bTreatAsSubdataset)
+    if (!bListAllArrays && nRasterVars == 0 && !bTreatAsSubdataset)
     {
         poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
@@ -8524,8 +8527,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // We have more than one variable with 2 dimensions in the
     // file, then treat this as a subdataset container dataset.
     bool bSeveralVariablesAsBands = false;
-    const bool bListAllArrays = CPLTestBool(
-        CSLFetchNameValueDef(poDS->papszOpenOptions, "LIST_ALL_ARRAYS", "NO"));
     if (bListAllArrays || ((nRasterVars > 1) && !bTreatAsSubdataset))
     {
         if (CPLFetchBool(poOpenInfo->papszOpenOptions, "VARIABLES_AS_BANDS",
