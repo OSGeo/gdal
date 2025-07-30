@@ -144,11 +144,6 @@ and :ref:`gdalwarp` for the traditional method.
 
 .. image:: ../../images/tutorials/clip.png
 
-GDAL can clip the raster dataset even though the polygon is in a different projection. However when using the CLI you must add
-``--allow-bbox-outside-source`` to avoid the following error caused by the projection mismatch:
-
-``ERROR 1: clip: Clipping geometry is partially or totally outside the extent of the raster.
-You can set the 'allow-bbox-outside-source' argument to proceed.``
 
 .. tabs::
 
