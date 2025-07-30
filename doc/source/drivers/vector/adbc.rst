@@ -7,6 +7,8 @@ ADBC -- Arrow Database Connectivity
 
 .. shortname:: ADBC
 
+.. build_dependencies:: adbc-driver-manager
+
 ADBC is a set of APIs and libraries for Arrow-native access to database.
 
 This driver has 2 modes:
