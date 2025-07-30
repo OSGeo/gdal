@@ -13,6 +13,7 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
@@ -145,6 +146,7 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register(algInfo);
 
     registry.Register<GDALVectorBufferAlgorithm>();
+    registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
     registry.Register<GDALVectorCleanCoverageAlgorithm>();
 

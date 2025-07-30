@@ -39,6 +39,8 @@
 
 #include "gdal_priv.h"
 
+#include <gdalalg_vector_check_geometry.h>
+
 #ifndef _
 #define _(x) (x)
 #endif
@@ -64,6 +66,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
 
         RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();

@@ -33,7 +33,7 @@ from threading import Thread
 
 import pytest
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -2160,3 +2160,29 @@ def importorskip_gdal_array():
     if pytest_version >= [8, 2, 0]:
         return pytest.importorskip("osgeo.gdal_array", exc_type=ImportError)
     return pytest.importorskip("osgeo.gdal_array")
+
+
+###############################################################################
+
+
+def wkt_ds(wkts, *, geom_type=None, epsg=None):
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+
+    lyr = ds.CreateLayer(
+        "polys",
+        osr.SpatialReference(epsg=epsg) if epsg else None,
+        geom_type=geom_type if geom_type else ogr.wkbUnknown,
+    )
+
+    if type(wkts) is str:
+        wkts = [wkts]
+
+    for wkt in wkts:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        assert geom
+        f.SetGeometry(geom)
+        lyr.CreateFeature(f)
+
+    return ds

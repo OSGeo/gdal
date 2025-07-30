@@ -783,6 +783,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_check_geometry",
+        "gdal-vector-check-geometry",
+        "Check polygons for validity",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_clean_coverage",
         "gdal-vector-clean-coverage",
         "Remove gaps and overlaps from a polygon dataset",
