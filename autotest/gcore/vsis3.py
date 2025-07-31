@@ -1244,9 +1244,16 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
                 </Contents>
             </ListBucketResult>
         """,
+        expected_headers={"foo": "bar"},
+    )
+    gdal.SetPathSpecificOption(
+        "/vsis3/s3_fake_bucket2/a_dir",
+        "GDAL_HTTP_HEADERS",
+        "foo:bar",
     )
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir")
+    gdal.ClearPathSpecificOptions()
     assert dir_contents == ["test.txt"]
 
     # Test CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE=NO
@@ -6238,7 +6245,7 @@ region = eu-east-1
     )
 
     gdal.FileFromMemBuffer(
-        tmp_vsimem / "sso" / "cache" / "327c3fda87ce286848a574982ddd0b7c7487f816.json",
+        tmp_vsimem / "sso" / "cache" / "0ad374308c5a4e22f723adf10145eafad7c4031c.json",
         '{"startUrl": "https://example.com", "region": "us-east-1", "accessToken": "sso-accessToken", "expiresAt": "9999-01-01T00:00:00Z"}',
     )
 

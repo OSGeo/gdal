@@ -3739,6 +3739,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not identify driver for output %s", pszDest);
             return nullptr;
         }
     }
