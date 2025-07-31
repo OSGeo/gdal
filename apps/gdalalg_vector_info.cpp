@@ -26,15 +26,23 @@
 /*            GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()        */
 /************************************************************************/
 
-GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetInputDatasetMaxCount(1)
+                                          .SetAddDefaultArguments(false))
 {
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
-    AddOpenOptionsArg(&m_openOptions);
+    AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(!standaloneStep);
     AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
+        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR})
+        .SetHiddenForCLI(!standaloneStep);
     auto &datasetArg =
-        AddInputDatasetArg(&m_dataset, GDAL_OF_VECTOR).AddAlias("dataset");
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
+                           /* positionalAndRequired = */ standaloneStep)
+            .AddAlias("dataset")
+            .SetHiddenForCLI(!standaloneStep);
     auto &layerArg =
         AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
@@ -62,6 +70,7 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddArg(GDAL_ARG_NAME_UPDATE, 0, _("Open the dataset in update mode"),
            &m_update)
+        .SetHiddenForCLI(!standaloneStep)
         .AddAction(
             [this]()
             {
@@ -82,12 +91,14 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALVectorInfoAlgorithm::RunImpl()                  */
+/*                  GDALVectorInfoAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_dataset.GetDatasetRef());
+    CPLAssert(m_inputDataset.size() == 1);
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
 
     if (m_format.empty())
         m_format = IsCalledFromCommandLine() ? "text" : "json";
@@ -143,8 +154,7 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     GDALVectorInfoOptions *psInfo =
         GDALVectorInfoOptionsNew(aosOptions.List(), nullptr);
 
-    char *ret = GDALVectorInfo(GDALDataset::ToHandle(m_dataset.GetDatasetRef()),
-                               psInfo);
+    char *ret = GDALVectorInfo(GDALDataset::ToHandle(poSrcDS), psInfo);
     GDALVectorInfoOptionsFree(psInfo);
     if (!ret)
         return false;
@@ -154,5 +164,8 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     return true;
 }
+
+GDALVectorInfoAlgorithmStandalone::~GDALVectorInfoAlgorithmStandalone() =
+    default;
 
 //! @endcond

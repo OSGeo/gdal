@@ -962,3 +962,28 @@ def test_gdalalg_vector_pipeline_skip_errors(tmp_vsimem):
 
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetLayer(0).GetFeatureCount() == 2
+
+
+def test_gdalalg_vector_pipeline_info():
+
+    with gdal.Run(
+        "vector",
+        "pipeline",
+        pipeline="read ../ogr/data/poly.shp ! info",
+    ) as alg:
+        assert "layers" in alg.Output()
+
+
+def test_gdalalg_vector_pipeline_info_executable():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} vector pipeline read ../ogr/data/poly.shp ! info"
+    )
+    assert out.startswith("INFO: Open of `../ogr/data/poly.shp'")

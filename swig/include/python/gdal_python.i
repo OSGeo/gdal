@@ -2804,10 +2804,10 @@ def Open(self, utf8_path, update=False):
        The path to open
     update : bool, default = False
        Whether to open the dataset in update mode.
-       
+
     Returns
     -------
-    Dataset, or None on error 
+    Dataset, or None on error
     """
     return OpenEx(utf8_path,
                   OF_VECTOR | (OF_UPDATE if update else 0),
@@ -6286,16 +6286,23 @@ class VSIFile(BytesIO):
         if not hasattr(self, "has_run"):
             raise RuntimeError("Algorithm.Run() must be called before")
 
-        count_output = 0
-        val = None
+        output_args = []
+        output_args_set = []
         for name in self.GetArgNames():
             arg = self.GetArg(name)
             if arg.IsOutput():
-                count_output += 1
-                if count_output == 2:
-                    raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) insead")
-                val = self._get_arg_value(arg, parse_json)
-        return val
+                output_args.append(arg)
+                if arg.IsExplicitlySet():
+                    output_args_set.append(arg)
+
+        if len(output_args) == 1:
+            return self._get_arg_value(output_args[0], parse_json)
+        elif len(output_args_set) == 1:
+            return self._get_arg_value(output_args_set[0], parse_json)
+        elif len(output_args) >= 2:
+            raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) insead")
+        else:
+            return None
 
 
     def Outputs(self, parse_json=True):

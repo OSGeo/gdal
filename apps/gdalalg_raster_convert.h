@@ -34,7 +34,8 @@ class GDALRasterConvertAlgorithm final : public GDALAlgorithm
         return {GDALAlgorithmRegistry::HIDDEN_ALIAS_SEPARATOR, "translate"};
     }
 
-    explicit GDALRasterConvertAlgorithm(bool openForMixedRasterVector = false);
+    explicit GDALRasterConvertAlgorithm(bool standalone = true,
+                                        bool openForMixedRasterVector = false);
 
     GDALDataset *GetDatasetRef()
     {

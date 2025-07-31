@@ -281,6 +281,8 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::vector<std::string> m_inputLayerNames{};
 
     // Output arguments
+    bool m_stdout = false;
+    std::string m_output{};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
     std::vector<std::string> m_creationOptions{};
@@ -678,12 +680,19 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         {
             stepCtxt.m_poNextUsableStep = m_steps[i + 1].get();
         }
+        if (i + 1 == m_steps.size() && StepAlgorithm::m_stdout &&
+            step->GetArg("stdout") != nullptr)
+        {
+            step->m_stdout = true;
+        }
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
             return false;
         }
         poCurDS = step->m_outputDataset.GetDatasetRef();
-        if (!poCurDS)
+        if (!poCurDS &&
+            !(i + 1 == m_steps.size() &&
+              (!step->m_output.empty() || step->GetArg("stdout") != nullptr)))
         {
             StepAlgorithm::ReportError(
                 CE_Failure, CPLE_AppDefined,
@@ -698,10 +707,17 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
     }
 
-    if (ctxt.m_pfnProgress)
+    if (ctxt.m_pfnProgress &&
+        m_steps.back()->GetArg("output-string") == nullptr)
         ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
-    if (!StepAlgorithm::m_outputDataset.GetDatasetRef())
+    if (!m_steps.back()->m_output.empty())
+    {
+        auto outputStringArg = StepAlgorithm::GetArg("output-string");
+        if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
+            outputStringArg->Set(m_steps.back()->m_output);
+    }
+    else if (!StepAlgorithm::m_outputDataset.GetDatasetRef())
     {
         StepAlgorithm::m_outputDataset.Set(poCurDS);
     }
