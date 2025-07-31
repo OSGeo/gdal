@@ -68,6 +68,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         A software component that enables reading, writing, and processing of specific raster or vector data formats.
 
+    DTM
+
+        Digital Terrain Model. A raster representation of the bare ground surface of the earth, excluding natural and man-made
+        objects such as vegetation and buildings.
+
     Ellipsoid
 
         A model used to approximate the Earth's shape in coordinate systems.
@@ -97,6 +102,14 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     File Handle
 
         An identifier used by an operating system to manage and access an open file during a program's execution.
+
+    GEOS
+
+        Geometry Engine - Open Source. GEOS is a C/C++ library for computational geometry with a focus on algorithms
+        used in geographic information systems (GIS) software. GEOS started as a port of the Java Topology Suite (JTS).
+
+        .. seealso::
+            https://libgeos.org/
 
     Gridding
 
@@ -174,6 +187,14 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     Nearest Neighbor
 
         A method that finds the closest data point(s) to a given point, often used for classification or estimation based on similarity.
+
+    OGC
+
+        Open Geospatial Consortium. An international, non-profit organization that develops and promotes open standards
+        for geospatial data and services.
+
+        .. seealso::
+            https://www.ogc.org/
 
     OSR
 
@@ -293,6 +314,13 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
         .. seealso::
             :ref:`gdalwarp`.
 
+    WFS
+
+        Web Feature Service, an :term:`OGC` standard that allows users to access geospatial vector data over the web.
+
+        .. seealso::
+            :ref:`vector.wfs`
+
     WKT
 
         Well-Known Text. Text representation of geometries described in the Simple Features for SQL (SFSQL) specification.
@@ -306,6 +334,13 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     WKB
 
         Well-Known Binary. Binary representation of geometries described in the Simple Features for SQL (SFSQL) specification.
+
+    WMS
+
+        Web Map Service, an :term:`OGC` standard that allows users to request and display georeferenced map images over the web.
+
+        .. seealso::
+            :ref:`raster.wms`
 
 
 Credits and Acknowledgments
