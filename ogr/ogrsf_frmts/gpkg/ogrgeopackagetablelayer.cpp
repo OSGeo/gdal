@@ -3481,6 +3481,7 @@ OGRErr OGRGeoPackageTableLayer::SetAttributeFilter(const char *pszQuery)
 
 void OGRGeoPackageTableLayer::ResetReading()
 {
+    m_bEOF = false;
     if (m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
         return;
 
@@ -3519,7 +3520,10 @@ void OGRGeoPackageTableLayer::ResetReading()
 OGRErr OGRGeoPackageTableLayer::SetNextByIndex(GIntBig nIndex)
 {
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
     if (m_soColumns.empty())
         BuildColumns();
     return ResetStatementInternal(nIndex);
@@ -3620,6 +3624,8 @@ OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
 
 OGRFeature *OGRGeoPackageTableLayer::GetNextFeature()
 {
+    if (m_bEOF)
+        return nullptr;
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
     if (m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)

@@ -814,18 +814,15 @@ OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
 
 {
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+        nIndex = GINTBIG_MAX;
 
     ResetReading();
 
-    OGRFeature *poFeature = nullptr;
     while (nIndex-- > 0)
     {
-        poFeature = GetNextFeature();
+        auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
         if (poFeature == nullptr)
-            return OGRERR_FAILURE;
-
-        delete poFeature;
+            return OGRERR_NON_EXISTING_FEATURE;
     }
 
     return OGRERR_NONE;
