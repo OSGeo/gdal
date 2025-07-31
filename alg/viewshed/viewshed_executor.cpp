@@ -17,8 +17,6 @@
 #include <cmath>
 #include <limits>
 
-#include <iostream>
-
 #include "viewshed_executor.h"
 #include "progress.h"
 #include "util.h"
