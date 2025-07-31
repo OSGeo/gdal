@@ -89,6 +89,24 @@ struct Options
     {
         return startAngle != endAngle;
     }
+
+    /// True if low pitch masking will occur.
+    bool lowPitchMasking() const
+    {
+        return lowPitch > -90.0;
+    }
+
+    /// True if high pitch masking will occur.
+    bool highPitchMasking() const
+    {
+        return highPitch < 90.0;
+    }
+
+    /// True if pitch masking will occur.
+    bool pitchMasking() const
+    {
+        return lowPitchMasking() || highPitchMasking();
+    }
 };
 
 /**
