@@ -56,7 +56,9 @@ struct GDALTileIndexRasterMetadata
 
 struct GDALTileIndexOptions
 {
+    bool bInvokedFromGdalRasterIndex = false;
     bool bOverwrite = false;
+    bool bSkipErrors = false;
     std::string osFormat{};
     std::string osIndexLayerName{};
     std::string osLocationField = "location";
@@ -105,6 +107,16 @@ static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
     argParser->add_epilog(
         _("For more details, see the full documentation for gdaltindex at\n"
           "https://gdal.org/programs/gdaltindex.html"));
+
+    // Hidden as used by gdal raster index
+    argParser->add_argument("--invoked-from-gdal-raster-index")
+        .store_into(psOptions->bInvokedFromGdalRasterIndex)
+        .hidden();
+
+    // Hidden as used by gdal raster index
+    argParser->add_argument("-skip_errors")
+        .store_into(psOptions->bSkipErrors)
+        .hidden();
 
     argParser->add_argument("-overwrite")
         .flag()
@@ -605,6 +617,10 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                  : nullptr;
     const int nMaxFieldSize = pszVal ? atoi(pszVal) : 0;
 
+    const bool bFailOnErrors =
+        psOptions->bInvokedFromGdalRasterIndex && !psOptions->bSkipErrors;
+    bool bSkipFirstTile = false;
+
     if (poLayer)
     {
         bExistingLayer = true;
@@ -665,15 +681,30 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                 return nullptr;
             }
             oGDALTileIndexTileIterator.reset();
+            std::unique_ptr<CPLTurnFailureIntoWarningBackuper>
+                poFailureIntoWarning;
+            if (!bFailOnErrors)
+                poFailureIntoWarning =
+                    std::make_unique<CPLTurnFailureIntoWarningBackuper>();
+            CPL_IGNORE_RET_VAL(poFailureIntoWarning);
             auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
                 osFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                 nullptr, nullptr, nullptr));
             if (!poSrcDS)
-                return nullptr;
-
-            auto poSrcSRS = poSrcDS->GetSpatialRef();
-            if (poSrcSRS)
-                oSRS = *poSrcSRS;
+            {
+                CPLError(bFailOnErrors ? CE_Failure : CE_Warning,
+                         CPLE_AppDefined, "Unable to open %s%s.",
+                         osFilename.c_str(), bFailOnErrors ? "" : ", skipping");
+                if (bFailOnErrors)
+                    return nullptr;
+                bSkipFirstTile = true;
+            }
+            else
+            {
+                auto poSrcSRS = poSrcDS->GetSpatialRef();
+                if (poSrcSRS)
+                    oSRS = *poSrcSRS;
+            }
         }
 
         poLayer = poTileIndexDS->CreateLayer(
@@ -964,6 +995,11 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         const std::string osSrcFilename = oGDALTileIndexTileIterator.next();
         if (osSrcFilename.empty())
             break;
+        if (bSkipFirstTile)
+        {
+            bSkipFirstTile = false;
+            continue;
+        }
 
         std::string osFileNameToWrite;
         VSIStatBuf sStatBuf;
@@ -991,23 +1027,39 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             continue;
         }
 
-        auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-            osSrcFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-            nullptr, nullptr, nullptr));
-        if (poSrcDS == nullptr)
+        std::unique_ptr<GDALDataset> poSrcDS;
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unable to open %s, skipping.", osSrcFilename.c_str());
-            continue;
+            std::unique_ptr<CPLTurnFailureIntoWarningBackuper>
+                poFailureIntoWarning;
+            if (!bFailOnErrors)
+                poFailureIntoWarning =
+                    std::make_unique<CPLTurnFailureIntoWarningBackuper>();
+            CPL_IGNORE_RET_VAL(poFailureIntoWarning);
+
+            poSrcDS.reset(GDALDataset::Open(
+                osSrcFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                nullptr, nullptr, nullptr));
+            if (poSrcDS == nullptr)
+            {
+                CPLError(bFailOnErrors ? CE_Failure : CE_Warning,
+                         CPLE_AppDefined, "Unable to open %s%s.",
+                         osSrcFilename.c_str(),
+                         bFailOnErrors ? "" : ", skipping");
+                if (bFailOnErrors)
+                    return nullptr;
+                continue;
+            }
         }
 
         GDALGeoTransform gt;
         if (poSrcDS->GetGeoTransform(gt) != CE_None)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            CPLError(bFailOnErrors ? CE_Failure : CE_Warning, CPLE_AppDefined,
                      "It appears no georeferencing is available for\n"
-                     "`%s', skipping.",
-                     osSrcFilename.c_str());
+                     "`%s'%s.",
+                     osSrcFilename.c_str(), bFailOnErrors ? "" : ", skipping");
+            if (bFailOnErrors)
+                return nullptr;
             continue;
         }
 
@@ -1049,9 +1101,11 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         const int nYSize = poSrcDS->GetRasterYSize();
         if (nXSize == 0 || nYSize == 0)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "%s has 0 width or height. Skipping",
-                     osSrcFilename.c_str());
+            CPLError(bFailOnErrors ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                     "%s has 0 width or height%s", osSrcFilename.c_str(),
+                     bFailOnErrors ? "" : ", skipping");
+            if (bFailOnErrors)
+                return nullptr;
             continue;
         }
 
@@ -1081,13 +1135,16 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS));
                 if (!poCT || !poCT->Transform(5, adfX, adfY, nullptr))
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
+                    CPLError(bFailOnErrors ? CE_Failure : CE_Warning,
+                             CPLE_AppDefined,
                              "unable to transform points from source "
-                             "SRS `%s' to target SRS `%s' for file `%s' - file "
-                             "skipped",
+                             "SRS `%s' to target SRS `%s' for file `%s'%s",
                              poSrcDS->GetProjectionRef(),
                              psOptions->osTargetSRS.c_str(),
-                             osFileNameToWrite.c_str());
+                             osFileNameToWrite.c_str(),
+                             bFailOnErrors ? "" : ", skipping");
+                    if (bFailOnErrors)
+                        return nullptr;
                     continue;
                 }
             }

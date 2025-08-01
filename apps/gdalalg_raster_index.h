@@ -61,6 +61,7 @@ class CPL_DLL GDALRasterIndexAlgorithm /* non final */
     std::string m_sourceCrsName{};
     std::string m_sourceCrsFormat = "auto";
     std::vector<std::string> m_metadata{};
+    bool m_skipErrors = false;
 };
 
 //! @endcond
