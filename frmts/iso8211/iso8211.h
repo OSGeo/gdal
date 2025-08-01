@@ -348,6 +348,8 @@ class CPL_ODLL DDFFieldDefn
 
     int nSubfieldCount;
     DDFSubfieldDefn **papoSubfields;
+
+    CPL_DISALLOW_COPY_ASSIGN(DDFFieldDefn)
 };
 
 /************************************************************************/
