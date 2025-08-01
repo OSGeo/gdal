@@ -1125,8 +1125,14 @@ import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.SpatialReference;
 %}
 
-
 %typemap(javacode) GDALRasterBandShadow %{
+
+  public Dataset GetDataset()
+  {
+      if (parentReference != null)
+         return (Dataset)parentReference;
+      return GetDatasetInternal();
+  }
 
   // Preferred name to match C++ API
   public int GetXSize() { return getXSize(); }
@@ -1359,7 +1365,7 @@ import org.gdal.osr.SpatialReference;
 %}
 
 %typemap(javacode) GDALMajorObjectShadow %{
-  private Object parentReference;
+  protected Object parentReference;
 
   /* Ensure that the GC doesn't collect any parent instance set from Java */
   protected void addReference(Object reference) {
