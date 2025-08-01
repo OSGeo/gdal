@@ -9650,8 +9650,8 @@ GDALRasterBand::WindowIteratorWrapper::end() const
 \code{.cpp}
     std::vector<double> pixelValues;
     for (const auto& window : poBand->IterateWindows()) {
-        CPLErr eErr = window.ReadRaster(pixelValues, window.nXOff, window.nYOff,
-                                        window.nXSize, window.nYSize);
+        CPLErr eErr = poBand->ReadRaster(pixelValues, window.nXOff, window.nYOff,
+                                         window.nXSize, window.nYSize);
         // check eErr
     }
 \endcode
