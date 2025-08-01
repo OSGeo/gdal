@@ -799,7 +799,10 @@ OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
         return OGRLayer::SetNextByIndex(nIndex);
 
     if (nIndex < 0 || nIndex >= nRecords)
-        return OGRERR_FAILURE;
+    {
+        nNextFID = nRecords;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     nNextFID = (int)nIndex;
     VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);

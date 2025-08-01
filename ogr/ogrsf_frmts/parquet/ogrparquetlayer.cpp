@@ -2779,11 +2779,19 @@ bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
 {
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     const auto metadata = m_poArrowReader->parquet_reader()->metadata();
     if (nIndex >= metadata->num_rows())
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
+
+    m_bEOF = false;
 
     if (m_bSingleBatch)
     {

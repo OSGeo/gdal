@@ -617,8 +617,13 @@ void OGRGenSQLResultsLayer::ResetReading()
 OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
 
 {
+    m_bEOF = false;
+
     if (nIndex < 0)
-        return OGRERR_FAILURE;
+    {
+        m_bEOF = true;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     swq_select *psSelectInfo = m_pSelectInfo.get();
 
@@ -627,7 +632,7 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
         m_nIteratedFeatures = nIndex;
         if (m_nIteratedFeatures >= psSelectInfo->limit)
         {
-            return OGRERR_FAILURE;
+            return OGRERR_NON_EXISTING_FEATURE;
         }
     }
 
@@ -636,7 +641,7 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
     if (nIndex > std::numeric_limits<GIntBig>::max() - psSelectInfo->offset)
     {
         m_bEOF = true;
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
     if (psSelectInfo->query_mode == SWQM_SUMMARY_RECORD ||
         psSelectInfo->query_mode == SWQM_DISTINCT_LIST || !m_anFIDIndex.empty())

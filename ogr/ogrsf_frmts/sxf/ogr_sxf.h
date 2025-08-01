@@ -44,6 +44,7 @@ class OGRSXFLayer final : public OGRLayer
     CPLString sFIDColumn_{};
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
+    bool m_bEOF = false;
     OGRFeature *GetNextRawFeature(long nFID);
 
     GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
