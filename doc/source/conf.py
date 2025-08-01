@@ -538,6 +538,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_compare",
+        "gdal-raster-compare",
+        "Compare two raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_convert",
         "gdal-raster-convert",
         "Convert a raster dataset",
