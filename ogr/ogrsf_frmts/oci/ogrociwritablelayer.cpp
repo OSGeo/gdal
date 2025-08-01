@@ -282,7 +282,7 @@ OGRErr OGROCIWritableLayer::CreateField(const OGRFieldDefn *poFieldIn,
             snprintf(szFieldType, sizeof(szFieldType), "VARCHAR2(%d)",
                      nDefaultStringSize);
         else
-            snprintf(szFieldType, sizeof(szFieldType), "VARCHAR2(%d)",
+            snprintf(szFieldType, sizeof(szFieldType), "VARCHAR2(%d CHAR)",
                      oField.GetWidth());
     }
     else if (oField.GetType() == OFTDate)
