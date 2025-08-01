@@ -34,6 +34,11 @@ class ILI1Reader : public IILI1Reader
     char codeUndefined;
     char codeContinue;
 
+    ILI1Reader(ILI1Reader &) = delete;
+    ILI1Reader &operator=(const ILI1Reader &) = delete;
+    ILI1Reader(ILI1Reader &&) = delete;
+    ILI1Reader &operator=(ILI1Reader &&) = delete;
+
   public:
     ILI1Reader();
     ~ILI1Reader();

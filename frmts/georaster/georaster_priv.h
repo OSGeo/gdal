@@ -333,6 +333,8 @@ class GeoRasterWrapper
 
     void GetSpatialReference();
 
+    CPL_DISALLOW_COPY_ASSIGN(GeoRasterWrapper)
+
   public:
     int nGCPCount;
     GDAL_GCP *pasGCPList;

@@ -589,7 +589,11 @@ class VSIArchiveContent
     int nEntries = 0;
     VSIArchiveEntry *entries = nullptr;
 
+    VSIArchiveContent() = default;
     ~VSIArchiveContent();
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(VSIArchiveContent)
 };
 
 class VSIArchiveReader
