@@ -118,3 +118,24 @@ def test_gdalalg_info_netcdf_raster():
     assert info.ParseRunAndFinalize(["../gdrivers/data/netcdf/byte.nc"])
     output_string = info["output-string"]
     assert '"geoTransform"' in output_string
+
+
+def test_gdalalg_info_i_do_not_exist_format():
+    info = get_info_alg()
+    info["input"] = "/i/do_not/exist"
+    info["format"] = "text"
+    with pytest.raises(Exception, match="/i/do_not/exist"):
+        info.Run()
+
+
+def test_gdalalg_info_help():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(f"{gdal_path} info --help")
+    assert out.startswith("Usage: gdal info [OPTIONS] <INPUT>")
