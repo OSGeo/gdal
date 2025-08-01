@@ -1,0 +1,2 @@
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\DBF_nodata_end\double_with_nodata.img" "D:\tmp\double_with_nodata.tiff" -if MiraMonRaster
+

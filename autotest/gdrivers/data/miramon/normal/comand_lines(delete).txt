@@ -1,0 +1,1 @@
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\normal\byte_2x3_6_categs.img" "D:\tmp\kk.tiff" -if MiraMonRaster
