@@ -84,6 +84,7 @@ Raster commands
    gdal_raster_color_map
    gdal_raster_color_merge
    gdal_raster_contour
+   gdal_raster_compare
    gdal_raster_convert
    gdal_raster_create
    gdal_raster_edit
@@ -132,6 +133,7 @@ Raster commands
     - :ref:`gdal_raster_clip`: Clip a raster dataset
     - :ref:`gdal_raster_color_map`: Use a grayscale raster to replace the intensity of a RGB/RGBA dataset
     - :ref:`gdal_raster_color_merge`: Replace the color value of a RGB/RGBA dataset by the one of a grayscale raster
+    - :ref:`gdal_raster_compare`: Compare two raster datasets
     - :ref:`gdal_raster_convert`: Convert a raster dataset
     - :ref:`gdal_raster_contour`: Builds vector contour lines from a raster elevation model
     - :ref:`gdal_raster_create`: Create a new raster dataset
