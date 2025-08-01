@@ -1,0 +1,3 @@
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\all_nodata\nodata.img" "D:\tmp\all_nodata.tiff" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\all_nodata\nodataI.rel" "D:\tmp\all_nodata.tiff" -if MiraMonRaster
