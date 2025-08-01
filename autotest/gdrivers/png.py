@@ -591,3 +591,22 @@ def test_png_create_copy_only_visible_at_close_time(tmp_path):
 
     with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("zlevel", [-1, 0, 9, 10])
+def test_png_create_zlevel(tmp_vsimem, zlevel):
+
+    src_ds = gdal.Open("data/byte.tif")
+    if zlevel < 0 or zlevel > 9:
+        with pytest.raises(Exception, match="Illegal ZLEVEL value"):
+            gdal.GetDriverByName("PNG").CreateCopy(
+                tmp_vsimem / "out.png", src_ds, options=[f"ZLEVEL={zlevel}"]
+            )
+    else:
+        gdal.GetDriverByName("PNG").CreateCopy(
+            tmp_vsimem / "out.png", src_ds, options=[f"ZLEVEL={zlevel}"]
+        )

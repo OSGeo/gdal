@@ -90,11 +90,11 @@ The following creation options are available:
       section for details.
 
 -  .. co:: ZLEVEL=n
-      :choices: [1-9]
+      :choices: [0-9]
       :default: 6
 
       Set the amount of time to spend on compression.
-      A value of 1 is fast but does no compression, and a
+      A value of 0 is fast but does no compression, and a
       value of 9 is slow but does the best compression.
 
 -  .. co:: TITLE
