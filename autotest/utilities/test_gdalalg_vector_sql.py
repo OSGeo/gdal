@@ -47,6 +47,7 @@ def test_gdalalg_vector_sql_layer_name(tmp_vsimem):
     assert sql_alg.ParseRunAndFinalize(
         [
             "--output-layer=foo",
+            "--format=ESRI Shapefile",
             "../ogr/data/poly.shp",
             out_filename,
             "--sql=select * from poly limit 1",
@@ -106,6 +107,7 @@ def test_gdalalg_vector_sql_several(tmp_vsimem):
         [
             "../ogr/data/poly.shp",
             out_filename,
+            "--format=ESRI Shapefile",
             "--sql=select * from poly limit 1",
             "--sql=select * from poly limit 2",
         ]
@@ -154,6 +156,7 @@ def test_gdalalg_vector_sql_layer_names(tmp_vsimem):
             "lyr1,lyr2",
             "../ogr/data/poly.shp",
             out_filename,
+            "--format=ESRI Shapefile",
             "--sql=select * from poly limit 1",
             "--sql=select * from poly limit 2",
         ]

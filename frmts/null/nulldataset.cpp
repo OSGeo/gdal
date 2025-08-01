@@ -387,7 +387,7 @@ void GDALRegister_NULL()
     poDriver = new GDALDriver();
 
     poDriver->SetDescription("NULL");
-    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "NULL: ");
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "NULL:");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
