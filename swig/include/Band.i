@@ -117,7 +117,11 @@ public:
 %mutable;
 
   /* Interface method added for GDAL 1.12.0 */
+#if defined(SWIGJAVA)
+  GDALDatasetShadow* GetDatasetInternal()
+#else
   GDALDatasetShadow* GetDataset()
+#endif
   {
     return (GDALDatasetShadow*) GDALGetBandDataset(self);
   }

@@ -237,6 +237,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   set_tests_properties(java_ogrtindex PROPERTIES DEPENDS java_GDALContour)
   add_test(NAME java_OSRTest COMMAND ${JAVA_RUN} OSRTest)
   add_test(NAME java_test_ogrfielddomains COMMAND ${JAVA_RUN} test_ogrfielddomains)
+  add_test(NAME java_GDALClose COMMAND ${JAVA_RUN} GDALClose)
 
   set(JAVA_TEST_LIST
           java_GDALOverviews
@@ -256,6 +257,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_ogrtindex
           java_OSRTest
           java_test_ogrfielddomains
+          java_GDALClose
   )
   if (OGR_ENABLE_DRIVER_CSV)
       add_test(NAME java_OGRTest COMMAND ${JAVA_RUN} OGRTest)
