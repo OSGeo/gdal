@@ -239,6 +239,10 @@ class DriverPropertyDirective(SphinxDirective):
         try:
             short_name_node = next(self.env.parser.document.findall(shortname))
             short_name = short_name_node.children[1].astext()
+            if "raster" in self.env.docname:
+                short_name += "_raster"
+            else:
+                short_name += "_vector"
 
         except StopIteration:
             if "plscenes" in self.env.docname:
@@ -583,7 +587,11 @@ def create_driver_index(app, doctree, fromdocname):
                         ),
                         internal=True,
                     )
-                    ref.append(nodes.Text(short_name))
+                    ref.append(
+                        nodes.Text(
+                            short_name.replace("_raster", "").replace("_vector", "")
+                        )
+                    )
                     para = nodes.paragraph()
                     para.append(ref)
                     cell.append(para)
