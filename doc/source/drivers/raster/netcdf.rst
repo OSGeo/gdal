@@ -774,7 +774,7 @@ See Also:
 
 -  :ref:`Vector side of the netCDF driver. <vector.netcdf>`
 -  `NetCDF CF-1.5
-   convention <http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.5/cf-conventions.html>`__
+   convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.5/build/cf-conventions.html>`__
 -  `NetCDF compiled
    libraries <http://www.unidata.ucar.edu/downloads/netcdf/index.jsp>`__
 -  `NetCDF
