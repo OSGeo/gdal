@@ -161,6 +161,8 @@ class HFABand
 
     CPLString osOverName;
 
+    CPL_DISALLOW_COPY_ASSIGN(HFABand)
+
   public:
     HFABand(HFAInfo_t *, HFAEntry *);
     ~HFABand();
@@ -250,6 +252,8 @@ class HFAEntry
     std::vector<HFAEntry *> FindChildren(const char *pszName,
                                          const char *pszType, int nRecLevel,
                                          int *pbErrorDetected);
+
+    CPL_DISALLOW_COPY_ASSIGN(HFAEntry)
 
   public:
     static HFAEntry *New(HFAInfo_t *psHFA, GUInt32 nPos, HFAEntry *poParent,
@@ -446,6 +450,8 @@ class HFADictionary
     int nTypes;
     int nTypesMax;
     HFAType **papoTypes;
+
+    CPL_DISALLOW_COPY_ASSIGN(HFADictionary)
 
   public:
     // TODO(schwehr): Make these members private.

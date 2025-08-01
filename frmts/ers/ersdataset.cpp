@@ -32,36 +32,38 @@ class ERSDataset final : public RawDataset
 {
     friend class ERSRasterBand;
 
-    VSILFILE *fpImage;  // Image data file.
-    GDALDataset *poDepFile;
+    VSILFILE *fpImage = nullptr;  // Image data file.
+    GDALDataset *poDepFile = nullptr;
 
-    int bGotTransform;
+    bool bGotTransform = false;
     double adfGeoTransform[6];
     OGRSpatialReference m_oSRS{};
 
-    CPLString osRawFilename;
+    CPLString osRawFilename{};
 
-    int bHDRDirty;
-    ERSHdrNode *poHeader;
+    bool bHDRDirty = false;
+    ERSHdrNode *poHeader = nullptr;
 
     const char *Find(const char *, const char *);
 
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
     OGRSpatialReference m_oGCPSRS{};
 
     void ReadGCPs();
 
-    int bHasNoDataValue;
-    double dfNoDataValue;
+    bool bHasNoDataValue = false;
+    double dfNoDataValue = 0;
 
-    CPLString osProj, osProjForced;
-    CPLString osDatum, osDatumForced;
-    CPLString osUnits, osUnitsForced;
+    CPLString osProj{}, osProjForced{};
+    CPLString osDatum{}, osDatumForced{};
+    CPLString osUnits{}, osUnitsForced{};
     void WriteProjectionInfo(const char *pszProj, const char *pszDatum,
                              const char *pszUnits);
 
-    CPLStringList oERSMetadataList;
+    CPLStringList oERSMetadataList{};
+
+    CPL_DISALLOW_COPY_ASSIGN(ERSDataset)
 
   protected:
     int CloseDependentDatasets() override;
@@ -102,9 +104,6 @@ class ERSDataset final : public RawDataset
 /************************************************************************/
 
 ERSDataset::ERSDataset()
-    : fpImage(nullptr), poDepFile(nullptr), bGotTransform(FALSE),
-      bHDRDirty(FALSE), poHeader(nullptr), nGCPCount(0), pasGCPList(nullptr),
-      bHasNoDataValue(FALSE), dfNoDataValue(0.0)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -179,7 +178,7 @@ int ERSDataset::CloseDependentDatasets()
         }
         nBands = 0;
 
-        GDALClose((GDALDatasetH)poDepFile);
+        delete poDepFile;
         poDepFile = nullptr;
     }
 
@@ -683,7 +682,8 @@ void ERSDataset::ReadGCPs()
     CPLAssert(nGCPCount == 0);
 
     nGCPCount = nItemCount / nItemsPerLine;
-    pasGCPList = (GDAL_GCP *)CPLCalloc(nGCPCount, sizeof(GDAL_GCP));
+    pasGCPList =
+        static_cast<GDAL_GCP *>(CPLCalloc(nGCPCount, sizeof(GDAL_GCP)));
     GDALInitGCPs(nGCPCount, pasGCPList);
 
     for (int iGCP = 0; iGCP < nGCPCount; iGCP++)
@@ -794,7 +794,7 @@ int ERSDataset::Identify(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      We assume the user selects the .ers file.                       */
     /* -------------------------------------------------------------------- */
-    CPLString osHeader((const char *)poOpenInfo->pabyHeader,
+    CPLString osHeader(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                        poOpenInfo->nHeaderBytes);
 
     if (osHeader.ifind("Algorithm Begin") != std::string::npos)
@@ -844,7 +844,9 @@ class ERSProxyRasterBand final : public GDALProxyRasterBand
     }
 
   private:
-    GDALRasterBand *m_poUnderlyingBand;
+    GDALRasterBand *m_poUnderlyingBand = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(ERSProxyRasterBand)
 };
 
 int ERSProxyRasterBand::GetOverviewCount()

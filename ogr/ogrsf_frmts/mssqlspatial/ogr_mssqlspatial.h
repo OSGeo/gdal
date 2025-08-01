@@ -100,15 +100,14 @@ void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
 class OGRMSSQLGeometryValidator
 {
   protected:
-    bool bIsValid;
-    OGRGeometry *poValidGeometry;
-    OGRGeometry *poOriginalGeometry;
-    int nGeomColumnType;
+    const OGRGeometry *const poOriginalGeometry;
+    const int nGeomColumnType;
+    const bool bIsValid;
+    std::unique_ptr<OGRGeometry> poValidGeometry{};
 
   public:
-    explicit OGRMSSQLGeometryValidator(OGRGeometry *poGeom,
+    explicit OGRMSSQLGeometryValidator(const OGRGeometry *poGeom,
                                        int nGeomColumnType);
-    ~OGRMSSQLGeometryValidator();
 
     bool IsValidLatLon(double longitude, double latitude);
     bool IsValidCircularZ(double z1, double z2);
@@ -137,9 +136,9 @@ class OGRMSSQLGeometryValidator
     void MakeValid(OGRGeometry *poGeom);
     bool ValidateGeometry(OGRGeometry *poGeom);
 
-    OGRGeometry *GetValidGeometryRef();
+    const OGRGeometry *GetValidGeometryRef() const;
 
-    bool IsValid()
+    bool IsValid() const
     {
         return bIsValid;
     }
