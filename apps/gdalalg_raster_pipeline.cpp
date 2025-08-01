@@ -17,6 +17,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_color_merge.h"
+#include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
@@ -185,6 +186,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
 
     registry.Register<GDALRasterColorMapAlgorithm>();
     registry.Register<GDALRasterColorMergeAlgorithm>();
+    registry.Register<GDALRasterCompareAlgorithm>();
 
     algInfo.m_name = addSuffixIfNeeded(GDALRasterEditAlgorithm::NAME);
     algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
@@ -542,9 +544,9 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     if (shortUsage)
         return ret;
 
-    ret +=
-        "\n<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] "
-        "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write|info|tile [WRITE-OPTIONS]\n";
+    ret += "\n<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] "
+           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! info|compare|tile|write "
+           "[WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
     {
