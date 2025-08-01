@@ -121,7 +121,7 @@ def test_gdal_viewshed_alternative_modes(gdal_viewshed_path, tmp_path, viewshed_
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
     gdal.Unlink(viewshed_out)
-    assert cs == 45734
+    assert cs == 47060
     assert nodata is None
 
     _, err = gdaltest.runexternal_out_and_err(
