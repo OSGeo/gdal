@@ -403,7 +403,11 @@ OGRMongoDBv3GetFieldTypeFromBSON(const bsoncxx::document::element &elt,
         return OFTInteger;
     else if (eBSONType == bsoncxx::type::k_int64)
         return OFTInteger64;
+#if BSONCXX_VERSION_MAJOR >= 4
+    else if (eBSONType == bsoncxx::type::k_string)
+#else
     else if (eBSONType == bsoncxx::type::k_utf8)
+#endif
         return OFTString;
     else if (eBSONType == bsoncxx::type::k_array)
     {
@@ -446,7 +450,11 @@ OGRMongoDBv3GetFieldTypeFromBSON(const bsoncxx::document::element &elt,
 
 static std::string get_string(const bsoncxx::document::element &elt)
 {
+#if BSONCXX_VERSION_MAJOR >= 4
+    CPLAssert(elt.type() == bsoncxx::type::k_string);
+#else
     CPLAssert(elt.type() == bsoncxx::type::k_utf8);
+#endif
 #if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
     return std::string(elt.get_string().value);
 #else
@@ -456,7 +464,11 @@ static std::string get_string(const bsoncxx::document::element &elt)
 
 static std::string get_string(const bsoncxx::array::element &elt)
 {
+#if BSONCXX_VERSION_MAJOR >= 4
+    CPLAssert(elt.type() == bsoncxx::type::k_string);
+#else
     CPLAssert(elt.type() == bsoncxx::type::k_utf8);
+#endif
 #if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
     return std::string(elt.get_string().value);
 #else
@@ -484,7 +496,11 @@ void OGRMongoDBv3Layer::AddOrUpdateField(
     {
         bsoncxx::document::view doc{elt.get_document()};
         auto eltType = doc["type"];
+#if BSONCXX_VERSION_MAJOR >= 4
+        if (eltType && eltType.type() == bsoncxx::type::k_string)
+#else
         if (eltType && eltType.type() == bsoncxx::type::k_utf8)
+#endif
         {
             OGRwkbGeometryType eGeomType =
                 OGRFromOGCGeomType(get_string(eltType).c_str());
@@ -606,7 +622,11 @@ std::map<CPLString, CPLString> OGRMongoDBv3Layer::CollectGeomIndices()
                 bsoncxx::document::view keyDoc{key.get_document()};
                 for (auto &&field : keyDoc)
                 {
+#if BSONCXX_VERSION_MAJOR >= 4
+                    if (field.type() == bsoncxx::type::k_string)
+#else
                     if (field.type() == bsoncxx::type::k_utf8)
+#endif
                     {
                         const std::string v(get_string(field));
                         if (v == "2d" || v == "2dsphere")
@@ -646,7 +666,11 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
         {
             auto doc = docOpt->view();
             auto fid = doc["fid"];
+#if BSONCXX_VERSION_MAJOR >= 4
+            if (fid && fid.type() == bsoncxx::type::k_string)
+#else
             if (fid && fid.type() == bsoncxx::type::k_utf8)
+#endif
                 m_osFID = get_string(fid);
 
             auto fields = doc["fields"];
@@ -663,8 +687,13 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                         auto type = obj2["type"];
                         auto subtype = obj2["subtype"];
                         auto path = obj2["path"];
+#if BSONCXX_VERSION_MAJOR >= 4
+                        if (name && name.type() == bsoncxx::type::k_string &&
+                            type && type.type() == bsoncxx::type::k_string &&
+#else
                         if (name && name.type() == bsoncxx::type::k_utf8 &&
                             type && type.type() == bsoncxx::type::k_utf8 &&
+#endif
                             path && path.type() == bsoncxx::type::k_array)
                         {
                             if (get_string(name) == "_id")
@@ -686,7 +715,11 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                             bool ok = true;
                             for (const auto &eltPath : oPathArray)
                             {
+#if BSONCXX_VERSION_MAJOR >= 4
+                                if (eltPath.type() != bsoncxx::type::k_string)
+#else
                                 if (eltPath.type() != bsoncxx::type::k_utf8)
+#endif
                                 {
                                     ok = false;
                                     break;
@@ -699,7 +732,11 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                             OGRFieldDefn oFieldDefn(get_string(name).c_str(),
                                                     eType);
                             if (subtype &&
+#if BSONCXX_VERSION_MAJOR >= 4
+                                subtype.type() == bsoncxx::type::k_string &&
+#else
                                 subtype.type() == bsoncxx::type::k_utf8 &&
+#endif
                                 get_string(subtype) == "Boolean")
                             {
                                 // cppcheck-suppress danglingTemporaryLifetime
@@ -727,8 +764,13 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                         auto name = obj2["name"];
                         auto type = obj2["type"];
                         auto path = obj2["path"];
+#if BSONCXX_VERSION_MAJOR >= 4
+                        if (name && name.type() == bsoncxx::type::k_string &&
+                            type && type.type() == bsoncxx::type::k_string &&
+#else
                         if (name && name.type() == bsoncxx::type::k_utf8 &&
                             type && type.type() == bsoncxx::type::k_utf8 &&
+#endif
                             path && path.type() == bsoncxx::type::k_array)
                         {
 
@@ -737,7 +779,11 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                             bool ok = true;
                             for (const auto &eltPath : oPathArray)
                             {
+#if BSONCXX_VERSION_MAJOR >= 4
+                                if (eltPath.type() != bsoncxx::type::k_string)
+#else
                                 if (eltPath.type() != bsoncxx::type::k_utf8)
+#endif
                                 {
                                     ok = false;
                                     break;
@@ -933,7 +979,11 @@ static CPLString Stringify(const bsoncxx::types::value &val)
 #endif
 {
     const auto eBSONType = val.type();
+#if BSONCXX_VERSION_MAJOR >= 4
+    if (eBSONType == bsoncxx::type::k_string)
+#else
     if (eBSONType == bsoncxx::type::k_utf8)
+#endif
     {
 #if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
         return std::string(val.get_string().value);
@@ -1204,7 +1254,11 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
             CPLFree(panValues);
         }
     }
+#if BSONCXX_VERSION_MAJOR >= 4
+    else if (eBSONType == bsoncxx::type::k_string)
+#else
     else if (eBSONType == bsoncxx::type::k_utf8)
+#endif
     {
         poFeature->SetField(nField, get_string(elt).c_str());
     }
