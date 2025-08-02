@@ -10649,13 +10649,13 @@ CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
         double dfLRX = 0, dfLRY = 0;
         gt.Apply(nRasterXSize, nRasterYSize, &dfLRX, &dfLRY);
         const double xmin =
-            std::min(std::min(dfULX, dfURX), std::min(dfLLX, dfLRX));
+            std::min({dfULX, dfURX, dfLLX, dfLRX});
         const double ymin =
-            std::min(std::min(dfULY, dfURY), std::min(dfLLY, dfLRY));
+            std::min({dfULY, dfURY, dfLLY, dfLRY});
         const double xmax =
-            std::max(std::max(dfULX, dfURX), std::max(dfLLX, dfLRX));
+            std::max({dfULX, dfURX, dfLLX, dfLRX});
         const double ymax =
-            std::max(std::max(dfULY, dfURY), std::max(dfLLY, dfLRY));
+            std::max({dfULY, dfURY, dfLLY, dfLRY});
         if (poCT)
         {
             OGREnvelope sEnvTmp;
