@@ -9619,9 +9619,8 @@ GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 
 GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     const GDALRasterBand &band)
-    : m_nRasterXSize(band.GetDataset()->GetRasterXSize()),
-      m_nRasterYSize(band.GetDataset()->GetRasterYSize()), m_nBlockXSize(-1),
-      m_nBlockYSize(-1)
+    : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
+      m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
     band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
 }
