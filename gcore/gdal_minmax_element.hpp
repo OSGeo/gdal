@@ -28,14 +28,19 @@
 
 #include "gdal.h"
 
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
-#include "cpl_float.h"
+// Just to please cppcheck
+#ifndef GDAL_COMPUTE_VERSION
+#define GDAL_COMPUTE_VERSION(maj, min, rev)                                    \
+    ((maj)*1000000 + (min)*10000 + (rev)*100)
 #endif
 
 #ifdef GDAL_COMPILATION
+#include "cpl_float.h"
 #define GDAL_MINMAXELT_NS gdal
 #elif !defined(GDAL_MINMAXELT_NS)
 #error "Please define the GDAL_MINMAXELT_NS macro to define the namespace"
+#elif GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 11, 0)
+#include "cpl_float.h"
 #endif
 
 #ifdef USE_NEON_OPTIMIZATIONS

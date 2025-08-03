@@ -39,6 +39,12 @@
 #include "ogr_srs_api.h"
 #include "ogr_wkb.h"
 
+#define SFCGAL_MAKE_VERSION(major, minor, patch)                               \
+    ((major)*10000 + (minor)*100 + (patch))
+#define SFCGAL_VERSION                                                         \
+    SFCGAL_MAKE_VERSION(SFCGAL_VERSION_MAJOR, SFCGAL_VERSION_MINOR,            \
+                        SFCGAL_VERSION_PATCH)
+
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
 #else
