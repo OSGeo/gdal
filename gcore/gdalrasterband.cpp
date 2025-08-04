@@ -4901,7 +4901,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     if (!bForce)
         return CE_Warning;
 
-    const int nBuckets = 256;
+    int nBuckets = 256;
 
     bool bSignedByte = false;
     if (eDataType == GDT_Byte)
@@ -4919,17 +4919,31 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         *pdfMin = -0.5;
         *pdfMax = 255.5;
     }
+    else if (GetRasterDataType() == GDT_Int8)
+    {
+        *pdfMin = -128 - 0.5;
+        *pdfMax = 127 + 0.5;
+    }
     else
     {
 
         const CPLErr eErr =
             GetStatistics(TRUE, TRUE, pdfMin, pdfMax, nullptr, nullptr);
-        const double dfHalfBucket = (*pdfMax - *pdfMin) / (2 * (nBuckets - 1));
-        *pdfMin -= dfHalfBucket;
-        *pdfMax += dfHalfBucket;
-
         if (eErr != CE_None)
             return eErr;
+        if (*pdfMin == *pdfMax)
+        {
+            nBuckets = 1;
+            *pdfMin -= 0.5;
+            *pdfMax += 0.5;
+        }
+        else
+        {
+            const double dfHalfBucket =
+                (*pdfMax - *pdfMin) / (2 * (nBuckets - 1));
+            *pdfMin -= dfHalfBucket;
+            *pdfMax += dfHalfBucket;
+        }
     }
 
     *ppanHistogram =
