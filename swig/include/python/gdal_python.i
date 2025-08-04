@@ -12,6 +12,7 @@
 %include "gdal_driver_docs.i"
 %include "gdal_mdm_docs.i"
 %include "gdal_operations_docs.i"
+%include "gdal_rat_docs.i"
 
 %init %{
   /* gdal_python.i %init code */
@@ -2344,11 +2345,57 @@ def ReleaseResultSet(self, sql_lyr):
 %extend GDALRasterAttributeTableShadow {
 %pythoncode %{
   def WriteArray(self, array, field, start=0):
+      """
+      Write a NumPy array to a single column of a RAT.
+
+      Parameters
+      ----------
+      array : np.ndarray
+          One-dimensional array of values to write
+      field : int
+          The index of the column to write (starting at 0)
+      start : int, default = 0
+          The index of the first row to write (starting at 0)
+
+      Returns
+      -------
+      int:
+          Error code, or ``gdal.CE_None`` if no error occurred.
+      """
       from osgeo import gdal_array
 
       return gdal_array.RATWriteArray(self, array, field, start)
 
   def ReadAsArray(self, field, start=0, length=None):
+      """
+      Read a single column of a RAT into a NumPy array.
+      
+      Parameters
+      ----------
+      field : int
+          The index of the column to read (starting at 0)
+      start : int, default = 0
+          The index of the first row to read (starting at 0)
+      length : int, default = None
+          The number of rows to read 
+      
+      
+      Returns
+      -------
+      np.ndarray
+      
+      Examples
+      --------
+      >>> ds = gdal.Open('clc2018_v2020_20u1.tif')
+      >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
+      >>> rat.ReadAsArray(0)
+      array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+             18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+             35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 48], dtype=int32)
+      >>> rat.ReadAsArray(0, 5, 3)
+      array([6, 7, 8], dtype=int32)
+      """
+
       from osgeo import gdal_array
 
       return gdal_array.RATReadArray(self, field, start, length)

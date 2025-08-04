@@ -415,7 +415,7 @@ int GDALRasterAttributeTable::GetRowOfValue(int nValue) const
  *
  * If the table already has rows, all row values for the new column will
  * be initialized to the default value ("", or zero).  The new column is
- * always created as the last column, can will be column (field)
+ * always created as the last column, and will be column (field)
  * "GetColumnCount()-1" after CreateColumn() has completed successfully.
  *
  * This method is the same as the C function GDALRATCreateColumn().
