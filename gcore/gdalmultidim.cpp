@@ -9218,8 +9218,8 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                  "can be exposed as classic GDALDataset");
         return nullptr;
     }
-    if (iXDim >= nDimCount ||
-        (nDimCount >= 2 && (iYDim >= nDimCount || iXDim == iYDim)))
+    if (iXDim >= nDimCount || iYDim >= nDimCount ||
+        (nDimCount >= 2 && iXDim == iYDim))
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid iXDim and/or iYDim");
         return nullptr;
