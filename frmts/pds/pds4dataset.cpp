@@ -1431,15 +1431,14 @@ bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
-    std::unique_ptr<PDS4TableCharacter> poLayer(new PDS4TableCharacter(
-        this, osLayerName.c_str(), osFullFilename.c_str()));
+    auto poLayer = std::make_unique<PDS4TableCharacter>(
+        this, osLayerName.c_str(), osFullFilename.c_str());
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
     }
-    std::unique_ptr<PDS4EditableLayer> poEditableLayer(
-        new PDS4EditableLayer(poLayer.release()));
-    m_apoLayers.push_back(std::move(poEditableLayer));
+    m_apoLayers.push_back(
+        std::make_unique<PDS4EditableLayer>(std::move(poLayer)));
     return true;
 }
 
@@ -1459,15 +1458,14 @@ bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
-    std::unique_ptr<PDS4TableBinary> poLayer(
-        new PDS4TableBinary(this, osLayerName.c_str(), osFullFilename.c_str()));
+    auto poLayer = std::make_unique<PDS4TableBinary>(this, osLayerName.c_str(),
+                                                     osFullFilename.c_str());
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
     }
-    std::unique_ptr<PDS4EditableLayer> poEditableLayer(
-        new PDS4EditableLayer(poLayer.release()));
-    m_apoLayers.push_back(std::move(poEditableLayer));
+    m_apoLayers.push_back(
+        std::make_unique<PDS4EditableLayer>(std::move(poLayer)));
     return true;
 }
 
@@ -1488,15 +1486,14 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
-    std::unique_ptr<PDS4DelimitedTable> poLayer(new PDS4DelimitedTable(
-        this, osLayerName.c_str(), osFullFilename.c_str()));
+    auto poLayer = std::make_unique<PDS4DelimitedTable>(
+        this, osLayerName.c_str(), osFullFilename.c_str());
     if (!poLayer->ReadTableDef(psTable))
     {
         return false;
     }
-    std::unique_ptr<PDS4EditableLayer> poEditableLayer(
-        new PDS4EditableLayer(poLayer.release()));
-    m_apoLayers.push_back(std::move(poEditableLayer));
+    m_apoLayers.push_back(
+        std::make_unique<PDS4EditableLayer>(std::move(poLayer)));
     return true;
 }
 
@@ -4217,33 +4214,32 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
 
     if (EQUAL(pszTableType, "DELIMITED"))
     {
-        std::unique_ptr<PDS4DelimitedTable> poLayer(
-            new PDS4DelimitedTable(this, pszName, osFullFilename));
+        auto poLayer =
+            std::make_unique<PDS4DelimitedTable>(this, pszName, osFullFilename);
         if (!poLayer->InitializeNewLayer(poSpatialRef, false, eGType,
                                          papszOptions))
         {
             return nullptr;
         }
-        std::unique_ptr<PDS4EditableLayer> poEditableLayer(
-            new PDS4EditableLayer(poLayer.release()));
-        m_apoLayers.push_back(std::move(poEditableLayer));
+        m_apoLayers.push_back(
+            std::make_unique<PDS4EditableLayer>(std::move(poLayer)));
     }
     else
     {
-        std::unique_ptr<PDS4FixedWidthTable> poLayer(
-            EQUAL(pszTableType, "CHARACTER")
-                ? static_cast<PDS4FixedWidthTable *>(
-                      new PDS4TableCharacter(this, pszName, osFullFilename))
-                : static_cast<PDS4FixedWidthTable *>(
-                      new PDS4TableBinary(this, pszName, osFullFilename)));
+        std::unique_ptr<PDS4FixedWidthTable> poLayer;
+        if (EQUAL(pszTableType, "CHARACTER"))
+            poLayer = std::make_unique<PDS4TableCharacter>(this, pszName,
+                                                           osFullFilename);
+        else
+            poLayer = std::make_unique<PDS4TableBinary>(this, pszName,
+                                                        osFullFilename);
         if (!poLayer->InitializeNewLayer(poSpatialRef, false, eGType,
                                          papszOptions))
         {
             return nullptr;
         }
-        std::unique_ptr<PDS4EditableLayer> poEditableLayer(
-            new PDS4EditableLayer(poLayer.release()));
-        m_apoLayers.push_back(std::move(poEditableLayer));
+        m_apoLayers.push_back(
+            std::make_unique<PDS4EditableLayer>(std::move(poLayer)));
     }
     return m_apoLayers.back().get();
 }

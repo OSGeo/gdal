@@ -2719,16 +2719,23 @@ PDS4EditableSynchronizer<T>::EditableSyncToDisk(OGRLayer *poEditableLayer,
 /* ==================================================================== */
 /************************************************************************/
 
-PDS4EditableLayer::PDS4EditableLayer(PDS4FixedWidthTable *poBaseLayer)
-    : OGREditableLayer(poBaseLayer, true,
-                       new PDS4EditableSynchronizer<PDS4FixedWidthTable>(),
-                       true)
+PDS4EditableLayer::PDS4EditableLayer(
+    std::unique_ptr<PDS4FixedWidthTable> poBaseLayer)
+    : OGREditableLayer(
+          poBaseLayer.release(), true,
+          std::make_unique<PDS4EditableSynchronizer<PDS4FixedWidthTable>>()
+              .release(),
+          true)
 {
 }
 
-PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer)
-    : OGREditableLayer(poBaseLayer, true,
-                       new PDS4EditableSynchronizer<PDS4DelimitedTable>(), true)
+PDS4EditableLayer::PDS4EditableLayer(
+    std::unique_ptr<PDS4DelimitedTable> poBaseLayer)
+    : OGREditableLayer(
+          poBaseLayer.release(), true,
+          std::make_unique<PDS4EditableSynchronizer<PDS4DelimitedTable>>()
+              .release(),
+          true)
 {
 }
 
