@@ -40,6 +40,45 @@ def validate_xml(filename):
         print("Validation of %s skipped as GMLAS driver missing" % filename)
         return
 
+    # for GDAL 3.12 / PDS4_PDS_1O00
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1O00.xsd",
+        "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
+        f.write(data)
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1O00_1970.xsd",
+        "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1O00_1970.xsd",
+        force_download=True,
+    )
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1O00_1510.xsd",
+        "pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1O00_1510.xsd",
+        force_download=True,
+    )
+
+    # Used by PDS4_CART_1O00_1970.xsd
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1O00_19A0.xsd",
+        "pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb") as f:
+        f.write(data)
+
     # for GDAL 3.4 / PDS4_PDS_1G00
 
     gdaltest.download_or_skip(

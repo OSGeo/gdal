@@ -36,7 +36,7 @@
     "avoid deleting the binary file when the label is deleted. Keep it to "    \
     "preserve this behavior."
 
-#define CURRENT_CART_VERSION "1G00_1950"
+#define CURRENT_CART_VERSION "1O00_1970"
 
 extern "C" void GDALRegister_PDS4();
 
@@ -2335,6 +2335,9 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
         const bool bUse_CART_1950_Or_Later =
             IsCARTVersionGTE(pszCARTVersion, "1G00_1950");
 
+        const bool bUse_CART_1970_Or_Later =
+            IsCARTVersionGTE(pszCARTVersion, "1O00_1970");
+
         if (pszProjection == nullptr)
         {
             pszPDS4ProjectionName = "Equirectangular";
@@ -2392,6 +2395,17 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
             pszPDS4ProjectionName = "Lambert Conformal Conic";
             if (bUse_CART_1933_Or_Later)
             {
+                if (bUse_CART_1970_Or_Later)
+                {
+                    // Note: in EPSG (and PROJ "metadata" part), there is
+                    // no standard_parallel_1 parameter for LCC_1SP. But
+                    // for historical reason we do map the latitude of origin
+                    // to +lat_1 (in addition to +lat_0). So do the same here.
+                    aoProjParams.push_back(
+                        ProjParam("standard_parallel_1",
+                                  m_oSRS.GetNormProjParm(
+                                      SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+                }
                 aoProjParams.push_back(
                     ProjParam("longitude_of_central_meridian",
                               FixLong(m_oSRS.GetNormProjParm(
@@ -3767,9 +3781,17 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
                                            "PDS4_CART_1D00_1933.xsd";
                             pszCARTVersion = "1D00_1933";
                         }
-                        else
+                        else if (strstr(psSchemaLoc->psChild->pszValue,
+                                        "PDS4_PDS_1G00_1950.xsd"))
                         {
                             // GDAL 3.4
+                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/"
+                                           "PDS4_CART_1G00_1950.xsd";
+                            pszCARTVersion = "1G00_1950";
+                        }
+                        else
+                        {
+                            // GDAL 3.12
                             osCartSchema =
                                 "https://pds.nasa.gov/pds4/cart/v1/"
                                 "PDS4_CART_" CURRENT_CART_VERSION ".xsd";
