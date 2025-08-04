@@ -1900,17 +1900,17 @@ def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
 
 
 @pytest.mark.parametrize(
-    "dt,val",
+    "dt,val,serialized_val",
     [
-        (gdal.GDT_Byte, 255),
-        (gdal.GDT_Int64, (1 << 63) - 1),
-        (gdal.GDT_UInt64, (1 << 64) - 1),
-        (gdal.GDT_Float32, -3.4028226550889045e38),
-        (gdal.GDT_Float64, -1.7976931348623157e308),
+        (gdal.GDT_Byte, 255, "255"),
+        (gdal.GDT_Int64, (1 << 63) - 1, str((1 << 63) - 1)),
+        (gdal.GDT_UInt64, (1 << 64) - 1, str((1 << 64) - 1)),
+        (gdal.GDT_Float32, -3.4028226550889045e38, "0xFF7FFFFB"),
+        (gdal.GDT_Float64, -1.7976931348623157e308, "0xFFEFFFFFFFFFFFFF"),
     ],
 )
 @pytest.mark.parametrize("geotiff", [True, False])
-def test_pds4_write_missing_constant(tmp_vsimem, dt, val, geotiff):
+def test_pds4_write_missing_constant(tmp_vsimem, dt, val, serialized_val, geotiff):
 
     options = ["IMAGE_FORMAT=GEOTIFF"] if geotiff else []
     ds = gdal.GetDriverByName("PDS4").Create(
@@ -1931,6 +1931,10 @@ def test_pds4_write_missing_constant(tmp_vsimem, dt, val, geotiff):
         assert ds.GetRasterBand(1).GetNoDataValue() == val
 
     ds = None
+
+    with gdal.VSIFile(tmp_vsimem / "test.xml", "rb") as f:
+        xml = f.read().decode("utf-8")
+    assert f"<missing_constant>{serialized_val}</missing_constant>" in xml
 
     ds = gdal.Open(tmp_vsimem / "test.xml")
     assert ds.GetRasterBand(1).DataType == dt

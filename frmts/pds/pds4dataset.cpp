@@ -3793,8 +3793,20 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
             osNoData = std::to_string(nNoDataUInt64);
         else if (GDALDataTypeIsInteger(GetRasterBand(1)->GetRasterDataType()))
             osNoData = std::to_string(static_cast<int64_t>(dfNoData));
+        else if (eDT == GDT_Float32)
+        {
+            uint32_t nVal;
+            float fVal = static_cast<float>(dfNoData);
+            memcpy(&nVal, &fVal, sizeof(nVal));
+            osNoData = CPLSPrintf("0x%08X", nVal);
+        }
         else
-            osNoData = CPLSPrintf("%.17g", dfNoData);
+        {
+            uint64_t nVal;
+            memcpy(&nVal, &dfNoData, sizeof(nVal));
+            osNoData =
+                CPLSPrintf("0x%16llX", static_cast<unsigned long long>(nVal));
+        }
     }
 
     if (psTemplateSpecialConstants)
