@@ -39,7 +39,8 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       ConstructorOptions()
                                           .SetStandaloneStep(bStandalone)
-                                          .SetInputDatasetMaxCount(INT_MAX))
+                                          .SetInputDatasetMaxCount(INT_MAX)
+                                          .SetAutoOpenInputDatasets(false))
 {
     if (!bStandalone)
     {
@@ -77,6 +78,8 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
 }
+
+GDALVectorConcatAlgorithm::~GDALVectorConcatAlgorithm() = default;
 
 /************************************************************************/
 /*                   GDALVectorConcatOutputDataset                      */
@@ -179,6 +182,58 @@ static std::string BuildLayerName(const std::string &layerNameTemplate,
     return std::string(std::move(ret));
 }
 
+namespace
+{
+
+/************************************************************************/
+/*                            OpenProxiedLayer()                        */
+/************************************************************************/
+
+struct PooledInitData
+{
+    std::unique_ptr<GDALDataset> poDS{};
+    std::string osDatasetName{};
+    std::vector<std::string> *pInputFormats = nullptr;
+    std::vector<std::string> *pOpenOptions = nullptr;
+    int iLayer = 0;
+};
+
+static OGRLayer *OpenProxiedLayer(void *pUserData)
+{
+    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
+    pData->poDS.reset(GDALDataset::Open(
+        pData->osDatasetName.c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+        pData->pInputFormats ? CPLStringList(*(pData->pInputFormats)).List()
+                             : nullptr,
+        pData->pOpenOptions ? CPLStringList(*(pData->pOpenOptions)).List()
+                            : nullptr,
+        nullptr));
+    if (!pData->poDS)
+        return nullptr;
+    return pData->poDS->GetLayer(pData->iLayer);
+}
+
+/************************************************************************/
+/*                         ReleaseProxiedLayer()                        */
+/************************************************************************/
+
+static void ReleaseProxiedLayer(OGRLayer *, void *pUserData)
+{
+    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
+    pData->poDS.reset();
+}
+
+/************************************************************************/
+/*                        FreeProxiedLayerUserData()                    */
+/************************************************************************/
+
+static void FreeProxiedLayerUserData(void *pUserData)
+{
+    delete static_cast<PooledInitData *>(pUserData);
+}
+
+}  // namespace
+
 /************************************************************************/
 /*                   GDALVectorConcatAlgorithm::RunStep()               */
 /************************************************************************/
@@ -204,18 +259,7 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         int iDS = 0;
         int iLayer = 0;
-
-        GDALDataset *
-        GetDataset(std::vector<GDALArgDatasetValue> &inputDatasets) const
-        {
-            return inputDatasets[iDS].GetDatasetRef();
-        }
-
-        OGRLayer *
-        GetLayer(std::vector<GDALArgDatasetValue> &inputDatasets) const
-        {
-            return inputDatasets[iDS].GetDatasetRef()->GetLayer(iLayer);
-        }
+        std::string osDatasetName{};
     };
 
     if (m_layerNameTemplate.empty())
@@ -238,13 +282,42 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
     else if (m_sourceLayerFieldName.empty())
         m_sourceLayerFieldName = "source_ds_lyr";
 
+    const int nMaxSimultaneouslyOpened =
+        std::max(atoi(CPLGetConfigOption(
+                     "GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", "100")),
+                 1);
+
     // First pass on input layers
     std::map<std::string, std::vector<LayerDesc>> allLayerNames;
     int iDS = 0;
+    int nonOpenedDSCount = 0;
     for (auto &srcDS : m_inputDataset)
     {
+        GDALDataset *poSrcDS = srcDS.GetDatasetRef();
+        std::unique_ptr<GDALDataset> poTmpDS;
+        if (!poSrcDS)
+        {
+            poTmpDS.reset(GDALDataset::Open(
+                srcDS.GetName().c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                CPLStringList(m_inputFormats).List(),
+                CPLStringList(m_openOptions).List(), nullptr));
+            poSrcDS = poTmpDS.get();
+            if (!poSrcDS)
+                return false;
+            if (static_cast<int>(m_inputDataset.size()) <=
+                nMaxSimultaneouslyOpened)
+            {
+                srcDS.Set(std::move(poTmpDS));
+                poSrcDS = srcDS.GetDatasetRef();
+            }
+            else
+            {
+                ++nonOpenedDSCount;
+            }
+        }
+
         int iLayer = 0;
-        for (const auto &poLayer : srcDS.GetDatasetRef()->GetLayers())
+        for (const auto &poLayer : poSrcDS->GetLayers())
         {
             if (m_inputLayerNames.empty() ||
                 std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
@@ -256,24 +329,23 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                     ReportError(
                         CE_Failure, CPLE_AppDefined,
                         "Layer '%s' of '%s' has no spatial reference system",
-                        poLayer->GetName(),
-                        srcDS.GetDatasetRef()->GetDescription());
+                        poLayer->GetName(), poSrcDS->GetDescription());
                     return false;
                 }
                 LayerDesc layerDesc;
                 layerDesc.iDS = iDS;
                 layerDesc.iLayer = iLayer;
+                layerDesc.osDatasetName = poSrcDS->GetDescription();
                 const std::string outLayerName =
                     m_mode == "single" ? m_layerNameTemplate
                     : m_mode == "merge-per-layer-name"
                         ? std::string(poLayer->GetName())
-                        : BuildLayerName(
-                              m_layerNameTemplate, iDS,
-                              srcDS.GetDatasetRef()->GetDescription(), iLayer,
-                              poLayer->GetName());
+                        : BuildLayerName(m_layerNameTemplate, iDS,
+                                         poSrcDS->GetDescription(), iLayer,
+                                         poLayer->GetName());
                 CPLDebugOnly("gdal_vector_concat", "%s,%s->%s",
-                             srcDS.GetDatasetRef()->GetDescription(),
-                             poLayer->GetName(), outLayerName.c_str());
+                             poSrcDS->GetDescription(), poLayer->GetName(),
+                             outLayerName.c_str());
                 allLayerNames[outLayerName].push_back(std::move(layerDesc));
             }
             ++iLayer;
@@ -282,6 +354,10 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
     }
 
     auto poUnionDS = std::make_unique<GDALVectorConcatOutputDataset>();
+
+    if (nonOpenedDSCount > nMaxSimultaneouslyOpened)
+        m_poLayerPool =
+            std::make_unique<OGRLayerPool>(nMaxSimultaneouslyOpened);
 
     bool ret = true;
     for (const auto &[outLayerName, listOfLayers] : allLayerNames)
@@ -292,7 +368,41 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 CPLCalloc(nLayerCount, sizeof(OGRLayer *))));
         for (int i = 0; i < nLayerCount; ++i)
         {
-            const auto poSrcLayer = listOfLayers[i].GetLayer(m_inputDataset);
+            auto &srcDS = m_inputDataset[listOfLayers[i].iDS];
+            GDALDataset *poSrcDS = srcDS.GetDatasetRef();
+            std::unique_ptr<GDALDataset> poTmpDS;
+            if (!poSrcDS)
+            {
+                poTmpDS.reset(GDALDataset::Open(
+                    listOfLayers[i].osDatasetName.c_str(),
+                    GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                    CPLStringList(m_inputFormats).List(),
+                    CPLStringList(m_openOptions).List(), nullptr));
+                poSrcDS = poTmpDS.get();
+                if (!poSrcDS)
+                    return false;
+            }
+            OGRLayer *poSrcLayer = poSrcDS->GetLayer(listOfLayers[i].iLayer);
+
+            if (m_poLayerPool)
+            {
+                auto pData = std::make_unique<PooledInitData>();
+                pData->osDatasetName = listOfLayers[i].osDatasetName;
+                pData->pInputFormats = &m_inputFormats;
+                pData->pOpenOptions = &m_openOptions;
+                pData->iLayer = listOfLayers[i].iLayer;
+                auto proxiedLayer = std::make_unique<OGRProxiedLayer>(
+                    m_poLayerPool.get(), OpenProxiedLayer, ReleaseProxiedLayer,
+                    FreeProxiedLayerUserData, pData.release());
+                proxiedLayer->SetDescription(poSrcLayer->GetDescription());
+                m_tempLayersKeeper.push_back(std::move(proxiedLayer));
+                poSrcLayer = m_tempLayersKeeper.back().get();
+            }
+            else if (poTmpDS)
+            {
+                srcDS.Set(std::move(poTmpDS));
+            }
+
             if (m_sourceLayerFieldName.empty())
             {
                 papoSrcLayers.get()[i] = poSrcLayer;
@@ -301,9 +411,7 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
             {
                 const std::string newSrcLayerName = BuildLayerName(
                     m_sourceLayerFieldContent, listOfLayers[i].iDS,
-                    listOfLayers[i]
-                        .GetDataset(m_inputDataset)
-                        ->GetDescription(),
+                    listOfLayers[i].osDatasetName.c_str(),
                     listOfLayers[i].iLayer, poSrcLayer->GetName());
                 ret = !newSrcLayerName.empty() && ret;
                 auto poTmpLayer =

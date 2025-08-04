@@ -136,6 +136,7 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
                            /* positionalAndRequired = */ !hiddenForCLI)
             .SetMinCount(1)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+            .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
             .SetHiddenForCLI(hiddenForCLI);
     if (m_constructorOptions.addInputLayerNameArgument)
     {

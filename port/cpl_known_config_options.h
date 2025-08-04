@@ -409,6 +409,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_USE_SSE", // from gdalgrid.cpp
    "GDAL_USE_SSSE3", // from cpl_cpu_features.cpp
    "GDAL_VALIDATE_CREATION_OPTIONS", // from gdaldataset.cpp, gdaldriver.cpp
+   "GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", // from gdalalg_vector_concat.cpp
    "GDAL_VRT_ENABLE_PYTHON", // from vrtderivedrasterband.cpp
    "GDAL_VRT_ENABLE_RAWRASTERBAND", // from vrtdataset.cpp
    "GDAL_VRT_PYTHON_EXCLUSIVE_LOCK", // from vrtderivedrasterband.cpp

@@ -16,6 +16,7 @@
 #include "gdalalg_vector_pipeline.h"
 
 #include "ogrsf_frmts.h"
+#include "ogrlayerpool.h"
 
 //! @cond Doxygen_Suppress
 
@@ -32,6 +33,7 @@ class GDALVectorConcatAlgorithm /* non final */
     static constexpr const char *HELP_URL = "/programs/gdal_vector_concat.html";
 
     explicit GDALVectorConcatAlgorithm(bool bStandalone = false);
+    ~GDALVectorConcatAlgorithm() override;
 
     bool CanBeFirstStep() const override
     {
@@ -50,6 +52,7 @@ class GDALVectorConcatAlgorithm /* non final */
     std::string m_srsCrs{};
     std::string m_dstCrs{};
 
+    std::unique_ptr<OGRLayerPool> m_poLayerPool{};
     std::vector<std::unique_ptr<OGRLayer>> m_tempLayersKeeper{};
 };
 
