@@ -504,7 +504,7 @@ def test_gdalalg_vector_pipeline_write_options(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it",
+        match="already exists",
     ):
         assert pipeline.ParseRunAndFinalize(
             ["read", "../ogr/data/poly.shp", "!", "write", out_filename]

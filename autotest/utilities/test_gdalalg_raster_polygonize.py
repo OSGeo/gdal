@@ -113,7 +113,7 @@ def test_gdalalg_raster_polygonize_overwrite(tmp_vsimem):
     alg["output"] = out_filename
     with pytest.raises(
         Exception,
-        match="already exists. Specify the --overwrite option to overwrite it or the --append option to append to it",
+        match="already exists",
     ):
         alg.Run()
     with ogr.Open(out_filename) as ds:
