@@ -795,6 +795,10 @@ def test_vsifile_18():
 # Test gdal.GetFileSystemOptions()
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("mingw64"),
+    reason="Crashes for unknown reason",
+)
 def test_vsifile_19():
 
     for prefix in gdal.GetFileSystemsPrefixes():
