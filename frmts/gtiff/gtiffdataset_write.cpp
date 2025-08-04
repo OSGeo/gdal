@@ -4055,7 +4055,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
          ++iDomain)
     {
         CSLConstList papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
-        bool bIsXML = false;
+        bool bIsXMLOrJSON = false;
 
         if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
             EQUAL(papszDomainList[iDomain], "DERIVED_SUBDATASETS"))
@@ -4070,8 +4070,11 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         if (EQUAL(papszDomainList[iDomain], "xml:XMP"))
             continue;  // Handled in SetMetadata.
 
-        if (STARTS_WITH_CI(papszDomainList[iDomain], "xml:"))
-            bIsXML = true;
+        if (STARTS_WITH_CI(papszDomainList[iDomain], "xml:") ||
+            STARTS_WITH_CI(papszDomainList[iDomain], "json:"))
+        {
+            bIsXMLOrJSON = true;
+        }
 
         /* --------------------------------------------------------------------
          */
@@ -4083,7 +4086,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             const char *pszItemValue = nullptr;
             char *pszItemName = nullptr;
 
-            if (bIsXML)
+            if (bIsXMLOrJSON)
             {
                 pszItemName = CPLStrdup("doc");
                 pszItemValue = papszMD[iItem];
