@@ -283,8 +283,9 @@ class PDS4EditableLayer final : public OGREditableLayer
     PDS4TableBaseLayer *GetBaseLayer() const;
 
   public:
-    explicit PDS4EditableLayer(PDS4FixedWidthTable *poBaseLayer);
-    explicit PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer);
+    explicit PDS4EditableLayer(
+        std::unique_ptr<PDS4FixedWidthTable> poBaseLayer);
+    explicit PDS4EditableLayer(std::unique_ptr<PDS4DelimitedTable> poBaseLayer);
     ~PDS4EditableLayer() override;
 
     void RefreshFileAreaObservational(CPLXMLNode *psFAO)
