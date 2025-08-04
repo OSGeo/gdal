@@ -14,6 +14,7 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -144,3 +145,115 @@ def test_rat_4(tmp_vsimem):
         rat = gdal_band.GetDefaultRAT()
         assert rat is not None
         assert rat.GetValueAsInt(0, 0) == 222
+
+
+###############################################################################
+# Read multiple rows
+
+
+def test_rat_readvaluesio():
+
+    rat = gdal.RasterAttributeTable()
+    rat.SetRowCount(5)
+    rat.CreateColumn("VALUE_INT", gdal.GFT_Integer, gdal.GFU_Generic)
+    rat.CreateColumn("VALUE_REAL", gdal.GFT_Real, gdal.GFU_Generic)
+    rat.CreateColumn("VALUE_STRING", gdal.GFT_String, gdal.GFU_Generic)
+
+    for i in range(rat.GetRowCount()):
+        rat.SetValueAsInt(i, 0, i + 7)
+        rat.SetValueAsDouble(i, 1, i + 7.1)
+        rat.SetValueAsString(i, 2, f"x{i + 7}s")
+
+    # start index < 0
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadValuesIOAsInteger(0, -1, 3)
+
+    # col index < 0
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadValuesIOAsInteger(-1, 0, 5)
+
+    # col index > max
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadValuesIOAsInteger(3, 0, 5)
+
+    assert rat.ReadValuesIOAsInteger(0, 0, 5) == [7, 8, 9, 10, 11]
+    assert rat.ReadValuesIOAsInteger(0, 2, 3) == [9, 10, 11]
+    # assert rat.ReadValuesIOAsInteger(0, 2, 5) is None
+
+    assert rat.ReadValuesIOAsDouble(1, 0, 5) == [7.1, 8.1, 9.1, 10.1, 11.1]
+    assert rat.ReadValuesIOAsDouble(1, 2, 3) == [9.1, 10.1, 11.1]
+
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadValuesIOAsDouble(1, -1, 3)
+
+    assert rat.ReadValuesIOAsString(2, 0, 5) == ["x7s", "x8s", "x9s", "x10s", "x11s"]
+    assert rat.ReadValuesIOAsString(2, 2, 3) == ["x9s", "x10s", "x11s"]
+
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadValuesIOAsString(2, -1, 3)
+
+
+def test_rat_readasarray():
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    rat = gdal.RasterAttributeTable()
+    rat.SetRowCount(5)
+    rat.CreateColumn("VALUE_INT", gdal.GFT_Integer, gdal.GFU_Generic)
+    rat.CreateColumn("VALUE_REAL", gdal.GFT_Real, gdal.GFU_Generic)
+    rat.CreateColumn("VALUE_STRING", gdal.GFT_String, gdal.GFU_Generic)
+
+    for i in range(rat.GetRowCount()):
+        rat.SetValueAsInt(i, 0, i + 7)
+        rat.SetValueAsDouble(i, 1, i + 7.1)
+        rat.SetValueAsString(i, 2, f"x{i + 7}s")
+
+    # start index < 0
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadAsArray(0, -1, 3)
+
+    # col index < 0
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadAsArray(-1, 0, 5)
+
+    # col index > max
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadAsArray(3, 0, 5)
+
+    # reading before first row row
+    with pytest.raises(Exception, match="must be a positive integer"):
+        rat.ReadAsArray(0, 2, -5)
+
+    # reading beyond last row
+    with pytest.raises(Exception):
+        rat.ReadAsArray(0, 2, 5)
+
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(0, 0, 5), np.array([7, 8, 9, 10, 11], dtype=np.int32)
+    )
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(0, 2, 3), np.array([9, 10, 11], dtype=np.int32)
+    )
+
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(1, 0, 5),
+        np.array([7.1, 8.1, 9.1, 10.1, 11.1], dtype=np.float64),
+    )
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(1, 2, 3), np.array([9.1, 10.1, 11.1], dtype=np.float64)
+    )
+
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadAsArray(1, -1, 3)
+
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(2, 0, 5),
+        np.array(["x7s", "x8s", "x9s", "x10s", "x11s"], dtype=np.bytes_),
+    )
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(2, 2, 3), np.array(["x9s", "x10s", "x11s"], dtype=np.bytes_)
+    )
+
+    with pytest.raises(Exception, match="out of range"):
+        rat.ReadAsArray(2, -1, 3)

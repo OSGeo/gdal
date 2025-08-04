@@ -66,12 +66,12 @@
  * column of usage GFU_MinMax can be used.
  *
  * In other cases all the categories are of equal size and regularly spaced
- * and the categorization information can be determine just by knowing the
+ * and the categorization information can be determined just by knowing the
  * value at which the categories start, and the size of a category.  This
  * is called "Linear Binning" and the information is kept specially on
  * the raster attribute table as a whole.
  *
- * RATs are normally associated with GDALRasterBands and be be queried
+ * RATs are normally associated with GDALRasterBands and can be queried
  * using the GDALRasterBand::GetDefaultRAT() method.
  */
 
@@ -114,21 +114,22 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            pdfData[iIndex] = GetValueAsDouble(iIndex, iField);
+            pdfData[iIndex - iStartRow] = GetValueAsDouble(iIndex, iField);
         }
     }
     else
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, pdfData[iIndex]);
+            SetValue(iIndex, iField, pdfData[iIndex - iStartRow]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -178,21 +179,22 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            pnData[iIndex] = GetValueAsInt(iIndex, iField);
+            pnData[iIndex - iStartRow] = GetValueAsInt(iIndex, iField);
         }
     }
     else
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, pnData[iIndex]);
+            SetValue(iIndex, iField, pnData[iIndex - iStartRow]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -244,21 +246,23 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
+    CPLErr eErr = CE_None;
     if (eRWFlag == GF_Read)
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            papszStrList[iIndex] = VSIStrdup(GetValueAsString(iIndex, iField));
+            papszStrList[iIndex - iStartRow] =
+                VSIStrdup(GetValueAsString(iIndex, iField));
         }
     }
     else
     {
         for (int iIndex = iStartRow; iIndex < (iStartRow + iLength); iIndex++)
         {
-            SetValue(iIndex, iField, papszStrList[iIndex]);
+            SetValue(iIndex, iField, papszStrList[iIndex - iStartRow]);
         }
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -408,7 +412,7 @@ int GDALRasterAttributeTable::GetRowOfValue(int nValue) const
  *
  * If the table already has rows, all row values for the new column will
  * be initialized to the default value ("", or zero).  The new column is
- * always created as the last column, can will be column (field)
+ * always created as the last column, and will be column (field)
  * "GetColumnCount()-1" after CreateColumn() has completed successfully.
  *
  * This method is the same as the C function GDALRATCreateColumn().
