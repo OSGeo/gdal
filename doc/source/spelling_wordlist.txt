@@ -1769,6 +1769,8 @@ maxdistance
 maxheight
 maximising
 MaximumLong
+maxlat
+maxlon
 maxOccurs
 MaxSize
 maxwidth
@@ -1821,6 +1823,8 @@ minimalistic
 minimising
 Minio
 minixml
+minlat
+minlon
 minsize
 minX
 miny
