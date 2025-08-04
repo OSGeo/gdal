@@ -272,7 +272,11 @@ class DriverPropertyDirective(SphinxDirective):
             long_name = long_name_node.astext()
             if " -- " in long_name:
                 long_name = long_name.split(" -- ")[1].strip()
-            if " - " in long_name and "OGC API" not in long_name:
+            if (
+                " - " in long_name
+                and "OGC API" not in long_name
+                and "NetCDF" not in long_name
+            ):
                 long_name = long_name.split(" - ")[1].strip()
 
             self.env.gdal_drivers[short_name] = {
