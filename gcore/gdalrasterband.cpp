@@ -9619,9 +9619,8 @@ GDALRasterBand::WindowIterator &GDALRasterBand::WindowIterator::operator++()
 
 GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     const GDALRasterBand &band)
-    : m_nRasterXSize(band.GetDataset()->GetRasterXSize()),
-      m_nRasterYSize(band.GetDataset()->GetRasterYSize()), m_nBlockXSize(-1),
-      m_nBlockYSize(-1)
+    : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
+      m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
     band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
 }
@@ -9650,8 +9649,8 @@ GDALRasterBand::WindowIteratorWrapper::end() const
 \code{.cpp}
     std::vector<double> pixelValues;
     for (const auto& window : poBand->IterateWindows()) {
-        CPLErr eErr = window.ReadRaster(pixelValues, window.nXOff, window.nYOff,
-                                        window.nXSize, window.nYSize);
+        CPLErr eErr = poBand->ReadRaster(pixelValues, window.nXOff, window.nYOff,
+                                         window.nXSize, window.nYSize);
         // check eErr
     }
 \endcode

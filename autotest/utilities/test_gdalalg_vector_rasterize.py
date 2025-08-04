@@ -45,7 +45,7 @@ def temp_cutline(input_csv):
         (
             True,
             ["--all-touched", "-b", "3,2,1", "--burn", "200,220,240", "-l", "cutline"],
-            "Specify the --overwrite option to overwrite it or the --update option to update",
+            "already exists",
         ),
         (
             True,
@@ -590,7 +590,7 @@ def test_gdalalg_vector_rasterize_overwrite(tmp_vsimem):
         rasterize = get_rasterize_alg()
         with pytest.raises(
             Exception,
-            match="Specify the --overwrite option to overwrite it or the --update option to update it",
+            match="already exists",
         ):
             rasterize.ParseRunAndFinalize(
                 ["-b", "1,2,3", "--burn=200,220,240", input_csv, output_tif]

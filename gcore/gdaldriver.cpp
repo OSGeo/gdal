@@ -16,6 +16,7 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 #include "gdalalgorithm.h"
+#include "gdal_known_connection_prefixes.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -3047,7 +3048,8 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
         GDALDriver *poDriver = poDM->GetDriver(i, true);
         bool bOk = false;
         if ((poDriver->GetMetadataItem(GDAL_DCAP_CREATE) != nullptr ||
-             poDriver->GetMetadataItem(GDAL_DCAP_CREATECOPY) != nullptr) &&
+             poDriver->GetMetadataItem(GDAL_DCAP_CREATECOPY) != nullptr ||
+             poDriver->GetMetadataItem(GDAL_DCAP_UPDATE) != nullptr) &&
             (((nFlagRasterVector & GDAL_OF_RASTER) &&
               poDriver->GetMetadataItem(GDAL_DCAP_RASTER) != nullptr) ||
              ((nFlagRasterVector & GDAL_OF_VECTOR) &&
@@ -3167,6 +3169,23 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
                  poMissingPluginDriver->GetDescription(),
                  GDALGetMessageAboutMissingPluginDriver(poMissingPluginDriver)
                      .c_str());
+    }
+    else if (aosDriverNames.empty() && bEmitWarning &&
+             aosMissingDriverNames.empty())
+    {
+        for (const auto &sConnectionPrefix : asKnownConnectionPrefixes)
+        {
+            if (STARTS_WITH_CI(pszDestDataset, sConnectionPrefix.pszPrefix))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Filename %s starts with the connection prefix of "
+                         "driver %s, which is not enabled in this GDAL build. "
+                         "If that filename is really intended, explicitly "
+                         "specify its output format.",
+                         pszDestDataset, sConnectionPrefix.pszDriverName);
+                break;
+            }
+        }
     }
 
     return aosDriverNames.StealList();

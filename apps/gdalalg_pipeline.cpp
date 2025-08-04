@@ -28,7 +28,9 @@
 #include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_footprint.h"
 #include "gdalalg_raster_polygonize.h"
+#include "gdalalg_raster_info.h"
 #include "gdalalg_vector_grid.h"
+#include "gdalalg_vector_info.h"
 #include "gdalalg_vector_rasterize.h"
 
 #include <algorithm>
@@ -219,9 +221,19 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         std::unique_ptr<GDALPipelineStepAlgorithm> writeAlg;
         if (GetOutputType() == GDAL_OF_RASTER)
-            writeAlg = std::make_unique<GDALRasterWriteAlgorithm>();
+        {
+            if (GetName() == GDALRasterInfoAlgorithm::NAME)
+                writeAlg = std::make_unique<GDALRasterInfoAlgorithm>();
+            else
+                writeAlg = std::make_unique<GDALRasterWriteAlgorithm>();
+        }
         else
-            writeAlg = std::make_unique<GDALVectorWriteAlgorithm>();
+        {
+            if (GetName() == GDALVectorInfoAlgorithm::NAME)
+                writeAlg = std::make_unique<GDALVectorInfoAlgorithm>();
+            else
+                writeAlg = std::make_unique<GDALVectorWriteAlgorithm>();
+        }
         for (auto &arg : writeAlg->GetArgs())
         {
             auto stepArg = GetArg(arg->GetName());
@@ -252,8 +264,9 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         else if (readAlg->Run())
         {
+            auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
             const bool bOutputSpecified =
-                GetArg(GDAL_ARG_NAME_OUTPUT)->IsExplicitlySet();
+                outputArg && outputArg->IsExplicitlySet();
 
             m_inputDataset.clear();
             m_inputDataset.resize(1);
@@ -401,6 +414,14 @@ class GDALPipelineAlgorithm final
         AddArg("pipeline", 0, _("Pipeline string"), &m_pipeline)
             .SetHiddenForCLI()
             .SetPositional();
+
+        AddOutputStringArg(&m_output).SetHiddenForCLI();
+        AddArg(
+            "stdout", 0,
+            _("Directly output on stdout (format=text mode only). If enabled, "
+              "output-string will be empty"),
+            &m_stdout)
+            .SetHidden();
 
         GDALRasterPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
         GDALVectorPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
@@ -618,24 +639,28 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
     if (!CheckFirstStep(stepAlgs))
         return false;  // CheckFirstStep emits an error
 
-    if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME)
+    if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME &&
+        steps.back().alg->GetName() != GDALRasterInfoAlgorithm::NAME)
     {
         if (helpRequested)
         {
             steps.back().alg->ParseCommandLineArguments(steps.back().args);
             return false;
         }
-        ReportError(CE_Failure, CPLE_AppDefined, "Last step should be '%s'",
-                    GDALRasterWriteAlgorithm::NAME);
+        ReportError(
+            CE_Failure, CPLE_AppDefined, "Last step should be '%s' or '%s'",
+            GDALRasterWriteAlgorithm::NAME, GDALRasterInfoAlgorithm::NAME);
         return false;
     }
     for (size_t i = 0; i < steps.size() - 1; ++i)
     {
-        if (steps[i].alg->GetName() == GDALRasterWriteAlgorithm::NAME)
+        if (steps[i].alg->GetName() == GDALRasterWriteAlgorithm::NAME ||
+            steps[i].alg->GetName() == GDALRasterInfoAlgorithm::NAME)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s'",
-                        GDALRasterWriteAlgorithm::NAME);
+                        "Only last step can be '%s' or '%s'",
+                        GDALRasterWriteAlgorithm::NAME,
+                        GDALRasterInfoAlgorithm::NAME);
             return false;
         }
     }
@@ -764,6 +789,8 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
             steps[i].alg->SetCallPath({steps[i].alg->GetName()});
             steps[i].alg->SetReferencePathForRelativePaths(
                 GetReferencePathForRelativePaths());
+            if (IsCalledFromCommandLine())
+                steps[i].alg->SetCalledFromCommandLine();
             steps[i].alreadyChangedType = true;
         }
         else if (steps[i].alg->GetInputType() != nLastStepOutputType)
@@ -896,17 +923,18 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
     }
+    for (const std::string &name :
+         {std::string(GDALRasterInfoAlgorithm::NAME) + RASTER_SUFFIX,
+          std::string(GDALRasterWriteAlgorithm::NAME) + RASTER_SUFFIX,
+          std::string(GDALVectorInfoAlgorithm::NAME) + VECTOR_SUFFIX,
+          std::string(GDALVectorWriteAlgorithm::NAME) + VECTOR_SUFFIX})
     {
         ret += '\n';
-        auto alg = std::make_unique<GDALRasterWriteAlgorithm>();
-        alg->SetCallPath({alg->GetName()});
-        ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
-    }
-    {
-        ret += '\n';
-        auto alg = std::make_unique<GDALVectorWriteAlgorithm>();
+        auto alg = GetStepAlg(name);
         assert(alg);
-        alg->SetCallPath({alg->GetName()});
+        alg->SetCallPath({CPLString(alg->GetName())
+                              .replaceAll(RASTER_SUFFIX, "")
+                              .replaceAll(VECTOR_SUFFIX, "")});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
 

@@ -92,6 +92,11 @@ class ILI2Reader : public IILI2Reader
 
     bool m_bXercesInitialized;
 
+    ILI2Reader(ILI2Reader &) = delete;
+    ILI2Reader &operator=(const ILI2Reader &) = delete;
+    ILI2Reader(ILI2Reader &&) = delete;
+    ILI2Reader &operator=(ILI2Reader &&) = delete;
+
   public:
     ILI2Reader();
     ~ILI2Reader();

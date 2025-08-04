@@ -77,7 +77,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
 
         AddOutputStringArg(&m_output);
 
-        RegisterSubAlgorithm<GDALRasterInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALRasterInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();

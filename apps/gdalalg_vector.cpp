@@ -62,7 +62,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
 
         AddOutputStringArg(&m_output);
 
-        RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();

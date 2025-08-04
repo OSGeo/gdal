@@ -192,6 +192,14 @@ Details for options can be found in :ref:`gdal_raster_unscale`.
 
 Details for options can be found in :ref:`gdal_raster_viewshed`.
 
+* info
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=info
+
+Details for options can be found in :ref:`gdal_raster_info`.
+
 * write
 
 .. program-output:: gdal raster pipeline --help-doc=write

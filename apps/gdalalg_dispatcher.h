@@ -33,8 +33,9 @@ class GDALDispatcherAlgorithm : public GDALAlgorithm
                             const std::string &helpURL)
         : GDALAlgorithm(name, description, helpURL),
           m_rasterDispatcher(std::make_unique<RasterDispatcher>(
-              /* openForMixedRasterVector = */ true)),
-          m_vectorDispatcher(std::make_unique<VectorDispatcher>())
+              /* standalone = */ true, /* openForMixedRasterVector = */ true)),
+          m_vectorDispatcher(
+              std::make_unique<VectorDispatcher>(/* standalone = */ true))
     {
         // A "info" dispacher command is a shortcut for something like
         // "raster info", "vector info". Best to expose the latter.
