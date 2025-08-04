@@ -2893,6 +2893,10 @@ def RATReadArray(rat, field, start=0, length=None):
     if length is None:
         length = rat.GetRowCount() - start
 
+    if length < 0:
+        gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "length must be a positive integer")
+        _RaiseException()
+
     ret = RATValuesIONumPyRead(rat, field, start, length)
     if ret is None:
         _RaiseException()
