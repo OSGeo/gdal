@@ -46,8 +46,7 @@ extern "C" void GDALRegister_PDS4();
 /************************************************************************/
 
 PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
-    : m_poBaseBand(poBaseBandIn), m_bHasOffset(false), m_bHasScale(false),
-      m_bHasNoData(false), m_dfOffset(0.0), m_dfScale(1.0), m_dfNoData(0.0)
+    : m_poBaseBand(poBaseBandIn)
 {
     eDataType = m_poBaseBand->GetRasterDataType();
     m_poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -124,6 +123,20 @@ CPLErr PDS4WrapperRasterBand::SetScale(double dfNewScale)
 
 double PDS4WrapperRasterBand::GetNoDataValue(int *pbSuccess)
 {
+    if (m_bHasNoDataInt64)
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataInt64);
+    }
+
+    if (m_bHasNoDataUInt64)
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataUInt64);
+    }
+
     if (pbSuccess)
         *pbSuccess = m_bHasNoData;
     return m_dfNoData;
@@ -142,6 +155,62 @@ CPLErr PDS4WrapperRasterBand::SetNoDataValue(double dfNewNoData)
     if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValue(
             dfNewNoData);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+int64_t PDS4WrapperRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
+{
+    if (pbSuccess)
+        *pbSuccess = m_bHasNoDataInt64;
+    return m_nNoDataInt64;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr PDS4WrapperRasterBand::SetNoDataValueAsInt64(int64_t nNewNoData)
+{
+    m_nNoDataInt64 = nNewNoData;
+    m_bHasNoDataInt64 = true;
+
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
+        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValueAsInt64(
+            nNewNoData);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+uint64_t PDS4WrapperRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
+{
+    if (pbSuccess)
+        *pbSuccess = m_bHasNoDataUInt64;
+    return m_nNoDataUInt64;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+CPLErr PDS4WrapperRasterBand::SetNoDataValueAsUInt64(uint64_t nNewNoData)
+{
+    m_nNoDataUInt64 = nNewNoData;
+    m_bHasNoDataUInt64 = true;
+
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
+        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValueAsUInt64(
+            nNewNoData);
 
     return CE_None;
 }
@@ -211,9 +280,7 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
                                      RawRasterBand::ByteOrder eByteOrderIn)
     : RawRasterBand(l_poDS, l_nBand, l_fpRaw, l_nImgOffset, l_nPixelOffset,
                     l_nLineOffset, l_eDataType, eByteOrderIn,
-                    RawRasterBand::OwnFP::NO),
-      m_bHasOffset(false), m_bHasScale(false), m_bHasNoData(false),
-      m_dfOffset(0.0), m_dfScale(1.0), m_dfNoData(0.0)
+                    RawRasterBand::OwnFP::NO)
 {
 }
 
@@ -277,6 +344,20 @@ CPLErr PDS4RawRasterBand::SetScale(double dfNewScale)
 
 double PDS4RawRasterBand::GetNoDataValue(int *pbSuccess)
 {
+    if (m_bHasNoDataInt64)
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataInt64);
+    }
+
+    if (m_bHasNoDataUInt64)
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return GDALGetNoDataValueCastToDouble(m_nNoDataUInt64);
+    }
+
     if (pbSuccess)
         *pbSuccess = m_bHasNoData;
     return m_dfNoData;
@@ -290,6 +371,62 @@ CPLErr PDS4RawRasterBand::SetNoDataValue(double dfNewNoData)
 {
     m_dfNoData = dfNewNoData;
     m_bHasNoData = true;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+int64_t PDS4RawRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
+{
+    if (pbSuccess)
+        *pbSuccess = m_bHasNoDataInt64;
+    return m_nNoDataInt64;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsInt64()                        */
+/************************************************************************/
+
+CPLErr PDS4RawRasterBand::SetNoDataValueAsInt64(int64_t nNewNoData)
+{
+    m_nNoDataInt64 = nNewNoData;
+    m_bHasNoDataInt64 = true;
+
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
+        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValueAsInt64(
+            nNewNoData);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       GetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+uint64_t PDS4RawRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
+{
+    if (pbSuccess)
+        *pbSuccess = m_bHasNoDataUInt64;
+    return m_nNoDataUInt64;
+}
+
+/************************************************************************/
+/*                       SetNoDataValueAsUInt64()                       */
+/************************************************************************/
+
+CPLErr PDS4RawRasterBand::SetNoDataValueAsUInt64(uint64_t nNewNoData)
+{
+    m_nNoDataUInt64 = nNewNoData;
+    m_bHasNoDataUInt64 = true;
+
+    PDS4Dataset *poGDS = cpl::down_cast<PDS4Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
+        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValueAsUInt64(
+            nNewNoData);
+
     return CE_None;
 }
 
@@ -457,6 +594,16 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     {
         FillMask<GInt32>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                          m_adfConstants);
+    }
+    else if (eSrcDT == GDT_UInt64)
+    {
+        FillMask<uint64_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, m_adfConstants);
+    }
+    else if (eSrcDT == GDT_Int64)
+    {
+        FillMask<int64_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          m_adfConstants);
     }
     else if (eSrcDT == GDT_Float32)
     {
@@ -1817,7 +1964,11 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 eDT = GDT_Int32;
             }
-            // SignedLSB8 and SignedMSB8 unhandled
+            else if (EQUAL(pszDataType, "SignedLSB8") ||
+                     EQUAL(pszDataType, "SignedMSB8"))
+            {
+                eDT = GDT_Int64;
+            }
             else if (EQUAL(pszDataType, "UnsignedByte"))
             {
                 eDT = GDT_Byte;
@@ -1832,7 +1983,11 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 eDT = GDT_UInt32;
             }
-            // UnsignedLSB8 and UnsignedMSB8 unhandled
+            else if (EQUAL(pszDataType, "UnsignedLSB8") ||
+                     EQUAL(pszDataType, "UnsignedMSB8"))
+            {
+                eDT = GDT_UInt64;
+            }
             else
             {
                 CPLDebug("PDS4", "data_type = '%s' unhandled", pszDataType);
@@ -1981,6 +2136,10 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             // Retrieve no data value
             bool bNoDataSet = false;
             double dfNoData = 0.0;
+            bool bNoDataSetInt64 = false;
+            int64_t nNoDataInt64 = 0;
+            bool bNoDataSetUInt64 = false;
+            int64_t nNoDataUInt64 = 0;
             std::vector<double> adfConstants;
             CPLXMLNode *psSC = CPLGetXMLNode(psSubIter, "Special_Constants");
             if (psSC)
@@ -1988,11 +2147,24 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 if (const char *pszMC =
                         CPLGetXMLValue(psSC, "missing_constant", nullptr))
                 {
-                    auto val = ConstantToDouble("missing_constant", pszMC);
-                    if (val)
+                    if (eDT == GDT_Int64)
                     {
-                        bNoDataSet = true;
-                        dfNoData = *val;
+                        bNoDataSetInt64 = true;
+                        nNoDataInt64 = std::strtoll(pszMC, nullptr, 10);
+                    }
+                    else if (eDT == GDT_UInt64)
+                    {
+                        bNoDataSetUInt64 = true;
+                        nNoDataUInt64 = std::strtoull(pszMC, nullptr, 10);
+                    }
+                    else
+                    {
+                        auto val = ConstantToDouble("missing_constant", pszMC);
+                        if (val)
+                        {
+                            bNoDataSet = true;
+                            dfNoData = *val;
+                        }
                     }
                 }
 
@@ -2109,6 +2281,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 if (bNoDataSet)
                 {
                     poBand->SetNoDataValue(dfNoData);
+                }
+                else if (bNoDataSetInt64)
+                {
+                    poBand->SetNoDataValueAsInt64(nNoDataInt64);
+                }
+                else if (bNoDataSetUInt64)
+                {
+                    poBand->SetNoDataValueAsUInt64(nNoDataUInt64);
                 }
                 poBand->SetOffset(dfValueOffset);
                 poBand->SetScale(dfValueScale);
@@ -3135,29 +3315,73 @@ bool PDS4Dataset::InitImageFile()
 {
     m_bMustInitImageFile = false;
 
+    int bHasNoData = FALSE;
+    double dfNoData = 0;
+    int bHasNoDataAsInt64 = FALSE;
+    int64_t nNoDataInt64 = 0;
+    int bHasNoDataAsUInt64 = FALSE;
+    uint64_t nNoDataUInt64 = 0;
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    if (eDT == GDT_Int64)
+    {
+        nNoDataInt64 =
+            GetRasterBand(1)->GetNoDataValueAsInt64(&bHasNoDataAsInt64);
+        if (!bHasNoDataAsInt64)
+            nNoDataInt64 = 0;
+    }
+    else if (eDT == GDT_UInt64)
+    {
+        nNoDataUInt64 =
+            GetRasterBand(1)->GetNoDataValueAsUInt64(&bHasNoDataAsUInt64);
+        if (!bHasNoDataAsUInt64)
+            nNoDataUInt64 = 0;
+    }
+    else
+    {
+        dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+        if (!bHasNoData)
+            dfNoData = 0;
+    }
+
     if (m_poExternalDS)
     {
         int nBlockXSize, nBlockYSize;
         GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
         const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
         const int nBlockSizeBytes = nBlockXSize * nBlockYSize * nDTSize;
         const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
-
-        int bHasNoData = FALSE;
-        double dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
-        if (!bHasNoData)
-            dfNoData = 0;
 
         if (nBands == 1 || EQUAL(m_osInterleave, "BSQ"))
         {
             // We need to make sure that blocks are written in the right order
             for (int i = 0; i < nBands; i++)
             {
-                if (m_poExternalDS->GetRasterBand(i + 1)->Fill(dfNoData) !=
-                    CE_None)
+                if (eDT == GDT_Int64)
                 {
-                    return false;
+                    if (m_poExternalDS->GetRasterBand(i + 1)->RasterIO(
+                            GF_Write, 0, 0, nRasterXSize, nRasterYSize,
+                            &nNoDataInt64, 1, 1, eDT, 0, 0, nullptr) != CE_None)
+                    {
+                        return false;
+                    }
+                }
+                else if (eDT == GDT_UInt64)
+                {
+                    if (m_poExternalDS->GetRasterBand(i + 1)->RasterIO(
+                            GF_Write, 0, 0, nRasterXSize, nRasterYSize,
+                            &nNoDataUInt64, 1, 1, eDT, 0, 0,
+                            nullptr) != CE_None)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (m_poExternalDS->GetRasterBand(i + 1)->Fill(dfNoData) !=
+                        CE_None)
+                    {
+                        return false;
+                    }
                 }
             }
             m_poExternalDS->FlushCache(false);
@@ -3203,8 +3427,21 @@ bool PDS4Dataset::InitImageFile()
             void *pBlockData = VSI_MALLOC_VERBOSE(nBlockSizeBytes);
             if (pBlockData == nullptr)
                 return false;
-            GDALCopyWords(&dfNoData, GDT_Float64, 0, pBlockData, eDT, nDTSize,
-                          nBlockXSize * nBlockYSize);
+            if (eDT == GDT_Int64)
+            {
+                GDALCopyWords(&nNoDataInt64, eDT, 0, pBlockData, eDT, nDTSize,
+                              nBlockXSize * nBlockYSize);
+            }
+            else if (eDT == GDT_UInt64)
+            {
+                GDALCopyWords(&nNoDataUInt64, eDT, 0, pBlockData, eDT, nDTSize,
+                              nBlockXSize * nBlockYSize);
+            }
+            else
+            {
+                GDALCopyWords(&dfNoData, GDT_Float64, 0, pBlockData, eDT,
+                              nDTSize, nBlockXSize * nBlockYSize);
+            }
             for (int y = 0; y < l_nBlocksPerColumn; y++)
             {
                 for (int i = 0; i < nBands; i++)
@@ -3259,13 +3496,13 @@ bool PDS4Dataset::InitImageFile()
         return true;
     }
 
-    int bHasNoData = FALSE;
-    const double dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     const vsi_l_offset nFileSize = static_cast<vsi_l_offset>(nRasterXSize) *
                                    nRasterYSize * nBands * nDTSize;
-    if (dfNoData == 0 || !bHasNoData)
+    if ((eDT == GDT_Int64 && (nNoDataInt64 == 0 || !bHasNoDataAsInt64)) ||
+        (eDT == GDT_UInt64 && (nNoDataUInt64 == 0 || !bHasNoDataAsUInt64)) ||
+        (eDT != GDT_Int64 && eDT != GDT_UInt64 &&
+         (dfNoData == 0 || !bHasNoData)))
     {
         if (VSIFTruncateL(m_fpImage, nFileSize) != 0)
         {
@@ -3281,8 +3518,21 @@ bool PDS4Dataset::InitImageFile()
         void *pData = VSI_MALLOC_VERBOSE(nLineSize);
         if (pData == nullptr)
             return false;
-        GDALCopyWords(&dfNoData, GDT_Float64, 0, pData, eDT, nDTSize,
-                      nRasterXSize);
+        if (eDT == GDT_Int64)
+        {
+            GDALCopyWords(&nNoDataInt64, eDT, 0, pData, eDT, nDTSize,
+                          nRasterXSize);
+        }
+        else if (eDT == GDT_UInt64)
+        {
+            GDALCopyWords(&nNoDataUInt64, eDT, 0, pData, eDT, nDTSize,
+                          nRasterXSize);
+        }
+        else
+        {
+            GDALCopyWords(&dfNoData, GDT_Float64, 0, pData, eDT, nDTSize,
+                          nRasterXSize);
+        }
 #ifdef CPL_MSB
         if (GDALDataTypeIsComplex(eDT))
         {
@@ -3427,6 +3677,8 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
         : (eDT == GDT_Int16)  ? (m_bIsLSB ? "SignedLSB2" : "SignedMSB2")
         : (eDT == GDT_UInt32) ? (m_bIsLSB ? "UnsignedLSB4" : "UnsignedMSB4")
         : (eDT == GDT_Int32)  ? (m_bIsLSB ? "SignedLSB4" : "SignedMSB4")
+        : (eDT == GDT_UInt64) ? (m_bIsLSB ? "UnsignedLSB8" : "UnsignedMSB8")
+        : (eDT == GDT_Int64)  ? (m_bIsLSB ? "SignedLSB8" : "SignedMSB8")
         : (eDT == GDT_Float32)
             ? (m_bIsLSB ? "IEEE754LSBSingle" : "IEEE754MSBSingle")
         : (eDT == GDT_Float64)
@@ -3522,7 +3774,29 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
     }
 
     int bHasNoData = FALSE;
-    double dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+    int64_t nNoDataInt64 = 0;
+    uint64_t nNoDataUInt64 = 0;
+    double dfNoData = 0;
+    if (eDT == GDT_Int64)
+        nNoDataInt64 = GetRasterBand(1)->GetNoDataValueAsInt64(&bHasNoData);
+    else if (eDT == GDT_UInt64)
+        nNoDataUInt64 = GetRasterBand(1)->GetNoDataValueAsUInt64(&bHasNoData);
+    else
+        dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+
+    std::string osNoData;
+    if (bHasNoData)
+    {
+        if (eDT == GDT_Int64)
+            osNoData = std::to_string(nNoDataInt64);
+        else if (eDT == GDT_UInt64)
+            osNoData = std::to_string(nNoDataUInt64);
+        else if (GDALDataTypeIsInteger(GetRasterBand(1)->GetRasterDataType()))
+            osNoData = std::to_string(static_cast<int64_t>(dfNoData));
+        else
+            osNoData = CPLSPrintf("%.17g", dfNoData);
+    }
+
     if (psTemplateSpecialConstants)
     {
         CPLAddXMLChild(psArray, psTemplateSpecialConstants);
@@ -3536,8 +3810,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
                 if (psMC->psChild && psMC->psChild->eType == CXT_Text)
                 {
                     CPLFree(psMC->psChild->pszValue);
-                    psMC->psChild->pszValue =
-                        CPLStrdup(CPLSPrintf("%.17g", dfNoData));
+                    psMC->psChild->pszValue = CPLStrdup(osNoData.c_str());
                 }
             }
             else
@@ -3547,7 +3820,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
                                   (osPrefix + "saturated_constant").c_str());
                 psMC = CPLCreateXMLElementAndValue(
                     nullptr, (osPrefix + "missing_constant").c_str(),
-                    CPLSPrintf("%.17g", dfNoData));
+                    osNoData.c_str());
                 CPLXMLNode *psNext;
                 if (psSaturatedConstant)
                 {
@@ -3567,9 +3840,8 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
     {
         CPLXMLNode *psSC = CPLCreateXMLNode(
             psArray, CXT_Element, (osPrefix + "Special_Constants").c_str());
-        CPLCreateXMLElementAndValue(psSC,
-                                    (osPrefix + "missing_constant").c_str(),
-                                    CPLSPrintf("%.17g", dfNoData));
+        CPLCreateXMLElementAndValue(
+            psSC, (osPrefix + "missing_constant").c_str(), osNoData.c_str());
     }
 }
 
@@ -4384,8 +4656,9 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
 
     if (!(eType == GDT_Byte || eType == GDT_Int8 || eType == GDT_Int16 ||
           eType == GDT_UInt16 || eType == GDT_Int32 || eType == GDT_UInt32 ||
-          eType == GDT_Float32 || eType == GDT_Float64 ||
-          eType == GDT_CFloat32 || eType == GDT_CFloat64))
+          eType == GDT_Int64 || eType == GDT_UInt64 || eType == GDT_Float32 ||
+          eType == GDT_Float64 || eType == GDT_CFloat32 ||
+          eType == GDT_CFloat64))
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -4879,10 +5152,28 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
     for (int i = 1; i <= nBands; i++)
     {
         int bHasNoData = false;
-        const double dfNoData =
-            poSrcDS->GetRasterBand(i)->GetNoDataValue(&bHasNoData);
-        if (bHasNoData)
-            poDS->GetRasterBand(i)->SetNoDataValue(dfNoData);
+
+        if (poSrcDS->GetRasterBand(i)->GetRasterDataType() == GDT_Int64)
+        {
+            const auto nNoData =
+                poSrcDS->GetRasterBand(i)->GetNoDataValueAsInt64(&bHasNoData);
+            if (bHasNoData)
+                poDS->GetRasterBand(i)->SetNoDataValueAsInt64(nNoData);
+        }
+        else if (poSrcDS->GetRasterBand(i)->GetRasterDataType() == GDT_UInt64)
+        {
+            const auto nNoData =
+                poSrcDS->GetRasterBand(i)->GetNoDataValueAsUInt64(&bHasNoData);
+            if (bHasNoData)
+                poDS->GetRasterBand(i)->SetNoDataValueAsUInt64(nNoData);
+        }
+        else
+        {
+            const double dfNoData =
+                poSrcDS->GetRasterBand(i)->GetNoDataValue(&bHasNoData);
+            if (bHasNoData)
+                poDS->GetRasterBand(i)->SetNoDataValue(dfNoData);
+        }
 
         const double dfOffset = poSrcDS->GetRasterBand(i)->GetOffset();
         if (dfOffset != 0.0)

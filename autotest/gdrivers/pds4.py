@@ -1894,3 +1894,55 @@ def test_pds4_json_isis3_to_geotiff(tmp_vsimem):
 def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).GetNoDataValue() == expected_val
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "dt,val",
+    [
+        (gdal.GDT_Byte, 255),
+        (gdal.GDT_Int64, (1 << 63) - 1),
+        (gdal.GDT_UInt64, (1 << 64) - 1),
+        (gdal.GDT_Float32, -3.4028226550889045e38),
+        (gdal.GDT_Float64, -1.7976931348623157e308),
+    ],
+)
+@pytest.mark.parametrize("geotiff", [True, False])
+def test_pds4_write_missing_constant(tmp_vsimem, dt, val, geotiff):
+
+    options = ["IMAGE_FORMAT=GEOTIFF"] if geotiff else []
+    ds = gdal.GetDriverByName("PDS4").Create(
+        tmp_vsimem / "test.xml", 1, 1, 1, dt, options=options
+    )
+    if dt == gdal.GDT_Int64:
+        ds.GetRasterBand(1).SetNoDataValueAsInt64(val)
+    elif dt == gdal.GDT_UInt64:
+        ds.GetRasterBand(1).SetNoDataValueAsUInt64(val)
+    else:
+        ds.GetRasterBand(1).SetNoDataValue(val)
+
+    if dt == gdal.GDT_Int64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == val
+    elif dt == gdal.GDT_UInt64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == val
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == val
+
+    ds = None
+
+    ds = gdal.Open(tmp_vsimem / "test.xml")
+    assert ds.GetRasterBand(1).DataType == dt
+    if dt == gdal.GDT_Int64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == val
+        assert ds.GetRasterBand(1).ReadRaster() == struct.pack("q", val)
+    elif dt == gdal.GDT_UInt64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == val
+        assert ds.GetRasterBand(1).ReadRaster() == struct.pack("Q", val)
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == val
+        if dt == gdal.GDT_Float32:
+            assert ds.GetRasterBand(1).ReadRaster() == struct.pack("f", val)
+        elif dt == gdal.GDT_Float64:
+            assert ds.GetRasterBand(1).ReadRaster() == struct.pack("d", val)
