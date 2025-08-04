@@ -110,6 +110,19 @@ def test_algorithm(tmp_path):
     assert arg.GetChoices() is None
     assert not arg.IsExplicitlySet()
     assert arg.HasDefaultValue()
+    assert arg.GetDefaultAsBoolean() is False
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsInteger()
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsDouble()
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsString()
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsIntegerList()
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsDoubleList()
+    with pytest.raises(Exception, match="must only be called on arguments of type"):
+        arg.GetDefaultAsStringList()
     assert not arg.IsHiddenForCLI()
     assert not arg.IsOnlyForCLI()
     assert arg.IsInput()

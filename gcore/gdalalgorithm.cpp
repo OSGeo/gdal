@@ -5716,9 +5716,12 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                     }
                     else
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Unhandled default value for arg %s",
-                                 arg->GetName().c_str());
+                        CPLJSONArray jArr;
+                        for (const auto &s : val)
+                        {
+                            jArr.Add(s);
+                        }
+                        jArg.Add("default", jArr);
                     }
                     break;
                 }
@@ -5731,9 +5734,12 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                     }
                     else
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Unhandled default value for arg %s",
-                                 arg->GetName().c_str());
+                        CPLJSONArray jArr;
+                        for (int i : val)
+                        {
+                            jArr.Add(i);
+                        }
+                        jArg.Add("default", jArr);
                     }
                     break;
                 }
@@ -5746,9 +5752,12 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
                     }
                     else
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Unhandled default value for arg %s",
-                                 arg->GetName().c_str());
+                        CPLJSONArray jArr;
+                        for (double d : val)
+                        {
+                            jArr.Add(d);
+                        }
+                        jArg.Add("default", jArr);
                     }
                     break;
                 }
@@ -6747,6 +6756,214 @@ bool GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArgGetDefaultAsBoolean()                */
+/************************************************************************/
+
+/** Return the argument default value as a integer.
+ *
+ * Must only be called on arguments whose type is GAAT_BOOLEAN
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.12
+ */
+bool GDALAlgorithmArgGetDefaultAsBoolean(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, false);
+    if (hArg->ptr->GetType() != GAAT_BOOLEAN)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_BOOLEAN",
+                 __func__);
+        return false;
+    }
+    return hArg->ptr->GetDefault<bool>();
+}
+
+/************************************************************************/
+/*                 GDALAlgorithmArgGetDefaultAsString()                 */
+/************************************************************************/
+
+/** Return the argument default value as a string.
+ *
+ * Must only be called on arguments whose type is GAAT_STRING.
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @return string whose lifetime is bound to hArg and which must not
+ * be freed.
+ * @since 3.11
+ */
+const char *GDALAlgorithmArgGetDefaultAsString(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, nullptr);
+    if (hArg->ptr->GetType() != GAAT_STRING)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_STRING",
+                 __func__);
+        return nullptr;
+    }
+    return hArg->ptr->GetDefault<std::string>().c_str();
+}
+
+/************************************************************************/
+/*                 GDALAlgorithmArgGetDefaultAsInteger()                */
+/************************************************************************/
+
+/** Return the argument default value as a integer.
+ *
+ * Must only be called on arguments whose type is GAAT_INTEGER
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.12
+ */
+int GDALAlgorithmArgGetDefaultAsInteger(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, 0);
+    if (hArg->ptr->GetType() != GAAT_INTEGER)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_INTEGER",
+                 __func__);
+        return 0;
+    }
+    return hArg->ptr->GetDefault<int>();
+}
+
+/************************************************************************/
+/*                 GDALAlgorithmArgGetDefaultAsDouble()                 */
+/************************************************************************/
+
+/** Return the argument default value as a double.
+ *
+ * Must only be called on arguments whose type is GAAT_REAL
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.12
+ */
+double GDALAlgorithmArgGetDefaultAsDouble(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, 0);
+    if (hArg->ptr->GetType() != GAAT_REAL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_REAL",
+                 __func__);
+        return 0;
+    }
+    return hArg->ptr->GetDefault<double>();
+}
+
+/************************************************************************/
+/*                GDALAlgorithmArgGetDefaultAsStringList()              */
+/************************************************************************/
+
+/** Return the argument default value as a string list.
+ *
+ * Must only be called on arguments whose type is GAAT_STRING_LIST.
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @return a NULL terminated list of names, which must be destroyed with
+ * CSLDestroy()
+
+ * @since 3.12
+ */
+char **GDALAlgorithmArgGetDefaultAsStringList(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, nullptr);
+    if (hArg->ptr->GetType() != GAAT_STRING_LIST)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_STRING_LIST",
+                 __func__);
+        return nullptr;
+    }
+    return CPLStringList(hArg->ptr->GetDefault<std::vector<std::string>>())
+        .StealList();
+}
+
+/************************************************************************/
+/*               GDALAlgorithmArgGetDefaultAsIntegerList()              */
+/************************************************************************/
+
+/** Return the argument default value as a integer list.
+ *
+ * Must only be called on arguments whose type is GAAT_INTEGER_LIST.
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @param[out] pnCount Pointer to the number of values in the list. Must NOT be null.
+ * @since 3.12
+ */
+const int *GDALAlgorithmArgGetDefaultAsIntegerList(GDALAlgorithmArgH hArg,
+                                                   size_t *pnCount)
+{
+    VALIDATE_POINTER1(hArg, __func__, nullptr);
+    VALIDATE_POINTER1(pnCount, __func__, nullptr);
+    if (hArg->ptr->GetType() != GAAT_INTEGER_LIST)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "%s must only be called on arguments of type GAAT_INTEGER_LIST",
+            __func__);
+        *pnCount = 0;
+        return nullptr;
+    }
+    const auto &val = hArg->ptr->GetDefault<std::vector<int>>();
+    *pnCount = val.size();
+    return val.data();
+}
+
+/************************************************************************/
+/*               GDALAlgorithmArgGetDefaultAsDoubleList()               */
+/************************************************************************/
+
+/** Return the argument default value as a real list.
+ *
+ * Must only be called on arguments whose type is GAAT_REAL_LIST.
+ *
+ * GDALAlgorithmArgHasDefaultValue() must be called to determine if the
+ * argument has a default value.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @param[out] pnCount Pointer to the number of values in the list. Must NOT be null.
+ * @since 3.12
+ */
+const double *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH hArg,
+                                                     size_t *pnCount)
+{
+    VALIDATE_POINTER1(hArg, __func__, nullptr);
+    VALIDATE_POINTER1(pnCount, __func__, nullptr);
+    if (hArg->ptr->GetType() != GAAT_REAL_LIST)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s must only be called on arguments of type GAAT_REAL_LIST",
+                 __func__);
+        *pnCount = 0;
+        return nullptr;
+    }
+    const auto &val = hArg->ptr->GetDefault<std::vector<double>>();
+    *pnCount = val.size();
+    return val.data();
+}
+
+/************************************************************************/
 /*                   GDALAlgorithmArgIsHiddenForCLI()                   */
 /************************************************************************/
 
@@ -6937,7 +7154,7 @@ bool GDALAlgorithmArgGetAsBoolean(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArgGetAsBoolean()                    */
+/*                    GDALAlgorithmArgGetAsString()                     */
 /************************************************************************/
 
 /** Return the argument value as a string.
@@ -7043,7 +7260,7 @@ double GDALAlgorithmArgGetAsDouble(GDALAlgorithmArgH hArg)
 /*                   GDALAlgorithmArgGetAsStringList()                  */
 /************************************************************************/
 
-/** Return the argument value as a double.
+/** Return the argument value as a string list.
  *
  * Must only be called on arguments whose type is GAAT_STRING_LIST.
  *
@@ -7071,9 +7288,9 @@ char **GDALAlgorithmArgGetAsStringList(GDALAlgorithmArgH hArg)
 /*                  GDALAlgorithmArgGetAsIntegerList()                  */
 /************************************************************************/
 
-/** Return the argument value as a integer.
+/** Return the argument value as a integer list.
  *
- * Must only be called on arguments whose type is GAAT_INTEGER
+ * Must only be called on arguments whose type is GAAT_INTEGER_LIST.
  *
  * @param hArg Handle to an argument. Must NOT be null.
  * @param[out] pnCount Pointer to the number of values in the list. Must NOT be null.
@@ -7102,9 +7319,9 @@ const int *GDALAlgorithmArgGetAsIntegerList(GDALAlgorithmArgH hArg,
 /*                  GDALAlgorithmArgGetAsDoubleList()                   */
 /************************************************************************/
 
-/** Return the argument value as a integer.
+/** Return the argument value as a real list.
  *
- * Must only be called on arguments whose type is GAAT_INTEGER
+ * Must only be called on arguments whose type is GAAT_REAL_LIST.
  *
  * @param hArg Handle to an argument. Must NOT be null.
  * @param[out] pnCount Pointer to the number of values in the list. Must NOT be null.

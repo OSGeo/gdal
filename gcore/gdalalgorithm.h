@@ -158,6 +158,22 @@ bool CPL_DLL GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH);
 
+bool CPL_DLL GDALAlgorithmArgGetDefaultAsBoolean(GDALAlgorithmArgH);
+
+const char CPL_DLL *GDALAlgorithmArgGetDefaultAsString(GDALAlgorithmArgH);
+
+int CPL_DLL GDALAlgorithmArgGetDefaultAsInteger(GDALAlgorithmArgH);
+
+double CPL_DLL GDALAlgorithmArgGetDefaultAsDouble(GDALAlgorithmArgH);
+
+char CPL_DLL **GDALAlgorithmArgGetDefaultAsStringList(GDALAlgorithmArgH);
+
+const int CPL_DLL *GDALAlgorithmArgGetDefaultAsIntegerList(GDALAlgorithmArgH,
+                                                           size_t *pnCount);
+
+const double CPL_DLL *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH,
+                                                             size_t *pnCount);
+
 bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH);
@@ -621,6 +637,12 @@ class CPL_DLL GDALAlgorithmArgDecl final
                         m_defaultValue = std::vector<std::string>{value};
                         return *this;
                     }
+                    else if constexpr (std::is_same_v<T,
+                                                      std::vector<std::string>>)
+                    {
+                        m_defaultValue = value;
+                        return *this;
+                    }
                     break;
                 }
 
@@ -629,6 +651,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     if constexpr (std::is_same_v<T, int>)
                     {
                         m_defaultValue = std::vector<int>{value};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<int>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
@@ -640,6 +667,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                     {
                         m_defaultValue =
                             std::vector<double>{static_cast<double>(value)};
+                        return *this;
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<double>>)
+                    {
+                        m_defaultValue = value;
                         return *this;
                     }
                     break;
