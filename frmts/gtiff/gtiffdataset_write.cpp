@@ -4307,12 +4307,27 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             papszSrcMDD)
         {
             GDALMultiDomainMetadata l_oMDMD;
-            CSLConstList papszMD = poSrcDS->GetMetadata();
-            if (CSLCount(papszMD) > 0 &&
-                (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
-                 CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
             {
-                l_oMDMD.SetMetadata(papszMD);
+                CSLConstList papszMD = poSrcDS->GetMetadata();
+                if (CSLCount(papszMD) > 0 &&
+                    (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
+                     CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
+                {
+                    l_oMDMD.SetMetadata(papszMD);
+                }
+            }
+
+            if (EQUAL(pszCopySrcMDD, "AUTO") && !papszSrcMDD)
+            {
+                // Propagate ISIS3 or VICAR metadata
+                for (const char *pszMDD : {"json:ISIS3", "json:VICAR"})
+                {
+                    char **papszMD = poSrcDS->GetMetadata(pszMDD);
+                    if (papszMD)
+                    {
+                        l_oMDMD.SetMetadata(papszMD, pszMDD);
+                    }
+                }
             }
 
             if ((!EQUAL(pszCopySrcMDD, "AUTO") && CPLTestBool(pszCopySrcMDD)) ||
@@ -8227,17 +8242,6 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         GTiffDataset::WriteRPC(poDS, l_hTIFF, true, eProfile, pszFilename,
                                papszOptions,
                                true /* write only in PAM AND if needed */);
-
-    // Propagate ISIS3 or VICAR metadata, but only as PAM metadata.
-    for (const char *pszMDD : {"json:ISIS3", "json:VICAR"})
-    {
-        char **papszMD = poSrcDS->GetMetadata(pszMDD);
-        if (papszMD)
-        {
-            poDS->SetMetadata(papszMD, pszMDD);
-            poDS->PushMetadataToPam();
-        }
-    }
 
     poDS->m_bWriteCOGLayout = bCopySrcOverviews;
 
