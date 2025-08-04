@@ -1813,7 +1813,8 @@ void PDS4DelimitedTable::GenerateVRT()
         psLayer, "SrcDataSource", CPLGetFilename(m_osFilename));
     CPLAddXMLAttributeAndValue(psSrcDataSource, "relativeToVRT", "1");
 
-    CPLCreateXMLElementAndValue(psLayer, "SrcLayer", GetName());
+    CPLCreateXMLElementAndValue(
+        psLayer, "SrcLayer", CPLGetBasenameSafe(m_osFilename.c_str()).c_str());
 
     CPLXMLNode *psLastChild = CPLCreateXMLElementAndValue(
         psLayer, "GeometryType",
