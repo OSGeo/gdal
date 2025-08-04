@@ -242,6 +242,7 @@ bool ViewshedExecutor::writeLine(int nLine, std::vector<double> &vResult)
 /// @param  nYOffset  Y offset of the line being adjusted.
 /// @param  vThisLineVal  Line height data.
 /// @param  vPitchMaskVal  Pitch masking line.
+/// @param  vResult  Initialized Result vector.
 /// @return  Processing limits of the line based on min/max distance.
 LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
                                           std::vector<double> &vThisLineVal,
@@ -342,6 +343,12 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
     return ll;
 }
 
+/// Calculate the pitch masking value to apply after running the viewshed algorithm.
+///
+/// @param  dfZ  Adjusted input height.
+/// @param  dfDist  Distance from observer to cell.
+/// @param  dfResult  Result value to which adjustment may be added.
+/// @param  maskVal  Output mask value.
 void ViewshedExecutor::calcPitchMask(double dfZ, double dfDist, double dfResult,
                                      double &maskVal)
 {
@@ -428,6 +435,11 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     return oProgress.lineComplete();
 }
 
+/// Set the pitch masked value into the result vector when applicable.
+///
+/// @param  vResult  Result vector.
+/// @param  vPitchMaskVal  Pitch mask values (nan is no masking, inf is out-of-range, else
+///                        actual value).
 void ViewshedExecutor::applyPitchMask(std::vector<double> &vResult,
                                       const std::vector<double> &vPitchMaskVal)
 {
@@ -442,8 +454,8 @@ void ViewshedExecutor::applyPitchMask(std::vector<double> &vResult,
     }
 }
 
-// If the observer is above or below the raster, set all cells in the first line near the
-// observer as observable provided they're in range. Mark cells out of range as such.
+/// If the observer is above or below the raster, set all cells in the first line near the
+/// observer as observable provided they're in range. Mark cells out of range as such.
 /// @param  ll  Line limits for processing.
 /// @param  vResult  Result line.
 /// @param  vThisLineVal  Heights of the cells in the target line
