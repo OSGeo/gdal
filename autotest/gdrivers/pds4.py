@@ -1843,3 +1843,18 @@ def test_pds4_read_right_to_left(tmp_path):
     ds = gdal.Open(tmp_filename)
     # Test that we flip the image along the horizontal axis
     assert numpy.all(ds.ReadAsArray()[::, ::-1] == ref_ds.ReadAsArray())
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,expected_val",
+    [
+        ("data/pds4/missing_constant_hexadecimal_float.xml", -3.4028226550889045e38),
+        ("data/pds4/missing_constant_hexadecimal_double.xml", -1.7976931348623157e308),
+    ],
+)
+def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == expected_val
