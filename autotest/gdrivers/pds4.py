@@ -1879,3 +1879,18 @@ def test_pds4_json_isis3_to_geotiff(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "out.tif.aux.xml") is None
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert ds.GetMetadata("json:ISIS3") is None
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,expected_val",
+    [
+        ("data/pds4/missing_constant_hexadecimal_float.xml", -3.4028226550889045e38),
+        ("data/pds4/missing_constant_hexadecimal_double.xml", -1.7976931348623157e308),
+    ],
+)
+def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == expected_val

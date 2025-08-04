@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <optional>
 
 #define TIFF_GEOTIFF_STRING "TIFF 6.0"
 #define BIGTIFF_GEOTIFF_STRING "TIFF 6.0"
@@ -1515,6 +1516,60 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
 }
 
 /************************************************************************/
+/*                           ConstantToDouble()                         */
+/************************************************************************/
+
+static std::optional<double> ConstantToDouble(const char *pszItem,
+                                              const char *pszVal)
+{
+    if (STARTS_WITH(pszVal, "0x"))
+    {
+        if (strlen(pszVal) == strlen("0x") + 2 * sizeof(float))
+        {
+            char *endptr = nullptr;
+            const uint32_t nVal =
+                static_cast<uint32_t>(std::strtoull(pszVal, &endptr, 0));
+            if (endptr == pszVal + strlen(pszVal))
+            {
+                float fVal;
+                memcpy(&fVal, &nVal, sizeof(nVal));
+                return fVal;
+            }
+        }
+        else if (strlen(pszVal) == strlen("0x") + 2 * sizeof(double))
+        {
+            char *endptr = nullptr;
+            const uint64_t nVal =
+                static_cast<uint64_t>(std::strtoull(pszVal, &endptr, 0));
+            if (endptr == pszVal + strlen(pszVal))
+            {
+                double dfVal;
+                memcpy(&dfVal, &nVal, sizeof(nVal));
+                return dfVal;
+            }
+        }
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for '%s': '%s'",
+                 pszItem, pszVal);
+        return std::nullopt;
+    }
+    else
+    {
+        char *endptr = nullptr;
+        double dfVal = std::strtod(pszVal, &endptr);
+        if (endptr == pszVal + strlen(pszVal))
+        {
+            return dfVal;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for '%s': '%s'", pszItem, pszVal);
+            return std::nullopt;
+        }
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1930,12 +1985,15 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             CPLXMLNode *psSC = CPLGetXMLNode(psSubIter, "Special_Constants");
             if (psSC)
             {
-                const char *pszMC =
-                    CPLGetXMLValue(psSC, "missing_constant", nullptr);
-                if (pszMC)
+                if (const char *pszMC =
+                        CPLGetXMLValue(psSC, "missing_constant", nullptr))
                 {
-                    bNoDataSet = true;
-                    dfNoData = CPLAtof(pszMC);
+                    auto val = ConstantToDouble("missing_constant", pszMC);
+                    if (val)
+                    {
+                        bNoDataSet = true;
+                        dfNoData = *val;
+                    }
                 }
 
                 const char *apszConstantNames[] = {
@@ -1949,12 +2007,17 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                     "high_representation_saturation",
                     "low_instrument_saturation",
                     "low_representation_saturation"};
-                for (size_t i = 0; i < CPL_ARRAYSIZE(apszConstantNames); i++)
+                for (const char *pszItem : apszConstantNames)
                 {
-                    const char *pszConstant =
-                        CPLGetXMLValue(psSC, apszConstantNames[i], nullptr);
-                    if (pszConstant)
-                        adfConstants.push_back(CPLAtof(pszConstant));
+                    if (const char *pszConstant =
+                            CPLGetXMLValue(psSC, pszItem, nullptr))
+                    {
+                        auto val = ConstantToDouble(pszItem, pszConstant);
+                        if (val)
+                        {
+                            adfConstants.push_back(*val);
+                        }
+                    }
                 }
             }
 
