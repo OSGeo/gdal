@@ -71,6 +71,7 @@ void GDALVectorPipelineStepAlgorithm::AddInputArgs(bool hiddenForCLI)
                       GetName() == GDALVectorConcatAlgorithm::NAME)
                          ? INT_MAX
                          : 1)
+        .SetAutoOpenDataset(GetName() != GDALVectorConcatAlgorithm::NAME)
         .SetHiddenForCLI(hiddenForCLI);
     if (GetName() != GDALVectorSQLAlgorithm::NAME)
     {
