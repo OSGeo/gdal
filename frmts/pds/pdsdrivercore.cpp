@@ -308,9 +308,6 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
         "'Name of a field containing a Altitude value' default='Altitude'/>"
         "  <Option name='WKT' type='string' description="
         "'Name of a field containing a WKT value' default='WKT'/>"
-        "  <Option name='SAME_DIRECTORY' type='boolean' description="
-        "'Whether table files should be created in the same "
-        "directory, or in a subdirectory' default='NO'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(

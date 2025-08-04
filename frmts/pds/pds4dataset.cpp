@@ -1428,7 +1428,12 @@ bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
                  pszFilename);
         return false;
     }
-    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    if (cpl::starts_with(osLayerName,
+                         CPLGetBasenameSafe(m_osXMLFilename.c_str()) + "_"))
+        osLayerName = osLayerName.substr(
+            CPLGetBasenameSafe(m_osXMLFilename.c_str()).size() + 1);
+
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
     auto poLayer = std::make_unique<PDS4TableCharacter>(
@@ -1455,7 +1460,13 @@ bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
                  "OpenTableBinary(): path traversal detected: %s", pszFilename);
         return false;
     }
-    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+
+    std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    if (cpl::starts_with(osLayerName,
+                         CPLGetBasenameSafe(m_osXMLFilename.c_str()) + "_"))
+        osLayerName = osLayerName.substr(
+            CPLGetBasenameSafe(m_osXMLFilename.c_str()).size() + 1);
+
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
     auto poLayer = std::make_unique<PDS4TableBinary>(this, osLayerName.c_str(),
@@ -1483,7 +1494,13 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
                  pszFilename);
         return false;
     }
-    const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+
+    std::string osLayerName(CPLGetBasenameSafe(pszFilename));
+    if (cpl::starts_with(osLayerName,
+                         CPLGetBasenameSafe(m_osXMLFilename.c_str()) + "_"))
+        osLayerName = osLayerName.substr(
+            CPLGetBasenameSafe(m_osXMLFilename.c_str()).size() + 1);
+
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
     auto poLayer = std::make_unique<PDS4DelimitedTable>(
@@ -4167,10 +4184,6 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     const char *pszExt = EQUAL(pszTableType, "CHARACTER") ? "dat"
                          : EQUAL(pszTableType, "BINARY")  ? "bin"
                                                           : "csv";
-
-    bool bSameDirectory =
-        CPLTestBool(CSLFetchNameValueDef(papszOptions, "SAME_DIRECTORY", "NO"));
-
     std::string osBasename(pszName);
     for (char &ch : osBasename)
     {
@@ -4179,37 +4192,21 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
             ch = '_';
     }
 
-    CPLString osFullFilename;
-    if (bSameDirectory)
+    CPLString osFullFilename(CPLFormFilenameSafe(
+        CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(),
+        CPLGetBasenameSafe(m_osXMLFilename.c_str()).c_str(), nullptr));
+    osFullFilename += '_';
+    osFullFilename += osBasename.c_str();
+    osFullFilename += '.';
+    osFullFilename += pszExt;
+    VSIStatBufL sStat;
+    if (VSIStatL(osFullFilename, &sStat) == 0)
     {
-        osFullFilename =
-            CPLFormFilenameSafe(CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(),
-                                osBasename.c_str(), pszExt);
-        VSIStatBufL sStat;
-        if (VSIStatL(osFullFilename, &sStat) == 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "%s already exists. Please delete it before, or "
-                     "rename the layer",
-                     osFullFilename.c_str());
-            return nullptr;
-        }
-    }
-    else
-    {
-        CPLString osDirectory = CPLFormFilenameSafe(
-            CPLGetPathSafe(m_osXMLFilename).c_str(),
-            CPLGetBasenameSafe(m_osXMLFilename).c_str(), nullptr);
-        VSIStatBufL sStat;
-        if (VSIStatL(osDirectory, &sStat) != 0 &&
-            VSIMkdir(osDirectory, 0755) != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot create directory %s",
-                     osDirectory.c_str());
-            return nullptr;
-        }
-        osFullFilename =
-            CPLFormFilenameSafe(osDirectory, osBasename.c_str(), pszExt);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s already exists. Please delete it before, or "
+                 "rename the layer",
+                 osFullFilename.c_str());
+        return nullptr;
     }
 
     if (EQUAL(pszTableType, "DELIMITED"))
