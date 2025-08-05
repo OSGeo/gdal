@@ -18,7 +18,7 @@ import os
 import sys
 
 import gdaltest
-from lxml import etree
+import pytest
 
 ###############################################################################
 # Remove mime header if found
@@ -80,6 +80,11 @@ def validate(
     ogc_schemas_location=None,
     inspire_schemas_location=None,
 ):
+
+    try:
+        from lxml import etree
+    except ImportError:
+        pytest.skip("lxml not available")
 
     try:
         if xml_filename_or_content.startswith("<"):
