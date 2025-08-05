@@ -1255,7 +1255,7 @@ CPLErr GDALWarpKernel::PerformWarp()
     if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
 
-    if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
+    if (eWorkingDataType == GDT_UInt16 && eResample == GRA_NearestNeighbour)
         return GWKNearestUnsignedShort(this);
 
     if (eWorkingDataType == GDT_Float32 && eResample == GRA_NearestNeighbour &&
