@@ -3834,7 +3834,9 @@ void netCDFDataset::SetProjectionFromVar(
             bGotCfGT = true;
 
             int node_offset = 0;
-            NCDFResolveAttInt(nGroupId, NC_GLOBAL, "node_offset", &node_offset);
+            const bool bUseActualRange =
+                NCDFResolveAttInt(nGroupId, NC_GLOBAL, "node_offset",
+                                  &node_offset) == CE_None;
 
             double adfActualRange[2] = {0.0, 0.0};
             double xMinMax[2] = {0.0, 0.0};
@@ -3890,7 +3892,8 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             };
 
-            if (!nc_get_att_double(nGroupDimXID, nVarDimXID, "actual_range",
+            if (bUseActualRange &&
+                !nc_get_att_double(nGroupDimXID, nVarDimXID, "actual_range",
                                    adfActualRange))
             {
                 xMinMax[0] = adfActualRange[0];
@@ -3917,7 +3920,8 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             }
 
-            if (!nc_get_att_double(nGroupDimYID, nVarDimYID, "actual_range",
+            if (bUseActualRange &&
+                !nc_get_att_double(nGroupDimYID, nVarDimYID, "actual_range",
                                    adfActualRange))
             {
                 yMinMax[0] = adfActualRange[0];
