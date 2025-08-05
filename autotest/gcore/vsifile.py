@@ -18,7 +18,6 @@ import time
 
 import gdaltest
 import pytest
-from lxml import etree
 
 from osgeo import gdal, ogr
 
@@ -800,6 +799,8 @@ def test_vsifile_18():
     reason="Crashes for unknown reason",
 )
 def test_vsifile_19():
+
+    from lxml import etree
 
     for prefix in gdal.GetFileSystemsPrefixes():
         options = gdal.GetFileSystemOptions(prefix)

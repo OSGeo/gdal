@@ -28,8 +28,6 @@ pytestmark = pytest.mark.skipif(
     reason="VRT driver open missing",
 )
 
-from lxml import etree
-
 from osgeo import gdal, osr
 
 ###############################################################################
@@ -2040,60 +2038,6 @@ def test_warp_multi_threaded_errors(tmp_vsimem):
 ###############################################################################
 
 
-schema_optionlist = etree.XML(
-    r"""
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:element name="Value">
-    <xs:complexType>
-      <xs:simpleContent>
-        <xs:extension base="xs:string">
-          <xs:attribute type="xs:string" name="alias" use="optional"/>
-        </xs:extension>
-      </xs:simpleContent>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="Option">
-    <xs:complexType mixed="true">
-      <xs:sequence>
-        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
-      </xs:sequence>
-      <xs:attribute name="name" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[^\s]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute name="type" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="int" />
-            <xs:enumeration value="float" />
-            <xs:enumeration value="boolean" />
-            <xs:enumeration value="string-select" />
-            <xs:enumeration value="string" />
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute type="xs:string" name="description" use="optional"/>
-      <xs:attribute type="xs:string" name="default" use="optional"/>
-      <xs:attribute type="xs:string" name="alias" use="optional"/>
-      <xs:attribute type="xs:string" name="min" use="optional"/>
-      <xs:attribute type="xs:string" name="max" use="optional"/>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="OptionList">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-</xs:schema>
-"""
-)
-
-
 def test_warp_validate_options():
 
     if (
@@ -2102,6 +2046,61 @@ def test_warp_validate_options():
         or gdaltest.is_travis_branch("build-windows-minimum")
     ):
         pytest.skip("Crashes for unknown reason")
+
+    from lxml import etree
+
+    schema_optionlist = etree.XML(
+        r"""
+    <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        <xs:element name="Value">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="xs:string">
+              <xs:attribute type="xs:string" name="alias" use="optional"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Option">
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+          <xs:attribute name="name" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:pattern value="[^\s]*"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="type" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="int" />
+                <xs:enumeration value="float" />
+                <xs:enumeration value="boolean" />
+                <xs:enumeration value="string-select" />
+                <xs:enumeration value="string" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute type="xs:string" name="description" use="optional"/>
+          <xs:attribute type="xs:string" name="default" use="optional"/>
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="min" use="optional"/>
+          <xs:attribute type="xs:string" name="max" use="optional"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="OptionList">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+    """
+    )
 
     schema = etree.XMLSchema(schema_optionlist)
 
