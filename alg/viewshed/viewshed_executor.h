@@ -96,6 +96,7 @@ class ViewshedExecutor
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
     LineLimits adjustHeight(int iLine, std::vector<double> &thisLineVal,
+                            const std::vector<double> &vResult,
                             std::vector<double> &vPitchMaskVal);
     void maskInitial(std::vector<double> &vResult, int nLine);
     bool maskAngleLeft(std::vector<double> &vResult, int nLine);
@@ -104,7 +105,8 @@ class ViewshedExecutor
                       int nLine);
     void maskLineRight(std::vector<double> &vResult, const LineLimits &ll,
                        int nLine);
-    void calcPitchMask(double dfZ, double dfDist, double &maskVal);
+    void calcPitchMask(double dfZ, double dfDist, double dfResult,
+                       double &maskVal);
     void applyPitchMask(std::vector<double> &vResult,
                         const std::vector<double> &vPitchMaskVal);
     void calcTestAngles();

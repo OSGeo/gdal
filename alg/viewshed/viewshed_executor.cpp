@@ -242,9 +242,11 @@ bool ViewshedExecutor::writeLine(int nLine, std::vector<double> &vResult)
 /// @param  nYOffset  Y offset of the line being adjusted.
 /// @param  vThisLineVal  Line height data.
 /// @param  vPitchMaskVal  Pitch masking line.
+/// @param  vResult  Initialized Result vector.
 /// @return  Processing limits of the line based on min/max distance.
 LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
                                           std::vector<double> &vThisLineVal,
+                                          const std::vector<double> &vResult,
                                           std::vector<double> &vPitchMaskVal)
 {
     LineLimits ll(0, m_nX + 1, m_nX + 1, oCurExtent.xSize());
@@ -298,6 +300,7 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
             if (oOpts.pitchMasking())
                 calcPitchMask(*pdfHeight, std::sqrt(dfR2),
+                              vResult[m_nX + nXOffset],
                               vPitchMaskVal[m_nX + nXOffset]);
         }
 
@@ -322,6 +325,7 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
             *pdfHeight -= m_dfHeightAdjFactor * dfR2 + m_dfZObserver;
             if (oOpts.pitchMasking())
                 calcPitchMask(*pdfHeight, std::sqrt(dfR2),
+                              vResult[m_nX + nXOffset],
                               vPitchMaskVal[m_nX + nXOffset]);
         }
     }
@@ -339,7 +343,14 @@ LineLimits ViewshedExecutor::adjustHeight(int nYOffset,
     return ll;
 }
 
-void ViewshedExecutor::calcPitchMask(double dfZ, double dfDist, double &maskVal)
+/// Calculate the pitch masking value to apply after running the viewshed algorithm.
+///
+/// @param  dfZ  Adjusted input height.
+/// @param  dfDist  Distance from observer to cell.
+/// @param  dfResult  Result value to which adjustment may be added.
+/// @param  maskVal  Output mask value.
+void ViewshedExecutor::calcPitchMask(double dfZ, double dfDist, double dfResult,
+                                     double &maskVal)
 {
     if (oOpts.lowPitchMasking())
     {
@@ -347,9 +358,9 @@ void ViewshedExecutor::calcPitchMask(double dfZ, double dfDist, double &maskVal)
         double adjustment = dfZMask - dfZ;
         if (adjustment > 0)
         {
-            maskVal =
-                (oOpts.outputMode == OutputMode::Normal ? oOpts.outOfRangeVal
-                                                        : adjustment);
+            maskVal = (oOpts.outputMode == OutputMode::Normal
+                           ? std::numeric_limits<double>::infinity()
+                           : adjustment + dfResult);
             return;
         }
     }
@@ -357,7 +368,7 @@ void ViewshedExecutor::calcPitchMask(double dfZ, double dfDist, double &maskVal)
     {
         double dfZMask = dfDist * m_highTanPitch;
         if (dfZ > dfZMask)
-            maskVal = oOpts.outOfRangeVal;
+            maskVal = std::numeric_limits<double>::infinity();
     }
 }
 
@@ -396,7 +407,8 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
-    LineLimits ll = adjustHeight(nYOffset, vThisLineVal, vPitchMaskVal);
+    LineLimits ll =
+        adjustHeight(nYOffset, vThisLineVal, vResult, vPitchMaskVal);
     if (oCurExtent.containsX(m_nX) && ll.leftMin != ll.rightMin)
         vResult[m_nX] = oOpts.outOfRangeVal;
 
@@ -423,6 +435,11 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     return oProgress.lineComplete();
 }
 
+/// Set the pitch masked value into the result vector when applicable.
+///
+/// @param  vResult  Result vector.
+/// @param  vPitchMaskVal  Pitch mask values (nan is no masking, inf is out-of-range, else
+///                        actual value).
 void ViewshedExecutor::applyPitchMask(std::vector<double> &vResult,
                                       const std::vector<double> &vPitchMaskVal)
 {
@@ -430,15 +447,15 @@ void ViewshedExecutor::applyPitchMask(std::vector<double> &vResult,
     {
         if (std::isnan(vPitchMaskVal[i]))
             continue;
-        if (vPitchMaskVal[i] == oOpts.outOfRangeVal)
+        if (std::isinf(vPitchMaskVal[i]))
             vResult[i] = oOpts.outOfRangeVal;
         else
-            vResult[i] += vPitchMaskVal[i];
+            vResult[i] = vPitchMaskVal[i];
     }
 }
 
-// If the observer is above or below the raster, set all cells in the first line near the
-// observer as observable provided they're in range. Mark cells out of range as such.
+/// If the observer is above or below the raster, set all cells in the first line near the
+/// observer as observable provided they're in range. Mark cells out of range as such.
 /// @param  ll  Line limits for processing.
 /// @param  vResult  Result line.
 /// @param  vThisLineVal  Heights of the cells in the target line
@@ -880,7 +897,8 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
         vResult = vThisLineVal;
 
     // Adjust height of the read line.
-    LineLimits ll = adjustHeight(nYOffset, vThisLineVal, vPitchMaskVal);
+    LineLimits ll =
+        adjustHeight(nYOffset, vThisLineVal, vResult, vPitchMaskVal);
 
     // Handle the initial position on the line.
     if (oCurExtent.containsX(m_nX))
