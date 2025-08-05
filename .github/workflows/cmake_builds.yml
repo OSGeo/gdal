@@ -329,7 +329,7 @@ jobs:
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
             mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-muparser mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler  mingw-w64-x86_64-podofo mingw-w64-x86_64-postgresql
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
-            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
+            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
       - name: Setup cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         id: cache
@@ -353,7 +353,7 @@ jobs:
         run: |
           # One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
           PYTHON_CMD=python3 && $PYTHON_CMD -m pip install "jsonschema<4.18"
-          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r autotest/requirements.txt
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install pytest-sugar pytest-env pytest-benchmark filelock
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       # Disable GDAL_ENABLE_DRIVER_HDF5 because of https://github.com/OSGeo/gdal/issues/11181
