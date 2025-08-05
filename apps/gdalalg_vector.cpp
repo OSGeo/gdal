@@ -14,6 +14,8 @@
 
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_check_geometry.h"
+#include "gdalalg_vector_check_coverage.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
@@ -38,8 +40,6 @@
 #include "gdalalg_vector_swap_xy.h"
 
 #include "gdal_priv.h"
-
-#include <gdalalg_vector_check_geometry.h>
 
 #ifndef _
 #define _(x) (x)
@@ -66,6 +66,7 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
 
         RegisterSubAlgorithm<GDALVectorInfoAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorBufferAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorCheckCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
