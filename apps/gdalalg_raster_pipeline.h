@@ -98,7 +98,8 @@ class GDALRasterPipelineAlgorithm final
 {
   public:
     static constexpr const char *NAME = "pipeline";
-    static constexpr const char *DESCRIPTION = "Process a raster dataset.";
+    static constexpr const char *DESCRIPTION =
+        "rocess a raster dataset applying several steps.";
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pipeline.html";
 

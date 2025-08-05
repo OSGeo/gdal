@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Execute a pipeline
+    Process a dataset applying several steps.
 
 .. Index:: gdal pipeline
 

@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Process a vector dataset.
+    Process a vector dataset applying several steps.
 
 .. Index:: gdal vector pipeline
 

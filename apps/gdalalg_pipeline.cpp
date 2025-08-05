@@ -388,7 +388,8 @@ class GDALPipelineAlgorithm final
 {
   public:
     static constexpr const char *NAME = "pipeline";
-    static constexpr const char *DESCRIPTION = "Execute a pipeline.";
+    static constexpr const char *DESCRIPTION =
+        "Process a dataset applying several steps.";
     static constexpr const char *HELP_URL = "/programs/gdal_pipeline.html";
 
     GDALPipelineAlgorithm()
