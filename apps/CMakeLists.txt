@@ -135,6 +135,10 @@ if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)
 endif()
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(appslib PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()
+
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
 endif()

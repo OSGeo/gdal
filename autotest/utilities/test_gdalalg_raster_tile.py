@@ -2207,3 +2207,24 @@ def test_gdalalg_raster_tile_png_optim(tmp_vsimem, GDAL_RASTER_TILE_PNG_FILTER, 
     assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
         src_ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)
     ]
+
+
+@pytest.mark.require_driver("JPEG")
+def test_gdalalg_raster_tile_png_optim_2(tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = "data/test_gdal_raster_tile_paeth.jpg"
+    alg["output"] = tmp_vsimem
+    alg.Run()
+
+    size_auto = gdal.VSIStatL(tmp_vsimem / "19/509173/334573.png").size
+
+    alg = get_alg()
+    alg["input"] = "data/test_gdal_raster_tile_paeth.jpg"
+    alg["output"] = tmp_vsimem
+    with gdal.config_option("GDAL_RASTER_TILE_PNG_FILTER", "AVERAGE"):
+        alg.Run()
+
+    size_avg = gdal.VSIStatL(tmp_vsimem / "19/509173/334573.png").size
+
+    assert size_auto != size_avg

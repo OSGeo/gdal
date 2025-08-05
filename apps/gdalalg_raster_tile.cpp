@@ -38,6 +38,22 @@
 #include <utility>
 #include <thread>
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#elif defined(__x86_64) || defined(_M_X64)
+#include <emmintrin.h>
+#if defined(__SSSE3__) || defined(__AVX__)
+#include <tmmintrin.h>
+#endif
+#if defined(__SSE4_1__) || defined(__AVX__)
+#include <smmintrin.h>
+#endif
+#endif
+
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+#define USE_PAETH_SSE2
+#endif
+
 #ifndef _WIN32
 #define FORK_ALLOWED
 #endif
@@ -488,6 +504,116 @@ inline GByte PNG_PAETH(int nVal, int nValPrev, int nValUp, int nValUpPrev)
         return static_cast<GByte>((nVal - nValUpPrev) & 0xff);
 }
 
+#ifdef USE_PAETH_SSE2
+
+static inline __m128i abs_epi16(__m128i x)
+{
+#if defined(__SSSE3__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_abs_epi16(x);
+#else
+    __m128i mask = _mm_srai_epi16(x, 15);
+    return _mm_sub_epi16(_mm_xor_si128(x, mask), mask);
+#endif
+}
+
+static inline __m128i blendv(__m128i a, __m128i b, __m128i mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_epi8(a, b, mask);
+#else
+    return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
+#endif
+}
+
+static inline __m128i PNG_PAETH_SSE2(__m128i up_prev, __m128i up, __m128i prev,
+                                     __m128i cur, __m128i &cost)
+{
+    auto cur_lo = _mm_unpacklo_epi8(cur, _mm_setzero_si128());
+    auto prev_lo = _mm_unpacklo_epi8(prev, _mm_setzero_si128());
+    auto up_lo = _mm_unpacklo_epi8(up, _mm_setzero_si128());
+    auto up_prev_lo = _mm_unpacklo_epi8(up_prev, _mm_setzero_si128());
+    auto cur_hi = _mm_unpackhi_epi8(cur, _mm_setzero_si128());
+    auto prev_hi = _mm_unpackhi_epi8(prev, _mm_setzero_si128());
+    auto up_hi = _mm_unpackhi_epi8(up, _mm_setzero_si128());
+    auto up_prev_hi = _mm_unpackhi_epi8(up_prev, _mm_setzero_si128());
+
+    auto pa_lo = _mm_sub_epi16(up_lo, up_prev_lo);
+    auto pb_lo = _mm_sub_epi16(prev_lo, up_prev_lo);
+    auto pc_lo = _mm_add_epi16(pa_lo, pb_lo);
+    pa_lo = abs_epi16(pa_lo);
+    pb_lo = abs_epi16(pb_lo);
+    pc_lo = abs_epi16(pc_lo);
+    auto min_lo = _mm_min_epi16(_mm_min_epi16(pa_lo, pb_lo), pc_lo);
+
+    auto res_lo = blendv(up_prev_lo, up_lo, _mm_cmpeq_epi16(min_lo, pb_lo));
+    res_lo = blendv(res_lo, prev_lo, _mm_cmpeq_epi16(min_lo, pa_lo));
+    res_lo = _mm_and_si128(_mm_sub_epi16(cur_lo, res_lo), _mm_set1_epi16(0xFF));
+
+    auto cost_lo = blendv(_mm_sub_epi16(_mm_set1_epi16(256), res_lo), res_lo,
+                          _mm_cmplt_epi16(res_lo, _mm_set1_epi16(128)));
+
+    auto pa_hi = _mm_sub_epi16(up_hi, up_prev_hi);
+    auto pb_hi = _mm_sub_epi16(prev_hi, up_prev_hi);
+    auto pc_hi = _mm_add_epi16(pa_hi, pb_hi);
+    pa_hi = abs_epi16(pa_hi);
+    pb_hi = abs_epi16(pb_hi);
+    pc_hi = abs_epi16(pc_hi);
+    auto min_hi = _mm_min_epi16(_mm_min_epi16(pa_hi, pb_hi), pc_hi);
+
+    auto res_hi = blendv(up_prev_hi, up_hi, _mm_cmpeq_epi16(min_hi, pb_hi));
+    res_hi = blendv(res_hi, prev_hi, _mm_cmpeq_epi16(min_hi, pa_hi));
+    res_hi = _mm_and_si128(_mm_sub_epi16(cur_hi, res_hi), _mm_set1_epi16(0xFF));
+
+    auto cost_hi = blendv(_mm_sub_epi16(_mm_set1_epi16(256), res_hi), res_hi,
+                          _mm_cmplt_epi16(res_hi, _mm_set1_epi16(128)));
+
+    cost_lo = _mm_add_epi16(cost_lo, cost_hi);
+
+    cost =
+        _mm_add_epi32(cost, _mm_unpacklo_epi16(cost_lo, _mm_setzero_si128()));
+    cost =
+        _mm_add_epi32(cost, _mm_unpackhi_epi16(cost_lo, _mm_setzero_si128()));
+
+    return _mm_packus_epi16(res_lo, res_hi);
+}
+
+static int RunPaeth(const GByte *srcBuffer, int nBands,
+                    int nSrcBufferBandStride, GByte *outBuffer, int W,
+                    int &costPaeth)
+{
+    __m128i xmm_cost = _mm_setzero_si128();
+    int i = 1;
+    for (int k = 0; k < nBands; ++k)
+    {
+        for (i = 1; i + 15 < W; i += 16)
+        {
+            auto up_prev = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer - W + (i - 1)));
+            auto up = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer - W + i));
+            auto prev = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer + (i - 1)));
+            auto cur = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer + i));
+
+            auto res = PNG_PAETH_SSE2(up_prev, up, prev, cur, xmm_cost);
+
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(outBuffer + k * W + i),
+                             res);
+        }
+        srcBuffer += nSrcBufferBandStride;
+    }
+
+    int32_t ar_cost[4];
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(ar_cost), xmm_cost);
+    for (int k = 0; k < 4; ++k)
+        costPaeth += ar_cost[k];
+
+    return i;
+}
+
+#endif  // USE_PAETH_SSE2
+
 static bool GenerateTile(
     GDALDataset *poSrcDS, GDALDriver *m_poDstDriver, const char *pszExtension,
     CSLConstList creationOptions, GDALWarpOperation &oWO,
@@ -602,8 +728,12 @@ static bool GenerateTile(
         if (bBlank)
             tmpBuffer.clear();
         const int tmpBufferSize = cpl::fits_on<int>(nDstBytesPerRow * H);
-        tmpBuffer.resize(tmpBufferSize + nDstBytesPerRow);
-        GByte *paethBuffer = tmpBuffer.data() + tmpBufferSize;
+        tmpBuffer.resize(tmpBufferSize + 2 * nDstBytesPerRow);
+        GByte *const paethBuffer = tmpBuffer.data() + tmpBufferSize;
+#ifdef USE_PAETH_SSE2
+        GByte *const paethBufferTmp =
+            tmpBuffer.data() + tmpBufferSize + nDstBytesPerRow;
+#endif
 
         const char *pszGDAL_RASTER_TILE_PNG_FILTER =
             CPLGetConfigOption("GDAL_RASTER_TILE_PNG_FILTER", "");
@@ -837,8 +967,17 @@ static bool GenerateTile(
 
                             costPaeth += (v < 128) ? v : 256 - v;
                         }
-                        for (int i = 1;
-                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+
+#ifdef USE_PAETH_SSE2
+                        const int iLimitSSE2 =
+                            RunPaeth(dstBuffer.data() + j * W, nBands, nBPB,
+                                     paethBufferTmp, W, costPaeth);
+                        int i = iLimitSSE2;
+#else
+                        int i = 1;
+#endif
+                        for (; i < W && (costPaeth < costAvg || bForcePaeth);
+                             ++i)
                         {
                             {
                                 const GByte v = PNG_PAETH(
@@ -871,14 +1010,35 @@ static bool GenerateTile(
                                 costPaeth += (v < 128) ? v : 256 - v;
                             }
                         }
+
                         if (costPaeth < costAvg || bForcePaeth)
                         {
                             tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
                                 PNG_FILTER_PAETH;
+#ifdef USE_PAETH_SSE2
+                            GByte *out =
+                                tmpBuffer.data() +
+                                cpl::fits_on<int>(j * nDstBytesPerRow) + 1;
+                            memcpy(out, paethBuffer, nBands);
+                            for (int iTmp = 1; iTmp < iLimitSSE2; ++iTmp)
+                            {
+                                out[nBands * iTmp + 0] =
+                                    paethBufferTmp[0 * W + iTmp];
+                                out[nBands * iTmp + 1] =
+                                    paethBufferTmp[1 * W + iTmp];
+                                out[nBands * iTmp + 2] =
+                                    paethBufferTmp[2 * W + iTmp];
+                            }
+                            memcpy(
+                                out + iLimitSSE2 * nBands,
+                                paethBuffer + iLimitSSE2 * nBands,
+                                cpl::fits_on<int>((W - iLimitSSE2) * nBands));
+#else
                             memcpy(tmpBuffer.data() +
                                        cpl::fits_on<int>(j * nDstBytesPerRow) +
                                        1,
                                    paethBuffer, nDstBytesPerRow - 1);
+#endif
                         }
                     }
                 }
@@ -960,8 +1120,17 @@ static bool GenerateTile(
 
                             costPaeth += (v < 128) ? v : 256 - v;
                         }
-                        for (int i = 1;
-                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+
+#ifdef USE_PAETH_SSE2
+                        const int iLimitSSE2 =
+                            RunPaeth(dstBuffer.data() + j * W, nBands, nBPB,
+                                     paethBufferTmp, W, costPaeth);
+                        int i = iLimitSSE2;
+#else
+                        int i = 1;
+#endif
+                        for (; i < W && (costPaeth < costAvg || bForcePaeth);
+                             ++i)
                         {
                             {
                                 const GByte v = PNG_PAETH(
@@ -1008,10 +1177,32 @@ static bool GenerateTile(
                         {
                             tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
                                 PNG_FILTER_PAETH;
+#ifdef USE_PAETH_SSE2
+                            GByte *out =
+                                tmpBuffer.data() +
+                                cpl::fits_on<int>(j * nDstBytesPerRow) + 1;
+                            memcpy(out, paethBuffer, nBands);
+                            for (int iTmp = 1; iTmp < iLimitSSE2; ++iTmp)
+                            {
+                                out[nBands * iTmp + 0] =
+                                    paethBufferTmp[0 * W + iTmp];
+                                out[nBands * iTmp + 1] =
+                                    paethBufferTmp[1 * W + iTmp];
+                                out[nBands * iTmp + 2] =
+                                    paethBufferTmp[2 * W + iTmp];
+                                out[nBands * iTmp + 3] =
+                                    paethBufferTmp[3 * W + iTmp];
+                            }
+                            memcpy(
+                                out + iLimitSSE2 * nBands,
+                                paethBuffer + iLimitSSE2 * nBands,
+                                cpl::fits_on<int>((W - iLimitSSE2) * nBands));
+#else
                             memcpy(tmpBuffer.data() +
                                        cpl::fits_on<int>(j * nDstBytesPerRow) +
                                        1,
                                    paethBuffer, nDstBytesPerRow - 1);
+#endif
                         }
                     }
                 }
