@@ -145,10 +145,13 @@ GEOSNonStreamingAlgorithmDataset::~GEOSNonStreamingAlgorithmDataset()
             GEOSGeom_destroy_r(m_poGeosContext, poGeom);
         }
 
+        GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+
         for (size_t i = 0; i < m_nGeosResultSize; i++)
         {
             GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
         }
+
         GEOSFree_r(m_poGeosContext, m_papoGeosResults);
         finishGEOS_r(m_poGeosContext);
     }
@@ -222,27 +225,47 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertInputsToGeos(OGRLayer &srcLayer,
 bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     OGRLayer &dstLayer)
 {
+    const OGRSpatialReference *poResultSRS =
+        dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
+
+// GEOSGeom_releaseCollection allows us to take ownership of the contents of
+// a GeometryCollection. We can then incrementally free the geometries as
+// we write them to features. It requires GEOS >= 3.12.
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
+#define __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#endif
+
+#ifdef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
     m_nGeosResultSize =
         GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
     m_papoGeosResults = GEOSGeom_releaseCollection_r(
         m_poGeosContext, m_poGeosResultAsCollection, &m_nGeosResultSize);
     GEOSGeom_destroy_r(m_poGeosContext, m_poGeosResultAsCollection);
+    m_poGeosResultAsCollection = nullptr;
     CPLAssert(m_apoFeatures.size() == m_nGeosResultSize);
-
-    const OGRSpatialReference *poResultSRS =
-        dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
 
     // Create features with the modified geometries
     for (size_t i = 0; i < m_apoFeatures.size(); i++)
     {
+        GEOSGeometry *poGeosResult = m_papoGeosResults[i];
+#else
+    auto nGeoms =
+        GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
+    for (decltype(nGeoms) i = 0; i < nGeoms; i++)
+    {
+        GEOSGeometry *poGeosResult = const_cast<GEOSGeometry *>(
+            GEOSGetGeometryN_r(m_poGeosContext, m_poGeosResultAsCollection, i));
+#endif
         std::unique_ptr<OGRGeometry> poResultGeom;
+
         bool skipFeature =
-            SkipEmpty() && GEOSisEmpty_r(m_poGeosContext, m_papoGeosResults[i]);
+            SkipEmpty() && GEOSisEmpty_r(m_poGeosContext, poGeosResult);
 
         if (!skipFeature)
         {
             poResultGeom.reset(OGRGeometryFactory::createFromGEOS(
-                m_poGeosContext, m_papoGeosResults[i]));
+                m_poGeosContext, poGeosResult));
 
             if (poResultGeom == nullptr)
             {
@@ -252,8 +275,11 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
             }
         }
 
+#ifdef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
         GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
         m_papoGeosResults[i] = nullptr;
+#undef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#endif
 
         if (!skipFeature)
         {
