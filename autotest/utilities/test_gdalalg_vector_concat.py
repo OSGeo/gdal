@@ -26,7 +26,8 @@ def get_pipeline_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["pipeline"]
 
 
-def test_gdalalg_vector_concat():
+@pytest.mark.parametrize("GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", ["1", None])
+def test_gdalalg_vector_concat(GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS):
 
     last_pct = [0]
 
@@ -38,7 +39,10 @@ def test_gdalalg_vector_concat():
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    assert alg.Run(my_progress)
+    with gdal.config_option(
+        "GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS
+    ):
+        assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
     assert ds.GetLayerCount() == 1
