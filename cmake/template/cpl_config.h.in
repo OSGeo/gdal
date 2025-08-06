@@ -49,9 +49,6 @@
 /* Define to name of 64bit stat structure */
 #cmakedefine VSI_STAT64_T @VSI_STAT64_T@
 
-/* Define to 1 if you have the `std::isnan' function. */
-#define HAVE_STD_IS_NAN 1
-
 
 #ifdef GDAL_COMPILATION
 
