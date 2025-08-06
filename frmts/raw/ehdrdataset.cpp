@@ -1513,16 +1513,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             if (utmZone >= 1 && utmZone <= 60 && bUTM && bWGS84 &&
                 (bNorth || bSouth))
             {
-                char projCSStr[64] = {'\0'};
-                snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
-                         utmZone, (bNorth) ? 'N' : 'S');
-
-                poDS->m_oSRS.SetProjCS(projCSStr);
-                poDS->m_oSRS.SetWellKnownGeogCS("WGS84");
-                poDS->m_oSRS.SetUTM(utmZone, bNorth);
-                poDS->m_oSRS.SetAuthority("PROJCS", "EPSG",
-                                          (bNorth ? 32600 : 32700) + utmZone);
-                poDS->m_oSRS.AutoIdentifyEPSG();
+                poDS->m_oSRS.importFromEPSG((bNorth ? 32600 : 32700) + utmZone);
             }
             else
             {
