@@ -1392,11 +1392,11 @@ MSSQL_ODBC
 The Microsoft SQL Native ODBC driver Library (closed source/proprietary) is required
 to enable bulk copy in the :ref:`vector.mssqlspatial` driver.
 If both MSSQL_NCLI and MSSQL_ODBC are found and enabled, MSSQL_ODBC will be used.
-The library is normally found if installed in standard location, and at version 17.
+The library is normally found if installed in standard location, and at version 17+.
 
 .. option:: MSSQL_ODBC_VERSION
 
-  Major version of the Native Client, typically 17
+  Major version of the Native Client, typically 17 or 18
 
 .. option:: MSSQL_ODBC_INCLUDE_DIR
 
