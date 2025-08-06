@@ -662,7 +662,7 @@ extern "C++"
     CPL_STATIC_CAST(GUInt16, (CPL_STATIC_CAST(GUInt16, x) << 8) |              \
                                  (CPL_STATIC_CAST(GUInt16, x) >> 8))
 
-#if defined(HAVE_GCC_BSWAP)
+#ifdef __GNUC__
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x)                                                          \
     CPL_STATIC_CAST(GUInt32, __builtin_bswap32(CPL_STATIC_CAST(GUInt32, x)))
