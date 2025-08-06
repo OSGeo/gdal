@@ -2373,10 +2373,10 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     if (pszLevel)
     {
         const int nLevel = atoi(pszLevel);
-        if (nLevel < 1 || nLevel > 9)
+        if (nLevel < 0 || nLevel > 9)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Illegal ZLEVEL value '%s', should be 1-9.", pszLevel);
+                     "Illegal ZLEVEL value '%s', should be 0-9.", pszLevel);
             fpImage->CancelCreation();
             png_destroy_write_struct(&hPNG, &psPNGInfo);
             return nullptr;

@@ -52,7 +52,7 @@ void PNGDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='WORLDFILE' type='boolean' description='Create world "
         "file' default='FALSE'/>\n"
         "   <Option name='ZLEVEL' type='int' description='DEFLATE compression "
-        "level 1-9' default='6'/>\n"
+        "level 0 (no compression)-9 (best compression)' default='6'/>\n"
         "   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC "
         "Profile'/>\n"
         "   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' "
