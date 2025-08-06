@@ -99,7 +99,7 @@ _gdal()
 }
 
 # nosort requires bash 4.4
-complete -o nosort -F _gdal gdal 2>/dev/null || complete -o default -F _gdal gdal
+complete -o nosort -o default -F _gdal gdal 2>/dev/null || complete -o default -F _gdal gdal
 
 _gdal2tiles.py()
 {
