@@ -116,6 +116,14 @@ def test_gdalalg_vector_info_features_json():
     assert "features" in j["layers"][0]
 
 
+def test_gdalalg_vector_info_features_limit_json():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--limit=2", "../ogr/data/poly.shp"])
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert len(j["layers"][0]["features"]) == 2
+
+
 def test_gdalalg_vector_info_sql():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(
