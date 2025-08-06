@@ -66,8 +66,8 @@ struct GDALVectorInfoOptions
     GIntBig nLimit = -1;
 
     // Only used during argument parsing
-    bool bSummaryParser = false;
-    bool bFeaturesParser = false;
+    bool bSummaryUserRequested = false;
+    bool bFeaturesUserRequested = false;
 
     // Set by gdal vector info
     bool bIsCli = false;
@@ -804,7 +804,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                           bool bTakeIntoAccountGeomField)
 {
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
-    const bool bIsSummaryCli = psOptions->bIsCli && psOptions->bSummaryParser;
+    const bool bIsSummaryCli =
+        psOptions->bIsCli && psOptions->bSummaryUserRequested;
     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
 
     oLayer.Set("name", poLayer->GetName());
@@ -1445,7 +1446,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
     /* -------------------------------------------------------------------- */
 
     if (psOptions->nFetchFID == OGRNullFID && !bForceSummary &&
-        !psOptions->bSummaryOnly)
+        ((psOptions->bIsCli && psOptions->bFeaturesUserRequested) ||
+         (!psOptions->bIsCli && !psOptions->bSummaryOnly)))
     {
         if (!psOptions->bSuperQuiet)
         {
@@ -1860,7 +1862,8 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
     const std::string osFilename(poDS->GetDescription());
 
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
-    const bool bIsSummaryCli = psOptions->bIsCli && psOptions->bSummaryParser;
+    const bool bIsSummaryCli =
+        psOptions->bIsCli && psOptions->bSummaryUserRequested;
 
     CPLJSONArray oLayerArray;
     if (bJson)
@@ -2225,13 +2228,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
     argParser->add_argument("-json")
         .flag()
-        .action(
-            [psOptions](const std::string &)
-            {
-                psOptions->eFormat = FORMAT_JSON;
-                psOptions->bAllLayers = true;
-                psOptions->bSummaryOnly = true;
-            })
+        .action([psOptions](const std::string &)
+                { psOptions->eFormat = FORMAT_JSON; })
         .help(_("Display the output in json format."));
 
     argParser->add_argument("-ro")
@@ -2339,12 +2337,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
     {
         auto &group = argParser->add_mutually_exclusive_group();
         group.add_argument("-so", "-summary")
-            .store_into(psOptions->bSummaryParser)
+            .store_into(psOptions->bSummaryUserRequested)
             .help(_("Summary only: show only summary information like "
                     "projection, schema, feature count and extents."));
 
         group.add_argument("-features")
-            .store_into(psOptions->bFeaturesParser)
+            .store_into(psOptions->bFeaturesUserRequested)
             .help(_("Enable listing of features."));
     }
 
@@ -2640,9 +2638,18 @@ GDALVectorInfoOptionsNew(char **papszArgv,
             psOptionsForBinary->osSQLStatement = psOptions->osSQLStatement;
         }
 
-        if (psOptions->bSummaryParser)
+        if (psOptions->eFormat == FORMAT_JSON)
+        {
+            psOptions->bAllLayers = true;
             psOptions->bSummaryOnly = true;
-        else if (psOptions->bFeaturesParser)
+            if (psOptions->aosExtraMDDomains.empty())
+                psOptions->aosExtraMDDomains.AddString("all");
+            psOptions->bStdoutOutput = false;
+        }
+
+        if (psOptions->bSummaryUserRequested)
+            psOptions->bSummaryOnly = true;
+        else if (psOptions->bFeaturesUserRequested)
             psOptions->bSummaryOnly = false;
 
         if (!psOptions->osDialect.empty() && !psOptions->osWHERE.empty() &&
@@ -2650,13 +2657,6 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "-dialect is ignored with -where. Use -sql instead");
-        }
-
-        if (psOptions->eFormat == FORMAT_JSON)
-        {
-            if (psOptions->aosExtraMDDomains.empty())
-                psOptions->aosExtraMDDomains.AddString("all");
-            psOptions->bStdoutOutput = false;
         }
 
         return psOptions.release();
