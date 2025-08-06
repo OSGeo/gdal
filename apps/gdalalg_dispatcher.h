@@ -71,6 +71,9 @@ template <class RasterDispatcher, class VectorDispatcher>
 bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     ParseCommandLineArguments(const std::vector<std::string> &args)
 {
+    if (args.size() == 1 && (args[0] == "-h" || args[0] == "--help"))
+        return GDALAlgorithm::ParseCommandLineArguments(args);
+
     // We first try to process with the raster specific algorithm (that has
     // been instantiated in a special way to accept both raster and vector
     // input datasets). If the raster specific algorithm can parse successfully
@@ -141,9 +144,12 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
 
     std::vector<std::string> argsWithoutInput;
     bool skipNext = false;
+    std::string osLikelyDatasetName;
+    size_t nCountLikelyDatasetName = 0;
     for (const auto &arg : args)
     {
-        if (arg == "-i" || arg == "--input")
+        if (arg == "-i" || arg == "--input" || arg == "-f" || arg == "--of" ||
+            arg == "--output-format" || arg == "--format")
         {
             skipNext = true;
         }
@@ -152,6 +158,11 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
             if (!STARTS_WITH(arg.c_str(), "--input=") &&
                 !(poDSFromRaster && arg == poDSFromRaster->GetDescription()))
             {
+                if (!arg.empty() && arg[0] != '-')
+                {
+                    ++nCountLikelyDatasetName;
+                    osLikelyDatasetName = arg;
+                }
                 argsWithoutInput.push_back(arg);
             }
         }
@@ -231,7 +242,9 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     }
 
     if (!ret && !managedToOpenDS &&
-        osLastError.find("not recognized") != std::string::npos)
+        (osLastError.find("not recognized") != std::string::npos ||
+         (nCountLikelyDatasetName == 1 &&
+          cpl::starts_with(osLastError, osLikelyDatasetName))))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", osLastError.c_str());
     }
