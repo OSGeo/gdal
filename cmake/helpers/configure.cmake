@@ -149,8 +149,6 @@ else ()
         "
     HAVE_PTHREAD_ATFORK)
 
-  check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
-
   check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
   check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
