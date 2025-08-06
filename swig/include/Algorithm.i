@@ -132,6 +132,44 @@ public:
     return GDALAlgorithmArgHasDefaultValue(self);
   }
 
+  bool GetDefaultAsBoolean() {
+    return GDALAlgorithmArgGetDefaultAsBoolean(self);
+  }
+
+  const char* GetDefaultAsString() {
+    return GDALAlgorithmArgGetDefaultAsString(self);
+  }
+
+  int GetDefaultAsInteger() {
+    return GDALAlgorithmArgGetDefaultAsInteger(self);
+  }
+
+  double GetDefaultAsDouble() {
+    return GDALAlgorithmArgGetDefaultAsDouble(self);
+  }
+
+%apply (char **CSL) {char **};
+  char **GetDefaultAsStringList() {
+    return GDALAlgorithmArgGetDefaultAsStringList( self );
+  }
+%clear char **;
+
+#if defined(SWIGPYTHON)
+  void GetDefaultAsIntegerList(int *nLen, const int **pList) {
+     size_t nLenSizet = 0;
+    *pList = GDALAlgorithmArgGetDefaultAsIntegerList(self, &nLenSizet);
+    *nLen = (int)nLenSizet;
+  }
+#endif
+
+#if defined(SWIGPYTHON)
+  void GetDefaultAsDoubleList(int *nLen, const double **pList) {
+     size_t nLenSizet = 0;
+    *pList = GDALAlgorithmArgGetDefaultAsDoubleList(self, &nLenSizet);
+    *nLen = (int)nLenSizet;
+  }
+#endif
+
   bool IsHiddenForCLI() {
     return GDALAlgorithmArgIsHiddenForCLI(self);
   }
