@@ -69,9 +69,7 @@
 #include <cstring>
 #include <ctime>
 
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 
 #include "cpl_zlib_header.h"  // to avoid warnings when including zlib.h
 

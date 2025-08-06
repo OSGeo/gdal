@@ -14,9 +14,7 @@
 #include "cpl_vsi_virtual.h"
 
 #include <cstring>
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #include <ctime>
 #include <map>
 #include <set>
