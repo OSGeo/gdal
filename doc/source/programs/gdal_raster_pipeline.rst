@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Process a raster dataset.
+    Process a raster dataset applying several steps.
 
 .. Index:: gdal raster pipeline
 

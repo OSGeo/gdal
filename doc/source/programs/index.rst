@@ -66,7 +66,7 @@ Commands working with raster or vector inputs
 
     - :ref:`gdal_info`: Get information on a dataset
     - :ref:`gdal_convert`: Convert a dataset
-    - :ref:`gdal_pipeline`: Execute a pipeline
+    - :ref:`gdal_pipeline`: Process a dataset applying several steps
 
 Raster commands
 +++++++++++++++
@@ -122,6 +122,8 @@ Raster commands
 
 .. only:: html
 
+    Single operations:
+
     - :ref:`gdal_raster`: Entry point for raster commands
     - :ref:`gdal_raster_info`: Get information on a raster dataset
     - :ref:`gdal_raster_aspect`: Generate an aspect map.
@@ -145,7 +147,6 @@ Raster commands
     - :ref:`gdal_raster_overview_delete`: Remove overviews of a raster dataset
     - :ref:`gdal_raster_overview_refresh`: Refresh overviews
     - :ref:`gdal_raster_pansharpen`: Perform a pansharpen operation
-    - :ref:`gdal_raster_pipeline`: Process a raster dataset
     - :ref:`gdal_raster_polygonize`: Create a polygon feature dataset from a raster band
     - :ref:`gdal_raster_pixel_info`: Return information on a pixel of a raster dataset
     - :ref:`gdal_raster_rgb_to_palette`: Convert a RGB image into a pseudo-color / paletted image
@@ -165,6 +166,10 @@ Raster commands
     - :ref:`gdal_raster_unscale`: Convert scaled values of a raster dataset into unscaled values.
     - :ref:`gdal_raster_update`: Update the destination raster with the content of the input one.
     - :ref:`gdal_raster_viewshed`: Compute the viewshed of a raster dataset.
+
+    Pipelines:
+
+    - :ref:`gdal_raster_pipeline`: Process a raster dataset applying several steps
 
 Vector commands
 +++++++++++++++
@@ -200,6 +205,8 @@ Vector commands
 
 .. only:: html
 
+    Single operations:
+
     - :ref:`gdal_vector`: Entry point for vector commands
     - :ref:`gdal_vector_buffer`: Compute a buffer around geometries of a vector dataset
     - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
@@ -214,7 +221,6 @@ Vector commands
     - :ref:`gdal_vector_index`: Create a vector index of vector datasets
     - :ref:`gdal_vector_layer_algebra`: Perform algebraic operation between 2 layers.
     - :ref:`gdal_vector_make_valid`: Fix validity of geometries of a vector dataset
-    - :ref:`gdal_vector_pipeline`: Process a vector dataset
     - :ref:`gdal_vector_rasterize`: Burns vector geometries into a raster
     - :ref:`gdal_vector_reproject`: Reproject a vector dataset
     - :ref:`gdal_vector_segmentize`: Segmentize geometries of a vector dataset
@@ -224,6 +230,10 @@ Vector commands
     - :ref:`gdal_vector_simplify_coverage`: Simplify shared boundaries of a polygonal vector dataset
     - :ref:`gdal_vector_sql`: Apply SQL statement(s) to a dataset
     - :ref:`gdal_vector_swap_xy`: Swap X and Y coordinates of geometries of a vector dataset
+
+    Pipelines:
+
+    - :ref:`gdal_raster_pipeline`: Process a vector dataset applying several steps
 
 Multidimensional raster commands
 ++++++++++++++++++++++++++++++++

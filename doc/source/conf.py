@@ -470,7 +470,7 @@ man_pages = [
     (
         "programs/gdal_pipeline",
         "gdal-pipeline",
-        "Execute a pipeline",
+        "Process a dataset applying several steps",
         [author_evenr],
         1,
     ),
@@ -631,7 +631,7 @@ man_pages = [
     (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
-        "Process a raster dataset",
+        "Process a raster dataset applying several steps",
         [author_evenr],
         1,
     ),
@@ -897,7 +897,7 @@ man_pages = [
     (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
-        "Process a vector dataset",
+        "Process a vector dataset applying several steps",
         [author_evenr],
         1,
     ),
