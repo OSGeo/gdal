@@ -2605,12 +2605,14 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         for (int i = 0; i * 3 + 2 < nColorValueCount; i++)
         {
-            GDALColorEntry sEntry;
-
-            sEntry.c1 = static_cast<short>(atoi(papszClassColors[i * 3 + 0]));
-            sEntry.c2 = static_cast<short>(atoi(papszClassColors[i * 3 + 1]));
-            sEntry.c3 = static_cast<short>(atoi(papszClassColors[i * 3 + 2]));
-            sEntry.c4 = 255;
+            const GDALColorEntry sEntry = {
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 0]),
+                                              0, 255)),  // Red
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 1]),
+                                              0, 255)),  // Green
+                static_cast<short>(std::clamp(atoi(papszClassColors[i * 3 + 2]),
+                                              0, 255)),  // Blue
+                255};
             oCT.SetColorEntry(i, &sEntry);
         }
 

@@ -1580,9 +1580,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 if (nIndex >= 0 && nIndex < 65536)
                 {
                     const GDALColorEntry oEntry = {
-                        static_cast<short>(atoi(papszValues[1])),  // Red
-                        static_cast<short>(atoi(papszValues[2])),  // Green
-                        static_cast<short>(atoi(papszValues[3])),  // Blue
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[1]), 0, 255)),  // Red
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[2]), 0, 255)),  // Green
+                        static_cast<short>(
+                            std::clamp(atoi(papszValues[3]), 0, 255)),  // Blue
                         255};
 
                     poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
