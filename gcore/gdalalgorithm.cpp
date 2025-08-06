@@ -4340,7 +4340,7 @@ bool GDALAlgorithm::ValidateBandArg() const
 {
     bool ret = true;
     const auto bandArg = GetArg(GDAL_ARG_NAME_BAND);
-    const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT, false);
+    const auto inputDatasetArg = GetArg(GDAL_ARG_NAME_INPUT);
     if (bandArg && bandArg->IsExplicitlySet() && inputDatasetArg &&
         (inputDatasetArg->GetType() == GAAT_DATASET ||
          inputDatasetArg->GetType() == GAAT_DATASET_LIST) &&
@@ -6492,7 +6492,7 @@ GDALAlgorithmArgH GDALAlgorithmGetArg(GDALAlgorithmH hAlg,
 {
     VALIDATE_POINTER1(hAlg, __func__, nullptr);
     VALIDATE_POINTER1(pszArgName, __func__, nullptr);
-    auto arg = hAlg->ptr->GetArg(pszArgName);
+    auto arg = hAlg->ptr->GetArg(pszArgName, /* suggestionAllowed = */ true);
     if (!arg)
         return nullptr;
     return std::make_unique<GDALAlgorithmArgHS>(arg).release();

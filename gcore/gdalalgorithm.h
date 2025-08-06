@@ -2447,7 +2447,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     GDALAlgorithmArg *GetArg(const std::string &osName,
-                             bool suggestionAllowed = true)
+                             bool suggestionAllowed = false)
     {
         return const_cast<GDALAlgorithmArg *>(
             const_cast<const GDALAlgorithm *>(this)->GetArg(osName,
@@ -2469,7 +2469,7 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg *GetArg(const std::string &osName,
-                                   bool suggestionAllowed = true) const;
+                                   bool suggestionAllowed = false) const;
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg &operator[](const std::string &osName) const

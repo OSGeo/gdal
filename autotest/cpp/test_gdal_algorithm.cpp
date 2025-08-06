@@ -1186,7 +1186,7 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
-        EXPECT_EQ(alg.GetArg("flig"), nullptr);
+        EXPECT_EQ(alg.GetArg("flig", /* suggestionAllowed = */ true), nullptr);
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "Argument 'flig' is unknown. Do you mean 'flag'?");
     }
@@ -1194,7 +1194,7 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
-        EXPECT_EQ(alg.GetArg("flga"), nullptr);
+        EXPECT_EQ(alg.GetArg("flga", /* suggestionAllowed = */ true), nullptr);
         EXPECT_STREQ(CPLGetLastErrorMsg(),
                      "Argument 'flga' is unknown. Do you mean 'flag'?");
     }
