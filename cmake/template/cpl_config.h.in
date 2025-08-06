@@ -118,9 +118,6 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #cmakedefine HAVE_VSNPRINTF 1
 
-/* Define to 1 if you have the `readlink' function. */
-#cmakedefine HAVE_READLINK 1
-
 /* Define to 1 if you have the `posix_spawnp' function. */
 #cmakedefine HAVE_POSIX_SPAWNP 1
 
@@ -141,9 +138,6 @@
 
 /* Define to 1 if you have the `statvfs64' function. */
 #cmakedefine HAVE_STATVFS64 1
-
-/* Define to 1 if you have the `lstat' function. */
-#cmakedefine HAVE_LSTAT 1
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
 #define ICONV_CPP_CONST @ICONV_CPP_CONST@

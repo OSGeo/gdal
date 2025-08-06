@@ -149,7 +149,6 @@ else ()
         "
     HAVE_PTHREAD_ATFORK)
 
-  check_function_exists(readlink HAVE_READLINK)
   check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
   check_function_exists(posix_memalign HAVE_POSIX_MEMALIGN)
   check_function_exists(vfork HAVE_VFORK)
@@ -157,7 +156,6 @@ else ()
   check_function_exists(sigaction HAVE_SIGACTION)
   check_function_exists(statvfs HAVE_STATVFS)
   check_function_exists(statvfs64 HAVE_STATVFS64)
-  check_function_exists(lstat HAVE_LSTAT)
 
   check_function_exists(getrlimit HAVE_GETRLIMIT)
   check_symbol_exists(RLIMIT_AS "sys/resource.h" HAVE_RLIMIT_AS)
