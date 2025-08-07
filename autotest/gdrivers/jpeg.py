@@ -156,12 +156,9 @@ def test_jpeg_3():
 
 def test_jpeg_4():
 
-    try:
-        gdalconst.GMF_ALL_VALID
-    except AttributeError:
-        pytest.skip()
-
     ds = gdal.Open("data/jpeg/masked.jpg")
+
+    assert ds.GetMetadataDomainList() == ["IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
 
     refband = ds.GetRasterBand(1)
 
@@ -176,11 +173,6 @@ def test_jpeg_4():
 
 
 def test_jpeg_5():
-
-    try:
-        gdalconst.GMF_ALL_VALID
-    except AttributeError:
-        pytest.skip()
 
     ds = gdal.Open("data/jpeg/masked.jpg")
 
@@ -1274,6 +1266,7 @@ def test_jpeg_flir_png():
     ds = gdal.Open("data/jpeg/flir/FLIR.jpg")
     assert ds.GetMetadataDomainList() == [
         "IMAGE_STRUCTURE",
+        "",
         "FLIR",
         "SUBDATASETS",
         "DERIVED_SUBDATASETS",
@@ -1654,6 +1647,7 @@ def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
     # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
     # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
     ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
+    assert ds.GetMetadataDomainList() == ["xml:XMP", "DERIVED_SUBDATASETS"]
     srs = ds.GetSpatialRef()
     assert srs.GetAuthorityCode("GEOGCS") == "6318"
     assert srs.GetAuthorityCode("VERT_CS") == "6360"
