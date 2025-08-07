@@ -395,6 +395,138 @@ void JPGDatasetCommon::ReadXMPMetadata()
 }
 
 /************************************************************************/
+/*                        ReadThermalMetadata()                         */
+/************************************************************************/
+void JPGDatasetCommon::ReadThermalMetadata()
+{
+    ReadFLIRMetadata();
+    ReadDJIMetadata();
+}
+
+/************************************************************************/
+/*                        ReadDJIMetadata()                             */
+/************************************************************************/
+
+void JPGDatasetCommon::ReadDJIMetadata()
+{
+    if (bHasReadDJIMetadata)
+        return;
+    bHasReadDJIMetadata = true;
+
+    if (!m_abyRawThermalImage.empty())
+    {
+        // If there is already FLIR data, do not overwrite with DJI.
+        // That combination is not expected, but just in case.
+        return;
+    }
+
+    const auto make = GetMetadataItem("EXIF_Make");
+    const bool bMakerDJI = make && STRCASECMP(make, "DJI") == 0;
+    if (!bMakerDJI)
+        return;
+
+    const int nImageWidth = nRasterXSize;
+    const int nImageHeight = nRasterYSize;
+    const size_t expectedSizeBytes = size_t(nImageHeight) * nImageWidth * 2;
+
+    std::vector<GByte> abyDJI;
+
+    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+
+    int nChunkLoc = 2;
+    // size of APP1 segment marker"
+    GByte abyChunkHeader[4];
+
+    while (true)
+    {
+        if (VSIFSeekL(m_fpImage, nChunkLoc, SEEK_SET) != 0)
+            break;
+
+        if (VSIFReadL(abyChunkHeader, sizeof(abyChunkHeader), 1, m_fpImage) !=
+            1)
+            break;
+
+        const int nMarkerLength =
+            abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
+        nChunkLoc += 4 + nMarkerLength;
+
+        // Not a marker
+        if (abyChunkHeader[0] != 0xFF)
+            break;
+
+        // Stop on Start of Scan
+        if (abyChunkHeader[1] == 0xDA)
+            break;
+
+        if (abyChunkHeader[1] == 0xE3)
+        {
+            if (expectedSizeBytes > 10000 * 10000 * 2)
+            {
+                // In case there is very wrong exif for a thermal sensor, avoid memory problems.
+                // Currently those sensors are 512x640
+                abyDJI.clear();
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "DJI exif sizes are too big for thermal data");
+                break;
+            }
+            const size_t nOldSize = abyDJI.size();
+            if (nOldSize + nMarkerLength > expectedSizeBytes)
+            {
+                abyDJI.clear();
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "DJI thermal rawdata buffer bigger than expected");
+                break;
+            }
+            abyDJI.resize(nOldSize + nMarkerLength);
+            if (VSIFReadL(&abyDJI[nOldSize], nMarkerLength, 1, m_fpImage) != 1)
+            {
+                abyDJI.clear();
+                break;
+            }
+        }
+    }
+    // Restore file pointer
+    VSIFSeekL(m_fpImage, nCurOffset, SEEK_SET);
+
+    if (!abyDJI.empty())
+    {
+        if (abyDJI.size() != expectedSizeBytes)
+        {
+            const auto size =
+                static_cast<long long unsigned int>(abyDJI.size());
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "DJI thermal sizes do not match. Bytes: %llu, "
+                     "width: %d, height %d",
+                     size, nImageWidth, nImageHeight);
+            return;
+        }
+        SetMetadataItem("RawThermalImageWidth", CPLSPrintf("%d", nImageWidth),
+                        "DJI");
+        SetMetadataItem("RawThermalImageHeight", CPLSPrintf("%d", nImageHeight),
+                        "DJI");
+        m_bRawThermalLittleEndian = true;  // Is that always?
+        m_nRawThermalImageWidth = nImageWidth;
+        m_nRawThermalImageHeight = nImageHeight;
+        m_abyRawThermalImage.clear();
+        m_abyRawThermalImage.insert(m_abyRawThermalImage.end(), abyDJI.begin(),
+                                    abyDJI.end());
+
+        if (!STARTS_WITH(GetDescription(), "JPEG:"))
+        {
+            m_nSubdatasetCount++;
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
+                CPLSPrintf("JPEG:\"%s\":DJI_RAW_THERMAL_IMAGE",
+                           GetDescription()),
+                "SUBDATASETS");
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
+                "DJI raw thermal image", "SUBDATASETS");
+        }
+    }
+}
+
+/************************************************************************/
 /*                        ReadFLIRMetadata()                            */
 /************************************************************************/
 
@@ -900,6 +1032,8 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         const auto nRecType = ReadUInt16(nOffsetDirEntry);
         const auto nRecOffset = ReadUInt32(nOffsetDirEntry + 12);
         const auto nRecLength = ReadUInt32(nOffsetDirEntry + 16);
+        nOffsetDirEntry += SIZE_RECORD_DIRECTORY;
+
         if (nRecType == FLIR_REC_FREE && nRecLength == 0)
             continue;  // silently keep empty records of type 0
         CPLDebugOnly("JPEG", "FLIR: record %u, type %u, offset %u, length %u",
@@ -947,7 +1081,6 @@ void JPGDatasetCommon::ReadFLIRMetadata()
                 break;
             }
         }
-        nOffsetDirEntry += SIZE_RECORD_DIRECTORY;
     }
 
     CPLDebug("JPEG", "FLIR metadata read");
@@ -962,7 +1095,7 @@ char **JPGDatasetCommon::GetMetadataDomainList()
     ReadEXIFMetadata();
     ReadXMPMetadata();
     ReadICCProfile();
-    ReadFLIRMetadata();
+    ReadThermalMetadata();
     return GDALPamDataset::GetMetadataDomainList();
 }
 
@@ -1001,8 +1134,11 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
     if (eAccess == GA_ReadOnly && !bHasReadFLIRMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "FLIR"))
         ReadFLIRMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadDJIMetadata &&
+        pszDomain != nullptr && EQUAL(pszDomain, "DJI"))
+        ReadDJIMetadata();
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
-        ReadFLIRMetadata();
+        ReadThermalMetadata();
 }
 
 /************************************************************************/
@@ -2755,6 +2891,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 
     CPLString osFilename(poOpenInfo->pszFilename);
     bool bFLIRRawThermalImage = false;
+    bool bDJIRawThermalImage = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "JPEG:"))
     {
         CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":",
@@ -2763,9 +2900,12 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
 
         osFilename = aosTokens[1];
-        if (std::string(aosTokens[2]) != "FLIR_RAW_THERMAL_IMAGE")
+        if (std::string(aosTokens[2]) == "FLIR_RAW_THERMAL_IMAGE")
+            bFLIRRawThermalImage = true;
+        else if (std::string(aosTokens[2]) == "DJI_RAW_THERMAL_IMAGE")
+            bDJIRawThermalImage = true;
+        else
             return nullptr;
-        bFLIRRawThermalImage = true;
     }
 
     VSILFILE *fpL = poOpenInfo->fpL;
@@ -2788,9 +2928,9 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
-    if (bFLIRRawThermalImage)
+    if (bFLIRRawThermalImage || bDJIRawThermalImage)
     {
-        poDS.reset(poJPG_DS->OpenFLIRRawThermalImage());
+        poDS.reset(poJPG_DS->OpenRawThermalImage());
     }
 
     if (poDS &&
@@ -2814,23 +2954,22 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OpenFLIRRawThermalImage()                      */
+/*                       OpenRawThermalImage()                          */
 /************************************************************************/
 
-GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
+GDALDataset *JPGDatasetCommon::OpenRawThermalImage()
 {
-    ReadFLIRMetadata();
+    ReadThermalMetadata();
     if (m_abyRawThermalImage.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find FLIR raw thermal image");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find raw thermal image");
         return nullptr;
     }
 
     GByte *pabyData =
         static_cast<GByte *>(CPLMalloc(m_abyRawThermalImage.size()));
     const std::string osTmpFilename(
-        VSIMemGenerateHiddenFilename("jpeg_flir_raw"));
+        VSIMemGenerateHiddenFilename("jpeg_thermal_raw"));
     memcpy(pabyData, m_abyRawThermalImage.data(), m_abyRawThermalImage.size());
     VSILFILE *fpRaw = VSIFileFromMemBuffer(osTmpFilename.c_str(), pabyData,
                                            m_abyRawThermalImage.size(), true);
