@@ -3250,33 +3250,44 @@ void VRTDataset::ClearStatistics()
 }
 
 /************************************************************************/
-/*                   VRTMapSharedResources::Get()                       */
+/*                 VRTMapSharedResources::LockGuard()                   */
 /************************************************************************/
 
-GDALDataset *VRTMapSharedResources::Get(const std::string &osKey) const
+std::unique_ptr<std::lock_guard<std::mutex>>
+VRTMapSharedResources::LockGuard() const
 {
-    if (poMutex)
-        poMutex->lock();
-    auto oIter = oMap.find(osKey);
-    GDALDataset *poRet = nullptr;
-    if (oIter != oMap.end())
-        poRet = oIter->second;
-    if (poMutex)
-        poMutex->unlock();
-    return poRet;
+    std::unique_ptr<std::lock_guard<std::mutex>> poLockGuard;
+    if (m_bUseMutex)
+    {
+        poLockGuard = std::make_unique<std::lock_guard<std::mutex>>(m_oMutex);
+    }
+    return poLockGuard;
 }
 
 /************************************************************************/
 /*                   VRTMapSharedResources::Get()                       */
 /************************************************************************/
 
+GDALDataset *VRTMapSharedResources::Get(const std::string &osKey) const
+{
+    auto poLockGuard = LockGuard();
+    CPL_IGNORE_RET_VAL(poLockGuard);
+    auto oIter = m_oMap.find(osKey);
+    GDALDataset *poRet = nullptr;
+    if (oIter != m_oMap.end())
+        poRet = oIter->second;
+    return poRet;
+}
+
+/************************************************************************/
+/*                   VRTMapSharedResources::Insert()                    */
+/************************************************************************/
+
 void VRTMapSharedResources::Insert(const std::string &osKey, GDALDataset *poDS)
 {
-    if (poMutex)
-        poMutex->lock();
-    oMap[osKey] = poDS;
-    if (poMutex)
-        poMutex->unlock();
+    auto poLockGuard = LockGuard();
+    CPL_IGNORE_RET_VAL(poLockGuard);
+    m_oMap[osKey] = poDS;
 }
 
 /************************************************************************/
@@ -3285,7 +3296,7 @@ void VRTMapSharedResources::Insert(const std::string &osKey, GDALDataset *poDS)
 
 void VRTMapSharedResources::InitMutex()
 {
-    poMutex = &oMutex;
+    m_bUseMutex = true;
 }
 
 /*! @endcond */

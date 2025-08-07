@@ -113,9 +113,11 @@ class CPL_DLL VRTMapSharedResources
     void InitMutex();
 
   private:
-    std::mutex oMutex{};
-    std::mutex *poMutex = nullptr;
-    std::map<std::string, GDALDataset *> oMap{};
+    mutable std::mutex m_oMutex{};
+    bool m_bUseMutex = false;
+    std::map<std::string, GDALDataset *> m_oMap{};
+
+    std::unique_ptr<std::lock_guard<std::mutex>> LockGuard() const;
 
     CPL_DISALLOW_COPY_ASSIGN(VRTMapSharedResources)
 };
