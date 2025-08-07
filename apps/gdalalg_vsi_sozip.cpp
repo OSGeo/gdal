@@ -495,7 +495,7 @@ class GDALVSISOZIPValidateAlgorithm final : public GDALAlgorithm
             .SetPositional();
         AddOutputStringArg(&m_output);
         AddArg("verbose", 'v', _("Turn on verbose mode"), &m_verbose)
-            .SetOnlyForCLI();
+            .SetHiddenForAPI();
         AddArg("stdout", 0,
                _("Directly output on stdout. If enabled, "
                  "output-string will be empty"),
