@@ -123,6 +123,9 @@ else ()
   detect_and_set_cxx_warning_flag(deprecated-copy-dtor)
   detect_and_set_cxx_warning_flag(implicit-fallthrough)
   detect_and_set_cxx_warning_flag(weak-vtables)
+  if(DEFINED ENV{CI})
+      detect_and_set_cxx_warning_flag(thread-safety-analysis)
+  endif()
 
   # Not sure about the minimum version, but clang 12 complains about \file, @cond Doxygen_Suppress, etc.
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 18.0.0)

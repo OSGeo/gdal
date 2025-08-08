@@ -442,8 +442,13 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
                      ->GetStreamingFilename(osFilename);
 
     // First if we have a tile presence cache, check tile presence from it
+    std::unique_ptr<std::lock_guard<std::mutex>> poLockGuard;
     if (bUseMutex)
-        m_oMutex.lock();
+    {
+        poLockGuard = std::make_unique<std::lock_guard<std::mutex>>(m_oMutex);
+    }
+    CPL_IGNORE_RET_VAL(poLockGuard);
+
     auto poTilePresenceArray = OpenTilePresenceCache(false);
     if (poTilePresenceArray)
     {
@@ -462,16 +467,13 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
                                       eByteDT, &byValue) &&
             byValue == 0)
         {
-            if (bUseMutex)
-                m_oMutex.unlock();
             CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
                          osFilename.c_str());
             bMissingTileOut = true;
             return true;
         }
     }
-    if (bUseMutex)
-        m_oMutex.unlock();
+    poLockGuard.reset();
 
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
