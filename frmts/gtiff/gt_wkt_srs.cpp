@@ -358,8 +358,8 @@ static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
             static_cast<PJ_CONTEXT *>(GTIFGetPROJContext(hGTIF, true, nullptr));
         const auto type = PJ_TYPE_VERTICAL_CRS;
         auto list = proj_create_from_name(ctx, nullptr, pszVertCSName, &type, 1,
-                                          true,  // exact match
-                                          -1,    // result set limit size,
+                                          /* approximateMatch = */ false,
+                                          -1,  // result set limit size,
                                           nullptr);
         if (list)
         {
@@ -375,7 +375,6 @@ static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
                     auto datum = proj_crs_get_datum(ctx, crs);
                     if (datum)
                     {
-                        osVDatumName = proj_get_name(datum);
                         const char *pszAuthName =
                             proj_get_id_auth_name(datum, 0);
                         const char *pszCode = proj_get_id_code(datum, 0);
@@ -383,12 +382,14 @@ static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
                         {
                             if (osVDatumAuthName.empty())
                             {
+                                osVDatumName = proj_get_name(datum);
                                 osVDatumAuthName = pszAuthName;
                                 nVDatumCode = atoi(pszCode);
                             }
                             else if (osVDatumAuthName != pszAuthName ||
                                      nVDatumCode != atoi(pszCode))
                             {
+                                osVDatumName = "unknown";
                                 osVDatumAuthName.clear();
                                 nVDatumCode = 0;
                                 bGoOn = false;
@@ -462,9 +463,9 @@ static char *GTIFGetEPSGOfficialName(GTIF *hGTIF, PJ_TYPE searchType,
     /* Search in database the corresponding EPSG 'official' name */
     auto ctx =
         static_cast<PJ_CONTEXT *>(GTIFGetPROJContext(hGTIF, true, nullptr));
-    auto list = proj_create_from_name(ctx, "EPSG", pszName, &searchType, 1,
-                                      false, /* approximate match */
-                                      1, nullptr);
+    auto list =
+        proj_create_from_name(ctx, "EPSG", pszName, &searchType, 1,
+                              /* approximateMatch = */ false, 1, nullptr);
     if (list)
     {
         const auto listSize = proj_list_get_count(list);
@@ -1870,9 +1871,9 @@ static int OGCDatumName2EPSGDatumCode(GTIF *psGTIF, const char *pszOGCName)
     auto ctx =
         static_cast<PJ_CONTEXT *>(GTIFGetPROJContext(psGTIF, true, nullptr));
     const PJ_TYPE searchType = PJ_TYPE_GEODETIC_REFERENCE_FRAME;
-    auto list = proj_create_from_name(ctx, "EPSG", pszOGCName, &searchType, 1,
-                                      true, /* approximate match */
-                                      10, nullptr);
+    auto list =
+        proj_create_from_name(ctx, "EPSG", pszOGCName, &searchType, 1,
+                              /* approximateMatch = */ true, 10, nullptr);
     if (list)
     {
         const auto listSize = proj_list_get_count(list);
@@ -2068,11 +2069,11 @@ int GTIFSetFromOGISDefnEx(GTIF *psGTIF, OGRSpatialReferenceH hSRS,
                 auto ctx = static_cast<PJ_CONTEXT *>(
                     GTIFGetPROJContext(psGTIF, true, nullptr));
                 const auto type = PJ_TYPE_GEOGRAPHIC_2D_CRS;
-                auto list = proj_create_from_name(ctx, "EPSG",
-                                                  oGeogCRS.GetName(), &type, 1,
-                                                  false,  // exact match
-                                                  1,  // result set limit size,
-                                                  nullptr);
+                auto list = proj_create_from_name(
+                    ctx, "EPSG", oGeogCRS.GetName(), &type, 1,
+                    /* approximateMatch = */ false,
+                    1,  // result set limit size,
+                    nullptr);
                 if (list && proj_list_get_count(list) == 1)
                 {
                     auto crs2D = proj_list_get(ctx, list, 0);
