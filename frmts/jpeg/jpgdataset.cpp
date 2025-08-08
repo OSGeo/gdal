@@ -301,7 +301,8 @@ void JPGDatasetCommon::ReadEXIFMetadata()
             }
         }
 
-        SetMetadata(papszMetadata);
+        if (papszMetadata)
+            SetMetadata(papszMetadata);
 
         nPamFlags = nOldPamFlags;
     }
@@ -961,10 +962,11 @@ void JPGDatasetCommon::ReadFLIRMetadata()
 
 char **JPGDatasetCommon::GetMetadataDomainList()
 {
+    ReadEXIFMetadata();
+    ReadXMPMetadata();
+    ReadICCProfile();
     ReadFLIRMetadata();
-    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "xml:XMP", "COLOR_PROFILE", "FLIR",
-                                   nullptr);
+    return GDALPamDataset::GetMetadataDomainList();
 }
 
 /************************************************************************/
@@ -972,6 +974,8 @@ char **JPGDatasetCommon::GetMetadataDomainList()
 /************************************************************************/
 void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
 {
+    // NOTE: if adding a new metadata domain here, also update GetMetadataDomainList()
+
     if (m_fpImage == nullptr)
         return;
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
