@@ -17,6 +17,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_spawn.h"
 #include "cpl_time.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
@@ -37,9 +38,27 @@
 #include <utility>
 #include <thread>
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#elif defined(__x86_64) || defined(_M_X64)
+#include <emmintrin.h>
+#if defined(__SSSE3__) || defined(__AVX__)
+#include <tmmintrin.h>
+#endif
+#if defined(__SSE4_1__) || defined(__AVX__)
+#include <smmintrin.h>
+#endif
+#endif
+
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
+#define USE_PAETH_SSE2
+#endif
+
 #ifndef _WIN32
 #define FORK_ALLOWED
 #endif
+
+#include "cpl_zlib_header.h"  // for crc32()
 
 //! @cond Doxygen_Suppress
 
@@ -459,6 +478,142 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 /*                          GenerateTile()                              */
 /************************************************************************/
 
+// Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
+// for specification of SUB and AVG filters
+inline GByte PNG_SUB(int nVal, int nValPrev)
+{
+    return static_cast<GByte>((nVal - nValPrev) & 0xff);
+}
+
+inline GByte PNG_AVG(int nVal, int nValPrev, int nValUp)
+{
+    return static_cast<GByte>((nVal - (nValPrev + nValUp) / 2) & 0xff);
+}
+
+inline GByte PNG_PAETH(int nVal, int nValPrev, int nValUp, int nValUpPrev)
+{
+    const int p = nValPrev + nValUp - nValUpPrev;
+    const int pa = std::abs(p - nValPrev);
+    const int pb = std::abs(p - nValUp);
+    const int pc = std::abs(p - nValUpPrev);
+    if (pa <= pb && pa <= pc)
+        return static_cast<GByte>((nVal - nValPrev) & 0xff);
+    else if (pb <= pc)
+        return static_cast<GByte>((nVal - nValUp) & 0xff);
+    else
+        return static_cast<GByte>((nVal - nValUpPrev) & 0xff);
+}
+
+#ifdef USE_PAETH_SSE2
+
+static inline __m128i abs_epi16(__m128i x)
+{
+#if defined(__SSSE3__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_abs_epi16(x);
+#else
+    __m128i mask = _mm_srai_epi16(x, 15);
+    return _mm_sub_epi16(_mm_xor_si128(x, mask), mask);
+#endif
+}
+
+static inline __m128i blendv(__m128i a, __m128i b, __m128i mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_epi8(a, b, mask);
+#else
+    return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
+#endif
+}
+
+static inline __m128i PNG_PAETH_SSE2(__m128i up_prev, __m128i up, __m128i prev,
+                                     __m128i cur, __m128i &cost)
+{
+    auto cur_lo = _mm_unpacklo_epi8(cur, _mm_setzero_si128());
+    auto prev_lo = _mm_unpacklo_epi8(prev, _mm_setzero_si128());
+    auto up_lo = _mm_unpacklo_epi8(up, _mm_setzero_si128());
+    auto up_prev_lo = _mm_unpacklo_epi8(up_prev, _mm_setzero_si128());
+    auto cur_hi = _mm_unpackhi_epi8(cur, _mm_setzero_si128());
+    auto prev_hi = _mm_unpackhi_epi8(prev, _mm_setzero_si128());
+    auto up_hi = _mm_unpackhi_epi8(up, _mm_setzero_si128());
+    auto up_prev_hi = _mm_unpackhi_epi8(up_prev, _mm_setzero_si128());
+
+    auto pa_lo = _mm_sub_epi16(up_lo, up_prev_lo);
+    auto pb_lo = _mm_sub_epi16(prev_lo, up_prev_lo);
+    auto pc_lo = _mm_add_epi16(pa_lo, pb_lo);
+    pa_lo = abs_epi16(pa_lo);
+    pb_lo = abs_epi16(pb_lo);
+    pc_lo = abs_epi16(pc_lo);
+    auto min_lo = _mm_min_epi16(_mm_min_epi16(pa_lo, pb_lo), pc_lo);
+
+    auto res_lo = blendv(up_prev_lo, up_lo, _mm_cmpeq_epi16(min_lo, pb_lo));
+    res_lo = blendv(res_lo, prev_lo, _mm_cmpeq_epi16(min_lo, pa_lo));
+    res_lo = _mm_and_si128(_mm_sub_epi16(cur_lo, res_lo), _mm_set1_epi16(0xFF));
+
+    auto cost_lo = blendv(_mm_sub_epi16(_mm_set1_epi16(256), res_lo), res_lo,
+                          _mm_cmplt_epi16(res_lo, _mm_set1_epi16(128)));
+
+    auto pa_hi = _mm_sub_epi16(up_hi, up_prev_hi);
+    auto pb_hi = _mm_sub_epi16(prev_hi, up_prev_hi);
+    auto pc_hi = _mm_add_epi16(pa_hi, pb_hi);
+    pa_hi = abs_epi16(pa_hi);
+    pb_hi = abs_epi16(pb_hi);
+    pc_hi = abs_epi16(pc_hi);
+    auto min_hi = _mm_min_epi16(_mm_min_epi16(pa_hi, pb_hi), pc_hi);
+
+    auto res_hi = blendv(up_prev_hi, up_hi, _mm_cmpeq_epi16(min_hi, pb_hi));
+    res_hi = blendv(res_hi, prev_hi, _mm_cmpeq_epi16(min_hi, pa_hi));
+    res_hi = _mm_and_si128(_mm_sub_epi16(cur_hi, res_hi), _mm_set1_epi16(0xFF));
+
+    auto cost_hi = blendv(_mm_sub_epi16(_mm_set1_epi16(256), res_hi), res_hi,
+                          _mm_cmplt_epi16(res_hi, _mm_set1_epi16(128)));
+
+    cost_lo = _mm_add_epi16(cost_lo, cost_hi);
+
+    cost =
+        _mm_add_epi32(cost, _mm_unpacklo_epi16(cost_lo, _mm_setzero_si128()));
+    cost =
+        _mm_add_epi32(cost, _mm_unpackhi_epi16(cost_lo, _mm_setzero_si128()));
+
+    return _mm_packus_epi16(res_lo, res_hi);
+}
+
+static int RunPaeth(const GByte *srcBuffer, int nBands,
+                    int nSrcBufferBandStride, GByte *outBuffer, int W,
+                    int &costPaeth)
+{
+    __m128i xmm_cost = _mm_setzero_si128();
+    int i = 1;
+    for (int k = 0; k < nBands; ++k)
+    {
+        for (i = 1; i + 15 < W; i += 16)
+        {
+            auto up_prev = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer - W + (i - 1)));
+            auto up = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer - W + i));
+            auto prev = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer + (i - 1)));
+            auto cur = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(srcBuffer + i));
+
+            auto res = PNG_PAETH_SSE2(up_prev, up, prev, cur, xmm_cost);
+
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(outBuffer + k * W + i),
+                             res);
+        }
+        srcBuffer += nSrcBufferBandStride;
+    }
+
+    int32_t ar_cost[4];
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(ar_cost), xmm_cost);
+    for (int k = 0; k < 4; ++k)
+        costPaeth += ar_cost[k];
+
+    return i;
+}
+
+#endif  // USE_PAETH_SSE2
+
 static bool GenerateTile(
     GDALDataset *poSrcDS, GDALDriver *m_poDstDriver, const char *pszExtension,
     CSLConstList creationOptions, GDALWarpOperation &oWO,
@@ -468,7 +623,8 @@ static bool GenerateTile(
     int nZoomLevel, int iX, int iY, const std::string &convention,
     int nMinTileX, int nMinTileY, bool bSkipBlank, bool bUserAskedForAlpha,
     bool bAuxXML, bool bResume, const std::vector<std::string> &metadata,
-    const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer)
+    const GDALColorTable *poColorTable, std::vector<GByte> &dstBuffer,
+    std::vector<GByte> &tmpBuffer)
 {
     const std::string osDirZ = CPLFormFilenameSafe(
         outputDirectory.c_str(), CPLSPrintf("%d", nZoomLevel), nullptr);
@@ -494,7 +650,7 @@ static bool GenerateTile(
     if (eErr != CE_None)
         return false;
 
-    const bool bDstHasAlpha =
+    bool bDstHasAlpha =
         nBands > poSrcDS->GetRasterCount() ||
         (nBands == poSrcDS->GetRasterCount() &&
          poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() ==
@@ -520,11 +676,645 @@ static bool GenerateTile(
             bAllOpaque = (dstBuffer[(nBands - 1) * nBytesPerBand + i] == 255);
         }
         if (bAllOpaque)
+        {
+            bDstHasAlpha = false;
             nBands--;
+        }
     }
 
     VSIMkdir(osDirZ.c_str(), 0755);
     VSIMkdir(osDirX.c_str(), 0755);
+
+    const bool bSupportsCreateOnlyVisibleAtCloseTime =
+        m_poDstDriver->GetMetadataItem(
+            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
+
+    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
+                                          ? osFilename
+                                          : osFilename + ".tmp." + pszExtension;
+
+    if (!bAuxXML && EQUAL(pszExtension, "png") &&
+        eWorkingDataType == GDT_Byte &&
+        tileMatrix.mTileWidth <=
+            (INT_MAX - INT_MAX / 10) / nBands / tileMatrix.mTileHeight &&
+        poColorTable == nullptr && pdfDstNoData == nullptr &&
+        CSLCount(creationOptions) == 0 &&
+        CPLTestBool(
+            CPLGetConfigOption("GDAL_RASTER_TILE_USE_PNG_OPTIM", "YES")))
+    {
+        // This is an optimized code path completely shortcircuiting libpng
+        // We manually generate the PNG file using the Average filter and
+        // ZLIB compressing the whole buffer, hopefully with libdeflate.
+
+        const int W = tileMatrix.mTileWidth;
+        const int H = tileMatrix.mTileHeight;
+        const int nDstBytesPerRow = 1 + nBands * W;
+        const int nBPB = static_cast<int>(nBytesPerBand);
+
+        bool bBlank = false;
+        if (bDstHasAlpha)
+        {
+            bBlank = true;
+            for (int i = 0; i < nBPB && bBlank; ++i)
+            {
+                bBlank = (dstBuffer[(nBands - 1) * nBPB + i] == 0);
+            }
+        }
+
+        constexpr GByte PNG_FILTER_SUB = 1;  // horizontal diff
+        constexpr GByte PNG_FILTER_AVG = 3;  // average with pixel before and up
+        constexpr GByte PNG_FILTER_PAETH = 4;
+
+        if (bBlank)
+            tmpBuffer.clear();
+        const int tmpBufferSize = cpl::fits_on<int>(nDstBytesPerRow * H);
+        tmpBuffer.resize(tmpBufferSize + 2 * nDstBytesPerRow);
+        GByte *const paethBuffer = tmpBuffer.data() + tmpBufferSize;
+#ifdef USE_PAETH_SSE2
+        GByte *const paethBufferTmp =
+            tmpBuffer.data() + tmpBufferSize + nDstBytesPerRow;
+#endif
+
+        const char *pszGDAL_RASTER_TILE_PNG_FILTER =
+            CPLGetConfigOption("GDAL_RASTER_TILE_PNG_FILTER", "");
+        const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");
+        const bool bForceAvg = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "AVERAGE");
+
+        for (int j = 0; !bBlank && j < H; ++j)
+        {
+            if (j > 0)
+            {
+                tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                    PNG_FILTER_AVG;
+                for (int i = 0; i < nBands; ++i)
+                {
+                    tmpBuffer[1 + j * nDstBytesPerRow + i] =
+                        PNG_AVG(dstBuffer[i * nBPB + j * W], 0,
+                                dstBuffer[i * nBPB + (j - 1) * W]);
+                }
+            }
+            else
+            {
+                tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                    PNG_FILTER_SUB;
+                for (int i = 0; i < nBands; ++i)
+                {
+                    tmpBuffer[1 + j * nDstBytesPerRow + i] =
+                        dstBuffer[i * nBPB + j * W];
+                }
+            }
+
+            if (nBands == 1)
+            {
+                if (j > 0)
+                {
+                    int costAvg = 0;
+                    for (int i = 1; i < W; ++i)
+                    {
+                        const GByte v =
+                            PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] = v;
+
+                        costAvg += (v < 128) ? v : 256 - v;
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[0 * nBPB + j * W + i], 0,
+                                dstBuffer[0 * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[0 * nBPB + j * W + i],
+                                dstBuffer[0 * nBPB + j * W + i - 1],
+                                dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                            paethBuffer[i] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else if (nBands == 2)
+            {
+                if (j > 0)
+                {
+                    int costAvg = 0;
+                    for (int i = 1; i < W; ++i)
+                    {
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+                        for (int i = 1;
+                             i < W && (bForcePaeth || costPaeth < costAvg); ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else if (nBands == 3)
+            {
+                if (j > 0)
+                {
+                    int costAvg = 0;
+                    for (int i = 1; i < W; ++i)
+                    {
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                        dstBuffer[2 * nBPB + j * W + i - 1],
+                                        dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      2] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+
+#ifdef USE_PAETH_SSE2
+                        const int iLimitSSE2 =
+                            RunPaeth(dstBuffer.data() + j * W, nBands, nBPB,
+                                     paethBufferTmp, W, costPaeth);
+                        int i = iLimitSSE2;
+#else
+                        int i = 1;
+#endif
+                        for (; i < W && (costPaeth < costAvg || bForcePaeth);
+                             ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 2] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+#ifdef USE_PAETH_SSE2
+                            GByte *out =
+                                tmpBuffer.data() +
+                                cpl::fits_on<int>(j * nDstBytesPerRow) + 1;
+                            memcpy(out, paethBuffer, nBands);
+                            for (int iTmp = 1; iTmp < iLimitSSE2; ++iTmp)
+                            {
+                                out[nBands * iTmp + 0] =
+                                    paethBufferTmp[0 * W + iTmp];
+                                out[nBands * iTmp + 1] =
+                                    paethBufferTmp[1 * W + iTmp];
+                                out[nBands * iTmp + 2] =
+                                    paethBufferTmp[2 * W + iTmp];
+                            }
+                            memcpy(
+                                out + iLimitSSE2 * nBands,
+                                paethBuffer + iLimitSSE2 * nBands,
+                                cpl::fits_on<int>((W - iLimitSSE2) * nBands));
+#else
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+#endif
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_SUB(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+            else /* if( nBands == 4 ) */
+            {
+                if (j > 0)
+                {
+                    int costAvg = 0;
+                    for (int i = 1; i < W; ++i)
+                    {
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[0 * nBPB + j * W + i],
+                                        dstBuffer[0 * nBPB + j * W + i - 1],
+                                        dstBuffer[0 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      0] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[1 * nBPB + j * W + i],
+                                        dstBuffer[1 * nBPB + j * W + i - 1],
+                                        dstBuffer[1 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      1] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[2 * nBPB + j * W + i],
+                                        dstBuffer[2 * nBPB + j * W + i - 1],
+                                        dstBuffer[2 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      2] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                        {
+                            const GByte v =
+                                PNG_AVG(dstBuffer[3 * nBPB + j * W + i],
+                                        dstBuffer[3 * nBPB + j * W + i - 1],
+                                        dstBuffer[3 * nBPB + (j - 1) * W + i]);
+                            tmpBuffer[1 + j * nDstBytesPerRow + i * nBands +
+                                      3] = v;
+
+                            costAvg += (v < 128) ? v : 256 - v;
+                        }
+                    }
+
+                    if (!bForceAvg)
+                    {
+                        int costPaeth = 0;
+                        for (int k = 0; k < nBands; ++k)
+                        {
+                            const int i = 0;
+                            const GByte v = PNG_PAETH(
+                                dstBuffer[k * nBPB + j * W + i], 0,
+                                dstBuffer[k * nBPB + (j - 1) * W + i], 0);
+                            paethBuffer[i * nBands + k] = v;
+
+                            costPaeth += (v < 128) ? v : 256 - v;
+                        }
+
+#ifdef USE_PAETH_SSE2
+                        const int iLimitSSE2 =
+                            RunPaeth(dstBuffer.data() + j * W, nBands, nBPB,
+                                     paethBufferTmp, W, costPaeth);
+                        int i = iLimitSSE2;
+#else
+                        int i = 1;
+#endif
+                        for (; i < W && (costPaeth < costAvg || bForcePaeth);
+                             ++i)
+                        {
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[0 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 0] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[1 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 1] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[2 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 2] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                            {
+                                const GByte v = PNG_PAETH(
+                                    dstBuffer[3 * nBPB + j * W + i],
+                                    dstBuffer[3 * nBPB + j * W + i - 1],
+                                    dstBuffer[3 * nBPB + (j - 1) * W + i],
+                                    dstBuffer[3 * nBPB + (j - 1) * W + i - 1]);
+                                paethBuffer[i * nBands + 3] = v;
+
+                                costPaeth += (v < 128) ? v : 256 - v;
+                            }
+                        }
+                        if (costPaeth < costAvg || bForcePaeth)
+                        {
+                            tmpBuffer[cpl::fits_on<int>(j * nDstBytesPerRow)] =
+                                PNG_FILTER_PAETH;
+#ifdef USE_PAETH_SSE2
+                            GByte *out =
+                                tmpBuffer.data() +
+                                cpl::fits_on<int>(j * nDstBytesPerRow) + 1;
+                            memcpy(out, paethBuffer, nBands);
+                            for (int iTmp = 1; iTmp < iLimitSSE2; ++iTmp)
+                            {
+                                out[nBands * iTmp + 0] =
+                                    paethBufferTmp[0 * W + iTmp];
+                                out[nBands * iTmp + 1] =
+                                    paethBufferTmp[1 * W + iTmp];
+                                out[nBands * iTmp + 2] =
+                                    paethBufferTmp[2 * W + iTmp];
+                                out[nBands * iTmp + 3] =
+                                    paethBufferTmp[3 * W + iTmp];
+                            }
+                            memcpy(
+                                out + iLimitSSE2 * nBands,
+                                paethBuffer + iLimitSSE2 * nBands,
+                                cpl::fits_on<int>((W - iLimitSSE2) * nBands));
+#else
+                            memcpy(tmpBuffer.data() +
+                                       cpl::fits_on<int>(j * nDstBytesPerRow) +
+                                       1,
+                                   paethBuffer, nDstBytesPerRow - 1);
+#endif
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i < W; ++i)
+                    {
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 0] =
+                            PNG_SUB(dstBuffer[0 * nBPB + j * W + i],
+                                    dstBuffer[0 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 1] =
+                            PNG_SUB(dstBuffer[1 * nBPB + j * W + i],
+                                    dstBuffer[1 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 2] =
+                            PNG_SUB(dstBuffer[2 * nBPB + j * W + i],
+                                    dstBuffer[2 * nBPB + j * W + i - 1]);
+                        tmpBuffer[1 + j * nDstBytesPerRow + i * nBands + 3] =
+                            PNG_SUB(dstBuffer[3 * nBPB + j * W + i],
+                                    dstBuffer[3 * nBPB + j * W + i - 1]);
+                    }
+                }
+            }
+        }
+        size_t nOutSize = 0;
+        // Shouldn't happen given the care we have done to dimension dstBuffer
+        if (CPLZLibDeflate(tmpBuffer.data(), tmpBufferSize, -1,
+                           dstBuffer.data(), dstBuffer.size(),
+                           &nOutSize) == nullptr ||
+            nOutSize > static_cast<size_t>(INT32_MAX))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CPLZLibDeflate() failed: too small destination buffer");
+            return false;
+        }
+
+        VSILFILE *fp = VSIFOpenL(osTmpFilename.c_str(), "wb");
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                     osTmpFilename.c_str());
+            return false;
+        }
+
+        // Cf https://en.wikipedia.org/wiki/PNG#Examples for formatting of
+        // IHDR, IDAT and IEND chunks
+
+        // PNG Signature
+        fp->Write("\x89PNG\x0D\x0A\x1A\x0A", 8, 1);
+
+        uLong crc;
+        const auto WriteAndUpdateCRC_Byte = [fp, &crc](uint8_t nVal)
+        {
+            fp->Write(&nVal, 1, sizeof(nVal));
+            crc = crc32(crc, &nVal, sizeof(nVal));
+        };
+        const auto WriteAndUpdateCRC_Int = [fp, &crc](int32_t nVal)
+        {
+            CPL_MSBPTR32(&nVal);
+            fp->Write(&nVal, 1, sizeof(nVal));
+            crc = crc32(crc, reinterpret_cast<const Bytef *>(&nVal),
+                        sizeof(nVal));
+        };
+
+        // IHDR chunk
+        uint32_t nIHDRSize = 13;
+        CPL_MSBPTR32(&nIHDRSize);
+        fp->Write(&nIHDRSize, 1, sizeof(nIHDRSize));
+        crc = crc32(0, reinterpret_cast<const Bytef *>("IHDR"), 4);
+        fp->Write("IHDR", 1, 4);
+        WriteAndUpdateCRC_Int(W);
+        WriteAndUpdateCRC_Int(H);
+        WriteAndUpdateCRC_Byte(8);  // Number of bits per pixel
+        const uint8_t nColorType = nBands == 1   ? 0
+                                   : nBands == 2 ? 4
+                                   : nBands == 3 ? 2
+                                                 : 6;
+        WriteAndUpdateCRC_Byte(nColorType);
+        WriteAndUpdateCRC_Byte(0);  // Compression method
+        WriteAndUpdateCRC_Byte(0);  // Filter method
+        WriteAndUpdateCRC_Byte(0);  // Interlacing=off
+        {
+            uint32_t nCrc32 = static_cast<uint32_t>(crc);
+            CPL_MSBPTR32(&nCrc32);
+            fp->Write(&nCrc32, 1, sizeof(nCrc32));
+        }
+
+        // IDAT chunk
+        uint32_t nIDATSize = static_cast<uint32_t>(nOutSize);
+        CPL_MSBPTR32(&nIDATSize);
+        fp->Write(&nIDATSize, 1, sizeof(nIDATSize));
+        crc = crc32(0, reinterpret_cast<const Bytef *>("IDAT"), 4);
+        fp->Write("IDAT", 1, 4);
+        crc = crc32(crc, dstBuffer.data(), static_cast<uint32_t>(nOutSize));
+        fp->Write(dstBuffer.data(), 1, nOutSize);
+        {
+            uint32_t nCrc32 = static_cast<uint32_t>(crc);
+            CPL_MSBPTR32(&nCrc32);
+            fp->Write(&nCrc32, 1, sizeof(nCrc32));
+        }
+
+        // IEND chunk
+        fp->Write("\x00\x00\x00\x00IEND\xAE\x42\x60\x82", 12, 1);
+
+        bool bRet =
+            fp->Tell() == 8 + 4 + 4 + 13 + 4 + 4 + 4 + nOutSize + 4 + 12;
+        bRet = VSIFCloseL(fp) == 0 && bRet &&
+               VSIRename(osTmpFilename.c_str(), osFilename.c_str()) == 0;
+        if (!bRet)
+            VSIUnlink(osTmpFilename.c_str());
+
+        return bRet;
+    }
 
     auto memDS = std::unique_ptr<GDALDataset>(
         MEMDataset::Create("", tileMatrix.mTileWidth, tileMatrix.mTileHeight, 0,
@@ -586,18 +1376,11 @@ static bool GenerateTile(
             "GDAL_OPEN_AFTER_COPY", "NO", false);
     CPL_IGNORE_RET_VAL(poSetter);
 
-    const bool bSupportsCreateOnlyVisibleAtCloseTime =
-        m_poDstDriver->GetMetadataItem(
-            GDAL_DCAP_CREATE_ONLY_VISIBLE_AT_CLOSE_TIME) != nullptr;
-
-    const std::string osTmpFilename = bSupportsCreateOnlyVisibleAtCloseTime
-                                          ? osFilename
-                                          : osFilename + ".tmp." + pszExtension;
-
     CPLStringList aosCreationOptions(creationOptions);
     if (bSupportsCreateOnlyVisibleAtCloseTime)
         aosCreationOptions.SetNameValue("@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME",
                                         "YES");
+
     std::unique_ptr<GDALDataset> poOutDS(
         m_poDstDriver->CreateCopy(osTmpFilename.c_str(), memDS.get(), false,
                                   aosCreationOptions.List(), nullptr, nullptr));
@@ -4075,9 +4858,18 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         psWO->nDstAlphaBand ? psWO->nDstAlphaBand : psWO->nBandCount;
 
     std::vector<GByte> dstBuffer;
-    const uint64_t dstBufferSize =
-        static_cast<uint64_t>(tileMatrix.mTileWidth) * tileMatrix.mTileHeight *
-        nDstBands * GDALGetDataTypeSizeBytes(psWO->eWorkingDataType);
+    const bool bIsPNGOutput = EQUAL(pszExtension, "png");
+    uint64_t dstBufferSize =
+        (static_cast<uint64_t>(tileMatrix.mTileWidth) *
+             // + 1 for PNG filter type / row byte
+             nDstBands * GDALGetDataTypeSizeBytes(psWO->eWorkingDataType) +
+         (bIsPNGOutput ? 1 : 0)) *
+        tileMatrix.mTileHeight;
+    if (bIsPNGOutput)
+    {
+        // Security margin for deflate compression
+        dstBufferSize += dstBufferSize / 10;
+    }
     const uint64_t nUsableRAM =
         std::min<uint64_t>(INT_MAX, CPLGetUsablePhysicalRAM() / 4);
     if (dstBufferSize <=
@@ -4506,6 +5298,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                         auto resources = oResourceManager.AcquireResources();
                         if (resources)
                         {
+                            std::vector<GByte> tmpBuffer;
                             for (int iY = iYStart;
                                  iY <= iYEndIncluded && !bParentAskedForStop;
                                  ++iY)
@@ -4531,7 +5324,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                             m_skipBlank, bUserAskedForAlpha,
                                             m_auxXML, m_resume, m_metadata,
                                             poColorTable.get(),
-                                            resources->dstBuffer))
+                                            resources->dstBuffer, tmpBuffer))
                                     {
                                         oResourceManager.SetError();
                                         bFailure = true;
@@ -4592,6 +5385,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         else
         {
             // Branch for single-thread max zoom level tile generation
+            std::vector<GByte> tmpBuffer;
             for (int iY = nMinTileY;
                  bRet && !bParentAskedForStop && iY <= nMaxTileY; ++iY)
             {
@@ -4607,7 +5401,8 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                                 : nullptr,
                         m_maxZoomLevel, iX, iY, m_convention, nMinTileX,
                         nMinTileY, m_skipBlank, bUserAskedForAlpha, m_auxXML,
-                        m_resume, m_metadata, poColorTable.get(), dstBuffer);
+                        m_resume, m_metadata, poColorTable.get(), dstBuffer,
+                        tmpBuffer);
 
                     if (m_spawned)
                     {

@@ -377,6 +377,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_RASTER_TILE_EMIT_SPURIOUS_CHARS", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_HTML_PREC", // from gdalalg_raster_tile.cpp
    "GDAL_RASTER_TILE_KML_PREC", // from gdalalg_raster_tile.cpp
+   "GDAL_RASTER_TILE_PNG_FILTER", // from gdalalg_raster_tile.cpp
+   "GDAL_RASTER_TILE_USE_PNG_OPTIM", // from gdalalg_raster_tile.cpp
    "GDAL_RASTERIO_RESAMPLING", // from gdal_misc.cpp
    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", // from gdalrasterblock.cpp
    "GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", // from gdalrasterblock.cpp
