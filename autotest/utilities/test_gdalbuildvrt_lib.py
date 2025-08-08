@@ -1085,3 +1085,20 @@ def test_gdalbuildvrt_pixel_function_arg_no_pixel_function():
         RuntimeError, match="arguments provided without a pixel function"
     ):
         gdal.BuildVRT("", "../gcore/data/byte.tif", pixelFunctionArgs={"k": 7})
+
+
+def test_gdalbuildvrt_lib_source_had_ds_mask_band_and_addalpha():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xFF")
+
+    vrt_ds = gdal.BuildVRT("", src_ds, addAlpha=True)
+    assert vrt_ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+    assert vrt_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+    assert (
+        vrt_ds.GetRasterBand(2).ReadRaster()
+        == src_ds.GetRasterBand(1).GetMaskBand().ReadRaster()
+    )
