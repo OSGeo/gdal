@@ -4055,7 +4055,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
          ++iDomain)
     {
         CSLConstList papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
-        bool bIsXML = false;
+        bool bIsXMLOrJSON = false;
 
         if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
             EQUAL(papszDomainList[iDomain], "DERIVED_SUBDATASETS"))
@@ -4070,8 +4070,11 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         if (EQUAL(papszDomainList[iDomain], "xml:XMP"))
             continue;  // Handled in SetMetadata.
 
-        if (STARTS_WITH_CI(papszDomainList[iDomain], "xml:"))
-            bIsXML = true;
+        if (STARTS_WITH_CI(papszDomainList[iDomain], "xml:") ||
+            STARTS_WITH_CI(papszDomainList[iDomain], "json:"))
+        {
+            bIsXMLOrJSON = true;
+        }
 
         /* --------------------------------------------------------------------
          */
@@ -4083,7 +4086,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             const char *pszItemValue = nullptr;
             char *pszItemName = nullptr;
 
-            if (bIsXML)
+            if (bIsXMLOrJSON)
             {
                 pszItemName = CPLStrdup("doc");
                 pszItemValue = papszMD[iItem];
@@ -4304,12 +4307,27 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             papszSrcMDD)
         {
             GDALMultiDomainMetadata l_oMDMD;
-            CSLConstList papszMD = poSrcDS->GetMetadata();
-            if (CSLCount(papszMD) > 0 &&
-                (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
-                 CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
             {
-                l_oMDMD.SetMetadata(papszMD);
+                CSLConstList papszMD = poSrcDS->GetMetadata();
+                if (CSLCount(papszMD) > 0 &&
+                    (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
+                     CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
+                {
+                    l_oMDMD.SetMetadata(papszMD);
+                }
+            }
+
+            if (EQUAL(pszCopySrcMDD, "AUTO") && !papszSrcMDD)
+            {
+                // Propagate ISIS3 or VICAR metadata
+                for (const char *pszMDD : {"json:ISIS3", "json:VICAR"})
+                {
+                    char **papszMD = poSrcDS->GetMetadata(pszMDD);
+                    if (papszMD)
+                    {
+                        l_oMDMD.SetMetadata(papszMD, pszMDD);
+                    }
+                }
             }
 
             if ((!EQUAL(pszCopySrcMDD, "AUTO") && CPLTestBool(pszCopySrcMDD)) ||
@@ -8224,17 +8242,6 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         GTiffDataset::WriteRPC(poDS, l_hTIFF, true, eProfile, pszFilename,
                                papszOptions,
                                true /* write only in PAM AND if needed */);
-
-    // Propagate ISIS3 or VICAR metadata, but only as PAM metadata.
-    for (const char *pszMDD : {"json:ISIS3", "json:VICAR"})
-    {
-        char **papszMD = poSrcDS->GetMetadata(pszMDD);
-        if (papszMD)
-        {
-            poDS->SetMetadata(papszMD, pszMDD);
-            poDS->PushMetadataToPam();
-        }
-    }
 
     poDS->m_bWriteCOGLayout = bCopySrcOverviews;
 

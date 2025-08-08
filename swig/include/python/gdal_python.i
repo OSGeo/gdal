@@ -2336,7 +2336,7 @@ def ReleaseResultSet(self, sql_lyr):
 %extend GDALMajorObjectShadow {
 %pythoncode %{
   def GetMetadata(self, domain=''):
-    if domain and domain[:4] == 'xml:':
+    if domain and (domain[:4] == 'xml:' or domain[:5] == 'json:'):
       return self.GetMetadata_List(domain)
     return self.GetMetadata_Dict(domain)
 %}

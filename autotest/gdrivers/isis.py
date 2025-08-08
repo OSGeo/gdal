@@ -1866,12 +1866,7 @@ End""",
     lbl = ds.GetMetadata_List("json:ISIS3")[0]
     assert lbl
     ds = None
-    assert gdal.VSIStatL("/vsimem/out.tif.aux.xml")
-
-    # Check that the label is in PAM, and not internal to GTiff
-    with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
-        ds = gdal.Open("/vsimem/out.tif")
-        assert not ds.GetMetadata_List("json:ISIS3")
+    assert gdal.VSIStatL("/vsimem/out.tif.aux.xml") is None
 
     # Copy back from GeoTIFF to ISIS3
     src_ds_gtiff = gdal.Open("/vsimem/out.tif")

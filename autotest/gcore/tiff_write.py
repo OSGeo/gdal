@@ -2369,22 +2369,40 @@ def test_tiff_write_64():
 # Verify that we can write XML metadata.
 
 
-def test_tiff_write_65():
+def test_tiff_write_xml(tmp_path):
 
-    ds = gdaltest.tiff_drv.Create("tmp/tiff_write_65.tif", 10, 10)
+    ds = gdaltest.tiff_drv.Create(tmp_path / "tiff_write_xml.tif", 10, 10)
 
     doc = '<doc><test xml:attr="abc"/></doc>'
     ds.SetMetadata([doc], "xml:test")
 
     ds = None
 
-    ds = gdal.Open("tmp/tiff_write_65.tif")
+    ds = gdal.Open(tmp_path / "tiff_write_xml.tif")
     md = ds.GetMetadata("xml:test")
     ds = None
 
     assert len(md) == 1 and md[0] == doc, "did not get xml back clean"
 
-    gdaltest.tiff_drv.Delete("tmp/tiff_write_65.tif")
+
+###############################################################################
+# Verify that we can write JSON metadata.
+
+
+def test_tiff_write_json(tmp_path):
+
+    ds = gdaltest.tiff_drv.Create(tmp_path / "tiff_write_json.tif", 10, 10)
+
+    doc = '{"key":"value}'
+    ds.SetMetadata([doc], "json:test")
+
+    ds = None
+
+    ds = gdal.Open(tmp_path / "tiff_write_json.tif")
+    md = ds.GetMetadata("json:test")
+    ds = None
+
+    assert len(md) == 1 and md[0] == doc, "did not get JSON back clean"
 
 
 ###############################################################################
