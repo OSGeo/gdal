@@ -444,8 +444,9 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
         {
             poSourcedRasterBand->AddSimpleSource(band);
         }
-        poSourcedRasterBand->papoSources[poSourcedRasterBand->nSources - 1]
-            ->SetName(CPLSPrintf("source%d", poSourcedRasterBand->nSources));
+        poSourcedRasterBand->m_papoSources.back()->SetName(CPLSPrintf(
+            "source%d",
+            static_cast<int>(poSourcedRasterBand->m_papoSources.size())));
     }
     if (hasAtLeastOneNDV)
     {

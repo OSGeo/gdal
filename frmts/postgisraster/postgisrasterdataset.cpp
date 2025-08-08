@@ -817,7 +817,7 @@ void PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
             nDstXOff, nDstYOff, nDstXSize, nDstYSize, 0.0, 1.0,
             (bHasNoData) ? dfBandNoDataValue : VRT_NODATA_UNSET);
 
-        prtb->poSource = prb->papoSources[prb->nSources - 1];
+        prtb->poSource = prb->m_papoSources.back().get();
     }
 }
 
