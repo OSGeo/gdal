@@ -353,3 +353,6 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
 - Koordinates
     Koordinates
 %apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
+#include <mach/mach.h>
+        const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");
+@pytest.mark.parametrize("GDAL_RASTER_TILE_PNG_FILTER", ["", "AVERAGE", "PAETH"])

@@ -3246,10 +3246,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     /*      fallback to adding a bit to the window if any points failed     */
     /*      to transform.                                                   */
     /* -------------------------------------------------------------------- */
-    if (const char *pszSoureExtra =
+    if (const char *pszSourceExtra =
             CSLFetchNameValue(psOptions->papszWarpOptions, "SOURCE_EXTRA"))
     {
-        const int nSrcExtra = atoi(pszSoureExtra);
+        const int nSrcExtra = atoi(pszSourceExtra);
         nXRadius += nSrcExtra;
         nYRadius += nSrcExtra;
     }
