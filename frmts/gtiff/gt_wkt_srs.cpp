@@ -453,6 +453,32 @@ static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
 }
 
 /************************************************************************/
+/*                       GTIFGetOfficialCRS()                           */
+/************************************************************************/
+
+static PJ *GTIFGetOfficialCRS(GTIF *hGTIF, PJ_TYPE searchType,
+                              const char *pszAuthName, const char *pszName)
+{
+    PJ *ret = nullptr;
+    /* Search in database the corresponding EPSG 'official' name */
+    auto ctx =
+        static_cast<PJ_CONTEXT *>(GTIFGetPROJContext(hGTIF, true, nullptr));
+    auto list =
+        proj_create_from_name(ctx, pszAuthName, pszName, &searchType, 1,
+                              /* approximateMatch = */ false, 1, nullptr);
+    if (list)
+    {
+        const auto listSize = proj_list_get_count(list);
+        if (listSize == 1)
+        {
+            ret = proj_list_get(ctx, list, 0);
+        }
+        proj_list_destroy(list);
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                    GTIFGetEPSGOfficialName()                         */
 /************************************************************************/
 
@@ -460,29 +486,15 @@ static char *GTIFGetEPSGOfficialName(GTIF *hGTIF, PJ_TYPE searchType,
                                      const char *pszName)
 {
     char *pszRet = nullptr;
-    /* Search in database the corresponding EPSG 'official' name */
-    auto ctx =
-        static_cast<PJ_CONTEXT *>(GTIFGetPROJContext(hGTIF, true, nullptr));
-    auto list =
-        proj_create_from_name(ctx, "EPSG", pszName, &searchType, 1,
-                              /* approximateMatch = */ false, 1, nullptr);
-    if (list)
+    PJ *crs = GTIFGetOfficialCRS(hGTIF, searchType, "EPSG", pszName);
+    if (crs)
     {
-        const auto listSize = proj_list_get_count(list);
-        if (listSize == 1)
+        const char *pszOfficialName = proj_get_name(crs);
+        if (pszOfficialName)
         {
-            auto obj = proj_list_get(ctx, list, 0);
-            if (obj)
-            {
-                const char *pszOfficialName = proj_get_name(obj);
-                if (pszOfficialName)
-                {
-                    pszRet = CPLStrdup(pszOfficialName);
-                }
-            }
-            proj_destroy(obj);
+            pszRet = CPLStrdup(pszOfficialName);
         }
-        proj_list_destroy(list);
+        proj_destroy(crs);
     }
     return pszRet;
 }
@@ -1632,7 +1644,8 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
         }
     }
 
-    if (oSRS.IsProjected() && oSRS.GetAxesCount() == 2)
+    const bool bIs2DProjCRS = oSRS.IsProjected() && oSRS.GetAxesCount() == 2;
+    if (bIs2DProjCRS)
     {
         const char *pszProjCRSName = oSRS.GetAttrValue("PROJCS");
         if (pszProjCRSName)
@@ -1655,6 +1668,76 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
                     CPLFree(pszOfficialName);
                 }
             }
+        }
+    }
+
+    if ((bIs2DProjCRS || oSRS.IsGeographic()) &&
+        oSRS.GetAuthorityCode(nullptr) == nullptr &&
+        psDefn->UOMAngleInDegrees == 1.0)
+    {
+        const PJ_TYPE type = bIs2DProjCRS ? PJ_TYPE_PROJECTED_CRS
+                             : oSRS.GetAxesCount() == 2
+                                 ? PJ_TYPE_GEOGRAPHIC_2D_CRS
+                                 : PJ_TYPE_GEOGRAPHIC_3D_CRS;
+        // If the CRS has no known id, try to find one by the CRS name
+        // in the PROJ database, and validate equivalence of the
+        // definition from the GeoTIFF keys with the one from the
+        // PROJ database.
+        PJ *refCRS = GTIFGetOfficialCRS(hGTIF, type, "EPSG", oSRS.GetName());
+        if (!refCRS)
+            refCRS = GTIFGetOfficialCRS(hGTIF, type, nullptr, oSRS.GetName());
+        if (refCRS)
+        {
+            auto ctx = static_cast<PJ_CONTEXT *>(
+                GTIFGetPROJContext(hGTIF, true, nullptr));
+            const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+            auto crs = proj_create(ctx, oSRS.exportToWkt(apszOptions).c_str());
+            if (crs)
+            {
+                if (proj_is_equivalent_to(
+                        crs, refCRS,
+                        PJ_COMP_EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS))
+                {
+                    const char *pszAuthName = proj_get_id_auth_name(refCRS, 0);
+                    const char *pszCode = proj_get_id_code(refCRS, 0);
+                    if (pszAuthName && pszCode)
+                    {
+                        oSRS.SetFromUserInput(std::string(pszAuthName)
+                                                  .append(":")
+                                                  .append(pszCode)
+                                                  .c_str());
+                    }
+                }
+                else
+                {
+                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                    auto refCrsFromWKT1 = proj_create(
+                        ctx, proj_as_wkt(ctx, refCRS, PJ_WKT1_GDAL, nullptr));
+                    if (refCrsFromWKT1)
+                    {
+                        if (proj_is_equivalent_to(
+                                crs, refCrsFromWKT1,
+                                PJ_COMP_EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS))
+                        {
+                            const char *pszAuthName =
+                                proj_get_id_auth_name(refCrsFromWKT1, 0);
+                            const char *pszCode =
+                                proj_get_id_code(refCrsFromWKT1, 0);
+                            if (pszAuthName && pszCode)
+                            {
+                                oSRS.SetFromUserInput(std::string(pszAuthName)
+                                                          .append(":")
+                                                          .append(pszCode)
+                                                          .c_str());
+                            }
+                        }
+                        proj_destroy(refCrsFromWKT1);
+                    }
+                }
+                proj_destroy(crs);
+            }
+
+            proj_destroy(refCRS);
         }
     }
 

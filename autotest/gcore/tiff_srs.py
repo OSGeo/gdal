@@ -1515,3 +1515,12 @@ def test_tiff_srs_write_read_epsg_27563_full_def(tmp_vsimem, config_options):
             srs.ExportToProj4()
             == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +units=m +no_defs"
         )
+
+
+@pytest.mark.require_proj(9, 0)
+def test_tiff_srs_infer_iau_code_from_srs_name():
+
+    ds = gdal.Open("data/gtiff/tiff_srs_iau_2015_30110.tif")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityName(None) == "IAU_2015"
+    assert srs.GetAuthorityCode(None) == "30110"
