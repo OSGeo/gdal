@@ -1479,14 +1479,33 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
             VRTSourcedRasterBand *poVRTBand =
                 static_cast<VRTSourcedRasterBand *>(
                     poVRTDS->GetRasterBand(nSelectedBands + 1));
-            /* Little trick : we use an offset of 255 and a scaling of 0, so
-             * that in areas covered */
-            /* by the source, the value of the alpha band will be 255, otherwise
-             * it will be 0 */
-            poVRTBand->AddComplexSource(
-                GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
-                dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
-                dfDstYOff, dfDstXSize, dfDstYSize, 255, 0, VRT_NODATA_UNSET);
+            if (psDatasetProperties->bHasDatasetMask && bUseSrcMaskBand)
+            {
+                auto poComplexSource = new VRTComplexSource();
+                poComplexSource->SetUseMaskBand(true);
+                poVRTBand->ConfigureSource(
+                    poComplexSource,
+                    GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
+                    TRUE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
+                    dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize);
+
+                if (bWriteAbsolutePath)
+                    WriteAbsolutePath(poComplexSource, dsFileName);
+
+                poVRTBand->AddSource(poComplexSource);
+            }
+            else
+            {
+                /* Little trick : we use an offset of 255 and a scaling of 0, so
+                 * that in areas covered */
+                /* by the source, the value of the alpha band will be 255, otherwise
+                 * it will be 0 */
+                poVRTBand->AddComplexSource(
+                    GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
+                    dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
+                    dfDstYOff, dfDstXSize, dfDstYSize, 255, 0,
+                    VRT_NODATA_UNSET);
+            }
         }
         else if (bHasDatasetMask)
         {
@@ -1506,7 +1525,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
             assert(poMaskVRTBand);
             poMaskVRTBand->ConfigureSource(
                 poSource,
-                static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
+                GDALRasterBand::FromHandle(GDALGetRasterBand(hSourceDS, 1)),
                 TRUE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
                 dfDstYOff, dfDstXSize, dfDstYSize);
 
