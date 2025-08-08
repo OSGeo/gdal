@@ -82,6 +82,10 @@ def test_gdalalg_vector_info_text():
     assert info.ParseRunAndFinalize(["--format=text", "data/path.shp"])
     output_string = info["output-string"]
     assert output_string.startswith("INFO: Open of")
+    assert "Layer name: path" in output_string
+    assert "Geometry: Line String" in output_string
+    assert "Feature Count: 1" in output_string
+    assert "OGRFeature" not in output_string
 
 
 def test_gdalalg_vector_info_json():
@@ -93,12 +97,31 @@ def test_gdalalg_vector_info_json():
     assert "features" not in j["layers"][0]
 
 
-def test_gdalalg_vector_info_features():
+def test_gdalalg_vector_info_features_text():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--format=text", "--features", "data/path.shp"])
+    output_string = info["output-string"]
+    assert output_string.startswith("INFO: Open of")
+    assert "Layer name: path" in output_string
+    assert "Geometry: Line String" in output_string
+    assert "Feature Count: 1" in output_string
+    assert "OGRFeature" in output_string
+
+
+def test_gdalalg_vector_info_features_json():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--features", "data/path.shp"])
     output_string = info["output-string"]
     j = json.loads(output_string)
     assert "features" in j["layers"][0]
+
+
+def test_gdalalg_vector_info_features_limit_json():
+    info = get_info_alg()
+    assert info.ParseRunAndFinalize(["--limit=2", "../ogr/data/poly.shp"])
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert len(j["layers"][0]["features"]) == 2
 
 
 def test_gdalalg_vector_info_sql():

@@ -45,9 +45,16 @@ Standard options
 
 .. option:: --features
 
-    List all features. Beware of RAM consumption on large layers when using
-    JSON output.
+    List all features by default, unless limited with :option:`--limit`.
+    Beware of RAM consumption on large layers when using JSON output.
     This option is mutually exclusive with the :option:`--summary` option.
+
+.. option:: --limit <FEATURE-COUNT>
+
+    .. versionadded:: 3.12
+
+    Limit the number of features reported per layer. When set, this implies
+    :option:`--features`.
 
 .. option:: --sql <statement>|@<filename>
 

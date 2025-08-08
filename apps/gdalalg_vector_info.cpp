@@ -46,13 +46,21 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
     auto &layerArg =
         AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
-    AddArg("features", 0,
-           _("List all features (beware of RAM consumption on large layers)"),
-           &m_listFeatures)
-        .SetMutualExclusionGroup("summary-features");
+    auto &argFeature =
+        AddArg(
+            "features", 0,
+            _("List all features (beware of RAM consumption on large layers)"),
+            &m_listFeatures)
+            .SetMutualExclusionGroup("summary-features");
     AddArg("summary", 0, _("List the layer names and the geometry type"),
            &m_summaryOnly)
         .SetMutualExclusionGroup("summary-features");
+    AddArg("limit", 0,
+           _("Limit the number of features per layer (implies --features)"),
+           &m_limit)
+        .SetMinValueIncluded(0)
+        .SetMetaVar("FEATURE-COUNT")
+        .AddAction([&argFeature]() { argFeature.Set(true); });
     AddArg("sql", 0,
            _("Execute the indicated SQL statement and return the result"),
            &m_sql)
@@ -139,6 +147,11 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (m_stdout)
     {
         aosOptions.AddString("-stdout");
+    }
+    if (m_limit > 0)
+    {
+        aosOptions.AddString("-limit");
+        aosOptions.AddString(std::to_string(m_limit));
     }
 
     // Must be last, as positional
