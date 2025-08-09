@@ -233,7 +233,7 @@ Vector commands
 
     Pipelines:
 
-    - :ref:`gdal_raster_pipeline`: Process a vector dataset applying several steps
+    - :ref:`gdal_vector_pipeline`: Process a vector dataset applying several steps
 
 Multidimensional raster commands
 ++++++++++++++++++++++++++++++++
