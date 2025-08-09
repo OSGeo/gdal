@@ -39,6 +39,45 @@ def validate_xml(filename):
         print("Validation of %s skipped as GMLAS driver missing" % filename)
         return
 
+    # for GDAL 3.12 / PDS4_PDS_1O00
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1O00.xsd",
+        "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
+        f.write(data)
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1O00_1970.xsd",
+        "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1O00_1970.xsd",
+        force_download=True,
+    )
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1O00_1510.xsd",
+        "pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1O00_1510.xsd",
+        force_download=True,
+    )
+
+    # Used by PDS4_CART_1O00_1970.xsd
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1O00_19A0.xsd",
+        "pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb") as f:
+        f.write(data)
+
     # for GDAL 3.4 / PDS4_PDS_1G00
 
     gdaltest.download_or_skip(
@@ -1804,3 +1843,74 @@ def test_pds4_read_right_to_left(tmp_path):
     ds = gdal.Open(tmp_filename)
     # Test that we flip the image along the horizontal axis
     assert numpy.all(ds.ReadAsArray()[::, ::-1] == ref_ds.ReadAsArray())
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,expected_val",
+    [
+        ("data/pds4/missing_constant_hexadecimal_float.xml", -3.4028226550889045e38),
+        ("data/pds4/missing_constant_hexadecimal_double.xml", -1.7976931348623157e308),
+    ],
+)
+def test_pds4_read_hexadecimal_missing_constant(filename, expected_val):
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == expected_val
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "dt,val,serialized_val",
+    [
+        (gdal.GDT_Byte, 255, "255"),
+        (gdal.GDT_Int64, (1 << 63) - 1, str((1 << 63) - 1)),
+        (gdal.GDT_UInt64, (1 << 64) - 1, str((1 << 64) - 1)),
+        (gdal.GDT_Float32, -3.4028226550889045e38, "0xFF7FFFFB"),
+        (gdal.GDT_Float64, -1.7976931348623157e308, "0xFFEFFFFFFFFFFFFF"),
+    ],
+)
+@pytest.mark.parametrize("geotiff", [True, False])
+def test_pds4_write_missing_constant(tmp_vsimem, dt, val, serialized_val, geotiff):
+
+    options = ["IMAGE_FORMAT=GEOTIFF"] if geotiff else []
+    ds = gdal.GetDriverByName("PDS4").Create(
+        tmp_vsimem / "test.xml", 1, 1, 1, dt, options=options
+    )
+    if dt == gdal.GDT_Int64:
+        ds.GetRasterBand(1).SetNoDataValueAsInt64(val)
+    elif dt == gdal.GDT_UInt64:
+        ds.GetRasterBand(1).SetNoDataValueAsUInt64(val)
+    else:
+        ds.GetRasterBand(1).SetNoDataValue(val)
+
+    if dt == gdal.GDT_Int64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == val
+    elif dt == gdal.GDT_UInt64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == val
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == val
+
+    ds = None
+
+    with gdal.VSIFile(tmp_vsimem / "test.xml", "rb") as f:
+        xml = f.read().decode("utf-8")
+    assert f"<missing_constant>{serialized_val}</missing_constant>" in xml
+
+    ds = gdal.Open(tmp_vsimem / "test.xml")
+    assert ds.GetRasterBand(1).DataType == dt
+    if dt == gdal.GDT_Int64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == val
+        assert ds.GetRasterBand(1).ReadRaster() == struct.pack("q", val)
+    elif dt == gdal.GDT_UInt64:
+        assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == val
+        assert ds.GetRasterBand(1).ReadRaster() == struct.pack("Q", val)
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == val
+        if dt == gdal.GDT_Float32:
+            assert ds.GetRasterBand(1).ReadRaster() == struct.pack("f", val)
+        elif dt == gdal.GDT_Float64:
+            assert ds.GetRasterBand(1).ReadRaster() == struct.pack("d", val)

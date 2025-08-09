@@ -29,6 +29,45 @@ def validate_xml(filename):
     if ogr.GetDriverByName("GMLAS") is None:
         pytest.skip("GMLAS driver missing")
 
+    # for GDAL 3.12 / PDS4_PDS_1O00
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1O00.xsd",
+        "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
+        f.write(data)
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1O00_1970.xsd",
+        "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1O00_1970.xsd",
+        force_download=True,
+    )
+
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1O00_1510.xsd",
+        "pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1O00_1510.xsd",
+        force_download=True,
+    )
+
+    # Used by PDS4_CART_1O00_1970.xsd
+    gdaltest.download_or_skip(
+        "https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1O00_19A0.xsd",
+        "pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd",
+        force_download=True,
+    )
+
+    # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb") as f:
+        data = f.read().replace(b"|[-]|", b"|[\\-]|")
+    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb") as f:
+        f.write(data)
+
     # for GDAL 3.4 / PDS4_PDS_1G00
 
     gdaltest.download_or_skip(
@@ -373,9 +412,9 @@ def test_ogr_pds4_create_table_character(tmp_vsimem, line_ending):
         # Only do that check in that configuration for faster test execution
         assert validate_xml(tmp_vsimem / "test.xml")
 
-    assert gdal.VSIStatL(tmp_vsimem / "test/0f_oo.dat")
+    assert gdal.VSIStatL(tmp_vsimem / "test_0f_oo.dat")
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "test/0f_oo.dat", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_0f_oo.dat", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
     if line_ending == "LF":
@@ -442,7 +481,7 @@ def test_ogr_pds4_create_with_srs(tmp_vsimem):
         "bar",
         geom_type=ogr.wkbPoint25D,
         srs=sr,
-        options=["TABLE_TYPE=CHARACTER", "SAME_DIRECTORY=YES"],
+        options=["TABLE_TYPE=CHARACTER"],
     )
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
@@ -451,7 +490,7 @@ def test_ogr_pds4_create_with_srs(tmp_vsimem):
 
     assert validate_xml(tmp_vsimem / "test.xml")
 
-    assert gdal.VSIStatL(tmp_vsimem / "bar.dat")
+    assert gdal.VSIStatL(tmp_vsimem / "test_bar.dat")
 
     f = gdal.VSIFOpenL(tmp_vsimem / "test.xml", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
@@ -676,7 +715,7 @@ def test_ogr_pds4_create_table_delimited(tmp_vsimem, line_ending):
     assert "foo.vrt" in fl[2]
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "test/foo.csv", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_foo.csv", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
     if line_ending == "LF":
@@ -685,7 +724,7 @@ def test_ogr_pds4_create_table_delimited(tmp_vsimem, line_ending):
     else:
         assert "\r\n" in data
 
-    for filename in [tmp_vsimem / "test.xml", tmp_vsimem / "test/foo.vrt"]:
+    for filename in [tmp_vsimem / "test.xml", tmp_vsimem / "test_foo.vrt"]:
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 8, filename
