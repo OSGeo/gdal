@@ -1623,7 +1623,7 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
                         : m_helpURL)
 {
     AddArg("help", 'h', _("Display help message and exit"), &m_helpRequested)
-        .SetOnlyForCLI()
+        .SetHiddenForAPI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
     AddArg("help-doc", 0, _("Display help message for use by documentation"),
@@ -1632,12 +1632,12 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
         .AddAction([this]() { m_specialActionRequested = true; });
     AddArg("json-usage", 0, _("Display usage as JSON document and exit"),
            &m_JSONUsageRequested)
-        .SetOnlyForCLI()
+        .SetHiddenForAPI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
     AddArg("config", 0, _("Configuration option"), &m_dummyConfigOptions)
         .SetMetaVar("<KEY>=<VALUE>")
-        .SetOnlyForCLI()
+        .SetHiddenForAPI()
         .SetCategory(GAAC_COMMON)
         .AddAction(
             [this]()
@@ -5073,7 +5073,7 @@ GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
 void GDALAlgorithm::AddProgressArg()
 {
     AddArg("quiet", 'q', _("Quiet mode (no progress bar)"), &m_quiet)
-        .SetOnlyForCLI()
+        .SetHiddenForAPI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_progressBarRequested = false; });
 
@@ -5915,8 +5915,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && arg->IsInput() &&
-                !arg->IsOutput())
+            if (!arg->IsHiddenForAPI() && arg->IsInput() && !arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("input_arguments", jArgs);
@@ -5926,8 +5925,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && !arg->IsInput() &&
-                arg->IsOutput())
+            if (!arg->IsHiddenForAPI() && !arg->IsInput() && arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("output_arguments", jArgs);
@@ -5937,8 +5935,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         CPLJSONArray jArgs;
         for (const auto &arg : m_args)
         {
-            if (!arg->IsHidden() && !arg->IsOnlyForCLI() && arg->IsInput() &&
-                arg->IsOutput())
+            if (!arg->IsHiddenForAPI() && arg->IsInput() && arg->IsOutput())
                 jArgs.Add(ProcessArg(arg.get()));
         }
         oRoot.Add("input_output_arguments", jArgs);
@@ -7015,6 +7012,24 @@ const double *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH hArg,
 }
 
 /************************************************************************/
+/*                   GDALAlgorithmArgIsHidden()                         */
+/************************************************************************/
+
+/** Return whether the argument is hidden (for GDAL internal use)
+ *
+ * This is an alias for GDALAlgorithmArgIsHiddenForCLI() &&
+ * GDALAlgorithmArgIsHiddenForAPI().
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.12
+ */
+bool GDALAlgorithmArgIsHidden(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, false);
+    return hArg->ptr->IsHidden();
+}
+
+/************************************************************************/
 /*                   GDALAlgorithmArgIsHiddenForCLI()                   */
 /************************************************************************/
 
@@ -7033,20 +7048,42 @@ bool GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
+/*                   GDALAlgorithmArgIsHiddenForAPI()                   */
+/************************************************************************/
+
+/** Return whether the argument must not be mentioned in the context of an
+ * API use.
+ * Said otherwise, if it is only for CLI usage.
+ *
+ * For example "--help"
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @since 3.12
+ */
+bool GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH hArg)
+{
+    VALIDATE_POINTER1(hArg, __func__, false);
+    return hArg->ptr->IsHiddenForAPI();
+}
+
+/************************************************************************/
 /*                   GDALAlgorithmArgIsOnlyForCLI()                     */
 /************************************************************************/
 
-/** Return whether the argument is only for CLI usage.
+/** Return whether the argument must not be mentioned in the context of an
+ * API use.
+ * Said otherwise, if it is only for CLI usage.
  *
  * For example "--help"
  *
  * @param hArg Handle to an argument. Must NOT be null.
  * @since 3.11
+ * @deprecated Use GDALAlgorithmArgIsHiddenForAPI() instead.
  */
 bool GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH hArg)
 {
     VALIDATE_POINTER1(hArg, __func__, false);
-    return hArg->ptr->IsOnlyForCLI();
+    return hArg->ptr->IsHiddenForAPI();
 }
 
 /************************************************************************/

@@ -39,7 +39,7 @@ GDALMainAlgorithm::GDALMainAlgorithm()
     SetCallPath({NAME});
 
     AddArg("version", 0, _("Display GDAL version and exit"), &m_version)
-        .SetOnlyForCLI();
+        .SetHiddenForAPI();
     AddArg("drivers", 0, _("Display driver list as JSON document"), &m_drivers);
 
     AddOutputStringArg(&m_output);

@@ -174,9 +174,14 @@ const int CPL_DLL *GDALAlgorithmArgGetDefaultAsIntegerList(GDALAlgorithmArgH,
 const double CPL_DLL *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH,
                                                              size_t *pnCount);
 
+bool CPL_DLL GDALAlgorithmArgIsHidden(GDALAlgorithmArgH);
+
 bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
 
-bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH);
+bool CPL_DLL GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH);
+
+bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH)
+    CPL_WARN_DEPRECATED("Use GDALAlgorithmArgIsHiddenForAPI() instead");
 
 bool CPL_DLL GDALAlgorithmArgIsInput(GDALAlgorithmArgH);
 
@@ -852,19 +857,22 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
-    /** Declare that the argument is only for CLI usage.
+    /** Declare that the argument is hidden in the context of an API use.
+     * Said otherwise, if it is only for CLI usage.
      * For example "--help" */
-    GDALAlgorithmArgDecl &SetOnlyForCLI(bool onlyForCLI = true)
+    GDALAlgorithmArgDecl &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_onlyForCLI = onlyForCLI;
+        m_hiddenForAPI = hiddenForAPI;
         return *this;
     }
 
-    /** Declare that the argument is hidden. Default is no
+    /** Declare that the argument is hidden. Default is no.
+     * This is equivalen to calling SetHiddenForCLI() and SetHiddenForAPI()
      */
     GDALAlgorithmArgDecl &SetHidden()
     {
-        m_hidden = true;
+        m_hiddenForCLI = true;
+        m_hiddenForAPI = true;
         return *this;
     }
 
@@ -1093,7 +1101,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      */
     inline bool IsHidden() const
     {
-        return m_hidden;
+        return m_hiddenForCLI && m_hiddenForAPI;
     }
 
     /** Return whether the argument must not be mentioned in CLI usage.
@@ -1106,10 +1114,20 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /** Return whether the argument is only for CLI usage.
-     * For example "--help" */
+     * For example "--help"
+     * This is an alias for IsHiddenForAPI()
+     */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_onlyForCLI;
+        return m_hiddenForAPI;
+    }
+
+    /** Return whether the argument is hidden for API usage
+     * For example "--help" */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_hiddenForAPI;
     }
 
     /** Indicate whether the value of the argument is read-only during the
@@ -1283,9 +1301,8 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_required = false;
     bool m_positional = false;
     bool m_hasDefaultValue = false;
-    bool m_hidden = false;
     bool m_hiddenForCLI = false;
-    bool m_onlyForCLI = false;
+    bool m_hiddenForAPI = false;
     bool m_isInput = true;
     bool m_isOutput = false;
     bool m_packedValuesAllowed = true;
@@ -1526,8 +1543,15 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 
     /** Alias for GDALAlgorithmArgDecl::IsOnlyForCLI() */
     inline bool IsOnlyForCLI() const
+        CPL_WARN_DEPRECATED("Use IsHiddenForAPI() instead")
     {
-        return m_decl.IsOnlyForCLI();
+        return m_decl.IsHiddenForAPI();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsHiddenForAPI() */
+    inline bool IsHiddenForAPI() const
+    {
+        return m_decl.IsHiddenForAPI();
     }
 
     /** Alias for GDALAlgorithmArgDecl::IsInput() */
@@ -2153,10 +2177,10 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
-    /** Alias for GDALAlgorithmArgDecl::SetOnlyForCLI() */
-    GDALInConstructionAlgorithmArg &SetOnlyForCLI(bool onlyForCLI = true)
+    /** Alias for GDALAlgorithmArgDecl::SetHiddenForAPI() */
+    GDALInConstructionAlgorithmArg &SetHiddenForAPI(bool hiddenForAPI = true)
     {
-        m_decl.SetOnlyForCLI(onlyForCLI);
+        m_decl.SetHiddenForAPI(hiddenForAPI);
         return *this;
     }
 

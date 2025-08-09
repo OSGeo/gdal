@@ -124,7 +124,8 @@ def test_algorithm(tmp_path):
     with pytest.raises(Exception, match="must only be called on arguments of type"):
         arg.GetDefaultAsStringList()
     assert not arg.IsHiddenForCLI()
-    assert not arg.IsOnlyForCLI()
+    assert not arg.IsHiddenForAPI()
+    assert not arg.IsHidden()
     assert arg.IsInput()
     assert not arg.IsOutput()
     assert arg.GetMutualExclusionGroup() == "overwrite-append"
