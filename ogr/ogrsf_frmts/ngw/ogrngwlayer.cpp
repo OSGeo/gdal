@@ -591,6 +591,7 @@ OGRErr OGRNGWLayer::Rename(const char *pszNewName)
  */
 void OGRNGWLayer::ResetReading()
 {
+    m_bEOF = false;
     SyncToDisk();
     FreeFeaturesCache();
     if (poDS->GetPageSize() > 0)
@@ -653,7 +654,7 @@ OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Feature index must be greater or equal 0. Got " CPL_FRMT_GIB,
                  nIndex);
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
     if (poDS->GetPageSize() > 0)
     {
@@ -719,6 +720,8 @@ OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
  */
 OGRFeature *OGRNGWLayer::GetNextFeature()
 {
+    if (m_bEOF)
+        return nullptr;
     std::string osUrl;
 
     if (poDS->GetPageSize() > 0)
