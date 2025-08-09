@@ -41,9 +41,7 @@
 #include <cstring>
 #include <ctime>
 #include <limits>
-#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 #if HAVE_GETRLIMIT
 #include <sys/time.h>
 #include <sys/resource.h>

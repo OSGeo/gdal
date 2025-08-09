@@ -933,7 +933,7 @@ static bool SENTINEL2GetGranuleList(
     }
 
     CPLString osDirname(CPLGetDirnameSafe(pszFilename));
-#ifdef HAVE_READLINK
+#if !defined(_WIN32)
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
         readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename)));
@@ -2700,7 +2700,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
     }
 
     CPLString osDirname(CPLGetDirnameSafe(pszFilename));
-#ifdef HAVE_READLINK
+#if !defined(_WIN32)
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
         readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename)));
@@ -2792,7 +2792,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
     }
 
     CPLString osDirname(CPLGetDirnameSafe(pszFilename));
-#ifdef HAVE_READLINK
+#if !defined(_WIN32)
     char szPointerFilename[2048];
     int nBytes = static_cast<int>(
         readlink(pszFilename, szPointerFilename, sizeof(szPointerFilename)));

@@ -19,9 +19,6 @@
 
 #include <cassert>
 #include <cstddef>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 #include <algorithm>
 #include <utility>
 

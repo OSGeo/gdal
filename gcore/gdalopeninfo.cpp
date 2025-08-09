@@ -179,12 +179,12 @@ GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
     /*      Collect information about the file.                             */
     /* -------------------------------------------------------------------- */
 
-#ifdef HAVE_READLINK
+#if !defined(_WIN32)
     bool bHasRetried = false;
 
 retry:  // TODO(schwehr): Stop using goto.
 
-#endif  // HAVE_READLINK
+#endif  //  !defined(_WIN32)
 
 #if !(defined(_WIN32) || defined(__linux__) || defined(__ANDROID__) ||         \
       (defined(__MACH__) && defined(__APPLE__)))
@@ -292,7 +292,7 @@ retry:  // TODO(schwehr): Stop using goto.
             if (VSI_ISDIR(sStat.st_mode))
                 bIsDirectory = TRUE;
         }
-#ifdef HAVE_READLINK
+#if !defined(_WIN32)
         else if (!bHasRetried && !STARTS_WITH(pszFilename, "/vsi"))
         {
             // If someone creates a file with "ln -sf
@@ -316,7 +316,7 @@ retry:  // TODO(schwehr): Stop using goto.
                 goto retry;
             }
         }
-#endif  // HAVE_READLINK
+#endif  //  !defined(_WIN32)
     }
 
     /* -------------------------------------------------------------------- */

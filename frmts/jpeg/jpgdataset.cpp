@@ -24,9 +24,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 #include <limits>
 #include <setjmp.h>
 

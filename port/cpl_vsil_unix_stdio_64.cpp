@@ -51,9 +51,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <errno.h>
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #include <sys/stat.h>
 #ifdef HAVE_STATVFS
 #include <sys/statvfs.h>

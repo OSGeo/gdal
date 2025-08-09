@@ -16,16 +16,13 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
 #ifdef _WIN32
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 static VSIWriteFunction pWriteFunction = fwrite;

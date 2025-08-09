@@ -63,7 +63,7 @@ int CPLGetCurrentThreadCount()
     return nRet;
 }
 
-#elif defined(__WIN32)
+#elif defined(_WIN32)
 
 #include <windows.h>
 #include <tlhelp32.h>
