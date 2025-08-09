@@ -45,8 +45,6 @@ Standard options
 
 .. include:: options/lco.rst
 
-.. include:: options/lco.rst
-
 .. include:: gdal_options/overwrite.rst
 
 .. include:: gdal_options/active_layer.rst
