@@ -61,10 +61,11 @@ jobs:
            python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
            libpq-dev libpqtypes-dev postgresql-14 postgresql-14-postgis-3 postgresql-client-14 postgresql-14-postgis-3-scripts
         # MSSQL: client side
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
-        sudo apt-get update
-        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+        # Disabled because of Conflicting values set for option Signed-By regarding source https://packages.microsoft.com/ubuntu/22.04/prod/ jammy: /usr/share/keyrings/microsoft-prod.gpg !=
+        # curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+        # curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        # sudo apt-get update
+        # sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
         # HANA: client side
         # Install hdbsql tool
         curl -v -j -k -s -L -H "Cookie: eula_3_2_agreed=tools.hana.ondemand.com/developer-license-3_2.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
