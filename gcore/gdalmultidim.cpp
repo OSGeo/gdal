@@ -11147,14 +11147,14 @@ GDALExtendedDataTypeCreateCompound(const char *pszName, size_t nTotalSize,
     std::vector<std::unique_ptr<GDALEDTComponent>> compsCpp;
     for (size_t i = 0; i < nComponents; i++)
     {
-        compsCpp.emplace_back(std::unique_ptr<GDALEDTComponent>(
-            new GDALEDTComponent(*(comps[i]->m_poImpl.get()))));
+        compsCpp.emplace_back(
+            std::make_unique<GDALEDTComponent>(*(comps[i]->m_poImpl.get())));
     }
     auto dt = GDALExtendedDataType::Create(pszName ? pszName : "", nTotalSize,
                                            std::move(compsCpp));
     if (dt.GetClass() != GEDTC_COMPOUND)
         return nullptr;
-    return new GDALExtendedDataTypeHS(new GDALExtendedDataType(dt));
+    return new GDALExtendedDataTypeHS(new GDALExtendedDataType(std::move(dt)));
 }
 
 /************************************************************************/

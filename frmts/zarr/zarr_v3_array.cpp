@@ -392,39 +392,49 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     osFilename = VSIFileManager::GetHandler(osFilename.c_str())
                      ->GetStreamingFilename(osFilename);
 
+    const auto CheckTilePresence =
+        [this, &osFilename, &tileIndices, &bMissingTileOut]()
+    {
+        auto poTilePresenceArray = OpenTilePresenceCache(false);
+        if (poTilePresenceArray)
+        {
+            std::vector<GUInt64> anTileIdx(m_aoDims.size());
+            const std::vector<size_t> anCount(m_aoDims.size(), 1);
+            const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+            const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+            const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+            for (size_t i = 0; i < m_aoDims.size(); ++i)
+            {
+                anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            }
+            GByte byValue = 0;
+            if (poTilePresenceArray->Read(
+                    anTileIdx.data(), anCount.data(), anArrayStep.data(),
+                    anBufferStride.data(), eByteDT, &byValue) &&
+                byValue == 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                             osFilename.c_str());
+                bMissingTileOut = true;
+                return true;
+            }
+        }
+        return false;
+    };
+
     // First if we have a tile presence cache, check tile presence from it
-    std::unique_ptr<std::lock_guard<std::mutex>> poLockGuard;
+    bool bEarlyRet;
     if (bUseMutex)
     {
-        poLockGuard = std::make_unique<std::lock_guard<std::mutex>>(m_oMutex);
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        bEarlyRet = CheckTilePresence();
     }
-    CPL_IGNORE_RET_VAL(poLockGuard);
-
-    auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if (poTilePresenceArray)
+    else
     {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
-        const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
-        {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
-        }
-        GByte byValue = 0;
-        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
-                                      anArrayStep.data(), anBufferStride.data(),
-                                      eByteDT, &byValue) &&
-            byValue == 0)
-        {
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                         osFilename.c_str());
-            bMissingTileOut = true;
-            return true;
-        }
+        bEarlyRet = CheckTilePresence();
     }
-    poLockGuard.reset();
+    if (bEarlyRet)
+        return true;
 
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
