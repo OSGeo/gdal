@@ -583,8 +583,9 @@ GDALTileIndexDataset::GDALTileIndexDataset()
 static std::string GetAbsoluteFileName(const char *pszTileName,
                                        const char *pszVRTName)
 {
-    if (STARTS_WITH(pszTileName, "https://"))
-        return std::string("/vsicurl/").append(pszTileName);
+    std::string osRet = VSIURIToVSIPath(pszTileName);
+    if (osRet != pszTileName)
+        return osRet;
 
     if (CPLIsFilenameRelative(pszTileName) &&
         !STARTS_WITH(pszTileName, "<VRTDataset") &&
@@ -594,13 +595,12 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
         if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
         {
             const std::string osPath(oSubDSInfo->GetPathComponent());
-            std::string osRet =
-                CPLIsFilenameRelative(osPath.c_str())
-                    ? oSubDSInfo->ModifyPathComponent(
-                          CPLProjectRelativeFilenameSafe(
-                              CPLGetPathSafe(pszVRTName).c_str(),
-                              osPath.c_str()))
-                    : std::string(pszTileName);
+            osRet = CPLIsFilenameRelative(osPath.c_str())
+                        ? oSubDSInfo->ModifyPathComponent(
+                              CPLProjectRelativeFilenameSafe(
+                                  CPLGetPathSafe(pszVRTName).c_str(),
+                                  osPath.c_str()))
+                        : std::string(pszTileName);
             GDALDestroySubdatasetInfo(oSubDSInfo);
             return osRet;
         }

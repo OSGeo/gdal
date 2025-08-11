@@ -4423,3 +4423,44 @@ void VSIProxyFileHandle::CancelCreation()
     m_nativeHandle->CancelCreation();
 }
 #endif
+
+/************************************************************************/
+/*                         VSIURIToVSIPath()                            */
+/************************************************************************/
+
+/** Return a VSI compatible path from a URI / URL
+ *
+ * Substitute URI / URLs starting with s3://, gs://, etc. by their VSI
+ * prefix equivalent. If no known substitution is found, the input string is
+ * returned unmodified.
+ *
+ * @since GDAL 3.12
+ */
+std::string VSIURIToVSIPath(const std::string &osURI)
+{
+    static const struct
+    {
+        const char *pszFSSpecPrefix;
+        const char *pszVSIPrefix;
+    } substitutions[] = {
+        {"s3://", "/vsis3/"},
+        {"gs://", "/vsigs/"},
+        {"gcs://", "/vsigs/"},
+        {"az://", "/vsiaz/"},
+        {"azure://", "/vsiaz/"},
+        {"http://", "/vsicurl/http://"},
+        {"https://", "/vsicurl/https://"},
+        {"file://", ""},
+    };
+
+    for (const auto &substitution : substitutions)
+    {
+        if (STARTS_WITH(osURI.c_str(), substitution.pszFSSpecPrefix))
+        {
+            return std::string(substitution.pszVSIPrefix)
+                .append(osURI.c_str() + strlen(substitution.pszFSSpecPrefix));
+        }
+    }
+
+    return osURI;
+}

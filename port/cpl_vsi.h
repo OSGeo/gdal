@@ -20,6 +20,13 @@
 
 #include <stdbool.h>
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+#include <string>
+}
+#endif
+
 /**
  * \file cpl_vsi.h
  *
@@ -483,6 +490,13 @@ GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
 void CPL_DLL VSINetworkStatsReset(void);
 char CPL_DLL *VSINetworkStatsGetAsSerializedJSON(char **papszOptions);
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    std::string CPL_DLL VSIURIToVSIPath(const std::string &osURI);
+}
+#endif
 
 /* ==================================================================== */
 /*      Install special file access handlers.                           */
