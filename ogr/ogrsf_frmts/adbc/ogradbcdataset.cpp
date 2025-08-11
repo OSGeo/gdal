@@ -113,8 +113,6 @@ OGRADBCDataset::CreateLayer(const char *pszStatement, const char *pszLayerName,
                             bool bInternalUse)
 {
 
-    OGRADBCError error;
-
     CPLString osStatement(pszStatement);
     if (!m_osParquetFilename.empty())
     {
@@ -155,48 +153,8 @@ OGRADBCDataset::CreateLayer(const char *pszStatement, const char *pszLayerName,
         }
     }
 
-    auto statement = std::make_unique<AdbcStatement>();
-    if (ADBC_CALL(StatementNew, m_connection.get(), statement.get(), error) !=
-        ADBC_STATUS_OK)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "AdbcStatementNew() failed: %s",
-                 error.message());
-        return nullptr;
-    }
-
-    if (ADBC_CALL(StatementSetSqlQuery, statement.get(), osStatement.c_str(),
-                  error) != ADBC_STATUS_OK)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "AdbcStatementSetSqlQuery() failed: %s", error.message());
-        error.clear();
-        ADBC_CALL(StatementRelease, statement.get(), error);
-        return nullptr;
-    }
-
-    auto stream = std::make_unique<OGRArrowArrayStream>();
-    int64_t rows_affected = -1;
-    if (ADBC_CALL(StatementExecuteQuery, statement.get(), stream->get(),
-                  &rows_affected, error) != ADBC_STATUS_OK)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "AdbcStatementExecuteQuery() failed: %s", error.message());
-        error.clear();
-        ADBC_CALL(StatementRelease, statement.get(), error);
-        return nullptr;
-    }
-
-    ArrowSchema schema = {};
-    if (stream->get_schema(&schema) != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "get_schema() failed");
-        ADBC_CALL(StatementRelease, statement.get(), error);
-        return nullptr;
-    }
-
-    return std::make_unique<OGRADBCLayer>(
-        this, pszLayerName, osStatement.c_str(), std::move(statement),
-        std::move(stream), &schema, bInternalUse);
+    return std::make_unique<OGRADBCLayer>(this, pszLayerName, osStatement,
+                                          bInternalUse);
 }
 
 /************************************************************************/
@@ -214,7 +172,9 @@ OGRLayer *OGRADBCDataset::ExecuteSQL(const char *pszStatement,
     }
 
     auto poLayer = CreateLayer(pszStatement, "RESULTSET", false);
-    if (poLayer && poSpatialFilter)
+    if (poLayer->GotError())
+        return nullptr;
+    if (poSpatialFilter)
     {
         if (poLayer->GetGeomType() == wkbNone)
             return nullptr;
@@ -410,7 +370,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     for (const char *pszStatement :
          cpl::Iterate(CSLConstList(papszPreludeStatements)))
     {
-        CreateInternalLayer(pszStatement);
+        CPL_IGNORE_RET_VAL(CreateInternalLayer(pszStatement)->GotError());
     }
     CSLDestroy(papszPreludeStatements);
     if (m_bIsDuckDBDriver && CPLTestBool(CPLGetConfigOption(
@@ -419,19 +379,20 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         auto poTmpLayer =
             CreateInternalLayer("SELECT 1 FROM duckdb_extensions() WHERE "
                                 "extension_name='spatial' AND loaded = false");
-        if (poTmpLayer && std::unique_ptr<OGRFeature>(
-                              poTmpLayer->GetNextFeature()) != nullptr)
+        if (!poTmpLayer->GotError() &&
+            std::unique_ptr<OGRFeature>(poTmpLayer->GetNextFeature()) !=
+                nullptr)
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            CreateInternalLayer("LOAD spatial");
+            CPL_IGNORE_RET_VAL(CreateInternalLayer("LOAD spatial")->GotError());
         }
 
         poTmpLayer =
             CreateInternalLayer("SELECT 1 FROM duckdb_extensions() WHERE "
                                 "extension_name='spatial' AND loaded = true");
-        m_bSpatialLoaded =
-            poTmpLayer && std::unique_ptr<OGRFeature>(
-                              poTmpLayer->GetNextFeature()) != nullptr;
+        m_bSpatialLoaded = !poTmpLayer->GotError() &&
+                           std::unique_ptr<OGRFeature>(
+                               poTmpLayer->GetNextFeature()) != nullptr;
     }
 
     std::string osLayerName = "RESULTSET";
@@ -466,10 +427,10 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
                 {
                     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
                     poLayer = CreateLayer(pszSQL, osLayerName.c_str(), false);
-                    if (!poLayer)
+                    if (poLayer->GotError())
                         osErrorMsg = CPLGetLastErrorMsg();
                 }
-                if (!poLayer)
+                if (poLayer->GotError())
                 {
                     CPLDebug("ADBC",
                              "Connecting with 'LOAD spatial' did not work "
@@ -527,10 +488,10 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
                     }
                 }
             }
-            if (!poLayer)
+            if (!poLayer || poLayer->GotError())
             {
                 poLayer = CreateLayer(pszSQL, osLayerName.c_str(), false);
-                if (!poLayer)
+                if (poLayer->GotError())
                     return false;
             }
 
@@ -542,7 +503,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     {
         auto poLayerList = CreateInternalLayer(
             "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')");
-        if (!poLayerList || poLayerList->GetLayerDefn()->GetFieldCount() != 1)
+        if (poLayerList->GotError() ||
+            poLayerList->GetLayerDefn()->GetFieldCount() != 1)
         {
             return false;
         }
@@ -555,13 +517,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             const std::string osStatement =
                 CPLSPrintf("SELECT * FROM \"%s\"",
                            OGRDuplicateCharacter(pszLayerName, '"').c_str());
-            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
-            auto poLayer =
-                CreateLayer(osStatement.c_str(), pszLayerName, false);
-            if (poLayer)
-            {
-                m_apoLayers.emplace_back(std::move(poLayer));
-            }
+            m_apoLayers.emplace_back(
+                CreateLayer(osStatement.c_str(), pszLayerName, false));
         }
     }
     else if (bIsPostgreSQL)
@@ -572,7 +529,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             "AND c.relkind in ('r','v','m','f') "
             "AND n.nspname NOT IN ('pg_catalog', 'information_schema') "
             "ORDER BY c.oid");
-        if (!poLayerList || poLayerList->GetLayerDefn()->GetFieldCount() != 2)
+        if (poLayerList->GotError() ||
+            poLayerList->GetLayerDefn()->GetFieldCount() != 2)
         {
             return false;
         }
@@ -586,14 +544,9 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
                            OGRDuplicateCharacter(pszNamespace, '"').c_str(),
                            OGRDuplicateCharacter(pszTableName, '"').c_str());
 
-            CPLTurnFailureIntoWarningBackuper oErrorsToWarnings{};
-            auto poLayer = CreateLayer(
+            m_apoLayers.emplace_back(CreateLayer(
                 osStatement.c_str(),
-                CPLSPrintf("%s.%s", pszNamespace, pszTableName), false);
-            if (poLayer)
-            {
-                m_apoLayers.emplace_back(std::move(poLayer));
-            }
+                CPLSPrintf("%s.%s", pszNamespace, pszTableName), false));
         }
     }
 
@@ -627,12 +580,11 @@ OGRLayer *OGRADBCDataset::GetLayerByName(const char *pszName)
         return nullptr;
     }
 
-    auto statement = std::make_unique<AdbcStatement>();
-    OGRADBCLayer tmpLayer(this, "", "", std::move(statement),
-                          std::move(objectsStream), &schema,
+    OGRADBCLayer tmpLayer(this, "", std::move(objectsStream), &schema,
                           /* bInternalUse = */ true);
     const auto tmpLayerDefn = tmpLayer.GetLayerDefn();
-    if (tmpLayerDefn->GetFieldIndex("catalog_name") < 0 ||
+    if (tmpLayer.GotError() ||
+        tmpLayerDefn->GetFieldIndex("catalog_name") < 0 ||
         tmpLayerDefn->GetFieldIndex("catalog_db_schemas") < 0)
     {
         return nullptr;
