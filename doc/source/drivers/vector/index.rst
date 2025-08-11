@@ -20,6 +20,7 @@ Vector drivers
    :hidden:
 
    adbc
+   adbc_bigquery
    aivector
    amigocloud
    arrow

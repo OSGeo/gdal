@@ -19,7 +19,7 @@
 
 static GDALDataset *OGRADBCDriverOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (!OGRADBCDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
+    if (!OGRADBCDriverIdentify(poOpenInfo))
         return nullptr;
     auto poDS = std::make_unique<OGRADBCDataset>();
     if (!poDS->Open(poOpenInfo))

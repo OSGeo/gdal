@@ -6236,9 +6236,16 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                         oFieldDefn.SetDomainName(oIter.second);
                 }
                 else if (oIter.first == ARROW_EXTENSION_NAME_KEY &&
-                         oIter.second == EXTENSION_NAME_ARROW_JSON)
+                         (oIter.second == EXTENSION_NAME_ARROW_JSON ||
+                          // Used by BigQuery through ADBC driver
+                          oIter.second == "google:sqlType:json"))
                 {
                     oFieldDefn.SetSubType(OFSTJSON);
+                }
+                else if (oIter.first == ARROW_EXTENSION_NAME_KEY)
+                {
+                    CPLDebug("OGR", "Unknown Arrow extension: %s",
+                             oIter.second.c_str());
                 }
                 else
                 {
