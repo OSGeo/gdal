@@ -11145,6 +11145,7 @@ GDALExtendedDataTypeCreateCompound(const char *pszName, size_t nTotalSize,
                                    const GDALEDTComponentH *comps)
 {
     std::vector<std::unique_ptr<GDALEDTComponent>> compsCpp;
+    compsCpp.reserve(nComponents);
     for (size_t i = 0; i < nComponents; i++)
     {
         compsCpp.emplace_back(
