@@ -444,6 +444,7 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     const auto CheckTilePresence =
         [this, &osFilename, &tileIndices, &bMissingTileOut]()
     {
+        CPL_IGNORE_RET_VAL(osFilename);
         auto poTilePresenceArray = OpenTilePresenceCache(false);
         if (poTilePresenceArray)
         {
