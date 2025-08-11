@@ -5,6 +5,7 @@ add_gdal_driver(
       ogradbcdriver.cpp
       ogradbcdataset.cpp
       ogradbclayer.cpp
+      ogradbcbigquerylayer.cpp
   CORE_SOURCES ogradbcdrivercore.cpp
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE

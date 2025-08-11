@@ -19,6 +19,8 @@
 #include "cpl_json.h"
 #include "gdal_adbc.h"
 
+#include <algorithm>
+
 #if defined(OGR_ADBC_HAS_DRIVER_MANAGER)
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -29,6 +31,8 @@
 #pragma clang diagnostic pop
 #endif
 #endif
+
+// #define DEBUG_VERBOSE
 
 #define OGR_ADBC_VERSION ADBC_VERSION_1_1_0
 static_assert(sizeof(AdbcDriver) == ADBC_DRIVER_1_1_0_SIZE);
@@ -91,6 +95,8 @@ AdbcStatusCode OGRADBCLoadDriver(const char *driver_name,
 
 OGRADBCDataset::~OGRADBCDataset()
 {
+    OGRADBCDataset::FlushCache(true);
+
     // Layers must be closed before the connection
     m_apoLayers.clear();
     OGRADBCError error;
@@ -102,6 +108,26 @@ OGRADBCDataset::~OGRADBCDataset()
         ADBC_CALL(DatabaseRelease, &m_database, error);
         m_driver.release(&m_driver, error);
     }
+}
+
+/************************************************************************/
+/*                           FlushCache()                               */
+/************************************************************************/
+
+CPLErr OGRADBCDataset::FlushCache(bool /* bAtClosing */)
+{
+    CPLErr eErr = CE_None;
+    for (auto &poLayer : m_apoLayers)
+    {
+        auto poADBCLayer = dynamic_cast<OGRADBCLayer *>(poLayer.get());
+        if (poADBCLayer)
+        {
+            if (!poADBCLayer->RunDeferredCreation())
+                eErr = CE_Failure;
+        }
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -158,6 +184,19 @@ OGRADBCDataset::CreateLayer(const char *pszStatement, const char *pszLayerName,
 }
 
 /************************************************************************/
+/*                        CreateInternalLayer()                         */
+/************************************************************************/
+
+std::unique_ptr<OGRADBCLayer>
+OGRADBCDataset::CreateInternalLayer(const char *pszStatement)
+{
+#ifdef DEBUG_VERBOSE
+    CPLDebug("ADBC", "%s", pszStatement);
+#endif
+    return CreateLayer(pszStatement, "temp", true);
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -165,13 +204,60 @@ OGRLayer *OGRADBCDataset::ExecuteSQL(const char *pszStatement,
                                      OGRGeometry *poSpatialFilter,
                                      const char *pszDialect)
 {
+    for (auto &poLayer : m_apoLayers)
+    {
+        auto poADBCLayer = dynamic_cast<OGRADBCLayer *>(poLayer.get());
+        if (poADBCLayer)
+            poADBCLayer->RunDeferredCreation();
+    }
+
     if (pszDialect && pszDialect[0] != 0 && !EQUAL(pszDialect, "NATIVE"))
     {
         return GDALDataset::ExecuteSQL(pszStatement, poSpatialFilter,
                                        pszDialect);
     }
 
-    auto poLayer = CreateLayer(pszStatement, "RESULTSET", false);
+    std::string osStatement(pszStatement);
+    for (const char *pszPrefix : {"SELECT * FROM ", "SELECT COUNT(*) FROM "})
+    {
+        if (m_bIsBigQuery && STARTS_WITH_CI(pszStatement, pszPrefix))
+        {
+            const auto nPos = osStatement.find(' ', strlen(pszPrefix));
+            const std::string osTableName = osStatement.substr(
+                strlen(pszPrefix),
+                nPos == std::string::npos ? nPos : nPos - strlen(pszPrefix));
+            auto poADBCLayer = dynamic_cast<OGRADBCBigQueryLayer *>(
+                GetLayerByName(osTableName.c_str()));
+            if (poADBCLayer)
+            {
+                std::string osDatasetId;
+                std::string osTableId;
+                if (poADBCLayer->GetBigQueryDatasetAndTableId(osDatasetId,
+                                                              osTableId))
+                {
+                    std::string osNewStatement = pszPrefix;
+                    osNewStatement += '`';
+                    osNewStatement += OGRDuplicateCharacter(osDatasetId, '`');
+                    osNewStatement += "`.`";
+                    osNewStatement += OGRDuplicateCharacter(osTableId, '`');
+                    osNewStatement += '`';
+                    if (nPos != std::string::npos)
+                        osNewStatement += osStatement.substr(nPos);
+                    osStatement = std::move(osNewStatement);
+                }
+            }
+            break;
+        }
+    }
+
+    const char *pszLayerName = "RESULTSET";
+    std::unique_ptr<OGRADBCLayer> poLayer;
+    if (m_bIsBigQuery)
+        poLayer = std::make_unique<OGRADBCBigQueryLayer>(
+            this, pszLayerName, osStatement,
+            /* bInternalUse = */ false);
+    else
+        poLayer = CreateLayer(osStatement.c_str(), pszLayerName, false);
     if (poLayer->GotError())
         return nullptr;
     if (poSpatialFilter)
@@ -206,10 +292,13 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(pszFilename, "ADBC:"))
     {
         pszFilename += strlen("ADBC:");
-        poTmpOpenInfo =
-            std::make_unique<GDALOpenInfo>(pszFilename, GA_ReadOnly);
-        poTmpOpenInfo->papszOpenOptions = poOpenInfo->papszOpenOptions;
-        poOpenInfo = poTmpOpenInfo.get();
+        if (pszFilename[0])
+        {
+            poTmpOpenInfo = std::make_unique<GDALOpenInfo>(pszFilename,
+                                                           poOpenInfo->eAccess);
+            poTmpOpenInfo->papszOpenOptions = poOpenInfo->papszOpenOptions;
+            poOpenInfo = poTmpOpenInfo.get();
+        }
     }
     const char *pszADBCDriverName =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ADBC_DRIVER");
@@ -219,6 +308,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         OGRADBCDriverIsSQLite3(poOpenInfo);
     bool bIsParquet =
         OGRADBCDriverIsParquet(poOpenInfo) || IsParquetExtension(pszFilename);
+    m_bIsBigQuery =
+        pszADBCDriverName && strstr(pszADBCDriverName, "adbc_driver_bigquery");
     const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     if (!bIsParquet && pszSQL)
     {
@@ -261,6 +352,18 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         {
             pszADBCDriverName = "adbc_driver_sqlite";
         }
+        else if (CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                   "BIGQUERY_PROJECT_ID") ||
+                 CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                   "BIGQUERY_DATASET_ID") ||
+                 CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                   "BIGQUERY_JSON_CREDENTIAL_STRING") ||
+                 CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                   "BIGQUERY_JSON_CREDENTIAL_FILE"))
+        {
+            m_bIsBigQuery = true;
+            pszADBCDriverName = "adbc_driver_bigquery";
+        }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -268,6 +371,13 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             return false;
         }
     }
+
+    if (poOpenInfo->eAccess == GA_Update && !m_bIsBigQuery)
+    {
+        return false;
+    }
+
+    eAccess = poOpenInfo->eAccess;
 
     m_bIsDuckDBDriver =
         m_bIsDuckDBDataset || bIsParquet ||
@@ -322,6 +432,128 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+    }
+
+    const auto GetAsOpenOptionOrConfigOption = [poOpenInfo](const char *pszKey)
+    {
+        const char *pszVal =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, pszKey);
+        if (pszVal)
+            return pszVal;
+        // Below comments are for scripts/collect_config_options.py
+        // CPLGetConfigOption("BIGQUERY_PROJECT_ID", nullptr);
+        // CPLGetConfigOption("BIGQUERY_DATASET_ID", nullptr);
+        // CPLGetConfigOption("BIGQUERY_JSON_CREDENTIAL_STRING", nullptr);
+        // CPLGetConfigOption("BIGQUERY_JSON_CREDENTIAL_FILE", nullptr);
+        return CPLGetConfigOption(pszKey, nullptr);
+    };
+
+    const char *pszBIGQUERY_PROJECT_ID =
+        GetAsOpenOptionOrConfigOption("BIGQUERY_PROJECT_ID");
+    if (pszBIGQUERY_PROJECT_ID && pszBIGQUERY_PROJECT_ID[0])
+    {
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.project_id", pszBIGQUERY_PROJECT_ID,
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+    }
+
+    const char *pszBIGQUERY_DATASET_ID =
+        GetAsOpenOptionOrConfigOption("BIGQUERY_DATASET_ID");
+    if (pszBIGQUERY_DATASET_ID && pszBIGQUERY_DATASET_ID[0])
+    {
+        m_osBigQueryDatasetId = pszBIGQUERY_DATASET_ID;
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.dataset_id", pszBIGQUERY_DATASET_ID,
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+    }
+
+    const char *pszBIGQUERY_JSON_CREDENTIAL_STRING =
+        GetAsOpenOptionOrConfigOption("BIGQUERY_JSON_CREDENTIAL_STRING");
+    const char *pszBIGQUERY_JSON_CREDENTIAL_FILE =
+        GetAsOpenOptionOrConfigOption("BIGQUERY_JSON_CREDENTIAL_FILE");
+    if (pszBIGQUERY_JSON_CREDENTIAL_STRING &&
+        pszBIGQUERY_JSON_CREDENTIAL_STRING[0])
+    {
+        if (pszBIGQUERY_JSON_CREDENTIAL_FILE &&
+            pszBIGQUERY_JSON_CREDENTIAL_FILE[0])
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "BIGQUERY_JSON_CREDENTIAL_FILE ignored when "
+                     "BIGQUERY_JSON_CREDENTIAL_STRING is set");
+        }
+
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.auth_credentials",
+                      "adbc.bigquery.sql.auth_type.json_credential_string",
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.auth_credentials",
+                      pszBIGQUERY_JSON_CREDENTIAL_STRING,
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+    }
+    else if (pszBIGQUERY_JSON_CREDENTIAL_FILE &&
+             pszBIGQUERY_JSON_CREDENTIAL_FILE[0])
+    {
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.auth_credentials",
+                      "adbc.bigquery.sql.auth_type.json_credential_file",
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+
+        if (ADBC_CALL(DatabaseSetOption, &m_database,
+                      "adbc.bigquery.sql.auth_credentials",
+                      pszBIGQUERY_JSON_CREDENTIAL_FILE,
+                      error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcDatabaseSetOption() failed: %s", error.message());
+            return false;
+        }
+    }
+
+    if (m_bIsBigQuery)
+    {
+        if (!(pszBIGQUERY_PROJECT_ID && pszBIGQUERY_PROJECT_ID[0]))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Required BIGQUERY_PROJECT_ID open option not provided");
+            return false;
+        }
+        if (!(pszBIGQUERY_JSON_CREDENTIAL_STRING &&
+              pszBIGQUERY_JSON_CREDENTIAL_STRING[0]) &&
+            !(pszBIGQUERY_JSON_CREDENTIAL_FILE &&
+              pszBIGQUERY_JSON_CREDENTIAL_FILE[0]))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Required BIGQUERY_JSON_CREDENTIAL_STRING or "
+                     "BIGQUERY_JSON_CREDENTIAL_FILE open option not provided");
             return false;
         }
     }
@@ -490,7 +722,12 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             }
             if (!poLayer || poLayer->GotError())
             {
-                poLayer = CreateLayer(pszSQL, osLayerName.c_str(), false);
+                if (m_bIsBigQuery)
+                    poLayer = std::make_unique<OGRADBCBigQueryLayer>(
+                        this, osLayerName.c_str(), pszSQL,
+                        /* bInternalUse = */ false);
+                else
+                    poLayer = CreateLayer(pszSQL, osLayerName.c_str(), false);
                 if (poLayer->GotError())
                     return false;
             }
@@ -549,8 +786,175 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
                 CPLSPrintf("%s.%s", pszNamespace, pszTableName), false));
         }
     }
+    else if (m_bIsBigQuery)
+    {
+        if (!(pszBIGQUERY_DATASET_ID && pszBIGQUERY_DATASET_ID[0]))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot list tables when BIGQUERY_DATASET_ID open option "
+                     "is not provided");
+            return false;
+        }
+        const std::string s(pszBIGQUERY_DATASET_ID);
+        if (!std::all_of(s.begin(), s.end(),
+                         [](char c) { return std::isalnum(c) || c == '_'; }))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid characters found in BIGQUERY_DATASET_ID value");
+            return false;
+        }
+        auto poLayerList = CreateInternalLayer(
+            CPLSPrintf("SELECT table_name FROM %s.INFORMATION_SCHEMA.TABLES "
+                       "ORDER BY creation_time",
+                       pszBIGQUERY_DATASET_ID));
+        if (poLayerList->GotError() ||
+            poLayerList->GetLayerDefn()->GetFieldCount() != 1)
+        {
+            return false;
+        }
+
+        for (const auto &poFeature : poLayerList.get())
+        {
+            const char *pszTableName = poFeature->GetFieldAsString(0);
+            const std::string osStatement = CPLSPrintf(
+                "SELECT * FROM `%s`.`%s`",
+                OGRDuplicateCharacter(pszBIGQUERY_DATASET_ID, '`').c_str(),
+                OGRDuplicateCharacter(pszTableName, '`').c_str());
+
+            m_apoLayers.emplace_back(std::make_unique<OGRADBCBigQueryLayer>(
+                this, pszTableName, osStatement,
+                /* bInternalUse = */ false));
+        }
+    }
 
     return true;
+}
+
+/************************************************************************/
+/*                          ICreateLayer()                              */
+/************************************************************************/
+
+OGRLayer *OGRADBCDataset::ICreateLayer(const char *pszName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList papszOptions)
+{
+    if (!m_bIsBigQuery)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "CreateLayer() only supported for BigQuery");
+        return nullptr;
+    }
+    if (GetAccess() != GA_Update)
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "CreateLayer() only supported on datasets opened in update mode");
+        return nullptr;
+    }
+    if (m_osBigQueryDatasetId.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Open option BIGQUERY_DATASET_ID should be set");
+        return nullptr;
+    }
+
+    if (GetLayerByName(pszName))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Table %s already exists",
+                 pszName);
+        return nullptr;
+    }
+
+    if (poGeomFieldDefn)
+    {
+        const auto poSRS = poGeomFieldDefn->GetSpatialRef();
+        if (poSRS && !poSRS->IsGeographic())
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "BigQuery only supports geographic CRS. Please reproject "
+                     "your layer to one (typically EPSG:4326)");
+            return nullptr;
+        }
+    }
+
+    const std::string osStatement = CPLSPrintf(
+        "SELECT * FROM `%s`.`%s`",
+        OGRDuplicateCharacter(m_osBigQueryDatasetId.c_str(), '`').c_str(),
+        OGRDuplicateCharacter(pszName, '`').c_str());
+
+    const char *pszFIDColName =
+        CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid");
+    auto poLayer =
+        std::make_unique<OGRADBCBigQueryLayer>(this, pszName, osStatement,
+                                               /* bInternalUse = */ false);
+    poLayer->SetDeferredCreation(pszFIDColName, poGeomFieldDefn);
+    m_apoLayers.emplace_back(std::move(poLayer));
+    return m_apoLayers.back().get();
+}
+
+/************************************************************************/
+/*                           DeleteLayer()                              */
+/************************************************************************/
+
+OGRErr OGRADBCDataset::DeleteLayer(int iLayer)
+{
+    if (!m_bIsBigQuery)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteLayer() only supported for BigQuery");
+        return OGRERR_FAILURE;
+    }
+    if (GetAccess() != GA_Update)
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "DeleteLayer() only supported on datasets opened in update mode");
+        return OGRERR_FAILURE;
+    }
+    if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid layer index");
+        return OGRERR_FAILURE;
+    }
+
+    auto poADBCLayer =
+        dynamic_cast<OGRADBCBigQueryLayer *>(m_apoLayers[iLayer].get());
+    if (poADBCLayer && !poADBCLayer->m_bDeferredCreation)
+    {
+        std::string osDatasetId;
+        std::string osTableId;
+        if (!poADBCLayer->GetBigQueryDatasetAndTableId(osDatasetId, osTableId))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "DeleteLayer(): cannot get dataset and table ID");
+            return OGRERR_FAILURE;
+        }
+
+        std::string osSQL = "DROP TABLE `";
+        osSQL += OGRDuplicateCharacter(osDatasetId.c_str(), '`');
+        osSQL += "`.`";
+        osSQL += OGRDuplicateCharacter(osTableId.c_str(), '`');
+        osSQL += "`";
+        // CPLDebug("ADBC", "%s", osSQL.c_str());
+        if (CreateInternalLayer(osSQL.c_str())->GotError())
+        {
+            return OGRERR_FAILURE;
+        }
+    }
+
+    m_apoLayers.erase(m_apoLayers.begin() + iLayer);
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+int OGRADBCDataset::TestCapability(const char *pszCap)
+{
+    if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
+        return m_bIsBigQuery && eAccess == GA_Update;
+    return false;
 }
 
 /************************************************************************/
@@ -583,8 +987,7 @@ OGRLayer *OGRADBCDataset::GetLayerByName(const char *pszName)
     OGRADBCLayer tmpLayer(this, "", std::move(objectsStream), &schema,
                           /* bInternalUse = */ true);
     const auto tmpLayerDefn = tmpLayer.GetLayerDefn();
-    if (tmpLayer.GotError() ||
-        tmpLayerDefn->GetFieldIndex("catalog_name") < 0 ||
+    if (tmpLayerDefn->GetFieldIndex("catalog_name") < 0 ||
         tmpLayerDefn->GetFieldIndex("catalog_db_schemas") < 0)
     {
         return nullptr;
