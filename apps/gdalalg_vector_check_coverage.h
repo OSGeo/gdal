@@ -1,7 +1,7 @@
 /******************************************************************************
 *
  * Project:  GDAL
- * Purpose:  "gdal vector check-geometry"
+ * Purpose:  "gdal vector check-coverage"
  * Author:   Daniel Baston
  *
  ******************************************************************************

@@ -29,7 +29,7 @@ class GDALVectorCheckGeometryAlgorithm : public GDALVectorPipelineStepAlgorithm
   public:
     static constexpr const char *NAME = "check-geometry";
     static constexpr const char *DESCRIPTION =
-        "Check a dataset for invalid features";
+        "Check a dataset for invalid geometries";
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_check_geometry.html";
 

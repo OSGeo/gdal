@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Checks the whether a polygon dataset forms a valid coverage.
+    Checks whether a polygon dataset forms a valid coverage.
 
 .. Index:: gdal vector check-coverage
 
@@ -20,7 +20,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal vector check-coverage` checks the whether a polygon dataset forms a valid coverage, meaning:
+:program:`gdal vector check-coverage` checks whether a polygon dataset forms a valid coverage, meaning:
 
 - no polygons overlap
 - all shared edges have nodes at the same locations

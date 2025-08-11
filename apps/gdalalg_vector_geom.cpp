@@ -128,15 +128,15 @@ GDALVectorGeomAlgorithmStandalone::~GDALVectorGeomAlgorithmStandalone() =
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                      GEOSNonStreamingAlgorithmDataset                */
+/*                    GDALGeosNonStreamingAlgorithmDataset              */
 /************************************************************************/
 
-GEOSNonStreamingAlgorithmDataset::GEOSNonStreamingAlgorithmDataset()
+GDALGeosNonStreamingAlgorithmDataset::GDALGeosNonStreamingAlgorithmDataset()
     : m_poGeosContext{OGRGeometry::createGEOSContext()}
 {
 }
 
-GEOSNonStreamingAlgorithmDataset::~GEOSNonStreamingAlgorithmDataset()
+GDALGeosNonStreamingAlgorithmDataset::~GDALGeosNonStreamingAlgorithmDataset()
 {
     if (m_poGeosContext != nullptr)
     {
@@ -157,9 +157,8 @@ GEOSNonStreamingAlgorithmDataset::~GEOSNonStreamingAlgorithmDataset()
     }
 }
 
-bool GEOSNonStreamingAlgorithmDataset::ConvertInputsToGeos(OGRLayer &srcLayer,
-                                                           OGRLayer &dstLayer,
-                                                           bool sameDefn)
+bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
+    OGRLayer &srcLayer, OGRLayer &dstLayer, bool sameDefn)
 {
     for (auto &feature : srcLayer)
     {
@@ -183,19 +182,27 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertInputsToGeos(OGRLayer &srcLayer,
             }
         }
 
-        GEOSGeometry *geosGeom =
-            poSrcGeom->exportToGEOS(m_poGeosContext, false);
-        if (!geosGeom)
+        if (poSrcGeom)
         {
-            // should not happen normally
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Geometry of feature %" PRId64
-                     " failed to convert to GEOS",
-                     static_cast<int64_t>(feature->GetFID()));
-            return false;
-        }
+            GEOSGeometry *geosGeom =
+                poSrcGeom->exportToGEOS(m_poGeosContext, false);
+            if (!geosGeom)
+            {
+                // should not happen normally
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Geometry of feature %" PRId64
+                         " failed to convert to GEOS",
+                         static_cast<int64_t>(feature->GetFID()));
+                return false;
+            }
 
-        m_apoGeosInputs.push_back(geosGeom);
+            m_apoGeosInputs.push_back(geosGeom);
+        }
+        else
+        {
+            m_apoGeosInputs.push_back(GEOSGeom_createEmptyCollection_r(
+                m_poGeosContext, GEOS_GEOMETRYCOLLECTION));
+        }
 
         OGRFeatureUniquePtr dstFeature;
 
@@ -222,7 +229,7 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertInputsToGeos(OGRLayer &srcLayer,
     return true;
 }
 
-bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
+bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     OGRLayer &dstLayer)
 {
     const OGRSpatialReference *poResultSRS =
@@ -233,10 +240,10 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 // we write them to features. It requires GEOS >= 3.12.
 #if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
-#define __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#define GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
 #endif
 
-#ifdef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
     m_nGeosResultSize =
         GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
     m_papoGeosResults = GEOSGeom_releaseCollection_r(
@@ -275,10 +282,10 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
             }
         }
 
-#ifdef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
         GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
         m_papoGeosResults[i] = nullptr;
-#undef __GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
+#undef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
 #endif
 
         if (!skipFeature)
@@ -298,8 +305,8 @@ bool GEOSNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     return true;
 }
 
-bool GEOSNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
-                                               OGRLayer &dstLayer)
+bool GDALGeosNonStreamingAlgorithmDataset::Process(OGRLayer &srcLayer,
+                                                   OGRLayer &dstLayer)
 {
     bool sameDefn = dstLayer.GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
 

@@ -133,8 +133,7 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
                     if (eType == wkbPolygon)
                     {
                         const OGRLinearRing *poRing =
-                            cpl::down_cast<const OGRPolygon *>(poGeom)
-                                ->getExteriorRing();
+                            poGeom->toPolygon()->getExteriorRing();
                         if (poRing != nullptr && !poRing->IsEmpty())
                         {
                             auto poPoint = std::make_unique<OGRPoint>();
@@ -225,22 +224,11 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
                       poSrcLayer->GetDescription()) != m_inputLayerNames.end())
         {
-            int geomFieldIndex = 0;
-
-            if (!m_geomField.empty())
-            {
-                geomFieldIndex = -1;
-                const OGRFeatureDefn *defn = poSrcLayer->GetLayerDefn();
-                for (int i = 0; i < defn->GetGeomFieldCount(); i++)
-                {
-                    if (EQUAL(defn->GetGeomFieldDefn(i)->GetNameRef(),
-                              m_geomField.c_str()))
-                    {
-                        geomFieldIndex = i;
-                        break;
-                    }
-                }
-            }
+            const int geomFieldIndex =
+                m_geomField.empty()
+                    ? 0
+                    : poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
+                          m_geomField.c_str());
 
             if (geomFieldIndex == -1)
             {

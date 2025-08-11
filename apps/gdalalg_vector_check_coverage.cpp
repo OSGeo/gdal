@@ -48,7 +48,7 @@ GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
 
 class GDALVectorCheckCoverageOutputDataset
-    : public GEOSNonStreamingAlgorithmDataset
+    : public GDALGeosNonStreamingAlgorithmDataset
 {
   public:
     explicit GDALVectorCheckCoverageOutputDataset(double maximumGapWidth,
@@ -113,22 +113,11 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
             std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
                       poSrcLayer->GetDescription()) != m_inputLayerNames.end())
         {
-            int geomFieldIndex = 0;
-
-            if (!m_geomField.empty())
-            {
-                geomFieldIndex = -1;
-                const OGRFeatureDefn *defn = poSrcLayer->GetLayerDefn();
-                for (int i = 0; i < defn->GetGeomFieldCount(); i++)
-                {
-                    if (EQUAL(defn->GetGeomFieldDefn(i)->GetNameRef(),
-                              m_geomField.c_str()))
-                    {
-                        geomFieldIndex = i;
-                        break;
-                    }
-                }
-            }
+            const int geomFieldIndex =
+                m_geomField.empty()
+                    ? 0
+                    : poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
+                          m_geomField.c_str());
 
             if (geomFieldIndex == -1)
             {

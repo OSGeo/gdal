@@ -52,7 +52,7 @@ GDALVectorCleanCoverageAlgorithm::GDALVectorCleanCoverageAlgorithm(
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14))
 
 class GDALVectorCleanCoverageOutputDataset
-    : public GEOSNonStreamingAlgorithmDataset
+    : public GDALGeosNonStreamingAlgorithmDataset
 {
   public:
     GDALVectorCleanCoverageOutputDataset(

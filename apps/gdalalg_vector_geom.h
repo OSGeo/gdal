@@ -188,24 +188,24 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                      GEOSNonStreamingAlgorithmDataset                */
+/*                    GDALGeosNonStreamingAlgorithmDataset              */
 /************************************************************************/
 
-/** A GEOSNonStreamingAlgorithmDataset manages the work of reading features
+/** A GDALGeosNonStreamingAlgorithmDataset manages the work of reading features
  *  from an input layer, converting OGR geometries into GEOS geometries,
  *  applying a GEOS function, and writing result to an output layer. It is
  *  appropriate only for GEOS algorithms that operate on all input geometries
  *  at a single time.
  */
-class GEOSNonStreamingAlgorithmDataset
+class GDALGeosNonStreamingAlgorithmDataset
     : public GDALVectorNonStreamingAlgorithmDataset
 {
   public:
-    GEOSNonStreamingAlgorithmDataset();
+    GDALGeosNonStreamingAlgorithmDataset();
 
-    ~GEOSNonStreamingAlgorithmDataset() override;
+    ~GDALGeosNonStreamingAlgorithmDataset() override;
 
-    CPL_DISALLOW_COPY_ASSIGN(GEOSNonStreamingAlgorithmDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALGeosNonStreamingAlgorithmDataset)
 
     bool ConvertInputsToGeos(OGRLayer &srcLayer, OGRLayer &dstLayer,
                              bool sameDefn);
