@@ -105,6 +105,8 @@ class OGRADBCLayer final : public OGRLayer,
     std::unique_ptr<AdbcStatement> m_statement{};
     std::unique_ptr<OGRArrowArrayToOGRFeatureAdapterLayer> m_poAdapterLayer{};
     std::unique_ptr<OGRArrowArrayStream> m_stream{};
+    bool m_bInternalUse = false;
+    bool m_bLayerDefinitionError = false;
 
     struct ArrowSchema m_schema
     {
@@ -123,7 +125,7 @@ class OGRADBCLayer final : public OGRLayer,
     bool GetArrowStreamInternal(struct ArrowArrayStream *out_stream);
     GIntBig GetFeatureCountParquet();
 
-    void BuildLayerDefn(bool bInternalUse);
+    void BuildLayerDefn();
     bool ReplaceStatement(const char *pszNewStatement);
     bool UpdateStatement();
     std::string GetCurrentStatement() const;
@@ -132,15 +134,19 @@ class OGRADBCLayer final : public OGRLayer,
 
   public:
     OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
-                 const char *pszStatement,
-                 std::unique_ptr<AdbcStatement> poStatement,
+                 const std::string &osStatement, bool bInternalUse);
+    OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
                  std::unique_ptr<OGRArrowArrayStream> poStream,
                  ArrowSchema *schema, bool bInternalUse);
     ~OGRADBCLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    bool GotError();
+
+    OGRFeatureDefn *GetLayerDefn() override;
+
+    const char *GetName() override
     {
-        return m_poAdapterLayer->GetLayerDefn();
+        return GetDescription();
     }
 
     void ResetReading() override;
@@ -201,7 +207,8 @@ class OGRADBCDataset final : public GDALDataset
                                               const char *pszLayerName,
                                               bool bInternalUse);
 
-    std::unique_ptr<OGRADBCLayer> CreateInternalLayer(const char *pszStatement)
+    std::unique_ptr<OGRADBCLayer>
+    CreateInternalLayer(const char *pszStatement) CPL_WARN_UNUSED_RESULT
     {
         return CreateLayer(pszStatement, "temp", true);
     }
