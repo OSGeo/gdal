@@ -4469,9 +4469,31 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
              (format[2] == 'u' ||  // time64 [microseconds]
               format[2] == 'n'))   // time64 [nanoseconds]
     {
-        oFeature.SetField(iOGRFieldIndex,
-                          static_cast<GIntBig>(static_cast<const int64_t *>(
-                              array->buffers[1])[nOffsettedIndex]));
+        int64_t value =
+            static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex];
+        if (oFeature.GetFieldDefnRef(iOGRFieldIndex)->GetType() == OFTInteger64)
+        {
+            oFeature.SetField(iOGRFieldIndex, static_cast<GIntBig>(value));
+        }
+        else
+        {
+            double floatingPart;
+            if (format[2] == 'u')
+            {
+                floatingPart = (value % (1000 * 1000)) / 1e6;
+                value /= 1000 * 1000;
+            }
+            else
+            {
+                floatingPart = (value % (1000 * 1000 * 1000)) / 1e9;
+                value /= 1000 * 1000 * 1000;
+            }
+            const int nHour = static_cast<int>(value / 3600);
+            const int nMinute = static_cast<int>((value / 60) % 60);
+            const int nSecond = static_cast<int>(value % 60);
+            oFeature.SetField(iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
+                              static_cast<float>(nSecond + floatingPart));
+        }
     }
     else if (IsTimestampSeconds(format))
     {
