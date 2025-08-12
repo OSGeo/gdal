@@ -207,6 +207,7 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
         .SetHiddenForCLI(hiddenForCLI);
+    AddOutputOpenOptionsArg(&m_outputOpenOptions).SetHiddenForCLI(hiddenForCLI);
     auto &outputDatasetArg =
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
                             /* positionalAndRequired = */ false)
