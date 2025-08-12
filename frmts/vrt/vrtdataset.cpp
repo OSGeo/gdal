@@ -857,7 +857,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
-#if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
+#if !defined(_WIN32)
         char filenameBuffer[2048];
 
         while (true)
@@ -910,7 +910,7 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
         }
-#endif  // HAVE_READLINK && HAVE_LSTAT
+#endif  // !defined(__WIN32)
 
         if (osInitialCurrentVrtFilename == currentVrtFilename)
             pszVRTPath =

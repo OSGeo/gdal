@@ -90,9 +90,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include <algorithm>
 #include <array>

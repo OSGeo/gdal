@@ -14,9 +14,7 @@
 #include "cpl_vsi_virtual.h"
 
 #include <cstring>
-#if HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
+#include <fcntl.h>
 #include <ctime>
 #include <map>
 #include <set>
