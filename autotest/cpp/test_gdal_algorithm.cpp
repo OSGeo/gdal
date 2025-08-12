@@ -3876,6 +3876,26 @@ TEST_F(test_gdal_algorithm, arg_band_vector_with_input_dataset)
     }
 }
 
+TEST_F(test_gdal_algorithm, SetHidden)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_b = false;
+
+        MyAlgorithm()
+        {
+            AddArg("flag", 0, "", &m_b).SetHidden().SetCategory(GAAC_ESOTERIC);
+        }
+    };
+
+    MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_TRUE(alg.GetArg("flag")->IsHidden());
+    alg.GetUsageForCLI(false);
+}
+
 TEST_F(test_gdal_algorithm, SetHiddenForCLI)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
@@ -3892,10 +3912,13 @@ TEST_F(test_gdal_algorithm, SetHiddenForCLI)
     };
 
     MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHidden());
     alg.GetUsageForCLI(false);
 }
 
-TEST_F(test_gdal_algorithm, SetOnlyForCLI)
+TEST_F(test_gdal_algorithm, SetHiddenForAPI)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun
     {
@@ -3905,13 +3928,16 @@ TEST_F(test_gdal_algorithm, SetOnlyForCLI)
         MyAlgorithm()
         {
             AddArg("flag", 0, "", &m_b)
-                .SetOnlyForCLI()
+                .SetHiddenForAPI()
                 .SetCategory("my category");
             m_longDescription = "long description";
         }
     };
 
     MyAlgorithm alg;
+    EXPECT_TRUE(alg.GetArg("flag")->IsHiddenForAPI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHiddenForCLI());
+    EXPECT_FALSE(alg.GetArg("flag")->IsHidden());
     alg.GetUsageForCLI(false);
 }
 

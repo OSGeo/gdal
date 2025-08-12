@@ -170,12 +170,16 @@ public:
   }
 #endif
 
+  bool IsHidden() {
+    return GDALAlgorithmArgIsHidden(self);
+  }
+
   bool IsHiddenForCLI() {
     return GDALAlgorithmArgIsHiddenForCLI(self);
   }
 
-  bool IsOnlyForCLI() {
-    return GDALAlgorithmArgIsOnlyForCLI(self);
+  bool IsHiddenForAPI() {
+    return GDALAlgorithmArgIsHiddenForAPI(self);
   }
 
   bool IsInput() {
