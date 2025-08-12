@@ -951,8 +951,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
     bool SkipBufferInitialization();
 
   public:
-    int nSources = 0;
-    VRTSource **papoSources = nullptr;
+    std::vector<std::unique_ptr<VRTSource>> m_papoSources{};
 
     VRTSourcedRasterBand(GDALDataset *poDS, int nBand);
     VRTSourcedRasterBand(GDALDataType eType, int nXSize, int nYSize);
@@ -1000,6 +999,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                                 GUIntBig *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
+
+    CPLErr AddSource(std::unique_ptr<VRTSource>);
 
     CPLErr AddSource(VRTSource *);
 

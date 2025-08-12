@@ -2260,11 +2260,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         /*      translation type required. */
         /* --------------------------------------------------------------------
          */
-        VRTSimpleSource *poSimpleSource = nullptr;
+        std::unique_ptr<VRTSimpleSource> poSimpleSource;
         if (psOptions->bUnscale || bScale ||
             (psOptions->nRGBExpand != 0 && i < psOptions->nRGBExpand))
         {
-            VRTComplexSource *poSource = new VRTComplexSource();
+            auto poComplexSource = std::make_unique<VRTComplexSource>();
 
             /* --------------------------------------------------------------------
              */
@@ -2274,41 +2274,41 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
             if (dfOffset != 0.0 || dfScale != 1.0)
             {
-                poSource->SetLinearScaling(dfOffset, dfScale);
+                poComplexSource->SetLinearScaling(dfOffset, dfScale);
             }
             else if (bExponentScaling)
             {
-                poSource->SetPowerScaling(dfExponent, dfScaleSrcMin,
-                                          dfScaleSrcMax, dfScaleDstMin,
-                                          dfScaleDstMax, !psOptions->bNoClip);
+                poComplexSource->SetPowerScaling(
+                    dfExponent, dfScaleSrcMin, dfScaleSrcMax, dfScaleDstMin,
+                    dfScaleDstMax, !psOptions->bNoClip);
             }
 
-            poSource->SetColorTableComponent(nComponent);
+            poComplexSource->SetColorTableComponent(nComponent);
 
             int bSuccess;
             double dfNoData = poSrcBand->GetNoDataValue(&bSuccess);
             if (bSuccess)
             {
-                poSource->SetNoDataValue(dfNoData);
+                poComplexSource->SetNoDataValue(dfNoData);
             }
 
-            poSimpleSource = poSource;
+            poSimpleSource = std::move(poComplexSource);
         }
         else
         {
-            poSimpleSource = new VRTSimpleSource();
+            poSimpleSource = std::make_unique<VRTSimpleSource>();
         }
 
         poSimpleSource->SetResampling(psOptions->osResampling.empty()
                                           ? nullptr
                                           : psOptions->osResampling.c_str());
         poVRTBand->ConfigureSource(
-            poSimpleSource, poSrcBand, FALSE, psOptions->srcWin.dfXOff,
+            poSimpleSource.get(), poSrcBand, FALSE, psOptions->srcWin.dfXOff,
             psOptions->srcWin.dfYOff, psOptions->srcWin.dfXSize,
             psOptions->srcWin.dfYSize, dstWin.dfXOff, dstWin.dfYOff,
             dstWin.dfXSize, dstWin.dfYSize);
 
-        poVRTBand->AddSource(poSimpleSource);
+        poVRTBand->AddSource(std::move(poSimpleSource));
 
         /* --------------------------------------------------------------------
          */
