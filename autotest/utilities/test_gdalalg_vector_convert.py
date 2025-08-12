@@ -287,3 +287,22 @@ def test_gdalalg_vector_convert_output_format_not_guessed(tmp_vsimem):
         match="Cannot guess driver for",
     ):
         convert.Run()
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdalalg_vector_convert_to_stdout():
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    # Check that quiet mode is automatically turned on (no progress bar)
+    out = gdaltest.runexternal(
+        f"{gdal_path} vector convert --of=GeoJSON data/path.shp /vsistdout/"
+    )
+
+    with ogr.Open(out) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
