@@ -1400,6 +1400,8 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             auto poSimpleSource =
                 cpl::down_cast<VRTSimpleSource *>(poSource.get());
             auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+            // already checked by IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange
+            assert(poSimpleSourceBand);
             int bHasNoData = FALSE;
             CPL_IGNORE_RET_VAL(poSimpleSourceBand->GetNoDataValue(&bHasNoData));
             if (bHasNoData)
@@ -1485,6 +1487,8 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             double adfMinMaxSource[2] = {0};
 
             auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+            // already checked by IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange
+            assert(poSimpleSourceBand);
             CPLErr eErr = poSimpleSourceBand->ComputeRasterMinMax(
                 bApproxOK, adfMinMaxSource);
             if (eErr == CE_Failure)
