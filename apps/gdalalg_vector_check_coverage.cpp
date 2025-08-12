@@ -35,7 +35,7 @@ GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
            _("Include valid inputs in output, with empty geometry"),
            &m_includeValid);
 
-    AddArg("geometry-field", 0, _("Name or geometry field to check"),
+    AddArg("geometry-field", 0, _("Name of geometry field to check"),
            &m_geomField);
 
     AddArg("maximum-gap-width", 0, _("Maximum width of a gap to be flagged"),
