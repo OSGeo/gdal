@@ -1854,9 +1854,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             const int bandPositionIndex = imageBandList.FindString(pszPole);
             if (bandPositionIndex < 0)
             {
-                CPLFree(imageBandList);
-                CPLFree(imageBandFileList);
-
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "ERROR: RCM cannot find the polarization %s. Please "
                          "contact your data provider for a corrected dataset",
