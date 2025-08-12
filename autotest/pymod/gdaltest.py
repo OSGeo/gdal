@@ -2178,11 +2178,12 @@ def wkt_ds(wkts, *, geom_type=None, epsg=None):
     if type(wkts) is str:
         wkts = [wkts]
 
-    for wkt in wkts:
+    for i, wkt in enumerate(wkts):
         f = ogr.Feature(lyr.GetLayerDefn())
         geom = ogr.CreateGeometryFromWkt(wkt)
         assert geom
         f.SetGeometry(geom)
+        f.SetFID(i + 1)
         lyr.CreateFeature(f)
 
     return ds
