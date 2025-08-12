@@ -1719,8 +1719,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
             osBuf += szBuf;
             if ((i & 1023) == 0 || i == nXSize - 1)
             {
-                if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1, fp) !=
-                    1)
+                if (VSIFWriteL(osBuf.c_str(), osBuf.size(), 1, fp) != 1)
                 {
                     eErr = CE_Failure;
                     CPLError(CE_Failure, CPLE_AppDefined,
