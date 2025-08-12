@@ -45,6 +45,8 @@ constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
 constexpr const char *GDAL_ARG_NAME_BAND = "band";
 
+constexpr const char *GDAL_ARG_NAME_QUIET = "quiet";
+
 //! @cond Doxygen_Suppress
 struct GDALAlgorithmArgHS
 {
@@ -2698,6 +2700,14 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         }
     }
 
+    // If outputing to stdout, automatically turn off progress bar
+    if (arg == outputArg && val.GetName() == "/vsistdout/")
+    {
+        auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
+        if (quietArg && quietArg->GetType() == GAAT_BOOLEAN)
+            quietArg->Set(true);
+    }
+
     return ret;
 }
 
@@ -5072,7 +5082,8 @@ GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
 
 void GDALAlgorithm::AddProgressArg()
 {
-    AddArg("quiet", 'q', _("Quiet mode (no progress bar)"), &m_quiet)
+    AddArg(GDAL_ARG_NAME_QUIET, 'q', _("Quiet mode (no progress bar)"),
+           &m_quiet)
         .SetHiddenForAPI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_progressBarRequested = false; });
