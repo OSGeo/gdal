@@ -3294,13 +3294,11 @@ void VRTSourcedRasterBand::RemoveCoveredSources(CSLConstList papszOptions)
     }
 
     // Compact the papoSources array
-    size_t iDst = 0;
-    for (size_t iSrc = 0; iSrc < m_papoSources.size(); iSrc++)
-    {
-        if (m_papoSources[iSrc])
-            m_papoSources[iDst++] = std::move(m_papoSources[iSrc]);
-    }
-    m_papoSources.resize(iDst);
+    m_papoSources.erase(std::remove_if(m_papoSources.begin(),
+                                       m_papoSources.end(),
+                                       [](const std::unique_ptr<VRTSource> &src)
+                                       { return src.get() == nullptr; }),
+                        m_papoSources.end());
 
     CPLQuadTreeDestroy(hTree);
 #endif
