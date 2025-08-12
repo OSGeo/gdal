@@ -52,14 +52,13 @@ GDALVectorCleanCoverageAlgorithm::GDALVectorCleanCoverageAlgorithm(
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14))
 
 class GDALVectorCleanCoverageOutputDataset
-    : public GDALVectorNonStreamingAlgorithmDataset
+    : public GDALGeosNonStreamingAlgorithmDataset
 {
   public:
     GDALVectorCleanCoverageOutputDataset(
         const GDALVectorCleanCoverageAlgorithm::Options &opts)
-        : m_opts(opts)
+        : m_opts(opts), m_cleanParams(GetCoverageCleanParams())
     {
-        m_poGeosContext = OGRGeometry::createGEOSContext();
     }
 
     ~GDALVectorCleanCoverageOutputDataset() override;
@@ -132,140 +131,49 @@ class GDALVectorCleanCoverageOutputDataset
         return params;
     }
 
-    bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) override
+    bool PolygonsOnly() const override
     {
-        std::vector<OGRFeatureUniquePtr> features;
-        std::vector<GEOSGeometry *> geoms;
-
-        GEOSCoverageCleanParams *params = GetCoverageCleanParams();
-
-        // Copy features from srcLayer into dstLayer, converting
-        // their geometries to GEOS
-        for (auto &feature : srcLayer)
-        {
-            const OGRGeometry *fgeom = feature->GetGeometryRef();
-
-            const auto eFGType =
-                fgeom ? wkbFlatten(fgeom->getGeometryType()) : wkbUnknown;
-            if (eFGType != wkbPolygon && eFGType != wkbMultiPolygon &&
-                eFGType != wkbCurvePolygon && eFGType != wkbMultiSurface)
-            {
-                for (auto &geom : geoms)
-                {
-                    GEOSGeom_destroy_r(m_poGeosContext, geom);
-                }
-                GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Coverage cleaning can only be performed on "
-                         "polygonal geometries. Feature %" PRId64
-                         " does not have one",
-                         static_cast<int64_t>(feature->GetFID()));
-                return false;
-            }
-
-            GEOSGeometry *geosGeom =
-                fgeom->exportToGEOS(m_poGeosContext, false);
-            if (!geosGeom)
-            {
-                // should not happen normally
-                for (auto &geom : geoms)
-                {
-                    GEOSGeom_destroy_r(m_poGeosContext, geom);
-                }
-                GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Geometry of feature %" PRId64
-                         " failed to convert to GEOS",
-                         static_cast<int64_t>(feature->GetFID()));
-                return false;
-            }
-            geoms.push_back(geosGeom);
-
-            feature->SetGeometry(nullptr);  // free some memory
-            feature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
-
-            features.push_back(std::move(feature));
-        }
-
-        // Perform coverage cleaning
-        GEOSGeometry *coll = GEOSGeom_createCollection_r(
-            m_poGeosContext, GEOS_GEOMETRYCOLLECTION, geoms.data(),
-            static_cast<unsigned int>(geoms.size()));
-
-        if (coll == nullptr)
-        {
-            for (auto &geom : geoms)
-            {
-                GEOSGeom_destroy_r(m_poGeosContext, geom);
-            }
-            GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
-            return false;
-        }
-
-        GEOSGeometry *geos_result =
-            GEOSCoverageCleanWithParams_r(m_poGeosContext, coll, params);
-        GEOSGeom_destroy_r(m_poGeosContext, coll);
-        GEOSCoverageCleanParams_destroy_r(m_poGeosContext, params);
-
-        if (geos_result == nullptr)
-        {
-            return false;
-        }
-
-        m_papoGeosResults = GEOSGeom_releaseCollection_r(
-            m_poGeosContext, geos_result, &m_nGeosResultSize);
-        GEOSGeom_destroy_r(m_poGeosContext, geos_result);
-        CPLAssert(features.size() == m_nGeosResultSize);
-
-        // Create features with the modified geometries
-        for (size_t i = 0; i < features.size(); i++)
-        {
-            GEOSGeometry *dstGeom = m_papoGeosResults[i];
-
-            std::unique_ptr<OGRGeometry> poSimplified(
-                OGRGeometryFactory::createFromGEOS(m_poGeosContext, dstGeom));
-            GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
-            m_papoGeosResults[i] = nullptr;
-
-            if (poSimplified == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to convert result from GEOS");
-                return false;
-            }
-            poSimplified->assignSpatialReference(
-                dstLayer.GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
-            features[i]->SetGeometry(std::move(poSimplified));
-
-            if (dstLayer.CreateFeature(features[i].get()) != CE_None)
-            {
-                return false;
-            }
-            features[i].reset();
-        }
-
         return true;
     }
 
-  private:
+    bool SkipEmpty() const override
+    {
+        return false;
+    }
+
+    bool ProcessGeos() override
+    {
+        // Perform coverage cleaning
+        GEOSGeometry *coll = GEOSGeom_createCollection_r(
+            m_poGeosContext, GEOS_GEOMETRYCOLLECTION, m_apoGeosInputs.data(),
+            static_cast<unsigned int>(m_apoGeosInputs.size()));
+
+        if (coll == nullptr)
+        {
+            return false;
+        }
+
+        m_apoGeosInputs.clear();
+
+        m_poGeosResultAsCollection =
+            GEOSCoverageCleanWithParams_r(m_poGeosContext, coll, m_cleanParams);
+        GEOSGeom_destroy_r(m_poGeosContext, coll);
+
+        return m_poGeosResultAsCollection != nullptr;
+    }
+
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorCleanCoverageOutputDataset)
 
+  private:
     const GDALVectorCleanCoverageAlgorithm::Options &m_opts;
-    GEOSContextHandle_t m_poGeosContext{nullptr};
-    GEOSGeometry **m_papoGeosResults{nullptr};
-    unsigned int m_nGeosResultSize{0};
+    GEOSCoverageCleanParams *m_cleanParams;
 };
 
 GDALVectorCleanCoverageOutputDataset::~GDALVectorCleanCoverageOutputDataset()
 {
     if (m_poGeosContext != nullptr)
     {
-        for (size_t i = 0; i < m_nGeosResultSize; i++)
-        {
-            GEOSGeom_destroy_r(m_poGeosContext, m_papoGeosResults[i]);
-        }
-        GEOSFree_r(m_poGeosContext, m_papoGeosResults);
-        finishGEOS_r(m_poGeosContext);
+        GEOSCoverageCleanParams_destroy_r(m_poGeosContext, m_cleanParams);
     }
 }
 

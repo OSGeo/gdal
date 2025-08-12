@@ -183,6 +183,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
 
     bool AddProcessedLayer(OGRLayer &srcLayer);
+    bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn);
     void AddPassThroughLayer(OGRLayer &oLayer);
     int GetLayerCount() final override;
     OGRLayer *GetLayer(int idx) final override;

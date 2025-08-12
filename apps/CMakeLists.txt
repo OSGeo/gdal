@@ -67,6 +67,8 @@ add_library(
   gdalalg_raster_write.cpp
   gdalalg_vector.cpp
   gdalalg_vector_info.cpp
+  gdalalg_vector_check_coverage.cpp
+  gdalalg_vector_check_geometry.cpp
   gdalalg_vector_clip.cpp
   gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_concat.cpp

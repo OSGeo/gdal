@@ -13,6 +13,8 @@
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
+#include "gdalalg_vector_check_coverage.h"
+#include "gdalalg_vector_check_geometry.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_concat.h"
@@ -145,6 +147,8 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register(algInfo);
 
     registry.Register<GDALVectorBufferAlgorithm>();
+    registry.Register<GDALVectorCheckCoverageAlgorithm>();
+    registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorConcatAlgorithm>();
     registry.Register<GDALVectorCleanCoverageAlgorithm>();
 
@@ -842,7 +846,7 @@ GDALVectorNonStreamingAlgorithmDataset::
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
-    OGRLayer &srcLayer)
+    OGRLayer &srcLayer, OGRFeatureDefn &dstDefn)
 {
     CPLStringList aosOptions;
     if (srcLayer.TestCapability(OLCStringsAsUTF8))
@@ -850,13 +854,18 @@ bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
         aosOptions.AddNameValue("ADVERTIZE_UTF8", "TRUE");
     }
 
-    OGRMemLayer *poDstLayer =
-        m_ds->CreateLayer(*srcLayer.GetLayerDefn(), aosOptions.List());
+    OGRMemLayer *poDstLayer = m_ds->CreateLayer(dstDefn, aosOptions.List());
     m_layers.push_back(poDstLayer);
 
     const bool bRet = Process(srcLayer, *poDstLayer);
     poDstLayer->SetUpdatable(false);
     return bRet;
+}
+
+bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
+    OGRLayer &srcLayer)
+{
+    return AddProcessedLayer(srcLayer, *srcLayer.GetLayerDefn());
 }
 
 /************************************************************************/
