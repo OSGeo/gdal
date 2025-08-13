@@ -415,7 +415,12 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (osDataFilename.empty())
         return nullptr;
-
+    if (CPLHasPathTraversal(osDataFilename.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osDataFilename.c_str());
+        return nullptr;
+    }
     if (!GDALCheckDatasetDimensions(nCols, nRows))
         return nullptr;
 
