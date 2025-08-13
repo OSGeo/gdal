@@ -199,7 +199,13 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
-        poDS->CleanString(osFilename);
+        CleanString(osFilename);
+        if (CPLHasPathTraversal(osFilename.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", osFilename.c_str());
+            return nullptr;
+        }
         osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
     }
@@ -207,7 +213,13 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const CPLString osTPath = CPLGetPathSafe(poOpenInfo->pszFilename);
         CPLString osFilename = poDS->GetKeywordSub("^QUBE", 1, "");
-        poDS->CleanString(osFilename);
+        CleanString(osFilename);
+        if (CPLHasPathTraversal(osFilename.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", osFilename.c_str());
+            return nullptr;
+        }
         osTargetFile = CPLFormCIFilenameSafe(osTPath, osFilename, nullptr);
         poDS->osExternalCube = osTargetFile;
 
@@ -380,7 +392,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /***********   Grab MAP_PROJECTION_TYPE ************/
     CPLString map_proj_name =
         poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
-    poDS->CleanString(map_proj_name);
+    CleanString(map_proj_name);
 
     /***********   Grab SEMI-MAJOR ************/
     const double semi_major =
