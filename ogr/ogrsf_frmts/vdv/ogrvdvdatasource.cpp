@@ -1919,6 +1919,14 @@ OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
     }
     else
     {
+        if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     pszLayerName);
+            return nullptr;
+        }
+
         CPLString osExtension =
             CSLFetchNameValueDef(papszOptions, "EXTENSION", "x10");
         const CPLString osFilename =
