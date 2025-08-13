@@ -109,7 +109,12 @@ bool ZarrGroupBase::DeleteGroup(const std::string &osName,
                  "Dataset not open in update mode");
         return false;
     }
-
+    if (CPLHasPathTraversal(osName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osName.c_str());
+        return false;
+    }
     GetGroupNames();
 
     auto oIterNames = std::find(m_aosGroups.begin(), m_aosGroups.end(), osName);
@@ -254,7 +259,12 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
                  "Dataset not open in update mode");
         return false;
     }
-
+    if (CPLHasPathTraversal(osName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osName.c_str());
+        return false;
+    }
     GetMDArrayNames();
 
     auto oIterNames = std::find(m_aosArrays.begin(), m_aosArrays.end(), osName);
