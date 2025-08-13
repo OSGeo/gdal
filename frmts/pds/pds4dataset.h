@@ -368,11 +368,10 @@ class PDS4Dataset final : public RawDataset
 
     bool OpenTableDelimited(const char *pszFilename, const CPLXMLNode *psTable);
 
-    static PDS4Dataset *CreateInternal(const char *pszFilename,
-                                       GDALDataset *poSrcDS, int nXSize,
-                                       int nYSize, int nBands,
-                                       GDALDataType eType,
-                                       const char *const *papszOptions);
+    static std::unique_ptr<PDS4Dataset>
+    CreateInternal(const char *pszFilename, GDALDataset *poSrcDS, int nXSize,
+                   int nYSize, int nBands, GDALDataType eType,
+                   const char *const *papszOptions);
 
     CPLErr Close() override;
 
@@ -407,11 +406,11 @@ class PDS4Dataset final : public RawDataset
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
-    static PDS4Dataset *OpenInternal(GDALOpenInfo *);
+    static std::unique_ptr<PDS4Dataset> OpenInternal(GDALOpenInfo *);
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo)
     {
-        return OpenInternal(poOpenInfo);
+        return OpenInternal(poOpenInfo).release();
     }
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
