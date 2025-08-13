@@ -224,6 +224,15 @@ The following dataset creation options are available:
 
          Manually set bounding box
 
+   -  .. co:: PROPAGATE_SRC_METADATA
+         :choices: YES, NO
+         :default: YES
+         :since: 3.12
+
+         Whether to propagate particular metadata domains, such as json:ISIS3.
+         When YES (the default), if IMAGE_FORMAT=GEOTIFF, that metadata is also
+         written into the GeoTIFF file.
+
 Layer creation options (vector/table datasets)
 ----------------------------------------------
 

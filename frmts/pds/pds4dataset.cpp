@@ -4818,10 +4818,17 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
             return nullptr;
         }
 
-        char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
-        if (papszISIS3MD)
+        if (CPLFetchBool(papszOptions, "PROPAGATE_SRC_METADATA", true))
         {
-            poDS->SetMetadata(papszISIS3MD, "json:ISIS3");
+            char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+            if (papszISIS3MD)
+            {
+                poDS->SetMetadata(papszISIS3MD, "json:ISIS3");
+
+                if (poDS->m_poExternalDS)
+                    poDS->m_poExternalDS->SetMetadata(papszISIS3MD,
+                                                      "json:ISIS3");
+            }
         }
     }
 

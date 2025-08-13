@@ -270,6 +270,9 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
         "  <Option name='BOUNDING_DEGREES' type='string' scope='raster,vector' "
         "description='Manually set bounding box with the syntax "
         "west_lon,south_lat,east_lon,north_lat'/>"
+        "  <Option name='PROPAGATE_SRC_METADATA' type='boolean' scope='raster' "
+        "description='Whether to propagate particular metadata domains, such "
+        "as json:ISIS3' default='YES'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
