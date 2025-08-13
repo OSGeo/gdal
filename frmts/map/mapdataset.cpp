@@ -183,7 +183,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
 
-    MAPDataset *poDS = new MAPDataset();
+    auto poDS = std::make_unique<MAPDataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Try to load and parse the .MAP file.                            */
@@ -206,19 +206,16 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
        function does not returns all required data . An API change is necessary
        : maybe in GDAL 2.0 ? */
 
-    char **papszLines = CSLLoad2(poOpenInfo->pszFilename, 200, 200, nullptr);
-
-    if (!papszLines)
+    const CPLStringList aosLines(
+        CSLLoad2(poOpenInfo->pszFilename, 200, 200, nullptr));
+    if (aosLines.empty())
     {
-        delete poDS;
         return nullptr;
     }
 
-    const int nLines = CSLCount(papszLines);
+    const int nLines = aosLines.size();
     if (nLines < 3)
     {
-        delete poDS;
-        CSLDestroy(papszLines);
         return nullptr;
     }
 
@@ -226,7 +223,13 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      We need to open the image in order to establish                 */
     /*      details like the band count and types.                          */
     /* -------------------------------------------------------------------- */
-    poDS->osImgFilename = papszLines[2];
+    poDS->osImgFilename = aosLines[2];
+    if (CPLHasPathTraversal(poDS->osImgFilename.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 poDS->osImgFilename.c_str());
+        return nullptr;
+    }
 
     const CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     if (CPLIsFilenameRelative(poDS->osImgFilename))
@@ -248,12 +251,10 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.                                          */
     /* -------------------------------------------------------------------- */
-    poDS->poImageDS =
-        GDALDataset::FromHandle(GDALOpen(poDS->osImgFilename, GA_ReadOnly));
+    poDS->poImageDS = GDALDataset::Open(poDS->osImgFilename,
+                                        GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
     if (poDS->poImageDS == nullptr || poDS->poImageDS->GetRasterCount() == 0)
     {
-        CSLDestroy(papszLines);
-        delete poDS;
         return nullptr;
     }
 
@@ -264,14 +265,11 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = poDS->poImageDS->GetRasterYSize();
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
-        CSLDestroy(papszLines);
-        GDALClose(poDS->poImageDS);
-        delete poDS;
         return nullptr;
     }
 
     for (int iBand = 1; iBand <= poDS->poImageDS->GetRasterCount(); iBand++)
-        poDS->SetBand(iBand, new MAPWrapperRasterBand(
+        poDS->SetBand(iBand, std::make_unique<MAPWrapperRasterBand>(
                                  poDS->poImageDS->GetRasterBand(iBand)));
 
     /* -------------------------------------------------------------------- */
@@ -282,28 +280,25 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bNeatLine = false;
     for (int iLine = 10; iLine < nLines; iLine++)
     {
-        if (STARTS_WITH_CI(papszLines[iLine], "MMPXY,"))
+        if (STARTS_WITH_CI(aosLines[iLine], "MMPXY,"))
         {
-            char **papszTok =
-                CSLTokenizeString2(papszLines[iLine], ",",
-                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(aosLines[iLine], ",",
+                                   CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
-            if (CSLCount(papszTok) != 4)
+            if (aosTokens.size() != 4)
             {
-                CSLDestroy(papszTok);
                 continue;
             }
 
-            const int x = atoi(papszTok[2]);
-            const int y = atoi(papszTok[3]);
+            const int x = atoi(aosTokens[2]);
+            const int y = atoi(aosTokens[3]);
             if ((x != 0 && x != poDS->nRasterXSize) ||
                 (y != 0 && y != poDS->nRasterYSize))
             {
                 bNeatLine = true;
-                CSLDestroy(papszTok);
                 break;
             }
-            CSLDestroy(papszTok);
         }
     }
 
@@ -319,33 +314,31 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             for (int iLine = 10; iLine < nLines; iLine++)
             {
-                if (STARTS_WITH_CI(papszLines[iLine], "MMPXY,"))
+                if (STARTS_WITH_CI(aosLines[iLine], "MMPXY,"))
                 {
-                    char **papszTok = CSLTokenizeString2(
-                        papszLines[iLine], ",",
-                        CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+                    const CPLStringList aosTokens(CSLTokenizeString2(
+                        aosLines[iLine], ",",
+                        CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
-                    if (CSLCount(papszTok) != 4)
+                    if (aosTokens.size() != 4)
                     {
-                        CSLDestroy(papszTok);
                         continue;
                     }
 
-                    const double x = CPLAtofM(papszTok[2]);
-                    const double y = CPLAtofM(papszTok[3]);
+                    const double x = CPLAtofM(aosTokens[2]);
+                    const double y = CPLAtofM(aosTokens[3]);
                     const double X =
                         poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
                     const double Y =
                         poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
                     poRing->addPoint(X, Y);
                     CPLDebug("CORNER MMPXY", "%f, %f, %f, %f", x, y, X, Y);
-                    CSLDestroy(papszTok);
                 }
             }
         }
         else /* Convert the geographic coordinates to projected coordinates */
         {
-            OGRCoordinateTransformation *poTransform = nullptr;
+            std::unique_ptr<OGRCoordinateTransformation> poTransform;
             if (!poDS->m_oSRS.IsEmpty())
             {
                 OGRSpatialReference *poLongLat = poDS->m_oSRS.CloneGeogCS();
@@ -353,40 +346,36 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poLongLat->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
-                    poTransform = OGRCreateCoordinateTransformation(
-                        poLongLat, &poDS->m_oSRS);
-                    delete poLongLat;
+                    poTransform.reset(OGRCreateCoordinateTransformation(
+                        poLongLat, &poDS->m_oSRS));
+                    poLongLat->Release();
                 }
             }
 
             for (int iLine = 10; iLine < nLines; iLine++)
             {
-                if (STARTS_WITH_CI(papszLines[iLine], "MMPLL,"))
+                if (STARTS_WITH_CI(aosLines[iLine], "MMPLL,"))
                 {
-                    CPLDebug("MMPLL", "%s", papszLines[iLine]);
+                    CPLDebug("MMPLL", "%s", aosLines[iLine]);
 
-                    char **papszTok = CSLTokenizeString2(
-                        papszLines[iLine], ",",
-                        CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+                    const CPLStringList aosTokens(CSLTokenizeString2(
+                        aosLines[iLine], ",",
+                        CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
-                    if (CSLCount(papszTok) != 4)
+                    if (aosTokens.size() != 4)
                     {
-                        CSLDestroy(papszTok);
                         continue;
                     }
 
-                    double dfLon = CPLAtofM(papszTok[2]);
-                    double dfLat = CPLAtofM(papszTok[3]);
+                    double dfLon = CPLAtofM(aosTokens[2]);
+                    double dfLat = CPLAtofM(aosTokens[3]);
 
                     if (poTransform)
                         poTransform->Transform(1, &dfLon, &dfLat);
                     poRing->addPoint(dfLon, dfLat);
                     CPLDebug("CORNER MMPLL", "%f, %f", dfLon, dfLat);
-                    CSLDestroy(papszTok);
                 }
             }
-            if (poTransform)
-                delete poTransform;
         }
 
         poRing->closeRings();
@@ -399,9 +388,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLFree(pszNeatLineWkt);
     }
 
-    CSLDestroy(papszLines);
-
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
