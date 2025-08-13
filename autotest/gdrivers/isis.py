@@ -2043,3 +2043,138 @@ def test_isis3_oblique_cylindrical_write():
     ds = None
 
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/isis_tmp.lbl")
+
+
+def test_isis_read_data(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+
+Object = Table
+  Name = FirstTable
+  StartByte = 1001
+  Bytes = 10
+End_Object
+
+Object = Table
+  Name = SecondTable
+  StartByte = 1
+  Bytes = 5
+  ^Table = in.bin
+End_Object
+
+Object = Table
+  Name = ThirdTable
+  StartByte = 1
+  Bytes = 5
+  ^Table = not_existing.bin
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01\x02\x03\x04\x05")
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "in.lbl", "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, 1000)
+    gdal.VSIFSeekL(f, 1000, 0)
+    gdal.VSIFWriteL(b"\x01\x02\x03\x04\x05\x01\x02\x03\x04\x05", 10, 1, f)
+    gdal.VSIFCloseL(f)
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" in got["Table_FirstTable"]
+    del got["_filename"]
+    expected = {
+        "IsisCube": {
+            "Core": {
+                "Dimensions": {
+                    "Bands": 1,
+                    "Lines": 1,
+                    "Samples": 1,
+                    "_type": "group",
+                },
+                "Format": "BandSequential",
+                "Pixels": {
+                    "Base": 0.0,
+                    "ByteOrder": "Lsb",
+                    "Multiplier": 1.0,
+                    "Type": "UnsignedByte",
+                    "_type": "group",
+                },
+                "StartByte": 1,
+                "_type": "object",
+            },
+            "_type": "object",
+        },
+        "Table_FirstTable": {
+            "Bytes": 10,
+            "Name": "FirstTable",
+            "StartByte": 1001,
+            "_container_name": "Table",
+            "_data": "01020304050102030405",
+            "_type": "object",
+        },
+        "Table_SecondTable": {
+            "Bytes": 5,
+            "Name": "SecondTable",
+            "StartByte": 1,
+            "_container_name": "Table",
+            "^Table": "in.bin",
+            "_data": "0102030405",
+            "_type": "object",
+        },
+        "Table_ThirdTable": {
+            "Bytes": 5,
+            "Name": "ThirdTable",
+            "StartByte": 1,
+            "^Table": "not_existing.bin",
+            "_container_name": "Table",
+            "_type": "object",
+        },
+    }
+    assert got == expected
+
+    with gdal.OpenEx(
+        tmp_vsimem / "in.lbl", open_options=["INCLUDE_OFFLINE_CONTENT=NO"]
+    ) as ds:
+        got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" not in got["Table_FirstTable"]
+
+    with gdal.OpenEx(
+        tmp_vsimem / "in.lbl", open_options=["MAX_SIZE_OFFLINE_CONTENT=5"]
+    ) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning, match="Too large content reference by Table_FirstTable"
+        ):
+            got = json.loads(ds.GetMetadata("json:ISIS3")[0])
+    assert "_data" not in got["Table_FirstTable"]
+    assert "_data" in got["Table_SecondTable"]
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            match="which does not exist. Removing this section from the label",
+        ):
+            gdal.GetDriverByName("ISIS3").CreateCopy(tmp_vsimem / "out.lbl", ds)
+    with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
+        data = f.read()
+        assert b"_data" not in data
