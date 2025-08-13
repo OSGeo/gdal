@@ -1132,6 +1132,13 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
         return FALSE;
     }
 
+    if (CPLHasPathTraversal(poIndex->GetIndexName().c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 poIndex->GetIndexName().c_str());
+        return FALSE;
+    }
+
     const std::string osAtxName =
         CPLFormFilenameSafe(
             CPLGetPathSafe(poParent->GetFilename().c_str()).c_str(),
