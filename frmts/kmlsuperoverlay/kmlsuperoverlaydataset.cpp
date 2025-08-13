@@ -1331,6 +1331,17 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                         }
                         else
                         {
+                            if ((STARTS_WITH(pszHref, "../../") &&
+                                 CPLHasPathTraversal(pszHref +
+                                                     strlen("../../"))) ||
+                                (!STARTS_WITH(pszHref, "../../") &&
+                                 CPLHasPathTraversal(pszHref)))
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Path traversal detected in %s",
+                                         pszHref);
+                                return CE_Failure;
+                            }
                             osSubFilename = CPLFormFilenameSafe(
                                 CPLGetPathSafe(pszBaseFilename).c_str(),
                                 pszHref, nullptr);
@@ -1761,6 +1772,12 @@ KmlSuperOverlayLoadIcon(const char *pszBaseFilename, const char *pszIcon)
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
+        if (CPLHasPathTraversal(pszIcon))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", pszIcon);
+            return nullptr;
+        }
         osSubFilename = CPLFormFilenameSafe(
             CPLGetPathSafe(pszBaseFilename).c_str(), pszIcon, nullptr);
         osSubFilename = KMLRemoveSlash(osSubFilename);
@@ -1823,6 +1840,16 @@ static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
                         CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
+                    if ((STARTS_WITH(pszHref, "../../") &&
+                         CPLHasPathTraversal(pszHref + strlen("../../"))) ||
+                        (!STARTS_WITH(pszHref, "../../") &&
+                         CPLHasPathTraversal(pszHref)))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Path traversal detected in %s", pszHref);
+                        return false;
+                    }
+
                     osSubFilename = CPLFormFilenameSafe(
                         CPLGetPathSafe(osFilename.c_str()).c_str(), pszHref,
                         nullptr);
@@ -2530,6 +2557,14 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
     std::array<double, 4> adfExtents = {0, 0, 0, 0};
     if (!KmlSuperOverlayGetBoundingBox(psGO, adfExtents))
         return nullptr;
+    if ((STARTS_WITH(pszHref, "../") &&
+         CPLHasPathTraversal(pszHref + strlen("../"))) ||
+        (!STARTS_WITH(pszHref, "../") && CPLHasPathTraversal(pszHref)))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 pszHref);
+        return nullptr;
+    }
     const std::string osImageFilename = CPLFormFilenameSafe(
         CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
     GDALDataset *poImageDS = GDALDataset::FromHandle(
@@ -2669,6 +2704,13 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {
+            if (CPLHasPathTraversal(pszHref))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", pszHref);
+                CPLDestroyXMLNode(psNode);
+                return nullptr;
+            }
             osSubFilename = CPLFormFilenameSafe(
                 CPLGetPathSafe(osFilename).c_str(), pszHref, nullptr);
             osSubFilename = KMLRemoveSlash(osSubFilename);
