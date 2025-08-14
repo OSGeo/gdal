@@ -449,6 +449,22 @@ bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
         }
         else if (eCurState == NUMBER)
         {
+            if (m_osToken.empty())
+            {
+                // Optimization to avoid using temporary buffer
+                auto nPos =
+                    std::string_view(pStr, nLength).find_first_of(" \t\r\n,}]");
+                if (nPos != std::string::npos)
+                {
+                    Number(std::string_view(pStr, nPos));
+                    m_aState.pop_back();
+                    pStr += nPos;
+                    nLength -= nPos;
+                    SkipSpace(pStr, nLength);
+                    continue;
+                }
+            }
+
             while (nLength)
             {
                 char ch = *pStr;
@@ -536,6 +552,37 @@ bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
         else if (eCurState == STRING)
         {
             bool bEOS = false;
+
+            if (m_osToken.empty() && !m_bInStringEscape && !m_bInUnicode)
+            {
+                // Optimization to avoid using temporary buffer
+                auto nPos =
+                    std::string_view(pStr, nLength).find_first_of("\"\\");
+                if (nPos != std::string::npos && pStr[nPos] == '"')
+                {
+                    if (nPos > m_nMaxStringSize)
+                    {
+                        return EmitException("Too many characters in number");
+                    }
+                    if (!m_aeObjectState.empty() &&
+                        m_aeObjectState.back() == IN_KEY)
+                    {
+                        StartObjectMember(std::string_view(pStr, nPos));
+                    }
+                    else
+                    {
+                        String(std::string_view(pStr, nPos));
+                    }
+                    m_aState.pop_back();
+                    pStr += nPos + 1;
+                    nLength -= nPos + 1;
+                    SkipSpace(pStr, nLength);
+                    if (nLength != 0)
+                        continue;
+                    bEOS = true;
+                }
+            }
+
             while (nLength)
             {
                 if (m_osToken.size() == m_nMaxStringSize)
