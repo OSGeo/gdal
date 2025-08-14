@@ -173,8 +173,12 @@ int OGRJSONFGStreamedLayer::TestCapability(const char *pszCap) const
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
-    else if (EQUAL(pszCap, OLCZGeometries))
+    else if (EQUAL(pszCap, OLCZGeometries) ||
+             EQUAL(pszCap, OLCMeasuredGeometries) ||
+             EQUAL(pszCap, OLCCurveGeometries))
+    {
         return TRUE;
+    }
 
     return FALSE;
 }

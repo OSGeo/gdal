@@ -6389,5 +6389,7 @@ OGRGeometryFactory::createFromGeoJson(const CPLJSONObject &oJsonObject)
     // TODO: Move from GeoJSON driver functions create geometry here, and
     // replace json-c specific json_object to CPLJSONObject
     return OGRGeoJSONReadGeometry(
-        static_cast<json_object *>(oJsonObject.GetInternalHandle()));
+               static_cast<json_object *>(oJsonObject.GetInternalHandle()),
+               /* bHasM = */ false, /* OGRSpatialReference* = */ nullptr)
+        .release();
 }

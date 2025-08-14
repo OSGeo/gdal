@@ -44,8 +44,6 @@ class OGRJSONFGMemLayer final : public OGRMemLayer
         return osFIDColumn_.c_str();
     }
 
-    int TestCapability(const char *pszCap) const override;
-
     void SetFIDColumn(const char *pszName)
     {
         osFIDColumn_ = pszName;
@@ -342,7 +340,8 @@ class OGRJSONFGReader
      */
     bool AnalyzeWithStreamingParser(OGRJSONFGDataset *poDS, VSILFILE *fp,
                                     const std::string &osDefaultLayerName,
-                                    bool &bCanTryWithNonStreamingParserOut);
+                                    bool &bCanTryWithNonStreamingParserOut,
+                                    bool &bHasTopLevelMeasures);
 
     /** Geometry element we are interested in. */
     enum class GeometryElement
@@ -367,6 +366,7 @@ class OGRJSONFGReader
      * @param pszRequestedLayer name of the layer of interest, or nullptr if
      * no filtering needed on the layer name. If the feature does not belong
      * to the requested layer, nullptr is returned.
+     * @param bHasM Whether the upper level of this object has measures
      * @param pOutMemLayer Pointer to the OGRJSONFGMemLayer* layer to which
      * the returned feature belongs to. May be nullptr. Only applies when
      * the Load() method has been used.
@@ -375,7 +375,7 @@ class OGRJSONFGReader
      * the AnalyzeWithStreamingParser() method has been used.
      */
     std::unique_ptr<OGRFeature>
-    ReadFeature(json_object *poObj, const char *pszRequestedLayer,
+    ReadFeature(json_object *poObj, const char *pszRequestedLayer, bool bHasM,
                 OGRJSONFGMemLayer **pOutMemLayer,
                 OGRJSONFGStreamedLayer **pOutStreamedLayer);
 
@@ -542,7 +542,8 @@ class OGRJSONFGStreamingParser final : public OGRJSONCollectionStreamingParser
     void TooComplex() override;
 
   public:
-    OGRJSONFGStreamingParser(OGRJSONFGReader &oReader, bool bFirstPass);
+    OGRJSONFGStreamingParser(OGRJSONFGReader &oReader, bool bFirstPass,
+                             bool bHasTopLevelMeasures);
     ~OGRJSONFGStreamingParser() override;
 
     void SetRequestedLayer(const char *pszRequestedLayer)

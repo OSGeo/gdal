@@ -942,31 +942,27 @@ def test_jsonfg_write_several_layers():
         ],
     ],
 )
-def test_jsonfg_write_all_geom_types(wkts, expect_geom_type):
+def test_jsonfg_write_all_geom_types(tmp_path, wkts, expect_geom_type):
 
-    filename = "/vsimem/test_jsonfg_read_write_all_geom_types.json"
-    try:
-        ds = ogr.GetDriverByName("JSONFG").CreateDataSource(filename)
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(32631)
-        lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-        for wkt in wkts:
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-            lyr.CreateFeature(f)
-        ds = None
+    filename = tmp_path / "test_jsonfg_read_write_all_geom_types.json"
 
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeomType() == expect_geom_type
-        for wkt in wkts:
-            f = lyr.GetNextFeature()
-            assert f.GetGeometryRef().ExportToIsoWkt() == wkt
-        ds = None
+    ds = ogr.GetDriverByName("JSONFG").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    for wkt in wkts:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+    ds = None
 
-    finally:
-        if gdal.VSIStatL(filename):
-            gdal.Unlink(filename)
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == expect_geom_type
+    for wkt in wkts:
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == wkt
+    ds = None
 
 
 ###############################################################################
@@ -1325,3 +1321,117 @@ def test_ogr_jsonfg_force_opening_url():
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["JSONFG"])
     assert drv.GetDescription() == "JSONFG"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename,expected_wkt",
+    [
+        ["CircularString", "CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5)"],
+        [
+            "CircularStringZ",
+            "CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5)",
+        ],
+        [
+            "CircularStringM",
+            "CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5)",
+        ],
+        [
+            "CircularStringZM",
+            "CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5)",
+        ],
+        [
+            "CompoundCurve",
+            "COMPOUNDCURVE (CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5),(4.5 49.5,5.5 50.5))",
+        ],
+        [
+            "CompoundCurveZ",
+            "COMPOUNDCURVE Z (CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5),(4.5 49.5 12.5,5.5 50.5 13.5))",
+        ],
+        [
+            "CompoundCurveM",
+            "COMPOUNDCURVE M (CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5),(4.5 49.5 102.5,5.5 50.5 103.5))",
+        ],
+        [
+            "CompoundCurveZM",
+            "COMPOUNDCURVE ZM (CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5),(4.5 49.5 12.5 102.5,5.5 50.5 13.5 103.5))",
+        ],
+        [
+            "CurvePolygon",
+            "CURVEPOLYGON ((10.5 10.5,10.5 20.5,20.5 20.5,20.5 10.5,10.5 10.5),CIRCULARSTRING (11.5 15.5,15.5 19.5,19.5 15.5,15.5 11.5,11.5 15.5),COMPOUNDCURVE ((13.5 13.5,13.5 17.5,17.5 17.5),(17.5 17.5,17.5 13.5,13.5 13.5)))",
+        ],
+        [
+            "CurvePolygonZ",
+            "CURVEPOLYGON Z ((10.5 10.5 -10.5,10.5 20.5 -11.5,20.5 20.5 -12.5,20.5 10.5 -13.5,10.5 10.5 -10.5),CIRCULARSTRING Z (11.5 15.5 -10.5,15.5 19.5 -11.5,19.5 15.5 -12.5,15.5 11.5 -13.5,11.5 15.5 -10.5),COMPOUNDCURVE Z ((13.5 13.5 -10.5,13.5 17.5 -11.5,17.5 17.5 -12.5),(17.5 17.5 -12.5,17.5 13.5 -13.5,13.5 13.5 -10.5)))",
+        ],
+        [
+            "CurvePolygonM",
+            "CURVEPOLYGON M ((10.5 10.5 100.5,10.5 20.5 101.5,20.5 20.5 102.5,20.5 10.5 103.5,10.5 10.5 100.5),CIRCULARSTRING M (11.5 15.5 100.5,15.5 19.5 101.5,19.5 15.5 102.5,15.5 11.5 103.5,11.5 15.5 100.5),COMPOUNDCURVE M ((13.5 13.5 100.5,13.5 17.5 101.5,17.5 17.5 102.5),(17.5 17.5 102.5,17.5 13.5 103.5,13.5 13.5 100.5)))",
+        ],
+        [
+            "CurvePolygonZM",
+            "CURVEPOLYGON ZM ((10.5 10.5 -10.5 100.5,10.5 20.5 -11.5 101.5,20.5 20.5 -12.5 102.5,20.5 10.5 -13.5 103.5,10.5 10.5 -10.5 100.5),CIRCULARSTRING ZM (11.5 15.5 -10.5 100.5,15.5 19.5 -11.5 101.5,19.5 15.5 -12.5 102.5,15.5 11.5 -13.5 103.5,11.5 15.5 -10.5 100.5),COMPOUNDCURVE ZM ((13.5 13.5 -10.5 100.5,13.5 17.5 -11.5 101.5,17.5 17.5 -12.5 102.5),(17.5 17.5 -12.5 102.5,17.5 13.5 -13.5 103.5,13.5 13.5 -10.5 100.5)))",
+        ],
+        [
+            "MultiCurve",
+            "MULTICURVE (CIRCULARSTRING (2.5 49.5,3.5 50.5,4.5 49.5),(4.5 49.5,5.5 50.5),COMPOUNDCURVE ((2.5 49.5,3.5 50.5),(3.5 50.5,4.5 49.5)))",
+        ],
+        [
+            "MultiCurveZ",
+            "MULTICURVE Z (CIRCULARSTRING Z (2.5 49.5 10.5,3.5 50.5 11.5,4.5 49.5 12.5),(4.5 49.5 13.5,5.5 50.5 14.5),COMPOUNDCURVE Z ((2.5 49.5 15.5,3.5 50.5 16.5),(3.5 50.5 16.5,4.5 49.5 17.5)))",
+        ],
+        [
+            "MultiCurveM",
+            "MULTICURVE M (CIRCULARSTRING M (2.5 49.5 100.5,3.5 50.5 101.5,4.5 49.5 102.5),(4.5 49.5 103.5,5.5 50.5 104.5),COMPOUNDCURVE M ((2.5 49.5 105.5,3.5 50.5 106.5),(3.5 50.5 106.5,4.5 49.5 107.5)))",
+        ],
+        [
+            "MultiCurveZM",
+            "MULTICURVE ZM (CIRCULARSTRING ZM (2.5 49.5 10.5 100.5,3.5 50.5 11.5 101.5,4.5 49.5 12.5 102.5),(4.5 49.5 13.5 103.5,5.5 50.5 14.5 104.5),COMPOUNDCURVE ZM ((2.5 49.5 15.5 105.5,3.5 50.5 16.5 106.5),(3.5 50.5 16.5 106.5,4.5 49.5 17.5 107.5)))",
+        ],
+        [
+            "MultiSurface",
+            "MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (10.5 10.5,10.5 20.5,20.5 20.5,20.5 10.5,10.5 10.5)),((100 100,100 200,200 200,100 100)))",
+        ],
+        [
+            "MultiSurfaceZ",
+            "MULTISURFACE Z (CURVEPOLYGON Z (CIRCULARSTRING Z (10.5 10.5 11.5,10.5 20.5 12.5,20.5 20.5 13.5,20.5 10.5 14.5,10.5 10.5 11.5)),((100 100 10.5,100 200 11.5,200 200 12.5,100 100 10.5)))",
+        ],
+        [
+            "MultiSurfaceM",
+            "MULTISURFACE M (CURVEPOLYGON M (CIRCULARSTRING M (10.5 10.5 100.5,10.5 20.5 101.5,20.5 20.5 102.5,20.5 10.5 103.5,10.5 10.5 100.5)),((100 100 100.5,100 200 101.5,200 200 102.5,100 100 100.5)))",
+        ],
+        [
+            "MultiSurfaceZM",
+            "MULTISURFACE ZM (CURVEPOLYGON ZM (CIRCULARSTRING ZM (10.5 10.5 11.5 100.5,10.5 20.5 12.5 101.5,20.5 20.5 13.5 102.5,20.5 10.5 14.5 103.5,10.5 10.5 11.5 100.5)),((100 100 10.5 -100.5,100 200 11.5 -101.5,200 200 12.5 -102.5,100 100 10.5 -100.5)))",
+        ],
+    ],
+)
+def test_jsonfg_read_geoms(filename, expected_wkt):
+
+    ds = ogr.Open(f"data/jsonfg/{filename}.json")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+    assert (
+        lyr.GetGeomType() == ogr.CreateGeometryFromWkt(expected_wkt).GetGeometryType()
+    )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "CompoundCurveBadChild",
+        "CurvePolygonBadChild",
+        "MultiCurveBadChild",
+        "MultiSurfaceBadChild",
+    ],
+)
+def test_jsonfg_read_bad_geoms(filename):
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        ds = ogr.Open(f"data/jsonfg/{filename}.json")
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef() is None

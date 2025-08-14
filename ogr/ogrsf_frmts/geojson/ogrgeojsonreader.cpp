@@ -1632,7 +1632,8 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
     json_object *poGeomObj = CPL_json_object_object_get(poObj, "geometry");
     if (poGeomObj && json_object_get_type(poGeomObj) == json_type_object)
     {
-        const auto eType = OGRGeoJSONGetOGRGeometryType(poGeomObj);
+        const auto eType =
+            OGRGeoJSONGetOGRGeometryType(poGeomObj, /* bHasM = */ false);
 
         OGRGeoJSONUpdateLayerGeomType(m_bFirstGeometry, eType,
                                       m_eLayerGeomType);
@@ -1949,7 +1950,8 @@ OGRGeometry *
 OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
                                    const OGRSpatialReference *poLayerSRS)
 {
-    OGRGeometry *poGeometry = OGRGeoJSONReadGeometry(poObj, poLayerSRS);
+    auto poGeometry =
+        OGRGeoJSONReadGeometry(poObj, /* bHasM = */ false, poLayerSRS);
 
     /* -------------------------------------------------------------------- */
     /*      Wrap geometry with GeometryCollection as a common denominator.  */
@@ -1963,13 +1965,13 @@ OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
         if (!bGeometryPreserve_ &&
             wkbGeometryCollection != poGeometry->getGeometryType())
         {
-            OGRGeometryCollection *poMetaGeometry = new OGRGeometryCollection();
-            poMetaGeometry->addGeometryDirectly(poGeometry);
-            return poMetaGeometry;
+            auto poMetaGeometry = std::make_unique<OGRGeometryCollection>();
+            poMetaGeometry->addGeometry(std::move(poGeometry));
+            return poMetaGeometry.release();
         }
     }
 
-    return poGeometry;
+    return poGeometry.release();
 }
 
 /************************************************************************/

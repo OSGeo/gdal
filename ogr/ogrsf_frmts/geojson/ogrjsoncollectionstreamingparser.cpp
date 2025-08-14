@@ -210,6 +210,8 @@ void OGRJSONCollectionStreamingParser::EndObject()
     else if (m_nDepth == 1)
     {
         m_bInFeatures = false;
+        m_bInMeasures = false;
+        m_bInMeasuresEnabled = false;
     }
 }
 
@@ -229,6 +231,7 @@ void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
     if (m_nDepth == 1)
     {
         m_bInFeatures = strcmp(pszKey, "features") == 0;
+        m_bInMeasures = strcmp(pszKey, "measures") == 0;
         m_bCanEasilyAppend = m_bInFeatures;
         m_bInType = strcmp(pszKey, "type") == 0;
         if (m_bInType || m_bInFeatures)
@@ -244,6 +247,10 @@ void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
             m_apoCurObj.push_back(m_poCurObj);
             m_nCurObjMemEstimate = m_nRootObjMemEstimate;
         }
+    }
+    else if (m_nDepth == 2 && m_bInMeasures)
+    {
+        m_bInMeasuresEnabled = strcmp(pszKey, "enabled") == 0;
     }
     else if (m_nDepth == 3 && m_bInFeaturesArray)
     {
@@ -452,6 +459,9 @@ void OGRJSONCollectionStreamingParser::Boolean(bool bVal)
         TooComplex();
         return;
     }
+
+    if (m_bInMeasuresEnabled)
+        m_bHasTopLevelMeasures = bVal;
 
     if (m_poCurObj)
     {

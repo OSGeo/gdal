@@ -270,9 +270,10 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
         if (bUseStreamingInterface)
         {
             bool bCanTryWithNonStreamingParserOut = true;
+            bool bHasTopLevelMeasures = false;
             if (poReader->AnalyzeWithStreamingParser(
                     this, fp.get(), osDefaultLayerName,
-                    bCanTryWithNonStreamingParserOut))
+                    bCanTryWithNonStreamingParserOut, bHasTopLevelMeasures))
             {
                 if (!apoLayers_.empty())
                 {
@@ -280,7 +281,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
                         apoLayers_[0].get());
                     poLayer->SetFile(std::move(fp));
                     auto poParser = std::make_unique<OGRJSONFGStreamingParser>(
-                        *(poReader.get()), false);
+                        *(poReader.get()), false, bHasTopLevelMeasures);
                     poLayer->SetStreamingParser(std::move(poParser));
                 }
 
@@ -300,7 +301,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
                     poLayer->SetFile(std::move(fpNew));
 
                     auto poParser = std::make_unique<OGRJSONFGStreamingParser>(
-                        *(poReader.get()), false);
+                        *(poReader.get()), false, bHasTopLevelMeasures);
                     poLayer->SetStreamingParser(std::move(poParser));
                 }
                 poReader_ = std::move(poReader);
@@ -867,7 +868,9 @@ int OGRJSONFGDataset::TestCapability(const char *pszCap) const
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr &&
                (!bSingleOutputLayer_ || apoLayers_.empty());
-    else if (EQUAL(pszCap, ODsCZGeometries))
+    else if (EQUAL(pszCap, ODsCZGeometries) ||
+             EQUAL(pszCap, ODsCMeasuredGeometries) ||
+             EQUAL(pszCap, ODsCCurveGeometries))
         return TRUE;
 
     return FALSE;

@@ -639,7 +639,14 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
             std::string::npos ||
         osWithoutSpace.find("\"time\":{\"date\":") != std::string::npos ||
         osWithoutSpace.find("\"time\":{\"timestamp\":") != std::string::npos ||
-        osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos)
+        osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CircularString\"") !=
+            std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CompoundCurve\"") !=
+            std::string::npos ||
+        osWithoutSpace.find("\"type\":\"CurvePolygon\"") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"MultiCurve\"") != std::string::npos ||
+        osWithoutSpace.find("\"type\":\"MultiSurface\"") != std::string::npos)
     {
         return true;
     }
