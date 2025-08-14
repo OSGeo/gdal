@@ -2614,6 +2614,11 @@ def DatasetWriteArray(ds, array, xoff=0, yoff=0,
     if array is None or len(array.shape) != 3:
         raise ValueError("expected array of dim 3")
 
+    # GDALRasterIO() thinks that a 0-stride means the "natural" stride,
+    # so to avoid issues, do a copy of the array
+    if array.strides[0] == 0 or array.strides[1] == 0 or array.strides[2] == 0:
+        array = array.astype(array.dtype)
+
     xsize = array.shape[xdim]
     ysize = array.shape[ydim]
 
@@ -2725,6 +2730,11 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
 
     xoff = _to_primitive_type(xoff)
     yoff = _to_primitive_type(yoff)
+
+    # GDALRasterIO() thinks that a 0-stride means the "natural" stride,
+    # so to avoid issues, do a copy of the array
+    if array.strides[0] == 0 or array.strides[1] == 0:
+        array = array.astype(array.dtype)
 
     xsize = array.shape[1]
     ysize = array.shape[0]
