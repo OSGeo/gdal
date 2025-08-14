@@ -153,9 +153,10 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
                     GEOSGeometry *location = nullptr;
                     char ret = 1;
                     bool warnAboutGeosVersion = false;
-                    bool checkedCollectionSimple = false;
+                    bool checkedSimple = false;
 
                     if (eType == wkbPolygon || eType == wkbMultiPolygon ||
+                        eType == wkbCurvePolygon || eType == wkbMultiSurface ||
                         eType == wkbGeometryCollection)
                     {
                         ret = GEOSisValidDetail_r(m_geosContext, poGeosGeom, 0,
@@ -163,9 +164,11 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
                     }
 
                     if (eType == wkbLineString || eType == wkbMultiLineString ||
+                        eType == wkbCircularString ||
+                        eType == wkbCompoundCurve ||
                         (ret == 1 && eType == wkbGeometryCollection))
                     {
-                        checkedCollectionSimple = true;
+                        checkedSimple = true;
 #if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14)
                         ret = GEOSisSimpleDetail_r(m_geosContext, poGeosGeom, 1,
@@ -191,10 +194,7 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
                         poErrorFeature = std::make_unique<OGRFeature>(m_defn);
                         if (pszReason == nullptr)
                         {
-                            if (eType == wkbLineString ||
-                                eType == wkbMultiLineString ||
-                                (eType == wkbGeometryCollection &&
-                                 checkedCollectionSimple))
+                            if (checkedSimple)
                             {
                                 poErrorFeature->SetField(
                                     ERROR_DESCRIPTION_FIELD,

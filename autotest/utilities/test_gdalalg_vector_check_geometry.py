@@ -163,6 +163,56 @@ def test_gdalalg_vector_check_geometry_linestring_multiple_self_intersections(al
     assert out[0].GetFID() == 1
 
 
+def test_gdalalg_vector_check_geometry_curvepolygon(alg):
+
+    alg["input"] = gdaltest.wkt_ds(
+        "CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 1 1.1, 0 0)))"
+    )
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0].GetFID() == 1
+
+
+def test_gdalalg_vector_check_geometry_compoundcurve(alg):
+
+    alg["input"] = gdaltest.wkt_ds(
+        "COMPOUNDCURVE (CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 1 1, 0 0))"
+    )
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0].GetFID() == 1
+    assert out[0]["error"] == "self-intersection"
+
+    if ogrtest.have_geos() and (
+        ogr.GetGEOSVersionMajor(),
+        ogr.GetGEOSVersionMinor(),
+    ) >= (3, 14):
+        expected = ogr.CreateGeometryFromWkt("POINT (1 1)")
+        assert out[0].GetGeometryRef().Distance(expected) < 1e-3
+
+
 def test_gdalalg_vector_check_geometry_single_point_linestring(alg):
 
     alg["input"] = gdaltest.wkt_ds("LINESTRING (3 2)")
