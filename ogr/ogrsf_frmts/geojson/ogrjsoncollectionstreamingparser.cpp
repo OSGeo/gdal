@@ -219,8 +219,7 @@ void OGRJSONCollectionStreamingParser::EndObject()
 /*                         StartObjectMember()                          */
 /************************************************************************/
 
-void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
-                                                         size_t nKeyLen)
+void OGRJSONCollectionStreamingParser::StartObjectMember(std::string_view sKey)
 {
     if (m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize)
     {
@@ -230,10 +229,10 @@ void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
 
     if (m_nDepth == 1)
     {
-        m_bInFeatures = strcmp(pszKey, "features") == 0;
-        m_bInMeasures = strcmp(pszKey, "measures") == 0;
+        m_bInFeatures = sKey == "features";
+        m_bInMeasures = sKey == "measures";
         m_bCanEasilyAppend = m_bInFeatures;
-        m_bInType = strcmp(pszKey, "type") == 0;
+        m_bInType = sKey == "type";
         if (m_bInType || m_bInFeatures)
         {
             m_poCurObj = nullptr;
@@ -250,12 +249,11 @@ void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
     }
     else if (m_nDepth == 2 && m_bInMeasures)
     {
-        m_bInMeasuresEnabled = strcmp(pszKey, "enabled") == 0;
+        m_bInMeasuresEnabled = sKey == "enabled";
     }
     else if (m_nDepth == 3 && m_bInFeaturesArray)
     {
-        m_bInCoordinates = strcmp(pszKey, "coordinates") == 0 ||
-                           strcmp(pszKey, "geometries") == 0;
+        m_bInCoordinates = sKey == "coordinates" || sKey == "geometries";
     }
 
     if (m_poCurObj)
@@ -265,12 +263,11 @@ void OGRJSONCollectionStreamingParser::StartObjectMember(const char *pszKey,
             if (!m_abFirstMember.back())
                 m_osJson += ",";
             m_abFirstMember.back() = false;
-            m_osJson +=
-                CPLJSonStreamingParser::GetSerializedString(pszKey) + ":";
+            m_osJson += CPLJSonStreamingParser::GetSerializedString(sKey) + ":";
         }
 
         m_nCurObjMemEstimate += ESTIMATE_OBJECT_ELT_SIZE;
-        m_osCurKey.assign(pszKey, nKeyLen);
+        m_osCurKey = sKey;
         m_bKeySet = true;
     }
 }
@@ -360,7 +357,7 @@ void OGRJSONCollectionStreamingParser::EndArray()
 /*                              String()                                */
 /************************************************************************/
 
-void OGRJSONCollectionStreamingParser::String(const char *pszValue, size_t nLen)
+void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
 {
     if (m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize)
     {
@@ -371,23 +368,30 @@ void OGRJSONCollectionStreamingParser::String(const char *pszValue, size_t nLen)
     if (m_nDepth == 1 && m_bInType)
     {
         m_bIsTypeKnown = true;
-        m_bIsFeatureCollection = strcmp(pszValue, "FeatureCollection") == 0;
+        m_bIsFeatureCollection = sValue == "FeatureCollection";
     }
     else if (m_poCurObj)
     {
         if (m_bFirstPass)
         {
             if (m_bInFeaturesArray)
-                m_nTotalOGRFeatureMemEstimate += sizeof(OGRField) + nLen;
+                m_nTotalOGRFeatureMemEstimate +=
+                    sizeof(OGRField) + sValue.size();
 
             m_nCurObjMemEstimate += ESTIMATE_BASE_OBJECT_SIZE;
-            m_nCurObjMemEstimate += nLen + sizeof(void *);
+            m_nCurObjMemEstimate += sValue.size() + sizeof(void *);
         }
         if (m_bInFeaturesArray && m_bStoreNativeData && m_nDepth >= 3)
         {
-            m_osJson += CPLJSonStreamingParser::GetSerializedString(pszValue);
+            m_osJson += CPLJSonStreamingParser::GetSerializedString(sValue);
         }
-        AppendObject(json_object_new_string(pszValue));
+        if (sValue.size() < static_cast<size_t>(INT_MAX - 1))
+            AppendObject(json_object_new_string_len(
+                sValue.data(), static_cast<int>(sValue.size())));
+        else
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "OGRJSONCollectionStreamingParser::String(): too large string");
     }
 }
 
@@ -395,7 +399,7 @@ void OGRJSONCollectionStreamingParser::String(const char *pszValue, size_t nLen)
 /*                              Number()                                */
 /************************************************************************/
 
-void OGRJSONCollectionStreamingParser::Number(const char *pszValue, size_t nLen)
+void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
 {
     if (m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize)
     {
@@ -419,31 +423,36 @@ void OGRJSONCollectionStreamingParser::Number(const char *pszValue, size_t nLen)
         }
         if (m_bInFeaturesArray && m_bStoreNativeData && m_nDepth >= 3)
         {
-            m_osJson.append(pszValue, nLen);
+            m_osJson.append(sValue);
         }
 
-        if (CPLGetValueType(pszValue) == CPL_VALUE_REAL)
+        m_osTmpValue = sValue;
+        if (CPLGetValueType(m_osTmpValue.c_str()) == CPL_VALUE_REAL)
         {
-            AppendObject(json_object_new_double(CPLAtof(pszValue)));
+            AppendObject(json_object_new_double(CPLAtof(m_osTmpValue.c_str())));
         }
-        else if (nLen == strlen("Infinity") && EQUAL(pszValue, "Infinity"))
+        else if (sValue.size() == strlen("Infinity") &&
+                 EQUALN(sValue.data(), "Infinity", strlen("Infinity")))
         {
             AppendObject(json_object_new_double(
                 std::numeric_limits<double>::infinity()));
         }
-        else if (nLen == strlen("-Infinity") && EQUAL(pszValue, "-Infinity"))
+        else if (sValue.size() == strlen("-Infinity") &&
+                 EQUALN(sValue.data(), "-Infinity", strlen("-Infinity")))
         {
             AppendObject(json_object_new_double(
                 -std::numeric_limits<double>::infinity()));
         }
-        else if (nLen == strlen("NaN") && EQUAL(pszValue, "NaN"))
+        else if (sValue.size() == strlen("NaN") &&
+                 EQUALN(sValue.data(), "NaN", strlen("NaN")))
         {
             AppendObject(json_object_new_double(
                 std::numeric_limits<double>::quiet_NaN()));
         }
         else
         {
-            AppendObject(json_object_new_int64(CPLAtoGIntBig(pszValue)));
+            AppendObject(
+                json_object_new_int64(CPLAtoGIntBig(m_osTmpValue.c_str())));
         }
     }
 }

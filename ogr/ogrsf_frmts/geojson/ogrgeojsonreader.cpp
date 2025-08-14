@@ -471,8 +471,10 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         }
         if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
-        if (!oParser.Parse(reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
-                           nRead - nSkip, bFinished) ||
+        if (!oParser.Parse(std::string_view(reinterpret_cast<const char *>(
+                                                pabyBuffer_ + nSkip),
+                                            nRead - nSkip),
+                           bFinished) ||
             oParser.ExceptionOccurred())
         {
             // to avoid killing ourselves during layer deletion
@@ -697,8 +699,10 @@ OGRFeature *OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer *poLayer)
         if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
         if (!poStreamingParser_->Parse(
-                reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
-                nRead - nSkip, bFinished) ||
+                std::string_view(
+                    reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
+                    nRead - nSkip),
+                bFinished) ||
             poStreamingParser_->ExceptionOccurred())
         {
             break;
@@ -758,7 +762,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
             for (size_t i = 0; i < nRead - nSkip; i++)
             {
                 oParser.ResetFeatureDetectionState();
-                if (!oParser.Parse(pszPtr + i, 1,
+                if (!oParser.Parse(std::string_view(pszPtr + i, 1),
                                    bFinished && (i + 1 == nRead - nSkip)) ||
                     oParser.ExceptionOccurred())
                 {

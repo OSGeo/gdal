@@ -49,6 +49,7 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     bool m_bStoreNativeData = false;
     std::string m_osJson{};
     size_t m_nMaxObjectSize = 0;
+    std::string m_osTmpValue{};
 
     bool m_bStartFeature = false;
     bool m_bEndFeature = false;
@@ -74,14 +75,14 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
                                      size_t nMaxObjectSize);
     ~OGRJSONCollectionStreamingParser() override;
 
-    void String(const char * /*pszValue*/, size_t) override;
-    void Number(const char * /*pszValue*/, size_t) override;
+    void String(std::string_view) override;
+    void Number(std::string_view) override;
     void Boolean(bool b) override;
     void Null() override;
 
     void StartObject() override;
     void EndObject() override;
-    void StartObjectMember(const char * /*pszKey*/, size_t) override;
+    void StartObjectMember(std::string_view) override;
 
     void StartArray() override;
     void EndArray() override;

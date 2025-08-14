@@ -280,8 +280,10 @@ bool OGRJSONFGReader::AnalyzeWithStreamingParser(
     {
         size_t nRead = VSIFReadL(abyBuffer.data(), 1, abyBuffer.size(), fp);
         const bool bFinished = nRead < abyBuffer.size();
-        if (!oParser.Parse(reinterpret_cast<const char *>(abyBuffer.data()),
-                           nRead, bFinished) ||
+        if (!oParser.Parse(
+                std::string_view(
+                    reinterpret_cast<const char *>(abyBuffer.data()), nRead),
+                bFinished) ||
             oParser.ExceptionOccurred())
         {
             return false;
