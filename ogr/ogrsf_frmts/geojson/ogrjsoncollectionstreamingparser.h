@@ -49,7 +49,6 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     bool m_bStoreNativeData = false;
     std::string m_osJson{};
     size_t m_nMaxObjectSize = 0;
-    std::string m_osTmpValue{};
 
     bool m_bStartFeature = false;
     bool m_bEndFeature = false;

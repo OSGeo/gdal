@@ -25,7 +25,10 @@
 #include <json_object_private.h>  // just for sizeof(struct json_object)
 #endif
 
+#include <charconv>
 #include <limits>
+
+#include "include_fast_float.h"
 
 #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
 const size_t ESTIMATE_BASE_OBJECT_SIZE = sizeof(struct json_object);
@@ -426,13 +429,8 @@ void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
             m_osJson.append(sValue);
         }
 
-        m_osTmpValue = sValue;
-        if (CPLGetValueType(m_osTmpValue.c_str()) == CPL_VALUE_REAL)
-        {
-            AppendObject(json_object_new_double(CPLAtof(m_osTmpValue.c_str())));
-        }
-        else if (sValue.size() == strlen("Infinity") &&
-                 EQUALN(sValue.data(), "Infinity", strlen("Infinity")))
+        if (sValue.size() == strlen("Infinity") &&
+            EQUALN(sValue.data(), "Infinity", strlen("Infinity")))
         {
             AppendObject(json_object_new_double(
                 std::numeric_limits<double>::infinity()));
@@ -449,10 +447,40 @@ void OGRJSONCollectionStreamingParser::Number(std::string_view sValue)
             AppendObject(json_object_new_double(
                 std::numeric_limits<double>::quiet_NaN()));
         }
+        else if (sValue.find_first_of("eE.") != std::string::npos ||
+                 sValue.size() >= 20)
+        {
+            double dfValue = 0;
+            const fast_float::parse_options options{
+                fast_float::chars_format::general, '.'};
+            auto answer = fast_float::from_chars_advanced(
+                sValue.data(), sValue.data() + sValue.size(), dfValue, options);
+            if (answer.ec == std::errc() &&
+                answer.ptr == sValue.data() + sValue.size())
+            {
+                AppendObject(json_object_new_double(dfValue));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized number: %s",
+                         std::string(sValue).c_str());
+            }
+        }
         else
         {
-            AppendObject(
-                json_object_new_int64(CPLAtoGIntBig(m_osTmpValue.c_str())));
+            GIntBig nValue = 0;
+            auto answer = std::from_chars(
+                sValue.data(), sValue.data() + sValue.size(), nValue);
+            if (answer.ec == std::errc() &&
+                answer.ptr == sValue.data() + sValue.size())
+            {
+                AppendObject(json_object_new_int64(nValue));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized number: %s",
+                         std::string(sValue).c_str());
+            }
         }
     }
 }
