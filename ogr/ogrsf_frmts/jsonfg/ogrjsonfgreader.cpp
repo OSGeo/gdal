@@ -45,10 +45,23 @@ bool OGRJSONFGReader::Load(OGRJSONFGDataset *poDS, const char *pszText,
     poDS_ = poDS;
     osDefaultLayerName_ = osDefaultLayerName;
 
+    GeoJSONObject::Type objType = OGRGeoJSONGetType(poObject_);
+
+    if (objType != GeoJSONObject::eFeature &&
+        objType != GeoJSONObject::eFeatureCollection &&
+        objType != GeoJSONObject::eUnknown)
+    {
+        json_object *poObj = json_object_new_object();
+        json_object_object_add(poObj, "type",
+                               json_object_new_string("Feature"));
+        json_object_object_add(poObj, "place", poObject_);
+        poObject_ = poObj;
+        objType = GeoJSONObject::eFeature;
+    }
+
     if (!GenerateLayerDefns())
         return false;
 
-    const GeoJSONObject::Type objType = OGRGeoJSONGetType(poObject_);
     if (objType == GeoJSONObject::eFeature)
     {
         OGRJSONFGMemLayer *poLayer = nullptr;
