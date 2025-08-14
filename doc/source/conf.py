@@ -792,7 +792,7 @@ man_pages = [
     (
         "programs/gdal_vector_check_geometry",
         "gdal-vector-check-geometry",
-        "Check a dataset for invalid geometries",
+        "Check a dataset for invalid or non-simple geometries",
         [author_dbaston],
         1,
     ),

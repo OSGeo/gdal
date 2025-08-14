@@ -9,7 +9,7 @@
 
 .. only:: html
 
-    Checks the elements of a polygonal dataset for validity according to the :term:`OGC` Simple Features standard.
+    Checks that geometries are valid and simple according to the :term:`OGC` Simple Features standard.
 
 .. Index:: gdal vector check-geometry
 
@@ -21,13 +21,20 @@ Synopsis
 Description
 -----------
 
-:program:`gdal vector check-geometry` checks the individual elements of a polygonal dataset for validity according to the :term:`OGC` Simple Features standard. For each invalid feature, it will output a description and, in most cases, a point location of the error. For features with multiple causes of invalidity, only a single feature will be output. The OGC validity concept is applied only to polygons and multipolygons; line and point geometries are always considered valid.
+:program:`gdal vector check-geometry` checks that individual elements of a dataset are valid and simple according to the :term:`OGC` Simple Features standard. For each invalid or non-simple feature, it will output a description and, in most cases, a point location of the error.
 
-Validity checking is performed by the GEOS library and should be consistent with results of software such as PostGIS, QGIS, and shapely that also uses that library. GEOS does not consider repeated points to be a cause of invalidity.
+The following checks are performed, depending on the input geometry type:
+
+- Polygons and MultiPolygons are checked for validity. A single point error point will be reported even if there are multiple causes of invalidity.
+- LineStrings and MultiLineStrings are checked for simplicity. All self-intersection locations will be reported if GDAL is built using version 3.14 or later of the GEOS library. With earlier versions, self-intersection locations are not reported.
+- GeometryCollections are checked that their individual elements are valid / simple. A single error point will be reported even if there are multiple causes of invalidity.
+- Other geometry types are not checked.
+
+Validity/simplicity checking is performed by the GEOS library and should be consistent with results of software such as PostGIS, QGIS, and shapely that also use that library. GEOS does not consider repeated points to be a cause of invalidity or non-simplicity.
 
 .. warning::
 
-   Curved geometries are linearized before converting to GEOS. Linearized geometries may be valid where the original geometries are not,
+   Curved geometries are linearized before converting to GEOS. Linearized geometries may be valid/simple where the original geometries are not,
    and vice-versa.
 
 Standard options
@@ -40,7 +47,7 @@ Standard options
 
 .. option:: --include-valid
 
-   Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
+   Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
 
 .. include:: gdal_options/of_vector.rst
 

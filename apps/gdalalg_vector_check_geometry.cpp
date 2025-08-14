@@ -113,21 +113,22 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
 
         if (poGeom)
         {
-            auto eType = wkbFlatten(poGeom->getGeometryType());
-
-            if (eType != wkbPolygon && eType != wkbMultiPolygon)
+            if (poGeom->getDimension() < 1)
             {
                 CPLErrorOnce(CE_Warning, CPLE_AppDefined,
-                             "Non-polygonal geometry passed to 'gdal vector "
-                             "check-geometry'. Non-polygonal geometries are "
-                             "always valid.");
+                             "Point geometry passed to 'gdal vector "
+                             "check-geometry'. Point geometries are "
+                             "always valid/simple.");
             }
             else
             {
+                auto eType = wkbFlatten(poGeom->getGeometryType());
                 GEOSGeometry *poGeosGeom = poGeom->exportToGEOS(m_geosContext);
 
                 if (!poGeosGeom)
                 {
+                    // Try to find a useful message / coordinate from
+                    // GEOS exception message.
                     poErrorFeature = CreateFeatureFromLastError();
 
                     if (eType == wkbPolygon)
@@ -148,29 +149,79 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
                 }
                 else
                 {
-                    char *pszReason;
-                    GEOSGeometry *location;
-                    auto ret = GEOSisValidDetail_r(m_geosContext, poGeosGeom, 0,
-                                                   &pszReason, &location);
+                    char *pszReason = nullptr;
+                    GEOSGeometry *location = nullptr;
+                    char ret = 1;
+                    bool warnAboutGeosVersion = false;
+                    bool checkedSimple = false;
+
+                    if (eType == wkbPolygon || eType == wkbMultiPolygon ||
+                        eType == wkbCurvePolygon || eType == wkbMultiSurface ||
+                        eType == wkbGeometryCollection)
+                    {
+                        ret = GEOSisValidDetail_r(m_geosContext, poGeosGeom, 0,
+                                                  &pszReason, &location);
+                    }
+
+                    if (eType == wkbLineString || eType == wkbMultiLineString ||
+                        eType == wkbCircularString ||
+                        eType == wkbCompoundCurve ||
+                        (ret == 1 && eType == wkbGeometryCollection))
+                    {
+                        checkedSimple = true;
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14)
+                        ret = GEOSisSimpleDetail_r(m_geosContext, poGeosGeom, 1,
+                                                   &location);
+#else
+                        ret = GEOSisSimple_r(m_geosContext, poGeosGeom);
+                        warnAboutGeosVersion = true;
+#endif
+                    }
+
                     GEOSGeom_destroy_r(m_geosContext, poGeosGeom);
                     if (ret == 0)
                     {
+                        if (warnAboutGeosVersion)
+                        {
+                            CPLErrorOnce(
+                                CE_Warning, CPLE_AppDefined,
+                                "Detected a non-simple linear geometry, but "
+                                "cannot output self-intersection points "
+                                "because GEOS library version is < 3.14.");
+                        }
+
                         poErrorFeature = std::make_unique<OGRFeature>(m_defn);
-                        poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD,
-                                                 pszReason);
-                        GEOSFree_r(m_geosContext, pszReason);
+                        if (pszReason == nullptr)
+                        {
+                            if (checkedSimple)
+                            {
+                                poErrorFeature->SetField(
+                                    ERROR_DESCRIPTION_FIELD,
+                                    "self-intersection");
+                            }
+                        }
+                        else
+                        {
+                            poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD,
+                                                     pszReason);
+                            GEOSFree_r(m_geosContext, pszReason);
+                        }
 
-                        std::unique_ptr<OGRGeometry> poErrorGeom(
-                            OGRGeometryFactory::createFromGEOS(m_geosContext,
-                                                               location));
-                        GEOSGeom_destroy_r(m_geosContext, location);
+                        if (location != nullptr)
+                        {
+                            std::unique_ptr<OGRGeometry> poErrorGeom(
+                                OGRGeometryFactory::createFromGEOS(
+                                    m_geosContext, location));
+                            GEOSGeom_destroy_r(m_geosContext, location);
 
-                        poErrorGeom->assignSpatialReference(
-                            m_srcLayer.GetLayerDefn()
-                                ->GetGeomFieldDefn(m_srcGeomField)
-                                ->GetSpatialRef());
+                            poErrorGeom->assignSpatialReference(
+                                m_srcLayer.GetLayerDefn()
+                                    ->GetGeomFieldDefn(m_srcGeomField)
+                                    ->GetSpatialRef());
 
-                        poErrorFeature->SetGeometry(std::move(poErrorGeom));
+                            poErrorFeature->SetGeometry(std::move(poErrorGeom));
+                        }
                     }
                     else if (ret == 2)
                     {
@@ -188,6 +239,7 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
 
         if (poErrorFeature)
         {
+            poErrorFeature->SetFID(poSrcFeature->GetFID());
             apoOutputFeatures.push_back(std::move(poErrorFeature));
         }
     }

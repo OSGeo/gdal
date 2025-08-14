@@ -12,6 +12,7 @@
 ###############################################################################
 
 import gdaltest
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -29,9 +30,9 @@ def polys():
 
     return gdaltest.wkt_ds(
         [
-            "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0))",
-            "POLYGON ((0 0, 10 0, 0 10, 10 10, 0 0))",
-            "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0), (15 15, 15 20, 20 15, 15 15))",
+            "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0))",  # square
+            "POLYGON ((0 0, 10 0, 0 10, 10 10, 0 0))",  # bowtie
+            "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0), (15 15, 15 20, 20 15, 15 15))",  # hole outside shell
         ],
         geom_type=ogr.wkbPolygon,
         epsg=32145,
@@ -43,8 +44,8 @@ def lines():
 
     return gdaltest.wkt_ds(
         [
-            "LINESTRING (0 0, 10 0, 10 10, 0 10, 0 0)",
-            "LINESTRING (0 0, 10 0, 0 10, 10 10, 0 0)",
+            "LINESTRING (0 0, 10 0, 10 10, 0 10, 0 0)",  # square
+            "LINESTRING (0 0, 10 0, 0 10, 10 10, 0 0)",  # bowtie
         ],
         geom_type=ogr.wkbLineString,
         epsg=32145,
@@ -69,9 +70,11 @@ def test_gdalalg_vector_check_geometry(alg, polys):
     assert len(errors) == 2
     assert errors[0]["error"] == "Self-intersection"
     assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+    assert errors[0].GetFID() == 2
 
     assert errors[1]["error"] == "Hole lies outside shell"
     assert errors[1].GetGeometryRef().ExportToWkt() == "POINT (15 15)"
+    assert errors[1].GetFID() == 3
 
     assert dst_lyr.GetFeatureCount() == 2
     assert dst_lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
@@ -99,30 +102,179 @@ def test_gdalalg_vector_check_geometry_include_valid(alg, polys):
 
     assert out[0]["error"] is None
     assert out[0].GetGeometryRef() is None
+    assert out[0].GetFID() == 1
 
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_geometry_non_polygon(alg, lines):
+def test_gdalalg_vector_check_geometry_linestring(alg, lines):
 
     alg["input"] = lines
     alg["output"] = ""
     alg["output-format"] = "stream"
 
-    # TODO: this warning is printed, why is it not captured?
-    # with gdaltest.error_raised(gdal.CE_Warning, "always valid"):
     assert alg.Run()
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
 
-    errors = [f for f in dst_lyr]
-    assert not errors
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0]["error"] == "self-intersection"
+    if ogrtest.have_geos() and (
+        ogr.GetGEOSVersionMajor(),
+        ogr.GetGEOSVersionMinor(),
+    ) >= (3, 14):
+        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+    assert out[0].GetFID() == 2
 
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_geometry_non_closed_polygon_ring(alg):
+def test_gdalalg_vector_check_geometry_linestring_multiple_self_intersections(alg):
+
+    alg["input"] = gdaltest.wkt_ds("LINESTRING (2 1, 0 0, 2 2, 1 2, 1 0)")
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0]["error"] == "self-intersection"
+
+    if ogrtest.have_geos() and (
+        ogr.GetGEOSVersionMajor(),
+        ogr.GetGEOSVersionMinor(),
+    ) >= (3, 14):
+        assert (
+            out[0]
+            .GetGeometryRef()
+            .Equals(ogr.CreateGeometryFromWkt("MULTIPOINT ((1 0.5), (1 1))"))
+        )
+    assert out[0].GetFID() == 1
+
+
+def test_gdalalg_vector_check_geometry_curvepolygon(alg):
+
+    alg["input"] = gdaltest.wkt_ds(
+        "CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 1 1.1, 0 0)))"
+    )
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0].GetFID() == 1
+
+
+def test_gdalalg_vector_check_geometry_compoundcurve(alg):
+
+    alg["input"] = gdaltest.wkt_ds(
+        "COMPOUNDCURVE (CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 1 1, 0 0))"
+    )
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0].GetFID() == 1
+    assert out[0]["error"] == "self-intersection"
+
+    if ogrtest.have_geos() and (
+        ogr.GetGEOSVersionMajor(),
+        ogr.GetGEOSVersionMinor(),
+    ) >= (3, 14):
+        expected = ogr.CreateGeometryFromWkt("POINT (1 1)")
+        assert out[0].GetGeometryRef().Distance(expected) < 1e-3
+
+
+def test_gdalalg_vector_check_geometry_single_point_linestring(alg):
+
+    alg["input"] = gdaltest.wkt_ds("LINESTRING (3 2)")
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+
+    assert out[0]["error"] == "point array must contain 0 or >1 elements"
+
+
+def test_gdalalg_vector_check_geometry_point(alg):
+
+    alg["input"] = gdaltest.wkt_ds("POINT (3 8)")
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_vector_check_geometry_geometry_collection(alg):
+
+    # valid polygon + non-simple linestring
+
+    alg["input"] = gdaltest.wkt_ds(
+        "GEOMETRYCOLLECTION ("
+        "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0)),"
+        "LINESTRING (0 0, 10 0, 0 10, 10 10, 0 0))"
+    )
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+
+    out = [f for f in dst_lyr]
+    assert out[0].GetFID() == 1
+    assert out[0]["error"] == "self-intersection"
+    if ogrtest.have_geos() and (
+        ogr.GetGEOSVersionMajor(),
+        ogr.GetGEOSVersionMinor(),
+    ) >= (3, 14):
+        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+
+
+def test_gdalalg_vector_check_geometry_non_closed_polygon_ring(alg):
 
     alg["input"] = gdaltest.wkt_ds("POLYGON ((7 3, 10 0, 10 10))")
 
@@ -145,7 +297,7 @@ def test_gdalalg_vector_geometry_non_closed_polygon_ring(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_geometry_single_point_polygon(alg):
+def test_gdalalg_vector_check_geometry_single_point_polygon(alg):
 
     alg["input"] = gdaltest.wkt_ds("POLYGON ((7 3))")
 
@@ -165,7 +317,7 @@ def test_gdalalg_vector_geometry_single_point_polygon(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_geometry_two_point_polygon(alg):
+def test_gdalalg_vector_check_geometry_two_point_polygon(alg):
 
     alg["input"] = gdaltest.wkt_ds("POLYGON ((7 3, 7 3))")
 
@@ -185,7 +337,7 @@ def test_gdalalg_vector_geometry_two_point_polygon(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_geometry_empty_shell_polygon_with_hole(alg):
+def test_gdalalg_vector_check_geometry_empty_shell_polygon_with_hole(alg):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
 
