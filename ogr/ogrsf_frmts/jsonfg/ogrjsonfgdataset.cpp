@@ -21,6 +21,8 @@
 
 constexpr const char *CONFORMANCE_CORE =
     "http://www.opengis.net/spec/json-fg-1/0.3/conf/core";
+constexpr const char *CONFORMANCE_FEATURE_TYPE =
+    "http://www.opengis.net/spec/json-fg-1/0.3/conf/types-schemas";
 constexpr const char *CONFORMANCE_POLYHEDRA =
     "http://www.opengis.net/spec/json-fg-1/0.3/conf/polyhedra";
 constexpr const char *CONFORMANCE_CIRCULAR_ARCS =
@@ -152,8 +154,8 @@ void OGRJSONFGDataset::FinishWriting()
             }
             VSIFPrintfL(fpOut_,
                         "\"conformsTo\": [\n"
-                        "  \"%s\"",
-                        CONFORMANCE_CORE);
+                        "  \"%s\",\n  \"%s\"",
+                        CONFORMANCE_CORE, CONFORMANCE_FEATURE_TYPE);
             if (bPolyhedra)
                 VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_POLYHEDRA);
             if (bCurve)
@@ -609,9 +611,10 @@ bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
         m_nPositionBeforeConformsTo = VSIFTellL(fpOut_);
         VSIFPrintfL(fpOut_,
                     "\"conformsTo\": [\n"
+                    "  \"%s\",\n"
                     "  \"%s\"\n"
                     "],\n",
-                    CONFORMANCE_CORE);
+                    CONFORMANCE_CORE, CONFORMANCE_FEATURE_TYPE);
         VSIFPrintfL(
             fpOut_, "%s",
             std::string(
