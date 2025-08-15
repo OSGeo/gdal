@@ -204,26 +204,22 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
                 m_poGeosContext, GEOS_GEOMETRYCOLLECTION));
         }
 
-        OGRFeatureUniquePtr dstFeature;
-
         feature->SetGeometry(nullptr);  // free some memory
 
         if (sameDefn)
         {
-            dstFeature = std::move(feature);
-            dstFeature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+            feature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+            m_apoFeatures.push_back(
+                std::unique_ptr<OGRFeature>(feature.release()));
         }
         else
         {
-            dstFeature.reset(
-                OGRFeature::CreateFeature(dstLayer.GetLayerDefn()));
-            // cppcheck-suppress nullPointer
-            dstFeature->SetFrom(feature.get(), true);
-            // cppcheck-suppress nullPointer
-            dstFeature->SetFID(feature->GetFID());
+            auto newFeature =
+                std::make_unique<OGRFeature>(dstLayer.GetLayerDefn());
+            newFeature->SetFrom(feature.get(), true);
+            newFeature->SetFID(feature->GetFID());
+            m_apoFeatures.push_back(std::move(newFeature));
         }
-
-        m_apoFeatures.push_back(std::move(dstFeature));
     }
 
     return true;
