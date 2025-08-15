@@ -446,6 +446,32 @@ bool OGRJSONFGReader::FinalizeGenerateLayerDefns(bool bStreamedLayer)
         }
     }
 
+    json_object *poMeasures = nullptr;
+    if (json_object_object_get_ex(poObject_, "measures", &poMeasures) &&
+        json_object_get_type(poMeasures) == json_type_object)
+    {
+        json_object *poEnabled = nullptr;
+        if (json_object_object_get_ex(poMeasures, "enabled", &poEnabled) &&
+            json_object_get_type(poEnabled) == json_type_boolean &&
+            json_object_get_boolean(poEnabled))
+        {
+            json_object *poUnit = nullptr;
+            if (json_object_object_get_ex(poMeasures, "unit", &poUnit) &&
+                json_object_get_type(poUnit) == json_type_string)
+            {
+                osMeasureUnit_ = json_object_get_string(poUnit);
+            }
+
+            json_object *poDescription = nullptr;
+            if (json_object_object_get_ex(poMeasures, "description",
+                                          &poDescription) &&
+                json_object_get_type(poDescription) == json_type_string)
+            {
+                osMeasureDescription_ = json_object_get_string(poDescription);
+            }
+        }
+    }
+
     // Finalize layer definition building and create OGRLayer objects
     for (auto &oBuildContextIter : oMapBuildContext_)
     {
@@ -672,6 +698,38 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
 
     if (oBuildContext.bNeedFID64)
         poLayer->SetMetadataItem(OLMD_FID64, "YES");
+
+    if (oBuildContext.bSameMeasureMetadata &&
+        (!oBuildContext.osMeasureUnit.empty() ||
+         !oBuildContext.osMeasureDescription.empty()))
+    {
+        if (!oBuildContext.osMeasureUnit.empty())
+        {
+            poLayer->SetMetadataItem(
+                "UNIT", oBuildContext.osMeasureUnit.c_str(), "MEASURES");
+        }
+
+        if (!oBuildContext.osMeasureDescription.empty())
+        {
+            poLayer->SetMetadataItem("DESCRIPTION",
+                                     oBuildContext.osMeasureDescription.c_str(),
+                                     "MEASURES");
+        }
+    }
+    else
+    {
+        if (!osMeasureUnit_.empty())
+        {
+            poLayer->SetMetadataItem("UNIT", osMeasureUnit_.c_str(),
+                                     "MEASURES");
+        }
+
+        if (!osMeasureDescription_.empty())
+        {
+            poLayer->SetMetadataItem("DESCRIPTION",
+                                     osMeasureDescription_.c_str(), "MEASURES");
+        }
+    }
 
     if (poStreamedLayer)
     {
@@ -1054,6 +1112,45 @@ bool OGRJSONFGReader::GenerateLayerDefnFromFeature(json_object *poObj)
             {
                 poContext->osCoordRefSysAtFeatureLevel.clear();
                 poContext->poCRSAtFeatureLevel.reset();
+            }
+        }
+    }
+
+    if (poContext->bSameMeasureMetadata)
+    {
+        json_object *poMeasures = nullptr;
+        if (json_object_object_get_ex(poObj, "measures", &poMeasures) &&
+            json_object_get_type(poMeasures) == json_type_object)
+        {
+            json_object *poEnabled = nullptr;
+            if (json_object_object_get_ex(poMeasures, "enabled", &poEnabled) &&
+                json_object_get_type(poEnabled) == json_type_boolean &&
+                json_object_get_boolean(poEnabled))
+            {
+                json_object *poUnit = nullptr;
+                if (json_object_object_get_ex(poMeasures, "unit", &poUnit) &&
+                    json_object_get_type(poUnit) == json_type_string)
+                {
+                    if (poContext->osMeasureUnit.empty())
+                        poContext->osMeasureUnit =
+                            json_object_get_string(poUnit);
+                    else if (poContext->osMeasureUnit !=
+                             json_object_get_string(poUnit))
+                        poContext->bSameMeasureMetadata = false;
+                }
+
+                json_object *poDescription = nullptr;
+                if (json_object_object_get_ex(poMeasures, "description",
+                                              &poDescription) &&
+                    json_object_get_type(poDescription) == json_type_string)
+                {
+                    if (poContext->osMeasureDescription.empty())
+                        poContext->osMeasureDescription =
+                            json_object_get_string(poDescription);
+                    else if (poContext->osMeasureDescription !=
+                             json_object_get_string(poDescription))
+                        poContext->bSameMeasureMetadata = false;
+                }
             }
         }
     }

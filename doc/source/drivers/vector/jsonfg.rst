@@ -108,6 +108,16 @@ Circular-arc geometry support
 Reading and writing of CircularString, CompoundCurve, CurvePolygon, MultiCurve
 and MultiSurface geometries is supported.
 
+Geometry measure support
+------------------------
+
+.. versionadded:: 3.12
+
+Geometry with measure values (M component) can be read and written. The unit
+and description of the measure, if included in the file, is reported in the
+``MEASURES`` layer metadata domain. On the writing side, the :lco:`MEASURE_UNIT`
+and :lco:`MEASURE_DESCRIPTION` layer creation option can be set.
+
 Configuration options
 ---------------------
 
@@ -209,6 +219,18 @@ The following layer creation options are supported:
       :choices: YES, NO
 
       Auto-generate feature ids
+
+-  .. lco:: MEASURE_UNIT
+      :choices: <string>
+      :since: 3.12
+
+      Unit of measures (M) values
+
+-  .. lco:: MEASURE_DESCRIPTION
+      :choices: <string>
+      :since: 3.12
+
+      Description of measures (M) values
 
 VSI Virtual File System API support
 -----------------------------------

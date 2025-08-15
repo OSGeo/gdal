@@ -135,6 +135,10 @@ void RegisterOGRJSONFG()
         "  </Option>"
         "  <Option name='ID_GENERATE' type='boolean' "
         "description='Auto-generate feature ids' default='NO'/>"
+        "  <Option name='MEASURE_UNIT' type='string' "
+        "description='Unit of measures (M) values'/>"
+        "  <Option name='MEASURE_DESCRIPTION' type='string' "
+        "description='Description of measures (M) values'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(

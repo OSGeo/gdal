@@ -236,6 +236,9 @@ class OGRJSONFGWriteLayer final : public OGRLayer
     bool m_bPolyhedraWritten = false;
     bool m_bCurveWritten = false;
     bool m_bMeasureWritten = false;
+    bool bLayerLevelMeasuresWritten_ = false;
+    std::string osMeasureUnit_{};
+    std::string osMeasureDescription_{};
 
     OGRGeoJSONWriteOptions oWriteOptions_{};
     OGRGeoJSONWriteOptions oWriteOptionsPlace_{};
@@ -417,6 +420,8 @@ class OGRJSONFGReader
     char chNestedAttributeSeparator_ = 0;
     bool bArrayAsString_ = false;
     bool bDateAsString_ = false;
+    std::string osMeasureUnit_{};
+    std::string osMeasureDescription_{};
 
     /** Layer building context, specific to one layer. */
     struct LayerDefnBuildContext
@@ -516,6 +521,14 @@ class OGRJSONFGReader
         /** Corresponding OGRJSONFGStreamedLayer(only for
          * AnalyzeWithStreamingParser() mode) */
         OGRJSONFGStreamedLayer *poStreamedLayer = nullptr;
+
+        bool bSameMeasureMetadata = true;
+
+        //! Measure unit
+        std::string osMeasureUnit{};
+
+        //! Measure description
+        std::string osMeasureDescription{};
 
         LayerDefnBuildContext() = default;
         LayerDefnBuildContext(LayerDefnBuildContext &&) = default;

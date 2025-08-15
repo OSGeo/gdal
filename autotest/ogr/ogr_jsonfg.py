@@ -1627,3 +1627,60 @@ def test_jsonfg_write_circular_string_longer_than_11_points(tmp_vsimem):
             f.GetGeometryRef().ExportToIsoWkt()
             == "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9 0,10 0),CIRCULARSTRING (10 0,11 0,12 0))"
         )
+
+
+@pytest.mark.parametrize("single_layer", ["YES", "NO"])
+def test_jsonfg_write_read_measure_unit_description(tmp_vsimem, single_layer):
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(
+        out_filename, options=["SINGLE_LAYER=" + single_layer]
+    ) as ds:
+        srs = osr.SpatialReference(epsg=32631)
+        lyr = ds.CreateLayer(
+            "test",
+            srs=srs,
+            options=["MEASURE_UNIT=my_unit", "MEASURE_DESCRIPTION=my_description"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        g = ogr.CreateGeometryFromWkt("POINT M (1 2 3)")
+        f.SetGeometry(g)
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+        if single_layer == "YES":
+            assert "measures" in j
+            assert j["measures"] == {
+                "enabled": True,
+                "unit": "my_unit",
+                "description": "my_description",
+            }
+        else:
+            assert "measures" in j["features"][0]
+            assert j["features"][0]["measures"] == {
+                "enabled": True,
+                "unit": "my_unit",
+                "description": "my_description",
+            }
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata_Dict("MEASURES") == {
+            "UNIT": "my_unit",
+            "DESCRIPTION": "my_description",
+        }
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 3)"
+
+    out2_filename = tmp_vsimem / "out2.json"
+    gdal.VectorTranslate(out2_filename, out_filename, format="JSONFG")
+
+    with ogr.Open(out2_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadata_Dict("MEASURES") == {
+            "UNIT": "my_unit",
+            "DESCRIPTION": "my_description",
+        }
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 3)"

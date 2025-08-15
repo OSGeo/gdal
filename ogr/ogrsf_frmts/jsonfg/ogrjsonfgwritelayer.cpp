@@ -71,6 +71,10 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
     bWriteFallbackGeometry_ = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "WRITE_GEOMETRY", "TRUE"));
 
+    osMeasureUnit_ = CSLFetchNameValueDef(papszOptions, "MEASURE_UNIT", "");
+    osMeasureDescription_ =
+        CSLFetchNameValueDef(papszOptions, "MEASURE_DESCRIPTION", "");
+
     VSILFILE *fp = poDS_->GetOutputFile();
     if (poDS_->IsSingleOutputLayer())
     {
@@ -81,6 +85,32 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
         json_object_put(poFeatureType);
         if (!osCoordRefSys.empty())
             VSIFPrintfL(fp, "\"coordRefSys\" : %s,\n", osCoordRefSys.c_str());
+
+        if (!osMeasureUnit_.empty() || !osMeasureDescription_.empty())
+        {
+            m_bMeasureWritten = true;
+            bLayerLevelMeasuresWritten_ = true;
+            VSIFPrintfL(fp, "\"measures\": {\n");
+            VSIFPrintfL(fp, "  \"enabled\": true");
+            if (!osMeasureUnit_.empty())
+            {
+                auto poUnit = json_object_new_string(osMeasureUnit_.c_str());
+                VSIFPrintfL(fp, ",\n  \"unit\": %s",
+                            json_object_to_json_string_ext(
+                                poUnit, JSON_C_TO_STRING_SPACED));
+                json_object_put(poUnit);
+            }
+            if (!osMeasureDescription_.empty())
+            {
+                auto poDescription =
+                    json_object_new_string(osMeasureDescription_.c_str());
+                VSIFPrintfL(fp, ",\n  \"description\": %s",
+                            json_object_to_json_string_ext(
+                                poDescription, JSON_C_TO_STRING_SPACED));
+                json_object_put(poDescription);
+            }
+            VSIFPrintfL(fp, "\n},\n");
+        }
     }
 }
 
@@ -366,9 +396,35 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (poGeom->IsMeasured())
         {
+            if (!bLayerLevelMeasuresWritten_)
+            {
+                json_object *poMeasures = json_object_new_object();
+                json_object_object_add(poMeasures, "enabled",
+                                       json_object_new_boolean(true));
+                if (!poDS_->IsSingleOutputLayer())
+                {
+                    if (!osMeasureUnit_.empty())
+                    {
+                        json_object_object_add(
+                            poMeasures, "unit",
+                            json_object_new_string(osMeasureUnit_.c_str()));
+                    }
+                    if (!osMeasureDescription_.empty())
+                    {
+                        json_object_object_add(
+                            poMeasures, "description",
+                            json_object_new_string(
+                                osMeasureDescription_.c_str()));
+                    }
+                }
+                json_object_object_add(poObj, "measures", poMeasures);
+            }
+        }
+        else if (bLayerLevelMeasuresWritten_)
+        {
             json_object *poMeasures = json_object_new_object();
             json_object_object_add(poMeasures, "enabled",
-                                   json_object_new_boolean(true));
+                                   json_object_new_boolean(false));
             json_object_object_add(poObj, "measures", poMeasures);
         }
     }
