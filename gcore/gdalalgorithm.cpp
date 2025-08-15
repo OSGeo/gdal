@@ -2700,7 +2700,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         }
     }
 
-    // If outputing to stdout, automatically turn off progress bar
+    // If outputting to stdout, automatically turn off progress bar
     if (arg == outputArg && val.GetName() == "/vsistdout/")
     {
         auto quietArg = GetArg(GDAL_ARG_NAME_QUIET);
