@@ -2178,3 +2178,68 @@ End
     with gdal.VSIFile(tmp_vsimem / "out.lbl", "rb") as f:
         data = f.read()
         assert b"_data" not in data
+
+
+def test_isis3_gdal_translate(tmp_vsimem):
+
+    isis_filename = tmp_vsimem / "in.lbl"
+    with gdal.quiet_errors():
+        gdal.Translate(isis_filename, "data/byte.tif", format="ISIS3")
+
+    gtiff_filename = tmp_vsimem / "out.tif"
+
+    gdal.Translate(
+        gtiff_filename,
+        isis_filename,
+        srcWin=[1, 2, 3, 4],
+        width=5,
+        scaleParams=[[5, 6, 7, 8]],
+    )
+    with gdal.Open(gtiff_filename) as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert "GDALHistory" in j
+        j = j["GDALHistory"]
+        if "Program" in j:
+            del j["Program"]
+        if "ProgramPath" in j:
+            del j["ProgramPath"]
+        expected_j = {
+            "Comment": "Part of that metadata might be invalid due to a clipping operation, a "
+            "resolution change operation and a scaling operation having been performed "
+            "by GDAL tools",
+            "GdalVersion": gdal.VersionInfo("RELEASE_NAME"),
+            "ProgramArguments": "-outsize 5 0 -srcwin 1 2 3 4 -scale 5 6 7 8",
+            "_type": "object",
+        }
+        assert j == expected_j
+
+
+def test_isis3_gdalwarp(tmp_vsimem):
+
+    isis_filename = tmp_vsimem / "in.lbl"
+    with gdal.quiet_errors():
+        gdal.Translate(isis_filename, "data/byte.tif", format="ISIS3")
+
+    gtiff_filename = tmp_vsimem / "out.tif"
+
+    gdal.Warp(
+        gtiff_filename,
+        isis_filename,
+        dstSRS="EPSG:4326",
+    )
+    with gdal.Open(gtiff_filename) as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert "GDALHistory" in j
+        j = j["GDALHistory"]
+        if "Program" in j:
+            del j["Program"]
+        if "ProgramPath" in j:
+            del j["ProgramPath"]
+        expected_j = {
+            "Comment": "Part of that metadata might be invalid due to a reprojection operation having been performed "
+            "by GDAL tools",
+            "GdalVersion": gdal.VersionInfo("RELEASE_NAME"),
+            "ProgramArguments": "-t_srs EPSG:4326",
+            "_type": "object",
+        }
+        assert j == expected_j
