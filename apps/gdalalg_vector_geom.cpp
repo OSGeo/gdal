@@ -239,6 +239,8 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
 #define GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
 #endif
 
+    const auto eLayerGeomType = dstLayer.GetLayerDefn()->GetGeomType();
+
 #ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
     m_nGeosResultSize =
         GEOSGetNumGeometries_r(m_poGeosContext, m_poGeosResultAsCollection);
@@ -269,6 +271,14 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         {
             poResultGeom.reset(OGRGeometryFactory::createFromGEOS(
                 m_poGeosContext, poGeosResult));
+
+            if (poResultGeom && eLayerGeomType != wkbUnknown &&
+                wkbFlatten(poResultGeom->getGeometryType()) !=
+                    wkbFlatten(eLayerGeomType))
+            {
+                poResultGeom.reset(OGRGeometryFactory::forceTo(
+                    poResultGeom.release(), eLayerGeomType));
+            }
 
             if (poResultGeom == nullptr)
             {

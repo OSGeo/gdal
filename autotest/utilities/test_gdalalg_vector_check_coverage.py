@@ -52,6 +52,7 @@ def test_gdalalg_vector_check_coverage(alg, include_valid, three_rectangles):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetName() == "invalid_edge"
 
     assert dst_lyr.GetSpatialRef().IsSame(three_rectangles.GetLayer(0).GetSpatialRef())
     assert dst_lyr.GetFeatureCount() == 3 if include_valid else 2
@@ -98,6 +99,8 @@ def test_gdalalg_vector_check_geometry_two_layers(alg, three_rectangles):
     dst_lyr = dst_ds.GetLayer(0)
 
     assert dst_lyr.GetFeatureCount() == 2
+    for f in dst_lyr:
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
 
     assert alg.Finalize()
 
@@ -142,3 +145,46 @@ def test_gdalalg_vector_check_coverage_multiple_geometry_fields(alg):
     assert dst_lyr.GetFeatureCount() == 10
 
     assert alg.Finalize()
+
+
+def test_gdalalg_vector_check_coverage_multiple_layers(alg):
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+
+    ds.CreateLayer("source1")
+    ds.CreateLayer("source2")
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    assert dst_ds.GetLayer(0).GetName() == "invalid_edge_source1"
+    assert dst_ds.GetLayer(1).GetName() == "invalid_edge_source2"
+
+
+def test_gdalalg_vector_check_coverage_no_geometry_field(alg):
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    ds.CreateLayer("source", geom_type=ogr.wkbNone)
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    assert dst_ds.GetLayerCount() == 0
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["input-layer"] = "source"
+
+    with pytest.raises(
+        Exception, match="Specified layer 'source' has no geometry field"
+    ):
+        alg.Run()
