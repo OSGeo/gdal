@@ -39,10 +39,16 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
     }
     SetDescription(poFeatureDefn_->GetName());
 
-    bIsWGS84CRS_ = osCoordRefSys_.find("[OGC:CRS84]") != std::string::npos ||
-                   osCoordRefSys_.find("[OGC:CRS84h]") != std::string::npos ||
-                   osCoordRefSys_.find("[EPSG:4326]") != std::string::npos ||
-                   osCoordRefSys_.find("[EPSG:4979]") != std::string::npos;
+    bIsWGS84CRS_ =
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/OGC/0/CRS84\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find(
+            "\"http://www.opengis.net/def/crs/OGC/0/CRS84h\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/EPSG/0/4326\"") !=
+            std::string::npos ||
+        osCoordRefSys_.find("\"http://www.opengis.net/def/crs/EPSG/0/4979\"") !=
+            std::string::npos;
 
     oWriteOptions_.nXYCoordPrecision = atoi(CSLFetchNameValueDef(
         papszOptions, "XY_COORD_PRECISION_GEOMETRY", "-1"));

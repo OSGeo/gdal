@@ -541,7 +541,9 @@ bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
     SetDescription(pszName);
 
     VSIFPrintfL(fpOut_, "{\n\"type\": \"FeatureCollection\",\n");
-    VSIFPrintfL(fpOut_, "\"conformsTo\" : [\"[ogc-json-fg-1-0.1:core]\"],\n");
+    VSIFPrintfL(fpOut_,
+                "\"conformsTo\" : "
+                "[\"http://www.opengis.net/spec/json-fg-1/0.3/conf/core\"],\n");
 
     return true;
 }
@@ -595,23 +597,27 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
     std::unique_ptr<OGRCoordinateTransformation> poCTToWGS84;
     if (poSRS)
     {
-        const auto GetCURIE =
-            [](const char *pszAuthName, const char *pszAuthCode)
+        const auto GetURI = [](const char *pszAuthName, const char *pszAuthCode)
         {
-            std::string osRet = "[";
+            std::string osRet = "http://www.opengis.net/def/crs/";
             if (STARTS_WITH(pszAuthName, "IAU_"))
-                osRet += "IAU";
+            {
+                osRet += "IAU/";
+                osRet += pszAuthName + strlen("IAU_");
+                osRet += '/';
+            }
             else
+            {
                 osRet += pszAuthName;
-            osRet += ':';
+                osRet += "/0/";
+            }
             osRet += pszAuthCode;
-            osRet += ']';
             return osRet;
         };
 
-        const auto GetCoordRefSys = [GetCURIE](const char *pszAuthName,
-                                               const char *pszAuthCode,
-                                               double dfCoordEpoch = 0)
+        const auto GetCoordRefSys = [GetURI](const char *pszAuthName,
+                                             const char *pszAuthCode,
+                                             double dfCoordEpoch = 0)
         {
             if (dfCoordEpoch > 0)
             {
@@ -621,7 +627,7 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                 json_object_object_add(
                     poObj, "href",
                     json_object_new_string(
-                        GetCURIE(pszAuthName, pszAuthCode).c_str()));
+                        GetURI(pszAuthName, pszAuthCode).c_str()));
                 json_object_object_add(poObj, "epoch",
                                        json_object_new_double(dfCoordEpoch));
                 return poObj;
@@ -629,7 +635,7 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
             else
             {
                 return json_object_new_string(
-                    GetCURIE(pszAuthName, pszAuthCode).c_str());
+                    GetURI(pszAuthName, pszAuthCode).c_str());
             }
         };
 
@@ -661,8 +667,9 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
 
         if (poObj)
         {
-            osCoordRefSys =
-                json_object_to_json_string_ext(poObj, JSON_C_TO_STRING_SPACED);
+            osCoordRefSys = CPLString(json_object_to_json_string_ext(
+                                          poObj, JSON_C_TO_STRING_SPACED))
+                                .replaceAll("\\/", '/');
             json_object_put(poObj);
         }
         else
@@ -675,7 +682,8 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
             return nullptr;
         }
 
-        if (!strstr(osCoordRefSys.c_str(), "[IAU:"))
+        if (!strstr(osCoordRefSys.c_str(),
+                    "http://www.opengis.net/def/crs/IAU/"))
         {
             OGRSpatialReference oSRSWGS84;
             oSRSWGS84.SetWellKnownGeogCS("WGS84");
@@ -687,9 +695,9 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
     else if (eGType != wkbNone)
     {
         if (OGR_GT_HasZ(eGType))
-            osCoordRefSys = "[OGC:CRS84h]";
+            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84h";
         else
-            osCoordRefSys = "[OGC:CRS84]";
+            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84";
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No SRS set on layer. Assuming it is long/lat on WGS84 "
                  "ellipsoid");

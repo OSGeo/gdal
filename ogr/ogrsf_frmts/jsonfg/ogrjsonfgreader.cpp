@@ -118,7 +118,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
         const char *pszStr = json_object_get_string(poCoordRefSys);
         if (pszStr[0] == '[' && pszStr[strlen(pszStr) - 1] == ']')
         {
-            // Safe CURIE, e.g. "[EPSG:4326]"
+            // Safe CURIE, e.g. "[EPSG:4326]" (removed in JSONFG 0.3)
             const char *pszColon = strchr(pszStr + 1, ':');
             if (!pszColon)
             {
