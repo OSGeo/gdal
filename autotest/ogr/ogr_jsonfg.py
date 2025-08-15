@@ -1497,17 +1497,70 @@ def test_ogr_jsonfg_force_opening_url():
             "MultiSurfaceZM",
             "MULTISURFACE ZM (CURVEPOLYGON ZM (CIRCULARSTRING ZM (10.5 10.5 11.5 100.5,10.5 20.5 12.5 101.5,20.5 20.5 13.5 102.5,20.5 10.5 14.5 103.5,10.5 10.5 11.5 100.5)),((100 100 10.5 -100.5,100 200 11.5 -101.5,200 200 12.5 -102.5,100 100 10.5 -100.5)))",
         ],
+        [
+            None,
+            "POINT (1.5 2.5)",
+        ],
+        [
+            None,
+            "POINT Z (1.5 2.5 3.5)",
+        ],
+        [
+            None,
+            "POINT M (1.5 2.5 4.5)",
+        ],
+        [
+            None,
+            "POINT ZM (1.5 2.5 3.5 4.5)",
+        ],
+        [
+            None,
+            "POLYHEDRALSURFACE Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+        ],
     ],
 )
-def test_jsonfg_read_geoms(filename, expected_wkt):
+def test_jsonfg_read_write_geoms(tmp_vsimem, filename, expected_wkt):
 
-    ds = ogr.Open(f"data/jsonfg/{filename}.json")
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
-    assert (
-        lyr.GetGeomType() == ogr.CreateGeometryFromWkt(expected_wkt).GetGeometryType()
-    )
+    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
+
+    if filename:
+        with ogr.Open(f"data/jsonfg/{filename}.json") as ds:
+            lyr = ds.GetLayer(0)
+            f = lyr.GetNextFeature()
+            assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+            assert lyr.GetGeomType() == expected_geom.GetGeometryType()
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(out_filename) as ds:
+        srs = osr.SpatialReference(epsg=(4979 if "Z" in expected_wkt else 4326))
+        srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+        lyr = ds.CreateLayer("test", srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(expected_geom)
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        data = f.read()
+        if expected_wkt.startswith("POINT") or expected_wkt.startswith(
+            "POLYHEDRALSURFACE"
+        ):
+            assert b"/conf/circular-arcs" not in data
+        else:
+            assert b"/conf/circular-arcs" in data
+        if " M" in expected_wkt or " ZM" in expected_wkt:
+            assert b"/conf/measures" in data
+        else:
+            assert b"/conf/measures" not in data
+        if expected_wkt.startswith("POLYHEDRALSURFACE"):
+            assert b"/conf/polyhedra" in data
+        else:
+            assert b"/conf/polyhedra" not in data
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+        assert lyr.GetGeomType() == expected_geom.GetGeometryType()
 
 
 @pytest.mark.parametrize(
@@ -1526,3 +1579,28 @@ def test_jsonfg_read_bad_geoms(filename):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f.GetGeometryRef() is None
+
+
+def test_jsonfg_write_to_stdout():
+
+    import gdaltest
+    import test_cli_utilities
+
+    ogr2ogr_path = test_cli_utilities.get_ogr2ogr_path()
+    if ogr2ogr_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{ogr2ogr_path} -f JSONFG /vsistdout/ data/jsonfg/CurvePolygonZM.json"
+    )
+
+    assert "/conf/circular-arcs" in out
+    assert "/conf/measures" in out
+
+    with ogr.Open(out) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert (
+            f.GetGeometryRef().ExportToIsoWkt()
+            == "CURVEPOLYGON ZM ((10.5 10.5 -10.5 100.5,10.5 20.5 -11.5 101.5,20.5 20.5 -12.5 102.5,20.5 10.5 -13.5 103.5,10.5 10.5 -10.5 100.5),CIRCULARSTRING ZM (11.5 15.5 -10.5 100.5,15.5 19.5 -11.5 101.5,19.5 15.5 -12.5 102.5,15.5 11.5 -13.5 103.5,11.5 15.5 -10.5 100.5),COMPOUNDCURVE ZM ((13.5 13.5 -10.5 100.5,13.5 17.5 -11.5 101.5,17.5 17.5 -12.5 102.5),(17.5 17.5 -12.5 102.5,17.5 13.5 -13.5 103.5,13.5 13.5 -10.5 100.5)))"
+        )

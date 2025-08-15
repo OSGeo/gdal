@@ -210,6 +210,21 @@ class OGRJSONFGWriteLayer final : public OGRLayer
 
     GDALDataset *GetDataset() override;
 
+    bool HasPolyhedra() const
+    {
+        return m_bPolyhedraWritten;
+    }
+
+    bool HasCurve() const
+    {
+        return m_bCurveWritten;
+    }
+
+    bool HasMeasure() const
+    {
+        return m_bMeasureWritten;
+    }
+
   private:
     OGRJSONFGDataset *poDS_{};
     OGRFeatureDefn *poFeatureDefn_ = nullptr;
@@ -218,6 +233,9 @@ class OGRJSONFGWriteLayer final : public OGRLayer
     bool m_bMustSwapForPlace = false;
     int nOutCounter_ = 0;
     std::string osCoordRefSys_{};
+    bool m_bPolyhedraWritten = false;
+    bool m_bCurveWritten = false;
+    bool m_bMeasureWritten = false;
 
     OGRGeoJSONWriteOptions oWriteOptions_{};
     OGRGeoJSONWriteOptions oWriteOptionsPlace_{};
@@ -292,6 +310,8 @@ class OGRJSONFGDataset final : public GDALDataset
 
     // Write side
     VSILFILE *fpOut_ = nullptr;
+    vsi_l_offset m_nPositionBeforeConformsTo = 0;
+    vsi_l_offset m_nPositionAfterConformsTo = 0;
     bool bSingleOutputLayer_ = false;
     bool bHasEmittedFeatures_ = false;
     bool bFpOutputIsSeekable_ = false;

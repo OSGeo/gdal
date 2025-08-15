@@ -19,6 +19,15 @@
 
 #include <cmath>
 
+constexpr const char *CONFORMANCE_CORE =
+    "http://www.opengis.net/spec/json-fg-1/0.3/conf/core";
+constexpr const char *CONFORMANCE_POLYHEDRA =
+    "http://www.opengis.net/spec/json-fg-1/0.3/conf/polyhedra";
+constexpr const char *CONFORMANCE_CIRCULAR_ARCS =
+    "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs";
+constexpr const char *CONFORMANCE_MEASURES =
+    "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures";
+
 /************************************************************************/
 /*                  OGRJSONFGDataset::~OGRJSONFGDataset()               */
 /************************************************************************/
@@ -116,7 +125,61 @@ void OGRJSONFGDataset::FinishWriting()
             }
         }
 
+        bool bPolyhedra = false;
+        bool bCurve = false;
+        bool bMeasure = false;
+        for (auto &poLayer : apoLayers_)
+        {
+            auto poWriteLayer =
+                dynamic_cast<OGRJSONFGWriteLayer *>(poLayer.get());
+            if (poWriteLayer)
+            {
+                bPolyhedra |= poWriteLayer->HasPolyhedra();
+                bCurve |= poWriteLayer->HasCurve();
+                bMeasure |= poWriteLayer->HasMeasure();
+            }
+        }
+        if (bPolyhedra || bCurve || bMeasure ||
+            m_nPositionBeforeConformsTo == 0)
+        {
+            if (m_nPositionBeforeConformsTo > 0)
+            {
+                VSIFSeekL(fpOut_, m_nPositionBeforeConformsTo, SEEK_SET);
+            }
+            else
+            {
+                VSIFPrintfL(fpOut_, ",\n");
+            }
+            VSIFPrintfL(fpOut_,
+                        "\"conformsTo\": [\n"
+                        "  \"%s\"",
+                        CONFORMANCE_CORE);
+            if (bPolyhedra)
+                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_POLYHEDRA);
+            if (bCurve)
+                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_CIRCULAR_ARCS);
+            if (bMeasure)
+                VSIFPrintfL(fpOut_, ",\n  \"%s\"", CONFORMANCE_MEASURES);
+            if (m_nPositionBeforeConformsTo > 0)
+            {
+                VSIFPrintfL(fpOut_, "\n],");
+                VSIFPrintfL(fpOut_, "%s\n",
+                            std::string(static_cast<size_t>(
+                                            m_nPositionAfterConformsTo -
+                                            strlen(",") - VSIFTellL(fpOut_)),
+                                        ' ')
+                                .c_str());
+
+                VSIFSeekL(fpOut_, 0, SEEK_END);
+            }
+            else
+            {
+                VSIFPrintfL(fpOut_, "\n]");
+            }
+        }
+
         VSIFPrintfL(fpOut_, "\n}\n");
+
         fpOut_->Flush();
     }
 }
@@ -541,9 +604,25 @@ bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
     SetDescription(pszName);
 
     VSIFPrintfL(fpOut_, "{\n\"type\": \"FeatureCollection\",\n");
-    VSIFPrintfL(fpOut_,
-                "\"conformsTo\" : "
-                "[\"http://www.opengis.net/spec/json-fg-1/0.3/conf/core\"],\n");
+    if (bFpOutputIsSeekable_)
+    {
+        m_nPositionBeforeConformsTo = VSIFTellL(fpOut_);
+        VSIFPrintfL(fpOut_,
+                    "\"conformsTo\": [\n"
+                    "  \"%s\"\n"
+                    "],\n",
+                    CONFORMANCE_CORE);
+        VSIFPrintfL(
+            fpOut_, "%s",
+            std::string(
+                strlen(",") + strlen("  \"\",\n") +
+                    strlen(CONFORMANCE_POLYHEDRA) + strlen("  \"\",\n") +
+                    strlen(CONFORMANCE_CIRCULAR_ARCS) + strlen("  \"\",\n") +
+                    strlen(CONFORMANCE_MEASURES) + strlen("\",\n"),
+                ' ')
+                .c_str());
+        m_nPositionAfterConformsTo = VSIFTellL(fpOut_);
+    }
 
     return true;
 }

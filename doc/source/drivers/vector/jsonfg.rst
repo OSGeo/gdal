@@ -100,6 +100,14 @@ The field names may also be prefixed with ``jsonfg_`` to distinguish them from
 fields ``time``, ``time_start``, ``time_end`` that must be written in
 Feature.properties
 
+Circular-arc geometry support
+-----------------------------
+
+.. versionadded:: 3.12
+
+Reading and writing of CircularString, CompoundCurve, CurvePolygon, MultiCurve
+and MultiSurface geometries is supported.
+
 Configuration options
 ---------------------
 
