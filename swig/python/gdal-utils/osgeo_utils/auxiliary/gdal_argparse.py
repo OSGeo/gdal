@@ -83,10 +83,6 @@ class GDALArgumentParser(argparse.ArgumentParser):
                 help="Gives a brief usage message for the generic GDAL OGR command line options and exit",
             )
 
-        if sys.version_info < (3, 8):
-            # extend was introduced to the stdlib in Python 3.8
-            self.register("action", "extend", ExtendAction)
-
         self.custom_format_arg = False
 
     def add_argument(self, *args, **kwargs):
