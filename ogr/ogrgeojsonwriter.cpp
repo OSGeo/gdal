@@ -1156,6 +1156,36 @@ json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
         return nullptr;
     }
 
+    std::unique_ptr<OGRGeometry> poTmpGeom;  // keep in that scope
+    if (eFType == wkbCircularString)
+    {
+        auto poCS = poGeometry->toCircularString();
+        const int nNumPoints = poCS->getNumPoints();
+        constexpr int MAX_POINTS_PER_CC = 11;
+        if (nNumPoints > MAX_POINTS_PER_CC)
+        {
+            auto poCC = std::make_unique<OGRCompoundCurve>();
+            auto poSubCS = std::make_unique<OGRCircularString>();
+            for (int i = 0; i < nNumPoints; ++i)
+            {
+                OGRPoint oPoint;
+                poCS->getPoint(i, &oPoint);
+                poSubCS->addPoint(&oPoint);
+                if (poSubCS->getNumPoints() == MAX_POINTS_PER_CC)
+                {
+                    poCC->addCurve(std::move(poSubCS));
+                    poSubCS = std::make_unique<OGRCircularString>();
+                    poSubCS->addPoint(&oPoint);
+                }
+            }
+            if (poSubCS->getNumPoints() > 1)
+                poCC->addCurve(std::move(poSubCS));
+            poTmpGeom = std::move(poCC);
+            poGeometry = poTmpGeom.get();
+            eFType = wkbCompoundCurve;
+        }
+    }
+
     json_object *poObj = json_object_new_object();
     CPLAssert(nullptr != poObj);
 

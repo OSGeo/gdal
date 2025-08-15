@@ -1604,3 +1604,26 @@ def test_jsonfg_write_to_stdout():
             f.GetGeometryRef().ExportToIsoWkt()
             == "CURVEPOLYGON ZM ((10.5 10.5 -10.5 100.5,10.5 20.5 -11.5 101.5,20.5 20.5 -12.5 102.5,20.5 10.5 -13.5 103.5,10.5 10.5 -10.5 100.5),CIRCULARSTRING ZM (11.5 15.5 -10.5 100.5,15.5 19.5 -11.5 101.5,19.5 15.5 -12.5 102.5,15.5 11.5 -13.5 103.5,11.5 15.5 -10.5 100.5),COMPOUNDCURVE ZM ((13.5 13.5 -10.5 100.5,13.5 17.5 -11.5 101.5,17.5 17.5 -12.5 102.5),(17.5 17.5 -12.5 102.5,17.5 13.5 -13.5 103.5,13.5 13.5 -10.5 100.5)))"
         )
+
+
+def test_jsonfg_write_circular_string_longer_than_11_points(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.json"
+    with gdal.GetDriverByName("JSONFG").CreateVector(out_filename) as ds:
+        srs = osr.SpatialReference(epsg=4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+        lyr = ds.CreateLayer("test", srs=srs)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        g = ogr.CreateGeometryFromWkt(
+            "CIRCULARSTRING(0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9 0,10 0,11 0,12 0)"
+        )
+        f.SetGeometry(g)
+        lyr.CreateFeature(f)
+
+    with ogr.Open(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert (
+            f.GetGeometryRef().ExportToIsoWkt()
+            == "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,2 0,3 0,4 0,5 0,6 0,7 0,8 0,9 0,10 0),CIRCULARSTRING (10 0,11 0,12 0))"
+        )
