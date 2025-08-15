@@ -56,6 +56,26 @@ accepting it, or ``JSONFG`` as the only value of the ``papszAllowedDrivers`` of
 :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
 URL/filename/text.
 
+CRS support
+-----------
+
+Starting with GDAL 3.12, if writing a CRS which has no known identifier, the
+CRS definition will be written as a `PROJJSON <https://proj.org/specifications/projjson.html>`__
+object like:
+
+.. code-block:: JSON
+
+    "coordRefSys": {
+        "type": "PROJJSON",
+        "value": {
+            "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+            "type": "CRS type",
+            "name": "CRS name",
+            "...[snip]...": {}
+        }
+    }
+
+
 Time support
 ------------
 

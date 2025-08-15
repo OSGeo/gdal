@@ -763,6 +763,17 @@ def test_jsonfg_read_prism_with_polygon_base():
             None,
             None,
         ),
+        (
+            osr.SpatialReference("+proj=merc +datum=NAD83"),
+            {"type": "PROJJSON", "value": {}},
+            True,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ),
     ],
 )
 def test_jsonfg_write_coordRefSys_geometry_place(
@@ -798,14 +809,20 @@ def test_jsonfg_write_coordRefSys_geometry_place(
             gdal.VSIFCloseL(f)
 
         j = json.loads(data)
-        assert j["coordRefSys"] == expected_coordRefSys
+        if isinstance(expected_coordRefSys, dict):
+            for x in expected_coordRefSys:
+                assert x in j["coordRefSys"]
+                if x == "type":
+                    assert j["coordRefSys"][x] == expected_coordRefSys[x]
+        else:
+            assert j["coordRefSys"] == expected_coordRefSys
         feat = j["features"][0]
-        if geom_x:
+        if geom_x is not None:
             assert feat["geometry"]["coordinates"][0] == pytest.approx(geom_x)
             assert feat["geometry"]["coordinates"][1] == pytest.approx(geom_y)
         else:
             assert feat["geometry"] is None
-        if place_x:
+        if place_x is not None:
             assert feat["place"]["coordinates"][0] == pytest.approx(place_x)
             assert feat["place"]["coordinates"][1] == pytest.approx(place_y)
         else:

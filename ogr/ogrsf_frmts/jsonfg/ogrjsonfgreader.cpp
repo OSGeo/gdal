@@ -180,39 +180,71 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
             return nullptr;
         }
         const char *pszType = json_object_get_string(poType);
-        if (strcmp(pszType, "Reference") != 0)
+        std::unique_ptr<OGRSpatialReference> poSRS;
+        if (strcmp(pszType, "Reference") == 0)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Only type=\"Reference\" handled in coordRefSys object");
-            return nullptr;
-        }
-
-        json_object *poHRef = CPL_json_object_object_get(poCoordRefSys, "href");
-        if (!poHRef)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Missing href member in coordRefSys object");
-            return nullptr;
-        }
-
-        auto poSRS = OGRJSONFGReadCoordRefSys(poHRef);
-        if (!poSRS)
-            return nullptr;
-
-        json_object *poEpoch =
-            CPL_json_object_object_get(poCoordRefSys, "epoch");
-        if (poEpoch)
-        {
-            const auto epochType = json_object_get_type(poEpoch);
-            if (epochType != json_type_int && epochType != json_type_double)
+            json_object *poHRef =
+                CPL_json_object_object_get(poCoordRefSys, "href");
+            if (!poHRef)
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Wrong value type for epoch member in coordRefSys object");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Missing href member in coordRefSys object");
                 return nullptr;
             }
 
-            poSRS->SetCoordinateEpoch(json_object_get_double(poEpoch));
+            poSRS = OGRJSONFGReadCoordRefSys(poHRef);
+        }
+        else if (strcmp(pszType, "PROJJSON") == 0)
+        {
+            json_object *poValue =
+                CPL_json_object_object_get(poCoordRefSys, "value");
+            if (!poValue)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Missing value member in coordRefSys object");
+                return nullptr;
+            }
+            if (json_object_get_type(poValue) != json_type_object)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid type for coordRefSys.value member");
+                return nullptr;
+            }
+
+            const char *pszPROJJSON = json_object_to_json_string(poValue);
+            poSRS = std::make_unique<OGRSpatialReference>();
+            if (poSRS->SetFromUserInput(
+                    pszPROJJSON,
+                    OGRSpatialReference::
+                        SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE)
+            {
+                poSRS.reset();
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported coordRefSys.type: %s", pszType);
+            return nullptr;
+        }
+
+        if (poSRS)
+        {
+            json_object *poEpoch =
+                CPL_json_object_object_get(poCoordRefSys, "epoch");
+            if (poEpoch)
+            {
+                const auto epochType = json_object_get_type(poEpoch);
+                if (epochType != json_type_int && epochType != json_type_double)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong value type for epoch member in coordRefSys "
+                             "object");
+                    return nullptr;
+                }
+
+                poSRS->SetCoordinateEpoch(json_object_get_double(poEpoch));
+            }
         }
 
         return poSRS;

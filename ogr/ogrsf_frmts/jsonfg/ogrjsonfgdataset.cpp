@@ -679,6 +679,31 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                     poObj, GetCoordRefSys(pszAuthNameVert, pszAuthCodeVert));
             }
         }
+        else
+        {
+            char *pszPROJJSON = nullptr;
+            if (poSRS->exportToPROJJSON(&pszPROJJSON, nullptr) == OGRERR_NONE)
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.LoadMemory(pszPROJJSON))
+                {
+                    poObj = json_object_new_object();
+                    json_object_object_add(poObj, "type",
+                                           json_object_new_string("PROJJSON"));
+                    auto poPROJJSON = reinterpret_cast<json_object *>(
+                        oDoc.GetRoot().GetInternalHandle());
+                    json_object_get(poPROJJSON);
+                    json_object_object_add(poObj, "value", poPROJJSON);
+                    if (dfCoordEpoch > 0)
+                    {
+                        json_object_object_add(
+                            poObj, "epoch",
+                            json_object_new_double(dfCoordEpoch));
+                    }
+                }
+            }
+            CPLFree(pszPROJJSON);
+        }
 
         if (poObj)
         {
