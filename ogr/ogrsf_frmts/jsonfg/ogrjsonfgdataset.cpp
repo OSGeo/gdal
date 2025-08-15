@@ -590,11 +590,12 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
 
     const auto eGType =
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
-    const auto poSRS =
+    const OGRSpatialReference *poSRS =
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
 
     std::string osCoordRefSys;
     std::unique_ptr<OGRCoordinateTransformation> poCTToWGS84;
+    std::unique_ptr<OGRSpatialReference> poSRSTmp;  // keep in this scope
     if (poSRS)
     {
         const auto GetURI = [](const char *pszAuthName, const char *pszAuthCode)
@@ -639,9 +640,23 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
             }
         };
 
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
         const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+        if (!pszAuthName)
+        {
+            auto poBestMatch = poSRS->FindBestMatch();
+            if (poBestMatch)
+            {
+                poSRSTmp.reset(poBestMatch);
+                if (dfCoordEpoch > 0)
+                    poSRSTmp->SetCoordinateEpoch(dfCoordEpoch);
+                poSRSTmp->SetDataAxisToSRSAxisMapping(
+                    poSRS->GetDataAxisToSRSAxisMapping());
+                poSRS = poSRSTmp.get();
+                pszAuthName = poSRS->GetAuthorityName(nullptr);
+            }
+        }
+        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
         json_object *poObj = nullptr;
         if (pszAuthName && pszAuthCode)
         {

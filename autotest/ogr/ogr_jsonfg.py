@@ -667,11 +667,12 @@ def test_jsonfg_read_prism_with_polygon_base():
 
 
 @pytest.mark.parametrize(
-    "crs,expected_coordRefSys,input_x,input_y,geom_x,geom_y,place_x,place_y",
+    "crs,expected_coordRefSys,check_crs_equivalence,input_x,input_y,geom_x,geom_y,place_x,place_y",
     [
         (
             _get_epsg_crs(32631),
             "http://www.opengis.net/def/crs/EPSG/0/32631",
+            True,
             500000,
             0,
             3,
@@ -682,6 +683,7 @@ def test_jsonfg_read_prism_with_polygon_base():
         (
             _get_epsg_crs(4326),
             "http://www.opengis.net/def/crs/EPSG/0/4326",
+            True,
             2,
             49,
             2,
@@ -692,6 +694,7 @@ def test_jsonfg_read_prism_with_polygon_base():
         (
             _get_epsg_crs(4258),
             "http://www.opengis.net/def/crs/EPSG/0/4258",
+            True,
             2,
             49,
             2,
@@ -706,6 +709,7 @@ def test_jsonfg_read_prism_with_polygon_base():
                 "href": "http://www.opengis.net/def/crs/EPSG/0/4326",
                 "epoch": 2023.4,
             },
+            True,
             2,
             49,
             2,
@@ -715,11 +719,12 @@ def test_jsonfg_read_prism_with_polygon_base():
         ),
         # Compound CRS
         (
-            _get_compound_crs(4258, 7837),
+            _get_compound_crs(4258, 5703),
             [
                 "http://www.opengis.net/def/crs/EPSG/0/4258",
-                "http://www.opengis.net/def/crs/EPSG/0/7837",
+                "http://www.opengis.net/def/crs/EPSG/0/5703",
             ],
+            True,
             2,
             49,
             2,
@@ -728,15 +733,16 @@ def test_jsonfg_read_prism_with_polygon_base():
             2,
         ),
         (
-            _get_compound_crs(4258, 7837, epoch=2023.4),
+            _get_compound_crs(4258, 5703, epoch=2023.4),
             [
                 {
                     "type": "Reference",
                     "href": "http://www.opengis.net/def/crs/EPSG/0/4258",
                     "epoch": 2023.4,
                 },
-                "http://www.opengis.net/def/crs/EPSG/0/7837",
+                "http://www.opengis.net/def/crs/EPSG/0/5703",
             ],
+            True,
             2,
             49,
             2,
@@ -744,10 +750,31 @@ def test_jsonfg_read_prism_with_polygon_base():
             49,
             2,
         ),
+        (
+            osr.SpatialReference(
+                'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+            ),
+            "http://www.opengis.net/def/crs/EPSG/0/4326",
+            False,
+            2,
+            49,
+            2,
+            49,
+            None,
+            None,
+        ),
     ],
 )
 def test_jsonfg_write_coordRefSys_geometry_place(
-    crs, expected_coordRefSys, input_x, input_y, geom_x, geom_y, place_x, place_y
+    crs,
+    expected_coordRefSys,
+    check_crs_equivalence,
+    input_x,
+    input_y,
+    geom_x,
+    geom_y,
+    place_x,
+    place_y,
 ):
 
     filename = "/vsimem/test_jsonfg_write_coordRefSys_geometry_place.json"
@@ -786,7 +813,8 @@ def test_jsonfg_write_coordRefSys_geometry_place(
 
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().IsSame(crs)
+        if check_crs_equivalence:
+            assert lyr.GetSpatialRef().IsSame(crs)
         ds = None
 
     finally:
@@ -804,7 +832,15 @@ def test_jsonfg_write_coordRefSys_IAU():
     srs.SetFromUserInput("IAU:49910")
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     test_jsonfg_write_coordRefSys_geometry_place(
-        srs, "http://www.opengis.net/def/crs/IAU/2015/49910", 2, 49, None, None, 2, 49
+        srs,
+        "http://www.opengis.net/def/crs/IAU/2015/49910",
+        True,
+        2,
+        49,
+        None,
+        None,
+        2,
+        49,
     )
 
 
