@@ -130,9 +130,7 @@ class GeoParquetValidator:
             return self._error("Parquet driver not available")
 
         try:
-            import jsonschema
-
-            jsonschema.validate
+            import jsonschema  # noqa: F401
         except ImportError:
             return self._error(
                 "jsonschema Python module not available. Try 'pip install jsonschema'"
