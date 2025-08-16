@@ -361,7 +361,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         // First process the changes from open options, if present
         changes = CSLFetchNameValueMultiple(OpenOptions, "Change");
         // Transfer them to subst list
-        for (int i = 0; changes && changes[i] != nullptr; i++)
+        for (int i = 0; i < changes.size(); i++)
         {
             char *key = nullptr;
             const char *value = CPLParseNameValue(changes[i], &key);
@@ -387,8 +387,8 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         m_parent_dataset->SetMetadataItem("ServerURL", m_base_url, nullptr);
         m_parent_dataset->SetMetadataItem("TiledGroupName", tiledGroupName,
                                           nullptr);
-        for (int i = 0, n = CSLCount(substs); i < n && substs; i++)
-            m_parent_dataset->SetMetadataItem("Change", substs[i], nullptr);
+        for (const char *subst : substs)
+            m_parent_dataset->SetMetadataItem("Change", subst, nullptr);
 
         const char *pszConfiguration =
             CPLGetXMLValue(config, "Configuration", nullptr);
@@ -814,9 +814,9 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                         nodechange = nodechange->psNext;
                     }
 
-                    for (int i = 0, n = substs.size(); i < n && substs; i++)
+                    for (const char *subst : substs)
                     {
-                        CPLString kv(substs[i]);
+                        CPLString kv(subst);
                         auto sep_pos =
                             kv.find_first_of("=:");  // It should find it
                         if (sep_pos == CPLString::npos)
