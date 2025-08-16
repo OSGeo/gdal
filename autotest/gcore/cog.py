@@ -2261,3 +2261,18 @@ def test_cog_write_interleave_tile_webp_error(tmp_vsimem):
             gdal.Open("data/rgbsmall.tif"),
             options=["INTERLEAVE=TILE", "COMPRESS=WEBP"],
         )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_cog_write_complex(tmp_vsimem):
+
+    gdal.Translate(
+        tmp_vsimem / "out.tif", "data/cfloat32.tif", format="COG", width=1024
+    )
+
+    with gdal.Open(tmp_vsimem / "out.tif") as src_ds:
+        assert src_ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert src_ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
