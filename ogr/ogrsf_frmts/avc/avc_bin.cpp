@@ -174,7 +174,7 @@
 
 #include "shapefil.h"
 #include "dbfopen.c"
-#include "shp_vsi.c"
+#include "shp_vsi.cpp"
 
 #else
 

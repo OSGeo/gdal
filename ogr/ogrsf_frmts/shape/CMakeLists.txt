@@ -1,6 +1,6 @@
 add_gdal_driver(
   TARGET ogr_Shape
-  SOURCES shape2ogr.cpp shp_vsi.c ogrshapedatasource.cpp ogrshapedriver.cpp ogrshapelayer.cpp
+  SOURCES shape2ogr.cpp shp_vsi.cpp ogrshapedatasource.cpp ogrshapedriver.cpp ogrshapelayer.cpp
   PLUGIN_CAPABLE
   NO_DEPS
 )
