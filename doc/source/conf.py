@@ -827,7 +827,7 @@ man_pages = [
     (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
-        "Edit metadata of a vetor dataset",
+        "Edit metadata of a vector dataset",
         [author_evenr],
         1,
     ),

@@ -223,8 +223,8 @@ bool getTransforms(GDALRasterBand &band, GDALGeoTransform &fwdTransform,
 /// @param oOutExtent  Window to modify
 /// @param nX  X coordinate of ray endpoint.
 /// @param nY  Y coordinate of ray endpoint.
-/// @param startAngle  Start angle of slice (standard mathmatics notion, in radians)
-/// @param endAngle  End angle of slice (standard mathmatics notion, in radians)
+/// @param startAngle  Start angle of slice (standard mathematics notion, in radians)
+/// @param endAngle  End angle of slice (standard mathematics notion, in radians)
 void shrinkWindowForAngles(Window &oOutExtent, int nX, int nY,
                            double startAngle, double endAngle)
 {

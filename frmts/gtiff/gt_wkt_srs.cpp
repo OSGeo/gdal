@@ -1394,7 +1394,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
             adfParam[i] = 0.0;
 
 #if LIBGEOTIFF_VERSION <= 1730
-        // libgeotiff <= 1.7.3 is unfortunately inconsistent. When it synthetizes the
+        // libgeotiff <= 1.7.3 is unfortunately inconsistent. When it synthesizes the
         // projection parameters from the EPSG ProjectedCRS code, it returns
         // them normalized in degrees. But when it gets them from
         // ProjCoordTransGeoKey and other Proj....GeoKey's it return them in

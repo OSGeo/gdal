@@ -492,7 +492,7 @@ void GWKThreadsEnd(void *psThreadDataIn);
 /*      This object is application created, or created by a higher      */
 /*      level convenience function.  It is responsible for              */
 /*      subdividing the operation into chunks, loading and saving       */
-/*      imagery, and establishing the varios validity and density       */
+/*      imagery, and establishing the various validity and density      */
 /*      masks.  Actual resampling is done by the GDALWarpKernel.        */
 /************************************************************************/
 

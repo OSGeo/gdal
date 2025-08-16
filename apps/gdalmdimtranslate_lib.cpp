@@ -540,7 +540,7 @@ GetDimensionDesc(DimensionRemapper &oDimRemapper,
             if (aosTokens.size() != 1 && aosTokens.size() != 2)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid number of valus in subset specification.");
+                         "Invalid number of values in subset specification.");
                 return nullptr;
             }
 

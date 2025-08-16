@@ -31,7 +31,7 @@ def module_disable_exceptions():
 
 
 ###############################################################################
-# Basic test without snapshoting
+# Basic test without snapshotting
 
 
 def test_ograpispy_1(tmp_path):
@@ -67,7 +67,7 @@ def test_ograpispy_1(tmp_path):
 
 
 ###############################################################################
-# With snapshoting
+# With snapshotting
 
 
 def test_ograpispy_2(tmp_path):

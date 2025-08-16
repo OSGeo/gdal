@@ -80,7 +80,7 @@ static const CeosRecipeType_t RadarSatRecipe[] = {
     {CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT, 429, 4,
      CEOS_REC_TYP_A}, /* Data type */
     {CEOS_REC_BPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT, 0, 0,
-     CEOS_REC_TYP_A}, /* For Defeault CEOS, this is done using other vals */
+     CEOS_REC_TYP_A}, /* For Default CEOS, this is done using other vals */
     {CEOS_REC_LINES, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT, 237, 8,
      CEOS_REC_TYP_I}, /* How many lines */
     {CEOS_REC_TBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT, 261, 4, CEOS_REC_TYP_I},
@@ -135,7 +135,7 @@ static const CeosRecipeType_t JersRecipe[] = {
     {CEOS_REC_DATATYPE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT, 429, 4,
      CEOS_REC_TYP_A}, /* Data type */
     {CEOS_REC_BPR, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT, 0, 0,
-     CEOS_REC_TYP_A}, /* For Defeault CEOS, this is done using other vals */
+     CEOS_REC_TYP_A}, /* For Default CEOS, this is done using other vals */
     {CEOS_REC_LINES, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT, 237, 8,
      CEOS_REC_TYP_I}, /* How many lines */
     {CEOS_REC_TBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT, 261, 4,

@@ -8311,7 +8311,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
     argParser->add_argument("-unsetFid")
         .store_into(psOptions->bUnsetFid)
         .help(_("Prevent the name of the source FID column and source feature "
-                "IDs from being re-used."));
+                "IDs from being reused."));
 
     {
         auto &group = argParser->add_mutually_exclusive_group();

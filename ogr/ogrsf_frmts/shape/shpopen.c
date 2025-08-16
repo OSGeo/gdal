@@ -183,7 +183,7 @@ void SHPAPI_CALL SHPWriteHeader(SHPHandle psSHP)
         STATIC_CAST(uint32_t *, malloc(sizeof(uint32_t) * 2 * psSHP->nRecords));
     if (panSHX == SHPLIB_NULLPTR)
     {
-        psSHP->sHooks.Error("Failure allocatin panSHX");
+        psSHP->sHooks.Error("Failure allocating panSHX");
         return;
     }
 

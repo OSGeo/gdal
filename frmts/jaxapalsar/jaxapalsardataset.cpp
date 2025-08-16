@@ -242,7 +242,7 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand(PALSARJaxaDataset *poDSIn,
     }
     else if (nBitsPerSample == 8 && nSamplesPerGroup == 2)
     {
-        eDataType = GDT_CInt16; /* shuold be 2 x signed byte */
+        eDataType = GDT_CInt16; /* should be 2 x signed byte */
         nFileType = level_10;
     }
     else
