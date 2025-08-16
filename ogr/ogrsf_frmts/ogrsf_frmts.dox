@@ -1881,6 +1881,12 @@ error code.
  fast seeking is available on the current layer use the TestCapability()
  method with a value of OLCFastSetNextByIndex.
 
+ Starting with GDAL 3.12, when implementations can detect that nIndex is
+ invalid (at the minimum all should detect negative indices), they should
+ return OGRERR_NON_EXISTING_FEATURE, and following calls to GetNextFeature()
+ should return nullptr, until ResetReading() or a valid call to
+ SetNextByIndex() is done.
+
  This method is the same as the C function OGR_L_SetNextByIndex().
 
  @param nIndex the index indicating how many steps into the result set
@@ -1908,6 +1914,12 @@ error code.
  and then calls GetNextFeature() nIndex times is used.  To determine if
  fast seeking is available on the current layer use the TestCapability()
  method with a value of OLCFastSetNextByIndex.
+
+ Starting with GDAL 3.12, when implementations can detect that nIndex is
+ invalid (at the minimum all should detect negative indices), they should
+ return OGRERR_NON_EXISTING_FEATURE, and following calls to GetNextFeature()
+ should return nullptr, until ResetReading() or a valid call to
+ SetNextByIndex() is done.
 
  This method is the same as the C++ method OGRLayer::SetNextByIndex()
 
