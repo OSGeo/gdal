@@ -1167,7 +1167,7 @@ bool GDALDatasetIsThreadSafe(GDALDatasetH hDS, int nScopeFlags,
 /** Return a thread-safe dataset.
  *
  * In the general case, this thread-safe dataset will open a
- * behind-the-scenes per-thread dataset (re-using the name and open options of poDS),
+ * behind-the-scenes per-thread dataset (reusing the name and open options of poDS),
  * the first time a thread calls a method on the thread-safe dataset, and will
  * transparently redirect calls from the calling thread to this behind-the-scenes
  * per-thread dataset. Hence there is an initial setup cost per thread.
@@ -1199,7 +1199,7 @@ GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags)
 /** Return a thread-safe dataset.
  *
  * In the general case, this thread-safe dataset will open a
- * behind-the-scenes per-thread dataset (re-using the name and open options of poDS),
+ * behind-the-scenes per-thread dataset (reusing the name and open options of poDS),
  * the first time a thread calls a method on the thread-safe dataset, and will
  * transparently redirect calls from the calling thread to this behind-the-scenes
  * per-thread dataset. Hence there is an initial setup cost per thread.
@@ -1247,7 +1247,7 @@ GDALDataset *GDALGetThreadSafeDataset(GDALDataset *poDS, int nScopeFlags)
 /** Return a thread-safe dataset.
  *
  * In the general case, this thread-safe dataset will open a
- * behind-the-scenes per-thread dataset (re-using the name and open options of hDS),
+ * behind-the-scenes per-thread dataset (reusing the name and open options of hDS),
  * the first time a thread calls a method on the thread-safe dataset, and will
  * transparently redirect calls from the calling thread to this behind-the-scenes
  * per-thread dataset. Hence there is an initial setup cost per thread.

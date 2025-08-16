@@ -41,7 +41,7 @@ def Usage(isError):
     print("            [-src_layer_field_content <layer_name_template>]", file=f)
     print("", file=f)
     print(
-        "* layer_name_template can contain the following substituable " "variables:",
+        "* layer_name_template can contain the following substitutable " "variables:",
         file=f,
     )
     print(

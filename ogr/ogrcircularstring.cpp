@@ -275,7 +275,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
             {
                 std::swap(quadrantStart, quadrantEnd);
             }
-            // Transition trough quadrants in counter-clock wise direction.
+            // Transition through quadrants in counter-clock wise direction.
             for (int j = quadrantStart + 1; j <= quadrantEnd; ++j)
             {
                 switch ((j + 8) % 4)

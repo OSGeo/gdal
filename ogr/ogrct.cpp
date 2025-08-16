@@ -2817,7 +2817,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                 bRet = FALSE;
                 err = proj_errno(pj);
                 // PROJ should normally emit an error, but in case it does not
-                // (e.g PROJ 6.3 with the +ortho projection), synthetize one
+                // (e.g PROJ 6.3 with the +ortho projection), synthesize one
                 if (err == 0)
                     err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
             }

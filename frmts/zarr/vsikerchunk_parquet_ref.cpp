@@ -681,7 +681,7 @@ char **VSIKerchunkParquetRefFileSystem::ReadDirEx(const char *pszDirname,
         aosRet.AddString(v.c_str());
     }
 
-    // Synthetize file names for x.y.z chunks
+    // Synthesize file names for x.y.z chunks
     const auto oIterArray = refFile->m_oMapArrayInfo.find(osAskedKey);
     if (oIterArray != refFile->m_oMapArrayInfo.end())
     {

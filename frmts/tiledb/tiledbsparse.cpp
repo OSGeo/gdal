@@ -3283,7 +3283,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                 psField->Set.nMarker2 = OGRUnsetMarker;
                 psField->Set.nMarker3 = OGRUnsetMarker;
                 constexpr int DAYS_IN_YEAR_APPROX = 365;
-                // Avoid overflow in the x SECONDS_PER_DAY muliplication
+                // Avoid overflow in the x SECONDS_PER_DAY multiplication
                 if (v[m_nOffsetInResultSet] > DAYS_IN_YEAR_APPROX * 100000 ||
                     v[m_nOffsetInResultSet] < -DAYS_IN_YEAR_APPROX * 100000)
                 {

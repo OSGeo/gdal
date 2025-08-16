@@ -2250,7 +2250,7 @@ EHreset_maxopenfiles(intn req_max)
     if (req_max <= EHXmaxfilecount)
         return EHXmaxfilecount;
 
-    /* Falback to built-in NEOSHDF constant if           */
+    /* Fallback to built-in NEOSHDF constant if          */
     /* SDreset_maxopenfiles() interface is not available */
     /* ------------------------------------------------- */
 #ifdef HDF4_HAS_MAXOPENFILES

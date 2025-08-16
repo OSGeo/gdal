@@ -6,5 +6,5 @@ state at beginning and end of inflateBack9(), to allow incremental decoding.
 
 GDAL's changes are regarding the "left" and "put" variables
 
-GDAL also adds a inflateBack9Copy() to allow snapshoting of decompression
+GDAL also adds a inflateBack9Copy() to allow snapshotting of decompression
 state.

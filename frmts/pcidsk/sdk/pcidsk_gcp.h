@@ -21,7 +21,7 @@ namespace PCIDSK {
     /**
      * \brief PCIDSK Generic GCP Structure
      *
-     * The PCIDSK::GCP class encompases all the possible field
+     * The PCIDSK::GCP class encompasses all the possible field
      * combinations in the last two revisions of PCI's GCP segment
      * type.
      *

@@ -3387,7 +3387,7 @@ void GDALGridContextFree(GDALGridContext *psContext)
 /**
  * Do the gridding of a window of a raster.
  *
- * This function takes the gridding context as input to preprare computation
+ * This function takes the gridding context as input to prepare computation
  * of regular grid (or call it a raster) from these scattered data.
  * You should supply the extent of the output grid and allocate array
  * sufficient to hold such a grid.

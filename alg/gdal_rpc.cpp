@@ -991,7 +991,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Establish a reference point for calcualating an affine          */
+    /*      Establish a reference point for calculating an affine           */
     /*      geotransform approximate transformation.                        */
     /* -------------------------------------------------------------------- */
     double adfGTFromLL[6] = {};

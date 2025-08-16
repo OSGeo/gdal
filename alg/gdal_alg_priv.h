@@ -333,7 +333,7 @@ typedef struct
     // GDALRefreshGenImgProjTransformer() must do something or not.
     bool bCheckWithInvertPROJ;
 
-    // Set to TRUE when the transformation pipline is a custom one.
+    // Set to TRUE when the transformation pipeline is a custom one.
     bool bHasCustomTransformationPipeline;
 
 } GDALGenImgProjTransformInfo;

@@ -494,7 +494,7 @@ macro(check_depend_condition variable depends)
     endif()
 endmacro()
 
-# gdal_dependent_format(format desc depend) do followings:
+# gdal_dependent_format(format desc depend) do the following:
 # - add subdirectory 'format'
 # - define option "GDAL_ENABLE_DRIVER_NAME" then set to default OFF/ON
 # - when enabled, add definition"-DFRMT_format"
@@ -542,7 +542,7 @@ macro(gdal_optional_format format desc)
     endif ()
 endmacro()
 
-# ogr_dependent_driver(NAME desc depend) do followings:
+# ogr_dependent_driver(NAME desc depend) do the following:
 # - define option "OGR_ENABLE_DRIVER_<name>" with default OFF
 # - add subdirectory 'name'
 # - when dependency specified by depend fails, force OFF
@@ -560,7 +560,7 @@ macro(ogr_dependent_driver name desc depend)
     endif ()
 endmacro()
 
-# ogr_optional_driver(name desc) do followings:
+# ogr_optional_driver(name desc) do the following:
 # - define option "OGR_ENABLE_DRIVER_<name>" with default OFF
 # - add subdirectory 'name' when enabled
 macro(ogr_optional_driver name desc)

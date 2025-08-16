@@ -277,7 +277,7 @@ make -j$(nproc) -s
 make install
 cd ../..
 
-# build libcurl.a (builing against Ubuntu libcurl.a doesn't work easily)
+# build libcurl.a (building against Ubuntu libcurl.a doesn't work easily)
 cd curl
 autoreconf -fi
 ./configure --disable-shared --with-openssl --without-libpsl --prefix=$SRC/install

@@ -225,7 +225,7 @@ static void *GDALCreateGCPTransformerEx(int nGCPCount,
         psInfo->asGCPs[0].Y() != psInfo->asGCPs[1].Y())
     {
         // Assumes that the 2 GCPs form opposite corners of a rectangle,
-        // and synthetize a 3rd corner
+        // and synthesize a 3rd corner
         gdal::GCP newGCP;
         newGCP.X() = psInfo->asGCPs[1].X();
         newGCP.Y() = psInfo->asGCPs[0].Y();

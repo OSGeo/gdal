@@ -825,7 +825,7 @@ static size_t brunsli_fun_callback(void *out, const GByte *data, size_t size)
 }
 #endif
 
-// Type dependent dispachers
+// Type dependent dispatchers
 CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
 #if defined(JPEG12_SUPPORTED)

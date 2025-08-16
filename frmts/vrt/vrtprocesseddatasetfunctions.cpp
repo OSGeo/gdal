@@ -1120,7 +1120,7 @@ struct TrimmingData
     //! Maximum threshold beyond which we give up saturation
     double m_dfToneCeil = 0;
 
-    //! Margin to allow for dynamics in brighest areas (in [0,1] range)
+    //! Margin to allow for dynamics in brightest areas (in [0,1] range)
     double m_dfTopMargin = 0;
 
     //! Index (zero-based) of input/output red band.
@@ -1840,7 +1840,7 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         "description='Maximum threshold beyond which we give up saturation' "
         "type='double' required='true'/>"
         "   <Argument name='top_margin' "
-        "description='Margin to allow for dynamics in brighest areas "
+        "description='Margin to allow for dynamics in brightest areas "
         "(between 0 and 1, should be close to 0)' "
         "type='double' required='true'/>"
         "   <Argument name='nodata' type='double' "

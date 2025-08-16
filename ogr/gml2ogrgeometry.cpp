@@ -923,7 +923,7 @@ GML2OGRGeometry_XMLNode_Internal(const CPLXMLNode *psNode, const char *pszId,
     // now.
 
     // We need this nRecLevel == 0 check, otherwise this could result in
-    // multiple revist of the same node, and exponential complexity.
+    // multiple revisit of the same node, and exponential complexity.
     if (nRecLevel == 0 && psNode != nullptr &&
         strcmp(psNode->pszValue, "?xml") == 0)
         psNode = psNode->psNext;

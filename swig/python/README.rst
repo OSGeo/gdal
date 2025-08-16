@@ -67,7 +67,7 @@ HOWTO-RELEASE for how this is created.  Because swig has been run, it
 need not be installed.
 
 
-Installation via packging systems
+Installation via packaging systems
 ---------------------------------
 
 General

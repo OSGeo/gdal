@@ -71,7 +71,7 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
     IconStylePtr poKmlIconStyle = nullptr;
     LabelStylePtr poKmlLabelStyle = nullptr;
 
-    /***** create and init a style mamager with the style string *****/
+    /***** create and init a style manager with the style string *****/
     OGRStyleMgr *const poOgrSM = new OGRStyleMgr;
 
     poOgrSM->InitStyleString(pszStyleString);

@@ -2992,7 +2992,7 @@ bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset,
  *
  * This is the same as the C function GDALMDArrayGetScale().
  *
- * @note Driver implementation: this method shall be implemented if gettings
+ * @note Driver implementation: this method shall be implemented if getting
  * scale is supported.
  *
  * @param pbHasScale Pointer to a output boolean that will be set to true if
@@ -3022,7 +3022,7 @@ double GDALMDArray::GetScale(CPL_UNUSED bool *pbHasScale,
  *
  * This is the same as the C function GDALMDArrayGetOffset().
  *
- * @note Driver implementation: this method shall be implemented if gettings
+ * @note Driver implementation: this method shall be implemented if getting
  * offset is supported.
  *
  * @param pbHasOffset Pointer to a output boolean that will be set to true if
@@ -5883,7 +5883,7 @@ GDALMDArray::GetView(const std::vector<GUInt64> &indices) const
  *
  * Equivalent of GetView("['fieldName']")
  *
- * \note When operationg on a shared_ptr, use (*array)["fieldName"] syntax.
+ * \note When operating on a shared_ptr, use (*array)["fieldName"] syntax.
  */
 std::shared_ptr<GDALMDArray>
 GDALMDArray::operator[](const std::string &fieldName) const
@@ -10016,11 +10016,11 @@ lbl_next_depth:
  *                           Such array must be a one
  *                           dimensional array, and its dimension must be one of
  *                           the dimensions of the array on which the method is
- *                           called (excluding the X and Y dimensons).
+ *                           called (excluding the X and Y dimensions).
  *                         - "attribute": name relative to *this array or full
  *                           name of a single dimension numeric array whose size
  *                           must be one of the dimensions of *this array
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                           "array" and "attribute" are mutually exclusive.
  *                         - "item_name": band metadata item name
  *                         - "item_value": (optional) String, where "%[x][.y]f",
@@ -10080,11 +10080,11 @@ lbl_next_depth:
  *                           Such array must be a one dimensional array, and its
  *                           dimension must be one of the dimensions of the
  *                           array on which the method is called
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                         - "attribute": name relative to *this array or full
  *                           name of a single dimension numeric array whose size
  *                           must be one of the dimensions of *this array
- *                           (excluding the X and Y dimensons).
+ *                           (excluding the X and Y dimensions).
  *                           "array" and "attribute" are mutually exclusive,
  *                           and one of them is required.
  *                         - "unit": (optional) unit of the values pointed in

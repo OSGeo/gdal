@@ -662,7 +662,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
         const bool bGeolocMaxAccuracy = CPLTestBool(
             CPLGetConfigOption("GDAL_GEOLOC_USE_MAX_ACCURACY", "YES"));
 
-        // Keep those objects in this outer scope, so they are re-used, to
+        // Keep those objects in this outer scope, so they are reused, to
         // save memory allocations.
         OGRPoint oPoint;
         OGRLinearRing oRing;
@@ -1148,7 +1148,7 @@ bool GDALGeoLoc<Accessors>::GenerateBackMap(
         }
     };
 
-    // Keep those objects in this outer scope, so they are re-used, to
+    // Keep those objects in this outer scope, so they are reused, to
     // save memory allocations.
     OGRPoint oPoint;
     OGRLinearRing oRing;
@@ -1633,7 +1633,7 @@ static void *GDALCreateSimilarGeoLocTransformer(void *hTransformArg,
 /*                  GDALCreateGeolocationMetadata()                     */
 /************************************************************************/
 
-/** Synthetize the content of a GEOLOCATION metadata domain from a
+/** Synthesize the content of a GEOLOCATION metadata domain from a
  *  geolocation dataset.
  *
  *  This is used when doing gdalwarp -to GEOLOC_ARRAY=some.tif
@@ -1737,7 +1737,7 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
     }
 
     std::string osDebugMsg;
-    osDebugMsg = "Synthetized GEOLOCATION metadata for ";
+    osDebugMsg = "Synthesized GEOLOCATION metadata for ";
     osDebugMsg += bIsSource ? "source" : "target";
     osDebugMsg += ":\n";
     for (int i = 0; i < aosMD.size(); ++i)

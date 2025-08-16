@@ -992,7 +992,7 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
     {
         if (!oDoc.GetRoot().GetArray("extent").IsValid())
         {
-            // If there is no "colletions" or "extent" member, then it is
+            // If there is no "collections" or "extent" member, then it is
             // perhaps a landing page
             const auto oLinks = oDoc.GetRoot().GetArray("links");
             osURL.clear();

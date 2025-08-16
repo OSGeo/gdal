@@ -200,7 +200,7 @@ void GDALGeoLocInverseTransformQuadtree(
     const GDALGeoLocTransformInfo *psTransform, int nPointCount, double *padfX,
     double *padfY, int *panSuccess)
 {
-    // Keep those objects in this outer scope, so they are re-used, to
+    // Keep those objects in this outer scope, so they are reused, to
     // save memory allocations.
     OGRPoint oPoint;
     OGRLinearRing oRing;

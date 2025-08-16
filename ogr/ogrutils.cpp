@@ -74,7 +74,7 @@ void removeTrailingZeros(std::string &s)
 void roundup(std::string &s)
 {
     // Remove a negative sign if it exists to make processing
-    // more straigtforward.
+    // more straightforward.
     bool negative(false);
     if (s[0] == '-')
     {

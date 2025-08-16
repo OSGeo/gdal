@@ -23,7 +23,7 @@
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   To swap memory in the Data array based on the knownledge that there are
+ *   To swap memory in the Data array based on the knowledge that there are
  * "num_elem" elements, each of size "elem_size".
  *
  * ARGUMENTS

@@ -9200,7 +9200,7 @@ OGRErr OGRGeoPackageTableLayer::IGetExtent3D(int iGeomField,
 /*                           Truncate()                                 */
 /************************************************************************/
 
-/** Implements "DELETE FROM {table_name}" in an optimzed way.
+/** Implements "DELETE FROM {table_name}" in an optimized way.
  *
  * Disable triggers if we detect that the only triggers on the table are ones
  * under our control (i.e. the ones for the gpkg_ogr_contents table and the

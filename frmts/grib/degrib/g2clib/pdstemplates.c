@@ -19,7 +19,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.4: Derived Fcst based on Ensemble cluster over circular
              //      area at Horiz Level/Layer at a point in time
          {4,30,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,1,1,1,1,-4,4,4,1,-1,4,-1,4} },
-             // 4.5: Probablility Forecast at Horiz Level/Layer
+             // 4.5: Probability Forecast at Horiz Level/Layer
              //      at a point in time
          {5,22,0, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,-1,-4,-1,-4} },
              // 4.6: Percentile Forecast at Horiz Level/Layer
@@ -31,7 +31,7 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.8: Ave/Accum/etc... at Horiz Level/Layer
              //      in a time interval
          {8,29,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
-             // 4.9: Probablility Forecast at Horiz Level/Layer
+             // 4.9: Probability Forecast at Horiz Level/Layer
              //      in a time interval
          {9,36,1, {1,1,1,1,1,2,1,1,-4,1,-1,-4,1,-1,-4,1,1,1,-1,-4,-1,-4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
              // 4.10: Percentile Forecast at Horiz Level/Layer

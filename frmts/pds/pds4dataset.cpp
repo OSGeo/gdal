@@ -1948,7 +1948,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", true);
             if (fp == nullptr)
             {
-                CPLError(CE_Warning, CPLE_FileIO, "Cannt open %s: %s",
+                CPLError(CE_Warning, CPLE_FileIO, "Cannot open %s: %s",
                          osImageFullFilename.c_str(), VSIGetLastErrorMsg());
                 continue;
             }

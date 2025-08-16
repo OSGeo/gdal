@@ -2032,7 +2032,7 @@ class GPKGChecker:
 
         try:
             # 'SELECT "col_name" FROM table_name' doesn't work because
-            # it will be interpreted as a literal if the columm does not exist
+            # it will be interpreted as a literal if the column does not exist
             c.execute(
                 "SELECT 1 FROM %s t ORDER BY t.%s LIMIT 0"
                 % (_esc_id(table_name), _esc_id(col_name))

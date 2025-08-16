@@ -79,7 +79,7 @@
    geotransform has been found, and is within the bounds -180,360 -90,90, if YES
    assume OGC:CRS84. Default is NO.
 
-   // TODO: this unusued and a few others occur in the source that are not
+   // TODO: this unused and a few others occur in the source that are not
    documented, flush out unused opts and document the rest mdsumner@gmail.com
    GDAL_NETCDF_CONVERT_LAT_180=YES/NO convert longitude values from ]180,360] to
    [-180,180]
