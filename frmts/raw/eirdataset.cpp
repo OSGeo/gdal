@@ -327,6 +327,12 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (EQUAL(aosTokens[0], "PIXEL_FILES"))
         {
+            if (CPLHasPathTraversal(aosTokens[1]))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", aosTokens[1]);
+                return nullptr;
+            }
             osRasterFilename = CPLFormCIFilenameSafe(osPath, aosTokens[1], "");
         }
         else if (EQUAL(aosTokens[0], "FORMAT"))

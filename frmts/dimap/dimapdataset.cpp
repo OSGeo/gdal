@@ -554,13 +554,13 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Ingest the xml file.                                            */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename.c_str());
+    CPLXMLTreeCloser psProduct(CPLParseXMLFile(osMDFilename.c_str()));
     if (psProduct == nullptr)
         return nullptr;
 
-    CPLXMLNode *psDoc = CPLGetXMLNode(psProduct, "=Dimap_Document");
+    const CPLXMLNode *psDoc = CPLGetXMLNode(psProduct.get(), "=Dimap_Document");
     if (!psDoc)
-        psDoc = CPLGetXMLNode(psProduct, "=PHR_DIMAP_Document");
+        psDoc = CPLGetXMLNode(psProduct.get(), "=PHR_DIMAP_Document");
 
     // We check the for the tag Metadata_Identification.METADATA_FORMAT.
     // The metadata will be set to 2.0 for DIMAP2.
@@ -573,21 +573,20 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osImageDSFilename;
     std::string osDIMAPFilename;
     std::string osRPCFilename;
-    CPLXMLNode *psProductDim = nullptr;
-    CPLXMLNode *psProductStrip = nullptr;
+    CPLXMLTreeCloser psProductDim(nullptr);
+    CPLXMLTreeCloser psProductStrip(nullptr);
 
     CPLStringList aosSubdatasets;
 
     // Check needed information for the DIMAP format.
     if (nProductVersion == 1)
     {
-        CPLXMLNode *psImageAttributes =
+        const CPLXMLNode *psImageAttributes =
             CPLGetXMLNode(psDoc, "Raster_Dimensions");
         if (psImageAttributes == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to find <Raster_Dimensions> in document.");
-            CPLDestroyXMLNode(psProduct);
             return nullptr;
         }
     }
@@ -596,20 +595,19 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
         // Verify if the opened file is not already a product dimap
         if (CPLGetXMLNode(psDoc, "Raster_Data"))
         {
-            psProductDim = psProduct;
+            std::swap(psProductDim, psProduct);
             osDIMAPFilename = osMDFilename;
         }
         else
         {
             // Verify the presence of the DIMAP product file.
-            CPLXMLNode *psDatasetComponents =
+            const CPLXMLNode *psDatasetComponents =
                 CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
 
             if (psDatasetComponents == nullptr)
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "Failed to find <Dataset_Components> in document.");
-                CPLDestroyXMLNode(psProduct);
                 return nullptr;
             }
 
@@ -633,6 +631,13 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         (osSelectedSubdataset.empty() ||
                          osSelectedSubdataset == osComponentTitleLaundered))
                     {
+                        if (CPLHasPathTraversal(pszHref))
+                        {
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Path traversal detected in %s", pszHref);
+                            return nullptr;
+                        }
+
                         if (poOpenInfo->bIsDirectory)
                         {
                             osDIMAPFilename = CPLFormCIFilenameSafe(
@@ -657,6 +662,13 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                                 CPLGetPathSafe(osMDFilename.c_str());
                             osImageDSFilename = CPLFormFilenameSafe(
                                 osPath, pszDataFileHref, nullptr);
+                            if (CPLHasPathTraversal(osImageDSFilename.c_str()))
+                            {
+                                CPLError(CE_Failure, CPLE_NotSupported,
+                                         "Path traversal detected in %s",
+                                         osImageDSFilename.c_str());
+                                return nullptr;
+                            }
                         }
                     }
 
@@ -672,20 +684,20 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
 
-            psProductDim = CPLParseXMLFile(osDIMAPFilename.c_str());
+            psProductDim.reset(CPLParseXMLFile(osDIMAPFilename.c_str()));
             if (psProductDim == nullptr)
             {
-                CPLDestroyXMLNode(psProduct);
                 return nullptr;
             }
         }
 
         // We need the {STRIP|RPC}_<product_id>.XML file for a few metadata.
-        CPLXMLNode *psDocDim = CPLGetXMLNode(psProductDim, "=Dimap_Document");
+        const CPLXMLNode *psDocDim =
+            CPLGetXMLNode(psProductDim.get(), "=Dimap_Document");
         if (!psDocDim)
-            psDocDim = CPLGetXMLNode(psProductDim, "=PHR_DIMAP_Document");
+            psDocDim = CPLGetXMLNode(psProductDim.get(), "=PHR_DIMAP_Document");
 
-        CPLXMLNode *psDatasetSources =
+        const CPLXMLNode *psDatasetSources =
             CPLGetXMLNode(psDocDim, "Dataset_Sources");
         if (psDatasetSources != nullptr)
         {
@@ -704,13 +716,20 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // STRIP product found.
                     {
+                        if (CPLHasPathTraversal(pszHref))
+                        {
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Path traversal detected in %s", pszHref);
+                            return nullptr;
+                        }
                         CPLString osPath =
                             CPLGetPathSafe(osDIMAPFilename.c_str());
                         osSTRIPFilename =
                             CPLFormCIFilenameSafe(osPath, pszHref, nullptr);
                         if (VSIStatL(osSTRIPFilename, &sStat) == 0)
                         {
-                            psProductStrip = CPLParseXMLFile(osSTRIPFilename);
+                            psProductStrip.reset(
+                                CPLParseXMLFile(osSTRIPFilename));
                             break;
                         }
                     }
@@ -718,11 +737,11 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        CPLXMLNode *psDatasetRFMComponents = CPLGetXMLNode(
+        const CPLXMLNode *psDatasetRFMComponents = CPLGetXMLNode(
             psDocDim, "Geoposition.Geoposition_Models.Rational_Function_Model");
         if (psDatasetRFMComponents != nullptr)
         {
-            for (CPLXMLNode *psDatasetRFMComponent =
+            for (const CPLXMLNode *psDatasetRFMComponent =
                      psDatasetRFMComponents->psChild;
                  psDatasetRFMComponent != nullptr;
                  psDatasetRFMComponent = psDatasetRFMComponent->psNext)
@@ -736,11 +755,16 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // RPC product found.
                     {
+                        if (CPLHasPathTraversal(pszHref))
+                        {
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Path traversal detected in %s", pszHref);
+                            return nullptr;
+                        }
                         CPLString osPath =
                             CPLGetPathSafe(osDIMAPFilename.c_str());
                         osRPCFilename =
                             CPLFormCIFilenameSafe(osPath, pszHref, nullptr);
-
                         break;
                     }
                 }
@@ -751,15 +775,15 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    DIMAPDataset *poDS = new DIMAPDataset();
+    auto poDS = std::make_unique<DIMAPDataset>();
 
     if (osSelectedSubdataset.empty() && aosSubdatasets.size() > 2)
     {
         poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
     }
-    poDS->psProduct = psProduct;
-    poDS->psProductDim = psProductDim;
-    poDS->psProductStrip = psProductStrip;
+    poDS->psProduct = psProduct.release();
+    poDS->psProductDim = psProductDim.release();
+    poDS->psProductStrip = psProductStrip.release();
     poDS->osRPCFilename = std::move(osRPCFilename);
     poDS->nProductVersion = nProductVersion;
     poDS->osMDFilename = std::move(osMDFilename);
@@ -771,11 +795,10 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (res == FALSE)
     {
-        delete poDS;
         return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -802,7 +825,12 @@ int DIMAPDataset::ReadImageInformation()
         CPLGetXMLValue(psDoc, "Data_Access.Data_File.DATA_FILE_PATH.href", "");
     CPLString osPath = CPLGetPathSafe(osMDFilename);
     CPLString osImageFilename = CPLFormFilenameSafe(osPath, pszHref, nullptr);
-
+    if (CPLHasPathTraversal(pszHref))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 pszHref);
+        return false;
+    }
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.                                          */
     /* -------------------------------------------------------------------- */
@@ -1177,6 +1205,12 @@ int DIMAPDataset::ReadImageInformation2()
                         }
                         std::string osTileFilename(
                             CPLFormCIFilenameSafe(osPath, pszHref, nullptr));
+                        if (CPLHasPathTraversal(pszHref))
+                        {
+                            CPLError(CE_Failure, CPLE_NotSupported,
+                                     "Path traversal detected in %s", pszHref);
+                            return false;
+                        }
                         if ((nRow == 1 && nCol == 1 && nPart == 0) ||
                             osImageDSFilename.empty())
                         {

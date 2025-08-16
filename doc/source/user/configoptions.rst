@@ -511,6 +511,15 @@ General options
 
       Location of Python shared library file, e.g. ``pythonX.Y[...].so/.dll``.
 
+-  .. config:: CPL_ENABLE_PATH_TRAVERSAL_DETECTION
+      :choices: YES, NO
+      :default: YES
+      :since: 3.12
+
+      Whether :cpp:func:`CPLHasPathTraversal` must detect ``../`` or ``..\\``
+      patterns in file paths that could cause
+      `path traversal vulnerabilities <https://en.wikipedia.org/wiki/Directory_traversal_attack>`__.
+
 
 .. _configoptions_vector:
 

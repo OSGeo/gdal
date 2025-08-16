@@ -1345,6 +1345,13 @@ bool VSIKerchunkRefFile::ConvertToParquetRef(const std::string &osCacheDir,
                     }
                     poDS.reset();
                 }
+                if (CPLHasPathTraversal(osArrayName.c_str()))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s",
+                             osArrayName.c_str());
+                    return false;
+                }
                 const std::string osParqFilename = CPLFormFilenameSafe(
                     CPLFormFilenameSafe(osCacheDir.c_str(), osArrayName.c_str(),
                                         nullptr)

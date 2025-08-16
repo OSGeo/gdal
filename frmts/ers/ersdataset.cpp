@@ -987,12 +987,17 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLString osPath = CPLGetPathSafe(poOpenInfo->pszFilename);
     CPLString osDataFile = poHeader->Find("DataFile", "");
 
-    if (osDataFile.length() == 0)  // just strip off extension.
+    if (osDataFile.empty())  // just strip off extension.
     {
         osDataFile = CPLGetFilename(poOpenInfo->pszFilename);
         osDataFile = osDataFile.substr(0, osDataFile.find_last_of('.'));
     }
-
+    if (CPLHasPathTraversal(osDataFile.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osDataFile.c_str());
+        return nullptr;
+    }
     CPLString osDataFilePath = CPLFormFilenameSafe(osPath, osDataFile, nullptr);
 
     /* -------------------------------------------------------------------- */

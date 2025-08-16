@@ -1620,7 +1620,14 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                 const CPLString osFilename(CPLFormFilenameSafe(
                     CPLGetPathSafe(poOpenInfo->pszFilename).c_str(),
                     oFilename.ToString().c_str(), nullptr));
-                if (VSIStatL(osFilename, &sStat) == 0)
+                if (CPLHasPathTraversal(oFilename.ToString().c_str()))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected for ^%s: %s",
+                             osContainerName.c_str(),
+                             oFilename.ToString().c_str());
+                }
+                else if (VSIStatL(osFilename, &sStat) == 0)
                 {
                     poDS->m_aosAdditionalFiles.AddString(osFilename);
                 }
@@ -1674,6 +1681,12 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             : CPLFormFilenameSafe(
                   CPLGetPathSafe(poOpenInfo->pszFilename).c_str(), pszCore,
                   nullptr));
+    if (CPLHasPathTraversal(pszCore))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Path traversal detected in IsisCube.Core.^Core: %s", pszCore);
+        return nullptr;
+    }
     if (!EQUAL(pszCore, ""))
     {
         poDS->m_osExternalFilename = osQubeFile;
@@ -3108,7 +3121,17 @@ void ISIS3Dataset::BuildLabel()
                 CPLString osSrcFilename(CPLFormFilenameSafe(
                     CPLGetPathSafe(osLabelSrcFilename).c_str(),
                     oFilenameCap.ToString().c_str(), nullptr));
-                if (VSIStatL(osSrcFilename, &sStat) == 0)
+
+                if (CPLHasPathTraversal(oFilenameCap.ToString().c_str()))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected for %s: %s. Removing "
+                             "this section from the label",
+                             osKey.c_str(), oFilenameCap.ToString().c_str());
+                    oLabel.Delete(osKey);
+                    continue;
+                }
+                else if (VSIStatL(osSrcFilename, &sStat) == 0)
                 {
                     oSection.osSrcFilename = std::move(osSrcFilename);
                 }
@@ -3195,6 +3218,14 @@ void ISIS3Dataset::BuildHistory()
                 osHistoryFilename = CPLFormFilenameSafe(
                     CPLGetPathSafe(osSrcFilename).c_str(),
                     oHistoryFilename.ToString().c_str(), nullptr);
+                if (CPLHasPathTraversal(oHistoryFilename.ToString().c_str()))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected for History: %s. Not "
+                             "including it in the label",
+                             oHistoryFilename.ToString().c_str());
+                    osHistoryFilename.clear();
+                }
             }
 
             CPLJSONObject oStartByte = oHistory["StartByte"];

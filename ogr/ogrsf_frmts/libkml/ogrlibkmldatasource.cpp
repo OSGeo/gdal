@@ -2270,6 +2270,14 @@ OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
     if (!bUpdate)
         return nullptr;
 
+    if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Illegal characters in '%s' to form a valid filename",
+                 pszLayerName);
+        return nullptr;
+    }
+
     if ((IsKmz() || IsDir()) && EQUAL(pszLayerName, "doc"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
