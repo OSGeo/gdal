@@ -1,0 +1,70 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20250611 17363874
+characterSet=006
+nOrganismes=2
+FileIdentifier=byte_2x3_6_categsI_13160
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=GIS Developer
+OrganisationName=CREAF
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=byte_2x3_6_categsI_13160
+codeSpace=
+DatasetTitle=byte_2x3_6_categs
+
+[OVERVIEW:ASPECTES_TECNICS]
+columns=2
+rows=3
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+resolution=0.5
+
+[EXTENT]
+MinX=516792
+MaxX=516796
+MinY=4638254
+MaxY=4638260
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20250611 17363863
+CoverageContentType=001
+
+[ATTRIBUTE_DATA]
+TipusCompressio=byte-RLE
+TractamentVariable=Categoric
+TipusRelacio=RELACIO_1_1_DICC
+IndexsNomsCamps=1
+NomCamp_1=G1
+
+[COLOR_TEXT]
+Simb_Vers=4
+Simb_SubVers=10
+Color_Paleta=<Automatic>
+
+[ATTRIBUTE_DATA:G1]
+NomFitxer=byte_2x3_6_categs_RLE_no_ind.img
+descriptor=Al·leluia 1
+min=0
+max=5
+IndexsJoinTaula=G1_1_BYTE_2X3_6_CATEGS_DBF
+JoinTaula_G1_1_BYTE_2X3_6_CATEGS_DBF=G1_1_BYTE_2X3_6_CATEGS_DBF
+
+[TAULA_G1_1_BYTE_2X3_6_CATEGS_DBF]
+NomFitxer=2x3_6_categs.rel

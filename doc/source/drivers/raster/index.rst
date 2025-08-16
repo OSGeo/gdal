@@ -115,6 +115,7 @@ Raster drivers
    mem
    mff
    mff2
+   miramon
    mrsid
    msg
    msgn

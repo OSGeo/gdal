@@ -1,13 +1,19 @@
 add_gdal_driver(
   TARGET ogr_MiraMon
-  SOURCES ogrmiramondatasource.cpp ogrmiramondriver.cpp ogrmiramonlayer.cpp mm_wrlayr.c mm_gdal_functions.c mm_rdlayr.c
-  PLUGIN_CAPABLE
+  SOURCES ogrmiramondatasource.cpp ogrmiramondriver.cpp ogrmiramonlayer.cpp mm_wrlayr.c mm_rdlayr.c
+  PLUGIN_CAPABLE 
   NO_DEPS
   NO_CXX_WFLAGS_EFFCXX
   NO_WFLAG_OLD_STYLE_CAST
 )
 gdal_standard_includes(ogr_MiraMon)
 target_include_directories(ogr_MiraMon PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
+
+# Because linking an OBJECT library
+#add_executable(mm_gdal_functions EXCLUDE_FROM_ALL mm_gdal_functions.c)
+#target_include_directories(mm_gdal_functions PRIVATE $<TARGET_PROPERTY:miramon_common,SOURCE_DIR>)
+#target_link_libraries(mm_gdal_functions PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> miramon_common)
+
 
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
     set(GDAL_DATA_FILES
