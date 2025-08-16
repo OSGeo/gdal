@@ -47,7 +47,7 @@ GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
 
-class GDALVectorCheckCoverageOutputDataset
+class GDALVectorCheckCoverageOutputDataset final
     : public GDALGeosNonStreamingAlgorithmDataset
 {
   public:
@@ -94,8 +94,8 @@ class GDALVectorCheckCoverageOutputDataset
     }
 
   private:
-    double m_maximumGapWidth;
-    bool m_includeValid;
+    const double m_maximumGapWidth;
+    const bool m_includeValid;
 };
 
 GDALVectorCheckCoverageOutputDataset::~GDALVectorCheckCoverageOutputDataset() =
@@ -107,17 +107,31 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
     auto poDstDS = std::make_unique<GDALVectorCheckCoverageOutputDataset>(
         m_maximumGapWidth, m_includeValid);
 
+    const bool bSingleLayerOutput = m_inputLayerNames.empty()
+                                        ? poSrcDS->GetLayerCount() == 1
+                                        : m_inputLayerNames.size() == 1;
+
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
         if (m_inputLayerNames.empty() ||
             std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
                       poSrcLayer->GetDescription()) != m_inputLayerNames.end())
         {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            if (poSrcLayerDefn->GetGeomFieldCount() == 0)
+            {
+                if (m_inputLayerNames.empty())
+                    continue;
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Specified layer '%s' has no geometry field",
+                            poSrcLayer->GetDescription());
+                return false;
+            }
+
             const int geomFieldIndex =
                 m_geomField.empty()
                     ? 0
-                    : poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
-                          m_geomField.c_str());
+                    : poSrcLayerDefn->GetGeomFieldIndex(m_geomField.c_str());
 
             if (geomFieldIndex == -1)
             {
@@ -128,11 +142,14 @@ bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 return false;
             }
 
-            OGRFeatureDefn defn;
+            OGRFeatureDefn defn(bSingleLayerOutput
+                                    ? "invalid_edge"
+                                    : std::string("invalid_edge_")
+                                          .append(poSrcLayer->GetDescription())
+                                          .c_str());
             defn.SetGeomType(wkbMultiLineString);
             defn.GetGeomFieldDefn(0)->SetSpatialRef(
-                poSrcLayer->GetLayerDefn()
-                    ->GetGeomFieldDefn(geomFieldIndex)
+                poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)
                     ->GetSpatialRef());
 
             poDstDS->SetSourceGeometryField(geomFieldIndex);

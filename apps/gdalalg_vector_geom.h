@@ -234,7 +234,7 @@ class GDALGeosNonStreamingAlgorithmDataset
     GEOSGeometry **m_papoGeosResults{nullptr};
 
   private:
-    std::vector<OGRFeatureUniquePtr> m_apoFeatures{};
+    std::vector<std::unique_ptr<OGRFeature>> m_apoFeatures{};
     unsigned int m_nGeosResultSize{0};
     int m_sourceGeometryField{0};
 };

@@ -204,26 +204,22 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertInputsToGeos(
                 m_poGeosContext, GEOS_GEOMETRYCOLLECTION));
         }
 
-        OGRFeatureUniquePtr dstFeature;
-
         feature->SetGeometry(nullptr);  // free some memory
 
         if (sameDefn)
         {
-            dstFeature = std::move(feature);
-            dstFeature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+            feature->SetFDefnUnsafe(dstLayer.GetLayerDefn());
+            m_apoFeatures.push_back(
+                std::unique_ptr<OGRFeature>(feature.release()));
         }
         else
         {
-            dstFeature.reset(
-                OGRFeature::CreateFeature(dstLayer.GetLayerDefn()));
-            // cppcheck-suppress nullPointer
-            dstFeature->SetFrom(feature.get(), true);
-            // cppcheck-suppress nullPointer
-            dstFeature->SetFID(feature->GetFID());
+            auto newFeature =
+                std::make_unique<OGRFeature>(dstLayer.GetLayerDefn());
+            newFeature->SetFrom(feature.get(), true);
+            newFeature->SetFID(feature->GetFID());
+            m_apoFeatures.push_back(std::move(newFeature));
         }
-
-        m_apoFeatures.push_back(std::move(dstFeature));
     }
 
     return true;
@@ -242,6 +238,8 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
 #define GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
 #endif
+
+    const auto eLayerGeomType = dstLayer.GetLayerDefn()->GetGeomType();
 
 #ifdef GDAL_GEOS_NON_STREAMING_ALGORITHM_DATASET_INCREMENTAL
     m_nGeosResultSize =
@@ -273,6 +271,14 @@ bool GDALGeosNonStreamingAlgorithmDataset::ConvertOutputsFromGeos(
         {
             poResultGeom.reset(OGRGeometryFactory::createFromGEOS(
                 m_poGeosContext, poGeosResult));
+
+            if (poResultGeom && eLayerGeomType != wkbUnknown &&
+                wkbFlatten(poResultGeom->getGeometryType()) !=
+                    wkbFlatten(eLayerGeomType))
+            {
+                poResultGeom.reset(OGRGeometryFactory::forceTo(
+                    poResultGeom.release(), eLayerGeomType));
+            }
 
             if (poResultGeom == nullptr)
             {

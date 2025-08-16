@@ -64,6 +64,7 @@ def test_gdalalg_vector_check_geometry(alg, polys):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetName() == "error_location"
 
     errors = [f for f in dst_lyr]
 
@@ -451,3 +452,46 @@ def test_gdalalg_vector_check_geometry_multiple_geometry_fields(alg):
     assert dst_lyr.GetFeatureCount() == 1
 
     assert alg.Finalize()
+
+
+def test_gdalalg_vector_check_geometry_multiple_layers(alg):
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+
+    ds.CreateLayer("source1")
+    ds.CreateLayer("source2")
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    assert dst_ds.GetLayer(0).GetName() == "error_location_source1"
+    assert dst_ds.GetLayer(1).GetName() == "error_location_source2"
+
+
+def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    ds.CreateLayer("source", geom_type=ogr.wkbNone)
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    assert dst_ds.GetLayerCount() == 0
+
+    alg["input"] = ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["input-layer"] = "source"
+
+    with pytest.raises(
+        Exception, match="Specified layer 'source' has no geometry field"
+    ):
+        alg.Run()

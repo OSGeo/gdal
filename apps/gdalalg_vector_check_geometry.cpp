@@ -41,15 +41,20 @@ GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
 
 #ifdef HAVE_GEOS
 
-class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
+class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 {
   private:
     static constexpr const char *ERROR_DESCRIPTION_FIELD = "error";
 
   public:
-    GDALInvalidLocationLayer(OGRLayer &layer, int srcGeomField, bool skipValid)
+    GDALInvalidLocationLayer(OGRLayer &layer, bool bSingleLayerOutput,
+                             int srcGeomField, bool skipValid)
         : GDALVectorPipelineOutputLayer(layer),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn("error_location")),
+          m_defn(OGRFeatureDefn::CreateFeatureDefn(
+              bSingleLayerOutput ? "error_location"
+                                 : std::string("error_location_")
+                                       .append(layer.GetDescription())
+                                       .c_str())),
           m_geosContext(OGRGeometry::createGEOSContext()),
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
@@ -81,22 +86,22 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
     {
         auto poErrorFeature = std::make_unique<OGRFeature>(m_defn);
 
-        const char *msg = CPLGetLastErrorMsg();
+        std::string msg = CPLGetLastErrorMsg();
 
         // Trim GEOS exception name
-        const char *subMsg = strstr(msg, ": ");
-        if (subMsg != nullptr)
+        const auto subMsgPos = msg.find(": ");
+        if (subMsgPos != std::string::npos)
         {
-            msg = subMsg + 2;
+            msg = msg.substr(subMsgPos + strlen(": "));
         }
 
         // Trim newline from end of GEOS exception message
-        if (msg[strlen(msg) - 1] == '\n')
+        if (!msg.empty() && msg.back() == '\n')
         {
-            const_cast<char *>(msg)[strlen(msg) - 1] = '\0';
+            msg.pop_back();
         }
 
-        poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD, msg);
+        poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD, msg.c_str());
 
         CPLErrorReset();
 
@@ -247,10 +252,10 @@ class GDALInvalidLocationLayer : public GDALVectorPipelineOutputLayer
     CPL_DISALLOW_COPY_ASSIGN(GDALInvalidLocationLayer)
 
   private:
-    OGRFeatureDefn *m_defn;
-    GEOSContextHandle_t m_geosContext;
-    int m_srcGeomField;
-    bool m_skipValid;
+    OGRFeatureDefn *const m_defn;
+    const GEOSContextHandle_t m_geosContext;
+    const int m_srcGeomField;
+    const bool m_skipValid;
 };
 
 GDALInvalidLocationLayer::~GDALInvalidLocationLayer()
@@ -269,6 +274,10 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
+    const bool bSingleLayerOutput = m_inputLayerNames.empty()
+                                        ? poSrcDS->GetLayerCount() == 1
+                                        : m_inputLayerNames.size() == 1;
+
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
@@ -276,11 +285,21 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             std::find(m_inputLayerNames.begin(), m_inputLayerNames.end(),
                       poSrcLayer->GetDescription()) != m_inputLayerNames.end())
         {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            if (poSrcLayerDefn->GetGeomFieldCount() == 0)
+            {
+                if (m_inputLayerNames.empty())
+                    continue;
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Specified layer '%s' has no geometry field",
+                            poSrcLayer->GetDescription());
+                return false;
+            }
+
             const int geomFieldIndex =
                 m_geomField.empty()
                     ? 0
-                    : poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
-                          m_geomField.c_str());
+                    : poSrcLayerDefn->GetGeomFieldIndex(m_geomField.c_str());
 
             if (geomFieldIndex == -1)
             {
@@ -293,7 +312,8 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
             outDS->AddLayer(*poSrcLayer,
                             std::make_unique<GDALInvalidLocationLayer>(
-                                *poSrcLayer, geomFieldIndex, !m_includeValid));
+                                *poSrcLayer, bSingleLayerOutput, geomFieldIndex,
+                                !m_includeValid));
         }
     }
 
