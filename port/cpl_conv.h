@@ -242,6 +242,8 @@ extern "C++"
 
 #endif  // defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+bool CPL_DLL CPLHasPathTraversal(const char *pszFilename);
+
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
 /* -------------------------------------------------------------------- */

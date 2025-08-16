@@ -100,6 +100,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_CURL_VERBOSE_DATA_IN", // from cpl_http.cpp
    "CPL_CURL_VSIMEM_PRINT_HEADERS", // from cpl_http.cpp
    "CPL_DEBUG", // from cpl_conv.cpp, cpl_error.cpp, gdalinfo_bin.cpp, gdalsrsinfo.cpp, gdalwarp_bin.cpp, gmlutils.cpp
+   "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", // from cpl_path.cpp
    "CPL_ENABLE_USERFAULTFD", // from cpl_userfaultfd.cpp
    "CPL_ERROR_SEPARATOR", // from cpl_error.cpp
    "CPL_GCE_CHECK_LOCAL_FILES", // from cpl_google_cloud.cpp

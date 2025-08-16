@@ -5984,4 +5984,17 @@ TEST_F(test_cpl, CPLGetCurrentThreadCount)
 #endif
 }
 
+TEST_F(test_cpl, CPLHasPathTraversal)
+{
+    EXPECT_TRUE(CPLHasPathTraversal("a/../b"));
+    EXPECT_TRUE(CPLHasPathTraversal("a\\..\\b"));
+    EXPECT_FALSE(CPLHasPathTraversal("a/b"));
+    {
+        CPLConfigOptionSetter oSetter("CPL_ENABLE_PATH_TRAVERSAL_DETECTION",
+                                      "NO", true);
+        EXPECT_FALSE(CPLHasPathTraversal("a/../b"));
+        EXPECT_FALSE(CPLHasPathTraversal("a\\..\\b"));
+    }
+}
+
 }  // namespace
