@@ -55,6 +55,7 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_inputFormats{};
     GDALArgDatasetValue m_outputDataset{};
     std::vector<std::string> m_creationOptions{};
+    std::vector<std::string> m_outputOpenOptions{};
     std::vector<std::string> m_layerCreationOptions{};
     bool m_overwrite = false;
     bool m_update = false;

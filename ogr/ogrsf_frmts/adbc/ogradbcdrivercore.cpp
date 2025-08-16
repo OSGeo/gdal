@@ -122,11 +122,40 @@ void OGRADBCDriverSetCommonMetadata(GDALDriver *poDriver)
         "  <Option name='PRELUDE_STATEMENTS' type='string' description='SQL "
         "statement(s) to send on the database connection before any other "
         "ones'/>"
+#ifdef OGR_ADBC_HAS_DRIVER_MANAGER
+        "  <Option name='BIGQUERY_PROJECT_ID' type='string' "
+        "description='Google Project ID'/>"
+        "  <Option name='BIGQUERY_DATASET_ID' type='string' "
+        "description='Google BigQuery dataset ID'/>"
+        "  <Option name='BIGQUERY_JSON_CREDENTIAL_STRING' type='string' "
+        "description='JSON string containing Google credentials'/>"
+        "  <Option name='BIGQUERY_JSON_CREDENTIAL_FILE' type='string' "
+        "description='Filename containing Google credentials'/>"
+#endif
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
                               "NATIVE OGRSQL SQLITE");
 #ifdef OGR_ADBC_HAS_DRIVER_MANAGER
     poDriver->SetMetadataItem("HAS_ADBC_DRIVER_MANAGER", "YES");
+
+    // For BigQuery
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "<Option name='FID' type='string' "
+        "description='Name of the FID column to create' default='ogc_fid'/>"
+        "</LayerCreationOptionList>");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONFIELDDATATYPES,
+        "Integer Integer64 Real String Date Time DateTime Binary StringList "
+        "IntegerList Integer64List RealList");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
+                              "Boolean JSON");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
 #endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");

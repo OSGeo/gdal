@@ -2848,10 +2848,15 @@ class CPL_DLL GDALAlgorithmRegistry
                                   GDAL_OF_MULTIDIM_RASTER,
         bool positionalAndRequired = true, const char *helpMessage = nullptr);
 
-    /** Add open option(s) argument. */
+    /** Add (input) open option(s) argument. */
     GDALInConstructionAlgorithmArg &
     AddOpenOptionsArg(std::vector<std::string> *pValue,
                       const char *helpMessage = nullptr);
+
+    /** Add output open option(s) argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOutputOpenOptionsArg(std::vector<std::string> *pValue,
+                            const char *helpMessage = nullptr);
 
     /** Add input format(s) argument. */
     GDALInConstructionAlgorithmArg &
@@ -3032,6 +3037,9 @@ class CPL_DLL GDALAlgorithmRegistry
                               char shortNameAlias);
 
     void SetPositional(GDALInConstructionAlgorithmArg *arg);
+
+    std::vector<std::string>
+    OpenOptionCompleteFunction(const std::string &currentValue) const;
 
     //! @endcond
 

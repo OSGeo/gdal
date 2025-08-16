@@ -40,6 +40,7 @@ GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
     AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+    AddOutputOpenOptionsArg(&m_outputOpenOptions);
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite);
