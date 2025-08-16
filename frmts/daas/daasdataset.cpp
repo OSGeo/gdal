@@ -562,7 +562,7 @@ bool GDALDAASDataset::GetAuthorization()
     if (!oDoc.LoadMemory(osAuthorizationResponse))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannont parse GetAuthorization response");
+                 "Cannot parse GetAuthorization response");
         return false;
     }
 
@@ -746,7 +746,7 @@ bool GDALDAASDataset::GetImageMetadata()
     if (!oDoc.LoadMemory(osResponse))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannont parse GetImageMetadata response");
+                 "Cannot parse GetImageMetadata response");
         return false;
     }
 
@@ -758,7 +758,7 @@ bool GDALDAASDataset::GetImageMetadata()
         if (!oProperties.IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannont find response/payload/payload/imageMetadata/"
+                     "Cannot find response/payload/payload/imageMetadata/"
                      "properties nor properties in GetImageMetadata response");
             return false;
         }

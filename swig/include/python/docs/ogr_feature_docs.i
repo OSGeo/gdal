@@ -1023,7 +1023,7 @@ See :cpp:func:`OGRFeature::Validate`.
 Parameters
 -----------
 flags : int, default = :py:const:`F_VAL_ALL`
-    One ore more of :py:const:`OGR_F_VAL_NULL`,
+    One or more of :py:const:`OGR_F_VAL_NULL`,
     :py:const:`OGR_F_VAL_GEOM_TYPE`, py:const:`OGR_F_VAL_WIDTH` and
     :py:const:`OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT` combined with
     the with ``|`` operator

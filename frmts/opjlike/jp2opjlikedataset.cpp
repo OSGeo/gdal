@@ -2529,7 +2529,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     }
 
     /* ---------------------------------------------------------------- */
-    /* If the input driver is identifed as "GEORASTER" the following    */
+    /* If the input driver is identified as "GEORASTER" the following   */
     /* section will try to dump a ORACLE GeoRaster JP2 BLOB into a file */
     /* ---------------------------------------------------------------- */
 

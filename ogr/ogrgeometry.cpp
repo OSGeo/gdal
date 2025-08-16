@@ -4299,7 +4299,7 @@ OGRGeometryH OGR_G_ConvexHull(OGRGeometryH hTarget)
  * This method is the same as the C function OGR_G_ConcaveHull().
  *
  * This method is built on the GEOS >= 3.11 library
- * If OGR is built without the GEOS >= 3.11 librray, this method will always
+ * If OGR is built without the GEOS >= 3.11 library, this method will always
  * fail, issuing a CPLE_NotSupported error.
  *
  * @param dfRatio Ratio of the area of the convex hull and the concave hull.
@@ -4361,7 +4361,7 @@ OGRGeometry *OGRGeometry::ConcaveHull(double dfRatio, bool bAllowHoles) const
  * This function is the same as the C++ method OGRGeometry::ConcaveHull().
  *
  * This function is built on the GEOS >= 3.11 library
- * If OGR is built without the GEOS >= 3.11 librray, this function will always
+ * If OGR is built without the GEOS >= 3.11 library, this function will always
  * fail, issuing a CPLE_NotSupported error.
  *
  * @param hTarget The Geometry to calculate the concave hull of.

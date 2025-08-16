@@ -6347,7 +6347,7 @@ class VSIFile(BytesIO):
         elif len(output_args_set) == 1:
             return self._get_arg_value(output_args_set[0], parse_json)
         elif len(output_args) >= 2:
-            raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) insead")
+            raise RuntimeError("Cannot use 'output' method on this algorithm as it supports multiple output arguments. Use 'Outputs' (plural) instead")
         else:
             return None
 

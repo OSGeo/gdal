@@ -21,7 +21,7 @@
 #if defined(JPEG12_SUPPORTED)
 
 #if !defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
-// Including LIBJPEG_12_H preculdes libjpeg.h from being read again
+// Including LIBJPEG_12_H precludes libjpeg.h from being read again
 CPL_C_START
 #include "../jpeg/libjpeg12/jpeglib.h"
 CPL_C_END

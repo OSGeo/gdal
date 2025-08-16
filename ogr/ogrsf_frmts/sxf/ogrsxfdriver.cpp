@@ -76,7 +76,7 @@ static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 static CPLErr OGRSXFDriverDelete(const char *pszName)
 {
-    // TODO: add more extensions if aplicable
+    // TODO: add more extensions if applicable
     static const char *const apszExtensions[] = {"szf", "rsc", "SZF", "RSC",
                                                  nullptr};
 

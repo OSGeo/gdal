@@ -37,7 +37,7 @@ class GDALDispatcherAlgorithm : public GDALAlgorithm
           m_vectorDispatcher(
               std::make_unique<VectorDispatcher>(/* standalone = */ true))
     {
-        // A "info" dispacher command is a shortcut for something like
+        // A "info" dispatcher command is a shortcut for something like
         // "raster info", "vector info". Best to expose the latter.
         SetDisplayInJSONUsage(false);
     }

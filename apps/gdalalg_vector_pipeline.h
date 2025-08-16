@@ -76,7 +76,7 @@ class GDALVectorPipelineAlgorithm final
   public:
     static constexpr const char *NAME = "pipeline";
     static constexpr const char *DESCRIPTION =
-        "rocess a vector dataset applying several steps.";
+        "Process a vector dataset applying several steps.";
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_pipeline.html";
 

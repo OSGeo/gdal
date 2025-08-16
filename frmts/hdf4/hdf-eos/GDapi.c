@@ -973,7 +973,7 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 |  OUTPUTS:                                                                   |
 |  projcode       int32               GCTP projection code                    |
 |  zonecode       int32               UTM zone code                           |
-|  spherecode     int32               GCTP spheriod code                      |
+|  spherecode     int32               GCTP spheroid code                      |
 |  projparm       float64             Projection parameters                   |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -3476,7 +3476,7 @@ GDclose(int32 fid)
 |  projcode       int32               GCTP projection code                    |
 |  zonecode       int32               UTM zone code                           |
 |  projparm       float64             Projection parameters                   |
-|  spherecode     int32               GCTP spheriod code                      |
+|  spherecode     int32               GCTP spheroid code                      |
 |  upleftpt       float64             upper left corner coordinates           |
 |  lowrightpt     float64             lower right corner coordinates          |
 |                                                                             |

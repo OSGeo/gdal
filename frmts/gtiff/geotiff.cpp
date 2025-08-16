@@ -611,7 +611,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     // This trick
     // creates a temporary in-memory file and fetches its JPEG tables so that
     // we can directly set them, before tif_jpeg.c compute them at the first
-    // strip/tile writing, which is too late, since we have already crystalized
+    // strip/tile writing, which is too late, since we have already crystallized
     // the directory. This way we avoid a directory rewriting.
     uint16_t nBands = 0;
     if (!TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nBands))

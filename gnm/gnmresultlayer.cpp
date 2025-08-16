@@ -150,7 +150,7 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
             poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
         if (iDstField >= 0)
         {
-            // TODO: by now skip fields with different types. In future shoul
+            // TODO: by now skip fields with different types. In future should
             // cast types
             OGRFieldDefn *poDstField = poDstFDefn->GetFieldDefn(iDstField);
             if (nullptr != poDstField &&

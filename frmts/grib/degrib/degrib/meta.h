@@ -522,7 +522,7 @@ typedef struct {
    double y2;
 /* following is just to track the datum. */
    uChar hdatum;              /* horizontal datum to use.  0=undefined (use
-                               * grid dataum) 1=WGS84 */
+                               * grid datum) 1=WGS84 */
 } gdsType;
 
 typedef struct {

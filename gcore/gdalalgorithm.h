@@ -867,7 +867,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /** Declare that the argument is hidden. Default is no.
-     * This is equivalen to calling SetHiddenForCLI() and SetHiddenForAPI()
+     * This is equivalent to calling SetHiddenForCLI() and SetHiddenForAPI()
      */
     GDALAlgorithmArgDecl &SetHidden()
     {
