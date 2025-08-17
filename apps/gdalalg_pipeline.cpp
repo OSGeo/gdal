@@ -29,6 +29,7 @@
 #include "gdalalg_raster_footprint.h"
 #include "gdalalg_raster_polygonize.h"
 #include "gdalalg_raster_info.h"
+#include "gdalalg_raster_tile.h"
 #include "gdalalg_vector_grid.h"
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_rasterize.h"
@@ -213,7 +214,8 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (auto &arg : readAlg->GetArgs())
         {
             auto stepArg = GetArg(arg->GetName());
-            if (stepArg && stepArg->IsExplicitlySet())
+            if (stepArg && stepArg->IsExplicitlySet() &&
+                stepArg->GetType() == arg->GetType())
             {
                 arg->SetSkipIfAlreadySet(true);
                 arg->SetFrom(*stepArg);
@@ -238,7 +240,8 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         for (auto &arg : writeAlg->GetArgs())
         {
             auto stepArg = GetArg(arg->GetName());
-            if (stepArg && stepArg->IsExplicitlySet())
+            if (stepArg && stepArg->IsExplicitlySet() &&
+                stepArg->GetType() == arg->GetType())
             {
                 arg->SetSkipIfAlreadySet(true);
                 arg->SetFrom(*stepArg);
@@ -630,37 +633,20 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
         return false;
     }
 
-    std::vector<GDALPipelineStepAlgorithm *> stepAlgs;
-    for (const auto &step : steps)
-        stepAlgs.push_back(step.alg.get());
-    if (!CheckFirstStep(stepAlgs))
-        return false;  // CheckFirstStep emits an error
-
-    if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME &&
-        steps.back().alg->GetName() != GDALRasterInfoAlgorithm::NAME)
+    if (!steps.back().alg->CanBeLastStep())
     {
         if (helpRequested)
         {
             steps.back().alg->ParseCommandLineArguments(steps.back().args);
             return false;
         }
-        ReportError(
-            CE_Failure, CPLE_AppDefined, "Last step should be '%s' or '%s'",
-            GDALRasterWriteAlgorithm::NAME, GDALRasterInfoAlgorithm::NAME);
-        return false;
     }
-    for (size_t i = 0; i < steps.size() - 1; ++i)
-    {
-        if (steps[i].alg->GetName() == GDALRasterWriteAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALRasterInfoAlgorithm::NAME)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s' or '%s'",
-                        GDALRasterWriteAlgorithm::NAME,
-                        GDALRasterInfoAlgorithm::NAME);
-            return false;
-        }
-    }
+
+    std::vector<GDALPipelineStepAlgorithm *> stepAlgs;
+    for (const auto &step : steps)
+        stepAlgs.push_back(step.alg.get());
+    if (!CheckFirstAndLastStep(stepAlgs))
+        return false;  // CheckFirstAndLastStep emits an error
 
     // Propagate input parameters set at the pipeline level to the
     // "read" step
@@ -671,7 +657,8 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
             if (!arg->IsHidden())
             {
                 auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
+                    pipelineArg->GetType() == arg->GetType())
                 {
                     arg->SetSkipIfAlreadySet(true);
                     arg->SetFrom(*pipelineArg);
@@ -689,7 +676,8 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
             if (!arg->IsHidden())
             {
                 auto pipelineArg = GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet())
+                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
+                    pipelineArg->GetType() == arg->GetType())
                 {
                     arg->SetSkipIfAlreadySet(true);
                     arg->SetFrom(*pipelineArg);
@@ -857,9 +845,10 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     if (shortUsage)
         return ret;
 
-    ret += "\n<PIPELINE> is of the form: read|calc|concat|mosaic|stack "
-           "[READ-OPTIONS] "
-           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
+    ret +=
+        "\n<PIPELINE> is of the form: read|calc|concat|mosaic|stack "
+        "[READ-OPTIONS] "
+        "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write!info!tile [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
     {
@@ -910,8 +899,7 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->IsHidden() &&
-            !STARTS_WITH(name.c_str(), GDALRasterWriteAlgorithm::NAME))
+        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({CPLString(alg->GetName())
@@ -922,8 +910,9 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     }
     for (const std::string &name :
          {std::string(GDALRasterInfoAlgorithm::NAME) + RASTER_SUFFIX,
-          std::string(GDALRasterWriteAlgorithm::NAME) + RASTER_SUFFIX,
           std::string(GDALVectorInfoAlgorithm::NAME) + VECTOR_SUFFIX,
+          std::string(GDALRasterTileAlgorithm::NAME),
+          std::string(GDALRasterWriteAlgorithm::NAME) + RASTER_SUFFIX,
           std::string(GDALVectorWriteAlgorithm::NAME) + VECTOR_SUFFIX})
     {
         ret += '\n';

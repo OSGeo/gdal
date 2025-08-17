@@ -347,6 +347,13 @@ constexpr const char *GDAL_ARG_NAME_APPEND = "append";
 /** Name of the argument for read-only. */
 constexpr const char *GDAL_ARG_NAME_READ_ONLY = "read-only";
 
+/** Name of the argument for number of threads (string). */
+constexpr const char *GDAL_ARG_NAME_NUM_THREADS = "num-threads";
+
+/** Name of the argument for number of threads (integer). */
+constexpr const char *GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN =
+    "num-threads-int-hidden";
+
 /** Driver must expose GDAL_DCAP_RASTER or GDAL_DCAP_MULTIDIM_RASTER.
  * This is a potential value of GetMetadataItem(GAAMDI_REQUIRED_CAPABILITIES)
  */
@@ -466,6 +473,12 @@ class CPL_DLL GDALArgDatasetValue final
      */
     void SetFrom(const GDALArgDatasetValue &other);
 
+    /** Set that the dataset has been opened by the algorithm */
+    void SetDatasetOpenedByAlgorithm()
+    {
+        m_openedByAlgorithm = true;
+    }
+
     /** Whether the dataset has been opened by the algorithm */
     bool HasDatasetBeenOpenedByAlgorithm() const
     {
@@ -480,12 +493,6 @@ class CPL_DLL GDALArgDatasetValue final
     {
         CPLAssert(!m_ownerArg);
         m_ownerArg = arg;
-    }
-
-    /** Set that the dataset has been opened by the algorithm */
-    void SetDatasetOpenedByAlgorithm()
-    {
-        m_openedByAlgorithm = true;
     }
 
   private:
@@ -1892,7 +1899,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * May return false if the argument is not explicitly set or if a dataset
      * is passed by value.
      */
-    bool Serialize(std::string &serializedArg) const;
+    bool Serialize(std::string &serializedArg, bool absolutePath = false) const;
 
     //! @cond Doxygen_Suppress
     void NotifyValueSet()
@@ -2709,8 +2716,10 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_calledFromCommandLine;
     }
 
-    /** Save command line in a .gdalg.json file. */
-    static bool SaveGDALG(const std::string &filename,
+    /** Save command line in a .gdalg.json file.
+     * If filename is empty, outString will contain the serialized JSON content.
+     */
+    static bool SaveGDALG(const std::string &filename, std::string &outString,
                           const std::string &commandLine);
 
     //! @cond Doxygen_Suppress

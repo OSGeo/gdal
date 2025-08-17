@@ -253,10 +253,7 @@ def test_gdalalg_pipeline_help_doc(gdal_path):
     out = gdaltest.runexternal(f"{gdal_path} pipeline --help-doc=main")
 
     assert "Usage: gdal pipeline [OPTIONS] <PIPELINE>" in out
-    assert (
-        "<PIPELINE> is of the form: read|calc|concat|mosaic|stack [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
-        in out
-    )
+    assert "<PIPELINE> is of the form:" in out
 
     out = gdaltest.runexternal(f"{gdal_path} pipeline --help-doc=edit-raster")
 

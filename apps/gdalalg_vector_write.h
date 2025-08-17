@@ -31,6 +31,11 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
 
     GDALVectorWriteAlgorithm();
 
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
+
     bool IsNativelyStreamingCompatible() const override
     {
         return false;

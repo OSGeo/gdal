@@ -33,6 +33,11 @@ class GDALRasterInfoAlgorithm /* non final */
     explicit GDALRasterInfoAlgorithm(bool standaloneStep = false,
                                      bool openForMixedRasterVector = false);
 
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
+
     GDALDataset *GetDatasetRef()
     {
         return m_inputDataset.empty() ? nullptr

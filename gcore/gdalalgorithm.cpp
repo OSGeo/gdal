@@ -1042,7 +1042,8 @@ bool GDALAlgorithmArg::RunValidationActions()
 /*                    GDALAlgorithmArg::Serialize()                     */
 /************************************************************************/
 
-bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
+bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
+                                 bool absolutePath) const
 {
     serializedArg.clear();
 
@@ -1091,6 +1092,21 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
         }
     };
 
+    const auto MakeAbsolutePath = [](const std::string &filename)
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(filename.c_str(), &sStat) != 0 ||
+            !CPLIsFilenameRelative(filename.c_str()))
+            return filename;
+        char *pszCWD = CPLGetCurrentDir();
+        if (!pszCWD)
+            return filename;
+        const auto absPath =
+            CPLFormFilenameSafe(pszCWD, filename.c_str(), nullptr);
+        CPLFree(pszCWD);
+        return absPath;
+    };
+
     ret += ' ';
     switch (GetType())
     {
@@ -1120,7 +1136,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
             {
                 return false;
             }
-            AppendString(str);
+            AppendString(absolutePath ? MakeAbsolutePath(str) : str);
             break;
         }
         case GAAT_STRING_LIST:
@@ -1169,7 +1185,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg) const
                 {
                     return false;
                 }
-                AppendString(str);
+                AppendString(absolutePath ? MakeAbsolutePath(str) : str);
             }
             break;
         }
@@ -1850,17 +1866,24 @@ bool GDALAlgorithm::ParseArgument(
 
         case GAAT_DATASET_LIST:
         {
-            const CPLStringList aosTokens(
-                CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS));
             if (!cpl::contains(inConstructionValues, arg))
             {
                 inConstructionValues[arg] = std::vector<GDALArgDatasetValue>();
             }
             auto &valueVector = std::get<std::vector<GDALArgDatasetValue>>(
                 inConstructionValues[arg]);
-            for (const char *v : aosTokens)
+            if (!value.empty() && value[0] == '{' && value.back() == '}')
             {
-                valueVector.push_back(GDALArgDatasetValue(v));
+                valueVector.push_back(GDALArgDatasetValue(value));
+            }
+            else
+            {
+                const CPLStringList aosTokens(
+                    CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS));
+                for (const char *v : aosTokens)
+                {
+                    valueVector.push_back(GDALArgDatasetValue(v));
+                }
             }
             break;
         }
@@ -4672,7 +4695,8 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
 
         osCommandLine += " --output-format stream --output streamed_dataset";
 
-        return SaveGDALG(filename, osCommandLine)
+        std::string outStringUnused;
+        return SaveGDALG(filename, outStringUnused, osCommandLine)
                    ? ProcessGDALGOutputRet::GDALG_OK
                    : ProcessGDALGOutputRet::GDALG_ERROR;
     }
@@ -4685,6 +4709,7 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
 /************************************************************************/
 
 /* static */ bool GDALAlgorithm::SaveGDALG(const std::string &filename,
+                                           std::string &outString,
                                            const std::string &commandLine)
 {
     CPLJSONDocument oDoc;
@@ -4692,7 +4717,11 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
     oDoc.GetRoot().Add("command_line", commandLine);
     oDoc.GetRoot().Add("gdal_version", GDALVersionInfo("VERSION_NUM"));
 
-    return oDoc.Save(filename);
+    if (!filename.empty())
+        return oDoc.Save(filename);
+
+    outString = oDoc.GetRoot().Format(CPLJSONObject::PrettyFormat::Pretty);
+    return true;
 }
 
 /************************************************************************/
@@ -4939,9 +4968,14 @@ GDALAlgorithm::AddNumThreadsArg(int *pValue, std::string *pStrValue,
                                 const char *helpMessage)
 {
     auto &arg =
-        AddArg("num-threads", 'j',
+        AddArg(GDAL_ARG_NAME_NUM_THREADS, 'j',
                MsgOrDefault(helpMessage, _("Number of jobs (or ALL_CPUS)")),
                pStrValue);
+
+    AddArg(GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN, 0,
+           _("Number of jobs (read-only, hidden argument)"), pValue)
+        .SetHidden();
+
     auto lambda = [this, &arg, pValue, pStrValue]
     {
 #ifdef DEBUG
