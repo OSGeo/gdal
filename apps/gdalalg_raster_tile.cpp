@@ -703,8 +703,8 @@ static bool GenerateTile(
             CPLGetConfigOption("GDAL_RASTER_TILE_USE_PNG_OPTIM", "YES")))
     {
         // This is an optimized code path completely shortcircuiting libpng
-        // We manually generate the PNG file using the Average filter and
-        // ZLIB compressing the whole buffer, hopefully with libdeflate.
+        // We manually generate the PNG file using the Average or PAETH filter
+        // and ZLIB compressing the whole buffer, hopefully with libdeflate.
 
         const int W = tileMatrix.mTileWidth;
         const int H = tileMatrix.mTileHeight;
