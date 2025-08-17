@@ -70,7 +70,7 @@ def test_hdf5_2():
 
 def test_hdf5_3():
 
-    ds = gdal.Open('HDF5:"data/hdf5/u8be.h5"://TestArray')
+    ds = gdal.Open("data/hdf5/u8be.h5")
 
     band = ds.GetRasterBand(1)
     cs = band.Checksum()
