@@ -27,7 +27,8 @@ Synopsis
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
 The first step must be ``read`` or ``concat``, and the last one ``info`` or ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read``, ``concat`` and ``write``,
+own positional or non-positional arguments.
+Apart from ``read``, ``concat``, ``info`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
