@@ -693,11 +693,16 @@ static bool GenerateTile(
                                           ? osFilename
                                           : osFilename + ".tmp." + pszExtension;
 
+    const int W = tileMatrix.mTileWidth;
+    const int H = tileMatrix.mTileHeight;
+    constexpr int EXTRA_BYTE_PER_ROW = 1;  // for filter type
+    constexpr int EXTRA_ROWS = 2;          // for paethBuffer and paethBufferTmp
     if (!bAuxXML && EQUAL(pszExtension, "png") &&
-        eWorkingDataType == GDT_Byte &&
-        tileMatrix.mTileWidth <=
-            (INT_MAX - INT_MAX / 10) / nBands / tileMatrix.mTileHeight &&
-        poColorTable == nullptr && pdfDstNoData == nullptr &&
+        eWorkingDataType == GDT_Byte && poColorTable == nullptr &&
+        pdfDstNoData == nullptr && W <= INT_MAX / nBands &&
+        nBands * W <= INT_MAX - EXTRA_BYTE_PER_ROW &&
+        H <= INT_MAX - EXTRA_ROWS &&
+        EXTRA_BYTE_PER_ROW + nBands * W <= INT_MAX / (H + EXTRA_ROWS) &&
         CSLCount(creationOptions) == 0 &&
         CPLTestBool(
             CPLGetConfigOption("GDAL_RASTER_TILE_USE_PNG_OPTIM", "YES")))
@@ -706,9 +711,7 @@ static bool GenerateTile(
         // We manually generate the PNG file using the Average or PAETH filter
         // and ZLIB compressing the whole buffer, hopefully with libdeflate.
 
-        const int W = tileMatrix.mTileWidth;
-        const int H = tileMatrix.mTileHeight;
-        const int nDstBytesPerRow = 1 + nBands * W;
+        const int nDstBytesPerRow = EXTRA_BYTE_PER_ROW + nBands * W;
         const int nBPB = static_cast<int>(nBytesPerBand);
 
         bool bBlank = false;
@@ -728,7 +731,16 @@ static bool GenerateTile(
         if (bBlank)
             tmpBuffer.clear();
         const int tmpBufferSize = cpl::fits_on<int>(nDstBytesPerRow * H);
-        tmpBuffer.resize(tmpBufferSize + 2 * nDstBytesPerRow);
+        try
+        {
+            tmpBuffer.resize(tmpBufferSize + EXTRA_ROWS * nDstBytesPerRow);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating temporary buffer");
+            return false;
+        }
         GByte *const paethBuffer = tmpBuffer.data() + tmpBufferSize;
 #ifdef USE_PAETH_SSE2
         GByte *const paethBufferTmp =
