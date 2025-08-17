@@ -324,6 +324,16 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     }
 
 
+def test_gdalg_generate_error_due_to_mem_dataset(tmp_vsimem):
+    out_filename = str(tmp_vsimem / "test.gdalg.json")
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with pytest.raises(Exception, match="Cannot serialize argument input"):
+        gdal.Run(
+            "raster pipeline", input=src_ds, pipeline=f"read ! write {out_filename}"
+        )
+
+
 def test_gdalg_generate_from_raster_mosaic(tmp_vsimem):
     mosaic = gdal.GetGlobalAlgorithmRegistry()["raster"]["mosaic"]
     out_filename = str(tmp_vsimem / "test.gdalg.json")
