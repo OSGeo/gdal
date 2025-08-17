@@ -23,7 +23,7 @@ Description
 :program:`gdal vector info` lists various information about a GDAL supported
 vector dataset.
 
-Starting with GDAL 3.12, :program:`gdal vectors info` can be used as the last
+Starting with GDAL 3.12, :program:`gdal vector info` can be used as the last
 step of a pipeline.
 
 The following options are available:
