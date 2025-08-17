@@ -733,6 +733,7 @@ static bool GenerateTile(
         const int tmpBufferSize = cpl::fits_on<int>(nDstBytesPerRow * H);
         try
         {
+            // cppcheck-suppress integerOverflowCond
             tmpBuffer.resize(tmpBufferSize + EXTRA_ROWS * nDstBytesPerRow);
         }
         catch (const std::exception &)
