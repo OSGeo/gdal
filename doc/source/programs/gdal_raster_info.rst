@@ -45,6 +45,9 @@ The following items will be reported (when known):
 -  Band unit type (i.e.. "meters" or "feet" for elevation bands).
 -  Band pseudo-color tables.
 
+Starting with GDAL 3.12, :program:`gdal raster info` can be used as the last
+step of a pipeline.
+
 The following options are available:
 
 Standard options
