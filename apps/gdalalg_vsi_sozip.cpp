@@ -106,11 +106,7 @@ class GDALVSISOZIPCreateBaseAlgorithm /* non final */ : public GDALAlgorithm
                 .SetMinCharCount(1);
 
         AddOutputStringArg(&m_output);
-        AddArg("stdout", 0,
-               _("Directly output on stdout. If enabled, "
-                 "output-string will be empty"),
-               &m_stdout)
-            .SetHiddenForCLI();
+        AddStdoutArg(&m_stdout);
     }
 
   private:
@@ -496,11 +492,7 @@ class GDALVSISOZIPValidateAlgorithm final : public GDALAlgorithm
         AddOutputStringArg(&m_output);
         AddArg("verbose", 'v', _("Turn on verbose mode"), &m_verbose)
             .SetHiddenForAPI();
-        AddArg("stdout", 0,
-               _("Directly output on stdout. If enabled, "
-                 "output-string will be empty"),
-               &m_stdout)
-            .SetHiddenForCLI();
+        AddStdoutArg(&m_stdout);
     }
 
   private:

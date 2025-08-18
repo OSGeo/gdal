@@ -4212,13 +4212,28 @@ GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddOutputStringArg(std::string *pValue, const char *helpMessage)
 {
     return AddArg(
-               "output-string", 0,
+               GDAL_ARG_NAME_OUTPUT_STRING, 0,
                MsgOrDefault(helpMessage,
                             _("Output string, in which the result is placed")),
                pValue)
         .SetHiddenForCLI()
         .SetIsInput(false)
         .SetIsOutput(true);
+}
+
+/************************************************************************/
+/*                     GDALAlgorithm::AddStdoutArg()                    */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddStdoutArg(bool *pValue, const char *helpMessage)
+{
+    return AddArg(GDAL_ARG_NAME_STDOUT, 0,
+                  MsgOrDefault(helpMessage,
+                               _("Directly output on stdout. If enabled, "
+                                 "output-string will be empty")),
+                  pValue)
+        .SetHidden();
 }
 
 /************************************************************************/

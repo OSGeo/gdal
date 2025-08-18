@@ -83,11 +83,7 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
         .SetMinValueIncluded(1);
 
     AddOutputStringArg(&m_output);
-    AddArg("stdout", 0,
-           _("Directly output on stdout (format=text mode only). If enabled, "
-             "output-string will be empty"),
-           &m_stdout)
-        .SetHiddenForCLI();
+    AddStdoutArg(&m_stdout);
 }
 
 /************************************************************************/

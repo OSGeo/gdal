@@ -323,6 +323,12 @@ constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 
+/** Name of the argument for an output string. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_STRING = "output-string";
+
+/** Name of the boolean argument to request outtputing directly on stdout. */
+constexpr const char *GDAL_ARG_NAME_STDOUT = "stdout";
+
 /** Name of the argument for an output format. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
 
@@ -2884,6 +2890,10 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add (non-CLI) output-string argument. */
     GDALInConstructionAlgorithmArg &
     AddOutputStringArg(std::string *pValue, const char *helpMessage = nullptr);
+
+    /** Add (hidden) stdout argument. */
+    GDALInConstructionAlgorithmArg &
+    AddStdoutArg(bool *pValue, const char *helpMessage = nullptr);
 
     /** Add output format argument. */
     GDALInConstructionAlgorithmArg &

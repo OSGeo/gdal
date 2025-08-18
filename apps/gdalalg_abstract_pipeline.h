@@ -681,7 +681,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             stepCtxt.m_poNextUsableStep = m_steps[i + 1].get();
         }
         if (i + 1 == m_steps.size() && StepAlgorithm::m_stdout &&
-            step->GetArg("stdout") != nullptr)
+            step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr)
         {
             step->m_stdout = true;
         }
@@ -690,9 +690,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             return false;
         }
         poCurDS = step->m_outputDataset.GetDatasetRef();
-        if (!poCurDS &&
-            !(i + 1 == m_steps.size() &&
-              (!step->m_output.empty() || step->GetArg("stdout") != nullptr)))
+        if (!poCurDS && !(i + 1 == m_steps.size() &&
+                          (!step->m_output.empty() ||
+                           step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr)))
         {
             StepAlgorithm::ReportError(
                 CE_Failure, CPLE_AppDefined,
@@ -708,12 +708,13 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     }
 
     if (ctxt.m_pfnProgress &&
-        m_steps.back()->GetArg("output-string") == nullptr)
+        m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING) == nullptr)
         ctxt.m_pfnProgress(1.0, "", ctxt.m_pProgressData);
 
     if (!m_steps.back()->m_output.empty())
     {
-        auto outputStringArg = StepAlgorithm::GetArg("output-string");
+        auto outputStringArg =
+            StepAlgorithm::GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
         if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
             outputStringArg->Set(m_steps.back()->m_output);
     }

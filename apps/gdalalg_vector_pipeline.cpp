@@ -105,11 +105,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
                         /* shortNameOutputLayerAllowed=*/false);
 
     AddOutputStringArg(&m_output).SetHiddenForCLI();
-    AddArg("stdout", 0,
-           _("Directly output on stdout (format=text mode only). If enabled, "
-             "output-string will be empty"),
-           &m_stdout)
-        .SetHidden();
+    AddStdoutArg(&m_stdout);
 
     RegisterAlgorithms(m_stepRegistry, false);
 }

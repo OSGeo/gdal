@@ -231,7 +231,8 @@ MAIN_START(nArgc, papszArgv)
     }
 
     {
-        const auto stdoutArg = alg->GetActualAlgorithm().GetArg("stdout");
+        const auto stdoutArg =
+            alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_STDOUT);
         if (stdoutArg && stdoutArg->GetType() == GAAT_BOOLEAN)
             stdoutArg->Set(true);
     }
@@ -246,7 +247,7 @@ MAIN_START(nArgc, papszArgv)
     if (alg->Run(pfnProgress, pProgressData) && alg->Finalize())
     {
         const auto outputArg =
-            alg->GetActualAlgorithm().GetArg("output-string");
+            alg->GetActualAlgorithm().GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
         if (outputArg && outputArg->GetType() == GAAT_STRING &&
             outputArg->IsOutput())
         {
