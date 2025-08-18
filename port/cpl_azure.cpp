@@ -41,6 +41,8 @@
 
 #ifdef HAVE_CURL
 
+constexpr const char *X_MS_VERSION = "2019-12-12";
+
 /************************************************************************/
 /*                      RemoveTrailingSlash()                           */
 /************************************************************************/
@@ -111,7 +113,7 @@ static struct curl_slist *GetAzureBlobHeaders(
         return psHeaders;
     }
 
-    std::string osMsVersion("2019-12-12");
+    std::string osMsVersion(X_MS_VERSION);
     std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
         oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
@@ -914,12 +916,16 @@ VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
 {
     if (m_bFromManagedIdentities || !m_osAccessToken.empty())
     {
+        psHeaders = curl_slist_append(
+            psHeaders,
+            std::string("x-ms-version: ").append(X_MS_VERSION).c_str());
+
         std::string osAccessToken;
         if (m_bFromManagedIdentities)
         {
             if (!GetConfigurationFromManagedIdentities(m_osPathForOption,
                                                        osAccessToken))
-                return nullptr;
+                return psHeaders;
         }
         else
         {
@@ -931,7 +937,6 @@ VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
         std::string osAuthorization = "Authorization: Bearer ";
         osAuthorization += osAccessToken;
         psHeaders = curl_slist_append(psHeaders, osAuthorization.c_str());
-        psHeaders = curl_slist_append(psHeaders, "x-ms-version: 2019-12-12");
         return psHeaders;
     }
 
