@@ -171,7 +171,7 @@ static struct curl_slist *GetGSHeaders(const std::string &osPathForOption,
     if (osSecretAccessKey.empty())
     {
         // GS_NO_SIGN_REQUEST=YES case
-        return nullptr;
+        return psHeaders;
     }
 
     std::string osDate = VSIGetPathSpecificOption(osPathForOption.c_str(),
