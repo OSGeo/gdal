@@ -37,11 +37,7 @@
 #define _(x) (x)
 #endif
 
-constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
-
 constexpr const char *GDAL_ARG_NAME_OUTPUT_DATA_TYPE = "output-data-type";
-
-constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
 constexpr const char *GDAL_ARG_NAME_BAND = "band";
 
@@ -1984,7 +1980,13 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             name = (equalPos != std::string::npos) ? strArg.substr(0, equalPos)
                                                    : strArg;
             const std::string nameWithoutDash = name.substr(2);
-            const auto iterArg = m_mapLongNameToArg.find(nameWithoutDash);
+            auto iterArg = m_mapLongNameToArg.find(nameWithoutDash);
+            if (m_arbitraryLongNameArgsAllowed &&
+                iterArg == m_mapLongNameToArg.end())
+            {
+                GetArg(nameWithoutDash);
+                iterArg = m_mapLongNameToArg.find(nameWithoutDash);
+            }
             if (iterArg == m_mapLongNameToArg.end())
             {
                 const std::string bestCandidate =
@@ -2746,6 +2748,8 @@ bool GDALAlgorithm::ValidateArguments()
     if (m_specialActionRequested)
         return true;
 
+    m_arbitraryLongNameArgsAllowed = false;
+
     // If only --output=format=MEM/stream is specified and not --output,
     // then set empty name for --output.
     auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
@@ -3028,16 +3032,28 @@ GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
 }
 
 /************************************************************************/
+/*            GDALAlgorithm::IsKnownOutputRelatedBooleanArgName()       */
+/************************************************************************/
+
+/* static */
+bool GDALAlgorithm::IsKnownOutputRelatedBooleanArgName(std::string_view osName)
+{
+    return osName == GDAL_ARG_NAME_APPEND || osName == GDAL_ARG_NAME_UPDATE ||
+           osName == GDAL_ARG_NAME_OVERWRITE ||
+           osName == GDAL_ARG_NAME_OVERWRITE_LAYER;
+}
+
+/************************************************************************/
 /*                      GDALAlgorithm::GetArg()                         */
 /************************************************************************/
 
-const GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
-                                              bool suggestionAllowed) const
+GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
+                                        bool suggestionAllowed, bool isConst)
 {
     const auto nPos = osName.find_first_not_of('-');
     if (nPos == std::string::npos)
         return nullptr;
-    const std::string osKey = osName.substr(nPos);
+    std::string osKey = osName.substr(nPos);
     {
         const auto oIter = m_mapLongNameToArg.find(osKey);
         if (oIter != m_mapLongNameToArg.end())
@@ -3049,10 +3065,47 @@ const GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
             return oIter->second;
     }
 
+    if (!isConst && m_arbitraryLongNameArgsAllowed)
+    {
+        const auto nDotPos = osKey.find('.');
+        const auto osKeyEnd =
+            nDotPos == std::string::npos ? osKey : osKey.substr(nDotPos + 1);
+        if (IsKnownOutputRelatedBooleanArgName(osKeyEnd))
+        {
+            m_arbitraryLongNameArgsValuesBool.emplace_back(
+                std::make_unique<bool>());
+            AddArg(osKey, 0, std::string("User-provided argument ") + osKey,
+                   m_arbitraryLongNameArgsValuesBool.back().get())
+                .SetUserProvided();
+        }
+        else
+        {
+            const std::string osKeyInit = osKey;
+            if (osKey == "oo")
+                osKey = GDAL_ARG_NAME_OPEN_OPTION;
+            else if (osKey == "co")
+                osKey = GDAL_ARG_NAME_CREATION_OPTION;
+            else if (osKey == "of")
+                osKey = GDAL_ARG_NAME_OUTPUT_FORMAT;
+            else if (osKey == "if")
+                osKey = GDAL_ARG_NAME_INPUT_FORMAT;
+            m_arbitraryLongNameArgsValuesStr.emplace_back(
+                std::make_unique<std::string>());
+            auto &arg =
+                AddArg(osKey, 0, std::string("User-provided argument ") + osKey,
+                       m_arbitraryLongNameArgsValuesStr.back().get())
+                    .SetUserProvided();
+            if (osKey != osKeyInit)
+                arg.AddAlias(osKeyInit);
+        }
+        const auto oIter = m_mapLongNameToArg.find(osKey);
+        CPLAssert(oIter != m_mapLongNameToArg.end());
+        return oIter->second;
+    }
+
     if (suggestionAllowed)
     {
         const std::string bestCandidate = GetSuggestionForArgumentName(osName);
-        ;
         if (!bestCandidate.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -4732,7 +4785,7 @@ GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
                                      const char *helpMessage)
 {
-    auto &arg = AddArg("creation-option", 0,
+    auto &arg = AddArg(GDAL_ARG_NAME_CREATION_OPTION, 0,
                        MsgOrDefault(helpMessage, _("Creation option")), pValue)
                     .AddAlias("co")
                     .SetMetaVar("<KEY>=<VALUE>")
@@ -5464,6 +5517,10 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         if (usageOptions.maxOptLen)
             maxOptLen = usageOptions.maxOptLen;
 
+        const std::string userProvidedOpt = "--<user-provided-option>=<value>";
+        if (m_arbitraryLongNameArgsAllowed)
+            maxOptLen = std::max(maxOptLen, userProvidedOpt.size());
+
         const auto OutputArg =
             [this, maxOptLen, &osRet](const GDALAlgorithmArg *arg,
                                       const std::string &opt)
@@ -5664,7 +5721,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                     }
                 }
             }
-            if (hasAdvanced)
+            if (hasAdvanced || m_arbitraryLongNameArgsAllowed)
                 categories.insert(categories.begin(), GAAC_ADVANCED);
             if (hasBase)
                 categories.insert(categories.begin(), GAAC_BASE);
@@ -5686,6 +5743,16 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 {
                     if (!arg->IsPositional() && arg->GetCategory() == category)
                         OutputArg(arg, opt);
+                }
+                if (m_arbitraryLongNameArgsAllowed && category == GAAC_ADVANCED)
+                {
+                    osRet += "  ";
+                    osRet += userProvidedOpt;
+                    osRet += "  ";
+                    if (userProvidedOpt.size() < maxOptLen)
+                        osRet.append(maxOptLen - userProvidedOpt.size(), ' ');
+                    osRet += "Argument provided by user";
+                    osRet += '\n';
                 }
             }
         }
@@ -5774,6 +5841,11 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         }
     }
     oRoot.Add("sub_algorithms", jSubAlgorithms);
+
+    if (m_arbitraryLongNameArgsAllowed)
+    {
+        oRoot.Add("user_provided_arguments_allowed", true);
+    }
 
     const auto ProcessArg = [](const GDALAlgorithmArg *arg)
     {
@@ -6549,7 +6621,35 @@ GDALAlgorithmArgH GDALAlgorithmGetArg(GDALAlgorithmH hAlg,
 {
     VALIDATE_POINTER1(hAlg, __func__, nullptr);
     VALIDATE_POINTER1(pszArgName, __func__, nullptr);
-    auto arg = hAlg->ptr->GetArg(pszArgName, /* suggestionAllowed = */ true);
+    auto arg = hAlg->ptr->GetArg(pszArgName, /* suggestionAllowed = */ true,
+                                 /* isConst = */ true);
+    if (!arg)
+        return nullptr;
+    return std::make_unique<GDALAlgorithmArgHS>(arg).release();
+}
+
+/************************************************************************/
+/*                     GDALAlgorithmGetArgNonConst()                    */
+/************************************************************************/
+
+/** Return an argument from its name, possibly allowing creation of user-provided
+ * argument if the algorithm allow it.
+ *
+ * The lifetime of the returned object does not exceed the one of hAlg.
+ *
+ * @param hAlg Handle to an algorithm. Must NOT be null.
+ * @param pszArgName Argument name. Must NOT be null.
+ * @return an argument that must be released with GDALAlgorithmArgRelease(),
+ * or nullptr in case of error
+ * @since 3.12
+ */
+GDALAlgorithmArgH GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg,
+                                              const char *pszArgName)
+{
+    VALIDATE_POINTER1(hAlg, __func__, nullptr);
+    VALIDATE_POINTER1(pszArgName, __func__, nullptr);
+    auto arg = hAlg->ptr->GetArg(pszArgName, /* suggestionAllowed = */ true,
+                                 /* isConst = */ false);
     if (!arg)
         return nullptr;
     return std::make_unique<GDALAlgorithmArgHS>(arg).release();

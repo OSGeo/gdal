@@ -118,6 +118,9 @@ char CPL_DLL **GDALAlgorithmGetArgNames(GDALAlgorithmH);
 GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArg(GDALAlgorithmH,
                                               const char *pszArgName);
 
+GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArgNonConst(GDALAlgorithmH,
+                                                      const char *pszArgName);
+
 /************************************************************************/
 /*                      GDALAlgorithmArgH API                           */
 /************************************************************************/
@@ -290,6 +293,7 @@ CPL_C_END
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -320,6 +324,12 @@ constexpr const char *GAAMDI_VRT_COMPATIBLE = "vrt_compatible";
 /** Name of the argument for an input dataset. */
 constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 
+/** Name of the argument for the input format. */
+constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
+
+/** Name of the argument for an open option. */
+constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
+
 /** Name of the argument for an output dataset. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT = "output";
 
@@ -331,6 +341,9 @@ constexpr const char *GDAL_ARG_NAME_STDOUT = "stdout";
 
 /** Name of the argument for an output format. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
+
+/** Name of the argument for a creation option. */
+constexpr const char *GDAL_ARG_NAME_CREATION_OPTION = "creation-option";
 
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";
@@ -959,6 +972,15 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Declares that this argument has been created on-the-fly from user-provided
+     * argument.
+     */
+    GDALAlgorithmArgDecl &SetUserProvided()
+    {
+        m_userProvided = true;
+        return *this;
+    }
+
     /** Return the (long) name */
     inline const std::string &GetName() const
     {
@@ -1198,6 +1220,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_autoOpenDataset;
     }
 
+    /** Returns whether the argument has been user-provided.
+     */
+    bool IsUserProvided() const
+    {
+        return m_userProvided;
+    }
+
     /** Get user-defined metadata. */
     inline const std::map<std::string, std::vector<std::string>>
     GetMetadata() const
@@ -1324,6 +1353,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_readFromFileAtSyntaxAllowed = false;
     bool m_removeSQLComments = false;
     bool m_autoOpenDataset = true;
+    bool m_userProvided = false;
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
@@ -1621,6 +1651,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline bool AutoOpenDataset() const
     {
         return m_decl.AutoOpenDataset();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::IsUserProvided() */
+    inline bool IsUserProvided() const
+    {
+        return m_decl.IsUserProvided();
     }
 
     /** Alias for GDALAlgorithmArgDecl::GetDatasetType() */
@@ -2312,6 +2348,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetIsCRSArg(bool noneAllowed = false,
                 const std::vector<std::string> &specialValues =
                     std::vector<std::string>());
+
+    /** Alias for GDALAlgorithmArgDecl::SetUserProvided() */
+    GDALInConstructionAlgorithmArg &SetUserProvided()
+    {
+        m_decl.SetUserProvided();
+        return *this;
+    }
 };
 
 /************************************************************************/
@@ -2486,9 +2529,7 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALAlgorithmArg *GetArg(const std::string &osName,
                              bool suggestionAllowed = false)
     {
-        return const_cast<GDALAlgorithmArg *>(
-            const_cast<const GDALAlgorithm *>(this)->GetArg(osName,
-                                                            suggestionAllowed));
+        return GetArg(osName, suggestionAllowed, /* isConst = */ false);
     }
 
     /** Return an argument from its long name, short name or an alias */
@@ -2506,7 +2547,11 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg *GetArg(const std::string &osName,
-                                   bool suggestionAllowed = false) const;
+                                   bool suggestionAllowed = false) const
+    {
+        return const_cast<GDALAlgorithm *>(this)->GetArg(
+            osName, suggestionAllowed, /* isConst = */ true);
+    }
 
     /** Return an argument from its long name, short name or an alias */
     const GDALAlgorithmArg &operator[](const std::string &osName) const
@@ -2787,6 +2832,12 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_subAlgRegistry.Register(info);
     }
 
+    /** Allow arbitrary user arguments using long name syntax (--something) */
+    void AllowArbitraryLongNameArgs()
+    {
+        m_arbitraryLongNameArgsAllowed = true;
+    }
+
     /** Add boolean argument. */
     GDALInConstructionAlgorithmArg &AddArg(const std::string &longName,
                                            char chShortName,
@@ -3054,6 +3105,9 @@ class CPL_DLL GDALAlgorithmRegistry
 
     //! @endcond
 
+    /** Whether this argument name is the one of a well-known boolean argument */
+    static bool IsKnownOutputRelatedBooleanArgName(std::string_view osName);
+
     /** Set whether this algorithm should be reported in JSON usage. */
     void SetDisplayInJSONUsage(bool b)
     {
@@ -3106,6 +3160,22 @@ class CPL_DLL GDALAlgorithmRegistry
     std::string m_dummyVal{};
     GDALAlgorithmArg m_dummyArg{
         GDALAlgorithmArgDecl("dummy", 0, "", GAAT_STRING), &m_dummyVal};
+
+    /** Whether arbitrary user arguments using long name syntax (--something)
+     * are allowed.
+     */
+    bool m_arbitraryLongNameArgsAllowed = false;
+
+    std::vector<std::unique_ptr<std::string>>
+        m_arbitraryLongNameArgsValuesStr{};
+    std::vector<std::unique_ptr<bool>> m_arbitraryLongNameArgsValuesBool{};
+
+    friend GDALAlgorithmArgH GDALAlgorithmGetArg(GDALAlgorithmH hAlg,
+                                                 const char *pszArgName);
+    friend GDALAlgorithmArgH
+    GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg, const char *pszArgName);
+    GDALAlgorithmArg *GetArg(const std::string &osName, bool suggestionAllowed,
+                             bool isConst);
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);
