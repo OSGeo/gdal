@@ -212,6 +212,17 @@ def test_gdalalg_pipeline_errors():
             pipeline="read ../ogr/data/poly.shp ! edit --gcp=1,2,3,4 ! write --output-format=stream streamed_dataset",
         )
 
+    with pytest.raises(
+        Exception, match="clip: Argument 'window' is mutually exclusive with 'bbox'"
+    ):
+        gdal.Run(
+            "pipeline",
+            input="../gcore/data/byte.tif",
+            output_format="MEM",
+            output="",
+            pipeline="read ! clip --bbox=1,2,3,4 --window=1,2,3,4 ! write",
+        )
+
 
 @pytest.fixture()
 def gdal_path():
