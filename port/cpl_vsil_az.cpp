@@ -742,10 +742,11 @@ int VSIAzureFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     if ((osFilename.find('/', GetFSPrefix().size()) == std::string::npos ||
          osFilename.find('/', GetFSPrefix().size()) == osFilename.size() - 1) &&
-        CPLGetConfigOption("AZURE_SAS", nullptr) != nullptr)
+        (!VSIAzureBlobHandleHelper::GetSAS(pszFilename).empty() ||
+         VSIAzureBlobHandleHelper::IsNoSignRequest(pszFilename)))
     {
         // On "/vsiaz/container", a HEAD or GET request fails to authenticate
-        // when SAS is used, so use directory listing instead.
+        // when SAS or no signing is used, so use directory listing instead.
         char **papszRet = ReadDirInternal(osFilename.c_str(), 100, nullptr);
         int nRet = papszRet ? 0 : -1;
         if (nRet == 0)

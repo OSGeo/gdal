@@ -204,23 +204,6 @@ def test_vsiaz_fake_basic():
                 print(stat_res)
             pytest.fail()
 
-    # Test that we don't emit a Authorization header in AZURE_NO_SIGN_REQUEST
-    # mode, even if we have credentials
-    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
-        handler = webserver.SequentialHandler()
-        handler.add(
-            "HEAD",
-            "/azure/blob/myaccount/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin",
-            200,
-            {"Content-Length": 1000000},
-            unexpected_headers=["Authorization"],
-        )
-        with webserver.install_http_handler(handler):
-            stat_res = gdal.VSIStatL(
-                "/vsiaz_streaming/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin"
-            )
-            assert stat_res is not None
-
 
 ###############################################################################
 # Test ReadDir() with a fake Azure Blob server
@@ -533,12 +516,122 @@ def test_vsiaz_sas_fake():
                         </Blobs>
                     </EnumerationResults>
                 """,
+            expected_headers={"x-ms-version": "2019-12-12"},
         )
 
         with webserver.install_http_handler(handler):
             assert "foo.bin" in gdal.ReadDir("/vsiaz/test")
 
         assert gdal.VSIStatL("/vsiaz/test/foo.bin").size == 456789
+
+
+###############################################################################
+# Test AZURE_NO_SIGN_REQUEST option with fake server
+
+
+def test_vsiaz_AZURE_NO_SIGN_REQUEST_fake_stat_file():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    # Test that we don't emit a Authorization header in AZURE_NO_SIGN_REQUEST
+    # mode, even if we have credentials
+    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "HEAD",
+            "/azure/blob/myaccount/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin",
+            200,
+            {"Content-Length": 1000000},
+            unexpected_headers=["Authorization"],
+        )
+        with webserver.install_http_handler(handler):
+            stat_res = gdal.VSIStatL(
+                "/vsiaz_streaming/az_fake_bucket/test_AZURE_NO_SIGN_REQUEST.bin"
+            )
+            assert stat_res is not None
+
+
+###############################################################################
+# Test AZURE_NO_SIGN_REQUEST option with fake server
+
+
+def test_vsiaz_AZURE_NO_SIGN_REQUEST_fake_readdir_bucket():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/test?comp=list&delimiter=%2F&restype=container",
+            200,
+            {"Content-type": "application/xml"},
+            """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>foo.bin</Name>
+                            <Properties>
+                              <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
+                              <Content-Length>456789</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>
+                """,
+            expected_headers={"x-ms-version": "2019-12-12"},
+            unexpected_headers=["Authorization"],
+        )
+
+        with webserver.install_http_handler(handler):
+            assert "foo.bin" in gdal.ReadDir("/vsiaz/test")
+
+        assert gdal.VSIStatL("/vsiaz/test/foo.bin").size == 456789
+
+
+###############################################################################
+# Test AZURE_NO_SIGN_REQUEST option with fake server
+
+
+def test_vsiaz_AZURE_NO_SIGN_REQUEST_fake_stat_bucket_root():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/test?comp=list&delimiter=%2F&maxresults=100&restype=container",
+            200,
+            {"Content-type": "application/xml"},
+            """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>foo.bin</Name>
+                            <Properties>
+                              <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
+                              <Content-Length>456789</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>
+                """,
+            expected_headers={"x-ms-version": "2019-12-12"},
+            unexpected_headers=["Authorization"],
+        )
+
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIStatL("/vsiaz/test").mode == 16384
 
 
 ###############################################################################

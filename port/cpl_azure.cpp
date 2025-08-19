@@ -40,6 +40,8 @@
 
 #ifdef HAVE_CURL
 
+constexpr const char *X_MS_VERSION = "2019-12-12";
+
 /************************************************************************/
 /*                      RemoveTrailingSlash()                           */
 /************************************************************************/
@@ -103,15 +105,26 @@ static struct curl_slist *GetAzureBlobHeaders(
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
+    const std::string osMsVersion(X_MS_VERSION);
+
+    const auto AddHeaders = [&osDate, &osMsVersion, bIncludeMSVersion]()
+    {
+        struct curl_slist *l_psHeaders = curl_slist_append(
+            nullptr, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        if (bIncludeMSVersion)
+        {
+            l_psHeaders =
+                curl_slist_append(l_psHeaders, CPLSPrintf("x-ms-version: %s",
+                                                          osMsVersion.c_str()));
+        }
+        return l_psHeaders;
+    };
+
     if (osStorageKeyB64.empty())
     {
-        struct curl_slist *headers = nullptr;
-        headers = curl_slist_append(
-            headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
-        return headers;
+        return AddHeaders();
     }
 
-    std::string osMsVersion("2019-12-12");
     std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
         oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
@@ -174,17 +187,10 @@ static struct curl_slist *GetAzureBlobHeaders(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
-    struct curl_slist *headers = nullptr;
-    headers =
-        curl_slist_append(headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
-    if (bIncludeMSVersion)
-    {
-        headers = curl_slist_append(
-            headers, CPLSPrintf("x-ms-version: %s", osMsVersion.c_str()));
-    }
-    headers = curl_slist_append(
-        headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
-    return headers;
+    struct curl_slist *psHeaders = AddHeaders();
+    psHeaders = curl_slist_append(
+        psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    return psHeaders;
 }
 
 /************************************************************************/
@@ -690,6 +696,30 @@ static bool GetConfigurationFromCLIConfigFile(
 }
 
 /************************************************************************/
+/*                              GetSAS()                                */
+/************************************************************************/
+
+/* static */
+std::string VSIAzureBlobHandleHelper::GetSAS(const char *pszFilename)
+{
+    return VSIGetPathSpecificOption(
+        pszFilename, "AZURE_STORAGE_SAS_TOKEN",
+        CPLGetConfigOption("AZURE_SAS",
+                           ""));  // AZURE_SAS for GDAL < 3.5
+}
+
+/************************************************************************/
+/*                          IsNoSignRequest()                           */
+/************************************************************************/
+
+/* static */
+bool VSIAzureBlobHandleHelper::IsNoSignRequest(const char *pszFilename)
+{
+    return CPLTestBool(
+        VSIGetPathSpecificOption(pszFilename, "AZURE_NO_SIGN_REQUEST", "NO"));
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
@@ -745,15 +775,10 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                                          "AZURE_STORAGE_ACCESS_KEY", ""));
             if (osStorageKey.empty())
             {
-                osSAS = VSIGetPathSpecificOption(
-                    osPathForOption.c_str(), "AZURE_STORAGE_SAS_TOKEN",
-                    CPLGetConfigOption("AZURE_SAS",
-                                       ""));  // AZURE_SAS for GDAL < 3.5
+                osSAS = GetSAS(osPathForOption.c_str());
                 if (osSAS.empty())
                 {
-                    if (CPLTestBool(VSIGetPathSpecificOption(
-                            osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST",
-                            "NO")))
+                    if (IsNoSignRequest(osPathForOption.c_str()))
                     {
                         return true;
                     }
@@ -845,8 +870,7 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
         return nullptr;
     }
 
-    if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                             "AZURE_NO_SIGN_REQUEST", "NO")))
+    if (IsNoSignRequest(osPathForOption.c_str()))
     {
         osStorageKey.clear();
         osSAS.clear();
@@ -940,7 +964,9 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
         std::string osAuthorization = "Authorization: Bearer ";
         osAuthorization += osAccessToken;
         headers = curl_slist_append(headers, osAuthorization.c_str());
-        headers = curl_slist_append(headers, "x-ms-version: 2019-12-12");
+        headers = curl_slist_append(
+            headers,
+            std::string("x-ms-version: ").append(X_MS_VERSION).c_str());
         return headers;
     }
 

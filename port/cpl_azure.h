@@ -101,6 +101,10 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
     {
         return m_osBucket;
     }
+
+    static std::string GetSAS(const char *pszFilename);
+
+    static bool IsNoSignRequest(const char *pszFilename);
 };
 
 namespace cpl
