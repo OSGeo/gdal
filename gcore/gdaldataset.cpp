@@ -3348,7 +3348,7 @@ GDALAntiRecursionGuard::GDALAntiRecursionGuard(
     const GDALAntiRecursionGuard &other, const std::string &osIdentifier)
     : m_psAntiRecursionStruct(other.m_psAntiRecursionStruct),
       m_osIdentifier(osIdentifier.empty()
-                         ? osIdentifier
+                         ? other.m_osIdentifier
                          : other.m_osIdentifier + osIdentifier),
       m_nDepth(m_osIdentifier.empty()
                    ? 0
@@ -3360,7 +3360,11 @@ GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
 {
     if (!m_osIdentifier.empty())
     {
-        --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
+        auto &count = --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
+        if (count == 0)
+        {
+            m_psAntiRecursionStruct->m_oMapDepth.erase(m_osIdentifier);
+        }
     }
 }
 
