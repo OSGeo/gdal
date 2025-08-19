@@ -7830,6 +7830,43 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     auto psFillArrowArray = static_cast<OGRGPKGTableLayerFillArrowArray *>(
         sqlite3_user_data(pContext));
 
+    // To be called under psFillArrowArray->oMutex
+    const auto SubmitBatchToCaller =
+        [psFillArrowArray](std::unique_lock<std::mutex> &oLock)
+    {
+        psFillArrowArray->psHelper->Shrink(psFillArrowArray->nCountRows);
+        psFillArrowArray->bThreadReady = true;
+        psFillArrowArray->oCV.notify_one();
+        while (psFillArrowArray->nCountRows > 0)
+        {
+            psFillArrowArray->oCV.wait(oLock);
+        }
+    };
+
+    const auto DealWithTooBigArray =
+        [&SubmitBatchToCaller, psFillArrowArray](int iFeat)
+    {
+        CPLDebug("GPKG",
+                 "OGR_GPKG_FillArrowArray_Step(): premature "
+                 "notification of %d features to consumer due "
+                 "to too big array",
+                 iFeat);
+        if (psFillArrowArray->bAsynchronousMode)
+        {
+            std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+            psFillArrowArray->bMemoryLimitReached = true;
+            SubmitBatchToCaller(oLock);
+        }
+        else
+        {
+            {
+                std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+                psFillArrowArray->bMemoryLimitReached = true;
+            }
+            sqlite3_interrupt(psFillArrowArray->hDB);
+        }
+    };
+
     {
         std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
         if (psFillArrowArray->nCountRows >=
@@ -7837,13 +7874,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         {
             if (psFillArrowArray->bAsynchronousMode)
             {
-                psFillArrowArray->psHelper->Shrink(
-                    psFillArrowArray->nCountRows);
-                psFillArrowArray->oCV.notify_one();
-                while (psFillArrowArray->nCountRows > 0)
-                {
-                    psFillArrowArray->oCV.wait(oLock);
-                }
+                SubmitBatchToCaller(oLock);
                 // Note that psFillArrowArray->psHelper.get() will generally now be
                 // different from before the wait()
             }
@@ -8020,28 +8051,13 @@ begin:
                     if (nWKBSize <= nMemLimit &&
                         nWKBSize > nMemLimit - nCurLength)
                     {
-                        CPLDebug("GPKG",
-                                 "OGR_GPKG_FillArrowArray_Step(): premature "
-                                 "notification of %d features to consumer due "
-                                 "to too big array",
-                                 iFeat);
-                        psFillArrowArray->bMemoryLimitReached = true;
+                        DealWithTooBigArray(iFeat);
                         if (psFillArrowArray->bAsynchronousMode)
                         {
-                            std::unique_lock<std::mutex> oLock(
-                                psFillArrowArray->oMutex);
-                            psFillArrowArray->psHelper->Shrink(
-                                psFillArrowArray->nCountRows);
-                            psFillArrowArray->oCV.notify_one();
-                            while (psFillArrowArray->nCountRows > 0)
-                            {
-                                psFillArrowArray->oCV.wait(oLock);
-                            }
                             goto begin;
                         }
                         else
                         {
-                            sqlite3_interrupt(psFillArrowArray->hDB);
                             return;
                         }
                     }
@@ -8158,28 +8174,13 @@ begin:
                         if (nBytes <= nMemLimit &&
                             nBytes > nMemLimit - nCurLength)
                         {
-                            CPLDebug("GPKG",
-                                     "OGR_GPKG_FillArrowArray_Step(): "
-                                     "premature notification of %d features to "
-                                     "consumer due to too big array",
-                                     iFeat);
-                            psFillArrowArray->bMemoryLimitReached = true;
+                            DealWithTooBigArray(iFeat);
                             if (psFillArrowArray->bAsynchronousMode)
                             {
-                                std::unique_lock<std::mutex> oLock(
-                                    psFillArrowArray->oMutex);
-                                psFillArrowArray->psHelper->Shrink(
-                                    psFillArrowArray->nCountRows);
-                                psFillArrowArray->oCV.notify_one();
-                                while (psFillArrowArray->nCountRows > 0)
-                                {
-                                    psFillArrowArray->oCV.wait(oLock);
-                                }
                                 goto begin;
                             }
                             else
                             {
-                                sqlite3_interrupt(psFillArrowArray->hDB);
                                 return;
                             }
                         }
@@ -8255,28 +8256,13 @@ begin:
                         if (nBytes <= nMemLimit &&
                             nBytes > nMemLimit - nCurLength)
                         {
-                            CPLDebug("GPKG",
-                                     "OGR_GPKG_FillArrowArray_Step(): "
-                                     "premature notification of %d features to "
-                                     "consumer due to too big array",
-                                     iFeat);
-                            psFillArrowArray->bMemoryLimitReached = true;
+                            DealWithTooBigArray(iFeat);
                             if (psFillArrowArray->bAsynchronousMode)
                             {
-                                std::unique_lock<std::mutex> oLock(
-                                    psFillArrowArray->oMutex);
-                                psFillArrowArray->psHelper->Shrink(
-                                    psFillArrowArray->nCountRows);
-                                psFillArrowArray->oCV.notify_one();
-                                while (psFillArrowArray->nCountRows > 0)
-                                {
-                                    psFillArrowArray->oCV.wait(oLock);
-                                }
                                 goto begin;
                             }
                             else
                             {
-                                sqlite3_interrupt(psFillArrowArray->hDB);
                                 return;
                             }
                         }
@@ -8314,7 +8300,6 @@ begin:
 
 error:
     sqlite3_interrupt(psFillArrowArray->hDB);
-    psFillArrowArray->bErrorOccurred = true;
 }
 
 /************************************************************************/
@@ -8389,8 +8374,6 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         m_poFillArrowArray =
             std::make_unique<OGRGPKGTableLayerFillArrowArray>();
         m_poFillArrowArray->psHelper = std::move(psHelper);
-        m_poFillArrowArray->nCountRows = 0;
-        m_poFillArrowArray->bErrorOccurred = false;
         m_poFillArrowArray->bDateTimeAsString =
             m_aosArrowArrayStreamOptions.FetchBool(GAS_OPT_DATETIME_AS_STRING,
                                                    false);
@@ -8399,9 +8382,6 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         m_poFillArrowArray->hDB = m_poDS->GetDB();
         memset(&m_poFillArrowArray->brokenDown, 0,
                sizeof(m_poFillArrowArray->brokenDown));
-        m_poFillArrowArray->nMaxBatchSize =
-            OGRArrowArrayHelper::GetMaxFeaturesInBatch(
-                m_aosArrowArrayStreamOptions);
         m_poFillArrowArray->bAsynchronousMode = true;
         if (m_poFilterGeom)
             m_poFillArrowArray->poLayerForFilterGeom = this;
@@ -8434,6 +8414,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         // Resume worker thread
         m_poFillArrowArray->psHelper = std::move(psHelper);
         m_poFillArrowArray->nCountRows = 0;
+        m_poFillArrowArray->bThreadReady = false;
+        m_poFillArrowArray->bMemoryLimitReached = false;
         m_poFillArrowArray->oCV.notify_one();
     }
 
@@ -8441,21 +8423,26 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     // OGR_GPKG_FillArrowArray_Step() to have generated a result set (or an
     // error)
     bool bIsFinished;
+    std::string osErrorMsg;
     {
         std::unique_lock<std::mutex> oLock(m_poFillArrowArray->oMutex);
-        while (m_poFillArrowArray->nCountRows == 0 &&
-               !m_poFillArrowArray->bIsFinished)
+        while (!m_poFillArrowArray->bThreadReady)
         {
             m_poFillArrowArray->oCV.wait(oLock);
         }
+        CPLAssert(m_poFillArrowArray->bErrorOccurred ||
+                  m_poFillArrowArray->bMemoryLimitReached ||
+                  m_poFillArrowArray->bIsFinished ||
+                  m_poFillArrowArray->nCountRows ==
+                      m_poFillArrowArray->psHelper->m_nMaxBatchSize);
         bIsFinished = m_poFillArrowArray->bIsFinished;
+        osErrorMsg = m_poFillArrowArray->osErrorMsg;
     }
 
     if (m_poFillArrowArray->bErrorOccurred)
     {
         m_oThreadNextArrowArray.join();
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 m_poFillArrowArray->osErrorMsg.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
         m_poFillArrowArray->psHelper->ClearArray();
         return EIO;
     }
@@ -8581,12 +8568,11 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
     char *pszErrMsg = nullptr;
+    std::string osErrorMsg;
     if (sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr,
                      &pszErrMsg) != SQLITE_OK)
     {
-        m_poFillArrowArray->bErrorOccurred = true;
-        m_poFillArrowArray->osErrorMsg =
-            pszErrMsg ? pszErrMsg : "unknown error";
+        osErrorMsg = pszErrMsg ? pszErrMsg : "unknown error";
     }
     sqlite3_free(pszErrMsg);
 
@@ -8597,6 +8583,9 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
 
     std::lock_guard oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
+    m_poFillArrowArray->bErrorOccurred = !osErrorMsg.empty();
+    m_poFillArrowArray->osErrorMsg = osErrorMsg;
+
     if (m_poFillArrowArray->nCountRows >= 0)
     {
         m_poFillArrowArray->psHelper->Shrink(m_poFillArrowArray->nCountRows);
@@ -8605,6 +8594,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
             m_poFillArrowArray->psHelper->ClearArray();
         }
     }
+    m_poFillArrowArray->bThreadReady = true;
     m_poFillArrowArray->oCV.notify_one();
 }
 
@@ -8942,9 +8932,6 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
 
     OGRGPKGTableLayerFillArrowArray sFillArrowArray;
     sFillArrowArray.psHelper = std::move(psHelper);
-    sFillArrowArray.nCountRows = 0;
-    sFillArrowArray.bMemoryLimitReached = false;
-    sFillArrowArray.bErrorOccurred = false;
     sFillArrowArray.bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
         GAS_OPT_DATETIME_AS_STRING, false);
     sFillArrowArray.poFeatureDefn = m_poFeatureDefn;
