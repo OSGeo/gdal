@@ -46,7 +46,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AZURE_IMDS_OBJECT_ID", // from cpl_azure.cpp
    "AZURE_MAX_RESULTS", // from cpl_vsil_adls.cpp, cpl_vsil_az.cpp
    "AZURE_NO_SIGN_REQUEST", // from cpl_azure.cpp
-   "AZURE_SAS", // from cpl_azure.cpp, cpl_vsil_az.cpp
+   "AZURE_SAS", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCESS_KEY", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCESS_TOKEN", // from cpl_azure.cpp
    "AZURE_STORAGE_ACCOUNT", // from cpl_azure.cpp
