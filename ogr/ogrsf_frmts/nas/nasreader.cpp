@@ -1041,8 +1041,6 @@ int NASReader::GetAttributeElementIndex(const char *pszElement, int nLen,
         return poClass->GetPropertyIndexBySrcElement(osElemPath.c_str(),
                                                      nFullLen);
     }
-
-    return -1;
 }
 
 /************************************************************************/
