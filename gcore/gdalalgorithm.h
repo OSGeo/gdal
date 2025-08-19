@@ -327,6 +327,9 @@ constexpr const char *GDAL_ARG_NAME_INPUT = "input";
 /** Name of the argument for the input format. */
 constexpr const char *GDAL_ARG_NAME_INPUT_FORMAT = "input-format";
 
+/** Name of the argument for the input layer. */
+constexpr const char *GDAL_ARG_NAME_INPUT_LAYER = "input-layer";
+
 /** Name of the argument for an open option. */
 constexpr const char *GDAL_ARG_NAME_OPEN_OPTION = "open-option";
 
@@ -342,8 +345,15 @@ constexpr const char *GDAL_ARG_NAME_STDOUT = "stdout";
 /** Name of the argument for an output format. */
 constexpr const char *GDAL_ARG_NAME_OUTPUT_FORMAT = "output-format";
 
+/** Name of the argument for the output layer. */
+constexpr const char *GDAL_ARG_NAME_OUTPUT_LAYER = "output-layer";
+
 /** Name of the argument for a creation option. */
 constexpr const char *GDAL_ARG_NAME_CREATION_OPTION = "creation-option";
+
+/** Name of the argument for a layer creation option. */
+constexpr const char *GDAL_ARG_NAME_LAYER_CREATION_OPTION =
+    "layer-creation-option";
 
 /** Name of the argument for update. */
 constexpr const char *GDAL_ARG_NAME_UPDATE = "update";

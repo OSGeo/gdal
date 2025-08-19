@@ -680,3 +680,118 @@ def test_gdalalg_pipeline_run_existing(tmp_path):
         f"{gdal_path} pipeline {pipeline_filename} --output {output_filename} --input=/i/do_not/exist"
     )
     assert "/i/do_not/exist" in err
+
+
+def test_gdalalg_pipeline_existing_completion(tmp_path):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    pipeline_filename = tmp_path / "pipeline.gdalg.json"
+
+    with gdal.VSIFile(pipeline_filename, "wb") as f:
+        j = json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "relative_paths_relative_to_this_file": False,
+                "command_line": "gdal pipeline read ../gcore/data/byte.tif ! edit --nodata=5 --metadata=KEY=VALUE",
+            }
+        )
+        f.write(j.encode("UTF-8"))
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
+    ).split(" ")
+    expected_out = [
+        "--input-format=",
+        "--open-option=",
+        "--input=",
+        "--edit.crs=",
+        "--edit.bbox=",
+        "--edit.nodata=",
+        "--edit.metadata=",
+        "--edit.unset-metadata=",
+        "--edit.gcp=",
+        "--output-format=",
+        "--output=",
+        "--creation-option=",
+        "--overwrite",
+    ]
+    for x in expected_out:
+        assert x in out
+    assert "--input-layer=" not in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} --input-format="
+    ).split(" ")
+    assert "MEM" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} --output=/vsimem/out.tif --creation-option="
+    ).split(" ")
+    assert "COMPRESS=" in out
+
+    with gdal.VSIFile(pipeline_filename, "wb") as f:
+        j = json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "relative_paths_relative_to_this_file": False,
+                "command_line": "gdal pipeline read ../ogr/data/poly.shp ! edit",
+            }
+        )
+        f.write(j.encode("UTF-8"))
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
+    ).split(" ")
+    expected_out = [
+        "--input-format=",
+        "--open-option=",
+        "--input=",
+        "--input-layer=",
+        "--edit.active-layer=",
+        "--edit.geometry-type=",
+        "--edit.crs=",
+        "--edit.metadata=",
+        "--edit.unset-metadata=",
+        "--edit.layer-metadata=",
+        "--edit.unset-layer-metadata=",
+        "--output-format=",
+        "--output=",
+        "--creation-option=",
+        "--layer-creation-option=",
+        "--overwrite",
+        "--update",
+        "--overwrite-layer",
+        "--append",
+        "--output-layer=",
+        "--write.skip-errors",
+    ]
+    for x in expected_out:
+        assert x in out
+    assert "--edit.nodata=" not in out
+
+    with gdal.VSIFile(pipeline_filename, "wb") as f:
+        j = json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "relative_paths_relative_to_this_file": False,
+                "command_line": "gdal pipeline read ../ogr/data/poly.shp ! edit ! edit",
+            }
+        )
+        f.write(j.encode("UTF-8"))
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
+    ).split(" ")
+    assert "--edit[0].geometry-type=" in out
+    assert "--edit[1].geometry-type=" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline {pipeline_filename} --edit[0].geometry-type="
+    ).split(" ")
+    assert "GEOMETRY" in out

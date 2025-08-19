@@ -53,7 +53,7 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
         &m_mode)
         .SetChoices("merge-per-layer-name", "stack", "single")
         .SetDefault(m_mode);
-    AddArg("output-layer", 0,
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0,
            _("Name of the output vector layer (single mode), or template to "
              "name the output vector layers (stack mode)"),
            &m_layerNameTemplate);
@@ -493,7 +493,7 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         GDALVectorWriteAlgorithm writeAlg;
         for (auto &arg : writeAlg.GetArgs())
         {
-            if (arg->GetName() != "output-layer")
+            if (arg->GetName() != GDAL_ARG_NAME_OUTPUT_LAYER)
             {
                 auto stepArg = GetArg(arg->GetName());
                 if (stepArg && stepArg->IsExplicitlySet())

@@ -4887,7 +4887,7 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue,
                                           const char *helpMessage)
 {
     auto &arg =
-        AddArg("layer-creation-option", 0,
+        AddArg(GDAL_ARG_NAME_LAYER_CREATION_OPTION, 0,
                MsgOrDefault(helpMessage, _("Layer creation option")), pValue)
             .AddAlias("lco")
             .SetMetaVar("<KEY>=<VALUE>")

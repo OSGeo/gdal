@@ -43,6 +43,52 @@
 #define _(x) (x)
 #endif
 
+/* clang-format off */
+constexpr const char *const apszReadParametersPrefixOmitted[] = {
+    GDAL_ARG_NAME_INPUT,
+    GDAL_ARG_NAME_INPUT_FORMAT,
+    GDAL_ARG_NAME_OPEN_OPTION,
+    GDAL_ARG_NAME_INPUT_LAYER};
+
+constexpr const char *const apszWriteParametersPrefixOmitted[] = {
+    GDAL_ARG_NAME_OUTPUT,
+    GDAL_ARG_NAME_OUTPUT_FORMAT,
+    GDAL_ARG_NAME_CREATION_OPTION,
+    GDAL_ARG_NAME_OUTPUT_LAYER,
+    GDAL_ARG_NAME_LAYER_CREATION_OPTION,
+    GDAL_ARG_NAME_UPDATE,
+    GDAL_ARG_NAME_OVERWRITE,
+    GDAL_ARG_NAME_APPEND,
+    GDAL_ARG_NAME_OVERWRITE_LAYER};
+
+/* clang-format on */
+
+/************************************************************************/
+/*                     IsReadSpecificArgument()                         */
+/************************************************************************/
+
+static bool IsReadSpecificArgument(const char *pszArgName)
+{
+    return std::find_if(std::begin(apszReadParametersPrefixOmitted),
+                        std::end(apszReadParametersPrefixOmitted),
+                        [pszArgName](const char *pszStr) {
+                            return strcmp(pszStr, pszArgName) == 0;
+                        }) != std::end(apszReadParametersPrefixOmitted);
+}
+
+/************************************************************************/
+/*                     IsWriteSpecificArgument()                        */
+/************************************************************************/
+
+static bool IsWriteSpecificArgument(const char *pszArgName)
+{
+    return std::find_if(std::begin(apszWriteParametersPrefixOmitted),
+                        std::end(apszWriteParametersPrefixOmitted),
+                        [pszArgName](const char *pszStr) {
+                            return strcmp(pszStr, pszArgName) == 0;
+                        }) != std::end(apszWriteParametersPrefixOmitted);
+}
+
 /************************************************************************/
 /*                     GDALPipelineStepAlgorithm()                      */
 /************************************************************************/
@@ -141,8 +187,8 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
             .SetHiddenForCLI(hiddenForCLI);
     if (m_constructorOptions.addInputLayerNameArgument)
     {
-        auto &layerArg = AddArg("input-layer", 'l', _("Input layer name(s)"),
-                                &m_inputLayerNames)
+        auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
+                                _("Input layer name(s)"), &m_inputLayerNames)
                              .AddAlias("layer")
                              .SetHiddenForCLI(hiddenForCLI);
         SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
@@ -190,8 +236,9 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
         GetName() != GDALVectorConcatAlgorithm::NAME)
     {
-        AddArg("output-layer", shortNameOutputLayerAllowed ? 'l' : 0,
-               _("Output layer name"), &m_outputLayerName)
+        AddArg(GDAL_ARG_NAME_OUTPUT_LAYER,
+               shortNameOutputLayerAllowed ? 'l' : 0, _("Output layer name"),
+               &m_outputLayerName)
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
@@ -450,12 +497,20 @@ class GDALPipelineAlgorithm final
         return 0;
     }
 
+    std::vector<std::string> GetAutoComplete(std::vector<std::string> &args,
+                                             bool lastWordIsComplete,
+                                             bool /* showAllOptions*/) override;
+
   protected:
     bool
     ParseCommandLineArguments(const std::vector<std::string> &args) override;
 
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
+
+  private:
+    bool ParseCommandLineArguments(const std::vector<std::string> &args,
+                                   bool forAutoComplete);
 };
 
 /************************************************************************/
@@ -464,6 +519,12 @@ class GDALPipelineAlgorithm final
 
 bool GDALPipelineAlgorithm::ParseCommandLineArguments(
     const std::vector<std::string> &argsIn)
+{
+    return ParseCommandLineArguments(argsIn, /*forAutoComplete=*/false);
+}
+
+bool GDALPipelineAlgorithm::ParseCommandLineArguments(
+    const std::vector<std::string> &argsIn, bool forAutoComplete)
 {
     std::vector<std::string> args = argsIn;
 
@@ -521,13 +582,18 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
                     ret = true;
                 else
                 {
-                    ret = GDALAlgorithm::ParseCommandLineArguments(args);
+                    const std::string filename =
+                        cpl::starts_with(arg, "--pipeline=")
+                            ? arg.substr(strlen("--pipeline="))
+                            : arg;
+                    if (forAutoComplete)
+                    {
+                        SetParseForAutoCompletion();
+                    }
+                    ret = GDALAlgorithm::ParseCommandLineArguments(args) ||
+                          forAutoComplete;
                     if (ret)
                     {
-                        const std::string filename =
-                            cpl::starts_with(arg, "--pipeline=")
-                                ? arg.substr(strlen("--pipeline="))
-                                : arg;
                         ret = m_pipeline == filename;
                     }
                 }
@@ -833,6 +899,7 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
         {
             if (arg->IsUserProvided() ||
                 ((arg->GetName() == GDAL_ARG_NAME_INPUT ||
+                  arg->GetName() == GDAL_ARG_NAME_INPUT_LAYER ||
                   arg->GetName() == GDAL_ARG_NAME_OUTPUT ||
                   arg->GetName() == GDAL_ARG_NAME_OUTPUT_FORMAT) &&
                  arg->IsExplicitlySet()))
@@ -841,20 +908,13 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
                     CSLTokenizeString2(arg->GetName().c_str(), ".", 0));
                 std::string stepName;
                 std::string stepArgName;
-                if (tokens.size() == 1 &&
-                    (strcmp(tokens[0], GDAL_ARG_NAME_INPUT) == 0 ||
-                     strcmp(tokens[0], GDAL_ARG_NAME_OPEN_OPTION) == 0 ||
-                     strcmp(tokens[0], GDAL_ARG_NAME_INPUT_FORMAT) == 0))
+                if (tokens.size() == 1 && IsReadSpecificArgument(tokens[0]))
                 {
                     stepName = steps.front().alg->GetName();
                     stepArgName = tokens[0];
                 }
                 else if (tokens.size() == 1 &&
-                         (IsKnownOutputRelatedBooleanArgName(tokens[0]) ||
-                          strcmp(tokens[0], GDAL_ARG_NAME_OUTPUT) == 0 ||
-                          strcmp(tokens[0], GDAL_ARG_NAME_OUTPUT_FORMAT) == 0 ||
-                          strcmp(tokens[0], GDAL_ARG_NAME_CREATION_OPTION) ==
-                              0))
+                         IsWriteSpecificArgument(tokens[0]))
                 {
                     stepName = steps.back().alg->GetName();
                     stepArgName = tokens[0];
@@ -1049,32 +1109,51 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
     }
 
     // Parse each step, but without running the validation
+    int nDatasetType = 0;
+    bool firstStep = true;
     for (auto &step : steps)
     {
-        bool ret;
+        bool ret = false;
         CPLErrorAccumulator oAccumulator;
+        bool hasTriedRaster = false;
+        if (nDatasetType == 0 || nDatasetType == GDAL_OF_RASTER)
         {
+            hasTriedRaster = true;
             [[maybe_unused]] auto context =
                 oAccumulator.InstallForCurrentScope();
             step.alg->m_skipValidationInParseCommandLine = true;
             ret = step.alg->ParseCommandLineArguments(step.args);
+            if (ret && nDatasetType == 0 && forAutoComplete)
+            {
+                ret = step.alg->ValidateArguments();
+                if (ret && firstStep && step.alg->m_inputDataset.size() == 1)
+                {
+                    auto poDS = step.alg->m_inputDataset[0].GetDatasetRef();
+                    if (poDS && poDS->GetLayerCount() > 0)
+                        ret = false;
+                }
+            }
         }
         if (!ret)
         {
-            auto alg = GetStepAlg(step.alg->GetName() + VECTOR_SUFFIX);
-            if (alg)
+            auto algVector = GetStepAlg(step.alg->GetName() + VECTOR_SUFFIX);
+            if (algVector &&
+                (nDatasetType == 0 || nDatasetType == GDAL_OF_VECTOR))
             {
-                step.alg = std::move(alg);
+                step.alg = std::move(algVector);
                 step.alg->m_skipValidationInParseCommandLine = true;
                 ret = step.alg->ParseCommandLineArguments(step.args);
-                if (!ret)
+                if (ret)
+                {
+                    step.alg->SetCallPath({step.alg->GetName()});
+                    step.alg->SetReferencePathForRelativePaths(
+                        GetReferencePathForRelativePaths());
+                    step.alreadyChangedType = true;
+                }
+                else if (!forAutoComplete)
                     return false;
-                step.alg->SetCallPath({step.alg->GetName()});
-                step.alg->SetReferencePathForRelativePaths(
-                    GetReferencePathForRelativePaths());
-                step.alreadyChangedType = true;
             }
-            else
+            if (!ret && hasTriedRaster && !forAutoComplete)
             {
                 for (const auto &sError : oAccumulator.GetErrors())
                 {
@@ -1083,6 +1162,9 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
                 return false;
             }
         }
+        if (ret && forAutoComplete)
+            nDatasetType = step.alg->GetOutputType();
+        firstStep = false;
     }
 
     // Evaluate "input" argument of "read" step, together with the "output"
@@ -1104,15 +1186,19 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
     }
     else
     {
-        auto poSrcDS = steps.front().alg->GetInputDatasets()[0].GetDatasetRef();
-        if (poSrcDS)
+        auto &inputDatasets = steps.front().alg->GetInputDatasets();
+        if (!inputDatasets.empty())
         {
-            if (poSrcDS->GetRasterCount() != 0)
-                nLastStepOutputType = GDAL_OF_RASTER;
+            auto poSrcDS = inputDatasets[0].GetDatasetRef();
+            if (poSrcDS)
+            {
+                if (poSrcDS->GetRasterCount() != 0)
+                    nLastStepOutputType = GDAL_OF_RASTER;
+            }
         }
     }
 
-    for (size_t i = 1; i < steps.size(); ++i)
+    for (size_t i = 1; !forAutoComplete && i < steps.size(); ++i)
     {
         if (!steps[i].alreadyChangedType && !steps[i].isSubAlgorithm &&
             GetStepAlg(steps[i].alg->GetName()) == nullptr)
@@ -1156,7 +1242,7 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
 
     for (const auto &step : steps)
     {
-        if (!step.alg->ValidateArguments())
+        if (!step.alg->ValidateArguments() && !forAutoComplete)
             return false;
     }
 
@@ -1164,6 +1250,143 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
         m_steps.push_back(std::move(step.alg));
 
     return true;
+}
+
+/************************************************************************/
+/*                GDALPipelineAlgorithm::GetAutoComplete()              */
+/************************************************************************/
+
+std::vector<std::string>
+GDALPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
+                                       bool lastWordIsComplete,
+                                       bool showAllOptions)
+{
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        ParseCommandLineArguments(args, /*forAutoComplete=*/true);
+    }
+    VSIStatBufL sStat;
+    if (!m_pipeline.empty() && VSIStatL(m_pipeline.c_str(), &sStat) == 0 &&
+        !m_steps.empty() && !args.empty())
+    {
+        std::map<std::string, std::vector<GDALAlgorithm *>> mapSteps;
+        for (const auto &step : m_steps)
+        {
+            mapSteps[step->GetName()].push_back(step.get());
+        }
+
+        std::vector<std::string> ret;
+        const auto &lastArg = args.back();
+        if (!lastArg.empty() && lastArg[0] == '-' &&
+            lastArg.find('=') == std::string::npos && !lastWordIsComplete)
+        {
+            for (const auto &step : m_steps)
+            {
+                const int iterCount =
+                    static_cast<int>(mapSteps[step->GetName()].size());
+                for (int i = 0; i < iterCount; ++i)
+                {
+                    for (const auto &arg : step->GetArgs())
+                    {
+                        if (!arg->IsHiddenForCLI() &&
+                            arg->GetCategory() != GAAC_COMMON)
+                        {
+                            std::string s = std::string("--");
+                            if (!((step->GetName() == "read" &&
+                                   IsReadSpecificArgument(
+                                       arg->GetName().c_str())) ||
+                                  (step->GetName() == "write" &&
+                                   IsWriteSpecificArgument(
+                                       arg->GetName().c_str()))))
+                            {
+                                s += step->GetName();
+                                if (iterCount > 1)
+                                {
+                                    s += '[';
+                                    s += std::to_string(i);
+                                    s += ']';
+                                }
+                                s += '.';
+                            }
+                            s += arg->GetName();
+                            if (arg->GetType() == GAAT_BOOLEAN)
+                                ret.push_back(std::move(s));
+                            else
+                                ret.push_back(s + "=");
+                        }
+                    }
+                }
+            }
+        }
+        else if (cpl::starts_with(lastArg, "--") &&
+                 lastArg.find('=') != std::string::npos && !lastWordIsComplete)
+        {
+            const auto nDotPos = lastArg.find('.');
+            std::string stepName;
+            std::string argName;
+            int idx = 0;
+            if (nDotPos != std::string::npos)
+            {
+                stepName = lastArg.substr(strlen("--"), nDotPos - strlen("--"));
+                const auto nBracketPos = stepName.find('[');
+                if (nBracketPos != std::string::npos)
+                {
+                    idx = atoi(stepName.c_str() + nBracketPos + 1);
+                    stepName.resize(nBracketPos);
+                }
+                argName = "--" + lastArg.substr(nDotPos + 1);
+            }
+            else
+            {
+                argName = lastArg;
+                for (const char *prefix : apszReadParametersPrefixOmitted)
+                {
+                    if (cpl::starts_with(lastArg.substr(strlen("--")),
+                                         std::string(prefix) + "="))
+                    {
+                        stepName = "read";
+                        break;
+                    }
+                }
+
+                for (const char *prefix : apszWriteParametersPrefixOmitted)
+                {
+                    if (cpl::starts_with(lastArg.substr(strlen("--")),
+                                         std::string(prefix) + "="))
+                    {
+                        stepName = "write";
+                        break;
+                    }
+                }
+            }
+
+            auto iter = mapSteps.find(stepName);
+            if (iter != mapSteps.end() && idx >= 0 &&
+                static_cast<size_t>(idx) < iter->second.size())
+            {
+                auto &step = iter->second[idx];
+                std::vector<std::string> subArgs;
+                for (const auto &arg : step->GetArgs())
+                {
+                    std::string strArg;
+                    if (arg->IsExplicitlySet() &&
+                        arg->Serialize(strArg, /* absolutePath=*/false))
+                    {
+                        subArgs.push_back(std::move(strArg));
+                    }
+                }
+                subArgs.push_back(std::move(argName));
+                ret = step->GetAutoComplete(subArgs, lastWordIsComplete,
+                                            showAllOptions);
+            }
+        }
+        return ret;
+    }
+    else
+    {
+        return GDALAbstractPipelineAlgorithm::GetAutoComplete(
+            args, lastWordIsComplete, showAllOptions);
+    }
 }
 
 /************************************************************************/
