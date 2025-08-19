@@ -106,14 +106,28 @@ static struct curl_slist *GetAzureBlobHeaders(
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
+    const std::string osMsVersion(X_MS_VERSION);
+
+    const auto AddHeaders = [&osDate, &osMsVersion,
+                             bIncludeMSVersion](struct curl_slist *l_psHeaders)
+    {
+        l_psHeaders = curl_slist_append(
+            l_psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        if (bIncludeMSVersion)
+        {
+            l_psHeaders =
+                curl_slist_append(l_psHeaders, CPLSPrintf("x-ms-version: %s",
+                                                          osMsVersion.c_str()));
+        }
+        return l_psHeaders;
+    };
+
     if (osStorageKeyB64.empty())
     {
-        psHeaders = curl_slist_append(
-            psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        psHeaders = AddHeaders(psHeaders);
         return psHeaders;
     }
 
-    std::string osMsVersion(X_MS_VERSION);
     std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
         oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
@@ -170,13 +184,7 @@ static struct curl_slist *GetAzureBlobHeaders(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
-    psHeaders = curl_slist_append(psHeaders,
-                                  CPLSPrintf("x-ms-date: %s", osDate.c_str()));
-    if (bIncludeMSVersion)
-    {
-        psHeaders = curl_slist_append(
-            psHeaders, CPLSPrintf("x-ms-version: %s", osMsVersion.c_str()));
-    }
+    psHeaders = AddHeaders(psHeaders);
     psHeaders = curl_slist_append(
         psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
     return psHeaders;
@@ -684,6 +692,30 @@ static bool GetConfigurationFromCLIConfigFile(
 }
 
 /************************************************************************/
+/*                              GetSAS()                                */
+/************************************************************************/
+
+/* static */
+std::string VSIAzureBlobHandleHelper::GetSAS(const char *pszFilename)
+{
+    return VSIGetPathSpecificOption(
+        pszFilename, "AZURE_STORAGE_SAS_TOKEN",
+        CPLGetConfigOption("AZURE_SAS",
+                           ""));  // AZURE_SAS for GDAL < 3.5
+}
+
+/************************************************************************/
+/*                          IsNoSignRequest()                           */
+/************************************************************************/
+
+/* static */
+bool VSIAzureBlobHandleHelper::IsNoSignRequest(const char *pszFilename)
+{
+    return CPLTestBool(
+        VSIGetPathSpecificOption(pszFilename, "AZURE_NO_SIGN_REQUEST", "NO"));
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
@@ -739,15 +771,10 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                                          "AZURE_STORAGE_ACCESS_KEY", ""));
             if (osStorageKey.empty())
             {
-                osSAS = VSIGetPathSpecificOption(
-                    osPathForOption.c_str(), "AZURE_STORAGE_SAS_TOKEN",
-                    CPLGetConfigOption("AZURE_SAS",
-                                       ""));  // AZURE_SAS for GDAL < 3.5
+                osSAS = GetSAS(osPathForOption.c_str());
                 if (osSAS.empty())
                 {
-                    if (CPLTestBool(VSIGetPathSpecificOption(
-                            osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST",
-                            "NO")))
+                    if (IsNoSignRequest(osPathForOption.c_str()))
                     {
                         return true;
                     }
@@ -839,8 +866,7 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
         return nullptr;
     }
 
-    if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                             "AZURE_NO_SIGN_REQUEST", "NO")))
+    if (IsNoSignRequest(osPathForOption.c_str()))
     {
         osStorageKey.clear();
         osSAS.clear();
