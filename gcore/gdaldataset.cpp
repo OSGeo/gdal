@@ -3290,6 +3290,13 @@ struct GDALAntiRecursionStruct
         }
     };
 
+    ~GDALAntiRecursionStruct()
+    {
+        CPLAssert(aosDatasetNamesWithFlags.empty());
+        CPLAssert(nRecLevel == 0);
+        CPLAssert(m_oMapDepth.empty());
+    }
+
     std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
     int nRecLevel = 0;
     std::map<std::string, int> m_oMapDepth{};
@@ -3360,7 +3367,10 @@ GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
 {
     if (!m_osIdentifier.empty())
     {
-        --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
+        auto oIter = m_psAntiRecursionStruct->m_oMapDepth.find(m_osIdentifier);
+        CPLAssert(oIter != m_psAntiRecursionStruct->m_oMapDepth.end());
+        if (--(oIter->second) == 0)
+            m_psAntiRecursionStruct->m_oMapDepth.erase(oIter);
     }
 }
 
