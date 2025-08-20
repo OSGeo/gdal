@@ -21,11 +21,11 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
 #include "cpl_string.h"
-#include "cpl_multiproc.h"
 
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <string>
 
@@ -621,7 +621,7 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
   protected:
-    CPLMutex *hMutex = nullptr;
+    std::recursive_mutex oMutex{};
     /* We use a cache that contains the list of files contained in a VSIArchive
      * file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access

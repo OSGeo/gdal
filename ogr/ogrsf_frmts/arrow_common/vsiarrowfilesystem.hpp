@@ -13,6 +13,8 @@
 #ifndef VSIARROWFILESYSTEM_HPP_INCLUDED
 #define VSIARROWFILESYSTEM_HPP_INCLUDED
 
+#include "cpl_multiproc.h"
+
 #include "arrow/util/config.h"
 
 #include "ograrrowrandomaccessfile.h"
