@@ -61,9 +61,9 @@ class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
   public:
     VSIStdoutFilesystemHandler() = default;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
 
@@ -198,7 +198,7 @@ int VSIStdoutHandle::Close()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIStdoutFilesystemHandler::Open(const char * /* pszFilename */,
                                  const char *pszAccess, bool /* bSetError */,
                                  CSLConstList /* papszOptions */)
@@ -215,7 +215,8 @@ VSIStdoutFilesystemHandler::Open(const char * /* pszFilename */,
         setmode(fileno(stdout), O_BINARY);
 #endif
 
-    return new VSIStdoutHandle;
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIStdoutHandle>().release());
 }
 
 /************************************************************************/
@@ -240,9 +241,9 @@ int VSIStdoutFilesystemHandler::Stat(const char * /* pszFilename */,
 class VSIStdoutRedirectFilesystemHandler final : public VSIFilesystemHandler
 {
   public:
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
 
@@ -388,7 +389,7 @@ int VSIStdoutRedirectHandle::Close()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIStdoutRedirectFilesystemHandler::Open(
+VSIVirtualHandleUniquePtr VSIStdoutRedirectFilesystemHandler::Open(
     const char *pszFilename, const char *pszAccess, bool /* bSetError */,
     CSLConstList /* papszOptions */)
 
@@ -400,12 +401,14 @@ VSIVirtualHandle *VSIStdoutRedirectFilesystemHandler::Open(
         return nullptr;
     }
 
-    VSIVirtualHandle *poHandle = reinterpret_cast<VSIVirtualHandle *>(
-        VSIFOpenL(pszFilename + strlen("/vsistdout_redirect/"), pszAccess));
+    auto poHandle = VSIFilesystemHandler::OpenStatic(
+        pszFilename + strlen("/vsistdout_redirect/"), pszAccess);
     if (poHandle == nullptr)
         return nullptr;
 
-    return new VSIStdoutRedirectHandle(poHandle);
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIStdoutRedirectHandle>(poHandle.release())
+            .release());
 }
 
 /************************************************************************/

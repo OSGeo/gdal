@@ -66,9 +66,9 @@ class VSIPluginFilesystemHandler : public VSIFilesystemHandler
                                const VSIFilesystemPluginCallbacksStruct *cb);
     ~VSIPluginFilesystemHandler() override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;

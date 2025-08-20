@@ -4342,10 +4342,10 @@ bool VSICurlFilesystemHandlerBase::IsAllowedFilename(const char *pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
-                                                     const char *pszAccess,
-                                                     bool bSetError,
-                                                     CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?"))
@@ -4422,7 +4422,8 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         CSLDestroy(papszFileList);
     }
 
-    VSICurlHandle *poHandle = CreateFileHandle(osFilename.c_str());
+    auto poHandle =
+        std::unique_ptr<VSICurlHandle>(CreateFileHandle(osFilename.c_str()));
     if (poHandle == nullptr)
         return nullptr;
     if (!bGotFileList || bForceExistsCheck)
@@ -4430,15 +4431,15 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         // If we didn't get a filelist, check that the file really exists.
         if (!poHandle->Exists(bSetError))
         {
-            delete poHandle;
             return nullptr;
         }
     }
 
     if (CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
     else
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

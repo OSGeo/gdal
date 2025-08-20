@@ -1466,9 +1466,9 @@ class VSICryptFilesystemHandler final : public VSIFilesystemHandler
     VSICryptFilesystemHandler();
     ~VSICryptFilesystemHandler() override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -1578,7 +1578,7 @@ static CPLString GetKey(const char *pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                                 bool /* bSetError */,
                                 CSLConstList /* papszOptions */)
@@ -1603,32 +1603,27 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         osAccess += "b";
     if (strchr(pszAccess, 'r'))
     {
-        VSIVirtualHandle *fpBase = reinterpret_cast<VSIVirtualHandle *>(
-            VSIFOpenL(osFilename, osAccess));
+        auto fpBase = VSIFilesystemHandler::OpenStatic(osFilename, osAccess);
         if (fpBase == nullptr)
             return nullptr;
-        VSICryptFileHeader *poHeader = new VSICryptFileHeader();
-        if (!poHeader->ReadFromFile(fpBase, osKey))
+        auto poHeader = std::make_unique<VSICryptFileHeader>();
+        if (!poHeader->ReadFromFile(fpBase.get(), osKey))
         {
             memset(osKey.data(), 0, osKey.size());
-            fpBase->Close();
-            delete fpBase;
-            delete poHeader;
             return nullptr;
         }
 
-        VSICryptFileHandle *poHandle = new VSICryptFileHandle(
-            osFilename, fpBase, poHeader,
+        auto poHandle = std::make_unique<VSICryptFileHandle>(
+            osFilename, fpBase.release(), poHeader.release(),
             strchr(pszAccess, '+') ? VSICRYPT_READ | VSICRYPT_WRITE
                                    : VSICRYPT_READ);
         if (!poHandle->Init(osKey, false))
         {
             memset(osKey.data(), 0, osKey.size());
-            delete poHandle;
-            poHandle = nullptr;
+            poHandle.reset();
         }
         memset(osKey.data(), 0, osKey.size());
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle.release());
     }
     else if (strchr(pszAccess, 'w'))
     {
@@ -1731,15 +1726,14 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             return nullptr;
         }
 
-        VSIVirtualHandle *fpBase = reinterpret_cast<VSIVirtualHandle *>(
-            VSIFOpenL(osFilename, osAccess.c_str()));
+        auto fpBase = VSIFilesystemHandler::OpenStatic(osFilename, osAccess);
         if (fpBase == nullptr)
         {
             memset(osKey.data(), 0, osKey.size());
             return nullptr;
         }
 
-        VSICryptFileHeader *poHeader = new VSICryptFileHeader();
+        auto poHeader = std::make_unique<VSICryptFileHeader>();
         poHeader->osIV = osIV;
         CPL_IGNORE_RET_VAL(osIV);
         poHeader->eAlg = eAlg;
@@ -1748,49 +1742,44 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         poHeader->osFreeText = std::move(osFreeText);
         poHeader->bAddKeyCheck = bAddKeyCheck;
 
-        VSICryptFileHandle *poHandle = new VSICryptFileHandle(
-            osFilename, fpBase, poHeader,
+        auto poHandle = std::make_unique<VSICryptFileHandle>(
+            osFilename, fpBase.release(), poHeader.release(),
             strchr(pszAccess, '+') ? VSICRYPT_READ | VSICRYPT_WRITE
                                    : VSICRYPT_WRITE);
         if (!poHandle->Init(osKey, true))
         {
             memset(osKey.data(), 0, osKey.size());
-            delete poHandle;
-            poHandle = nullptr;
+            poHandle.reset();
         }
         memset(osKey.data(), 0, osKey.size());
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle.release());
     }
     else if (strchr(pszAccess, 'a'))
     {
-        VSIVirtualHandle *fpBase =
-            reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osFilename, "rb+"));
+        auto fpBase = VSIFilesystemHandler::OpenStatic(osFilename, "rb+");
         if (fpBase == nullptr)
         {
             memset(osKey.data(), 0, osKey.size());
-            return VSIFilesystemHandler::Open(pszFilename, "wb+");
+            return VSIFilesystemHandler::OpenStatic(pszFilename, "wb+");
         }
-        VSICryptFileHeader *poHeader = new VSICryptFileHeader();
-        if (!poHeader->ReadFromFile(fpBase, osKey))
+        auto poHeader = std::make_unique<VSICryptFileHeader>();
+        if (!poHeader->ReadFromFile(fpBase.get(), osKey))
         {
             memset(osKey.data(), 0, osKey.size());
-            fpBase->Close();
-            delete fpBase;
-            delete poHeader;
             return nullptr;
         }
 
-        VSICryptFileHandle *poHandle = new VSICryptFileHandle(
-            osFilename, fpBase, poHeader, VSICRYPT_READ | VSICRYPT_WRITE);
+        auto poHandle = std::make_unique<VSICryptFileHandle>(
+            osFilename, fpBase.release(), poHeader.release(),
+            VSICRYPT_READ | VSICRYPT_WRITE);
         if (!poHandle->Init(osKey))
         {
-            delete poHandle;
-            poHandle = nullptr;
+            poHandle.reset();
         }
         memset(osKey.data(), 0, osKey.size());
         if (poHandle != nullptr)
             poHandle->Seek(0, SEEK_END);
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle.release());
     }
 
     return nullptr;
@@ -2101,9 +2090,10 @@ class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
   public:
     VSIDummyCryptFilesystemHandler() = default;
 
-    VSIVirtualHandle *Open(const char * /* pszFilename */,
-                           const char * /* pszAccess */, bool /* bSetError */,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char * /* pszFilename */,
+                                   const char * /* pszAccess */,
+                                   bool /* bSetError */,
+                                   CSLConstList /* papszOptions */) override;
 
     int Stat(const char * /* pszFilename */, VSIStatBufL * /*pStatBuf */,
              int /* nFlags */) override
@@ -2114,7 +2104,7 @@ class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
     }
 };
 
-VSIVirtualHandle *VSIDummyCryptFilesystemHandler::Open(
+VSIVirtualHandleUniquePtr VSIDummyCryptFilesystemHandler::Open(
     const char * /* pszFilename */, const char * /* pszAccess */,
     bool /* bSetError */, CSLConstList /* papszOptions */)
 {

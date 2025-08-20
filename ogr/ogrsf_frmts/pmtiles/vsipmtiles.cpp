@@ -34,8 +34,9 @@ class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
   public:
     VSIPMTilesFilesystemHandler() = default;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
@@ -206,7 +207,7 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
 /*                               Open()                                 */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
                                   const char *pszAccess, bool /*bSetError*/,
                                   CSLConstList /*papszOptions*/)
@@ -226,18 +227,19 @@ VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
 
     if (osSubfilename == METADATA_JSON)
     {
-        return VSIFileFromMemBuffer(nullptr,
-                                    reinterpret_cast<GByte *>(CPLStrdup(
-                                        poDS->GetMetadataContent().c_str())),
-                                    poDS->GetMetadataContent().size(), true);
+        return VSIVirtualHandleUniquePtr(
+            VSIFileFromMemBuffer(nullptr,
+                                 reinterpret_cast<GByte *>(CPLStrdup(
+                                     poDS->GetMetadataContent().c_str())),
+                                 poDS->GetMetadataContent().size(), true));
     }
 
     if (osSubfilename == PMTILES_HEADER_JSON)
     {
         const auto osStr = VSIPMTilesGetPMTilesHeaderJson(poDS.get());
-        return VSIFileFromMemBuffer(
+        return VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
             nullptr, reinterpret_cast<GByte *>(CPLStrdup(osStr.c_str())),
-            osStr.size(), true);
+            osStr.size(), true));
     }
 
     if (nComponents != 3)
@@ -258,7 +260,8 @@ VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
 
     GByte *pabyData = static_cast<GByte *>(CPLMalloc(posStr->size()));
     memcpy(pabyData, posStr->data(), posStr->size());
-    return VSIFileFromMemBuffer(nullptr, pabyData, posStr->size(), true);
+    return VSIVirtualHandleUniquePtr(
+        VSIFileFromMemBuffer(nullptr, pabyData, posStr->size(), true));
 }
 
 /************************************************************************/

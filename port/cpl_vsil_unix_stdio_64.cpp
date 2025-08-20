@@ -160,11 +160,11 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     ~VSIUnixStdioFilesystemHandler() override;
 #endif
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 
-    VSIVirtualHandle *
+    VSIVirtualHandleUniquePtr
     CreateOnlyVisibleAtCloseTime(const char *pszFilename,
                                  bool bEmulationAllowed,
                                  CSLConstList papszOptions) override;
@@ -784,7 +784,7 @@ VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
                                     const char *pszAccess, bool bSetError,
                                     CSLConstList /* papszOptions */)
@@ -810,13 +810,8 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
         strcmp(pszAccess, "rb") == 0 || strcmp(pszAccess, "r") == 0;
     const bool bModeAppendReadWrite =
         strcmp(pszAccess, "a+b") == 0 || strcmp(pszAccess, "a+") == 0;
-    VSIUnixStdioHandle *poHandle = new (std::nothrow)
-        VSIUnixStdioHandle(this, fp, bReadOnly, bModeAppendReadWrite);
-    if (poHandle == nullptr)
-    {
-        fclose(fp);
-        return nullptr;
-    }
+    auto poHandle = std::make_unique<VSIUnixStdioHandle>(this, fp, bReadOnly,
+                                                         bModeAppendReadWrite);
 
     errno = nError;
 
@@ -826,17 +821,19 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     if (bReadOnly && CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
     {
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
     }
 
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
 /*                      CreateOnlyVisibleAtCloseTime()                  */
 /************************************************************************/
 
-VSIVirtualHandle *VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+VSIVirtualHandleUniquePtr
+VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
     const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
 {
 #ifdef __linux
@@ -862,13 +859,10 @@ VSIVirtualHandle *VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
         return nullptr;
     }
 
-    VSIUnixStdioHandle *poHandle = new (std::nothrow) VSIUnixStdioHandle(
+    auto poHandle = std::make_unique<VSIUnixStdioHandle>(
         this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
-    if (poHandle)
-    {
-        poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
-    }
-    return poHandle;
+    poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 #else
     if (!bEmulationAllowed)
         return nullptr;
@@ -888,14 +882,11 @@ VSIVirtualHandle *VSIUnixStdioFilesystemHandler::CreateOnlyVisibleAtCloseTime(
         return nullptr;
     }
 
-    VSIUnixStdioHandle *poHandle = new (std::nothrow) VSIUnixStdioHandle(
+    auto poHandle = std::make_unique<VSIUnixStdioHandle>(
         this, fp, /* bReadOnly = */ false, /* bModeAppendReadWrite = */ false);
-    if (poHandle)
-    {
-        poHandle->m_osTmpFilename = std::move(osTmpFilename);
-        poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
-    }
-    return poHandle;
+    poHandle->m_osTmpFilename = std::move(osTmpFilename);
+    poHandle->m_osFilenameToSetAtCloseTime = pszFilename;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 #endif
 }
 
