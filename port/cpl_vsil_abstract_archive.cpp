@@ -70,22 +70,13 @@ VSIArchiveContent::~VSIArchiveContent()
 /*                   VSIArchiveFilesystemHandler()                      */
 /************************************************************************/
 
-VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler()
-{
-    hMutex = nullptr;
-}
+VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler() = default;
 
 /************************************************************************/
 /*                   ~VSIArchiveFilesystemHandler()                     */
 /************************************************************************/
 
-VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
-
-{
-    if (hMutex != nullptr)
-        CPLDestroyMutex(hMutex);
-    hMutex = nullptr;
-}
+VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler() = default;
 
 /************************************************************************/
 /*                       GetStrippedFilename()                          */
@@ -147,7 +138,7 @@ const VSIArchiveContent *
 VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
                                                  VSIArchiveReader *poReader)
 {
-    CPLMutexHolder oHolder(&hMutex);
+    std::unique_lock oLock(oMutex);
 
     VSIStatBufL sStat;
     if (VSIStatL(archiveFilename, &sStat) != 0)
@@ -398,7 +389,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
         }
         else
         {
-            CPLMutexHolder oHolder(&hMutex);
+            std::unique_lock oLock(oMutex);
 
             if (oFileList.find(archiveFilename) != oFileList.end())
             {
@@ -531,7 +522,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             }
             else
             {
-                CPLMutexHolder oHolder(&hMutex);
+                std::unique_lock oLock(oMutex);
 
                 if (oFileList.find(archiveFilename) != oFileList.end())
                 {
@@ -650,7 +641,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
         // slow on .tar.gz files, try reading the first one first.
         // This can help if it is really huge.
         {
-            CPLMutexHolder oHolder(&hMutex);
+            std::unique_lock oLock(oMutex);
 
             if (oFileList.find(archiveFilename) == oFileList.end())
             {

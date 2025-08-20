@@ -23,6 +23,7 @@
 #include "cpl_string.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
+#include "cpl_multiproc.h"
 
 #include "cpl_curl_priv.h"
 
