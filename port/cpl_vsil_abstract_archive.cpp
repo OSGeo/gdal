@@ -140,7 +140,6 @@ static void BuildDirectoryIndex(VSIArchiveContent *content)
     {
         const char *fileName = content->entries[i].fileName;
 
-        std::string parentDir;
         std::string fileStr(fileName);
         if (!fileStr.empty() &&
             (fileStr.back() == '/' || fileStr.back() == '\\'))
@@ -149,15 +148,7 @@ static void BuildDirectoryIndex(VSIArchiveContent *content)
             fileStr.pop_back();
         }
 
-        const char *lastSlash = strrchr(fileStr.c_str(), '/');
-        if (!lastSlash)
-            lastSlash = strrchr(fileStr.c_str(), '\\');
-        if (lastSlash)
-        {
-            parentDir =
-                std::string(fileStr.c_str(), lastSlash - fileStr.c_str());
-        }
-        // else: entry is a child of the root directory (empty parentDir)
+        std::string parentDir = CPLGetPathSafe(fileStr.c_str());
 
         content->dirIndex[parentDir].push_back(i);
     }
@@ -839,25 +830,18 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
                                 : std::string("");
 
     // Use directory index to find the list of children for this directory
-    std::vector<int> childIndices;
     auto dirIter = content->dirIndex.find(searchDir);
-    if (dirIter != content->dirIndex.end())
-    {
-        childIndices = dirIter->second;
-    }
-    else
+    if (dirIter == content->dirIndex.end())
     {
         // Directory not found in index - no children
         CPLFree(archiveFilename);
         return oDir.StealList();
     }
+    const std::vector<int> &childIndices = dirIter->second;
 
     // Scan the children of this directory
-    int entriesScanned = 0;
-    int entriesReturned = 0;
     for (int childIdx : childIndices)
     {
-        entriesScanned++;
         const char *fileName = content->entries[childIdx].fileName;
 
         const char *baseName = fileName;
@@ -866,10 +850,7 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
             // Skip the directory prefix and slash to get just the child name
             baseName = fileName + lenInArchiveSubDir + 1;
         }
-        char *entryName = CPLStrdup(baseName);
-        oDir.AddString(entryName);
-        CPLFree(entryName);
-        entriesReturned++;
+        oDir.AddStringDirectly(CPLStrdup(baseName));
 
         if (nMaxFiles > 0 && oDir.Count() > nMaxFiles)
             break;

@@ -592,12 +592,9 @@ class VSIArchiveContent
     int nEntries = 0;
     VSIArchiveEntry *entries = nullptr;
 
-    std::map<std::string, DirectoryChildren> dirIndex;
+    std::map<std::string, DirectoryChildren> dirIndex{};
 
-    VSIArchiveContent()
-        : mTime(0), nFileSize(0), nEntries(0), entries(nullptr), dirIndex()
-    {
-    }
+    VSIArchiveContent() = default;
 
     ~VSIArchiveContent();
 
