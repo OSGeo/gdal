@@ -631,7 +631,8 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 
     virtual const char *GetPrefix() = 0;
     virtual std::vector<CPLString> GetExtensions() = 0;
-    virtual VSIArchiveReader *CreateReader(const char *pszArchiveFileName) = 0;
+    virtual std::unique_ptr<VSIArchiveReader>
+    CreateReader(const char *pszArchiveFileName) = 0;
 
   public:
     VSIArchiveFilesystemHandler();
@@ -647,8 +648,8 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
     virtual char *SplitFilename(const char *pszFilename,
                                 CPLString &osFileInArchive,
                                 bool bCheckMainFileExists, bool bSetError);
-    virtual VSIArchiveReader *OpenArchiveFile(const char *archiveFilename,
-                                              const char *fileInArchiveName);
+    virtual std::unique_ptr<VSIArchiveReader>
+    OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
     virtual int FindFileInArchive(const char *archiveFilename,
                                   const char *fileInArchiveName,
                                   const VSIArchiveEntry **archiveEntry);
