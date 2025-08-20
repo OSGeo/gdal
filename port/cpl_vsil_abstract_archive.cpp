@@ -164,7 +164,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
     std::unique_ptr<VSIArchiveReader> temporaryReader;  // keep in that scope
     if (poReader == nullptr)
     {
-        temporaryReader.reset(CreateReader(archiveFilename));
+        temporaryReader = CreateReader(archiveFilename);
         poReader = temporaryReader.get();
         if (!poReader)
             return nullptr;
@@ -579,11 +579,11 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 /*                           OpenArchiveFile()                          */
 /************************************************************************/
 
-VSIArchiveReader *
+std::unique_ptr<VSIArchiveReader>
 VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
                                              const char *fileInArchiveName)
 {
-    VSIArchiveReader *poReader = CreateReader(archiveFilename);
+    auto poReader = CreateReader(archiveFilename);
 
     if (poReader == nullptr)
     {
@@ -594,7 +594,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
     {
         if (poReader->GotoFirstFile() == FALSE)
         {
-            delete (poReader);
             return nullptr;
         }
 
@@ -604,7 +603,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
         {
             if (poReader->GotoNextFile() == FALSE)
             {
-                delete (poReader);
                 return nullptr;
             }
         }
@@ -616,7 +614,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
                        "no explicit in-archive filename is specified",
                        archiveFilename);
             const VSIArchiveContent *content =
-                GetContentOfArchive(archiveFilename, poReader);
+                GetContentOfArchive(archiveFilename, poReader.get());
             if (content)
             {
                 msg += "\nYou could try one of the following :\n";
@@ -630,7 +628,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
 
             CPLError(CE_Failure, CPLE_NotSupported, "%s", msg.c_str());
 
-            delete (poReader);
             return nullptr;
         }
     }
@@ -646,7 +643,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
             {
                 if (poReader->GotoFirstFile() == FALSE)
                 {
-                    delete (poReader);
                     return nullptr;
                 }
 
@@ -662,7 +658,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
                     {
                         if (bIsDir)
                         {
-                            delete (poReader);
                             return nullptr;
                         }
                         return poReader;
@@ -676,12 +671,10 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
                               &archiveEntry) == FALSE ||
             archiveEntry->bIsDir)
         {
-            delete (poReader);
             return nullptr;
         }
         if (!poReader->GotoFileOffset(archiveEntry->file_pos))
         {
-            delete poReader;
             return nullptr;
         }
     }
@@ -728,7 +721,7 @@ int VSIArchiveFilesystemHandler::Stat(const char *pszFilename,
     }
     else
     {
-        VSIArchiveReader *poReader = CreateReader(archiveFilename);
+        auto poReader = CreateReader(archiveFilename);
         CPLFree(archiveFilename);
         archiveFilename = nullptr;
 
@@ -740,7 +733,6 @@ int VSIArchiveFilesystemHandler::Stat(const char *pszFilename,
             {
                 if (poReader->GotoNextFile() == FALSE)
                 {
-                    delete (poReader);
                     return -1;
                 }
             }
@@ -762,8 +754,6 @@ int VSIArchiveFilesystemHandler::Stat(const char *pszFilename,
 
             ret = 0;
         }
-
-        delete (poReader);
     }
 
     CPLFree(archiveFilename);
