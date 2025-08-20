@@ -81,11 +81,6 @@ VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler()
 VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 
 {
-    for (const auto &iter : oFileList)
-    {
-        delete iter.second;
-    }
-
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
     hMutex = nullptr;
@@ -157,16 +152,16 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
     if (VSIStatL(archiveFilename, &sStat) != 0)
         return nullptr;
 
-    if (oFileList.find(archiveFilename) != oFileList.end())
+    auto oIter = oFileList.find(archiveFilename);
+    if (oIter != oFileList.end())
     {
-        VSIArchiveContent *content = oFileList[archiveFilename];
+        const VSIArchiveContent *content = oIter->second.get();
         if (static_cast<time_t>(sStat.st_mtime) > content->mTime ||
             static_cast<vsi_l_offset>(sStat.st_size) != content->nFileSize)
         {
             CPLDebug("VSIArchive",
                      "The content of %s has changed since it was cached",
                      archiveFilename);
-            delete content;
             oFileList.erase(archiveFilename);
         }
         else
@@ -175,27 +170,25 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
         }
     }
 
-    bool bMustClose = poReader == nullptr;
+    std::unique_ptr<VSIArchiveReader> temporaryReader;  // keep in that scope
     if (poReader == nullptr)
     {
-        poReader = CreateReader(archiveFilename);
+        temporaryReader.reset(CreateReader(archiveFilename));
+        poReader = temporaryReader.get();
         if (!poReader)
             return nullptr;
     }
 
     if (poReader->GotoFirstFile() == FALSE)
     {
-        if (bMustClose)
-            delete (poReader);
         return nullptr;
     }
 
-    VSIArchiveContent *content = new VSIArchiveContent;
+    auto content = std::make_unique<VSIArchiveContent>();
     content->mTime = sStat.st_mtime;
     content->nFileSize = static_cast<vsi_l_offset>(sStat.st_size);
     content->nEntries = 0;
     content->entries = nullptr;
-    oFileList[archiveFilename] = content;
 
     std::set<CPLString> oSet;
 
@@ -279,13 +272,13 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
 
     } while (poReader->GotoNextFile());
 
-    if (bMustClose)
-        delete (poReader);
-
     // Build directory index for fast lookups
-    BuildDirectoryIndex(content);
+    BuildDirectoryIndex(content.get());
 
-    return content;
+    return oFileList
+        .insert(std::pair<CPLString, std::unique_ptr<VSIArchiveContent>>(
+            archiveFilename, std::move(content)))
+        .first->second.get();
 }
 
 /************************************************************************/

@@ -4568,12 +4568,9 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
     zipFilename = nullptr;
 
     // Invalidate cached file list.
-    std::map<CPLString, VSIArchiveContent *>::iterator iter =
-        oFileList.find(osZipFilename);
+    auto iter = oFileList.find(osZipFilename);
     if (iter != oFileList.end())
     {
-        delete iter->second;
-
         oFileList.erase(iter);
     }
 
@@ -4703,8 +4700,6 @@ int VSIZipFilesystemHandler::CopyFile(const char *pszSource,
     auto oIterFileList = oFileList.find(osZipFilename);
     if (oIterFileList != oFileList.end())
     {
-        delete oIterFileList->second;
-
         oFileList.erase(oIterFileList);
     }
 

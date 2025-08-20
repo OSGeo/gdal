@@ -627,7 +627,7 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
     /* unarchive.c is quite inefficient in listing them. This speeds up access
      * to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
-    std::map<CPLString, VSIArchiveContent *> oFileList{};
+    std::map<CPLString, std::unique_ptr<VSIArchiveContent>> oFileList{};
 
     virtual const char *GetPrefix() = 0;
     virtual std::vector<CPLString> GetExtensions() = 0;
