@@ -2031,10 +2031,13 @@ VSILFILE *VSIFOpenL(const char *pszFilename, const char *pszAccess)
 
 #ifndef DOXYGEN_SKIP
 
-VSIVirtualHandle *VSIFilesystemHandler::Open(const char *pszFilename,
-                                             const char *pszAccess)
+VSIVirtualHandleUniquePtr
+VSIFilesystemHandler::OpenStatic(const char *pszFilename, const char *pszAccess,
+                                 bool bSetError, CSLConstList papszOptions)
 {
-    return Open(pszFilename, pszAccess, false, nullptr);
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -2396,7 +2399,7 @@ int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
 /*                       CreateOnlyVisibleAtCloseTime()                 */
 /************************************************************************/
 
-VSIVirtualHandle *VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
+VSIVirtualHandleUniquePtr VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
     const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
 {
     if (!bEmulationAllowed)
@@ -2407,9 +2410,10 @@ VSIVirtualHandle *VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
         Open(tmpName.c_str(), "wb+", true, papszOptions));
     if (!nativeHandle)
         return nullptr;
-    return std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
-               std::move(nativeHandle), pszFilename, tmpName)
-        .release();
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIVirtualHandleOnlyVisibleAtCloseTime>(
+            std::move(nativeHandle), pszFilename, tmpName)
+            .release());
 }
 
 /************************************************************************/
@@ -2862,13 +2866,13 @@ VSILFILE *VSIFOpenEx2L(const char *pszFilename, const char *pszAccess,
 
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
 
-    VSILFILE *fp = poFSHandler->Open(pszFilename, pszAccess,
-                                     CPL_TO_BOOL(bSetError), papszOptions);
+    auto fp = poFSHandler->Open(pszFilename, pszAccess, CPL_TO_BOOL(bSetError),
+                                papszOptions);
 
     VSIDebug4("VSIFOpenEx2L(%s,%s,%d) = %p", pszFilename, pszAccess, bSetError,
-              fp);
+              fp.get());
 
-    return fp;
+    return fp.release();
 }
 
 /************************************************************************/

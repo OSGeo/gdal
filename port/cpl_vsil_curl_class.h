@@ -242,9 +242,9 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static bool IsAllowedFilename(const char *pszFilename);
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -575,8 +575,9 @@ class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
     CreateWriteHandle(const char *pszFilename, CSLConstList papszOptions) = 0;
 
   public:
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 
     bool SupportsSequentialWrite(const char * /* pszPath */,
                                  bool /* bAllowLocalTempFile */) override

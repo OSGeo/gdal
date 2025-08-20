@@ -5891,11 +5891,14 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     VSIErrorReset();
     const bool bOnlyVisibleAtCloseTime = CPLTestBool(CSLFetchNameValueDef(
         papszParamList, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"));
-    VSILFILE *l_fpL =
+    auto l_fpL =
         bOnlyVisibleAtCloseTime && !bAppend
             ? VSIFileManager::GetHandler(pszFilename)
                   ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
-            : VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
+                  .release()
+            : VSIFilesystemHandler::OpenStatic(pszFilename,
+                                               bAppend ? "r+b" : "w+b", true)
+                  .release();
     if (l_fpL == nullptr)
     {
         VSIToCPLErrorWithMsg(CE_Failure, CPLE_OpenFailed,

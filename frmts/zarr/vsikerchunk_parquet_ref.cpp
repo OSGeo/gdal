@@ -70,8 +70,9 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
         return bIsFileSystemInstantiated;
     }
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -495,7 +496,7 @@ VSIKerchunkParquetRefFileSystem::GetChunkInfo(
 /*               VSIKerchunkParquetRefFileSystem::Open()                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
+VSIVirtualHandleUniquePtr VSIKerchunkParquetRefFileSystem::Open(
     const char *pszFilename, const char *pszAccess, bool /* bSetError */,
     CSLConstList /* papszOptions */)
 {
@@ -526,8 +527,9 @@ VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
                 psField->Binary.paData = nullptr;
                 psField->Binary.nCount = 0;
                 // and transmit its ownership to the VSIMem file
-                return VSIFileFromMemBuffer(nullptr, abyData, nSize,
-                                            /* bTakeOwnership = */ true);
+                return VSIVirtualHandleUniquePtr(
+                    VSIFileFromMemBuffer(nullptr, abyData, nSize,
+                                         /* bTakeOwnership = */ true));
             }
             else
             {
@@ -550,7 +552,7 @@ VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
                              osPath.c_str());
                 CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
                                               "EMPTY_DIR", false);
-                return VSIFOpenL(osPath.c_str(), "rb");
+                return VSIFilesystemHandler::OpenStatic(osPath.c_str(), "rb");
             }
         }
 
@@ -558,8 +560,9 @@ VSIVirtualHandle *VSIKerchunkParquetRefFileSystem::Open(
     }
 
     const auto &abyValue = oIter->second;
-    return VSIFileFromMemBuffer(nullptr, const_cast<GByte *>(abyValue.data()),
-                                abyValue.size(), /* bTakeOwnership = */ false);
+    return VSIVirtualHandleUniquePtr(
+        VSIFileFromMemBuffer(nullptr, const_cast<GByte *>(abyValue.data()),
+                             abyValue.size(), /* bTakeOwnership = */ false));
 }
 
 /************************************************************************/

@@ -496,9 +496,9 @@ class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
     std::unique_ptr<VSIArchiveReader>
     CreateReader(const char *pszTarFileName) override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 };
 
 /************************************************************************/
@@ -544,10 +544,9 @@ VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
-                                                const char *pszAccess,
-                                                bool bSetError,
-                                                CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+VSITarFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                              bool bSetError, CSLConstList /* papszOptions */)
 {
 
     if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
@@ -586,7 +585,7 @@ VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
     else
         osSubFileName += tarFilename.get();
 
-    return VSIFOpenL(osSubFileName, "rb");
+    return VSIFilesystemHandler::OpenStatic(osSubFileName, "rb");
 }
 
 //! @endcond

@@ -50,16 +50,13 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIWin32FilesystemHandler)
 
   public:
-    // TODO(schwehr): Fix Open call to remove the need for this using call.
-    using VSIFilesystemHandler::Open;
-
     VSIWin32FilesystemHandler() = default;
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList /* papszOptions */) override;
 
-    VSIVirtualHandle *
+    VSIVirtualHandleUniquePtr
     CreateOnlyVisibleAtCloseTime(const char *pszFilename,
                                  bool bEmulationAllowed,
                                  CSLConstList papszOptions) override;
@@ -795,10 +792,9 @@ static bool VSIWin32IsLongFilename(const wchar_t *pwszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
-                                                  const char *pszAccess,
-                                                  bool bSetError,
-                                                  CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                                bool bSetError, CSLConstList papszOptions)
 
 {
     DWORD dwDesiredAccess;
@@ -965,7 +961,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create a VSI file handle.                                       */
     /* -------------------------------------------------------------------- */
-    VSIWin32Handle *poHandle = new VSIWin32Handle;
+    auto poHandle = std::make_unique<VSIWin32Handle>();
 
     poHandle->hFile = hFile;
     poHandle->m_bWriteThrough = bWriteThrough;
@@ -980,12 +976,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
     if ((EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb")) &&
         CPLTestBool(CPLGetConfigOption("VSI_CACHE", "FALSE")))
     {
-        return VSICreateCachedFile(poHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateCachedFile(poHandle.release()));
     }
-    else
-    {
-        return poHandle;
-    }
+
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -1072,7 +1067,8 @@ static bool IsPathNTFS(const char *pszPath)
 /*                      CreateOnlyVisibleAtCloseTime()                  */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
+VSIVirtualHandleUniquePtr
+VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
     const char *pszFilename, bool bEmulationAllowed, CSLConstList papszOptions)
 {
     typedef NTSTATUS(WINAPI * CPLNtCreateFile_t)(
@@ -1207,13 +1203,13 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::CreateOnlyVisibleAtCloseTime(
                 break;
             }
 
-            VSIWin32Handle *poHandle = new VSIWin32Handle;
+            auto poHandle = std::make_unique<VSIWin32Handle>();
 
             poHandle->hFile = hFile;
             poHandle->m_bWriteThrough = bWriteThrough;
             poHandle->m_osFilenameToSetAtCloseTime = osFullFilename;
 
-            return poHandle;
+            return VSIVirtualHandleUniquePtr(poHandle.release());
 
         } while (false);
     }
@@ -1273,7 +1269,7 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         // In that situation try a poor-man implementation with Open()
         if (nResult < 0 && VSIWin32IsLongFilename(pwszFilename))
         {
-            VSIVirtualHandle *poHandle = Open(pszFilename, "rb");
+            auto poHandle = Open(pszFilename, "rb", false, nullptr);
             if (poHandle != nullptr)
             {
                 nResult = 0;
@@ -1281,8 +1277,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
                 CPL_IGNORE_RET_VAL(poHandle->Seek(0, SEEK_END));
                 pStatBuf->st_mode = S_IFREG;
                 pStatBuf->st_size = poHandle->Tell();
-                poHandle->Close();
-                delete poHandle;
             }
             else
                 nResult = -1;
