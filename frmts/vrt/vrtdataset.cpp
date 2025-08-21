@@ -2980,7 +2980,8 @@ bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
         static_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
 
     GDALRasterBand *poBand = poSource->GetRasterBand();
-    if (!poBand || poSource->GetMaskBandMainBand())
+    if (!poBand || poSource->GetMaskBandMainBand() ||
+        poBand->GetRasterDataType() != poVRTBand->GetRasterDataType())
         return false;
 
     poSrcDataset = poBand->GetDataset();
