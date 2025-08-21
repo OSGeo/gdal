@@ -236,27 +236,16 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
 /*                        FindFileInArchive()                           */
 /************************************************************************/
 
-int VSIArchiveFilesystemHandler::FindFileInArchive(
+bool VSIArchiveFilesystemHandler::FindFileInArchive(
     const char *archiveFilename, const char *fileInArchiveName,
     const VSIArchiveEntry **archiveEntry)
 {
-    if (fileInArchiveName == nullptr)
-        return FALSE;
+    CPLAssert(fileInArchiveName);
 
     const VSIArchiveContent *content = GetContentOfArchive(archiveFilename);
     if (content)
     {
-        std::string parentDir;
-        const char *lastSlash = strrchr(fileInArchiveName, '/');
-        if (!lastSlash)
-            lastSlash = strrchr(fileInArchiveName, '\\');
-
-        if (lastSlash)
-        {
-            parentDir =
-                std::string(fileInArchiveName, lastSlash - fileInArchiveName);
-        }
-        // else: file is in root directory (empty parentDir)
+        const std::string parentDir = CPLGetPathSafe(fileInArchiveName);
 
         // Use directory index to search within parent directory's children
         auto dirIter = content->dirIndex.find(parentDir);
@@ -269,12 +258,12 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(
                 {
                     if (archiveEntry)
                         *archiveEntry = &content->entries[childIdx];
-                    return TRUE;
+                    return true;
                 }
             }
         }
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
