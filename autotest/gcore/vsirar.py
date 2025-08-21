@@ -30,7 +30,7 @@ def test_vsirar_basic():
 
     content = gdal.ReadDir("/vsirar/../ogr/data/poly.shp.rar")
     if content is None:
-        pytest.skip()
+        pytest.skip("RAR support not enabled")
 
     assert set(content) == set(["poly.PRJ", "poly.dbf", "poly.shp", "poly.shx"])
 
@@ -64,9 +64,27 @@ def test_vsirar_ogr():
 
     content = gdal.ReadDir("/vsirar/../ogr/data/poly.shp.rar")
     if content is None:
-        pytest.skip()
+        pytest.skip("RAR support not enabled")
 
     ds = ogr.Open("/vsirar/../ogr/data/poly.shp.rar")
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
+
+
+###############################################################################
+# Test /vsirar/
+
+
+@pytest.mark.skipif(
+    "SKIP_VSIRAR" in os.environ,
+    reason="test skipped due to random crashes",
+)
+def test_vsirar_gdal():
+
+    content = gdal.ReadDir("/vsirar/data/byte.tif.rar")
+    if content is None:
+        pytest.skip("RAR support not enabled")
+
+    ds = gdal.Open("/vsirar/data/byte.tif.rar")
+    assert ds.GetRasterBand(1).Checksum() == 4672
