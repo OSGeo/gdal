@@ -13,10 +13,9 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
-#include <algorithm>
 #include <cstring>
-#include <fcntl.h>
 #include <ctime>
+#include <fcntl.h>
 #include <map>
 #include <set>
 #include <string>
