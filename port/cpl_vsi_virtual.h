@@ -581,6 +581,9 @@ typedef struct
     GIntBig nModifiedTime;
 } VSIArchiveEntry;
 
+// Store list of child indices for each directory
+using DirectoryChildren = std::vector<int>;
+
 class VSIArchiveContent
 {
   public:
@@ -589,7 +592,10 @@ class VSIArchiveContent
     int nEntries = 0;
     VSIArchiveEntry *entries = nullptr;
 
+    std::map<std::string, DirectoryChildren> dirIndex{};
+
     VSIArchiveContent() = default;
+
     ~VSIArchiveContent();
 
   private:

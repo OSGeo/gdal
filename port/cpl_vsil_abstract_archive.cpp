@@ -13,6 +13,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <algorithm>
 #include <cstring>
 #include <fcntl.h>
 #include <ctime>
@@ -126,6 +127,21 @@ static CPLString GetStrippedFilename(const CPLString &osFileName, bool &bIsDir)
     CPLString osRet(pszStrippedFileName);
     CPLFree(pszStrippedFileName);
     return osRet;
+}
+
+/************************************************************************/
+/*                        BuildDirectoryIndex()                         */
+/************************************************************************/
+
+static void BuildDirectoryIndex(VSIArchiveContent *content)
+{
+    content->dirIndex.clear();
+    for (int i = 0; i < content->nEntries; i++)
+    {
+        const char *fileName = content->entries[i].fileName;
+        std::string parentDir = CPLGetPathSafe(fileName);
+        content->dirIndex[parentDir].push_back(i);
+    }
 }
 
 /************************************************************************/
@@ -267,6 +283,9 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
     if (bMustClose)
         delete (poReader);
 
+    // Build directory index for fast lookups
+    BuildDirectoryIndex(content);
+
     return content;
 }
 
@@ -284,13 +303,32 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(
     const VSIArchiveContent *content = GetContentOfArchive(archiveFilename);
     if (content)
     {
-        for (int i = 0; i < content->nEntries; i++)
+        std::string parentDir;
+        const char *lastSlash = strrchr(fileInArchiveName, '/');
+        if (!lastSlash)
+            lastSlash = strrchr(fileInArchiveName, '\\');
+
+        if (lastSlash)
         {
-            if (strcmp(fileInArchiveName, content->entries[i].fileName) == 0)
+            parentDir =
+                std::string(fileInArchiveName, lastSlash - fileInArchiveName);
+        }
+        // else: file is in root directory (empty parentDir)
+
+        // Use directory index to search within parent directory's children
+        auto dirIter = content->dirIndex.find(parentDir);
+        if (dirIter != content->dirIndex.end())
+        {
+            const std::vector<int> &childIndices = dirIter->second;
+            for (int childIdx : childIndices)
             {
-                if (archiveEntry)
-                    *archiveEntry = &content->entries[i];
-                return TRUE;
+                if (strcmp(content->entries[childIdx].fileName,
+                           fileInArchiveName) == 0)
+                {
+                    if (archiveEntry)
+                        *archiveEntry = &content->entries[childIdx];
+                    return TRUE;
+                }
             }
         }
     }
@@ -776,48 +814,37 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIArchive", "Read dir %s", pszDirname);
 #endif
-    for (int i = 0; i < content->nEntries; i++)
+
+    std::string searchDir = lenInArchiveSubDir > 0
+                                ? std::string(osInArchiveSubDir)
+                                : std::string("");
+
+    // Use directory index to find the list of children for this directory
+    auto dirIter = content->dirIndex.find(searchDir);
+    if (dirIter == content->dirIndex.end())
     {
-        const char *fileName = content->entries[i].fileName;
-        /* Only list entries at the same level of inArchiveSubDir */
-        if (lenInArchiveSubDir != 0 &&
-            strncmp(fileName, osInArchiveSubDir, lenInArchiveSubDir) == 0 &&
-            IsEitherSlash(fileName[lenInArchiveSubDir]) &&
-            fileName[lenInArchiveSubDir + 1] != 0)
+        // Directory not found in index - no children
+        CPLFree(archiveFilename);
+        return oDir.StealList();
+    }
+    const std::vector<int> &childIndices = dirIter->second;
+
+    // Scan the children of this directory
+    for (int childIdx : childIndices)
+    {
+        const char *fileName = content->entries[childIdx].fileName;
+
+        const char *baseName = fileName;
+        if (lenInArchiveSubDir != 0)
         {
-            const char *slash = strchr(fileName + lenInArchiveSubDir + 1, '/');
-            if (slash == nullptr)
-                slash = strchr(fileName + lenInArchiveSubDir + 1, '\\');
-            if (slash == nullptr || slash[1] == 0)
-            {
-                char *tmpFileName = CPLStrdup(fileName);
-                if (slash != nullptr)
-                {
-                    tmpFileName[strlen(tmpFileName) - 1] = 0;
-                }
-#ifdef DEBUG_VERBOSE
-                CPLDebug("VSIArchive", "Add %s as in directory %s",
-                         tmpFileName + lenInArchiveSubDir + 1, pszDirname);
-#endif
-                oDir.AddString(tmpFileName + lenInArchiveSubDir + 1);
-                CPLFree(tmpFileName);
-            }
+            // Skip the directory prefix and slash to get just the child name
+            baseName = fileName + lenInArchiveSubDir + 1;
         }
-        else if (lenInArchiveSubDir == 0 && strchr(fileName, '/') == nullptr &&
-                 strchr(fileName, '\\') == nullptr)
-        {
-            // Only list toplevel files and directories.
-#ifdef DEBUG_VERBOSE
-            CPLDebug("VSIArchive", "Add %s as in directory %s", fileName,
-                     pszDirname);
-#endif
-            oDir.AddString(fileName);
-        }
+        oDir.AddStringDirectly(CPLStrdup(baseName));
 
         if (nMaxFiles > 0 && oDir.Count() > nMaxFiles)
             break;
     }
-
     CPLFree(archiveFilename);
     return oDir.StealList();
 }
