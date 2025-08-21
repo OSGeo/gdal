@@ -572,25 +572,25 @@ class VSIArchiveEntryFileOffset
     virtual ~VSIArchiveEntryFileOffset();
 };
 
-typedef struct
+class VSIArchiveEntry
 {
-    char *fileName;
-    vsi_l_offset uncompressed_size;
-    VSIArchiveEntryFileOffset *file_pos;
-    int bIsDir;
-    GIntBig nModifiedTime;
-} VSIArchiveEntry;
-
-// Store list of child indices for each directory
-using DirectoryChildren = std::vector<int>;
+  public:
+    std::string fileName{};
+    vsi_l_offset uncompressed_size = 0;
+    std::unique_ptr<VSIArchiveEntryFileOffset> file_pos{};
+    bool bIsDir = false;
+    GIntBig nModifiedTime = 0;
+};
 
 class VSIArchiveContent
 {
   public:
     time_t mTime = 0;
     vsi_l_offset nFileSize = 0;
-    int nEntries = 0;
-    VSIArchiveEntry *entries = nullptr;
+    std::vector<VSIArchiveEntry> entries{};
+
+    // Store list of child indices for each directory
+    using DirectoryChildren = std::vector<int>;
 
     std::map<std::string, DirectoryChildren> dirIndex{};
 
