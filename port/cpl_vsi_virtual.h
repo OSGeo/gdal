@@ -620,6 +620,10 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
+    bool FindFileInArchive(const char *archiveFilename,
+                           const char *fileInArchiveName,
+                           const VSIArchiveEntry **archiveEntry);
+
   protected:
     std::recursive_mutex oMutex{};
     /* We use a cache that contains the list of files contained in a VSIArchive
@@ -650,9 +654,6 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                                 bool bCheckMainFileExists, bool bSetError);
     virtual std::unique_ptr<VSIArchiveReader>
     OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
-    virtual int FindFileInArchive(const char *archiveFilename,
-                                  const char *fileInArchiveName,
-                                  const VSIArchiveEntry **archiveEntry);
 
     virtual bool IsLocal(const char *pszPath) override;
 
