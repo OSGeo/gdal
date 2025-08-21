@@ -139,17 +139,7 @@ static void BuildDirectoryIndex(VSIArchiveContent *content)
     for (int i = 0; i < content->nEntries; i++)
     {
         const char *fileName = content->entries[i].fileName;
-
-        std::string fileStr(fileName);
-        if (!fileStr.empty() &&
-            (fileStr.back() == '/' || fileStr.back() == '\\'))
-        {
-            // this entry is a directory. remove trailing slash to get the directory name
-            fileStr.pop_back();
-        }
-
-        std::string parentDir = CPLGetPathSafe(fileStr.c_str());
-
+        std::string parentDir = CPLGetPathSafe(fileName);
         content->dirIndex[parentDir].push_back(i);
     }
 }
