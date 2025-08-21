@@ -108,10 +108,13 @@ static double GTiffGetLERCMaxZErrorOverview(CSLConstList papszOptions)
 }
 
 #if HAVE_JXL
-static bool GTiffGetJXLLossless(CSLConstList papszOptions)
+static bool GTiffGetJXLLossless(CSLConstList papszOptions,
+                                bool *pbIsSpecified = nullptr)
 {
-    return CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "JXL_LOSSLESS", "TRUE"));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_LOSSLESS");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr || CPLTestBool(pszVal);
 }
 
 static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
@@ -119,16 +122,22 @@ static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
     return atoi(CSLFetchNameValueDef(papszOptions, "JXL_EFFORT", "5"));
 }
 
-static float GTiffGetJXLDistance(CSLConstList papszOptions)
+static float GTiffGetJXLDistance(CSLConstList papszOptions,
+                                 bool *pbIsSpecified = nullptr)
 {
-    return static_cast<float>(
-        CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_DISTANCE");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr ? 1.0f : static_cast<float>(CPLAtof(pszVal));
 }
 
-static float GTiffGetJXLAlphaDistance(CSLConstList papszOptions)
+static float GTiffGetJXLAlphaDistance(CSLConstList papszOptions,
+                                      bool *pbIsSpecified = nullptr)
 {
-    return static_cast<float>(CPLAtof(
-        CSLFetchNameValueDef(papszOptions, "JXL_ALPHA_DISTANCE", "-1.0")));
+    const char *pszVal = CSLFetchNameValue(papszOptions, "JXL_ALPHA_DISTANCE");
+    if (pbIsSpecified)
+        *pbIsSpecified = pszVal != nullptr;
+    return pszVal == nullptr ? -1.0f : static_cast<float>(CPLAtof(pszVal));
 }
 
 #endif
@@ -5659,10 +5668,30 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
 #if HAVE_JXL
-    const bool l_bJXLLossless = GTiffGetJXLLossless(papszParamList);
+    bool bJXLLosslessSpecified = false;
+    const bool l_bJXLLossless =
+        GTiffGetJXLLossless(papszParamList, &bJXLLosslessSpecified);
     const uint32_t l_nJXLEffort = GTiffGetJXLEffort(papszParamList);
-    const float l_fJXLDistance = GTiffGetJXLDistance(papszParamList);
-    const float l_fJXLAlphaDistance = GTiffGetJXLAlphaDistance(papszParamList);
+    bool bJXLDistanceSpecified = false;
+    const float l_fJXLDistance =
+        GTiffGetJXLDistance(papszParamList, &bJXLDistanceSpecified);
+    if (bJXLDistanceSpecified && l_bJXLLossless)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
+                    "JXL_DISTANCE creation option is ignored, given %s "
+                    "JXL_LOSSLESS=YES",
+                    bJXLLosslessSpecified ? "(explicit)" : "(implicit)");
+    }
+    bool bJXLAlphaDistanceSpecified = false;
+    const float l_fJXLAlphaDistance =
+        GTiffGetJXLAlphaDistance(papszParamList, &bJXLAlphaDistanceSpecified);
+    if (bJXLAlphaDistanceSpecified && l_bJXLLossless)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
+                    "JXL_ALPHA_DISTANCE creation option is ignored, given %s "
+                    "JXL_LOSSLESS=YES",
+                    bJXLLosslessSpecified ? "(explicit)" : "(implicit)");
+    }
 #endif
     /* -------------------------------------------------------------------- */
     /*      Streaming related code                                          */
