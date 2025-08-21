@@ -103,7 +103,8 @@ jobs:
         # Build libjxl
         # libjxl being still unstable, if the main branch fails to compile/test
         # you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
-        JXL_TREEISH=main
+        # FIXME: restore JXL_TREEISH=main, once https://github.com/libjxl/libjxl/issues/4410 is solved
+        JXL_TREEISH=a4e40af31ab4dd6d6b9ce893c4425b7180012916
         git clone https://github.com/libjxl/libjxl.git --recursive \
             && cd libjxl \
             && git checkout ${JXL_TREEISH} \
