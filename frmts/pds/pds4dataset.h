@@ -283,8 +283,9 @@ class PDS4EditableLayer final : public OGREditableLayer
     PDS4TableBaseLayer *GetBaseLayer() const;
 
   public:
-    explicit PDS4EditableLayer(PDS4FixedWidthTable *poBaseLayer);
-    explicit PDS4EditableLayer(PDS4DelimitedTable *poBaseLayer);
+    explicit PDS4EditableLayer(
+        std::unique_ptr<PDS4FixedWidthTable> poBaseLayer);
+    explicit PDS4EditableLayer(std::unique_ptr<PDS4DelimitedTable> poBaseLayer);
     ~PDS4EditableLayer() override;
 
     void RefreshFileAreaObservational(CPLXMLNode *psFAO)
@@ -448,9 +449,13 @@ class PDS4RawRasterBand final : public RawRasterBand
     bool m_bHasOffset{};
     bool m_bHasScale{};
     bool m_bHasNoData{};
+    bool m_bHasNoDataInt64{};
+    bool m_bHasNoDataUInt64{};
     double m_dfOffset{};
     double m_dfScale{};
     double m_dfNoData{};
+    int64_t m_nNoDataInt64{};
+    uint64_t m_nNoDataUInt64{};
 
   public:
     PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
@@ -475,6 +480,10 @@ class PDS4RawRasterBand final : public RawRasterBand
     virtual CPLErr SetScale(double dfNewScale) override;
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double dfNewNoData) override;
+    virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
+    virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
 
     virtual const char *GetUnitType() override
     {
@@ -505,9 +514,13 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
     bool m_bHasOffset{};
     bool m_bHasScale{};
     bool m_bHasNoData{};
+    bool m_bHasNoDataInt64{};
+    bool m_bHasNoDataUInt64{};
     double m_dfOffset{};
     double m_dfScale{};
     double m_dfNoData{};
+    int64_t m_nNoDataInt64{};
+    uint64_t m_nNoDataUInt64{};
 
     CPL_DISALLOW_COPY_ASSIGN(PDS4WrapperRasterBand)
 
@@ -540,6 +553,10 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
     virtual CPLErr SetScale(double dfNewScale) override;
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double dfNewNoData) override;
+    virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr) override;
+    virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
+    virtual CPLErr SetNoDataValueAsUInt64(uint64_t nNoData) override;
 
     virtual const char *GetUnitType() override
     {
