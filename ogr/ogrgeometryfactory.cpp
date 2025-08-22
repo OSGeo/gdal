@@ -26,7 +26,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #ifdef HAVE_GEOS
-#include "geos_c.h"
+#include "ogr_geos.h"
 #endif
 
 #include "ogrgeojsongeometry.h"
