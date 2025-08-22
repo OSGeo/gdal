@@ -394,6 +394,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX}
+# FIXME: restore JXL_TREEISH=main, once https://github.com/libjxl/libjxl/issues/4410 is solved
+ARG JXL_TREEISH=a4e40af31ab4dd6d6b9ce893c4425b7180012916
 RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && git clone https://github.com/libjxl/libjxl.git --recursive \
@@ -406,6 +408,7 @@ RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
         ccache -M 100M; \
     fi \
     && cd libjxl \
+    && git checkout ${JXL_TREEISH} \
     && mkdir build \
     && cd build \
     && cmake -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
