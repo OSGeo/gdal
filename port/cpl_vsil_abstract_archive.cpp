@@ -862,4 +862,17 @@ bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath)
     return poFSHandler->IsLocal(pszPath);
 }
 
+/************************************************************************/
+/*                               IsArchive()                            */
+/************************************************************************/
+
+bool VSIArchiveFilesystemHandler::IsArchive(const char *pszPath)
+{
+    if (!STARTS_WITH(pszPath, GetPrefix()))
+        return false;
+    CPLString osFileInArchive;
+    return SplitFilename(pszPath, osFileInArchive, false, false) != nullptr &&
+           osFileInArchive.empty();
+}
+
 //! @endcond
