@@ -1950,3 +1950,57 @@ def test_pds4_write_missing_constant(tmp_vsimem, dt, val, serialized_val, geotif
             assert ds.GetRasterBand(1).ReadRaster() == struct.pack("f", val)
         elif dt == gdal.GDT_Float64:
             assert ds.GetRasterBand(1).ReadRaster() == struct.pack("d", val)
+
+
+###############################################################################
+# Test support for products like https://d34uoeqxvp7znu.cloudfront.net/data/l2/200908/20090811/m3g20090811t012112_l2.xml
+
+
+def test_pds4_array_3D_with_untypical_band_names(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.xml",
+        """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational>
+        <File>
+            <file_name>test.img</file_name>
+        </File>
+        <Array_3D>
+            <axes>3</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>IEEE754MSBSingle</data_type>
+            </Element_Array>
+            <Axis_Array>
+                <axis_name>something</axis_name>
+                <elements>3</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Lines</axis_name>
+                <elements>5</elements>
+                <sequence_number>2</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Samples</axis_name>
+                <elements>4</elements>
+                <sequence_number>3</sequence_number>
+            </Axis_Array>
+            <Special_Constants>
+               <invalid_constant>-999.0</invalid_constant>
+            </Special_Constants>
+        </Array_3D>
+    </File_Area_Observational>
+</Product_Observational>""",
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "test.img", "wb"):
+        pass
+
+    ds = gdal.Open(tmp_vsimem / "test.xml")
+    assert ds.RasterCount == 3
+    assert ds.RasterYSize == 5
+    assert ds.RasterXSize == 4
+    assert ds.GetRasterBand(1).GetNoDataValue() == -999.0
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"

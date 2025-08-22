@@ -1891,6 +1891,12 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 continue;
             }
+            if (!(nDIM >= 1 && nDIM <= 3))
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Array with %d dimensions not supported", nDIM);
+                continue;
+            }
 
             nArrayIdx++;
             // Does it match a selected subdataset ?
@@ -2003,12 +2009,19 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psSubIter, "Element_Array.scaling_factor", "1"));
 
             // Parse Axis_Array elements
-            char szOrder[4] = {0};
             int l_nBands = 1;
             int nLines = 0;
             int nSamples = 0;
-            int nAxisFound = 0;
-            int anElements[3] = {0};
+            std::vector<int> anElements;
+            std::vector<std::string> axisNames;
+            std::vector<char> dimSemantics;
+            anElements.resize(nDIM);
+            axisNames.resize(nDIM);
+            dimSemantics.resize(nDIM);
+            int iBandIdx = -1;
+            int iLineIdx = -1;
+            int iSampleIdx = -1;
+            int nAxisOKCount = 0;
             for (CPLXMLNode *psAxisIter = psSubIter->psChild;
                  psAxisIter != nullptr; psAxisIter = psAxisIter->psNext)
             {
@@ -2042,47 +2055,116 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                              "Invalid elements = %s", pszElements);
                     continue;
                 }
-                nSeqNumber--;
-                if (szOrder[nSeqNumber] != '\0')
+
+                const int nIdx = nSeqNumber - 1;
+                if (STARTS_WITH_CI(pszAxisName, "Line"))
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Invalid sequence_number = %s", pszSequenceNumber);
-                    continue;
+                    if (iLineIdx < 0)
+                        iLineIdx = nIdx;
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Several axis with Line identifier");
+                        break;
+                    }
                 }
-                if (EQUAL(pszAxisName, "Band") && nDIM == 3)
+                else if (STARTS_WITH_CI(pszAxisName, "Sample"))
                 {
-                    szOrder[nSeqNumber] = 'B';
-                    l_nBands = nElements;
-                    anElements[nSeqNumber] = nElements;
-                    nAxisFound++;
+                    if (iSampleIdx < 0)
+                        iSampleIdx = nIdx;
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Several axis with Sample identifier");
+                        break;
+                    }
                 }
-                else if (EQUAL(pszAxisName, "Line"))
+                else if (STARTS_WITH_CI(pszAxisName, "Band"))
                 {
-                    szOrder[nSeqNumber] = 'L';
-                    nLines = nElements;
-                    anElements[nSeqNumber] = nElements;
-                    nAxisFound++;
+                    if (iBandIdx < 0)
+                        iBandIdx = nIdx;
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Several axis with Band identifier");
+                        break;
+                    }
                 }
-                else if (EQUAL(pszAxisName, "Sample"))
-                {
-                    szOrder[nSeqNumber] = 'S';
-                    nSamples = nElements;
-                    anElements[nSeqNumber] = nElements;
-                    nAxisFound++;
-                }
-                else
-                {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "Unsupported axis_name = %s", pszAxisName);
-                    continue;
-                }
+
+                anElements[nIdx] = nElements;
+                axisNames[nIdx] = pszAxisName;
+
+                ++nAxisOKCount;
             }
-            if (nAxisFound != nDIM)
+
+            if (nAxisOKCount != nDIM)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Found only %d Axis_Array elements. %d expected",
-                         nAxisFound, nDIM);
+                         nAxisOKCount, nDIM);
                 continue;
+            }
+
+            if (nDIM == 1)
+            {
+                dimSemantics[0] = 'S';
+                nLines = 1;
+                nSamples = anElements[0];
+            }
+            else if (nDIM == 2)
+            {
+                if (iLineIdx < 0 || iSampleIdx < 0)
+                {
+                    CPLDebug("PDS4", "Assume that axis %s is Line",
+                             axisNames[0].c_str());
+                    CPLDebug("PDS4", "Assume that axis %s is Sample",
+                             axisNames[1].c_str());
+                    iLineIdx = 0;
+                    iSampleIdx = 1;
+                }
+                CPLAssert(iLineIdx >= 0 && iLineIdx < 2);
+                CPLAssert(iSampleIdx >= 0 && iSampleIdx < 2);
+                dimSemantics[iLineIdx] = 'L';
+                dimSemantics[iSampleIdx] = 'S';
+                nLines = anElements[iLineIdx];
+                nSamples = anElements[iSampleIdx];
+            }
+            else /* if (nDim == 3) */
+            {
+                if (iLineIdx < 0 || iSampleIdx < 0)
+                {
+                    CPLDebug("PDS4", "Assume that axis %s is Band",
+                             axisNames[0].c_str());
+                    CPLDebug("PDS4", "Assume that axis %s is Line",
+                             axisNames[1].c_str());
+                    CPLDebug("PDS4", "Assume that axis %s is Sample",
+                             axisNames[2].c_str());
+                    iBandIdx = 0;
+                    iLineIdx = 1;
+                    iSampleIdx = 2;
+                }
+                else if (iBandIdx < 0)
+                {
+                    CPLAssert(iLineIdx >= 0 && iLineIdx < 3);
+                    CPLAssert(iSampleIdx >= 0 && iSampleIdx < 3);
+                    bool abUsedIndices[3] = {false, false, false};
+                    abUsedIndices[iLineIdx] = true;
+                    abUsedIndices[iSampleIdx] = true;
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        if (!abUsedIndices[i])
+                            iBandIdx = i;
+                    }
+                }
+                CPLAssert(iLineIdx >= 0 && iLineIdx < 3);
+                CPLAssert(iSampleIdx >= 0 && iSampleIdx < 3);
+                CPLAssert(iBandIdx >= 0 && iSampleIdx < 3);
+                dimSemantics[iBandIdx] = 'B';
+                dimSemantics[iLineIdx] = 'L';
+                dimSemantics[iSampleIdx] = 'S';
+                l_nBands = anElements[iBandIdx];
+                nLines = anElements[iLineIdx];
+                nSamples = anElements[iSampleIdx];
             }
 
             if (!GDALCheckDatasetDimensions(nSamples, nLines) ||
@@ -2099,7 +2181,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             int nCountPreviousDim = 1;
             for (int i = nDIM - 1; i >= 0; i--)
             {
-                if (szOrder[i] == 'S')
+                if (dimSemantics[i] == 'S')
                 {
                     if (nSpacing >
                         static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
@@ -2112,7 +2194,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                         static_cast<int>(nSpacing * nCountPreviousDim);
                     nSpacing = nPixelOffset;
                 }
-                else if (szOrder[i] == 'L')
+                else if (dimSemantics[i] == 'L')
                 {
                     if (nSpacing >
                         static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
@@ -2144,31 +2226,46 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             CPLXMLNode *psSC = CPLGetXMLNode(psSubIter, "Special_Constants");
             if (psSC)
             {
-                if (const char *pszMC =
-                        CPLGetXMLValue(psSC, "missing_constant", nullptr))
+                const auto GetNoDataFromConstant =
+                    [psSC, eDT, &bNoDataSetInt64, &nNoDataInt64,
+                     &bNoDataSetUInt64, &nNoDataUInt64, &bNoDataSet,
+                     &dfNoData](const char *pszConstantName)
                 {
-                    if (eDT == GDT_Int64)
+                    if (const char *pszVal =
+                            CPLGetXMLValue(psSC, pszConstantName, nullptr))
                     {
-                        bNoDataSetInt64 = true;
-                        nNoDataInt64 = std::strtoll(pszMC, nullptr, 10);
-                    }
-                    else if (eDT == GDT_UInt64)
-                    {
-                        bNoDataSetUInt64 = true;
-                        nNoDataUInt64 = std::strtoull(pszMC, nullptr, 10);
-                    }
-                    else
-                    {
-                        auto val = ConstantToDouble("missing_constant", pszMC);
-                        if (val)
+                        if (eDT == GDT_Int64)
                         {
-                            bNoDataSet = true;
-                            dfNoData = *val;
+                            bNoDataSetInt64 = true;
+                            nNoDataInt64 = std::strtoll(pszVal, nullptr, 10);
                         }
+                        else if (eDT == GDT_UInt64)
+                        {
+                            bNoDataSetUInt64 = true;
+                            nNoDataUInt64 = std::strtoull(pszVal, nullptr, 10);
+                        }
+                        else
+                        {
+                            auto val =
+                                ConstantToDouble(pszConstantName, pszVal);
+                            if (val)
+                            {
+                                bNoDataSet = true;
+                                dfNoData = *val;
+                            }
+                        }
+                        return true;
                     }
+                    return false;
+                };
+
+                if (!GetNoDataFromConstant("missing_constant"))
+                {
+                    // For example in https://d34uoeqxvp7znu.cloudfront.net/data/l2/200908/20090811/m3g20090811t012112_l2.xml
+                    GetNoDataFromConstant("invalid_constant");
                 }
 
-                const char *apszConstantNames[] = {
+                const char *const apszConstantNames[] = {
                     "saturated_constant",
                     "missing_constant",
                     "error_constant",
@@ -2233,12 +2330,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             poDS->m_fpImage = fp;
             poDS->m_bIsLSB = bLSBOrder;
 
-            if (memcmp(szOrder, "BLS", 3) == 0)
+            if (l_nBands > 1 && dimSemantics[0] == 'B' &&
+                dimSemantics[1] == 'L' && dimSemantics[2] == 'S')
             {
                 poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
                                                    "IMAGE_STRUCTURE");
             }
-            else if (memcmp(szOrder, "LSB", 3) == 0)
+            if (l_nBands > 1 && dimSemantics[0] == 'L' &&
+                dimSemantics[1] == 'S' && dimSemantics[2] == 'B')
             {
                 poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
                                                    "IMAGE_STRUCTURE");
