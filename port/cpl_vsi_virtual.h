@@ -491,6 +491,11 @@ class CPL_DLL VSIFilesystemHandler
         return true;
     }
 
+    virtual bool IsArchive(const char * /* pszPath */)
+    {
+        return false;
+    }
+
     virtual bool SupportsSequentialWrite(const char * /* pszPath */,
                                          bool /* bAllowLocalTempFile */)
     {
@@ -616,7 +621,7 @@ class VSIArchiveReader
     virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) = 0;
 };
 
-class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
+class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
@@ -653,17 +658,18 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                                   const char *fileInArchiveName,
                                   const VSIArchiveEntry **archiveEntry);
 
-    virtual bool IsLocal(const char *pszPath) override;
+    bool IsLocal(const char *pszPath) override;
 
-    virtual bool
-    SupportsSequentialWrite(const char * /* pszPath */,
-                            bool /* bAllowLocalTempFile */) override
+    bool IsArchive(const char *pszPath) override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
 
-    virtual bool SupportsRandomWrite(const char * /* pszPath */,
-                                     bool /* bAllowLocalTempFile */) override
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
