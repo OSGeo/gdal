@@ -486,9 +486,14 @@ class CPL_DLL VSIFilesystemHandler
         return osFilename;
     }
 
-    virtual bool IsLocal(const char * /* pszPath */)
+    virtual bool IsLocal(const char * /* pszPath */) const
     {
         return true;
+    }
+
+    virtual bool IsArchive(const char * /* pszPath */) const
+    {
+        return false;
     }
 
     virtual bool SupportsSequentialWrite(const char * /* pszPath */,
@@ -616,7 +621,7 @@ class VSIArchiveReader
     virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) = 0;
 };
 
-class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
+class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
@@ -625,7 +630,8 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                            const VSIArchiveEntry **archiveEntry);
 
   protected:
-    std::recursive_mutex oMutex{};
+    mutable std::recursive_mutex oMutex{};
+
     /* We use a cache that contains the list of files contained in a VSIArchive
      * file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access
@@ -633,8 +639,8 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
     /* containing ~1000 files like a CADRG product */
     std::map<CPLString, std::unique_ptr<VSIArchiveContent>> oFileList{};
 
-    virtual const char *GetPrefix() = 0;
-    virtual std::vector<CPLString> GetExtensions() = 0;
+    virtual const char *GetPrefix() const = 0;
+    virtual std::vector<CPLString> GetExtensions() const = 0;
     virtual std::unique_ptr<VSIArchiveReader>
     CreateReader(const char *pszArchiveFileName) = 0;
 
@@ -651,21 +657,23 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                         VSIArchiveReader *poReader = nullptr);
     virtual char *SplitFilename(const char *pszFilename,
                                 CPLString &osFileInArchive,
-                                bool bCheckMainFileExists, bool bSetError);
+                                bool bCheckMainFileExists,
+                                bool bSetError) const;
     virtual std::unique_ptr<VSIArchiveReader>
     OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
 
-    virtual bool IsLocal(const char *pszPath) override;
+    bool IsLocal(const char *pszPath) const override;
 
-    virtual bool
-    SupportsSequentialWrite(const char * /* pszPath */,
-                            bool /* bAllowLocalTempFile */) override
+    bool IsArchive(const char *pszPath) const override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
 
-    virtual bool SupportsRandomWrite(const char * /* pszPath */,
-                                     bool /* bAllowLocalTempFile */) override
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override
     {
         return false;
     }

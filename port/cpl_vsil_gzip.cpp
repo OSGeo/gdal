@@ -3522,12 +3522,12 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     VSIZipFilesystemHandler() = default;
     ~VSIZipFilesystemHandler() override;
 
-    const char *GetPrefix() override
+    const char *GetPrefix() const override
     {
         return "/vsizip";
     }
 
-    std::vector<CPLString> GetExtensions() override;
+    std::vector<CPLString> GetExtensions() const override;
     std::unique_ptr<VSIArchiveReader>
     CreateReader(const char *pszZipFileName) override;
 
@@ -3639,7 +3639,7 @@ VSIZipFilesystemHandler::~VSIZipFilesystemHandler()
 /*                          GetExtensions()                             */
 /************************************************************************/
 
-std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
+std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions() const
 {
     std::vector<CPLString> oList;
     oList.push_back(".zip");

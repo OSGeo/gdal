@@ -272,7 +272,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     virtual std::string GetFSPrefix() const = 0;
     virtual bool AllowCachedDataFor(const char *pszFilename);
 
-    virtual bool IsLocal(const char * /* pszPath */) override
+    virtual bool IsLocal(const char * /* pszPath */) const override
     {
         return false;
     }

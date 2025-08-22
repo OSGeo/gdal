@@ -487,12 +487,12 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset *pOffset)
 class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
 {
   public:
-    const char *GetPrefix() override
+    const char *GetPrefix() const override
     {
         return "/vsitar";
     }
 
-    std::vector<CPLString> GetExtensions() override;
+    std::vector<CPLString> GetExtensions() const override;
     std::unique_ptr<VSIArchiveReader>
     CreateReader(const char *pszTarFileName) override;
 
@@ -505,7 +505,7 @@ class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
 /*                          GetExtensions()                             */
 /************************************************************************/
 
-std::vector<CPLString> VSITarFilesystemHandler::GetExtensions()
+std::vector<CPLString> VSITarFilesystemHandler::GetExtensions() const
 {
     std::vector<CPLString> oList;
     oList.push_back(".tar.gz");

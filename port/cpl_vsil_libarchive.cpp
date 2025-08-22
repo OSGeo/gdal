@@ -505,12 +505,12 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
 
     const std::string m_osPrefix;
 
-    virtual const char *GetPrefix() override
+    virtual const char *GetPrefix() const override
     {
         return m_osPrefix.c_str();
     }
 
-    virtual std::vector<CPLString> GetExtensions() override
+    virtual std::vector<CPLString> GetExtensions() const override
     {
         if (m_osPrefix == "/vsi7z")
         {
