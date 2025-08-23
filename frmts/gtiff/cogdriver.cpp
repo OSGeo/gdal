@@ -80,7 +80,11 @@ static CPLString GetTmpFilename(const char *pszFilename, const char *pszExt)
 
 static const char *GetResampling(GDALDataset *poSrcDS)
 {
-    return poSrcDS->GetRasterBand(1)->GetColorTable() ? "NEAREST" : "CUBIC";
+    return poSrcDS->GetRasterBand(1)->GetColorTable() ||
+                   GDALDataTypeIsComplex(
+                       poSrcDS->GetRasterBand(1)->GetRasterDataType())
+               ? "NEAREST"
+               : "CUBIC";
 }
 
 /************************************************************************/
