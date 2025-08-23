@@ -887,3 +887,37 @@ def test_hdf5_multidim_read_cfloat16():
         24.0,
         24.0,
     )
+
+
+##############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_multimdim_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
+
+    ds = gdal.OpenEx(
+        "data/hdf5/dummy_HDFEOS_IIRS_Grid_IMG_2D_issue_1294.h5", gdal.OF_MULTIDIM_RASTER
+    )
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/GRIDS/test/Data Fields/test"
+    )
+    dims = ar.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetName() == "YDim"
+    assert dims[0].GetFullName() == "/HDFEOS/GRIDS/test/YDim"
+    assert dims[0].GetType() == "HORIZONTAL_Y"
+    assert dims[0].GetSize() == 5
+    assert dims[1].GetName() == "XDim"
+    assert dims[1].GetFullName() == "/HDFEOS/GRIDS/test/XDim"
+    assert dims[1].GetType() == "HORIZONTAL_X"
+    assert dims[1].GetSize() == 4
+    ydim_var = dims[0].GetIndexingVariable()
+    assert ydim_var
+    assert struct.unpack("d" * 5, ydim_var.Read())[0:2] == pytest.approx(
+        (5448557.5463664, 5226167.4424332)
+    )
+    xdim_var = dims[1].GetIndexingVariable()
+    assert xdim_var
+    assert struct.unpack("d" * 4, xdim_var.Read())[0:2] == pytest.approx(
+        (-972956.7047086251, -694969.0747918751)
+    )

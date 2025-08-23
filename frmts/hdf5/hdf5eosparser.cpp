@@ -225,28 +225,28 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
             // https://n5eil01u.ecs.nsidc.org/AMSA/AU_SI12.001/2012.07.02/AMSR_U2_L3_SeaIce12km_B04_20120702.he5
             const int nXDim = oGrid.GetInteger("XDim", 0);
             const int nYDim = oGrid.GetInteger("YDim", 0);
-            if (poGridMetadata->aoDimensions.empty() && nXDim > 0 && nYDim > 0)
+            if (nXDim > 0 && nYDim > 0 &&
+                !cpl::contains(oMapDimensionNameToSize, "XDim") &&
+                !cpl::contains(oMapDimensionNameToSize, "YDim"))
             {
-                // Check that all data fields have a DimList=(YDim,XDim)
-                // property. This may be unneeded, but at least if we meet
-                // this condition, that should be a strong hint that the first
-                // dimension is Y, and the second X.
-                bool bDimListIsYDimXDim = true;
+                // Check that we have at least one data field with DimList=(YDim,XDim)
+                // property.
+                bool bHasDimListYDimXDim = false;
                 for (const auto &oDataField : oDataFields.GetChildren())
                 {
                     if (oDataField.GetType() == CPLJSONObject::Type::Object)
                     {
                         const auto oDimList = oDataField.GetArray("DimList");
-                        if (!(oDimList.Size() == 2 &&
-                              oDimList[0].ToString() == "YDim" &&
-                              oDimList[1].ToString() == "XDim"))
+                        if (oDimList.Size() == 2 &&
+                            oDimList[0].ToString() == "YDim" &&
+                            oDimList[1].ToString() == "XDim")
                         {
-                            bDimListIsYDimXDim = false;
+                            bHasDimListYDimXDim = true;
                             break;
                         }
                     }
                 }
-                if (bDimListIsYDimXDim)
+                if (bHasDimListYDimXDim)
                 {
                     {
                         std::string osDimensionName("YDim");
@@ -647,7 +647,8 @@ bool HDF5EOSParser::GetSwathGeolocationFieldMetadata(
 
 bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (nProjCode >= 0 && osGridOrigin == "HE5_HDFE_GD_UL" &&
+    if (nProjCode >= 0 &&
+        (osGridOrigin == "HE5_HDFE_GD_UL" || osGridOrigin.empty()) &&
         adfUpperLeftPointMeters.size() == 2 &&
         adfLowerRightPointMeters.size() == 2)
     {
