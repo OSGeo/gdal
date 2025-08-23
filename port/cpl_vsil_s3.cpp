@@ -1866,7 +1866,7 @@ VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
+VSIVirtualHandleUniquePtr VSICurlFilesystemHandlerBaseWritable::Open(
     const char *pszFilename, const char *pszAccess, bool bSetError,
     CSLConstList papszOptions)
 {
@@ -1894,7 +1894,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
         if (strchr(pszAccess, 'r'))
         {
             auto poExistingFile =
-                VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rb"));
+                VSIFilesystemHandler::OpenStatic(pszFilename, "rb");
             if (!poExistingFile)
             {
                 return nullptr;
@@ -1908,8 +1908,8 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
             }
         }
 
-        auto fpTemp = VSIVirtualHandleUniquePtr(
-            VSIFOpenL(osTmpFilename.c_str(), pszAccess));
+        auto fpTemp =
+            VSIFilesystemHandler::OpenStatic(osTmpFilename.c_str(), pszAccess);
         VSIUnlink(osTmpFilename.c_str());
         if (!fpTemp)
         {
@@ -1922,12 +1922,13 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
             return nullptr;
         }
 
-        return VSICreateUploadOnCloseFile(std::move(poWriteHandle),
-                                          std::move(fpTemp), osTmpFilename);
+        return VSIVirtualHandleUniquePtr(VSICreateUploadOnCloseFile(
+            std::move(poWriteHandle), std::move(fpTemp), osTmpFilename));
     }
     else if (strchr(pszAccess, 'w') || strchr(pszAccess, 'a'))
     {
-        return CreateWriteHandle(pszFilename, papszOptions).release();
+        return VSIVirtualHandleUniquePtr(
+            CreateWriteHandle(pszFilename, papszOptions).release());
     }
 
     if (std::string(pszFilename).back() != '/')

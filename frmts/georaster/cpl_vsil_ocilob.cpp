@@ -24,9 +24,9 @@
 class WSIOCILobFSHandle : public VSIFilesystemHandler
 {
   public:
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -182,10 +182,9 @@ OWStatement *WSIOCILobFSHandle::GetStatement(const char *tableName,
 //                                                                        Open()
 // -----------------------------------------------------------------------------
 
-VSIVirtualHandle *WSIOCILobFSHandle::Open(const char *pszFilename,
-                                          const char *pszAccess,
-                                          bool /* bSetError*/,
-                                          CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+WSIOCILobFSHandle::Open(const char *pszFilename, const char *pszAccess,
+                        bool /* bSetError*/, CSLConstList /* papszOptions */)
 {
     char **papszParam = ParseIdentificator(pszFilename);
 
@@ -239,7 +238,10 @@ VSIVirtualHandle *WSIOCILobFSHandle::Open(const char *pszFilename,
     CPLDebug("GEOR", "VSIOCILOB open successfully");
     CSLDestroy(papszParam);
 
-    return new VSIOCILobHandle(poConnection, poStatement, phLocator, bUpdate);
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSIOCILobHandle>(poConnection, poStatement, phLocator,
+                                          bUpdate)
+            .release());
 }
 
 // -----------------------------------------------------------------------------

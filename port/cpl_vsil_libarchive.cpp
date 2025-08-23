@@ -519,7 +519,7 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     {
     }
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList papszOptions) override;
 };
@@ -528,10 +528,10 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle *VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
-                                                       const char *pszAccess,
-                                                       bool bSetError,
-                                                       CSLConstList)
+VSIVirtualHandleUniquePtr
+VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
+                                     const char *pszAccess, bool bSetError,
+                                     CSLConstList)
 {
     if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
     {
@@ -554,7 +554,9 @@ VSIVirtualHandle *VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
         return nullptr;
     }
 
-    return new VSILibArchiveHandler(pszFilename, poReader);
+    return VSIVirtualHandleUniquePtr(
+        std::make_unique<VSILibArchiveHandler>(pszFilename, poReader)
+            .release());
 }
 
 /************************************************************************/

@@ -300,13 +300,15 @@ class CPL_DLL VSIFilesystemHandler
     {
     }
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess);
+    static VSIVirtualHandleUniquePtr
+    OpenStatic(const char *pszFilename, const char *pszAccess,
+               bool bSetError = false, CSLConstList papszOptions = nullptr);
 
-    virtual VSIVirtualHandle *Open(const char *pszFilename,
-                                   const char *pszAccess, bool bSetError,
-                                   CSLConstList papszOptions) = 0;
+    virtual VSIVirtualHandleUniquePtr
+    Open(const char *pszFilename, const char *pszAccess, bool bSetError = false,
+         CSLConstList papszOptions = nullptr) = 0;
 
-    virtual VSIVirtualHandle *
+    virtual VSIVirtualHandleUniquePtr
     CreateOnlyVisibleAtCloseTime(const char *pszFilename,
                                  bool bEmulationAllowed,
                                  CSLConstList papszOptions);

@@ -200,12 +200,9 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 
     ~VSIMemFilesystemHandler() override;
 
-    // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.
-    using VSIFilesystemHandler::Open;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -622,10 +619,9 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
-                                                const char *pszAccess,
-                                                bool bSetError,
-                                                CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+VSIMemFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                              bool bSetError, CSLConstList /* papszOptions */)
 
 {
     CPLMutexHolder oHolder(&hMutex);
@@ -705,7 +701,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Setup the file handle on this file.                             */
     /* -------------------------------------------------------------------- */
-    VSIMemHandle *poHandle = new VSIMemHandle;
+    auto poHandle = std::make_unique<VSIMemHandle>();
 
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
@@ -728,7 +724,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
         poHandle->m_nOffset = nOffset;
     }
 
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
