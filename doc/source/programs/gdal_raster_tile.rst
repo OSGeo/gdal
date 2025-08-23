@@ -36,6 +36,9 @@ It can also use a tiling scheme fully adapted to the input raster, in terms of
 origin and resolution, when using the ``raster`` tiling scheme. In that scheme,
 tiles at the maximum zoom level will have the same resolution as the raster.
 
+Starting with GDAL 3.12, :program:`gdal raster tile` can be used as the last
+step of a pipeline.
+
 Standard options
 ++++++++++++++++
 
@@ -326,3 +329,10 @@ Examples
    .. code-block:: bash
 
       gdal raster tile --format COG --tile-size 4096 input.tif output_folder
+
+.. example::
+   :title: Mosaic on-the-fly several input files and tile that mosaic.
+
+   .. code-block:: bash
+
+      gdal raster pipeline ! mosaic input*.tif ! tile output_folder
