@@ -447,65 +447,108 @@ def test_gdal_completion_config(gdal_path):
     assert out == [""]
 
 
-@pytest.mark.parametrize("subcommand", ["raster", "vector"])
+@pytest.mark.parametrize("subcommand", [None, "raster", "vector"])
 def test_gdal_completion_pipeline(gdal_path, subcommand):
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline"
-    ).split(" ")
+    pipeline_cmd = f"{gdal_path} completion gdal"
+    if subcommand:
+        pipeline_cmd += " "
+        pipeline_cmd += subcommand
+    pipeline_cmd += " pipeline"
+
+    out = gdaltest.runexternal(f"{pipeline_cmd}").split(" ")
+    if subcommand == "raster":
+        assert "calc" in out
+        assert "concat" not in out
+    elif subcommand == "vector":
+        assert "calc" not in out
+        assert "concat" in out
+    assert "read" in out
+    assert "write" not in out
+
+    out = gdaltest.runexternal(f"{pipeline_cmd} re").split(" ")
     assert out == ["read"]
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline re"
-    ).split(" ")
-    assert out == ["read"]
-
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline read"
-    ).split(" ")
+    out = gdaltest.runexternal(f"{pipeline_cmd} read").split(" ")
     assert out == [""]
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline read -"
-    ).split(" ")
+    out = gdaltest.runexternal(f"{pipeline_cmd} read -").split(" ")
     assert "--input" in out
     assert "--open-option" in out
+    if subcommand == "raster":
+        assert "--input-layer" not in out
+    else:
+        assert "--input-layer" in out
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline read !"
-    ).split(" ")
+    out = gdaltest.runexternal(f"{pipeline_cmd} read !").split(" ")
     assert "reproject" in out
     assert "write" in out
     assert "read" not in out
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline read ! re"
-    ).split(" ")
+    out = gdaltest.runexternal(f"{pipeline_cmd} read ! re").split(" ")
     assert "reproject" in out
     assert "write" in out
     assert "read" not in out
 
-    out = gdaltest.runexternal(
-        f"{gdal_path} completion gdal {subcommand} pipeline read foo ! write -"
-    ).split(" ")
+    out = gdaltest.runexternal(f"{pipeline_cmd} read foo ! write -").split(" ")
     assert "--output" in out
     assert "--creation-option" in out
 
-    if subcommand == "raster":
+    if subcommand != "vector":
         out = gdaltest.runexternal(
-            f"{gdal_path} completion gdal {subcommand} pipeline read foo ! foo ! reproject -"
+            f"{pipeline_cmd} read foo ! foo ! reproject -"
         ).split(" ")
         assert "--resampling" in out
 
         out = gdaltest.runexternal(
-            f"{gdal_path} completion gdal {subcommand} pipeline read foo ! reproject --resampling"
+            f"{pipeline_cmd} read foo ! reproject --resampling"
         ).split(" ")
         assert "nearest" in out
-    else:
+
         out = gdaltest.runexternal(
-            f"{gdal_path} completion gdal {subcommand} pipeline read foo ! geom"
+            f"{pipeline_cmd} read ../gcore/data/byte.tif !"
         ).split(" ")
-        assert "set-geom-type" in out
+        assert "resize" in out
+        assert "make-valid" not in out
+        if subcommand is None:
+            assert "polygonize" in out
+        else:
+            assert "polygonize" not in out
+
+        out = gdaltest.runexternal(
+            f"{pipeline_cmd} read ../gcore/data/byte.tif ! edit -"
+        ).split(" ")
+        assert "--nodata" in out
+        assert "--geometry-type" not in out
+
+    if subcommand != "raster":
+
+        out = gdaltest.runexternal(f"{pipeline_cmd} read test_gdal.py -").split(" ")
+        assert "--input-layer" in out
+
+        out = gdaltest.runexternal(f"{pipeline_cmd} read foo ! reproject -").split(" ")
+        assert "--active-layer" in out
+
+        out = gdaltest.runexternal(
+            f"{pipeline_cmd} read foo ! reproject --dst-crs"
+        ).split(" ")
+        assert "EPSG:" in out
+
+        out = gdaltest.runexternal(f"{pipeline_cmd} read ../ogr/data/poly.shp !").split(
+            " "
+        )
+        assert "resize" not in out
+        assert "make-valid" in out
+        if subcommand is None:
+            assert "rasterize" in out
+        else:
+            assert "rasterize" not in out
+
+        out = gdaltest.runexternal(
+            f"{pipeline_cmd} read ../ogr/data/poly.shp ! edit -"
+        ).split(" ")
+        assert "--nodata" not in out
+        assert "--geometry-type" in out
 
 
 def test_gdal_completion_gdal_vector_info_layer(gdal_path):

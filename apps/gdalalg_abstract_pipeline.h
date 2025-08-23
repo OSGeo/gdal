@@ -386,42 +386,146 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
     bool /* showAllOptions*/)
 {
     std::vector<std::string> ret;
+    std::set<std::string> setSuggestions;
     if (args.size() <= 1)
-    {
-        if (args.empty() || args.front() != "read")
-            ret.push_back("read");
-    }
-    else if (args.back() == "!" ||
-             (args[args.size() - 2] == "!" && !GetStepAlg(args.back())))
     {
         for (const std::string &name : m_stepRegistry.GetNames())
         {
-            if (name != "read")
+            auto alg = m_stepRegistry.Instantiate(name);
+            auto stepAlg = dynamic_cast<StepAlgorithm *>(alg.get());
+            if (stepAlg && stepAlg->CanBeFirstStep())
             {
-                ret.push_back(name);
+                std::string suggestionName = CPLString(name)
+                                                 .replaceAll(RASTER_SUFFIX, "")
+                                                 .replaceAll(VECTOR_SUFFIX, "");
+                if (!cpl::contains(setSuggestions, suggestionName))
+                {
+                    if (!args.empty() && suggestionName == args[0])
+                        return {};
+                    if (args.empty() ||
+                        cpl::starts_with(suggestionName, args[0]))
+                    {
+                        setSuggestions.insert(suggestionName);
+                        ret.push_back(std::move(suggestionName));
+                    }
+                }
             }
         }
     }
     else
     {
-        std::string lastStep = "read";
+        int nDatasetType = this->GetInputType();
+        constexpr int MIXED_TYPE = GDAL_OF_RASTER | GDAL_OF_VECTOR;
+        const bool isMixedTypePipeline = nDatasetType == MIXED_TYPE;
+        std::string lastStep = args[0];
         std::vector<std::string> lastArgs;
+        bool firstStep = true;
         for (size_t i = 1; i < args.size(); ++i)
         {
+            if (firstStep && isMixedTypePipeline &&
+                nDatasetType == MIXED_TYPE && !args[i].empty() &&
+                args[i][0] != '-')
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                auto poDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(args[i].c_str()));
+                if (poDS && poDS->GetLayerCount() > 0 &&
+                    poDS->GetRasterCount() == 0)
+                {
+                    nDatasetType = GDAL_OF_VECTOR;
+                }
+                else if (poDS && poDS->GetLayerCount() == 0 &&
+                         (poDS->GetRasterCount() > 0 ||
+                          poDS->GetMetadata("SUBDATASETS") != nullptr))
+                {
+                    nDatasetType = GDAL_OF_RASTER;
+                }
+            }
             lastArgs.push_back(args[i]);
             if (i + 1 < args.size() && args[i] == "!")
             {
+                firstStep = false;
                 ++i;
                 lastArgs.clear();
                 lastStep = args[i];
+                auto curAlg = GetStepAlg(lastStep);
+                if (isMixedTypePipeline && !curAlg)
+                {
+                    if (nDatasetType == GDAL_OF_RASTER)
+                        curAlg = GetStepAlg(lastStep + RASTER_SUFFIX);
+                    else if (nDatasetType == GDAL_OF_VECTOR)
+                        curAlg = GetStepAlg(lastStep + VECTOR_SUFFIX);
+                }
+                if (curAlg)
+                    nDatasetType = curAlg->GetOutputType();
             }
         }
 
-        auto curAlg = GetStepAlg(lastStep);
-        if (curAlg)
+        if (args.back() == "!" ||
+            (args[args.size() - 2] == "!" && !GetStepAlg(args.back()) &&
+             !GetStepAlg(args.back() + RASTER_SUFFIX) &&
+             !GetStepAlg(args.back() + VECTOR_SUFFIX)))
         {
-            ret = curAlg->GetAutoComplete(lastArgs, lastWordIsComplete,
-                                          /* showAllOptions = */ false);
+            for (const std::string &name : m_stepRegistry.GetNames())
+            {
+                auto alg = m_stepRegistry.Instantiate(name);
+                auto stepAlg = dynamic_cast<StepAlgorithm *>(alg.get());
+                if (stepAlg && isMixedTypePipeline &&
+                    nDatasetType != MIXED_TYPE &&
+                    stepAlg->GetInputType() != nDatasetType)
+                {
+                    continue;
+                }
+                if (stepAlg && !stepAlg->CanBeFirstStep())
+                {
+                    std::string suggestionName =
+                        CPLString(name)
+                            .replaceAll(RASTER_SUFFIX, "")
+                            .replaceAll(VECTOR_SUFFIX, "");
+                    if (!cpl::contains(setSuggestions, suggestionName))
+                    {
+                        setSuggestions.insert(suggestionName);
+                        ret.push_back(std::move(suggestionName));
+                    }
+                }
+            }
+        }
+        else
+        {
+            auto curAlg = GetStepAlg(lastStep);
+            if (isMixedTypePipeline && !curAlg)
+            {
+                if (nDatasetType == GDAL_OF_RASTER)
+                    curAlg = GetStepAlg(lastStep + RASTER_SUFFIX);
+                else if (nDatasetType == GDAL_OF_VECTOR)
+                    curAlg = GetStepAlg(lastStep + VECTOR_SUFFIX);
+                else
+                {
+                    for (const char *suffix : {RASTER_SUFFIX, VECTOR_SUFFIX})
+                    {
+                        curAlg = GetStepAlg(lastStep + suffix);
+                        if (curAlg)
+                        {
+                            for (const auto &v : curAlg->GetAutoComplete(
+                                     lastArgs, lastWordIsComplete,
+                                     /* showAllOptions = */ false))
+                            {
+                                if (!cpl::contains(setSuggestions, v))
+                                {
+                                    setSuggestions.insert(v);
+                                    ret.push_back(std::move(v));
+                                }
+                            }
+                        }
+                    }
+                    curAlg.reset();
+                }
+            }
+            if (curAlg)
+            {
+                ret = curAlg->GetAutoComplete(lastArgs, lastWordIsComplete,
+                                              /* showAllOptions = */ false);
+            }
         }
     }
     return ret;
