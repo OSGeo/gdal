@@ -2369,7 +2369,7 @@ def ReleaseResultSet(self, sql_lyr):
   def ReadAsArray(self, field, start=0, length=None):
       """
       Read a single column of a RAT into a NumPy array.
-      
+
       Parameters
       ----------
       field : int
@@ -2377,13 +2377,13 @@ def ReleaseResultSet(self, sql_lyr):
       start : int, default = 0
           The index of the first row to read (starting at 0)
       length : int, default = None
-          The number of rows to read 
-      
-      
+          The number of rows to read
+
+
       Returns
       -------
       np.ndarray
-      
+
       Examples
       --------
       >>> ds = gdal.Open('clc2018_v2020_20u1.tif')
@@ -6447,7 +6447,7 @@ class VSIFile(BytesIO):
            >>> alg["input"] = [one_ds, two_ds]
         """
 
-        arg = self.GetArg(key.replace('_', '-'))
+        arg = self.GetArgNonConst(key.replace('_', '-'))
         if not arg:
             raise RuntimeError(f"'{key}' is not a valid argument of '{self.GetName()}'")
         if not arg.Set(value):

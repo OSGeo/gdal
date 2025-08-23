@@ -422,37 +422,20 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         return false;
     }
 
-    std::vector<GDALVectorPipelineStepAlgorithm *> stepAlgs;
-    for (const auto &step : steps)
-        stepAlgs.push_back(step.alg.get());
-    if (!CheckFirstStep(stepAlgs))
-        return false;
-
-    if (steps.back().alg->GetName() != GDALVectorWriteAlgorithm::NAME &&
-        steps.back().alg->GetName() != GDALVectorInfoAlgorithm::NAME)
+    if (!steps.back().alg->CanBeLastStep())
     {
         if (helpRequested)
         {
             steps.back().alg->ParseCommandLineArguments(steps.back().args);
             return false;
         }
-        ReportError(
-            CE_Failure, CPLE_AppDefined, "Last step should be '%s' or '%s'",
-            GDALVectorWriteAlgorithm::NAME, GDALVectorInfoAlgorithm::NAME);
-        return false;
     }
-    for (size_t i = 0; i < steps.size() - 1; ++i)
-    {
-        if (steps[i].alg->GetName() == GDALVectorWriteAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALVectorInfoAlgorithm::NAME)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s' or '%s'",
-                        GDALVectorWriteAlgorithm::NAME,
-                        GDALVectorInfoAlgorithm::NAME);
-            return false;
-        }
-    }
+
+    std::vector<GDALVectorPipelineStepAlgorithm *> stepAlgs;
+    for (const auto &step : steps)
+        stepAlgs.push_back(step.alg.get());
+    if (!CheckFirstAndLastStep(stepAlgs))
+        return false;  // CheckFirstAndLastStep emits an error
 
     for (auto &step : steps)
     {
@@ -467,7 +450,8 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         for (auto &arg : step.alg->GetArgs())
         {
             auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (pipelineArg && pipelineArg->IsExplicitlySet() &&
+                pipelineArg->GetType() == arg->GetType())
             {
                 arg->SetSkipIfAlreadySet(true);
                 arg->SetFrom(*pipelineArg);
@@ -481,7 +465,8 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
         for (auto &arg : step.alg->GetArgs())
         {
             auto pipelineArg = GetArg(arg->GetName());
-            if (pipelineArg && pipelineArg->IsExplicitlySet())
+            if (pipelineArg && pipelineArg->IsExplicitlySet() &&
+                pipelineArg->GetType() == arg->GetType())
             {
                 arg->SetSkipIfAlreadySet(true);
                 arg->SetFrom(*pipelineArg);
@@ -556,7 +541,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         return ret;
 
     ret += "\n<PIPELINE> is of the form: read|concat [READ-OPTIONS] "
-           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
+           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write|info [WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
     {
@@ -583,7 +568,6 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         const auto name = GDALVectorReadAlgorithm::NAME;
         ret += '\n';
         auto alg = GetStepAlg(name);
-        assert(alg);
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
@@ -603,21 +587,29 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->IsHidden() &&
-            name != GDALVectorWriteAlgorithm::NAME &&
-            name != GDALVectorInfoAlgorithm::NAME)
+        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({name});
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
     }
-    for (const char *name :
-         {GDALVectorInfoAlgorithm::NAME, GDALVectorWriteAlgorithm::NAME})
+    for (const std::string &name : m_stepRegistry.GetNames())
     {
-        ret += '\n';
         auto alg = GetStepAlg(name);
         assert(alg);
+        if (alg->CanBeLastStep() && !alg->IsHidden() &&
+            name != GDALVectorWriteAlgorithm::NAME)
+        {
+            ret += '\n';
+            alg->SetCallPath({name});
+            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+        }
+    }
+    {
+        const auto name = GDALVectorWriteAlgorithm::NAME;
+        ret += '\n';
+        auto alg = GetStepAlg(name);
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }

@@ -65,9 +65,11 @@ GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
     AddOverwriteLayerArg(&m_overwriteLayer);
     AddAppendLayerArg(&m_appendLayer);
 
-    AddArg("input-layer", 0, _("Input layer name"), &m_inputLayerName);
+    AddArg(GDAL_ARG_NAME_INPUT_LAYER, 0, _("Input layer name"),
+           &m_inputLayerName);
     AddArg("method-layer", 0, _("Method layer name"), &m_methodLayerName);
-    AddArg("output-layer", 0, _("Output layer name"), &m_outputLayerName)
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0, _("Output layer name"),
+           &m_outputLayerName)
         .AddHiddenAlias("nln");  // For ogr2ogr nostalgic people
 
     AddGeometryTypeArg(&m_geometryType);

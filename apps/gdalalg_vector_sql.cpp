@@ -56,8 +56,8 @@ GDALVectorSQLAlgorithm::GDALVectorSQLAlgorithm(bool standaloneStep)
                        .SetRemoveSQLCommentsEnabled();
     if (!standaloneStep)
         sqlArg.SetPositional();
-    AddArg("output-layer", standaloneStep ? 0 : 'l', _("Output layer name(s)"),
-           &m_outputLayer);
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, standaloneStep ? 0 : 'l',
+           _("Output layer name(s)"), &m_outputLayer);
     AddArg("dialect", 0, _("SQL dialect (e.g. OGRSQL, SQLITE)"), &m_dialect);
 }
 

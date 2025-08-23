@@ -24,8 +24,10 @@ Synopsis
 .. program-output:: gdal pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and the last one ``info`` or ``write``. Each step has its
-own positional or non-positional arguments. Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack`` and ``write``,
+The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``,
+and the last one ``info``, ``tile`` or ``write``.
+Each step has its own positional or non-positional arguments.
+Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack``, ``info``, ``tile`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 For steps that have both *raster* data type as input and output, consult :ref:`gdal_raster_pipeline`.
@@ -94,6 +96,77 @@ The final ``write`` step can be added but if so it must explicitly specify the
         "command_line": "gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write --output-format=streamed streamed_dataset"
     }
 
+.. _gdal_pipeline_substitutions:
+
+Substitutions
+-------------
+
+It is also possible to use :program:`gdal pipeline` to use a pipeline already
+serialized in a .gdal.json file, and customize its existing steps, typically
+changing input filename, specifying output filename, or adding/modifying arguments
+of steps.
+
+The syntax is:
+
+::
+
+    gdal pipeline <filename.gdalg.json> --<step-name>.<arg-name>=value
+
+
+When specifying an existing argument of a step of a pipeline, the value from the
+pipeline is overridden by the one specified on the :program:`gdal pipeline` command line.
+
+Let's imagine with have a :file:`raster_reproject.gdalg.json` with the following content:
+
+.. code-block:: json
+
+    {
+        "type": "gdal_streamed_alg",
+        "command_line": "gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
+    }
+
+It is possible to run it with the following command command line, overridden the
+``input`` argument of the ``read`` step, and implicitly adding a final ``write``
+step with an ``output`` argument.
+
+.. code-block:: bash
+
+    $ gdal pipeline raster_reproject.gdalg.json --read.input=other_input.tif --write.output=out.tif
+
+
+When there is no ambiguity, it is also possible to omit the step name, and just
+specify the argument name (if there is an ambiguity, :program:`gdal pipeline`
+will emit an error, so this is safe to do):
+
+.. code-block:: bash
+
+    $ gdal pipeline raster_reproject.gdalg.json --input=other_input.tif --output=out.tif --co COMPRESS=LZW --overwrite
+
+
+When a step appears several times in the pipeline, it must specified as
+``<step-name>[<idx>]``, where ``<idx>`` is a zero-based index.
+
+For example, given:
+
+.. code-block:: json
+
+    {
+        "type": "gdal_streamed_alg",
+        "command_line": "gdal pipeline ! read in.tif ! edit --metadata=before=value ! reproject --dst-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
+    }
+
+the following command line may be used:
+
+.. code-block:: bash
+
+    $ gdal pipeline raster_reproject.gdalg.json --edit[0].metadata=before=modified --output=out.tif
+
+
+Execution of pipeline and argument substitutions can also be done in Python with:
+
+.. code-block:: python
+
+    gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
 Examples
 --------
@@ -111,3 +184,10 @@ Examples
    .. code-block:: bash
 
         $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite
+
+.. example::
+   :title: Use an existing pipeline that rasterize and reproject, but change its input file and target CRS, and specify the output file
+
+   .. code-block:: bash
+
+        $ gdal pipeline raster_reproject.gdalg.json --input=my.gpkg --output=out.tif --dst-crs=EPSG:32631

@@ -2228,3 +2228,42 @@ def test_gdalalg_raster_tile_png_optim_2(tmp_vsimem):
     size_avg = gdal.VSIStatL(tmp_vsimem / "19/509173/334573.png").size
 
     assert size_auto != size_avg
+
+
+def test_gdalalg_raster_tile_pipeline(tmp_path):
+
+    out_dirname = tmp_path / "subdir"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        gdal.Run(
+            "raster pipeline",
+            pipeline=f"mosaic ../gdrivers/data/small_world.tif ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
+        )
+
+    assert len(gdal.ReadDirRecursive(out_dirname)) == 108
+
+
+@pytest.mark.skipif(_get_effective_cpus() <= 2, reason="needs more than 2 CPUs")
+def test_gdalalg_raster_tile_pipeline_error(tmp_path):
+
+    src_ds = gdal.Translate("", "../gdrivers/data/small_world.tif", format="MEM")
+
+    out_dirname = tmp_path / "subdir"
+    with gdaltest.config_options(
+        {
+            "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN": "1",
+            "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
+        }
+    ):
+        with pytest.raises(
+            Exception, match="Cannot execute this pipeline in parallel mode"
+        ):
+            gdal.Run(
+                "raster pipeline",
+                input=src_ds,
+                pipeline=f"mosaic ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
+            )

@@ -44,6 +44,10 @@
           },
           "$comment": "Names of the immediate sub-algorithm of this algorithm. For example, or 'gdal raster', this will be [\"info\", \"convert\", ...]"
         },
+        "user_provided_arguments_allowed": {
+          "type": "boolean",
+          "$comment": "Whether user-provided arguments are allowed"
+        },
         "input_arguments": {
           "type": "array",
           "items": {
