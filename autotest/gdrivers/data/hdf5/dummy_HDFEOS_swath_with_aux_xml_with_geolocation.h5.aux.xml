@@ -1,0 +1,18 @@
+<PAMDataset>
+  <Subdataset name="//HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField">
+    <PAMDataset>
+      <Metadata domain="GEOLOCATION">
+        <MDI key="GEOREFERENCING_CONVENTION">PIXEL_CENTER</MDI>
+        <MDI key="LINE_OFFSET">0</MDI>
+        <MDI key="LINE_STEP">1</MDI>
+        <MDI key="PIXEL_OFFSET">0</MDI>
+        <MDI key="PIXEL_STEP">1</MDI>
+        <MDI key="SRS">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]</MDI>
+        <MDI key="X_BAND">1</MDI>
+        <MDI key="X_DATASET">HDF5:"/i/do/not/exist/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Longitude</MDI>
+        <MDI key="Y_BAND">1</MDI>
+        <MDI key="Y_DATASET">HDF5:"/i/do/not/exist/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Latitude</MDI>
+      </Metadata>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>

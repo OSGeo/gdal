@@ -1276,6 +1276,36 @@ END
 
 
 ###############################################################################
+# Test opening a HDF5EOS swath file with a .aux.xml
+
+
+def test_hdf5_eos_swath_with_aux_xml():
+
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    assert (
+        "data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5.aux.xml"
+        in ds.GetFileList()
+    )
+    assert (
+        b"/i/do/not/exist/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"
+        in open(
+            "data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5.aux.xml",
+            "rb",
+        ).read()
+    )
+    assert (
+        ds.GetMetadataItem("X_DATASET", "GEOLOCATION")
+        == 'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Longitude'
+    )
+    assert (
+        ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")
+        == 'HDF5:"data/hdf5/dummy_HDFEOS_swath_with_aux_xml_with_geolocation.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Latitude'
+    )
+
+
+###############################################################################
 # Test opening a file with band specific attributes
 
 
