@@ -485,6 +485,14 @@ def test_jpegxl_write_five_bands(tmp_vsimem):
     ]
 
 
+def test_jpegxl_write_jxl_to_jxl_data_type_change(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.jxl"
+    gdal.Translate(out_filename, "data/jpegxl/float16.jxl", options="-ot Byte")
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+
+
 def test_jpegxl_write_five_bands_lossy(tmp_vsimem):
     drv = gdal.GetDriverByName("JPEGXL")
     if drv.GetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS") is None:
@@ -727,7 +735,7 @@ def test_jpegxl_apply_orientation(orientation):
 
 
 ###############################################################################
-# Test ALPHA_DISTANCE option
+# Test ALPHA_DISTANCE option0
 @pytest.mark.require_creation_option(
     "JPEGXL", "ALPHA_DISTANCE"
 )  # "libjxl > 0.8.1 required"

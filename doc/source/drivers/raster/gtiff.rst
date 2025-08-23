@@ -704,6 +704,7 @@ This driver supports the following creation options:
       :choices: [0.01-25]
       :default: 1.0
 
+      (Only applies when JXL_LOSSLESS=NO)
       Distance level for lossy JPEG-XL compression.
       It is specified in multiples of a just-noticeable difference.
       (cf `butteraugli <https://github.com/google/butteraugli>`__ for the definition
@@ -717,6 +718,7 @@ This driver supports the following creation options:
       :default: -1
       :since: 3.7
 
+      (Only applies when JXL_LOSSLESS=NO)
       Requires libjxl > 0.8.1.
       Distance level for alpha channel for lossy JPEG-XL compression.
       It is specified in multiples of a just-noticeable difference.
