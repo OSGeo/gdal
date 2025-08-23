@@ -163,7 +163,7 @@ def test_gdalalg_raster_pipeline_help_doc():
 
     assert "Usage: gdal raster pipeline [OPTIONS] <PIPELINE>" in out
     assert (
-        "<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]"
+        "<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! info|compare|write [WRITE-OPTIONS]"
         in out
     )
 

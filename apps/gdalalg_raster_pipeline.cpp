@@ -17,6 +17,7 @@
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_color_merge.h"
+#include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_fill_nodata.h"
 #include "gdalalg_raster_hillshade.h"
@@ -184,6 +185,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
 
     registry.Register<GDALRasterColorMapAlgorithm>();
     registry.Register<GDALRasterColorMergeAlgorithm>();
+    registry.Register<GDALRasterCompareAlgorithm>();
 
     algInfo.m_name = addSuffixIfNeeded(GDALRasterEditAlgorithm::NAME);
     algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
@@ -423,27 +425,32 @@ bool GDALRasterPipelineAlgorithm::ParseCommandLineArguments(
         return false;
 
     if (steps.back().alg->GetName() != GDALRasterWriteAlgorithm::NAME &&
-        steps.back().alg->GetName() != GDALRasterInfoAlgorithm::NAME)
+        steps.back().alg->GetName() != GDALRasterInfoAlgorithm::NAME &&
+        steps.back().alg->GetName() != GDALRasterCompareAlgorithm::NAME)
     {
         if (helpRequested)
         {
             steps.back().alg->ParseCommandLineArguments(steps.back().args);
             return false;
         }
-        ReportError(
-            CE_Failure, CPLE_AppDefined, "Last step should be '%s' or '%s'",
-            GDALRasterWriteAlgorithm::NAME, GDALRasterInfoAlgorithm::NAME);
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Last step should be '%s', '%s' or '%s'",
+                    GDALRasterWriteAlgorithm::NAME,
+                    GDALRasterInfoAlgorithm::NAME,
+                    GDALRasterCompareAlgorithm::NAME);
         return false;
     }
     for (size_t i = 0; i < steps.size() - 1; ++i)
     {
         if (steps[i].alg->GetName() == GDALRasterWriteAlgorithm::NAME ||
-            steps[i].alg->GetName() == GDALRasterInfoAlgorithm::NAME)
+            steps[i].alg->GetName() == GDALRasterInfoAlgorithm::NAME ||
+            steps[i].alg->GetName() == GDALRasterCompareAlgorithm::NAME)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s' or '%s'",
+                        "Only last step can be '%s', '%s' or '%s'",
                         GDALRasterWriteAlgorithm::NAME,
-                        GDALRasterInfoAlgorithm::NAME);
+                        GDALRasterInfoAlgorithm::NAME,
+                        GDALRasterCompareAlgorithm::NAME);
             return false;
         }
     }
@@ -556,7 +563,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         return ret;
 
     ret += "\n<PIPELINE> is of the form: read|mosaic|stack [READ-OPTIONS] "
-           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]\n";
+           "( ! <STEP-NAME> [STEP-OPTIONS] )* ! info|compare|write "
+           "[WRITE-OPTIONS]\n";
 
     if (m_helpDocCategory == "main")
     {
@@ -611,7 +619,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
         }
     }
     for (const char *name :
-         {GDALRasterInfoAlgorithm::NAME, GDALRasterWriteAlgorithm::NAME})
+         {GDALRasterInfoAlgorithm::NAME, GDALRasterCompareAlgorithm::NAME,
+          GDALRasterWriteAlgorithm::NAME})
     {
         ret += '\n';
         auto alg = GetStepAlg(name);
