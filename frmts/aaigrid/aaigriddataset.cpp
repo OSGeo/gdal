@@ -1466,8 +1466,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                 if ((iPixel > 0 && (iPixel % 1024) == 0) ||
                     iPixel == nXSize - 1)
                 {
-                    if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
-                                   fpImage) != 1)
+                    if (VSIFWriteL(osBuf.c_str(), osBuf.size(), 1, fpImage) !=
+                        1)
                     {
                         eErr = CE_Failure;
                         ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
@@ -1508,8 +1508,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                 if ((iPixel > 0 && (iPixel % 1024) == 0) ||
                     iPixel == nXSize - 1)
                 {
-                    if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
-                                   fpImage) != 1)
+                    if (VSIFWriteL(osBuf.c_str(), osBuf.size(), 1, fpImage) !=
+                        1)
                     {
                         eErr = CE_Failure;
                         ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
