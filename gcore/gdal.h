@@ -629,6 +629,16 @@ typedef enum
 #define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
 
 /** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
+ * feature appending capabilities.
+ *
+ * Note: feature appending capability is also implied if GDAL_DCAP_UPDATE or
+ * GDAL_DCAP_CREATE_LAYER is set, in which case GDAL_DCAP_APPEND is not set.
+ *
+ * @since GDAL 3.12.
+ */
+#define GDAL_DCAP_APPEND "DCAP_APPEND"
+
+/** Capability set by a driver that supports the GDAL_OF_UPDATE flag and offers
  * at least some update capabilities.
  * Exact update capabilities can be determined by the GDAL_DMD_UPDATE_ITEMS
  * metadata item
