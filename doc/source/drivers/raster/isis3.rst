@@ -130,14 +130,20 @@ For example:
        "Name":"IsisCube",
        "StartByte":1,
        "Bytes":957,
-       "^History":"r0200357_10m_Jul20_o_i3_detatched.History.IsisCube"
+       "^History":"r0200357_10m_Jul20_o_i3_detatched.History.IsisCube",
+       "_data": {
+          "ASCII" : "[...snip...]"
+       },
      },
      "OriginalLabel":{
        "_type":"object",
        "Name":"IsisCube",
        "StartByte":1,
        "Bytes":2482,
-       "^OriginalLabel":"r0200357_10m_Jul20_o_i3_detatched.OriginalLabel.IsisCube"
+       "^OriginalLabel":"r0200357_10m_Jul20_o_i3_detatched.OriginalLabel.IsisCube",
+       "_data": {
+          "HEX" : "0102[...snip...]"
+       },
      }
    }
 
@@ -304,6 +310,29 @@ The available creation options are:
       Manually defined GDAL history. Must be
       formatted as ISIS3 PDL. If not specified, it is automatically
       composed. Only used if :co:`ADD_GDAL_HISTORY=YES` (or unspecified).
+
+Open options
+------------
+
+.. versionadded:: 3.12
+
+|about-open-options|
+The available open options are:
+
+-  .. oo:: INCLUDE_OFFLINE_CONTENT
+      :choices: YES, NO
+      :default: YES
+
+      Whether to include a ``_data`` member in ``json:ISIS3`` metadata with offline
+      content of label objects. Defaults to YES
+
+-  .. oo:: MAX_SIZE_OFFLINE_CONTENT
+      :choices: <integer>
+      :default: 1000000000
+
+      Maximum size of offline content to include in ``_data`` member, in bytes.
+
+
 
 Examples
 --------

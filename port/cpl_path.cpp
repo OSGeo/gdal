@@ -1608,3 +1608,44 @@ const char *CPLLaunderForFilename(const char *pszName,
     return CPLPathReturnTLSString(
         CPLLaunderForFilenameSafe(pszName, pszOutputPath), __FUNCTION__);
 }
+
+/************************************************************************/
+/*                        CPLHasPathTraversal()                        */
+/************************************************************************/
+
+/**
+ * Return whether the filename contains a path traversal pattern.
+ *
+ * i.e. if it contains "../" or "..\\".
+ *
+ * The CPL_ENABLE_PATH_TRAVERSAL_DETECTION configuration option can be set
+ * to NO to disable this check, although this is not recommended when dealing
+ * with un-trusted input.
+ *
+ * @param pszFilename The input string to check.
+ * @return true if a path traversal pattern is detected.
+ *
+ * @since GDAL 3.12
+ */
+
+bool CPLHasPathTraversal(const char *pszFilename)
+{
+    if (strstr(pszFilename, "../") != nullptr ||
+        strstr(pszFilename, "..\\") != nullptr)
+    {
+        if (CPLTestBool(CPLGetConfigOption(
+                "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", "YES")))
+        {
+            CPLDebug("CPL", "Path traversal detected for %s", pszFilename);
+            return true;
+        }
+        else
+        {
+            CPLDebug("CPL",
+                     "Path traversal detected for %s but ignored given that "
+                     "CPL_ENABLE_PATH_TRAVERSAL_DETECTION is disabled",
+                     pszFilename);
+        }
+    }
+    return false;
+}

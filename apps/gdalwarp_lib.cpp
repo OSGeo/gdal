@@ -72,6 +72,9 @@
  */
 struct GDALWarpAppOptions
 {
+    /*! Raw program arguments */
+    CPLStringList aosArgs{};
+
     /*! set georeferenced extents of output file to be created (in target SRS by
        default, or in the SRS specified with pszTE_SRS) */
     double dfMinX = 0;
@@ -1765,11 +1768,67 @@ CreateOutput(const char *pszDest, int nSrcCount, GDALDatasetH *pahSrcDS,
 }
 
 /************************************************************************/
+/*                    EditISIS3ForMetadataChanges()                     */
+/************************************************************************/
+
+static std::string
+EditISIS3ForMetadataChanges(const char *pszJSON,
+                            const GDALWarpAppOptions *psOptions)
+{
+    CPLJSONDocument oJSONDocument;
+    if (!oJSONDocument.LoadMemory(pszJSON))
+    {
+        return std::string();
+    }
+
+    auto oRoot = oJSONDocument.GetRoot();
+    if (!oRoot.IsValid())
+    {
+        return std::string();
+    }
+
+    auto oGDALHistory = oRoot.GetObj("GDALHistory");
+    if (!oGDALHistory.IsValid())
+    {
+        oGDALHistory = CPLJSONObject();
+        oRoot.Add("GDALHistory", oGDALHistory);
+    }
+    oGDALHistory["_type"] = "object";
+
+    char szFullFilename[2048] = {0};
+    if (!CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1))
+        strcpy(szFullFilename, "unknown_program");
+    const CPLString osProgram(CPLGetBasenameSafe(szFullFilename));
+    const CPLString osPath(CPLGetPathSafe(szFullFilename));
+
+    oGDALHistory["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+    oGDALHistory["Program"] = osProgram;
+    if (osPath != ".")
+        oGDALHistory["ProgramPath"] = osPath;
+
+    std::string osArgs;
+    for (const char *pszArg : psOptions->aosArgs)
+    {
+        if (!osArgs.empty())
+            osArgs += ' ';
+        osArgs += pszArg;
+    }
+    oGDALHistory["ProgramArguments"] = osArgs;
+
+    oGDALHistory.Add(
+        "Comment",
+        "Part of that metadata might be invalid due to a reprojection "
+        "operation having been performed by GDAL tools");
+
+    return oRoot.Format(CPLJSONObject::PrettyFormat::Pretty);
+}
+
+/************************************************************************/
 /*                           ProcessMetadata()                          */
 /************************************************************************/
 
 static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
-                            GDALWarpAppOptions *psOptions,
+                            const GDALWarpAppOptions *psOptions,
                             const bool bEnableDstAlpha)
 {
     if (psOptions->bCopyMetadata)
@@ -1819,11 +1878,23 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             CSLDestroy(papszMetadataNew);
 
             /* ISIS3 -> ISIS3 special case */
-            if (EQUAL(psOptions->osFormat.c_str(), "ISIS3"))
+            if (EQUAL(psOptions->osFormat.c_str(), "ISIS3") ||
+                EQUAL(psOptions->osFormat.c_str(), "PDS4") ||
+                EQUAL(psOptions->osFormat.c_str(), "GTIFF") ||
+                EQUAL(psOptions->osFormat.c_str(), "COG"))
             {
                 char **papszMD_ISIS3 = GDALGetMetadata(hSrcDS, "json:ISIS3");
-                if (papszMD_ISIS3 != nullptr)
-                    GDALSetMetadata(hDstDS, papszMD_ISIS3, "json:ISIS3");
+                if (papszMD_ISIS3 != nullptr && papszMD_ISIS3[0])
+                {
+                    std::string osJSON = papszMD_ISIS3[0];
+                    osJSON =
+                        EditISIS3ForMetadataChanges(osJSON.c_str(), psOptions);
+                    if (!osJSON.empty())
+                    {
+                        char *apszMD[] = {osJSON.data(), nullptr};
+                        GDALSetMetadata(hDstDS, apszMD, "json:ISIS3");
+                    }
+                }
             }
             else if (EQUAL(psOptions->osFormat.c_str(), "PDS4"))
             {
@@ -6310,6 +6381,8 @@ GDALWarpAppOptionsNew(char **papszArgv,
                       GDALWarpAppOptionsForBinary *psOptionsForBinary)
 {
     auto psOptions = std::make_unique<GDALWarpAppOptions>();
+
+    psOptions->aosArgs.Assign(CSLDuplicate(papszArgv), true);
 
     /* -------------------------------------------------------------------- */
     /*      Pre-processing for custom syntax that ArgumentParser does not   */
