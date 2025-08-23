@@ -67,6 +67,13 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
         return OGRERR_NONE;
     }
 
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldDefn,
+                           int) override
+    {
+        m_poLayerDefn->AddGeomFieldDefn(poGeomFieldDefn);
+        return OGRERR_NONE;
+    }
+
     OGRErr ICreateFeature(OGRFeature *poFeature) override
     {
         m_apoFeatures.emplace_back(
@@ -81,8 +88,9 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
 
 class OGRADBCDataset;
 
-class OGRADBCLayer final : public OGRLayer,
-                           public OGRGetNextFeatureThroughRaw<OGRADBCLayer>
+class OGRADBCLayer /* non final */ : public OGRLayer,
+                                     public OGRGetNextFeatureThroughRaw<
+                                         OGRADBCLayer>
 {
   public:
     //! Describe the bbox column of a geometry column
@@ -94,7 +102,7 @@ class OGRADBCLayer final : public OGRLayer,
         std::string osYMax{};
     };
 
-  private:
+  protected:
     friend class OGRADBCDataset;
 
     OGRADBCDataset *m_poDS = nullptr;
@@ -105,6 +113,8 @@ class OGRADBCLayer final : public OGRLayer,
     std::unique_ptr<AdbcStatement> m_statement{};
     std::unique_ptr<OGRArrowArrayToOGRFeatureAdapterLayer> m_poAdapterLayer{};
     std::unique_ptr<OGRArrowArrayStream> m_stream{};
+    bool m_bInternalUse = false;
+    bool m_bLayerDefinitionError = false;
 
     struct ArrowSchema m_schema
     {
@@ -113,34 +123,48 @@ class OGRADBCLayer final : public OGRLayer,
     bool m_bEOF = false;
     size_t m_nIdx = 0;
     GIntBig m_nFeatureID = 0;
+    GIntBig m_nMaxFeatureID = -1;
     bool m_bIsParquetLayer = false;
 
     std::vector<GeomColBBOX>
         m_geomColBBOX{};                     // same size as GetGeomFieldCount()
     std::vector<OGREnvelope3D> m_extents{};  // same size as GetGeomFieldCount()
+    std::string m_osFIDColName{};
 
     OGRFeature *GetNextRawFeature();
     bool GetArrowStreamInternal(struct ArrowArrayStream *out_stream);
+    GIntBig GetFeatureCountSelectCountStar();
+    GIntBig GetFeatureCountArrow();
     GIntBig GetFeatureCountParquet();
 
-    void BuildLayerDefn(bool bInternalUse);
+    bool BuildLayerDefnInit();
+    virtual void BuildLayerDefn();
     bool ReplaceStatement(const char *pszNewStatement);
     bool UpdateStatement();
-    std::string GetCurrentStatement() const;
+    virtual std::string GetCurrentStatement() const;
+
+    virtual bool RunDeferredCreation()
+    {
+        return true;
+    }
 
     CPL_DISALLOW_COPY_ASSIGN(OGRADBCLayer)
 
   public:
     OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
-                 const char *pszStatement,
-                 std::unique_ptr<AdbcStatement> poStatement,
+                 const std::string &osStatement, bool bInternalUse);
+    OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
                  std::unique_ptr<OGRArrowArrayStream> poStream,
                  ArrowSchema *schema, bool bInternalUse);
     ~OGRADBCLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    bool GotError();
+
+    OGRFeatureDefn *GetLayerDefn() override;
+
+    const char *GetName() override
     {
-        return m_poAdapterLayer->GetLayerDefn();
+        return GetDescription();
     }
 
     void ResetReading() override;
@@ -159,6 +183,44 @@ class OGRADBCLayer final : public OGRLayer,
                       bool bForce) override;
     OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                         bool bForce) override;
+
+    const char *GetFIDColumn() override;
+};
+
+/************************************************************************/
+/*                      OGRADBCBigQueryLayer                            */
+/************************************************************************/
+
+class OGRADBCBigQueryLayer final : public OGRADBCLayer
+{
+  private:
+    friend class OGRADBCDataset;
+
+    bool m_bDeferredCreation = false;
+
+    void BuildLayerDefn() override;
+    bool RunDeferredCreation() override;
+    std::string GetCurrentStatement() const override;
+    bool GetBigQueryDatasetAndTableId(std::string &osDatasetId,
+                                      std::string &osTableId) const;
+
+  public:
+    OGRADBCBigQueryLayer(OGRADBCDataset *poDS, const char *pszName,
+                         const std::string &osStatement, bool bInternalUse);
+
+    int TestCapability(const char *) override;
+    GIntBig GetFeatureCount(int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
+    OGRErr SetAttributeFilter(const char *pszFilter) override;
+
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
+
+    void SetDeferredCreation(const char *pszFIDColName,
+                             const OGRGeomFieldDefn *poGeomFieldDefn);
 };
 
 /************************************************************************/
@@ -177,10 +239,14 @@ class OGRADBCDataset final : public GDALDataset
     bool m_bIsDuckDBDataset = false;
     bool m_bIsDuckDBDriver = false;
     bool m_bSpatialLoaded = false;
+    bool m_bIsBigQuery = false;
+    std::string m_osBigQueryDatasetId{};
 
   public:
     OGRADBCDataset() = default;
     ~OGRADBCDataset() override;
+
+    CPLErr FlushCache(bool bAtClosing) override;
 
     bool Open(const GDALOpenInfo *poOpenInfo);
 
@@ -201,13 +267,18 @@ class OGRADBCDataset final : public GDALDataset
                                               const char *pszLayerName,
                                               bool bInternalUse);
 
-    std::unique_ptr<OGRADBCLayer> CreateInternalLayer(const char *pszStatement)
-    {
-        return CreateLayer(pszStatement, "temp", true);
-    }
+    std::unique_ptr<OGRADBCLayer>
+    CreateInternalLayer(const char *pszStatement) CPL_WARN_UNUSED_RESULT;
+
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
+
+    int TestCapability(const char *pszCap) override;
 };
 
 /************************************************************************/

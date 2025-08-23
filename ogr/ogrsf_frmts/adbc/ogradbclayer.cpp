@@ -48,20 +48,61 @@ static OGRwkbGeometryType GetGeometryTypeFromString(const std::string &osType)
 /************************************************************************/
 
 OGRADBCLayer::OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
-                           const char *pszStatement,
-                           std::unique_ptr<AdbcStatement> poStatement,
+                           const std::string &osStatement, bool bInternalUse)
+    : m_poDS(poDS), m_osBaseStatement(osStatement),
+      m_osModifiedBaseStatement(m_osBaseStatement), m_bInternalUse(bInternalUse)
+{
+    SetDescription(pszName);
+
+    memset(&m_schema, 0, sizeof(m_schema));
+}
+
+/************************************************************************/
+/*                            OGRADBCLayer()                            */
+/************************************************************************/
+
+OGRADBCLayer::OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
                            std::unique_ptr<OGRArrowArrayStream> poStream,
                            ArrowSchema *schema, bool bInternalUse)
-    : m_poDS(poDS), m_osBaseStatement(pszStatement),
-      m_osModifiedBaseStatement(m_osBaseStatement),
-      m_statement(std::move(poStatement)), m_stream(std::move(poStream))
+    : m_poDS(poDS), m_stream(std::move(poStream)), m_bInternalUse(bInternalUse)
 {
     SetDescription(pszName);
 
     memcpy(&m_schema, schema, sizeof(m_schema));
     schema->release = nullptr;
+}
 
-    BuildLayerDefn(bInternalUse);
+/************************************************************************/
+/*                            GetLayerDefn()                            */
+/************************************************************************/
+
+OGRFeatureDefn *OGRADBCLayer::GetLayerDefn()
+{
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+    return m_poAdapterLayer->GetLayerDefn();
+}
+
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRADBCLayer::GetFIDColumn()
+{
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+    return m_osFIDColName.c_str();
+}
+
+/************************************************************************/
+/*                             GotError()                               */
+/************************************************************************/
+
+bool OGRADBCLayer::GotError()
+{
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+    return m_bLayerDefinitionError;
 }
 
 /************************************************************************/
@@ -293,11 +334,71 @@ static void ParseGeoParquetColumn(
 }
 
 /************************************************************************/
+/*                         BuildLayerDefnInit()                         */
+/************************************************************************/
+
+bool OGRADBCLayer::BuildLayerDefnInit()
+{
+    CPLAssert(!m_poAdapterLayer);
+
+    m_bLayerDefinitionError = true;
+    m_poAdapterLayer = std::make_unique<OGRArrowArrayToOGRFeatureAdapterLayer>(
+        GetDescription());
+
+    m_statement = std::make_unique<AdbcStatement>();
+    if (!m_osBaseStatement.empty())
+    {
+        OGRADBCError error;
+        if (ADBC_CALL(StatementNew, m_poDS->m_connection.get(),
+                      m_statement.get(), error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcStatementNew() failed: %s", error.message());
+            return false;
+        }
+
+        if (ADBC_CALL(StatementSetSqlQuery, m_statement.get(),
+                      m_osBaseStatement.c_str(), error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcStatementSetSqlQuery() failed: %s", error.message());
+            return false;
+        }
+    }
+
+    if (!m_stream)
+    {
+        OGRADBCError error;
+        m_stream = std::make_unique<OGRArrowArrayStream>();
+        int64_t rows_affected = -1;
+        if (ADBC_CALL(StatementExecuteQuery, m_statement.get(), m_stream->get(),
+                      &rows_affected, error) != ADBC_STATUS_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "AdbcStatementExecuteQuery() failed: %s", error.message());
+            return false;
+        }
+
+        if (m_stream->get_schema(&m_schema) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "get_schema() failed");
+            return false;
+        }
+    }
+
+    m_bLayerDefinitionError = false;
+    return true;
+}
+
+/************************************************************************/
 /*                           BuildLayerDefn()                           */
 /************************************************************************/
 
-void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
+void OGRADBCLayer::BuildLayerDefn()
 {
+    if (!BuildLayerDefnInit())
+        return;
+
     // Identify geometry columns for Parquet files, and query them with
     // ST_AsWKB() to avoid getting duckdb_spatial own geometry encoding
     // (https://github.com/duckdb/duckdb_spatial/blob/a60aa3733741a99c49baaf33390c0f7c8a9598a3/spatial/src/spatial/core/geometry/geometry_serialization.cpp#L11)
@@ -305,13 +406,10 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
     std::map<std::string, OGRwkbGeometryType> oMapType;
     std::map<std::string, OGREnvelope3D> oMapExtent;
     std::map<std::string, GeomColBBOX> oMapGeomColumnToCoveringBBOXColumn;
-    if (!bInternalUse && STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT ") &&
-        (m_poDS->m_bIsDuckDBDriver ||
-         (!m_poDS->m_osParquetFilename.empty() &&
-          CPLString(m_osBaseStatement)
-                  .ifind(std::string(" FROM '").append(OGRDuplicateCharacter(
-                      m_poDS->m_osParquetFilename, '\''))) !=
-              std::string::npos)))
+
+    if (!m_bInternalUse &&
+        STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT ") &&
+        m_poDS->m_bIsDuckDBDriver)
     {
         // Try to read GeoParquet 'geo' metadata
         std::map<std::string, std::unique_ptr<OGRSpatialReference>>
@@ -327,7 +425,7 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
                                                   '\''))
                     .append("') WHERE key = 'geo'")
                     .c_str());
-            if (poMetadataLayer)
+            if (!poMetadataLayer->GotError())
             {
                 auto f = std::unique_ptr<OGRFeature>(
                     poMetadataLayer->GetNextFeature());
@@ -361,9 +459,10 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
             std::string("DESCRIBE ").append(m_osBaseStatement).c_str());
         std::string osNewStatement;
         bool bNewStatement = false;
-        if (poDescribeLayer && (m_poDS->m_bIsDuckDBDriver ||
-                                // cppcheck-suppress knownConditionTrueFalse
-                                !oMapGeomColumnsFromGeoParquet.empty()))
+        if (!poDescribeLayer->GotError() &&
+            (m_poDS->m_bIsDuckDBDriver ||
+             // cppcheck-suppress knownConditionTrueFalse
+             !oMapGeomColumnsFromGeoParquet.empty()))
         {
             for (auto &&f : *poDescribeLayer)
             {
@@ -419,9 +518,6 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
             }
         }
     }
-
-    m_poAdapterLayer = std::make_unique<OGRArrowArrayToOGRFeatureAdapterLayer>(
-        GetDescription());
 
     for (int i = 0; i < m_schema.n_children; ++i)
     {
@@ -529,7 +625,11 @@ bool OGRADBCLayer::ReplaceStatement(const char *pszNewStatement)
 
 OGRFeature *OGRADBCLayer::GetNextRawFeature()
 {
-    if (m_bEOF)
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+    RunDeferredCreation();
+
+    if (m_bEOF || m_bLayerDefinitionError)
         return nullptr;
 
     if (m_nIdx == m_poAdapterLayer->m_apoFeatures.size())
@@ -579,7 +679,11 @@ OGRFeature *OGRADBCLayer::GetNextRawFeature()
                 m_poAdapterLayer->m_poLayerDefn->GetGeomFieldDefn(i)
                     ->GetSpatialRef());
     }
-    poFeature->SetFID(m_nFeatureID++);
+    if (m_osFIDColName.empty())
+        poFeature->SetFID(m_nFeatureID++);
+    else
+        poFeature->SetFID(
+            poFeature->GetFieldAsInteger64(m_osFIDColName.c_str()));
     return poFeature;
 }
 
@@ -606,6 +710,9 @@ void OGRADBCLayer::ResetReading()
 OGRErr OGRADBCLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
                                 bool bForce)
 {
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+
     *psExtent = m_extents[iGeomField];
     if (psExtent->IsInit())
         return OGRERR_NONE;
@@ -620,6 +727,9 @@ OGRErr OGRADBCLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 OGRErr OGRADBCLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                                   bool bForce)
 {
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+
     *psExtent = m_extents[iGeomField];
     if (psExtent->IsInit())
         return OGRERR_NONE;
@@ -633,7 +743,7 @@ OGRErr OGRADBCLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
 
 std::string OGRADBCLayer::GetCurrentStatement() const
 {
-    if (!m_osModifiedSelect.empty() &&
+    if (m_poDS->m_bIsDuckDBDriver && !m_osModifiedSelect.empty() &&
         STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT * FROM ") &&
         (!m_osAttributeFilter.empty() ||
          (m_poFilterGeom &&
@@ -727,7 +837,7 @@ bool OGRADBCLayer::UpdateStatement()
 
 OGRErr OGRADBCLayer::SetAttributeFilter(const char *pszFilter)
 {
-    if (!m_osModifiedSelect.empty() &&
+    if (!m_osModifiedSelect.empty() && m_poDS->m_bIsDuckDBDriver &&
         STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT * FROM "))
     {
         m_osAttributeFilter = pszFilter ? pszFilter : "";
@@ -763,6 +873,9 @@ OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
 
 int OGRADBCLayer::TestCapability(const char *pszCap)
 {
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+
     if (EQUAL(pszCap, OLCFastGetArrowStream))
     {
         return !m_poFilterGeom && !m_poAttrQuery && m_osAttributeFilter.empty();
@@ -792,7 +905,7 @@ int OGRADBCLayer::TestCapability(const char *pszCap)
                 OGRDuplicateCharacter(GetDescription(), '\'').c_str(),
                 pszGeomColName,
                 OGRDuplicateCharacter(pszGeomColName, '"').c_str()));
-            return poTmpLayer &&
+            return !poTmpLayer->GotError() &&
                    std::unique_ptr<OGRFeature>(poTmpLayer->GetNextFeature());
         }
         else if (!m_geomColBBOX[m_iGeomFieldFilter].osXMin.empty())
@@ -803,6 +916,8 @@ int OGRADBCLayer::TestCapability(const char *pszCap)
             return true;
         }
     }
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return true;
 
     return false;
 }
@@ -823,6 +938,9 @@ GDALDataset *OGRADBCLayer::GetDataset()
 bool OGRADBCLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
                                   CSLConstList papszOptions)
 {
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+
     if (m_poFilterGeom || m_poAttrQuery ||
         CPLFetchBool(papszOptions, GAS_OPT_DATETIME_AS_STRING, false))
     {
@@ -859,43 +977,34 @@ bool OGRADBCLayer::GetArrowStreamInternal(struct ArrowArrayStream *out_stream)
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                    GetFeatureCountSelectCountStar()                  */
 /************************************************************************/
 
-GIntBig OGRADBCLayer::GetFeatureCount(int bForce)
+GIntBig OGRADBCLayer::GetFeatureCountSelectCountStar()
 {
-    if (m_poFilterGeom || m_poAttrQuery || !m_osAttributeFilter.empty())
+    const std::string osCurStatement = GetCurrentStatement();
+    auto poCountLayer =
+        m_poDS->CreateInternalLayer(std::string("SELECT COUNT(*) FROM (")
+                                        .append(osCurStatement)
+                                        .append(")")
+                                        .c_str());
+    if (!poCountLayer->GotError() &&
+        poCountLayer->GetLayerDefn()->GetFieldCount() == 1)
     {
-        if (!m_osModifiedSelect.empty() &&
-            STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT * FROM ") &&
-            (!m_poFilterGeom ||
-             !m_geomColBBOX[m_iGeomFieldFilter].osXMin.empty() ||
-             m_poDS->m_bSpatialLoaded))
-        {
-            const std::string osCurStatement = GetCurrentStatement();
-            auto poCountLayer = m_poDS->CreateInternalLayer(
-                std::string("SELECT COUNT(*) FROM (")
-                    .append(osCurStatement)
-                    .append(")")
-                    .c_str());
-            if (poCountLayer &&
-                poCountLayer->GetLayerDefn()->GetFieldCount() == 1)
-            {
-                auto poFeature =
-                    std::unique_ptr<OGRFeature>(poCountLayer->GetNextFeature());
-                if (poFeature)
-                    return poFeature->GetFieldAsInteger64(0);
-            }
-        }
-
-        return OGRLayer::GetFeatureCount(bForce);
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(poCountLayer->GetNextFeature());
+        if (poFeature)
+            return poFeature->GetFieldAsInteger64(0);
     }
+    return -1;
+}
 
-    if (m_bIsParquetLayer)
-    {
-        return GetFeatureCountParquet();
-    }
+/************************************************************************/
+/*                      GetFeatureCountArrow()                          */
+/************************************************************************/
 
+GIntBig OGRADBCLayer::GetFeatureCountArrow()
+{
     if (m_nIdx > 0 || m_bEOF)
         m_stream.reset();
 
@@ -931,6 +1040,41 @@ GIntBig OGRADBCLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
+/*                           GetFeatureCount()                          */
+/************************************************************************/
+
+GIntBig OGRADBCLayer::GetFeatureCount(int bForce)
+{
+    if (!m_poAdapterLayer)
+        BuildLayerDefn();
+    if (m_bLayerDefinitionError)
+        return 0;
+
+    if (m_poFilterGeom || m_poAttrQuery || !m_osAttributeFilter.empty())
+    {
+        if (!m_osModifiedSelect.empty() &&
+            STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT * FROM ") &&
+            (!m_poFilterGeom ||
+             !m_geomColBBOX[m_iGeomFieldFilter].osXMin.empty() ||
+             m_poDS->m_bSpatialLoaded))
+        {
+            auto nCount = GetFeatureCountSelectCountStar();
+            if (nCount >= 0)
+                return nCount;
+        }
+
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    if (m_bIsParquetLayer)
+    {
+        return GetFeatureCountParquet();
+    }
+
+    return GetFeatureCountArrow();
+}
+
+/************************************************************************/
 /*                        GetFeatureCountParquet()                      */
 /************************************************************************/
 
@@ -940,7 +1084,8 @@ GIntBig OGRADBCLayer::GetFeatureCountParquet()
         "SELECT CAST(SUM(num_rows) AS BIGINT) FROM parquet_file_metadata('%s')",
         OGRDuplicateCharacter(m_poDS->m_osParquetFilename, '\'').c_str()));
     auto poCountLayer = m_poDS->CreateInternalLayer(osSQL.c_str());
-    if (poCountLayer && poCountLayer->GetLayerDefn()->GetFieldCount() == 1)
+    if (!poCountLayer->GotError() &&
+        poCountLayer->GetLayerDefn()->GetFieldCount() == 1)
     {
         auto poFeature =
             std::unique_ptr<OGRFeature>(poCountLayer->GetNextFeature());

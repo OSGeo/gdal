@@ -56,6 +56,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "BAG_GEOREF_MD_BLOCKXSIZE", // from bagdataset.cpp
    "BAG_GEOREF_MD_BLOCKYSIZE", // from bagdataset.cpp
    "BASISU_MAX_FILE_SIZE", // from basisudataset.cpp
+   "BIGQUERY_DATASET_ID", // from ogradbcdataset.cpp
+   "BIGQUERY_JSON_CREDENTIAL_FILE", // from ogradbcdataset.cpp
+   "BIGQUERY_JSON_CREDENTIAL_STRING", // from ogradbcdataset.cpp
+   "BIGQUERY_PROJECT_ID", // from ogradbcdataset.cpp
    "BIGTIFF_OVERVIEW", // from gt_overview.cpp
    "BLOCKXSIZE", // from netcdfdataset.cpp
    "BLOCKYSIZE", // from netcdfdataset.cpp

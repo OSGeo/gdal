@@ -450,23 +450,37 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-compute-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
-# Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
-RUN . /buildscripts/bh-set-envvars.sh \
-    && if test "${GCC_ARCH}" = "x86_64"; then \
-    curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake102_14-1_amd64.deb \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-manager-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-sqlite-dev_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake102_14-1_amd64.deb \
-    && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb \
-    && rm -f libadbc*.deb; \
-    fi
+# Manually build ADBC packages to have support for BigQuery
+ARG ARROW_ADBC_VERSION=19
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends golang libpq-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} \
+    && if test "${TARGET_ARCH:-}" != ""; then \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu; \
+    fi \
+    && curl -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && tar xzf apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && rm -f apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && cd arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}/c \
+    && mkdir build \
+    && cd build \
+    && export GOOS=linux \
+    && if test "${TARGET_ARCH:-}" != ""; then \
+        export GOARCH=${TARGET_ARCH:-}; \
+        export PKG_CONFIG_PATH=/usr/lib/${GCC_ARCH}-linux-gnu/pkgconfig; \
+    fi \
+    && cmake .. -G Ninja ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+        -DADBC_BUILD_STATIC=OFF \
+        -DADBC_DRIVER_FLIGHTSQL=ON -DADBC_DRIVER_MANAGER=ON \
+        -DADBC_DRIVER_POSTGRESQL=ON -DADBC_DRIVER_SQLITE=ON \
+        -DADBC_DRIVER_SNOWFLAKE=ON -DADBC_DRIVER_BIGQUERY=ON || (cat CMakeCache.txt) \
+    && ninja \
+    && ninja install \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && cd ../../.. \
+    && rm -rf arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}
 
 ARG WITH_DEBUG_SYMBOLS=no
 
@@ -586,7 +600,7 @@ RUN if test "$(uname -p)" = "x86_64"; then \
     fi
 
 # Install libduckdb
-ARG DUCKDB_VERSION=v1.3.1
+ARG DUCKDB_VERSION=v1.3.2
 RUN if test "$(uname -p)" = "x86_64"; then \
     curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
