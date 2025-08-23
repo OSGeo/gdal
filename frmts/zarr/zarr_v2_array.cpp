@@ -1474,6 +1474,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             std::string osDirName = m_osDirectoryName;
             while (true)
             {
+                if (CPLHasPathTraversal(osDimName.c_str()))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s",
+                             osDimName.c_str());
+                    return false;
+                }
                 const std::string osArrayFilenameDim = CPLFormFilenameSafe(
                     CPLFormFilenameSafe(osDirName.c_str(), osDimName.c_str(),
                                         nullptr)
@@ -1972,6 +1979,13 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const std::string gridMappingName = gridMapping.ToString();
         if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
         {
+            if (CPLHasPathTraversal(gridMappingName.c_str()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s",
+                         gridMappingName.c_str());
+                return nullptr;
+            }
             const std::string osArrayFilenameDim = CPLFormFilenameSafe(
                 CPLFormFilenameSafe(m_osDirectoryName.c_str(),
                                     gridMappingName.c_str(), nullptr)

@@ -281,6 +281,12 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
+            if (CPLHasPathTraversal(osFilename.c_str()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", osFilename.c_str());
+                return nullptr;
+            }
             CPLString osBasePath = CPLGetPathSafe(poOpenInfo->pszFilename);
             osFilename = CPLFormFilenameSafe(osBasePath, osFilename, nullptr);
         }

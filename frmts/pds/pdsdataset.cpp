@@ -832,6 +832,12 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     if (!osQube.empty() && osQube[0] == '"')
     {
         const CPLString osFilename = CleanString(osQube);
+        if (CPLHasPathTraversal(osFilename.c_str()))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Path traversal detected in %s", osFilename.c_str());
+            return false;
+        }
         if (!osFilenamePrefix.empty())
         {
             m_osImageFilename = osFilenamePrefix + osFilename;
@@ -1323,6 +1329,12 @@ int PDSDataset::ParseCompressedImage()
 {
     const CPLString osFileName =
         CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
+    if (CPLHasPathTraversal(osFileName.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 osFileName.c_str());
+        return false;
+    }
 
     const CPLString osPath = CPLGetPathSafe(GetDescription());
     const CPLString osFullFileName =

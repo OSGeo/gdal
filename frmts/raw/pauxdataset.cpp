@@ -492,6 +492,12 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         szAuxTarget[sizeof(szAuxTarget) - 1] = '\0';
 
+        if (CPLHasPathTraversal(szAuxTarget))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", szAuxTarget);
+            return nullptr;
+        }
         const std::string osPath(CPLGetPathSafe(poOpenInfo->pszFilename));
         osTarget = CPLFormFilenameSafe(osPath.c_str(), szAuxTarget, nullptr);
     }

@@ -528,9 +528,19 @@ CPLErr HFADelete(const char *pszFilename)
                 poDMS->GetStringField("fileName.string");
 
             if (pszRawFilename != nullptr)
-                HFARemove(CPLFormFilenameSafe(psInfo->pszPath, pszRawFilename,
-                                              nullptr)
-                              .c_str());
+            {
+                if (CPLHasPathTraversal(pszRawFilename))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszRawFilename);
+                }
+                else
+                {
+                    HFARemove(CPLFormFilenameSafe(psInfo->pszPath,
+                                                  pszRawFilename, nullptr)
+                                  .c_str());
+                }
+            }
         }
 
         CPL_IGNORE_RET_VAL(HFAClose(psInfo));
@@ -2903,6 +2913,13 @@ std::string HFAGetIGEFilename(HFAHandle hHFA)
 
             if (pszRawFilename != nullptr)
             {
+                if (CPLHasPathTraversal(pszRawFilename))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszRawFilename);
+                    return std::string();
+                }
+
                 VSIStatBufL sStatBuf;
                 std::string osFullFilename =
                     CPLFormFilenameSafe(hHFA->pszPath, pszRawFilename, nullptr);

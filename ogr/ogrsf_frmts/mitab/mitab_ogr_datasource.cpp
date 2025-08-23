@@ -328,6 +328,14 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
 
     else
     {
+        if (CPLLaunderForFilenameSafe(pszLayerName, nullptr) != pszLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     pszLayerName);
+            return nullptr;
+        }
+
         if (m_bCreateMIF)
         {
             pszFullFilename = CPLStrdup(

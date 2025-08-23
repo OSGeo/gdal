@@ -3598,6 +3598,17 @@ def test_ogr_csv_open_dir(tmp_vsimem):
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_ogr_csv_creation_illegal_layer_name(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("CSV").CreateDataSource(tmp_vsimem / "out")
+    with pytest.raises(Exception, match="Illegal character"):
+        ds.CreateLayer("illegal/with/slash")
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:

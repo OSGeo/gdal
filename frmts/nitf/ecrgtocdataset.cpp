@@ -526,7 +526,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
     /* ------------------------------------ */
     /* Create the VRT with the overall size */
     /* ------------------------------------ */
-    ECRGTOCSubDataset *poVirtualDS = new ECRGTOCSubDataset(nSizeX, nSizeY);
+    auto poVirtualDS = std::make_unique<ECRGTOCSubDataset>(nSizeX, nSizeY);
 
     poVirtualDS->SetProjection(SRS_WKT_WGS84_LAT_LONG);
 
@@ -555,7 +555,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
     /* -------------------------------------------------------------------- */
 
     poVirtualDS->oOvManager.Initialize(
-        poVirtualDS,
+        poVirtualDS.get(),
         CPLString().Printf("%s.%d", pszTOCFilename, nCountSubDataset));
 
     poVirtualDS->papszFileList = poVirtualDS->GDALDataset::GetFileList();
@@ -568,6 +568,12 @@ GDALDataset *ECRGTOCSubDataset::Build(
 
     for (int i = 0; i < static_cast<int>(aosFrameDesc.size()); i++)
     {
+        if (CPLHasPathTraversal(aosFrameDesc[i].pszName))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Path traversal detected in %s", aosFrameDesc[i].pszName);
+            return nullptr;
+        }
         const std::string osName = BuildFullName(
             pszTOCFilename, aosFrameDesc[i].pszPath, aosFrameDesc[i].pszName);
 
@@ -610,7 +616,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
 
     poVirtualDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
-    return poVirtualDS;
+    return poVirtualDS.release();
 }
 
 /************************************************************************/
@@ -640,7 +646,7 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
     double dfGlobalPixelYSize = 0.0;
     bool bGlobalExtentValid = false;
 
-    ECRGTOCDataset *poDS = new ECRGTOCDataset();
+    auto poDS = std::make_unique<ECRGTOCDataset>();
     int nSubDatasets = 0;
 
     int bLookForSubDataset = !osProduct.empty() && !osDiscId.empty();
@@ -750,7 +756,6 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
                                      "Scale should be mentioned in "
                                      "subdatasets syntax since this disk "
                                      "contains several scales");
-                            delete poDS;
                             return nullptr;
                         }
                     }
@@ -846,6 +851,12 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
 
                     nValidFrames++;
 
+                    if (CPLHasPathTraversal(pszFrameName))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Path traversal detected in %s", pszFrameName);
+                        return nullptr;
+                    }
                     const std::string osFullName = BuildFullName(
                         pszTOCFilename, pszFramePath, pszFrameName);
                     poDS->papszFileList =
@@ -892,7 +903,6 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
 
                 if (bLookForSubDataset)
                 {
-                    delete poDS;
                     if (nValidFrames == 0)
                         return nullptr;
                     return ECRGTOCSubDataset::Build(
@@ -914,7 +924,6 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
 
     if (!bGlobalExtentValid)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -923,7 +932,7 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
         const char *pszSubDatasetName = CSLFetchNameValue(
             poDS->GetMetadata("SUBDATASETS"), "SUBDATASET_1_NAME");
         GDALOpenInfo oOpenInfo(pszSubDatasetName, GA_ReadOnly);
-        delete poDS;
+        poDS.reset();
         GDALDataset *poRetDS = Open(&oOpenInfo);
         if (poRetDS)
             poRetDS->SetDescription(pszOpenInfoFilename);
@@ -947,7 +956,7 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
     /* -------------------------------------------------------------------- */
     poDS->TryLoadXML();
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

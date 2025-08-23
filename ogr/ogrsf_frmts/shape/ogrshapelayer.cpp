@@ -3770,6 +3770,14 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     if (!TestCapability(OLCRename))
         return OGRERR_FAILURE;
 
+    if (CPLLaunderForFilenameSafe(pszNewName, nullptr) != pszNewName)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Illegal characters in '%s' to form a valid filename",
+                 pszNewName);
+        return OGRERR_FAILURE;
+    }
+
     if (m_poDS->GetLayerByName(pszNewName) != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Layer %s already exists",

@@ -516,13 +516,17 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
         record->GetStringSubfield("SPR", 0, "BAD", 0, &bSuccess);
     if (pszBAD == nullptr)
         return false;
-    const CPLString osBAD = pszBAD;
-    {
-        char *c = (char *)strchr(osBAD, ' ');
-        if (c)
-            *c = 0;
-    }
+    std::string osBAD = pszBAD;
+    const auto nSpacePos = osBAD.find(' ');
+    if (nSpacePos != std::string::npos)
+        osBAD.resize(nSpacePos);
     CPLDebug("SRP", "BAD=%s", osBAD.c_str());
+    if (CPLHasPathTraversal(osBAD.c_str()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Path traversal detected in %s",
+                 osBAD.c_str());
+        return false;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Read the tile map if available.                                 */
@@ -582,7 +586,7 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     /* -------------------------------------------------------------------- */
     const CPLString osDirname = CPLGetDirnameSafe(pszFileName);
     const CPLString osImgName =
-        CPLFormCIFilenameSafe(osDirname, osBAD, nullptr);
+        CPLFormCIFilenameSafe(osDirname, osBAD.c_str(), nullptr);
 
     fdIMG = VSIFOpenL(osImgName, "rb");
     if (fdIMG == nullptr)
@@ -1054,13 +1058,12 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
     DDFRecord *record = nullptr;
     DDFField *field = nullptr;
     DDFFieldDefn *fieldDefn = nullptr;
-    int nFilenames = 0;
+    CPLStringList aosFilenames;
 
-    char **papszFileNames = nullptr;
     if (!module.Open(pszFileName, TRUE))
-        return papszFileNames;
+        return nullptr;
 
-    CPLString osDirName(CPLGetDirnameSafe(pszFileName));
+    const CPLString osDirName(CPLGetDirnameSafe(pszFileName));
 
     while (true)
     {
@@ -1121,6 +1124,13 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
                      * characters */
                     CPLString osDirDataset = pszNAM;
                     osDirDataset.resize(6);
+                    if (CPLHasPathTraversal(osDirDataset.c_str()))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Path traversal detected in %s",
+                                 osDirDataset.c_str());
+                        return nullptr;
+                    }
                     CPLString osDatasetDir = CPLFormFilenameSafe(
                         osDirName.c_str(), osDirDataset.c_str(), nullptr);
 
@@ -1184,18 +1194,13 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
 
                     if (bFound == 1)
                     {
-                        papszFileNames = (char **)CPLRealloc(
-                            papszFileNames, sizeof(char *) * (nFilenames + 2));
-                        papszFileNames[nFilenames] =
-                            CPLStrdup(osGENFileName.c_str());
-                        papszFileNames[nFilenames + 1] = nullptr;
-                        nFilenames++;
+                        aosFilenames.AddString(osGENFileName.c_str());
                     }
                 }
             }
         }
     }
-    return papszFileNames;
+    return aosFilenames.StealList();
 }
 
 /************************************************************************/
@@ -1396,12 +1401,16 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
             if (pszBAD == nullptr || strlen(pszBAD) != 12)
                 continue;
             std::string osBAD = pszBAD;
-            {
-                char *c = (char *)strchr(osBAD.c_str(), ' ');
-                if (c)
-                    *c = 0;
-            }
+            const auto nSpacePos = osBAD.find(' ');
+            if (nSpacePos != std::string::npos)
+                osBAD.resize(nSpacePos);
             CPLDebug("SRP", "BAD=%s", osBAD.c_str());
+            if (CPLHasPathTraversal(osBAD.c_str()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", osBAD.c_str());
+                return nullptr;
+            }
 
             /* Build full IMG file name from BAD value */
             const CPLString osGENDir(CPLGetDirnameSafe(pszFileName));
