@@ -47,6 +47,7 @@ class GDALRasterEditAlgorithm /* non final */
     std::vector<double> m_bbox{};
     std::vector<std::string> m_metadata{};
     std::vector<std::string> m_unsetMetadata{};
+    std::vector<std::string> m_unsetMetadataDomain{};
     std::string m_nodata{};
     std::vector<std::string> m_gcps{};
     bool m_stats = false;        // standalone mode only

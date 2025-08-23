@@ -79,9 +79,13 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
         arg.AddHiddenAlias("mo");
     }
 
-    AddArg("unset-metadata", 0, _("Remove dataset metadata item"),
+    AddArg("unset-metadata", 0, _("Remove dataset metadata item(s)"),
            &m_unsetMetadata)
         .SetMetaVar("<KEY>");
+
+    AddArg("unset-metadata-domain", 0, _("Remove dataset metadata domain(s)"),
+           &m_unsetMetadataDomain)
+        .SetMetaVar("<DOMAIN>");
 
     AddArg("gcp", 0,
            _("Add ground control point, formatted as "
@@ -337,6 +341,16 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
                             "SetMetadataItem('%s', NULL) failed", key.c_str());
+                return false;
+            }
+        }
+
+        for (const std::string &domain : m_unsetMetadataDomain)
+        {
+            if (poDS->SetMetadata(nullptr, domain.c_str()) != CE_None)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "SetMetadata(NULL, '%s') failed", domain.c_str());
                 return false;
             }
         }
