@@ -82,12 +82,6 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
         // Shortcut.
         return true;
     }
-    /* fguuid:jgd20??.bl (Japanese FGD GML v4) */
-    else if (EQUALN(pszSRSName, "fguuid:jgd2011.bl", 17) ||
-             EQUALN(pszSRSName, "fguuid:jgd2001.bl", 17))
-    {
-        return true;
-    }
     else if (!EQUALN(pszSRSName, "EPSG:", 5))
     {
         OGRSpatialReference oSRS;

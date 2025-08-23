@@ -4254,6 +4254,34 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         return SetFromUserInput("EPSG:25832+7837");
     }
 
+    // Used by  Japan's Fundamental Geospatial Data (FGD) GML
+    if (EQUAL(pszDefinition, "fguuid:jgd2001.bl"))
+        return importFromEPSG(4612);  // JGD2000 (slight difference in years)
+    else if (EQUAL(pszDefinition, "fguuid:jgd2011.bl"))
+        return importFromEPSG(6668);  // JGD2011
+    else if (EQUAL(pszDefinition, "fguuid:jgd2024.bl"))
+    {
+        // FIXME when EPSG attributes a CRS code
+        return importFromWkt(
+            "GEOGCRS[\"JGD2024\",\n"
+            "    DATUM[\"Japanese Geodetic Datum 2024\",\n"
+            "        ELLIPSOID[\"GRS 1980\",6378137,298.257222101,\n"
+            "            LENGTHUNIT[\"metre\",1]]],\n"
+            "    PRIMEM[\"Greenwich\",0,\n"
+            "        ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "    CS[ellipsoidal,2],\n"
+            "        AXIS[\"geodetic latitude (Lat)\",north,\n"
+            "            ORDER[1],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "        AXIS[\"geodetic longitude (Lon)\",east,\n"
+            "            ORDER[2],\n"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433]],\n"
+            "    USAGE[\n"
+            "        SCOPE[\"Horizontal component of 3D system.\"],\n"
+            "        AREA[\"Japan - onshore and offshore.\"],\n"
+            "        BBOX[17.09,122.38,46.05,157.65]]]");
+    }
+
     // Deal with IGNF:xxx, ESRI:xxx, etc from the PROJ database
     const char *pszDot = strrchr(pszDefinition, ':');
     if (pszDot)
