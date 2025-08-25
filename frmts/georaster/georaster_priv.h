@@ -118,6 +118,30 @@ class GeoRasterRasterBand;
 class GeoRasterWrapper;
 
 //  ---------------------------------------------------------------------------
+//  GeoRasterDriver class definitions
+//  ---------------------------------------------------------------------------
+class GeoRasterDriver final : public GDALDriver
+{
+
+  private:
+    CPLMutex *hMutex = nullptr;
+    std::map<CPLString, OWSessionPool *> oMapSessionPool{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GeoRasterDriver)
+  public:
+    GeoRasterDriver();
+    virtual ~GeoRasterDriver();
+    OWConnection *GetConnection(const char *pszUserIn,
+                                const char *pszPasswordIn,
+                                const char *pszServerIn,
+                                int nSessMinIn,
+                                int nSessMaxIn,
+                                int nSessIncrIn);
+
+    static GeoRasterDriver *gpoGeoRasterDriver;
+};
+
+//  ---------------------------------------------------------------------------
 //  GeoRasterDataset, extends GDALDataset to support GeoRaster Datasets
 //  ---------------------------------------------------------------------------
 
@@ -146,6 +170,9 @@ class GeoRasterDataset final : public GDALDataset
                            GDALProgressFunc pfnProgress, void *pProgressData);
     boolean JPEG_CopyDirect(const char *pszJPGFilename,
                             GDALProgressFunc pfnProgress, void *pProgressData);
+    static GDALDataset *OpenDataset( const char *pszFilenameIn, 
+        GDALAccess eAccessIn, bool bPoolIn, int nPoolSessionMinIn, 
+        int nPoolSessionMaxIn, int nPoolSessionIncrIn);
 
   public:
     GDALDataset *poJP2Dataset;
@@ -343,7 +370,8 @@ class GeoRasterWrapper
 
     bool FlushMetadata();
     static char **ParseIdentificator(const char *pszStringID);
-    static GeoRasterWrapper *Open(const char *pszStringID, bool bUpdate);
+    static GeoRasterWrapper *Open(const char *pszStringID, bool bUpdate,
+        bool bPool, int nSessionMinIn, int nSessionMaxIn, int nSessionIncrIn);
     bool Create(char *pszDescription, char *pszInsert, bool bUpdate);
     bool Delete();
     void GetRasterInfo();
@@ -442,6 +470,11 @@ class GeoRasterWrapper
 
     bool bBlocking;
     bool bAutoBlocking;
+
+    bool bPool;
+    int nPoolSessionMin;
+    int nPoolSessionMax;
+    int nPoolSessionIncr;
 
     double dfXCoefficient[3];
     double dfYCoefficient[3];
