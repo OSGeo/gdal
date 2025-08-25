@@ -93,11 +93,82 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     //  -------------------------------------------------------------------
+    //  Check the Open Options on Session Pool 
+    //  -------------------------------------------------------------------
+
+    const char *pszFetched = "";
+    bool bPool = false;
+    int nPoolSessionMin = -1;
+    int nPoolSessionMax = -1;
+    int nPoolSessionIncr = -1;
+
+    pszFetched = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "POOL");
+
+    if (pszFetched && EQUAL(pszFetched, "TRUE"))
+    {
+        bPool = true;
+    }
+
+    pszFetched = CSLFetchNameValue(poOpenInfo->papszOpenOptions, 
+                                   "POOL_SESSMIN");
+
+    if (pszFetched)
+    {
+        nPoolSessionMin = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(poOpenInfo->papszOpenOptions, 
+                                   "POOL_SESSMAX");
+
+    if (pszFetched)
+    {
+        nPoolSessionMax = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(poOpenInfo->papszOpenOptions, 
+                                   "POOL_SESSINCR");
+
+    if (pszFetched)
+    {
+        nPoolSessionIncr = atoi(pszFetched);
+    }
+
+    //  -------------------------------------------------------------------
+    //  Create a corresponding GDALDataset object
+    //  -------------------------------------------------------------------
+
+    GeoRasterDataset *poGRD = (GeoRasterDataset *) OpenDataset(
+            poOpenInfo->pszFilename, poOpenInfo->eAccess, bPool,
+            nPoolSessionMin, nPoolSessionMax, nPoolSessionIncr);
+
+    //  -------------------------------------------------------------------
+    //  Return a GDALDataset
+    //  -------------------------------------------------------------------
+
+    return (GDALDataset *)poGRD;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                OpenDataset()
+//  ---------------------------------------------------------------------------
+
+GDALDataset *GeoRasterDataset::OpenDataset( const char *pszFilenameIn, 
+        GDALAccess eAccessIn, bool bPoolIn, int nPoolSessionMinIn, 
+        int nPoolSessionMaxIn, int nPoolSessionIncrIn)
+{
+
+    CPLDebug("GEOR", "OpenDataset with name=%s, access=%d", pszFilenameIn, 
+            eAccessIn);
+    CPLDebug("GEOR", "pool=%d, sessmin=%d, sessmax=%d, sessIncr=%d\n", 
+            bPoolIn, nPoolSessionMinIn, nPoolSessionMaxIn, nPoolSessionIncrIn);
+
+    //  -------------------------------------------------------------------
     //  Create a GeoRaster wrapper object
     //  -------------------------------------------------------------------
 
     GeoRasterWrapper *poGRW = GeoRasterWrapper::Open(
-        poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update);
+        pszFilenameIn, eAccessIn == GA_Update,
+        bPoolIn, nPoolSessionMinIn, nPoolSessionMaxIn, nPoolSessionIncrIn);
 
     if (!poGRW)
     {
@@ -105,7 +176,7 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     //  -------------------------------------------------------------------
-    //  Create a corresponding GDALDataset
+    //  Create a corresponding GDALDataset object
     //  -------------------------------------------------------------------
 
     GeoRasterDataset *poGRD = new GeoRasterDataset();
@@ -115,7 +186,7 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    poGRD->eAccess = poOpenInfo->eAccess;
+    poGRD->eAccess = eAccessIn;
     poGRD->poGeoRaster = poGRW;
 
     //  -------------------------------------------------------------------
@@ -193,7 +264,7 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(poGRW->sCompressionType.c_str(), "JP2-F") &&
         poGRD->eAccess == GA_ReadOnly)
     {
-        poGRD->JP2_Open(poOpenInfo->eAccess);
+        poGRD->JP2_Open(eAccessIn);
 
         if (!poGRD->poJP2Dataset)
         {
@@ -805,11 +876,50 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     //  -------------------------------------------------------------------
-    //  Open the Dataset
+    //  Check the Create Options on Session Pool 
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset *poGRD =
-        (GeoRasterDataset *)GDALOpen(pszFilename, GA_Update);
+    const char *pszFetched = "";
+    bool bPool = false;
+    int nPoolSessionMin = -1;
+    int nPoolSessionMax = -1;
+    int nPoolSessionIncr = -1;
+
+    pszFetched = CSLFetchNameValue(papszOptions, "POOL");
+
+    if (pszFetched && EQUAL(pszFetched, "TRUE"))
+    {
+        bPool = true;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "POOL_SESSMIN");
+
+    if (pszFetched)
+    {
+        nPoolSessionMin = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "POOL_SESSMAX");
+
+    if (pszFetched)
+    {
+        nPoolSessionMax = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "POOL_SESSINCR");
+
+    if (pszFetched)
+    {
+        nPoolSessionIncr = atoi(pszFetched);
+    }
+
+    //  -------------------------------------------------------------------
+    //  Create a Dataset object
+    //  -------------------------------------------------------------------
+
+    GeoRasterDataset *poGRD = (GeoRasterDataset *) OpenDataset(pszFilename, 
+            GA_Update, bPool, nPoolSessionMin, nPoolSessionMax, 
+            nPoolSessionIncr);
 
     if (!poGRD)
     {
@@ -849,7 +959,6 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     //  Check the create options to use in initialization
     //  -------------------------------------------------------------------
 
-    const char *pszFetched = "";
     CPLCharUniquePtr pszDescription;
     CPLCharUniquePtr pszInsert;
     int nQuality = -1;
@@ -1161,7 +1270,10 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     delete poGRD;
 
-    poGRD = (GeoRasterDataset *)GDALOpen(szStringId, GA_Update);
+    CPLDebug("GEOR", "Create:: Open the dataset on the new georaster object");
+    poGRD = (GeoRasterDataset *) OpenDataset(szStringId, 
+            GA_Update, bPool, nPoolSessionMin, nPoolSessionMax, 
+            nPoolSessionIncr);
 
     if (!poGRD)
     {
@@ -2934,7 +3046,7 @@ void CPL_DLL GDALRegister_GEOR()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GeoRasterDriver();
 
     GEORDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = GeoRasterDataset::Open;
