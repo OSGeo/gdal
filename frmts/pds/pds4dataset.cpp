@@ -1421,6 +1421,13 @@ static std::string FixupTableFilename(const std::string &osFilename)
 bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
                                      const CPLXMLNode *psTable)
 {
+    if (CPLHasPathTraversal(pszFilename))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OpenTableCharacter(): path traversal detected: %s",
+                 pszFilename);
+        return false;
+    }
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
@@ -1443,6 +1450,12 @@ bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
 bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
                                   const CPLXMLNode *psTable)
 {
+    if (CPLHasPathTraversal(pszFilename))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OpenTableBinary(): path traversal detected: %s", pszFilename);
+        return false;
+    }
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
@@ -1465,6 +1478,13 @@ bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
 bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
                                      const CPLXMLNode *psTable)
 {
+    if (CPLHasPathTraversal(pszFilename))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "OpenTableDelimited(): path traversal detected: %s",
+                 pszFilename);
+        return false;
+    }
     const std::string osLayerName(CPLGetBasenameSafe(pszFilename));
     const std::string osFullFilename = FixupTableFilename(CPLFormFilenameSafe(
         CPLGetPathSafe(m_osXMLFilename.c_str()).c_str(), pszFilename, nullptr));
@@ -1943,6 +1963,12 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             const std::string osImageFullFilename = CPLFormFilenameSafe(
                 CPLGetPathSafe(osXMLFilename.c_str()).c_str(), pszFilename,
                 nullptr);
+            if (CPLHasPathTraversal(pszFilename))
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Path traversal detected in %s", pszFilename);
+                return nullptr;
+            }
             VSILFILE *fp = VSIFOpenExL(
                 osImageFullFilename.c_str(),
                 (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", true);

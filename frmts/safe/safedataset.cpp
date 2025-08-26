@@ -1097,14 +1097,20 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
             if (*pszMeasurement == '\0')
                 continue;
 
-            char **papszTokens = CSLTokenizeString2(pszDmdID, " ",
-                                                    CSLT_ALLOWEMPTYTOKENS |
-                                                        CSLT_STRIPLEADSPACES |
-                                                        CSLT_STRIPENDSPACES);
-
-            for (int j = 0; j < CSLCount(papszTokens); j++)
+            if (CPLHasPathTraversal(pszMeasurement))
             {
-                const char *pszId = papszTokens[j];
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", pszMeasurement);
+                return nullptr;
+            }
+
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                pszDmdID, " ",
+                CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+                    CSLT_STRIPENDSPACES));
+
+            for (const char *pszId : aosTokens)
+            {
                 if (*pszId == '\0')
                     continue;
 
@@ -1137,10 +1143,22 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
 
-            CSLDestroy(papszTokens);
-
             if (pszAnnotation == nullptr || pszCalibration == nullptr)
                 continue;
+
+            if (CPLHasPathTraversal(pszAnnotation))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", pszAnnotation);
+                return nullptr;
+            }
+
+            if (CPLHasPathTraversal(pszCalibration))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Path traversal detected in %s", pszCalibration);
+                return nullptr;
+            }
 
             // open Annotation XML file
             const CPLString osAnnotationFilePath =

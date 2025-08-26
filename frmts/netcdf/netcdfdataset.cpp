@@ -6671,6 +6671,14 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
     netCDFDataset *poLayerDataset = nullptr;
     if (eMultipleLayerBehavior == SEPARATE_FILES)
     {
+        if (CPLLaunderForFilenameSafe(osNetCDFLayerName.c_str(), nullptr) !=
+            osNetCDFLayerName)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal characters in '%s' to form a valid filename",
+                     osNetCDFLayerName.c_str());
+            return nullptr;
+        }
         char **papszDatasetOptions = nullptr;
         papszDatasetOptions = CSLSetNameValue(
             papszDatasetOptions, "CONFIG_FILE",
