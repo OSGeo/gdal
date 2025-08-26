@@ -4099,7 +4099,7 @@ def test_flipped_axis():
     assert ft_wkt == "POLYGON ((0 0,1 0,1 1,0 0))"
 
 
-def test_arbitrary_3Daxis_order_():
+def test_arbitrary_3Daxis_order():
 
     polygon = ogr.Open("data/netcdf-sg/arbitrary_axis_order_test.nc")
     assert polygon != None
