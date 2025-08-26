@@ -1303,6 +1303,27 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         CSLDestroy(papszTypeNames);
     }
 
+    // Japan Fundamental Geospatial Data (FGD)
+    if (strstr(szPtr, "http://fgd.gsi.go.jp/spec/2008/FGD_GMLSchema"))
+    {
+        if (ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)))
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            OGRSpatialReference oSRS;
+            if (oSRS.SetFromUserInput(
+                    szSRSName,
+                    OGRSpatialReference::
+                        SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE)
+            {
+                bUseGlobalSRSName = true;
+                for (int i = 0; i < poReader->GetClassCount(); ++i)
+                {
+                    poReader->GetClass(i)->SetSRSName(szSRSName);
+                }
+            }
+        }
+    }
+
     // Force a first pass to establish the schema.  Eventually we will have
     // mechanisms for remembering the schema and related information.
     const char *pszForceSRSDetection =
