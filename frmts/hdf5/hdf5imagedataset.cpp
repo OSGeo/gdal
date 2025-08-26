@@ -1160,42 +1160,38 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->m_nOtherDimIndex = oSwathDataFieldMetadata.iOtherDim;
                 if (!oSwathDataFieldMetadata.osLongitudeSubdataset.empty())
                 {
+                    CPLStringList aosGeolocation;
+
                     // Arbitrary
-                    poDS->SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
-                                          "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                    aosGeolocation.AddNameValue("SRS", SRS_WKT_WGS84_LAT_LONG);
+                    aosGeolocation.AddNameValue(
                         "X_DATASET",
                         ("HDF5:\"" + osFilename +
                          "\":" + oSwathDataFieldMetadata.osLongitudeSubdataset)
-                            .c_str(),
-                        "GEOLOCATION");
-                    poDS->SetMetadataItem("X_BAND", "1", "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                            .c_str());
+                    aosGeolocation.AddNameValue("X_BAND", "1");
+                    aosGeolocation.AddNameValue(
                         "Y_DATASET",
                         ("HDF5:\"" + osFilename +
                          "\":" + oSwathDataFieldMetadata.osLatitudeSubdataset)
-                            .c_str(),
-                        "GEOLOCATION");
-                    poDS->SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                            .c_str());
+                    aosGeolocation.AddNameValue("Y_BAND", "1");
+                    aosGeolocation.AddNameValue(
                         "PIXEL_OFFSET",
-                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelOffset),
-                        "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelOffset));
+                    aosGeolocation.AddNameValue(
                         "PIXEL_STEP",
-                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelStep),
-                        "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelStep));
+                    aosGeolocation.AddNameValue(
                         "LINE_OFFSET",
-                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineOffset),
-                        "GEOLOCATION");
-                    poDS->SetMetadataItem(
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineOffset));
+                    aosGeolocation.AddNameValue(
                         "LINE_STEP",
-                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineStep),
-                        "GEOLOCATION");
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineStep));
                     // Not totally sure about that
-                    poDS->SetMetadataItem("GEOREFERENCING_CONVENTION",
-                                          "PIXEL_CENTER", "GEOLOCATION");
+                    aosGeolocation.AddNameValue("GEOREFERENCING_CONVENTION",
+                                                "PIXEL_CENTER");
+                    poDS->SetMetadata(aosGeolocation.List(), "GEOLOCATION");
                 }
             }
         }
@@ -1344,6 +1340,47 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Setup/check for pam .aux.xml.
     poDS->TryLoadXML();
+
+    // If the PAM .aux.xml file contains the serialized GEOLOCATION metadata
+    // domain, make sure to patch the X_DATASET and Y_DATASET values, when
+    // they point to the current file, to use the filename with which we have
+    // opened the dataset. Helps in scenarios where the .aux.xml file has
+    // been saved with a relative filename for example.
+    // Or scenarios like https://github.com/OSGeo/gdal/issues/12824 mixing
+    // native Windows and WSL use.
+    CSLConstList papszGeoLocationAfterLoadXML =
+        poDS->GetMetadata("GEOLOCATION");
+    if (papszGeoLocationAfterLoadXML)
+    {
+        for (const char *pszItem : {"X_DATASET", "Y_DATASET"})
+        {
+            const char *pszSubdataset =
+                CSLFetchNameValue(papszGeoLocationAfterLoadXML, pszItem);
+            if (pszSubdataset && STARTS_WITH(pszSubdataset, "HDF5:\"") &&
+                strstr(pszSubdataset, CPLGetFilename(osFilename.c_str())))
+            {
+                auto hSubDSInfo = GDALGetSubdatasetInfo(pszSubdataset);
+                if (hSubDSInfo)
+                {
+                    char *pszOriPath =
+                        GDALSubdatasetInfoGetPathComponent(hSubDSInfo);
+                    if (EQUAL(CPLGetFilename(pszOriPath),
+                              CPLGetFilename(osFilename.c_str())))
+                    {
+                        char *pszNewVal = GDALSubdatasetInfoModifyPathComponent(
+                            hSubDSInfo, osFilename.c_str());
+                        poDS->SetMetadataItem(pszItem, pszNewVal,
+                                              "GEOLOCATION");
+                        CPLFree(pszNewVal);
+                    }
+                    CPLFree(pszOriPath);
+                    GDALDestroySubdatasetInfo(hSubDSInfo);
+                }
+            }
+        }
+    }
+
+    poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 
     // Setup overviews.
     poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
