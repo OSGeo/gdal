@@ -21,11 +21,11 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
 #include "cpl_string.h"
-#include "cpl_multiproc.h"
 
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <string>
 
@@ -572,25 +572,25 @@ class VSIArchiveEntryFileOffset
     virtual ~VSIArchiveEntryFileOffset();
 };
 
-typedef struct
+class VSIArchiveEntry
 {
-    char *fileName;
-    vsi_l_offset uncompressed_size;
-    VSIArchiveEntryFileOffset *file_pos;
-    int bIsDir;
-    GIntBig nModifiedTime;
-} VSIArchiveEntry;
-
-// Store list of child indices for each directory
-using DirectoryChildren = std::vector<int>;
+  public:
+    std::string fileName{};
+    vsi_l_offset uncompressed_size = 0;
+    std::unique_ptr<VSIArchiveEntryFileOffset> file_pos{};
+    bool bIsDir = false;
+    GIntBig nModifiedTime = 0;
+};
 
 class VSIArchiveContent
 {
   public:
     time_t mTime = 0;
     vsi_l_offset nFileSize = 0;
-    int nEntries = 0;
-    VSIArchiveEntry *entries = nullptr;
+    std::vector<VSIArchiveEntry> entries{};
+
+    // Store list of child indices for each directory
+    using DirectoryChildren = std::vector<int>;
 
     std::map<std::string, DirectoryChildren> dirIndex{};
 
@@ -620,18 +620,23 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
+    bool FindFileInArchive(const char *archiveFilename,
+                           const char *fileInArchiveName,
+                           const VSIArchiveEntry **archiveEntry);
+
   protected:
-    CPLMutex *hMutex = nullptr;
+    std::recursive_mutex oMutex{};
     /* We use a cache that contains the list of files contained in a VSIArchive
      * file as */
     /* unarchive.c is quite inefficient in listing them. This speeds up access
      * to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
-    std::map<CPLString, VSIArchiveContent *> oFileList{};
+    std::map<CPLString, std::unique_ptr<VSIArchiveContent>> oFileList{};
 
     virtual const char *GetPrefix() = 0;
     virtual std::vector<CPLString> GetExtensions() = 0;
-    virtual VSIArchiveReader *CreateReader(const char *pszArchiveFileName) = 0;
+    virtual std::unique_ptr<VSIArchiveReader>
+    CreateReader(const char *pszArchiveFileName) = 0;
 
   public:
     VSIArchiveFilesystemHandler();
@@ -647,11 +652,8 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
     virtual char *SplitFilename(const char *pszFilename,
                                 CPLString &osFileInArchive,
                                 bool bCheckMainFileExists, bool bSetError);
-    virtual VSIArchiveReader *OpenArchiveFile(const char *archiveFilename,
-                                              const char *fileInArchiveName);
-    virtual int FindFileInArchive(const char *archiveFilename,
-                                  const char *fileInArchiveName,
-                                  const VSIArchiveEntry **archiveEntry);
+    virtual std::unique_ptr<VSIArchiveReader>
+    OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
 
     virtual bool IsLocal(const char *pszPath) override;
 
