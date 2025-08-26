@@ -422,6 +422,9 @@ extern "C++"
         CPLSTRING_METHOD_DLL CPLString &tolower(void);
 
         CPLSTRING_METHOD_DLL bool endsWith(const std::string &osStr) const;
+
+      private:
+        operator void *(void) = delete;
     };
 
 #undef CPLSTRING_CLASS_DLL
@@ -644,6 +647,9 @@ extern "C++"
         {
             return std::vector<std::string>{begin(), end()};
         }
+
+      private:
+        operator void *(void) = delete;
     };
 
 #ifdef GDAL_COMPILATION

@@ -163,8 +163,10 @@ static unsigned long OGRPGHashTableEntry(const void *_psTableEntry)
 {
     const PGTableEntry *psTableEntry =
         static_cast<const PGTableEntry *>(_psTableEntry);
-    return CPLHashSetHashStr(CPLString().Printf(
-        "%s.%s", psTableEntry->pszSchemaName, psTableEntry->pszTableName));
+    return CPLHashSetHashStr(CPLString()
+                                 .Printf("%s.%s", psTableEntry->pszSchemaName,
+                                         psTableEntry->pszTableName)
+                                 .c_str());
 }
 
 static int OGRPGEqualTableEntry(const void *_psTableEntry1,
