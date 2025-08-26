@@ -106,18 +106,16 @@ static struct curl_slist *GetAzureBlobHeaders(
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
-    const std::string osMsVersion(X_MS_VERSION);
 
-    const auto AddHeaders = [&osDate, &osMsVersion,
-                             bIncludeMSVersion](struct curl_slist *l_psHeaders)
+    const auto AddHeaders =
+        [&osDate, bIncludeMSVersion](struct curl_slist *l_psHeaders)
     {
         l_psHeaders = curl_slist_append(
             l_psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
         if (bIncludeMSVersion)
         {
-            l_psHeaders =
-                curl_slist_append(l_psHeaders, CPLSPrintf("x-ms-version: %s",
-                                                          osMsVersion.c_str()));
+            l_psHeaders = curl_slist_append(
+                l_psHeaders, CPLSPrintf("x-ms-version: %s", X_MS_VERSION));
         }
         return l_psHeaders;
     };
@@ -130,7 +128,7 @@ static struct curl_slist *GetAzureBlobHeaders(
 
     std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
-        oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
+        oSortedMapMSHeaders["x-ms-version"] = X_MS_VERSION;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
     std::string osCanonicalizedHeaders(
         IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(oSortedMapMSHeaders,

@@ -799,7 +799,7 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
     if (archiveFilename == nullptr)
         return nullptr;
 
-    const int lenInArchiveSubDir = static_cast<int>(osInArchiveSubDir.size());
+    const size_t lenInArchiveSubDir = osInArchiveSubDir.size();
 
     CPLStringList oDir;
 
@@ -814,9 +814,9 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
     CPLDebug("VSIArchive", "Read dir %s", pszDirname);
 #endif
 
-    std::string searchDir = lenInArchiveSubDir > 0
-                                ? std::string(osInArchiveSubDir)
-                                : std::string("");
+    std::string searchDir;
+    if (lenInArchiveSubDir != 0)
+        searchDir = std::move(osInArchiveSubDir);
 
     // Use directory index to find the list of children for this directory
     auto dirIter = content->dirIndex.find(searchDir);
