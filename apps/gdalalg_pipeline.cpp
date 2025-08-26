@@ -481,20 +481,14 @@ class GDALPipelineAlgorithm final
         m_stepRegistry.Register<GDALVectorRasterizeAlgorithm>();
     }
 
-    // Declared to satisfy GDALPipelineStepAlgorithm, but not called as this
-    // class is not an actual step, hence return value is "random"
     int GetInputType() const override
     {
-        CPLAssert(false);
-        return 0;
+        return GDAL_OF_RASTER | GDAL_OF_VECTOR;
     }
 
-    // Declared to satisfy GDALPipelineStepAlgorithm, but not called as this
-    // class is not an actual step, hence return value is "random"
     int GetOutputType() const override
     {
-        CPLAssert(false);
-        return 0;
+        return GDAL_OF_RASTER | GDAL_OF_VECTOR;
     }
 
     std::vector<std::string> GetAutoComplete(std::vector<std::string> &args,
