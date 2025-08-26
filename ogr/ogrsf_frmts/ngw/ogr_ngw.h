@@ -177,6 +177,7 @@ class OGRNGWLayer final : public OGRLayer
     std::string osWhere;
     std::string osSpatialFilter;
     bool bClientSideAttributeFilter;
+    bool m_bEOF = false;
 
     explicit OGRNGWLayer(const std::string &osResourceIdIn,
                          OGRNGWDataset *poDSIn,

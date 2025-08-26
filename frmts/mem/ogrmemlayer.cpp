@@ -127,6 +127,9 @@ void OGRMemLayer::ResetReading()
 OGRFeature *OGRMemLayer::GetNextFeature()
 
 {
+    if (m_iNextReadFID < 0)
+        return nullptr;
+
     while (true)
     {
         OGRFeature *poFeature = nullptr;
@@ -172,7 +175,10 @@ OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
         return OGRLayer::SetNextByIndex(nIndex);
 
     if (nIndex < 0 || nIndex >= m_nMaxFeatureCount)
-        return OGRERR_FAILURE;
+    {
+        m_iNextReadFID = -1;
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
 
     m_iNextReadFID = nIndex;
 

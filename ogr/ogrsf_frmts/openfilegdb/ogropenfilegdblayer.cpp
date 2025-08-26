@@ -2022,13 +2022,18 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
     if (!BuildLayerDefinition())
         return OGRERR_FAILURE;
 
+    m_bEOF = false;
+
     if (m_eSpatialIndexState == SPI_IN_BUILDING)
         m_eSpatialIndexState = SPI_INVALID;
 
     if (m_nFilteredFeatureCount >= 0)
     {
         if (nIndex < 0 || nIndex >= m_nFilteredFeatureCount)
-            return OGRERR_FAILURE;
+        {
+            m_bEOF = true;
+            return OGRERR_NON_EXISTING_FEATURE;
+        }
         m_iCurFeat = nIndex;
         return OGRERR_NONE;
     }
@@ -2036,7 +2041,10 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
              m_poLyrTable->GetTotalRecordCount())
     {
         if (nIndex < 0 || nIndex >= m_poLyrTable->GetValidRecordCount())
-            return OGRERR_FAILURE;
+        {
+            m_bEOF = true;
+            return OGRERR_NON_EXISTING_FEATURE;
+        }
         m_iCurFeat = nIndex;
         return OGRERR_NONE;
     }
