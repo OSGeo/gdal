@@ -1042,6 +1042,7 @@ void RegisterOGRGeoJSONSeq()
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
     poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_APPEND, "YES");
 
     poDriver->pfnOpen = OGRGeoJSONSeqDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONSeqDriverIdentify;
