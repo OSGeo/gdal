@@ -296,16 +296,18 @@ CPLSpawnAsync(CPL_UNUSED int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
     {
         if (i > 0)
             osCommandLine += " ";
-        // We need to quote arguments with spaces in them (if not already done).
-        if (strchr(papszArgv[i], ' ') != nullptr && papszArgv[i][0] != '"')
+        CPLString osArg(papszArgv[i]);
+        // We need to quote arguments with spaces or double quotes in them (if not already done).
+        if (osArg.find_first_of(" \"") != std::string::npos &&
+            !(osArg.size() >= 3 && osArg.front() == '"' && osArg.back() == '"'))
         {
-            osCommandLine += "\"";
-            osCommandLine += papszArgv[i];
-            osCommandLine += "\"";
+            osCommandLine += '"';
+            osCommandLine += osArg.replaceAll('"', "\\\"");
+            osCommandLine += '"';
         }
         else
         {
-            osCommandLine += papszArgv[i];
+            osCommandLine += osArg;
         }
     }
 

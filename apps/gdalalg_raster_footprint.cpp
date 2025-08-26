@@ -58,7 +58,8 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
     }
 
     m_outputLayerName = "footprint";
-    AddArg("output-layer", 0, _("Output layer name"), &m_outputLayerName)
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0, _("Output layer name"),
+           &m_outputLayerName)
         .SetDefault(m_outputLayerName);
 
     AddBandArg(&m_bands);
@@ -283,7 +284,7 @@ bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.push_back(m_dstCrs);
     }
 
-    if (GetArg("output-layer")->IsExplicitlySet())
+    if (GetArg(GDAL_ARG_NAME_OUTPUT_LAYER)->IsExplicitlySet())
     {
         aosOptions.push_back("-lyr_name");
         aosOptions.push_back(m_outputLayerName.c_str());

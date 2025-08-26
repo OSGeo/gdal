@@ -398,6 +398,13 @@ public:
   }
 %clear const char *argName;
 
+%apply Pointer NONNULL {const char *argName};
+%newobject GetArgNonConst;
+  GDALAlgorithmArgHS* GetArgNonConst(const char *argName) {
+    return GDALAlgorithmGetArgNonConst(self, argName);
+  }
+%clear const char *argName;
+
 }
 };
 

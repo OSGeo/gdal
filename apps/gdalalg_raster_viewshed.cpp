@@ -234,8 +234,8 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     else
     {
-        static const std::vector<std::string> badArgs{"observer-spacing",
-                                                      "num-threads"};
+        static const std::vector<std::string> badArgs{
+            "observer-spacing", GDAL_ARG_NAME_NUM_THREADS};
         for (const auto &arg : badArgs)
             if (GetArg(arg)->IsExplicitlySet())
             {

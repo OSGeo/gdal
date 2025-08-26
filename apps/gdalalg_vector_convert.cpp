@@ -46,9 +46,11 @@ GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
     AddUpdateArg(&m_update);
     AddOverwriteLayerArg(&m_overwriteLayer);
     AddAppendLayerArg(&m_appendLayer);
-    AddArg("input-layer", 'l', _("Input layer name(s)"), &m_inputLayerNames)
+    AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l', _("Input layer name(s)"),
+           &m_inputLayerNames)
         .AddAlias("layer");
-    AddArg("output-layer", 0, _("Output layer name"), &m_outputLayerName)
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0, _("Output layer name"),
+           &m_outputLayerName)
         .AddHiddenAlias("nln");  // For ogr2ogr nostalgic people
     AddArg("skip-errors", 0, _("Skip errors when writing features"),
            &m_skipErrors)

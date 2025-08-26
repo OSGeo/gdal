@@ -13,7 +13,8 @@
 #ifndef GDALALG_RASTER_TILE_INCLUDED
 #define GDALALG_RASTER_TILE_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
+
 #include "cpl_string.h"
 
 #include <limits>
@@ -29,7 +30,8 @@ typedef struct _CPLSpawnedProcess CPLSpawnedProcess;
 /*                       GDALRasterTileAlgorithm                        */
 /************************************************************************/
 
-class GDALRasterTileAlgorithm final : public GDALAlgorithm
+class GDALRasterTileAlgorithm /* non final */
+    : public GDALRasterPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "tile";
@@ -37,19 +39,23 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
         "Generate tiles in separate files from a raster dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_raster_tile.html";
 
-    GDALRasterTileAlgorithm();
+    explicit GDALRasterTileAlgorithm(bool standaloneStep = false);
+
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterTileAlgorithm)
 
-    GDALArgDatasetValue m_dataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    std::string m_outputFormat = "PNG";
-    std::vector<std::string> m_creationOptions{};
     std::vector<std::string> m_metadata{};
     bool m_copySrcMetadata = false;
-    std::string m_outputDirectory{};
     std::string m_tilingScheme{};
     std::string m_convention = "xyz";
     std::string m_resampling{};
@@ -100,6 +106,7 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
 
     // Private methods
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     bool ValidateOutputFormat(GDALDataType eSrcDT) const;
 
@@ -128,6 +135,21 @@ class GDALRasterTileAlgorithm final : public GDALAlgorithm
         int iZ, int nOvrMinTileX, int nOvrMinTileY, int nOvrMaxTileX,
         int nOvrMaxTileY, std::atomic<uint64_t> &nCurTile, uint64_t nTotalTiles,
         GDALProgressFunc pfnProgress, void *pProgressData);
+};
+
+/************************************************************************/
+/*                 GDALRasterTileAlgorithmStandalone                    */
+/************************************************************************/
+
+class GDALRasterTileAlgorithmStandalone final : public GDALRasterTileAlgorithm
+{
+  public:
+    GDALRasterTileAlgorithmStandalone()
+        : GDALRasterTileAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterTileAlgorithmStandalone() override;
 };
 
 //! @endcond
