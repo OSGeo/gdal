@@ -1131,8 +1131,9 @@ json_object *OGRElasticLayer::BuildSort()
     {
         const int nIdx =
             m_poFeatureDefn->GetFieldIndex(m_aoSortColumns[i].osColumn);
-        CPLString osFieldName(
-            nIdx == 0 ? "_uid" : BuildPathFromArray(m_aaosFieldPaths[nIdx]));
+        CPLString osFieldName(nIdx == 0
+                                  ? CPLString("_uid")
+                                  : BuildPathFromArray(m_aaosFieldPaths[nIdx]));
         if (CSLFindString(m_papszFieldsWithRawValue,
                           m_aoSortColumns[i].osColumn) >= 0)
         {
