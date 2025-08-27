@@ -251,10 +251,10 @@ Substitutions
 
 It is possible to use :program:`gdal pipeline` to use a pipeline already
 serialized in a .gdal.json file, and customize its existing steps, typically
-changing input filename, specifying output filename, or adding/modifying arguments
+changing an input filename, specifying an output filename, or adding/modifying arguments
 of steps.
 
-See :ref:`gdal_pipeline_substitutions`
+See :ref:`gdal_pipeline_substitutions`.
 
 
 Examples

@@ -102,8 +102,8 @@ Substitutions
 -------------
 
 It is also possible to use :program:`gdal pipeline` to use a pipeline already
-serialized in a .gdal.json file, and customize its existing steps, typically
-changing input filename, specifying output filename, or adding/modifying arguments
+serialized in a ``.gdalg.json`` file, and customize its existing steps, typically
+changing an input filename, specifying an output filename, or adding/modifying arguments
 of steps.
 
 The syntax is:
@@ -116,7 +116,7 @@ The syntax is:
 When specifying an existing argument of a step of a pipeline, the value from the
 pipeline is overridden by the one specified on the :program:`gdal pipeline` command line.
 
-Let's imagine with have a :file:`raster_reproject.gdalg.json` with the following content:
+Let's imagine we have a :file:`raster_reproject.gdalg.json` with the following content:
 
 .. code-block:: json
 
@@ -125,7 +125,7 @@ Let's imagine with have a :file:`raster_reproject.gdalg.json` with the following
         "command_line": "gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
     }
 
-It is possible to run it with the following command command line, overridden the
+It is possible to run it with the following command line, overriding the
 ``input`` argument of the ``read`` step, and implicitly adding a final ``write``
 step with an ``output`` argument.
 
@@ -162,7 +162,7 @@ the following command line may be used:
     $ gdal pipeline raster_reproject.gdalg.json --edit[0].metadata=before=modified --output=out.tif
 
 
-Execution of pipeline and argument substitutions can also be done in Python with:
+Execution of pipelines and argument substitutions can also be done in Python with:
 
 .. code-block:: python
 
@@ -186,7 +186,7 @@ Examples
         $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite
 
 .. example::
-   :title: Use an existing pipeline that rasterize and reproject, but change its input file and target CRS, and specify the output file
+   :title: Use an existing pipeline that rasterizes and reprojects, but change its input file and target CRS, and specify the output file
 
    .. code-block:: bash
 
