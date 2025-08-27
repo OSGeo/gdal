@@ -299,7 +299,7 @@ static std::string CompactFilename(const char *pszArchiveInFileNameIn)
 char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                                                  CPLString &osFileInArchive,
                                                  bool bCheckMainFileExists,
-                                                 bool bSetError)
+                                                 bool bSetError) const
 {
     // TODO(schwehr): Cleanup redundant calls to GetPrefix and strlen.
     if (strcmp(pszFilename, GetPrefix()) == 0)
@@ -774,7 +774,7 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
 /*                               IsLocal()                              */
 /************************************************************************/
 
-bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath)
+bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath) const
 {
     if (!STARTS_WITH(pszPath, GetPrefix()))
         return false;
@@ -782,6 +782,19 @@ bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath)
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler(pszBaseFileName);
     return poFSHandler->IsLocal(pszPath);
+}
+
+/************************************************************************/
+/*                               IsArchive()                            */
+/************************************************************************/
+
+bool VSIArchiveFilesystemHandler::IsArchive(const char *pszPath) const
+{
+    if (!STARTS_WITH(pszPath, GetPrefix()))
+        return false;
+    CPLString osFileInArchive;
+    return SplitFilename(pszPath, osFileInArchive, false, false) != nullptr &&
+           osFileInArchive.empty();
 }
 
 //! @endcond

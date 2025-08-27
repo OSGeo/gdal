@@ -78,7 +78,7 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
 
     virtual GIntBig GetDiskFreeSpace(const char *pszDirname) override;
     virtual int SupportsSparseFiles(const char *pszPath) override;
-    virtual bool IsLocal(const char *pszPath) override;
+    virtual bool IsLocal(const char *pszPath) const override;
     std::string
     GetCanonicalFilename(const std::string &osFilename) const override;
 
@@ -1749,7 +1749,7 @@ int VSIWin32FilesystemHandler::SupportsSparseFiles(const char *pszPath)
 /*                          IsLocal()                                   */
 /************************************************************************/
 
-bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
+bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath) const
 {
     if (STARTS_WITH(pszPath, "\\\\") || STARTS_WITH(pszPath, "//"))
         return false;

@@ -180,7 +180,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     GIntBig GetDiskFreeSpace(const char *pszDirname) override;
     int SupportsSparseFiles(const char *pszPath) override;
 
-    bool IsLocal(const char *pszPath) override;
+    bool IsLocal(const char *pszPath) const override;
     bool SupportsSequentialWrite(const char *pszPath,
                                  bool /* bAllowLocalTempFile */) override;
     bool SupportsRandomWrite(const char *pszPath,
@@ -1100,7 +1100,7 @@ bool VSIUnixStdioFilesystemHandler::IsLocal(const char *
 #ifdef __linux
                                                 pszPath
 #endif
-)
+) const
 {
 #ifdef __linux
     struct statfs sStatFS;
