@@ -95,3 +95,25 @@ def test_ogr_gml_fgd_2():
     ogrtest.check_feature_geometry(feat, wkt)
 
     assert feat.GetField("devDate") == "2017-03-07", "Wrong attribute value"
+
+
+###############################################################################
+# Test reading Japanese FGD GML (v4) with JGD2024
+
+
+def test_ogr_gml_fgd_jgd2024():
+
+    # open FGD GML file
+    ds = ogr.Open(_fgd_dir + "ElevPt_JGD2024.xml")
+
+    # check number of layers
+    assert ds.GetLayerCount() == 1, "Wrong layer count"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetSpatialRef().IsGeographic()
+    assert lyr.GetSpatialRef().GetName() == "JGD2024"
+
+    # check the first feature
+    feat = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(feat, "POINT (133.123456789 34.123456789)")
