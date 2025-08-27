@@ -2759,6 +2759,7 @@ rasterization
 rasterize
 Rasterize
 rasterized
+rasterizes
 RasterizeOptions
 rasterizing
 rasterlite
