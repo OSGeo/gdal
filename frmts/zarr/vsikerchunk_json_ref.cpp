@@ -141,8 +141,9 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
         return bIsFileSystemInstantiated;
     }
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -1528,7 +1529,7 @@ bool VSIKerchunkConvertJSONToParquet(const char *pszSrcJSONFilename,
 /*               VSIKerchunkJSONRefFileSystem::Open()                   */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
                                    const char *pszAccess, bool /* bSetError */,
                                    CSLConstList /* papszOptions */)
@@ -1548,7 +1549,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
         if (osParqFilename.empty())
             return nullptr;
 
-        return VSIFOpenL(
+        return VSIFilesystemHandler::OpenStatic(
             CPLFormFilenameSafe(CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX,
                                            osParqFilename.c_str()),
                                 osKey.c_str(), nullptr)
@@ -1563,9 +1564,9 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
     const auto &keyInfo = oIter->second;
     if (!keyInfo.posURI)
     {
-        return VSIFileFromMemBuffer(
+        return VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
             nullptr, const_cast<GByte *>(keyInfo.abyValue.data()),
-            keyInfo.abyValue.size(), /* bTakeOwnership = */ false);
+            keyInfo.abyValue.size(), /* bTakeOwnership = */ false));
     }
     else
     {
@@ -1582,7 +1583,7 @@ VSIKerchunkJSONRefFileSystem::Open(const char *pszFilename,
                      osPath.c_str());
         CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
                                       "EMPTY_DIR", false);
-        return VSIFOpenL(osPath.c_str(), "rb");
+        return VSIFilesystemHandler::OpenStatic(osPath.c_str(), "rb");
     }
 }
 

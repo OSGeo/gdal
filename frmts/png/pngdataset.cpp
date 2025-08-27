@@ -2280,12 +2280,12 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     }
 
     // Create the dataset.
-    VSIVirtualHandleUniquePtr fpImage(
+    auto fpImage(
         CPLTestBool(CSLFetchNameValueDef(
             papszOptions, "@CREATE_ONLY_VISIBLE_AT_CLOSE_TIME", "NO"))
             ? VSIFileManager::GetHandler(pszFilename)
                   ->CreateOnlyVisibleAtCloseTime(pszFilename, true, nullptr)
-            : VSIFOpenL(pszFilename, "wb"));
+            : VSIFilesystemHandler::OpenStatic(pszFilename, "wb"));
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,

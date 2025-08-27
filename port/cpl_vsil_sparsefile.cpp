@@ -101,13 +101,9 @@ class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
                       vsi_l_offset &nSparseFileOffset,
                       vsi_l_offset &nSparseFileSize);
 
-    // TODO(schwehr): Fix VSISparseFileFilesystemHandler::Stat to not need
-    // using.
-    using VSIFilesystemHandler::Open;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Unlink(const char *pszFilename) override;
@@ -403,7 +399,7 @@ void VSISparseFileHandle::ClearErr()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
+VSIVirtualHandleUniquePtr VSISparseFileFilesystemHandler::Open(
     const char *pszFilename, const char *pszAccess, bool /* bSetError */,
     CSLConstList /* papszOptions */)
 
@@ -426,10 +422,8 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
     /* -------------------------------------------------------------------- */
     /*      Does this file even exist?                                      */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL(osSparseFilePath, "r");
-    if (fp == nullptr)
+    if (VSIFilesystemHandler::OpenStatic(osSparseFilePath, "rb") == nullptr)
         return nullptr;
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
     /* -------------------------------------------------------------------- */
     /*      Read the XML file.                                              */
@@ -442,7 +436,7 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
     /* -------------------------------------------------------------------- */
     /*      Setup the file handle on this file.                             */
     /* -------------------------------------------------------------------- */
-    VSISparseFileHandle *poHandle = new VSISparseFileHandle(this);
+    auto poHandle = std::make_unique<VSISparseFileHandle>(this);
 
     /* -------------------------------------------------------------------- */
     /*      Translate the desired fields out of the XML tree.               */
@@ -501,7 +495,7 @@ VSIVirtualHandle *VSISparseFileFilesystemHandler::Open(
 
     CPLDestroyXMLNode(psXMLRoot);
 
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -512,9 +506,7 @@ int VSISparseFileFilesystemHandler::Stat(const char *pszFilename,
                                          VSIStatBufL *psStatBuf, int nFlags)
 
 {
-    // TODO(schwehr): Fix this so that the using statement is not needed.
-    // Will just adding the bool for bSetError be okay?
-    VSIVirtualHandle *poFile = Open(pszFilename, "r");
+    auto poFile = Open(pszFilename, "rb", false, nullptr);
 
     memset(psStatBuf, 0, sizeof(VSIStatBufL));
 
@@ -523,7 +515,6 @@ int VSISparseFileFilesystemHandler::Stat(const char *pszFilename,
 
     poFile->Seek(0, SEEK_END);
     const vsi_l_offset nLength = poFile->Tell();
-    delete poFile;
 
     const int nResult =
         VSIStatExL(pszFilename + strlen("/vsisparse/"), psStatBuf, nFlags);

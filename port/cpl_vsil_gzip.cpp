@@ -349,9 +349,9 @@ class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
     VSIGZipFilesystemHandler() = default;
     ~VSIGZipFilesystemHandler() override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
     VSIGZipHandle *OpenGZipReadOnly(const char *pszFilename,
                                     const char *pszAccess);
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
@@ -386,8 +386,7 @@ VSIGZipHandle *VSIGZipHandle::Duplicate()
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler(m_pszBaseFileName);
 
-    VSIVirtualHandleUniquePtr poNewBaseHandle;
-    poNewBaseHandle.reset(poFSHandler->Open(m_pszBaseFileName, "rb"));
+    auto poNewBaseHandle = poFSHandler->Open(m_pszBaseFileName, "rb");
 
     if (poNewBaseHandle == nullptr)
         return nullptr;
@@ -3014,7 +3013,7 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked(VSIGZipHandle *poHandle)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIGZipFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                                bool /* bSetError */,
                                CSLConstList /* papszOptions */)
@@ -3040,14 +3039,15 @@ VSIGZipFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             return nullptr;
         }
 
-        VSIVirtualHandle *poVirtualHandle =
+        auto poVirtualHandle =
             poFSHandler->Open(pszFilename + strlen("/vsigzip/"), "wb");
 
         if (poVirtualHandle == nullptr)
             return nullptr;
 
-        return VSICreateGZipWritable(poVirtualHandle,
-                                     strchr(pszAccess, 'z') != nullptr, TRUE);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateGZipWritable(poVirtualHandle.release(),
+                                  strchr(pszAccess, 'z') != nullptr, TRUE));
     }
 
     /* -------------------------------------------------------------------- */
@@ -3059,7 +3059,8 @@ VSIGZipFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         // Wrap the VSIGZipHandle inside a buffered reader that will
         // improve dramatically performance when doing small backward
         // seeks.
-        return VSICreateBufferedReaderHandle(poGZIPHandle);
+        return VSIVirtualHandleUniquePtr(
+            VSICreateBufferedReaderHandle(poGZIPHandle));
 
     return nullptr;
 }
@@ -3494,8 +3495,8 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIZipFilesystemHandler)
 
     std::map<CPLString, VSIZipWriteHandle *> oMapZipWriteHandles{};
-    VSIVirtualHandle *OpenForWrite_unlocked(const char *pszFilename,
-                                            const char *pszAccess);
+    VSIVirtualHandleUniquePtr OpenForWrite_unlocked(const char *pszFilename,
+                                                    const char *pszAccess);
 
     struct VSIFileInZipInfo
     {
@@ -3531,15 +3532,15 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     std::unique_ptr<VSIArchiveReader>
     CreateReader(const char *pszZipFileName) override;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError,
-                           CSLConstList /* papszOptions */) override;
+    VSIVirtualHandleUniquePtr Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList /* papszOptions */) override;
 
     char **GetFileMetadata(const char *pszFilename, const char *pszDomain,
                            CSLConstList papszOptions) override;
 
-    VSIVirtualHandle *OpenForWrite(const char *pszFilename,
-                                   const char *pszAccess);
+    VSIVirtualHandleUniquePtr OpenForWrite(const char *pszFilename,
+                                           const char *pszAccess);
 
     int CopyFile(const char *pszSource, const char *pszTarget,
                  VSILFILE *fpSource, vsi_l_offset nSourceSize,
@@ -4280,10 +4281,9 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 /*                                 Open()                               */
 /************************************************************************/
 
-VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
-                                                const char *pszAccess,
-                                                bool bSetError,
-                                                CSLConstList /* papszOptions */)
+VSIVirtualHandleUniquePtr
+VSIZipFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                              bool bSetError, CSLConstList /* papszOptions */)
 {
 
     if (strchr(pszAccess, 'w') != nullptr)
@@ -4316,7 +4316,8 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
         // Wrap the VSIGZipHandle inside a buffered reader that will
         // improve dramatically performance when doing small backward
         // seeks.
-        return VSICreateBufferedReaderHandle(poGZIPHandle.release());
+        return VSIVirtualHandleUniquePtr(
+            VSICreateBufferedReaderHandle(poGZIPHandle.release()));
     }
     else
 #endif
@@ -4331,8 +4332,8 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
             {
                 return nullptr;
             }
-            return VSICreateCachedFile(poSOZIPHandle.release(),
-                                       info.nSOZIPChunkSize, 0);
+            return VSIVirtualHandleUniquePtr(VSICreateCachedFile(
+                poSOZIPHandle.release(), info.nSOZIPChunkSize, 0));
         }
 
         auto poGZIPHandle = std::make_unique<VSIGZipHandle>(
@@ -4347,7 +4348,8 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
         // Wrap the VSIGZipHandle inside a buffered reader that will
         // improve dramatically performance when doing small backward
         // seeks.
-        return VSICreateBufferedReaderHandle(poGZIPHandle.release());
+        return VSIVirtualHandleUniquePtr(
+            VSICreateBufferedReaderHandle(poGZIPHandle.release()));
     }
 }
 
@@ -4436,11 +4438,7 @@ int VSIZipFilesystemHandler::Mkdir(const char *pszDirname, long /* nMode */)
     CPLString osDirname = pszDirname;
     if (!osDirname.empty() && osDirname.back() != '/')
         osDirname += "/";
-    VSIVirtualHandle *poZIPHandle = OpenForWrite(osDirname, "wb");
-    if (poZIPHandle == nullptr)
-        return -1;
-    delete poZIPHandle;
-    return 0;
+    return OpenForWrite(osDirname, "wb") != nullptr ? 0 : -1;
 }
 
 /************************************************************************/
@@ -4527,14 +4525,15 @@ void VSIZipFilesystemHandler::RemoveFromMap(VSIZipWriteHandle *poHandle)
 /*                             OpenForWrite()                           */
 /************************************************************************/
 
-VSIVirtualHandle *VSIZipFilesystemHandler::OpenForWrite(const char *pszFilename,
-                                                        const char *pszAccess)
+VSIVirtualHandleUniquePtr
+VSIZipFilesystemHandler::OpenForWrite(const char *pszFilename,
+                                      const char *pszAccess)
 {
     std::unique_lock oLock(oMutex);
     return OpenForWrite_unlocked(pszFilename, pszAccess);
 }
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
                                                const char *pszAccess)
 {
@@ -4555,7 +4554,8 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
         oFileList.erase(iter);
     }
 
-    if (oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end())
+    auto oIter = oMapZipWriteHandles.find(osZipFilename);
+    if (oIter != oMapZipWriteHandles.end())
     {
         if (strchr(pszAccess, '+') != nullptr)
         {
@@ -4565,7 +4565,7 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
             return nullptr;
         }
 
-        VSIZipWriteHandle *poZIPHandle = oMapZipWriteHandles[osZipFilename];
+        VSIZipWriteHandle *poZIPHandle = oIter->second;
 
         if (poZIPHandle->GetChildInWriting() != nullptr)
         {
@@ -4587,12 +4587,12 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
                                nullptr) != CE_None)
             return nullptr;
 
-        VSIZipWriteHandle *poChildHandle =
-            new VSIZipWriteHandle(this, nullptr, poZIPHandle);
+        auto poChildHandle =
+            std::make_unique<VSIZipWriteHandle>(this, nullptr, poZIPHandle);
 
-        poZIPHandle->StartNewFile(poChildHandle);
+        poZIPHandle->StartNewFile(poChildHandle.get());
 
-        return poChildHandle;
+        return VSIVirtualHandleUniquePtr(poChildHandle.release());
     }
     else
     {
@@ -4616,8 +4616,9 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
 
         if (!osZipInFileName.empty())
         {
-            VSIZipWriteHandle *poRes = reinterpret_cast<VSIZipWriteHandle *>(
-                OpenForWrite_unlocked(pszFilename, pszAccess));
+            auto poRes = std::unique_ptr<VSIZipWriteHandle>(
+                cpl::down_cast<VSIZipWriteHandle *>(
+                    OpenForWrite_unlocked(pszFilename, pszAccess).release()));
             if (poRes == nullptr)
             {
                 delete poHandle;
@@ -4627,10 +4628,10 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
 
             poRes->SetAutoDeleteParent();
 
-            return poRes;
+            return VSIVirtualHandleUniquePtr(poRes.release());
         }
 
-        return poHandle;
+        return VSIVirtualHandleUniquePtr(poHandle);
     }
 }
 
