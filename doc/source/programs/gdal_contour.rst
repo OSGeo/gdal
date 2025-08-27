@@ -127,7 +127,7 @@ be on the right, i.e. a line string goes clockwise around a top.
     in case :option:`-fl` is used alone at least two fixed levels must be specified.
 
     The minimum and maximum values from the raster are not automatically added to
-    the fixed levels list but the special values `MIN`` and `MAX`` (case insensitive)
+    the fixed levels list but the special values ``MIN`` and ``MAX`` (case insensitive)
     can be used to include them.
 
 
