@@ -13,6 +13,7 @@ This page contains classes, methods, functions that relate to the GDAL :ref:`ras
 - `Driver`_
 - `Dataset`_
 - `Band`_
+- `Band Algebra`_
 - `Other`_
 
 .. py:currentmodule:: osgeo.gdal
@@ -63,8 +64,41 @@ Band
 
 .. autofunction:: osgeo.gdal.RegenerateOverviews
 
+Band Algebra
+------------
+
+.. autoclass:: osgeo.gdal.ComputedBand
+
+.. autofunction:: osgeo.gdal.abs
+
+.. autofunction:: osgeo.gdal.log
+   
+.. autofunction:: osgeo.gdal.log10
+
+.. autofunction:: osgeo.gdal.logical_and
+
+.. autofunction:: osgeo.gdal.logical_or
+
+.. autofunction:: osgeo.gdal.logical_not
+
+.. autofunction:: osgeo.gdal.maximum
+
+.. autofunction:: osgeo.gdal.mean
+
+.. autofunction:: osgeo.gdal.minimum
+
+.. autofunction:: osgeo.gdal.pow
+
+.. autofunction:: osgeo.gdal.sqrt
+
+.. autofunction:: osgeo.gdal.where
+
 Other
 -----
+
+.. autofunction:: osgeo.gdal.ApplyGeoTransform
+
+.. autofunction:: osgeo.gdal.InvGeoTransform
 
 .. autoclass:: osgeo.gdal.RasterAttributeTable
     :members:
