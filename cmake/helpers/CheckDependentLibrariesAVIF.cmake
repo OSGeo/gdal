@@ -23,6 +23,7 @@ if (AVIF_HAS_OPAQUE_PROPERTIES)
 endif ()
 
 option(AVIF_VERSION_CHECK "Check libavif runtime vs compile-time versions" ON)
+mark_as_advanced(AVIF_VERSION_CHECK)
 if (HAVE_AVIF AND AVIF_VERSION_CHECK)
     set_property(TARGET AVIF::AVIF APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "AVIF_VERSION_CHECK")
 endif ()
