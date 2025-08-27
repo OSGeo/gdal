@@ -88,6 +88,9 @@ struct OGRGPKGTableLayerFillArrowArray
     bool bErrorOccurred = false;
     bool bMemoryLimitReached = false;
     bool bDateTimeAsString = false;
+    bool bAsynchronousMode = false;
+    bool bIsFinished = false;
+    bool bThreadReady = false;
     std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
@@ -97,11 +100,8 @@ struct OGRGPKGTableLayerFillArrowArray
     };
 
     sqlite3 *hDB = nullptr;
-    int nMaxBatchSize = 0;
-    bool bAsynchronousMode = false;
     std::mutex oMutex{};
     std::condition_variable oCV{};
-    bool bIsFinished = false;
     GIntBig nCurFID = 0;
     uint32_t nMemLimit = 0;
     // For spatial filtering
