@@ -168,6 +168,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     bool bHasReadXMPMetadata{};
     bool bHasReadICCMetadata{};
     bool bHasReadFLIRMetadata = false;
+    bool bHasReadDJIMetadata = false;
     bool bHasReadImageStructureMetadata = false;
     char **papszMetadata{};
     int nExifOffset{-1};
@@ -181,7 +182,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     int m_nSubdatasetCount = 0;
 
-    // FLIR raw thermal image
+    // FLIR or DJI raw thermal image
     bool m_bRawThermalLittleEndian = false;
     int m_nRawThermalImageWidth = 0;
     int m_nRawThermalImageHeight = 0;
@@ -206,8 +207,10 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void ReadImageStructureMetadata();
     void ReadEXIFMetadata();
     void ReadXMPMetadata();
+    void ReadThermalMetadata();
     void ReadFLIRMetadata();
-    GDALDataset *OpenFLIRRawThermalImage();
+    void ReadDJIMetadata();
+    GDALDataset *OpenRawThermalImage();
 
     bool bHasCheckedForMask{};
     JPGMaskBand *poMaskBand{};
