@@ -168,9 +168,10 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
                               "NASA Planetary Data System 4");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/pds4.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xml");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 "
-                              "Float64 CFloat32 CFloat64");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONDATATYPES,
+        "Byte Int8 UInt16 Int16 UInt32 Int32 UInt64 Int64 "
+        "Float32 Float64 CFloat32 CFloat64");
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
@@ -308,9 +309,6 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
         "'Name of a field containing a Altitude value' default='Altitude'/>"
         "  <Option name='WKT' type='string' description="
         "'Name of a field containing a WKT value' default='WKT'/>"
-        "  <Option name='SAME_DIRECTORY' type='boolean' description="
-        "'Whether table files should be created in the same "
-        "directory, or in a subdirectory' default='NO'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(
