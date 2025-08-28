@@ -33,7 +33,7 @@ GeoRasterDriver::~GeoRasterDriver()
     gpoGeoRasterDriver = nullptr;
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
-    std::map<CPLString, OWSessionPool *>::iterator oIter = 
+    std::map<CPLString, OWSessionPool *>::iterator oIter =
         oMapSessionPool.begin();
     for (; oIter != oMapSessionPool.end(); ++oIter)
         delete (oIter->second);
@@ -46,12 +46,10 @@ GeoRasterDriver::~GeoRasterDriver()
  * is destroyed.
  *
  ***************************************************************************/
-OWConnection *GeoRasterDriver::GetConnection(const char *pszUserIn, 
-                                             const char *pszPasswordIn,
-                                             const char *pszServerIn, 
-                                             int nPoolSessionMinIn,
-                                             int nPoolSessionMaxIn,
-                                             int nPoolSessionIncrIn)
+OWConnection *
+GeoRasterDriver::GetConnection(const char *pszUserIn, const char *pszPasswordIn,
+                               const char *pszServerIn, int nPoolSessionMinIn,
+                               int nPoolSessionMaxIn, int nPoolSessionIncrIn)
 {
     OWSessionPool *poPool = nullptr;
 
@@ -62,18 +60,18 @@ OWConnection *GeoRasterDriver::GetConnection(const char *pszUserIn,
     osKey += pszServerIn;
 
     bool bConfigPool = false;
-    if (nPoolSessionMinIn >=0 || nPoolSessionMaxIn > 0 || 
-        nPoolSessionIncrIn > 0) 
+    if (nPoolSessionMinIn >= 0 || nPoolSessionMaxIn > 0 ||
+        nPoolSessionIncrIn > 0)
         bConfigPool = true;
 
-    CPLDebug("GEOR", 
-            "Getting connection from the Session pool with key %s ", osKey.c_str());
+    CPLDebug("GEOR", "Getting connection from the Session pool with key %s ",
+             osKey.c_str());
 
     /**
      * Look for an existing session pool in the map
      **/
     CPLMutexHolderD(&hMutex);
-    std::map<CPLString, OWSessionPool*>::iterator oIter = 
+    std::map<CPLString, OWSessionPool *>::iterator oIter =
         oMapSessionPool.find(osKey);
 
     if (oIter != oMapSessionPool.end())
@@ -81,16 +79,15 @@ OWConnection *GeoRasterDriver::GetConnection(const char *pszUserIn,
         poPool = oIter->second;
         if (bConfigPool)
         {
-            ub4 nSessMin = (nPoolSessionMinIn >= 0)? (ub4)nPoolSessionMinIn :
-                           poPool->GetSessMin();
-            ub4 nSessMax = (nPoolSessionMaxIn > 0)? (ub4)nPoolSessionMaxIn :
-                           poPool->GetSessMax();
-            ub4 nSessIncr = (nPoolSessionIncrIn > 0)? (ub4)nPoolSessionIncrIn :
-                           poPool->GetSessIncr();
+            ub4 nSessMin = (nPoolSessionMinIn >= 0) ? (ub4)nPoolSessionMinIn
+                                                    : poPool->GetSessMin();
+            ub4 nSessMax = (nPoolSessionMaxIn > 0) ? (ub4)nPoolSessionMaxIn
+                                                   : poPool->GetSessMax();
+            ub4 nSessIncr = (nPoolSessionIncrIn > 0) ? (ub4)nPoolSessionIncrIn
+                                                     : poPool->GetSessIncr();
 
             poPool->ReInitialize(nSessMin, nSessMax, nSessIncr);
         }
-
 
         return poPool->GetConnection(pszUserIn, pszPasswordIn, pszServerIn);
     }
@@ -101,19 +98,18 @@ OWConnection *GeoRasterDriver::GetConnection(const char *pszUserIn,
     poPool = new OWSessionPool(pszUserIn, pszPasswordIn, pszServerIn);
     if (poPool == nullptr || !poPool->Succeeded())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                "Failed to create session pool.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create session pool.");
         return nullptr;
     }
 
     if (bConfigPool)
     {
-        ub4 nSessMin = (nPoolSessionMinIn >= 0)? (ub4)nPoolSessionMinIn :
-                       SDO_SPOOL_DEFAULT_SESSMIN;
-        ub4 nSessMax = (nPoolSessionMaxIn > 0)? (ub4)nPoolSessionMaxIn :
-                       SDO_SPOOL_DEFAULT_SESSMAX;
-        ub4 nSessIncr = (nPoolSessionIncrIn > 0)? (ub4)nPoolSessionIncrIn :
-                        SDO_SPOOL_DEFAULT_SESSINCR;
+        ub4 nSessMin = (nPoolSessionMinIn >= 0) ? (ub4)nPoolSessionMinIn
+                                                : SDO_SPOOL_DEFAULT_SESSMIN;
+        ub4 nSessMax = (nPoolSessionMaxIn > 0) ? (ub4)nPoolSessionMaxIn
+                                               : SDO_SPOOL_DEFAULT_SESSMAX;
+        ub4 nSessIncr = (nPoolSessionIncrIn > 0) ? (ub4)nPoolSessionIncrIn
+                                                 : SDO_SPOOL_DEFAULT_SESSINCR;
 
         poPool->ReInitialize(nSessMin, nSessMax, nSessIncr);
     }
