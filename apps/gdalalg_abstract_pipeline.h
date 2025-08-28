@@ -293,6 +293,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     std::string m_output{};
     GDALArgDatasetValue m_outputDataset{};
     std::string m_format{};
+    std::vector<std::string> m_outputOpenOptions{};
     std::vector<std::string> m_creationOptions{};
     bool m_overwrite = false;
     std::string m_outputLayerName{};

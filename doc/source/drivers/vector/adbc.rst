@@ -33,6 +33,11 @@ There is spatial support when the underlying ADBC driver is DuckDB, for
 native spatial DuckDB databases and GeoParquet datasets, and when the spatial
 extension is installed.
 
+Google BigQuery support
+-----------------------
+
+Consult the :ref:`vector.adbc_bigquery` page.
+
 Connection string
 -----------------
 

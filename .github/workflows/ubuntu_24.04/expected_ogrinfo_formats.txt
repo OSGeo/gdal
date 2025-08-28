@@ -80,7 +80,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   JSONFG -vector- (rw+v): OGC Features and Geometries JSON (*.json)
   MiraMonVector -vector- (rw+v): MiraMon Vectors (.pol, .arc, .pnt) (*.pol, *.arc, *.pnt)
   XODR -vector- (ro): OpenDRIVE - Open Dynamic Road Information for Vehicle Environment (*.xodr)
-  ADBC -vector- (ro): Arrow Database Connectivity
+  ADBC -vector- (rou): Arrow Database Connectivity
   AVCBin -vector- (rov): Arc/Info Binary Coverage
   AVCE00 -vector- (rov): Arc/Info E00 (ASCII) Coverage (*.e00)
   AIVector -vector- (ro): Artificial Intelligence powered vector driver
