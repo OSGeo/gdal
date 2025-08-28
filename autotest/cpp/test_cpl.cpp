@@ -4295,19 +4295,20 @@ TEST_F(test_cpl, CPLQuadTree)
 // Test bUnlinkAndSize on VSIGetMemFileBuffer
 TEST_F(test_cpl, VSIGetMemFileBuffer_unlink_and_size)
 {
-    VSILFILE *fp = VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb");
-    VSIFWriteL("test", 5, 1, fp);
-    GByte *pRawData =
-        VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, true);
-    ASSERT_TRUE(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
+    VSIVirtualHandleUniquePtr fp(
+        VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb"));
+    VSIFWriteL("test", 5, 1, fp.get());
+    std::unique_ptr<GByte, VSIFreeReleaser> pRawData(VSIGetMemFileBuffer(
+        "/vsimem/test_unlink_and_seize.tif", nullptr, true));
+    ASSERT_TRUE(EQUAL(reinterpret_cast<const char *>(pRawData.get()), "test"));
     ASSERT_TRUE(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif",
                                     nullptr, false) == nullptr);
-    ASSERT_TRUE(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
-    ASSERT_TRUE(VSIFReadL(pRawData, 5, 1, fp) == 0);
-    ASSERT_TRUE(VSIFWriteL(pRawData, 5, 1, fp) == 0);
-    ASSERT_TRUE(VSIFSeekL(fp, 0, SEEK_END) == 0);
-    CPLFree(pRawData);
-    VSIFCloseL(fp);
+    VSIVirtualHandleUniquePtr fp2(
+        VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r"));
+    ASSERT_TRUE(fp2.get() == nullptr);
+    ASSERT_TRUE(VSIFReadL(pRawData.get(), 5, 1, fp.get()) == 0);
+    ASSERT_TRUE(VSIFWriteL(pRawData.get(), 5, 1, fp.get()) == 0);
+    ASSERT_TRUE(VSIFSeekL(fp.get(), 0, SEEK_END) == 0);
 }
 
 // Test CPLLoadConfigOptionsFromFile() for VSI credentials

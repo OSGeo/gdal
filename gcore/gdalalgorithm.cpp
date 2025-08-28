@@ -3083,7 +3083,7 @@ GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
     if (!isConst && m_arbitraryLongNameArgsAllowed)
     {
         const auto nDotPos = osKey.find('.');
-        const auto osKeyEnd =
+        const std::string osKeyEnd =
             nDotPos == std::string::npos ? osKey : osKey.substr(nDotPos + 1);
         if (IsKnownOutputRelatedBooleanArgName(osKeyEnd))
         {

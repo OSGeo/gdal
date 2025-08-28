@@ -8590,7 +8590,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     std::lock_guard oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
     m_poFillArrowArray->bErrorOccurred = !osErrorMsg.empty();
-    m_poFillArrowArray->osErrorMsg = osErrorMsg;
+    m_poFillArrowArray->osErrorMsg = std::move(osErrorMsg);
 
     if (m_poFillArrowArray->nCountRows >= 0)
     {

@@ -292,13 +292,14 @@ static GDALDataset *OGRFeatherDriverCreate(const char *pszName, int nXSize,
     if (STARTS_WITH(pszName, "/vsi") ||
         CPLTestBool(CPLGetConfigOption("OGR_ARROW_USE_VSI", "YES")))
     {
-        VSILFILE *fp = VSIFOpenL(pszName, "wb");
+        VSIVirtualHandleUniquePtr fp =
+            VSIFilesystemHandler::OpenStatic(pszName, "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszName);
             return nullptr;
         }
-        out_file = std::make_shared<OGRArrowWritableFile>(fp);
+        out_file = std::make_shared<OGRArrowWritableFile>(std::move(fp));
     }
     else
     {

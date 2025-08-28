@@ -1022,7 +1022,7 @@ bool GDALPipelineAlgorithm::ParseCommandLineArguments(
                 auto oKeyPair = std::make_pair(matchingStep, stepArgName);
                 if (!cpl::contains(alreadyCleanedArgs, oKeyPair))
                 {
-                    alreadyCleanedArgs.insert(oKeyPair);
+                    alreadyCleanedArgs.insert(std::move(oKeyPair));
 
                     std::vector<GDALAlgorithmArg *> positionalArgs;
                     for (auto &stepArg : step.alg->GetArgs())
