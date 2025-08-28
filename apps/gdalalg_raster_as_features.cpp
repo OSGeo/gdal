@@ -197,7 +197,7 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
             m_bandFields.push_back(m_defn->GetFieldIndex(fieldName));
         }
 
-        ResetReading();
+        GDALRasterAsFeaturesLayer::ResetReading();
     }
 
     ~GDALRasterAsFeaturesLayer() override;
@@ -348,9 +348,10 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
 
         if (m_buf == nullptr && !m_bands.empty())
         {
-            m_buf = VSI_MALLOC3_VERBOSE(
-                m_window.nXSize, m_window.nYSize,
-                nBandCount * GDALGetDataTypeSizeBytes(m_bufType));
+            m_buf =
+                VSI_MALLOC3_VERBOSE(m_window.nXSize, m_window.nYSize,
+                                    static_cast<size_t>(nBandCount) *
+                                        GDALGetDataTypeSizeBytes(m_bufType));
             if (m_buf == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -368,9 +369,11 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
                                static_cast<GByte *>(m_buf) +
                                    i * GDALGetDataTypeSizeBytes(m_bufType),
                                m_window.nXSize, m_window.nYSize, m_bufType,
-                               GDALGetDataTypeSizeBytes(m_bufType) * nBandCount,
-                               GDALGetDataTypeSizeBytes(m_bufType) *
-                                   m_window.nXSize * nBandCount,
+                               static_cast<GSpacing>(nBandCount) *
+                                   GDALGetDataTypeSizeBytes(m_bufType),
+                               static_cast<GSpacing>(nBandCount) *
+                                   GDALGetDataTypeSizeBytes(m_bufType) *
+                                   m_window.nXSize,
                                nullptr);
 
             if (eErr != CE_None)
