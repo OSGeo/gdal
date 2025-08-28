@@ -2675,8 +2675,22 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                         pDstBuffer);
     }
 
+    bool strideOK = true;
+    GPtrDiff_t nExpectedBufferStride = 1;
+    for (size_t i = nDims; i != 0;)
+    {
+        --i;
+        if (count[i] != 1 && bufferStride[i] != nExpectedBufferStride)
+        {
+            strideOK = false;
+            break;
+        }
+        nExpectedBufferStride *= count[i];
+    }
+
     hid_t hBufferType = H5I_INVALID_HID;
     GByte *pabyTemp = nullptr;
+    bool bUseTmpBuffer = false;
     if (m_dt.GetClass() == GEDTC_STRING)
     {
         if (bufferDataType.GetClass() != GEDTC_STRING)
@@ -2693,7 +2707,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 return false;
         }
     }
-    else if (bufferDataType.GetClass() == GEDTC_NUMERIC &&
+    else if (strideOK && bufferDataType.GetClass() == GEDTC_NUMERIC &&
              m_dt.GetClass() == GEDTC_NUMERIC &&
              !GDALDataTypeIsComplex(m_dt.GetNumericDataType()) &&
              !GDALDataTypeIsComplex(bufferDataType.GetNumericDataType()))
@@ -2715,14 +2729,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 hBufferType = H5Tcopy(m_hNativeDT);
                 if (m_dt != bufferDataType)
                 {
-                    const size_t nDataTypeSize = H5Tget_size(m_hNativeDT);
-                    pabyTemp = static_cast<GByte *>(
-                        VSI_MALLOC2_VERBOSE(nDataTypeSize, nEltCount));
-                    if (pabyTemp == nullptr)
-                    {
-                        H5Tclose(hBufferType);
-                        return false;
-                    }
+                    bUseTmpBuffer = true;
                 }
             }
             H5Tclose(hParent);
@@ -2733,24 +2740,33 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                                           bufferDataType);
             if (hBufferType == H5I_INVALID_HID)
             {
-                VSIFree(pabyTemp);
                 return false;
             }
+        }
+    }
+    else if (strideOK)
+    {
+        hBufferType = H5Tcopy(m_hNativeDT);
+        if (m_dt != bufferDataType || m_bHasString || m_bHasNonNativeDataType)
+        {
+            bUseTmpBuffer = true;
         }
     }
     else
     {
         hBufferType = H5Tcopy(m_hNativeDT);
-        if (m_dt != bufferDataType || m_bHasString || m_bHasNonNativeDataType)
+        bUseTmpBuffer = true;
+    }
+
+    if (bUseTmpBuffer)
+    {
+        const size_t nDataTypeSize = H5Tget_size(hBufferType);
+        pabyTemp =
+            static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nDataTypeSize, nEltCount));
+        if (pabyTemp == nullptr)
         {
-            const size_t nDataTypeSize = H5Tget_size(m_hNativeDT);
-            pabyTemp = static_cast<GByte *>(
-                VSI_MALLOC2_VERBOSE(nDataTypeSize, nEltCount));
-            if (pabyTemp == nullptr)
-            {
-                H5Tclose(hBufferType);
-                return false;
-            }
+            H5Tclose(hBufferType);
+            return false;
         }
     }
 
