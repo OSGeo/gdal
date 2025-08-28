@@ -362,6 +362,17 @@ def test_hdf5_multidim_read_array():
     assert struct.unpack("H" * (len(data) // 2), data) == got_data_ref
 
 
+def test_hdf5_multidim_read_stride():
+
+    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    var = rg.OpenMDArray("ubyte_z2_y2_x2_var")
+    assert struct.unpack("B" * 119, var.Read(buffer_stride=[3 * 4 * 2, 4 * 2, 1 * 2]))[
+        ::2
+    ] == struct.unpack("B" * 60, var.Read())
+
+
 def test_hdf5_multidim_attr_alldatatypes():
 
     ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
