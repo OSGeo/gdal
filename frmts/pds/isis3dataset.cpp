@@ -24,6 +24,7 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi_error.h"
+#include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
 #include "gdal_proxy.h"
 #include "nasakeywordhandler.h"
@@ -43,6 +44,7 @@
 #endif
 
 #include <algorithm>
+#include <cinttypes>
 #include <map>
 #include <utility>  // pair
 #include <vector>
@@ -161,6 +163,10 @@ class ISIS3Dataset final : public RawDataset
 
     RawBinaryLayout m_sLayout{};
 
+    bool m_bResolveOfflineContent = true;
+    int m_nMaxOfflineContentSize = 100000000;
+    bool m_bHasResolvedOfflineContent = false;
+
     const char *GetKeyword(const char *pszPath, const char *pszDefault = "");
 
     double FixLong(double dfLong);
@@ -168,6 +174,7 @@ class ISIS3Dataset final : public RawDataset
     void BuildHistory();
     void WriteLabel();
     void InvalidateLabel();
+    void ResolveOfflineContentOfLabel();
 
     static CPLString SerializeAsPDL(const CPLJSONObject &oObj);
     static void SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
@@ -1455,6 +1462,10 @@ char **ISIS3Dataset::GetMetadata(const char *pszDomain)
                 BuildLabel();
             }
             CPLAssert(m_oJSonLabel.IsValid());
+            if (m_bResolveOfflineContent && !m_bHasResolvedOfflineContent)
+            {
+                ResolveOfflineContentOfLabel();
+            }
             const CPLString osJson =
                 m_oJSonLabel.Format(CPLJSONObject::PrettyFormat::Pretty);
             m_aosISIS3MD.InsertString(0, osJson.c_str());
@@ -1465,6 +1476,134 @@ char **ISIS3Dataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
+/*                        ResolveOfflineContentOfLabel()                */
+/************************************************************************/
+
+void ISIS3Dataset::ResolveOfflineContentOfLabel()
+{
+    m_bHasResolvedOfflineContent = true;
+
+    std::vector<GByte> abyData;
+
+    for (CPLJSONObject &oObj : m_oJSonLabel.GetChildren())
+    {
+        if (oObj.GetType() == CPLJSONObject::Type::Object)
+        {
+            CPLString osContainerName = oObj.GetName();
+            CPLJSONObject oContainerName = oObj.GetObj("_container_name");
+            if (oContainerName.GetType() == CPLJSONObject::Type::String)
+            {
+                osContainerName = oContainerName.ToString();
+            }
+
+            std::string osFilename;
+            CPLJSONObject oFilename = oObj.GetObj("^" + osContainerName);
+            if (oFilename.GetType() == CPLJSONObject::Type::String)
+            {
+                VSIStatBufL sStat;
+                osFilename = CPLFormFilenameSafe(
+                    CPLGetPathSafe(GetDescription()).c_str(),
+                    oFilename.ToString().c_str(), nullptr);
+                if (CPLHasPathTraversal(oFilename.ToString().c_str()))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Path traversal detected for ^%s: %s",
+                             osContainerName.c_str(),
+                             oFilename.ToString().c_str());
+                    continue;
+                }
+                else if (VSIStatL(osFilename.c_str(), &sStat) != 0)
+                {
+                    CPLDebug("ISIS3", "File %s referenced but not foud",
+                             osFilename.c_str());
+                    continue;
+                }
+            }
+            else
+            {
+                osFilename = GetDescription();
+            }
+
+            CPLJSONObject oBytes = oObj.GetObj("Bytes");
+            if (oBytes.GetType() == CPLJSONObject::Type::Long)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Too large content reference by %s to be captured in "
+                         "json:ISIS3 metadata domain",
+                         oObj.GetName().c_str());
+                continue;
+            }
+            else if (oBytes.GetType() != CPLJSONObject::Type::Integer ||
+                     oBytes.ToInteger() <= 0)
+            {
+                continue;
+            }
+            if (oBytes.ToInteger() > m_nMaxOfflineContentSize)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Too large content reference by %s to be captured in "
+                         "json:ISIS3 metadata domain",
+                         oObj.GetName().c_str());
+                continue;
+            }
+
+            CPLJSONObject oStartByte = oObj.GetObj("StartByte");
+            if ((oStartByte.GetType() != CPLJSONObject::Type::Integer &&
+                 oStartByte.GetType() != CPLJSONObject::Type::Long) ||
+                oStartByte.ToLong() <= 0)
+            {
+                continue;
+            }
+
+            // 1-based offsets
+            const auto nOffset =
+                static_cast<vsi_l_offset>(oStartByte.ToLong() - 1);
+
+            const auto nSize = static_cast<size_t>(oBytes.ToInteger());
+            try
+            {
+                abyData.resize(nSize);
+            }
+            catch (const std::exception &)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Out of memory: too large content referenced by %s "
+                         "to be captured in json:ISIS3 metadata domain",
+                         oObj.GetName().c_str());
+                continue;
+            }
+
+            VSIVirtualHandleUniquePtr fp(VSIFOpenL(osFilename.c_str(), "rb"));
+            if (!fp)
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Cannot open %s referenced by %s", osFilename.c_str(),
+                         oObj.GetName().c_str());
+                continue;
+            }
+
+            if (fp->Seek(nOffset, SEEK_SET) != 0 ||
+                fp->Read(abyData.data(), abyData.size(), 1) != 1)
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Cannot read %u bytes at offset %" PRIu64
+                         " in %s, referenced by %s",
+                         static_cast<unsigned>(abyData.size()),
+                         static_cast<uint64_t>(nOffset), osFilename.c_str(),
+                         oObj.GetName().c_str());
+                continue;
+            }
+
+            CPLJSONObject oData;
+            char *pszHex = CPLBinaryToHex(static_cast<int>(abyData.size()),
+                                          abyData.data());
+            oObj.Add("_data", pszHex);
+            CPLFree(pszHex);
+        }
+    }
+}
+
+/************************************************************************/
 /*                           InvalidateLabel()                          */
 /************************************************************************/
 
@@ -1472,6 +1611,7 @@ void ISIS3Dataset::InvalidateLabel()
 {
     m_oJSonLabel.Deinit();
     m_aosISIS3MD.Clear();
+    m_bHasResolvedOfflineContent = false;
 }
 
 /************************************************************************/
@@ -1598,6 +1738,13 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         poOpenInfo->fpL = nullptr;
         return nullptr;
     }
+
+    poDS->m_bResolveOfflineContent = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "INCLUDE_OFFLINE_CONTENT", "YES"));
+    poDS->m_nMaxOfflineContentSize = std::max(
+        0, atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                     "MAX_SIZE_OFFLINE_CONTENT", "100000000")));
+
     poDS->m_oJSonLabel = poDS->m_oKeywords.GetJsonObject();
     poDS->m_oJSonLabel.Add("_filename", poOpenInfo->pszFilename);
 
@@ -3423,12 +3570,12 @@ void ISIS3Dataset::WriteLabel()
     }
 
     // Hack back History.StartBytes value
-    char *pszHistoryStartBytes =
+    char *pszHistoryStartByte =
         strstr(pszLabel, pszHISTORY_STARTBYTE_PLACEHOLDER);
 
     vsi_l_offset nHistoryOffset = 0;
     vsi_l_offset nLastOffset = 0;
-    if (pszHistoryStartBytes != nullptr)
+    if (pszHistoryStartByte != nullptr)
     {
         CPLAssert(m_osExternalFilename.empty());
         nHistoryOffset = nLabelSize + nImagePixels * nDTSize;
@@ -3437,8 +3584,8 @@ void ISIS3Dataset::WriteLabel()
             CPLSPrintf(CPL_FRMT_GUIB, nHistoryOffset + 1);
         CPLAssert(strlen(pszStartByte) <
                   strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
-        memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
-        memset(pszHistoryStartBytes + strlen(pszStartByte), ' ',
+        memcpy(pszHistoryStartByte, pszStartByte, strlen(pszStartByte));
+        memset(pszHistoryStartByte + strlen(pszStartByte), ' ',
                strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) - strlen(pszStartByte));
     }
 
@@ -3651,7 +3798,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
     {
         const CPLString osKey = oChild.GetName();
         if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
-            EQUAL(osKey, "_filename"))
+            EQUAL(osKey, "_filename") || EQUAL(osKey, "_data"))
         {
             continue;
         }
@@ -3686,7 +3833,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
     {
         const CPLString osKey = oChild.GetName();
         if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
-            EQUAL(osKey, "_filename"))
+            EQUAL(osKey, "_filename") || EQUAL(osKey, "_data"))
         {
             continue;
         }

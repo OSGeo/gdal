@@ -12,6 +12,7 @@
 ###############################################################################
 
 import contextlib
+import json
 import os
 import struct
 
@@ -1804,3 +1805,38 @@ def test_pds4_read_right_to_left(tmp_path):
     ds = gdal.Open(tmp_filename)
     # Test that we flip the image along the horizontal axis
     assert numpy.all(ds.ReadAsArray()[::, ::-1] == ref_ds.ReadAsArray())
+
+
+###############################################################################
+# Test propagation of ISIS3 label into GeoTIFF
+
+
+@pytest.mark.require_driver("ISIS3")
+def test_pds4_json_isis3_to_geotiff(tmp_vsimem):
+
+    gdal.GetDriverByName("ISIS3").CreateCopy(
+        tmp_vsimem / "input.cub", gdal.Open("../gcore/data/uint16.tif")
+    )
+
+    with gdal.Open(tmp_vsimem / "input.cub") as src_ds:
+        expected_json_isis3_md = json.loads(src_ds.GetMetadata("json:ISIS3")[0])
+        gdal.GetDriverByName("PDS4").CreateCopy(
+            tmp_vsimem / "out.xml", src_ds, options=["IMAGE_FORMAT=GEOTIFF"]
+        )
+
+    assert gdal.VSIStatL(tmp_vsimem / "out.tif.aux.xml") is None
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        got_json_isis3_md = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert got_json_isis3_md == expected_json_isis3_md
+
+    with gdal.Open(tmp_vsimem / "input.cub") as src_ds:
+        gdal.GetDriverByName("PDS4").CreateCopy(
+            tmp_vsimem / "out.xml",
+            src_ds,
+            options=["IMAGE_FORMAT=GEOTIFF", "PROPAGATE_SRC_METADATA=NO"],
+        )
+
+    assert gdal.VSIStatL(tmp_vsimem / "out.tif.aux.xml") is None
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetMetadata("json:ISIS3") is None

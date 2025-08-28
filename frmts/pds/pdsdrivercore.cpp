@@ -270,6 +270,9 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
         "  <Option name='BOUNDING_DEGREES' type='string' scope='raster,vector' "
         "description='Manually set bounding box with the syntax "
         "west_lon,south_lat,east_lon,north_lat'/>"
+        "  <Option name='PROPAGATE_SRC_METADATA' type='boolean' scope='raster' "
+        "description='Whether to propagate particular metadata domains, such "
+        "as json:ISIS3' default='YES'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
@@ -387,6 +390,18 @@ void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte UInt16 Int16 Float32");
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='INCLUDE_OFFLINE_CONTENT' type='boolean' default='YES' "
+        "description='Whether to include a _data member in "
+        "json:ISIS3 metadata with offline content of label objects'/>"
+        "  <Option name='MAX_SIZE_OFFLINE_CONTENT' type='string' "
+        "default='100000000' description='Maximum size of offline content to "
+        "include in _data member, in bytes' min='0'/>"
+        "</OpenOptionList>");
+
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"

@@ -1506,7 +1506,7 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
 
 // See https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd
 // and https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch
-PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
+std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 {
     if (!PDS4DriverIdentify(poOpenInfo))
         return nullptr;
@@ -2121,7 +2121,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
@@ -4271,25 +4271,24 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename, int nXSize,
                                  char **papszOptions)
 {
     return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBandsIn, eType,
-                          papszOptions);
+                          papszOptions)
+        .release();
 }
 
 /************************************************************************/
 /*                           CreateInternal()                           */
 /************************************************************************/
 
-PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
-                                         GDALDataset *poSrcDS, int nXSize,
-                                         int nYSize, int nBandsIn,
-                                         GDALDataType eType,
-                                         const char *const *papszOptionsIn)
+std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
+    const char *pszFilename, GDALDataset *poSrcDS, int nXSize, int nYSize,
+    int nBandsIn, GDALDataType eType, const char *const *papszOptionsIn)
 {
     CPLStringList aosOptions(papszOptionsIn);
 
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eType == GDT_Unknown)
     {
         // Vector file creation
-        PDS4Dataset *poDS = new PDS4Dataset();
+        auto poDS = std::make_unique<PDS4Dataset>();
         poDS->SetDescription(pszFilename);
         poDS->nRasterXSize = 0;
         poDS->nRasterYSize = 0;
@@ -4395,22 +4394,21 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     if (bAppend)
     {
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-        auto poExistingPDS4 = static_cast<PDS4Dataset *>(Open(&oOpenInfo));
+        auto poExistingPDS4 = OpenInternal(&oOpenInfo);
         if (!poExistingPDS4)
         {
             return nullptr;
         }
         osImageFilename = poExistingPDS4->m_osImageFilename;
-        delete poExistingPDS4;
+        poExistingPDS4.reset();
 
-        auto poImageDS = GDALDataset::FromHandle(GDALOpenEx(
-            osImageFilename, GDAL_OF_RASTER, nullptr, nullptr, nullptr));
+        auto poImageDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(osImageFilename, GDAL_OF_RASTER));
         if (poImageDS && poImageDS->GetDriver() &&
             EQUAL(poImageDS->GetDriver()->GetDescription(), "GTiff"))
         {
             pszImageFormat = "GEOTIFF";
         }
-        delete poImageDS;
     }
 
     GDALDataset *poExternalDS = nullptr;
@@ -4650,7 +4648,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
     }
 
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
@@ -4704,7 +4702,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
     if (bAppend)
     {
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-        GDALDataset *poExistingDS = Open(&oOpenInfo);
+        auto poExistingDS = OpenInternal(&oOpenInfo);
         if (poExistingDS)
         {
             GDALGeoTransform existingGT;
@@ -4713,36 +4711,26 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
             GDALGeoTransform gt;
             const bool bSrcHasGT = poSrcDS->GetGeoTransform(gt) == CE_None;
 
-            OGRSpatialReference oExistingSRS;
-            OGRSpatialReference oSrcSRS;
-            const char *pszExistingSRS = poExistingDS->GetProjectionRef();
-            const char *pszSrcSRS = poSrcDS->GetProjectionRef();
             CPLString osExistingProj4;
-            if (pszExistingSRS && pszExistingSRS[0])
+            if (const auto poExistingSRS = poExistingDS->GetSpatialRef())
             {
-                oExistingSRS.SetFromUserInput(
-                    pszExistingSRS,
-                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
                 char *pszExistingProj4 = nullptr;
-                oExistingSRS.exportToProj4(&pszExistingProj4);
+                poExistingSRS->exportToProj4(&pszExistingProj4);
                 if (pszExistingProj4)
                     osExistingProj4 = pszExistingProj4;
                 CPLFree(pszExistingProj4);
             }
             CPLString osSrcProj4;
-            if (pszSrcSRS && pszSrcSRS[0])
+            if (const auto poSrcSRS = poSrcDS->GetSpatialRef())
             {
-                oSrcSRS.SetFromUserInput(
-                    pszSrcSRS,
-                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
                 char *pszSrcProj4 = nullptr;
-                oSrcSRS.exportToProj4(&pszSrcProj4);
+                poSrcSRS->exportToProj4(&pszSrcProj4);
                 if (pszSrcProj4)
                     osSrcProj4 = pszSrcProj4;
                 CPLFree(pszSrcProj4);
             }
 
-            delete poExistingDS;
+            poExistingDS.reset();
 
             const auto maxRelErrorGT =
                 [](const GDALGeoTransform &gt1, const GDALGeoTransform &gt2)
@@ -4793,8 +4781,8 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
     const int nYSize = poSrcDS->GetRasterYSize();
     const int nBands = poSrcDS->GetRasterCount();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    PDS4Dataset *poDS = CreateInternal(pszFilename, poSrcDS, nXSize, nYSize,
-                                       nBands, eType, papszOptions);
+    auto poDS = CreateInternal(pszFilename, poSrcDS, nXSize, nYSize, nBands,
+                               eType, papszOptions);
     if (poDS == nullptr)
         return nullptr;
 
@@ -4848,23 +4836,29 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 
     if (!CPLFetchBool(papszOptions, "CREATE_LABEL_ONLY", false))
     {
-        CPLErr eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDS, nullptr,
+        CPLErr eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDS.get(), nullptr,
                                                  pfnProgress, pProgressData);
         poDS->FlushCache(false);
         if (eErr != CE_None)
         {
-            delete poDS;
             return nullptr;
         }
 
-        char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
-        if (papszISIS3MD)
+        if (CPLFetchBool(papszOptions, "PROPAGATE_SRC_METADATA", true))
         {
-            poDS->SetMetadata(papszISIS3MD, "json:ISIS3");
+            char **papszISIS3MD = poSrcDS->GetMetadata("json:ISIS3");
+            if (papszISIS3MD)
+            {
+                poDS->SetMetadata(papszISIS3MD, "json:ISIS3");
+
+                if (poDS->m_poExternalDS)
+                    poDS->m_poExternalDS->SetMetadata(papszISIS3MD,
+                                                      "json:ISIS3");
+            }
         }
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -4878,8 +4872,7 @@ CPLErr PDS4Dataset::Delete(const char *pszFilename)
     /*      Collect file list.                                              */
     /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    auto poDS =
-        std::unique_ptr<PDS4Dataset>(PDS4Dataset::OpenInternal(&oOpenInfo));
+    auto poDS = PDS4Dataset::OpenInternal(&oOpenInfo);
     if (poDS == nullptr)
     {
         if (CPLGetLastErrorNo() == 0)
