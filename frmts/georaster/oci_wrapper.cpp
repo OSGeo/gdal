@@ -38,7 +38,7 @@ OWSessionPool::OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
                              const char *pszServerIn)
 {
     CPLDebug("GEOR", "Creating session pool with user=%s, pwd=%s, server=%s",
-            pszUserIn, pszPasswordIn, pszServerIn);
+             pszUserIn, pszPasswordIn, pszServerIn);
 
     pszUser = CPLStrdup(pszUserIn);
     pszPassword = CPLStrdup(pszPasswordIn);
@@ -49,7 +49,6 @@ OWSessionPool::OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
     // ------------------------------------------------------
 
     const char *pszUserId = "/";
-
 
     nPoolMode |= OCI_SPC_STMTCACHE;
     nSessMode |= OCI_SESSGET_SPOOL;
@@ -86,8 +85,7 @@ OWSessionPool::OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
 
     if (CheckError(OCIEnvCreate(
                        &hEnv, (ub4)(OCI_DEFAULT | OCI_OBJECT | OCI_THREADED),
-                       (dvoid *)nullptr,
-                       (dvoid * (*)(dvoid *, size_t)) nullptr,
+                       (dvoid *)nullptr, (dvoid * (*)(dvoid *, size_t)) nullptr,
                        (dvoid * (*)(dvoid *, dvoid *, size_t)) nullptr,
                        (void (*)(dvoid *, dvoid *)) nullptr, (size_t)0,
                        (dvoid **)nullptr),
@@ -124,14 +122,13 @@ OWSessionPool::OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
     //  Create the Session Pool
     // ------------------------------------------------------
 
-    if (CheckError(OCISessionPoolCreate((OCIEnv *)hEnv, (OCIError *)hError,
-                      (OCISPool *)hPool,
-                      (OraText **)&pszPoolName, &nPoolNameLen,
-                      (OraText *)pszServerIn, strlen(pszServerIn),
-                      nSessMin, nSessMax, nSessIncr,
-                      (OraText *)pszUserId, strlen(pszUserId),
-                      (OraText *)pszPasswordIn, strlen(pszPasswordIn),
-                      nPoolMode),
+    if (CheckError(OCISessionPoolCreate(
+                       (OCIEnv *)hEnv, (OCIError *)hError, (OCISPool *)hPool,
+                       (OraText **)&pszPoolName, &nPoolNameLen,
+                       (OraText *)pszServerIn, strlen(pszServerIn), nSessMin,
+                       nSessMax, nSessIncr, (OraText *)pszUserId,
+                       strlen(pszUserId), (OraText *)pszPasswordIn,
+                       strlen(pszPasswordIn), nPoolMode),
                    hError))
     {
         CPLDebug("OCI", "Session pool creation failed");
@@ -163,19 +160,17 @@ OWSessionPool::~OWSessionPool()
     {
         OCIHandleFree((dvoid *)hError, (ub4)OCI_HTYPE_ERROR);
     }
-
 }
 
 void OWSessionPool::ReInitialize(ub4 nSessMinIn, ub4 nSessMaxIn,
                                  ub4 nSessIncrIn)
 {
-    if ((nSessMin == nSessMinIn) &&
-        (nSessMax == nSessMaxIn) &&
+    if ((nSessMin == nSessMinIn) && (nSessMax == nSessMaxIn) &&
         (nSessIncr == nSessIncrIn))
         return;
 
     CPLDebug("GEOR", "Reinitialize the Session pool %s with %d, %d, %d",
-            pszPoolName, nSessMinIn, nSessMaxIn, nSessIncrIn);
+             pszPoolName, nSessMinIn, nSessMaxIn, nSessIncrIn);
     nSessMin = nSessMinIn;
     nSessMax = nSessMaxIn;
     nSessIncr = nSessIncrIn;
@@ -184,23 +179,21 @@ void OWSessionPool::ReInitialize(ub4 nSessMinIn, ub4 nSessMaxIn,
     //  Reinitialize the Session Pool
     // ------------------------------------------------------
 
-    if (CheckError(OCISessionPoolCreate((OCIEnv *)hEnv, (OCIError *)hError,
-                      (OCISPool *)hPool,
-                      (OraText **)&pszPoolName, &nPoolNameLen,
-                      (OraText *)nullptr, (ub4)0,
-                      nSessMinIn, nSessMaxIn, nSessIncrIn,
-                      (OraText *)nullptr, (ub4)0,
-                      (OraText *)nullptr, (ub4)0,
-                      OCI_SPC_REINITIALIZE),
+    if (CheckError(OCISessionPoolCreate(
+                       (OCIEnv *)hEnv, (OCIError *)hError, (OCISPool *)hPool,
+                       (OraText **)&pszPoolName, &nPoolNameLen,
+                       (OraText *)nullptr, (ub4)0, nSessMinIn, nSessMaxIn,
+                       nSessIncrIn, (OraText *)nullptr, (ub4)0,
+                       (OraText *)nullptr, (ub4)0, OCI_SPC_REINITIALIZE),
                    hError))
     {
         return;
     }
 }
 
-OWConnection *OWSessionPool:: GetConnection(const char *pszUserIn,
-                                            const char *pszPasswordIn,
-                                            const char *pszServerIn)
+OWConnection *OWSessionPool::GetConnection(const char *pszUserIn,
+                                           const char *pszPasswordIn,
+                                           const char *pszServerIn)
 {
     return new OWConnection(this, pszUserIn, pszPasswordIn, pszServerIn);
 }
@@ -412,19 +405,17 @@ OWConnection::OWConnection(const char *pszUserIn, const char *pszPasswordIn,
     // -----------------------------------------------------------------
     //  If no user specified or proxy user used, query the session user
     // -----------------------------------------------------------------
-    QueryAndInit(EQUAL(pszUser, "") || 
+    QueryAndInit(EQUAL(pszUser, "") ||
                  (strchr(pszUser, '[') && strchr(pszUser, ']')));
 
     bSucceeded = true;
-
 }
 
 /**********************************************
  *  Create Connection from the Session Pool
  **********************************************/
-OWConnection::OWConnection(OWSessionPool *hPool,
-                           const char *pszUserIn, const char *pszPasswordIn,
-                           const char *pszServerIn)
+OWConnection::OWConnection(OWSessionPool *hPool, const char *pszUserIn,
+                           const char *pszPasswordIn, const char *pszServerIn)
 {
     hEnv = hPool->hEnv;
     pszUser = CPLStrdup(pszUserIn);
@@ -432,7 +423,7 @@ OWConnection::OWConnection(OWSessionPool *hPool,
     pszServer = CPLStrdup(pszServerIn);
 
     CPLDebug("GEOR", "Creating OWConnection from the pool using %s, %s, %s",
-              pszUserIn, pszPasswordIn, pszServerIn);
+             pszUserIn, pszPasswordIn, pszServerIn);
 
     // ------------------------------------------------------
     //  Initialize Error handler
@@ -506,8 +497,8 @@ OWConnection::OWConnection(OWSessionPool *hPool,
                                  (OraText *)hPool->pszPoolName,
                                  hPool->nPoolNameLen, (OraText *)nullptr,
                                  (ub4)0, (OraText **)&retTagInfo,
-                                 (ub4 *)&retTagInfoLen,
-                                 (boolean *)&bFound, hPool->nSessMode),
+                                 (ub4 *)&retTagInfoLen, (boolean *)&bFound,
+                                 hPool->nSessMode),
                    hError))
     {
         return;
@@ -559,7 +550,6 @@ void OWConnection::QueryAndInit(bool bQuerySessionUser)
     {
         hPCTDO = DescribeType(SDO_PC);
     }
-
 }
 
 void OWConnection::QueryVersion()
@@ -598,8 +588,7 @@ OWConnection::~OWConnection()
         DestroyType(hPCTDO);
 
     if (hDescribe)
-        OCIHandleFree(static_cast<dvoid *>(hDescribe),
-                      (ub4)OCI_HTYPE_DESCRIBE);
+        OCIHandleFree(static_cast<dvoid *>(hDescribe), (ub4)OCI_HTYPE_DESCRIBE);
 
     // ------------------------------------------------------
     //  Do not free OCI handles from a external procedure
@@ -613,7 +602,7 @@ OWConnection::~OWConnection()
     }
 
     // ------------------------------------------------------
-    // Release sessions to the session pool 
+    // Release sessions to the session pool
     // ------------------------------------------------------
 
     if (bFromPool)
@@ -624,11 +613,10 @@ OWConnection::~OWConnection()
             OCIHandleFree((dvoid *)hAuth, (ub4)OCI_HTYPE_AUTHINFO);
         }
 
-        if (CheckError(OCISessionRelease((OCISvcCtx *)hSvcCtx, 
-                                         (OCIError *)hError,
-                                         (OraText *)nullptr, (ub4)0,
-                                         OCI_DEFAULT),
-                   hError))
+        if (CheckError(OCISessionRelease((OCISvcCtx *)hSvcCtx,
+                                         (OCIError *)hError, (OraText *)nullptr,
+                                         (ub4)0, OCI_DEFAULT),
+                       hError))
         {
             return;
         }
@@ -637,7 +625,7 @@ OWConnection::~OWConnection()
         {
             OCIHandleFree((dvoid *)hError, (ub4)OCI_HTYPE_ERROR);
         }
-   
+
         return;
     }
 

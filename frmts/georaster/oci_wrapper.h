@@ -253,7 +253,7 @@ class OWSessionPool
 
   public:
     OWSessionPool(const char *pszUserIn, const char *pszPasswordIn,
-            const char *pszServerIn);
+                  const char *pszServerIn);
     virtual ~OWSessionPool();
 
   private:
@@ -306,7 +306,6 @@ class OWSessionPool
     {
         return nSessIncr;
     }
-
 };
 
 //  ---------------------------------------------------------------------------
@@ -320,9 +319,8 @@ class OWConnection
   public:
     OWConnection(const char *pszUserIn, const char *pszPasswordIn,
                  const char *pszServerIn);
-    OWConnection(OWSessionPool *hPool,
-                 const char *pszUserIn, const char *pszPasswordIn,
-                 const char *pszServerIn);
+    OWConnection(OWSessionPool *hPool, const char *pszUserIn,
+                 const char *pszPasswordIn, const char *pszServerIn);
     explicit OWConnection(OCIExtProcContext *poWithContext);
     virtual ~OWConnection();
 

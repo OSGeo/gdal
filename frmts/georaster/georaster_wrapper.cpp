@@ -231,8 +231,9 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
 //  ---------------------------------------------------------------------------
 
 GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
-        bool bPool, int nPoolSessionMinIn, int nPoolSessionMaxIn, 
-        int nPoolSessionIncrIn)
+                                         bool bPool, int nPoolSessionMinIn,
+                                         int nPoolSessionMaxIn,
+                                         int nPoolSessionIncrIn)
 {
     char **papszParam = ParseIdentificator(pszStringId);
 
@@ -292,10 +293,10 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
          */
         if (bPool)
         {
-            poGRW->poConnection = GeoRasterDriver::gpoGeoRasterDriver->
-                GetConnection(papszParam[0], papszParam[1], papszParam[2],
-                              nPoolSessionMinIn, nPoolSessionMaxIn,
-                              nPoolSessionIncrIn); 
+            poGRW->poConnection =
+                GeoRasterDriver::gpoGeoRasterDriver->GetConnection(
+                    papszParam[0], papszParam[1], papszParam[2],
+                    nPoolSessionMinIn, nPoolSessionMaxIn, nPoolSessionIncrIn);
             poGRW->bPool = true;
             poGRW->nPoolSessionMin = nPoolSessionMinIn;
             poGRW->nPoolSessionMax = nPoolSessionMaxIn;
@@ -304,7 +305,7 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
         else
         {
             poGRW->poConnection =
-                new OWConnection(papszParam[0], papszParam[1], papszParam[2]); 
+                new OWConnection(papszParam[0], papszParam[1], papszParam[2]);
         }
     }
 
