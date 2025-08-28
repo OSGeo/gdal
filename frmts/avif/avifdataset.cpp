@@ -1245,6 +1245,7 @@ void GDALRegister_AVIF()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
+#ifdef AVIF_VERSION_CHECK
     // Check libavif runtime vs compile-time versions
     const char *pszVersion = avifVersion();
     const CPLStringList aosVersionTokens(
@@ -1263,6 +1264,7 @@ void GDALRegister_AVIF()
                  "against %s. Runtime issues could occur",
                  osExpectedVersion.c_str(), avifVersion());
     }
+#endif
 
     auto poDriver = std::make_unique<GDALAVIFDriver>();
     auto poDM = GetGDALDriverManager();
