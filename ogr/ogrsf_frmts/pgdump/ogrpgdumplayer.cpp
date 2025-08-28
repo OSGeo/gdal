@@ -91,7 +91,7 @@ OGRFeature *OGRPGDumpLayer::GetNextFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-int OGRPGDumpLayer::TestCapability(const char *pszCap)
+int OGRPGDumpLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField) ||
         EQUAL(pszCap, OLCCreateGeomField) ||
@@ -285,7 +285,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                 if (bNeedComma)
                     osCommand += ", ";
 
-                OGRGeomFieldDefn *poGFldDefn =
+                const OGRGeomFieldDefn *poGFldDefn =
                     poFeature->GetGeomFieldDefnRef(i);
                 osCommand +=
                     OGRPGDumpEscapeColumnName(poGFldDefn->GetNameRef());
@@ -332,8 +332,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             {
                 char *pszWKT = nullptr;
 
-                OGRPGDumpGeomFieldDefn *poGFldDefn =
-                    cpl::down_cast<OGRPGDumpGeomFieldDefn *>(
+                const OGRPGDumpGeomFieldDefn *poGFldDefn =
+                    cpl::down_cast<const OGRPGDumpGeomFieldDefn *>(
                         poFeature->GetGeomFieldDefnRef(i));
 
                 poGeom->closeRings();
@@ -477,8 +477,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
             if (nullptr !=
                 poGeometry /* && (bHasWkb || bHasPostGISGeometry || bHasPostGISGeography) */)
             {
-                OGRPGDumpGeomFieldDefn *poGFldDefn =
-                    cpl::down_cast<OGRPGDumpGeomFieldDefn *>(
+                const OGRPGDumpGeomFieldDefn *poGFldDefn =
+                    cpl::down_cast<const OGRPGDumpGeomFieldDefn *>(
                         poFeature->GetGeomFieldDefnRef(i));
 
                 poGeometry->closeRings();
@@ -1024,7 +1024,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
         return;
     }
 
-    OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
+    const OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
     OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
     OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
 

@@ -2817,7 +2817,7 @@ static void SetSWEValue(OGRFeature *poFeature, int iField, CPLString &osValue)
 {
     if (!osValue.empty())
     {
-        OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        const OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(iField);
         OGRFieldType eType(poFieldDefn->GetType());
         OGRFieldSubType eSubType(poFieldDefn->GetSubType());
         if (eType == OFTReal || eType == OFTInteger)
@@ -3100,8 +3100,8 @@ static void AddMissingSRSDimension(CPLXMLNode *psRoot, int nDefaultSrsDimension)
 
 void GMLASReader::ProcessGeometry(CPLXMLNode *psRoot)
 {
-    OGRGeomFieldDefn *poGeomFieldDefn =
-        m_oCurCtxt.m_poFeature->GetGeomFieldDefnRef(m_nCurGeomFieldIdx);
+    OGRGeomFieldDefn *poGeomFieldDefn = const_cast<OGRGeomFieldDefn *>(
+        m_oCurCtxt.m_poFeature->GetGeomFieldDefnRef(m_nCurGeomFieldIdx));
 
     if (m_bInitialPass)
     {
@@ -3532,7 +3532,7 @@ bool GMLASReader::RunFirstPass(
         {
             std::set<CPLString> &oSetUnusedFields =
                 oMapUnusedFields[poLayerFeature];
-            OGRFeatureDefn *poFDefn = poLayerFeature->GetLayerDefn();
+            const OGRFeatureDefn *poFDefn = poLayerFeature->GetLayerDefn();
             int nFieldCount = poFDefn->GetFieldCount();
             for (int j = 0; j < nFieldCount; j++)
             {

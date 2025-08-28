@@ -337,7 +337,7 @@ OGRErr OGRODBCTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCTableLayer::TestCapability(const char *pszCap)
+int OGRODBCTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -388,7 +388,7 @@ GIntBig OGRODBCTableLayer::GetFeatureCount(int bForce)
 /*      haven't yet even looked for it).                                */
 /************************************************************************/
 
-OGRSpatialReference *OGRODBCTableLayer::GetSpatialRef()
+const OGRSpatialReference *OGRODBCTableLayer::GetSpatialRef() const
 
 {
 #ifdef notdef

@@ -3291,7 +3291,7 @@ OGRErr MEMDataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MEMDataset::TestCapability(const char *pszCap)
+int MEMDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -3322,7 +3322,7 @@ int MEMDataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *MEMDataset::GetLayer(int iLayer)
+OGRLayer *MEMDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -3368,12 +3368,12 @@ bool MEMDataset::DeleteFieldDomain(const std::string &name,
     {
         for (int j = 0; j < poLayer->GetLayerDefn()->GetFieldCount(); ++j)
         {
+            OGRLayer *poLayerAsLayer = poLayer.get();
             OGRFieldDefn *poFieldDefn =
-                poLayer->GetLayerDefn()->GetFieldDefn(j);
+                poLayerAsLayer->GetLayerDefn()->GetFieldDefn(j);
             if (poFieldDefn->GetDomainName() == name)
             {
-                auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
-                poFieldDefn->SetDomainName(std::string());
+                whileUnsealing(poFieldDefn)->SetDomainName(std::string());
             }
         }
     }

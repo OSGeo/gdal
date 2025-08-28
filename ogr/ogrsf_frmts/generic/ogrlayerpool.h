@@ -17,6 +17,8 @@
 
 #include "ogrsf_frmts.h"
 
+#include <mutex>
+
 typedef OGRLayer *(*OpenLayerFunc)(void *user_data);
 typedef void (*ReleaseLayerFunc)(OGRLayer *, void *user_data);
 typedef void (*FreeUserDataFunc)(void *user_data);
@@ -93,11 +95,12 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     ReleaseLayerFunc pfnReleaseLayer;
     FreeUserDataFunc pfnFreeUserData;
     void *pUserData;
-    OGRLayer *poUnderlyingLayer;
-    OGRFeatureDefn *poFeatureDefn;
-    OGRSpatialReference *poSRS;
+    mutable OGRLayer *poUnderlyingLayer;
+    mutable OGRFeatureDefn *poFeatureDefn;
+    mutable OGRSpatialReference *poSRS;
+    mutable std::recursive_mutex m_oMutex{};
 
-    int OpenUnderlyingLayer();
+    int OpenUnderlyingLayer() const;
 
   protected:
     virtual void CloseUnderlyingLayer() override;
@@ -136,17 +139,17 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;
 
-    virtual const char *GetName() override;
-    virtual OGRwkbGeometryType GetGeomType() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const char *GetName() const override;
+    OGRwkbGeometryType GetGeomType() const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

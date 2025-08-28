@@ -72,12 +72,12 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
     ~GDALInvalidLocationLayer() override;
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return false;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_defn;
     }

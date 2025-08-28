@@ -543,7 +543,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
     CPLXMLNode *psRoot =
         CPLCreateXMLNode(nullptr, CXT_Element, "OGRMILayerAttrIndex");
-    OGRFeatureDefn *poLayerDefn = GetLayerDefn();
+    const OGRFeatureDefn *poLayerDefn = GetLayerDefn();
     for (int iField = 0; iField < poLayerDefn->GetFieldCount(); iField++)
     {
         int iIndexIndex = GetFieldIndexNumber(iField);
@@ -1962,7 +1962,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
 }
 
 /**********************************************************************
- *                   TABFile::GetLayerDefn()
+ *                   TABFile::GetLayerDefn() const
  *
  * Returns a reference to the OGRFeatureDefn that will be used to create
  * features in this dataset.
@@ -1972,7 +1972,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
  * NULL if the OGRFeatureDefn has not been initialized yet (i.e. no file
  * opened yet)
  **********************************************************************/
-OGRFeatureDefn *TABFile::GetLayerDefn()
+const OGRFeatureDefn *TABFile::GetLayerDefn() const
 {
     return m_poDefn;
 }
@@ -2923,7 +2923,7 @@ OGRErr TABFile::SyncToDisk()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABFile::TestCapability(const char *pszCap)
+int TABFile::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -3047,7 +3047,7 @@ CPLErr TABFile::SetMetadataItem(const char *pszName, const char *pszValue,
  *
  * Returns NULL if the SpatialRef cannot be accessed.
  **********************************************************************/
-OGRSpatialReference *TABFile::GetSpatialRef()
+const OGRSpatialReference *TABFile::GetSpatialRef() const
 {
     if (m_poMAPFile == nullptr)
     {

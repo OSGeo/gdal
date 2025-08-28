@@ -777,12 +777,12 @@ std::vector<std::unique_ptr<OGRLayer>> &ILI2Reader::GetLayers()
     return m_listLayer;
 }
 
-int ILI2Reader::GetLayerCount()
+int ILI2Reader::GetLayerCount() const
 {
     return static_cast<int>(m_listLayer.size());
 }
 
-OGRLayer *ILI2Reader::GetLayer(const char *pszName)
+OGRLayer *ILI2Reader::GetLayer(const char *pszName) const
 {
     for (auto it = m_listLayer.rbegin(); it != m_listLayer.rend(); ++it)
     {

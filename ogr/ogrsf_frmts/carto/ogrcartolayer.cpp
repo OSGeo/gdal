@@ -62,9 +62,9 @@ void OGRCARTOLayer::ResetReading()
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn *OGRCARTOLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRCARTOLayer::GetLayerDefn() const
 {
-    return GetLayerDefnInternal(nullptr);
+    return const_cast<OGRCARTOLayer *>(this)->GetLayerDefnInternal(nullptr);
 }
 
 /************************************************************************/
@@ -264,7 +264,7 @@ OGRFeature *OGRCARTOLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTOLayer::TestCapability(const char *pszCap)
+int OGRCARTOLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

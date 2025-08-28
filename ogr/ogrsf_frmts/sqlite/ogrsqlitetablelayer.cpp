@@ -232,7 +232,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
 /*                               GetName()                              */
 /************************************************************************/
 
-const char *OGRSQLiteTableLayer::GetName()
+const char *OGRSQLiteTableLayer::GetName() const
 {
     return GetDescription();
 }
@@ -836,11 +836,21 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn() const
 {
-    if (m_poFeatureDefn)
-        return m_poFeatureDefn;
+    if (!m_poFeatureDefn)
+    {
+        const_cast<OGRSQLiteTableLayer *>(this)->BuildLayerDefn();
+    }
+    return m_poFeatureDefn;
+}
 
+/************************************************************************/
+/*                          BuildLayerDefn()                            */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::BuildLayerDefn()
+{
     EstablishFeatureDefn(nullptr, /* bMayEmitError = */ true);
 
     if (m_poFeatureDefn == nullptr)
@@ -854,8 +864,6 @@ OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn()
         LoadStatistics();
 
     m_poFeatureDefn->Seal(/* bSealFields */ true);
-
-    return m_poFeatureDefn;
 }
 
 /************************************************************************/
@@ -1145,7 +1153,7 @@ void OGRSQLiteTableLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteTableLayer::TestCapability(const char *pszCap)
+int OGRSQLiteTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -3678,15 +3686,15 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
 /*                           HasSpatialIndex()                          */
 /************************************************************************/
 
-bool OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol)
+bool OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol) const
 {
     GetLayerDefn();
     if (iGeomCol < 0 || iGeomCol >= m_poFeatureDefn->GetGeomFieldCount())
         return false;
-    OGRSQLiteGeomFieldDefn *poGeomFieldDefn =
+    const OGRSQLiteGeomFieldDefn *poGeomFieldDefn =
         m_poFeatureDefn->myGetGeomFieldDefn(iGeomCol);
 
-    CreateSpatialIndexIfNecessary();
+    const_cast<OGRSQLiteTableLayer *>(this)->CreateSpatialIndexIfNecessary();
 
     return poGeomFieldDefn->m_bHasSpatialIndex;
 }

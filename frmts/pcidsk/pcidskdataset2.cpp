@@ -2042,7 +2042,7 @@ GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PCIDSK2Dataset::TestCapability(const char *pszCap)
+int PCIDSK2Dataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -2059,7 +2059,7 @@ int PCIDSK2Dataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer)
+OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(apoLayers.size()))

@@ -769,7 +769,7 @@ GIntBig OGRWFSJoinLayer::GetFeatureCount(int bForce)
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRWFSJoinLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRWFSJoinLayer::GetLayerDefn() const
 {
     return poFeatureDefn;
 }
@@ -778,7 +778,7 @@ OGRFeatureDefn *OGRWFSJoinLayer::GetLayerDefn()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSJoinLayer::TestCapability(const char *)
+int OGRWFSJoinLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

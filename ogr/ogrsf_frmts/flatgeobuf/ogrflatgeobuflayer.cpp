@@ -2413,7 +2413,7 @@ OGRErr OGRFlatGeobufLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
     return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
 }
 
-int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
+int OGRFlatGeobufLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField))
         return m_create;

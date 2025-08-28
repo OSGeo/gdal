@@ -875,7 +875,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
     json_object *poObjProps = json_object_new_object();
     CPLAssert(nullptr != poObjProps);
 
-    OGRFeatureDefn *poDefn = poFeature->GetDefnRef();
+    const OGRFeatureDefn *poDefn = poFeature->GetDefnRef();
 
     const int nIDField =
         !oOptions.osIDField.empty()
@@ -926,7 +926,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             continue;
         }
 
-        OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(nField);
+        const OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(nField);
         CPLAssert(nullptr != poFieldDefn);
         const OGRFieldType eType = poFieldDefn->GetType();
         const OGRFieldSubType eSubType = poFieldDefn->GetSubType();

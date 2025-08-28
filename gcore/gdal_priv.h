@@ -1187,8 +1187,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLStringList oDerivedMetadataList{};
 
   public:
-    virtual int GetLayerCount();
-    virtual OGRLayer *GetLayer(int iLayer);
+    virtual int GetLayerCount() const;
+    virtual OGRLayer *GetLayer(int iLayer) const;
 
     virtual bool IsLayerPrivate(int iLayer) const;
 
@@ -1199,9 +1199,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     {
       private:
         friend class GDALDataset;
-        GDALDataset *m_poSelf;
+        const GDALDataset *m_poSelf;
 
-        CPL_INTERNAL explicit Layers(GDALDataset *poSelf) : m_poSelf(poSelf)
+        CPL_INTERNAL explicit Layers(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
         {
         }
 
@@ -1223,10 +1224,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                 std::input_iterator_tag; /**< iterator_category */
 
             Iterator(); /**< Default constructor */
-            Iterator(GDALDataset *poDS, bool bStart); /**< Constructor */
-            Iterator(const Iterator &oOther);         /**< Copy constructor */
-            Iterator(Iterator &&oOther) noexcept;     /**< Move constructor */
-            ~Iterator();                              /**< Destructor */
+            Iterator(const GDALDataset *poDS, bool bStart); /**< Constructor */
+            Iterator(const Iterator &oOther);     /**< Copy constructor */
+            Iterator(Iterator &&oOther) noexcept; /**< Move constructor */
+            ~Iterator();                          /**< Destructor */
 
             Iterator &
             operator=(const Iterator &oOther); /**< Assignment operator */
@@ -1250,11 +1251,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         OGRLayer *operator[](const char *pszLayername);
     };
 
-    Layers GetLayers();
+    Layers GetLayers() const;
 
     virtual OGRLayer *GetLayerByName(const char *);
 
-    int GetLayerIndex(const char *pszName);
+    int GetLayerIndex(const char *pszName) const;
 
     virtual OGRErr DeleteLayer(int iLayer);
 
@@ -1301,7 +1302,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Features GetFeatures();
 
-    virtual int TestCapability(const char *);
+    virtual int TestCapability(const char *) const;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;

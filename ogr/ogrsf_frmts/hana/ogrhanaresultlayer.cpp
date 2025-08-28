@@ -52,17 +52,17 @@ OGRErr OGRHanaResultLayer::Initialize()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaResultLayer::TestCapability(const char *capabilities)
+int OGRHanaResultLayer::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, OLCFastGetExtent))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaResultLayer *>(this)->EnsureInitialized();
         return IsFastExtentAvailable();
     }
     if (EQUAL(capabilities, OLCFastFeatureCount) ||
         EQUAL(capabilities, OLCFastSpatialFilter))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaResultLayer *>(this)->EnsureInitialized();
         return (geomColumns_.size() > 0);
     }
     if (EQUAL(capabilities, OLCStringsAsUTF8))

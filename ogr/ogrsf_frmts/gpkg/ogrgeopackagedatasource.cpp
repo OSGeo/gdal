@@ -6426,7 +6426,7 @@ bool GDALGeoPackageDataset::RegisterZoomOtherExtension()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
+OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -7321,7 +7321,7 @@ bool GDALGeoPackageDataset::RenameRasterLayer(const char *pszLayerName,
 /*                       TestCapability()                               */
 /************************************************************************/
 
-int GDALGeoPackageDataset::TestCapability(const char *pszCap)
+int GDALGeoPackageDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, "RenameLayer"))

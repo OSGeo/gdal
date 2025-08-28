@@ -187,15 +187,18 @@ OGRProxiedLayer::~OGRProxiedLayer()
 /*                       OpenUnderlyingLayer()                          */
 /************************************************************************/
 
-int OGRProxiedLayer::OpenUnderlyingLayer()
+int OGRProxiedLayer::OpenUnderlyingLayer() const
 {
-    CPLDebug("OGR", "OpenUnderlyingLayer(%p)", this);
-    CPLAssert(poUnderlyingLayer == nullptr);
-    poPool->SetLastUsedLayer(this);
-    poUnderlyingLayer = pfnOpenLayer(pUserData);
+    std::lock_guard oLock(m_oMutex);
     if (poUnderlyingLayer == nullptr)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot open underlying layer");
+        CPLDebug("OGR", "OpenUnderlyingLayer(%p)", this);
+        poPool->SetLastUsedLayer(const_cast<OGRProxiedLayer *>(this));
+        poUnderlyingLayer = pfnOpenLayer(pUserData);
+        if (poUnderlyingLayer == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot open underlying layer");
+        }
     }
     return poUnderlyingLayer != nullptr;
 }
@@ -399,7 +402,7 @@ OGRErr OGRProxiedLayer::DeleteFeature(GIntBig nFID)
 /*                             GetName()                                */
 /************************************************************************/
 
-const char *OGRProxiedLayer::GetName()
+const char *OGRProxiedLayer::GetName() const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return "";
@@ -410,7 +413,7 @@ const char *OGRProxiedLayer::GetName()
 /*                            GetGeomType()                             */
 /************************************************************************/
 
-OGRwkbGeometryType OGRProxiedLayer::GetGeomType()
+OGRwkbGeometryType OGRProxiedLayer::GetGeomType() const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return wkbUnknown;
@@ -421,8 +424,9 @@ OGRwkbGeometryType OGRProxiedLayer::GetGeomType()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRProxiedLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRProxiedLayer::GetLayerDefn() const
 {
+    std::lock_guard oLock(m_oMutex);
     if (poFeatureDefn != nullptr)
         return poFeatureDefn;
 
@@ -444,19 +448,21 @@ OGRFeatureDefn *OGRProxiedLayer::GetLayerDefn()
 /*                            GetSpatialRef()                           */
 /************************************************************************/
 
-OGRSpatialReference *OGRProxiedLayer::GetSpatialRef()
+const OGRSpatialReference *OGRProxiedLayer::GetSpatialRef() const
 {
+    std::lock_guard oLock(m_oMutex);
     if (poSRS != nullptr)
         return poSRS;
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return nullptr;
-    OGRSpatialReference *poRet = poUnderlyingLayer->GetSpatialRef();
-    if (poRet != nullptr)
+    OGRSpatialReference *l_poSRS =
+        const_cast<OGRSpatialReference *>(poUnderlyingLayer->GetSpatialRef());
+    if (l_poSRS != nullptr)
     {
-        poSRS = poRet;
-        poSRS->Reference();
+        l_poSRS->Reference();
+        poSRS = l_poSRS;
     }
-    return poRet;
+    return poSRS;
 }
 
 /************************************************************************/
@@ -486,7 +492,7 @@ OGRErr OGRProxiedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRProxiedLayer::TestCapability(const char *pszCapability)
+int OGRProxiedLayer::TestCapability(const char *pszCapability) const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return FALSE;

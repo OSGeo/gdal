@@ -383,7 +383,7 @@ OGRFeature *OGRIDBLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability(const char * /*pszCap*/)
+int OGRIDBLayer::TestCapability(const char * /*pszCap*/) const
 
 {
     return FALSE;
@@ -393,7 +393,7 @@ int OGRIDBLayer::TestCapability(const char * /*pszCap*/)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRIDBLayer::GetSpatialRef()
+const OGRSpatialReference *OGRIDBLayer::GetSpatialRef() const
 
 {
     return poSRS;

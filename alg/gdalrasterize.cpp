@@ -1675,7 +1675,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
             char *pszProjection = nullptr;
             bNeedToFreeTransformer = true;
 
-            OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+            const OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
             if (!poSRS)
             {
                 if (poDS->GetSpatialRef() != nullptr ||
@@ -2027,7 +2027,7 @@ CPLErr GDALRasterizeLayersBuf(
             char *pszProjection = nullptr;
             bNeedToFreeTransformer = true;
 
-            OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+            const OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
             if (!poSRS)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,

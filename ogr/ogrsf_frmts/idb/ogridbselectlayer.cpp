@@ -123,7 +123,7 @@ OGRFeature *OGRIDBSelectLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBSelectLayer::TestCapability(const char *pszCap)
+int OGRIDBSelectLayer::TestCapability(const char *pszCap) const
 
 {
     return OGRIDBLayer::TestCapability(pszCap);

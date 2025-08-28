@@ -1777,10 +1777,10 @@ OGRErr OGRShapeLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRShapeLayer::TestCapability(const char *pszCap)
+int OGRShapeLayer::TestCapability(const char *pszCap) const
 
 {
-    if (!TouchLayer())
+    if (!const_cast<OGRShapeLayer *>(this)->TouchLayer())
         return FALSE;
 
     if (EQUAL(pszCap, OLCRandomRead))
@@ -1791,13 +1791,17 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
 
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {
-        if (!(m_poFilterGeom == nullptr || CheckForQIX() || CheckForSBN()))
+        if (!(m_poFilterGeom == nullptr ||
+              const_cast<OGRShapeLayer *>(this)->CheckForQIX() ||
+              const_cast<OGRShapeLayer *>(this)->CheckForSBN()))
             return FALSE;
 
         if (m_poAttrQuery != nullptr)
         {
-            InitializeIndexSupport(m_osFullName.c_str());
-            return m_poAttrQuery->CanUseIndex(this);
+            const_cast<OGRShapeLayer *>(this)->InitializeIndexSupport(
+                m_osFullName.c_str());
+            return m_poAttrQuery->CanUseIndex(
+                const_cast<OGRShapeLayer *>(this));
         }
         return TRUE;
     }
@@ -1806,7 +1810,8 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
         return m_bUpdateAccess;
 
     if (EQUAL(pszCap, OLCFastSpatialFilter))
-        return CheckForQIX() || CheckForSBN();
+        return const_cast<OGRShapeLayer *>(this)->CheckForQIX() ||
+               const_cast<OGRShapeLayer *>(this)->CheckForSBN();
 
     if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
@@ -3708,8 +3713,8 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
     {
         if (GetSpatialRef() != nullptr)
         {
-            OGRShapeGeomFieldDefn *poGeomFieldDefn =
-                cpl::down_cast<OGRShapeGeomFieldDefn *>(
+            const OGRShapeGeomFieldDefn *poGeomFieldDefn =
+                cpl::down_cast<const OGRShapeGeomFieldDefn *>(
                     GetLayerDefn()->GetGeomFieldDefn(0));
             oFileList.AddStringDirectly(
                 VSIGetCanonicalFilename(poGeomFieldDefn->GetPrjFilename()));

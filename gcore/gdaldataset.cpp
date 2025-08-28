@@ -5100,7 +5100,7 @@ int GDALDatasetIsLayerPrivate(GDALDatasetH hDS, int iLayer)
  @return an index >= 0, or -1 if not found.
 */
 
-int GDALDataset::GetLayerIndex(const char *pszName)
+int GDALDataset::GetLayerIndex(const char *pszName) const
 {
     const int nLayerCount = GetLayerCount();
     int iMatch = -1;
@@ -5979,7 +5979,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
     /* -------------------------------------------------------------------- */
     std::unique_ptr<OGRCoordinateTransformation> poCT;
-    OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
+    const OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr && !oDstSpaRef.IsEmpty() &&
         sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
@@ -7697,12 +7697,15 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
  This method is the same as the C function GDALDatasetGetLayerCount(),
  and the deprecated OGR_DS_GetLayerCount().
 
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
+
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
  @return layer count.
 */
 
-int GDALDataset::GetLayerCount()
+int GDALDataset::GetLayerCount() const
 {
     return 0;
 }
@@ -7718,6 +7721,9 @@ int GDALDataset::GetLayerCount()
  The returned layer remains owned by the
  GDALDataset and should not be deleted by the application.
 
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
+
  See GetLayers() for a C++ iterator version of this method.
 
  This method is the same as the C function GDALDatasetGetLayer() and the
@@ -7732,7 +7738,7 @@ int GDALDataset::GetLayerCount()
  @see GetLayers()
 */
 
-OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer)
+OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) const
 {
     return nullptr;
 }
@@ -8096,7 +8102,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability(const char *pszCap)
+int GDALDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, GDsCFastGetExtent) ||
         EQUAL(pszCap, GDsCFastGetExtentWGS84LongLat))
@@ -8797,7 +8803,7 @@ struct GDALDataset::Layers::Iterator::Private
     OGRLayer *m_poLayer = nullptr;
     int m_iCurLayer = 0;
     int m_nLayerCount = 0;
-    GDALDataset *m_poDS = nullptr;
+    const GDALDataset *m_poDS = nullptr;
 };
 
 GDALDataset::Layers::Iterator::Iterator() : m_poPrivate(new Private())
@@ -8816,7 +8822,7 @@ GDALDataset::Layers::Iterator::Iterator(Iterator &&oOther) noexcept
 {
 }
 
-GDALDataset::Layers::Iterator::Iterator(GDALDataset *poDS, bool bStart)
+GDALDataset::Layers::Iterator::Iterator(const GDALDataset *poDS, bool bStart)
     : m_poPrivate(new Private())
 {
     m_poPrivate->m_poDS = poDS;
@@ -8902,7 +8908,7 @@ bool GDALDataset::Layers::Iterator::operator!=(const Iterator &it) const
  *
  * @since GDAL 2.3
  */
-GDALDataset::Layers GDALDataset::GetLayers()
+GDALDataset::Layers GDALDataset::GetLayers() const
 {
     return Layers(this);
 }
@@ -9014,7 +9020,7 @@ OGRLayer *GDALDataset::Layers::operator[](size_t iLayer)
 
 OGRLayer *GDALDataset::Layers::operator[](const char *pszLayerName)
 {
-    return m_poSelf->GetLayerByName(pszLayerName);
+    return const_cast<GDALDataset *>(m_poSelf)->GetLayerByName(pszLayerName);
 }
 
 /************************************************************************/

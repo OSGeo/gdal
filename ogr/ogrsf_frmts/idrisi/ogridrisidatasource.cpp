@@ -37,7 +37,7 @@ OGRIdrisiDataSource::~OGRIdrisiDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIdrisiDataSource::GetLayer(int iLayer)
+OGRLayer *OGRIdrisiDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

@@ -499,7 +499,7 @@ OGRErr OGREditableLayer::DeleteFeature(GIntBig nFID)
 /*                             GetGeomType()                            */
 /************************************************************************/
 
-OGRwkbGeometryType OGREditableLayer::GetGeomType()
+OGRwkbGeometryType OGREditableLayer::GetGeomType() const
 {
     return OGRLayer::GetGeomType();
 }
@@ -508,7 +508,7 @@ OGRwkbGeometryType OGREditableLayer::GetGeomType()
 /*                             GetLayerDefn()                           */
 /************************************************************************/
 
-OGRFeatureDefn *OGREditableLayer::GetLayerDefn()
+const OGRFeatureDefn *OGREditableLayer::GetLayerDefn() const
 {
     return m_poEditableFeatureDefn;
 }
@@ -517,7 +517,7 @@ OGRFeatureDefn *OGREditableLayer::GetLayerDefn()
 /*                             GetSpatialRef()                          */
 /************************************************************************/
 
-OGRSpatialReference *OGREditableLayer::GetSpatialRef()
+const OGRSpatialReference *OGREditableLayer::GetSpatialRef() const
 {
     return OGRLayer::GetSpatialRef();
 }
@@ -625,7 +625,7 @@ OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGREditableLayer::TestCapability(const char *pszCap)
+int OGREditableLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poDecoratedLayer)
         return FALSE;

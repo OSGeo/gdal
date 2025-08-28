@@ -734,7 +734,8 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
         }
         if (bNeedSecondPass)
         {
-            OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
+            OGRLayer *poMainLayerAsLayer = poMainLayer;
+            OGRFeatureDefn *poDefn = poMainLayerAsLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
             auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
@@ -768,7 +769,8 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
         }
         if (bNeedSecondPass)
         {
-            OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
+            OGRLayer *poMainLayerAsLayer = poMainLayer;
+            OGRFeatureDefn *poDefn = poMainLayerAsLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
             auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
