@@ -9636,7 +9636,11 @@ GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
       m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
+    // If invalid block size is reported, just use a value of 1.
+    CPLErrorStateBackuper state(CPLQuietErrorHandler);
     band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
+    m_nBlockXSize = std::max(m_nBlockXSize, 1);
+    m_nBlockYSize = std::max(m_nBlockYSize, 1);
 }
 
 GDALRasterBand::WindowIterator

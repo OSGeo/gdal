@@ -182,3 +182,61 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
     lyr = ds.GetLayer("layer123")
 
     assert lyr is not None
+
+
+def test_gdalalg_raster_as_features_zero_bands(alg, tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 0)
+
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem / "out.shp"
+    alg["include-row-col"] = True
+
+    assert alg.Run()
+
+    assert alg["output"]
+    ds = alg["output"].GetDataset()
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 4
+
+    features = [f for f in lyr]
+
+    assert (features[0]["ROW"], features[0]["COL"]) == (0, 0)
+    assert (features[1]["ROW"], features[1]["COL"]) == (0, 1)
+    assert (features[2]["ROW"], features[2]["COL"]) == (1, 0)
+    assert (features[3]["ROW"], features[3]["COL"]) == (1, 1)
+
+
+def test_gdalalg_raster_as_features_zero_height(alg, tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 0, 1)
+
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem / "out.shp"
+    alg["include-row-col"] = True
+
+    assert alg.Run()
+
+    assert alg["output"]
+    ds = alg["output"].GetDataset()
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_raster_as_features_zero_width(alg, tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 2, 1)
+
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem / "out.shp"
+    alg["include-row-col"] = True
+
+    assert alg.Run()
+
+    assert alg["output"]
+    ds = alg["output"].GetDataset()
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 0

@@ -136,8 +136,12 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
 
     GDALRasterAsFeaturesLayer(GDALDataset &ds, RasterAsFeaturesOptions options)
         : m_ds(ds), m_bufType(GDT_Float64),
-          m_it(m_ds.GetRasterBand(1)->IterateWindows().begin()),
-          m_end(m_ds.GetRasterBand(1)->IterateWindows().end()),
+          m_it(GDALRasterBand::WindowIterator(
+              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
+              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 0, 0)),
+          m_end(GDALRasterBand::WindowIterator(
+              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
+              m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 1, 0)),
           m_includeXY(options.includeXY),
           m_includeRowCol(options.includeRowCol),
           m_excludeNoDataPixels(options.skipNoData)
@@ -153,6 +157,7 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         }
 
         // TODO: Handle per-band NoData values
+        if (nBands > 0)
         {
             int hasNoData;
             double noData = m_ds.GetRasterBand(1)->GetNoDataValue(&hasNoData);
@@ -191,14 +196,19 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
             m_defn->AddFieldDefn(std::move(bandField));
             m_bandFields.push_back(m_defn->GetFieldIndex(fieldName));
         }
+
+        ResetReading();
     }
 
     ~GDALRasterAsFeaturesLayer() override;
 
     void ResetReading() override
     {
-        m_it = m_ds.GetRasterBand(1)->IterateWindows().begin();
-        m_end = m_ds.GetRasterBand(1)->IterateWindows().end();
+        if (m_ds.GetRasterCount() > 0)
+        {
+            m_it = m_ds.GetRasterBand(1)->IterateWindows().begin();
+            m_end = m_ds.GetRasterBand(1)->IterateWindows().end();
+        }
     }
 
     int TestCapability(const char *) const override
@@ -223,7 +233,7 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
         while (m_row < m_window.nYSize)
         {
             const double *pSrcVal = static_cast<double *>(m_buf) +
-                                    (m_row * m_window.nXSize * m_bands.size() +
+                                    (m_bands.size() * m_row * m_window.nXSize +
                                      m_col * m_bands.size());
 
             const bool emitFeature =
@@ -328,14 +338,25 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
             return false;
         }
 
+        if (m_ds.GetRasterXSize() == 0 || m_ds.GetRasterYSize() == 0)
+        {
+            return false;
+        }
+
         m_window = *m_it;
         ++m_it;
 
-        if (m_buf == nullptr)
+        if (m_buf == nullptr && !m_bands.empty())
         {
             m_buf = VSI_MALLOC3_VERBOSE(
                 m_window.nXSize, m_window.nYSize,
                 nBandCount * GDALGetDataTypeSizeBytes(m_bufType));
+            if (m_buf == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to allocate buffer");
+                return false;
+            }
         }
 
         for (size_t i = 0; i < m_bands.size(); i++)
