@@ -25,6 +25,7 @@
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
+#include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_footprint.h"
 #include "gdalalg_raster_polygonize.h"
@@ -275,6 +276,8 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             if (GetName() == GDALRasterInfoAlgorithm::NAME)
                 writeAlg = std::make_unique<GDALRasterInfoAlgorithm>();
+            else if (GetName() == GDALRasterCompareAlgorithm::NAME)
+                writeAlg = std::make_unique<GDALRasterCompareAlgorithm>();
             else
                 writeAlg = std::make_unique<GDALRasterWriteAlgorithm>();
         }
@@ -332,17 +335,23 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             const bool bCanHandleNextStep =
                 !bIsStreaming && CanHandleNextStep(writeAlg.get());
 
-            if (pfnProgress &&
-                (bCanHandleNextStep || !IsNativelyStreamingCompatible()))
+            GDALPipelineStepRunContext stepCtxt;
+            if (pfnProgress && GetName() == GDALRasterCompareAlgorithm::NAME)
+            {
+                stepCtxt.m_pfnProgress = pfnProgress;
+                stepCtxt.m_pProgressData = pProgressData;
+            }
+            else if (pfnProgress &&
+                     (bCanHandleNextStep || !IsNativelyStreamingCompatible()))
             {
                 pScaledData.reset(GDALCreateScaledProgress(
                     0.0, bIsStreaming || bCanHandleNextStep ? 1.0 : 0.5,
                     pfnProgress, pProgressData));
+                stepCtxt.m_pfnProgress =
+                    pScaledData ? GDALScaledProgress : nullptr;
+                stepCtxt.m_pProgressData = pScaledData.get();
             }
 
-            GDALPipelineStepRunContext stepCtxt;
-            stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
-            stepCtxt.m_pProgressData = pScaledData.get();
             if (bCanHandleNextStep)
                 stepCtxt.m_poNextUsableStep = writeAlg.get();
             if (RunPreStepPipelineValidations() && RunStep(stepCtxt))

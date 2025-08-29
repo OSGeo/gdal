@@ -29,7 +29,7 @@ A pipeline chains several steps, separated with the `!` (exclamation mark) chara
 The first step must be ``read``, ``calc``, ``mosaic`` or ``stack``,
 and the last one ``write``, ``info`` or ``tile``.
 Each step has its own positional or non-positional arguments.
-Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``info``, ``tile`` and ``write``,
+Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``compare``, ``info``, ``tile`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -209,6 +209,14 @@ Details for options can be found in :ref:`gdal_raster_info`.
 .. program-output:: gdal raster pipeline --help-doc=tile
 
 Details for options can be found in :ref:`gdal_raster_tile`.
+
+* compare
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=compare
+
+Details for options can be found in :ref:`gdal_raster_compare`.
 
 * write
 

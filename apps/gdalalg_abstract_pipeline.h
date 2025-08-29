@@ -837,8 +837,9 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
     if (countPipelinesWithProgress == 0)
         countPipelinesWithProgress = 1;
 
+    bool ret = true;
     GDALDataset *poCurDS = nullptr;
-    int iCurPipelineWithProgress = 0;
+    int iCurStepWithProgress = 0;
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
         auto &step = m_steps[i];
@@ -880,12 +881,12 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
             !step->IsNativelyStreamingCompatible())
         {
             pScaledData.reset(GDALCreateScaledProgress(
-                iCurPipelineWithProgress /
+                iCurStepWithProgress /
                     static_cast<double>(countPipelinesWithProgress),
-                (iCurPipelineWithProgress + 1) /
+                (iCurStepWithProgress + 1) /
                     static_cast<double>(countPipelinesWithProgress),
                 ctxt.m_pfnProgress, ctxt.m_pProgressData));
-            ++iCurPipelineWithProgress;
+            ++iCurStepWithProgress;
             stepCtxt.m_pfnProgress = pScaledData ? GDALScaledProgress : nullptr;
             stepCtxt.m_pProgressData = pScaledData.get();
         }
@@ -900,12 +901,14 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         }
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
-            return false;
+            ret = false;
+            break;
         }
         poCurDS = step->m_outputDataset.GetDatasetRef();
         if (!poCurDS && !(i + 1 == m_steps.size() &&
                           (!step->m_output.empty() ||
-                           step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr)))
+                           step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr ||
+                           step->GetName() == "compare")))
         {
             StepAlgorithm::ReportError(
                 CE_Failure, CPLE_AppDefined,
@@ -931,12 +934,12 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
         if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
             outputStringArg->Set(m_steps.back()->m_output);
     }
-    else if (!StepAlgorithm::m_outputDataset.GetDatasetRef())
+    else if (ret && !StepAlgorithm::m_outputDataset.GetDatasetRef())
     {
         StepAlgorithm::m_outputDataset.Set(poCurDS);
     }
 
-    return true;
+    return ret;
 }
 
 /************************************************************************/
