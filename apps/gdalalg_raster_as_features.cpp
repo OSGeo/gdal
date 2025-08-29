@@ -206,8 +206,10 @@ class GDALRasterAsFeaturesLayer final : public OGRLayer
     {
         if (m_ds.GetRasterCount() > 0)
         {
-            m_it = m_ds.GetRasterBand(1)->IterateWindows().begin();
-            m_end = m_ds.GetRasterBand(1)->IterateWindows().end();
+            GDALRasterBand *poFirstBand = m_ds.GetRasterBand(1);
+            CPLAssert(poFirstBand);  // appease clang scan-build
+            m_it = poFirstBand->IterateWindows().begin();
+            m_end = poFirstBand->IterateWindows().end();
         }
     }
 
