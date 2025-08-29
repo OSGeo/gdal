@@ -149,7 +149,7 @@ Example
 
 %feature("docstring")  GetUsageAsJSON {
 
-Returns a JSON representation of an algorithm's usage information, serialzed to a string.
+Returns a JSON representation of an algorithm's usage information, serialized to a string.
 
 Returns
 -------
@@ -312,7 +312,7 @@ Example
 
 %feature("docstring")  ParseCommandLineArguments {
 
-Parse a list of arguments for the algorithm, setting the appropriate parametres. May only be called once per algorithm.
+Parse a list of arguments for the algorithm, setting the appropriate parameters. May only be called once per algorithm.
 
 Parameters
 ----------
