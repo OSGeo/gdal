@@ -526,6 +526,7 @@ CPLErr STACTARawDataset::IRasterIO(
                                         CPLPopErrorHandler();
                                     if (fp != nullptr)
                                     {
+                                        VSIFCloseL(fp);
                                         m_poMasterDS
                                             ->m_bVSICLOUDSubstitutionOK = true;
                                         osURL = std::move(osNewURL);

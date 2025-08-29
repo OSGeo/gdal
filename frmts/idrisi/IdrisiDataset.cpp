@@ -3287,11 +3287,11 @@ char *GetUnitDefault(const char *pszUnitName, const char *pszToMeter)
 
 int SaveAsCRLF(char **papszStrList, const char *pszFname)
 {
-    VSILFILE *fp = VSIFOpenL(pszFname, "wt");
     int nLines = 0;
 
     if (papszStrList)
     {
+        VSILFILE *fp = VSIFOpenL(pszFname, "wt");
         if (fp != nullptr)
         {
             while (*papszStrList != nullptr)

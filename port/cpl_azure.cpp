@@ -101,14 +101,8 @@ static struct curl_slist *GetAzureBlobHeaders(
      * https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
      */
 
-    std::string osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
-    if (osDate.empty())
-    {
-        osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
-    }
-
-    const auto AddHeaders =
-        [&osDate, bIncludeMSVersion](struct curl_slist *l_psHeaders)
+    const auto AddHeaders = [bIncludeMSVersion](struct curl_slist *l_psHeaders,
+                                                const std::string &osDate)
     {
         l_psHeaders = curl_slist_append(
             l_psHeaders, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
@@ -120,9 +114,15 @@ static struct curl_slist *GetAzureBlobHeaders(
         return l_psHeaders;
     };
 
+    std::string osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
+    if (osDate.empty())
+    {
+        osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
+    }
+
     if (osStorageKeyB64.empty())
     {
-        psHeaders = AddHeaders(psHeaders);
+        psHeaders = AddHeaders(psHeaders, osDate);
         return psHeaders;
     }
 
@@ -182,9 +182,10 @@ static struct curl_slist *GetAzureBlobHeaders(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
-    psHeaders = AddHeaders(psHeaders);
+    psHeaders = AddHeaders(psHeaders, osDate);
     psHeaders = curl_slist_append(
         psHeaders, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+
     return psHeaders;
 }
 
