@@ -43,8 +43,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                            /* positionalAndRequired = */ standaloneStep)
             .AddAlias("dataset")
             .SetHiddenForCLI(!standaloneStep);
-    auto &layerArg =
-        AddLayerNameArg(&m_layerNames).SetMutualExclusionGroup("layer-sql");
+    auto &layerArg = AddLayerNameArg(&m_layerNames)
+                         .SetMutualExclusionGroup("layer-sql")
+                         .AddAlias("layer");
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     auto &argFeature =
         AddArg(

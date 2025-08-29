@@ -145,7 +145,9 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
         .AddHiddenAlias("srs")
         .SetIsCRSArg(/*noneAllowed=*/false);
     AddOverwriteArg(&m_overwrite);
-    AddLayerNameArg(&m_layers).SetMutualExclusionGroup("layer-sql");
+    AddLayerNameArg(&m_layers)
+        .SetMutualExclusionGroup("layer-sql")
+        .AddAlias("layer");
     AddArg("sql", 0, _("SQL statement"), &m_sql)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<statement>|@<filename>")

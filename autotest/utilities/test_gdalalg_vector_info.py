@@ -145,7 +145,7 @@ def test_gdalalg_vector_info_layer():
 
 def test_gdalalg_vector_info_wrong_layer():
     info = get_info_alg()
-    with pytest.raises(Exception, match="Couldn't fetch requested layer"):
+    with pytest.raises(Exception, match="Cannot find source layer 'invalid'"):
         info.ParseRunAndFinalize(["-l", "invalid", "data/path.shp"])
 
 
