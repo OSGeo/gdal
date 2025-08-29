@@ -51,6 +51,11 @@ class GDALRasterTileAlgorithm /* non final */
         return false;
     }
 
+    bool SupportsInputMultiThreading() const override
+    {
+        return true;
+    }
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterTileAlgorithm)
 
