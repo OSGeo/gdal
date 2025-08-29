@@ -4376,8 +4376,20 @@ GDALAlgorithm::AddStdoutArg(bool *pValue, const char *helpMessage)
 GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddLayerNameArg(std::string *pValue, const char *helpMessage)
 {
-    return AddArg("layer", 'l', MsgOrDefault(helpMessage, _("Layer name")),
-                  pValue);
+    return AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
+                  MsgOrDefault(helpMessage, _("Input layer name")), pValue);
+}
+
+/************************************************************************/
+/*                    GDALAlgorithm::AddOutputLayerNameArg()                  */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddOutputLayerNameArg(std::string *pValue,
+                                     const char *helpMessage)
+{
+    return AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0,
+                  MsgOrDefault(helpMessage, _("Output layer name")), pValue);
 }
 
 /************************************************************************/
@@ -4388,8 +4400,8 @@ GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddLayerNameArg(std::vector<std::string> *pValue,
                                const char *helpMessage)
 {
-    return AddArg("layer", 'l', MsgOrDefault(helpMessage, _("Layer name")),
-                  pValue);
+    return AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
+                  MsgOrDefault(helpMessage, _("Input layer name")), pValue);
 }
 
 /************************************************************************/

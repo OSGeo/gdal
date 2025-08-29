@@ -51,7 +51,8 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR);
         AddCreationOptionsArg(&m_creationOptions);
         AddLayerCreationOptionsArg(&m_layerCreationOptions);
-        AddLayerNameArg(&m_outputLayerName).AddAlias("nln");
+        AddOutputLayerNameArg(&m_outputLayerName)
+            .AddAlias("nln");  // For ogr2ogr nostalgic people
         AddOverwriteArg(&m_overwrite);
     }
 

@@ -46,7 +46,7 @@ void GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()
         .SetDefault(false)
         .AddAction([&updateArg] { updateArg.Set(true); });
     {
-        auto &arg = AddLayerNameArg(&m_outputLayerName)
+        auto &arg = AddOutputLayerNameArg(&m_outputLayerName)
                         .AddAlias("nln")
                         .SetMinCharCount(0);
         if (!m_outputLayerName.empty())
