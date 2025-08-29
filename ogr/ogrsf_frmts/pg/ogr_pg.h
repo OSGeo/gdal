@@ -664,7 +664,7 @@ class OGRPGDataSource final : public GDALDataset
               const char *pszGeomColForced, int bUpdate, int bTestOpen);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;

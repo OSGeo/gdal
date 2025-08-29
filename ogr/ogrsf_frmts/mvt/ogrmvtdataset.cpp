@@ -303,7 +303,7 @@ class OGRMVTDataset final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override
     {
@@ -1949,7 +1949,7 @@ OGRMVTDataset::~OGRMVTDataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMVTDataset::GetLayer(int iLayer) const
+const OGRLayer *OGRMVTDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

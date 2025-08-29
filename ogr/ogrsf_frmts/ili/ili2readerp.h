@@ -108,7 +108,7 @@ class ILI2Reader : public IILI2Reader
 
     std::vector<std::unique_ptr<OGRLayer>> &GetLayers() override;
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(const char *pszName) const;
+    OGRLayer *GetLayer(const char *pszName);
 
     int AddFeature(DOMElement *elem);
     void SetFieldValues(OGRFeature *feature, DOMElement *elem);

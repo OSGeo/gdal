@@ -154,7 +154,7 @@ class OGRSelafinDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

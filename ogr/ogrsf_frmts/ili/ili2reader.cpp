@@ -782,7 +782,7 @@ int ILI2Reader::GetLayerCount() const
     return static_cast<int>(m_listLayer.size());
 }
 
-OGRLayer *ILI2Reader::GetLayer(const char *pszName) const
+OGRLayer *ILI2Reader::GetLayer(const char *pszName)
 {
     for (auto it = m_listLayer.rbegin(); it != m_listLayer.rend(); ++it)
     {

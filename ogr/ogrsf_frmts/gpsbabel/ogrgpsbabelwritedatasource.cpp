@@ -215,7 +215,7 @@ int OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer) const
 
 {
     if (poGPXDS)

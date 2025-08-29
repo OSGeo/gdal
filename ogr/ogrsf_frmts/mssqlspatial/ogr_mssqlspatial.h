@@ -615,7 +615,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
                   bool bUpdate);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszLayerName) override;
 
     int GetGeometryFormat()

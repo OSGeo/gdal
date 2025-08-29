@@ -812,7 +812,7 @@ int OGRVRTDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRVRTDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRVRTDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

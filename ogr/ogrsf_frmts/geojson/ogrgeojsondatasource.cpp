@@ -343,7 +343,7 @@ int OGRGeoJSONDataSource::GetLayerCount() const
 /*                           GetLayer()                                 */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer) const
+const OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer) const
 {
     if (0 <= nLayer && nLayer < nLayers_)
     {

@@ -61,7 +61,7 @@ int OGRParquetWriterDataset::GetLayerCount() const
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
+const OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }

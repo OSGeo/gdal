@@ -101,7 +101,7 @@ int OGRVFKDataSource::Open(GDALOpenInfo *poOpenInfo)
 
   \return pointer to OGRLayer instance or NULL on error
 */
-OGRLayer *OGRVFKDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRVFKDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

@@ -531,7 +531,7 @@ class OGRTileDBDataset final : public TileDBDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int nIdx) const override
+    const OGRLayer *GetLayer(int nIdx) const override
     {
         return nIdx >= 0 && nIdx < GetLayerCount() ? m_apoLayers[nIdx].get()
                                                    : nullptr;

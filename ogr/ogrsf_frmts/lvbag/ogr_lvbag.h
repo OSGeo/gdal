@@ -147,7 +147,7 @@ class OGRLVBAGDataSource final : public GDALDataset
     int Open(const char *pszFilename, char **papszOpenOptions);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 };

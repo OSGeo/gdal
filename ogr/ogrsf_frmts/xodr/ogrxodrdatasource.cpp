@@ -89,7 +89,7 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
     return true;
 }
 
-OGRLayer *OGRXODRDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRXODRDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
         return nullptr;

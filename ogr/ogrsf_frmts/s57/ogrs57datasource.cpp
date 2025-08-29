@@ -343,7 +343,7 @@ int OGRS57DataSource::Open(const char *pszFilename)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRS57DataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRS57DataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

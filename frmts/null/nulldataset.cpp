@@ -36,7 +36,7 @@ class GDALNullDataset final : public GDALDataset
         return m_nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -245,7 +245,7 @@ int GDALNullDataset::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALNullDataset::GetLayer(int iLayer) const
+const OGRLayer *GDALNullDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= m_nLayers)

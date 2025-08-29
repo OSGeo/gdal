@@ -199,7 +199,7 @@ class OGRJMLDataset final : public GDALDataset
         return poLayer != nullptr ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

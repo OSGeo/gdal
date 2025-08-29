@@ -427,7 +427,7 @@ int OGRKMLDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRKMLDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRKMLDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers_)
         return nullptr;

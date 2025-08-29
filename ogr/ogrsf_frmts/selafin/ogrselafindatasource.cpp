@@ -317,7 +317,7 @@ int OGRSelafinDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

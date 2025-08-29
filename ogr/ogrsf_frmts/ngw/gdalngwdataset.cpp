@@ -226,7 +226,7 @@ int OGRNGWDataset::TestCapability(const char *pszCap) const
 /*
  * GetLayer()
  */
-OGRLayer *OGRNGWDataset::GetLayer(int iLayer) const
+const OGRLayer *OGRNGWDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
     {

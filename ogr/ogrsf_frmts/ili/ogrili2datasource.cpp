@@ -168,7 +168,7 @@ int OGRILI2DataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRILI2DataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRILI2DataSource::GetLayer(int iLayer) const
 
 {
     int i = 0;

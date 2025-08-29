@@ -4220,7 +4220,7 @@ int OGROSMDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGROSMDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGROSMDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())

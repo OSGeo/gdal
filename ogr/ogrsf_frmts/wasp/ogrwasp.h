@@ -190,7 +190,8 @@ class OGRWAsPDataSource final : public GDALDataset
         return oLayer.get() ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,

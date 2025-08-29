@@ -463,7 +463,7 @@ int OGRCSVDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSVDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRCSVDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

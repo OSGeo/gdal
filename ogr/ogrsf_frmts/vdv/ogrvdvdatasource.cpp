@@ -612,7 +612,7 @@ int OGRIDFDataSource::GetLayerCount() const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
@@ -692,7 +692,7 @@ int OGRVDVDataSource::GetLayerCount() const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRVDVDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRVDVDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;

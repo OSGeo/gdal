@@ -60,7 +60,7 @@ int OGRJMLDataset::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRJMLDataset::GetLayer(int iLayer) const
+const OGRLayer *OGRJMLDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer != 0)

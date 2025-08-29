@@ -117,7 +117,7 @@ class VICARDataset final : public RawDataset
         return m_poLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int i) const override
+    const OGRLayer *GetLayer(int i) const override
     {
         return (m_poLayer && i == 0) ? m_poLayer.get() : nullptr;
     }

@@ -36,7 +36,7 @@ class OGRMIAttrIndex : public OGRAttrIndex
     int iIndex;
     TABINDFile *poINDFile;
     OGRMILayerAttrIndex *poLIndex;
-    OGRFieldDefn *poFldDefn;
+    const OGRFieldDefn *poFldDefn;
 
     int iField;
 
@@ -100,7 +100,7 @@ class OGRMILayerAttrIndex final : public OGRLayerAttrIndex
     OGRErr LoadConfigFromXML(const char *pszRawXML);
     void AddAttrInd(int iField, int iINDIndex);
 
-    OGRLayer *GetLayer()
+    const OGRLayer *GetLayer()
     {
         return poLayer;
     }

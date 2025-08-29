@@ -140,7 +140,7 @@ class OGRSXFDataSource final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
     void CloseFile();

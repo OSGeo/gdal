@@ -482,7 +482,7 @@ int OGRODBCDataSource::TestCapability(const char *) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRODBCDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRODBCDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

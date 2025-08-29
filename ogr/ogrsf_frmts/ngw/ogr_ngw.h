@@ -313,7 +313,7 @@ class OGRNGWDataset final : public GDALDataset
         return static_cast<int>(aoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     int TestCapability(const char *) const override;
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

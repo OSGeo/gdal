@@ -746,7 +746,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
     virtual bool IsLayerPrivate(int) const override;
     OGRLayer *GetLayerByNameNotVisible(const char *);

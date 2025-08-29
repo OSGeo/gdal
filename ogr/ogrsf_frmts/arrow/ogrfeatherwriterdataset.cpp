@@ -40,7 +40,7 @@ int OGRFeatherWriterDataset::GetLayerCount() const
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
+const OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }

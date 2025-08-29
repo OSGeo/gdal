@@ -215,7 +215,7 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
     }
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
     int TestCapability(const char *pszCap) const override;
     std::vector<std::string> GetFieldDomainNames(
         CSLConstList /*papszOptions*/ = nullptr) const override;

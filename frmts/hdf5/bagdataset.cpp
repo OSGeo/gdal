@@ -204,7 +204,7 @@ class BAGDataset final : public GDALPamDataset
         return m_poTrackingListLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenForCreate(GDALOpenInfo *, int nXSizeIn,
@@ -3499,7 +3499,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *BAGDataset::GetLayer(int idx) const
+const OGRLayer *BAGDataset::GetLayer(int idx) const
 {
     if (idx != 0)
         return nullptr;

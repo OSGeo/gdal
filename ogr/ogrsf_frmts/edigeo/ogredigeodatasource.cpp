@@ -58,7 +58,7 @@ OGREDIGEODataSource::~OGREDIGEODataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer) const
+const OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer) const
 
 {
     ReadEDIGEO();

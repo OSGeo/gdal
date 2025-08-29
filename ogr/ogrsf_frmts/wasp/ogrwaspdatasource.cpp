@@ -160,7 +160,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer) const
 
 {
     return (iLayer == 0) ? oLayer.get() : nullptr;

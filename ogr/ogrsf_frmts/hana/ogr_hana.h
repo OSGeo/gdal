@@ -462,7 +462,8 @@ class OGRHanaDataSource final : public GDALDataset
         return static_cast<int>(layers_.size());
     }
 
-    OGRLayer *GetLayer(int index) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int index) const override;
     OGRLayer *GetLayerByName(const char *) override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

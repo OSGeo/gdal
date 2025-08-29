@@ -167,7 +167,7 @@ int OGRILI1DataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRILI1DataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRILI1DataSource::GetLayer(int iLayer) const
 {
     if (!poReader)
     {

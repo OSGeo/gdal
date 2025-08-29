@@ -180,7 +180,7 @@ int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAVCE00DataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRAVCE00DataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

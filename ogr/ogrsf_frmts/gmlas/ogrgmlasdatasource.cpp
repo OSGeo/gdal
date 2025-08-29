@@ -200,7 +200,7 @@ int OGRGMLASDataSource::GetLayerCount() const
 /*                                GetLayer()                            */
 /************************************************************************/
 
-OGRLayer *OGRGMLASDataSource::GetLayer(int i) const
+const OGRLayer *OGRGMLASDataSource::GetLayer(int i) const
 {
     const int nBaseLayers = static_cast<int>(m_apoLayers.size());
     if (i >= nBaseLayers)

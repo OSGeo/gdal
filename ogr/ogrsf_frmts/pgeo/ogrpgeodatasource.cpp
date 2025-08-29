@@ -318,7 +318,7 @@ int OGRPGeoDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGeoDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRPGeoDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

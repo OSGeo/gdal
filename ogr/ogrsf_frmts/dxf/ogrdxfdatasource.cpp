@@ -72,7 +72,7 @@ int OGRDXFDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDXFDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRDXFDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= (int)apoLayers.size())

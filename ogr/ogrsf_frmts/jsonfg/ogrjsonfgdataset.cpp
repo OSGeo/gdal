@@ -330,7 +330,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
 /*                  OGRJSONFGDataset::GetLayer()                        */
 /************************************************************************/
 
-OGRLayer *OGRJSONFGDataset::GetLayer(int i) const
+const OGRLayer *OGRJSONFGDataset::GetLayer(int i) const
 {
     if (i < 0 || i >= static_cast<int>(apoLayers_.size()))
         return nullptr;

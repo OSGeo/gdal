@@ -95,7 +95,7 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
         return 1;
     }
 
-    OGRLayer *GetLayer(int nLayer) const override;
+    const OGRLayer *GetLayer(int nLayer) const override;
 
     OGRLayer *GetUnderlyingLayer()
     {
@@ -111,7 +111,7 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
     }
 };
 
-OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer) const
+const OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer) const
 {
     return (nLayer == 0) ? m_poLayer.get() : nullptr;
 }

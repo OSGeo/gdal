@@ -232,7 +232,7 @@ class OGREDIGEODataSource final : public GDALDataset
     int Open(const char *pszFilename);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int HasUTF8ContentOnly()
     {

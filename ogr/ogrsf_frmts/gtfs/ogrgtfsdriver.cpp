@@ -36,7 +36,7 @@ class OGRGTFSDataset final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int nIdx) const override;
+    const OGRLayer *GetLayer(int nIdx) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -46,7 +46,7 @@ class OGRGTFSDataset final : public GDALDataset
 /*                              GetLayer()                             */
 /***********************************************************************/
 
-OGRLayer *OGRGTFSDataset::GetLayer(int nIdx) const
+const OGRLayer *OGRGTFSDataset::GetLayer(int nIdx) const
 {
     return nIdx >= 0 && nIdx < static_cast<int>(m_apoLayers.size())
                ? m_apoLayers[nIdx].get()

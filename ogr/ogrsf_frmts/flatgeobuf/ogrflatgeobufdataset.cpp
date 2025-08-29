@@ -352,7 +352,7 @@ GDALDataset *OGRFlatGeobufDataset::Create(const char *pszName, int /* nBands */,
     return new OGRFlatGeobufDataset(pszName, bIsDir, true, false);
 }
 
-OGRLayer *OGRFlatGeobufDataset::GetLayer(int iLayer) const
+const OGRLayer *OGRFlatGeobufDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;

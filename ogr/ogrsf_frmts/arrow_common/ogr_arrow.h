@@ -369,7 +369,8 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     GetFieldDomain(const std::string &name) const override;
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int idx) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
 };
 
 /************************************************************************/

@@ -98,7 +98,7 @@ class OGRCSWDataSource final : public GDALDataset
         return poLayer != nullptr;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     static CPLHTTPResult *HTTPFetch(const char *pszURL, const char *pszPost);
 
@@ -1014,7 +1014,7 @@ int OGRCSWDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSWDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRCSWDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= ((poLayer != nullptr) ? 1 : 0))

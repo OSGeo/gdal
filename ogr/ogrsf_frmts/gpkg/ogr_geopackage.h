@@ -325,7 +325,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     int Open(GDALOpenInfo *poOpenInfo, const std::string &osFilenameInZip);
     int Create(const char *pszFilename, int nXSize, int nYSize, int nBands,
                GDALDataType eDT, char **papszOptions);
-    OGRLayer *GetLayer(int iLayer) const override;
+    const OGRLayer *GetLayer(int iLayer) const override;
     OGRErr DeleteLayer(int iLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

@@ -55,7 +55,8 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
     }
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual bool IsLayerPrivate(int iLayer) const override;

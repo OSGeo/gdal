@@ -59,7 +59,7 @@ class OGRMapMLReaderDataset final : public GDALPamDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -138,7 +138,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -257,7 +257,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx) const
+const OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr;
 }
@@ -962,7 +962,7 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
+const OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr;
 }

@@ -196,7 +196,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRWFSDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRWFSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

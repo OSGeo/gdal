@@ -63,7 +63,7 @@ OGRLayer *OGRMutexedDataSource::WrapLayerIfNecessary(OGRLayer *poLayer)
     return poLayer;
 }
 
-OGRLayer *OGRMutexedDataSource::GetLayer(int iIndex) const
+const OGRLayer *OGRMutexedDataSource::GetLayer(int iIndex) const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return const_cast<OGRMutexedDataSource *>(this)->WrapLayerIfNecessary(

@@ -265,7 +265,7 @@ class OGRAmigoCloudDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
     int TestCapability(const char *) const override;

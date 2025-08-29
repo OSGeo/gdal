@@ -236,7 +236,7 @@ class OGRODSDataSource final : public GDALDataset
     int Create(const char *pszName, char **papszOptions);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 

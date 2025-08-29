@@ -88,7 +88,7 @@ inline int OGRArrowDataset::GetLayerCount() const
 /*                             GetLayer()                               */
 /************************************************************************/
 
-inline OGRLayer *OGRArrowDataset::GetLayer(int idx) const
+inline const OGRLayer *OGRArrowDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }

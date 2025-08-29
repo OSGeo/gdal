@@ -315,7 +315,7 @@ OGRLayer *OGRElasticDataSource::GetLayerByName(const char *pszName)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) const
 {
     const int nLayers = GetLayerCount();
     if (iLayer < 0 || iLayer >= nLayers)

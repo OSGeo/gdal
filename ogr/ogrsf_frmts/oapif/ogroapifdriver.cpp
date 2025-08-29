@@ -123,7 +123,7 @@ class OGROAPIFDataset final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     bool Open(GDALOpenInfo *);
     const CPLJSONDocument &GetAPIDoc(std::string &osURLOut);
@@ -1246,7 +1246,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGROAPIFDataset::GetLayer(int nIndex) const
+const OGRLayer *OGROAPIFDataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;

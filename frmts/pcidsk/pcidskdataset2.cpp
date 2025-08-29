@@ -2059,7 +2059,7 @@ int PCIDSK2Dataset::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
+const OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(apoLayers.size()))

@@ -153,7 +153,7 @@ int OGRAVCBinDataSource::TestCapability(const char *) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAVCBinDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRAVCBinDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

@@ -47,7 +47,7 @@ OGRPLScenesDataV1Dataset::~OGRPLScenesDataV1Dataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPLScenesDataV1Dataset::GetLayer(int idx) const
+const OGRLayer *OGRPLScenesDataV1Dataset::GetLayer(int idx) const
 {
     if (idx < 0 || idx >= GetLayerCount())
         return nullptr;

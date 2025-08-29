@@ -972,7 +972,7 @@ int OGRShapeDataSource::GetLayerCount() const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRShapeDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRShapeDataSource::GetLayer(int iLayer) const
 
 {
     // To ensure that existing layers are created.

@@ -663,7 +663,7 @@ int OGROCIDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGROCIDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGROCIDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

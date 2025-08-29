@@ -1193,7 +1193,7 @@ int OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
 /*                            GetLayer()                               */
 /***********************************************************************/
 
-OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex) const
+const OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex) const
 {
     if (iIndex < 0 || iIndex >= static_cast<int>(m_apoLayers.size()))
         return nullptr;

@@ -293,7 +293,7 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
     return TRUE;
 }
 
-OGRLayer *GDALCADDataset::GetLayer(int iLayer) const
+const OGRLayer *GDALCADDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

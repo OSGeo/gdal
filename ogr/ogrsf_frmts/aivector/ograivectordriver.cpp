@@ -109,7 +109,7 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
             return 1;
         }
 
-        OGRLayer *GetLayer(int idx) const override
+        const OGRLayer *GetLayer(int idx) const override
         {
             return idx == 0 ? const_cast<MyLayer *>(&m_oLayer) : nullptr;
         }

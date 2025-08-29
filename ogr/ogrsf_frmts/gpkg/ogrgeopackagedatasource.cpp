@@ -6426,7 +6426,7 @@ bool GDALGeoPackageDataset::RegisterZoomOtherExtension()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer) const
+const OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

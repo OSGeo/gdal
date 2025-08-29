@@ -463,7 +463,7 @@ int FGdbDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *FGdbDataSource::GetLayer(int iLayer) const
+const OGRLayer *FGdbDataSource::GetLayer(int iLayer) const
 {
     int count = static_cast<int>(m_layers.size());
 

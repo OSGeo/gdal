@@ -124,7 +124,7 @@ class MBTilesDataset final : public GDALPamDataset,
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -1404,7 +1404,7 @@ const char *MBTilesDataset::GetMetadataItem(const char *pszName,
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *MBTilesDataset::GetLayer(int iLayer) const
+const OGRLayer *MBTilesDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

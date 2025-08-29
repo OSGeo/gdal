@@ -264,7 +264,8 @@ class OGRFlatGeobufDataset final : public GDALDataset
                                CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
                                CPL_UNUSED GDALDataType eDT,
                                char **papszOptions);
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     int TestCapability(const char *pszCap) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,

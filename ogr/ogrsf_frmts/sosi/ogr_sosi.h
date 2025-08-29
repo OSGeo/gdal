@@ -114,7 +114,7 @@ class OGRSOSIDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 #ifdef WRITE_SUPPORT
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRSpatialReference *poSpatialRef = NULL,

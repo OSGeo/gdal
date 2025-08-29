@@ -63,7 +63,7 @@ class GDALGDataset final : public GDALProxyDataset
         return m_poUnderlyingDS->GetLayerCount();
     }
 
-    OGRLayer *GetLayer(int idx) const override
+    const OGRLayer *GetLayer(int idx) const override
     {
         return m_poUnderlyingDS->GetLayer(idx);
     }

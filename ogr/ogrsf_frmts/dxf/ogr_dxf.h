@@ -725,7 +725,7 @@ class OGRDXFDataSource final : public GDALDataset
         return static_cast<int>(apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 
@@ -1015,7 +1015,7 @@ class OGRDXFWriterDS final : public GDALDataset
     int Open(const char *pszFilename, char **papszOptions);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 

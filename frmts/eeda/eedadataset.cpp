@@ -82,7 +82,7 @@ class GDALEEDADataset final : public GDALEEDABaseDataset
         return m_poLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int idx) const override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     json_object *RunRequest(const CPLString &osURL);
@@ -1003,7 +1003,7 @@ GDALEEDADataset::~GDALEEDADataset()
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *GDALEEDADataset::GetLayer(int idx) const
+const OGRLayer *GDALEEDADataset::GetLayer(int idx) const
 {
     if (idx == 0)
         return m_poLayer;

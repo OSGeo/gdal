@@ -443,7 +443,7 @@ class PDFDataset final : public GDALPamDataset
                       GSpacing nBandSpace, GByte *pabyData);
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 
@@ -541,7 +541,7 @@ class PDFWritableVectorDataset final : public GDALDataset
     OGRErr SyncToDisk();
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 

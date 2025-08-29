@@ -50,7 +50,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
@@ -157,7 +157,7 @@ OGRGeoJSONSeqDataSource::~OGRGeoJSONSeqDataSource()
 /*                               GetLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex) const
+const OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;

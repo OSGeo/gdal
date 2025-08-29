@@ -136,7 +136,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     using GDALDataset::CreateLayer;
 

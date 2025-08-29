@@ -101,7 +101,7 @@ class OGRKMLDataSource final : public GDALDataset
         return nLayers_;
     }
 
-    OGRLayer *GetLayer(int nLayer) const override;
+    const OGRLayer *GetLayer(int nLayer) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;

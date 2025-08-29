@@ -310,7 +310,8 @@ class OGRCSVDataSource final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
 
     char **GetFileList() override;
 

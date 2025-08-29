@@ -97,7 +97,7 @@ int OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

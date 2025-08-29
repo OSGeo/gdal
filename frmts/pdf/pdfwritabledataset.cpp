@@ -132,7 +132,7 @@ int PDFWritableVectorDataset::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer) const
+const OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

@@ -182,7 +182,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRLVBAGDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRLVBAGDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
     {

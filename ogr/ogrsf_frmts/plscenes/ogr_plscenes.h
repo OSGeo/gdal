@@ -52,7 +52,9 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
     virtual ~OGRPLScenesDataV1Dataset();
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int idx) const override;
+
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
     json_object *RunRequest(const char *pszURL, int bQuiet404Error = FALSE,

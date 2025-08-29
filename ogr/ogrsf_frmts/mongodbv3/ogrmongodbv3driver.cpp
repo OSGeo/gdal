@@ -84,7 +84,7 @@ class OGRMongoDBv3Dataset final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszLayerName) override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
@@ -2287,7 +2287,7 @@ OGRErr OGRMongoDBv3Layer::ISetSpatialFilter(int iGeomField,
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMongoDBv3Dataset::GetLayer(int nIndex) const
+const OGRLayer *OGRMongoDBv3Dataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;

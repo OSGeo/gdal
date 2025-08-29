@@ -240,7 +240,7 @@ int OGRIDBDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIDBDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRIDBDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

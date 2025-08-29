@@ -212,7 +212,7 @@ int OGRGmtDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGmtDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRGmtDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

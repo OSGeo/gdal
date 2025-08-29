@@ -89,7 +89,7 @@ class OGRIdrisiDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 };
 
 #endif  // ndef OGR_IDRISI_H_INCLUDED

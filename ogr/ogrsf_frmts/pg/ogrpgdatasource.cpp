@@ -2118,7 +2118,7 @@ int OGRPGDataSource::GetLayerCount() const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRPGDataSource::GetLayer(int iLayer) const
 
 {
     /* Force loading of all registered tables */

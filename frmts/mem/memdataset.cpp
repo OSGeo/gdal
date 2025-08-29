@@ -3322,7 +3322,7 @@ int MEMDataset::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *MEMDataset::GetLayer(int iLayer) const
+const OGRLayer *MEMDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

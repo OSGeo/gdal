@@ -15,7 +15,7 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
     When they are invoked from the API, the default is still JSON.
 
 - Changes impacting out-of-tree vector drivers:
-  * GDALDataset::GetLayer() is now a const method
+  * GDALDataset::GetLayer() is now a const method that returns a const OGRLayer*
   * GDALDataset::GetLayerCount() is now a const method
   * GDALDataset::TestCapacility() is now a const method
   * OGRLayer::GetName() is now a const method

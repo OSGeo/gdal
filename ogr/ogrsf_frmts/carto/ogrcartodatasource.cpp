@@ -72,7 +72,7 @@ int OGRCARTODataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCARTODataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRCARTODataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

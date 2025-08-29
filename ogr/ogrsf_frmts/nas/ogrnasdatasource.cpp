@@ -296,7 +296,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema(GMLFeatureClass *poClass)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRNASDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRNASDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

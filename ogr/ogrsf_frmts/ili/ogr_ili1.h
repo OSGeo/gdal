@@ -109,7 +109,8 @@ class OGRILI1DataSource final : public GDALDataset
         return poReader ? poReader->GetLayerCount() : 0;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     OGRILI1Layer *GetLayerByName(const char *) override;
 
     int TestCapability(const char *) const override;

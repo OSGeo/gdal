@@ -729,7 +729,7 @@ int OGRPGDumpDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

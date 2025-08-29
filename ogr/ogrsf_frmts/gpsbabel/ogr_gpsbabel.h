@@ -44,7 +44,7 @@ class OGRGPSBabelDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int Open(const char *pszFilename, const char *pszGPSBabelDriverNameIn,
              char **papszOpenOptions);
@@ -73,7 +73,7 @@ class OGRGPSBabelWriteDataSource final : public GDALDataset
     virtual ~OGRGPSBabelWriteDataSource();
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 

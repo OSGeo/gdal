@@ -100,7 +100,8 @@ class OGRS57DataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     void AddLayer(OGRS57Layer *);
     int TestCapability(const char *) const override;
 

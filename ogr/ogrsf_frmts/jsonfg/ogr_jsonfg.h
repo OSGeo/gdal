@@ -248,7 +248,7 @@ class OGRJSONFGDataset final : public GDALDataset
         return static_cast<int>(apoLayers_.size());
     }
 
-    OGRLayer *GetLayer(int i) const override;
+    const OGRLayer *GetLayer(int i) const override;
 
     //! Return the output file handle. Used by OGRJSONFGWriteLayer
     VSILFILE *GetOutputFile() const

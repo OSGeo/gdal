@@ -87,7 +87,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
         return (int)apoLayers.size();
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
 

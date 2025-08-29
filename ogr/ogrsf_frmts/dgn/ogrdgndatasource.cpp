@@ -100,7 +100,7 @@ int OGRDGNDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRDGNDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

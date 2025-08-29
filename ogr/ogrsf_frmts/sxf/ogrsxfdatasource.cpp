@@ -93,7 +93,7 @@ int OGRSXFDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSXFDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRSXFDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

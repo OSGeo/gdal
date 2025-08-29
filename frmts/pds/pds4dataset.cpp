@@ -1522,7 +1522,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDS4Dataset::GetLayer(int nIndex) const
+const OGRLayer *PDS4Dataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;

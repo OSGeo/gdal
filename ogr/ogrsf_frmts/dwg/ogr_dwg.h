@@ -196,7 +196,7 @@ class OGRDWGDataSource final : public GDALDataset
         return static_cast<int>(apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     // The following is only used by OGRDWGLayer
 

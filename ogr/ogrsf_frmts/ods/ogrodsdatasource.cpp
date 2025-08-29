@@ -370,7 +370,7 @@ int OGRODSDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRODSDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRODSDataSource::GetLayer(int iLayer) const
 
 {
     const_cast<OGRODSDataSource *>(this)->AnalyseFile();

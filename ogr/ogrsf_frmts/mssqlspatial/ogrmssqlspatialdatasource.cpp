@@ -179,7 +179,7 @@ int OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMSSQLSpatialDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRMSSQLSpatialDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

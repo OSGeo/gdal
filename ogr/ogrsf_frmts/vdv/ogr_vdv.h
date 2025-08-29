@@ -40,7 +40,7 @@ class OGRIDFDataSource final : public GDALDataset
     virtual ~OGRIDFDataSource();
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     int TestCapability(const char *pszCap) const override;
 };
 
@@ -206,7 +206,7 @@ class OGRVDVDataSource final : public GDALDataset
     virtual ~OGRVDVDataSource();
 
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

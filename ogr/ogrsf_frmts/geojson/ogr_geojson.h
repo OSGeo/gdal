@@ -247,7 +247,9 @@ class OGRGeoJSONDataSource final : public GDALDataset
     int Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,
              const char *pszJSonFlavor);
     int GetLayerCount() const override;
-    OGRLayer *GetLayer(int nLayer) const override;
+
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int nLayer) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;

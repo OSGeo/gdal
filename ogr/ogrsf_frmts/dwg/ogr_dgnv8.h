@@ -136,7 +136,7 @@ class OGRDGNV8DataSource final : public GDALDataset
         return m_nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int TestCapability(const char *) const override;
     virtual CPLErr FlushCache(bool bAtClosing) override;

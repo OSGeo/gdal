@@ -1968,7 +1968,7 @@ int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

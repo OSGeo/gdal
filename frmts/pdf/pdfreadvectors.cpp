@@ -221,7 +221,7 @@ int PDFDataset::TestCapability(const char *) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDFDataset::GetLayer(int iLayer) const
+const OGRLayer *PDFDataset::GetLayer(int iLayer) const
 
 {
     const_cast<PDFDataset *>(this)->OpenVectorLayers(nullptr);

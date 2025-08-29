@@ -85,7 +85,7 @@ class OGRNASDataSource final : public GDALDataset
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
 
     IGMLReader *GetReader()
     {

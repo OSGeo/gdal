@@ -360,7 +360,7 @@ int OGRMySQLDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMySQLDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRMySQLDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

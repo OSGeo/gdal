@@ -583,7 +583,7 @@ class netCDFDataset final : public GDALPamDataset
         return static_cast<int>(this->papoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int nIdx) const override;
+    virtual const OGRLayer *GetLayer(int nIdx) const override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 

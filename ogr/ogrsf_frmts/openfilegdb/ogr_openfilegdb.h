@@ -525,7 +525,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) const override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGROpenFileGDBLayer *GetLayerByName(const char *pszName) override;
     bool IsLayerPrivate(int) const override;
 

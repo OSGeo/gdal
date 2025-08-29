@@ -83,7 +83,7 @@ int OGRAmigoCloudDataSource::TestCapability(const char *pszCap) const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAmigoCloudDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRAmigoCloudDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

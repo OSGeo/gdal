@@ -259,7 +259,7 @@ int OGRTABDataSource::GetLayerCount() const
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRTABDataSource::GetLayer(int iLayer) const
+const OGRLayer *OGRTABDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

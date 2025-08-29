@@ -258,7 +258,7 @@ class OGRADBCDataset final : public GDALDataset
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) const override
+    const OGRLayer *GetLayer(int idx) const override
     {
         return (idx >= 0 && idx < GetLayerCount()) ? m_apoLayers[idx].get()
                                                    : nullptr;
