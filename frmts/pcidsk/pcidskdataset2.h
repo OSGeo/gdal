@@ -51,6 +51,8 @@ class PCIDSK2Dataset final : public GDALPamDataset
     static GDALDataType PCIDSKTypeToGDAL(PCIDSK::eChanType eType);
     void ProcessRPC();
 
+    const OGRSpatialReference *GetSpatialRef(bool bRasterOnly) const;
+
   public:
     PCIDSK2Dataset();
     virtual ~PCIDSK2Dataset();
@@ -68,6 +70,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     virtual char **GetMetadataDomainList() override;

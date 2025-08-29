@@ -926,6 +926,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual const OGRSpatialReference *GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference *poSRS);
 
+    virtual const OGRSpatialReference *GetSpatialRefRasterOnly() const;
+    virtual const OGRSpatialReference *GetSpatialRefVectorOnly() const;
+
     // Compatibility layer
     const char *GetProjectionRef(void) const;
     CPLErr SetProjection(const char *pszProjection);

@@ -345,6 +345,8 @@ def test_ogr_gpkg_3(gpkg_ds, tmp_path):
     )
     assert lyr is not None
 
+    assert gpkg_ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
     lyr = gpkg_ds.CreateLayer("a_layer", options=["SPATIAL_INDEX=NO"])
 
     ###############################################################################

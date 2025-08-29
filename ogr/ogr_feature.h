@@ -541,53 +541,53 @@ class CPL_DLL OGRFeatureDefn
      *
      * Note: fields should not be added or removed while iterating over them.
      */
-    struct CPL_DLL Fields
+    template <class OwnerT, class ChildT> struct CPL_DLL Fields
     {
       private:
-        OGRFeatureDefn *m_poFDefn;
+        OwnerT m_poFDefn;
 
       public:
-        inline explicit Fields(OGRFeatureDefn *poFDefn) : m_poFDefn(poFDefn)
+        inline explicit Fields(OwnerT poFDefn) : m_poFDefn(poFDefn)
         {
         }
 
-        struct CPL_DLL ConstIterator
+        struct CPL_DLL Iterator
         {
           private:
-            OGRFeatureDefn *m_poFDefn;
+            OwnerT m_poFDefn;
             int m_nIdx;
 
           public:
-            inline ConstIterator(OGRFeatureDefn *poFDefn, int nIdx)
+            inline Iterator(OwnerT poFDefn, int nIdx)
                 : m_poFDefn(poFDefn), m_nIdx(nIdx)
             {
             }
 
-            inline const OGRFieldDefn *operator*() const
+            inline ChildT operator*() const
             {
                 return m_poFDefn->GetFieldDefn(m_nIdx);
             }
 
-            inline ConstIterator &operator++()
+            inline Iterator &operator++()
             {
                 m_nIdx++;
                 return *this;
             }
 
-            inline bool operator!=(const ConstIterator &it) const
+            inline bool operator!=(const Iterator &it) const
             {
                 return m_nIdx != it.m_nIdx;
             }
         };
 
-        inline ConstIterator begin()
+        inline Iterator begin()
         {
-            return ConstIterator(m_poFDefn, 0);
+            return Iterator(m_poFDefn, 0);
         }
 
-        inline ConstIterator end()
+        inline Iterator end()
         {
-            return ConstIterator(m_poFDefn, m_poFDefn->GetFieldCount());
+            return Iterator(m_poFDefn, m_poFDefn->GetFieldCount());
         }
 
         inline size_t size() const
@@ -595,18 +595,16 @@ class CPL_DLL OGRFeatureDefn
             return static_cast<std::size_t>(m_poFDefn->GetFieldCount());
         }
 
-        inline OGRFieldDefn *operator[](size_t i)
-        {
-            return m_poFDefn->GetFieldDefn(static_cast<int>(i));
-        }
-
-        inline const OGRFieldDefn *operator[](size_t i) const
+        inline ChildT operator[](size_t i)
         {
             return m_poFDefn->GetFieldDefn(static_cast<int>(i));
         }
     };
 
     //! @endcond
+
+    /** Return type of GetFields() */
+    using NonConstFields = Fields<OGRFeatureDefn *, OGRFieldDefn *>;
 
     /** Return an object that can be used to iterate over non-geometry fields.
         \verbatim
@@ -618,9 +616,27 @@ class CPL_DLL OGRFeatureDefn
 
         @since GDAL 3.7
      */
-    inline Fields GetFields()
+    inline NonConstFields GetFields()
     {
-        return Fields(this);
+        return NonConstFields(this);
+    }
+
+    /** Return type of GetFields() const */
+    using ConstFields = Fields<const OGRFeatureDefn *, const OGRFieldDefn *>;
+
+    /** Return an object that can be used to iterate over non-geometry fields.
+        \verbatim
+        for( const auto* poFieldDefn: poFeatureDefn->GetFields() )
+        {
+            // do something
+        }
+        \endverbatim
+
+        @since GDAL 3.12
+     */
+    inline ConstFields GetFields() const
+    {
+        return ConstFields(this);
     }
 
     //! @cond Doxygen_Suppress
@@ -685,53 +701,53 @@ class CPL_DLL OGRFeatureDefn
      *
      * Note: fields should not be added or removed while iterating over them.
      */
-    struct CPL_DLL GeomFields
+    template <class OwnerT, class ChildT> struct CPL_DLL GeomFields
     {
       private:
-        OGRFeatureDefn *m_poFDefn;
+        OwnerT m_poFDefn;
 
       public:
-        inline explicit GeomFields(OGRFeatureDefn *poFDefn) : m_poFDefn(poFDefn)
+        inline explicit GeomFields(OwnerT poFDefn) : m_poFDefn(poFDefn)
         {
         }
 
-        struct CPL_DLL ConstIterator
+        struct CPL_DLL Iterator
         {
           private:
-            OGRFeatureDefn *m_poFDefn;
+            OwnerT m_poFDefn;
             int m_nIdx;
 
           public:
-            inline ConstIterator(OGRFeatureDefn *poFDefn, int nIdx)
+            inline Iterator(OwnerT poFDefn, int nIdx)
                 : m_poFDefn(poFDefn), m_nIdx(nIdx)
             {
             }
 
-            inline const OGRGeomFieldDefn *operator*() const
+            inline ChildT operator*() const
             {
                 return m_poFDefn->GetGeomFieldDefn(m_nIdx);
             }
 
-            inline ConstIterator &operator++()
+            inline Iterator &operator++()
             {
                 m_nIdx++;
                 return *this;
             }
 
-            inline bool operator!=(const ConstIterator &it) const
+            inline bool operator!=(const Iterator &it) const
             {
                 return m_nIdx != it.m_nIdx;
             }
         };
 
-        inline ConstIterator begin()
+        inline Iterator begin()
         {
-            return ConstIterator(m_poFDefn, 0);
+            return Iterator(m_poFDefn, 0);
         }
 
-        inline ConstIterator end()
+        inline Iterator end()
         {
-            return ConstIterator(m_poFDefn, m_poFDefn->GetGeomFieldCount());
+            return Iterator(m_poFDefn, m_poFDefn->GetGeomFieldCount());
         }
 
         inline size_t size() const
@@ -739,18 +755,16 @@ class CPL_DLL OGRFeatureDefn
             return static_cast<std::size_t>(m_poFDefn->GetGeomFieldCount());
         }
 
-        inline OGRGeomFieldDefn *operator[](size_t i)
-        {
-            return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i));
-        }
-
-        inline const OGRGeomFieldDefn *operator[](size_t i) const
+        inline ChildT operator[](size_t i) const
         {
             return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i));
         }
     };
 
     //! @endcond
+
+    /** Return type of GetGeomFields() */
+    using NonConstGeomFields = GeomFields<OGRFeatureDefn *, OGRGeomFieldDefn *>;
 
     /** Return an object that can be used to iterate over geometry fields.
         \verbatim
@@ -762,9 +776,28 @@ class CPL_DLL OGRFeatureDefn
 
         @since GDAL 3.7
      */
-    inline GeomFields GetGeomFields()
+    inline NonConstGeomFields GetGeomFields()
     {
-        return GeomFields(this);
+        return NonConstGeomFields(this);
+    }
+
+    /** Return type of GetGeomFields() const */
+    using ConstGeomFields =
+        GeomFields<const OGRFeatureDefn *, const OGRGeomFieldDefn *>;
+
+    /** Return an object that can be used to iterate over geometry fields.
+        \verbatim
+        for( const auto* poGeomFieldDefn: poFeatureDefn->GetGeomFields() )
+        {
+            // do something
+        }
+        \endverbatim
+
+        @since GDAL 3.12
+     */
+    inline ConstGeomFields GetGeomFields() const
+    {
+        return ConstGeomFields(this);
     }
 
     virtual void AddGeomFieldDefn(const OGRGeomFieldDefn *);

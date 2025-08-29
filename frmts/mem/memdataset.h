@@ -86,6 +86,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     virtual ~MEMDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;

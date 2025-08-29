@@ -1354,6 +1354,19 @@ const OGRSpatialReference *GDALPamDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
+/*                        GetSpatialRefRasterOnly()                     */
+/************************************************************************/
+
+const OGRSpatialReference *GDALPamDataset::GetSpatialRefRasterOnly() const
+
+{
+    if (psPam && psPam->poSRS)
+        return psPam->poSRS;
+
+    return GDALDataset::GetSpatialRefRasterOnly();
+}
+
+/************************************************************************/
 /*                           SetSpatialRef()                            */
 /************************************************************************/
 

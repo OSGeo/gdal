@@ -3036,6 +3036,19 @@ bool GDALGeoPackageDataset::OpenRaster(
 
 const OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef() const
 {
+    if (GetLayerCount())
+        return GDALDataset::GetSpatialRef();
+    return GetSpatialRefRasterOnly();
+}
+
+/************************************************************************/
+/*                      GetSpatialRefRasterOnly()                       */
+/************************************************************************/
+
+const OGRSpatialReference *
+GDALGeoPackageDataset::GetSpatialRefRasterOnly() const
+
+{
     return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 

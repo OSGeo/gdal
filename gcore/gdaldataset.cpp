@@ -1179,6 +1179,8 @@ const char *GDALDataset::GetProjectionRef() const
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
+static thread_local int tlsEnableLayersInGetSpatialRefCounter = 0;
+
 /**
  * \brief Fetch the spatial reference for this dataset.
  *
@@ -1188,18 +1190,88 @@ const char *GDALDataset::GetProjectionRef() const
  * a dataset where there are GCPs and not a geotransform, this method returns
  * null. Use GetGCPSpatialRef() instead.
  *
+ * Since GDAL 3.12, the default implementation of this method will iterate over
+ * vector layers and return their SRS if all geometry columns of all layers use
+ * the same SRS, or nullptr otherwise.
+ *
  * @since GDAL 3.0
  *
  * @return a pointer to an internal object. It should not be altered or freed.
- * Its lifetime will be the one of the dataset object, or until the next
- * call to this method.
+ * Its lifetime will be the one of the dataset object.
  *
  * @see https://gdal.org/tutorials/osr_api_tut.html
  */
 
 const OGRSpatialReference *GDALDataset::GetSpatialRef() const
 {
+    if (tlsEnableLayersInGetSpatialRefCounter == 0)
+        return GetSpatialRefVectorOnly();
     return nullptr;
+}
+
+/************************************************************************/
+/*                       GetSpatialRefVectorOnly()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch the spatial reference for this dataset (only for vector layers)
+ *
+ * The default implementation of this method will iterate over
+ * vector layers and return their SRS if all geometry columns of all layers use
+ * the same SRS, or nullptr otherwise.
+ *
+ * @since GDAL 3.12
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object.
+ */
+
+const OGRSpatialReference *GDALDataset::GetSpatialRefVectorOnly() const
+{
+    bool bInit = false;
+    const OGRSpatialReference *poGlobalSRS = nullptr;
+    for (const OGRLayer *poLayer : GetLayers())
+    {
+        for (const auto *poGeomFieldDefn :
+             poLayer->GetLayerDefn()->GetGeomFields())
+        {
+            const auto *poSRS = poGeomFieldDefn->GetSpatialRef();
+            if (!bInit)
+            {
+                bInit = true;
+                poGlobalSRS = poSRS;
+            }
+            else if ((poSRS && !poGlobalSRS) || (!poSRS && poGlobalSRS) ||
+                     (poSRS && poGlobalSRS && !poSRS->IsSame(poGlobalSRS)))
+            {
+                CPLDebug("GDAL",
+                         "Not all geometry fields or layers have the same CRS");
+                return nullptr;
+            }
+        }
+    }
+    return poGlobalSRS;
+}
+
+/************************************************************************/
+/*                       GetSpatialRefRasterOnly()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch the spatial reference for this dataset (ignoring vector layers)
+ *
+ * @since GDAL 3.12
+ *
+ * @return a pointer to an internal object. It should not be altered or freed.
+ * Its lifetime will be the one of the dataset object.
+ */
+
+const OGRSpatialReference *GDALDataset::GetSpatialRefRasterOnly() const
+{
+    ++tlsEnableLayersInGetSpatialRefCounter;
+    const auto poRet = GetSpatialRef();
+    --tlsEnableLayersInGetSpatialRefCounter;
+    return poRet;
 }
 
 /************************************************************************/
@@ -1208,6 +1280,8 @@ const OGRSpatialReference *GDALDataset::GetSpatialRef() const
 
 /**
  * \brief Fetch the spatial reference for this dataset.
+ *
+ * Same as the C++ method GDALDataset::GetSpatialRef()
  *
  * @since GDAL 3.0
  *
@@ -10880,26 +10954,26 @@ CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
 CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
                               const OGRSpatialReference *poCRS) const
 {
-    auto poThisDS = const_cast<GDALDataset *>(this);
-    const OGRSpatialReference *poThisCRS = poThisDS->GetSpatialRef();
+    const OGRSpatialReference *poThisCRS = GetSpatialRefRasterOnly();
     int nLayerCount = 0;
     if (!poThisCRS)
     {
-        nLayerCount = poThisDS->GetLayerCount();
+        nLayerCount = GetLayerCount();
         if (nLayerCount >= 1)
         {
-            if (auto poLayer = poThisDS->GetLayer(0))
+            if (auto poLayer = GetLayer(0))
                 poThisCRS = poLayer->GetSpatialRef();
         }
-        if (poCRS && !poThisCRS)
-            return CE_Failure;
     }
     if (!poCRS)
         poCRS = poThisCRS;
+    else if (!poThisCRS)
+        return CE_Failure;
 
     *psExtent = OGREnvelope();
 
     GDALGeoTransform gt;
+    auto poThisDS = const_cast<GDALDataset *>(this);
     const bool bHasGT = poThisDS->GetGeoTransform(gt) == CE_None;
     if (bHasGT)
     {
