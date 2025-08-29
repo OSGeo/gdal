@@ -292,10 +292,20 @@ int VSITarReader::GotoNextFile()
                     }
                     if (m_abyBufferIdx < m_abyBufferSize)
                     {
-                        osNextFileName.assign(
+                        const char *pszFilename =
                             reinterpret_cast<const char *>(m_abyBuffer +
-                                                           nFilenameStartIdx),
-                            m_abyBufferIdx - nFilenameStartIdx);
+                                                           nFilenameStartIdx);
+                        osNextFileName.assign(
+                            pszFilename,
+                            CPLStrnlen(pszFilename,
+                                       m_abyBufferIdx - nFilenameStartIdx));
+                        if (osNextFileName.empty() || osNextFileName == "." ||
+                            osNextFileName.find("..") != std::string::npos)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Invalid filename");
+                            return false;
+                        }
                         nCurOffset = VSIFTellL(fp);
                         nCurOffset -= m_abyBufferSize;
                         nCurOffset += m_abyBufferIdx + 1;
