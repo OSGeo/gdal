@@ -68,19 +68,6 @@ typedef enum
     /*! @endcond */
 } GDALResampleAlg;
 
-/*! GWKAverageOrMode Algorithm */
-typedef enum
-{
-    /*! Average */ GWKAOM_Average = 1,
-    /*! Mode */ GWKAOM_Fmode = 2,
-    /*! Mode of GDT_Byte, GDT_UInt16, or GDT_Int16 */ GWKAOM_Imode = 3,
-    /*! Maximum */ GWKAOM_Max = 4,
-    /*! Minimum */ GWKAOM_Min = 5,
-    /*! Quantile */ GWKAOM_Quant = 6,
-    /*! Sum */ GWKAOM_Sum = 7,
-    /*! RMS */ GWKAOM_RMS = 8
-} GWKAverageOrModeAlg;
-
 /*! @cond Doxygen_Suppress */
 typedef int (*GDALMaskFunc)(void *pMaskFuncArg, int nBandCount,
                             GDALDataType eType, int nXOff, int nYOff,

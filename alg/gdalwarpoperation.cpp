@@ -266,8 +266,7 @@ int GDALWarpOperation::ValidateOptions()
     }
 
     if (GDALDataTypeIsComplex(psOptions->eWorkingDataType) != 0 &&
-        (psOptions->eResampleAlg == GRA_Mode ||
-         psOptions->eResampleAlg == GRA_Max ||
+        (psOptions->eResampleAlg == GRA_Max ||
          psOptions->eResampleAlg == GRA_Min ||
          psOptions->eResampleAlg == GRA_Med ||
          psOptions->eResampleAlg == GRA_Q1 ||
