@@ -1096,14 +1096,27 @@ retry:
     /* -------------------------------------------------------------------- */
     /*      Compute a pixel size from this.                                 */
     /* -------------------------------------------------------------------- */
-    const double dfPixelSize =
+    double dfPixelSize =
         dfDiagonalDist / sqrt(static_cast<double>(nInXSize) * nInXSize +
                               static_cast<double>(nInYSize) * nInYSize);
 
-    const double dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
-    const double dfLines = (dfMaxYOut - dfMinYOut) / dfPixelSize;
+    double dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
+    double dfLines = (dfMaxYOut - dfMinYOut) / dfPixelSize;
 
     const int knIntMaxMinusOne = std::numeric_limits<int>::max() - 1;
+    if (dfPixels > knIntMaxMinusOne && dfLines <= dfPixels)
+    {
+        dfPixels = knIntMaxMinusOne;
+        dfPixelSize = (dfMaxXOut - dfMinXOut) / dfPixels;
+        dfLines = (dfMaxYOut - dfMinYOut) / dfPixelSize;
+    }
+    else if (dfLines > knIntMaxMinusOne)
+    {
+        dfLines = knIntMaxMinusOne;
+        dfPixelSize = (dfMaxYOut - dfMinYOut) / dfLines;
+        dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
+    }
+
     if (dfPixels > knIntMaxMinusOne || dfLines > knIntMaxMinusOne)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
