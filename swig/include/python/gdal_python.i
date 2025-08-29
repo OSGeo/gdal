@@ -7,6 +7,7 @@
 %feature("autodoc");
 
 %include "gdal_docs.i"
+%include "gdal_algorithm_docs.i"
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 %include "gdal_driver_docs.i"
@@ -5830,7 +5831,7 @@ def quiet_errors():
 def quiet_warnings():
     """Temporarily install an error handler that silences all warnings.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        Returns
        -------
@@ -5852,12 +5853,12 @@ def quiet_warnings():
 def Run(*alg, arguments={}, progress=None, **kwargs):
     """Run a GDAL algorithm and return it.
 
-       .. versionadded: 3.11
+       .. versionadded:: 3.11
 
        This method can also be used within a context manager, in which case
        :py:meth:`osgeo.gdal.Algorithm.Finalize` will be called at the exit of the
        context manager.  An exception will be raised if the algorithm fails,
-       even if `gdal.UseExceptions()` has not been called.
+       even if :py:meth:`osgeo.gdal.UseExceptions()` has not been called.
 
        Parameters
        ----------
@@ -5877,10 +5878,10 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
 
        Returns
        -------
-            An algorithm
+       Algorithm
 
-       Example
-       -------
+       Examples
+       --------
 
        >>> alg = gdal.Run(["raster", "info"], {"input": "byte.tif"})
        >>> print(alg.output()["bands"])
@@ -6228,7 +6229,7 @@ class VSIFile(BytesIO):
 
         """Instantiate an existing GDAL algorithm from its path.
 
-           .. versionadded: 3.11
+           .. versionadded:: 3.11
 
            Parameters
            ----------
