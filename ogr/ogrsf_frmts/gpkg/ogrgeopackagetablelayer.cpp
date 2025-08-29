@@ -23,9 +23,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
 #include <cinttypes>
+#include <climits>
 #include <cmath>
 #include <limits>
+#include <mutex>
 
 #undef SQLITE_STATIC
 #define SQLITE_STATIC static_cast<sqlite3_destructor_type>(nullptr)

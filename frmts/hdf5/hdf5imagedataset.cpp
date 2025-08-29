@@ -25,6 +25,7 @@
 #include "memdataset.h"
 
 #include <algorithm>
+#include <cstring>
 #include <limits>
 
 class HDF5ImageDataset final : public HDF5Dataset
