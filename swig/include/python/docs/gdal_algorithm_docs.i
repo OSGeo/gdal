@@ -49,7 +49,7 @@ AlgorithmArg
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster").InstantiateSubAlgorithm("polygonize")
+>>> alg = gdal.Algorithm("raster", "polygonize")
 >>> arg = alg.GetArg("connect-diagonal-pixels")
 >>> arg.GetDescription()
 'Consider diagonal pixels as connected'
@@ -66,7 +66,7 @@ list
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster").InstantiateSubAlgorithm("convert")
+>>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetArgNames()
 ['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'overwrite', 'append']
 
@@ -88,7 +88,7 @@ str
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster").InstantiateSubAlgorithm("convert")
+>>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetDescription()
 'Convert a raster dataset.'
 
@@ -104,7 +104,7 @@ str
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster").InstantiateSubAlgorithm("convert")
+>>> alg = gdal.Algorithm("raster", "convert")
 >>> alg.GetHelpFullURL()
 'https://gdal.org/programs/gdal_raster_convert.html'
 
@@ -126,7 +126,7 @@ str
 
 Example
 -------
->>> gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("vector").InstantiateSubAlgorithm("info").GetName()
+>>> gdal.Algorithm("raster", "info").GetName()
 'info'
 
 };
@@ -141,7 +141,7 @@ list or None
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster")
+>>> alg = gdal.Algorithm("raster")
 >>> alg.GetSubAlgorithmNames()
 ['aspect', 'calc', 'clean-collar', 'clip', 'color-map', 'color-merge', 'contour', 'convert', 'create', 'edit', 'fill-nodata', 'footprint', 'hillshade', 'index', 'info', 'mosaic', 'nodata-to-alpha', 'overview', 'pansharpen', 'pipeline', 'pixel-info', 'polygonize', 'proximity', 'reclassify', 'reproject', 'resize', 'rgb-to-palette', 'roughness', 'scale', 'select', 'set-type', 'sieve', 'slope', 'stack', 'tile', 'tpi', 'tri', 'unscale', 'update', 'viewshed']
 
@@ -159,7 +159,7 @@ Example
 -------
 >>> import json
 >>> import pprint
->>> usage = json.loads(gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("vector").InstantiateSubAlgorithm("info").GetUsageAsJSON())
+>>> usage = json.loads(gdal.Algorithm("vector", "info").GetUsageAsJSON())
 >>> pprint.pprint(usage)
 {'description': 'Return information on a vector dataset.',
  'full_path': ['gdal', 'vector', 'info'],
@@ -284,7 +284,7 @@ bool
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster")
+>>> alg = gdal.Algorithm("raster")
 >>> alg.HasSubAlgorithms()
 True
 >>> subalg = alg.InstantiateSubAlgorithm("convert")
@@ -303,7 +303,7 @@ Algorithm or None
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg("raster")
+>>> alg = gdal.Algorithm("raster")
 >>> alg.InstantiateSubAlgorithm("convert")
 <osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at 0x7ca38a3eec40> >
 >>> subalg = alg.InstantiateSubAlgorithm("does_not_exist")
@@ -326,7 +326,7 @@ bool
 
 Example
 -------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('vector').InstantiateSubAlgorithm('info')
+>>> alg = gdal.Algorithm("vector", "info")
 >>> alg.ParseCommandLineArguments(['poly.shp', '--format', 'text'])
 True
 
@@ -370,7 +370,7 @@ bool
 
 Examples
 --------
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('vector').InstantiateSubAlgorithm('info')
+>>> alg = gdal.Algorithm("vector", "info")
 >>> alg['input'] = 'poly.shp'
 >>> alg.Run()
 True
@@ -423,7 +423,7 @@ Algorithm
 Examples
 --------
 
->>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('pipeline')
+>>> alg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('pipeline')    # or alg= gdal.Algorithm("pipeline")
 >>> alg.GetName()
 'pipeline'
 >>> alg.GetArgNames()
