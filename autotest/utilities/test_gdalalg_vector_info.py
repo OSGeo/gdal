@@ -264,3 +264,15 @@ def test_gdalalg_vector_info_update(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 9
+
+
+def test_gdalalg_vector_info_sql_where_mutually_exclusive():
+
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Run(
+            "vector",
+            "info",
+            dataset="data/path.shp",
+            sql="select * from path",
+            where="1=1",
+        )
