@@ -17,6 +17,7 @@
 #include <ctime>
 #include <fcntl.h>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
