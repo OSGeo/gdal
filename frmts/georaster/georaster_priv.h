@@ -168,11 +168,11 @@ class GeoRasterDataset final : public GDALDataset
                            GDALProgressFunc pfnProgress, void *pProgressData);
     boolean JPEG_CopyDirect(const char *pszJPGFilename,
                             GDALProgressFunc pfnProgress, void *pProgressData);
-    static GDALDataset *OpenDataset(const char *pszFilenameIn,
-                                    GDALAccess eAccessIn, bool bPoolIn,
-                                    int nPoolSessionMinIn,
-                                    int nPoolSessionMaxIn,
-                                    int nPoolSessionIncrIn);
+    static GeoRasterDataset *OpenDataset(const char *pszFilenameIn,
+                                         GDALAccess eAccessIn, bool bPoolIn,
+                                         int nPoolSessionMinIn,
+                                         int nPoolSessionMaxIn,
+                                         int nPoolSessionIncrIn);
 
   public:
     GDALDataset *poJP2Dataset;

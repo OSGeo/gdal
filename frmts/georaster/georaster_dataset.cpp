@@ -137,9 +137,9 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     //  Create a corresponding GDALDataset object
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset *poGRD = (GeoRasterDataset *)OpenDataset(
-        poOpenInfo->pszFilename, poOpenInfo->eAccess, bPool, nPoolSessionMin,
-        nPoolSessionMax, nPoolSessionIncr);
+    GeoRasterDataset *poGRD =
+        OpenDataset(poOpenInfo->pszFilename, poOpenInfo->eAccess, bPool,
+                    nPoolSessionMin, nPoolSessionMax, nPoolSessionIncr);
 
     //  -------------------------------------------------------------------
     //  Return a GDALDataset
@@ -152,11 +152,10 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 //                                                                OpenDataset()
 //  ---------------------------------------------------------------------------
 
-GDALDataset *GeoRasterDataset::OpenDataset(const char *pszFilenameIn,
-                                           GDALAccess eAccessIn, bool bPoolIn,
-                                           int nPoolSessionMinIn,
-                                           int nPoolSessionMaxIn,
-                                           int nPoolSessionIncrIn)
+GeoRasterDataset *
+GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
+                              bool bPoolIn, int nPoolSessionMinIn,
+                              int nPoolSessionMaxIn, int nPoolSessionIncrIn)
 {
 
     CPLDebug("GEOR", "OpenDataset with name=%s, access=%d", pszFilenameIn,
@@ -207,7 +206,7 @@ GDALDataset *GeoRasterDataset::OpenDataset(const char *pszFilenameIn,
                 poGRD = nullptr;
             }
         }
-        return (GDALDataset *)poGRD;
+        return poGRD;
     }
 
     //  -------------------------------------------------------------------
@@ -397,10 +396,10 @@ GDALDataset *GeoRasterDataset::OpenDataset(const char *pszFilenameIn,
     CPLFree(pszDoc);
 
     //  -------------------------------------------------------------------
-    //  Return a GDALDataset
+    //  Return a GeoRasterDataset
     //  -------------------------------------------------------------------
 
-    return (GDALDataset *)poGRD;
+    return poGRD;
 }
 
 //  ---------------------------------------------------------------------------
@@ -919,9 +918,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     //  Create a Dataset object
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset *poGRD = (GeoRasterDataset *)OpenDataset(
-        pszFilename, GA_Update, bPool, nPoolSessionMin, nPoolSessionMax,
-        nPoolSessionIncr);
+    GeoRasterDataset *poGRD =
+        OpenDataset(pszFilename, GA_Update, bPool, nPoolSessionMin,
+                    nPoolSessionMax, nPoolSessionIncr);
 
     if (!poGRD)
     {
@@ -1273,9 +1272,8 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     delete poGRD;
 
     CPLDebug("GEOR", "Create:: Open the dataset on the new georaster object");
-    poGRD = (GeoRasterDataset *)OpenDataset(szStringId, GA_Update, bPool,
-                                            nPoolSessionMin, nPoolSessionMax,
-                                            nPoolSessionIncr);
+    poGRD = OpenDataset(szStringId, GA_Update, bPool, nPoolSessionMin,
+                        nPoolSessionMax, nPoolSessionIncr);
 
     if (!poGRD)
     {
