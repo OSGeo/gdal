@@ -6673,6 +6673,26 @@ static bool GWKAverageOrModeComputeSourceCoords(
 /*                         GWKModeRealType()                            */
 /************************************************************************/
 
+template <class T> static inline bool IsSame(T a, T b)
+{
+    return a == b;
+}
+
+template <> bool IsSame<GFloat16>(GFloat16 a, GFloat16 b)
+{
+    return a == b || (CPLIsNan(a) && CPLIsNan(b));
+}
+
+template <> bool IsSame<float>(float a, float b)
+{
+    return a == b || (std::isnan(a) && std::isnan(b));
+}
+
+template <> bool IsSame<double>(double a, double b)
+{
+    return a == b || (std::isnan(a) && std::isnan(b));
+}
+
 template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
 {
     const GDALWarpKernel *poWK = psJob->poWK;
@@ -6803,7 +6823,7 @@ template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
                             int i = 0;
                             for (i = 0; i < nBins; ++i)
                             {
-                                if (pVals[i] == nVal)
+                                if (IsSame(pVals[i], nVal))
                                 {
 
                                     pafCounts[i] +=
@@ -7056,8 +7076,8 @@ static void GWKModeComplexType(GWKJobStruct *psJob)
                             int i = 0;
                             for (i = 0; i < nBins; ++i)
                             {
-                                if (padfRealVals[i] == dfValueReal &&
-                                    padfImagVals[i] == dfValueImag)
+                                if (IsSame(padfRealVals[i], dfValueReal) &&
+                                    IsSame(padfImagVals[i], dfValueImag))
                                 {
 
                                     pafCounts[i] +=
