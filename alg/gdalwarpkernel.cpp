@@ -1558,7 +1558,7 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
 
         // It seems like we also ought to be testing panDstValid[] here!
 
-        const double dfDstReal = pDst[iDstOffset];
+        const double dfDstReal = static_cast<double>(pDst[iDstOffset]);
 
         // The destination density is really only relative to the portion
         // not occluded by the overlay.
