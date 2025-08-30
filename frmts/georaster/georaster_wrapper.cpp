@@ -88,6 +88,10 @@ GeoRasterWrapper::GeoRasterWrapper()
     bWriteOnly = false;
     bBlocking = true;
     bAutoBlocking = false;
+    bPool = false;
+    nPoolSessionMin = -1;
+    nPoolSessionMax = -1;
+    nPoolSessionIncr = -1;
     eModelCoordLocation = MCL_DEFAULT;
     phRPC = nullptr;
     poConnection = nullptr;
@@ -226,7 +230,10 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
 //                                                                       Open()
 //  ---------------------------------------------------------------------------
 
-GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
+GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
+                                         bool bPool, int nPoolSessionMinIn,
+                                         int nPoolSessionMaxIn,
+                                         int nPoolSessionIncrIn)
 {
     char **papszParam = ParseIdentificator(pszStringId);
 
@@ -280,8 +287,26 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     }
     else
     {
-        poGRW->poConnection =
-            new OWConnection(papszParam[0], papszParam[1], papszParam[2]);
+        /**
+         * Get the session from the OCI session pool or 
+         * create a new session
+         */
+        if (bPool)
+        {
+            poGRW->poConnection =
+                GeoRasterDriver::gpoGeoRasterDriver->GetConnection(
+                    papszParam[0], papszParam[1], papszParam[2],
+                    nPoolSessionMinIn, nPoolSessionMaxIn, nPoolSessionIncrIn);
+            poGRW->bPool = true;
+            poGRW->nPoolSessionMin = nPoolSessionMinIn;
+            poGRW->nPoolSessionMax = nPoolSessionMaxIn;
+            poGRW->nPoolSessionIncr = nPoolSessionIncrIn;
+        }
+        else
+        {
+            poGRW->poConnection =
+                new OWConnection(papszParam[0], papszParam[1], papszParam[2]);
+        }
     }
 
     if (!poGRW->poConnection || !poGRW->poConnection->Succeeded())
