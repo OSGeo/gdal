@@ -41,6 +41,11 @@
 
 #ifdef USE_NEON_OPTIMIZATIONS
 #include "include_sse2neon.h"
+
+#if (!defined(__aarch64__) && !defined(_M_ARM64))
+#define ARM_V7
+#endif
+
 #define USE_SSE2
 
 #include "gdalsse_priv.h"
@@ -943,6 +948,8 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
 /*                      QuadraticMeanFloatSSE2()                        */
 /************************************************************************/
 
+#if !defined(ARM_V7)
+
 #ifdef __SSE3__
 #define sse2_hadd_ps _mm_hadd_ps
 #else
@@ -1124,21 +1131,21 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
     for (; iDstPixel < nDstXWidth - 3; iDstPixel += 4)
     {
         // Load 8 Float32 from each line
-        const auto firstLineLo = _mm_loadu_ps(pSrcScanlineShifted);
-        const auto firstLineHi = _mm_loadu_ps(pSrcScanlineShifted + 4);
-        const auto secondLineLo =
-            _mm_loadu_ps(pSrcScanlineShifted + nChunkXSize);
-        const auto secondLineHi =
-            _mm_loadu_ps(pSrcScanlineShifted + 4 + nChunkXSize);
+        const auto firstLineLo =
+            _mm_mul_ps(_mm_loadu_ps(pSrcScanlineShifted), zeroDot25);
+        const auto firstLineHi =
+            _mm_mul_ps(_mm_loadu_ps(pSrcScanlineShifted + 4), zeroDot25);
+        const auto secondLineLo = _mm_mul_ps(
+            _mm_loadu_ps(pSrcScanlineShifted + nChunkXSize), zeroDot25);
+        const auto secondLineHi = _mm_mul_ps(
+            _mm_loadu_ps(pSrcScanlineShifted + 4 + nChunkXSize), zeroDot25);
 
         // Vertical addition
-        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
-        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
+        const auto tmpLo = _mm_add_ps(firstLineLo, secondLineLo);
+        const auto tmpHi = _mm_add_ps(firstLineHi, secondLineHi);
 
         // Horizontal addition
-        const auto sum = sse2_hadd_ps(sumLo, sumHi);
-
-        const auto average = _mm_mul_ps(sum, zeroDot25);
+        const auto average = sse2_hadd_ps(tmpLo, tmpHi);
 
         _mm_storeu_ps(&pDstScanline[iDstPixel], average);
         pSrcScanlineShifted += 8;
@@ -1150,11 +1157,13 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
 
 #endif
 
+#endif
+
 /************************************************************************/
 /*                    GDALResampleChunk_AverageOrRMS()                  */
 /************************************************************************/
 
-template <class T, class Tsum, GDALDataType eWrkDataType>
+template <class T, class Tsum, GDALDataType eWrkDataType, bool bQuadraticMean>
 static CPLErr
 GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                  const T *pChunk, void **ppDstBuffer)
@@ -1181,7 +1190,6 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
         CPL_TO_BOOL(STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2G"));
-    const bool bQuadraticMean = CPL_TO_BOOL(EQUAL(pszResampling, "RMS"));
     if (bBit2Grayscale)
         poColorTable = nullptr;
 
@@ -1335,7 +1343,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
 #ifdef USE_SSE2
                     if constexpr (eWrkDataType == GDT_Byte)
                     {
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                         {
                             iDstPixel = QuadraticMeanByteSSE2OrAVX2(
                                 nDstXWidth, nChunkXSize, pSrcScanlineShifted,
@@ -1351,7 +1359,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     else
                     {
                         static_assert(eWrkDataType == GDT_UInt16);
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                         {
                             iDstPixel = QuadraticMeanUInt16SSE2(
                                 nDstXWidth, nChunkXSize, pSrcScanlineShifted,
@@ -1369,7 +1377,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     {
                         Tsum nTotal = 0;
                         T nVal;
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                             nTotal =
                                 SQUARE<Tsum>(pSrcScanlineShifted[0]) +
                                 SQUARE<Tsum>(pSrcScanlineShifted[1]) +
@@ -1383,7 +1391,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                      pSrcScanlineShifted[1 + nChunkXSize];
 
                         constexpr int nTotalWeight = 4;
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                             nVal = ComputeIntegerRMS_4values<T>(nTotal);
                         else
                             nVal = static_cast<T>((nTotal + nTotalWeight / 2) /
@@ -1405,11 +1413,11 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                         static_cast<size_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
-#ifdef USE_SSE2
+#if defined(USE_SSE2) && !defined(ARM_V7)
                     if constexpr (eWrkDataType == GDT_Float32)
                     {
                         static_assert(std::is_same_v<T, float>);
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                         {
                             iDstPixel = QuadraticMeanFloatSSE2(
                                 nDstXWidth, nChunkXSize, pSrcScanlineShifted,
@@ -1427,7 +1435,71 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     for (; iDstPixel < nDstXWidth; ++iDstPixel)
                     {
                         T nVal;
-                        if (bQuadraticMean)
+                        if constexpr (eWrkDataType == GDT_Float32 ||
+                                      eWrkDataType == GDT_Float64)
+                        {
+                            if constexpr (bQuadraticMean)
+                            {
+                                // Avoid issues with large values by renormalizing
+                                const auto max = std::max(
+                                    {std::fabs(pSrcScanlineShifted[0]),
+                                     std::fabs(pSrcScanlineShifted[1]),
+                                     std::fabs(
+                                         pSrcScanlineShifted[nChunkXSize]),
+                                     std::fabs(
+                                         pSrcScanlineShifted[1 +
+                                                             nChunkXSize])});
+                                if (max == 0)
+                                {
+                                    nVal = 0;
+                                }
+                                else if (std::isinf(max))
+                                {
+                                    // If there is at least one infinity value,
+                                    // then just summing, and taking the abs
+                                    // value will give the expected result:
+                                    // * +inf if all values are +inf
+                                    // * +inf if all values are -inf
+                                    // * NaN otherwise
+                                    nVal = std::fabs(
+                                        pSrcScanlineShifted[0] +
+                                        pSrcScanlineShifted[1] +
+                                        pSrcScanlineShifted[nChunkXSize] +
+                                        pSrcScanlineShifted[1 + nChunkXSize]);
+                                }
+                                else
+                                {
+                                    const auto inv_max =
+                                        static_cast<T>(1.0) / max;
+                                    nVal = max *
+                                           std::sqrt(
+                                               static_cast<T>(0.25) *
+                                               (SQUARE(pSrcScanlineShifted[0] *
+                                                       inv_max) +
+                                                SQUARE(pSrcScanlineShifted[1] *
+                                                       inv_max) +
+                                                SQUARE(pSrcScanlineShifted
+                                                           [nChunkXSize] *
+                                                       inv_max) +
+                                                SQUARE(pSrcScanlineShifted
+                                                           [1 + nChunkXSize] *
+                                                       inv_max)));
+                                }
+                            }
+                            else
+                            {
+                                nVal =
+                                    (static_cast<T>(0.25) *
+                                         pSrcScanlineShifted[0] +
+                                     static_cast<T>(0.25) *
+                                         pSrcScanlineShifted[1] +
+                                     static_cast<T>(0.25) *
+                                         pSrcScanlineShifted[nChunkXSize] +
+                                     static_cast<T>(0.25) *
+                                         pSrcScanlineShifted[1 + nChunkXSize]);
+                            }
+                        }
+                        else if constexpr (bQuadraticMean)
                         {
                             // Cast to double to avoid overflows
                             // (using std::hypot() is much slower)
@@ -1480,8 +1552,46 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
 
                     double dfTotal = 0;
                     double dfTotalWeight = 0;
+                    [[maybe_unused]] double dfMulFactor = 1.0;
+                    [[maybe_unused]] double dfInvMulFactor = 1.0;
+                    constexpr bool bUseMulFactor =
+                        (eWrkDataType == GDT_Float32 ||
+                         eWrkDataType == GDT_Float64);
                     if (pabyChunkNodataMask == nullptr)
                     {
+                        if constexpr (bUseMulFactor)
+                        {
+                            if constexpr (bQuadraticMean)
+                            {
+                                T mulFactor = 0;
+                                auto pChunkShifted =
+                                    pChunk +
+                                    static_cast<size_t>(nSrcYOff) * nChunkXSize;
+
+                                for (int iY = nSrcYOff; iY < nSrcYOff2;
+                                     ++iY, pChunkShifted += nChunkXSize)
+                                {
+                                    for (int iX = nSrcXOff; iX < nSrcXOff2;
+                                         ++iX)
+                                        mulFactor = std::max(
+                                            mulFactor,
+                                            std::fabs(pChunkShifted[iX]));
+                                }
+                                dfMulFactor = mulFactor;
+                                dfInvMulFactor =
+                                    dfMulFactor > 0 &&
+                                            std::isfinite(dfMulFactor)
+                                        ? 1.0 / dfMulFactor
+                                        : 1.0;
+                            }
+                            else
+                            {
+                                dfMulFactor = (nSrcYOff2 - nSrcYOff) *
+                                              (nSrcXOff2 - nSrcXOff);
+                                dfInvMulFactor = 1.0 / dfMulFactor;
+                            }
+                        }
+
                         auto pChunkShifted =
                             pChunk +
                             static_cast<size_t>(nSrcYOff) * nChunkXSize;
@@ -1490,13 +1600,13 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                         while (true)
                         {
                             double dfTotalLine;
-                            if (bQuadraticMean)
+                            if constexpr (bQuadraticMean)
                             {
                                 // Left pixel
                                 {
                                     const T val = pChunkShifted[nSrcXOff];
                                     dfTotalLine =
-                                        SQUARE<double>(val) *
+                                        SQUARE(val * dfInvMulFactor) *
                                         pasSrcX[iDstPixel].dfLeftWeight;
                                 }
 
@@ -1507,7 +1617,8 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                          iX < nSrcXOff2 - 1; ++iX)
                                     {
                                         const T val = pChunkShifted[iX];
-                                        dfTotalLine += SQUARE<double>(val);
+                                        dfTotalLine +=
+                                            SQUARE(val * dfInvMulFactor);
                                     }
 
                                     // Right pixel
@@ -1515,7 +1626,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                         const T val =
                                             pChunkShifted[nSrcXOff2 - 1];
                                         dfTotalLine +=
-                                            SQUARE<double>(val) *
+                                            SQUARE(val * dfInvMulFactor) *
                                             pasSrcX[iDstPixel].dfRightWeight;
                                     }
                                 }
@@ -1526,7 +1637,8 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                 {
                                     const T val = pChunkShifted[nSrcXOff];
                                     dfTotalLine =
-                                        val * pasSrcX[iDstPixel].dfLeftWeight;
+                                        val * dfInvMulFactor *
+                                        pasSrcX[iDstPixel].dfLeftWeight;
                                 }
 
                                 if (nSrcXOff + 1 < nSrcXOff2)
@@ -1536,7 +1648,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                          iX < nSrcXOff2 - 1; ++iX)
                                     {
                                         const T val = pChunkShifted[iX];
-                                        dfTotalLine += val;
+                                        dfTotalLine += val * dfInvMulFactor;
                                     }
 
                                     // Right pixel
@@ -1544,7 +1656,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                         const T val =
                                             pChunkShifted[nSrcXOff2 - 1];
                                         dfTotalLine +=
-                                            val *
+                                            val * dfInvMulFactor *
                                             pasSrcX[iDstPixel].dfRightWeight;
                                     }
                                 }
@@ -1584,7 +1696,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                     const double dfWeightX =
                                         pasSrcX[iDstPixel].dfLeftWeight;
                                     dfTotalWeightLine = dfWeightX;
-                                    if (bQuadraticMean)
+                                    if constexpr (bQuadraticMean)
                                         dfTotalLine =
                                             SQUARE<double>(val) * dfWeightX;
                                     else
@@ -1605,7 +1717,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                     {
                                         nCount++;
                                         dfTotalWeightLine += 1;
-                                        if (bQuadraticMean)
+                                        if constexpr (bQuadraticMean)
                                             dfTotalLine += SQUARE<double>(val);
                                         else
                                             dfTotalLine += val;
@@ -1624,7 +1736,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                                         const double dfWeightX =
                                             pasSrcX[iDstPixel].dfRightWeight;
                                         dfTotalWeightLine += dfWeightX;
-                                        if (bQuadraticMean)
+                                        if constexpr (bQuadraticMean)
                                             dfTotalLine +=
                                                 SQUARE<double>(val) * dfWeightX;
                                         else
@@ -1654,7 +1766,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     if constexpr (eWrkDataType == GDT_Byte)
                     {
                         T nVal;
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                             nVal = ComputeIntegerRMS<T, int>(dfTotal,
                                                              dfTotalWeight);
                         else
@@ -1667,7 +1779,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     else if constexpr (eWrkDataType == GDT_UInt16)
                     {
                         T nVal;
-                        if (bQuadraticMean)
+                        if constexpr (bQuadraticMean)
                             nVal = ComputeIntegerRMS<T, uint64_t>(
                                 dfTotal, dfTotalWeight);
                         else
@@ -1680,11 +1792,24 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     else
                     {
                         T nVal;
-                        if (bQuadraticMean)
-                            nVal =
-                                static_cast<T>(sqrt(dfTotal / dfTotalWeight));
+                        if constexpr (bQuadraticMean)
+                        {
+                            if constexpr (bUseMulFactor)
+                                nVal = static_cast<T>(
+                                    dfMulFactor *
+                                    sqrt(dfTotal / dfTotalWeight));
+                            else
+                                nVal = static_cast<T>(
+                                    sqrt(dfTotal / dfTotalWeight));
+                        }
                         else
-                            nVal = static_cast<T>(dfTotal / dfTotalWeight);
+                        {
+                            if constexpr (bUseMulFactor)
+                                nVal = static_cast<T>(
+                                    dfMulFactor * (dfTotal / dfTotalWeight));
+                            else
+                                nVal = static_cast<T>(dfTotal / dfTotalWeight);
+                        }
                         if (bHasNoData && nVal == tNoDataValue)
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -1720,7 +1845,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                         const auto &entry = colorEntries[idx];
                         if (entry.c4)
                         {
-                            if (bQuadraticMean)
+                            if constexpr (bQuadraticMean)
                             {
                                 nTotalR += SQUARE<int>(entry.c1);
                                 nTotalG += SQUARE<int>(entry.c2);
@@ -1748,7 +1873,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                 else
                 {
                     GDALColorEntry color;
-                    if (bQuadraticMean)
+                    if constexpr (bQuadraticMean)
                     {
                         color.c1 =
                             static_cast<short>(sqrt(nTotalR / nCount) + 0.5);
@@ -1778,47 +1903,50 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     return CE_None;
 }
 
+template <bool bQuadraticMean>
 static CPLErr
-GDALResampleChunk_AverageOrRMS(const GDALOverviewResampleArgs &args,
-                               const void *pChunk, void **ppDstBuffer,
-                               GDALDataType *peDstBufferDataType)
+GDALResampleChunk_AverageOrRMSInternal(const GDALOverviewResampleArgs &args,
+                                       const void *pChunk, void **ppDstBuffer,
+                                       GDALDataType *peDstBufferDataType)
 {
     *peDstBufferDataType = args.eWrkDataType;
     switch (args.eWrkDataType)
     {
         case GDT_Byte:
         {
-            return GDALResampleChunk_AverageOrRMS_T<GByte, int, GDT_Byte>(
+            return GDALResampleChunk_AverageOrRMS_T<GByte, int, GDT_Byte,
+                                                    bQuadraticMean>(
                 args, static_cast<const GByte *>(pChunk), ppDstBuffer);
         }
 
         case GDT_UInt16:
         {
-            if (EQUAL(args.pszResampling, "RMS"))
+            if constexpr (bQuadraticMean)
             {
                 // Use double as accumulation type, because UInt32 could overflow
-                return GDALResampleChunk_AverageOrRMS_T<GUInt16, double,
-                                                        GDT_UInt16>(
+                return GDALResampleChunk_AverageOrRMS_T<
+                    GUInt16, double, GDT_UInt16, bQuadraticMean>(
                     args, static_cast<const GUInt16 *>(pChunk), ppDstBuffer);
             }
             else
             {
-                return GDALResampleChunk_AverageOrRMS_T<GUInt16, GUInt32,
-                                                        GDT_UInt16>(
+                return GDALResampleChunk_AverageOrRMS_T<
+                    GUInt16, GUInt32, GDT_UInt16, bQuadraticMean>(
                     args, static_cast<const GUInt16 *>(pChunk), ppDstBuffer);
             }
         }
 
         case GDT_Float32:
         {
-            return GDALResampleChunk_AverageOrRMS_T<float, double, GDT_Float32>(
+            return GDALResampleChunk_AverageOrRMS_T<float, double, GDT_Float32,
+                                                    bQuadraticMean>(
                 args, static_cast<const float *>(pChunk), ppDstBuffer);
         }
 
         case GDT_Float64:
         {
-            return GDALResampleChunk_AverageOrRMS_T<double, double,
-                                                    GDT_Float64>(
+            return GDALResampleChunk_AverageOrRMS_T<double, double, GDT_Float64,
+                                                    bQuadraticMean>(
                 args, static_cast<const double *>(pChunk), ppDstBuffer);
         }
 
@@ -1828,6 +1956,19 @@ GDALResampleChunk_AverageOrRMS(const GDALOverviewResampleArgs &args,
 
     CPLAssert(false);
     return CE_Failure;
+}
+
+static CPLErr
+GDALResampleChunk_AverageOrRMS(const GDALOverviewResampleArgs &args,
+                               const void *pChunk, void **ppDstBuffer,
+                               GDALDataType *peDstBufferDataType)
+{
+    if (EQUAL(args.pszResampling, "RMS"))
+        return GDALResampleChunk_AverageOrRMSInternal<true>(
+            args, pChunk, ppDstBuffer, peDstBufferDataType);
+    else
+        return GDALResampleChunk_AverageOrRMSInternal<false>(
+            args, pChunk, ppDstBuffer, peDstBufferDataType);
 }
 
 /************************************************************************/
@@ -3141,11 +3282,12 @@ inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
 /*                    GDALResampleChunk_Convolution()                   */
 /************************************************************************/
 
-template <class T, class Twork, GDALDataType eWrkDataType>
+template <class T, class Twork, GDALDataType eWrkDataType,
+          bool bKernelWithNegativeWeights, bool bNeedRescale>
 static CPLErr GDALResampleChunk_ConvolutionT(
     const GDALOverviewResampleArgs &args, const T *pChunk, void *pDstBuffer,
     FilterFuncType pfnFilterFunc, FilterFunc4ValuesType pfnFilterFunc4Values,
-    int nKernelRadius, bool bKernelWithNegativeWeights, float fMaxVal)
+    int nKernelRadius, float fMaxVal)
 
 {
     const double dfXRatioDstToSrc = args.dfXRatioDstToSrc;
@@ -3375,12 +3517,69 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         const int nHeight = nChunkYSize * nBands;
         if (pabyChunkNodataMask == nullptr)
         {
+            // For floating-point data types, we must scale down a bit values
+            // if input values are close to +/- std::numeric_limits<T>::max()
+#ifdef OLD_CPPCHECK
+            constexpr double mulFactor = 1;
+#else
+            constexpr double mulFactor =
+                (bNeedRescale &&
+                 (std::is_same_v<T, float> || std::is_same_v<T, double>))
+                    ? 2
+                    : 1;
+#endif
+
             if (dfWeightSum != 0)
             {
-                const double dfInvWeightSum = 1.0 / dfWeightSum;
+                const double dfInvWeightSum = 1.0 / (mulFactor * dfWeightSum);
                 for (int i = 0; i < nSrcPixelCount; ++i)
+                {
                     padfWeights[i] *= dfInvWeightSum;
+                }
             }
+
+            const auto ScaleValue = [
+#ifdef _MSC_VER
+                                        mulFactor
+#endif
+            ](double dfVal, [[maybe_unused]] const T *inputValues,
+                                    [[maybe_unused]] int nInputValues)
+            {
+                constexpr bool isFloat =
+                    std::is_same_v<T, float> || std::is_same_v<T, double>;
+                if constexpr (isFloat)
+                {
+                    if (std::isfinite(dfVal))
+                    {
+                        return std::clamp(dfVal,
+                                          -std::numeric_limits<double>::max() /
+                                              mulFactor,
+                                          std::numeric_limits<double>::max() /
+                                              mulFactor) *
+                               mulFactor;
+                    }
+                    else if constexpr (bKernelWithNegativeWeights)
+                    {
+                        if (std::isnan(dfVal))
+                        {
+                            // Either one of the input value is NaN or they are +/-Inf
+                            const bool isPositive = inputValues[0] >= 0;
+                            for (int i = 0; i < nInputValues; ++i)
+                            {
+                                if (std::isnan(inputValues[i]))
+                                    return dfVal;
+                                // cppcheck-suppress knownConditionTrueFalse
+                                if ((inputValues[i] >= 0) != isPositive)
+                                    return dfVal;
+                            }
+                            // All values are positive or negative infinity
+                            return static_cast<double>(inputValues[0]);
+                        }
+                    }
+                }
+                return dfVal;
+            };
+
             int iSrcLineOff = 0;
 #ifdef USE_SSE2
             if (nSrcPixelCount == 4)
@@ -3399,15 +3598,18 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         dfVal2, dfVal3);
                     padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal1;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal1, pChunk + j, 4);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             1) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal2;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal2, pChunk + j + nChunkXSize, 4);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             2) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal3;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal3, pChunk + j + 2 * nChunkXSize, 4);
                 }
             }
             else if (bSrcPixelCountLess8)
@@ -3426,15 +3628,20 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         nSrcPixelCount, dfVal1, dfVal2, dfVal3);
                     padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal1;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal1, pChunk + j, nSrcPixelCount);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             1) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal2;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal2, pChunk + j + nChunkXSize,
+                                   nSrcPixelCount);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             2) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal3;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal3, pChunk + j + 2 * nChunkXSize,
+                                   nSrcPixelCount);
                 }
             }
             else
@@ -3454,15 +3661,20 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         nSrcPixelCount, dfVal1, dfVal2, dfVal3);
                     padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal1;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal1, pChunk + j, nSrcPixelCount);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             1) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal2;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal2, pChunk + j + nChunkXSize,
+                                   nSrcPixelCount);
                     padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) +
                                             2) *
                                                nDstXSize +
-                                           iDstPixel - nDstXOff] = dfVal3;
+                                           iDstPixel - nDstXOff] =
+                        ScaleValue(dfVal3, pChunk + j + 2 * nChunkXSize,
+                                   nSrcPixelCount);
                 }
             }
             for (; iSrcLineOff < nHeight; ++iSrcLineOff)
@@ -3474,7 +3686,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                     pChunk + j, padfWeights, nSrcPixelCount);
                 padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) *
                                            nDstXSize +
-                                       iDstPixel - nDstXOff] = dfVal;
+                                       iDstPixel - nDstXOff] =
+                    ScaleValue(dfVal, pChunk + j, nSrcPixelCount);
             }
         }
         else
@@ -3594,22 +3807,33 @@ static CPLErr GDALResampleChunk_ConvolutionT(
 
         if (pabyChunkNodataMask == nullptr)
         {
+            // For floating-point data types, we must scale down a bit values
+            // if input values are close to +/- std::numeric_limits<T>::max()
+#ifdef OLD_CPPCHECK
+            constexpr double mulFactor = 1;
+#else
+            constexpr double mulFactor =
+                (bNeedRescale &&
+                 (std::is_same_v<T, float> || std::is_same_v<T, double>))
+                    ? 2
+                    : 1;
+#endif
+
             if (dfWeightSum != 0)
             {
-                const double dfInvWeightSum = 1.0 / dfWeightSum;
+                const double dfInvWeightSum = 1.0 / (mulFactor * dfWeightSum);
                 for (int i = 0; i < nSrcLineCount; ++i)
                     padfWeights[i] *= dfInvWeightSum;
             }
-        }
 
-        if (pabyChunkNodataMask == nullptr)
-        {
             int iFilteredPixelOff = 0;  // Used after for.
             // j used after for.
             size_t j =
                 (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
 #ifdef USE_SSE2
-            if constexpr (eWrkDataType == GDT_Float32)
+            if constexpr ((!bNeedRescale ||
+                           !std::is_same_v<T, float>)&&eWrkDataType ==
+                          GDT_Float32)
             {
 #ifdef __AVX__
                 for (; iFilteredPixelOff < nDstXSize - 15;
@@ -3660,6 +3884,50 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             else
 #endif
             {
+                const auto ScaleValue = [
+#ifdef _MSC_VER
+                                            mulFactor
+#endif
+                ](double dfVal, [[maybe_unused]] const double *inputValues,
+                                        [[maybe_unused]] int nInputValues)
+                {
+                    constexpr bool isFloat =
+                        std::is_same_v<T, float> || std::is_same_v<T, double>;
+                    if constexpr (isFloat)
+                    {
+                        if (std::isfinite(dfVal))
+                        {
+                            return std::clamp(
+                                       dfVal,
+                                       -std::numeric_limits<Twork>::max() /
+                                           mulFactor,
+                                       std::numeric_limits<Twork>::max() /
+                                           mulFactor) *
+                                   mulFactor;
+                        }
+                        else if constexpr (bKernelWithNegativeWeights)
+                        {
+                            if (std::isnan(dfVal))
+                            {
+                                // Either one of the input value is NaN or they are +/-Inf
+                                const bool isPositive = inputValues[0] >= 0;
+                                for (int i = 0; i < nInputValues; ++i)
+                                {
+                                    if (std::isnan(inputValues[i]))
+                                        return dfVal;
+                                    // cppcheck-suppress knownConditionTrueFalse
+                                    if ((inputValues[i] >= 0) != isPositive)
+                                        return dfVal;
+                                }
+                                // All values are positive or negative infinity
+                                return inputValues[0];
+                            }
+                        }
+                    }
+
+                    return dfVal;
+                };
+
                 for (; iFilteredPixelOff < nDstXSize - 1;
                      iFilteredPixelOff += 2, j += 2)
                 {
@@ -3669,9 +3937,13 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         padfHorizontalFiltered + j, nDstXSize, padfWeights,
                         nSrcLineCount, dfVal1, dfVal2);
                     pafDstScanline[iFilteredPixelOff] =
-                        replaceValIfNodata(static_cast<Twork>(dfVal1));
+                        replaceValIfNodata(static_cast<Twork>(
+                            ScaleValue(dfVal1, padfHorizontalFiltered + j,
+                                       nSrcLineCount)));
                     pafDstScanline[iFilteredPixelOff + 1] =
-                        replaceValIfNodata(static_cast<Twork>(dfVal2));
+                        replaceValIfNodata(static_cast<Twork>(ScaleValue(
+                            dfVal2, padfHorizontalFiltered + j + nDstXSize,
+                            nSrcLineCount)));
                 }
                 if (iFilteredPixelOff < nDstXSize)
                 {
@@ -3679,7 +3951,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         padfHorizontalFiltered + j, nDstXSize, padfWeights,
                         nSrcLineCount);
                     pafDstScanline[iFilteredPixelOff] =
-                        replaceValIfNodata(static_cast<Twork>(dfVal));
+                        replaceValIfNodata(static_cast<Twork>(ScaleValue(
+                            dfVal, padfHorizontalFiltered + j, nSrcLineCount)));
                 }
             }
         }
@@ -3775,27 +4048,21 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     return CE_None;
 }
 
+template <bool bKernelWithNegativeWeights, bool bNeedRescale>
 static CPLErr
-GDALResampleChunk_Convolution(const GDALOverviewResampleArgs &args,
-                              const void *pChunk, void **ppDstBuffer,
-                              GDALDataType *peDstBufferDataType)
+GDALResampleChunk_ConvolutionInternal(const GDALOverviewResampleArgs &args,
+                                      const void *pChunk, void **ppDstBuffer,
+                                      GDALDataType *peDstBufferDataType)
 {
     GDALResampleAlg eResample;
-    bool bKernelWithNegativeWeights = false;
     if (EQUAL(args.pszResampling, "BILINEAR"))
         eResample = GRA_Bilinear;
     else if (EQUAL(args.pszResampling, "CUBIC"))
-    {
         eResample = GRA_Cubic;
-        bKernelWithNegativeWeights = true;
-    }
     else if (EQUAL(args.pszResampling, "CUBICSPLINE"))
         eResample = GRA_CubicSpline;
     else if (EQUAL(args.pszResampling, "LANCZOS"))
-    {
         eResample = GRA_Lanczos;
-        bKernelWithNegativeWeights = true;
-    }
     else
     {
         CPLAssert(false);
@@ -3833,34 +4100,38 @@ GDALResampleChunk_Convolution(const GDALOverviewResampleArgs &args,
     {
         case GDT_Byte:
         {
-            return GDALResampleChunk_ConvolutionT<GByte, float, GDT_Float32>(
+            return GDALResampleChunk_ConvolutionT<GByte, float, GDT_Float32,
+                                                  bKernelWithNegativeWeights,
+                                                  bNeedRescale>(
                 args, static_cast<const GByte *>(pChunk), *ppDstBuffer,
-                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius,
-                bKernelWithNegativeWeights, fMaxVal);
+                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius, fMaxVal);
         }
 
         case GDT_UInt16:
         {
-            return GDALResampleChunk_ConvolutionT<GUInt16, float, GDT_Float32>(
+            return GDALResampleChunk_ConvolutionT<GUInt16, float, GDT_Float32,
+                                                  bKernelWithNegativeWeights,
+                                                  bNeedRescale>(
                 args, static_cast<const GUInt16 *>(pChunk), *ppDstBuffer,
-                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius,
-                bKernelWithNegativeWeights, fMaxVal);
+                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius, fMaxVal);
         }
 
         case GDT_Float32:
         {
-            return GDALResampleChunk_ConvolutionT<float, float, GDT_Float32>(
+            return GDALResampleChunk_ConvolutionT<float, float, GDT_Float32,
+                                                  bKernelWithNegativeWeights,
+                                                  bNeedRescale>(
                 args, static_cast<const float *>(pChunk), *ppDstBuffer,
-                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius,
-                bKernelWithNegativeWeights, fMaxVal);
+                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius, fMaxVal);
         }
 
         case GDT_Float64:
         {
-            return GDALResampleChunk_ConvolutionT<double, double, GDT_Float64>(
+            return GDALResampleChunk_ConvolutionT<double, double, GDT_Float64,
+                                                  bKernelWithNegativeWeights,
+                                                  bNeedRescale>(
                 args, static_cast<const double *>(pChunk), *ppDstBuffer,
-                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius,
-                bKernelWithNegativeWeights, fMaxVal);
+                pfnFilterFunc, pfnFilterFunc4Values, nKernelRadius, fMaxVal);
         }
 
         default:
@@ -3869,6 +4140,24 @@ GDALResampleChunk_Convolution(const GDALOverviewResampleArgs &args,
 
     CPLAssert(false);
     return CE_Failure;
+}
+
+static CPLErr
+GDALResampleChunk_Convolution(const GDALOverviewResampleArgs &args,
+                              const void *pChunk, void **ppDstBuffer,
+                              GDALDataType *peDstBufferDataType)
+{
+    if (EQUAL(args.pszResampling, "CUBIC") ||
+        EQUAL(args.pszResampling, "LANCZOS"))
+        return GDALResampleChunk_ConvolutionInternal<
+            /* bKernelWithNegativeWeights=*/true, /* bNeedRescale = */ true>(
+            args, pChunk, ppDstBuffer, peDstBufferDataType);
+    else if (EQUAL(args.pszResampling, "CUBICSPLINE"))
+        return GDALResampleChunk_ConvolutionInternal<false, true>(
+            args, pChunk, ppDstBuffer, peDstBufferDataType);
+    else
+        return GDALResampleChunk_ConvolutionInternal<false, false>(
+            args, pChunk, ppDstBuffer, peDstBufferDataType);
 }
 
 /************************************************************************/

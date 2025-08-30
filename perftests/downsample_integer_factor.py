@@ -127,6 +127,14 @@ def testCubic(downsampling_factor):
     )
 
 
+def testCubicFloat32(downsampling_factor):
+    ds.ReadRaster(
+        buf_xsize=ds.RasterXSize // downsampling_factor,
+        buf_ysize=ds.RasterYSize // downsampling_factor,
+        resample_alg=gdal.GRIORA_Cubic,
+    )
+
+
 print(
     "testNearUInt16(2): %.3f"
     % timeit.timeit(
@@ -235,5 +243,14 @@ print(
     "testCubic(4): %.3f"
     % timeit.timeit(
         "testCubic(4)", setup="from __main__ import testCubic", number=NITERS
+    )
+)
+
+print(
+    "testCubicFloat32(2): %.3f"
+    % timeit.timeit(
+        "testCubicFloat32(2)",
+        setup="from __main__ import testCubicFloat32",
+        number=NITERS,
     )
 )

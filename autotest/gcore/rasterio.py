@@ -3529,7 +3529,7 @@ def test_rasterio_float64(resample_alg):
 
 
 ###############################################################################
-# Test rms downsampling by a factor of 2 on exact boundaries, with float data type
+# Test downsampling with constant value, with non factor of two downsampling
 
 
 @pytest.mark.parametrize(
@@ -3538,6 +3538,8 @@ def test_rasterio_float64(resample_alg):
         gdal.GRIORA_NearestNeighbour,
         gdal.GRIORA_Bilinear,
         gdal.GRIORA_Cubic,
+        gdal.GRIORA_CubicSpline,
+        gdal.GRIORA_Lanczos,
         gdal.GRIORA_Mode,
         gdal.GRIORA_Average,
         gdal.GRIORA_RMS,
@@ -3549,7 +3551,29 @@ def test_rasterio_float64(resample_alg):
         (gdal.GDT_Byte, "B", 255),
         (gdal.GDT_UInt16, "H", 65535),
         (gdal.GDT_Float32, "f", 1.5),
-        (gdal.GDT_Float64, "d", 1.5e100),
+        (gdal.GDT_Float32, "f", struct.unpack("<f", b"\x00\x00\x80\x00")[0]),  # FLT_MIN
+        (gdal.GDT_Float32, "f", struct.unpack("<f", b"\xff\xff\x7f\x7f")[0]),  # FLT_MAX
+        (gdal.GDT_Float32, "f", float("inf")),
+        (
+            gdal.GDT_Float32,
+            "f",
+            -struct.unpack("<f", b"\x00\x00\x80\x00")[0],
+        ),  # -FLT_MIN
+        (
+            gdal.GDT_Float32,
+            "f",
+            -struct.unpack("<f", b"\xff\xff\x7f\x7f")[0],
+        ),  # -FLT_MAX
+        (gdal.GDT_Float32, "f", -float("inf")),
+        (gdal.GDT_Float32, "f", float("nan")),
+        (gdal.GDT_Float64, "d", 1.5),
+        (gdal.GDT_Float64, "d", sys.float_info.min),
+        (gdal.GDT_Float64, "d", sys.float_info.max),
+        (gdal.GDT_Float64, "d", float("inf")),
+        (gdal.GDT_Float64, "d", -sys.float_info.min),
+        (gdal.GDT_Float64, "d", -sys.float_info.max),
+        (gdal.GDT_Float64, "d", -float("inf")),
+        (gdal.GDT_Float64, "d", float("nan")),
     ],
 )
 def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
@@ -3563,9 +3587,96 @@ def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
         struct.pack(struct_type * (3 * 3), val, val, val, val, val, val, val, val, val),
     )
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3, 2, 2, resample_alg=resample_alg)
-    assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
-        (val, val, val, val), rel=1e-14
+
+    if resample_alg == gdal.GRIORA_RMS:
+        val = abs(val)
+
+    if math.isnan(val):
+        for v in struct.unpack(struct_type * (2 * 2), data):
+            assert math.isnan(v)
+    else:
+        if abs(val) < 1e-10:
+            for x in struct.unpack(struct_type * (2 * 2), data):
+                assert abs(x) > 0 and abs(x) < 2 * abs(val)
+        assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
+            (val,) * (2 * 2), rel=1e-7 if dt == gdal.GDT_Float32 else 1e-14
+        )
+
+
+###############################################################################
+# Test downsampling with constant value, with factor of two downsampling
+
+
+@pytest.mark.parametrize(
+    "resample_alg",
+    [
+        gdal.GRIORA_NearestNeighbour,
+        gdal.GRIORA_Bilinear,
+        gdal.GRIORA_Cubic,
+        gdal.GRIORA_CubicSpline,
+        gdal.GRIORA_Lanczos,
+        gdal.GRIORA_Mode,
+        gdal.GRIORA_Average,
+        gdal.GRIORA_RMS,
+    ],
+)
+@pytest.mark.parametrize(
+    "dt,struct_type,val",
+    [
+        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt16, "H", 65535),
+        (gdal.GDT_Float32, "f", 1.5),
+        (gdal.GDT_Float32, "f", struct.unpack("<f", b"\x00\x00\x80\x00")[0]),  # FLT_MIN
+        (gdal.GDT_Float32, "f", struct.unpack("<f", b"\xff\xff\x7f\x7f")[0]),  # FLT_MAX
+        (gdal.GDT_Float32, "f", float("inf")),
+        (gdal.GDT_Float32, "f", float("nan")),
+        (
+            gdal.GDT_Float32,
+            "f",
+            -struct.unpack("<f", b"\x00\x00\x80\x00")[0],
+        ),  # -FLT_MIN
+        (
+            gdal.GDT_Float32,
+            "f",
+            -struct.unpack("<f", b"\xff\xff\x7f\x7f")[0],
+        ),  # -FLT_MAX
+        (gdal.GDT_Float32, "f", -float("inf")),
+        (gdal.GDT_Float64, "d", 1.5),
+        (gdal.GDT_Float64, "d", sys.float_info.min),
+        (gdal.GDT_Float64, "d", sys.float_info.max),
+        (gdal.GDT_Float64, "d", float("inf")),
+        (gdal.GDT_Float64, "d", -sys.float_info.min),
+        (gdal.GDT_Float64, "d", -sys.float_info.max),
+        (gdal.GDT_Float64, "d", -float("inf")),
+        (gdal.GDT_Float64, "d", float("nan")),
+    ],
+)
+def test_rasterio_constant_value_factor_of_two(resample_alg, dt, struct_type, val):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 18, 8, 1, dt)
+    ds.WriteRaster(
+        0,
+        0,
+        18,
+        8,
+        struct.pack(struct_type, val) * (18 * 8),
     )
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 8, 9, 4, resample_alg=resample_alg)
+
+    if resample_alg == gdal.GRIORA_RMS:
+        val = abs(val)
+
+    if math.isnan(val):
+        for v in struct.unpack(struct_type * (9 * 4), data):
+            assert math.isnan(v)
+    else:
+        if abs(val) < 1e-10:
+            for x in struct.unpack(struct_type * (9 * 4), data):
+                assert abs(x) > 0 and abs(x) < 2 * abs(val)
+
+        assert struct.unpack(struct_type * (9 * 4), data) == pytest.approx(
+            (val,) * (9 * 4), rel=1e-7 if dt == gdal.GDT_Float32 else 1e-14
+        )
 
 
 ###############################################################################
