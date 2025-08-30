@@ -1449,6 +1449,8 @@ def test_ogr_spatialite_2(sqlite_test_db):
     sqlite_test_db = reopen_sqlite_db(sqlite_test_db, update=False)
     lyr = sqlite_test_db.GetLayerByName("test_spatialfilter")
 
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) is True
+
     extent = lyr.GetExtent()
     assert extent == (0.0, 9.0, 0.0, 9.0), "got bad extent"
 
