@@ -2190,9 +2190,10 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
     else
         tNoDataValue = static_cast<T>(args.dfNoDataValue);
 
-    size_t nMaxNumPx = 0;
+    using CountType = uint32_t;
+    CountType nMaxNumPx = 0;
     T *paVals = nullptr;
-    int *panSums = nullptr;
+    CountType *panCounts = nullptr;
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
     const int nChunkBottomYOff = nChunkYOff + nChunkYSize;
@@ -2282,44 +2283,42 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
 
             if (bRegularProcessing)
             {
-                // Not sure how much sense it makes to run a majority
-                // filter on floating point data, but here it is for the sake
-                // of compatibility. It won't look right on RGB images by the
-                // nature of the filter.
-
+                // Sanity check to make sure the allocation of paVals and
+                // panCounts don't overflow.
+                static_assert(sizeof(CountType) <= sizeof(size_t));
                 if (nSrcYOff2 - nSrcYOff <= 0 || nSrcXOff2 - nSrcXOff <= 0 ||
-                    nSrcYOff2 - nSrcYOff > INT_MAX / (nSrcXOff2 - nSrcXOff) ||
-                    static_cast<size_t>(nSrcYOff2 - nSrcYOff) *
-                            static_cast<size_t>(nSrcXOff2 - nSrcXOff) >
-                        std::numeric_limits<size_t>::max() / sizeof(float))
+                    static_cast<CountType>(nSrcYOff2 - nSrcYOff) >
+                        (std::numeric_limits<CountType>::max() /
+                         std::max(sizeof(T), sizeof(CountType))) /
+                            static_cast<CountType>(nSrcXOff2 - nSrcXOff))
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Too big downsampling factor");
                     CPLFree(paVals);
-                    CPLFree(panSums);
+                    CPLFree(panCounts);
                     return CE_Failure;
                 }
-                const size_t nNumPx =
-                    static_cast<size_t>(nSrcYOff2 - nSrcYOff) *
-                    static_cast<size_t>(nSrcXOff2 - nSrcXOff);
-                size_t iMaxInd = 0;
-                size_t iMaxVal = 0;
-                bool biMaxValdValid = false;
+                const CountType nNumPx =
+                    static_cast<CountType>(nSrcYOff2 - nSrcYOff) *
+                    (nSrcXOff2 - nSrcXOff);
+                CountType iMaxInd = 0;
+                CountType iMaxVal = 0;
 
                 if (paVals == nullptr || nNumPx > nMaxNumPx)
                 {
                     T *paValsNew = static_cast<T *>(
                         VSI_REALLOC_VERBOSE(paVals, nNumPx * sizeof(T)));
-                    int *panSumsNew = static_cast<int *>(
-                        VSI_REALLOC_VERBOSE(panSums, nNumPx * sizeof(int)));
+                    CountType *panCountsNew =
+                        static_cast<CountType *>(VSI_REALLOC_VERBOSE(
+                            panCounts, nNumPx * sizeof(CountType)));
                     if (paValsNew != nullptr)
                         paVals = paValsNew;
-                    if (panSumsNew != nullptr)
-                        panSums = panSumsNew;
-                    if (paValsNew == nullptr || panSumsNew == nullptr)
+                    if (panCountsNew != nullptr)
+                        panCounts = panCountsNew;
+                    if (paValsNew == nullptr || panCountsNew == nullptr)
                     {
                         CPLFree(paVals);
-                        CPLFree(panSums);
+                        CPLFree(panCounts);
                         return CE_Failure;
                     }
                     nMaxNumPx = nNumPx;
@@ -2336,28 +2335,30 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
                             pabySrcScanlineNodataMask[iX + iTotYOff])
                         {
                             const T val = paSrcScanline[iX + iTotYOff];
-                            size_t i = 0;  // Used after for.
+                            CountType i = 0;  // Used after for.
 
                             // Check array for existing entry.
                             for (; i < iMaxInd; ++i)
-                                if (IsSame(paVals[i], val) &&
-                                    ++panSums[i] > panSums[iMaxVal])
+                            {
+                                if (IsSame(paVals[i], val))
                                 {
-                                    iMaxVal = i;
-                                    biMaxValdValid = true;
+                                    if (++panCounts[i] > panCounts[iMaxVal])
+                                    {
+                                        iMaxVal = i;
+                                    }
                                     break;
                                 }
+                            }
 
                             // Add to arr if entry not already there.
                             if (i == iMaxInd)
                             {
                                 paVals[iMaxInd] = val;
-                                panSums[iMaxInd] = 1;
+                                panCounts[iMaxInd] = 1;
 
-                                if (!biMaxValdValid)
+                                if (iMaxInd == 0)
                                 {
                                     iMaxVal = iMaxInd;
-                                    biMaxValdValid = true;
                                 }
 
                                 ++iMaxInd;
@@ -2366,7 +2367,7 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
                     }
                 }
 
-                if (!biMaxValdValid)
+                if (iMaxInd == 0)
                     paDstScanline[iDstPixel - nDstXOff] = tNoDataValue;
                 else
                     paDstScanline[iDstPixel - nDstXOff] = paVals[iMaxVal];
@@ -2416,7 +2417,7 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
     }
 
     CPLFree(paVals);
-    CPLFree(panSums);
+    CPLFree(panCounts);
 
     return CE_None;
 }
