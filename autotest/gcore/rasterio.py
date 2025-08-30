@@ -943,10 +943,12 @@ def test_rasterio_13(dt):
         "UInt32",
         "Int64",
         "UInt64",
+        "Float16",
         "Float32",
         "Float64",
         "CInt16",
         "CInt32",
+        "CFloat16",
         "CFloat32",
         "CFloat64",
     ],
@@ -977,7 +979,12 @@ def test_rasterio_nearest_or_mode(dt, resample_alg, use_nan):
         x = (1 << 63) - 1
     elif dt == gdal.GDT_UInt64:
         x = (1 << 64) - 1
-    elif dt == gdal.GDT_Float32 or dt == gdal.GDT_CFloat32:
+    elif dt in (
+        gdal.GDT_Float16,
+        gdal.GDT_Float32,
+        gdal.GDT_CFloat16,
+        gdal.GDT_CFloat32,
+    ):
         x = float("nan") if use_nan else 1.5
     else:
         x = float("nan") if use_nan else 1.234567890123
