@@ -124,7 +124,7 @@ def temp_cutline(input_csv):
                 "-l",
                 "cutline",
             ],
-            "Argument 'sql' is mutually exclusive with 'layer-name'.",
+            "Argument 'sql' is mutually exclusive with 'input-layer'.",
         ),
         (
             True,

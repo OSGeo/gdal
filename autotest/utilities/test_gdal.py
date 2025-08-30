@@ -587,7 +587,7 @@ def test_gdal_question_mark(gdal_path):
     _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} vector info ../ogr/data/poly.shp --layer=?"
     )
-    assert "Single potential value for argument 'layer' is 'poly'" in err
+    assert "Single potential value for argument 'input-layer' is 'poly'" in err
 
     _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} vector pipeline read ../ogr/data/poly.shp --layer=?"

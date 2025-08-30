@@ -3001,6 +3001,11 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddLayerNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
+    /** Add (single) output layer name argument. */
+    GDALInConstructionAlgorithmArg &
+    AddOutputLayerNameArg(std::string *pValue,
+                          const char *helpMessage = nullptr);
+
     /** Add (potentially multiple) layer name(s) argument. */
     GDALInConstructionAlgorithmArg &
     AddLayerNameArg(std::vector<std::string> *pValue,

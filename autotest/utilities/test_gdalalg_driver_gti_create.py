@@ -30,7 +30,7 @@ def test_gdalalg_driver_gti_create_xml_filename(tmp_vsimem):
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     alg["xml-filename"] = xml_filename
     alg["fetch-metadata"] = "AREA_OR_POINT,area_or_point,String"
     assert alg.Run()
@@ -65,7 +65,7 @@ def test_gdalalg_driver_gti_create():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     alg["resolution"] = [10, 11]
     alg["datatype"] = "UInt16"
     alg["bbox"] = [1, 2, 3, 4]
@@ -99,7 +99,7 @@ def test_gdalalg_driver_gti_create_wrong_nodata():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     alg["band-count"] = 3
     alg["nodata"] = [5, 6]
     with pytest.raises(
@@ -114,7 +114,7 @@ def test_gdalalg_driver_gti_create_wrong_color_interpretation():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     alg["band-count"] = 3
     alg["color-interpretation"] = ["red", "green"]
     with pytest.raises(

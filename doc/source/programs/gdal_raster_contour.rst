@@ -42,7 +42,7 @@ Standard options
 
     Picks a particular band to get the DEM from. Defaults to band 1.
 
-.. option:: -l, --nln, --layer <LAYER>
+.. option:: --nln, --output-layer <OUTPUT-LAYER>
 
     Provides a name for the output vector layer. Defaults to "contour".
 
