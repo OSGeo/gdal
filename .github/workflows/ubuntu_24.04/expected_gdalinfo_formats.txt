@@ -82,6 +82,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   MFF2 -raster- (ro): Vexcel MFF2 (HKV) Raster
   GSC -raster- (rov): GSC Geogrid
   FAST -raster- (rov): EOSAT FAST Format
+  BT -raster- (rw+v): VTP .bt (Binary Terrain) 1.3 Format (*.bt)
   LAN -raster- (rov): Erdas .LAN/.GIS
   CPG -raster- (rov): Convair PolGASP
   NDF -raster- (rov): NLAPS Data Format
