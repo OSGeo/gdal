@@ -972,6 +972,7 @@ inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
 #define unpacklo_ps _mm256_unpacklo_ps
 #define unpackhi_ps _mm256_unpackhi_ps
 #define storeu_ps _mm256_storeu_ps
+#define blendv_ps _mm256_blendv_ps
 
 inline __m256 SQUARE_PS(__m256 x)
 {
@@ -997,6 +998,15 @@ inline __m256 SQUARE_PS(__m256 x)
 #define unpacklo_ps _mm_unpacklo_ps
 #define unpackhi_ps _mm_unpackhi_ps
 #define storeu_ps _mm_storeu_ps
+
+inline __m128 blendv_ps(__m128 a, __m128 b, __m128 mask)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(a, b, mask);
+#else
+    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+}
 
 inline __m128 SQUARE_PS(__m128 x)
 {
@@ -1084,7 +1094,7 @@ static int
 
         // Deal with infinity being the maximum
         const auto maskIsInf = cmpeq_ps(maxV, infv);
-        rms = or_ps(andnot_ps(maskIsInf, rms), and_ps(maskIsInf, infv));
+        rms = blendv_ps(rms, infv, maskIsInf);
 
         rms = FIXUP_LANES(rms);
 
