@@ -106,3 +106,12 @@ Examples
    .. code-block:: bash
 
         $ gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"
+
+.. example::
+   :title: Append to an existing layer of a GeoPackage file
+
+   .. code-block:: bash
+
+       $ gdal vector pipeline read europe.gpkg ! \
+                              sql --sql "SELECT * FROM country WHERE pop > 1e6" ! \
+                              write --append --output-layer-name=world world.gpkg

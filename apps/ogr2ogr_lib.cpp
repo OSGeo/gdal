@@ -3199,9 +3199,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 }
                 else if (!poResultSet->TestCapability(OLCFastFeatureCount))
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Progress turned off as fast feature count is not "
-                             "available.");
+                    if (!psOptions->bInvokedFromGdalVectorConvert)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Progress turned off as fast feature count is not "
+                            "available.");
+                    }
                     psOptions->bDisplayProgress = false;
                 }
                 else
@@ -3652,9 +3656,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 if (!poLayer->TestCapability(OLCFastFeatureCount))
                 {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "Progress turned off as fast feature count is not "
-                             "available.");
+                    if (!psOptions->bInvokedFromGdalVectorConvert)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_NotSupported,
+                            "Progress turned off as fast feature count is not "
+                            "available.");
+                    }
                     psOptions->bDisplayProgress = false;
                 }
                 else

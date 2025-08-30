@@ -270,6 +270,11 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return true;
     }
 
+    virtual bool SupportsInputMultiThreading() const
+    {
+        return false;
+    }
+
     virtual bool CanHandleNextStep(GDALPipelineStepAlgorithm *) const
     {
         return false;
@@ -774,7 +779,7 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 
     // Because of multiprocessing in gdal raster tile, make sure that all
     // steps before it are serialized in a .gdal.json file
-    if (m_steps.size() >= 2 && m_steps.back()->GetName() == "tile" &&
+    if (m_steps.size() >= 2 && m_steps.back()->SupportsInputMultiThreading() &&
         m_steps.back()
                 ->GetArg(GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN)
                 ->template Get<int>() > 1 &&
