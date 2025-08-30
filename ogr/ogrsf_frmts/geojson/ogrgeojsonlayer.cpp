@@ -499,7 +499,7 @@ OGRErr OGRGeoJSONLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONLayer::TestCapability(const char *pszCap)
+int OGRGeoJSONLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCCurveGeometries))
@@ -590,7 +590,8 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
 
 void OGRGeoJSONLayer::DetectGeometryType()
 {
-    if (GetLayerDefn()->GetGeomType() != wkbUnknown)
+    auto poFDefn = GetLayerDefn();
+    if (poFDefn->GetGeomType() != wkbUnknown)
         return;
 
     ResetReading();
@@ -611,7 +612,6 @@ void OGRGeoJSONLayer::DetectGeometryType()
     }
 
     {
-        auto poFDefn = GetLayerDefn();
         auto oTemporaryUnsealer(poFDefn->GetTemporaryUnsealer());
         poFDefn->SetGeomType(eLayerGeomType);
     }

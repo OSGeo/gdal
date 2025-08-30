@@ -47,12 +47,14 @@ class OGRNASLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -78,12 +80,12 @@ class OGRNASDataSource final : public GDALDataset
     int Open(const char *);
     int Create(const char *pszFile, char **papszOptions);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     IGMLReader *GetReader()
     {

@@ -51,11 +51,11 @@ class GDALVectorPipelineReadOutputDataset final : public GDALDataset
 
     void AddLayer(OGRLayer &oSrcLayer);
 
-    int GetLayerCount() override;
+    int GetLayerCount() const override;
 
-    OGRLayer *GetLayer(int idx) override;
+    OGRLayer *GetLayer(int idx) const override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     void ResetReading() override;
 
@@ -89,7 +89,7 @@ void GDALVectorPipelineReadOutputDataset::AddLayer(OGRLayer &oSrcLayer)
 /*          GDALVectorPipelineReadOutputDataset::GetLayerCount()        */
 /************************************************************************/
 
-int GDALVectorPipelineReadOutputDataset::GetLayerCount()
+int GDALVectorPipelineReadOutputDataset::GetLayerCount() const
 {
     return static_cast<int>(m_layers.size());
 }
@@ -98,7 +98,7 @@ int GDALVectorPipelineReadOutputDataset::GetLayerCount()
 /*           GDALVectorPipelineReadOutputDataset::GetLayer()            */
 /************************************************************************/
 
-OGRLayer *GDALVectorPipelineReadOutputDataset::GetLayer(int idx)
+OGRLayer *GDALVectorPipelineReadOutputDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
 }
@@ -107,7 +107,8 @@ OGRLayer *GDALVectorPipelineReadOutputDataset::GetLayer(int idx)
 /*         GDALVectorPipelineReadOutputDataset::TestCapability()        */
 /************************************************************************/
 
-int GDALVectorPipelineReadOutputDataset::TestCapability(const char *pszCap)
+int GDALVectorPipelineReadOutputDataset::TestCapability(
+    const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCRandomLayerRead))
         return m_srcDS.TestCapability(pszCap);

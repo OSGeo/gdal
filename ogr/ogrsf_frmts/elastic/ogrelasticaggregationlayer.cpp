@@ -578,7 +578,7 @@ GIntBig OGRElasticAggregationLayer::GetFeatureCount(int bForce)
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRElasticAggregationLayer::TestCapability(const char *pszCap)
+int OGRElasticAggregationLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }

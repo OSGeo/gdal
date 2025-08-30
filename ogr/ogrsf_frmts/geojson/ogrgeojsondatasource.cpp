@@ -334,7 +334,7 @@ int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::GetLayerCount()
+int OGRGeoJSONDataSource::GetLayerCount() const
 {
     return nLayers_;
 }
@@ -343,7 +343,7 @@ int OGRGeoJSONDataSource::GetLayerCount()
 /*                           GetLayer()                                 */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer)
+const OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer) const
 {
     if (0 <= nLayer && nLayer < nLayers_)
     {
@@ -748,7 +748,7 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::TestCapability(const char *pszCap)
+int OGRGeoJSONDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr && nLayers_ == 0;

@@ -79,7 +79,7 @@ OGRArrowDataset::GetFieldDomain(const std::string &name) const
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-inline int OGRArrowDataset::GetLayerCount()
+inline int OGRArrowDataset::GetLayerCount() const
 {
     return m_poLayer ? 1 : 0;
 }
@@ -88,7 +88,7 @@ inline int OGRArrowDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-inline OGRLayer *OGRArrowDataset::GetLayer(int idx)
+inline const OGRLayer *OGRArrowDataset::GetLayer(int idx) const
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }

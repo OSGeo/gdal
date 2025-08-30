@@ -54,12 +54,12 @@ class OGRCSWLayer final : public OGRLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -93,12 +93,12 @@ class OGRCSWDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, char **papszOpenOptions);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return poLayer != nullptr;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     static CPLHTTPResult *HTTPFetch(const char *pszURL, const char *pszPost);
 
@@ -1014,7 +1014,7 @@ int OGRCSWDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSWDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRCSWDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= ((poLayer != nullptr) ? 1 : 0))

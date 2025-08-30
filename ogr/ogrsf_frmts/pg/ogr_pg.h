@@ -225,7 +225,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
 
     virtual void ResetReading() override;
 
-    virtual OGRPGFeatureDefn *GetLayerDefn() override
+    const OGRPGFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -389,7 +389,7 @@ class OGRPGTableLayer final : public OGRPGLayer
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlagsIn) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -530,7 +530,7 @@ class OGRPGResultLayer final : public OGRPGLayer
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRFeature *GetNextFeature() override;
 
@@ -663,8 +663,8 @@ class OGRPGDataSource final : public GDALDataset
               const char *pszSchemaName, const char *pszDescription,
               const char *pszGeomColForced, int bUpdate, int bTestOpen);
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
@@ -673,7 +673,7 @@ class OGRPGDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;

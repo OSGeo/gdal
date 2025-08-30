@@ -64,17 +64,17 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;
 
-    virtual const char *GetName() override;
-    virtual OGRwkbGeometryType GetGeomType() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const char *GetName() const override;
+    OGRwkbGeometryType GetGeomType() const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

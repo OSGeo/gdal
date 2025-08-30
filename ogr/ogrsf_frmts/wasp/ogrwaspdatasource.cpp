@@ -41,7 +41,7 @@ OGRWAsPDataSource::~OGRWAsPDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWAsPDataSource::TestCapability(const char *pszCap)
+int OGRWAsPDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) && oLayer.get() == nullptr)
@@ -160,7 +160,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer) const
 
 {
     return (iLayer == 0) ? oLayer.get() : nullptr;

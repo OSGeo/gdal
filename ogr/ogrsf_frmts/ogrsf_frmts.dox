@@ -629,7 +629,7 @@ by the OGRSFDriverManager.
 /************************************************************************/
 
 /**
- \fn const char* OGRLayer::GetName();
+ \fn const char* OGRLayer::GetName() const;
 
  \brief Return the layer name.
 
@@ -665,13 +665,16 @@ by the OGRSFDriverManager.
 
 
 /**
- \fn OGRwkbGeometryType OGRLayer::GetGeomType();
+ \fn OGRwkbGeometryType OGRLayer::GetGeomType() const;
 
  \brief Return the layer geometry type.
 
  This returns the same result as GetLayerDefn()->OGRFeatureDefn::GetGeomType(), but for a
  few drivers, calling GetGeomType() directly can avoid lengthy layer
  definition initialization.
+
+ Note that even if this method is const (since GDAL 3.12), there is no guarantee
+ it can be safely called by concurrent threads on the same GDALDataset object.
 
  For layers with multiple geometry fields, this method only returns the geometry
  type of the first geometry column. For other columns, use
@@ -968,7 +971,25 @@ by the OGRSFDriverManager.
  This method is the same as the C function OGR_L_GetLayerDefn().
 
  @return feature definition.
+*/
 
+/**
+ \fn const OGRFeatureDefn *OGRLayer::GetLayerDefn() const;
+
+ \brief Fetch the schema information for this layer.
+
+ The returned OGRFeatureDefn is owned by the OGRLayer, and should not be
+ modified or freed by the application.  It encapsulates the attribute schema
+ of the features of the layer.
+
+ Note that even if this method is const, there is no guarantee it can be
+ safely called by concurrent threads on the same GDALDataset object.
+
+ This method is the same as the C function OGR_L_GetLayerDefn().
+
+ @return feature definition.
+
+ @since 3.12
 */
 
 /**
@@ -1027,14 +1048,17 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn OGRSpatialReference *OGRLayer::GetSpatialRef();
+ \fn const OGRSpatialReference *OGRLayer::GetSpatialRef() const;
 
  \brief Fetch the spatial reference system for this layer.
 
  The returned object is owned by the OGRLayer and should not be modified
  or freed by the application.
 
- Starting with OGR 1.11, several geometry fields can be associated to a
+ Note that even if this method is const (since GDAL 3.12), there is no guarantee
+ it can be safely called by concurrent threads on the same GDALDataset object.
+
+ Several geometry fields can be associated to a
  feature definition. Each geometry field can have its own spatial reference
  system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
  OGRLayer::GetSpatialRef() is equivalent to
@@ -1613,7 +1637,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn int OGRLayer::TestCapability( const char * pszCap );
+ \fn int OGRLayer::TestCapability( const char * pszCap ) const;
 
  \brief Test if this layer supported the named capability.
 

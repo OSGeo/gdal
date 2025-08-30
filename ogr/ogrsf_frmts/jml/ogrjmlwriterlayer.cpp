@@ -414,7 +414,7 @@ OGRErr OGRJMLWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLWriterLayer::TestCapability(const char *pszCap)
+int OGRJMLWriterLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

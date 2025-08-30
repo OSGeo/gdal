@@ -423,63 +423,60 @@ def test_pcidsk_14():
 # Test mixed raster and vector
 
 
-def test_pcidsk_15():
+def test_pcidsk_15(tmp_path):
 
     # One raster band and vector layer
-    ds = gdal.GetDriverByName("PCIDSK").Create("/vsimem/pcidsk_15.pix", 1, 1)
+    ds = gdal.GetDriverByName("PCIDSK").Create(tmp_path / "pcidsk_15.pix", 1, 1)
     ds.CreateLayer("foo")
     ds = None
 
-    ds = gdal.Open("/vsimem/pcidsk_15.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15.pix")
     assert ds.RasterCount == 1
     assert ds.GetLayerCount() == 1
 
-    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy("/vsimem/pcidsk_15_2.pix", ds)
+    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy(tmp_path / "pcidsk_15_2.pix", ds)
     ds2 = None
     ds = None
 
-    ds = gdal.Open("/vsimem/pcidsk_15_2.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15_2.pix")
     assert ds.RasterCount == 1
     assert ds.GetLayerCount() == 1
     ds = None
 
     # One vector layer only
-    ds = gdal.GetDriverByName("PCIDSK").Create("/vsimem/pcidsk_15.pix", 0, 0, 0)
+    ds = gdal.GetDriverByName("PCIDSK").Create(tmp_path / "pcidsk_15.pix", 0, 0, 0)
     ds.CreateLayer("foo")
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/pcidsk_15.pix")
+    ds = gdal.OpenEx(tmp_path / "pcidsk_15.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 1
 
-    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy("/vsimem/pcidsk_15_2.pix", ds)
+    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy(tmp_path / "pcidsk_15_2.pix", ds)
     ds2 = None
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/pcidsk_15_2.pix")
+    ds = gdal.OpenEx(tmp_path / "pcidsk_15_2.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 1
     ds = None
 
     # Zero raster band and vector layer
-    ds = gdal.GetDriverByName("PCIDSK").Create("/vsimem/pcidsk_15.pix", 0, 0, 0)
+    ds = gdal.GetDriverByName("PCIDSK").Create(tmp_path / "pcidsk_15.pix", 0, 0, 0)
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/pcidsk_15.pix")
+    ds = gdal.OpenEx(tmp_path / "pcidsk_15.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 0
 
-    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy("/vsimem/pcidsk_15_2.pix", ds)
+    ds2 = gdal.GetDriverByName("PCIDSK").CreateCopy(tmp_path / "pcidsk_15_2.pix", ds)
     del ds2
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/pcidsk_15_2.pix")
+    ds = gdal.OpenEx(tmp_path / "pcidsk_15_2.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 0
     ds = None
-
-    gdal.GetDriverByName("PCIDSK").Delete("/vsimem/pcidsk_15.pix")
-    gdal.GetDriverByName("PCIDSK").Delete("/vsimem/pcidsk_15_2.pix")
 
 
 ###############################################################################

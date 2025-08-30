@@ -1968,7 +1968,7 @@ int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRLIBKMLDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
@@ -2568,7 +2568,7 @@ void OGRLIBKMLDataSource::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLDataSource::TestCapability(const char *pszCap)
+int OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return bUpdate;

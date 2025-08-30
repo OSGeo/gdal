@@ -713,7 +713,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer(
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSOSIDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRSOSIDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

@@ -1425,8 +1425,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
         {
             bool bIsRaster = false;
             OGREnvelope sDatasetLongLatEnv;
-            OGRSpatialReference oDSCRS;
-            const char *pszCelestialBodyName = nullptr;
+            std::string osCelestialBodyName;
             if (GetName() == "dst-crs")
             {
                 auto inputArg = m_owner->GetArg(GDAL_ARG_NAME_INPUT);
@@ -1442,30 +1441,18 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                         if (poDS)
                         {
                             bIsRaster = poDS->GetRasterCount() != 0;
-                            const OGRSpatialReference *poCRS;
-                            if ((poCRS = poDS->GetSpatialRef()) != nullptr)
+                            if (auto poCRS = poDS->GetSpatialRef())
                             {
-                                oDSCRS = *poCRS;
-                            }
-                            else if (poDS->GetLayerCount() >= 1)
-                            {
-                                if (auto poLayer = poDS->GetLayer(0))
-                                {
-                                    if ((poCRS = poLayer->GetSpatialRef()) !=
-                                        nullptr)
-                                        oDSCRS = *poCRS;
-                                }
-                            }
-                            if (!oDSCRS.IsEmpty())
-                            {
-                                pszCelestialBodyName =
-                                    oDSCRS.GetCelestialBodyName();
+                                const char *pszCelestialBodyName =
+                                    poCRS->GetCelestialBodyName();
+                                if (pszCelestialBodyName)
+                                    osCelestialBodyName = pszCelestialBodyName;
 
                                 if (!pszCelestialBodyName ||
                                     !EQUAL(pszCelestialBodyName, "Earth"))
                                 {
                                     OGRSpatialReference oLongLat;
-                                    oLongLat.CopyGeogCSFrom(&oDSCRS);
+                                    oLongLat.CopyGeogCSFrom(poCRS);
                                     oLongLat.SetAxisMappingStrategy(
                                         OAMS_TRADITIONAL_GIS_ORDER);
                                     poDS->GetExtent(&sDatasetLongLatEnv,
@@ -1484,7 +1471,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
 
             const auto IsCRSCompatible =
                 [bIsRaster, &sDatasetLongLatEnv,
-                 pszCelestialBodyName](const OSRCRSInfo *crsInfo)
+                 &osCelestialBodyName](const OSRCRSInfo *crsInfo)
             {
                 if (!sDatasetLongLatEnv.IsInit())
                     return true;
@@ -1497,11 +1484,11 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
                        sDatasetLongLatEnv.MaxX > crsInfo->dfWestLongitudeDeg &&
                        sDatasetLongLatEnv.MinY < crsInfo->dfNorthLatitudeDeg &&
                        sDatasetLongLatEnv.MaxY > crsInfo->dfSouthLatitudeDeg &&
-                       ((pszCelestialBodyName &&
+                       ((!osCelestialBodyName.empty() &&
                          crsInfo->pszCelestialBodyName &&
-                         EQUAL(pszCelestialBodyName,
-                               crsInfo->pszCelestialBodyName)) ||
-                        (!pszCelestialBodyName &&
+                         osCelestialBodyName ==
+                             crsInfo->pszCelestialBodyName) ||
+                        (osCelestialBodyName.empty() &&
                          !crsInfo->pszCelestialBodyName));
             };
 

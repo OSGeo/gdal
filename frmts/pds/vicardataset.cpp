@@ -138,14 +138,14 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
         m_iRecord = 0;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     OGRFeature *GetNextFeature() override;
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return false;
     }

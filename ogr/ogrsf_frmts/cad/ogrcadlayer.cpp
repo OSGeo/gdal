@@ -151,7 +151,7 @@ GIntBig OGRCADLayer::GetFeatureCount(int bForce)
     return poCADLayer.getGeometryCount();
 }
 
-int OGRCADLayer::TestCapability(const char *pszCap)
+int OGRCADLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;

@@ -133,13 +133,15 @@ class OGROSMLayer final : public OGRLayer
     OGROSMLayer(OGROSMDataSource *m_poDS, int m_nIdxLayer, const char *pszName);
     virtual ~OGROSMLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     virtual void ResetReading() override;
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRFeature *GetNextFeature() override;
 
@@ -563,14 +565,14 @@ class OGROSMDataSource final : public GDALDataset
     OGROSMDataSource();
     virtual ~OGROSMDataSource();
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

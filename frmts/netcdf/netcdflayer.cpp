@@ -1349,7 +1349,7 @@ OGRFeature *netCDFLayer::GetNextFeature()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *netCDFLayer::GetLayerDefn()
+const OGRFeatureDefn *netCDFLayer::GetLayerDefn() const
 {
     return m_poFeatureDefn;
 }
@@ -2790,7 +2790,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int netCDFLayer::TestCapability(const char *pszCap)
+int netCDFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_poDS->GetAccess() == GA_Update;

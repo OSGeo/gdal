@@ -148,12 +148,12 @@ class FGdbLayer final : public FGdbBaseLayer
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_pFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     // Access the XML directly. The 2 following methods are not currently used
     // by the driver, but can be used by external code for specific purposes.
@@ -208,12 +208,12 @@ class FGdbResultLayer final : public FGdbBaseLayer
 
     virtual void ResetReading() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_pFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
   protected:
     FGdbDataSource *m_pDS;
@@ -248,19 +248,19 @@ class FGdbDataSource final : public GDALDataset
         return m_osFSName.c_str();
     }
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_layers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;

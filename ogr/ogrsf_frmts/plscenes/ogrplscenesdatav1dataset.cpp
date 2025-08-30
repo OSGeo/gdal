@@ -47,7 +47,7 @@ OGRPLScenesDataV1Dataset::~OGRPLScenesDataV1Dataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPLScenesDataV1Dataset::GetLayer(int idx)
+const OGRLayer *OGRPLScenesDataV1Dataset::GetLayer(int idx) const
 {
     if (idx < 0 || idx >= GetLayerCount())
         return nullptr;
@@ -58,12 +58,12 @@ OGRLayer *OGRPLScenesDataV1Dataset::GetLayer(int idx)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRPLScenesDataV1Dataset::GetLayerCount()
+int OGRPLScenesDataV1Dataset::GetLayerCount() const
 {
     if (!m_bLayerListInitialized)
     {
         m_bLayerListInitialized = true;
-        EstablishLayerList();
+        const_cast<OGRPLScenesDataV1Dataset *>(this)->EstablishLayerList();
     }
     return m_nLayers;
 }

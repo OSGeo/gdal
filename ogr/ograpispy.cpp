@@ -836,7 +836,8 @@ static void OGRAPISpyDumpFeature(OGRFeatureH hFeat)
 
     fprintf(fpSpyFile, "f = ogr.Feature(%s)\n",
             OGRAPISpyGetFeatureDefnVar(
-                OGRFeatureDefn::ToHandle(poFeature->GetDefnRef()))
+                OGRFeatureDefn::ToHandle(
+                    const_cast<OGRFeatureDefn *>(poFeature->GetDefnRef())))
                 .c_str());
     if (poFeature->GetFID() != -1)
         fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());

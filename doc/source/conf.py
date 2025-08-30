@@ -171,9 +171,11 @@ nitpick_ignore = [
     ("cpp:identifier", "ArrowSchema"),
     # Internal GDAL types
     ("cpp:identifier", "ConstIterator"),
-    ("cpp:identifier", "GeomFields"),
+    ("cpp:identifier", "GeomFields<OGRFeatureDefn*, OGRGeomFieldDefn*>"),
+    ("cpp:identifier", "GeomFields<const OGRFeatureDefn*, const OGRGeomFieldDefn*>"),
     ("cpp:identifier", "FeatureIterator"),
-    ("cpp:identifier", "Fields"),
+    ("cpp:identifier", "Fields<OGRFeatureDefn*, OGRFieldDefn*>"),
+    ("cpp:identifier", "Fields<const OGRFeatureDefn*, const OGRFieldDefn*>"),
     ("cpp:identifier", "GDALPamDataset"),
     ("cpp:identifier", "GDALPamRasterBand"),
     ("cpp:identifier", "GDALPluginDriverProxy"),

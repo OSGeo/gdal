@@ -46,7 +46,7 @@ OGRDXFBlocksWriterLayer::~OGRDXFBlocksWriterLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFBlocksWriterLayer::TestCapability(const char *pszCap)
+int OGRDXFBlocksWriterLayer::TestCapability(const char *pszCap) const
 
 {
     return EQUAL(pszCap, OLCSequentialWrite);

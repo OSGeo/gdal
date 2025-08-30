@@ -467,7 +467,7 @@ OGRErr OGRGeoJSONWriteLayer::CreateField(const OGRFieldDefn *poField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONWriteLayer::TestCapability(const char *pszCap)
+int OGRGeoJSONWriteLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField))
         return TRUE;

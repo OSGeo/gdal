@@ -134,7 +134,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFWriterDS::TestCapability(const char *pszCap)
+int OGRDXFWriterDS::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -149,7 +149,7 @@ int OGRDXFWriterDS::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDXFWriterDS::GetLayer(int iLayer)
+const OGRLayer *OGRDXFWriterDS::GetLayer(int iLayer) const
 
 {
     if (iLayer == 0)
@@ -162,7 +162,7 @@ OGRLayer *OGRDXFWriterDS::GetLayer(int iLayer)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRDXFWriterDS::GetLayerCount()
+int OGRDXFWriterDS::GetLayerCount() const
 
 {
     if (poLayer)

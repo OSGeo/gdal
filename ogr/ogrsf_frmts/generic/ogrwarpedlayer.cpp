@@ -32,6 +32,11 @@ OGRWarpedLayer::OGRWarpedLayer(OGRLayer *poDecoratedLayer, int iGeomField,
     CPLAssert(poCT != nullptr);
     SetDescription(poDecoratedLayer->GetDescription());
 
+    m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
+    m_poFeatureDefn->Reference();
+    if (m_poFeatureDefn->GetGeomFieldCount() > 0)
+        m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);
+
     if (m_poSRS != nullptr)
     {
         m_poSRS->Reference();
@@ -122,7 +127,8 @@ OGRWarpedLayer::SrcFeatureToWarpedFeature(std::unique_ptr<OGRFeature> poFeature)
 {
     // This is safe to do here as they have matching attribute and geometry
     // fields
-    poFeature->SetFDefnUnsafe(GetLayerDefn());
+    OGRLayer *poThisLayer = this;
+    poFeature->SetFDefnUnsafe(poThisLayer->GetLayerDefn());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
     if (poGeom && poGeom->transform(m_poCT) != OGRERR_NONE)
@@ -260,16 +266,8 @@ OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                            GetLayerDefn()                           */
 /************************************************************************/
 
-OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn() const
 {
-    if (m_poFeatureDefn != nullptr)
-        return m_poFeatureDefn;
-
-    m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
-    m_poFeatureDefn->Reference();
-    if (m_poFeatureDefn->GetGeomFieldCount() > 0)
-        m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);
-
     return m_poFeatureDefn;
 }
 
@@ -277,7 +275,7 @@ OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
 /*                            GetSpatialRef()                           */
 /************************************************************************/
 
-OGRSpatialReference *OGRWarpedLayer::GetSpatialRef()
+const OGRSpatialReference *OGRWarpedLayer::GetSpatialRef() const
 {
     if (m_iGeomField == 0)
         return m_poSRS;
@@ -505,7 +503,7 @@ int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
 /*                             TestCapability()                         */
 /************************************************************************/
 
-int OGRWarpedLayer::TestCapability(const char *pszCapability)
+int OGRWarpedLayer::TestCapability(const char *pszCapability) const
 {
     if (EQUAL(pszCapability, OLCFastGetExtent) && sStaticEnvelope.IsInit())
         return TRUE;

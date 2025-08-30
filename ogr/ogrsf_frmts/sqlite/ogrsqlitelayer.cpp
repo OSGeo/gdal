@@ -3514,7 +3514,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteLayer::TestCapability(const char *pszCap)
+int OGRSQLiteLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

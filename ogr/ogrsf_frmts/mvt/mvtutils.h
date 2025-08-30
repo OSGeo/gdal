@@ -72,7 +72,7 @@ OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
 OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
                                     OGRFeatureDefn *poTargetFeatureDefn,
                                     bool bJsonField,
-                                    OGRSpatialReference *poSRS);
+                                    const OGRSpatialReference *poSRS);
 
 // #ifdef HAVE_MVT_WRITE_SUPPORT
 GDALDataset *OGRMVTWriterDatasetCreate(const char *pszFilename, int nXSize,

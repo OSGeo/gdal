@@ -207,8 +207,9 @@ class OGRNGWLayer final : public OGRLayer
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual int TestCapability(const char *) override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -307,13 +308,13 @@ class OGRNGWDataset final : public GDALDataset
     std::string Extensions() const;
 
     /* GDALDataset */
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(aoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
-    virtual int TestCapability(const char *) override;
+    const OGRLayer *GetLayer(int) const override;
+    int TestCapability(const char *) const override;
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
@@ -327,7 +328,7 @@ class OGRNGWDataset final : public GDALDataset
                                  OGRGeometry *poSpatialFilter,
                                  const char *pszDialect) override;
 
-    virtual const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,

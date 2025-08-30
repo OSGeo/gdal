@@ -1826,7 +1826,7 @@ OGRErr OGRCARTOTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTOTableLayer::TestCapability(const char *pszCap)
+int OGRCARTOTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

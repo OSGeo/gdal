@@ -812,14 +812,14 @@ class OGRSplitListFieldLayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     virtual void ResetReading() override
     {
         poSrcLayer->ResetReading();
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -829,7 +829,7 @@ class OGRSplitListFieldLayer : public OGRLayer
         return poSrcLayer->GetFeatureCount(bForce);
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return poSrcLayer->GetSpatialRef();
     }
@@ -1149,7 +1149,7 @@ OGRFeature *OGRSplitListFieldLayer::GetFeature(GIntBig nFID)
 /*                        GetLayerDefn()                                */
 /************************************************************************/
 
-OGRFeatureDefn *OGRSplitListFieldLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRSplitListFieldLayer::GetLayerDefn() const
 {
     if (poFeatureDefn == nullptr)
         return poSrcLayer->GetLayerDefn();
@@ -1629,12 +1629,12 @@ class GDALVectorTranslateWrappedDataset : public GDALDataset
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorTranslateWrappedDataset)
 
   public:
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int nIdx) override;
+    OGRLayer *GetLayer(int nIdx) const override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszStatement,
@@ -1660,7 +1660,7 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
   public:
     virtual ~GDALVectorTranslateWrappedLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFDefn;
     }
@@ -1821,7 +1821,7 @@ GDALVectorTranslateWrappedDataset::New(GDALDataset *poBase,
     return poNew;
 }
 
-OGRLayer *GDALVectorTranslateWrappedDataset::GetLayer(int i)
+OGRLayer *GDALVectorTranslateWrappedDataset::GetLayer(int i) const
 {
     if (i < 0 || i >= static_cast<int>(m_apoLayers.size()))
         return nullptr;

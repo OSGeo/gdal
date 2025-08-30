@@ -94,7 +94,7 @@ OGRFeature *OGREDIGEOLayer::GetFeature(GIntBig nFID)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGREDIGEOLayer::TestCapability(const char *pszCap)
+int OGREDIGEOLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

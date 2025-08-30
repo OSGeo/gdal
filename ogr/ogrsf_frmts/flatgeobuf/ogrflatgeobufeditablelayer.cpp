@@ -69,7 +69,8 @@ OGRErr OGRFlatGeobufEditableLayerSynchronizer::EditableSyncToDisk(
     {
         osTmpFilename += "_ogr_tmp.fgb";
     }
-    OGRSpatialReference *spatialRef = m_poFlatGeobufLayer->GetSpatialRef();
+    const OGRSpatialReference *spatialRef =
+        m_poFlatGeobufLayer->GetSpatialRef();
     auto gType = m_poFlatGeobufLayer->getOGRwkbGeometryType();
     auto createIndex = m_poFlatGeobufLayer->GetIndexNodeSize() > 0;
 
@@ -194,7 +195,7 @@ GIntBig OGRFlatGeobufEditableLayer::GetFeatureCount(int bForce)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRFlatGeobufEditableLayer::TestCapability(const char *pszCap)
+int OGRFlatGeobufEditableLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite) ||
         EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCDeleteField) ||

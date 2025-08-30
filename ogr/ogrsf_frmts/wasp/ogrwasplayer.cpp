@@ -813,7 +813,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWAsPLayer::TestCapability(const char *pszCap)
+int OGRWAsPLayer::TestCapability(const char *pszCap) const
 
 {
     return (WRITE_ONLY == eMode && (EQUAL(pszCap, OLCSequentialWrite) ||

@@ -1949,7 +1949,7 @@ OGRErr OGRPGLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 
     CPLString osCommand;
 
-    OGRPGGeomFieldDefn *poGeomFieldDefn =
+    const OGRPGGeomFieldDefn *poGeomFieldDefn =
         poLayerDefn->GetGeomFieldDefn(iGeomField);
 
     if (TestCapability(OLCFastGetExtent3D))

@@ -53,9 +53,9 @@ class ILI1Reader : public IILI1Reader
     char **ReadParseLine();
 
     void AddLayer(OGRILI1Layer *poNewLayer);
-    OGRILI1Layer *GetLayer(int) override;
+    OGRILI1Layer *GetLayer(int) const override;
     OGRILI1Layer *GetLayerByName(const char *) override;
-    int GetLayerCount() override;
+    int GetLayerCount() const override;
 
     static const char *GetLayerNameString(const char *topicname,
                                           const char *tablename);

@@ -89,7 +89,7 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
     return true;
 }
 
-OGRLayer *OGRXODRDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRXODRDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
         return nullptr;
@@ -97,7 +97,7 @@ OGRLayer *OGRXODRDataSource::GetLayer(int iLayer)
     return m_apoLayers[iLayer].get();
 }
 
-int OGRXODRDataSource::TestCapability(const char *pszCap)
+int OGRXODRDataSource::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

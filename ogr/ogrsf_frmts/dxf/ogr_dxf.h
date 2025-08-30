@@ -109,12 +109,12 @@ class OGRDXFBlocksLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRDXFFeature *GetNextUnfilteredFeature();
 };
@@ -393,7 +393,7 @@ class OGRDXFFeature final : public OGRFeature
     std::vector<std::unique_ptr<OGRDXFFeature>> apoAttribFeatures;
 
   public:
-    explicit OGRDXFFeature(OGRFeatureDefn *poFeatureDefn);
+    explicit OGRDXFFeature(const OGRFeatureDefn *poFeatureDefn);
     ~OGRDXFFeature() override;
 
     OGRDXFFeature *CloneDXFFeature();
@@ -557,12 +557,12 @@ class OGRDXFLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -720,14 +720,14 @@ class OGRDXFDataSource final : public GDALDataset
     bool Open(const char *pszFilename, VSILFILE *fpIn, bool bHeaderOnly,
               CSLConstList papszOptionsIn);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     // The following is only used by OGRDXFLayer
 
@@ -901,12 +901,12 @@ class OGRDXFWriterLayer final : public OGRLayer
         return nullptr;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
@@ -947,12 +947,12 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
         return nullptr;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
@@ -1014,10 +1014,10 @@ class OGRDXFWriterDS final : public GDALDataset
 
     int Open(const char *pszFilename, char **papszOptions);
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

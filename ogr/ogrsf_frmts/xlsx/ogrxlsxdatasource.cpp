@@ -304,7 +304,7 @@ CPLErr OGRXLSXDataSource::Close()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSXDataSource::TestCapability(const char *pszCap)
+int OGRXLSXDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -327,7 +327,7 @@ int OGRXLSXDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRXLSXDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRXLSXDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -340,7 +340,7 @@ OGRLayer *OGRXLSXDataSource::GetLayer(int iLayer)
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int OGRXLSXDataSource::GetLayerCount()
+int OGRXLSXDataSource::GetLayerCount() const
 {
     return nLayers;
 }
@@ -1129,8 +1129,9 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         OGRFieldType eValType = GetOGRFieldType(
                             apoCurLineValues[i].c_str(),
                             apoCurLineTypes[i].c_str(), eValSubType);
+                        OGRLayer *poCurLayerAsLayer = poCurLayer;
                         OGRFieldDefn *poFieldDefn =
-                            poCurLayer->GetLayerDefn()->GetFieldDefn(
+                            poCurLayerAsLayer->GetLayerDefn()->GetFieldDefn(
                                 static_cast<int>(i));
                         const OGRFieldType eFieldType = poFieldDefn->GetType();
                         auto oIter = poCurLayer->oSetFieldsOfUnknownType.find(
@@ -2238,7 +2239,7 @@ static bool WriteLayer(const char *pszName, OGRXLSXLayer *poLayer, int iLayer,
 
     OGRFeature *poFeature = poLayer->GetNextFeature();
 
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     bool bHasHeaders = false;
     int iRow = 1;
 
@@ -2303,7 +2304,7 @@ static bool WriteLayer(const char *pszName, OGRXLSXLayer *poLayer, int iLayer,
             {
                 CPLString osCol = BuildColString(j);
 
-                OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(j);
+                const OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(j);
                 OGRFieldType eType = poFieldDefn->GetType();
 
                 if (eType == OFTReal)

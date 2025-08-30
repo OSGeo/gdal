@@ -363,7 +363,8 @@ void OGRGeoJSONReaderStreamingParser::TooComplex()
 static void SetCoordinatePrecision(json_object *poRootObj,
                                    OGRGeoJSONLayer *poLayer)
 {
-    if (poLayer->GetLayerDefn()->GetGeomType() != wkbNone)
+    OGRFeatureDefn *poFeatureDefn = poLayer->GetLayerDefn();
+    if (poFeatureDefn->GetGeomType() != wkbNone)
     {
         OGRGeoJSONWriteOptions options;
 
@@ -372,7 +373,7 @@ static void SetCoordinatePrecision(json_object *poRootObj,
         if (poXYRes && (json_object_get_type(poXYRes) == json_type_double ||
                         json_object_get_type(poXYRes) == json_type_int))
         {
-            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
             OGRGeomCoordinatePrecision oCoordPrec(
                 poGeomFieldDefn->GetCoordinatePrecision());
             oCoordPrec.dfXYResolution = json_object_get_double(poXYRes);
@@ -388,7 +389,7 @@ static void SetCoordinatePrecision(json_object *poRootObj,
         if (poZRes && (json_object_get_type(poZRes) == json_type_double ||
                        json_object_get_type(poZRes) == json_type_int))
         {
-            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
             OGRGeomCoordinatePrecision oCoordPrec(
                 poGeomFieldDefn->GetCoordinatePrecision());
             oCoordPrec.dfZResolution = json_object_get_double(poZRes);
@@ -1944,8 +1945,9 @@ bool OGRGeoJSONReader::AddFeature(OGRGeoJSONLayer *poLayer,
 /*                           ReadGeometry                               */
 /************************************************************************/
 
-OGRGeometry *OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
-                                                OGRSpatialReference *poLayerSRS)
+OGRGeometry *
+OGRGeoJSONBaseReader::ReadGeometry(json_object *poObj,
+                                   const OGRSpatialReference *poLayerSRS)
 {
     OGRGeometry *poGeometry = OGRGeoJSONReadGeometry(poObj, poLayerSRS);
 
@@ -2025,7 +2027,7 @@ void OGRGeoJSONReaderSetField(OGRLayer *poLayer, OGRFeature *poFeature,
     if (nField < 0)
         return;
 
-    OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(nField);
+    const OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(nField);
     CPLAssert(nullptr != poFieldDefn);
     OGRFieldType eType = poFieldDefn->GetType();
 

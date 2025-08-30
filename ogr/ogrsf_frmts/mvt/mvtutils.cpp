@@ -172,7 +172,8 @@ OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
 
 OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
                                     OGRFeatureDefn *poTargetFeatureDefn,
-                                    bool bJsonField, OGRSpatialReference *poSRS)
+                                    bool bJsonField,
+                                    const OGRSpatialReference *poSRS)
 {
     OGRFeature *poFeature = new OGRFeature(poTargetFeatureDefn);
     if (bJsonField)
@@ -184,7 +185,7 @@ OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
             if (poSrcFeature->IsFieldSet(i))
             {
                 bEmpty = false;
-                OGRFieldDefn *poFDefn = poSrcFeature->GetFieldDefnRef(i);
+                const OGRFieldDefn *poFDefn = poSrcFeature->GetFieldDefnRef(i);
                 if (poSrcFeature->IsFieldNull(i))
                 {
                     oProperties.AddNull(poFDefn->GetNameRef());

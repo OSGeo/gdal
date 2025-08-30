@@ -1102,7 +1102,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLLayer::TestCapability(const char *pszCap)
+int OGRGMLLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

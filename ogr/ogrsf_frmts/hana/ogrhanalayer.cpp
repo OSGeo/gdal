@@ -844,7 +844,7 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent,
         ReadGeometryExtent(geomField, extent, true);
 }
 
-bool OGRHanaLayer::IsFastExtentAvailable()
+bool OGRHanaLayer::IsFastExtentAvailable() const
 {
     if (geomColumns_.empty())
         return false;
@@ -923,9 +923,9 @@ GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn *OGRHanaLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRHanaLayer::GetLayerDefn() const
 {
-    EnsureInitialized();
+    const_cast<OGRHanaLayer *>(this)->EnsureInitialized();
     return featureDefn_;
 }
 
@@ -933,7 +933,7 @@ OGRFeatureDefn *OGRHanaLayer::GetLayerDefn()
 /*                               GetName()                              */
 /************************************************************************/
 
-const char *OGRHanaLayer::GetName()
+const char *OGRHanaLayer::GetName() const
 {
     return GetDescription();
 }

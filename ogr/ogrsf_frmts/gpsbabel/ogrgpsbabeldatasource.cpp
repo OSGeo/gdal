@@ -366,7 +366,7 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGPSBabelDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGPSBabelDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

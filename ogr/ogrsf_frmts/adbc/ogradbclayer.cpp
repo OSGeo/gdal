@@ -16,6 +16,7 @@
 #include "ogr_p.h"
 #include "cpl_json.h"
 
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -76,10 +77,11 @@ OGRADBCLayer::OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRADBCLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRADBCLayer::GetLayerDefn() const
 {
     if (!m_poAdapterLayer)
-        BuildLayerDefn();
+        const_cast<OGRADBCLayer *>(this)->BuildLayerDefn();
+    assert(m_poAdapterLayer);
     return m_poAdapterLayer->GetLayerDefn();
 }
 
@@ -871,10 +873,10 @@ OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRADBCLayer::TestCapability(const char *pszCap)
+int OGRADBCLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poAdapterLayer)
-        BuildLayerDefn();
+        const_cast<OGRADBCLayer *>(this)->BuildLayerDefn();
 
     if (EQUAL(pszCap, OLCFastGetArrowStream))
     {

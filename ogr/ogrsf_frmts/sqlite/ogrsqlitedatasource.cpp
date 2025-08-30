@@ -2916,8 +2916,10 @@ bool OGRSQLiteDataSource::OpenVirtualTable(const char *pszName,
         {
             OGRGeometry *poGeom = poFeature->GetGeometryRef();
             if (poGeom)
+            {
                 whileUnsealing(poLayer->GetLayerDefn())
                     ->SetGeomType(poGeom->getGeometryType());
+            }
             delete poFeature;
         }
         poLayer->ResetReading();
@@ -2994,7 +2996,7 @@ bool OGRSQLiteDataSource::OpenView(const char *pszViewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteDataSource::TestCapability(const char *pszCap)
+int OGRSQLiteDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
@@ -3014,7 +3016,7 @@ int OGRSQLiteDataSource::TestCapability(const char *pszCap)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::TestCapability(const char *pszCap)
+int OGRSQLiteBaseDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCTransactions))
         return true;
@@ -3028,7 +3030,7 @@ int OGRSQLiteBaseDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSQLiteDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRSQLiteDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

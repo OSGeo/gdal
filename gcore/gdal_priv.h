@@ -926,6 +926,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual const OGRSpatialReference *GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference *poSRS);
 
+    virtual const OGRSpatialReference *GetSpatialRefRasterOnly() const;
+    virtual const OGRSpatialReference *GetSpatialRefVectorOnly() const;
+
     // Compatibility layer
     const char *GetProjectionRef(void) const;
     CPLErr SetProjection(const char *pszProjection);
@@ -1187,8 +1190,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLStringList oDerivedMetadataList{};
 
   public:
-    virtual int GetLayerCount();
-    virtual OGRLayer *GetLayer(int iLayer);
+    virtual int GetLayerCount() const;
+    virtual const OGRLayer *GetLayer(int iLayer) const;
+
+    OGRLayer *GetLayer(int iLayer)
+    {
+        return const_cast<OGRLayer *>(
+            const_cast<const GDALDataset *>(this)->GetLayer(iLayer));
+    }
 
     virtual bool IsLayerPrivate(int iLayer) const;
 
@@ -1233,9 +1242,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
             Iterator &operator=(
                 Iterator &&oOther) noexcept; /**< Move assignment operator */
 
-            OGRLayer *operator*() const; /**< Dereference operator */
-            Iterator &operator++();      /**< Pre-increment operator */
-            Iterator operator++(int);    /**< Post-increment operator */
+            value_type operator*() const; /**< Dereference operator */
+            Iterator &operator++();       /**< Pre-increment operator */
+            Iterator operator++(int);     /**< Post-increment operator */
             bool operator!=(const Iterator &it)
                 const; /**< Difference comparison operator */
         };
@@ -1252,9 +1261,70 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Layers GetLayers();
 
+    /** Class returned by GetLayers() that acts as a range of layers.
+     * @since GDAL 3.12
+     */
+    class CPL_DLL ConstLayers
+    {
+      private:
+        friend class GDALDataset;
+        const GDALDataset *m_poSelf;
+
+        CPL_INTERNAL explicit ConstLayers(const GDALDataset *poSelf)
+            : m_poSelf(poSelf)
+        {
+        }
+
+      public:
+        /** Layer iterator.
+         * @since GDAL 3.12
+         */
+        class CPL_DLL Iterator
+        {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+
+          public:
+            using value_type = const OGRLayer *; /**< value_type */
+            using reference = const OGRLayer *;  /**< reference */
+            using difference_type = void;        /**< difference_type */
+            using pointer = void;                /**< pointer */
+            using iterator_category =
+                std::input_iterator_tag; /**< iterator_category */
+
+            Iterator(); /**< Default constructor */
+            Iterator(const GDALDataset *poDS, bool bStart); /**< Constructor */
+            Iterator(const Iterator &oOther);     /**< Copy constructor */
+            Iterator(Iterator &&oOther) noexcept; /**< Move constructor */
+            ~Iterator();                          /**< Destructor */
+
+            Iterator &
+            operator=(const Iterator &oOther); /**< Assignment operator */
+            Iterator &operator=(
+                Iterator &&oOther) noexcept; /**< Move assignment operator */
+
+            value_type operator*() const; /**< Dereference operator */
+            Iterator &operator++();       /**< Pre-increment operator */
+            Iterator operator++(int);     /**< Post-increment operator */
+            bool operator!=(const Iterator &it)
+                const; /**< Difference comparison operator */
+        };
+
+        Iterator begin() const;
+        Iterator end() const;
+
+        size_t size() const;
+
+        const OGRLayer *operator[](int iLayer);
+        const OGRLayer *operator[](size_t iLayer);
+        const OGRLayer *operator[](const char *pszLayername);
+    };
+
+    ConstLayers GetLayers() const;
+
     virtual OGRLayer *GetLayerByName(const char *);
 
-    int GetLayerIndex(const char *pszName);
+    int GetLayerIndex(const char *pszName) const;
 
     virtual OGRErr DeleteLayer(int iLayer);
 
@@ -1301,7 +1371,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Features GetFeatures();
 
-    virtual int TestCapability(const char *);
+    virtual int TestCapability(const char *) const;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;

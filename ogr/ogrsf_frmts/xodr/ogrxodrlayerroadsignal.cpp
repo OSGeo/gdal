@@ -69,7 +69,7 @@ OGRXODRLayerRoadSignal::OGRXODRLayerRoadSignal(
     m_poFeatureDefn->AddFieldDefn(&oFieldObjectDynamic);
 }
 
-int OGRXODRLayerRoadSignal::TestCapability(const char *pszCap)
+int OGRXODRLayerRoadSignal::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

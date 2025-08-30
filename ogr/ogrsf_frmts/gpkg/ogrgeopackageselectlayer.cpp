@@ -136,7 +136,7 @@ OGRErr OGRGeoPackageSelectLayer::ISetSpatialFilter(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoPackageSelectLayer::TestCapability(const char *pszCap)
+int OGRGeoPackageSelectLayer::TestCapability(const char *pszCap) const
 {
     return poBehavior->TestCapability(pszCap);
 }

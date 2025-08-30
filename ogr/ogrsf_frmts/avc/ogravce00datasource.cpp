@@ -171,7 +171,7 @@ int OGRAVCE00DataSource::CheckAddTable(AVCE00Section *psTblSection)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */)
+int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */) const
 {
     return FALSE;
 }
@@ -180,7 +180,7 @@ int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAVCE00DataSource::GetLayer(int iLayer)
+const OGRLayer *OGRAVCE00DataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

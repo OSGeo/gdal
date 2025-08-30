@@ -140,6 +140,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &) const override;

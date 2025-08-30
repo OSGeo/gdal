@@ -296,7 +296,7 @@ void OGRParquetDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRParquetDataset::TestCapability(const char *pszCap)
+int OGRParquetDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))

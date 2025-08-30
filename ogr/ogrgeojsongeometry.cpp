@@ -19,7 +19,7 @@ static OGRLinearRing *OGRGeoJSONReadLinearRing(json_object *poObj);
 static OGRMultiPolygon *OGRGeoJSONReadMultiPolygon(json_object *poObj);
 static OGRGeometryCollection *
 OGRGeoJSONReadGeometryCollection(json_object *poObj,
-                                 OGRSpatialReference *poSRS = nullptr);
+                                 const OGRSpatialReference *poSRS = nullptr);
 
 /************************************************************************/
 /*                           OGRGeoJSONGetType                          */
@@ -134,7 +134,7 @@ OGRwkbGeometryType OGRGeoJSONGetOGRGeometryType(json_object *poObj)
 /************************************************************************/
 
 OGRGeometry *OGRGeoJSONReadGeometry(json_object *poObj,
-                                    OGRSpatialReference *poParentSRS)
+                                    const OGRSpatialReference *poParentSRS)
 {
 
     OGRGeometry *poGeometry = nullptr;
@@ -150,7 +150,7 @@ OGRGeometry *OGRGeoJSONReadGeometry(json_object *poObj,
         }
     }
 
-    OGRSpatialReference *poSRSToAssign = nullptr;
+    const OGRSpatialReference *poSRSToAssign = nullptr;
     if (entry != nullptr)
     {
         poSRSToAssign = poSRS;
@@ -709,7 +709,8 @@ OGRMultiPolygon *OGRGeoJSONReadMultiPolygon(json_object *poObj)
 /************************************************************************/
 
 OGRGeometryCollection *
-OGRGeoJSONReadGeometryCollection(json_object *poObj, OGRSpatialReference *poSRS)
+OGRGeoJSONReadGeometryCollection(json_object *poObj,
+                                 const OGRSpatialReference *poSRS)
 {
     CPLAssert(nullptr != poObj);
 

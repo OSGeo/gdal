@@ -405,7 +405,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
 /************************************************************************/
 
 std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>
-OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t &i)
+OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t &i) const
 {
     char **papszTokens = CSLTokenizeString(m_osSQLBase.c_str());
     bool bCanInsertFilter = true;
@@ -619,12 +619,13 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteSelectLayer::TestCapability(const char *pszCap)
+int OGRSQLiteSelectLayer::TestCapability(const char *pszCap) const
 {
     return m_poBehavior->TestCapability(pszCap);
 }
 
-int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(const char *pszCap)
+int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(
+    const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastSpatialFilter))

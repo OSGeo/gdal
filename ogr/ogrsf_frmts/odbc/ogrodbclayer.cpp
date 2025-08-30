@@ -340,7 +340,7 @@ OGRFeature *OGRODBCLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCLayer::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRODBCLayer::TestCapability(const char *) const
 {
     return FALSE;
 }
@@ -349,7 +349,7 @@ int OGRODBCLayer::TestCapability(CPL_UNUSED const char *pszCap)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRODBCLayer::GetSpatialRef()
+const OGRSpatialReference *OGRODBCLayer::GetSpatialRef() const
 
 {
     return poSRS;

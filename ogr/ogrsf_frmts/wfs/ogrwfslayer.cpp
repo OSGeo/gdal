@@ -1130,20 +1130,30 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRWFSLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRWFSLayer::GetLayerDefn() const
 {
-    if (poFeatureDefn)
-        return poFeatureDefn;
+    if (!poFeatureDefn)
+    {
+        const_cast<OGRWFSLayer *>(this)->BuildLayerDefn();
+    }
+    return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                          BuildLayerDefn()                            */
+/************************************************************************/
+
+void OGRWFSLayer::BuildLayerDefn()
+{
+    CPLAssert(!poFeatureDefn);
 
     if (poDS->GetLayerCount() > 1)
     {
         poDS->LoadMultipleLayerDefn(GetName(), pszNS, pszNSVal);
-
-        if (poFeatureDefn)
-            return poFeatureDefn;
     }
 
-    return BuildLayerDefn();
+    if (!poFeatureDefn)
+        BuildLayerDefn(nullptr);
 }
 
 /************************************************************************/
@@ -1516,7 +1526,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter(const char *pszFilter)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSLayer::TestCapability(const char *pszCap)
+int OGRWFSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -2007,7 +2017,7 @@ OGRErr OGRWFSLayer::ICreateFeature(OGRFeature *poFeature)
 #ifdef notdef
         if (poFeature->IsFieldNull(i))
         {
-            OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
+            const OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
             osPost += "      <feature:";
             osPost += poFDefn->GetNameRef();
             osPost += " xsi:nil=\"true\" />\n";
@@ -2016,7 +2026,7 @@ OGRErr OGRWFSLayer::ICreateFeature(OGRFeature *poFeature)
 #endif
             if (poFeature->IsFieldSet(i) && !poFeature->IsFieldNull(i))
         {
-            OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
+            const OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
             osPost += "      <feature:";
             osPost += poFDefn->GetNameRef();
             osPost += ">";
@@ -2270,7 +2280,7 @@ OGRErr OGRWFSLayer::ISetFeature(OGRFeature *poFeature)
 
     for (int i = 1; i < poFeature->GetFieldCount(); i++)
     {
-        OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
+        const OGRFieldDefn *poFDefn = poFeature->GetFieldDefnRef(i);
 
         osPost += "    <wfs:Property>\n";
         osPost += "      <wfs:Name>";

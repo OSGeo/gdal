@@ -19,11 +19,12 @@
 #include "ogrsf_frmts.h"
 #include "ogr_swq.h"
 
-CPLString CPL_DLL WFS_TurnSQLFilterToOGCFilter(
-    const swq_expr_node *poExpr, GDALDataset *poDS, OGRFeatureDefn *poFDefn,
-    int nVersion, int bPropertyIsNotEqualToSupported, int bUseFeatureId,
-    int bGmlObjectIdNeedsGMLPrefix, const char *pszNSPrefix,
-    int *pbOutNeedsNullCheck);
+CPLString CPL_DLL
+WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, GDALDataset *poDS,
+                             const OGRFeatureDefn *poFDefn, int nVersion,
+                             int bPropertyIsNotEqualToSupported,
+                             int bUseFeatureId, int bGmlObjectIdNeedsGMLPrefix,
+                             const char *pszNSPrefix, int *pbOutNeedsNullCheck);
 swq_custom_func_registrar CPL_DLL *WFSGetCustomFuncRegistrar();
 
 #endif

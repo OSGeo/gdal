@@ -974,7 +974,7 @@ OGRErr OGRAmigoCloudTableLayer::IGetExtent(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAmigoCloudTableLayer::TestCapability(const char *pszCap)
+int OGRAmigoCloudTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

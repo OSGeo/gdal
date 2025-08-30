@@ -71,7 +71,7 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
             m_bReturnedFeature = false;
         }
 
-        OGRFeatureDefn *GetLayerDefn() override
+        const OGRFeatureDefn *GetLayerDefn() const override
         {
             return m_poLayerDefn;
         }
@@ -91,7 +91,7 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
             return poFeature;
         }
 
-        int TestCapability(const char *) override
+        int TestCapability(const char *) const override
         {
             return false;
         }
@@ -104,14 +104,14 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
       public:
         MyDataset() = default;
 
-        int GetLayerCount() override
+        int GetLayerCount() const override
         {
             return 1;
         }
 
-        OGRLayer *GetLayer(int idx) override
+        const OGRLayer *GetLayer(int idx) const override
         {
-            return idx == 0 ? &m_oLayer : nullptr;
+            return idx == 0 ? const_cast<MyLayer *>(&m_oLayer) : nullptr;
         }
     };
 

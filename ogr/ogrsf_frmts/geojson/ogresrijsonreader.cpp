@@ -443,7 +443,7 @@ OGRFeature *OGRESRIJSONReader::ReadFeature(json_object *poObj)
     if (nullptr != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object)
     {
-        OGRFieldDefn *poFieldDefn = nullptr;
+        const OGRFieldDefn *poFieldDefn = nullptr;
         json_object_iter it;
         it.key = nullptr;
         it.val = nullptr;

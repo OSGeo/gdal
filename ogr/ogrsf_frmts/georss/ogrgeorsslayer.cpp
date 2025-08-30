@@ -196,10 +196,10 @@ OGRGeoRSSLayer::~OGRGeoRSSLayer()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRGeoRSSLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRGeoRSSLayer::GetLayerDefn() const
 {
     if (!bHasReadSchema)
-        LoadSchema();
+        const_cast<OGRGeoRSSLayer *>(this)->LoadSchema();
 
     return poFeatureDefn;
 }
@@ -2239,7 +2239,7 @@ void OGRGeoRSSLayer::LoadSchema()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoRSSLayer::TestCapability(const char *pszCap)
+int OGRGeoRSSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

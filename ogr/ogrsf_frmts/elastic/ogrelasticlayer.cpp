@@ -1042,10 +1042,10 @@ OGRErr OGRElasticLayer::SyncToDisk()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRElasticLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRElasticLayer::GetLayerDefn() const
 {
 
-    FinalizeFeatureDefn();
+    const_cast<OGRElasticLayer *>(this)->FinalizeFeatureDefn();
 
     return m_poFeatureDefn;
 }
@@ -3046,7 +3046,7 @@ OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRElasticLayer::TestCapability(const char *pszCap)
+int OGRElasticLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

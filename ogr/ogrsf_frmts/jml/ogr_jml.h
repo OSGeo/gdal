@@ -104,7 +104,7 @@ class OGRJMLLayer final : public OGRLayer
     OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDS, VSILFILE *fp);
     ~OGRJMLLayer();
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return poFeatureDefn->GetName();
     }
@@ -112,9 +112,9 @@ class OGRJMLLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -169,12 +169,12 @@ class OGRJMLWriterLayer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -194,18 +194,18 @@ class OGRJMLDataset final : public GDALDataset
     OGRJMLDataset();
     ~OGRJMLDataset();
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return poLayer != nullptr ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);

@@ -45,12 +45,12 @@ GNMGenericNetwork::~GNMGenericNetwork()
         delete m_apoLayers[i];
 }
 
-int GNMGenericNetwork::GetLayerCount()
+int GNMGenericNetwork::GetLayerCount() const
 {
     return static_cast<int>(m_apoLayers.size());
 }
 
-OGRLayer *GNMGenericNetwork::GetLayer(int nIndex)
+OGRLayer *GNMGenericNetwork::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
@@ -1389,7 +1389,7 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset *const pDS)
     return CE_None;
 }
 
-int GNMGenericNetwork::TestCapability(const char *pszCap)
+int GNMGenericNetwork::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

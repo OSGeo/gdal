@@ -119,25 +119,25 @@ OGRErr OGRMutexedLayer::DeleteFeature(GIntBig nFID)
     return OGRLayerDecorator::DeleteFeature(nFID);
 }
 
-const char *OGRMutexedLayer::GetName()
+const char *OGRMutexedLayer::GetName() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetName();
 }
 
-OGRwkbGeometryType OGRMutexedLayer::GetGeomType()
+OGRwkbGeometryType OGRMutexedLayer::GetGeomType() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetGeomType();
 }
 
-OGRFeatureDefn *OGRMutexedLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRMutexedLayer::GetLayerDefn() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetLayerDefn();
 }
 
-OGRSpatialReference *OGRMutexedLayer::GetSpatialRef()
+const OGRSpatialReference *OGRMutexedLayer::GetSpatialRef() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetSpatialRef();
@@ -156,7 +156,7 @@ OGRErr OGRMutexedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
     return OGRLayerDecorator::IGetExtent(iGeomField, psExtent, bForce);
 }
 
-int OGRMutexedLayer::TestCapability(const char *pszCapability)
+int OGRMutexedLayer::TestCapability(const char *pszCapability) const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::TestCapability(pszCapability);

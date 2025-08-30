@@ -65,10 +65,10 @@ OGRJMLLayer::~OGRJMLLayer()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRJMLLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRJMLLayer::GetLayerDefn() const
 {
     if (!bHasReadSchema)
-        LoadSchema();
+        const_cast<OGRJMLLayer *>(this)->LoadSchema();
 
     return poFeatureDefn;
 }
@@ -807,7 +807,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk(const char * /* pszName */)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLLayer::TestCapability(const char *pszCap)
+int OGRJMLLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

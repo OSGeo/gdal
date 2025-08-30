@@ -58,17 +58,17 @@ class OGRODSLayer final : public OGRMemLayer
         bHasHeaderLine = bIn;
     }
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return OGRMemLayer::GetLayerDefn()->GetName();
     }
 
-    OGRwkbGeometryType GetGeomType() override
+    OGRwkbGeometryType GetGeomType() const override
     {
         return wkbNone;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return nullptr;
     }
@@ -88,7 +88,7 @@ class OGRODSLayer final : public OGRMemLayer
 
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    virtual int TestCapability(const char *pszCap) const override;
 
     /* For internal usage, for cell resolver */
     OGRFeature *GetNextFeatureWithoutFIDHack()
@@ -235,10 +235,10 @@ class OGRODSDataSource final : public GDALDataset
              VSILFILE *fpSettingsIn, int bUpdatableIn);
     int Create(const char *pszName, char **papszOptions);
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

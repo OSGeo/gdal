@@ -78,7 +78,7 @@ OGRPLScenesDataV1Layer::~OGRPLScenesDataV1Layer()
 /*                             GetLayerDefn()                           */
 /************************************************************************/
 
-OGRFeatureDefn *OGRPLScenesDataV1Layer::GetLayerDefn()
+const OGRFeatureDefn *OGRPLScenesDataV1Layer::GetLayerDefn() const
 {
     return m_poFeatureDefn;
 }
@@ -1365,7 +1365,7 @@ OGRErr OGRPLScenesDataV1Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGRPLScenesDataV1Layer::TestCapability(const char *pszCap)
+int OGRPLScenesDataV1Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return !m_bFilterMustBeClientSideEvaluated;

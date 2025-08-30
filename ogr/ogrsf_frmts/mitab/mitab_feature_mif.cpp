@@ -186,14 +186,13 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 
     const char *delimiter = fp->GetDelimiter();
 
-    OGRFieldDefn *poFDefn = nullptr;
     const int numFields = GetFieldCount();
 
     for (int iField = 0; iField < numFields; iField++)
     {
         if (iField != 0)
             fp->WriteLine("%s", delimiter);
-        poFDefn = GetFieldDefnRef(iField);
+        const auto poFDefn = GetFieldDefnRef(iField);
 
         switch (poFDefn->GetType())
         {

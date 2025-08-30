@@ -906,7 +906,7 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRShapeDataSource::TestCapability(const char *pszCap)
+int OGRShapeDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -928,7 +928,7 @@ int OGRShapeDataSource::TestCapability(const char *pszCap)
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int OGRShapeDataSource::GetLayerCount()
+int OGRShapeDataSource::GetLayerCount() const
 
 {
 #ifndef IMMEDIATE_OPENING
@@ -951,7 +951,8 @@ int OGRShapeDataSource::GetLayerCount()
             if (bFound)
                 continue;
 
-            if (!OpenFile(pszFilename, eAccess == GA_Update))
+            if (!const_cast<OGRShapeDataSource *>(this)->OpenFile(
+                    pszFilename, eAccess == GA_Update))
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "Failed to open file %s."
@@ -971,7 +972,7 @@ int OGRShapeDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRShapeDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRShapeDataSource::GetLayer(int iLayer) const
 
 {
     // To ensure that existing layers are created.

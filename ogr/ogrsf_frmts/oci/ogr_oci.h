@@ -273,12 +273,14 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
@@ -329,7 +331,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
     virtual ~OGROCIWritableLayer();
 
   public:
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return poSRS;
     }
@@ -409,12 +411,12 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return poSRS;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -501,7 +503,7 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr SyncToDisk() override;
 
@@ -564,12 +566,12 @@ class OGROCIDataSource final : public GDALDataset
     int OpenTable(const char *pszTableName, int nSRID, int bUpdate,
                   int bTestOpen, char **papszOpenOptionsIn);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual OGRErr DeleteLayer(int) override;
@@ -578,7 +580,7 @@ class OGROCIDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void DeleteLayer(const char *);
 

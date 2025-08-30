@@ -203,7 +203,7 @@ void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -238,7 +238,7 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -362,7 +362,7 @@ OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -395,7 +395,7 @@ void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -463,7 +463,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  * This method is the same as the C function OGR_GFld_SetIgnored().
  *
  * This method should not be called on a object returned with
- * OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead, the
+ * OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead, the
  * OGRLayer::SetIgnoredFields() method should be called.
  *
  * @param ignore ignore state
@@ -481,7 +481,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  * This method is the same as the C++ method OGRGeomFieldDefn::SetIgnored().
  *
  * This method should not be called on a object returned with
- * OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead, the
+ * OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead, the
  * OGRLayer::SetIgnoredFields() method should be called.
  *
  * @param hDefn handle to the geometry field definition
@@ -560,7 +560,7 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -608,7 +608,7 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -702,7 +702,7 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -735,7 +735,7 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
  * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
@@ -826,7 +826,7 @@ OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH hDefn)
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn().
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn().
  *
  * @param prec Coordinate precision
  * @since GDAL 3.9
@@ -855,7 +855,7 @@ void OGRGeomFieldDefn::SetCoordinatePrecision(
  *
  * Note that once a OGRGeomFieldDefn has been added to a layer definition with
  * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
- * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn().
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn().
  *
  * @param hDefn handle to the field definition.  Must not be NULL.
  * @param hGeomCoordPrec Coordinate precision. Must not be NULL.

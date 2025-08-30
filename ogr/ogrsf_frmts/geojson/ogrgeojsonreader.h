@@ -82,7 +82,7 @@ class OGRGeoJSONBaseReader
     void FinalizeLayerDefn(OGRLayer *poLayer, CPLString &osFIDColumn);
 
     OGRGeometry *ReadGeometry(json_object *poObj,
-                              OGRSpatialReference *poLayerSRS);
+                              const OGRSpatialReference *poLayerSRS);
     OGRFeature *ReadFeature(OGRLayer *poLayer, json_object *poObj,
                             const char *pszSerializedObj);
 

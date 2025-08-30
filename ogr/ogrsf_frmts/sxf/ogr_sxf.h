@@ -75,18 +75,18 @@ class OGRSXFLayer final : public OGRLayer
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
     virtual const char *GetFIDColumn() override;
 
     GByte GetId() const
@@ -135,14 +135,14 @@ class OGRSXFDataSource final : public GDALDataset
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     void CloseFile();
 };
 

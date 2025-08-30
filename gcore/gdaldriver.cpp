@@ -743,7 +743,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
 
     if (eErr == CE_None)
     {
-        const auto poSrcSRS = poSrcDS->GetSpatialRef();
+        const auto poSrcSRS = poSrcDS->GetSpatialRefRasterOnly();
         if (poSrcSRS && !poSrcSRS->IsEmpty())
         {
             eErr = poDstDS->SetSpatialRef(poSrcSRS);

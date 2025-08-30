@@ -58,7 +58,9 @@ class OGRILI1Layer final : public OGRLayer
 
     int GeometryAppend(OGRGeometry *poGeometry);
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -68,7 +70,7 @@ class OGRILI1Layer final : public OGRLayer
         return oGeomFieldInfos;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -102,15 +104,16 @@ class OGRILI1DataSource final : public GDALDataset
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return poReader ? poReader->GetLayerCount() : 0;
     }
 
-    OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     OGRILI1Layer *GetLayerByName(const char *) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 #endif /* OGR_ILI1_H_INCLUDED */

@@ -216,7 +216,7 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCBinLayer::TestCapability(const char *pszCap)
+int OGRAVCBinLayer::TestCapability(const char *pszCap) const
 
 {
     if (eSectionType == AVCFileARC && EQUAL(pszCap, OLCRandomRead))

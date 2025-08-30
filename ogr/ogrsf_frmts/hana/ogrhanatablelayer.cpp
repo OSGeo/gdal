@@ -1123,23 +1123,23 @@ void OGRHanaTableLayer::ResetReading()
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRHanaTableLayer::TestCapability(const char *capabilities)
+int OGRHanaTableLayer::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, OLCRandomRead))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaTableLayer *>(this)->EnsureInitialized();
         return fidFieldIndex_ != OGRNullFID;
     }
     if (EQUAL(capabilities, OLCFastFeatureCount))
         return TRUE;
     if (EQUAL(capabilities, OLCFastSpatialFilter))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaTableLayer *>(this)->EnsureInitialized();
         return !geomColumns_.empty();
     }
     if (EQUAL(capabilities, OLCFastGetExtent))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaTableLayer *>(this)->EnsureInitialized();
         return IsFastExtentAvailable();
     }
     if (EQUAL(capabilities, OLCCreateField))
@@ -1151,7 +1151,7 @@ int OGRHanaTableLayer::TestCapability(const char *capabilities)
         return updateMode_;
     if (EQUAL(capabilities, OLCDeleteFeature))
     {
-        EnsureInitialized();
+        const_cast<OGRHanaTableLayer *>(this)->EnsureInitialized();
         return updateMode_ && fidFieldIndex_ != OGRNullFID;
     }
     if (EQUAL(capabilities, OLCAlterFieldDefn))

@@ -32,7 +32,7 @@ OGRPMTilesDataset::~OGRPMTilesDataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPMTilesDataset::GetLayer(int iLayer)
+const OGRLayer *OGRPMTilesDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

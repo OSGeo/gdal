@@ -27,7 +27,7 @@ class OGRPLScenesDataV1Layer;
 
 class OGRPLScenesDataV1Dataset final : public GDALDataset
 {
-    bool m_bLayerListInitialized;
+    mutable bool m_bLayerListInitialized;
     bool m_bMustCleanPersistent;
     CPLString m_osBaseURL;
     CPLString m_osAPIKey;
@@ -51,8 +51,10 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
     OGRPLScenesDataV1Dataset();
     virtual ~OGRPLScenesDataV1Dataset();
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int idx) override;
+    int GetLayerCount() const override;
+
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
     json_object *RunRequest(const char *pszURL, int bQuiet404Error = FALSE,
@@ -152,8 +154,8 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual int TestCapability(const char *) override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    int TestCapability(const char *) const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;

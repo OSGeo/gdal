@@ -85,7 +85,7 @@ bool OGRDGNDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNDataSource::TestCapability(const char *pszCap)
+int OGRDGNDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -100,7 +100,7 @@ int OGRDGNDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRDGNDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

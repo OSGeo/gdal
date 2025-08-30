@@ -289,10 +289,10 @@ GIntBig OGRADBCBigQueryLayer::GetFeatureCount(int /*bForce*/)
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRADBCBigQueryLayer::TestCapability(const char *pszCap)
+int OGRADBCBigQueryLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poAdapterLayer)
-        BuildLayerDefn();
+        const_cast<OGRADBCBigQueryLayer *>(this)->BuildLayerDefn();
 
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField))
         return m_poDS->GetAccess() == GA_Update;
