@@ -385,7 +385,6 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 
 #ifdef __AVX2__
 
-#define DEST_ELTS 16
 #define set1_epi16 _mm256_set1_epi16
 #define set1_epi32 _mm256_set1_epi32
 #define setzero _mm256_setzero_si256
@@ -425,7 +424,6 @@ inline __m256i FIXUP_LANES(__m256i x)
     _mm256_storeu_si256(reinterpret_cast<__m256i *>(x), FIXUP_LANES(y))
 #define hadd_epi16 _mm256_hadd_epi16
 #else
-#define DEST_ELTS 8
 #define set1_epi16 _mm_set1_epi16
 #define set1_epi32 _mm_set1_epi32
 #define setzero _mm_setzero_si128
@@ -473,6 +471,7 @@ static int
     const auto zero = setzero();
     const auto minus32768 = set1_epi16(-32768);
 
+    constexpr int DEST_ELTS = static_cast<int>(sizeof(zero)) / 2;
     for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
     {
         // Load 2 * DEST_ELTS bytes from each line
@@ -544,19 +543,19 @@ static int
 /*                      AverageByteSSE2OrAVX2()                         */
 /************************************************************************/
 
-template <class T>
 static int
 AverageByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
-                      const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                      T *CPL_RESTRICT pDstScanline)
+                      const GByte *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                      GByte *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on Byte by
     // processing by group of 16 output pixels for SSE2, or 32 for AVX2
 
     const auto zero = setzero();
     const auto two16 = set1_epi16(2);
-    const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+    const GByte *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
+    constexpr int DEST_ELTS = static_cast<int>(sizeof(zero)) / 2;
     int iDstPixel = 0;
     for (; iDstPixel < nDstXWidth - (2 * DEST_ELTS - 1);
          iDstPixel += 2 * DEST_ELTS)
@@ -663,15 +662,14 @@ inline __m256 FIXUP_LANES(__m256 x)
 
 #endif
 
-template <class T>
 static int
 QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
-                        const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                        T *CPL_RESTRICT pDstScanline)
+                        const uint16_t *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                        uint16_t *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on UInt16 by
     // processing by group of 4 output pixels.
-    const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+    const uint16_t *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
     const auto zero = _mm_setzero_si128();
@@ -688,7 +686,9 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
     const auto zeroDot5 = _mm_set1_pd(0.5);
 #endif
 
-    for (; iDstPixel < nDstXWidth - 3; iDstPixel += 4)
+    constexpr int DEST_ELTS =
+        static_cast<int>(sizeof(zero) / sizeof(uint16_t)) / 2;
+    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
     {
         // Load 8 UInt16 from each line
         const auto firstLine = _mm_loadu_si128(
@@ -748,7 +748,7 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
             rms = _mm_packs_epi32(rms, rms /* could be anything */);
             _mm_storel_epi64(
                 reinterpret_cast<__m128i *>(&pDstScanline[iDstPixel]), rms);
-            pSrcScanlineShifted += 8;
+            pSrcScanlineShifted += 2 * DEST_ELTS;
             continue;
         }
 
@@ -862,7 +862,7 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
 
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&pDstScanline[iDstPixel]),
                          rms);
-        pSrcScanlineShifted += 8;
+        pSrcScanlineShifted += 2 * DEST_ELTS;
     }
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
@@ -873,20 +873,21 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
 /*                         AverageUInt16SSE2()                          */
 /************************************************************************/
 
-template <class T>
-static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
-                             const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
-                             T *CPL_RESTRICT pDstScanline)
+static int
+AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
+                  const uint16_t *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                  uint16_t *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on UInt16 by
     // processing by group of 8 output pixels.
 
     const auto mask = _mm_set1_epi32(0xFFFF);
     const auto two = _mm_set1_epi32(2);
-    const T *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+    const uint16_t *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    for (; iDstPixel < nDstXWidth - 7; iDstPixel += 8)
+    constexpr int DEST_ELTS = static_cast<int>(sizeof(mask) / sizeof(uint16_t));
+    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
     {
         __m128i averageLow;
         // Load 8 UInt16 from each line
@@ -913,11 +914,12 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
         // Load 8 UInt16 from each line
         __m128i averageHigh;
         {
-            const auto firstLine = _mm_loadu_si128(
-                reinterpret_cast<__m128i const *>(pSrcScanlineShifted + 8));
+            const auto firstLine =
+                _mm_loadu_si128(reinterpret_cast<__m128i const *>(
+                    pSrcScanlineShifted + DEST_ELTS));
             const auto secondLine =
                 _mm_loadu_si128(reinterpret_cast<__m128i const *>(
-                    pSrcScanlineShifted + 8 + nChunkXSize));
+                    pSrcScanlineShifted + DEST_ELTS + nChunkXSize));
 
             // Horizontal addition and extension to 32 bit
             const auto horizAddFirstLine = _mm_add_epi32(
@@ -937,7 +939,7 @@ static int AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
         auto average = sse2_packus_epi32(averageLow, averageHigh);
         _mm_storeu_si128(reinterpret_cast<__m128i *>(&pDstScanline[iDstPixel]),
                          average);
-        pSrcScanlineShifted += 16;
+        pSrcScanlineShifted += 2 * DEST_ELTS;
     }
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
@@ -962,7 +964,6 @@ inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
 #endif
 
 #ifdef __AVX2__
-#define RMS_FLOAT_ELTS 8
 #define set1_ps _mm256_set1_ps
 #define loadu_ps _mm256_loadu_ps
 #define andnot_ps _mm256_andnot_ps
@@ -988,7 +989,6 @@ inline __m256 SQUARE_PS(__m256 x)
 
 #else
 
-#define RMS_FLOAT_ELTS 4
 #define set1_ps _mm_set1_ps
 #define loadu_ps _mm_loadu_ps
 #define andnot_ps _mm_andnot_ps
@@ -1036,7 +1036,7 @@ static int
                            float *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on Float32 by
-    // processing by group of RMS_FLOAT_ELTS output pixels.
+    // processing by group of output pixels.
     const float *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
@@ -1044,16 +1044,16 @@ static int
     const auto zeroDot25 = set1_ps(0.25f);
     const auto one = set1_ps(1.0f);
     const auto infv = set1_ps(std::numeric_limits<float>::infinity());
+    constexpr int DEST_ELTS = static_cast<int>(sizeof(one) / sizeof(float));
 
-    for (; iDstPixel < nDstXWidth - (RMS_FLOAT_ELTS - 1);
-         iDstPixel += RMS_FLOAT_ELTS)
+    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
     {
-        // Load 2*RMS_FLOAT_ELTS Float32 from each line
+        // Load 2*DEST_ELTS Float32 from each line
         auto firstLineLo = loadu_ps(pSrcScanlineShifted);
-        auto firstLineHi = loadu_ps(pSrcScanlineShifted + RMS_FLOAT_ELTS);
+        auto firstLineHi = loadu_ps(pSrcScanlineShifted + DEST_ELTS);
         auto secondLineLo = loadu_ps(pSrcScanlineShifted + nChunkXSize);
         auto secondLineHi =
-            loadu_ps(pSrcScanlineShifted + RMS_FLOAT_ELTS + nChunkXSize);
+            loadu_ps(pSrcScanlineShifted + DEST_ELTS + nChunkXSize);
 
         // Take the absolute value
         firstLineLo = andnot_ps(minus_zero, firstLineLo);
@@ -1070,11 +1070,11 @@ static int
         auto secondLineOdd =
             shuffle_ps(secondLineLo, secondLineHi, _MM_SHUFFLE(3, 1, 3, 1));
 
-        // Compute the maximum of each RMS_FLOAT_ELTS value to RMS-average
+        // Compute the maximum of each DEST_ELTS value to RMS-average
         const auto maxV = max_ps(max_ps(firstLineEven, firstLineOdd),
                                  max_ps(secondLineEven, secondLineEven));
 
-        // Normalize each value by the maximum of the RMS_FLOAT_ELTS ones.
+        // Normalize each value by the maximum of the DEST_ELTS ones.
         // This step is important to avoid that the square evaluates to infinity
         // for sufficiently big input.
         auto invMax = div_ps(one, maxV);
@@ -1106,7 +1106,7 @@ static int
         rms = FIXUP_LANES(rms);
 
         storeu_ps(&pDstScanline[iDstPixel], rms);
-        pSrcScanlineShifted += RMS_FLOAT_ELTS * 2;
+        pSrcScanlineShifted += DEST_ELTS * 2;
     }
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
@@ -1122,23 +1122,26 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
                             float *CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for average on Float32 by
-    // processing by group of 4 output pixels.
+    // processing by group of output pixels.
     const float *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
     const auto zeroDot25 = _mm_set1_ps(0.25f);
+    constexpr int DEST_ELTS =
+        static_cast<int>(sizeof(zeroDot25) / sizeof(float));
 
-    for (; iDstPixel < nDstXWidth - 3; iDstPixel += 4)
+    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
     {
-        // Load 8 Float32 from each line
+        // Load 2 * DEST_ELTS Float32 from each line
         const auto firstLineLo =
             _mm_mul_ps(_mm_loadu_ps(pSrcScanlineShifted), zeroDot25);
-        const auto firstLineHi =
-            _mm_mul_ps(_mm_loadu_ps(pSrcScanlineShifted + 4), zeroDot25);
+        const auto firstLineHi = _mm_mul_ps(
+            _mm_loadu_ps(pSrcScanlineShifted + DEST_ELTS), zeroDot25);
         const auto secondLineLo = _mm_mul_ps(
             _mm_loadu_ps(pSrcScanlineShifted + nChunkXSize), zeroDot25);
         const auto secondLineHi = _mm_mul_ps(
-            _mm_loadu_ps(pSrcScanlineShifted + 4 + nChunkXSize), zeroDot25);
+            _mm_loadu_ps(pSrcScanlineShifted + DEST_ELTS + nChunkXSize),
+            zeroDot25);
 
         // Vertical addition
         const auto tmpLo = _mm_add_ps(firstLineLo, secondLineLo);
@@ -1148,7 +1151,7 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
         const auto average = sse2_hadd_ps(tmpLo, tmpHi);
 
         _mm_storeu_ps(&pDstScanline[iDstPixel], average);
-        pSrcScanlineShifted += 8;
+        pSrcScanlineShifted += DEST_ELTS * 2;
     }
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
@@ -1488,14 +1491,14 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                             }
                             else
                             {
+                                constexpr auto weight = static_cast<T>(0.25);
+                                // Multiply each value by weight to avoid
+                                // potential overflow
                                 nVal =
-                                    (static_cast<T>(0.25) *
-                                         pSrcScanlineShifted[0] +
-                                     static_cast<T>(0.25) *
-                                         pSrcScanlineShifted[1] +
-                                     static_cast<T>(0.25) *
-                                         pSrcScanlineShifted[nChunkXSize] +
-                                     static_cast<T>(0.25) *
+                                    (weight * pSrcScanlineShifted[0] +
+                                     weight * pSrcScanlineShifted[1] +
+                                     weight * pSrcScanlineShifted[nChunkXSize] +
+                                     weight *
                                          pSrcScanlineShifted[1 + nChunkXSize]);
                             }
                         }
