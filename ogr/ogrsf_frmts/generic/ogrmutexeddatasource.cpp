@@ -38,7 +38,7 @@ OGRMutexedDataSource::~OGRMutexedDataSource()
         delete m_poBaseDataSource;
 }
 
-int OGRMutexedDataSource::GetLayerCount()
+int OGRMutexedDataSource::GetLayerCount() const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->GetLayerCount();
@@ -63,10 +63,11 @@ OGRLayer *OGRMutexedDataSource::WrapLayerIfNecessary(OGRLayer *poLayer)
     return poLayer;
 }
 
-OGRLayer *OGRMutexedDataSource::GetLayer(int iIndex)
+const OGRLayer *OGRMutexedDataSource::GetLayer(int iIndex) const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
-    return WrapLayerIfNecessary(m_poBaseDataSource->GetLayer(iIndex));
+    return const_cast<OGRMutexedDataSource *>(this)->WrapLayerIfNecessary(
+        m_poBaseDataSource->GetLayer(iIndex));
 }
 
 OGRLayer *OGRMutexedDataSource::GetLayerByName(const char *pszName)
@@ -101,7 +102,7 @@ bool OGRMutexedDataSource::IsLayerPrivate(int iLayer) const
     return m_poBaseDataSource->IsLayerPrivate(iLayer);
 }
 
-int OGRMutexedDataSource::TestCapability(const char *pszCap)
+int OGRMutexedDataSource::TestCapability(const char *pszCap) const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->TestCapability(pszCap);

@@ -145,7 +145,7 @@ int OGRDGNV8DataSource::Open(const char *pszFilename, bool bUpdate)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNV8DataSource::TestCapability(const char *pszCap)
+int OGRDGNV8DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -162,7 +162,7 @@ int OGRDGNV8DataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDGNV8DataSource::GetLayer(int iLayer)
+const OGRLayer *OGRDGNV8DataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= m_nLayers)

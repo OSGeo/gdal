@@ -181,7 +181,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     if (Open(osFilename, fp, poSRS, TRUE))
     {
-        auto poLayer = papoLayers[nLayers - 1];
+        OGRLayer *poLayer = papoLayers[nLayers - 1];
         if (strcmp(pszGeom, "") != 0)
         {
             poLayer->GetLayerDefn()->SetGeomType(wkbFlatten(eType));
@@ -197,7 +197,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGmtDataSource::TestCapability(const char *pszCap)
+int OGRGmtDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -212,7 +212,7 @@ int OGRGmtDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGmtDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGmtDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

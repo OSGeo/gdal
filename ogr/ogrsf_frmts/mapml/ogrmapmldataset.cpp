@@ -54,12 +54,12 @@ class OGRMapMLReaderDataset final : public GDALPamDataset
   public:
     OGRMapMLReaderDataset() = default;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -90,14 +90,14 @@ class OGRMapMLReaderLayer final
     OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS, const char *pszLayerName);
     ~OGRMapMLReaderLayer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMapMLReaderLayer)
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -133,18 +133,18 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     explicit OGRMapMLWriterDataset(VSILFILE *fpOut);
     ~OGRMapMLWriterDataset() override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void AddFeature(CPLXMLNode *psNode);
 
@@ -177,7 +177,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
                         std::unique_ptr<OGRCoordinateTransformation> &&poCT);
     ~OGRMapMLWriterLayer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -193,7 +193,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
 
     OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -257,7 +257,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx)
+const OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr;
 }
@@ -477,7 +477,7 @@ OGRMapMLReaderLayer::~OGRMapMLReaderLayer()
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMapMLReaderLayer::TestCapability(const char *pszCap)
+int OGRMapMLReaderLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))
@@ -962,7 +962,7 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx)
+const OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr;
 }
@@ -971,7 +971,7 @@ OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMapMLWriterDataset::TestCapability(const char *pszCap)
+int OGRMapMLWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return true;
@@ -1084,7 +1084,7 @@ OGRMapMLWriterLayer::~OGRMapMLWriterLayer()
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMapMLWriterLayer::TestCapability(const char *pszCap)
+int OGRMapMLWriterLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField))

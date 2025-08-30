@@ -122,6 +122,8 @@ class OGRWFSLayer final : public OGRLayer
 
     std::string m_osTmpDir{};
 
+    void BuildLayerDefn();
+
     CPL_DISALLOW_COPY_ASSIGN(OGRWFSLayer)
 
   public:
@@ -133,7 +135,7 @@ class OGRWFSLayer final : public OGRLayer
 
     OGRWFSLayer *Clone();
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return pszName;
     }
@@ -142,9 +144,9 @@ class OGRWFSLayer final : public OGRLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -175,7 +177,7 @@ class OGRWFSLayer final : public OGRLayer
     }
 
     OGRFeatureDefn *ParseSchema(const CPLXMLNode *psSchema);
-    OGRFeatureDefn *BuildLayerDefn(OGRFeatureDefn *poSrcFDefn = nullptr);
+    OGRFeatureDefn *BuildLayerDefn(OGRFeatureDefn *poSrcFDefn);
 
     OGRErr DeleteFromFilter(const std::string &osOGCFilter);
 
@@ -283,9 +285,9 @@ class OGRWFSJoinLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 
@@ -383,12 +385,12 @@ class OGRWFSDataSource final : public GDALDataset
     int Open(const char *pszFilename, int bUpdate,
              CSLConstList papszOpenOptions);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *pszLayerName) override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,

@@ -293,7 +293,7 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
     return TRUE;
 }
 
-OGRLayer *GDALCADDataset::GetLayer(int iLayer)
+const OGRLayer *GDALCADDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
@@ -301,7 +301,7 @@ OGRLayer *GDALCADDataset::GetLayer(int iLayer)
         return papoLayers[iLayer];
 }
 
-int GDALCADDataset::TestCapability(const char *pszCap)
+int GDALCADDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
         return FALSE;

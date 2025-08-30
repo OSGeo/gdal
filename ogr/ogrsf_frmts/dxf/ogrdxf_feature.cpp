@@ -17,7 +17,7 @@
 /*                            OGRDXFFeature()                           */
 /************************************************************************/
 
-OGRDXFFeature::OGRDXFFeature(OGRFeatureDefn *poFeatureDefn)
+OGRDXFFeature::OGRDXFFeature(const OGRFeatureDefn *poFeatureDefn)
     : OGRFeature(poFeatureDefn), oOCS(0.0, 0.0, 1.0), bIsBlockReference(false),
       dfBlockAngle(0.0), oBlockScale(1.0, 1.0, 1.0),
       oOriginalCoords(0.0, 0.0, 0.0)

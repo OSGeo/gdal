@@ -41,7 +41,9 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
 
     ~OGRArrowArrayToOGRFeatureAdapterLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poLayerDefn;
     }
@@ -55,7 +57,7 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
         return nullptr;
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         return EQUAL(pszCap, OLCCreateField) ||
                EQUAL(pszCap, OLCSequentialWrite);
@@ -160,16 +162,17 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
 
     bool GotError();
 
-    OGRFeatureDefn *GetLayerDefn() override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return GetDescription();
     }
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRADBCLayer)
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     GDALDataset *GetDataset() override;
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
@@ -208,7 +211,7 @@ class OGRADBCBigQueryLayer final : public OGRADBCLayer
     OGRADBCBigQueryLayer(OGRADBCDataset *poDS, const char *pszName,
                          const std::string &osStatement, bool bInternalUse);
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -250,12 +253,12 @@ class OGRADBCDataset final : public GDALDataset
 
     bool Open(const GDALOpenInfo *poOpenInfo);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override
+    const OGRLayer *GetLayer(int idx) const override
     {
         return (idx >= 0 && idx < GetLayerCount()) ? m_apoLayers[idx].get()
                                                    : nullptr;
@@ -278,7 +281,7 @@ class OGRADBCDataset final : public GDALDataset
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/

@@ -474,7 +474,7 @@ OGRFeature *OGRPMTilesVectorLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPMTilesVectorLayer::TestCapability(const char *pszCap)
+int OGRPMTilesVectorLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCFastSpatialFilter) || EQUAL(pszCap, OLCFastGetExtent))

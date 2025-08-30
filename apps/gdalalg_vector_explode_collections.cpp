@@ -97,7 +97,7 @@ class GDALVectorExplodeCollectionsAlgorithmLayer final
         m_poFeatureDefn->Release();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -114,7 +114,7 @@ class GDALVectorExplodeCollectionsAlgorithmLayer final
         return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||

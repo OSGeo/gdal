@@ -119,7 +119,7 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFWritableVectorDataset::TestCapability(const char *pszCap)
+int PDFWritableVectorDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -132,7 +132,7 @@ int PDFWritableVectorDataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer)
+const OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -145,7 +145,7 @@ OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer)
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int PDFWritableVectorDataset::GetLayerCount()
+int PDFWritableVectorDataset::GetLayerCount() const
 {
     return nLayers;
 }
@@ -335,7 +335,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     poSrcDS->SetGeoTransform(gt);
 
-    OGRSpatialReference *poSRS = papoLayers[0]->GetSpatialRef();
+    const OGRSpatialReference *poSRS = papoLayers[0]->GetSpatialRef();
     if (poSRS)
     {
         char *pszWKT = nullptr;

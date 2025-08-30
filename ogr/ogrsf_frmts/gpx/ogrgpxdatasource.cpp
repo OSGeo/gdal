@@ -76,7 +76,7 @@ OGRGPXDataSource::~OGRGPXDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPXDataSource::TestCapability(const char *pszCap)
+int OGRGPXDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -93,7 +93,7 @@ int OGRGPXDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGPXDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGPXDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

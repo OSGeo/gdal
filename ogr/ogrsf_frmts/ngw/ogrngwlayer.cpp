@@ -157,11 +157,11 @@ static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
         oFeatureJson.Add("geom", osGeomWKT);
     }
 
-    OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
+    const OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
     CPLJSONObject oFieldsJson("fields", oFeatureJson);
     for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); ++iField)
     {
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
         if (poFeature->IsFieldNull(iField) == TRUE)
         {
             oFieldsJson.AddNull(poFieldDefn->GetNameRef());
@@ -843,7 +843,7 @@ OGRFeature *OGRNGWLayer::GetFeature(GIntBig nFID)
 /*
  * GetLayerDefn()
  */
-OGRFeatureDefn *OGRNGWLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRNGWLayer::GetLayerDefn() const
 {
     return poFeatureDefn;
 }
@@ -851,9 +851,9 @@ OGRFeatureDefn *OGRNGWLayer::GetLayerDefn()
 /*
  * TestCapability()
  */
-int OGRNGWLayer::TestCapability(const char *pszCap)
+int OGRNGWLayer::TestCapability(const char *pszCap) const
 {
-    FetchPermissions();
+    const_cast<OGRNGWLayer *>(this)->FetchPermissions();
     if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
     else if (EQUAL(pszCap, OLCSequentialWrite))
@@ -1290,12 +1290,12 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     CPLJSONObject oVectorLayer("vector_layer", oResourceJson);
     CPLJSONObject oVectorLayerSrs("srs", oVectorLayer);
 
-    OGRSpatialReference *poSpatialRef = GetSpatialRef();
     int nEPSG = 3857;
-    if (poSpatialRef)
+    if (const auto poSRSConst = GetSpatialRef())
     {
-        poSpatialRef->AutoIdentifyEPSG();
-        const char *pszEPSG = poSpatialRef->GetAuthorityCode(nullptr);
+        OGRSpatialReference oSRS(*poSRSConst);
+        oSRS.AutoIdentifyEPSG();
+        const char *pszEPSG = oSRS.GetAuthorityCode(nullptr);
         if (pszEPSG != nullptr)
         {
             nEPSG = atoi(pszEPSG);

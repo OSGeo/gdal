@@ -97,18 +97,18 @@ class FITSDataset final : public GDALPamDataset
     virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     char **GetMetadata(const char *papszDomain = nullptr) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 };
@@ -204,13 +204,13 @@ class FITSLayer final : public OGRLayer,
     FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName);
     ~FITSLayer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
@@ -877,7 +877,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int FITSLayer::TestCapability(const char *pszCap)
+int FITSLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -2277,7 +2277,7 @@ char **FITSDataset::GetMetadata(const char *pszDomain)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *FITSDataset::GetLayer(int idx)
+const OGRLayer *FITSDataset::GetLayer(int idx) const
 {
     if (idx < 0 || idx >= GetLayerCount())
         return nullptr;
@@ -2346,7 +2346,7 @@ OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSDataset::TestCapability(const char *pszCap)
+int FITSDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

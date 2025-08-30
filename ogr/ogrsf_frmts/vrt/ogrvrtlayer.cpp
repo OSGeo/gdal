@@ -47,7 +47,7 @@
 /*                   GetFieldIndexCaseSensitiveFirst()                  */
 /************************************************************************/
 
-static int GetFieldIndexCaseSensitiveFirst(OGRFeatureDefn *poFDefn,
+static int GetFieldIndexCaseSensitiveFirst(const OGRFeatureDefn *poFDefn,
                                            const char *pszFieldName)
 {
     int idx = poFDefn->GetFieldIndexCaseSensitive(pszFieldName);
@@ -2053,7 +2053,7 @@ OGRErr OGRVRTLayer::SetAttributeFilter(const char *pszNewQuery)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTLayer::TestCapability(const char *pszCap)
+int OGRVRTLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && nFeatureCount >= 0 &&
@@ -2065,7 +2065,7 @@ int OGRVRTLayer::TestCapability(const char *pszCap)
         return TRUE;
 
     if (!bHasFullInitialized)
-        FullInitialize();
+        const_cast<OGRVRTLayer *>(this)->FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected())
         return FALSE;
 
@@ -2245,10 +2245,10 @@ OGRErr OGRVRTLayer::SyncToDisk()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRVRTLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRVRTLayer::GetLayerDefn() const
 {
     if (!bHasFullInitialized)
-        FullInitialize();
+        const_cast<OGRVRTLayer *>(this)->FullInitialize();
 
     return poFeatureDefn;
 }
@@ -2257,7 +2257,7 @@ OGRFeatureDefn *OGRVRTLayer::GetLayerDefn()
 /*                             GetGeomType()                            */
 /************************************************************************/
 
-OGRwkbGeometryType OGRVRTLayer::GetGeomType()
+OGRwkbGeometryType OGRVRTLayer::GetGeomType() const
 {
     if (CPLGetXMLValue(psLTree, "GeometryType", nullptr) != nullptr ||
         CPLGetXMLValue(psLTree, "GeometryField.GeometryType", nullptr) !=

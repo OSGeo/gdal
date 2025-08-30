@@ -1555,25 +1555,27 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     }
     ASSERT_EQ(nCountLayers, 2);
 
-    // std::copy requires a InputIterator
-    std::vector<OGRLayer *> oTarget;
-    oTarget.resize(2);
     auto layers = poDS->GetLayers();
-    std::copy(layers.begin(), layers.end(), oTarget.begin());
-    ASSERT_EQ(oTarget[0], layers[0]);
-    ASSERT_EQ(oTarget[1], layers[1]);
-
-    // but in practice not necessarily uses the postincrement iterator.
-    oTarget.clear();
-    oTarget.resize(2);
-    auto input_iterator = layers.begin();
-    auto output_iterator = oTarget.begin();
-    while (input_iterator != layers.end())
     {
-        *output_iterator++ = *input_iterator++;
+        // std::copy requires a InputIterator
+        std::vector<OGRLayer *> oTarget;
+        oTarget.resize(2);
+        std::copy(layers.begin(), layers.end(), oTarget.begin());
+        ASSERT_EQ(oTarget[0], layers[0]);
+        ASSERT_EQ(oTarget[1], layers[1]);
+
+        // but in practice not necessarily uses the postincrement iterator.
+        oTarget.clear();
+        oTarget.resize(2);
+        auto input_iterator = layers.begin();
+        auto output_iterator = oTarget.begin();
+        while (input_iterator != layers.end())
+        {
+            *output_iterator++ = *input_iterator++;
+        }
+        ASSERT_EQ(oTarget[0], layers[0]);
+        ASSERT_EQ(oTarget[1], layers[1]);
     }
-    ASSERT_EQ(oTarget[0], layers[0]);
-    ASSERT_EQ(oTarget[1], layers[1]);
 
     // Test copy constructor
     {
@@ -1609,6 +1611,87 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator newIter;
         newIter = std::move(srcIter);
         ASSERT_EQ(*newIter, layers[1]);
+    }
+
+    const GDALDataset *poConstDS = poDS.get();
+    ASSERT_EQ(poConstDS->GetLayers().size(), 2U);
+    ASSERT_EQ(poConstDS->GetLayers()[0], poConstDS->GetLayer(0));
+    ASSERT_EQ(poConstDS->GetLayers()[static_cast<size_t>(0)],
+              poConstDS->GetLayer(0));
+    ASSERT_EQ(poConstDS->GetLayers()["foo"], poConstDS->GetLayer(0));
+    nCountLayers = 0;
+    for (auto &&poLayer : poDS->GetLayers())
+    {
+        if (nCountLayers == 0)
+        {
+            EXPECT_STREQ(poLayer->GetName(), "foo")
+                << "layer " << poLayer->GetName();
+        }
+        else if (nCountLayers == 1)
+        {
+            EXPECT_STREQ(poLayer->GetName(), "bar")
+                << "layer " << poLayer->GetName();
+        }
+        nCountLayers++;
+    }
+    ASSERT_EQ(nCountLayers, 2);
+
+    auto constLayers = poConstDS->GetLayers();
+    {
+        // std::copy requires a InputIterator
+        std::vector<const OGRLayer *> oTarget;
+        oTarget.resize(2);
+        std::copy(constLayers.begin(), constLayers.end(), oTarget.begin());
+        ASSERT_EQ(oTarget[0], constLayers[0]);
+        ASSERT_EQ(oTarget[1], constLayers[1]);
+
+        // but in practice not necessarily uses the postincrement iterator.
+        oTarget.clear();
+        oTarget.resize(2);
+        auto input_iterator = constLayers.begin();
+        auto output_iterator = oTarget.begin();
+        while (input_iterator != constLayers.end())
+        {
+            *output_iterator++ = *input_iterator++;
+        }
+        ASSERT_EQ(oTarget[0], constLayers[0]);
+        ASSERT_EQ(oTarget[1], constLayers[1]);
+    }
+
+    // Test copy constructor
+    {
+        auto srcIter(poConstDS->GetLayers().begin());
+        ++srcIter;
+        auto newIter(srcIter);
+        srcIter = constLayers.begin();  // avoid Coverity Scan warning
+        ASSERT_EQ(*newIter, constLayers[1]);
+    }
+
+    // Test assignment operator
+    {
+        auto srcIter(poConstDS->GetLayers().begin());
+        ++srcIter;
+        GDALDataset::ConstLayers::Iterator newIter;
+        newIter = srcIter;
+        srcIter = constLayers.begin();  // avoid Coverity Scan warning
+        ASSERT_EQ(*newIter, constLayers[1]);
+    }
+
+    // Test move constructor
+    {
+        auto srcIter(poConstDS->GetLayers().begin());
+        ++srcIter;
+        auto newIter(std::move(srcIter));
+        ASSERT_EQ(*newIter, constLayers[1]);
+    }
+
+    // Test move assignment operator
+    {
+        auto srcIter(poConstDS->GetLayers().begin());
+        ++srcIter;
+        GDALDataset::ConstLayers::Iterator newIter;
+        newIter = std::move(srcIter);
+        ASSERT_EQ(*newIter, constLayers[1]);
     }
 }
 

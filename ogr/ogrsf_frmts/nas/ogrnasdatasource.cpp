@@ -282,6 +282,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema(GMLFeatureClass *poClass)
 
         oField.SetSpatialRef(poSRS);
         oField.SetNullable(poProperty->IsNullable());
+
         poLayer->GetLayerDefn()->AddGeomFieldDefn(&oField);
     }
 
@@ -295,7 +296,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema(GMLFeatureClass *poClass)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRNASDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRNASDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

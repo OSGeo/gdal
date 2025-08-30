@@ -905,7 +905,7 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNLayer::TestCapability(const char *pszCap)
+int OGRDGNLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

@@ -706,7 +706,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGDumpDataSource::TestCapability(const char *pszCap)
+int OGRPGDumpDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -729,7 +729,7 @@ int OGRPGDumpDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))

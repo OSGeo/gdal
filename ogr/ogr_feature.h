@@ -908,7 +908,7 @@ class CPL_DLL OGRFeature
 {
   private:
     GIntBig nFID;
-    OGRFeatureDefn *poDefn;
+    const OGRFeatureDefn *poDefn;
     OGRGeometry **papoGeometries;
     OGRField *pauFields;
     char *m_pszNativeData;
@@ -926,7 +926,7 @@ class CPL_DLL OGRFeature
     bool CopySelfTo(OGRFeature *poNew) const;
 
   public:
-    explicit OGRFeature(OGRFeatureDefn *);
+    explicit OGRFeature(const OGRFeatureDefn *);
     virtual ~OGRFeature();
 
     /** Field value. */
@@ -1202,11 +1202,6 @@ class CPL_DLL OGRFeature
     const FieldValue operator[](const char *pszFieldName) const;
     FieldValue operator[](const char *pszFieldName);
 
-    OGRFeatureDefn *GetDefnRef()
-    {
-        return poDefn;
-    }
-
     const OGRFeatureDefn *GetDefnRef() const
     {
         return poDefn;
@@ -1226,11 +1221,6 @@ class CPL_DLL OGRFeature
     int GetGeomFieldCount() const
     {
         return poDefn->GetGeomFieldCount();
-    }
-
-    OGRGeomFieldDefn *GetGeomFieldDefnRef(int iField)
-    {
-        return poDefn->GetGeomFieldDefn(iField);
     }
 
     const OGRGeomFieldDefn *GetGeomFieldDefnRef(int iField) const
@@ -1263,11 +1253,6 @@ class CPL_DLL OGRFeature
     }
 
     const OGRFieldDefn *GetFieldDefnRef(int iField) const
-    {
-        return poDefn->GetFieldDefn(iField);
-    }
-
-    OGRFieldDefn *GetFieldDefnRef(int iField)
     {
         return poDefn->GetFieldDefn(iField);
     }
@@ -1518,9 +1503,10 @@ class CPL_DLL OGRFeature
                          bool bUseISO8601ForDateTimeAsString = false);
 
     //! @cond Doxygen_Suppress
-    OGRErr RemapFields(OGRFeatureDefn *poNewDefn, const int *panRemapSource);
+    OGRErr RemapFields(const OGRFeatureDefn *poNewDefn,
+                       const int *panRemapSource);
     void AppendField();
-    OGRErr RemapGeomFields(OGRFeatureDefn *poNewDefn,
+    OGRErr RemapGeomFields(const OGRFeatureDefn *poNewDefn,
                            const int *panRemapSource);
     //! @endcond
 
@@ -1558,7 +1544,7 @@ class CPL_DLL OGRFeature
     void SetNativeData(const char *pszNativeData);
     void SetNativeMediaType(const char *pszNativeMediaType);
 
-    static OGRFeature *CreateFeature(OGRFeatureDefn *);
+    static OGRFeature *CreateFeature(const OGRFeatureDefn *);
     static void DestroyFeature(OGRFeature *);
 
     /** Convert a OGRFeature* to a OGRFeatureH.
@@ -1965,7 +1951,7 @@ struct swq_evaluation_context;
 class CPL_DLL OGRFeatureQuery
 {
   private:
-    OGRFeatureDefn *poTargetDefn;
+    const OGRFeatureDefn *poTargetDefn;
     void *pSWQExpr;
     swq_evaluation_context *m_psContext = nullptr;
 
@@ -1976,7 +1962,8 @@ class CPL_DLL OGRFeatureQuery
 
     static int CanUseIndex(const swq_expr_node *, OGRLayer *);
 
-    OGRErr Compile(OGRLayer *, OGRFeatureDefn *, const char *, int bCheck,
+    OGRErr Compile(const OGRLayer *, const OGRFeatureDefn *, const char *,
+                   int bCheck,
                    swq_custom_func_registrar *poCustomFuncRegistrar);
 
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureQuery)
@@ -1985,9 +1972,9 @@ class CPL_DLL OGRFeatureQuery
     OGRFeatureQuery();
     ~OGRFeatureQuery();
 
-    OGRErr Compile(OGRLayer *, const char *, int bCheck = TRUE,
+    OGRErr Compile(const OGRLayer *, const char *, int bCheck = TRUE,
                    swq_custom_func_registrar *poCustomFuncRegistrar = nullptr);
-    OGRErr Compile(OGRFeatureDefn *, const char *, int bCheck = TRUE,
+    OGRErr Compile(const OGRFeatureDefn *, const char *, int bCheck = TRUE,
                    swq_custom_func_registrar *poCustomFuncRegistrar = nullptr);
     int Evaluate(OGRFeature *);
 

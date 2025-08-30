@@ -199,12 +199,12 @@ class BAGDataset final : public GDALPamDataset
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_poTrackingListLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int idx) override;
+    const OGRLayer *GetLayer(int idx) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenForCreate(GDALOpenInfo *, int nXSizeIn,
@@ -3499,7 +3499,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *BAGDataset::GetLayer(int idx)
+const OGRLayer *BAGDataset::GetLayer(int idx) const
 {
     if (idx != 0)
         return nullptr;
@@ -3526,7 +3526,7 @@ class BAGTrackingListLayer final
     explicit BAGTrackingListLayer(const std::shared_ptr<GDALMDArray> &poArray);
     ~BAGTrackingListLayer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -3534,7 +3534,7 @@ class BAGTrackingListLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return false;
     }

@@ -31,18 +31,18 @@ class GDALNullDataset final : public GDALDataset
     GDALNullDataset();
     virtual ~GDALNullDataset();
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
@@ -88,12 +88,12 @@ class GDALNullLayer final : public OGRLayer
                   OGRwkbGeometryType eType);
     virtual ~GDALNullLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return poSRS;
     }
@@ -102,7 +102,7 @@ class GDALNullLayer final : public OGRLayer
     {
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRFeature *GetNextFeature() override
     {
@@ -231,7 +231,7 @@ OGRLayer *GDALNullDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALNullDataset::TestCapability(const char *pszCap)
+int GDALNullDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -245,7 +245,7 @@ int GDALNullDataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALNullDataset::GetLayer(int iLayer)
+const OGRLayer *GDALNullDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= m_nLayers)
@@ -353,7 +353,7 @@ GDALNullLayer::~GDALNullLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALNullLayer::TestCapability(const char *pszCap)
+int GDALNullLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

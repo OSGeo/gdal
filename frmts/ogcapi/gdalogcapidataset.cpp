@@ -130,13 +130,13 @@ class OGCAPIDataset final : public GDALDataset
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_poOAPIFDS ? m_poOAPIFDS->GetLayerCount()
                            : static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int idx) override
+    const OGRLayer *GetLayer(int idx) const override
     {
         return m_poOAPIFDS                         ? m_poOAPIFDS->GetLayer(idx)
                : idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get()
@@ -280,17 +280,17 @@ class OGCAPITiledLayer final
 
     void ResetReading() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return m_poFeatureDefn->GetName();
     }
 
-    OGRwkbGeometryType GetGeomType() override
+    OGRwkbGeometryType GetGeomType() const override
     {
         return m_poFeatureDefn->GetGeomType();
     }
@@ -308,7 +308,7 @@ class OGCAPITiledLayer final
                              const OGRGeometry *poGeom) override;
 
     OGRFeature *GetFeature(GIntBig nFID) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -2819,7 +2819,7 @@ OGRErr OGCAPITiledLayer::ISetSpatialFilter(int iGeomField,
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGCAPITiledLayer::TestCapability(const char *pszCap)
+int OGCAPITiledLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead))
         return true;

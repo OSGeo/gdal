@@ -644,7 +644,7 @@ OGROCIDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCIDataSource::TestCapability(const char *pszCap)
+int OGROCIDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) && bDSUpdate)
@@ -663,7 +663,7 @@ int OGROCIDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGROCIDataSource::GetLayer(int iLayer)
+const OGRLayer *OGROCIDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

@@ -134,7 +134,7 @@ OGRErr OGRSelafinLayer::SetNextByIndex(GIntBig nIndex)
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
-int OGRSelafinLayer::TestCapability(const char *pszCap)
+int OGRSelafinLayer::TestCapability(const char *pszCap) const
 {
     // CPLDebug("Selafin","TestCapability(%s)",pszCap);
     if (EQUAL(pszCap, OLCRandomRead))

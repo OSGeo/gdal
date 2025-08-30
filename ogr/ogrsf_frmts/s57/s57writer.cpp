@@ -799,7 +799,7 @@ static char GetHEXChar(const char *pszSrcHEXString)
 bool S57Writer::WriteCompleteFeature(OGRFeature *poFeature)
 
 {
-    OGRFeatureDefn *poFDefn = poFeature->GetDefnRef();
+    const OGRFeatureDefn *poFDefn = poFeature->GetDefnRef();
 
     /* -------------------------------------------------------------------- */
     /*      We handle primitives in a separate method.                      */

@@ -16,6 +16,7 @@
 #include "ogrsf_frmts.h"
 #include <vector>
 #include <map>
+#include <mutex>
 #include <set>
 
 /************************************************************************/
@@ -51,12 +52,12 @@ class OGREDIGEOLayer final : public OGRLayer,
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
     virtual GIntBig GetFeatureCount(int bForce) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void AddFeature(OGRFeature *poFeature);
 
@@ -132,90 +133,97 @@ class OGREDIGEODataSource final : public GDALDataset
 {
     friend class OGREDIGEOLayer;
 
-    VSILFILE *fpTHF;
+    mutable VSILFILE *fpTHF;
 
-    OGRLayer **papoLayers;
-    int nLayers;
+    mutable OGRLayer **papoLayers;
+    mutable int nLayers;
 
-    VSILFILE *OpenFile(const char *pszType, const CPLString &osExt);
+    VSILFILE *OpenFile(const char *pszType, const CPLString &osExt) const;
 
     // TODO: Translate comments to English.
-    CPLString osLON; /* Nom du lot */
-    CPLString osGNN; /* Nom du sous-ensemble de données générales */
-    CPLString osGON; /* Nom du sous-ensemble de la référence de coordonnées */
-    CPLString osQAN; /* Nom du sous-ensemble de qualité */
-    CPLString osDIN; /* Nom du sous-ensemble de définition de la nomenclature */
-    CPLString osSCN;    /* Nom du sous-ensemble de définition du SCD */
-    strListType aosGDN; /* Nom du sous-ensemble de données géographiques */
-    int ReadTHF(VSILFILE *fp);
+    mutable CPLString osLON; /* Nom du lot */
+    mutable CPLString osGNN; /* Nom du sous-ensemble de données générales */
+    mutable CPLString
+        osGON; /* Nom du sous-ensemble de la référence de coordonnées */
+    mutable CPLString osQAN; /* Nom du sous-ensemble de qualité */
+    mutable CPLString
+        osDIN; /* Nom du sous-ensemble de définition de la nomenclature */
+    mutable CPLString osSCN; /* Nom du sous-ensemble de définition du SCD */
+    mutable strListType
+        aosGDN; /* Nom du sous-ensemble de données géographiques */
+    int ReadTHF(VSILFILE *fp) const;
 
-    CPLString osREL;
-    OGRSpatialReference *poSRS;
-    int ReadGEO();
+    mutable CPLString osREL;
+    mutable OGRSpatialReference *poSRS;
+    int ReadGEO() const;
 
     /* Map from ID_N_OBJ_E_2_1_0 to OBJ_E_2_1_0 */
-    std::map<CPLString, CPLString> mapObjects;
+    mutable std::map<CPLString, CPLString> mapObjects;
 
     /* Map from ID_N_ATT_TEX2 to (osLAB=TEX2, osTYP=T) */
-    std::map<CPLString, OGREDIGEOAttributeDef> mapAttributes;
-    int ReadDIC();
+    mutable std::map<CPLString, OGREDIGEOAttributeDef> mapAttributes;
+    int ReadDIC() const;
 
-    std::vector<OGREDIGEOObjectDescriptor> aoObjList;
+    mutable std::vector<OGREDIGEOObjectDescriptor> aoObjList;
     /* Map from TEX2_id to (osNameRID=ID_N_ATT_TEX2, nWidth=80) */
-    std::map<CPLString, OGREDIGEOAttributeDescriptor> mapAttributesSCD;
-    int ReadSCD();
+    mutable std::map<CPLString, OGREDIGEOAttributeDescriptor> mapAttributesSCD;
+    int ReadSCD() const;
 
-    int bExtentValid;
-    double dfMinX;
-    double dfMinY;
-    double dfMaxX;
-    double dfMaxY;
-    int ReadGEN();
+    mutable int bExtentValid;
+    mutable double dfMinX;
+    mutable double dfMinY;
+    mutable double dfMaxX;
+    mutable double dfMaxY;
+    int ReadGEN() const;
 
     /* Map from Actualite_Objet_X to (creationData, updateData) */
-    std::map<CPLString, intintType> mapQAL;
-    int ReadQAL();
+    mutable std::map<CPLString, intintType> mapQAL;
+    int ReadQAL() const;
 
-    std::map<CPLString, OGREDIGEOLayer *> mapLayer;
+    mutable std::map<CPLString, OGREDIGEOLayer *> mapLayer;
 
-    int CreateLayerFromObjectDesc(const OGREDIGEOObjectDescriptor &objDesc);
+    int
+    CreateLayerFromObjectDesc(const OGREDIGEOObjectDescriptor &objDesc) const;
 
-    std::map<CPLString, xyPairType> mapPNO; /* Map Noeud_X to (x,y) */
-    std::map<CPLString, xyPairListType>
+    mutable std::map<CPLString, xyPairType> mapPNO; /* Map Noeud_X to (x,y) */
+    mutable std::map<CPLString, xyPairListType>
         mapPAR; /* Map Arc_X to ((x1,y1),...(xn,yn)) */
-    std::map<CPLString, OGREDIGEOFEADesc> mapFEA; /* Map Object_X to FEADesc */
-    std::map<CPLString, strListType>
+    mutable std::map<CPLString, OGREDIGEOFEADesc>
+        mapFEA; /* Map Object_X to FEADesc */
+    mutable std::map<CPLString, strListType>
         mapPFE_PAR; /* Map Face_X to (Arc_X1,..Arc_Xn) */
-    std::vector<std::pair<CPLString, strListType>>
+    mutable std::vector<std::pair<CPLString, strListType>>
         listFEA_PFE; /* List of (Object_X,(Face_Y1,..Face_Yn)) */
-    std::vector<std::pair<CPLString, strListType>>
+    mutable std::vector<std::pair<CPLString, strListType>>
         listFEA_PAR; /* List of (Object_X,(Arc_Y1,..Arc_Yn))) */
-    std::vector<strstrType> listFEA_PNO; /* List of (Object_X,Noeud_Y) */
-    std::map<CPLString, CPLString>
+    mutable std::vector<strstrType>
+        listFEA_PNO; /* List of (Object_X,Noeud_Y) */
+    mutable std::map<CPLString, CPLString>
         mapFEA_FEA; /* Map Attribut_TEX{X}_id_Objet_{Y} to Objet_Y */
 
-    int bRecodeToUTF8;
-    int bHasUTF8ContentOnly;
+    mutable int bRecodeToUTF8;
+    mutable int bHasUTF8ContentOnly;
 
-    int ReadVEC(const char *pszVECName);
+    int ReadVEC(const char *pszVECName) const;
 
-    OGRFeature *CreateFeature(const CPLString &osFEA);
-    int BuildPoints();
-    int BuildLineStrings();
-    int BuildPolygon(const CPLString &osFEA, const strListType &aosPFE);
-    int BuildPolygons();
+    OGRFeature *CreateFeature(const CPLString &osFEA) const;
+    int BuildPoints() const;
+    int BuildLineStrings() const;
+    int BuildPolygon(const CPLString &osFEA, const strListType &aosPFE) const;
+    int BuildPolygons() const;
 
-    int iATR, iDI3, iDI4, iHEI, iFON;
-    int iATR_VAL, iANGLE, iSIZE, iOBJ_LNK, iOBJ_LNK_LAYER;
-    double dfSizeFactor;
-    int bIncludeFontFamily;
-    int SetStyle(const CPLString &osFEA, OGRFeature *poFeature);
+    mutable int iATR, iDI3, iDI4, iHEI, iFON;
+    mutable int iATR_VAL, iANGLE, iSIZE, iOBJ_LNK, iOBJ_LNK_LAYER;
+    mutable double dfSizeFactor;
+    mutable int bIncludeFontFamily;
+    int SetStyle(const CPLString &osFEA, OGRFeature *poFeature) const;
 
-    std::set<CPLString> setLayersWithLabels;
-    void CreateLabelLayers();
+    mutable std::set<CPLString> setLayersWithLabels;
+    void CreateLabelLayers() const;
 
-    int bHasReadEDIGEO;
-    void ReadEDIGEO();
+    mutable bool bHasReadEDIGEO = false;
+    mutable std::recursive_mutex m_oMutex{};
+    void ReadEDIGEO() const;
 
   public:
     OGREDIGEODataSource();
@@ -223,8 +231,8 @@ class OGREDIGEODataSource final : public GDALDataset
 
     int Open(const char *pszFilename);
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
     int HasUTF8ContentOnly()
     {

@@ -284,7 +284,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
     CPLAssert(wkbFlatten(poMultiPoint->GetGeometryRef()->getGeometryType()) ==
               wkbMultiPoint);
 
-    OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
+    const OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
     OGRFeature *poPoint = new OGRFeature(poDefn);
     OGRMultiPoint *poMPGeom = poMultiPoint->GetGeometryRef()->toMultiPoint();
 
@@ -949,7 +949,8 @@ void S57Reader::ApplyObjectClassAttributes(DDFRecord *poRecord,
             continue;
         }
 
-        OGRFieldDefn *poFldDefn = poFeature->GetDefnRef()->GetFieldDefn(iField);
+        const OGRFieldDefn *poFldDefn =
+            poFeature->GetDefnRef()->GetFieldDefn(iField);
         const auto eType = poFldDefn->GetType();
         if (eType == OFTInteger || eType == OFTReal)
         {

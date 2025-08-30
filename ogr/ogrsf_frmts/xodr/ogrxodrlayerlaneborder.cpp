@@ -45,7 +45,7 @@ OGRXODRLayerLaneBorder::OGRXODRLayerLaneBorder(
     m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }
 
-int OGRXODRLayerLaneBorder::TestCapability(const char *pszCap)
+int OGRXODRLayerLaneBorder::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

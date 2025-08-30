@@ -72,12 +72,12 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
@@ -115,7 +115,7 @@ class OGRPGeoTableLayer final : public OGRPGeoLayer
     virtual OGRErr SetAttributeFilter(const char *) override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
@@ -153,7 +153,7 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -192,16 +192,16 @@ class OGRPGeoDataSource final : public GDALDataset
     int OpenTable(const char *pszTableName, const char *pszGeomCol,
                   int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

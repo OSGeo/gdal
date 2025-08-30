@@ -295,7 +295,7 @@ GIntBig OGRMySQLResultLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLResultLayer::TestCapability(const char *pszCap)
+int OGRMySQLResultLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;

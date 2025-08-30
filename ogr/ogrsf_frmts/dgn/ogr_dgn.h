@@ -67,12 +67,12 @@ class OGRDGNLayer final : public OGRLayer
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
@@ -107,14 +107,14 @@ class OGRDGNDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     const std::string &GetEncoding() const
     {

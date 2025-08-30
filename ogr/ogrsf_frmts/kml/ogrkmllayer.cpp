@@ -116,7 +116,7 @@ OGRKMLLayer::~OGRKMLLayer()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRKMLLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRKMLLayer::GetLayerDefn() const
 {
     return poFeatureDefn_;
 }
@@ -227,10 +227,11 @@ CPLString OGRKMLLayer::WriteSchema()
 
     CPLString osRet;
 
-    OGRFeatureDefn *featureDefinition = GetLayerDefn();
+    const OGRFeatureDefn *featureDefinition = GetLayerDefn();
     for (int j = 0; j < featureDefinition->GetFieldCount(); j++)
     {
-        OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);
+        const OGRFieldDefn *fieldDefinition =
+            featureDefinition->GetFieldDefn(j);
 
         if (nullptr != poDS_->GetNameField() &&
             EQUAL(fieldDefinition->GetNameRef(), poDS_->GetNameField()))
@@ -563,7 +564,7 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRKMLLayer::TestCapability(const char *pszCap)
+int OGRKMLLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
     {

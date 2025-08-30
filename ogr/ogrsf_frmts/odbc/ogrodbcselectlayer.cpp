@@ -122,7 +122,7 @@ OGRFeature *OGRODBCSelectLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCSelectLayer::TestCapability(const char *pszCap)
+int OGRODBCSelectLayer::TestCapability(const char *pszCap) const
 
 {
     return OGRODBCLayer::TestCapability(pszCap);

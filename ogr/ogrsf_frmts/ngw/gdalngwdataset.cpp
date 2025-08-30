@@ -177,9 +177,9 @@ void OGRNGWDataset::FetchPermissions()
 /*
  * TestCapability()
  */
-int OGRNGWDataset::TestCapability(const char *pszCap)
+int OGRNGWDataset::TestCapability(const char *pszCap) const
 {
-    FetchPermissions();
+    const_cast<OGRNGWDataset *>(this)->FetchPermissions();
     if (EQUAL(pszCap, ODsCCreateLayer))
     {
         return stPermissions.bResourceCanCreate;
@@ -226,7 +226,7 @@ int OGRNGWDataset::TestCapability(const char *pszCap)
 /*
  * GetLayer()
  */
-OGRLayer *OGRNGWDataset::GetLayer(int iLayer)
+const OGRLayer *OGRNGWDataset::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
     {

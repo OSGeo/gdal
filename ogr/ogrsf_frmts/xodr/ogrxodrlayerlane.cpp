@@ -55,7 +55,7 @@ OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
     m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }
 
-int OGRXODRLayerLane::TestCapability(const char *pszCap)
+int OGRXODRLayerLane::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

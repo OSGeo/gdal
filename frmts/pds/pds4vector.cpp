@@ -519,7 +519,7 @@ OGRFeature *PDS4FixedWidthTable::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4FixedWidthTable::TestCapability(const char *pszCap)
+int PDS4FixedWidthTable::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCZGeometries))
@@ -1996,7 +1996,7 @@ OGRFeature *PDS4DelimitedTable::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4DelimitedTable::TestCapability(const char *pszCap)
+int PDS4DelimitedTable::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCZGeometries))

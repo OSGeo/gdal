@@ -397,7 +397,7 @@ OGRErr OGRIDBTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBTableLayer::TestCapability(const char *pszCap)
+int OGRIDBTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite))
@@ -433,7 +433,7 @@ GIntBig OGRIDBTableLayer::GetFeatureCount(int bForce)
 /*      haven't yet even looked for it).                                */
 /************************************************************************/
 
-OGRSpatialReference *OGRIDBTableLayer::GetSpatialRef()
+const OGRSpatialReference *OGRIDBTableLayer::GetSpatialRef() const
 
 {
     if (nSRSId == -2)

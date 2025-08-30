@@ -6122,7 +6122,7 @@ OGRArrowLayer::CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-inline int OGRArrowLayer::TestCapability(const char *pszCap)
+inline int OGRArrowLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))

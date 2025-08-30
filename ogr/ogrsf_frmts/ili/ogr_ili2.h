@@ -50,7 +50,9 @@ class OGRILI2Layer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -60,7 +62,7 @@ class OGRILI2Layer final : public OGRLayer
         return oGeomFieldInfos[cFieldName].iliGeomType;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -87,14 +89,15 @@ class OGRILI2DataSource final : public GDALDataset
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return poReader->GetLayerCount();
     }
 
-    OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 #endif /* OGR_ILI2_H_INCLUDED */

@@ -30,8 +30,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
       dfSizeFactor(
           CPLAtof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"))),
       bIncludeFontFamily(CPLTestBool(
-          CPLGetConfigOption("OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"))),
-      bHasReadEDIGEO(FALSE)
+          CPLGetConfigOption("OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES")))
 {
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
@@ -59,7 +58,7 @@ OGREDIGEODataSource::~OGREDIGEODataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer)
+const OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer) const
 
 {
     ReadEDIGEO();
@@ -73,7 +72,7 @@ OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer)
 /*                         GetLayerCount()                              */
 /************************************************************************/
 
-int OGREDIGEODataSource::GetLayerCount()
+int OGREDIGEODataSource::GetLayerCount() const
 {
     ReadEDIGEO();
     return nLayers;
@@ -83,7 +82,7 @@ int OGREDIGEODataSource::GetLayerCount()
 /*                              ReadTHF()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadTHF(VSILFILE *fp)
+int OGREDIGEODataSource::ReadTHF(VSILFILE *fp) const
 {
     const char *pszLine = nullptr;
     while ((pszLine = CPLReadLine2L(fp, 81, nullptr)) != nullptr)
@@ -153,7 +152,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE *fp)
 /************************************************************************/
 
 VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
-                                        const CPLString &osExt)
+                                        const CPLString &osExt) const
 {
     CPLString osTmp = osLON + pszType;
     CPLString osFilename = CPLFormCIFilenameSafe(
@@ -178,7 +177,7 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
 /*                              ReadGEO()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadGEO()
+int OGREDIGEODataSource::ReadGEO() const
 {
     VSILFILE *fp = OpenFile(osGON, "GEO");
     if (fp == nullptr)
@@ -257,7 +256,7 @@ int OGREDIGEODataSource::ReadGEO()
 /*                              ReadGEN()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadGEN()
+int OGREDIGEODataSource::ReadGEN() const
 {
     VSILFILE *fp = OpenFile(osGNN, "GEN");
     if (fp == nullptr)
@@ -306,7 +305,7 @@ int OGREDIGEODataSource::ReadGEN()
 /*                              ReadDIC()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadDIC()
+int OGREDIGEODataSource::ReadDIC() const
 {
     VSILFILE *fp = OpenFile(osDIN, "DIC");
     if (fp == nullptr)
@@ -372,7 +371,7 @@ int OGREDIGEODataSource::ReadDIC()
 /*                              ReadSCD()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadSCD()
+int OGREDIGEODataSource::ReadSCD() const
 {
     VSILFILE *fp = OpenFile(osSCN, "SCD");
     if (fp == nullptr)
@@ -484,7 +483,7 @@ int OGREDIGEODataSource::ReadSCD()
 /*                              ReadQAL()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadQAL()
+int OGREDIGEODataSource::ReadQAL() const
 {
     VSILFILE *fp = OpenFile(osQAN, "QAL");
     if (fp == nullptr)
@@ -535,7 +534,7 @@ int OGREDIGEODataSource::ReadQAL()
 /************************************************************************/
 
 int OGREDIGEODataSource::CreateLayerFromObjectDesc(
-    const OGREDIGEOObjectDescriptor &objDesc)
+    const OGREDIGEOObjectDescriptor &objDesc) const
 {
     OGRwkbGeometryType eType = wkbUnknown;
     if (objDesc.osKND == "ARE")
@@ -552,8 +551,8 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(
 
     const char *pszLayerName = objDesc.osRID.c_str();
     // mapObjects.find(objDesc.osNameRID)->second.c_str();
-    OGREDIGEOLayer *poLayer =
-        new OGREDIGEOLayer(this, pszLayerName, eType, poSRS);
+    OGREDIGEOLayer *poLayer = new OGREDIGEOLayer(
+        const_cast<OGREDIGEODataSource *>(this), pszLayerName, eType, poSRS);
 
     poLayer->AddFieldDefn("OBJECT_RID", OFTString, "");
 
@@ -622,7 +621,7 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(
 /*                              ReadVEC()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
+int OGREDIGEODataSource::ReadVEC(const char *pszVECName) const
 {
     VSILFILE *fp = OpenFile(pszVECName, "VEC");
     if (fp == nullptr)
@@ -883,7 +882,7 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
 /*                        CreateFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGREDIGEODataSource::CreateFeature(const CPLString &osFEA)
+OGRFeature *OGREDIGEODataSource::CreateFeature(const CPLString &osFEA) const
 {
     const std::map<CPLString, OGREDIGEOFEADesc>::iterator itFEA =
         mapFEA.find(osFEA);
@@ -945,7 +944,8 @@ OGRFeature *OGREDIGEODataSource::CreateFeature(const CPLString &osFEA)
 /*                             SetStyle()                               */
 /************************************************************************/
 
-int OGREDIGEODataSource::SetStyle(const CPLString &osFEA, OGRFeature *poFeature)
+int OGREDIGEODataSource::SetStyle(const CPLString &osFEA,
+                                  OGRFeature *poFeature) const
 {
     /* EDIGEO PCI specific */
     /* See EDIGeO_PCI.pdf, chapter 3 "Principes généraux de */
@@ -1032,7 +1032,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString &osFEA, OGRFeature *poFeature)
 /*                           BuildPoints()                              */
 /************************************************************************/
 
-int OGREDIGEODataSource::BuildPoints()
+int OGREDIGEODataSource::BuildPoints() const
 {
     for (int i = 0; i < (int)listFEA_PNO.size(); i++)
     {
@@ -1067,7 +1067,7 @@ int OGREDIGEODataSource::BuildPoints()
 /*                        BuildLineStrings()                            */
 /************************************************************************/
 
-int OGREDIGEODataSource::BuildLineStrings()
+int OGREDIGEODataSource::BuildLineStrings() const
 {
     int i, iter;
 
@@ -1128,7 +1128,7 @@ int OGREDIGEODataSource::BuildLineStrings()
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildPolygon(const CPLString &osFEA,
-                                      const strListType &aosPFE)
+                                      const strListType &aosPFE) const
 {
     std::vector<xyPairListType> aoXYList;
 
@@ -1278,7 +1278,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString &osFEA,
 /*                          BuildPolygons()                             */
 /************************************************************************/
 
-int OGREDIGEODataSource::BuildPolygons()
+int OGREDIGEODataSource::BuildPolygons() const
 {
     for (int iter = 0; iter < (int)listFEA_PFE.size(); iter++)
     {
@@ -1389,8 +1389,9 @@ int OGREDIGEODataSource::Open(const char *pszFilename)
 /*                           ReadEDIGEO()                               */
 /************************************************************************/
 
-void OGREDIGEODataSource::ReadEDIGEO()
+void OGREDIGEODataSource::ReadEDIGEO() const
 {
+    std::lock_guard oLock(m_oMutex);
     if (bHasReadEDIGEO)
         return;
 
@@ -1512,9 +1513,10 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /*                         CreateLabelLayers()                          */
 /************************************************************************/
 
-void OGREDIGEODataSource::CreateLabelLayers()
+void OGREDIGEODataSource::CreateLabelLayers() const
 {
-    OGRLayer *poLayer = GetLayerByName("ID_S_OBJ_Z_1_2_2");
+    OGRLayer *poLayer = const_cast<OGREDIGEODataSource *>(this)->GetLayerByName(
+        "ID_S_OBJ_Z_1_2_2");
     if (poLayer == nullptr)
         return;
 
@@ -1538,7 +1540,8 @@ void OGREDIGEODataSource::CreateLabelLayers()
                 /* Create label layer if it does not already exist */
                 CPLString osLayerLabelName = osBelongingLayerName + "_LABEL";
                 poLabelLayer = new OGREDIGEOLayer(
-                    this, osLayerLabelName.c_str(), wkbPoint, poSRS);
+                    const_cast<OGREDIGEODataSource *>(this),
+                    osLayerLabelName.c_str(), wkbPoint, poSRS);
                 OGRFeatureDefn *poLabelFeatureDefn =
                     poLabelLayer->GetLayerDefn();
                 for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)

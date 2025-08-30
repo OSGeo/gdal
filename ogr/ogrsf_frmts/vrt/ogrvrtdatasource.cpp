@@ -796,7 +796,7 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTDataSource::TestCapability(const char *pszCap)
+int OGRVRTDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCurveGeometries))
         return true;
@@ -812,7 +812,7 @@ int OGRVRTDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRVRTDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRVRTDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

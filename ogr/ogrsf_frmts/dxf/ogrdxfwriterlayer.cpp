@@ -64,7 +64,7 @@ void OGRDXFWriterLayer::ResetFP(VSILFILE *fpNew)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFWriterLayer::TestCapability(const char *pszCap)
+int OGRDXFWriterLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

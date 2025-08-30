@@ -1132,7 +1132,7 @@ OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 /*                         TestCapability()                             */
 /************************************************************************/
 
-inline int OGRParquetWriterLayer::TestCapability(const char *pszCap)
+inline int OGRParquetWriterLayer::TestCapability(const char *pszCap) const
 {
 #if PARQUET_VERSION_MAJOR <= 10
     if (EQUAL(pszCap, OLCFastWriteArrowBatch))

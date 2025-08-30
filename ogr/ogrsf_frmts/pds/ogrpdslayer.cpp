@@ -746,7 +746,7 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSLayer::TestCapability(const char *pszCap)
+int OGRPDSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_poFilterGeom == nullptr &&

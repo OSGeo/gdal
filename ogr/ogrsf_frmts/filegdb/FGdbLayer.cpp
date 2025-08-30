@@ -1613,7 +1613,7 @@ OGRErr FGdbLayer::GetLayerMetadataXML(char **ppXml)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FGdbLayer::TestCapability(const char *pszCap)
+int FGdbLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCRandomRead))

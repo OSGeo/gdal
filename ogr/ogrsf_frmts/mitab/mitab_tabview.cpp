@@ -589,10 +589,10 @@ int TABView::WriteTABFile()
         VSIFPrintfL(fp, "Create View %s As\n", pszTable);
         VSIFPrintfL(fp, "Select ");
 
-        OGRFeatureDefn *poDefn = GetLayerDefn();
+        const OGRFeatureDefn *poDefn = GetLayerDefn();
         for (int iField = 0; iField < poDefn->GetFieldCount(); iField++)
         {
-            OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(iField);
+            const OGRFieldDefn *poFieldDefn = poDefn->GetFieldDefn(iField);
             if (iField == 0)
                 VSIFPrintfL(fp, "%s", poFieldDefn->GetNameRef());
             else
@@ -844,7 +844,7 @@ OGRErr TABView::CreateFeature(TABFeature *poFeature)
 }
 
 /**********************************************************************
- *                   TABView::GetLayerDefn()
+ *                   TABView::GetLayerDefn() const
  *
  * Returns a reference to the OGRFeatureDefn that will be used to create
  * features in this dataset.
@@ -854,7 +854,7 @@ OGRErr TABView::CreateFeature(TABFeature *poFeature)
  * NULL if the OGRFeatureDefn has not been initialized yet (i.e. no file
  * opened yet)
  **********************************************************************/
-OGRFeatureDefn *TABView::GetLayerDefn()
+const OGRFeatureDefn *TABView::GetLayerDefn() const
 {
     if (m_poRelation)
         return m_poRelation->GetFeatureDefn();
@@ -1072,7 +1072,7 @@ int TABView::GetFeatureCountByType(int &numPoints, int &numLines,
  *
  * Returns NULL if the SpatialRef cannot be accessed.
  **********************************************************************/
-OGRSpatialReference *TABView::GetSpatialRef()
+const OGRSpatialReference *TABView::GetSpatialRef() const
 {
     if (m_nMainTableIndex == -1)
     {
@@ -1119,7 +1119,7 @@ int TABView::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABView::TestCapability(const char *pszCap)
+int TABView::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
@@ -1263,8 +1263,8 @@ int TABRelation::Init(const char *pszViewName, TABFile *poMainTable,
         return -1;
 
     // We'll need the feature Defn later...
-    OGRFeatureDefn *poMainDefn = poMainTable->GetLayerDefn();
-    OGRFeatureDefn *poRelDefn = poRelTable->GetLayerDefn();
+    const OGRFeatureDefn *poMainDefn = poMainTable->GetLayerDefn();
+    const OGRFeatureDefn *poRelDefn = poRelTable->GetLayerDefn();
 
     /*-----------------------------------------------------------------
      * Keep info for later use about source tables, etc.
@@ -1324,7 +1324,7 @@ int TABRelation::Init(const char *pszViewName, TABFile *poMainTable,
 
         for (int i = 0; i < numFields1; i++)
         {
-            OGRFieldDefn *poFieldDefn = poMainDefn->GetFieldDefn(i);
+            const OGRFieldDefn *poFieldDefn = poMainDefn->GetFieldDefn(i);
 
             papszSelectedFields =
                 CSLAddString(papszSelectedFields, poFieldDefn->GetNameRef());
@@ -1332,7 +1332,7 @@ int TABRelation::Init(const char *pszViewName, TABFile *poMainTable,
 
         for (int i = 0; i < numFields2; i++)
         {
-            OGRFieldDefn *poFieldDefn = poRelDefn->GetFieldDefn(i);
+            const OGRFieldDefn *poFieldDefn = poRelDefn->GetFieldDefn(i);
 
             if (CSLFindString(papszSelectedFields, poFieldDefn->GetNameRef()) !=
                 -1)
@@ -1347,7 +1347,7 @@ int TABRelation::Init(const char *pszViewName, TABFile *poMainTable,
      * Create new FeatureDefn and copy selected fields definitions
      * while updating the appropriate field maps.
      *----------------------------------------------------------------*/
-    OGRFieldDefn *poFieldDefn = nullptr;
+    const OGRFieldDefn *poFieldDefn = nullptr;
 
     m_poDefn = new OGRFeatureDefn(pszViewName);
     // Ref count defaults to 0... set it to 1
@@ -1441,8 +1441,8 @@ int TABRelation::CreateRelFields()
     /*-----------------------------------------------------------------
      * Update field maps
      *----------------------------------------------------------------*/
-    OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
-    OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
+    const OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+    const OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
     m_panMainTableFieldMap = static_cast<int *>(CPLRealloc(
         m_panMainTableFieldMap, poMainDefn->GetFieldCount() * sizeof(int)));
@@ -1694,7 +1694,7 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                           bApproxOK) != 0)
             return -1;
 
-        OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+        const OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
 
         m_panMainTableFieldMap = static_cast<int *>(CPLRealloc(
             m_panMainTableFieldMap, poMainDefn->GetFieldCount() * sizeof(int)));
@@ -1715,7 +1715,7 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                          bApproxOK) != 0)
             return -1;
 
-        OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
+        const OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
         m_panRelTableFieldMap = static_cast<int *>(CPLRealloc(
             m_panRelTableFieldMap, poRelDefn->GetFieldCount() * sizeof(int)));
@@ -1874,8 +1874,8 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     CPLAssert(m_poMainTable && m_poRelTable);
 
     // We'll need the feature Defn later...
-    OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
-    OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
+    const OGRFeatureDefn *poMainDefn = m_poMainTable->GetLayerDefn();
+    const OGRFeatureDefn *poRelDefn = m_poRelTable->GetLayerDefn();
 
     /*-----------------------------------------------------------------
      * Create one feature for each table

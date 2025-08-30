@@ -49,7 +49,7 @@ OGRSOSILayer::~OGRSOSILayer()
 /************************************************************************/
 /*                           GetLayerDefn()                             */
 /************************************************************************/
-OGRFeatureDefn *OGRSOSILayer::GetLayerDefn()
+const OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() const
 {
     return poFeatureDefn;
 }
@@ -574,7 +574,7 @@ void OGRSOSILayer::ResetReading()
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGRSOSILayer::TestCapability(const char *pszCap)
+int OGRSOSILayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))

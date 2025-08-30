@@ -469,9 +469,9 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                     if (iTimeField == iSkip1 || iTimeField == iSkip2)
                         continue;
 
-                    OGRFieldDefn *poOgrFieldDef2 =
+                    const OGRFieldDefn *poOgrFieldDef2 =
                         poOgrFeat->GetFieldDefnRef(i);
-                    OGRFieldType type2 = poOgrFieldDef2->GetType();
+                    const OGRFieldType type2 = poOgrFieldDef2->GetType();
                     const char *name2 = poOgrFieldDef2->GetNameRef();
 
                     if (EQUAL(name2, name) && type2 == OFTTime &&
@@ -509,7 +509,7 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                     if (iTimeField == iSkip1 || iTimeField == iSkip2)
                         continue;
 
-                    OGRFieldDefn *const poOgrFieldDef2 =
+                    const OGRFieldDefn *const poOgrFieldDef2 =
                         poOgrFeat->GetFieldDefnRef(i);
                     OGRFieldType type2 = poOgrFieldDef2->GetType();
                     const char *const name2 = poOgrFieldDef2->GetNameRef();

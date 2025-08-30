@@ -55,7 +55,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     Sentinel3_SRAL_MWR_Layer(const std::string &name, int cdfid, int dimid);
     ~Sentinel3_SRAL_MWR_Layer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFDefn;
     }
@@ -64,7 +64,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     GIntBig GetFeatureCount(int bForce) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     char **GetMetadata(const char *pszDomain) override;
     const char *GetMetadataItem(const char *pszKey,
                                 const char *pszDomain) override;
@@ -254,7 +254,7 @@ GIntBig Sentinel3_SRAL_MWR_Layer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int Sentinel3_SRAL_MWR_Layer::TestCapability(const char *pszCap)
+int Sentinel3_SRAL_MWR_Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;

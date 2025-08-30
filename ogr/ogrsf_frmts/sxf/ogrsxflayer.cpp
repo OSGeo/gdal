@@ -301,7 +301,7 @@ OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRSXFLayer::GetSpatialRef()
+const OGRSpatialReference *OGRSXFLayer::GetSpatialRef() const
 {
     return stSXFMapDescription.pSpatRef;
 }
@@ -393,7 +393,7 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSXFLayer::TestCapability(const char *pszCap)
+int OGRSXFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) &&

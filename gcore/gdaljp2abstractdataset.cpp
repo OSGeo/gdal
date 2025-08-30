@@ -610,7 +610,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int GDALJP2AbstractDataset::GetLayerCount()
+int GDALJP2AbstractDataset::GetLayerCount() const
 {
     return poMemDS != nullptr ? poMemDS->GetLayerCount() : 0;
 }
@@ -619,7 +619,7 @@ int GDALJP2AbstractDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer *GDALJP2AbstractDataset::GetLayer(int i)
+OGRLayer *GDALJP2AbstractDataset::GetLayer(int i) const
 {
     return poMemDS != nullptr ? poMemDS->GetLayer(i) : nullptr;
 }
