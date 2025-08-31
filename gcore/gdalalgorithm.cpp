@@ -1037,6 +1037,26 @@ bool GDALAlgorithmArg::RunValidationActions()
 }
 
 /************************************************************************/
+/*                 GDALAlgorithmArg::GetEscapedString()                 */
+/************************************************************************/
+
+/* static */
+std::string GDALAlgorithmArg::GetEscapedString(const std::string &s)
+{
+    if (s.find_first_of("\" \\,") != std::string::npos)
+    {
+        return std::string("\"")
+            .append(
+                CPLString(s).replaceAll('\\', "\\\\").replaceAll('"', "\\\""))
+            .append("\"");
+    }
+    else
+    {
+        return s;
+    }
+}
+
+/************************************************************************/
 /*                    GDALAlgorithmArg::Serialize()                     */
 /************************************************************************/
 
@@ -1057,24 +1077,6 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
         serializedArg = std::move(ret);
         return true;
     }
-
-    const auto AppendString = [&ret](const std::string &str)
-    {
-        if (str.find('"') != std::string::npos ||
-            str.find(' ') != std::string::npos ||
-            str.find('\\') != std::string::npos ||
-            str.find(',') != std::string::npos)
-        {
-            ret += '"';
-            ret +=
-                CPLString(str).replaceAll('\\', "\\\\").replaceAll('"', "\\\"");
-            ret += '"';
-        }
-        else
-        {
-            ret += str;
-        }
-    };
 
     const auto AddListValueSeparator = [this, &ret]()
     {
@@ -1113,7 +1115,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
         case GAAT_STRING:
         {
             const auto &val = Get<std::string>();
-            AppendString(val);
+            ret += GetEscapedString(val);
             break;
         }
         case GAAT_INTEGER:
@@ -1134,7 +1136,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
             {
                 return false;
             }
-            AppendString(absolutePath ? MakeAbsolutePath(str) : str);
+            ret += GetEscapedString(absolutePath ? MakeAbsolutePath(str) : str);
             break;
         }
         case GAAT_STRING_LIST:
@@ -1144,7 +1146,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
             {
                 if (i > 0)
                     AddListValueSeparator();
-                AppendString(vals[i]);
+                ret += GetEscapedString(vals[i]);
             }
             break;
         }
@@ -1183,7 +1185,8 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
                 {
                     return false;
                 }
-                AppendString(absolutePath ? MakeAbsolutePath(str) : str);
+                ret += GetEscapedString(absolutePath ? MakeAbsolutePath(str)
+                                                     : str);
             }
             break;
         }
