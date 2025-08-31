@@ -275,7 +275,7 @@ void GDALRasterCompareAlgorithm::GeoTransformComparison(
                 s += std::to_string(inputGT[j]);
             }
             s += ')';
-            aosReport.push_back(s);
+            aosReport.push_back(std::move(s));
             return;
         }
     }

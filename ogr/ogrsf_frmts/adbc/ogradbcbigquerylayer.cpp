@@ -38,13 +38,13 @@ bool OGRADBCBigQueryLayer::GetBigQueryDatasetAndTableId(
     if (nPos != std::string::npos)
     {
         nPos += strlen(" FROM ");
-        auto nPos2 = m_osBaseStatement.find(' ', nPos);
-        const auto osTableName =
+        const auto nPos2 = m_osBaseStatement.find(' ', nPos);
+        const std::string osTableName =
             (nPos2 != std::string::npos)
                 ? m_osBaseStatement.substr(nPos, nPos2 - nPos)
                 : m_osBaseStatement.substr(nPos);
 
-        auto nPosDot = osTableName.find('.');
+        const auto nPosDot = osTableName.find('.');
         if (nPosDot != std::string::npos)
         {
             osDatasetId = osTableName.substr(0, nPosDot);
