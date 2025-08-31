@@ -2097,6 +2097,11 @@ template <class T> static inline bool IsSame(T a, T b)
     return a == b;
 }
 
+template <> bool IsSame<GFloat16>(GFloat16 a, GFloat16 b)
+{
+    return a == b || (CPLIsNan(a) && CPLIsNan(b));
+}
+
 template <> bool IsSame<float>(float a, float b)
 {
     return a == b || (std::isnan(a) && std::isnan(b));
@@ -2105,6 +2110,21 @@ template <> bool IsSame<float>(float a, float b)
 template <> bool IsSame<double>(double a, double b)
 {
     return a == b || (std::isnan(a) && std::isnan(b));
+}
+
+namespace
+{
+struct ComplexFloat16
+{
+    GFloat16 r;
+    GFloat16 i;
+};
+}  // namespace
+
+template <> bool IsSame<ComplexFloat16>(ComplexFloat16 a, ComplexFloat16 b)
+{
+    return (a.r == b.r && a.i == b.i) ||
+           (CPLIsNan(a.r) && CPLIsNan(a.i) && CPLIsNan(b.r) && CPLIsNan(b.i));
 }
 
 template <>
@@ -2145,8 +2165,13 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
     const int nDstXSize = nDstXOff2 - nDstXOff;
 
     T tNoDataValue;
-    if constexpr (std::is_same<T, std::complex<float>>::value ||
-                  std::is_same<T, std::complex<double>>::value)
+    if constexpr (std::is_same<T, ComplexFloat16>::value)
+    {
+        tNoDataValue.r = cpl::NumericLimits<GFloat16>::quiet_NaN();
+        tNoDataValue.i = cpl::NumericLimits<GFloat16>::quiet_NaN();
+    }
+    else if constexpr (std::is_same<T, std::complex<float>>::value ||
+                       std::is_same<T, std::complex<double>>::value)
     {
         using BaseT = typename T::value_type;
         tNoDataValue =
@@ -2425,7 +2450,6 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
 
         case GDT_Int16:
         case GDT_UInt16:
-        case GDT_Float16:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_ModeT(
@@ -2434,7 +2458,6 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
         }
 
         case GDT_CInt16:
-        case GDT_CFloat16:
         case GDT_Int32:
         case GDT_UInt32:
         {
@@ -2442,14 +2465,6 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
             return GDALResampleChunk_ModeT(
                 args, static_cast<const uint32_t *>(pChunk),
                 static_cast<uint32_t *>(*ppDstBuffer));
-        }
-
-        case GDT_Float32:
-        {
-            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 4);
-            return GDALResampleChunk_ModeT(args,
-                                           static_cast<const float *>(pChunk),
-                                           static_cast<float *>(*ppDstBuffer));
         }
 
         case GDT_CInt32:
@@ -2462,12 +2477,32 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
                 static_cast<uint64_t *>(*ppDstBuffer));
         }
 
+        case GDT_Float16:
+        {
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const GFloat16 *>(pChunk),
+                static_cast<GFloat16 *>(*ppDstBuffer));
+        }
+
+        case GDT_Float32:
+        {
+            return GDALResampleChunk_ModeT(args,
+                                           static_cast<const float *>(pChunk),
+                                           static_cast<float *>(*ppDstBuffer));
+        }
+
         case GDT_Float64:
         {
-            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 8);
             return GDALResampleChunk_ModeT(args,
                                            static_cast<const double *>(pChunk),
                                            static_cast<double *>(*ppDstBuffer));
+        }
+
+        case GDT_CFloat16:
+        {
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const ComplexFloat16 *>(pChunk),
+                static_cast<ComplexFloat16 *>(*ppDstBuffer));
         }
 
         case GDT_CFloat32:
