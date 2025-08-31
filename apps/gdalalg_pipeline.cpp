@@ -564,7 +564,8 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeFirstStep() && !alg->IsHidden() &&
+        if (alg->CanBeFirstStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() &&
             !STARTS_WITH(name.c_str(), GDALRasterReadAlgorithm::NAME))
         {
             ret += '\n';
@@ -576,7 +577,7 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
+        if (alg->CanBeMiddleStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({CPLString(alg->GetName())
@@ -585,19 +586,29 @@ GDALPipelineAlgorithm::GetUsageForCLI(bool shortUsage,
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
     }
-    for (const std::string &name :
-         {std::string(GDALRasterInfoAlgorithm::NAME) + RASTER_SUFFIX,
-          std::string(GDALVectorInfoAlgorithm::NAME) + VECTOR_SUFFIX,
-          std::string(GDALRasterTileAlgorithm::NAME),
-          std::string(GDALRasterWriteAlgorithm::NAME) + RASTER_SUFFIX,
-          std::string(GDALVectorWriteAlgorithm::NAME) + VECTOR_SUFFIX})
+    for (const std::string &name : m_stepRegistry.GetNames())
     {
-        ret += '\n';
         auto alg = GetStepAlg(name);
         assert(alg);
-        alg->SetCallPath({CPLString(alg->GetName())
-                              .replaceAll(RASTER_SUFFIX, "")
-                              .replaceAll(VECTOR_SUFFIX, "")});
+        if (alg->CanBeLastStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() &&
+            !STARTS_WITH(name.c_str(), GDALRasterWriteAlgorithm::NAME))
+        {
+            ret += '\n';
+            alg->SetCallPath({name});
+            ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+        }
+    }
+    {
+        ret += '\n';
+        auto alg = std::make_unique<GDALRasterWriteAlgorithm>();
+        alg->SetCallPath({alg->GetName()});
+        ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+    }
+    {
+        ret += '\n';
+        auto alg = std::make_unique<GDALVectorWriteAlgorithm>();
+        alg->SetCallPath({alg->GetName()});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
 

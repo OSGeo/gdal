@@ -74,6 +74,12 @@ Details for options can be found in :ref:`gdal_vector_grid`.
 
 Details for options can be found in :ref:`gdal_vector_rasterize`.
 
+* tee
+
+.. program-output:: gdal pipeline --help-doc=tee-raster
+
+Details for options can be found in :ref:`gdal_output_nested_pipeline`.
+
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------
 
@@ -175,13 +181,19 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
+
+.. _gdal_nested_pipeline:
+
 Nested pipeline
 ---------------
 
+.. include:: gdal_cli_include/gdal_nested_pipeline_intro.rst
+
+Input nested pipeline
+*********************
+
 Wherever an input dataset is expected as an auxiliary dataset, it is possible
-to specify it as the result of a nested pipeline. A nested pipeline is delimited
-by an opening square bracket (surrounded by a space character) `` [ `` and a closing
-square bracket (surrounded by a space character) `` ] `` . The content of a
+to specify it as the result of a nested pipeline. The content of an input
 nested pipeline is identical to the outer pipeline, except it must not end with
 an output-generating step like ``info``, ``tile`` or ``write``
 
@@ -198,6 +210,49 @@ an output-generating step like ``info``, ``tile`` or ``write``
 
 In the above example, the value of the ``grayscale`` argument of the ``color-merge``
 step is set as the output of the nested pipeline ``read n43.tif ! hillshade -z 30``.
+
+.. _gdal_output_nested_pipeline:
+
+Output nested pipeline
+**********************
+
+The ``tee`` step in a pipeline forwards the input dataset as its output,
+and additionally executes one or several nested pipelines that take this input
+dataset as input and do other processing to eventually write the output of that
+processing. The first step of a ``tee`` output nested pipeline *must* not be
+``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``, and its last step
+*must* be ``write`` or ``tile``. The ``tee`` operator can be either used in
+the middle of a pipeline or as its last step.
+
+The below example shows an example where the ``tee`` operator executes two
+output nested pipelines.
+
+.. example::
+   :title: Split the content of a "cities" layer according to whether its population is below or above 1 million.
+
+   .. code-block:: bash
+
+      $ gdal pipeline read cities.gpkg ! \
+              tee [ filter --where "pop < 1e6" ! write small_cities.gpkg ] \
+                  [ filter --where "pop >= 1e6" ! write big_cities.gpkg ]
+
+
+The below example shows a more complicated use case, including two occurrences of ``tee``,
+with one of them being an output nested pipeline inside an input nested pipeline.
+
+.. example::
+   :title: Combine the output of shaded relief map and hypsometric rendering on
+           a DEM to create a colorized shaded relief map, and write intermediate
+           hillshade and colorized dataset
+
+   .. code-block:: bash
+
+        $ gdal pipeline read n43.tif ! \
+                        color-map --color-map color_file.txt ! \
+                        tee [ write colored.tif --overwrite ] ! \
+                        color-merge --grayscale \
+                            [ read n43.tif ! hillshade -z 30  ! tee [ write hillshade.tif --overwrite ] ] ! \
+                        write colored-hillshade.tif --overwrite
 
 Examples
 --------

@@ -43,6 +43,7 @@
 #include "gdalalg_raster_tri.h"
 #include "gdalalg_raster_unscale.h"
 #include "gdalalg_raster_viewshed.h"
+#include "gdalalg_tee.h"
 
 #include "cpl_conv.h"
 #include "cpl_progress.h"
@@ -224,6 +225,11 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterTRIAlgorithm>();
     registry.Register<GDALRasterUnscaleAlgorithm>();
     registry.Register<GDALRasterViewshedAlgorithm>();
+
+    algInfo.m_name = addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME);
+    algInfo.m_creationFunc = []() -> std::unique_ptr<GDALAlgorithm>
+    { return std::make_unique<GDALTeeRasterAlgorithm>(); };
+    registry.Register(algInfo);
 }
 
 /************************************************************************/
@@ -296,8 +302,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeFirstStep() && !alg->IsHidden() &&
-            name != GDALRasterReadAlgorithm::NAME)
+        if (alg->CanBeFirstStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALRasterReadAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -308,7 +314,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
+        if (alg->CanBeMiddleStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -319,8 +325,8 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeLastStep() && !alg->IsHidden() &&
-            name != GDALRasterWriteAlgorithm::NAME)
+        if (alg->CanBeLastStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALRasterWriteAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});
