@@ -1188,8 +1188,8 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     bool bHasNoData = args.bHasNoData;
     const double dfNoDataValue = args.dfNoDataValue;
     const GDALColorTable *const poColorTable =
-        bQuadraticMean ||
-                // // AVERAGE_BIT2GRAYSCALE
+        !bQuadraticMean &&
+                // AVERAGE_BIT2GRAYSCALE
                 CPL_TO_BOOL(STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2G"))
             ? nullptr
             : args.poColorTable;
@@ -1235,26 +1235,24 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     }
 
     std::vector<GDALColorEntry> colorEntries;
-    if constexpr (!bQuadraticMean)
+
+    if (poColorTable)
     {
-        if (poColorTable)
+        int nTransparentIdx = -1;
+        colorEntries = ReadColorTable(*poColorTable, nTransparentIdx);
+
+        // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
+        // it as nodata value
+        if (bHasNoData && dfNoDataValue >= 0.0f &&
+            tNoDataValue < colorEntries.size())
+            colorEntries[static_cast<int>(tNoDataValue)].c4 = 0;
+
+        // Or if we have no explicit nodata, but a color table entry that is
+        // transparent, consider it as the nodata value
+        else if (!bHasNoData && nTransparentIdx >= 0)
         {
-            int nTransparentIdx = -1;
-            colorEntries = ReadColorTable(*poColorTable, nTransparentIdx);
-
-            // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
-            // it as nodata value
-            if (bHasNoData && dfNoDataValue >= 0.0f &&
-                tNoDataValue < colorEntries.size())
-                colorEntries[static_cast<int>(tNoDataValue)].c4 = 0;
-
-            // Or if we have no explicit nodata, but a color table entry that is
-            // transparent, consider it as the nodata value
-            else if (!bHasNoData && nTransparentIdx >= 0)
-            {
-                bHasNoData = true;
-                tNoDataValue = static_cast<T>(nTransparentIdx);
-            }
+            bHasNoData = true;
+            tNoDataValue = static_cast<T>(nTransparentIdx);
         }
     }
 
@@ -1822,7 +1820,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                 }
             }
         }
-        else if constexpr (!bQuadraticMean)
+        else
         {
             nSrcYOff -= nChunkYOff;
             nSrcYOff2 -= nChunkYOff;
