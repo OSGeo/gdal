@@ -1947,6 +1947,9 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      */
     bool Serialize(std::string &serializedArg, bool absolutePath = false) const;
 
+    /** Return an escaped string for argument serialization */
+    static std::string GetEscapedString(const std::string &s);
+
     //! @cond Doxygen_Suppress
     void NotifyValueSet()
     {

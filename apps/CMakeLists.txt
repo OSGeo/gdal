@@ -28,6 +28,7 @@ add_library(
 
 if(GDAL_ENABLE_ALGORITHMS)
 target_sources(appslib PRIVATE
+  gdalalg_abstract_pipeline.cpp
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
