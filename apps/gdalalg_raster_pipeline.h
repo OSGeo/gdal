@@ -164,6 +164,13 @@ class GDALRasterPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
     {
         return m_stepRegistry;
     }
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALRasterPipelineAlgorithm>();
+    }
 };
 
 //! @endcond

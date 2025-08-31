@@ -298,6 +298,9 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
         }
     }
 
+    static constexpr const char *OPEN_NESTED_PIPELINE = "[";
+    static constexpr const char *CLOSE_NESTED_PIPELINE = "]";
+
   protected:
     GDALAbstractPipelineAlgorithm(
         const std::string &name, const std::string &description,
@@ -330,6 +333,14 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     std::unique_ptr<GDALPipelineStepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
+    bool m_bExpectWriteStep = true;
+
+    std::vector<std::unique_ptr<GDALAbstractPipelineAlgorithm>>
+        m_apoNestedPipelines{};
+
+    // More would lead to unreadable pipelines
+    static constexpr int MAX_NESTING_LEVEL = 3;
+
     bool CheckFirstAndLastStep(
         const std::vector<GDALPipelineStepAlgorithm *> &steps) const;
 
@@ -338,8 +349,16 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::string
+    BuildNestedPipeline(GDALPipelineStepAlgorithm *curAlg,
+                        std::vector<std::string> &nestedPipelineArgs,
+                        bool forAutoComplete);
+
     bool SaveGDALGFile(const std::string &outFilename,
                        std::string &outString) const;
+
+    virtual std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const = 0;
 };
 
 //! @endcond

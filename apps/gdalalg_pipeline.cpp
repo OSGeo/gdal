@@ -474,6 +474,13 @@ class GDALPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALPipelineAlgorithm>();
+    }
 };
 
 /************************************************************************/

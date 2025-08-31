@@ -164,3 +164,14 @@ Examples
    .. code-block:: bash
 
         $ gdal raster hillshade --zfactor=30 n43.dt0 out.tif --overwrite
+
+.. example::
+   :title: Combine the output of shaded relief map and hypsometric rendering on a DEM to create a colorized shaded relief map.
+
+   .. code-block:: bash
+
+        $ gdal pipeline read n43.tif ! \
+                        color-map --color-map color_file.txt ! \
+                        color-merge --grayscale \
+                            [ read n43.tif ! hillshade -z 30 ] ! \
+                        write out.tif --overwrite

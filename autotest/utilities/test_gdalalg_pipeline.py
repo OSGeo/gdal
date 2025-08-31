@@ -805,3 +805,96 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --edit[0].geometry-type="
     ).split(" ")
     assert "GEOMETRY" in out
+
+
+def test_gdalalg_pipeline_nested_nominal():
+
+    with gdal.Run(
+        "pipeline",
+        pipeline="read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write --of MEM unnamed",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 3
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+            48564,
+            51840,
+            50950,
+        ]
+
+
+def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
+
+    out_filename = tmp_vsimem / "out.gdalg.json"
+    gdal.Run(
+        "pipeline",
+        pipeline=f"read ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ] ! write {out_filename}",
+    )
+
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+
+    j["relative_paths_relative_to_this_file"] = False
+
+    with gdal.VSIFile(out_filename, "wb") as f:
+        f.write(json.dumps(j).encode("utf-8"))
+
+    del j["gdal_version"]
+    assert j == {
+        "command_line": "gdal pipeline read --input ../gdrivers/data/n43.tif ! color-map --color-map data/color_file.txt ! color-merge --grayscale [ read ../gdrivers/data/n43.tif ! hillshade -z 30 ]",
+        "relative_paths_relative_to_this_file": False,
+        "type": "gdal_streamed_alg",
+    }
+
+    if gdal.GetDriverByName("GDALG"):
+        with gdal.Open(out_filename) as ds:
+            assert ds.RasterCount == 3
+            assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+                48564,
+                51840,
+                50950,
+            ]
+
+
+def test_gdalalg_pipeline_nested_errors():
+
+    with pytest.raises(
+        Exception,
+        match="Open bracket must be placed where an input dataset is expected",
+    ):
+        gdal.Run("pipeline", pipeline="[")
+
+    with pytest.raises(Exception, match="Open bracket has no matching closing bracket"):
+        gdal.Run("pipeline", pipeline="read [")
+
+    with pytest.raises(
+        Exception, match="At least one step must be provided in an inner pipeline"
+    ):
+        gdal.Run("pipeline", pipeline="read [ ]")
+
+    with pytest.raises(
+        Exception, match="Closing bracket found without matching open bracket"
+    ):
+        gdal.Run("pipeline", pipeline="read ]")
+
+    with pytest.raises(Exception, match="Too many nested pipelines"):
+        gdal.Run("pipeline", pipeline="read [ read [ read [ foo ] ] ]")
+
+    with pytest.raises(
+        Exception, match="Last step in an inner pipeline must not be a write-like step"
+    ):
+        gdal.Run("pipeline", pipeline="read [ write foo ]")
+
+    with pytest.raises(Exception, match="No write-like step like 'write' is allowed"):
+        gdal.Run(
+            "pipeline",
+            pipeline="read [ read ../gcore/data/byte.tif ! write /vsimem/out.tif ! reproject ] ! info",
+        )
+
+    with pytest.raises(Exception, match="/i/do_not/exist.bin"):
+        gdal.Run("pipeline", pipeline="read [ read /i/do_not/exist.bin ]")
+
+    with pytest.raises(Exception, match="Cannot find coordinate operations"):
+        gdal.Run(
+            "pipeline",
+            pipeline='read [ read ../gcore/data/byte.tif ! reproject --dst-crs "+proj=longlat +a=1" ] ! info',
+        )

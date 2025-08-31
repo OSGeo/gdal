@@ -19,6 +19,7 @@
 #include "cpl_multiproc.h"
 
 #include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
@@ -1043,7 +1044,11 @@ bool GDALAlgorithmArg::RunValidationActions()
 /* static */
 std::string GDALAlgorithmArg::GetEscapedString(const std::string &s)
 {
-    if (s.find_first_of("\" \\,") != std::string::npos)
+    if (s.find_first_of("\" \\,") != std::string::npos &&
+        !(s.size() > 4 &&
+          s[0] == GDALAbstractPipelineAlgorithm::OPEN_NESTED_PIPELINE[0] &&
+          s[1] == ' ' && s[s.size() - 2] == ' ' &&
+          s.back() == GDALAbstractPipelineAlgorithm::CLOSE_NESTED_PIPELINE[0]))
     {
         return std::string("\"")
             .append(
@@ -2568,11 +2573,22 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
         }
 
-        auto poDS =
-            GDALDataset::Open(osDatasetName.c_str(), flags,
-                              aosAllowedDrivers.List(), aosOpenOptions.List());
+        auto oIter = m_oMapDatasetNameToDataset.find(osDatasetName.c_str());
+        auto poDS = oIter != m_oMapDatasetNameToDataset.end()
+                        ? oIter->second
+                        : GDALDataset::Open(osDatasetName.c_str(), flags,
+                                            aosAllowedDrivers.List(),
+                                            aosOpenOptions.List());
         if (poDS)
         {
+            if (oIter != m_oMapDatasetNameToDataset.end())
+            {
+                if (arg->GetType() == GAAT_DATASET)
+                    arg->Get<GDALArgDatasetValue>().Set(poDS->GetDescription());
+                poDS->Reference();
+                m_oMapDatasetNameToDataset.erase(oIter);
+            }
+
             if (assignToOutputArg)
             {
                 // Avoid opening twice the same datasource if it is both

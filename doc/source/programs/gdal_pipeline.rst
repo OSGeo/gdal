@@ -30,6 +30,13 @@ Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack``, ``info``, ``tile``, ``partition`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
+.. example::
+   :title: Compute the footprint of a raster and apply a buffer on the footprint
+
+   .. code-block:: bash
+
+        $ gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
+
 For steps that have both *raster* data type as input and output, consult :ref:`gdal_raster_pipeline`.
 For steps that have both *vector* data type as input and output, consult :ref:`gdal_vector_pipeline`.
 
@@ -167,6 +174,30 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 .. code-block:: python
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
+
+Nested pipeline
+---------------
+
+Wherever an input dataset is expected as an auxiliary dataset, it is possible
+to specify it as the result of a nested pipeline. A nested pipeline is delimited
+by an opening square bracket (surrounded by a space character) `` [ `` and a closing
+square bracket (surrounded by a space character) `` ] `` . The content of a
+nested pipeline is identical to the outer pipeline, except it must not end with
+an output-generating step like ``info``, ``tile`` or ``write``
+
+.. example::
+   :title: Combine the output of shaded relief map and hypsometric rendering on a DEM to create a colorized shaded relief map.
+
+   .. code-block:: bash
+
+        $ gdal pipeline read n43.tif ! \
+                        color-map --color-map color_file.txt ! \
+                        color-merge --grayscale \
+                            [ read n43.tif ! hillshade -z 30 ] ! \
+                        write out.tif --overwrite
+
+In the above example, the value of the ``grayscale`` argument of the ``color-merge``
+step is set as the output of the nested pipeline ``read n43.tif ! hillshade -z 30``.
 
 Examples
 --------

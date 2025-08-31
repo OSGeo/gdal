@@ -122,7 +122,7 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         }
     }
 
-    if (!steps.back()->CanBeLastStep())
+    if (m_bExpectWriteStep && !steps.back()->CanBeLastStep())
     {
         std::set<CPLString> setLastStepNames;
         for (const auto &stepName : GetStepRegistry().GetNames())
@@ -154,14 +154,30 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         ReportError(CE_Failure, CPLE_AppDefined, "%s", msg.c_str());
         return false;
     }
-    for (size_t i = 1; i < steps.size() - 1; ++i)
+    if (m_bExpectWriteStep)
     {
-        if (steps[i]->CanBeLastStep())
+        for (size_t i = 1; i < steps.size() - 1; ++i)
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Only last step can be '%s'",
-                        steps[i]->GetName().c_str());
-            return false;
+            if (steps[i]->CanBeLastStep())
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Only last step can be '%s'",
+                            steps[i]->GetName().c_str());
+                return false;
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i < steps.size(); ++i)
+        {
+            if (steps[i]->CanBeLastStep())
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "No write-like step like '%s' is allowed",
+                            steps[i]->GetName().c_str());
+                return false;
+            }
         }
     }
 
@@ -368,11 +384,49 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     std::vector<Step> steps;
     steps.resize(1);
 
+    int nNestLevel = 0;
+    std::vector<std::string> nestedPipelineArgs;
+
     for (const auto &argIn : args)
     {
         std::string arg(argIn);
 
         auto &curStep = steps.back();
+
+        if (nNestLevel > 0)
+        {
+            if (arg == CLOSE_NESTED_PIPELINE)
+            {
+                if ((--nNestLevel) == 0)
+                {
+                    arg = BuildNestedPipeline(
+                        curStep.alg.get(), nestedPipelineArgs, forAutoComplete);
+                    if (arg.empty())
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    nestedPipelineArgs.push_back(arg);
+                    continue;
+                }
+            }
+            else
+            {
+                if (arg == OPEN_NESTED_PIPELINE)
+                {
+                    if (++nNestLevel == MAX_NESTING_LEVEL)
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Too many nested pipelines");
+                        return false;
+                    }
+                }
+                nestedPipelineArgs.push_back(arg);
+                continue;
+            }
+        }
 
         if (arg == "--progress")
         {
@@ -407,6 +461,23 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             {
                 steps.resize(steps.size() + 1);
             }
+        }
+        else if (arg == OPEN_NESTED_PIPELINE)
+        {
+            if (!curStep.alg)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Open bracket must be placed where an input "
+                            "dataset is expected");
+                return false;
+            }
+            ++nNestLevel;
+        }
+        else if (arg == CLOSE_NESTED_PIPELINE)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Closing bracket found without matching open bracket");
+            return false;
         }
 #ifdef GDAL_PIPELINE_PROJ_NOSTALGIA
         else if (arg == "+step")
@@ -464,6 +535,22 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     }
 
+    if (nNestLevel > 0)
+    {
+        if (forAutoComplete)
+        {
+            BuildNestedPipeline(steps.back().alg.get(), nestedPipelineArgs,
+                                forAutoComplete);
+            return true;
+        }
+        else
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Open bracket has no matching closing bracket");
+            return false;
+        }
+    }
+
     // As we initially added a step without alg to bootstrap things, make
     // sure to remove it if it hasn't been filled, or the user has terminated
     // the pipeline with a '!' separator.
@@ -472,7 +559,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
 
     // Automatically add a final write step if none in m_executionForStreamOutput
     // mode
-    if (m_executionForStreamOutput && !steps.empty() &&
+    if (m_executionForStreamOutput && m_bExpectWriteStep && !steps.empty() &&
         steps.back().alg->GetName() !=
             std::string(GDALRasterWriteAlgorithm::NAME)
                 .append(bIsGenericPipeline ? RASTER_SUFFIX : ""))
@@ -535,24 +622,45 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     }
 
-    if (steps.size() < 2)
+    if (m_bExpectWriteStep)
     {
-        if (!steps.empty() && helpRequested)
+        if (steps.size() < 2)
         {
-            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            if (!steps.empty() && helpRequested)
+            {
+                steps.back().alg->ParseCommandLineArguments(steps.back().args);
+                return false;
+            }
+
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "At least 2 steps must be provided");
             return false;
         }
 
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "At least 2 steps must be provided");
-        return false;
-    }
-
-    if (!steps.back().alg->CanBeLastStep())
-    {
-        if (helpRequested)
+        if (!steps.back().alg->CanBeLastStep())
         {
-            steps.back().alg->ParseCommandLineArguments(steps.back().args);
+            if (helpRequested)
+            {
+                steps.back().alg->ParseCommandLineArguments(steps.back().args);
+                return false;
+            }
+        }
+    }
+    else
+    {
+        if (steps.empty())
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "At least one step must be provided in an inner pipeline.");
+            return false;
+        }
+
+        if (steps.back().alg->CanBeLastStep())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Last step in an inner pipeline must not be a "
+                        "write-like step.");
             return false;
         }
     }
@@ -611,7 +719,10 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     };
 
-    SetWriteArgFromPipeline();
+    if (m_bExpectWriteStep)
+    {
+        SetWriteArgFromPipeline();
+    }
 
     if (runExistingPipeline)
     {
@@ -948,7 +1059,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                                                : VECTOR_SUFFIX));
                 CPLAssert(steps[i].alg);
 
-                if (i == steps.size() - 1)
+                if (i == steps.size() - 1 && m_bExpectWriteStep)
                 {
                     SetWriteArgFromPipeline();
                 }
@@ -992,6 +1103,56 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         m_steps.push_back(std::move(step.alg));
 
     return true;
+}
+
+/************************************************************************/
+/*           GDALAbstractPipelineAlgorithm::BuildNestedPipeline()       */
+/************************************************************************/
+
+std::string GDALAbstractPipelineAlgorithm::BuildNestedPipeline(
+    GDALPipelineStepAlgorithm *curAlg,
+    std::vector<std::string> &nestedPipelineArgs, bool forAutoComplete)
+{
+    std::string datasetNameOut;
+
+    auto nestedPipeline = CreateNestedPipeline();
+    nestedPipeline->m_bExpectWriteStep = false;
+    nestedPipeline->m_executionForStreamOutput = m_executionForStreamOutput;
+    nestedPipeline->SetReferencePathForRelativePaths(
+        GetReferencePathForRelativePaths());
+    if (!nestedPipeline->ParseCommandLineArguments(nestedPipelineArgs,
+                                                   forAutoComplete) ||
+        (!forAutoComplete && !nestedPipeline->Run()))
+    {
+        return datasetNameOut;
+    }
+    auto poDS = nestedPipeline->GetOutputDataset().GetDatasetRef();
+    if (!poDS)
+    {
+        // That shouldn't happen normally for well-behaved algorithms, but
+        // it doesn't hurt checking.
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Nested pipeline does not generate an output dataset");
+        return datasetNameOut;
+    }
+    datasetNameOut = CPLSPrintf("$$nested_pipeline_%p$$", nestedPipeline.get());
+    CPLAssert(curAlg);
+    curAlg->m_oMapDatasetNameToDataset[datasetNameOut] = poDS;
+
+    std::string argsStr = OPEN_NESTED_PIPELINE;
+    for (const std::string &str : nestedPipelineArgs)
+    {
+        argsStr += ' ';
+        argsStr += GDALAlgorithmArg::GetEscapedString(str);
+    }
+    argsStr += ' ';
+    argsStr += CLOSE_NESTED_PIPELINE;
+    poDS->SetDescription(argsStr.c_str());
+
+    m_apoNestedPipelines.emplace_back(std::move(nestedPipeline));
+    nestedPipelineArgs.clear();
+
+    return datasetNameOut;
 }
 
 /************************************************************************/

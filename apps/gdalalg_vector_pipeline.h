@@ -143,6 +143,13 @@ class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
     {
         return m_stepRegistry;
     }
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALVectorPipelineAlgorithm>();
+    }
 };
 
 /************************************************************************/
