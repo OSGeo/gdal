@@ -1766,7 +1766,9 @@ bool GDALAlgorithm::ParseArgument(
         {
             const CPLStringList aosTokens(
                 arg->GetPackedValuesAllowed()
-                    ? CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS)
+                    ? CSLTokenizeString2(value.c_str(), ",",
+                                         CSLT_HONOURSTRINGS |
+                                             CSLT_PRESERVEQUOTES)
                     : CSLAddString(nullptr, value.c_str()));
             if (!cpl::contains(inConstructionValues, arg))
             {
@@ -1866,8 +1868,9 @@ bool GDALAlgorithm::ParseArgument(
             }
             else
             {
-                const CPLStringList aosTokens(
-                    CSLTokenizeString2(value.c_str(), ",", CSLT_HONOURSTRINGS));
+                const CPLStringList aosTokens(CSLTokenizeString2(
+                    value.c_str(), ",",
+                    CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES));
                 for (const char *v : aosTokens)
                 {
                     valueVector.push_back(GDALArgDatasetValue(v));
