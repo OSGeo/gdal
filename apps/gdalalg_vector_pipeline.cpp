@@ -34,6 +34,7 @@
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_swap_xy.h"
 #include "gdalalg_vector_write.h"
+#include "gdalalg_tee.h"
 
 #include "../frmts/mem/memdataset.h"
 
@@ -170,6 +171,9 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorSimplifyCoverageAlgorithm>();
     registry.Register<GDALVectorSQLAlgorithm>();
     registry.Register<GDALVectorSwapXYAlgorithm>();
+
+    registry.Register<GDALTeeVectorAlgorithm>(
+        addSuffixIfNeeded(GDALTeeVectorAlgorithm::NAME));
 }
 
 /************************************************************************/
@@ -242,8 +246,8 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeFirstStep() && !alg->IsHidden() &&
-            name != GDALVectorReadAlgorithm::NAME)
+        if (alg->CanBeFirstStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALVectorReadAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -254,7 +258,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (!alg->CanBeFirstStep() && !alg->CanBeLastStep() && !alg->IsHidden())
+        if (alg->CanBeMiddleStep() && !alg->IsHidden())
         {
             ret += '\n';
             alg->SetCallPath({name});
@@ -265,8 +269,8 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     {
         auto alg = GetStepAlg(name);
         assert(alg);
-        if (alg->CanBeLastStep() && !alg->IsHidden() &&
-            name != GDALVectorWriteAlgorithm::NAME)
+        if (alg->CanBeLastStep() && !alg->CanBeMiddleStep() &&
+            !alg->IsHidden() && name != GDALVectorWriteAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});

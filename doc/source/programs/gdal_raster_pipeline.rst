@@ -200,6 +200,12 @@ Details for options can be found in :ref:`gdal_raster_unscale`.
 
 Details for options can be found in :ref:`gdal_raster_viewshed`.
 
+* tee
+
+.. program-output:: gdal raster pipeline --help-doc=tee
+
+Details for options can be found in :ref:`gdal_output_nested_pipeline`.
+
 * info
 
 .. versionadded:: 3.12
@@ -269,6 +275,16 @@ changing an input filename, specifying an output filename, or adding/modifying a
 of steps.
 
 See :ref:`gdal_pipeline_substitutions`.
+
+
+Nested pipeline
+---------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdal_nested_pipeline_intro.rst
+
+See :ref:`gdal_nested_pipeline`.
 
 
 Examples

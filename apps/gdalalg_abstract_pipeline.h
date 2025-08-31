@@ -60,6 +60,11 @@ class GDALPipelineStepRunContext
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 {
   public:
+    std::vector<GDALArgDatasetValue> &GetInputDatasets()
+    {
+        return m_inputDataset;
+    }
+
     const std::vector<GDALArgDatasetValue> &GetInputDatasets() const
     {
         return m_inputDataset;
@@ -203,7 +208,18 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         return false;
     }
 
+    virtual bool CanBeMiddleStep() const
+    {
+        return !CanBeFirstStep() && !CanBeLastStep();
+    }
+
     virtual bool CanBeLastStep() const
+    {
+        return false;
+    }
+
+    //! Whether a user parameter can cause a file to be written at a specified location
+    virtual bool GeneratesFilesFromUserInput() const
     {
         return false;
     }
@@ -333,6 +349,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     std::unique_ptr<GDALPipelineStepAlgorithm> m_stepOnWhichHelpIsRequested{};
 
+    bool m_bExpectReadStep = true;
     bool m_bExpectWriteStep = true;
 
     std::vector<std::unique_ptr<GDALAbstractPipelineAlgorithm>>

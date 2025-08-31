@@ -190,7 +190,17 @@ of steps.
 
 See :ref:`gdal_pipeline_substitutions`.
 
-`
+
+Nested pipeline
+---------------
+
+.. versionadded:: 3.12
+
+.. include:: gdal_cli_include/gdal_nested_pipeline_intro.rst
+
+See :ref:`gdal_nested_pipeline`.
+
+
 Examples
 --------
 
