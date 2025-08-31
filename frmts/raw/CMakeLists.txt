@@ -3,6 +3,7 @@ add_gdal_driver(
   SOURCES atlsci_spheroid.h
           ace2dataset.cpp
           atlsci_spheroid.cpp
+          btdataset.cpp
           cpgdataset.cpp
           doq1dataset.cpp
           doq2dataset.cpp
