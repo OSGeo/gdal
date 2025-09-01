@@ -28,6 +28,38 @@ OGRFeatherWriterDataset::OGRFeatherWriterDataset(
 }
 
 /************************************************************************/
+/*                     ~OGRFeatherWriterDataset()                       */
+/************************************************************************/
+
+OGRFeatherWriterDataset::~OGRFeatherWriterDataset()
+{
+    OGRFeatherWriterDataset::Close();
+}
+
+/************************************************************************/
+/*                                Close()                               */
+/************************************************************************/
+
+CPLErr OGRFeatherWriterDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (m_poLayer && !m_poLayer->Close())
+        {
+            eErr = CE_Failure;
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+        {
+            eErr = CE_Failure;
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
