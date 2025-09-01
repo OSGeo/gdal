@@ -120,7 +120,16 @@ void GDALPipelineStepAlgorithm::AddRasterOutputArgs(bool hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddCreationOptionsArg(&m_creationOptions).SetHiddenForCLI(hiddenForCLI);
-    AddOverwriteArg(&m_overwrite).SetHiddenForCLI(hiddenForCLI);
+    constexpr const char *MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND =
+        "overwrite-append";
+    AddOverwriteArg(&m_overwrite)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND);
+    AddArg(GDAL_ARG_NAME_APPEND, 0,
+           _("Append as a subdataset to existing output"), &m_appendRaster)
+        .SetDefault(false)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_OVERWRITE_APPEND);
 }
 
 /************************************************************************/
