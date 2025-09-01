@@ -91,7 +91,7 @@ void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGMemLayer::TestCapability(const char *pszCap)
+int OGRJSONFGMemLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCCurveGeometries))

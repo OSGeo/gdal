@@ -587,7 +587,7 @@ static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
 static OGRLayerH OGRGeocodeMakeRawLayer(const char *pszContent)
 {
     OGRMemLayer *poLayer = new OGRMemLayer("result", nullptr, wkbNone);
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     OGRFieldDefn oFieldDefnRaw("raw", OFTString);
     poLayer->CreateField(&oFieldDefnRaw);
     OGRFeature *poFeature = new OGRFeature(poFDefn);
@@ -606,7 +606,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
                                                const bool bAddRawFeature)
 {
     OGRMemLayer *poLayer = new OGRMemLayer("place", nullptr, wkbUnknown);
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
 
     CPLXMLNode *psPlace = psSearchResults->psChild;
     // First iteration to add fields.
@@ -752,7 +752,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     }
 
     OGRMemLayer *poLayer = new OGRMemLayer("result", nullptr, wkbNone);
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
 
     bool bFoundLat = false;
     bool bFoundLon = false;
@@ -881,7 +881,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
                                            bool bAddRawFeature)
 {
     OGRMemLayer *poLayer = new OGRMemLayer("place", nullptr, wkbPoint);
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
 
     // First iteration to add fields.
     CPLXMLNode *psPlace = psResultSet->psChild;
@@ -1022,7 +1022,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
         return nullptr;
 
     OGRMemLayer *poLayer = new OGRMemLayer("place", nullptr, wkbPoint);
-    OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
 
     // First iteration to add fields.
     CPLXMLNode *psPlace = psResources->psChild;

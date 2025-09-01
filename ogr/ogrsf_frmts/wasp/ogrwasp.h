@@ -137,13 +137,13 @@ class OGRWAsPLayer final : public OGRLayer,
 
     virtual ~OGRWAsPLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poLayerDefn;
     }
 
     virtual void ResetReading() override;
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -154,7 +154,7 @@ class OGRWAsPLayer final : public OGRLayer,
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return sName.c_str();
     }
@@ -185,19 +185,20 @@ class OGRWAsPDataSource final : public GDALDataset
     OGRWAsPDataSource(const char *pszName, VSILFILE *hFile);
     virtual ~OGRWAsPDataSource();
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return oLayer.get() ? 1 : 0;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr Load(bool bSilent = false);
 };
 

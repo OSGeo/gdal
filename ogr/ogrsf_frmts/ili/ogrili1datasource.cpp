@@ -152,7 +152,7 @@ int OGRILI1DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRILI1DataSource::TestCapability(const char *pszCap)
+int OGRILI1DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCurveGeometries))
@@ -167,7 +167,7 @@ int OGRILI1DataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRILI1DataSource::GetLayer(int iLayer)
+const OGRLayer *OGRILI1DataSource::GetLayer(int iLayer) const
 {
     if (!poReader)
     {

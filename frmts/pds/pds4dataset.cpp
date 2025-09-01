@@ -1522,7 +1522,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PDS4Dataset::GetLayer(int nIndex)
+const OGRLayer *PDS4Dataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;
@@ -4037,11 +4037,9 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
         osPrefix = "pds:";
 
     OGREnvelope sExtent;
-    if (m_oSRS.IsEmpty() && GetLayerCount() >= 1 &&
-        GetLayer(0)->GetSpatialRef() != nullptr)
+    if (m_oSRS.IsEmpty() && GetLayerCount() >= 1)
     {
-        const auto poSRS = GetLayer(0)->GetSpatialRef();
-        if (poSRS)
+        if (const auto poSRS = GetLayer(0)->GetSpatialRef())
             m_oSRS = *poSRS;
     }
 
@@ -4713,7 +4711,7 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4Dataset::TestCapability(const char *pszCap)
+int PDS4Dataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

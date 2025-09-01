@@ -105,7 +105,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
     virtual json_object *FetchNewFeatures(GIntBig iNext);
 
@@ -114,7 +114,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
         return osFIDColName.c_str();
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -151,7 +151,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource *poDS, const char *pszName);
     virtual ~OGRAmigoCloudTableLayer();
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return osName.c_str();
     }
@@ -172,7 +172,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -260,15 +260,15 @@ class OGRAmigoCloudDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

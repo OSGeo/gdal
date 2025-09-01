@@ -1458,7 +1458,7 @@ OGRErr OGROCITableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCITableLayer::TestCapability(const char *pszCap)
+int OGROCITableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite))

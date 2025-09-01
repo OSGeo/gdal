@@ -90,12 +90,12 @@ class OGRDGNV8Layer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -131,14 +131,14 @@ class OGRDGNV8DataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual char **GetMetadataDomainList() override;

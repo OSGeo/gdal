@@ -110,7 +110,7 @@ OGRPMTilesWriterDataset::ICreateLayer(const char *pszLayerName,
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRPMTilesWriterDataset::TestCapability(const char *pszCap)
+int OGRPMTilesWriterDataset::TestCapability(const char *pszCap) const
 {
     return m_poMBTilesWriterDataset->TestCapability(pszCap);
 }

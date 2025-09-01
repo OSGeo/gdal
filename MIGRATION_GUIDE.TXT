@@ -14,6 +14,19 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
     now the default when those utilities are invoked from the command line.
     When they are invoked from the API, the default is still JSON.
 
+- Changes impacting out-of-tree vector drivers:
+  * GDALDataset::GetLayer() is now a const method that returns a const OGRLayer*
+  * GDALDataset::GetLayerCount() is now a const method
+  * GDALDataset::TestCapacility() is now a const method
+  * OGRLayer::GetName() is now a const method
+  * OGRLayer::GetGeomType() is now a const method
+  * OGRLayer::GetLayerDefn() is now a const method that returns a const OGRFeatureDefn*
+  * OGRLayer::GetSpatialRef() is now a const method that returns a const OGRSpatialReference*
+  * OGRLayer::TestCapacility() is now a const method
+
+- Changes impacting C++ users:
+  * OGRLayer::GetSpatialRef() now returns a const OGRSpatialReference* instead of a non-const one.
+
 - The raw file capabilities (VRTRawRasterBand) of the VRT raster driver have
   been limited by default for security reasons. Consult
   https://gdal.org/drivers/raster/vrt.html#vrtrawrasterband_restricted_access

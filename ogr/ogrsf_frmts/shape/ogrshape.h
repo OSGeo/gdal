@@ -239,7 +239,9 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr SyncToDisk() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRAbstractProxiedLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -261,7 +263,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                               const OGRGeomFieldDefn *poNewGeomFieldDefn,
                               int nFlagsIn) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -297,7 +299,7 @@ class OGRShapeDataSource final : public GDALDataset
     bool m_bSingleFileDataSource = false;
     std::unique_ptr<OGRLayerPool> m_poPool{};
 
-    std::vector<CPLString> m_oVectorLayerName{};
+    mutable std::vector<CPLString> m_oVectorLayerName{};
 
     bool m_b2GBLimit = false;
     bool m_bIsZip = false;
@@ -334,8 +336,8 @@ class OGRShapeDataSource final : public GDALDataset
     bool OpenZip(GDALOpenInfo *poOpenInfo, const char *pszOriFilename);
     bool CreateZip(const char *pszOriFilename);
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -345,7 +347,7 @@ class OGRShapeDataSource final : public GDALDataset
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr DeleteLayer(int iLayer) override;
 
     char **GetFileList() override;

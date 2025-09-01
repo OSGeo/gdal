@@ -54,13 +54,14 @@ class CPL_DLL OGRMutexedDataSource : public GDALDataset
         return m_poBaseDataSource;
     }
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual bool IsLayerPrivate(int iLayer) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

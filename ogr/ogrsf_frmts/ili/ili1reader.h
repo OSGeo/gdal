@@ -28,9 +28,9 @@ class IILI1Reader
                           OGRILI1DataSource *poDS) = 0;
     virtual int ReadFeatures() = 0;
 
-    virtual OGRLayer *GetLayer(int) = 0;
+    virtual const OGRLayer *GetLayer(int) const = 0;
     virtual OGRLayer *GetLayerByName(const char *) = 0;
-    virtual int GetLayerCount() = 0;
+    virtual int GetLayerCount() const = 0;
 };
 
 IILI1Reader *CreateILI1Reader();

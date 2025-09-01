@@ -82,15 +82,15 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    virtual const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce = true) override;
 
-    virtual int TestCapability(const char *) override;
+    virtual int TestCapability(const char *) const override;
 
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;

@@ -950,7 +950,7 @@ OGRErr OGRADBCDataset::DeleteLayer(int iLayer)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRADBCDataset::TestCapability(const char *pszCap)
+int OGRADBCDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
         return m_bIsBigQuery && eAccess == GA_Update;

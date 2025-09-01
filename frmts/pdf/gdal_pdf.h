@@ -74,7 +74,7 @@ class OGRPDFLayer final : public OGRMemLayer
 
     void Fill(GDALPDFArray *poArray);
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -98,7 +98,7 @@ class OGRPDFWritableLayer final : public OGRMemLayer
                         OGRSpatialReference *poSRS,
                         OGRwkbGeometryType eGeomType);
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     GDALDataset *GetDataset() override;
@@ -442,10 +442,10 @@ class PDFDataset final : public GDALPamDataset
                       GSpacing nPixelSpace, GSpacing nLineSpace,
                       GSpacing nBandSpace, GByte *pabyData);
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRGeometry *GetGeometryFromMCID(int nMCID);
 
@@ -540,10 +540,10 @@ class PDFWritableVectorDataset final : public GDALDataset
 
     OGRErr SyncToDisk();
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,

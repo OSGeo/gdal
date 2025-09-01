@@ -227,7 +227,7 @@ int OGRIDBDataSource::OpenTable(const char *pszNewName, const char *pszGeomCol,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBDataSource::TestCapability(const char *pszCap)
+int OGRIDBDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -240,7 +240,7 @@ int OGRIDBDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIDBDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRIDBDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

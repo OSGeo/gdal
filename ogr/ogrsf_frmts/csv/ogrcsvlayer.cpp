@@ -1759,7 +1759,7 @@ OGRFeature *OGRCSVLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVLayer::TestCapability(const char *pszCap)
+int OGRCSVLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

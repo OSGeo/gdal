@@ -540,7 +540,7 @@ OGRErr OGROCILoaderLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCILoaderLayer::TestCapability(const char *pszCap)
+int OGROCILoaderLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

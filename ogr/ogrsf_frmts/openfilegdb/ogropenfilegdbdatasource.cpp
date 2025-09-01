@@ -1165,7 +1165,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
 /*                         TestCapability()                            */
 /***********************************************************************/
 
-int OGROpenFileGDBDataSource::TestCapability(const char *pszCap)
+int OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCAddFieldDomain) ||
@@ -1193,7 +1193,7 @@ int OGROpenFileGDBDataSource::TestCapability(const char *pszCap)
 /*                            GetLayer()                               */
 /***********************************************************************/
 
-OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex)
+const OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex) const
 {
     if (iIndex < 0 || iIndex >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
@@ -1357,12 +1357,12 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual const char *GetFIDColumn() override
     {
@@ -1547,7 +1547,7 @@ GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
 /*                         TestCapability()                            */
 /***********************************************************************/
 
-int OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap)
+int OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -1865,7 +1865,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                     if (idx < 0)
                         break;
 
-                    OGRFieldDefn *poFieldDefn =
+                    const OGRFieldDefn *poFieldDefn =
                         poLayer->GetLayerDefn()->GetFieldDefn(idx);
 
                     if (col_func == SWQCF_SUM &&

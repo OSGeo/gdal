@@ -32,8 +32,8 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
     ITCursor *m_poCurr;
 
     // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
-    int nSRSId;
+    mutable OGRSpatialReference *poSRS;
+    mutable int nSRSId;
 
     int iNextShapeId;
 
@@ -60,7 +60,7 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -68,9 +68,9 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -110,9 +110,9 @@ class OGRIDBTableLayer final : public OGRIDBLayer
 #endif
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -140,7 +140,7 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -163,14 +163,14 @@ class OGRIDBDataSource final : public GDALDataset
     int OpenTable(const char *pszTableName, const char *pszGeomCol,
                   int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

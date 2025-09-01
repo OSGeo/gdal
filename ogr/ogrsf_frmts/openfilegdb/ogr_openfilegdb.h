@@ -218,9 +218,9 @@ class OGROpenFileGDBLayer final : public OGRLayer
                                                          : 1;
     }
 
-    const OGRField *GetMinMaxValue(OGRFieldDefn *poFieldDefn, int bIsMin,
+    const OGRField *GetMinMaxValue(const OGRFieldDefn *poFieldDefn, int bIsMin,
                                    int &eOutType);
-    int GetMinMaxSumCount(OGRFieldDefn *poFieldDefn, double &dfMin,
+    int GetMinMaxSumCount(const OGRFieldDefn *poFieldDefn, double &dfMin,
                           double &dfMax, double &dfSum, int &nCount);
     bool HasIndexForField(const char *pszFieldName);
     FileGDBIterator *BuildIndex(const char *pszFieldName, int bAscending,
@@ -250,12 +250,12 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     GDALDataset *GetDataset() override;
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return m_osName.c_str();
     }
 
-    virtual OGRwkbGeometryType GetGeomType() override;
+    OGRwkbGeometryType GetGeomType() const override;
 
     virtual const char *GetFIDColumn() override;
 
@@ -271,14 +271,14 @@ class OGROpenFileGDBLayer final : public OGRLayer
     OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                         bool bForce) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr Rename(const char *pszNewName) override;
 
@@ -520,12 +520,12 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return m_apoLayers;
     }
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGROpenFileGDBLayer *GetLayerByName(const char *pszName) override;
     bool IsLayerPrivate(int) const override;
 
@@ -534,7 +534,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -680,12 +680,12 @@ class OGROpenFileGDBSingleFeatureLayer final : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

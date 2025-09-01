@@ -55,9 +55,9 @@ class OGRTABDataSource : public GDALDataset
     int Open(GDALOpenInfo *poOpenInfo, int bTestOpen);
     int Create(const char *pszName, char **papszOptions);
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
-    int TestCapability(const char *) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

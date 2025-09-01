@@ -80,7 +80,7 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::TestCapability(const char *pszCap)
+int OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -97,7 +97,7 @@ int OGRGeoRSSDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

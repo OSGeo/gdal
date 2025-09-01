@@ -148,9 +148,9 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     {
     }
 
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
     }
@@ -185,9 +185,9 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
     bool AddProcessedLayer(OGRLayer &srcLayer);
     bool AddProcessedLayer(OGRLayer &srcLayer, OGRFeatureDefn &dstDefn);
     void AddPassThroughLayer(OGRLayer &oLayer);
-    int GetLayerCount() final override;
-    OGRLayer *GetLayer(int idx) final override;
-    int TestCapability(const char *pszCap) override;
+    int GetLayerCount() const final override;
+    OGRLayer *GetLayer(int idx) const final override;
+    int TestCapability(const char *pszCap) const override;
 
   private:
     std::vector<std::unique_ptr<OGRLayer>> m_passthrough_layers{};
@@ -224,11 +224,11 @@ class GDALVectorPipelineOutputDataset final : public GDALDataset
     void AddLayer(OGRLayer &oSrcLayer,
                   std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer);
 
-    int GetLayerCount() override;
+    int GetLayerCount() const override;
 
-    OGRLayer *GetLayer(int idx) override;
+    OGRLayer *GetLayer(int idx) const override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     void ResetReading() override;
 

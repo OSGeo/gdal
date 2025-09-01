@@ -105,7 +105,7 @@ class OGRFeatherLayer final : public OGRArrowLayer
                         &poRecordBatchStreamReader);
 
     void ResetReading() override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
@@ -127,7 +127,7 @@ class OGRFeatherDataset final : public OGRArrowDataset
     explicit OGRFeatherDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -214,9 +214,9 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
         return m_poMemoryPool.get();
     }
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int idx) override;
-    int TestCapability(const char *pszCap) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int idx) const override;
+    int TestCapability(const char *pszCap) const override;
     std::vector<std::string> GetFieldDomainNames(
         CSLConstList /*papszOptions*/ = nullptr) const override;
     const OGRFieldDomain *

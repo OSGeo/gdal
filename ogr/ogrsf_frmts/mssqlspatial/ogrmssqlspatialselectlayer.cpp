@@ -176,7 +176,7 @@ OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialSelectLayer::TestCapability(const char *pszCap)
+int OGRMSSQLSpatialSelectLayer::TestCapability(const char *pszCap) const
 
 {
     return OGRMSSQLSpatialLayer::TestCapability(pszCap);

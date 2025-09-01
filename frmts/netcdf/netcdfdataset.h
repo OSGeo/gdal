@@ -576,14 +576,14 @@ class netCDFDataset final : public GDALPamDataset
     virtual CPLErr SetMetadata(char **papszMD,
                                const char *pszDomain = "") override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
-    virtual int GetLayerCount() override
+    virtual int GetLayerCount() const override
     {
         return static_cast<int>(this->papoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int nIdx) override;
+    virtual const OGRLayer *GetLayer(int nIdx) const override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -759,9 +759,10 @@ class netCDFLayer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce) override;
 
-    virtual int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,

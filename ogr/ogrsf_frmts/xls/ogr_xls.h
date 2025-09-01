@@ -25,7 +25,7 @@ class OGRXLSLayer final : public OGRLayer,
                           public OGRGetNextFeatureThroughRaw<OGRXLSLayer>
 {
     OGRXLSDataSource *poDS;
-    OGRFeatureDefn *poFeatureDefn;
+    mutable OGRFeatureDefn *poFeatureDefn;
 
     char *pszName;
     int iSheet;
@@ -48,22 +48,22 @@ class OGRXLSLayer final : public OGRLayer,
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXLSLayer)
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return pszName;
     }
 
-    virtual OGRwkbGeometryType GetGeomType() override
+    OGRwkbGeometryType GetGeomType() const override
     {
         return wkbNone;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override
+    const OGRSpatialReference *GetSpatialRef() const override
     {
         return nullptr;
     }
@@ -92,12 +92,12 @@ class OGRXLSDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, int bUpdate);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     const void *GetXLSHandle();
 };

@@ -334,7 +334,7 @@ OGRFeature *OGRPGeoLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoLayer::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRPGeoLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCZGeometries))
         return true;

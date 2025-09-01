@@ -152,7 +152,7 @@ void OGRMSSQLSpatialDataSource::OGRMSSQLDecodeVersionString(MSSQLVer *psVersion,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap)
+int OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap) const
 
 {
 #if (ODBCVER >= 0x0300)
@@ -179,7 +179,7 @@ int OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMSSQLSpatialDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRMSSQLSpatialDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -648,7 +648,7 @@ int OGRMSSQLSpatialDataSource::OpenTable(const char *pszSchemaName,
 /*                       GetLayerCount()                                */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::GetLayerCount()
+int OGRMSSQLSpatialDataSource::GetLayerCount() const
 {
     return nLayers;
 }

@@ -136,14 +136,14 @@ class OGRMVTLayerBase CPL_NON_FINAL
   public:
     virtual ~OGRMVTLayerBase();
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMVTLayerBase)
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -258,7 +258,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
 
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -298,14 +298,14 @@ class OGRMVTDataset final : public GDALDataset
     explicit OGRMVTDataset(GByte *pabyData);
     virtual ~OGRMVTDataset();
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -367,7 +367,7 @@ void OGRMVTLayerBase::InitFields(const CPLJSONObject &oFields,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTLayerBase::TestCapability(const char *pszCap)
+int OGRMVTLayerBase::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCFastSpatialFilter))
     {
@@ -1802,7 +1802,7 @@ OGRErr OGRMVTDirectoryLayer::ISetSpatialFilter(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTDirectoryLayer::TestCapability(const char *pszCap)
+int OGRMVTDirectoryLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastGetExtent))
     {
@@ -1949,7 +1949,7 @@ OGRMVTDataset::~OGRMVTDataset()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMVTDataset::GetLayer(int iLayer)
+const OGRLayer *OGRMVTDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
@@ -3460,7 +3460,7 @@ class OGRMVTWriterDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr WriteFeature(OGRMVTWriterLayer *poLayer, OGRFeature *poFeature,
                         GIntBig nSerial, OGRGeometry *poGeom);
@@ -3505,12 +3505,12 @@ class OGRMVTWriterLayer final : public OGRLayer
         return nullptr;
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;
 
@@ -3563,7 +3563,7 @@ OGRMVTWriterLayer::~OGRMVTWriterLayer()
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMVTWriterLayer::TestCapability(const char *pszCap)
+int OGRMVTWriterLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField))
@@ -5918,7 +5918,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMVTWriterDataset::TestCapability(const char *pszCap)
+int OGRMVTWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return true;

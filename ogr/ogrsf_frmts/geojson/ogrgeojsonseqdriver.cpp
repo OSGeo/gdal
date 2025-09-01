@@ -45,16 +45,16 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     OGRGeoJSONSeqDataSource();
     ~OGRGeoJSONSeqDataSource();
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, char **papszOptions);
@@ -104,14 +104,14 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
 
     bool Init(bool bLooseIdentification, bool bEstablishLayerDefn);
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return GetDescription();
     }
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     const char *GetFIDColumn() override
     {
@@ -119,7 +119,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     }
 
     GIntBig GetFeatureCount(int) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;
 
@@ -157,7 +157,7 @@ OGRGeoJSONSeqDataSource::~OGRGeoJSONSeqDataSource()
 /*                               GetLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex)
+const OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;
@@ -284,7 +284,7 @@ OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONSeqDataSource::TestCapability(const char *pszCap)
+int OGRGeoJSONSeqDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;
@@ -376,12 +376,13 @@ OGRGeoJSONSeqLayer::~OGRGeoJSONSeqLayer()
 /*                           GetLayerDefn()                             */
 /************************************************************************/
 
-OGRFeatureDefn *OGRGeoJSONSeqLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRGeoJSONSeqLayer::GetLayerDefn() const
 {
     if (!m_bLayerDefnEstablished)
     {
-        Init(/* bLooseIdentification = */ false,
-             /* bEstablishLayerDefn = */ true);
+        const_cast<OGRGeoJSONSeqLayer *>(this)->Init(
+            /* bLooseIdentification = */ false,
+            /* bEstablishLayerDefn = */ true);
     }
     return m_poFeatureDefn;
 }
@@ -665,7 +666,7 @@ GIntBig OGRGeoJSONSeqLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONSeqLayer::TestCapability(const char *pszCap)
+int OGRGeoJSONSeqLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;

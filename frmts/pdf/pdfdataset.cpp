@@ -2609,6 +2609,9 @@ PDFDataset::~PDFDataset()
     m_poPagePdfium = nullptr;
 #endif  // ~ HAVE_PDFIUM
 
+    m_bHasLoadedLayers = true;
+    m_apoLayers.clear();
+
     /* Now do the update */
     if (poPageDictCopy)
     {
@@ -2651,8 +2654,6 @@ PDFDataset::~PDFDataset()
     }
 
     CleanupIntermediateResources();
-
-    m_apoLayers.clear();
 
     // Do that only after having destroyed Poppler objects
     m_fp.reset();

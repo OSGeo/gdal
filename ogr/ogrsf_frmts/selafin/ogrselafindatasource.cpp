@@ -301,7 +301,7 @@ OGRSelafinDataSource::~OGRSelafinDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSelafinDataSource::TestCapability(const char *pszCap)
+int OGRSelafinDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;
@@ -317,7 +317,7 @@ int OGRSelafinDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRSelafinDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;

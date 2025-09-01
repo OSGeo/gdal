@@ -53,11 +53,12 @@ class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;
 
-    virtual const char *GetName() override;
-    virtual OGRwkbGeometryType GetGeomType() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const char *GetName() const override;
+    OGRwkbGeometryType GetGeomType() const override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -65,7 +66,7 @@ class CPL_DLL OGRLayerDecorator : virtual public OGRLayer
     virtual OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                                 bool bForce = true) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

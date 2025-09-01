@@ -41,7 +41,7 @@ OGRXODRLayerRoadObject::OGRXODRLayerRoadObject(
     m_poFeatureDefn->AddFieldDefn(&oFieldObjectName);
 }
 
-int OGRXODRLayerRoadObject::TestCapability(const char *pszCap)
+int OGRXODRLayerRoadObject::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

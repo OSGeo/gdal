@@ -720,7 +720,7 @@ void GDALVectorPipelineOutputDataset::AddLayer(
 /*          GDALVectorPipelineOutputDataset::GetLayerCount()            */
 /************************************************************************/
 
-int GDALVectorPipelineOutputDataset::GetLayerCount()
+int GDALVectorPipelineOutputDataset::GetLayerCount() const
 {
     return static_cast<int>(m_layers.size());
 }
@@ -729,7 +729,7 @@ int GDALVectorPipelineOutputDataset::GetLayerCount()
 /*             GDALVectorPipelineOutputDataset::GetLayer()              */
 /************************************************************************/
 
-OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
+OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx) const
 {
     return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
 }
@@ -738,7 +738,7 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx)
 /*           GDALVectorPipelineOutputDataset::TestCapability()          */
 /************************************************************************/
 
-int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap)
+int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCRandomLayerRead) ||
         EQUAL(pszCap, ODsCMeasuredGeometries) || EQUAL(pszCap, ODsCZGeometries))
@@ -808,7 +808,7 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
 /*            GDALVectorPipelinePassthroughLayer::GetLayerDefn()        */
 /************************************************************************/
 
-OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn()
+const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
 {
     return m_srcLayer.GetLayerDefn();
 }
@@ -872,7 +872,7 @@ void GDALVectorNonStreamingAlgorithmDataset::AddPassThroughLayer(
 /*       GDALVectorNonStreamingAlgorithmDataset::GetLayerCount()        */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::GetLayerCount()
+int GDALVectorNonStreamingAlgorithmDataset::GetLayerCount() const
 {
     return static_cast<int>(m_layers.size());
 }
@@ -881,7 +881,7 @@ int GDALVectorNonStreamingAlgorithmDataset::GetLayerCount()
 /*       GDALVectorNonStreamingAlgorithmDataset::GetLayer()             */
 /************************************************************************/
 
-OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx)
+OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 {
     if (idx < 0 || idx >= static_cast<int>(m_layers.size()))
     {
@@ -894,7 +894,8 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx)
 /*    GDALVectorNonStreamingAlgorithmDataset::TestCapability()          */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *pszCap)
+int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
+    const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
     {

@@ -216,12 +216,14 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -303,12 +305,13 @@ class OGRCSVDataSource final : public GDALDataset
                    const char *pszNfdcRunwaysGeomField = nullptr,
                    const char *pszGeonamesGeomFieldPrefix = nullptr);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
 
     char **GetFileList() override;
 
@@ -318,7 +321,7 @@ class OGRCSVDataSource final : public GDALDataset
 
     virtual OGRErr DeleteLayer(int) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void CreateForSingleFile(const char *pszDirname, const char *pszFilename);
 

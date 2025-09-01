@@ -79,12 +79,12 @@ class OGRMongoDBv3Dataset final : public GDALDataset
   public:
     OGRMongoDBv3Dataset() = default;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *pszLayerName) override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
@@ -96,7 +96,7 @@ class OGRMongoDBv3Dataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int iLayer) override;
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 };
@@ -182,8 +182,8 @@ class OGRMongoDBv3Layer final : public OGRLayer
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
-    int TestCapability(const char *pszCap) override;
-    OGRFeatureDefn *GetLayerDefn() override;
+    int TestCapability(const char *pszCap) const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poFieldIn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
@@ -373,10 +373,10 @@ void OGRMongoDBv3Layer::ResetReading()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRMongoDBv3Layer::GetLayerDefn()
+const OGRFeatureDefn *OGRMongoDBv3Layer::GetLayerDefn() const
 {
     if (!m_bHasEstablishedFeatureDefn)
-        EstablishFeatureDefn();
+        const_cast<OGRMongoDBv3Layer *>(this)->EstablishFeatureDefn();
 
     return m_poFeatureDefn;
 }
@@ -1111,7 +1111,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
     int nField = poFeature->GetFieldIndex(pszAttrName);
     if (nField < 0)
         return;
-    OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(nField);
+    const OGRFieldDefn *poFieldDefn = poFeature->GetFieldDefnRef(nField);
     CPLAssert(nullptr != poFieldDefn);
     OGRFieldType eType = poFieldDefn->GetType();
     if (eBSONType == bsoncxx::type::k_null)
@@ -2149,7 +2149,7 @@ OGRErr OGRMongoDBv3Layer::IUpdateFeature(OGRFeature *poFeature,
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRMongoDBv3Layer::TestCapability(const char *pszCap)
+int OGRMongoDBv3Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
     {
@@ -2157,13 +2157,12 @@ int OGRMongoDBv3Layer::TestCapability(const char *pszCap)
     }
     if (EQUAL(pszCap, OLCRandomRead))
     {
-        EstablishFeatureDefn();
-        return !m_osFID.empty();
+        return const_cast<OGRMongoDBv3Layer *>(this)->GetFIDColumn()[0] != 0;
     }
     if (EQUAL(pszCap, OLCFastSpatialFilter))
     {
-        EstablishFeatureDefn();
-        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
+        const int nGeomFieldCount = GetLayerDefn()->GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; i++)
         {
             if (m_aosGeomIndexes[i] == "none")
             {
@@ -2180,8 +2179,8 @@ int OGRMongoDBv3Layer::TestCapability(const char *pszCap)
     }
     else if (EQUAL(pszCap, OLCDeleteFeature))
     {
-        EstablishFeatureDefn();
-        return m_poDS->GetAccess() == GA_Update && !m_osFID.empty();
+        return m_poDS->GetAccess() == GA_Update &&
+               const_cast<OGRMongoDBv3Layer *>(this)->GetFIDColumn()[0] != 0;
     }
 
     return false;
@@ -2288,7 +2287,7 @@ OGRErr OGRMongoDBv3Layer::ISetSpatialFilter(int iGeomField,
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRMongoDBv3Dataset::GetLayer(int nIndex)
+const OGRLayer *OGRMongoDBv3Dataset::GetLayer(int nIndex) const
 {
     if (nIndex < 0 || nIndex >= GetLayerCount())
         return nullptr;
@@ -2676,7 +2675,7 @@ OGRErr OGRMongoDBv3Dataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMongoDBv3Dataset::TestCapability(const char *pszCap)
+int OGRMongoDBv3Dataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
@@ -2711,12 +2710,12 @@ class OGRMongoDBv3SingleFeatureLayer final : public OGRLayer
 
     OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

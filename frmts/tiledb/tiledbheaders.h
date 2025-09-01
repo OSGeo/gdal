@@ -483,7 +483,7 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -493,7 +493,7 @@ class OGRTileDBLayer final : public OGRLayer,
         return m_osFIDColumn.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -526,18 +526,18 @@ class OGRTileDBDataset final : public TileDBDataset
                          OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int nIdx) override
+    const OGRLayer *GetLayer(int nIdx) const override
     {
         return nIdx >= 0 && nIdx < GetLayerCount() ? m_apoLayers[nIdx].get()
                                                    : nullptr;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

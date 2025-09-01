@@ -40,7 +40,8 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer(OGRPGeoDataSource *poDSIn,
             poDSIn->GetLayerByName(pszBaseStatement + strlen("SELECT * FROM "));
         if (poBaseLayer != nullptr)
         {
-            poSRS = poBaseLayer->GetSpatialRef();
+            poSRS =
+                const_cast<OGRSpatialReference *>(poBaseLayer->GetSpatialRef());
             if (poSRS != nullptr)
                 poSRS->Reference();
         }
@@ -139,7 +140,7 @@ OGRFeature *OGRPGeoSelectLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoSelectLayer::TestCapability(const char *pszCap)
+int OGRPGeoSelectLayer::TestCapability(const char *pszCap) const
 
 {
     return OGRPGeoLayer::TestCapability(pszCap);

@@ -238,7 +238,7 @@ class GDALVectorSelectAlgorithmLayer final
         }
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -265,7 +265,7 @@ class GDALVectorSelectAlgorithmLayer final
         return TranslateFeature(std::move(poSrcFeature)).release();
     }
 
-    int TestCapability(const char *pszCap) override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||

@@ -79,7 +79,7 @@ static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
     /*      Find requested geometry fields.                                 */
     /* -------------------------------------------------------------------- */
 
-    OGRSpatialReference *poOutputSRS = poSrcLayer->GetSpatialRef();
+    const OGRSpatialReference *poOutputSRS = poSrcLayer->GetSpatialRef();
 
     /* -------------------------------------------------------------------- */
     /*      Find the layer.                                                 */

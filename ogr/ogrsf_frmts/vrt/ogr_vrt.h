@@ -142,12 +142,12 @@ class OGRVRTLayer final : public OGRLayer
     bool FastInitialize(CPLXMLNode *psLTree, const char *pszVRTDirectory,
                         int bUpdate);
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return osName.c_str();
     }
 
-    virtual OGRwkbGeometryType GetGeomType() override;
+    OGRwkbGeometryType GetGeomType() const override;
 
     /* -------------------------------------------------------------------- */
     /*      Caution : all the below methods should care of calling          */
@@ -161,13 +161,13 @@ class OGRVRTLayer final : public OGRLayer
 
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     virtual GIntBig GetFeatureCount(int) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce = TRUE) override;
@@ -246,14 +246,14 @@ class OGRVRTDataSource final : public GDALDataset
 
     bool Initialize(CPLXMLNode *psXML, const char *pszName, int bUpdate);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual char **GetFileList() override;
 

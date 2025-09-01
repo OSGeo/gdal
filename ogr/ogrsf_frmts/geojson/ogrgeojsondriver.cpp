@@ -61,9 +61,9 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = true) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
@@ -90,12 +90,12 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
         std::unique_ptr<OGRGeoJSONDataSource> &&poFirst,
         GeoJSONSourceType nSrcType);
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return 1;
     }
 
-    OGRLayer *GetLayer(int nLayer) override;
+    const OGRLayer *GetLayer(int nLayer) const override;
 
     OGRLayer *GetUnderlyingLayer()
     {
@@ -111,7 +111,7 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
     }
 };
 
-OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer)
+const OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer) const
 {
     return (nLayer == 0) ? m_poLayer.get() : nullptr;
 }
@@ -233,7 +233,7 @@ OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap)
+int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

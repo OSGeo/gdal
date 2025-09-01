@@ -40,7 +40,7 @@ OGRPDSDataSource::~OGRPDSDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPDSDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRPDSDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)

@@ -239,12 +239,19 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr DeleteFeature(GIntBig nFID) CPL_WARN_UNUSED_RESULT;
 
-    virtual const char *GetName();
-    virtual OGRwkbGeometryType GetGeomType();
-    virtual OGRFeatureDefn *GetLayerDefn() = 0;
+    virtual const char *GetName() const;
+    virtual OGRwkbGeometryType GetGeomType() const;
+    virtual const OGRFeatureDefn *GetLayerDefn() const = 0;
+
+    OGRFeatureDefn *GetLayerDefn()
+    {
+        return const_cast<OGRFeatureDefn *>(
+            const_cast<const OGRLayer *>(this)->GetLayerDefn());
+    }
+
     virtual int FindFieldIndex(const char *pszFieldName, int bExactMatch);
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual const OGRSpatialReference *GetSpatialRef() const;
 
     /** Return type of OGRLayer::GetSupportedSRSList() */
     typedef std::vector<
@@ -265,7 +272,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                        bool bForce = true) CPL_WARN_UNUSED_RESULT;
 
-    virtual int TestCapability(const char *) = 0;
+    virtual int TestCapability(const char *) const = 0;
 
     virtual OGRErr Rename(const char *pszNewName) CPL_WARN_UNUSED_RESULT;
 

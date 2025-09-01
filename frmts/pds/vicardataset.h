@@ -112,12 +112,12 @@ class VICARDataset final : public RawDataset
     char **GetMetadata(const char *pszDomain = "") override;
     CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return m_poLayer ? 1 : 0;
     }
 
-    OGRLayer *GetLayer(int i) override
+    const OGRLayer *GetLayer(int i) const override
     {
         return (m_poLayer && i == 0) ? m_poLayer.get() : nullptr;
     }

@@ -182,7 +182,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRLVBAGDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRLVBAGDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
     {
@@ -195,9 +195,9 @@ OGRLayer *OGRLVBAGDataSource::GetLayer(int iLayer)
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRLVBAGDataSource::GetLayerCount()
+int OGRLVBAGDataSource::GetLayerCount() const
 {
-    TryCoalesceLayers();
+    const_cast<OGRLVBAGDataSource *>(this)->TryCoalesceLayers();
     return static_cast<int>(papoLayers.size());
 }
 
@@ -205,7 +205,7 @@ int OGRLVBAGDataSource::GetLayerCount()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGDataSource::TestCapability(const char * /* pszCap */)
+int OGRLVBAGDataSource::TestCapability(const char * /* pszCap */) const
 {
     return FALSE;
 }

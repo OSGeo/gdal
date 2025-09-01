@@ -162,8 +162,11 @@ OGRIDFDataSource::~OGRIDFDataSource()
 /*                                Parse()                               */
 /************************************************************************/
 
-void OGRIDFDataSource::Parse()
+void OGRIDFDataSource::Parse() const
 {
+    std::lock_guard oLock(m_oMutex);
+    if (m_bHasParsed)
+        return;
     m_bHasParsed = true;
 
     VSIStatBufL sStatBuf;
@@ -597,10 +600,9 @@ void OGRIDFDataSource::Parse()
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRIDFDataSource::GetLayerCount()
+int OGRIDFDataSource::GetLayerCount() const
 {
-    if (!m_bHasParsed)
-        Parse();
+    Parse();
     if (m_poTmpDS == nullptr)
         return 0;
     return m_poTmpDS->GetLayerCount();
@@ -610,7 +612,7 @@ int OGRIDFDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRIDFDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
@@ -623,7 +625,7 @@ OGRLayer *OGRIDFDataSource::GetLayer(int iLayer)
 /*                              TestCapability()                        */
 /************************************************************************/
 
-int OGRIDFDataSource::TestCapability(const char *pszCap)
+int OGRIDFDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
@@ -680,10 +682,9 @@ OGRVDVDataSource::~OGRVDVDataSource()
 /*                           GetLayerCount()                            */
 /************************************************************************/
 
-int OGRVDVDataSource::GetLayerCount()
+int OGRVDVDataSource::GetLayerCount() const
 {
-    if (!m_bLayersDetected)
-        DetectLayers();
+    DetectLayers();
     return m_nLayerCount;
 }
 
@@ -691,7 +692,7 @@ int OGRVDVDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRVDVDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRVDVDataSource::GetLayer(int iLayer) const
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
@@ -702,8 +703,13 @@ OGRLayer *OGRVDVDataSource::GetLayer(int iLayer)
 /*                         DetectLayers()                               */
 /************************************************************************/
 
-void OGRVDVDataSource::DetectLayers()
+void OGRVDVDataSource::DetectLayers() const
 {
+    std::lock_guard oLock(m_oMutex);
+
+    if (m_bLayersDetected)
+        return;
+
     m_bLayersDetected = true;
 
     char szBuffer[1 + 1024 + 1];
@@ -749,8 +755,9 @@ void OGRVDVDataSource::DetectLayers()
                 if (szBuffer[i] == '\r' || szBuffer[i] == '\n')
                 {
                     bInTableName = false;
-                    poLayer = new OGRVDVLayer(this, osTableName, m_fpL, false,
-                                              bRecodeFromLatin1, nStartOffset);
+                    poLayer = new OGRVDVLayer(
+                        const_cast<OGRVDVDataSource *>(this), osTableName,
+                        m_fpL, false, bRecodeFromLatin1, nStartOffset);
                     m_papoLayers = static_cast<OGRLayer **>(
                         CPLRealloc(m_papoLayers,
                                    sizeof(OGRLayer *) * (m_nLayerCount + 1)));
@@ -1114,7 +1121,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGRVDVLayer::TestCapability(const char *pszCap)
+int OGRVDVLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_nTotalFeatureCount > 0 &&
         m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
@@ -1588,7 +1595,7 @@ OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRVDVWriterLayer::TestCapability(const char *pszCap)
+int OGRVDVWriterLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_bWritePossible;
@@ -2019,7 +2026,7 @@ void OGRVDVDataSource::SetCurrentWriterLayer(OGRVDVWriterLayer *poLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVDVDataSource::TestCapability(const char *pszCap)
+int OGRVDVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

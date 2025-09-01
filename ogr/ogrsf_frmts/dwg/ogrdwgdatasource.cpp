@@ -46,7 +46,7 @@ OGRDWGDataSource::~OGRDWGDataSource()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDWGDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRDWGDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= (int)apoLayers.size())

@@ -92,7 +92,7 @@ OGRFeature *OGRSQLiteSingleFeatureLayer::GetNextFeature()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRSQLiteSingleFeatureLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRSQLiteSingleFeatureLayer::GetLayerDefn() const
 {
     return poFeatureDefn;
 }
@@ -101,7 +101,7 @@ OGRFeatureDefn *OGRSQLiteSingleFeatureLayer::GetLayerDefn()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteSingleFeatureLayer::TestCapability(const char *)
+int OGRSQLiteSingleFeatureLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

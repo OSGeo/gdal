@@ -119,12 +119,12 @@ class MBTilesDataset final : public GDALPamDataset,
                                    void *pProgressData,
                                    CSLConstList papszOptions) override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -248,7 +248,7 @@ class MBTilesVectorLayer final : public OGRLayer
 
     OGRFeature *GetNextRawFeature();
     OGRFeature *GetNextSrcFeature();
-    OGRFeature *CreateFeatureFrom(OGRFeature *poSrcFeature);
+    OGRFeature *CreateFeatureFrom(OGRFeature *poSrcFeature) const;
 
   public:
     MBTilesVectorLayer(MBTilesDataset *poDS, const char *pszLayerName,
@@ -263,13 +263,13 @@ class MBTilesVectorLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
     virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce) override;
@@ -1404,7 +1404,7 @@ const char *MBTilesDataset::GetMetadataItem(const char *pszName,
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *MBTilesDataset::GetLayer(int iLayer)
+const OGRLayer *MBTilesDataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())
@@ -1500,7 +1500,7 @@ MBTilesVectorLayer::~MBTilesVectorLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MBTilesVectorLayer::TestCapability(const char *pszCap)
+int MBTilesVectorLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCFastSpatialFilter) || EQUAL(pszCap, OLCFastGetExtent))
@@ -1808,7 +1808,8 @@ OGRFeature *MBTilesVectorLayer::GetNextSrcFeature()
 /*                         CreateFeatureFrom()                          */
 /************************************************************************/
 
-OGRFeature *MBTilesVectorLayer::CreateFeatureFrom(OGRFeature *poSrcFeature)
+OGRFeature *
+MBTilesVectorLayer::CreateFeatureFrom(OGRFeature *poSrcFeature) const
 {
 
     return OGRMVTCreateFeatureFrom(poSrcFeature, m_poFeatureDefn, m_bJsonField,

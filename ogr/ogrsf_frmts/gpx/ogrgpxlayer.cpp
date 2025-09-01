@@ -1807,7 +1807,7 @@ OGRErr OGRGPXLayer::CreateField(const OGRFieldDefn *poField, int /*bApproxOK*/)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPXLayer::TestCapability(const char *pszCap)
+int OGRGPXLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

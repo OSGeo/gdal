@@ -190,7 +190,7 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
-int OGRGMLASDataSource::GetLayerCount()
+int OGRGMLASDataSource::GetLayerCount() const
 {
     return static_cast<int>(m_apoLayers.size() +
                             m_apoRequestedMetadataLayers.size());
@@ -200,12 +200,13 @@ int OGRGMLASDataSource::GetLayerCount()
 /*                                GetLayer()                            */
 /************************************************************************/
 
-OGRLayer *OGRGMLASDataSource::GetLayer(int i)
+const OGRLayer *OGRGMLASDataSource::GetLayer(int i) const
 {
     const int nBaseLayers = static_cast<int>(m_apoLayers.size());
     if (i >= nBaseLayers)
     {
-        RunFirstPassIfNeeded(nullptr, nullptr, nullptr);
+        const_cast<OGRGMLASDataSource *>(this)->RunFirstPassIfNeeded(
+            nullptr, nullptr, nullptr);
         if (i - nBaseLayers <
             static_cast<int>(m_apoRequestedMetadataLayers.size()))
             return m_apoRequestedMetadataLayers[i - nBaseLayers];
@@ -1052,7 +1053,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLASDataSource::TestCapability(const char *pszCap)
+int OGRGMLASDataSource::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, ODsCRandomLayerRead);
 }

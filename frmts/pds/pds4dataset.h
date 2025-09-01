@@ -66,7 +66,9 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
                        const char *pszFilename);
     ~PDS4TableBaseLayer();
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -140,7 +142,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
     void ResetReading() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
@@ -252,7 +254,7 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
@@ -392,18 +394,19 @@ class PDS4Dataset final : public RawDataset
     virtual CPLErr SetMetadata(char **papszMD,
                                const char *pszDomain = "") override;
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 

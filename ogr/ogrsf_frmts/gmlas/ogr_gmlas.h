@@ -1401,8 +1401,8 @@ class OGRGMLASDataSource final : public GDALDataset
 
     ~OGRGMLASDataSource();
 
-    virtual int GetLayerCount() override;
-    virtual OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    const OGRLayer *GetLayer(int) const override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual void ResetReading() override;
@@ -1410,7 +1410,7 @@ class OGRGMLASDataSource final : public GDALDataset
                                        double *pdfProgressPct,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData) override;
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
@@ -1504,7 +1504,7 @@ class OGRGMLASLayer final : public OGRLayer
 
     OGRGMLASDataSource *m_poDS = nullptr;
     GMLASFeatureClass m_oFC{};
-    bool m_bLayerDefnFinalized = false;
+    mutable bool m_bLayerDefnFinalized = false;
     int m_nMaxFieldIndex = 0;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
 
@@ -1559,16 +1559,17 @@ class OGRGMLASLayer final : public OGRLayer
     explicit OGRGMLASLayer(const char *pszLayerName);
     virtual ~OGRGMLASLayer();
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return GetDescription();
     }
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    using OGRLayer::GetLayerDefn;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

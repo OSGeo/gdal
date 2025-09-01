@@ -438,7 +438,7 @@ OGRCSVDataSource::~OGRCSVDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVDataSource::TestCapability(const char *pszCap)
+int OGRCSVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -463,7 +463,7 @@ int OGRCSVDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRCSVDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRCSVDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
@@ -1254,10 +1254,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     if (pszWriteBOM)
         poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
-    if (poCSVLayer->GetLayerDefn()->GetGeomFieldCount() > 0 &&
-        poSrcGeomFieldDefn)
+    auto poFeatureDefn = poCSVLayer->GetLayerDefn();
+    if (poFeatureDefn->GetGeomFieldCount() > 0 && poSrcGeomFieldDefn)
     {
-        auto poGeomFieldDefn = poCSVLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
         poGeomFieldDefn->SetCoordinatePrecision(
             poSrcGeomFieldDefn->GetCoordinatePrecision());
     }

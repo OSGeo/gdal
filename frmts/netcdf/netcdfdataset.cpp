@@ -6614,7 +6614,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int netCDFDataset::TestCapability(const char *pszCap)
+int netCDFDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
     {
@@ -6632,7 +6632,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *netCDFDataset::GetLayer(int nIdx)
+const OGRLayer *netCDFDataset::GetLayer(int nIdx) const
 {
     if (nIdx < 0 || nIdx >= this->GetLayerCount())
         return nullptr;

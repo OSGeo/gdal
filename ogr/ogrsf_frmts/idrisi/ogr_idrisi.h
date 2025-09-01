@@ -55,12 +55,12 @@ class OGRIdrisiLayer final : public OGRLayer,
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRIdrisiLayer)
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -84,12 +84,12 @@ class OGRIdrisiDataSource final : public GDALDataset
 
     int Open(const char *pszFilename);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 };
 
 #endif  // ndef OGR_IDRISI_H_INCLUDED

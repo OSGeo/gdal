@@ -77,7 +77,7 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
     virtual json_object *FetchNewFeatures();
 
@@ -86,7 +86,7 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
         return osFIDColName.c_str();
     }
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -139,7 +139,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     OGRCARTOTableLayer(OGRCARTODataSource *poDS, const char *pszName);
     virtual ~OGRCARTOTableLayer();
 
-    virtual const char *GetName() override
+    const char *GetName() const override
     {
         return osName.c_str();
     }
@@ -150,7 +150,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
@@ -273,14 +273,14 @@ class OGRCARTODataSource final : public GDALDataset
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

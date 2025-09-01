@@ -168,11 +168,11 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = true) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     virtual void ResetReading() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -234,7 +234,7 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
         return this;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     CPLErr Close() override
     {
@@ -264,14 +264,15 @@ class OGRFlatGeobufDataset final : public GDALDataset
                                CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
                                CPL_UNUSED GDALDataType eDT,
                                char **papszOptions);
-    virtual OGRLayer *GetLayer(int) override;
-    int TestCapability(const char *pszCap) override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int) const override;
+    int TestCapability(const char *pszCap) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }

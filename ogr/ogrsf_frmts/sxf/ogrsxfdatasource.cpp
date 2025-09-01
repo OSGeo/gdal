@@ -81,7 +81,7 @@ void OGRSXFDataSource::CloseFile()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSXFDataSource::TestCapability(const char *pszCap)
+int OGRSXFDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCZGeometries))
         return true;
@@ -93,7 +93,7 @@ int OGRSXFDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSXFDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRSXFDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= GetLayerCount())

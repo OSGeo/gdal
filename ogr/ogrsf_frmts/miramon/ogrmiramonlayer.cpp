@@ -2784,7 +2784,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 /*                             GetLayerDefn()                               */
 /*                                                                          */
 /****************************************************************************/
-OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn() const
 {
     return m_poFeatureDefn;
 }
@@ -2833,7 +2833,7 @@ OGRErr OGRMiraMonLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
 /*                           TestCapability()                               */
 /****************************************************************************/
 
-int OGRMiraMonLayer::TestCapability(const char *pszCap)
+int OGRMiraMonLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

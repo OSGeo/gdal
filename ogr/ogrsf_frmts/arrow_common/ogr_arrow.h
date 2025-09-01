@@ -293,7 +293,7 @@ class OGRArrowLayer CPL_NON_FINAL
   public:
     virtual ~OGRArrowLayer() override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -314,7 +314,7 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
 
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
@@ -368,8 +368,9 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int idx) override;
+    int GetLayerCount() const override;
+    using GDALDataset::GetLayer;
+    const OGRLayer *GetLayer(int idx) const override;
 };
 
 /************************************************************************/
@@ -512,7 +513,9 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return m_osFIDColumn.c_str();
     }
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -526,7 +529,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
 
-    int TestCapability(const char *pszCap) override;
+    int TestCapability(const char *pszCap) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,

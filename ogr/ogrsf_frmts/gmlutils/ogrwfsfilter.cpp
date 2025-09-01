@@ -21,7 +21,7 @@ typedef struct
     bool bPropertyIsNotEqualToSupported;
     int bOutNeedsNullCheck;
     GDALDataset *poDS;
-    OGRFeatureDefn *poFDefn;
+    const OGRFeatureDefn *poFDefn;
     int nUniqueGeomGMLId;
     const OGRSpatialReference *poSRS;
     const char *pszNSPrefix;
@@ -609,7 +609,7 @@ static bool WFS_ExprDumpAsOGCFilter(CPLString &osFilter,
 
 CPLString
 WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, GDALDataset *poDS,
-                             OGRFeatureDefn *poFDefn, int nVersion,
+                             const OGRFeatureDefn *poFDefn, int nVersion,
                              int bPropertyIsNotEqualToSupported,
                              int bUseFeatureId, int bGmlObjectIdNeedsGMLPrefix,
                              const char *pszNSPrefix, int *pbOutNeedsNullCheck)

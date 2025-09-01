@@ -302,7 +302,7 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoDataSource::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRPGeoDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
@@ -318,7 +318,7 @@ int OGRPGeoDataSource::TestCapability(CPL_UNUSED const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGeoDataSource::GetLayer(int iLayer)
+const OGRLayer *OGRPGeoDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
@@ -422,12 +422,12 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

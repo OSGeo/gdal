@@ -1393,6 +1393,21 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
 {
+    return GetSpatialRef(false);
+}
+
+const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRefRasterOnly() const
+{
+    return GetSpatialRef(true);
+}
+
+static thread_local int tlsEnableLayersInGetSpatialRefCounter = 0;
+
+const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef(bool bRasterOnly) const
+{
+    if (tlsEnableLayersInGetSpatialRefCounter)
+        return nullptr;
+
     if (m_poSRS)
         return m_poSRS;
 
@@ -1410,7 +1425,12 @@ const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
 
     if (poGeoref == nullptr)
     {
-        return GDALPamDataset::GetSpatialRef();
+        ++tlsEnableLayersInGetSpatialRefCounter;
+        const OGRSpatialReference *poRet =
+            (bRasterOnly) ? GDALPamDataset::GetSpatialRefRasterOnly()
+                          : GDALPamDataset::GetSpatialRef();
+        --tlsEnableLayersInGetSpatialRefCounter;
+        return poRet;
     }
 
     CPLString osGeosys;
@@ -1450,7 +1470,12 @@ const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
     }
     else
     {
-        return GDALPamDataset::GetSpatialRef();
+        ++tlsEnableLayersInGetSpatialRefCounter;
+        const OGRSpatialReference *poRet =
+            (bRasterOnly) ? GDALPamDataset::GetSpatialRefRasterOnly()
+                          : GDALPamDataset::GetSpatialRef();
+        --tlsEnableLayersInGetSpatialRefCounter;
+        return poRet;
     }
 }
 
@@ -2042,7 +2067,7 @@ GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PCIDSK2Dataset::TestCapability(const char *pszCap)
+int PCIDSK2Dataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -2059,7 +2084,7 @@ int PCIDSK2Dataset::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer)
+const OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || iLayer >= static_cast<int>(apoLayers.size()))

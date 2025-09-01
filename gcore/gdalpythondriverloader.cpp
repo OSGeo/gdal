@@ -296,9 +296,9 @@ static CPLString GetStringRes(PyObject *poObj, const char *pszFunctionName,
 
 class PythonPluginLayer final : public OGRLayer
 {
-    PyObject *m_poLayer = nullptr;
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
-    CPLString m_osName{};
+    mutable PyObject *m_poLayer = nullptr;
+    mutable OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    mutable CPLString m_osName{};
     CPLString m_osFIDColumn{};
     bool m_bHasFIDColumn = false;
     std::map<CPLString, CPLStringList> m_oMapMD{};
@@ -313,8 +313,8 @@ class PythonPluginLayer final : public OGRLayer
     void RefreshHonourFlags();
     void StoreSpatialFilter();
 
-    void GetFields();
-    void GetGeomFields();
+    void GetFields() const;
+    void GetGeomFields() const;
     OGRFeature *TranslateToOGRFeature(PyObject *poObj);
 
     PythonPluginLayer(const PythonPluginLayer &) = delete;
@@ -324,12 +324,12 @@ class PythonPluginLayer final : public OGRLayer
     explicit PythonPluginLayer(PyObject *poLayer);
     ~PythonPluginLayer();
 
-    const char *GetName() override;
+    const char *GetName() const override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
-    int TestCapability(const char *) override;
-    OGRFeatureDefn *GetLayerDefn() override;
+    int TestCapability(const char *) const override;
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     GIntBig GetFeatureCount(int bForce) override;
     const char *GetFIDColumn() override;
@@ -522,7 +522,7 @@ OGRErr PythonPluginLayer::ISetSpatialFilter(int iGeomField,
 /*                           GetName()                                  */
 /************************************************************************/
 
-const char *PythonPluginLayer::GetName()
+const char *PythonPluginLayer::GetName() const
 {
     if (m_osName.empty())
     {
@@ -549,7 +549,7 @@ const char *PythonPluginLayer::GetName()
 /*                       TestCapability()                               */
 /************************************************************************/
 
-int PythonPluginLayer::TestCapability(const char *pszCap)
+int PythonPluginLayer::TestCapability(const char *pszCap) const
 {
     GIL_Holder oHolder(false);
     if (PyObject_HasAttrString(m_poLayer, "test_capability"))
@@ -1027,7 +1027,7 @@ OGRFeature *PythonPluginLayer::GetNextFeature()
 /*                         GetLayerDefn()                               */
 /************************************************************************/
 
-OGRFeatureDefn *PythonPluginLayer::GetLayerDefn()
+const OGRFeatureDefn *PythonPluginLayer::GetLayerDefn() const
 {
     if (m_poFeatureDefn)
         return m_poFeatureDefn;
@@ -1046,7 +1046,7 @@ OGRFeatureDefn *PythonPluginLayer::GetLayerDefn()
 /*                           GetFields()                                */
 /************************************************************************/
 
-void PythonPluginLayer::GetFields()
+void PythonPluginLayer::GetFields() const
 {
     PyObject *poFields = PyObject_GetAttrString(m_poLayer, "fields");
     if (ErrOccurredEmitCPLError())
@@ -1211,7 +1211,7 @@ void PythonPluginLayer::GetFields()
 /*                         GetGeomFields()                              */
 /************************************************************************/
 
-void PythonPluginLayer::GetGeomFields()
+void PythonPluginLayer::GetGeomFields() const
 {
     PyObject *poFields = PyObject_GetAttrString(m_poLayer, "geometry_fields");
     if (ErrOccurredEmitCPLError())
@@ -1409,7 +1409,7 @@ char **PythonPluginLayer::GetMetadata(const char *pszDomain)
 class PythonPluginDataset final : public GDALDataset
 {
     PyObject *m_poDataset = nullptr;
-    std::map<int, std::unique_ptr<OGRLayer>> m_oMapLayer{};
+    mutable std::map<int, std::unique_ptr<OGRLayer>> m_oMapLayer{};
     std::map<CPLString, CPLStringList> m_oMapMD{};
     bool m_bHasLayersMember = false;
 
@@ -1420,8 +1420,8 @@ class PythonPluginDataset final : public GDALDataset
     PythonPluginDataset(GDALOpenInfo *poOpenInfo, PyObject *poDataset);
     ~PythonPluginDataset();
 
-    int GetLayerCount() override;
-    OGRLayer *GetLayer(int) override;
+    int GetLayerCount() const override;
+    OGRLayer *GetLayer(int) const override;
     char **GetMetadata(const char *pszDomain = "") override;
 };
 
@@ -1482,7 +1482,7 @@ PythonPluginDataset::~PythonPluginDataset()
 /*                          GetLayerCount()                             */
 /************************************************************************/
 
-int PythonPluginDataset::GetLayerCount()
+int PythonPluginDataset::GetLayerCount() const
 {
     if (m_bHasLayersMember)
         return static_cast<int>(m_oMapLayer.size());
@@ -1495,7 +1495,7 @@ int PythonPluginDataset::GetLayerCount()
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer *PythonPluginDataset::GetLayer(int idx)
+OGRLayer *PythonPluginDataset::GetLayer(int idx) const
 {
     if (idx < 0)
         return nullptr;
@@ -1531,9 +1531,10 @@ OGRLayer *PythonPluginDataset::GetLayer(int idx)
         Py_DecRef(poMethodRes);
         return nullptr;
     }
-    m_oMapLayer[idx] =
-        std::unique_ptr<PythonPluginLayer>(new PythonPluginLayer(poMethodRes));
-    return m_oMapLayer[idx].get();
+    return m_oMapLayer
+        .insert(std::make_pair(idx, std::unique_ptr<PythonPluginLayer>(
+                                        new PythonPluginLayer(poMethodRes))))
+        .first->second.get();
 }
 
 /************************************************************************/

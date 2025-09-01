@@ -169,7 +169,7 @@ void OGRXLSLayer::DetectColumnTypes(const void *xlshandle, int *paeFieldTypes)
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *OGRXLSLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRXLSLayer::GetLayerDefn() const
 {
     if (poFeatureDefn)
         return poFeatureDefn;
@@ -189,7 +189,7 @@ OGRFeatureDefn *OGRXLSLayer::GetLayerDefn()
 
         FreeXL_CellValue sCellValue;
 
-        DetectHeaderLine(xlshandle);
+        const_cast<OGRXLSLayer *>(this)->DetectHeaderLine(xlshandle);
 
         int *paeFieldTypes = (int *)CPLMalloc(nCols * sizeof(int));
         for (unsigned short i = 0; i < nCols; i++)
@@ -200,7 +200,8 @@ OGRFeatureDefn *OGRXLSLayer::GetLayerDefn()
         const char *pszXLSFieldTypes =
             CPLGetConfigOption("OGR_XLS_FIELD_TYPES", "");
         if (!EQUAL(pszXLSFieldTypes, "STRING"))
-            DetectColumnTypes(xlshandle, paeFieldTypes);
+            const_cast<OGRXLSLayer *>(this)->DetectColumnTypes(xlshandle,
+                                                               paeFieldTypes);
 
         for (unsigned short i = 0; i < nCols; i++)
         {
@@ -226,7 +227,7 @@ OGRFeatureDefn *OGRXLSLayer::GetLayerDefn()
         CPLFree(paeFieldTypes);
     }
 
-    ResetReading();
+    const_cast<OGRXLSLayer *>(this)->ResetReading();
 
     return poFeatureDefn;
 }
@@ -312,7 +313,7 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSLayer::TestCapability(const char *pszCap)
+int OGRXLSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

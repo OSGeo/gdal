@@ -51,6 +51,8 @@ class PCIDSK2Dataset final : public GDALPamDataset
     static GDALDataType PCIDSKTypeToGDAL(PCIDSK::eChanType eType);
     void ProcessRPC();
 
+    const OGRSpatialReference *GetSpatialRef(bool bRasterOnly) const;
+
   public:
     PCIDSK2Dataset();
     virtual ~PCIDSK2Dataset();
@@ -68,6 +70,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     virtual char **GetMetadataDomainList() override;
@@ -82,14 +85,14 @@ class PCIDSK2Dataset final : public GDALPamDataset
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
-    virtual int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return (int)apoLayers.size();
     }
 
-    virtual OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -185,12 +188,12 @@ class OGRPCIDSKLayer final : public OGRLayer,
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;

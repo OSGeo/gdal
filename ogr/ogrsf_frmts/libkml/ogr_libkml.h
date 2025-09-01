@@ -95,7 +95,7 @@ class OGRLIBKMLLayer final : public OGRLayer,
     }
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRLIBKMLLayer)
 
-    OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poOgrFeatureDefn;
     }
@@ -120,12 +120,12 @@ class OGRLIBKMLLayer final : public OGRLayer,
     void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
     void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    const char *GetName() override
+    const char *GetName() const override
     {
         return m_pszName;
     }
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -244,12 +244,12 @@ class OGRLIBKMLDataSource final : public GDALDataset
     explicit OGRLIBKMLDataSource(kmldom::KmlFactory *poKmlFactory);
     ~OGRLIBKMLDataSource();
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return nLayers;
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *) override;
     OGRErr DeleteLayer(int) override;
 
@@ -265,7 +265,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
     int Create(const char *pszFilename, char **papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     kmldom::KmlFactory *GetKmlFactory()
     {

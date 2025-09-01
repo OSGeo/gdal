@@ -106,7 +106,7 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 /*                               GetName()                              */
 /************************************************************************/
 
-const char *OGRMSSQLSpatialTableLayer::GetName()
+const char *OGRMSSQLSpatialTableLayer::GetName() const
 
 {
     return pszLayerName;
@@ -115,7 +115,7 @@ const char *OGRMSSQLSpatialTableLayer::GetName()
 /************************************************************************/
 /*                             GetLayerDefn()                           */
 /************************************************************************/
-OGRFeatureDefn *OGRMSSQLSpatialTableLayer::GetLayerDefn()
+const OGRFeatureDefn *OGRMSSQLSpatialTableLayer::GetLayerDefn() const
 {
     if (poFeatureDefn && !bLayerDefnNeedsRefresh)
         return poFeatureDefn;
@@ -158,7 +158,8 @@ OGRFeatureDefn *OGRMSSQLSpatialTableLayer::GetLayerDefn()
         return poFeatureDefn;
     }
 
-    BuildFeatureDefn(pszLayerName, &oGetCol);
+    const_cast<OGRMSSQLSpatialTableLayer *>(this)->BuildFeatureDefn(
+        pszLayerName, &oGetCol);
 
     if (eGeomType != wkbNone)
         poFeatureDefn->SetGeomType(eGeomType);
@@ -826,7 +827,7 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialTableLayer::TestCapability(const char *pszCap)
+int OGRMSSQLSpatialTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (bUpdateAccess)

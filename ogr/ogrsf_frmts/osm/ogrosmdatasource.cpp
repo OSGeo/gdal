@@ -4211,7 +4211,7 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability(const char *pszCap)
+int OGROSMDataSource::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, ODsCRandomLayerRead);
 }
@@ -4220,7 +4220,7 @@ int OGROSMDataSource::TestCapability(const char *pszCap)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGROSMDataSource::GetLayer(int iLayer)
+const OGRLayer *OGROSMDataSource::GetLayer(int iLayer) const
 
 {
     if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
@@ -4278,12 +4278,12 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() override
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return poFeatureDefn;
     }
 
-    virtual int TestCapability(const char *) override
+    int TestCapability(const char *) const override
     {
         return FALSE;
     }

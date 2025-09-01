@@ -86,6 +86,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     virtual ~MEMDataset();
 
     const OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -131,12 +132,12 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
     // Vector capabilities
 
-    int GetLayerCount() override
+    int GetLayerCount() const override
     {
         return static_cast<int>(m_apoLayers.size());
     }
 
-    OGRLayer *GetLayer(int) override;
+    const OGRLayer *GetLayer(int) const override;
 
     using GDALDataset::CreateLayer;
 
@@ -148,7 +149,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
                            CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int iLayer) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
@@ -278,7 +279,9 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
                           bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
-    OGRFeatureDefn *GetLayerDefn() override
+    using OGRLayer::GetLayerDefn;
+
+    const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
@@ -298,7 +301,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) override;
+    int TestCapability(const char *) const override;
 
     const char *GetFIDColumn() override
     {
