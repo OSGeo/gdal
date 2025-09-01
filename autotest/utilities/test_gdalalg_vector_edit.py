@@ -173,3 +173,29 @@ def test_gdalalg_vector_edit_active_layer():
 
     out_lyr = out_ds.GetLayer(1)
     assert out_lyr.GetGeomType() == ogr.wkbUnknown
+
+
+def test_gdalalg_vector_edit_unset_fid():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer("the_layer", options=["FID=my_fid_column"])
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    lyr.CreateFeature(f)
+
+    with gdal.Run("vector", "edit", input=src_ds, output_format="MEM") as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFIDColumn() == "my_fid_column"
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 10
+
+    with gdal.Run(
+        "vector", "edit", input=src_ds, output_format="MEM", unset_fid=True
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFIDColumn() == ""
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
