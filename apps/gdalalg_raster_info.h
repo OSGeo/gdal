@@ -44,18 +44,6 @@ class GDALRasterInfoAlgorithm /* non final */
                                       : m_inputDataset[0].GetDatasetRef();
     }
 
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg)
-        {
-            auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
-            val.resize(1);
-            val[0].Set(poDS);
-            arg->SetSkipIfAlreadySet();
-        }
-    }
-
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

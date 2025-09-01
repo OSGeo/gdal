@@ -42,7 +42,7 @@ class GDALRasterConvertAlgorithm final : public GDALAlgorithm
         return m_inputDataset.GetDatasetRef();
     }
 
-    void SetDataset(GDALDataset *poDS)
+    void SetInputDataset(GDALDataset *poDS)
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
         arg->Set(poDS);

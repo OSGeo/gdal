@@ -96,6 +96,9 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     bool Finalize() override;
 
+    // Used by GDALDispatcherAlgorithm for vector info/convert
+    void SetInputDataset(GDALDataset *poDS);
+
   protected:
     struct ConstructorOptions
     {

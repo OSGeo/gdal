@@ -139,7 +139,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     // cppcheck-suppress knownConditionTrueFalse
     if (poDSFromRaster)
     {
-        m_vectorDispatcher->SetDataset(poDSFromRaster);
+        m_vectorDispatcher->SetInputDataset(poDSFromRaster);
     }
 
     std::vector<std::string> argsWithoutInput;
@@ -214,7 +214,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                     }
                     m_rasterDispatcher = std::make_unique<RasterDispatcher>();
                     auto poDSRaw = poDS.get();
-                    m_rasterDispatcher->SetDataset(poDS.release());
+                    m_rasterDispatcher->SetInputDataset(poDS.release());
                     poDSRaw->Release();
                     m_selectedSubAlg = m_rasterDispatcher.get();
                     std::vector<std::string> callPath(m_callPath);
@@ -227,7 +227,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                 {
                     m_vectorDispatcher = std::make_unique<VectorDispatcher>();
                     auto poDSRaw = poDS.get();
-                    m_vectorDispatcher->SetDataset(poDS.release());
+                    m_vectorDispatcher->SetInputDataset(poDS.release());
                     poDSRaw->Release();
                     m_selectedSubAlg = m_vectorDispatcher.get();
                     std::vector<std::string> callPath(m_callPath);

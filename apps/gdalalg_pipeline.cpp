@@ -359,6 +359,23 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
+/*                          SetInputDataset()                           */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::SetInputDataset(GDALDataset *poDS)
+{
+    auto arg = GetArg(GDAL_ARG_NAME_INPUT);
+    if (arg)
+    {
+        auto &val = arg->Get<std::vector<GDALArgDatasetValue>>();
+        val.resize(1);
+        val[0].Set(poDS);
+        arg->NotifyValueSet();
+        arg->SetSkipIfAlreadySet();
+    }
+}
+
+/************************************************************************/
 /*                          ProcessGDALGOutput()                        */
 /************************************************************************/
 
