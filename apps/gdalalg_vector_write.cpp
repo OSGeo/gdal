@@ -65,6 +65,10 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         aosOptions.AddString("-append");
     }
+    if (m_upsert)
+    {
+        aosOptions.AddString("-upsert");
+    }
     if (!m_format.empty())
     {
         aosOptions.AddString("-of");
@@ -94,18 +98,22 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-skipfailures");
     }
 
-    GDALVectorTranslateOptions *psOptions =
-        GDALVectorTranslateOptionsNew(aosOptions.List(), nullptr);
-    GDALVectorTranslateOptionsSetProgress(psOptions, pfnProgress,
-                                          pProgressData);
-
+    GDALDataset *poRetDS = nullptr;
     GDALDatasetH hOutDS =
         GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
-    GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
-    auto poRetDS = GDALDataset::FromHandle(
-        GDALVectorTranslate(m_outputDataset.GetName().c_str(), hOutDS, 1,
-                            &hSrcDS, psOptions, nullptr));
-    GDALVectorTranslateOptionsFree(psOptions);
+    GDALVectorTranslateOptions *psOptions =
+        GDALVectorTranslateOptionsNew(aosOptions.List(), nullptr);
+    if (psOptions)
+    {
+        GDALVectorTranslateOptionsSetProgress(psOptions, pfnProgress,
+                                              pProgressData);
+
+        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        poRetDS = GDALDataset::FromHandle(
+            GDALVectorTranslate(m_outputDataset.GetName().c_str(), hOutDS, 1,
+                                &hSrcDS, psOptions, nullptr));
+        GDALVectorTranslateOptionsFree(psOptions);
+    }
     if (!poRetDS)
         return false;
 

@@ -281,6 +281,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_update = false;
     bool m_overwriteLayer = false;
     bool m_appendLayer = false;
+    bool m_upsert = false;
     bool m_skipErrors = false;
 
     void AddRasterInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);

@@ -197,7 +197,21 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             m_constructorOptions.updateMutualExclusionGroup);
     }
     AddOverwriteLayerArg(&m_overwriteLayer).SetHiddenForCLI(hiddenForCLI);
-    AddAppendLayerArg(&m_appendLayer).SetHiddenForCLI(hiddenForCLI);
+    constexpr const char *MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT =
+        "append-upsert";
+    AddAppendLayerArg(&m_appendLayer)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT);
+    AddArg("upsert", 0, _("Upsert features (implies 'append')"), &m_upsert)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetMutualExclusionGroup(MUTUAL_EXCLUSION_GROUP_APPEND_UPSERT)
+        .AddAction(
+            [&updateArg, this]()
+            {
+                if (m_upsert)
+                    updateArg.Set(true);
+            })
+        .SetCategory(GAAC_ADVANCED);
     if (GetName() != GDALVectorSQLAlgorithm::NAME &&
         GetName() != GDALVectorConcatAlgorithm::NAME)
     {
