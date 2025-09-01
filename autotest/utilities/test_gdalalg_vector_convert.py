@@ -138,7 +138,7 @@ def test_gdalalg_vector_convert_progress(tmp_vsimem):
 def test_gdalalg_vector_wrong_layer_name(tmp_vsimem):
 
     convert = get_convert_alg()
-    with pytest.raises(Exception, match="Couldn't fetch requested layer"):
+    with pytest.raises(Exception, match="Cannot find source layer 'invalid'"):
         convert.ParseRunAndFinalize(
             [
                 "../ogr/data/poly.shp",
