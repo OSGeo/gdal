@@ -81,15 +81,20 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
 {
     if (!steps.front()->CanBeFirstStep())
     {
-        std::vector<std::string> firstStepNames{"read"};
+        std::set<CPLString> setFirstStepNames;
         for (const auto &stepName : GetStepRegistry().GetNames())
         {
             auto alg = GetStepAlg(stepName);
             if (alg && alg->CanBeFirstStep() && stepName != "read")
             {
-                firstStepNames.push_back(stepName);
+                setFirstStepNames.insert(CPLString(stepName)
+                                             .replaceAll(RASTER_SUFFIX, "")
+                                             .replaceAll(VECTOR_SUFFIX, ""));
             }
         }
+        std::vector<std::string> firstStepNames{"read"};
+        for (const std::string &s : setFirstStepNames)
+            firstStepNames.push_back(s);
 
         std::string msg = "First step should be ";
         for (size_t i = 0; i < firstStepNames.size(); ++i)
@@ -119,15 +124,20 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
 
     if (!steps.back()->CanBeLastStep())
     {
-        std::vector<std::string> lastStepNames{"write"};
+        std::set<CPLString> setLastStepNames;
         for (const auto &stepName : GetStepRegistry().GetNames())
         {
             auto alg = GetStepAlg(stepName);
             if (alg && alg->CanBeLastStep() && stepName != "write")
             {
-                lastStepNames.push_back(stepName);
+                setLastStepNames.insert(CPLString(stepName)
+                                            .replaceAll(RASTER_SUFFIX, "")
+                                            .replaceAll(VECTOR_SUFFIX, ""));
             }
         }
+        std::vector<std::string> lastStepNames{"write"};
+        for (const std::string &s : setLastStepNames)
+            lastStepNames.push_back(s);
 
         std::string msg = "Last step should be ";
         for (size_t i = 0; i < lastStepNames.size(); ++i)
