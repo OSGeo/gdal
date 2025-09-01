@@ -214,20 +214,20 @@ class MMRBand
 
   private:
     int Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
-        const CPLString osSection, const char *pszKey, int *nValue,
+        const CPLString &osSection, const char *pszKey, int *nValue,
         const char *pszErrorMessage);
     static int GetDataTypeAndBytesPerPixel(const char *pszCompType,
                                            MMDataType *nCompressionType,
                                            MMBytesPerPixel *nBytesPerPixel);
     int UpdateDataTypeFromREL(const CPLString osSection);
-    int UpdateColumnsNumberFromREL(const CPLString osSection);
-    int UpdateRowsNumberFromREL(const CPLString osSection);
-    void UpdateNoDataValue(const CPLString osSection);
-    void UpdateBoundingBoxFromREL(const CPLString osSection);
+    int UpdateColumnsNumberFromREL(const CPLString &osSection);
+    int UpdateRowsNumberFromREL(const CPLString &osSection);
+    void UpdateNoDataValue(const CPLString &osSection);
+    void UpdateBoundingBoxFromREL(const CPLString &osSection);
     void UpdateReferenceSystemFromREL();
-    void UpdateMinMaxValuesFromREL(const CPLString osSection);
-    void UpdateMinMaxVisuValuesFromREL(const CPLString osSection);
-    void UpdateFriendlyDescriptionFromREL(const CPLString osSection);
+    void UpdateMinMaxValuesFromREL(const CPLString &osSection);
+    void UpdateMinMaxVisuValuesFromREL(const CPLString &osSection);
+    void UpdateFriendlyDescriptionFromREL(const CPLString &osSection);
 
     template <typename TYPE>
     CPLErr UncompressRow(void *rowBuffer, size_t nCompressedRawSize);

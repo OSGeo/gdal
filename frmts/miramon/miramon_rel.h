@@ -42,7 +42,7 @@ using ExcludedEntry = std::pair<CPLString, CPLString>;
 class MMRRel
 {
   public:
-    MMRRel(CPLString, bool);
+    MMRRel(const CPLString &, bool);
     MMRRel(const MMRRel &) =
         delete;  // I don't want to construct a MMRDataset from another MMRDataset (effc++)
     MMRRel &operator=(const MMRRel &) =
@@ -50,37 +50,37 @@ class MMRRel
     ~MMRRel();
 
     static CPLString
-    GetValueFromSectionKeyPriorToREL(const CPLString osPriorRelName,
-                                     const CPLString osSection,
-                                     const CPLString osKey);
+    GetValueFromSectionKeyPriorToREL(const CPLString &osPriorRelName,
+                                     const CPLString &osSection,
+                                     const CPLString &osKey);
     CPLString GetValueFromSectionKeyFromREL(const CPLString osSection,
                                             const CPLString osKey);
     static CPLString GetValueFromSectionKey(VSILFILE *pf,
-                                            const CPLString osSection,
-                                            const CPLString osKey);
-    bool GetMetadataValue(const CPLString osMainSection,
-                          const CPLString osSubSection,
-                          const CPLString osSubSubSection,
-                          const CPLString osKey, CPLString &osValue);
-    bool GetMetadataValue(const CPLString osMainSection,
-                          const CPLString osSubSection, const CPLString osKey,
+                                            const CPLString &osSection,
+                                            const CPLString &osKey);
+    bool GetMetadataValue(const CPLString &osMainSection,
+                          const CPLString &osSubSection,
+                          const CPLString &osSubSubSection,
+                          const CPLString &osKey, CPLString &osValue);
+    bool GetMetadataValue(const CPLString &osMainSection,
+                          const CPLString &osSubSection, const CPLString &osKey,
                           CPLString &osValue);
-    bool GetMetadataValue(const CPLString osSection, const CPLString osKey,
+    bool GetMetadataValue(const CPLString &osSection, const CPLString &osKey,
                           CPLString &osValue);
-    bool GetAndExcludeMetadataValueDirectly(const CPLString osRELFile,
-                                            const CPLString osSection,
-                                            const CPLString osKey,
+    bool GetAndExcludeMetadataValueDirectly(const CPLString &osRELFile,
+                                            const CPLString &osSection,
+                                            const CPLString &osKey,
                                             CPLString &osValue);
-    static bool GetMetadataValueDirectly(const CPLString osRELFile,
-                                         const CPLString osSection,
-                                         const CPLString osKey,
+    static bool GetMetadataValueDirectly(const CPLString &osRELFile,
+                                         const CPLString &osSection,
+                                         const CPLString &osKey,
                                          CPLString &osValue);
     void RELToGDALMetadata(GDALDataset *poDS);
 
-    static CPLString MMRGetFileNameFromRelName(const CPLString osRELFile);
+    static CPLString MMRGetFileNameFromRelName(const CPLString &osRELFile);
     int GetColumnsNumberFromREL();
     int GetRowsNumberFromREL();
-    static int IdentifySubdataSetFile(const CPLString osFileName);
+    static int IdentifySubdataSetFile(const CPLString &osFileName);
     static int IdentifyFile(GDALOpenInfo *poOpenInfo);
 
     bool IsValid() const
@@ -162,19 +162,20 @@ class MMRRel
     }
 
   private:
-    static CPLErr CheckBandInRel(CPLString osRELFileName, CPLString osIMGFile);
-    static CPLString MMRGetSimpleMetadataName(CPLString osLayerName);
+    static CPLErr CheckBandInRel(const CPLString &osRELFileName,
+                                 const CPLString &osIMGFile);
+    static CPLString MMRGetSimpleMetadataName(const CPLString &osLayerName);
     static bool SameFile(CPLString osFile1, CPLString osFile2);
-    MMRNomFitxerState MMRStateOfNomFitxerInSection(CPLString osLayerName,
-                                                   CPLString osSection,
-                                                   CPLString osRELFile,
+    MMRNomFitxerState MMRStateOfNomFitxerInSection(const CPLString &osLayerName,
+                                                   const CPLString &osSection,
+                                                   const CPLString &osRELFile,
                                                    bool bNomFitxerMustExtist);
-    CPLString MMRGetAReferenceToIMGFile(CPLString osLayerName,
-                                        CPLString osRELFile);
+    CPLString MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
+                                        const CPLString &osRELFile);
 
-    CPLString GetAssociatedMetadataFileName(CPLString osFileName);
+    CPLString GetAssociatedMetadataFileName(const CPLString &osFileName);
 
-    void UpdateRELNameChar(CPLString osRelFileNameIn);
+    void UpdateRELNameChar(const CPLString &osRelFileNameIn);
     CPLErr ParseBandInfo();
 
     CPLString osRelFileName = "";

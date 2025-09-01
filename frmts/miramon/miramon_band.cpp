@@ -49,8 +49,7 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     else
     {
         osBandName = CPLGetBasenameSafe(osRawBandFileName);
-        CPLString osAux =
-            CPLGetPathSafe(pfRel->GetRELNameChar());
+        CPLString osAux = CPLGetPathSafe(pfRel->GetRELNameChar());
         osBandFileName =
             CPLFormFilenameSafe(osAux.c_str(), osRawBandFileName.c_str(), "");
     }
@@ -192,8 +191,8 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
 
-    if (nDataSize != -1 && (nGDALBlockSize > INT_MAX ||
-                            nGDALBlockSize > nDataSize))
+    if (nDataSize != -1 &&
+        (nGDALBlockSize > INT_MAX || nGDALBlockSize > nDataSize))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid block size: %d",
                  nGDALBlockSize);
@@ -220,8 +219,7 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
     if (iBlock == nHeight - 1)
         nCompressedRawSize = SIZE_MAX;  // We don't know it
     else
-        nCompressedRawSize =
-            aFileOffsets[iBlock + 1] - aFileOffsets[iBlock];
+        nCompressedRawSize = aFileOffsets[iBlock + 1] - aFileOffsets[iBlock];
 
     return GetBlockData(pData, nCompressedRawSize);
 }
@@ -581,12 +579,13 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
         try
         {
             aCompressedRow.resize(nCompressedRawSize);
-         }
-         catch (const std::exception &)
-         {
-             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory allocating working buffer");
-             return CE_Failure;
-         }
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return CE_Failure;
+        }
         if (VSIFReadL(aCompressedRow.data(), nCompressedRawSize, 1, pfIMG) != 1)
             return CE_Failure;
     }
@@ -707,30 +706,30 @@ CPLErr MMRBand::GetBlockData(void *rowBuffer, size_t nCompressedRawSize)
     switch (eMMDataType)
     {
         case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
-            peErr = UncompressRow<GByte>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<GByte>(rowBuffer, nCompressedRawSize);
             break;
         case MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE:
-            peErr = UncompressRow<GInt16>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<GInt16>(rowBuffer, nCompressedRawSize);
             break;
         case MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE:
-            peErr = UncompressRow<GUInt16>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<GUInt16>(rowBuffer, nCompressedRawSize);
             break;
         case MMDataType::DATATYPE_AND_COMPR_LONG_RLE:
-            peErr = UncompressRow<GInt32>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<GInt32>(rowBuffer, nCompressedRawSize);
             break;
         case MMDataType::DATATYPE_AND_COMPR_REAL_RLE:
-            peErr = UncompressRow<float>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<float>(rowBuffer, nCompressedRawSize);
             break;
         case MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE:
-            peErr = UncompressRow<double>(rowBuffer, nCompressedRawSize);
+            eErr = UncompressRow<double>(rowBuffer, nCompressedRawSize);
             break;
 
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "Error in datatype");
-            peErr = CE_Failure;
+            eErr = CE_Failure;
     }
 
-    return peErr;
+    return eErr;
 }  // End of GetBlockData()
 
 int MMRBand::PositionAtStartOfRowOffsetsInFile()

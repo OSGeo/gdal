@@ -311,31 +311,24 @@ CPLErr MMRRasterBand::FillRATFromPalette()
 
     // Here I have some attribute table. I want to expose to RAT.
     const CPLStringList aosTokens(CSLTokenizeString2(os_IndexJoin, ",", 0));
-    const int nTokens = CSLCount(papszTokens);
+    const int nTokens = CSLCount(aosTokens);
 
     if (nTokens < 1)
-    {
-        CSLDestroy(papszTokens);
         return CE_Failure;
-    }
 
     // Let's see the conditions to have one.
     CPLString osRELName, osDBFName, osAssociateRel;
     if (CE_None !=
-            GetRATName(papszTokens[0], osRELName, osDBFName, osAssociateRel) ||
+            GetRATName(aosTokens[0], osRELName, osDBFName, osAssociateRel) ||
         osDBFName.empty() || osAssociateRel.empty())
     {
-        CSLDestroy(papszTokens);
         return CE_Failure;
     }
 
     // Let's create and fill the RAT
     if (CE_None != CreateRATFromDBF(osRELName, osDBFName, osAssociateRel))
-    {
-        CSLDestroy(papszTokens);
         return CE_Failure;
-    }
-    CSLDestroy(papszTokens);
+
     return CE_None;
 }
 
@@ -383,8 +376,7 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
     if (!osRELName.empty())
     {
         if (MM_ReadExtendedDBFHeaderFromFile(
-                osDBFName.c_str(), &oAttributteTable,
-                osRELName.c_str()))
+                osDBFName.c_str(), &oAttributteTable, osRELName.c_str()))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Error reading attribute table \"%s\".",
@@ -855,13 +847,13 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
     return CE_None;
 }
 
-CPLErr MMRRasterBand::GetRATName(char *papszToken, CPLString &osRELName,
+CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
                                  CPLString &osDBFName,
                                  CPLString &osAssociateREL)
 {
     CPLString os_Join = "JoinTaula";
     os_Join.append("_");
-    os_Join.append(papszToken);
+    os_Join.append(aosToken);
 
     CPLString osTableNameSection_value;
 
@@ -896,26 +888,24 @@ CPLErr MMRRasterBand::GetRATName(char *papszToken, CPLString &osRELName,
         MMRRel localRel(osRELName, false);
         CPLString osShortDBFName;
 
-        if (!fLocalRel->GetMetadataValue("TAULA_PRINCIPAL", "NomFitxer",
-                                         osShortDBFName) ||
+        if (!localRel.GetMetadataValue("TAULA_PRINCIPAL", "NomFitxer",
+                                       osShortDBFName) ||
             osShortDBFName.empty())
         {
             osRELName = "";
-            delete fLocalRel;
             return CE_Failure;
         }
 
         // Get path relative to REL file
         osDBFName = CPLFormFilenameSafe(
-            CPLGetPathSafe(fLocalRel->GetRELNameChar()).c_str(), osShortDBFName,
+            CPLGetPathSafe(localRel.GetRELNameChar()).c_str(), osShortDBFName,
             "");
 
-        if (!fLocalRel->GetMetadataValue("TAULA_PRINCIPAL", "AssociatRel",
-                                         osAssociateREL) ||
+        if (!localRel.GetMetadataValue("TAULA_PRINCIPAL", "AssociatRel",
+                                       osAssociateREL) ||
             osAssociateREL.empty())
         {
             osRELName = "";
-            delete fLocalRel;
             return CE_Failure;
         }
 
@@ -924,18 +914,16 @@ CPLErr MMRRasterBand::GetRATName(char *papszToken, CPLString &osRELName,
 
         CPLString osTactVar;
 
-        if (fLocalRel->GetMetadataValue(osSection, "TractamentVariable",
-                                        osTactVar) &&
+        if (localRel.GetMetadataValue(osSection, "TractamentVariable",
+                                      osTactVar) &&
             osTactVar == "Categoric")
             poDefaultRAT->SetTableType(GRTT_THEMATIC);
         else
         {
             osRELName = "";
-            delete fLocalRel;
             return CE_Failure;
         }
 
-        delete fLocalRel;
         return CE_None;
     }
 

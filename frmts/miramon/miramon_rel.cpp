@@ -44,23 +44,22 @@ MMRRel::MMRRel(const CPLString &osRELFilenameIn, bool bIMGMustExist)
 
         // Getting the internal names of the bands
         const CPLStringList aosTokens(CSLTokenizeString2(osSDSReL, ",", 0));
-        const int nTokens = CSLCount(papszTokens);
+        const int nTokens = CSLCount(aosTokens);
 
         if (nTokens < 1)
             return;
 
-        osRelCandidate = papszTokens[0];
+        osRelCandidate = aosTokens[0];
         osRelCandidate.replaceAll("\"", "");
 
         // Getting the list of bands in the subdataset
         for (int nIBand = 0; nIBand < nTokens - 1; nIBand++)
         {
             // Raw band name
-            CPLString osBandName = papszTokens[nIBand + 1];
+            CPLString osBandName = aosTokens[nIBand + 1];
             osBandName.replaceAll("\"", "");
             papoSDSBands.emplace_back(osBandName);
         }
-        CSLDestroy(papszTokens);
         bIsAMiraMonFile = true;
     }
     else
@@ -300,7 +299,8 @@ bool MMRRel::GetAndExcludeMetadataValueDirectly(const CPLString &osRELFile,
 
 bool MMRRel::GetMetadataValueDirectly(const CPLString &osRELFile,
                                       const CPLString &osSection,
-                                      const CPLString &osKey, CPLString &osValue)
+                                      const CPLString &osKey,
+                                      CPLString &osValue)
 {
     osValue = GetValueFromSectionKeyPriorToREL(osRELFile, osSection, osKey);
 
@@ -335,10 +335,9 @@ bool MMRRel::SameFile(CPLString osFile1, CPLString osFile2)
 // specified section
 // [pszSection]
 // NomFitxer=Value
-MMRNomFitxerState
-MMRRel::MMRStateOfNomFitxerInSection(const CPLString &osLayerName, const CPLString &osSection,
-                                     const CPLString &osRELFile,
-                                     bool bNomFitxerMustExtist)
+MMRNomFitxerState MMRRel::MMRStateOfNomFitxerInSection(
+    const CPLString &osLayerName, const CPLString &osSection,
+    const CPLString &osRELFile, bool bNomFitxerMustExtist)
 {
     CPLString osDocumentedLayerName;
 
@@ -439,7 +438,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
 
     // Getting the internal names of the bands
     const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
-    const int nTokenBands = CSLCount(papszTokens);
+    const int nTokenBands = CSLCount(aosTokens);
 
     CPLString osBandSectionKey;
     CPLString osAtributeDataName;
@@ -447,7 +446,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
     {
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
-        osBandSectionKey.append(papszTokens[nIBand]);
+        osBandSectionKey.append(aosTokens[nIBand]);
 
         CPLString osBandSectionValue;
 
@@ -467,24 +466,16 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
         iState = MMRStateOfNomFitxerInSection(osLayerName, osAtributeDataName,
                                               osRELFile, true);
         if (iState == MMRNomFitxerState::NOMFITXER_VALUE_EXPECTED)
-        {
-            CSLDestroy(papszTokens);
             return osRELFile;
-        }
+
         else if (iState == MMRNomFitxerState::NOMFITXER_VALUE_UNEXPECTED)
-        {
             continue;
-        }
 
         // If there is only one band is accepted NOMFITXER_NOT_FOUND/EMPTY iState result
         if (nTokenBands == 1)
-        {
-            CSLDestroy(papszTokens);
             return osRELFile;
-        }
     }
 
-    CSLDestroy(papszTokens);
     if (bIsAMiraMonFile)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
@@ -554,13 +545,9 @@ CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString &osFileName)
 
         osRELFile = MMRGetAReferenceToIMGFile(osFileName, osFilePath);
         if (!osRELFile.empty())
-        {
-            CSLDestroy(folder);
             return osRELFile;
-        }
     }
 
-    CSLDestroy(folder);
     if (bIsAMiraMonFile)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "REL search failed for %s file",
@@ -585,7 +572,7 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
 
     // Separator ,
     const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
-    const int nTokenCount = CSLCount(papszTokens);
+    const int nTokenCount = CSLCount(aosTokens);
 
     if (!nTokenCount)
         return CE_Failure;
@@ -596,7 +583,7 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
     {
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
-        osBandSectionKey.append(papszTokens[i]);
+        osBandSectionKey.append(aosTokens[i]);
 
         if (!GetMetadataValueDirectly(osRELFileName, SECTION_ATTRIBUTE_DATA,
                                       osBandSectionKey, osBandSectionValue) ||
@@ -626,34 +613,31 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
         }
     }
 
-    CSLDestroy(papszTokens);
-
     return CE_None;
 }
 
 int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
 {
     const CPLString osMMRPrefix = "MiraMonRaster:";
-    if (!STARTS_WITH(pszFileName, osMMRPrefix))
+    if (!STARTS_WITH(osFileName, osMMRPrefix))
         return FALSE;
 
     // SUBDATASETS
-    CPLString osFilename = pszFileName;
-    size_t nPos = osFilename.ifind(osMMRPrefix);
+    size_t nPos = osFileName.ifind(osMMRPrefix);
     if (nPos != 0)
         return GDAL_IDENTIFY_FALSE;
 
-    CPLString osRELAndBandName = osFilename.substr(osMMRPrefix.size());
+    CPLString osRELAndBandName = osFileName.substr(osMMRPrefix.size());
 
     const CPLStringList aosTokens(CSLTokenizeString2(osRELAndBandName, ",", 0));
-    const int nTokens = CSLCount(papszTokens);
+    const int nTokens = CSLCount(aosTokens);
     // Getting the REL associated to the bands
     // We need the REL and at least one band (index + name).
     if (nTokens < 2)
         return GDAL_IDENTIFY_FALSE;
 
     // Let's remove "\"" if existant.
-    CPLString osRELName = papszTokens[0];
+    CPLString osRELName = aosTokens[0];
     osRELName.replaceAll("\"", "");
 
     // It must be a I.rel file.
@@ -668,7 +652,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
     for (int nIBand = 1; nIBand < nTokens; nIBand++)
     {
         // Let's check that this band (papszTokens[nIBand]) is in the REL file.
-        CPLString osBandName = papszTokens[nIBand];
+        CPLString osBandName = aosTokens[nIBand];
 
         // Let's remove "\"" if existant.
         osBandName.replaceAll("\"", "");
@@ -680,12 +664,8 @@ int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
             return GDAL_IDENTIFY_FALSE;
 
         if (CE_None != CheckBandInRel(osRELName, osBandName))
-        {
-            CSLDestroy(papszTokens);
             return GDAL_IDENTIFY_FALSE;
-        }
     }
-    CSLDestroy(papszTokens);
     return GDAL_IDENTIFY_TRUE;
 }
 
@@ -702,7 +682,8 @@ int MMRRel::IdentifyFile(GDALOpenInfo *poOpenInfo)
         return GDAL_IDENTIFY_FALSE;
 
     // In fact, the file has to end with I.rel (pszExtRasterREL)
-    if (!cpl::ends_with(poOpenInfo->pszFilename, pszExtRasterREL))
+    CPLString osFileName = poOpenInfo->pszFilename;
+    if (!cpl::ends_with(osFileName, pszExtRasterREL))
         return GDAL_IDENTIFY_FALSE;
 
     // Some versions of REL files are not allowed.
@@ -776,8 +757,8 @@ bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
     return true;  // Found
 }
 
-bool MMRRel::GetMetadataValue(const CPLString &osSection, const CPLString &osKey,
-                              CPLString &osValue)
+bool MMRRel::GetMetadataValue(const CPLString &osSection,
+                              const CPLString &osKey, CPLString &osValue)
 {
     if (!isAMiraMonFile())
         CPLAssert(false);  // Trying to access metadata from the wrong way
@@ -818,7 +799,7 @@ CPLErr MMRRel::ParseBandInfo()
 
     // Separator ,
     const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
-    const int nMaxBands = CSLCount(papszTokens);
+    const int nMaxBands = CSLCount(aosTokens);
 
     if (!nMaxBands)
     {
@@ -842,7 +823,7 @@ CPLErr MMRRel::ParseBandInfo()
     {
         osBandSectionKey = KEY_NomCamp;
         osBandSectionKey.append("_");
-        osBandSectionKey.append(papszTokens[i]);
+        osBandSectionKey.append(aosTokens[i]);
 
         if (!GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSectionKey,
                               osBandSectionValue) ||
@@ -878,14 +859,11 @@ CPLErr MMRRel::ParseBandInfo()
             // This band is not been completed, so let's delete it now
             // The rest of bands will be deleted by destructor.
             delete papoBand[nBands];
-            CSLDestroy(papszTokens);
             return CE_Failure;
         }
 
         nBands++;
     }
-
-    CSLDestroy(papszTokens);
 
     return CE_None;
 }

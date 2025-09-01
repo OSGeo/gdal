@@ -181,8 +181,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 
 {
     // Getting the full path name of the DBF
-    CPLString osAux =
-        CPLGetPathSafe(pfRel->GetRELNameChar());
+    CPLString osAux = CPLGetPathSafe(pfRel->GetRELNameChar());
     CPLString osColorTableFileName =
         CPLFormFilenameSafe(osAux.c_str(), os_Color_Paleta_DBF.c_str(), "");
 
@@ -190,9 +189,8 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
     struct MM_DATA_BASE_XP oColorTable;
     memset(&oColorTable, 0, sizeof(oColorTable));
 
-    if (MM_ReadExtendedDBFHeaderFromFile(
-            osColorTableFileName.c_str(), &oColorTable,
-            pfRel->GetRELNameChar()))
+    if (MM_ReadExtendedDBFHeaderFromFile(osColorTableFileName.c_str(),
+                                         &oColorTable, pfRel->GetRELNameChar()))
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Invalid color table:"
@@ -330,11 +328,11 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 
 // Colors in a PAL, P25 or P65 format files
 // Updates nNPaletteColors
-CPLErr MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
+CPLErr
+MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
 
 {
-    CPLString osAux =
-        CPLGetPathSafe(pfRel->GetRELNameChar());
+    CPLString osAux = CPLGetPathSafe(pfRel->GetRELNameChar());
     CPLString osColorTableFileName =
         CPLFormFilenameSafe(osAux.c_str(), os_Color_Paleta_DBF.c_str(), "");
 
@@ -476,36 +474,32 @@ CPLErr MMRPalettes::UpdateConstantColor()
         os_Color_Smb.replaceAll("(", "");
         os_Color_Smb.replaceAll(")", "");
         const CPLStringList aosTokens(CSLTokenizeString2(os_Color_Smb, ",", 0));
-        if (CSLCount(papszTokens) != 3)
+        if (CSLCount(aosTokens) != 3)
         {
-            CSLDestroy(papszTokens);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid constant color: \"%s\"", pfRel->GetRELNameChar());
             return CE_Failure;
         }
 
         int nIColor0;
-        if (1 != sscanf(papszTokens[0], "%d", &nIColor0))
+        if (1 != sscanf(aosTokens[0], "%d", &nIColor0))
         {
-            CSLDestroy(papszTokens);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid constant color: \"%s\"", pfRel->GetRELNameChar());
             return CE_Failure;
         }
 
         int nIColor1;
-        if (1 != sscanf(papszTokens[1], "%d", &nIColor1))
+        if (1 != sscanf(aosTokens[1], "%d", &nIColor1))
         {
-            CSLDestroy(papszTokens);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid constant color: \"%s\"", pfRel->GetRELNameChar());
             return CE_Failure;
         }
 
         int nIColor2;
-        if (1 != sscanf(papszTokens[2], "%d", &nIColor2))
+        if (1 != sscanf(aosTokens[2], "%d", &nIColor2))
         {
-            CSLDestroy(papszTokens);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid constant color: \"%s\"", pfRel->GetRELNameChar());
             return CE_Failure;
@@ -514,8 +508,6 @@ CPLErr MMRPalettes::UpdateConstantColor()
         SetConstantColorRGB(static_cast<short>(nIColor0),
                             static_cast<short>(nIColor1),
                             static_cast<short>(nIColor2));
-
-        CSLDestroy(papszTokens);
     }
     return CE_None;
 }
