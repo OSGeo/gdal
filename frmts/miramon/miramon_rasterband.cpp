@@ -310,7 +310,7 @@ CPLErr MMRRasterBand::FillRATFromPalette()
     }
 
     // Here I have some attribute table. I want to expose to RAT.
-    char **papszTokens = CSLTokenizeString2(os_IndexJoin, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(os_IndexJoin, ",", 0));
     const int nTokens = CSLCount(papszTokens);
 
     if (nTokens < 1)
@@ -384,7 +384,7 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
     {
         if (MM_ReadExtendedDBFHeaderFromFile(
                 osDBFName.c_str(), &oAttributteTable,
-                static_cast<const char *>(osRELName)))
+                osRELName.c_str()))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Error reading attribute table \"%s\".",
@@ -611,8 +611,7 @@ CPLErr MMRRasterBand::AssignUniformColorTable()
         return CE_None;
     }
 
-    int nNPossibleValues = static_cast<int>(
-        pow(2, static_cast<double>(8) * static_cast<int>(eMMBytesPerPixel)));
+    const int nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
         try
@@ -683,8 +682,7 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     }
     else
     {
-        nNPossibleValues = static_cast<int>(pow(
-            2, static_cast<double>(8) * static_cast<int>(eMMBytesPerPixel)));
+        nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
     }
 
     for (int iColumn = 0; iColumn < 4; iColumn++)
@@ -757,8 +755,7 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
     if (!poBand->GetVisuMinSet() || !poBand->GetVisuMaxSet())
         return CE_Failure;
 
-    int nNPossibleValues = static_cast<int>(
-        pow(2, static_cast<double>(8) * static_cast<int>(eMMBytesPerPixel)));
+    const int nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
         try
@@ -896,7 +893,7 @@ CPLErr MMRRasterBand::GetRATName(char *papszToken, CPLString &osRELName,
                                 osShortRELName, "");
 
         // Getting information from the associated REL
-        MMRRel *fLocalRel = new MMRRel(osRELName, false);
+        MMRRel localRel(osRELName, false);
         CPLString osShortDBFName;
 
         if (!fLocalRel->GetMetadataValue("TAULA_PRINCIPAL", "NomFitxer",

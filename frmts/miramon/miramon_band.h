@@ -63,7 +63,7 @@ enum class MMBytesPerPixel
 class MMRBand
 {
   public:
-    MMRBand(MMRRel &pfRel, CPLString osSection);
+    MMRBand(MMRRel &pfRel, const CPLString &osSection);
     MMRBand(const MMRBand &) =
         delete;  // I don't want to construct a MMRBand from another MMRBand (effc++)
     MMRBand &operator=(const MMRBand &) =
@@ -75,7 +75,7 @@ class MMRBand
 
     int UpdateGeoTransform();
 
-    int GetAssignedSubDataSet()
+    int GetAssignedSubDataSet() const
     {
         return nAssignedSDS;
     }

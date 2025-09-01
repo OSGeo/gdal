@@ -26,7 +26,7 @@ CPLString MMRRel::szImprobableRELChain = "@#&%$|``|$%&#@";
 /************************************************************************/
 /*                              MMRRel()                               */
 /************************************************************************/
-MMRRel::MMRRel(CPLString osRELFilenameIn, bool bIMGMustExist)
+MMRRel::MMRRel(const CPLString &osRELFilenameIn, bool bIMGMustExist)
     : osRelFileName(osRELFilenameIn)
 {
     CPLString osRelCandidate = osRELFilenameIn;
@@ -43,7 +43,7 @@ MMRRel::MMRRel(CPLString osRELFilenameIn, bool bIMGMustExist)
         CPLString osSDSReL = osRelCandidate.substr(osMMRPrefix.size());
 
         // Getting the internal names of the bands
-        char **papszTokens = CSLTokenizeString2(osSDSReL, ",", 0);
+        const CPLStringList aosTokens(CSLTokenizeString2(osSDSReL, ",", 0));
         const int nTokens = CSLCount(papszTokens);
 
         if (nTokens < 1)
@@ -145,9 +145,9 @@ MMRRel::~MMRRel()
 /************************************************************************/
 // Used when the MMRREL is not yet constructed.
 CPLString
-MMRRel::GetValueFromSectionKeyPriorToREL(const CPLString osPriorRelName,
-                                         const CPLString osSection,
-                                         const CPLString osKey)
+MMRRel::GetValueFromSectionKeyPriorToREL(const CPLString &osPriorRelName,
+                                         const CPLString &osSection,
+                                         const CPLString &osKey)
 {
     if (osPriorRelName.empty())
         return "";
@@ -183,8 +183,8 @@ CPLString MMRRel::GetValueFromSectionKeyFromREL(const CPLString osSection,
 // widely used by existing, already OGR tested code (and in the common code itself).
 // At least in C++ code the modern version is used
 CPLString MMRRel::GetValueFromSectionKey(VSILFILE *pf,
-                                         const CPLString osSection,
-                                         const CPLString osKey)
+                                         const CPLString &osSection,
+                                         const CPLString &osKey)
 {
     if (!pf)
         return "";
@@ -249,7 +249,7 @@ CPLString MMRRel::GetValueFromSectionKey(VSILFILE *pf,
 /************************************************************************/
 
 // Converts FileNameI.rel to FileName.img
-CPLString MMRRel::MMRGetFileNameFromRelName(const CPLString osRELFile)
+CPLString MMRRel::MMRGetFileNameFromRelName(const CPLString &osRELFile)
 {
     if (osRELFile.empty())
         return "";
@@ -266,7 +266,7 @@ CPLString MMRRel::MMRGetFileNameFromRelName(const CPLString osRELFile)
 }
 
 // Converts FileName.img to FileNameI.rel
-CPLString MMRRel::MMRGetSimpleMetadataName(const CPLString osLayerName)
+CPLString MMRRel::MMRGetSimpleMetadataName(const CPLString &osLayerName)
 {
     if (osLayerName.empty())
         return "";
@@ -289,18 +289,18 @@ CPLString MMRRel::MMRGetSimpleMetadataName(const CPLString osLayerName)
 // Gets the value from a section-key accessing directly to the RELFile.
 // It happens when MMRel is used to acces a REL that is not an IMG sidecar
 // or at the Identify() process, when we don't have already the MMRRel constructed.
-bool MMRRel::GetAndExcludeMetadataValueDirectly(const CPLString osRELFile,
-                                                const CPLString osSection,
-                                                const CPLString osKey,
+bool MMRRel::GetAndExcludeMetadataValueDirectly(const CPLString &osRELFile,
+                                                const CPLString &osSection,
+                                                const CPLString &osKey,
                                                 CPLString &osValue)
 {
     addExcludedSectionKey(osSection, osKey);
     return GetMetadataValueDirectly(osRELFile, osSection, osKey, osValue);
 }
 
-bool MMRRel::GetMetadataValueDirectly(const CPLString osRELFile,
-                                      const CPLString osSection,
-                                      const CPLString osKey, CPLString &osValue)
+bool MMRRel::GetMetadataValueDirectly(const CPLString &osRELFile,
+                                      const CPLString &osSection,
+                                      const CPLString &osKey, CPLString &osValue)
 {
     osValue = GetValueFromSectionKeyPriorToREL(osRELFile, osSection, osKey);
 
@@ -336,8 +336,8 @@ bool MMRRel::SameFile(CPLString osFile1, CPLString osFile2)
 // [pszSection]
 // NomFitxer=Value
 MMRNomFitxerState
-MMRRel::MMRStateOfNomFitxerInSection(CPLString osLayerName, CPLString osSection,
-                                     CPLString osRELFile,
+MMRRel::MMRStateOfNomFitxerInSection(const CPLString &osLayerName, const CPLString &osSection,
+                                     const CPLString &osRELFile,
                                      bool bNomFitxerMustExtist)
 {
     CPLString osDocumentedLayerName;
@@ -371,8 +371,8 @@ MMRRel::MMRStateOfNomFitxerInSection(CPLString osLayerName, CPLString osSection,
 
 // Tries to find a reference to the IMG file 'pszLayerName'
 // we are opening in the REL file 'pszRELFile'
-CPLString MMRRel::MMRGetAReferenceToIMGFile(CPLString osLayerName,
-                                            CPLString osRELFile)
+CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
+                                            const CPLString &osRELFile)
 {
     if (osRELFile.empty())
     {
@@ -438,7 +438,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(CPLString osLayerName,
     }
 
     // Getting the internal names of the bands
-    char **papszTokens = CSLTokenizeString2(osFieldNames, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
     const int nTokenBands = CSLCount(papszTokens);
 
     CPLString osBandSectionKey;
@@ -495,7 +495,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(CPLString osLayerName,
 }
 
 // Finds the metadata filename associated to osFileName (usually an IMG file)
-CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString osFileName)
+CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString &osFileName)
 {
     if (osFileName.empty())
     {
@@ -506,9 +506,7 @@ CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString osFileName)
 
     // If the string finishes in "I.rel" we consider it can be
     // the associated file to all bands that are documented in this file.
-    if (strlen(osFileName) >= strlen(pszExtRasterREL) &&
-        EQUAL(osFileName + strlen(osFileName) - strlen(pszExtRasterREL),
-              pszExtRasterREL))
+    if (cpl::ends_with(osFileName, pszExtRasterREL))
     {
         bIsAMiraMonFile = true;
         return osFileName;
@@ -541,8 +539,8 @@ CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString osFileName)
     // If the file I.rel doesn't exist then it has to be found
     // in the same folder than the .img file.
     const CPLString osPath = CPLGetPathSafe(osFileName);
-    char **folder = VSIReadDir(osPath.c_str());
-    int size = folder ? CSLCount(folder) : 0;
+    const CPLStringList folder(VSIReadDir(osPath.c_str()));
+    const int size = folder.size();
 
     for (int i = 0; i < size; i++)
     {
@@ -575,8 +573,8 @@ CPLString MMRRel::GetAssociatedMetadataFileName(const CPLString osFileName)
 /************************************************************************/
 /*                         CheckBandInRel()                             */
 /************************************************************************/
-CPLErr MMRRel::CheckBandInRel(const CPLString osRELFileName,
-                              const CPLString osIMGFile)
+CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
+                              const CPLString &osIMGFile)
 
 {
     CPLString osFieldNames;
@@ -586,7 +584,7 @@ CPLErr MMRRel::CheckBandInRel(const CPLString osRELFileName,
         return CE_Failure;
 
     // Separator ,
-    char **papszTokens = CSLTokenizeString2(osFieldNames, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
     const int nTokenCount = CSLCount(papszTokens);
 
     if (!nTokenCount)
@@ -633,7 +631,7 @@ CPLErr MMRRel::CheckBandInRel(const CPLString osRELFileName,
     return CE_None;
 }
 
-int MMRRel::IdentifySubdataSetFile(const CPLString pszFileName)
+int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
 {
     const CPLString osMMRPrefix = "MiraMonRaster:";
     if (!STARTS_WITH(pszFileName, osMMRPrefix))
@@ -647,7 +645,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString pszFileName)
 
     CPLString osRELAndBandName = osFilename.substr(osMMRPrefix.size());
 
-    char **papszTokens = CSLTokenizeString2(osRELAndBandName, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(osRELAndBandName, ",", 0));
     const int nTokens = CSLCount(papszTokens);
     // Getting the REL associated to the bands
     // We need the REL and at least one band (index + name).
@@ -659,9 +657,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString pszFileName)
     osRELName.replaceAll("\"", "");
 
     // It must be a I.rel file.
-    if (!(strlen(osRELName) >= strlen(pszExtRasterREL) &&
-          EQUAL(osRELName + strlen(osRELName) - strlen(pszExtRasterREL),
-                pszExtRasterREL)))
+    if (!cpl::ends_with(osRELName, pszExtRasterREL))
         return GDAL_IDENTIFY_FALSE;
 
     if (MMCheck_REL_FILE(osRELName))
@@ -706,10 +702,7 @@ int MMRRel::IdentifyFile(GDALOpenInfo *poOpenInfo)
         return GDAL_IDENTIFY_FALSE;
 
     // In fact, the file has to end with I.rel (pszExtRasterREL)
-    if (!(strlen(poOpenInfo->pszFilename) >= strlen(pszExtRasterREL) &&
-          EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) -
-                    strlen(pszExtRasterREL),
-                pszExtRasterREL)))
+    if (!cpl::ends_with(poOpenInfo->pszFilename, pszExtRasterREL))
         return GDAL_IDENTIFY_FALSE;
 
     // Some versions of REL files are not allowed.
@@ -722,10 +715,10 @@ int MMRRel::IdentifyFile(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 /*                     GetMetadataValue()                               */
 /************************************************************************/
-bool MMRRel::GetMetadataValue(const CPLString osMainSection,
-                              const CPLString osSubSection,
-                              const CPLString osSubSubSection,
-                              const CPLString osKey, CPLString &osValue)
+bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
+                              const CPLString &osSubSection,
+                              const CPLString &osSubSubSection,
+                              const CPLString &osKey, CPLString &osValue)
 {
     if (!isAMiraMonFile())
         CPLAssert(false);  // Trying to access metadata from the wrong way
@@ -754,9 +747,9 @@ bool MMRRel::GetMetadataValue(const CPLString osMainSection,
     return true;  // Found
 }
 
-bool MMRRel::GetMetadataValue(const CPLString osMainSection,
-                              const CPLString osSubSection,
-                              const CPLString osKey, CPLString &osValue)
+bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
+                              const CPLString &osSubSection,
+                              const CPLString &osKey, CPLString &osValue)
 {
     if (!isAMiraMonFile())
         CPLAssert(false);  // Trying to access metadata from the wrong way
@@ -783,7 +776,7 @@ bool MMRRel::GetMetadataValue(const CPLString osMainSection,
     return true;  // Found
 }
 
-bool MMRRel::GetMetadataValue(const CPLString osSection, const CPLString osKey,
+bool MMRRel::GetMetadataValue(const CPLString &osSection, const CPLString &osKey,
                               CPLString &osValue)
 {
     if (!isAMiraMonFile())
@@ -799,7 +792,7 @@ bool MMRRel::GetMetadataValue(const CPLString osSection, const CPLString osKey,
     return true;  // Found
 }
 
-void MMRRel::UpdateRELNameChar(CPLString osRelFileNameIn)
+void MMRRel::UpdateRELNameChar(const CPLString &osRelFileNameIn)
 {
     osRelFileName = osRelFileNameIn;
 }
@@ -824,7 +817,7 @@ CPLErr MMRRel::ParseBandInfo()
     }
 
     // Separator ,
-    char **papszTokens = CSLTokenizeString2(osFieldNames, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(osFieldNames, ",", 0));
     const int nMaxBands = CSLCount(papszTokens);
 
     if (!nMaxBands)
@@ -882,7 +875,7 @@ CPLErr MMRRel::ParseBandInfo()
 
         if (!papoBand[nBands]->IsValid())
         {
-            // This band is not been completed, so let's detele now
+            // This band is not been completed, so let's delete it now
             // The rest of bands will be deleted by destructor.
             delete papoBand[nBands];
             CSLDestroy(papszTokens);

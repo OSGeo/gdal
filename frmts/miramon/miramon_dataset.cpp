@@ -33,7 +33,6 @@ void GDALRegister_MiraMon()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MiraMon Raster Images");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/raster/miramon.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "rel");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "rel img");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
@@ -46,7 +45,7 @@ void GDALRegister_MiraMon()
 }
 
 /************************************************************************/
-/*                            MMRDataset()                            */
+/*                            MMRDataset()                              */
 /************************************************************************/
 
 MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
@@ -118,13 +117,12 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           ~MMRDataset()                            */
+/*                           ~MMRDataset()                              */
 /************************************************************************/
 
 MMRDataset::~MMRDataset()
 
 {
-    delete pMMRRel;
 }
 
 /************************************************************************/
@@ -186,7 +184,7 @@ void MMRDataset::CreateRasterBands()
         nRasterYSize = pBand->GetHeight();
         pBand->UpdateGeoTransform();  // Fills adfGeoTransform for this band
 
-        MMRRasterBand *poRasterBand = new MMRRasterBand(this, nBands + 1);
+        auto poRasterBand = std::make_unique<MMRRasterBand>(this, nBands + 1);
         if (!poRasterBand->IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -194,10 +192,10 @@ void MMRDataset::CreateRasterBands()
                      pMMRRel->GetRELNameChar());
         }
 
-        SetBand(nBands + 1, poRasterBand);
+        SetBand(nBands + 1, std::move(poRasterBand));
 
         MMRRasterBand *poBand =
-            static_cast<MMRRasterBand *>(GetRasterBand(nIBand + 1));
+            cpl::down_cast<MMRRasterBand *>(GetRasterBand(nIBand + 1));
 
         pBand = pMMRRel->GetBand(nIBand);
         if (!pBand)

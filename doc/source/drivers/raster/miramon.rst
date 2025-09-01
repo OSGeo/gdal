@@ -3,6 +3,8 @@
 MiraMon Raster
 ==============
 
+.. versionadded:: 3.12
+
 .. shortname:: MiraMonRaster
 
 .. built_in_by_default::

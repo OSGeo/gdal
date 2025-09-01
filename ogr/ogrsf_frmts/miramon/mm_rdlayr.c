@@ -18,13 +18,8 @@
 #include "ogr_api.h"  // For CPL_C_START
 #include "mm_wrlayr.h"
 #include "mm_wrlayr.h"  // For MMReadHeader()
-#ifdef MSVC
-#include "..\..\..\frmts\miramon_common\mm_gdal_functions.h"
-#include "..\..\..\frmts\miramon_common\mm_gdal_constants.h"
-#else
 #include "../../../frmts/miramon_common/mm_gdal_functions.h"
 #include "../../../frmts/miramon_common/mm_gdal_constants.h"
-#endif
 #include "mm_rdlayr.h"
 
 CPL_C_START  // Necessary for compiling in GDAL project

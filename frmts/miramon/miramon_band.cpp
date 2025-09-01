@@ -22,7 +22,7 @@
 /************************************************************************/
 /*                              MMRBand()                               */
 /************************************************************************/
-MMRBand::MMRBand(MMRRel &fRel, CPLString osBandSectionIn)
+MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     : pfRel(&fRel), nWidth(0), nHeight(0), osBandSection(osBandSectionIn)
 
 {
@@ -38,7 +38,7 @@ MMRBand::MMRBand(MMRRel &fRel, CPLString osBandSectionIn)
             nHeight = 0;
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "The REL file '%s' contains a documented \
-                band with no explicit name. Section [%s] or [%s:%s].\n",
+                band with no explicit name. Section [%s] or [%s:%s].",
                      pfRel->GetRELNameChar(), SECTION_ATTRIBUTE_DATA,
                      SECTION_ATTRIBUTE_DATA, osBandSection.c_str());
             return;
@@ -50,7 +50,7 @@ MMRBand::MMRBand(MMRRel &fRel, CPLString osBandSectionIn)
     {
         osBandName = CPLGetBasenameSafe(osRawBandFileName);
         CPLString osAux =
-            CPLGetPathSafe(static_cast<const char *>(pfRel->GetRELNameChar()));
+            CPLGetPathSafe(pfRel->GetRELNameChar());
         osBandFileName =
             CPLFormFilenameSafe(osAux.c_str(), osRawBandFileName.c_str(), "");
     }
@@ -62,7 +62,7 @@ MMRBand::MMRBand(MMRRel &fRel, CPLString osBandSectionIn)
         nHeight = 0;
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "The REL file '%s' contains a documented \
-            band with no explicit name. Section [%s] or [%s:%s].\n",
+            band with no explicit name. Section [%s] or [%s:%s].",
                  pfRel->GetRELNameChar(), SECTION_ATTRIBUTE_DATA,
                  SECTION_ATTRIBUTE_DATA, osBandSection.c_str());
         return;
@@ -191,23 +191,17 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
 
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
-    if (!pfIMG)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "File band not opened: \n%s",
-                 osBandFileName.c_str());
-        return CE_Failure;
-    }
 
     if (nDataSize != -1 && (nGDALBlockSize > INT_MAX ||
-                            static_cast<int>(nGDALBlockSize) > nDataSize))
+                            nGDALBlockSize > nDataSize))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid block size: %d",
-                 static_cast<int>(nGDALBlockSize));
+                 nGDALBlockSize);
         return CE_Failure;
     }
 
     // Getting the row offsets to optimize access.
-    if (FillRowOffsets() == false || aFileOffsets.size() == 0)
+    if (FillRowOffsets() == false || aFileOffsets.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Some error in offsets calculation");
@@ -227,7 +221,7 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
         nCompressedRawSize = SIZE_MAX;  // We don't know it
     else
         nCompressedRawSize =
-            static_cast<int>(aFileOffsets[iBlock + 1] - aFileOffsets[iBlock]);
+            aFileOffsets[iBlock + 1] - aFileOffsets[iBlock];
 
     return GetBlockData(pData, nCompressedRawSize);
 }
@@ -250,7 +244,7 @@ int MMRBand::UpdateGeoTransform()
 
 // [ATTRIBUTE_DATA:xxxx] or [OVERVIEW:ASPECTES_TECNICS]
 int MMRBand::Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
-    const CPLString osSection, const char *pszKey, int *nValue,
+    const CPLString &osSection, const char *pszKey, int *nValue,
     const char *pszErrorMessage)
 {
     if (osSection.empty() || !pszKey || !nValue)
@@ -402,14 +396,14 @@ int MMRBand::UpdateDataTypeFromREL(const CPLString osSection)
 }
 
 // Getting number of columns from metadata
-int MMRBand::UpdateColumnsNumberFromREL(const CPLString osSection)
+int MMRBand::UpdateColumnsNumberFromREL(const CPLString &osSection)
 {
     return Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
         osSection, "columns", &nWidth,
         "MMRBand::MMRBand : No number of columns documented");
 }
 
-int MMRBand::UpdateRowsNumberFromREL(const CPLString osSection)
+int MMRBand::UpdateRowsNumberFromREL(const CPLString &osSection)
 {
     return Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
         osSection, "rows", &nHeight,
@@ -417,7 +411,7 @@ int MMRBand::UpdateRowsNumberFromREL(const CPLString osSection)
 }
 
 // Getting nodata value from metadata
-void MMRBand::UpdateNoDataValue(const CPLString osSection)
+void MMRBand::UpdateNoDataValue(const CPLString &osSection)
 {
     CPLString osValue;
     if (!pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "NODATA",
@@ -434,7 +428,7 @@ void MMRBand::UpdateNoDataValue(const CPLString osSection)
     }
 }
 
-void MMRBand::UpdateMinMaxValuesFromREL(const CPLString osSection)
+void MMRBand::UpdateMinMaxValuesFromREL(const CPLString &osSection)
 {
     bMinSet = false;
 
@@ -466,7 +460,7 @@ void MMRBand::UpdateMinMaxValuesFromREL(const CPLString osSection)
     }
 }
 
-void MMRBand::UpdateMinMaxVisuValuesFromREL(const CPLString osSection)
+void MMRBand::UpdateMinMaxVisuValuesFromREL(const CPLString &osSection)
 {
     bMinVisuSet = false;
     dfVisuMin = 1;
@@ -492,7 +486,7 @@ void MMRBand::UpdateMinMaxVisuValuesFromREL(const CPLString osSection)
     }
 }
 
-void MMRBand::UpdateFriendlyDescriptionFromREL(const CPLString osSection)
+void MMRBand::UpdateFriendlyDescriptionFromREL(const CPLString &osSection)
 {
     pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "descriptor",
                             osFriendlyDescription);
@@ -504,7 +498,7 @@ void MMRBand::UpdateReferenceSystemFromREL()
                             "HorizontalSystemIdentifier", osRefSystem);
 }
 
-void MMRBand::UpdateBoundingBoxFromREL(const CPLString osSection)
+void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
 {
     // Bounding box of the band
     // [ATTRIBUTE_DATA:xxxx:EXTENT] or [EXTENT]
@@ -584,7 +578,15 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
 
     if (nCompressedRawSize != SIZE_MAX)
     {
-        aCompressedRow.resize(nCompressedRawSize);
+        try
+        {
+            aCompressedRow.resize(nCompressedRawSize);
+         }
+         catch (const std::exception &)
+         {
+             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory allocating working buffer");
+             return CE_Failure;
+         }
         if (VSIFReadL(aCompressedRow.data(), nCompressedRawSize, 1, pfIMG) != 1)
             return CE_Failure;
     }
@@ -675,11 +677,11 @@ CPLErr MMRBand::GetBlockData(void *rowBuffer, size_t nCompressedRawSize)
 {
     if (eMMDataType == MMDataType::DATATYPE_AND_COMPR_BIT)
     {
-        const int nGDALBlockSize = static_cast<int>(ceil(nBlockXSize / 8.0));
+        const int nGDALBlockSize = DIV_ROUND_UP(nBlockXSize, 8);
 
         if (VSIFReadL(rowBuffer, nGDALBlockSize, 1, pfIMG) != 1)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "\nError while reading band");
+            CPLError(CE_Failure, CPLE_AppDefined, "Error while reading band");
             return CE_Failure;
         }
         return CE_None;
@@ -695,13 +697,13 @@ CPLErr MMRBand::GetBlockData(void *rowBuffer, size_t nCompressedRawSize)
         if (VSIFReadL(rowBuffer, nDataTypeSizeBytes, nWidth, pfIMG) !=
             static_cast<size_t>(nWidth))
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "\nError while reading band");
+            CPLError(CE_Failure, CPLE_AppDefined, "Error while reading band");
             return CE_Failure;
         }
         return CE_None;
     }
 
-    CPLErr peErr;
+    CPLErr eErr;
     switch (eMMDataType)
     {
         case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
@@ -724,7 +726,7 @@ CPLErr MMRBand::GetBlockData(void *rowBuffer, size_t nCompressedRawSize)
             break;
 
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "\nError in datatype");
+            CPLError(CE_Failure, CPLE_AppDefined, "Error in datatype");
             peErr = CE_Failure;
     }
 
@@ -783,7 +785,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
     if (VSIFReadL(&nHeaderOffset, sizeof(vsi_l_offset), 1, pfIMG) != 1)
         return 0;
 
-    int bRepeat;
+    bool bRepeat;
     do
     {
         bRepeat = FALSE;
@@ -888,11 +890,10 @@ bool MMRBand::FillRowOffsets()
                       // directly from the IMG file (can be 1, 2, 4, or 8).
     vsi_l_offset nFileByte;
     size_t nMaxBytesPerCompressedRow;
-    const int nGDALBlockSize = static_cast<int>(ceil(nBlockXSize / 8.0));
-    ;
+    const int nGDALBlockSize = DIV_ROUND_UP(nBlockXSize, 8);
 
     // If it's filled, there is no need to fill it again
-    if (aFileOffsets.size() > 0)
+    if (!aFileOffsets.empty())
         return true;
 
     try

@@ -193,11 +193,11 @@ class MMRRel
     // Preserving metadata
 
     // Domain
-    const char *kMetadataDomain = "MIRAMON";
+    static constexpr const char *kMetadataDomain = "MIRAMON";
 
     // Used to join Section and Key in a single
     // name for SetMetadataItem(Name, Value)
-    const char *SecKeySeparator = "[$$$]";
+    static constexpr const char *SecKeySeparator = "[$$$]";
 
     // List of excluded pairs {Section, Key} to be added to metadata
     // Empty Key means all section

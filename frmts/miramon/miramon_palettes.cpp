@@ -18,7 +18,7 @@
 
 #include "../miramon_common/mm_gdal_functions.h"  // For MMCheck_REL_FILE()
 
-MMRPalettes::MMRPalettes(MMRRel &fRel, CPLString osBandSectionIn)
+MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     : pfRel(&fRel), osBandSection(osBandSectionIn)
 {
     // Is a constant color, and which colors is it?
@@ -182,7 +182,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 {
     // Getting the full path name of the DBF
     CPLString osAux =
-        CPLGetPathSafe(static_cast<const char *>(pfRel->GetRELNameChar()));
+        CPLGetPathSafe(pfRel->GetRELNameChar());
     CPLString osColorTableFileName =
         CPLFormFilenameSafe(osAux.c_str(), os_Color_Paleta_DBF.c_str(), "");
 
@@ -192,7 +192,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 
     if (MM_ReadExtendedDBFHeaderFromFile(
             osColorTableFileName.c_str(), &oColorTable,
-            static_cast<const char *>(pfRel->GetRELNameChar())))
+            pfRel->GetRELNameChar()))
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Invalid color table:"
@@ -330,11 +330,11 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 
 // Colors in a PAL, P25 or P65 format files
 // Updates nNPaletteColors
-CPLErr MMRPalettes::GetPaletteColors_PAL_P25_P65(CPLString os_Color_Paleta_DBF)
+CPLErr MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
 
 {
     CPLString osAux =
-        CPLGetPathSafe(static_cast<const char *>(pfRel->GetRELNameChar()));
+        CPLGetPathSafe(pfRel->GetRELNameChar());
     CPLString osColorTableFileName =
         CPLFormFilenameSafe(osAux.c_str(), os_Color_Paleta_DBF.c_str(), "");
 
@@ -384,8 +384,8 @@ CPLErr MMRPalettes::GetPaletteColors_PAL_P25_P65(CPLString os_Color_Paleta_DBF)
         if (pszLine[0] == '\0')
             continue;
 
-        char **papszTokens = CSLTokenizeString2(pszLine, " \t", 0);
-        if (CSLCount(papszTokens) != 4)
+        const CPLStringList aosTokens(CSLTokenizeString2(pszLine, " \t", 0));
+        if (aosTokens.size() != 4)
         {
             VSIFCloseL(fpColorTable);
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid color table: \"%s\"",
@@ -397,18 +397,16 @@ CPLErr MMRPalettes::GetPaletteColors_PAL_P25_P65(CPLString os_Color_Paleta_DBF)
         // papszTokens[0] is ignored;
 
         // RED
-        aadfPaletteColors[0][nNReadPaletteColors] = CPLAtof(papszTokens[1]);
+        aadfPaletteColors[0][nNReadPaletteColors] = CPLAtof(aosTokens[1]);
 
         // GREEN
-        aadfPaletteColors[1][nNReadPaletteColors] = CPLAtof(papszTokens[2]);
+        aadfPaletteColors[1][nNReadPaletteColors] = CPLAtof(aosTokens[2]);
 
         // BLUE
-        aadfPaletteColors[2][nNReadPaletteColors] = CPLAtof(papszTokens[3]);
+        aadfPaletteColors[2][nNReadPaletteColors] = CPLAtof(aosTokens[3]);
 
         // ALPHA
         aadfPaletteColors[3][nNReadPaletteColors] = 255.0;
-
-        CSLDestroy(papszTokens);
         nNReadPaletteColors++;
     }
 
@@ -477,7 +475,7 @@ CPLErr MMRPalettes::UpdateConstantColor()
     {
         os_Color_Smb.replaceAll("(", "");
         os_Color_Smb.replaceAll(")", "");
-        char **papszTokens = CSLTokenizeString2(os_Color_Smb, ",", 0);
+        const CPLStringList aosTokens(CSLTokenizeString2(os_Color_Smb, ",", 0));
         if (CSLCount(papszTokens) != 3)
         {
             CSLDestroy(papszTokens);

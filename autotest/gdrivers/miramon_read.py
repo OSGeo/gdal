@@ -20,6 +20,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("MiraMonRaster")
+
 gdal_to_struct = {
     gdal.GDT_Byte: ("B", 1),
     gdal.GDT_UInt16: ("H", 2),

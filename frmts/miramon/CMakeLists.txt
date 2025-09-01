@@ -20,5 +20,3 @@ gdal_standard_includes(gdal_MiraMon)
 #add_executable(mm_gdal_functions EXCLUDE_FROM_ALL mm_gdal_functions.cpp)
 #target_include_directories(mm_gdal_functions PRIVATE $<TARGET_PROPERTY:miramon_common,SOURCE_DIR>)
 #target_link_libraries(mm_gdal_functions PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> miramon_common)
-
-gdal_target_link_libraries(gdal_MiraMon PRIVATE PROJ::proj)

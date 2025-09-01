@@ -39,7 +39,7 @@ enum class ColorTreatment
 class MMRPalettes
 {
   public:
-    MMRPalettes(MMRRel &fRel, CPLString osBandSectionIn);
+    MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn);
     MMRPalettes(const MMRPalettes &) =
         delete;  // I don't want to construct a MMRPalettes from another MMRBand (effc++)
     MMRPalettes &operator=(const MMRPalettes &) =
