@@ -47,7 +47,7 @@ class MMRDataset final : public GDALPamDataset
 
     MMRRel *GetRel()
     {
-        return pMMRRel;
+        return m_pMMRRel.get();
     }
 
   private:
@@ -63,19 +63,20 @@ class MMRDataset final : public GDALPamDataset
 
     bool IsValid() const
     {
-        return bIsValid;
+        return m_bIsValid;
     }
 
     GDALGeoTransform m_gt{};
     OGRSpatialReference m_oSRS{};
 
-    bool bIsValid = false;  // Determines if the created object is valid or not.
-    MMRRel *pMMRRel = nullptr;
+    bool m_bIsValid =
+        false;  // Determines if the created object is valid or not.
+    std::unique_ptr<MMRRel> m_pMMRRel;
 
     std::vector<gdal::GCP> m_aoGCPs{};
 
     // Numbers of subdatasets (if any) in this dataset.
-    int nNSubdataSets = 0;
+    int m_nNSubdataSets = 0;
 };
 
 #endif  // MMRDATASET_H_INCLUDED

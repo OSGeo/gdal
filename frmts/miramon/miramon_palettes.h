@@ -48,98 +48,98 @@ class MMRPalettes
 
     bool IsValid() const
     {
-        return bIsValid;
+        return m_bIsValid;
     }
 
     bool IsCategorical() const
     {
-        return bIsCategorical;
+        return m_bIsCategorical;
     }
 
     void SetIsCategorical(bool bIsCategoricalIn)
     {
-        bIsCategorical = bIsCategoricalIn;
+        m_bIsCategorical = bIsCategoricalIn;
     }
 
     bool IsConstantColor() const
     {
-        return bIsConstantColor;
+        return m_bIsConstantColor;
     }
 
     GDALColorEntry GetDefaultColorRGB() const
     {
-        return sDefaultColorRGB;
+        return m_sDefaultColorRGB;
     }
 
     GDALColorEntry GetConstantColorRGB() const
     {
-        return sConstantColorRGB;
+        return m_sConstantColorRGB;
     }
 
     void SetConstantColorRGB(GDALColorEntry sConstantColorRGBIn)
     {
-        sConstantColorRGB = sConstantColorRGBIn;
+        m_sConstantColorRGB = sConstantColorRGBIn;
     }
 
     void SetConstantColorRGB(short c1, short c2, short c3)
     {
-        sConstantColorRGB.c1 = c1;
-        sConstantColorRGB.c2 = c2;
-        sConstantColorRGB.c3 = c3;
+        m_sConstantColorRGB.c1 = c1;
+        m_sConstantColorRGB.c2 = c2;
+        m_sConstantColorRGB.c3 = c3;
     }
 
     void SetConstantColorRGB(short c1, short c2, short c3, short c4)
     {
-        sConstantColorRGB.c1 = c1;
-        sConstantColorRGB.c2 = c2;
-        sConstantColorRGB.c3 = c3;
-        sConstantColorRGB.c4 = c4;
+        m_sConstantColorRGB.c1 = c1;
+        m_sConstantColorRGB.c2 = c2;
+        m_sConstantColorRGB.c3 = c3;
+        m_sConstantColorRGB.c4 = c4;
     }
 
     bool HasNodata() const
     {
-        return bHasNodata;
+        return m_bHasNodata;
     }
 
     void SetHasNodata(bool bHasNodataIn)
     {
-        bHasNodata = bHasNodataIn;
+        m_bHasNodata = bHasNodataIn;
     }
 
     int GetNoDataPaletteIndex() const
     {
-        return nNoDataPaletteIndex;
+        return m_nNoDataPaletteIndex;
     }
 
     void SetNoDataPaletteIndex(bool nNoDataPaletteIndexIn)
     {
-        nNoDataPaletteIndex = nNoDataPaletteIndexIn;
+        m_nNoDataPaletteIndex = nNoDataPaletteIndexIn;
     }
 
     GDALColorEntry GetNoDataDefaultColor() const
     {
-        return sNoDataColorRGB;
+        return m_sNoDataColorRGB;
     }
 
     double GetPaletteColorsValue(int nIComponent, int nIColor) const
     {
-        return aadfPaletteColors[nIComponent][nIColor];
+        return m_aadfPaletteColors[nIComponent][nIColor];
     }
 
     int GetSizeOfPaletteColors() const
     {
-        return static_cast<int>(aadfPaletteColors[0].size());
+        return static_cast<int>(m_aadfPaletteColors[0].size());
     }
 
     int GetNumberOfColors() const
     {
-        return nNPaletteColors;
+        return m_nNPaletteColors;
     }
 
     // Real means with no nodata.
     int GetNumberOfColorsIncludingNodata() const
     {
-        return nRealNPaletteColors;
+        return m_nRealNPaletteColors;
     }
 
     void UpdateColorInfo();
@@ -160,28 +160,29 @@ class MMRPalettes
                             MM_EXT_DBF_N_FIELDS &nBIndex, int nIPaletteIndex);
     CPLErr UpdateConstantColor();
 
-    std::array<std::vector<double>, 4> aadfPaletteColors{};
-    bool bIsCategorical = false;
+    std::array<std::vector<double>, 4> m_aadfPaletteColors{};
+    bool m_bIsCategorical = false;
 
     // Palette info
-    GDALColorEntry sDefaultColorRGB = {0, 0, 0, 127};
+    GDALColorEntry m_sDefaultColorRGB = {0, 0, 0, 127};
 
-    bool bHasNodata = false;
+    bool m_bHasNodata = false;
     // index in the DBF that gives nodata color
-    int nNoDataPaletteIndex = 0;
+    int m_nNoDataPaletteIndex = 0;
     // Default color for nodata
-    GDALColorEntry sNoDataColorRGB = {0, 0, 0, 0};
+    GDALColorEntry m_sNoDataColorRGB = {0, 0, 0, 0};
 
-    bool bIsConstantColor = false;
-    GDALColorEntry sConstantColorRGB = {0, 0, 0, 0};
+    bool m_bIsConstantColor = false;
+    GDALColorEntry m_sConstantColorRGB = {0, 0, 0, 0};
 
-    int nNPaletteColors = 0;
-    int nRealNPaletteColors = 0;  // Without nodata
+    int m_nNPaletteColors = 0;
+    int m_nRealNPaletteColors = 0;  // Without nodata
 
-    MMRRel *pfRel = nullptr;  // Rel where metadata is readed from
-    CPLString osBandSection;
+    MMRRel *m_pfRel = nullptr;  // Rel where metadata is readed from
+    CPLString m_osBandSection;
 
-    bool bIsValid = false;  // Determines if the created object is valid or not.
+    bool m_bIsValid =
+        false;  // Determines if the created object is valid or not.
 };
 
 #endif  // MMRPALETTES_H_INCLUDED

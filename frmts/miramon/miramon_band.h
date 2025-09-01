@@ -73,155 +73,155 @@ class MMRBand
     const CPLString GetRELFileName() const;
     CPLErr GetRasterBlock(int nXBlock, int nYBlock, void *pData, int nDataSize);
 
-    int UpdateGeoTransform();
+    void UpdateGeoTransform();
 
     int GetAssignedSubDataSet() const
     {
-        return nAssignedSDS;
+        return m_nAssignedSDS;
     }
 
     void AssignSubDataSet(int nAssignedSDSIn)
     {
-        nAssignedSDS = nAssignedSDSIn;
+        m_nAssignedSDS = nAssignedSDSIn;
     }
 
     const CPLString &GetBandName() const
     {
-        return osBandName;
+        return m_osBandName;
     }
 
     const CPLString &GetBandSection() const
     {
-        return osBandSection;
+        return m_osBandSection;
     }
 
     const CPLString &GetRawBandFileName() const
     {
-        return osRawBandFileName;
+        return m_osRawBandFileName;
     }
 
     const CPLString &GetFriendlyDescription() const
     {
-        return osFriendlyDescription;
+        return m_osFriendlyDescription;
     }
 
     MMDataType GeteMMDataType() const
     {
-        return eMMDataType;
+        return m_eMMDataType;
     }
 
     MMBytesPerPixel GeteMMBytesPerPixel() const
     {
-        return eMMBytesPerPixel;
+        return m_eMMBytesPerPixel;
     }
 
     bool GetMinSet() const
     {
-        return bMinSet;
+        return m_bMinSet;
     }
 
     double GetMin() const
     {
-        return dfMin;
+        return m_dfMin;
     }
 
     bool GetMaxSet() const
     {
-        return bMaxSet;
+        return m_bMaxSet;
     }
 
     double GetMax() const
     {
-        return dfMax;
+        return m_dfMax;
     }
 
     bool GetVisuMinSet() const
     {
-        return bMinVisuSet;
+        return m_bMinVisuSet;
     }
 
     double GetVisuMin() const
     {
-        return dfVisuMin;
+        return m_dfVisuMin;
     }
 
     bool GetVisuMaxSet() const
     {
-        return bMaxVisuSet;
+        return m_bMaxVisuSet;
     }
 
     double GetVisuMax() const
     {
-        return dfVisuMax;
+        return m_dfVisuMax;
     }
 
     double GetBoundingBoxMinX() const
     {
-        return dfBBMinX;
+        return m_dfBBMinX;
     }
 
     double GetBoundingBoxMaxX() const
     {
-        return dfBBMaxX;
+        return m_dfBBMaxX;
     }
 
     double GetBoundingBoxMinY() const
     {
-        return dfBBMinY;
+        return m_dfBBMinY;
     }
 
     double GetBoundingBoxMaxY() const
     {
-        return dfBBMaxY;
+        return m_dfBBMaxY;
     }
 
     bool BandHasNoData() const
     {
-        return bNoDataSet;
+        return m_bNoDataSet;
     }
 
     double GetNoDataValue() const
     {
-        return dfNoData;
+        return m_dfNoData;
     }
 
     int GetWidth() const
     {
-        return nWidth;
+        return m_nWidth;
     }
 
     int GetHeight() const
     {
-        return nHeight;
+        return m_nHeight;
     }
 
     int GetBlockXSize() const
     {
-        return nBlockXSize;
+        return m_nBlockXSize;
     }
 
     int GetBlockYSize() const
     {
-        return nBlockYSize;
+        return m_nBlockYSize;
     }
 
     bool IsValid() const
     {
-        return bIsValid;
+        return m_bIsValid;
     }
 
     GDALGeoTransform m_gt{};  // Bounding box for this band
 
   private:
-    int Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
+    bool Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
         const CPLString &osSection, const char *pszKey, int *nValue,
         const char *pszErrorMessage);
-    static int GetDataTypeAndBytesPerPixel(const char *pszCompType,
-                                           MMDataType *nCompressionType,
-                                           MMBytesPerPixel *nBytesPerPixel);
-    int UpdateDataTypeFromREL(const CPLString osSection);
-    int UpdateColumnsNumberFromREL(const CPLString &osSection);
-    int UpdateRowsNumberFromREL(const CPLString &osSection);
+    static bool GetDataTypeAndBytesPerPixel(const char *pszCompType,
+                                            MMDataType *nCompressionType,
+                                            MMBytesPerPixel *nBytesPerPixel);
+    bool UpdateDataTypeFromREL(const CPLString osSection);
+    bool UpdateColumnsNumberFromREL(const CPLString &osSection);
+    bool UpdateRowsNumberFromREL(const CPLString &osSection);
     void UpdateNoDataValue(const CPLString &osSection);
     void UpdateBoundingBoxFromREL(const CPLString &osSection);
     void UpdateReferenceSystemFromREL();
@@ -235,73 +235,74 @@ class MMRBand
     int PositionAtStartOfRowOffsetsInFile();
     bool FillRowOffsets();
 
-    bool bIsValid = false;  // Determines if the created object is valid or not.
+    bool m_bIsValid =
+        false;  // Determines if the created object is valid or not.
 
-    VSILFILE *pfIMG = nullptr;  // Point to IMG file (RAW data)
-    MMRRel *pfRel = nullptr;    // Rel where metadata is readed from
+    VSILFILE *m_pfIMG = nullptr;  // Point to IMG file (RAW data)
+    MMRRel *m_pfRel = nullptr;    // Rel where metadata is readed from
 
-    int nBlockXSize = 1;
-    int nBlockYSize = 1;
+    int m_nBlockXSize = 1;
+    int m_nBlockYSize = 1;
 
-    int nWidth = 0;   // Number of columns
-    int nHeight = 0;  // Number of rows
+    int m_nWidth = 0;   // Number of columns
+    int m_nHeight = 0;  // Number of rows
 
-    int nNRowsPerBlock = 1;
+    int m_nNRowsPerBlock = 1;
 
     // indexed-RLE format
-    std::vector<vsi_l_offset> aFileOffsets{};
+    std::vector<vsi_l_offset> m_aFileOffsets{};
 
     // Assigned Subdataset for this band.
-    int nAssignedSDS = 0;
+    int m_nAssignedSDS = 0;
 
     // Section in REL file that give information about the band
-    CPLString osBandSection;
+    CPLString m_osBandSection;
     // File name relative to REL file with banda data
-    CPLString osRawBandFileName = "";
+    CPLString m_osRawBandFileName = "";
     // Friendly osRawBandFileName
-    CPLString osBandFileName = "";
+    CPLString m_osBandFileName = "";
     // Name of the band documented in REL metadata file.
-    CPLString osBandName = "";
+    CPLString m_osBandName = "";
     // Descripcion of the band, not the name
-    CPLString osFriendlyDescription = "";
+    CPLString m_osFriendlyDescription = "";
 
-    MMDataType eMMDataType =
+    MMDataType m_eMMDataType =
         static_cast<MMDataType>(MMDataType::DATATYPE_AND_COMPR_UNDEFINED);
-    MMBytesPerPixel eMMBytesPerPixel = static_cast<MMBytesPerPixel>(
+    MMBytesPerPixel m_eMMBytesPerPixel = static_cast<MMBytesPerPixel>(
         MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_UNDEFINED);
-    int nDataTypeSizeBytes = 0;
+    int m_nDataTypeSizeBytes = 0;
 
-    bool bIsCompressed = false;
+    bool m_bIsCompressed = false;
 
     // Min and Max values from metadata:  This value should correspond
     // to the actual minimum and maximum, not to an approximation.
     // However, MiraMon is proof to approximate values. The minimum
     // and maximum values are useful, for example, to properly scale
     // colors, etc.
-    bool bMinSet = false;
-    double dfMin = 0.0;
-    bool bMaxSet = false;
-    double dfMax = 0.0;
+    bool m_bMinSet = false;
+    double m_dfMin = 0.0;
+    bool m_bMaxSet = false;
+    double m_dfMax = 0.0;
     // These values will be dfMin/dfMax if they don't exist in REL file
-    bool bMinVisuSet = false;
-    double dfVisuMin = 0.0;  // Key Color_ValorColor_0 in COLOR_TEXT
-    bool bMaxVisuSet = false;
-    double dfVisuMax = 0.0;  // Key Color_ValorColor_n_1 COLOR_TEXT
+    bool m_bMinVisuSet = false;
+    double m_dfVisuMin = 0.0;  // Key Color_ValorColor_0 in COLOR_TEXT
+    bool m_bMaxVisuSet = false;
+    double m_dfVisuMax = 0.0;  // Key Color_ValorColor_n_1 COLOR_TEXT
 
-    CPLString osRefSystem = "";
+    CPLString m_osRefSystem = "";
 
     // Extent values of the band:
     // They always refer to extreme outer coordinates,
     // not to cell centers.
 
-    double dfBBMinX = 0.0;
-    double dfBBMinY = 0.0;
-    double dfBBMaxX = 0.0;
-    double dfBBMaxY = 0.0;
+    double m_dfBBMinX = 0.0;
+    double m_dfBBMinY = 0.0;
+    double m_dfBBMaxX = 0.0;
+    double m_dfBBMaxY = 0.0;
 
     // Nodata stuff
-    bool bNoDataSet = false;  // There is nodata?
-    double dfNoData = 0.0;    // Value of nodata
+    bool m_bNoDataSet = false;  // There is nodata?
+    double m_dfNoData = 0.0;    // Value of nodata
 };
 
 #endif /* ndef MM_BAND_INCLUDED */

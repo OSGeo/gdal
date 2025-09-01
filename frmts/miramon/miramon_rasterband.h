@@ -52,43 +52,44 @@ class MMRRasterBand final : public GDALPamRasterBand
 
     const std::vector<double> &GetPCT_Red() const
     {
-        return aadfPCT[0];
+        return m_aadfPCT[0];
     }
 
     const std::vector<double> &GetPCT_Green() const
     {
-        return aadfPCT[1];
+        return m_aadfPCT[1];
     }
 
     const std::vector<double> &GetPCT_Blue() const
     {
-        return aadfPCT[2];
+        return m_aadfPCT[2];
     }
 
     const std::vector<double> &GetPCT_Alpha() const
     {
-        return aadfPCT[3];
+        return m_aadfPCT[3];
     }
 
     bool IsValid() const
     {
-        return bIsValid;
+        return m_bIsValid;
     }
 
     bool IsInteger() const
     {
-        if (eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BIT ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BYTE ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_INTEGER ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_UINTEGER ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_LONG ||
-            eMMRDataTypeMiraMon ==
+        if (m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BIT ||
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BYTE ||
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_INTEGER ||
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_UINTEGER ||
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_LONG ||
+            m_eMMRDataTypeMiraMon ==
                 MMDataType::DATATYPE_AND_COMPR_INTEGER_ASCII ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BYTE_RLE ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE ||
-            eMMRDataTypeMiraMon ==
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BYTE_RLE ||
+            m_eMMRDataTypeMiraMon ==
+                MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE ||
+            m_eMMRDataTypeMiraMon ==
                 MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE ||
-            eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_LONG_RLE)
+            m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_LONG_RLE)
             return true;
         return false;
     }
@@ -114,27 +115,28 @@ class MMRRasterBand final : public GDALPamRasterBand
     CPLErr FromPaletteToColorTableContinousMode();
     CPLErr UpdateTableColorsFromPalette();
 
-    bool bTriedLoadColorTable = false;
-    bool bIsValid = false;  // Determines if the created object is valid or not.
+    bool m_bTriedLoadColorTable = false;
+    bool m_bIsValid =
+        false;  // Determines if the created object is valid or not.
 
-    std::array<std::vector<double>, 4> aadfPCT{};
+    std::array<std::vector<double>, 4> m_aadfPCT{};
 
-    CPLString osBandSection = "";  // Name of the band
+    CPLString m_osBandSection = "";  // Name of the band
 
-    MMDataType eMMRDataTypeMiraMon = MMDataType::DATATYPE_AND_COMPR_UNDEFINED;
-    MMBytesPerPixel eMMBytesPerPixel =
+    MMDataType m_eMMRDataTypeMiraMon = MMDataType::DATATYPE_AND_COMPR_UNDEFINED;
+    MMBytesPerPixel m_eMMBytesPerPixel =
         MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_UNDEFINED;
 
-    MMRRel *pfRel = nullptr;  // Pointer to info from rel. Do not free.
+    MMRRel *m_pfRel = nullptr;  // Pointer to info from rel. Do not free.
 
     // Color table
-    GDALColorTable *poCT = nullptr;
+    std::unique_ptr<GDALColorTable> m_poCT;
 
     // Attributte table
-    GDALRasterAttributeTable *poDefaultRAT = nullptr;
+    std::unique_ptr<GDALRasterAttributeTable> m_poDefaultRAT;
 
     // Palettes
-    MMRPalettes *Palette = nullptr;
+    std::unique_ptr<MMRPalettes> m_Palette;
 };
 
 #endif  // MMRRASTERBAND_H_INCLUDED

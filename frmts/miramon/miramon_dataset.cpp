@@ -76,11 +76,11 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
         return;
     }
 
-    pMMRRel = pMMfRel.release();
+    m_pMMRRel = std::move(pMMfRel);
 
     // General Dataset information available
-    nRasterXSize = pMMRRel->GetColumnsNumberFromREL();
-    nRasterYSize = pMMRRel->GetRowsNumberFromREL();
+    nRasterXSize = m_pMMRRel->GetColumnsNumberFromREL();
+    nRasterYSize = m_pMMRRel->GetRowsNumberFromREL();
     ReadProjection();
     nBands = 0;
 
@@ -91,7 +91,7 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
     AssignBandsToSubdataSets();
 
     // Create subdatasets or add bands, as needed
-    if (nNSubdataSets)
+    if (m_nNSubdataSets)
     {
         CreateSubdatasetsFromBands();
         // Fills adfGeoTransform if documented
@@ -103,7 +103,7 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
         // Fills adfGeoTransform if documented. If not, then gets one from last band.
         if (1 == UpdateGeoTransform())
         {
-            MMRBand *poBand = pMMRRel->GetBand(pMMRRel->GetNBands() - 1);
+            MMRBand *poBand = m_pMMRRel->GetBand(m_pMMRRel->GetNBands() - 1);
             if (poBand)
                 memcpy(&m_gt, &poBand->m_gt, sizeof(m_gt));
         }
@@ -113,7 +113,7 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
     nPamFlags |= GPF_NOSAVE;
 
     // We have a valid DataSet.
-    bIsValid = true;
+    m_bIsValid = true;
 }
 
 /************************************************************************/
@@ -174,10 +174,10 @@ void MMRDataset::CreateRasterBands()
 {
     MMRBand *pBand;
 
-    for (int nIBand = 0; nIBand < pMMRRel->GetNBands(); nIBand++)
+    for (int nIBand = 0; nIBand < m_pMMRRel->GetNBands(); nIBand++)
     {
         // Establish raster band info.
-        pBand = pMMRRel->GetBand(nIBand);
+        pBand = m_pMMRRel->GetBand(nIBand);
         if (!pBand)
             return;
         nRasterXSize = pBand->GetWidth();
@@ -189,7 +189,7 @@ void MMRDataset::CreateRasterBands()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to create a RasterBand from '%s'",
-                     pMMRRel->GetRELNameChar());
+                     m_pMMRRel->GetRELNameChar());
         }
 
         SetBand(nBands + 1, std::move(poRasterBand));
@@ -197,7 +197,7 @@ void MMRDataset::CreateRasterBands()
         MMRRasterBand *poBand =
             cpl::down_cast<MMRRasterBand *>(GetRasterBand(nIBand + 1));
 
-        pBand = pMMRRel->GetBand(nIBand);
+        pBand = m_pMMRRel->GetBand(nIBand);
         if (!pBand)
             return;
         if (!pBand->GetFriendlyDescription().empty())
@@ -208,19 +208,19 @@ void MMRDataset::CreateRasterBands()
     }
     // Some metadata items must be preserved just in case to be restored
     // if they are preserved through translations.
-    pMMRRel->RELToGDALMetadata(this);
+    m_pMMRRel->RELToGDALMetadata(this);
 }
 
 void MMRDataset::ReadProjection()
 
 {
-    if (!pMMRRel)
+    if (!m_pMMRRel)
         return;
 
     CPLString osSRS;
 
-    if (!pMMRRel->GetMetadataValue("SPATIAL_REFERENCE_SYSTEM:HORIZONTAL",
-                                   "HorizontalSystemIdentifier", osSRS) ||
+    if (!m_pMMRRel->GetMetadataValue("SPATIAL_REFERENCE_SYSTEM:HORIZONTAL",
+                                     "HorizontalSystemIdentifier", osSRS) ||
         osSRS.empty())
         return;
 
@@ -242,48 +242,48 @@ void MMRDataset::ReadProjection()
 // Assigns every band to a subdataset
 void MMRDataset::AssignBandsToSubdataSets()
 {
-    nNSubdataSets = 0;
-    if (!pMMRRel->GetBands())
+    m_nNSubdataSets = 0;
+    if (!m_pMMRRel->GetBands())
         return;
 
-    nNSubdataSets = 1;
+    m_nNSubdataSets = 1;
     int nIBand = 0;
-    MMRBand *pBand = pMMRRel->GetBand(nIBand);
+    MMRBand *pBand = m_pMMRRel->GetBand(nIBand);
     if (!pBand)
         return;
 
-    pBand->AssignSubDataSet(nNSubdataSets);
+    pBand->AssignSubDataSet(m_nNSubdataSets);
     MMRBand *pNextBand;
-    for (; nIBand < pMMRRel->GetNBands() - 1; nIBand++)
+    for (; nIBand < m_pMMRRel->GetNBands() - 1; nIBand++)
     {
         if (IsNextBandInANewDataSet(nIBand))
         {
-            nNSubdataSets++;
-            pNextBand = pMMRRel->GetBand(nIBand + 1);
+            m_nNSubdataSets++;
+            pNextBand = m_pMMRRel->GetBand(nIBand + 1);
             if (!pNextBand)
                 return;
-            pNextBand->AssignSubDataSet(nNSubdataSets);
+            pNextBand->AssignSubDataSet(m_nNSubdataSets);
         }
         else
         {
-            pNextBand = pMMRRel->GetBand(nIBand + 1);
+            pNextBand = m_pMMRRel->GetBand(nIBand + 1);
             if (!pNextBand)
                 return;
-            pNextBand->AssignSubDataSet(nNSubdataSets);
+            pNextBand->AssignSubDataSet(m_nNSubdataSets);
         }
     }
 
     // If there is only one subdataset, it means that
     // we don't need subdatasets (all assigned to 0)
-    if (nNSubdataSets == 1)
+    if (m_nNSubdataSets == 1)
     {
-        nNSubdataSets = 0;
-        for (nIBand = 0; nIBand < pMMRRel->GetNBands(); nIBand++)
+        m_nNSubdataSets = 0;
+        for (nIBand = 0; nIBand < m_pMMRRel->GetNBands(); nIBand++)
         {
-            pBand = pMMRRel->GetBand(nIBand);
+            pBand = m_pMMRRel->GetBand(nIBand);
             if (!pBand)
                 break;
-            pBand->AssignSubDataSet(nNSubdataSets);
+            pBand->AssignSubDataSet(m_nNSubdataSets);
         }
     }
 }
@@ -295,22 +295,22 @@ void MMRDataset::CreateSubdatasetsFromBands()
     CPLString osDSDesc;
     MMRBand *pBand;
 
-    for (int iSubdataset = 1; iSubdataset <= nNSubdataSets; iSubdataset++)
+    for (int iSubdataset = 1; iSubdataset <= m_nNSubdataSets; iSubdataset++)
     {
         int nIBand;
-        for (nIBand = 0; nIBand < pMMRRel->GetNBands(); nIBand++)
+        for (nIBand = 0; nIBand < m_pMMRRel->GetNBands(); nIBand++)
         {
-            pBand = pMMRRel->GetBand(nIBand);
+            pBand = m_pMMRRel->GetBand(nIBand);
             if (!pBand)
                 return;
             if (pBand->GetAssignedSubDataSet() == iSubdataset)
                 break;
         }
 
-        if (nIBand == pMMRRel->GetNBands())
+        if (nIBand == m_pMMRRel->GetNBands())
             break;
 
-        pBand = pMMRRel->GetBand(nIBand);
+        pBand = m_pMMRRel->GetBand(nIBand);
         if (!pBand)
             return;
 
@@ -321,9 +321,9 @@ void MMRDataset::CreateSubdatasetsFromBands()
                         pBand->GetBandName().c_str());
         nIBand++;
 
-        for (; nIBand < pMMRRel->GetNBands(); nIBand++)
+        for (; nIBand < m_pMMRRel->GetNBands(); nIBand++)
         {
-            pBand = pMMRRel->GetBand(nIBand);
+            pBand = m_pMMRRel->GetBand(nIBand);
             if (!pBand)
                 return;
             if (pBand->GetAssignedSubDataSet() != iSubdataset)
@@ -354,11 +354,11 @@ bool MMRDataset::IsNextBandInANewDataSet(int nIBand)
     if (nIBand < 0)
         return false;
 
-    if (nIBand + 1 >= pMMRRel->GetNBands())
+    if (nIBand + 1 >= m_pMMRRel->GetNBands())
         return false;
 
-    MMRBand *pThisBand = pMMRRel->GetBand(nIBand);
-    MMRBand *pNextBand = pMMRRel->GetBand(nIBand + 1);
+    MMRBand *pThisBand = m_pMMRRel->GetBand(nIBand);
+    MMRBand *pNextBand = m_pMMRRel->GetBand(nIBand + 1);
     if (!pThisBand || !pNextBand)
         return false;
 
@@ -407,23 +407,23 @@ int MMRDataset::UpdateGeoTransform()
     m_gt[4] = 0.0;
     m_gt[5] = 1.0;
 
-    if (!pMMRRel)
+    if (!m_pMMRRel)
         return 1;
 
     CPLString osMinX;
-    if (!pMMRRel->GetMetadataValue(SECTION_EXTENT, "MinX", osMinX) ||
+    if (!m_pMMRRel->GetMetadataValue(SECTION_EXTENT, "MinX", osMinX) ||
         osMinX.empty())
         return 1;
 
     if (1 != CPLsscanf(osMinX, "%lf", &(m_gt[0])))
         m_gt[0] = 0.0;
 
-    int nNCols = pMMRRel->GetColumnsNumberFromREL();
+    int nNCols = m_pMMRRel->GetColumnsNumberFromREL();
     if (nNCols <= 0)
         return 1;
 
     CPLString osMaxX;
-    if (!pMMRRel->GetMetadataValue(SECTION_EXTENT, "MaxX", osMaxX) ||
+    if (!m_pMMRRel->GetMetadataValue(SECTION_EXTENT, "MaxX", osMaxX) ||
         osMaxX.empty())
         return 1;
 
@@ -435,16 +435,16 @@ int MMRDataset::UpdateGeoTransform()
     m_gt[2] = 0.0;  // No rotation in MiraMon rasters
 
     CPLString osMinY;
-    if (!pMMRRel->GetMetadataValue(SECTION_EXTENT, "MinY", osMinY) ||
+    if (!m_pMMRRel->GetMetadataValue(SECTION_EXTENT, "MinY", osMinY) ||
         osMinY.empty())
         return 1;
 
     CPLString osMaxY;
-    if (!pMMRRel->GetMetadataValue(SECTION_EXTENT, "MaxY", osMaxY) ||
+    if (!m_pMMRRel->GetMetadataValue(SECTION_EXTENT, "MaxY", osMaxY) ||
         osMaxY.empty())
         return 1;
 
-    int nNRows = pMMRRel->GetRowsNumberFromREL();
+    int nNRows = m_pMMRRel->GetRowsNumberFromREL();
     if (nNRows <= 0)
         return 1;
 

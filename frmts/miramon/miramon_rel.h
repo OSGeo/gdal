@@ -85,80 +85,80 @@ class MMRRel
 
     bool IsValid() const
     {
-        return bIsValid;
+        return m_bIsValid;
     }
 
     void SetIsValid(bool bIsValidIn)
     {
-        bIsValid = bIsValidIn;
+        m_bIsValid = bIsValidIn;
     }
 
     VSILFILE *GetRELFile() const
     {
-        return pRELFile;
+        return m_pRELFile;
     }
 
     bool OpenRELFile()
     {
-        if (osRelFileName.empty())
+        if (m_osRelFileName.empty())
             return false;
 
-        pRELFile = VSIFOpenL(osRelFileName, "rb");
-        if (pRELFile)
+        m_pRELFile = VSIFOpenL(m_osRelFileName, "rb");
+        if (m_pRELFile)
             return true;
         return false;
     }
 
     void CloseRELFile()
     {
-        if (!pRELFile)
+        if (!m_pRELFile)
             return;
 
-        VSIFCloseL(pRELFile);
-        pRELFile = nullptr;
+        VSIFCloseL(m_pRELFile);
+        m_pRELFile = nullptr;
     }
 
     const char *GetRELNameChar() const
     {
-        return osRelFileName.c_str();
+        return m_osRelFileName.c_str();
     }
 
     CPLString GetRELName() const
     {
-        return osRelFileName;
+        return m_osRelFileName;
     }
 
     int GetNBands() const
     {
-        return nBands;
+        return m_nBands;
     }
 
     MMRBand **GetBands() const
     {
-        return papoBand;
+        return m_papoBand;
     }
 
     MMRBand *GetBand(int nIBand) const
     {
-        if (nIBand < 0 || nIBand >= nBands)
+        if (nIBand < 0 || nIBand >= m_nBands)
             return nullptr;
 
-        return papoBand[nIBand];
+        return m_papoBand[nIBand];
     }
 
     int isAMiraMonFile() const
     {
-        return bIsAMiraMonFile;
+        return m_bIsAMiraMonFile;
     }
 
     void addExcludedSectionKey(const CPLString section, const CPLString key)
     {
-        ExcludedSectionKey.emplace(section, key);
+        m_ExcludedSectionKey.emplace(section, key);
     }
 
     std::set<ExcludedEntry> GetExcludedMetadata() const
     {
-        return ExcludedSectionKey;
+        return m_ExcludedSectionKey;
     }
 
   private:
@@ -178,31 +178,32 @@ class MMRRel
     void UpdateRELNameChar(const CPLString &osRelFileNameIn);
     CPLErr ParseBandInfo();
 
-    CPLString osRelFileName = "";
-    VSILFILE *pRELFile = nullptr;
-    static CPLString szImprobableRELChain;
+    CPLString m_osRelFileName = "";
+    VSILFILE *m_pRELFile = nullptr;
+    static CPLString m_szImprobableRELChain;
 
-    bool bIsValid = false;  // Determines if the created object is valid or not.
-    bool bIsAMiraMonFile = false;
+    bool m_bIsValid =
+        false;  // Determines if the created object is valid or not.
+    bool m_bIsAMiraMonFile = false;
 
     // List of rawBandNames in a subdataset
-    std::vector<CPLString> papoSDSBands{};
+    std::vector<CPLString> m_papoSDSBands{};
 
-    int nBands = 0;
-    MMRBand **papoBand = nullptr;
+    int m_nBands = 0;
+    MMRBand **m_papoBand = nullptr;
 
     // Preserving metadata
 
     // Domain
-    static constexpr const char *kMetadataDomain = "MIRAMON";
+    static constexpr const char *m_kMetadataDomain = "MIRAMON";
 
     // Used to join Section and Key in a single
     // name for SetMetadataItem(Name, Value)
-    static constexpr const char *SecKeySeparator = "[$$$]";
+    static constexpr const char *m_SecKeySeparator = "[$$$]";
 
     // List of excluded pairs {Section, Key} to be added to metadata
     // Empty Key means all section
-    std::set<ExcludedEntry> ExcludedSectionKey = {};
+    std::set<ExcludedEntry> m_ExcludedSectionKey = {};
 };
 
 #endif /* ndef MMR_REL_H_INCLUDED */

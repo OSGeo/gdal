@@ -21,28 +21,28 @@
 /*                           MMRRasterBand()                            */
 /************************************************************************/
 MMRRasterBand::MMRRasterBand(MMRDataset *poDSIn, int nBandIn)
-    : pfRel(poDSIn->GetRel())
+    : m_pfRel(poDSIn->GetRel())
 {
     poDS = poDSIn;
     nBand = nBandIn;
 
     eAccess = poDSIn->GetAccess();
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (poBand == nullptr)
         return;
 
     // Getting some band info
-    osBandSection = poBand->GetBandSection();
-    eMMRDataTypeMiraMon = poBand->GeteMMDataType();
-    eMMBytesPerPixel = poBand->GeteMMBytesPerPixel();
+    m_osBandSection = poBand->GetBandSection();
+    m_eMMRDataTypeMiraMon = poBand->GeteMMDataType();
+    m_eMMBytesPerPixel = poBand->GeteMMBytesPerPixel();
     nBlockXSize = poBand->GetBlockXSize();
     nBlockYSize = poBand->GetBlockYSize();
 
     UpdateDataType();
 
     // We have a valid RasterBand.
-    bIsValid = true;
+    m_bIsValid = true;
 }
 
 /************************************************************************/
@@ -53,18 +53,6 @@ MMRRasterBand::~MMRRasterBand()
 
 {
     FlushCache(true);
-
-    if (poCT != nullptr)
-    {
-        delete poCT;
-        poCT = nullptr;
-    }
-
-    if (Palette != nullptr)
-        delete Palette;
-
-    if (poDefaultRAT != nullptr)
-        delete poDefaultRAT;
 }
 
 /************************************************************************/
@@ -72,7 +60,7 @@ MMRRasterBand::~MMRRasterBand()
 /************************************************************************/
 void MMRRasterBand::UpdateDataType()
 {
-    switch (eMMRDataTypeMiraMon)
+    switch (m_eMMRDataTypeMiraMon)
     {
         case MMDataType::DATATYPE_AND_COMPR_BIT:
         case MMDataType::DATATYPE_AND_COMPR_BYTE:
@@ -112,7 +100,7 @@ void MMRRasterBand::UpdateDataType()
             // This should really report an error, but this isn't
             // so easy from within constructors.
             CPLDebug("GDAL", "Unsupported pixel type in MMRRasterBand: %d.",
-                     static_cast<int>(eMMRDataTypeMiraMon));
+                     static_cast<int>(m_eMMRDataTypeMiraMon));
             break;
     }
 }
@@ -128,7 +116,7 @@ double MMRRasterBand::GetNoDataValue(int *pbSuccess)
     if (pbSuccess)
         *pbSuccess = FALSE;
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return dfNoData;
 
@@ -154,7 +142,7 @@ double MMRRasterBand::GetMinimum(int *pbSuccess)
     if (pbSuccess)
         *pbSuccess = FALSE;
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand || !poBand->GetMinSet())
         return 0.0;
 
@@ -174,7 +162,7 @@ double MMRRasterBand::GetMaximum(int *pbSuccess)
     if (pbSuccess)
         *pbSuccess = FALSE;
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand || !poBand->GetMaxSet())
         return 0.0;
 
@@ -193,10 +181,10 @@ CPLErr MMRRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     CPLErr eErr = CE_None;
 
-    if (nBand < 1 || nBand > pfRel->GetNBands())
+    if (nBand < 1 || nBand > m_pfRel->GetNBands())
         return CE_Failure;
 
-    MMRBand *pBand = pfRel->GetBand(nBand - 1);
+    MMRBand *pBand = m_pfRel->GetBand(nBand - 1);
     if (!pBand)
         return CE_Failure;
     eErr = pBand->GetRasterBlock(nBlockXOff, nBlockYOff, pImage,
@@ -204,7 +192,7 @@ CPLErr MMRRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                                      GDALGetDataTypeSizeBytes(eDataType));
 
     if (eErr == CE_None &&
-        eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BIT)
+        m_eMMRDataTypeMiraMon == MMDataType::DATATYPE_AND_COMPR_BIT)
     {
         GByte *pabyData = static_cast<GByte *>(pImage);
 
@@ -227,21 +215,20 @@ CPLErr MMRRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 GDALColorTable *MMRRasterBand::GetColorTable()
 {
-    if (bTriedLoadColorTable)
-        return poCT;
+    if (m_bTriedLoadColorTable)
+        return m_poCT.get();
 
-    bTriedLoadColorTable = true;
+    m_bTriedLoadColorTable = true;
 
-    Palette = new MMRPalettes(*pfRel, osBandSection);
+    m_Palette = std::make_unique<MMRPalettes>(*m_pfRel, m_osBandSection);
 
-    if (!Palette->IsValid())
+    if (!m_Palette->IsValid())
     {
-        delete Palette;
-        Palette = nullptr;
+        m_Palette = nullptr;
         return nullptr;
     }
 
-    poCT = new GDALColorTable();
+    m_poCT = std::make_unique<GDALColorTable>();
 
     /*
     * GDALPaletteInterp
@@ -250,14 +237,13 @@ GDALColorTable *MMRRasterBand::GetColorTable()
     if (CE_None != UpdateTableColorsFromPalette())
     {
         // No color table available. Perhaps some attribute table with the colors?
-        delete poCT;
-        poCT = nullptr;
-        return poCT;
+        m_poCT = nullptr;
+        return m_poCT.get();
     }
 
     ConvertColorsFromPaletteToColorTable();
 
-    return poCT;
+    return m_poCT.get();
 }
 
 /************************************************************************/
@@ -276,18 +262,17 @@ GDALColorInterp MMRRasterBand::GetColorInterpretation()
 GDALRasterAttributeTable *MMRRasterBand::GetDefaultRAT()
 
 {
-    if (poDefaultRAT != nullptr)
-        return poDefaultRAT;
+    if (m_poDefaultRAT != nullptr)
+        return m_poDefaultRAT.get();
 
-    poDefaultRAT = new GDALDefaultRasterAttributeTable();
+    m_poDefaultRAT = std::make_unique<GDALDefaultRasterAttributeTable>();
 
     if (CE_None != FillRATFromPalette())
     {
-        delete poDefaultRAT;
-        poDefaultRAT = nullptr;
+        m_poDefaultRAT = nullptr;
     }
 
-    return poDefaultRAT;
+    return m_poDefaultRAT.get();
 }
 
 CPLErr MMRRasterBand::FillRATFromPalette()
@@ -295,8 +280,8 @@ CPLErr MMRRasterBand::FillRATFromPalette()
 {
     CPLString os_IndexJoin;
 
-    if (!pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSection,
-                                 "IndexsJoinTaula", os_IndexJoin) ||
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, m_osBandSection,
+                                   "IndexsJoinTaula", os_IndexJoin) ||
         os_IndexJoin.empty())
     {
         // I don't have any associated attribute table but
@@ -336,14 +321,13 @@ CPLErr MMRRasterBand::UpdateAttributeColorsFromPalette()
 
 {
     // If there is no palette, let's get one
-    if (!Palette)
+    if (!m_Palette)
     {
-        Palette = new MMRPalettes(*pfRel, osBandSection);
+        m_Palette = std::make_unique<MMRPalettes>(*m_pfRel, m_osBandSection);
 
-        if (!Palette->IsValid())
+        if (!m_Palette->IsValid())
         {
-            delete Palette;
-            Palette = nullptr;
+            m_Palette = nullptr;
             return CE_None;
         }
     }
@@ -355,19 +339,18 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
                                        CPLString osAssociateRel)
 {
     // If there is no palette, let's get one
-    if (!Palette)
+    if (!m_Palette)
     {
-        Palette = new MMRPalettes(*pfRel, osBandSection);
+        m_Palette = std::make_unique<MMRPalettes>(*m_pfRel, m_osBandSection);
 
-        if (!Palette->IsValid())
+        if (!m_Palette->IsValid())
         {
-            delete Palette;
-            Palette = nullptr;
+            m_Palette = nullptr;
             return CE_None;
         }
     }
 
-    if (!Palette->IsCategorical())
+    if (!m_Palette->IsCategorical())
         return CE_Failure;
 
     struct MM_DATA_BASE_XP oAttributteTable;
@@ -431,7 +414,7 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
     // 0 column: category value
     if (oAttributteTable.pField[nFieldIndex].DecimalsIfFloat)
     {
-        if (CE_None != poDefaultRAT->CreateColumn(
+        if (CE_None != m_poDefaultRAT->CreateColumn(
                            oAttributteTable.pField[nFieldIndex].FieldName,
                            GFT_Real, GFU_MinMax))
             return CE_Failure;
@@ -440,7 +423,7 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
     }
     else
     {
-        if (CE_None != poDefaultRAT->CreateColumn(
+        if (CE_None != m_poDefaultRAT->CreateColumn(
                            oAttributteTable.pField[nFieldIndex].FieldName,
                            GFT_Integer, GFU_MinMax))
             return CE_Failure;
@@ -472,7 +455,7 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
         if (nIField == nCategIndex)
             eFieldUsage = GFU_Name;
 
-        if (CE_None != poDefaultRAT->CreateColumn(
+        if (CE_None != m_poDefaultRAT->CreateColumn(
                            oAttributteTable.pField[nIField].FieldName,
                            eFieldType, eFieldUsage))
             return CE_Failure;
@@ -482,12 +465,28 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
 
     VSIFSeekL(oAttributteTable.pfDataBase, oAttributteTable.FirstRecordOffset,
               SEEK_SET);
-    poDefaultRAT->SetRowCount(nNRATColumns);
+    m_poDefaultRAT->SetRowCount(nNRATColumns);
 
     MM_ACCUMULATED_BYTES_TYPE_DBF nBufferSize =
         oAttributteTable.BytesPerRecord + 1;
     char *pzsRecord = static_cast<char *>(VSI_CALLOC_VERBOSE(1, nBufferSize));
+    if (!pzsRecord)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory allocating working buffer");
+        VSIFCloseL(oAttributteTable.pfDataBase);
+        MM_ReleaseMainFields(&oAttributteTable);
+    }
+
     char *pszField = static_cast<char *>(VSI_CALLOC_VERBOSE(1, nBufferSize));
+    if (!pszField)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory allocating working buffer");
+        VSIFree(pzsRecord);
+        VSIFCloseL(oAttributteTable.pfDataBase);
+        MM_ReleaseMainFields(&oAttributteTable);
+    }
 
     for (int nIRecord = 0;
          nIRecord < static_cast<int>(oAttributteTable.nRecords); nIRecord++)
@@ -499,6 +498,11 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid attribute table: \"%s\"", osDBFName.c_str());
+
+            VSIFree(pzsRecord);
+            VSIFree(pszField);
+            VSIFCloseL(oAttributteTable.pfDataBase);
+            MM_ReleaseMainFields(&oAttributteTable);
             return CE_Failure;
         }
 
@@ -515,9 +519,14 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid attribute table: \"%s\"", osDBFName.c_str());
+
+            VSIFree(pzsRecord);
+            VSIFree(pszField);
+            VSIFCloseL(oAttributteTable.pfDataBase);
+            MM_ReleaseMainFields(&oAttributteTable);
             return CE_Failure;
         }
-        poDefaultRAT->SetValue(nCatField, 0, osCatField);
+        m_poDefaultRAT->SetValue(nCatField, 0, osCatField);
 
         int nIOrderedField = 1;
         for (nIField = 0; nIField < oAttributteTable.nFields; nIField++)
@@ -549,9 +558,14 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid attribute table: \"%s\"", osDBFName.c_str());
+
+                VSIFree(pzsRecord);
+                VSIFree(pszField);
+                VSIFCloseL(oAttributteTable.pfDataBase);
+                MM_ReleaseMainFields(&oAttributteTable);
                 return CE_Failure;
             }
-            poDefaultRAT->SetValue(nCatField, nIOrderedField, osField);
+            m_poDefaultRAT->SetValue(nCatField, nIOrderedField, osField);
             nIOrderedField++;
         }
     }
@@ -567,21 +581,21 @@ CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
 CPLErr MMRRasterBand::UpdateTableColorsFromPalette()
 
 {
-    if (!Palette)
+    if (!m_Palette)
         return CE_Failure;
 
-    if (Palette->IsConstantColor())
+    if (m_Palette->IsConstantColor())
         return AssignUniformColorTable();
 
     CPLString os_Color_Paleta;
 
-    if (!pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osBandSection,
-                                 "Color_Paleta", os_Color_Paleta) ||
+    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
+                                   "Color_Paleta", os_Color_Paleta) ||
         os_Color_Paleta.empty() || os_Color_Paleta == "<Automatic>")
         return CE_Failure;
 
     CPLErr peErr;
-    if (Palette->IsCategorical())
+    if (m_Palette->IsCategorical())
         peErr = FromPaletteToColorTableCategoricalMode();
     else
         peErr = FromPaletteToColorTableContinousMode();
@@ -592,23 +606,26 @@ CPLErr MMRRasterBand::UpdateTableColorsFromPalette()
 CPLErr MMRRasterBand::AssignUniformColorTable()
 
 {
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
     // Only for 1 or 2 bytes images
-    if (eMMBytesPerPixel != MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_BYTE_I_RLE &&
-        eMMBytesPerPixel != MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_INTEGER_I_RLE)
+    if (m_eMMBytesPerPixel !=
+            MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_BYTE_I_RLE &&
+        m_eMMBytesPerPixel !=
+            MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_INTEGER_I_RLE)
     {
         return CE_None;
     }
 
-    const int nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
+    const int nNPossibleValues = 1
+                                 << (8 * static_cast<int>(m_eMMBytesPerPixel));
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
         try
         {
-            aadfPCT[iColumn].resize(nNPossibleValues);
+            m_aadfPCT[iColumn].resize(nNPossibleValues);
         }
         catch (std::bad_alloc &e)
         {
@@ -621,19 +638,19 @@ CPLErr MMRRasterBand::AssignUniformColorTable()
     {
         if (poBand->BandHasNoData() && nITableColor == poBand->GetNoDataValue())
         {
-            aadfPCT[0][nITableColor] = 0;
-            aadfPCT[1][nITableColor] = 0;
-            aadfPCT[2][nITableColor] = 0;
-            aadfPCT[3][nITableColor] = 0;
+            m_aadfPCT[0][nITableColor] = 0;
+            m_aadfPCT[1][nITableColor] = 0;
+            m_aadfPCT[2][nITableColor] = 0;
+            m_aadfPCT[3][nITableColor] = 0;
         }
         else
         {
             // Before the minimum, we apply the color of the first
             // element (as a placeholder).
-            aadfPCT[0][nITableColor] = Palette->GetConstantColorRGB().c1;
-            aadfPCT[1][nITableColor] = Palette->GetConstantColorRGB().c2;
-            aadfPCT[2][nITableColor] = Palette->GetConstantColorRGB().c3;
-            aadfPCT[3][nITableColor] = 255;
+            m_aadfPCT[0][nITableColor] = m_Palette->GetConstantColorRGB().c1;
+            m_aadfPCT[1][nITableColor] = m_Palette->GetConstantColorRGB().c2;
+            m_aadfPCT[2][nITableColor] = m_Palette->GetConstantColorRGB().c3;
+            m_aadfPCT[3][nITableColor] = 255;
         }
     }
 
@@ -644,29 +661,29 @@ CPLErr MMRRasterBand::AssignUniformColorTable()
 CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
 
 {
-    if (!Palette)
+    if (!m_Palette)
         return CE_Failure;
 
-    if (!Palette->IsCategorical())
+    if (!m_Palette->IsCategorical())
         return CE_Failure;
 
     // If the palette is not loaded, then, ignore the conversion silently
-    if (Palette->GetSizeOfPaletteColors() == 0)
+    if (m_Palette->GetSizeOfPaletteColors() == 0)
         return CE_Failure;
 
-    if (Palette->ColorScaling == ColorTreatment::DEFAULT_SCALING)
-        Palette->ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
-    else if (Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->ColorScaling == ColorTreatment::DEFAULT_SCALING)
+        m_Palette->ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
+    else if (m_Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
         return CE_Failure;
 
     // Getting number of color in the palette
-    int nNPaletteColors = Palette->GetSizeOfPaletteColors();
+    int nNPaletteColors = m_Palette->GetSizeOfPaletteColors();
     int nNPossibleValues;
 
-    if (eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE_RLE &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
+    if (m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE_RLE &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
     {
         // Rare case where its a not byte or uinteger img file
         // but it has a categorical palettte.
@@ -674,14 +691,14 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     }
     else
     {
-        nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
+        nNPossibleValues = 1 << (8 * static_cast<int>(m_eMMBytesPerPixel));
     }
 
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
         try
         {
-            aadfPCT[iColumn].resize(nNPossibleValues);
+            m_aadfPCT[iColumn].resize(nNPossibleValues);
         }
         catch (std::bad_alloc &e)
         {
@@ -697,23 +714,23 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     int nIPaletteColor = 0;
     for (nIPaletteColor = 0; nIPaletteColor < nNPaletteColors; nIPaletteColor++)
     {
-        aadfPCT[0][nIPaletteColor] =
-            Palette->GetPaletteColorsValue(0, nIPaletteColor);
-        aadfPCT[1][nIPaletteColor] =
-            Palette->GetPaletteColorsValue(1, nIPaletteColor);
-        aadfPCT[2][nIPaletteColor] =
-            Palette->GetPaletteColorsValue(2, nIPaletteColor);
-        aadfPCT[3][nIPaletteColor] =
-            Palette->GetPaletteColorsValue(3, nIPaletteColor);
+        m_aadfPCT[0][nIPaletteColor] =
+            m_Palette->GetPaletteColorsValue(0, nIPaletteColor);
+        m_aadfPCT[1][nIPaletteColor] =
+            m_Palette->GetPaletteColorsValue(1, nIPaletteColor);
+        m_aadfPCT[2][nIPaletteColor] =
+            m_Palette->GetPaletteColorsValue(2, nIPaletteColor);
+        m_aadfPCT[3][nIPaletteColor] =
+            m_Palette->GetPaletteColorsValue(3, nIPaletteColor);
     }
 
     // Rest of colors
     for (; nIPaletteColor < nNPossibleValues; nIPaletteColor++)
     {
-        aadfPCT[0][nIPaletteColor] = Palette->GetDefaultColorRGB().c1;
-        aadfPCT[1][nIPaletteColor] = Palette->GetDefaultColorRGB().c2;
-        aadfPCT[2][nIPaletteColor] = Palette->GetDefaultColorRGB().c3;
-        aadfPCT[3][nIPaletteColor] = Palette->GetDefaultColorRGB().c4;
+        m_aadfPCT[0][nIPaletteColor] = m_Palette->GetDefaultColorRGB().c1;
+        m_aadfPCT[1][nIPaletteColor] = m_Palette->GetDefaultColorRGB().c2;
+        m_aadfPCT[2][nIPaletteColor] = m_Palette->GetDefaultColorRGB().c3;
+        m_aadfPCT[3][nIPaletteColor] = m_Palette->GetDefaultColorRGB().c4;
     }
 
     return CE_None;
@@ -723,36 +740,37 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
 CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
 
 {
-    if (!Palette)
+    if (!m_Palette)
         return CE_Failure;
 
-    if (Palette->IsCategorical())
+    if (m_Palette->IsCategorical())
         return CE_Failure;
 
     // TODO: more types of scaling
-    if (Palette->ColorScaling != ColorTreatment::LINEAR_SCALING)
+    if (m_Palette->ColorScaling != ColorTreatment::LINEAR_SCALING)
         return CE_Failure;
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
-    if (eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE_RLE &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER &&
-        eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
+    if (m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_BYTE_RLE &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER &&
+        m_eMMRDataTypeMiraMon != MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
         return CE_Failure;  // Attribute table
 
     // Some necessary information
     if (!poBand->GetVisuMinSet() || !poBand->GetVisuMaxSet())
         return CE_Failure;
 
-    const int nNPossibleValues = 1 << (8 * static_cast<int>(eMMBytesPerPixel));
+    const int nNPossibleValues = 1
+                                 << (8 * static_cast<int>(m_eMMBytesPerPixel));
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
         try
         {
-            aadfPCT[iColumn].resize(nNPossibleValues);
+            m_aadfPCT[iColumn].resize(nNPossibleValues);
         }
         catch (std::bad_alloc &e)
         {
@@ -761,35 +779,35 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
         }
     }
 
-    if (static_cast<int>(eMMBytesPerPixel) > 2 &&
-        Palette->GetNumberOfColors() < nNPossibleValues)
+    if (static_cast<int>(m_eMMBytesPerPixel) > 2 &&
+        m_Palette->GetNumberOfColors() < nNPossibleValues)
         return CE_Failure;
 
-    if (Palette->GetNumberOfColors() < 1)
+    if (m_Palette->GetNumberOfColors() < 1)
         return CE_Failure;
 
     int nFirstValidPaletteIndex;
     unsigned short nIndexColor;
     double dfSlope = 1, dfIntercept = 0;
 
-    if (Palette->HasNodata() && Palette->GetNoDataPaletteIndex() == 0)
+    if (m_Palette->HasNodata() && m_Palette->GetNoDataPaletteIndex() == 0)
         nFirstValidPaletteIndex = 1;
     else
         nFirstValidPaletteIndex = 0;
 
     int nIPaletteColorNoData = 0;
-    if (static_cast<int>(eMMBytesPerPixel) == 2)
+    if (static_cast<int>(m_eMMBytesPerPixel) == 2)
     {
         // A scaling is applied between the minimum and maximum display values.
-        dfSlope = (static_cast<double>(Palette->GetNumberOfColors()) - 1) /
+        dfSlope = (static_cast<double>(m_Palette->GetNumberOfColors()) - 1) /
                   (poBand->GetVisuMax() - poBand->GetVisuMin());
 
         dfIntercept = -dfSlope * poBand->GetVisuMin();
 
         if (poBand->BandHasNoData())
         {
-            if (Palette->GetNoDataPaletteIndex() ==
-                Palette->GetNumberOfColors())
+            if (m_Palette->GetNoDataPaletteIndex() ==
+                m_Palette->GetNumberOfColors())
                 nIPaletteColorNoData = nNPossibleValues - 1;
         }
     }
@@ -799,9 +817,9 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
     {
         if (poBand->BandHasNoData() && nIPaletteColor == nIPaletteColorNoData)
         {
-            if (Palette->HasNodata())
+            if (m_Palette->HasNodata())
                 AssignRGBColor(nIPaletteColor,
-                               Palette->GetNoDataPaletteIndex());
+                               m_Palette->GetNoDataPaletteIndex());
             else
                 AssignRGBColorDirectly(nIPaletteColor, 255);
         }
@@ -817,7 +835,7 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
             {
                 // Between the minimum and maximum, we apply the value
                 // read from the table.
-                if (static_cast<int>(eMMBytesPerPixel) < 2)
+                if (static_cast<int>(m_eMMBytesPerPixel) < 2)
                 {
                     // The value is applied directly.
                     AssignRGBColor(nIPaletteColor, nFirstValidPaletteIndex);
@@ -828,9 +846,9 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
                     // The value is applied according to the scaling.
                     nIndexColor = static_cast<unsigned short>(
                         dfSlope * nIPaletteColor + dfIntercept);
-                    if (nIndexColor > Palette->GetNumberOfColors())
+                    if (nIndexColor > m_Palette->GetNumberOfColors())
                         nIndexColor = static_cast<unsigned short>(
-                            Palette->GetNumberOfColors());
+                            m_Palette->GetNumberOfColors());
                     AssignRGBColor(nIPaletteColor, nIndexColor);
                 }
             }
@@ -839,7 +857,7 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
                 // After the maximum, we apply the value of the last
                 // element (as a placeholder).
                 AssignRGBColor(nIPaletteColor,
-                               Palette->GetNumberOfColors() - 1);
+                               m_Palette->GetNumberOfColors() - 1);
             }
         }
     }
@@ -857,8 +875,8 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
 
     CPLString osTableNameSection_value;
 
-    if (!pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osBandSection, os_Join,
-                                 osTableNameSection_value) ||
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, m_osBandSection,
+                                   os_Join, osTableNameSection_value) ||
         osTableNameSection_value.empty())
         return CE_Failure;  // No attribute available
 
@@ -867,8 +885,8 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
 
     CPLString osShortRELName;
 
-    if (!pfRel->GetMetadataValue(osTableNameSection, "NomFitxer",
-                                 osShortRELName) ||
+    if (!m_pfRel->GetMetadataValue(osTableNameSection, "NomFitxer",
+                                   osShortRELName) ||
         osShortRELName.empty())
     {
         osRELName = "";
@@ -880,9 +898,9 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
     if (osExtension.tolower() == "rel")
     {
         // Get path relative to REL file
-        osRELName =
-            CPLFormFilenameSafe(CPLGetPathSafe(pfRel->GetRELNameChar()).c_str(),
-                                osShortRELName, "");
+        osRELName = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_pfRel->GetRELNameChar()).c_str(), osShortRELName,
+            "");
 
         // Getting information from the associated REL
         MMRRel localRel(osRELName, false);
@@ -917,7 +935,7 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
         if (localRel.GetMetadataValue(osSection, "TractamentVariable",
                                       osTactVar) &&
             osTactVar == "Categoric")
-            poDefaultRAT->SetTableType(GRTT_THEMATIC);
+            m_poDefaultRAT->SetTableType(GRTT_THEMATIC);
         else
         {
             osRELName = "";
@@ -931,19 +949,19 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
     if (osExtension.tolower() == "dbf")
     {
         // Get path relative to REL file
-        osDBFName =
-            CPLFormFilenameSafe(CPLGetPathSafe(pfRel->GetRELNameChar()).c_str(),
-                                osShortRELName, "");
+        osDBFName = CPLFormFilenameSafe(
+            CPLGetPathSafe(m_pfRel->GetRELNameChar()).c_str(), osShortRELName,
+            "");
 
-        if (!pfRel->GetMetadataValue(osTableNameSection, "AssociatRel",
-                                     osAssociateREL) ||
+        if (!m_pfRel->GetMetadataValue(osTableNameSection, "AssociatRel",
+                                       osAssociateREL) ||
             osAssociateREL.empty())
         {
             osRELName = "";
             osAssociateREL = "";
             return CE_Failure;
         }
-        poDefaultRAT->SetTableType(GRTT_THEMATIC);
+        m_poDefaultRAT->SetTableType(GRTT_THEMATIC);
         return CE_None;
     }
 
@@ -956,25 +974,25 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
 CPLErr MMRRasterBand::FromPaletteToAttributeTable()
 
 {
-    if (!Palette)
+    if (!m_Palette)
         return CE_None;
 
     // TODO: more types of scaling
-    if (Palette->ColorScaling != ColorTreatment::LINEAR_SCALING &&
-        Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->ColorScaling != ColorTreatment::LINEAR_SCALING &&
+        m_Palette->ColorScaling != ColorTreatment::DIRECT_ASSIGNATION)
         return CE_Failure;
 
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
-    if (Palette->IsConstantColor())
+    if (m_Palette->IsConstantColor())
         return FromPaletteToAttributeTableConstant();
 
-    if (Palette->GetNumberOfColors() <= 0)
+    if (m_Palette->GetNumberOfColors() <= 0)
         return CE_Failure;
 
-    if (Palette->ColorScaling == ColorTreatment::DIRECT_ASSIGNATION)
+    if (m_Palette->ColorScaling == ColorTreatment::DIRECT_ASSIGNATION)
         return FromPaletteToAttributeTableDirectAssig();
 
     // A scaling is applied between the minimum and maximum display values.
@@ -983,7 +1001,7 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTable()
 
 CPLErr MMRRasterBand::FromPaletteToAttributeTableConstant()
 {
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
@@ -991,86 +1009,86 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableConstant()
     if (!poBand->GetVisuMinSet() || !poBand->GetVisuMaxSet())
         return CE_Failure;
 
-    poDefaultRAT->CreateColumn("MIN", GFT_Real, GFU_Min);
-    poDefaultRAT->CreateColumn("MAX", GFT_Real, GFU_Max);
-    poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
-    poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
-    poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
+    m_poDefaultRAT->CreateColumn("MIN", GFT_Real, GFU_Min);
+    m_poDefaultRAT->CreateColumn("MAX", GFT_Real, GFU_Max);
+    m_poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
+    m_poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
+    m_poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
 
-    poDefaultRAT->SetTableType(GRTT_THEMATIC);
+    m_poDefaultRAT->SetTableType(GRTT_THEMATIC);
 
     int nRow = 0;
     if (poBand->BandHasNoData())
     {
-        poDefaultRAT->SetRowCount(2);
+        m_poDefaultRAT->SetRowCount(2);
 
-        poDefaultRAT->SetValue(0, 0, poBand->GetNoDataValue());
-        poDefaultRAT->SetValue(0, 1, poBand->GetNoDataValue());
-        poDefaultRAT->SetValue(0, 2, Palette->GetNoDataDefaultColor().c1);
-        poDefaultRAT->SetValue(0, 3, Palette->GetNoDataDefaultColor().c2);
-        poDefaultRAT->SetValue(0, 4, Palette->GetNoDataDefaultColor().c3);
+        m_poDefaultRAT->SetValue(0, 0, poBand->GetNoDataValue());
+        m_poDefaultRAT->SetValue(0, 1, poBand->GetNoDataValue());
+        m_poDefaultRAT->SetValue(0, 2, m_Palette->GetNoDataDefaultColor().c1);
+        m_poDefaultRAT->SetValue(0, 3, m_Palette->GetNoDataDefaultColor().c2);
+        m_poDefaultRAT->SetValue(0, 4, m_Palette->GetNoDataDefaultColor().c3);
         nRow++;
     }
     else
-        poDefaultRAT->SetRowCount(1);
+        m_poDefaultRAT->SetRowCount(1);
 
     // Sets the constant color from min to max
-    poDefaultRAT->SetValue(nRow, 0, poBand->GetVisuMin());
-    poDefaultRAT->SetValue(nRow, 1, poBand->GetVisuMax());
-    poDefaultRAT->SetValue(nRow, 2, Palette->GetConstantColorRGB().c1);
-    poDefaultRAT->SetValue(nRow, 3, Palette->GetConstantColorRGB().c2);
-    poDefaultRAT->SetValue(nRow, 4, Palette->GetConstantColorRGB().c3);
+    m_poDefaultRAT->SetValue(nRow, 0, poBand->GetVisuMin());
+    m_poDefaultRAT->SetValue(nRow, 1, poBand->GetVisuMax());
+    m_poDefaultRAT->SetValue(nRow, 2, m_Palette->GetConstantColorRGB().c1);
+    m_poDefaultRAT->SetValue(nRow, 3, m_Palette->GetConstantColorRGB().c2);
+    m_poDefaultRAT->SetValue(nRow, 4, m_Palette->GetConstantColorRGB().c3);
 
     return CE_None;
 }
 
 CPLErr MMRRasterBand::FromPaletteToAttributeTableDirectAssig()
 {
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
-    poDefaultRAT->SetTableType(GRTT_THEMATIC);
+    m_poDefaultRAT->SetTableType(GRTT_THEMATIC);
 
-    poDefaultRAT->CreateColumn("MIN_MAX", GFT_Real, GFU_MinMax);
-    poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
-    poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
-    poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
+    m_poDefaultRAT->CreateColumn("MIN_MAX", GFT_Real, GFU_MinMax);
+    m_poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
+    m_poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
+    m_poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
 
-    poDefaultRAT->SetRowCount(static_cast<int>(
-        Palette->GetNumberOfColorsIncludingNodata()));  // +1 for last element
+    m_poDefaultRAT->SetRowCount(static_cast<int>(
+        m_Palette->GetNumberOfColorsIncludingNodata()));  // +1 for last element
 
     // Nodata color assignation
     int nIRow = 0;
-    if (poBand->BandHasNoData() && Palette->HasNodata())
+    if (poBand->BandHasNoData() && m_Palette->HasNodata())
     {
-        poDefaultRAT->SetValue(nIRow, 0, poBand->GetNoDataValue());
-        poDefaultRAT->SetValue(nIRow, 1,
-                               Palette->GetPaletteColorsValue(
-                                   0, Palette->GetNoDataPaletteIndex()));
-        poDefaultRAT->SetValue(nIRow, 2,
-                               Palette->GetPaletteColorsValue(
-                                   1, Palette->GetNoDataPaletteIndex()));
-        poDefaultRAT->SetValue(nIRow, 3,
-                               Palette->GetPaletteColorsValue(
-                                   2, Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 0, poBand->GetNoDataValue());
+        m_poDefaultRAT->SetValue(nIRow, 1,
+                                 m_Palette->GetPaletteColorsValue(
+                                     0, m_Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 2,
+                                 m_Palette->GetPaletteColorsValue(
+                                     1, m_Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 3,
+                                 m_Palette->GetPaletteColorsValue(
+                                     2, m_Palette->GetNoDataPaletteIndex()));
         nIRow++;
     }
 
     int nIPaletteColor = 0;
-    for (; nIPaletteColor < Palette->GetNumberOfColors(); nIPaletteColor++)
+    for (; nIPaletteColor < m_Palette->GetNumberOfColors(); nIPaletteColor++)
     {
-        if (nIPaletteColor == Palette->GetNoDataPaletteIndex())
+        if (nIPaletteColor == m_Palette->GetNoDataPaletteIndex())
             continue;
 
-        poDefaultRAT->SetValue(nIRow, 0, nIPaletteColor);
+        m_poDefaultRAT->SetValue(nIRow, 0, nIPaletteColor);
 
-        poDefaultRAT->SetValue(
-            nIRow, 1, Palette->GetPaletteColorsValue(0, nIPaletteColor));
-        poDefaultRAT->SetValue(
-            nIRow, 2, Palette->GetPaletteColorsValue(1, nIPaletteColor));
-        poDefaultRAT->SetValue(
-            nIRow, 3, Palette->GetPaletteColorsValue(2, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 1, m_Palette->GetPaletteColorsValue(0, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 2, m_Palette->GetPaletteColorsValue(1, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 3, m_Palette->GetPaletteColorsValue(2, nIPaletteColor));
 
         nIRow++;
     }
@@ -1080,7 +1098,7 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableDirectAssig()
 
 CPLErr MMRRasterBand::FromPaletteToAttributeTableLinear()
 {
-    MMRBand *poBand = pfRel->GetBand(nBand - 1);
+    MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
     if (!poBand)
         return CE_Failure;
 
@@ -1088,94 +1106,98 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableLinear()
     if (!poBand->GetVisuMinSet() || !poBand->GetVisuMaxSet())
         return CE_Failure;
 
-    poDefaultRAT->SetTableType(GRTT_ATHEMATIC);
-    poDefaultRAT->CreateColumn("MIN", GFT_Real, GFU_Min);
-    poDefaultRAT->CreateColumn("MAX", GFT_Real, GFU_Max);
-    poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
-    poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
-    poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
+    m_poDefaultRAT->SetTableType(GRTT_ATHEMATIC);
+    m_poDefaultRAT->CreateColumn("MIN", GFT_Real, GFU_Min);
+    m_poDefaultRAT->CreateColumn("MAX", GFT_Real, GFU_Max);
+    m_poDefaultRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
+    m_poDefaultRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
+    m_poDefaultRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
 
-    poDefaultRAT->SetRowCount(Palette->GetNumberOfColorsIncludingNodata() +
-                              1);  // +1 for last element
+    m_poDefaultRAT->SetRowCount(m_Palette->GetNumberOfColorsIncludingNodata() +
+                                1);  // +1 for last element
 
     // Nodata color assignation
     int nIRow = 0;
-    if (poBand->BandHasNoData() && Palette->HasNodata())
+    if (poBand->BandHasNoData() && m_Palette->HasNodata())
     {
-        poDefaultRAT->SetValue(nIRow, 0, poBand->GetNoDataValue());
-        poDefaultRAT->SetValue(nIRow, 1, poBand->GetNoDataValue());
-        poDefaultRAT->SetValue(nIRow, 2,
-                               Palette->GetPaletteColorsValue(
-                                   0, Palette->GetNoDataPaletteIndex()));
-        poDefaultRAT->SetValue(nIRow, 3,
-                               Palette->GetPaletteColorsValue(
-                                   1, Palette->GetNoDataPaletteIndex()));
-        poDefaultRAT->SetValue(nIRow, 4,
-                               Palette->GetPaletteColorsValue(
-                                   2, Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 0, poBand->GetNoDataValue());
+        m_poDefaultRAT->SetValue(nIRow, 1, poBand->GetNoDataValue());
+        m_poDefaultRAT->SetValue(nIRow, 2,
+                                 m_Palette->GetPaletteColorsValue(
+                                     0, m_Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 3,
+                                 m_Palette->GetPaletteColorsValue(
+                                     1, m_Palette->GetNoDataPaletteIndex()));
+        m_poDefaultRAT->SetValue(nIRow, 4,
+                                 m_Palette->GetPaletteColorsValue(
+                                     2, m_Palette->GetNoDataPaletteIndex()));
         nIRow++;
     }
 
-    double dfInterval = (poBand->GetVisuMax() - poBand->GetVisuMin()) /
-                        (static_cast<double>(Palette->GetNumberOfColors()) + 1);
+    double dfInterval =
+        (poBand->GetVisuMax() - poBand->GetVisuMin()) /
+        (static_cast<double>(m_Palette->GetNumberOfColors()) + 1);
 
     int nIPaletteColorNoData = 0;
     if (poBand->BandHasNoData())
     {
-        if (Palette->GetNoDataPaletteIndex() == Palette->GetNumberOfColors())
-            nIPaletteColorNoData = Palette->GetNumberOfColorsIncludingNodata();
+        if (m_Palette->GetNoDataPaletteIndex() ==
+            m_Palette->GetNumberOfColors())
+            nIPaletteColorNoData =
+                m_Palette->GetNumberOfColorsIncludingNodata();
     }
 
     bool bFirstIteration = true;
     int nIPaletteColor = 0;
-    for (; nIPaletteColor < Palette->GetNumberOfColors() - 1; nIPaletteColor++)
+    for (; nIPaletteColor < m_Palette->GetNumberOfColors() - 1;
+         nIPaletteColor++)
     {
-        if (poBand->BandHasNoData() && Palette->HasNodata() &&
+        if (poBand->BandHasNoData() && m_Palette->HasNodata() &&
             nIPaletteColor == nIPaletteColorNoData)
             continue;
         if (bFirstIteration)
         {
-            poDefaultRAT->SetValue(
+            m_poDefaultRAT->SetValue(
                 nIRow, 0, poBand->GetVisuMin() + dfInterval * nIPaletteColor);
         }
         else
         {
             if (IsInteger())
             {
-                poDefaultRAT->SetValue(
+                m_poDefaultRAT->SetValue(
                     nIRow, 0,
                     ceil(poBand->GetVisuMin() + dfInterval * nIPaletteColor));
             }
             else
             {
-                poDefaultRAT->SetValue(nIRow, 0,
-                                       poBand->GetVisuMin() +
-                                           dfInterval * nIPaletteColor);
+                m_poDefaultRAT->SetValue(nIRow, 0,
+                                         poBand->GetVisuMin() +
+                                             dfInterval * nIPaletteColor);
             }
         }
         bFirstIteration = false;
 
         if (IsInteger())
         {
-            poDefaultRAT->SetValue(
+            m_poDefaultRAT->SetValue(
                 nIRow, 1,
                 ceil(poBand->GetVisuMin() +
                      dfInterval * (static_cast<double>(nIPaletteColor) + 1)));
         }
         else
         {
-            poDefaultRAT->SetValue(
+            m_poDefaultRAT->SetValue(
                 nIRow, 1,
                 poBand->GetVisuMin() +
                     dfInterval * (static_cast<double>(nIPaletteColor) + 1));
         }
 
-        poDefaultRAT->SetValue(
-            nIRow, 2, Palette->GetPaletteColorsValue(0, nIPaletteColor));
-        poDefaultRAT->SetValue(
-            nIRow, 3, Palette->GetPaletteColorsValue(1, nIPaletteColor));
-        poDefaultRAT->SetValue(
-            nIRow, 4, Palette->GetPaletteColorsValue(2, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 2, m_Palette->GetPaletteColorsValue(0, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 3, m_Palette->GetPaletteColorsValue(1, nIPaletteColor));
+        m_poDefaultRAT->SetValue(
+            nIRow, 4, m_Palette->GetPaletteColorsValue(2, nIPaletteColor));
 
         nIRow++;
     }
@@ -1183,39 +1205,40 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTableLinear()
     // Last interval
     if (IsInteger())
     {
-        poDefaultRAT->SetValue(
+        m_poDefaultRAT->SetValue(
             nIRow, 0,
-            ceil(poBand->GetVisuMin() +
-                 dfInterval *
-                     (static_cast<double>(Palette->GetNumberOfColors()) - 1)));
+            ceil(
+                poBand->GetVisuMin() +
+                dfInterval *
+                    (static_cast<double>(m_Palette->GetNumberOfColors()) - 1)));
     }
     else
     {
-        poDefaultRAT->SetValue(
+        m_poDefaultRAT->SetValue(
             nIRow, 0,
             poBand->GetVisuMin() +
                 dfInterval *
-                    (static_cast<double>(Palette->GetNumberOfColors()) - 1));
+                    (static_cast<double>(m_Palette->GetNumberOfColors()) - 1));
     }
-    poDefaultRAT->SetValue(nIRow, 1, poBand->GetVisuMax());
-    poDefaultRAT->SetValue(
-        nIRow, 2, Palette->GetPaletteColorsValue(0, nIPaletteColor - 1));
-    poDefaultRAT->SetValue(
-        nIRow, 3, Palette->GetPaletteColorsValue(1, nIPaletteColor - 1));
-    poDefaultRAT->SetValue(
-        nIRow, 4, Palette->GetPaletteColorsValue(2, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(nIRow, 1, poBand->GetVisuMax());
+    m_poDefaultRAT->SetValue(
+        nIRow, 2, m_Palette->GetPaletteColorsValue(0, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(
+        nIRow, 3, m_Palette->GetPaletteColorsValue(1, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(
+        nIRow, 4, m_Palette->GetPaletteColorsValue(2, nIPaletteColor - 1));
 
     nIRow++;
 
     // Last value
-    poDefaultRAT->SetValue(nIRow, 0, poBand->GetVisuMax());
-    poDefaultRAT->SetValue(nIRow, 1, poBand->GetVisuMax());
-    poDefaultRAT->SetValue(
-        nIRow, 2, Palette->GetPaletteColorsValue(0, nIPaletteColor - 1));
-    poDefaultRAT->SetValue(
-        nIRow, 3, Palette->GetPaletteColorsValue(1, nIPaletteColor - 1));
-    poDefaultRAT->SetValue(
-        nIRow, 4, Palette->GetPaletteColorsValue(2, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(nIRow, 0, poBand->GetVisuMax());
+    m_poDefaultRAT->SetValue(nIRow, 1, poBand->GetVisuMax());
+    m_poDefaultRAT->SetValue(
+        nIRow, 2, m_Palette->GetPaletteColorsValue(0, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(
+        nIRow, 3, m_Palette->GetPaletteColorsValue(1, nIPaletteColor - 1));
+    m_poDefaultRAT->SetValue(
+        nIRow, 4, m_Palette->GetPaletteColorsValue(2, nIPaletteColor - 1));
 
     return CE_None;
 }
@@ -1245,27 +1268,27 @@ void MMRRasterBand::ConvertColorsFromPaletteToColorTable()
                 break;
             }
 
-            poCT->SetColorEntry(iColor, &sEntry);
+            m_poCT->SetColorEntry(iColor, &sEntry);
         }
     }
 }
 
 void MMRRasterBand::AssignRGBColor(int nIndexDstCT, int nIndexSrcPalete)
 {
-    aadfPCT[0][nIndexDstCT] =
-        Palette->GetPaletteColorsValue(0, nIndexSrcPalete);
-    aadfPCT[1][nIndexDstCT] =
-        Palette->GetPaletteColorsValue(1, nIndexSrcPalete);
-    aadfPCT[2][nIndexDstCT] =
-        Palette->GetPaletteColorsValue(2, nIndexSrcPalete);
-    aadfPCT[3][nIndexDstCT] =
-        Palette->GetPaletteColorsValue(3, nIndexSrcPalete);
+    m_aadfPCT[0][nIndexDstCT] =
+        m_Palette->GetPaletteColorsValue(0, nIndexSrcPalete);
+    m_aadfPCT[1][nIndexDstCT] =
+        m_Palette->GetPaletteColorsValue(1, nIndexSrcPalete);
+    m_aadfPCT[2][nIndexDstCT] =
+        m_Palette->GetPaletteColorsValue(2, nIndexSrcPalete);
+    m_aadfPCT[3][nIndexDstCT] =
+        m_Palette->GetPaletteColorsValue(3, nIndexSrcPalete);
 }
 
 void MMRRasterBand::AssignRGBColorDirectly(int nIndexDstCT, double dfValue)
 {
-    aadfPCT[0][nIndexDstCT] = dfValue;
-    aadfPCT[1][nIndexDstCT] = dfValue;
-    aadfPCT[2][nIndexDstCT] = dfValue;
-    aadfPCT[3][nIndexDstCT] = dfValue;
+    m_aadfPCT[0][nIndexDstCT] = dfValue;
+    m_aadfPCT[1][nIndexDstCT] = dfValue;
+    m_aadfPCT[2][nIndexDstCT] = dfValue;
+    m_aadfPCT[3][nIndexDstCT] = dfValue;
 }
