@@ -26,9 +26,9 @@ Synopsis
 .. program-output:: gdal vector pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read`` or ``concat``, and the last one ``info`` or ``write``. Each step has its
+The first step must be ``read`` or ``concat``, and the last one ``info``, ``partition`` or ``write``. Each step has its
 own positional or non-positional arguments.
-Apart from ``read``, ``concat``, ``info`` and ``write``,
+Apart from ``read``, ``concat``, ``info``, ``partition`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -134,6 +134,14 @@ Details for options can be found in :ref:`gdal_vector_swap_xy`.
 .. program-output:: gdal vector pipeline --help-doc=info
 
 Details for options can be found in :ref:`gdal_vector_info`.
+
+* partition
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal vector pipeline --help-doc=partition
+
+Details for options can be found in :ref:`gdal_vector_partition`.
 
 * write
 

@@ -925,6 +925,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_partition",
+        "gdal-vector-partition",
+        "Partition a vector dataset into multiple files",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_pipeline",
         "gdal-vector-pipeline",
         "Process a vector dataset applying several steps",
