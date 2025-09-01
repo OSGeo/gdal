@@ -69,6 +69,8 @@ Standard options
     Editing capabilities depend on the selected
     dialect with :option:`--dialect`.
 
+    This option is mutually exclusive with the :option:`--where` option.
+
 .. option:: --where <WHERE>|@<filename>
 
     An attribute query in a restricted form of the queries used in the SQL
@@ -81,6 +83,8 @@ Standard options
     .. code-block:: console
 
         --where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
+    This option is mutually exclusive with the :option:`--sql` option.
 
 .. option:: --dialect <dialect>
 

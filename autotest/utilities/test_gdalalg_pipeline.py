@@ -36,21 +36,20 @@ def test_gdalalg_pipeline_read_and_write_vector(tmp_vsimem):
         return True
 
     pipeline = get_pipeline_alg()
-    with gdaltest.error_raised(gdal.CE_Warning):
-        assert pipeline.ParseRunAndFinalize(
-            [
-                "read",
-                "../ogr/data/poly.shp",
-                "!",
-                "edit",
-                "--layer-metadata",
-                "FOO=BAR",
-                "!",
-                "write",
-                out_filename,
-            ],
-            my_progress,
-        )
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "edit",
+            "--layer-metadata",
+            "FOO=BAR",
+            "!",
+            "write",
+            out_filename,
+        ],
+        my_progress,
+    )
     assert last_pct[0] == 1.0
 
     with gdal.OpenEx(out_filename) as ds:
