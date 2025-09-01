@@ -4381,7 +4381,7 @@ GDALAlgorithm::AddLayerNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddOutputLayerNameArg()                  */
+/*                  GDALAlgorithm::AddOutputLayerNameArg()              */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
