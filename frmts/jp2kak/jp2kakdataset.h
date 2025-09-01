@@ -94,7 +94,6 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 
     static void KakaduInitialize();
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
