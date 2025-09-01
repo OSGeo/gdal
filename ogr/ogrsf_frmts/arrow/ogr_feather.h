@@ -171,13 +171,14 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
         return true;
     }
 
+    friend class OGRFeatherWriterDataset;
+    bool Close();
+
   public:
     OGRFeatherWriterLayer(
         GDALDataset *poDS, arrow::MemoryPool *poMemoryPool,
         const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
         const char *pszLayerName);
-
-    ~OGRFeatherWriterLayer() override;
 
     bool SetOptions(const std::string &osFilename, CSLConstList papszOptions,
                     const OGRSpatialReference *poSpatialRef,
@@ -208,6 +209,10 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
     explicit OGRFeatherWriterDataset(
         const char *pszFilename,
         const std::shared_ptr<arrow::io::OutputStream> &poOutputStream);
+
+    ~OGRFeatherWriterDataset() override;
+
+    CPLErr Close() override;
 
     arrow::MemoryPool *GetMemoryPool() const
     {

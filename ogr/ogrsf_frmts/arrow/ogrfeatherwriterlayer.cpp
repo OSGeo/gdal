@@ -29,13 +29,18 @@ OGRFeatherWriterLayer::OGRFeatherWriterLayer(
 }
 
 /************************************************************************/
-/*                     ~OGRFeatherWriterLayer()                         */
+/*                                Close()                               */
 /************************************************************************/
 
-OGRFeatherWriterLayer::~OGRFeatherWriterLayer()
+bool OGRFeatherWriterLayer::Close()
 {
     if (m_bInitializationOK)
-        FinalizeWriting();
+    {
+        if (!FinalizeWriting())
+            return false;
+    }
+
+    return true;
 }
 
 /************************************************************************/

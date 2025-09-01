@@ -450,6 +450,8 @@ class OGRParquetWriterDataset final : public GDALPamDataset
     explicit OGRParquetWriterDataset(
         const std::shared_ptr<arrow::io::OutputStream> &poOutputStream);
 
+    ~OGRParquetWriterDataset() override;
+
     arrow::MemoryPool *GetMemoryPool() const
     {
         return m_poMemoryPool.get();
