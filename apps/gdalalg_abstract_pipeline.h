@@ -148,6 +148,9 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 
     virtual int GetOutputType() const = 0;
 
+    // Used by GDALDispatcherAlgorithm for vector info/convert
+    void SetInputDataset(GDALDataset *poDS);
+
   protected:
     struct ConstructorOptions
     {
