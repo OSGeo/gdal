@@ -38,12 +38,6 @@ class GDALRasterInfoAlgorithm /* non final */
         return true;
     }
 
-    GDALDataset *GetDatasetRef()
-    {
-        return m_inputDataset.empty() ? nullptr
-                                      : m_inputDataset[0].GetDatasetRef();
-    }
-
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 

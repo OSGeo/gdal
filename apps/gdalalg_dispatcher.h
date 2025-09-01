@@ -106,7 +106,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
 
     if (ok)
     {
-        auto poDS = m_rasterDispatcher->GetDatasetRef();
+        auto poDS = m_rasterDispatcher->GetInputDatasetRef();
         // cppcheck-suppress knownConditionTrueFalse
         if (poDS &&
             (poDS->GetRasterCount() > 0 || poDS->GetMetadata("SUBDATASETS")))
@@ -135,7 +135,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
         return false;
     }
 
-    auto poDSFromRaster = m_rasterDispatcher->GetDatasetRef();
+    auto poDSFromRaster = m_rasterDispatcher->GetInputDatasetRef();
     // cppcheck-suppress knownConditionTrueFalse
     if (poDSFromRaster)
     {
