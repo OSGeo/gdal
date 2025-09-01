@@ -187,7 +187,7 @@ def test_gdalalg_raster_polygonize_layer_and_field_name():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "foo"
+    alg["output-layer"] = "foo"
     alg["attribute-name"] = "bar"
     assert alg.Run()
     ds = alg["output"].GetDataset()

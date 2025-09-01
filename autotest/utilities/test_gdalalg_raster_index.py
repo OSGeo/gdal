@@ -45,7 +45,7 @@ def test_gdalalg_raster_index():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     assert alg.Run(my_progress)
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
@@ -68,7 +68,7 @@ def test_gdalalg_raster_index_source_by_ref():
     alg["input"] = gdal.GetDriverByName("MEM").Create("", 1, 1)
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "my_layer"
+    alg["output-layer"] = "my_layer"
     with pytest.raises(
         Exception, match="Input datasets must be provided by name, not as object"
     ):
@@ -164,7 +164,7 @@ def test_gdalalg_raster_index_recursive_filter_absolute_path_location_name():
     alg["input"] = "../gcore/data"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["recursive"] = True
     alg["filename-filter"] = "byt?.tif"
     alg["absolute-path"] = True
@@ -187,7 +187,7 @@ def test_gdalalg_raster_index_metadata():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["metadata"] = {"foo": "bar"}
     alg["filename-filter"] = "byte.tif"
     assert alg.Run()
@@ -203,7 +203,7 @@ def test_gdalalg_raster_index_min_pixel_size(min_pixel_size, expected_count):
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["min-pixel-size"] = min_pixel_size
     with gdaltest.error_raised(
         gdal.CE_Warning if min_pixel_size == 61 else gdal.CE_None
@@ -220,7 +220,7 @@ def test_gdalalg_raster_index_crs():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["dst-crs"] = "EPSG:4267"
     alg["source-crs-field-name"] = "source_crs"
     assert alg.Run()
@@ -241,7 +241,7 @@ def test_gdalalg_raster_error():
     alg["input"] = "/i/do/not/exist"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["dst-crs"] = "EPSG:4267"
     with pytest.raises(Exception, match="Unable to open /i/do/not/exist"):
         alg.Run()
@@ -253,7 +253,7 @@ def test_gdalalg_raster_skip_errors_with_crs():
     alg["input"] = "/i/do/not/exist"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["dst-crs"] = "EPSG:4267"
     alg["skip-errors"] = True
     with gdaltest.error_raised(gdal.CE_Warning):
@@ -269,7 +269,7 @@ def test_gdalalg_raster_skip_errors_without_crs():
     alg["input"] = "/i/do/not/exist"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["layer"] = "out"
+    alg["output-layer"] = "out"
     alg["skip-errors"] = True
     with gdaltest.error_raised(gdal.CE_Warning):
         assert alg.Run()

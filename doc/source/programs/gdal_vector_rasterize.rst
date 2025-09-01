@@ -69,7 +69,7 @@ Standard options
 
    Instead of burning a new value, this adds the new value to the existing raster, implies ``--update``. Suitable for heatmaps for instance.
 
-.. option:: -l, --layer, --layer-name <LAYER-NAME>
+.. option:: -l, --input-layer <INPUT-LAYER>
 
     Indicates the layer(s) from the datasource that will be used for input features. May be specified multiple times, but at least one layer name or a -sql option must be specified (not both).
 

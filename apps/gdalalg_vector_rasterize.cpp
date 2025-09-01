@@ -66,9 +66,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
            _("Indicates that a burn value should be extracted from the Z"
              " values of the feature"),
            &m_3d);
-    AddArg("layer-name", 'l', _("Layer name"), &m_layerName)
-        .AddAlias("layer")
-        .SetMutualExclusionGroup("layer-name-or-sql");
+    AddLayerNameArg(&m_layerName).SetMutualExclusionGroup("layer-name-or-sql");
     AddArg("where", 0, _("SQL where clause"), &m_where);
     AddArg("sql", 0, _("SQL select statement"), &m_sql)
         .SetMutualExclusionGroup("layer-name-or-sql");

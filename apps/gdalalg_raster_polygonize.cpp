@@ -54,9 +54,9 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
         AddUpdateArg(&m_update);
         AddOverwriteLayerArg(&m_overwriteLayer);
         AddAppendLayerArg(&m_appendLayer);
-        AddLayerNameArg(&m_outputLayerName)
-            .AddAlias("nln")
-            .SetDefault(m_outputLayerName);
+        AddOutputLayerNameArg(&m_outputLayerName)
+            .SetDefault(m_outputLayerName)
+            .AddAlias("nln");
     }
 
     // gdal_polygonize specific options
