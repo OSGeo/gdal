@@ -198,6 +198,9 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
             .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
             .SetHiddenForCLI(hiddenForCLI);
     }
+    AddArg("skip-errors", 0, _("Skip errors when writing features"),
+           &m_skipErrors)
+        .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
 }
 
 /************************************************************************/
