@@ -187,7 +187,26 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
                                int nDataSize)
 
 {
+    if (nYBlock > INT_MAX / (std::max(1, m_nNRowsPerBlock)))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Error in GetRasterBlock");
+        return CE_Failure;
+    }
     const int iBlock = nYBlock * m_nNRowsPerBlock;
+
+    if (m_nBlockXSize > INT_MAX / (std::max(1, m_nDataTypeSizeBytes)))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Error in GetRasterBlock");
+        return CE_Failure;
+    }
+
+    if (m_nBlockYSize >
+        INT_MAX / (std::max(1, m_nDataTypeSizeBytes * m_nBlockXSize)))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Error in GetRasterBlock");
+        return CE_Failure;
+    }
+
     const int nGDALBlockSize =
         m_nDataTypeSizeBytes * m_nBlockXSize * m_nBlockYSize;
 
@@ -788,6 +807,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
     if (VSIFReadL(&nHeaderOffset, sizeof(vsi_l_offset), 1, m_pfIMG) != 1)
         return 0;
 
+    std::set<vsi_l_offset> alreadyVisitedOffsets;
     bool bRepeat;
     do
     {
@@ -817,6 +837,15 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 
             if (nHeaderOffset == 0)
                 return 0;
+
+            if (cpl::contains(alreadyVisitedOffsets, nHeaderOffset))
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Error reading offsets. They will be ignored.");
+                return 0;
+            }
+
+            alreadyVisitedOffsets.insert(nHeaderOffset);
 
             bRepeat = TRUE;
         }
@@ -975,6 +1004,16 @@ bool MMRBand::FillRowOffsets()
             }
 
             // Not indexed RLE. We create a dynamic indexation
+            if (m_nWidth >
+                INT_MAX /
+                    (std::max(1, static_cast<int>(m_eMMBytesPerPixel)) + 1))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large row: %d",
+                         m_nWidth);
+                VSIFSeekL(m_pfIMG, nStartOffset, SEEK_SET);
+                return false;
+            }
+
             nMaxBytesPerCompressedRow =
                 static_cast<int>(m_eMMBytesPerPixel)
                     ? (m_nWidth * (static_cast<int>(m_eMMBytesPerPixel) + 1))

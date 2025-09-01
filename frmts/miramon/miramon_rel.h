@@ -133,17 +133,12 @@ class MMRRel
         return m_nBands;
     }
 
-    MMRBand **GetBands() const
-    {
-        return m_papoBand;
-    }
-
     MMRBand *GetBand(int nIBand) const
     {
         if (nIBand < 0 || nIBand >= m_nBands)
             return nullptr;
 
-        return m_papoBand[nIBand];
+        return m_oBands[nIBand].get();
     }
 
     int isAMiraMonFile() const
@@ -190,7 +185,7 @@ class MMRRel
     std::vector<CPLString> m_papoSDSBands{};
 
     int m_nBands = 0;
-    MMRBand **m_papoBand = nullptr;
+    std::vector<std::unique_ptr<MMRBand>> m_oBands{};
 
     // Preserving metadata
 

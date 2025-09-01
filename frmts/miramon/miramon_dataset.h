@@ -54,7 +54,7 @@ class MMRDataset final : public GDALPamDataset
     void ReadProjection();
     void AssignBandsToSubdataSets();
     void CreateSubdatasetsFromBands();
-    void CreateRasterBands();
+    bool CreateRasterBands();
     bool IsNextBandInANewDataSet(int nIBand);
 
     int UpdateGeoTransform();
@@ -71,7 +71,7 @@ class MMRDataset final : public GDALPamDataset
 
     bool m_bIsValid =
         false;  // Determines if the created object is valid or not.
-    std::unique_ptr<MMRRel> m_pMMRRel;
+    std::unique_ptr<MMRRel> m_pMMRRel = nullptr;
 
     std::vector<gdal::GCP> m_aoGCPs{};
 

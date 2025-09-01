@@ -99,7 +99,9 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        CreateRasterBands();
+        if (!CreateRasterBands())
+            return;
+
         // Fills adfGeoTransform if documented. If not, then gets one from last band.
         if (1 == UpdateGeoTransform())
         {
@@ -170,7 +172,7 @@ GDALDataset *MMRDataset::Open(GDALOpenInfo *poOpenInfo)
     return poDS.release();
 }
 
-void MMRDataset::CreateRasterBands()
+bool MMRDataset::CreateRasterBands()
 {
     MMRBand *pBand;
 
@@ -179,7 +181,7 @@ void MMRDataset::CreateRasterBands()
         // Establish raster band info.
         pBand = m_pMMRRel->GetBand(nIBand);
         if (!pBand)
-            return;
+            return false;
         nRasterXSize = pBand->GetWidth();
         nRasterYSize = pBand->GetHeight();
         pBand->UpdateGeoTransform();  // Fills adfGeoTransform for this band
@@ -190,6 +192,8 @@ void MMRDataset::CreateRasterBands()
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to create a RasterBand from '%s'",
                      m_pMMRRel->GetRELNameChar());
+
+            return false;
         }
 
         SetBand(nBands + 1, std::move(poRasterBand));
@@ -199,7 +203,7 @@ void MMRDataset::CreateRasterBands()
 
         pBand = m_pMMRRel->GetBand(nIBand);
         if (!pBand)
-            return;
+            return false;
         if (!pBand->GetFriendlyDescription().empty())
         {
             poBand->SetMetadataItem("DESCRIPTION",
@@ -209,6 +213,8 @@ void MMRDataset::CreateRasterBands()
     // Some metadata items must be preserved just in case to be restored
     // if they are preserved through translations.
     m_pMMRRel->RELToGDALMetadata(this);
+
+    return true;
 }
 
 void MMRDataset::ReadProjection()
@@ -243,7 +249,7 @@ void MMRDataset::ReadProjection()
 void MMRDataset::AssignBandsToSubdataSets()
 {
     m_nNSubdataSets = 0;
-    if (!m_pMMRRel->GetBands())
+    if (!m_pMMRRel.get())
         return;
 
     m_nNSubdataSets = 1;

@@ -139,11 +139,6 @@ MMRRel::MMRRel(const CPLString &osRELFilenameIn, bool bIMGMustExist)
 MMRRel::~MMRRel()
 {
     CloseRELFile();
-
-    for (int i = 0; i < m_nBands; i++)
-        delete m_papoBand[i];
-
-    delete[] m_papoBand;
 }
 
 /************************************************************************/
@@ -824,7 +819,7 @@ CPLErr MMRRel::ParseBandInfo()
     else
         nNBand = nMaxBands;
 
-    m_papoBand = new MMRBand *[nNBand];
+    m_oBands.reserve(nNBand);
 
     for (int i = 0; i < nMaxBands; i++)
     {
@@ -859,13 +854,12 @@ CPLErr MMRRel::ParseBandInfo()
         if (m_nBands >= nNBand)
             break;
 
-        m_papoBand[m_nBands] = new MMRBand(*this, osBandSectionValue.Trim());
+        m_oBands.emplace_back(
+            std::make_unique<MMRBand>(*this, osBandSectionValue.Trim()));
 
-        if (!m_papoBand[m_nBands]->IsValid())
+        if (!m_oBands[m_nBands]->IsValid())
         {
-            // This band is not been completed, so let's delete it now
-            // The rest of bands will be deleted by destructor.
-            delete m_papoBand[m_nBands];
+            // This band is not been completed
             return CE_Failure;
         }
 
