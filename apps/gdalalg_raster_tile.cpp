@@ -170,6 +170,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
 
     AddArg(GDAL_ARG_NAME_OUTPUT, 'o', _("Output directory"), &m_output)
         .SetRequired()
+        .SetIsInput()
         .SetMinCharCount(1)
         .SetPositional();
 

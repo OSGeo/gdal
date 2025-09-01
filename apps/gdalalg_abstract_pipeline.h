@@ -934,10 +934,15 @@ bool GDALAbstractPipelineAlgorithm<StepAlgorithm>::RunStep(
 
     if (!m_steps.back()->m_output.empty())
     {
-        auto outputStringArg =
-            StepAlgorithm::GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
-        if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
-            outputStringArg->Set(m_steps.back()->m_output);
+        auto stepOutputStringArg =
+            m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+        if (stepOutputStringArg && stepOutputStringArg->IsOutput())
+        {
+            auto outputStringArg =
+                StepAlgorithm::GetArg(GDAL_ARG_NAME_OUTPUT_STRING);
+            if (outputStringArg && outputStringArg->GetType() == GAAT_STRING)
+                outputStringArg->Set(m_steps.back()->m_output);
+        }
     }
     else if (ret && !StepAlgorithm::m_outputDataset.GetDatasetRef())
     {
