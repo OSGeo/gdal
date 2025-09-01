@@ -3930,6 +3930,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                                             mulFactor
 #endif
                 ](double dfVal, [[maybe_unused]] const double *inputValues,
+                                        [[maybe_unused]] int nStride,
                                         [[maybe_unused]] int nInputValues)
                 {
                     constexpr bool isFloat =
@@ -3954,7 +3955,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                                 const bool isPositive = inputValues[0] >= 0;
                                 for (int i = 0; i < nInputValues; ++i)
                                 {
-                                    if (std::isnan(inputValues[i]))
+                                    if (std::isnan(inputValues[i * nStride]))
                                         return dfVal;
                                     // cppcheck-suppress knownConditionTrueFalse
                                     if ((inputValues[i] >= 0) != isPositive)
@@ -3980,11 +3981,11 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                     pafDstScanline[iFilteredPixelOff] =
                         replaceValIfNodata(static_cast<Twork>(
                             ScaleValue(dfVal1, padfHorizontalFiltered + j,
-                                       nSrcLineCount)));
+                                       nDstXSize, nSrcLineCount)));
                     pafDstScanline[iFilteredPixelOff + 1] =
-                        replaceValIfNodata(static_cast<Twork>(ScaleValue(
-                            dfVal2, padfHorizontalFiltered + j + nDstXSize,
-                            nSrcLineCount)));
+                        replaceValIfNodata(static_cast<Twork>(
+                            ScaleValue(dfVal2, padfHorizontalFiltered + j + 1,
+                                       nDstXSize, nSrcLineCount)));
                 }
                 if (iFilteredPixelOff < nDstXSize)
                 {
@@ -3992,8 +3993,9 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                         padfHorizontalFiltered + j, nDstXSize, padfWeights,
                         nSrcLineCount);
                     pafDstScanline[iFilteredPixelOff] =
-                        replaceValIfNodata(static_cast<Twork>(ScaleValue(
-                            dfVal, padfHorizontalFiltered + j, nSrcLineCount)));
+                        replaceValIfNodata(static_cast<Twork>(
+                            ScaleValue(dfVal, padfHorizontalFiltered + j,
+                                       nDstXSize, nSrcLineCount)));
                 }
             }
         }
