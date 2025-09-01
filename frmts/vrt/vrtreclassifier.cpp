@@ -58,7 +58,7 @@ CPLErr Reclassifier::Interval::Parse(const char *s, char **rest)
         if (end == start)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Interval must start with '(' or ']'");
+                     "Interval must start with '(' or '['");
             return CE_Failure;
         }
 
@@ -139,9 +139,9 @@ CPLErr Reclassifier::Interval::Parse(const char *s, char **rest)
 
     if (dfMin > dfMax)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Lower bound of interval must be lower or equal to upper bound");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Lower bound of interval must be lower or equal to upper "
+                 "bound");
         return CE_Failure;
     }
 
@@ -227,9 +227,9 @@ CPLErr Reclassifier::Init(const char *pszText,
         {
             if (!noDataValue.has_value())
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Value mapped from NO_DATA, but NoData value is not set");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Value mapped from NO_DATA, but NoData value is "
+                         "not set");
                 return CE_Failure;
             }
 
