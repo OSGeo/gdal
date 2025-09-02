@@ -6,7 +6,7 @@
  *           and for determining the number of subdatasets that need to be
  *           generated.
  * Author:   Abel Pau
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2025, Xavier Pons
  *
@@ -622,6 +622,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
         }
         else
         {
+            if (nCompressedIndex >= aCompressedRow.size())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid nCompressedIndex");
+                return CE_Failure;
+            }
             cCounter = aCompressedRow[nCompressedIndex];
             nCompressedIndex++;
         }
@@ -638,6 +644,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
             }
             else
             {
+                if (nCompressedIndex >= aCompressedRow.size())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid nCompressedIndex");
+                    return CE_Failure;
+                }
                 cCounter = aCompressedRow[nCompressedIndex];
                 nCompressedIndex++;
             }
@@ -658,6 +670,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
                 }
                 else
                 {
+                    if (nCompressedIndex + sizeof_TYPE > aCompressedRow.size())
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid nCompressedIndex");
+                        return CE_Failure;
+                    }
                     memcpy((static_cast<TYPE *>(rowBuffer)) + nIAcumulated,
                            &aCompressedRow[nCompressedIndex], sizeof_TYPE);
                     nCompressedIndex += sizeof_TYPE;
@@ -678,6 +696,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
             }
             else
             {
+                if (nCompressedIndex + sizeof(TYPE) > aCompressedRow.size())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid nCompressedIndex");
+                    return CE_Failure;
+                }
                 memcpy(&RLEValue, &aCompressedRow[nCompressedIndex],
                        sizeof(TYPE));
                 nCompressedIndex += sizeof(TYPE);
