@@ -51,17 +51,32 @@ def check_raster(ds, band_idx, expected, checksum, exp_min, exp_max, exp_gt):
 
     assert rchecksum == checksum, f"Unexpected checksum: {rchecksum}"
 
+    # size of the raster
     xsize = band.XSize
     ysize = band.YSize
     dtype = band.DataType
     assert dtype in gdal_to_struct, f"Unsupported GDAL data type: {dtype}"
 
+    # min and max values
     min_val = band.GetMinimum()
     max_val = band.GetMaximum()
 
     assert min_val == exp_min
     assert max_val == exp_max
 
+    # Coherence between ColorTable i PaletteInterpretation
+    ct = band.GetColorTable()
+    cint = band.GetColorInterpretation()
+    if ct is None:
+        assert (
+            cint == gdal.GCI_GrayIndex
+        ), f"Band {band_idx} should have GrayIndex as ColorInterpretation"
+    else:
+        assert (
+            cint == gdal.GCI_PaletteIndex
+        ), f"Band {band_idx} should have PaletteIndex as ColorInterpretation"
+
+    # Reading content
     fmt, size = gdal_to_struct[dtype]
     buf = band.ReadRaster(0, 0, xsize, ysize, buf_type=dtype)
     assert buf is not None, "Could not read raster data"
@@ -742,6 +757,9 @@ def test_miramon_epsg_and_color_table(filename, idx_bnd, expected_ct, exp_epsg):
     else:
         ct = band.GetColorTable()
         assert ct is not None, "No color table found on band"
+        assert (
+            band.GetColorInterpretation() == gdal.GCI_PaletteIndex
+        ), f"band {idx_bnd} should have PaletteIndex as Color Interpretation"
         for index, expected_color in expected_ct.items():
             entry = ct.GetColorEntry(index)
             assert (

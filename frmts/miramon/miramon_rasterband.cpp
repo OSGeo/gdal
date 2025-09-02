@@ -252,7 +252,12 @@ GDALColorTable *MMRRasterBand::GetColorTable()
 
 GDALColorInterp MMRRasterBand::GetColorInterpretation()
 {
-    return GCI_PaletteIndex;
+    GDALColorTable *ct = GetColorTable();
+
+    if (ct)
+        return GCI_PaletteIndex;
+
+    return GCI_GrayIndex;
 }
 
 /************************************************************************/
