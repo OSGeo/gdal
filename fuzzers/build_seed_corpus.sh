@@ -584,6 +584,7 @@ for subdir in *; do
     )
 done
 cd $CUR_DIR
+rm -f $OUT/ogr_miramon_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_miramon_fuzzer_seed_corpus.zip ogr_miramon_*.tar >/dev/null
 rm ogr_miramon_*.tar
 
@@ -650,8 +651,8 @@ x,y,z
 1,1,1
 EOF
 
-rm -f gdal_algorithm_fuzzer_seed_corpus.zip
-zip -r gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
+rm -f $OUT/gdal_algorithm_fuzzer_seed_corpus.zip
+zip -r $OUT/gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
 rm test*.tar
 
 echo "Copying data to $OUT"
