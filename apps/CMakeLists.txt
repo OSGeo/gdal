@@ -26,7 +26,6 @@ add_library(
   gdalmdimtranslate_lib.cpp
   gdaltindex_lib.cpp)
 
-option(GDAL_ENABLE_ALGORITHMS "Whether to enable 'gdal' algorithms" ON)
 if(GDAL_ENABLE_ALGORITHMS)
 target_sources(appslib PRIVATE
   gdalalg_clip_common.cpp
