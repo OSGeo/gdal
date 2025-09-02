@@ -4538,6 +4538,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
     }
 
+    if (const char *pszOverviewResampling =
+            CSLFetchNameValue(papszCreationOptions, "@OVERVIEW_RESAMPLING"))
+    {
+        AppendMetadataItem(&psRoot, &psTail, "OVERVIEW_RESAMPLING",
+                           pszOverviewResampling, 0, nullptr,
+                           "IMAGE_STRUCTURE");
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Write information about some codecs.                            */
     /* -------------------------------------------------------------------- */
