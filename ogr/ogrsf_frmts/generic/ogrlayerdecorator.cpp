@@ -294,14 +294,14 @@ OGRErr OGRLayerDecorator::RollbackTransaction()
     return m_poDecoratedLayer->RollbackTransaction();
 }
 
-const char *OGRLayerDecorator::GetFIDColumn()
+const char *OGRLayerDecorator::GetFIDColumn() const
 {
     if (!m_poDecoratedLayer)
         return "";
     return m_poDecoratedLayer->GetFIDColumn();
 }
 
-const char *OGRLayerDecorator::GetGeometryColumn()
+const char *OGRLayerDecorator::GetGeometryColumn() const
 {
     if (!m_poDecoratedLayer)
         return "";

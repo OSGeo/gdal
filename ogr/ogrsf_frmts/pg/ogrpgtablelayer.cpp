@@ -134,10 +134,10 @@ void OGRPGTableFeatureDefn::SolveFields() const
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGTableLayer::GetFIDColumn()
+const char *OGRPGTableLayer::GetFIDColumn() const
 
 {
-    ReadTableDefinition();
+    const_cast<OGRPGTableLayer *>(this)->ReadTableDefinition();
 
     if (pszFIDColumn != nullptr)
         return pszFIDColumn;

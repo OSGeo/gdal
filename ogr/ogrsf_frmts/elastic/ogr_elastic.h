@@ -182,7 +182,7 @@ class OGRElasticLayer final : public OGRLayer
     }
 
     const OGRFeatureDefn *GetLayerDefn() const override;
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     int TestCapability(const char *) const override;
 

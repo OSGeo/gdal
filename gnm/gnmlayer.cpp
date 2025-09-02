@@ -45,12 +45,12 @@ GNMGenericLayer::GNMGenericLayer(OGRLayer *poLayer,
  */
 GNMGenericLayer::~GNMGenericLayer() = default;
 
-const char *GNMGenericLayer::GetFIDColumn()
+const char *GNMGenericLayer::GetFIDColumn() const
 {
     return GNM_SYSFIELD_GFID;
 }
 
-const char *GNMGenericLayer::GetGeometryColumn()
+const char *GNMGenericLayer::GetGeometryColumn() const
 {
     return m_poLayer->GetGeometryColumn();
 }

@@ -118,7 +118,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual const char *GetGeometryColumn() override;
+    const char *GetGeometryColumn() const override;
 };
 
 //! @endcond

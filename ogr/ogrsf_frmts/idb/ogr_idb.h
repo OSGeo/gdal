@@ -65,8 +65,8 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 

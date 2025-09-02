@@ -282,8 +282,8 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
 
     int TestCapability(const char *) const override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     GDALDataset *GetDataset() override;
 

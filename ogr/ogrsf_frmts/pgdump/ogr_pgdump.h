@@ -152,7 +152,7 @@ class OGRPGDumpLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_pszFIDColumn ? m_pszFIDColumn : "";
     }

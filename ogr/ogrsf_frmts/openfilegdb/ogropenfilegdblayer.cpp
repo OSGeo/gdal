@@ -883,9 +883,9 @@ const OGRFeatureDefn *OGROpenFileGDBLayer::GetLayerDefn() const
 /*                          GetFIDColumn()                             */
 /***********************************************************************/
 
-const char *OGROpenFileGDBLayer::GetFIDColumn()
+const char *OGROpenFileGDBLayer::GetFIDColumn() const
 {
-    if (!BuildLayerDefinition())
+    if (!const_cast<OGROpenFileGDBLayer *>(this)->BuildLayerDefinition())
         return "";
     int iIdx = m_poLyrTable->GetObjectIdFieldIdx();
     if (iIdx < 0)

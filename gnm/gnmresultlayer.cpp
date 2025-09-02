@@ -106,12 +106,12 @@ OGRGNMWrappedResultLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
     return poLayer->CreateGeomField(poField, bApproxOK);
 }
 
-const char *OGRGNMWrappedResultLayer::GetFIDColumn()
+const char *OGRGNMWrappedResultLayer::GetFIDColumn() const
 {
     return poLayer->GetFIDColumn();
 }
 
-const char *OGRGNMWrappedResultLayer::GetGeometryColumn()
+const char *OGRGNMWrappedResultLayer::GetGeometryColumn() const
 {
     return poLayer->GetGeometryColumn();
 }

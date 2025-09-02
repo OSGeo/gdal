@@ -187,7 +187,7 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
     OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                         bool bForce) override;
 
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 };
 
 /************************************************************************/

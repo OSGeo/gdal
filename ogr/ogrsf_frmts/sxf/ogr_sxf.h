@@ -87,7 +87,7 @@ class OGRSXFLayer final : public OGRLayer
                               bool bForce) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     GByte GetId() const
     {

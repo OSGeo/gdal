@@ -300,7 +300,7 @@ class OGRArrowLayer CPL_NON_FINAL
 
     void ResetReading() override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
@@ -508,7 +508,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::string> GetFieldDomainNames() const;
     const OGRFieldDomain *GetFieldDomain(const std::string &name) const;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }

@@ -632,7 +632,7 @@ const OGRSpatialReference *OGRMSSQLSpatialLayer::GetSpatialRef() const
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRMSSQLSpatialLayer::GetFIDColumn()
+const char *OGRMSSQLSpatialLayer::GetFIDColumn() const
 
 {
     GetLayerDefn();
@@ -647,7 +647,7 @@ const char *OGRMSSQLSpatialLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRMSSQLSpatialLayer::GetGeometryColumn()
+const char *OGRMSSQLSpatialLayer::GetGeometryColumn() const
 
 {
     GetLayerDefn();

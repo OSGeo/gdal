@@ -232,7 +232,7 @@ class OGRHanaLayer : public OGRLayer
     OGRErr IGetExtent(int geomField, OGREnvelope *extent, bool force) override;
     GIntBig GetFeatureCount(int force) override;
     OGRFeature *GetNextFeature() override;
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
     const char *GetName() const override;

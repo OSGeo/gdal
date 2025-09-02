@@ -638,7 +638,7 @@ OGRErr OGRProxiedLayer::RollbackTransaction()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRProxiedLayer::GetFIDColumn()
+const char *OGRProxiedLayer::GetFIDColumn() const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return "";
@@ -649,7 +649,7 @@ const char *OGRProxiedLayer::GetFIDColumn()
 /*                          GetGeometryColumn()                         */
 /************************************************************************/
 
-const char *OGRProxiedLayer::GetGeometryColumn()
+const char *OGRProxiedLayer::GetGeometryColumn() const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return "";

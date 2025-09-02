@@ -89,10 +89,10 @@ const OGRFeatureDefn *OGRADBCLayer::GetLayerDefn() const
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRADBCLayer::GetFIDColumn()
+const char *OGRADBCLayer::GetFIDColumn() const
 {
     if (!m_poAdapterLayer)
-        BuildLayerDefn();
+        const_cast<OGRADBCLayer *>(this)->BuildLayerDefn();
     return m_osFIDColName.c_str();
 }
 

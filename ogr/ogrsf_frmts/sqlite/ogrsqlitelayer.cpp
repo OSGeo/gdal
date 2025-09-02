@@ -685,7 +685,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRSQLiteLayer::GetFIDColumn()
+const char *OGRSQLiteLayer::GetFIDColumn() const
 
 {
     GetLayerDefn();

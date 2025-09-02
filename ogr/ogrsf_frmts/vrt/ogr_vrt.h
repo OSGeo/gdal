@@ -183,7 +183,7 @@ class OGRVRTLayer final : public OGRLayer
 
     virtual OGRErr SyncToDisk() override;
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;

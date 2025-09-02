@@ -66,7 +66,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     //
     // OGRLayer Interface
     //
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     int TestCapability(const char *pszCap) const override;
 
     virtual OGRErr SyncToDisk() override;

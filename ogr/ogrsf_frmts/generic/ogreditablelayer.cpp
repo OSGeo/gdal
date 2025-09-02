@@ -887,7 +887,7 @@ OGRErr OGREditableLayer::RollbackTransaction()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGREditableLayer::GetGeometryColumn()
+const char *OGREditableLayer::GetGeometryColumn() const
 
 {
     return OGRLayer::GetGeometryColumn();

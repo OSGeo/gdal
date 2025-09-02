@@ -941,7 +941,7 @@ int OGROCILayer::LookupTableSRID()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGROCILayer::GetFIDColumn()
+const char *OGROCILayer::GetFIDColumn() const
 
 {
     if (pszFIDName != nullptr)
@@ -954,7 +954,7 @@ const char *OGROCILayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGROCILayer::GetGeometryColumn()
+const char *OGROCILayer::GetGeometryColumn() const
 
 {
     if (pszGeomName != nullptr)

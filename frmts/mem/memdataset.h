@@ -303,7 +303,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     int TestCapability(const char *) const override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }

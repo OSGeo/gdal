@@ -113,7 +113,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }

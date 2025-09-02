@@ -308,8 +308,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual void FinishRollbackTransaction(const std::string &osSavepointName);
     //! @endcond
 
-    virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
+    virtual const char *GetFIDColumn() const;
+    virtual const char *GetGeometryColumn() const;
 
     virtual OGRErr SetIgnoredFields(CSLConstList papszFields);
 

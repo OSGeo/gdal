@@ -569,8 +569,8 @@ class GNMGenericLayer : public OGRLayer
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
@@ -753,8 +753,8 @@ class OGRGNMWrappedResultLayer : public OGRLayer
                                int bApproxOK = TRUE) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
     virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     // OGRGNMWrappedResultLayer

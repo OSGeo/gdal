@@ -629,7 +629,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     /* OGR API methods */
 
     OGRFeature *GetNextFeature() override;
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     void ResetReading() override;
     int TestCapability(const char *) const override;
 
@@ -848,9 +848,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
         return GetDescription();
     }
 
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     OGRwkbGeometryType GetGeomType() const override;
-    const char *GetGeometryColumn() override;
+    const char *GetGeometryColumn() const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
     int TestCapability(const char *) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,

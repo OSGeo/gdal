@@ -98,8 +98,8 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
