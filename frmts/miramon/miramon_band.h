@@ -67,7 +67,7 @@ class MMRBand
     MMRBand(const MMRBand &) =
         delete;  // I don't want to construct a MMRBand from another MMRBand (effc++)
     MMRBand &operator=(const MMRBand &) =
-        delete;  // I don't want to assing a MMRBand to another MMRBand (effc++)
+        delete;  // I don't want to assign a MMRBand to another MMRBand (effc++)
     ~MMRBand();
 
     const CPLString GetRELFileName() const;
@@ -239,7 +239,7 @@ class MMRBand
         false;  // Determines if the created object is valid or not.
 
     VSILFILE *m_pfIMG = nullptr;  // Point to IMG file (RAW data)
-    MMRRel *m_pfRel = nullptr;    // Rel where metadata is readed from
+    MMRRel *m_pfRel = nullptr;    // Rel where metadata is read from
 
     int m_nBlockXSize = 1;
     int m_nBlockYSize = 1;

@@ -59,7 +59,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define SECTION_ATTRIBUTE_DATA "ATTRIBUTE_DATA"
 #define KEY_NomFitxer "NomFitxer"
 #define KEY_via "via"
-#define Key_IndexsNomsCamps "IndexsNomsCamps"
+#define Key_IndexesNomsCamps "IndexsNomsCamps"
 #define KEY_NomCamp "NomCamp"
 #define SECTION_COLOR_TEXT "COLOR_TEXT"
 

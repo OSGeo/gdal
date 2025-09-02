@@ -372,7 +372,7 @@ def test_miramon_test_basic_raster(
     check_raster(ds, band_idx, expected, checksum, exp_min, exp_max, exp_gt)
 
 
-###### Testing IMG/REL files with controled errors
+###### Testing IMG/REL files with controlled errors
 @pytest.mark.parametrize(
     "name,message_substring",
     [

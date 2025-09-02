@@ -288,7 +288,7 @@ CPLString MMRRel::MMRGetSimpleMetadataName(const CPLString &osLayerName)
 }
 
 // Gets the value from a section-key accessing directly to the RELFile.
-// It happens when MMRel is used to acces a REL that is not an IMG sidecar
+// It happens when MMRel is used to access a REL that is not an IMG sidecar
 // or at the Identify() process, when we don't have already the MMRRel constructed.
 bool MMRRel::GetAndExcludeMetadataValueDirectly(const CPLString &osRELFile,
                                                 const CPLString &osSection,
@@ -339,7 +339,7 @@ bool MMRRel::SameFile(CPLString osFile1, CPLString osFile2)
 // NomFitxer=Value
 MMRNomFitxerState MMRRel::MMRStateOfNomFitxerInSection(
     const CPLString &osLayerName, const CPLString &osSection,
-    const CPLString &osRELFile, bool bNomFitxerMustExtist)
+    const CPLString &osRELFile, bool bNomFitxerMustExist)
 {
     CPLString osDocumentedLayerName;
 
@@ -351,7 +351,7 @@ MMRNomFitxerState MMRRel::MMRStateOfNomFitxerInSection(
         if (SameFile(osIIMGFromREL, osLayerName))
             return MMRNomFitxerState::NOMFITXER_VALUE_EXPECTED;
 
-        if (bNomFitxerMustExtist)
+        if (bNomFitxerMustExist)
             return MMRNomFitxerState::NOMFITXER_VALUE_UNEXPECTED;
         else
             return MMRNomFitxerState::NOMFITXER_NOT_FOUND;
@@ -407,7 +407,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
     }
 
     // Discarting not supported via SDE (some files
-    // could have this otpion)
+    // could have this option)
     CPLString osVia;
     if (GetAndExcludeMetadataValueDirectly(osRELFile, SECTION_ATTRIBUTE_DATA,
                                            KEY_via, osVia))
@@ -426,14 +426,15 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
     CPLString osFieldNames;
 
     if (!GetAndExcludeMetadataValueDirectly(osRELFile, SECTION_ATTRIBUTE_DATA,
-                                            Key_IndexsNomsCamps,
+                                            Key_IndexesNomsCamps,
                                             osFieldNames) ||
         osFieldNames.empty())
     {
         if (m_bIsAMiraMonFile)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "IndexsNomsCamps not found in %s file", osRELFile.c_str());
+                     "IndexesNomsCamps not found in %s file",
+                     osRELFile.c_str());
         }
         return "";
     }
@@ -443,7 +444,7 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
     const int nTokenBands = CSLCount(aosTokens);
 
     CPLString osBandSectionKey;
-    CPLString osAtributeDataName;
+    CPLString osAttributeDataName;
     for (int nIBand = 0; nIBand < nTokenBands; nIBand++)
     {
         osBandSectionKey = KEY_NomCamp;
@@ -459,13 +460,13 @@ CPLString MMRRel::MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
             continue;  // A band without name (·$· unexpected)
 
         // Example: [ATTRIBUTE_DATA:G1]
-        osAtributeDataName = SECTION_ATTRIBUTE_DATA;
-        osAtributeDataName.append(":");
-        osAtributeDataName.append(osBandSectionValue.Trim());
+        osAttributeDataName = SECTION_ATTRIBUTE_DATA;
+        osAttributeDataName.append(":");
+        osAttributeDataName.append(osBandSectionValue.Trim());
 
         // Let's see if this band contains the expected name
         // or none (in monoband case)
-        iState = MMRStateOfNomFitxerInSection(osLayerName, osAtributeDataName,
+        iState = MMRStateOfNomFitxerInSection(osLayerName, osAttributeDataName,
                                               osRELFile, true);
         if (iState == MMRNomFitxerState::NOMFITXER_VALUE_EXPECTED)
             return osRELFile;
@@ -568,7 +569,7 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
 {
     CPLString osFieldNames;
     if (!GetMetadataValueDirectly(osRELFileName, SECTION_ATTRIBUTE_DATA,
-                                  Key_IndexsNomsCamps, osFieldNames) ||
+                                  Key_IndexesNomsCamps, osFieldNames) ||
         osFieldNames.empty())
         return CE_Failure;
 
@@ -592,14 +593,14 @@ CPLErr MMRRel::CheckBandInRel(const CPLString &osRELFileName,
             osBandSectionValue.empty())
             return CE_Failure;
 
-        CPLString osAtributeDataName;
-        osAtributeDataName = SECTION_ATTRIBUTE_DATA;
-        osAtributeDataName.append(":");
-        osAtributeDataName.append(osBandSectionValue.Trim());
+        CPLString osAttributeDataName;
+        osAttributeDataName = SECTION_ATTRIBUTE_DATA;
+        osAttributeDataName.append(":");
+        osAttributeDataName.append(osBandSectionValue.Trim());
 
         CPLString osRawBandFileName;
 
-        if (!GetMetadataValueDirectly(osRELFileName, osAtributeDataName,
+        if (!GetMetadataValueDirectly(osRELFileName, osAttributeDataName,
                                       KEY_NomFitxer, osRawBandFileName) ||
             osRawBandFileName.empty())
         {
@@ -638,7 +639,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
     if (nTokens < 2)
         return GDAL_IDENTIFY_FALSE;
 
-    // Let's remove "\"" if existant.
+    // Let's remove "\"" if existent.
     CPLString osRELName = aosTokens[0];
     osRELName.replaceAll("\"", "");
 
@@ -656,7 +657,7 @@ int MMRRel::IdentifySubdataSetFile(const CPLString &osFileName)
         // Let's check that this band (papszTokens[nIBand]) is in the REL file.
         CPLString osBandName = aosTokens[nIBand];
 
-        // Let's remove "\"" if existant.
+        // Let's remove "\"" if existent.
         osBandName.replaceAll("\"", "");
 
         // If it's not an IMG file return FALSE
@@ -707,15 +708,15 @@ bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
         isAMiraMonFile());  // Trying to access metadata from the wrong way
 
     // Searches in [pszMainSection:pszSubSection]
-    CPLString osAtributeDataName;
-    osAtributeDataName = osMainSection;
-    osAtributeDataName.append(":");
-    osAtributeDataName.append(osSubSection);
-    osAtributeDataName.append(":");
-    osAtributeDataName.append(osSubSubSection);
+    CPLString osAttributeDataName;
+    osAttributeDataName = osMainSection;
+    osAttributeDataName.append(":");
+    osAttributeDataName.append(osSubSection);
+    osAttributeDataName.append(":");
+    osAttributeDataName.append(osSubSubSection);
 
-    addExcludedSectionKey(osAtributeDataName, osKey);
-    osValue = GetValueFromSectionKeyFromREL(osAtributeDataName, osKey);
+    addExcludedSectionKey(osAttributeDataName, osKey);
+    osValue = GetValueFromSectionKeyFromREL(osAttributeDataName, osKey);
     if (osValue.compare(m_szImprobableRELChain) != 0)
         return true;  // Found
 
@@ -738,13 +739,13 @@ bool MMRRel::GetMetadataValue(const CPLString &osMainSection,
         isAMiraMonFile());  // Trying to access metadata from the wrong way
 
     // Searches in [pszMainSection:pszSubSection]
-    CPLString osAtributeDataName;
-    osAtributeDataName = osMainSection;
-    osAtributeDataName.append(":");
-    osAtributeDataName.append(osSubSection);
+    CPLString osAttributeDataName;
+    osAttributeDataName = osMainSection;
+    osAttributeDataName.append(":");
+    osAttributeDataName.append(osSubSection);
 
-    addExcludedSectionKey(osAtributeDataName, osKey);
-    osValue = GetValueFromSectionKeyFromREL(osAtributeDataName, osKey);
+    addExcludedSectionKey(osAttributeDataName, osKey);
+    osValue = GetValueFromSectionKeyFromREL(osAttributeDataName, osKey);
     if (osValue.compare(m_szImprobableRELChain) != 0)
         return true;  // Found
 
@@ -788,13 +789,13 @@ CPLErr MMRRel::ParseBandInfo()
     m_nBands = 0;
 
     CPLString osFieldNames;
-    if (!GetMetadataValue(SECTION_ATTRIBUTE_DATA, Key_IndexsNomsCamps,
+    if (!GetMetadataValue(SECTION_ATTRIBUTE_DATA, Key_IndexesNomsCamps,
                           osFieldNames) ||
         osFieldNames.empty())
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "%s-%s section-key should exist in %s.",
-                 SECTION_ATTRIBUTE_DATA, Key_IndexsNomsCamps,
+                 SECTION_ATTRIBUTE_DATA, Key_IndexesNomsCamps,
                  m_osRelFileName.c_str());
         return CE_Failure;
     }

@@ -586,7 +586,7 @@ void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
 template <typename TYPE>
 CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
 {
-    int nAcumulated = 0L, nIAcumulated = 0L;
+    int nAccumulated = 0L, nIAccumulated = 0L;
     unsigned char cCounter;
     size_t nCompressedIndex = 0;
 
@@ -613,7 +613,7 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
             return CE_Failure;
     }
 
-    while (nAcumulated < m_nWidth)
+    while (nAccumulated < m_nWidth)
     {
         if (nCompressedRawSize == SIZE_MAX)
         {
@@ -654,18 +654,18 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
                 nCompressedIndex++;
             }
 
-            nAcumulated += cCounter;
+            nAccumulated += cCounter;
 
-            if (nAcumulated > m_nWidth) /* This should not happen if the file
+            if (nAccumulated > m_nWidth) /* This should not happen if the file
                                   is RLE and does not share counters across rows */
                 return CE_Failure;
 
-            for (; nIAcumulated < nAcumulated; nIAcumulated++)
+            for (; nIAccumulated < nAccumulated; nIAccumulated++)
             {
                 if (nCompressedRawSize == SIZE_MAX)
                 {
                     VSIFReadL(&RLEValue, sizeof_TYPE, 1, m_pfIMG);
-                    memcpy((static_cast<TYPE *>(rowBuffer)) + nIAcumulated,
+                    memcpy((static_cast<TYPE *>(rowBuffer)) + nIAccumulated,
                            &RLEValue, sizeof_TYPE);
                 }
                 else
@@ -676,7 +676,7 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
                                  "Invalid nCompressedIndex");
                         return CE_Failure;
                     }
-                    memcpy((static_cast<TYPE *>(rowBuffer)) + nIAcumulated,
+                    memcpy((static_cast<TYPE *>(rowBuffer)) + nIAccumulated,
                            &aCompressedRow[nCompressedIndex], sizeof_TYPE);
                     nCompressedIndex += sizeof_TYPE;
                 }
@@ -684,8 +684,8 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
         }
         else
         {
-            nAcumulated += cCounter;
-            if (nAcumulated > m_nWidth) /* This should not happen if the file
+            nAccumulated += cCounter;
+            if (nAccumulated > m_nWidth) /* This should not happen if the file
                                   is RLE and does not share counters across rows */
                 return CE_Failure;
 
@@ -707,12 +707,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
                 nCompressedIndex += sizeof(TYPE);
             }
 
-            const int nCount = nAcumulated - nIAcumulated;
-            pDst = static_cast<TYPE *>(rowBuffer) + nIAcumulated;
+            const int nCount = nAccumulated - nIAccumulated;
+            pDst = static_cast<TYPE *>(rowBuffer) + nIAccumulated;
 
             std::fill(pDst, pDst + nCount, RLEValue);
 
-            nIAcumulated = nAcumulated;
+            nIAccumulated = nAccumulated;
         }
     }
 
@@ -887,7 +887,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
         Now I'm in the correct section
         -------------------------------
         Info about this section:
-        RasterRLE: minumum size: nHeight*2
+        RasterRLE: minimum size: nHeight*2
         Offsets:   minimum size: 32+nHeight*4
         Final:     size: 32
     */
@@ -895,10 +895,10 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
     if (m_nHeight)
     {
         if (nHeaderOffset < static_cast<vsi_l_offset>(m_nHeight) *
-                                2 ||  // Minumum size of an RLE
+                                2 ||  // Minimum size of an RLE
             nFileSize - nHeaderOffset <
                 static_cast<vsi_l_offset>(32) + m_nHeight +
-                    32)  // Minumum size of the section in version 1.0
+                    32)  // Minimum size of the section in version 1.0
             return 0;
     }
 

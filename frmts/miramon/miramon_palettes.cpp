@@ -146,7 +146,7 @@ void MMRPalettes::AssignColorFromDBF(struct MM_DATA_BASE_XP &oColorTable,
         m_aadfPaletteColors[3][nIPaletteIndex] = 255;
 }
 
-CPLErr MMRPalettes::GetPaletteColors_DBF_Indexs(
+CPLErr MMRPalettes::GetPaletteColors_DBF_Indexes(
     struct MM_DATA_BASE_XP &oColorTable, MM_EXT_DBF_N_FIELDS &nClauSimbol,
     MM_EXT_DBF_N_FIELDS &nRIndex, MM_EXT_DBF_N_FIELDS &nGIndex,
     MM_EXT_DBF_N_FIELDS &nBIndex)
@@ -203,8 +203,8 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
 
     // Getting indices of fields that determine the colors.
     MM_EXT_DBF_N_FIELDS nClauSimbol, nRIndex, nGIndex, nBIndex;
-    if (CE_Failure == GetPaletteColors_DBF_Indexs(oColorTable, nClauSimbol,
-                                                  nRIndex, nGIndex, nBIndex))
+    if (CE_Failure == GetPaletteColors_DBF_Indexes(oColorTable, nClauSimbol,
+                                                   nRIndex, nGIndex, nBIndex))
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Invalid color table:"
@@ -216,7 +216,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
         return CE_Failure;
     }
 
-    // Cheking the structure to be correct
+    // Checking the structure to be correct
     if (oColorTable.pField[nClauSimbol].BytesPerField == 0 ||
         oColorTable.pField[nRIndex].BytesPerField == 0 ||
         oColorTable.pField[nGIndex].BytesPerField == 0 ||
@@ -298,7 +298,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
         Each record's CLAUSIMBOL field doesn't match a pixel value present in the raster,
         and it's used only for discovering nodata value (blanc value).
         The list of values is used to map every value in a color using:
-            - Direct assignation: mode used in categorical modes but possible in continous.
+            - Direct assignation: mode used in categorical modes but possible in continuous.
             - Linear scaling
             - Logarithmic scaling
         */

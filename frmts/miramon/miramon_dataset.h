@@ -39,7 +39,7 @@ class MMRDataset final : public GDALPamDataset
     MMRDataset(const MMRDataset &) =
         delete;  // I don't want to construct a MMRDataset from another MMRDataset (effc++)
     MMRDataset &operator=(const MMRDataset &) =
-        delete;  // I don't want to assing a MMRDataset to another MMRDataset (effc++)
+        delete;  // I don't want to assign a MMRDataset to another MMRDataset (effc++)
     ~MMRDataset();
 
     static int Identify(GDALOpenInfo *);

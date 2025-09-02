@@ -46,7 +46,7 @@ class MMRRel
     MMRRel(const MMRRel &) =
         delete;  // I don't want to construct a MMRDataset from another MMRDataset (effc++)
     MMRRel &operator=(const MMRRel &) =
-        delete;  // I don't want to assing a MMRDataset to another MMRDataset (effc++)
+        delete;  // I don't want to assign a MMRDataset to another MMRDataset (effc++)
     ~MMRRel();
 
     static CPLString
@@ -164,7 +164,7 @@ class MMRRel
     MMRNomFitxerState MMRStateOfNomFitxerInSection(const CPLString &osLayerName,
                                                    const CPLString &osSection,
                                                    const CPLString &osRELFile,
-                                                   bool bNomFitxerMustExtist);
+                                                   bool bNomFitxerMustExist);
     CPLString MMRGetAReferenceToIMGFile(const CPLString &osLayerName,
                                         const CPLString &osRELFile);
 

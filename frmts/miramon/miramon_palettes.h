@@ -43,7 +43,7 @@ class MMRPalettes
     MMRPalettes(const MMRPalettes &) =
         delete;  // I don't want to construct a MMRPalettes from another MMRBand (effc++)
     MMRPalettes &operator=(const MMRPalettes &) =
-        delete;  // I don't want to assing a MMRPalettes to another MMRBand (effc++)
+        delete;  // I don't want to assign a MMRPalettes to another MMRBand (effc++)
     ~MMRPalettes();
 
     bool IsValid() const
@@ -147,7 +147,7 @@ class MMRPalettes
     ColorTreatment ColorScaling = ColorTreatment::DEFAULT_SCALING;
 
   private:
-    static CPLErr GetPaletteColors_DBF_Indexs(
+    static CPLErr GetPaletteColors_DBF_Indexes(
         struct MM_DATA_BASE_XP &oColorTable, MM_EXT_DBF_N_FIELDS &nClauSimbol,
         MM_EXT_DBF_N_FIELDS &nRIndex, MM_EXT_DBF_N_FIELDS &nGIndex,
         MM_EXT_DBF_N_FIELDS &nBIndex);
@@ -178,7 +178,7 @@ class MMRPalettes
     int m_nNPaletteColors = 0;
     int m_nRealNPaletteColors = 0;  // Without nodata
 
-    MMRRel *m_pfRel = nullptr;  // Rel where metadata is readed from
+    MMRRel *m_pfRel = nullptr;  // Rel where metadata is read from
     CPLString m_osBandSection;
 
     bool m_bIsValid =

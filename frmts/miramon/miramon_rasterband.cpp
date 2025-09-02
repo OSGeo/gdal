@@ -4,7 +4,7 @@
  * Purpose:  Implements MMRRasterBand class: responsible for converting the
  *           information stored in an MMRBand into a GDAL RasterBand
  * Author:   Abel Pau
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2025, Xavier Pons
  *
@@ -196,13 +196,13 @@ CPLErr MMRRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         GByte *pabyData = static_cast<GByte *>(pImage);
 
-        for (int nIAcumulated = nBlockXSize * nBlockYSize - 1;
-             nIAcumulated >= 0; nIAcumulated--)
+        for (int nIAccumulated = nBlockXSize * nBlockYSize - 1;
+             nIAccumulated >= 0; nIAccumulated--)
         {
-            if ((pabyData[nIAcumulated >> 3] & (1 << (nIAcumulated & 0x7))))
-                pabyData[nIAcumulated] = 1;
+            if ((pabyData[nIAccumulated >> 3] & (1 << (nIAccumulated & 0x7))))
+                pabyData[nIAccumulated] = 1;
             else
-                pabyData[nIAcumulated] = 0;
+                pabyData[nIAccumulated] = 0;
         }
     }
 
@@ -603,7 +603,7 @@ CPLErr MMRRasterBand::UpdateTableColorsFromPalette()
     if (m_Palette->IsCategorical())
         peErr = FromPaletteToColorTableCategoricalMode();
     else
-        peErr = FromPaletteToColorTableContinousMode();
+        peErr = FromPaletteToColorTableContinuousMode();
 
     return peErr;
 }
@@ -662,7 +662,7 @@ CPLErr MMRRasterBand::AssignUniformColorTable()
     return CE_None;
 }
 
-// Converts pallete Colors to Colors of pixels
+// Converts palette Colors to Colors of pixels
 CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
 
 {
@@ -741,8 +741,8 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     return CE_None;
 }
 
-// Converts palleteColors to Colors of pixels for the Color Table
-CPLErr MMRRasterBand::FromPaletteToColorTableContinousMode()
+// Converts paletteColors to Colors of pixels for the Color Table
+CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
 
 {
     if (!m_Palette)
@@ -975,7 +975,7 @@ CPLErr MMRRasterBand::GetRATName(CPLString aosToken, CPLString &osRELName,
     return CE_Failure;
 }
 
-// Converts palleteColors to Colors of pixels in the attribute table
+// Converts paletteColors to Colors of pixels in the attribute table
 CPLErr MMRRasterBand::FromPaletteToAttributeTable()
 
 {
@@ -1278,16 +1278,16 @@ void MMRRasterBand::ConvertColorsFromPaletteToColorTable()
     }
 }
 
-void MMRRasterBand::AssignRGBColor(int nIndexDstCT, int nIndexSrcPalete)
+void MMRRasterBand::AssignRGBColor(int nIndexDstCT, int nIndexSrcPalette)
 {
     m_aadfPCT[0][nIndexDstCT] =
-        m_Palette->GetPaletteColorsValue(0, nIndexSrcPalete);
+        m_Palette->GetPaletteColorsValue(0, nIndexSrcPalette);
     m_aadfPCT[1][nIndexDstCT] =
-        m_Palette->GetPaletteColorsValue(1, nIndexSrcPalete);
+        m_Palette->GetPaletteColorsValue(1, nIndexSrcPalette);
     m_aadfPCT[2][nIndexDstCT] =
-        m_Palette->GetPaletteColorsValue(2, nIndexSrcPalete);
+        m_Palette->GetPaletteColorsValue(2, nIndexSrcPalette);
     m_aadfPCT[3][nIndexDstCT] =
-        m_Palette->GetPaletteColorsValue(3, nIndexSrcPalete);
+        m_Palette->GetPaletteColorsValue(3, nIndexSrcPalette);
 }
 
 void MMRRasterBand::AssignRGBColorDirectly(int nIndexDstCT, double dfValue)

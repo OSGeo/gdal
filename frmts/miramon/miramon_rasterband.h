@@ -39,7 +39,7 @@ class MMRRasterBand final : public GDALPamRasterBand
     MMRRasterBand(const MMRRasterBand &) =
         delete;  // I don't want to construct a MMRRasterBand from another MMRRasterBand (effc++)
     MMRRasterBand &operator=(const MMRRasterBand &) =
-        delete;  // I don't want to assing a MMRRasterBand to another MMRRasterBand (effc++)
+        delete;  // I don't want to assign a MMRRasterBand to another MMRRasterBand (effc++)
     ~MMRRasterBand();
 
     CPLErr IReadBlock(int, int, void *) override;
@@ -95,8 +95,8 @@ class MMRRasterBand final : public GDALPamRasterBand
     }
 
   private:
-    void AssignRGBColor(int nIndexDstPalete, int nIndexSrcPalete);
-    void AssignRGBColorDirectly(int nIndexDstPalete, double dfValue);
+    void AssignRGBColor(int nIndexDstPalette, int nIndexSrcPalette);
+    void AssignRGBColorDirectly(int nIndexDstPalette, double dfValue);
     void UpdateDataType();
     CPLErr FillRATFromPalette();
     CPLErr FromPaletteToAttributeTable();
@@ -112,7 +112,7 @@ class MMRRasterBand final : public GDALPamRasterBand
 
     CPLErr AssignUniformColorTable();
     CPLErr FromPaletteToColorTableCategoricalMode();
-    CPLErr FromPaletteToColorTableContinousMode();
+    CPLErr FromPaletteToColorTableContinuousMode();
     CPLErr UpdateTableColorsFromPalette();
 
     bool m_bTriedLoadColorTable = false;
