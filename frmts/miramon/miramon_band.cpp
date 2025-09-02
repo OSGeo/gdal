@@ -241,8 +241,8 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
     if (iBlock == m_nHeight - 1)
         nCompressedRawSize = SIZE_MAX;  // We don't know it
     else
-        nCompressedRawSize =
-            m_aFileOffsets[iBlock + 1] - m_aFileOffsets[iBlock];
+        nCompressedRawSize = static_cast<size_t>(m_aFileOffsets[iBlock + 1] -
+                                                 m_aFileOffsets[iBlock]);
 
     return GetBlockData(pData, nCompressedRawSize);
 }

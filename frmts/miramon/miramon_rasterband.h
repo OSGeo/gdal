@@ -130,13 +130,13 @@ class MMRRasterBand final : public GDALPamRasterBand
     MMRRel *m_pfRel = nullptr;  // Pointer to info from rel. Do not free.
 
     // Color table
-    std::unique_ptr<GDALColorTable> m_poCT;
+    std::unique_ptr<GDALColorTable> m_poCT = nullptr;
 
     // Attributte table
-    std::unique_ptr<GDALRasterAttributeTable> m_poDefaultRAT;
+    std::unique_ptr<GDALRasterAttributeTable> m_poDefaultRAT = nullptr;
 
     // Palettes
-    std::unique_ptr<MMRPalettes> m_Palette;
+    std::unique_ptr<MMRPalettes> m_Palette = nullptr;
 };
 
 #endif  // MMRRASTERBAND_H_INCLUDED
