@@ -4,7 +4,7 @@
  * Purpose:  Implements MMRDataset class: responsible for generating the
  *           main dataset or the subdatasets as needed.
  * Author:   Abel Pau
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2025, Xavier Pons
  *
@@ -107,7 +107,7 @@ MMRDataset::MMRDataset(GDALOpenInfo *poOpenInfo)
         {
             MMRBand *poBand = m_pMMRRel->GetBand(m_pMMRRel->GetNBands() - 1);
             if (poBand)
-                memcpy(&m_gt, &poBand->m_gt, sizeof(m_gt));
+                m_gt = poBand->m_gt;
         }
     }
 
@@ -355,7 +355,7 @@ void MMRDataset::CreateSubdatasetsFromBands()
     }
 }
 
-bool MMRDataset::IsNextBandInANewDataSet(int nIBand)
+bool MMRDataset::IsNextBandInANewDataSet(int nIBand) const
 {
     if (nIBand < 0)
         return false;
@@ -405,13 +405,6 @@ int MMRDataset::UpdateGeoTransform()
 {
     // Bounding box of the band
     // Section [EXTENT] in rel file
-
-    m_gt[0] = 0.0;
-    m_gt[1] = 1.0;
-    m_gt[2] = 0.0;
-    m_gt[3] = 0.0;
-    m_gt[4] = 0.0;
-    m_gt[5] = 1.0;
 
     if (!m_pMMRRel)
         return 1;

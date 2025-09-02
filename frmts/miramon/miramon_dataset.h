@@ -55,7 +55,7 @@ class MMRDataset final : public GDALPamDataset
     void AssignBandsToSubdataSets();
     void CreateSubdatasetsFromBands();
     bool CreateRasterBands();
-    bool IsNextBandInANewDataSet(int nIBand);
+    bool IsNextBandInANewDataSet(int nIBand) const;
 
     int UpdateGeoTransform();
     const OGRSpatialReference *GetSpatialRef() const override;
