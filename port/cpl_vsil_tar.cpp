@@ -300,7 +300,9 @@ int VSITarReader::GotoNextFile()
                             CPLStrnlen(pszFilename,
                                        m_abyBufferIdx - nFilenameStartIdx));
                         if (osNextFileName.empty() || osNextFileName == "." ||
-                            osNextFileName.find("..") != std::string::npos)
+                            osNextFileName.find("..") != std::string::npos ||
+                            osNextFileName.find("//") != std::string::npos ||
+                            osNextFileName.find("\\\\") != std::string::npos)
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Invalid filename");
