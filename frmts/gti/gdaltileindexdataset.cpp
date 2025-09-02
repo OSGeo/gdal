@@ -4797,6 +4797,8 @@ void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
     ++(*psJob->pnCompletedJobs);
 }
 
+#ifdef GDAL_ENABLE_ALGORITHMS
+
 /************************************************************************/
 /*                     GDALGTICreateAlgorithm                           */
 /************************************************************************/
@@ -5027,6 +5029,8 @@ GDALTileIndexInstantiateAlgorithm(const std::vector<std::string> &aosPath)
     }
 }
 
+#endif
+
 /************************************************************************/
 /*                         GDALRegister_GTI()                           */
 /************************************************************************/
@@ -5070,8 +5074,10 @@ void GDALRegister_GTI()
         "default='ALL_CPUS'/>"
         "</OpenOptionList>");
 
+#ifdef GDAL_ENABLE_ALGORITHMS
     poDriver->DeclareAlgorithm({"create"});
     poDriver->pfnInstantiateAlgorithm = GDALTileIndexInstantiateAlgorithm;
+#endif
 
 #ifdef BUILT_AS_PLUGIN
     // Used by gdaladdo and test_gdaladdo.py

@@ -6,6 +6,29 @@ add_library(
   commonutils.h
   gdal_utils.h
   gdalargumentparser.cpp
+  gdalalg_main.cpp
+  gdalgetgdalpath.cpp
+  gdalinfo_lib.cpp
+  gdalbuildvrt_lib.cpp
+  gdal_grid_lib.cpp
+  gdal_translate_lib.cpp
+  gdal_rasterize_lib.cpp
+  gdal_contour_lib.cpp
+  gdalwarp_lib.cpp
+  commonutils.cpp
+  ogrinfo_lib.cpp
+  ogr2ogr_lib.cpp
+  gdaldem_lib.cpp
+  nearblack_lib.cpp
+  nearblack_lib_floodfill.cpp
+  gdal_footprint_lib.cpp
+  gdalmdiminfo_lib.cpp
+  gdalmdimtranslate_lib.cpp
+  gdaltindex_lib.cpp)
+
+option(GDAL_ENABLE_ALGORITHMS "Whether to enable 'gdal' algorithms" ON)
+if(GDAL_ENABLE_ALGORITHMS)
+target_sources(appslib PRIVATE
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
@@ -14,7 +37,6 @@ add_library(
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
-  gdalalg_main.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
@@ -109,24 +131,9 @@ add_library(
   gdalalg_vsi_move.cpp
   gdalalg_vsi_sozip.cpp
   gdalalg_vsi_sync.cpp
-  gdalgetgdalpath.cpp
-  gdalinfo_lib.cpp
-  gdalbuildvrt_lib.cpp
-  gdal_grid_lib.cpp
-  gdal_translate_lib.cpp
-  gdal_rasterize_lib.cpp
-  gdal_contour_lib.cpp
-  gdalwarp_lib.cpp
-  commonutils.cpp
-  ogrinfo_lib.cpp
-  ogr2ogr_lib.cpp
-  gdaldem_lib.cpp
-  nearblack_lib.cpp
-  nearblack_lib_floodfill.cpp
-  gdal_footprint_lib.cpp
-  gdalmdiminfo_lib.cpp
-  gdalmdimtranslate_lib.cpp
-  gdaltindex_lib.cpp)
+)
+endif()
+
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
@@ -217,7 +224,9 @@ if (BUILD_APPS)
     target_compile_definitions(ogrlineref PRIVATE -DHAVE_GEOS=1)
   endif ()
 
-  add_executable(ogrtindex ogrtindex.cpp)
+  if(GDAL_ENABLE_ALGORITHMS)
+    add_executable(ogrtindex ogrtindex.cpp)
+  endif()
   add_executable(nearblack nearblack_bin.cpp)
   add_executable(gdalmdiminfo gdalmdiminfo_bin.cpp)
   add_executable(gdalmdimtranslate gdalmdimtranslate_bin.cpp)
@@ -247,7 +256,6 @@ if (BUILD_APPS)
       gdal_viewshed
       nearblack
       ogrlineref
-      ogrtindex
       gdalwarp
       gdal_contour
       gdallocationinfo
@@ -257,6 +265,9 @@ if (BUILD_APPS)
       gdalmdiminfo
       gdalmdimtranslate
       sozip)
+  if (GDAL_ENABLE_ALGORITHMS)
+    list(APPEND APPS_TARGETS ogrtindex)
+  endif()
   if (ENABLE_GNM)
     add_executable(gnmanalyse gnmanalyse.cpp)
     add_executable(gnmmanage gnmmanage.cpp)
