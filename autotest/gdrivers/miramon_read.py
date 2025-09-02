@@ -348,7 +348,6 @@ init_list = [
     init_list,
     ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver("MiraMonRaster")
 def test_miramon_test_basic_raster(
     filename, band_idx, expected, checksum, exp_min, exp_max, exp_gt
 ):
@@ -424,7 +423,6 @@ def test_miramon_test_basic_raster(
         ),
     ],
 )
-@pytest.mark.require_driver("MiraMonRaster")
 def test_miramon_test_fails(name, message_substring):
     with pytest.raises(Exception) as excinfo:
         gdal.OpenEx(
@@ -510,7 +508,6 @@ init_list_subdatasets = [
     init_list_subdatasets,
     ids=[tup[0].split("/")[-1].split(".")[0] for tup in init_list_subdatasets],
 )
-@pytest.mark.require_driver("MiraMonRaster")
 def test_miramon_subdatasets_detection(
     filename,
     n_exp_sds,
@@ -718,7 +715,6 @@ init_list_color_tables = [
         for tup in init_list_color_tables
     ],
 )
-@pytest.mark.require_driver("MiraMonRaster")
 def test_miramon_epsg_and_color_table(filename, idx_bnd, expected_ct, exp_epsg):
     ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, f"Could not open file: {filename}"
@@ -1032,7 +1028,6 @@ init_list_attribute_tables = [
         for tup in init_list_attribute_tables
     ],
 )
-@pytest.mark.require_driver("MiraMonRaster")
 def test_miramon_default_rat(filename, idx_bnd, expected_rat):
     ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, f"Could not open file: {filename}"
