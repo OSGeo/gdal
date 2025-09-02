@@ -2356,7 +2356,6 @@ CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
                                               const char *key)
 {
     char *value = nullptr;
-    char *pszString;
     const char *pszLine;
     char *section_header = nullptr;
     size_t key_len = 0;
@@ -2374,7 +2373,7 @@ CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
 
     while ((pszLine = CPLReadLine2L(file, 10000, nullptr)) != nullptr)
     {
-        pszString = CPLRecode(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+        char *pszString = CPLRecode(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
 
         // Skip comments and empty lines
         if (*pszString == ';' || *pszString == '#' || *pszString == '\n' ||
@@ -2437,6 +2436,7 @@ CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
                         }
                     }
 
+                    VSIFree(value);
                     value = CPLStrdup(value_start);
                     VSIFCloseL(file);
                     VSIFree(section_header);  // Free allocated memory
@@ -2447,18 +2447,20 @@ CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
         }
         else
         {
+            VSIFree(value);
+            value = nullptr;
             if (section_header)
             {
                 if (!strcmp(section_header, section))
+                {
                     value = section_header;  // Freed out
-                else
-                    value = nullptr;
+                    section_header = nullptr;
+                }
             }
-            else
-                value = nullptr;
 
             VSIFCloseL(file);
             VSIFree(pszString);
+            VSIFree(section_header);
             return value;
         }
         VSIFree(pszString);
