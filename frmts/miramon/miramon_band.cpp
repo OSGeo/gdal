@@ -953,6 +953,20 @@ bool MMRBand::FillRowOffsets()
     if (!m_aFileOffsets.empty())
         return true;
 
+    // Sanity check to avoid attempting huge memory allocation
+    if (m_nHeight > 1000 * 1000)
+    {
+        const auto nCurPos = VSIFTellL(m_pfIMG);
+        VSIFSeekL(m_pfIMG, 0, SEEK_END);
+        const auto nFileSize = VSIFTellL(m_pfIMG);
+        VSIFSeekL(m_pfIMG, nCurPos, SEEK_SET);
+        if (nFileSize < static_cast<vsi_l_offset>(m_nHeight))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too small file");
+            return false;
+        }
+    }
+
     try
     {
         m_aFileOffsets.resize(static_cast<size_t>(m_nHeight) + 1);
