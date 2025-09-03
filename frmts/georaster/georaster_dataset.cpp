@@ -863,6 +863,16 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
                                       GDALDataType eType, char **papszOptions)
 {
     //  -------------------------------------------------------------------
+    //  Verify georaster prefix
+    //  -------------------------------------------------------------------
+
+    if (STARTS_WITH_CI(pszFilename, "georaster:") == false &&
+        STARTS_WITH_CI(pszFilename, "geor:") == false)
+    {
+        return nullptr;
+    }
+
+    //  -------------------------------------------------------------------
     //  Check for supported Data types
     //  -------------------------------------------------------------------
 
