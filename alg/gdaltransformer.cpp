@@ -1421,7 +1421,9 @@ void *GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS,
 /*      the center longitude of the dataset for wrapping purposes.      */
 /************************************************************************/
 
-static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
+static void InsertCenterLong(GDALDatasetH hDS, const OGRSpatialReference *poSRS,
+                             const OGRSpatialReference *poDstSRS,
+                             const char *pszTargetExtent,
                              CPLStringList &aosOptions)
 
 {
@@ -1468,13 +1470,26 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
                           adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
                               nYSize * adfGeoTransform[2]));
 
-    const double dfEpsilon =
-        std::max(std::fabs(adfGeoTransform[1]), std::fabs(adfGeoTransform[2]));
-    // If the raster covers more than 360 degree (allow an extra pixel),
-    // give up
-    constexpr double RELATIVE_EPSILON = 0.05;  // for numeric precision issues
-    if (dfMaxLong - dfMinLong > 360.0 + dfEpsilon * (1 + RELATIVE_EPSILON))
-        return;
+    // If the raster covers more than 360 degree, give up,
+    // except is the target SRS is geographic and crossing the antimeridian
+    if (dfMaxLong - dfMinLong > 360.0)
+    {
+        const CPLStringList aosTE(CSLTokenizeString2(pszTargetExtent, ",", 0));
+        if (aosTE.size() == 4 && poDstSRS->IsGeographic() &&
+            std::fabs(poDstSRS->GetAngularUnits() -
+                      CPLAtof(SRS_UA_DEGREE_CONV)) <= 1e-9 &&
+            ((CPLAtof(aosTE[0]) >= -179 && CPLAtof(aosTE[0]) < 180 &&
+              CPLAtof(aosTE[2]) > 180) ||
+             (CPLAtof(aosTE[0]) < -180 && CPLAtof(aosTE[2]) > -180 &&
+              CPLAtof(aosTE[2]) <= 179)))
+        {
+            // insert CENTER_LONG
+        }
+        else
+        {
+            return;
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Insert center long.                                             */
@@ -1928,6 +1943,9 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
            "compute the best coordinate operation between the source and "
            "target SRS. If not specified, the bounding box of the source "
            "raster will be used.'/>"
+           "<Option name='TARGET_EXTENT' type='string' "
+           "description='Target extent as minx,miny,maxx,maxy expressed in "
+           "target SRS.'/>"
            "<Option name='GEOLOC_BACKMAP_OVERSAMPLE_FACTOR' type='float' "
            "min='0.1' max='2' description='"
            "Oversample factor used to derive the size of the \"backmap\" used "
@@ -2668,7 +2686,9 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
         if (bMayInsertCenterLong)
         {
-            InsertCenterLong(hSrcDS, &oSrcSRS, aosOptions);
+            InsertCenterLong(hSrcDS, &oSrcSRS, &oDstSRS,
+                             CSLFetchNameValue(papszOptions, "TARGET_EXTENT"),
+                             aosOptions);
         }
 
         if (CPLFetchBool(papszOptions, "PROMOTE_TO_3D", false))
