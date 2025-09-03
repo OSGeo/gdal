@@ -3504,6 +3504,7 @@ void GDALRegister_MEM()
 
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
                               "Name Type Nullable SRS CoordinateEpoch");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     // Define GDAL_NO_OPEN_FOR_MEM_DRIVER macro to undefine Open() method for
     // MEM driver.  Otherwise, bad user input can trigger easily a GDAL crash

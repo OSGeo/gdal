@@ -268,6 +268,8 @@ int OGRODSLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poFilterGeom == nullptr && m_poAttrQueryODS == nullptr;
+    else if (EQUAL(pszCap, OLCUpsertFeature))
+        return false;
     return OGRMemLayer::TestCapability(pszCap);
 }
 

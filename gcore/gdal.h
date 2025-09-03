@@ -867,6 +867,11 @@ typedef enum
 #define GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION                              \
     "DCAP_HONOR_GEOM_COORDINATE_PRECISION"
 
+/** Capability set by drivers that implements OGRLayer::UpsertTeature().
+ * @since GDLA 3.12
+ */
+#define GDAL_DCAP_UPSERT "DCAP_UPSERT"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *
