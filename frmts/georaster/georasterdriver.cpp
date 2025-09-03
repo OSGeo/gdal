@@ -13,7 +13,6 @@
  *****************************************************************************/
 #include "oci_wrapper.h"
 #include "georaster_priv.h"
-#include "cpl_multiproc.h"
 
 GeoRasterDriver *GeoRasterDriver::gpoGeoRasterDriver = nullptr;
 
@@ -31,8 +30,6 @@ GeoRasterDriver::GeoRasterDriver()
 GeoRasterDriver::~GeoRasterDriver()
 {
     gpoGeoRasterDriver = nullptr;
-    if (hMutex != nullptr)
-        CPLDestroyMutex(hMutex);
     std::map<CPLString, OWSessionPool *>::iterator oIter =
         oMapSessionPool.begin();
     for (; oIter != oMapSessionPool.end(); ++oIter)
@@ -70,7 +67,7 @@ GeoRasterDriver::GetConnection(const char *pszUserIn, const char *pszPasswordIn,
     /**
      * Look for an existing session pool in the map
      **/
-    CPLMutexHolderD(&hMutex);
+    std::lock_guard<std::mutex> oLock(oMutex);
     std::map<CPLString, OWSessionPool *>::iterator oIter =
         oMapSessionPool.find(osKey);
 

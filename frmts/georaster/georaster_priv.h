@@ -22,6 +22,8 @@
 #include "cpl_minixml.h"
 #include "cpl_list.h"
 
+#include <mutex>
+
 //  ---------------------------------------------------------------------------
 //  DEFLATE compression support
 //  ---------------------------------------------------------------------------
@@ -124,7 +126,7 @@ class GeoRasterDriver final : public GDALDriver
 {
 
   private:
-    CPLMutex *hMutex = nullptr;
+    std::mutex oMutex{};
     std::map<CPLString, OWSessionPool *> oMapSessionPool{};
 
     CPL_DISALLOW_COPY_ASSIGN(GeoRasterDriver)
