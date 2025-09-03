@@ -1158,6 +1158,53 @@ static int AverageFloatSSE2(int nDstXWidth, int nChunkXSize,
     return iDstPixel;
 }
 
+/************************************************************************/
+/*                        AverageDoubleSSE2()                           */
+/************************************************************************/
+
+static int
+AverageDoubleSSE2(int nDstXWidth, int nChunkXSize,
+                  const double *&CPL_RESTRICT pSrcScanlineShiftedInOut,
+                  double *CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on Float64 by
+    // processing by group of output pixels.
+    const double *CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zeroDot25 = _mm_set1_pd(0.25);
+    constexpr int DEST_ELTS =
+        static_cast<int>(sizeof(zeroDot25) / sizeof(double));
+
+    for (; iDstPixel < nDstXWidth - (DEST_ELTS - 1); iDstPixel += DEST_ELTS)
+    {
+        // Load 4 * DEST_ELTS Float64 from each line
+        const auto firstLine0 = _mm_mul_pd(
+            _mm_loadu_pd(pSrcScanlineShifted + 0 * DEST_ELTS), zeroDot25);
+        const auto firstLine1 = _mm_mul_pd(
+            _mm_loadu_pd(pSrcScanlineShifted + 1 * DEST_ELTS), zeroDot25);
+        const auto secondLine0 = _mm_mul_pd(
+            _mm_loadu_pd(pSrcScanlineShifted + 0 * DEST_ELTS + nChunkXSize),
+            zeroDot25);
+        const auto secondLine1 = _mm_mul_pd(
+            _mm_loadu_pd(pSrcScanlineShifted + 1 * DEST_ELTS + nChunkXSize),
+            zeroDot25);
+
+        // Vertical addition
+        const auto tmp0 = _mm_add_pd(firstLine0, secondLine0);
+        const auto tmp1 = _mm_add_pd(firstLine1, secondLine1);
+
+        // Horizontal addition
+        const auto average0 = sse2_hadd_pd(tmp0, tmp1);
+
+        _mm_storeu_pd(&pDstScanline[iDstPixel + 0], average0);
+        pSrcScanlineShifted += DEST_ELTS * 2;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
 #endif
 
 #endif
@@ -1429,6 +1476,15 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                         else
                         {
                             iDstPixel = AverageFloatSSE2(
+                                nDstXWidth, nChunkXSize, pSrcScanlineShifted,
+                                pDstScanline);
+                        }
+                    }
+                    else
+                    {
+                        if constexpr (!bQuadraticMean)
+                        {
+                            iDstPixel = AverageDoubleSSE2(
                                 nDstXWidth, nChunkXSize, pSrcScanlineShifted,
                                 pDstScanline);
                         }

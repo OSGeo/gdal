@@ -13,19 +13,24 @@ ds_nodata.GetRasterBand(1).SetNoDataValue(0)
 ds_nodata.GetRasterBand(1).Fill(127)
 
 ds_uint16 = gdal.GetDriverByName("MEM").Create(
-    "", 1024 * 10, 1024 * 10, 1, gdal.GDT_UInt16
+    "", 1024 * 10, 512 * 10, 1, gdal.GDT_UInt16
 )
 ds_uint16.GetRasterBand(1).Fill(32767)
 
 ds_uint16_16383 = gdal.GetDriverByName("MEM").Create(
-    "", 1024 * 10, 1024 * 10, 1, gdal.GDT_UInt16
+    "", 1024 * 10, 512 * 10, 1, gdal.GDT_UInt16
 )
 ds_uint16_16383.GetRasterBand(1).Fill(16383)
 
 ds_float32 = gdal.GetDriverByName("MEM").Create(
-    "", 1024 * 10, 1024 * 10, 1, gdal.GDT_Float32
+    "", 1024 * 10, 256 * 10, 1, gdal.GDT_Float32
 )
 ds_float32.GetRasterBand(1).Fill(32767)
+
+ds_float64 = gdal.GetDriverByName("MEM").Create(
+    "", 1024 * 10, 128 * 10, 1, gdal.GDT_Float64
+)
+ds_float64.GetRasterBand(1).Fill(32767)
 
 NITERS = 50
 
@@ -74,6 +79,14 @@ def testAverageFloat32(downsampling_factor):
     ds_float32.ReadRaster(
         buf_xsize=ds_float32.RasterXSize // downsampling_factor,
         buf_ysize=ds_float32.RasterYSize // downsampling_factor,
+        resample_alg=gdal.GRIORA_Average,
+    )
+
+
+def testAverageFloat64(downsampling_factor):
+    ds_float64.ReadRaster(
+        buf_xsize=ds_float64.RasterXSize // downsampling_factor,
+        buf_ysize=ds_float64.RasterYSize // downsampling_factor,
         resample_alg=gdal.GRIORA_Average,
     )
 
@@ -171,6 +184,7 @@ print(
         number=NITERS,
     )
 )
+
 print(
     "testAverageFloat32(2): %.3f"
     % timeit.timeit(
@@ -179,6 +193,16 @@ print(
         number=NITERS,
     )
 )
+
+print(
+    "testAverageFloat64(2): %.3f"
+    % timeit.timeit(
+        "testAverageFloat64(2)",
+        setup="from __main__ import testAverageFloat64",
+        number=NITERS,
+    )
+)
+
 print(
     "testRMSFloat32(2): %.3f"
     % timeit.timeit(
