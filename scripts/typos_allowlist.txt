@@ -352,6 +352,15 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
 - Koordinates
     Koordinates
+    DATATYPE_AND_COMPR_BIT_VELL = 2,  // Not supported
+                                   "IndexsJoinTaula", os_IndexJoin) ||
+#define Key_IndexesNomsCamps "IndexsNomsCamps"
+        "data/miramon/several_errors/NonExistantPaletteI.rel",
+        "data/miramon/palettes/Continous/ColorTable/uinteger_with_nodataI.rel",
+        "data/miramon/palettes/Continous/ColorTable/double_with_nodataI.rel",
+        "data/miramon/palettes/Continous/DBF_nodata_end/double_with_nodataI.rel",
+        "data/miramon/palettes/Continous/ColorTable/uinteger_with_nodataI.rel",
+        "data/miramon/palettes/Continous/LinearLogSimbo/LinearSimboWith0I.rel",
 %apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
 #include <mach/mach.h>
         const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");

@@ -17,7 +17,6 @@
 
 #include "ogr_api.h"            // For CPL_C_START
 #include "mm_gdal_functions.h"  // For CPLStrlcpy()
-#include "mm_wrlayr.h"          // For VSIFCloseL()...
 #ifdef EMBED_RESOURCE_FILES
 #include "embedded_resources.h"
 #endif
@@ -25,143 +24,12 @@
 CPL_C_START              // Necessary for compiling in GDAL project
 #include "cpl_string.h"  // For CPL_ENC_UTF8
 
-    char szInternalGraphicIdentifierEng[MM_MAX_IDENTIFIER_SIZE];
-char szInternalGraphicIdentifierCat[MM_MAX_IDENTIFIER_SIZE];
-char szInternalGraphicIdentifierSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szNumberOfVerticesEng[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfVerticesCat[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfVerticesSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szLengthOfAarcEng[MM_MAX_IDENTIFIER_SIZE];
-char szLengthOfAarcCat[MM_MAX_IDENTIFIER_SIZE];
-char szLengthOfAarcSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szInitialNodeEng[MM_MAX_IDENTIFIER_SIZE];
-char szInitialNodeCat[MM_MAX_IDENTIFIER_SIZE];
-char szInitialNodeSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szFinalNodeEng[MM_MAX_IDENTIFIER_SIZE];
-char szFinalNodeCat[MM_MAX_IDENTIFIER_SIZE];
-char szFinalNodeSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szNumberOfArcsToNodeEng[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfArcsToNodeCat[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfArcsToNodeSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szNodeTypeEng[MM_MAX_IDENTIFIER_SIZE];
-char szNodeTypeCat[MM_MAX_IDENTIFIER_SIZE];
-char szNodeTypeSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szPerimeterOfThePolygonEng[MM_MAX_IDENTIFIER_SIZE];
-char szPerimeterOfThePolygonCat[MM_MAX_IDENTIFIER_SIZE];
-char szPerimeterOfThePolygonSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szAreaOfThePolygonEng[MM_MAX_IDENTIFIER_SIZE];
-char szAreaOfThePolygonCat[MM_MAX_IDENTIFIER_SIZE];
-char szAreaOfThePolygonSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szNumberOfArcsEng[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfArcsCat[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfArcsSpa[MM_MAX_IDENTIFIER_SIZE];
-
-char szNumberOfElementaryPolygonsEng[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfElementaryPolygonsCat[MM_MAX_IDENTIFIER_SIZE];
-char szNumberOfElementaryPolygonsSpa[MM_MAX_IDENTIFIER_SIZE];
-
-void MM_FillFieldDescriptorByLanguage(void)
-{
-    CPLStrlcpy(szInternalGraphicIdentifierEng, "Internal Graphic identifier",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szInternalGraphicIdentifierCat, "Identificador Grafic intern",
-               MM_MAX_IDENTIFIER_SIZE);
-    *(unsigned char *)&szInternalGraphicIdentifierCat[16] = MM_a_WITH_GRAVE;
-    CPLStrlcpy(szInternalGraphicIdentifierSpa, "Identificador Grafico interno",
-               MM_MAX_IDENTIFIER_SIZE);
-    *(unsigned char *)&szInternalGraphicIdentifierSpa[16] = MM_a_WITH_ACUTE;
-
-    CPLStrlcpy(szNumberOfVerticesEng, "Number of vertices",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfVerticesCat, "Nombre de vertexs",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfVerticesSpa, "Numero de vertices",
-               MM_MAX_IDENTIFIER_SIZE);
-    *(unsigned char *)&szNumberOfVerticesCat[11] = MM_e_WITH_GRAVE;
-    *(unsigned char *)&szNumberOfVerticesSpa[1] = MM_u_WITH_ACUTE;
-    *(unsigned char *)&szNumberOfVerticesSpa[11] = MM_e_WITH_ACUTE;
-
-    CPLStrlcpy(szLengthOfAarcEng, "Length of arc", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szLengthOfAarcCat, "Longitud de l'arc", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szLengthOfAarcSpa, "Longitud del arco", MM_MAX_IDENTIFIER_SIZE);
-
-    CPLStrlcpy(szInitialNodeEng, "Initial node", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szInitialNodeCat, "Node inicial", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szInitialNodeSpa, "Nodo inicial", MM_MAX_IDENTIFIER_SIZE);
-
-    CPLStrlcpy(szFinalNodeEng, "Final node", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szFinalNodeCat, "Node final", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szFinalNodeSpa, "Nodo final", MM_MAX_IDENTIFIER_SIZE);
-
-    CPLStrlcpy(szNumberOfArcsToNodeEng, "Number of arcs to node",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfArcsToNodeCat, "Nombre d'arcs al node",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfArcsToNodeSpa, "Numero de arcos al nodo",
-               MM_MAX_IDENTIFIER_SIZE);
-    *(unsigned char *)&szNumberOfArcsToNodeSpa[1] = MM_u_WITH_ACUTE;
-
-    CPLStrlcpy(szNodeTypeEng, "Node type", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNodeTypeCat, "Tipus de node", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNodeTypeSpa, "Tipo de nodo", MM_MAX_IDENTIFIER_SIZE);
-
-    CPLStrlcpy(szPerimeterOfThePolygonEng, "Perimeter of the polygon",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szPerimeterOfThePolygonSpa, "Perimetro del poligono",
-               MM_MAX_IDENTIFIER_SIZE);
-
-    *(unsigned char *)&szPerimeterOfThePolygonCat[3] = MM_i_WITH_ACUTE;
-    *(unsigned char *)&szPerimeterOfThePolygonSpa[3] = MM_i_WITH_ACUTE;
-    *(unsigned char *)&szPerimeterOfThePolygonCat[17] = MM_i_WITH_ACUTE;
-    *(unsigned char *)&szPerimeterOfThePolygonSpa[17] = MM_i_WITH_ACUTE;
-
-    CPLStrlcpy(szAreaOfThePolygonEng, "Area of the polygon",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szAreaOfThePolygonCat, "Area del poligon",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szAreaOfThePolygonSpa, "Area del poligono",
-               MM_MAX_IDENTIFIER_SIZE);
-
-    *(unsigned char *)&szAreaOfThePolygonCat[0] = MM_A_WITH_GRAVE;
-    *(unsigned char *)&szAreaOfThePolygonSpa[0] = MM_A_WITH_ACUTE;
-    *(unsigned char *)&szAreaOfThePolygonCat[12] = MM_i_WITH_ACUTE;
-    *(unsigned char *)&szAreaOfThePolygonSpa[12] = MM_i_WITH_ACUTE;
-
-    CPLStrlcpy(szNumberOfArcsEng, "Number of arcs", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfArcsCat, "Nombre d'arcs", MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfArcsSpa, "Numero de arcos", MM_MAX_IDENTIFIER_SIZE);
-
-    *(unsigned char *)&szNumberOfArcsSpa[1] = MM_u_WITH_ACUTE;
-
-    CPLStrlcpy(szNumberOfElementaryPolygonsEng, "Number of elementary polygons",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfElementaryPolygonsCat, "Nombre de poligons elementals",
-               MM_MAX_IDENTIFIER_SIZE);
-    CPLStrlcpy(szNumberOfElementaryPolygonsSpa,
-               "Numero de poligonos elementales", MM_MAX_IDENTIFIER_SIZE);
-
-    *(unsigned char *)&szNumberOfElementaryPolygonsSpa[1] = MM_u_WITH_ACUTE;
-    *(unsigned char *)&szNumberOfElementaryPolygonsCat[13] = MM_i_WITH_ACUTE;
-    *(unsigned char *)&szNumberOfElementaryPolygonsSpa[13] = MM_i_WITH_ACUTE;
-}
-
-const char *MM_pszLogFilename = nullptr;
+    const char *MM_pszLogFilename = nullptr;
 
 static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
 
-void fclose_and_nullify(VSILFILE **pFunc)
+CPL_DLL void fclose_and_nullify(VSILFILE **pFunc)
 {
     if (!pFunc || !(*pFunc))
         return;
@@ -170,7 +38,7 @@ void fclose_and_nullify(VSILFILE **pFunc)
 }
 
 // CREATING AN EXTENDED MIRAMON DBF
-void MM_InitializeField(struct MM_FIELD *pField)
+CPL_DLL void MM_InitializeField(struct MM_FIELD *pField)
 {
     memset(pField, '\0', sizeof(*pField));
     pField->FieldType = 'C';
@@ -179,7 +47,7 @@ void MM_InitializeField(struct MM_FIELD *pField)
 
 #define MM_ACCEPTABLE_NUMBER_OF_FIELDS 20000
 
-struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS nFields)
+CPL_DLL struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS nFields)
 {
     struct MM_FIELD *camp;
     MM_EXT_DBF_N_FIELDS i;
@@ -235,8 +103,8 @@ static struct MM_DATA_BASE_XP *MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
     return data_base_XP;
 }
 
-struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
-                                           MM_BYTE charset)
+CPL_DLL struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
+                                                   MM_BYTE charset)
 {
     struct MM_DATA_BASE_XP *bd_xp;
     struct MM_FIELD *camp;
@@ -357,7 +225,7 @@ MM_Is_character_valid_for_extended_DBF_field_name(int valor,
     return TRUE;
 }
 
-static int MM_ISExtendedNameBD_XP(const char *nom_camp)
+CPL_DLL int MM_ISExtendedNameBD_XP(const char *nom_camp)
 {
     size_t mida, j;
 
@@ -384,7 +252,7 @@ static int MM_ISExtendedNameBD_XP(const char *nom_camp)
     return NM_CLASSICAL_DBF_AND_VALID_NAME;
 }
 
-static MM_BYTE MM_CalculateBytesExtendedFieldName(struct MM_FIELD *camp)
+CPL_DLL MM_BYTE MM_CalculateBytesExtendedFieldName(struct MM_FIELD *camp)
 {
     camp->reserved_2[MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE] =
         (MM_BYTE)strlen(camp->FieldName);
@@ -495,7 +363,7 @@ static short int MM_return_common_valid_DBF_field_name_string(char *szChain)
     return error_retornat;
 }
 
-static short int MM_ReturnValidClassicDBFFieldName(char *szChain)
+CPL_DLL short int MM_ReturnValidClassicDBFFieldName(char *szChain)
 {
     size_t long_nom_camp;
     short int error_retornat = 0;
@@ -586,7 +454,7 @@ static char *MM_SetSubIndexFieldNam(const char *nom_camp,
     return NomCamp_SubIndex;
 }
 
-MM_FIRST_RECORD_OFFSET_TYPE
+CPL_DLL MM_FIRST_RECORD_OFFSET_TYPE
 MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp)
 {
     MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
@@ -597,7 +465,7 @@ MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp)
     return offset_nom_camp;
 }
 
-int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
+CPL_DLL int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 {
     if (!MMAdmDB->pMMBDXP || !MMAdmDB->pMMBDXP->pfDataBase)
         return 0;
@@ -1148,8 +1016,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     return TRUE;
 } /* End of MM_OpenIfNeededAndUpdateEntireHeader() */
 
-MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
-                                   const char *NomFitxer)
+CPL_DLL MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
+                                           const char *NomFitxer)
 {
     time_t currentTime;
 
@@ -1172,7 +1040,7 @@ MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
     return MM_OpenIfNeededAndUpdateEntireHeader(bd_xp);
 }
 
-void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP)
+CPL_DLL void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP)
 {
     MM_EXT_DBF_N_FIELDS i;
     size_t j;
@@ -1201,9 +1069,9 @@ void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP)
 
 // READING THE HEADER OF AN EXTENDED DBF
 // Free with MM_ReleaseDBFHeader()
-int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
-                                     struct MM_DATA_BASE_XP *pMMBDXP,
-                                     const char *pszRelFile)
+CPL_DLL int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
+                                             struct MM_DATA_BASE_XP *pMMBDXP,
+                                             const char *pszRelFile)
 {
     MM_BYTE variable_byte;
     VSILFILE *pf;
@@ -1760,7 +1628,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     return 0;
 }  // End of MM_ReadExtendedDBFHeaderFromFile()
 
-void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP)
+CPL_DLL void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP)
 {
     if (!data_base_XP)
         return;
@@ -1774,7 +1642,7 @@ void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP)
     return;
 }
 
-int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(
+CPL_DLL int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(
     struct MM_FIELD *camp, struct MM_DATA_BASE_XP *bd_xp,
     MM_BOOLEAN no_modifica_descriptor, size_t mida_nom)
 {
@@ -1961,8 +1829,8 @@ static int MM_DuplicateMultilingualString(
     return 0;
 }
 
-int MM_DuplicateFieldDBXP(struct MM_FIELD *camp_final,
-                          const struct MM_FIELD *camp_inicial)
+CPL_DLL int MM_DuplicateFieldDBXP(struct MM_FIELD *camp_final,
+                                  const struct MM_FIELD *camp_inicial)
 {
     *camp_final = *camp_inicial;
 
@@ -1976,7 +1844,7 @@ int MM_DuplicateFieldDBXP(struct MM_FIELD *camp_final,
 
 // If n_bytes==SIZE_MAX, the parameter is ignored ant, then,
 // it's assumed that szszChain is NUL terminated
-char *MM_oemansi_n(char *szszChain, size_t n_bytes)
+CPL_DLL char *MM_oemansi_n(char *szszChain, size_t n_bytes)
 {
     size_t u_i;
     unsigned char *punter_bait;
@@ -2013,7 +1881,7 @@ char *MM_oemansi_n(char *szszChain, size_t n_bytes)
 }
 
 // An implementation of non-sensitive strstr()
-char *MM_stristr(const char *haystack, const char *needle)
+CPL_DLL char *MM_stristr(const char *haystack, const char *needle)
 {
     if (!haystack)
         return nullptr;
@@ -2034,306 +1902,14 @@ char *MM_stristr(const char *haystack, const char *needle)
     return p1;
 }
 
-char *MM_oemansi(char *szszChain)
+CPL_DLL char *MM_oemansi(char *szszChain)
 {
     return MM_oemansi_n(szszChain, SIZE_MAX);
 }
 
-static MM_BOOLEAN MM_FillFieldDB_XP(
-    struct MM_FIELD *camp, const char *FieldName,
-    const char *FieldDescriptionEng, const char *FieldDescriptionCat,
-    const char *FieldDescriptionSpa, char FieldType,
-    MM_BYTES_PER_FIELD_TYPE_DBF BytesPerField, MM_BYTE DecimalsIfFloat)
-{
-    char nom_temp[MM_MAX_LON_FIELD_NAME_DBF];
-    int retorn_valida_nom_camp;
-
-    if (FieldName)
-    {
-        retorn_valida_nom_camp = MM_ISExtendedNameBD_XP(FieldName);
-        if (retorn_valida_nom_camp == MM_DBF_NAME_NO_VALID)
-            return FALSE;
-        CPLStrlcpy(camp->FieldName, FieldName, MM_MAX_LON_FIELD_NAME_DBF);
-
-        if (retorn_valida_nom_camp == MM_VALID_EXTENDED_DBF_NAME)
-        {
-            MM_CalculateBytesExtendedFieldName(camp);
-            CPLStrlcpy(nom_temp, FieldName, MM_MAX_LON_FIELD_NAME_DBF);
-            MM_ReturnValidClassicDBFFieldName(nom_temp);
-            nom_temp[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF] = '\0';
-            CPLStrlcpy(camp->ClassicalDBFFieldName, nom_temp,
-                       MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
-        }
-    }
-
-    if (FieldDescriptionEng)
-        CPLStrlcpy(camp->FieldDescription[MM_DEF_LANGUAGE], FieldDescriptionEng,
-                   sizeof(camp->FieldDescription[MM_DEF_LANGUAGE]));
-    else
-        strcpy(camp->FieldDescription[MM_DEF_LANGUAGE], "\0");
-
-    if (FieldDescriptionEng)
-        CPLStrlcpy(camp->FieldDescription[MM_ENG_LANGUAGE], FieldDescriptionEng,
-                   sizeof(camp->FieldDescription[MM_ENG_LANGUAGE]));
-    else
-        strcpy(camp->FieldDescription[MM_ENG_LANGUAGE], "\0");
-
-    if (FieldDescriptionCat)
-        CPLStrlcpy(camp->FieldDescription[MM_CAT_LANGUAGE], FieldDescriptionCat,
-                   sizeof(camp->FieldDescription[MM_CAT_LANGUAGE]));
-    else
-        strcpy(camp->FieldDescription[MM_CAT_LANGUAGE], "\0");
-
-    if (FieldDescriptionSpa)
-        CPLStrlcpy(camp->FieldDescription[MM_SPA_LANGUAGE], FieldDescriptionSpa,
-                   sizeof(camp->FieldDescription[MM_SPA_LANGUAGE]));
-    else
-        strcpy(camp->FieldDescription[MM_SPA_LANGUAGE], "\0");
-
-    camp->FieldType = FieldType;
-    camp->DecimalsIfFloat = DecimalsIfFloat;
-    camp->BytesPerField = BytesPerField;
-    return TRUE;
-}
-
-size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
-                                        MM_BYTE n_perimeter_decimals,
-                                        MM_BYTE n_area_decimals_decimals)
-{
-    MM_EXT_DBF_N_FIELDS i_camp = 0;
-
-    MM_FillFieldDB_XP(
-        bd_xp->pField + i_camp, szMMNomCampIdGraficDefecte,
-        szInternalGraphicIdentifierEng, szInternalGraphicIdentifierCat,
-        szInternalGraphicIdentifierSpa, 'N', MM_MIN_WIDTH_ID_GRAFIC, 0);
-    bd_xp->IdGraficField = 0;
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampNVertexsDefecte,
-                      szNumberOfVerticesEng, szNumberOfVerticesCat,
-                      szNumberOfVerticesSpa, 'N', MM_MIN_WIDTH_N_VERTEXS, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_N_VERTEXS;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampPerimetreDefecte,
-                      szPerimeterOfThePolygonEng, szPerimeterOfThePolygonCat,
-                      szPerimeterOfThePolygonSpa, 'N', MM_MIN_WIDTH_LONG,
-                      n_perimeter_decimals);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_PERIMETRE;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampAreaDefecte,
-                      szAreaOfThePolygonEng, szAreaOfThePolygonCat,
-                      szAreaOfThePolygonSpa, 'N', MM_MIN_WIDTH_AREA,
-                      n_area_decimals_decimals);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_AREA;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampNArcsDefecte,
-                      szNumberOfArcsEng, szNumberOfArcsCat, szNumberOfArcsSpa,
-                      'N', MM_MIN_WIDTH_N_ARCS, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_N_ARCS;
-    i_camp++;
-
-    MM_FillFieldDB_XP(
-        bd_xp->pField + i_camp, szMMNomCampNPoligonsDefecte,
-        szNumberOfElementaryPolygonsEng, szNumberOfElementaryPolygonsCat,
-        szNumberOfElementaryPolygonsSpa, 'N', MM_MIN_WIDTH_N_POLIG, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_N_POLIG;
-    i_camp++;
-
-    return i_camp;
-}
-
-size_t MM_DefineFirstArcFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
-                                    MM_BYTE n_decimals)
-{
-    MM_EXT_DBF_N_FIELDS i_camp;
-
-    i_camp = 0;
-    MM_FillFieldDB_XP(
-        bd_xp->pField + i_camp, szMMNomCampIdGraficDefecte,
-        szInternalGraphicIdentifierEng, szInternalGraphicIdentifierCat,
-        szInternalGraphicIdentifierSpa, 'N', MM_MIN_WIDTH_ID_GRAFIC, 0);
-    bd_xp->IdGraficField = 0;
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampNVertexsDefecte,
-                      szNumberOfVerticesEng, szNumberOfVerticesCat,
-                      szNumberOfVerticesSpa, 'N', MM_MIN_WIDTH_N_VERTEXS, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_N_VERTEXS;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampLongitudArcDefecte,
-                      szLengthOfAarcEng, szLengthOfAarcCat, szLengthOfAarcSpa,
-                      'N', MM_MIN_WIDTH_LONG, n_decimals);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_LONG_ARC;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampNodeIniDefecte,
-                      szInitialNodeEng, szInitialNodeCat, szInitialNodeSpa, 'N',
-                      MM_MIN_WIDTH_INITIAL_NODE, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_NODE_INI;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampNodeFiDefecte,
-                      szFinalNodeEng, szFinalNodeCat, szFinalNodeSpa, 'N',
-                      MM_MIN_WIDTH_FINAL_NODE, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_NODE_FI;
-    i_camp++;
-
-    return i_camp;
-}
-
-size_t MM_DefineFirstNodeFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp)
-{
-    MM_EXT_DBF_N_FIELDS i_camp;
-
-    i_camp = 0;
-
-    MM_FillFieldDB_XP(
-        bd_xp->pField + i_camp, szMMNomCampIdGraficDefecte,
-        szInternalGraphicIdentifierEng, szInternalGraphicIdentifierCat,
-        szInternalGraphicIdentifierSpa, 'N', MM_MIN_WIDTH_ID_GRAFIC, 0);
-    bd_xp->IdGraficField = 0;
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampArcsANodeDefecte,
-                      szNumberOfArcsToNodeEng, szNumberOfArcsToNodeCat,
-                      szNumberOfArcsToNodeSpa, 'N', MM_MIN_WIDTH_ARCS_TO_NODE,
-                      0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_ARCS_A_NOD;
-    i_camp++;
-
-    MM_FillFieldDB_XP(bd_xp->pField + i_camp, szMMNomCampTipusNodeDefecte,
-                      szNodeTypeEng, szNodeTypeCat, szNodeTypeSpa, 'N', 1, 0);
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_TIPUS_NODE;
-    i_camp++;
-
-    return i_camp;
-}
-
-size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp)
-{
-    size_t i_camp = 0;
-
-    MM_FillFieldDB_XP(
-        bd_xp->pField + i_camp, szMMNomCampIdGraficDefecte,
-        szInternalGraphicIdentifierEng, szInternalGraphicIdentifierCat,
-        szInternalGraphicIdentifierSpa, 'N', MM_MIN_WIDTH_ID_GRAFIC, 0);
-    bd_xp->IdGraficField = 0;
-    (bd_xp->pField + i_camp)->GeoTopoTypeField = (MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
-    i_camp++;
-
-    return i_camp;
-}
-
-/*
-    Controlling the number of significant figures is often crucial in science
-    and technology, and the best option when nothing is known about the number
-    to be printed (if it is really small (near to 0), or very large), and
-    allows a good return (the same value) into memory when re-read from a text
-    file with scanf() functions.
-    If you need to print 0.00000000000000000000000000000000000000001 with %f
-    you will need an extremely large string. If you print 1980.45 with %E you
-    obtain 1.98045E+003, needing more space, and not being easy to interpret
-    for some people. Moreover, “normal” users do not want to see 1.0 as
-    1.0E+000 or 1.0E+00. The choice of the format specifier, and the integer
-    to be passed to the ‘*’ is not always easy,
-    and MM_SprintfDoubleSignifFigures() automatically uses a “fair” notation
-    whenever it is possible, resulting in shorter strings, being them under
-    control (the maximum length of the resulting string is always known).
-    Moreover, it avoids some failures in compilers not expecting
-    NAN or INF values.
-*/
-int MM_SprintfDoubleSignifFigures(char *szChain, size_t size_szChain,
-                                  int nSignifFigures, double dfRealValue)
-{
-    double VALOR_LIMIT_PRINT_IN_FORMAT_E;
-    double VALOR_TOO_SMALL_TO_PRINT_f;
-    int retorn, exponent;
-    char *ptr;
-
-#define N_POWERS MM_MAX_XS_DOUBLE
-
-    /* This expression ensures that no garbage is written in
-    the non-significant digits of the integer part, i.e., requesting 9E20
-    with 16 significant digits does not print 90000000000000004905, where
-    "4905" is garbage generated by the print call with such a large value 
-    and "%.16f", but rather writes 9.000000000000000E+20.
-    At the same time, it ensures that 9000 requested with 4 significant
-    digits is written as 9000 and that requested with 5 significant digits
-    is written as 9000.0, but that requested with 3 significant digits is
-    written as 9.00E+03. */
-    double potencies_de_10[N_POWERS] = {
-        1E+1,  1E+2,  1E+3,  1E+4,  1E+5,  1E+6,  1E+7,  1E+8, 1E+9,
-        1E+10, 1E+11, 1E+12, 1E+13, 1E+14, 1E+15, 1E+16, 1E+17};
-
-    /* This expression ensures that -9E-7 requested with 11 significant digits
-    still uses "natural" notation and gives -0.0000009000000000, which still
-    fits exactly within the 20 characters of a 'N' field in dBASE, while
-    requested with 12 significant digits jumps to exponential notation and
-    writes -9.00000000000E-07, which also fits (in this case, comfortably)
-    within the 20 characters of dBASE.
-    The expression could be replaced by: pow(10,-max(0,20-2-signif_digits)); */
-    double fraccions_de_10[N_POWERS + 1] = {
-        1E-1,  1E-2,  1E-3,  1E-4,  1E-5,  1E-6,  1E-7,  1E-8,  1E-9,
-        1E-10, 1E-11, 1E-12, 1E-13, 1E-14, 1E-15, 1E-16, 1E-17, 1E-18};
-
-    if (!szChain)
-        return 0;
-
-    if (size_szChain < 3)
-        return 0;
-
-    memset(szChain, '\0', size_szChain);
-
-    if (MM_IsNANDouble(dfRealValue))
-        return snprintf(szChain, size_szChain, "NAN");
-
-    if (MM_IsDoubleInfinite(dfRealValue))
-        return snprintf(szChain, size_szChain, "INF");
-
-    if (dfRealValue == 0.0)
-        return snprintf(szChain, size_szChain, "%.*f", nSignifFigures, 0.0);
-
-    if (nSignifFigures < 1)
-        return snprintf(szChain, size_szChain, "0.0");
-
-    if (nSignifFigures > N_POWERS)
-        nSignifFigures = N_POWERS;
-
-    retorn = snprintf(szChain, size_szChain, "%.*E", nSignifFigures - 1,
-                      dfRealValue);
-
-    VALOR_LIMIT_PRINT_IN_FORMAT_E = potencies_de_10[nSignifFigures - 1];
-    VALOR_TOO_SMALL_TO_PRINT_f =
-        fraccions_de_10[MM_MAX_XS_DOUBLE - nSignifFigures];
-
-    if (dfRealValue > VALOR_LIMIT_PRINT_IN_FORMAT_E ||
-        dfRealValue < -VALOR_LIMIT_PRINT_IN_FORMAT_E ||
-        (dfRealValue < VALOR_TOO_SMALL_TO_PRINT_f &&
-         dfRealValue > -VALOR_TOO_SMALL_TO_PRINT_f))
-        return retorn;
-
-    ptr = strchr(szChain, 'E');
-    if (!ptr)
-        return 0;
-    exponent = atoi(ptr + 1);
-
-    return sprintf(szChain, "%.*f",
-                   (nSignifFigures - exponent - 1) > 0
-                       ? (nSignifFigures - exponent - 1)
-                       : 0,
-                   dfRealValue);
-#undef N_POWERS
-}  // End of SprintfDoubleXifSignif()
-
-int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
-                                  MM_EXT_DBF_N_FIELDS *nStringCurrentLength)
+CPL_DLL int
+MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
+                              MM_EXT_DBF_N_FIELDS *nStringCurrentLength)
 {
 
     if (!pszStringSrc)
@@ -2363,10 +1939,10 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
 }
 
 // This function assumes that all the file is saved in disk and closed.
-int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
-                           MM_EXT_DBF_N_FIELDS nIField,
-                           MM_BYTES_PER_FIELD_TYPE_DBF nNewWidth,
-                           MM_BYTE nNewPrecision)
+CPL_DLL int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
+                                   MM_EXT_DBF_N_FIELDS nIField,
+                                   MM_BYTES_PER_FIELD_TYPE_DBF nNewWidth,
+                                   MM_BYTE nNewPrecision)
 {
     char *record, *whites = nullptr;
     MM_BYTES_PER_FIELD_TYPE_DBF l_glop1, l_glop2, i_glop2;
@@ -2577,118 +2153,6 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     return 0;
 } /* End of MMChangeCFieldWidthDBF() */
 
-static void MM_AdoptHeight(double *desti, const double *proposta, uint32_t flag)
-{
-    if (*proposta == MM_NODATA_COORD_Z)
-        return;
-
-    if (flag & MM_STRING_HIGHEST_ALTITUDE)
-    {
-        if (*desti == MM_NODATA_COORD_Z || *desti < *proposta)
-            *desti = *proposta;
-    }
-    else if (flag & MM_STRING_LOWEST_ALTITUDE)
-    {
-        if (*desti == MM_NODATA_COORD_Z || *desti > *proposta)
-            *desti = *proposta;
-    }
-    else
-    {
-        // First coordinate of this vertice
-        if (*desti == MM_NODATA_COORD_Z)
-            *desti = *proposta;
-    }
-}
-
-int MM_GetArcHeights(double *coord_z, VSILFILE *pF, MM_N_VERTICES_TYPE n_vrt,
-                     struct MM_ZD *pZDescription, uint32_t flag)
-{
-    MM_N_HEIGHT_TYPE i;
-    MM_N_VERTICES_TYPE i_vrt;
-    double *pcoord_z;
-    MM_N_HEIGHT_TYPE n_alcada, n_h_total;
-    int tipus;
-    double *alcada = nullptr, *palcada, *palcada_i;
-#define MM_N_ALCADA_LOCAL 50  // Nr of local heights
-    double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
-
-    for (i_vrt = 0; i_vrt < n_vrt; i_vrt++)
-        coord_z[i_vrt] = MM_NODATA_COORD_Z;
-
-    if (pZDescription->nZCount == INT_MIN)
-        return 0;
-    tipus = MM_ARC_HEIGHT_TYPE(pZDescription->nZCount);
-    n_alcada = MM_ARC_N_HEIGHTS(pZDescription->nZCount);
-    if (n_vrt == 0 || n_alcada == 0)
-        return 0;
-
-    if (tipus == MM_ARC_HEIGHT_FOR_EACH_VERTEX)
-    {
-        if (n_vrt > (unsigned)(INT_MAX / n_alcada))
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "Integer overflow");
-            return 1;
-        }
-        n_h_total = (MM_N_HEIGHT_TYPE)n_vrt * n_alcada;
-    }
-    else
-        n_h_total = n_alcada;
-
-    if (n_h_total <= MM_N_ALCADA_LOCAL)
-        palcada = local_CinquantaAlcades;
-    else
-    {
-        if (MMCheckSize_t(n_h_total, sizeof(double)))
-            return 1;
-        if (nullptr ==
-            (palcada = alcada = VSICalloc((size_t)n_h_total, sizeof(double))))
-            return 1;
-    }
-
-    if (VSIFSeekL(pF, pZDescription->nOffsetZ, SEEK_SET))
-    {
-        if (alcada)
-            VSIFree(alcada);
-        return 1;
-    }
-    if (n_h_total !=
-        (MM_N_HEIGHT_TYPE)VSIFReadL(palcada, sizeof(double), n_h_total, pF))
-    {
-        if (alcada)
-            VSIFree(alcada);
-        return 1;
-    }
-
-    if (tipus == MM_ARC_HEIGHT_FOR_EACH_VERTEX)
-    {
-        palcada_i = palcada;
-        for (i = 0; i < n_alcada; i++)
-        {
-            for (i_vrt = 0, pcoord_z = coord_z; i_vrt < n_vrt;
-                 i_vrt++, pcoord_z++, palcada_i++)
-                MM_AdoptHeight(pcoord_z, palcada_i, flag);
-        }
-    }
-    else
-    {
-        palcada_i = palcada;
-        pcoord_z = coord_z;
-        for (i = 0; i < n_alcada; i++, palcada_i++)
-            MM_AdoptHeight(pcoord_z, palcada_i, flag);
-
-        if (*pcoord_z != MM_NODATA_COORD_Z)
-        {
-            /*Copio el mateix valor a totes les alcades.*/
-            for (i_vrt = 1, pcoord_z++; i_vrt < (size_t)n_vrt;
-                 i_vrt++, pcoord_z++)
-                *pcoord_z = *coord_z;
-        }
-    }
-    if (alcada)
-        VSIFree(alcada);
-    return 0;
-}  // End of MM_GetArcHeights()
-
 static char *MM_l_RemoveWhitespacesFromEndOfString(char *punter,
                                                    size_t l_szChain)
 {
@@ -2705,7 +2169,7 @@ static char *MM_l_RemoveWhitespacesFromEndOfString(char *punter,
     return punter;
 }
 
-char *MM_RemoveInitial_and_FinalQuotationMarks(char *szChain)
+CPL_DLL char *MM_RemoveInitial_and_FinalQuotationMarks(char *szChain)
 {
     char *ptr1, *ptr2;
     char cometa = '"';
@@ -2731,7 +2195,7 @@ char *MM_RemoveInitial_and_FinalQuotationMarks(char *szChain)
     return szChain;
 } /* End of MM_RemoveInitial_and_FinalQuotationMarks() */
 
-char *MM_RemoveLeadingWhitespaceOfString(char *szChain)
+CPL_DLL char *MM_RemoveLeadingWhitespaceOfString(char *szChain)
 {
     char *ptr;
     char *ptr2;
@@ -2756,14 +2220,26 @@ char *MM_RemoveLeadingWhitespaceOfString(char *szChain)
     return szChain;
 }
 
-char *MM_RemoveWhitespacesFromEndOfString(char *str)
+// Checks if a string is empty
+CPL_DLL int MMIsEmptyString(const char *string)
+{
+    const char *ptr = string;
+
+    for (; *ptr; ptr++)
+        if (*ptr != ' ' && *ptr != '\t')
+            return 0;
+
+    return 1;
+}
+
+CPL_DLL char *MM_RemoveWhitespacesFromEndOfString(char *str)
 {
     if (str == nullptr)
         return str;
     return MM_l_RemoveWhitespacesFromEndOfString(str, strlen(str));
 }
 
-struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
+CPL_DLL struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
     VSILFILE *f, MM_EXT_DBF_N_RECORDS nNumberOfRecords,
     MM_FIRST_RECORD_OFFSET_TYPE offset_1era,
     MM_ACCUMULATED_BYTES_TYPE_DBF bytes_per_fitxa,
@@ -2875,11 +2351,11 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(
 
 // READING/CREATING MIRAMON METADATA
 // Returns the value of an INI file. Used to read MiraMon metadata
-char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
-                                      const char *key)
+CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
+                                              const char *section,
+                                              const char *key)
 {
     char *value = nullptr;
-    char *pszString;
     const char *pszLine;
     char *section_header = nullptr;
     size_t key_len = 0;
@@ -2897,7 +2373,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
 
     while ((pszLine = CPLReadLine2L(file, 10000, nullptr)) != nullptr)
     {
-        pszString = CPLRecode(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+        char *pszString = CPLRecode(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
 
         // Skip comments and empty lines
         if (*pszString == ';' || *pszString == '#' || *pszString == '\n' ||
@@ -2960,6 +2436,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
                         }
                     }
 
+                    VSIFree(value);
                     value = CPLStrdup(value_start);
                     VSIFCloseL(file);
                     VSIFree(section_header);  // Free allocated memory
@@ -2970,18 +2447,20 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
         }
         else
         {
+            VSIFree(value);
+            value = nullptr;
             if (section_header)
             {
                 if (!strcmp(section_header, section))
+                {
                     value = section_header;  // Freed out
-                else
-                    value = nullptr;
+                    section_header = nullptr;
+                }
             }
-            else
-                value = nullptr;
 
             VSIFCloseL(file);
             VSIFree(pszString);
+            VSIFree(section_header);
             return value;
         }
         VSIFree(pszString);
@@ -2994,8 +2473,8 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
 }
 
 // Retrieves EPSG codes from a CSV file based on provided geodetic identifiers.
-int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
-                                MM_BYTE direction)
+CPL_DLL int MMReturnCodeFromMM_m_idofic(const char *pMMSRS_or_pSRS,
+                                        char *szResult, MM_BYTE direction)
 {
     char *aMMIDDBFFile = nullptr;  //m_idofic.dbf
     VSILFILE *pfMMSRS = nullptr;
@@ -3182,7 +2661,7 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
 }
 
 // Verifies the version of a MiraMon REL 4 file.
-int MMCheck_REL_FILE(const char *szREL_file)
+CPL_DLL int MMCheck_REL_FILE(const char *szREL_file)
 {
     char *pszLine;
     VSILFILE *pF;
@@ -3303,6 +2782,33 @@ int MMCheck_REL_FILE(const char *szREL_file)
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "The file \"%s\" must have %s>=%d.", szREL_file,
                  KEY_SubVersMetaDades, MM_SUBVERS_METADADES);
+        return 1;
+    }
+    return 0;
+}
+
+/* -------------------------------------------------------------------- */
+/*      Managing errors and warnings                                    */
+/* -------------------------------------------------------------------- */
+
+// Checks for potential arithmetic overflow when performing multiplication
+// operations between two GUInt64 values and converting the result to size_t.
+// Important for 32 vs. 64 bit compiling compatibility.
+CPL_DLL int MMCheckSize_t(GUInt64 nCount, GUInt64 nSize)
+{
+    if ((size_t)nCount != nCount)
+        return 1;
+
+    if ((size_t)nSize != nSize)
+        return 1;
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (nCount != 0 && nSize > SIZE_MAX / nCount)
+#else
+    if (nCount != 0 && nSize > (1000 * 1000 * 1000U) / nCount)
+#endif
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Overflow in MMCheckSize_t()");
         return 1;
     }
     return 0;

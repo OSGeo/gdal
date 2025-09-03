@@ -1,0 +1,47 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20250730 07392275+0200
+characterSet=006
+FileIdentifier=nodataI_07770
+
+[IDENTIFICATION]
+code=
+codeSpace=
+DatasetTitle=Fitxer extret de D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\all_nodata\nodata.txt
+
+[OVERVIEW:ASPECTES_TECNICS]
+columns=2
+rows=3
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemDefinition=Local
+HorizontalSystemIdentifier=plane
+unitats=pixels
+resolution=1
+
+[EXTENT]
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20250730 07392265+0200
+
+[ATTRIBUTE_DATA]
+TipusCompressio=byte
+unitats=?
+MostrarUnitats=0
+NODATA=0
+NODATADef=NODATA
+IndexsNomsCamps=1
+NomCamp_1=1
+TipusRelacio=RELACIO_1_1_DICC
+
+[ATTRIBUTE_DATA:1]
+min=
+max=

@@ -139,6 +139,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web
+  MiraMonRaster -raster- (rovs): MiraMon Raster Images (*.rel, *.img)
   GenBin -raster- (rov): Generic Binary (.hdr Labelled)
   ENVI -raster- (rw+uv): ENVI .hdr Labelled
   EHdr -raster- (rw+uv): ESRI .hdr Labelled (*.bil)

@@ -1,0 +1,7 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Metadata>
+      <MDI key="DESCRIPTION">Usos/Cobertes del sòl de Catalunya 2002</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

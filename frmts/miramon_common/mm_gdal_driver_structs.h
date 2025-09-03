@@ -28,6 +28,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_codeSpace "codeSpace"
 #define KEY_DatasetTitle "DatasetTitle"
 #define SECTION_OVERVIEW "OVERVIEW"
+#define SECTION_ASPECTES_TECNICS "ASPECTES_TECNICS"
 #define SECTION_OVVW_ASPECTES_TECNICS "OVERVIEW:ASPECTES_TECNICS"
 #define KEY_ArcSource "ArcSource"
 #define SECTION_EXTENT "EXTENT"
@@ -53,6 +54,14 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_MDIdiom "MDIdiom"
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
+
+// Raster
+#define SECTION_ATTRIBUTE_DATA "ATTRIBUTE_DATA"
+#define KEY_NomFitxer "NomFitxer"
+#define KEY_via "via"
+#define Key_IndexesNomsCamps "IndexsNomsCamps"
+#define KEY_NomCamp "NomCamp"
+#define SECTION_COLOR_TEXT "COLOR_TEXT"
 
 // MiraMon feature field names
 #define szMMNomCampIdGraficDefecte "ID_GRAFIC"

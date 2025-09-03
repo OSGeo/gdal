@@ -18,8 +18,8 @@
 #include "ogr_api.h"  // For CPL_C_START
 #include "mm_wrlayr.h"
 #include "mm_wrlayr.h"  // For MMReadHeader()
-#include "mm_gdal_functions.h"
-#include "mm_gdal_constants.h"
+#include "../../../frmts/miramon_common/mm_gdal_functions.h"
+#include "../../../frmts/miramon_common/mm_gdal_constants.h"
 #include "mm_rdlayr.h"
 
 CPL_C_START  // Necessary for compiling in GDAL project
@@ -162,6 +162,122 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
     return 0;
 }
+
+static void MM_AdoptHeight(double *desti, const double *proposta, uint32_t flag)
+{
+    if (*proposta == MM_NODATA_COORD_Z)
+        return;
+
+    if (flag & MM_STRING_HIGHEST_ALTITUDE)
+    {
+        if (*desti == MM_NODATA_COORD_Z || *desti < *proposta)
+            *desti = *proposta;
+    }
+    else if (flag & MM_STRING_LOWEST_ALTITUDE)
+    {
+        if (*desti == MM_NODATA_COORD_Z || *desti > *proposta)
+            *desti = *proposta;
+    }
+    else
+    {
+        // First coordinate of this vertice
+        if (*desti == MM_NODATA_COORD_Z)
+            *desti = *proposta;
+    }
+}
+
+static int MM_GetArcHeights(double *coord_z, VSILFILE *pF,
+                            MM_N_VERTICES_TYPE n_vrt,
+                            struct MM_ZD *pZDescription, uint32_t flag)
+{
+    MM_N_HEIGHT_TYPE i;
+    MM_N_VERTICES_TYPE i_vrt;
+    double *pcoord_z;
+    MM_N_HEIGHT_TYPE n_alcada, n_h_total;
+    int tipus;
+    double *alcada = nullptr, *palcada, *palcada_i;
+#define MM_N_ALCADA_LOCAL 50  // Nr of local heights
+    double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
+
+    if (!pZDescription)
+        return 0;
+
+    for (i_vrt = 0; i_vrt < n_vrt; i_vrt++)
+        coord_z[i_vrt] = MM_NODATA_COORD_Z;
+
+    if (pZDescription->nZCount == INT_MIN)
+        return 0;
+    tipus = MM_ARC_HEIGHT_TYPE(pZDescription->nZCount);
+    n_alcada = MM_ARC_N_HEIGHTS(pZDescription->nZCount);
+    if (n_vrt == 0 || n_alcada == 0)
+        return 0;
+
+    if (tipus == MM_ARC_HEIGHT_FOR_EACH_VERTEX)
+    {
+        if (n_vrt > (unsigned)(INT_MAX / n_alcada))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Integer overflow");
+            return 1;
+        }
+        n_h_total = (MM_N_HEIGHT_TYPE)n_vrt * n_alcada;
+    }
+    else
+        n_h_total = n_alcada;
+
+    if (n_h_total <= MM_N_ALCADA_LOCAL)
+        palcada = local_CinquantaAlcades;
+    else
+    {
+        if (MMCheckSize_t(n_h_total, sizeof(double)))
+            return 1;
+        if (nullptr ==
+            (palcada = alcada = VSICalloc((size_t)n_h_total, sizeof(double))))
+            return 1;
+    }
+
+    if (VSIFSeekL(pF, pZDescription->nOffsetZ, SEEK_SET))
+    {
+        if (alcada)
+            VSIFree(alcada);
+        return 1;
+    }
+    if (n_h_total !=
+        (MM_N_HEIGHT_TYPE)VSIFReadL(palcada, sizeof(double), n_h_total, pF))
+    {
+        if (alcada)
+            VSIFree(alcada);
+        return 1;
+    }
+
+    if (tipus == MM_ARC_HEIGHT_FOR_EACH_VERTEX)
+    {
+        palcada_i = palcada;
+        for (i = 0; i < n_alcada; i++)
+        {
+            for (i_vrt = 0, pcoord_z = coord_z; i_vrt < n_vrt;
+                 i_vrt++, pcoord_z++, palcada_i++)
+                MM_AdoptHeight(pcoord_z, palcada_i, flag);
+        }
+    }
+    else
+    {
+        palcada_i = palcada;
+        pcoord_z = coord_z;
+        for (i = 0; i < n_alcada; i++, palcada_i++)
+            MM_AdoptHeight(pcoord_z, palcada_i, flag);
+
+        if (*pcoord_z != MM_NODATA_COORD_Z)
+        {
+            /*Copio el mateix valor a totes les alcades.*/
+            for (i_vrt = 1, pcoord_z++; i_vrt < (size_t)n_vrt;
+                 i_vrt++, pcoord_z++)
+                *pcoord_z = *coord_z;
+        }
+    }
+    if (alcada)
+        VSIFree(alcada);
+    return 0;
+}  // End of MM_GetArcHeights()
 
 // Reads stringline coordinates and puts them in a buffer
 static int

@@ -10,11 +10,13 @@
  ****************************************************************************/
 #include "ogrmiramon.h"
 
-#include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
-#include "mm_rdlayr.h"          // For MMInitLayerToRead()
-#include <algorithm>            // For std::clamp()
-#include <string>               // For std::string
-#include <algorithm>            // For std::max
+// For MMCreateExtendedDBFIndex()
+#include "../../../frmts/miramon_common/mm_gdal_functions.h"
+#include "../../../frmts/miramon_common/mm_gdal_constants.h"
+#include "mm_rdlayr.h"  // For MMInitLayerToRead()
+#include <algorithm>    // For std::clamp()
+#include <string>       // For std::string
+#include <algorithm>    // For std::max
 
 /****************************************************************************/
 /*                            OGRMiraMonLayer()                             */
@@ -393,11 +395,13 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                 // multiple records
                 if (phMiraMonLayer->pMultRecordIndex)
                 {
-                    padfValues = static_cast<double *>(CPLCalloc(
-                        (size_t)phMiraMonLayer->nMaxN, sizeof(*padfValues)));
+                    padfValues = static_cast<double *>(
+                        CPLCalloc(static_cast<size_t>(phMiraMonLayer->nMaxN),
+                                  sizeof(*padfValues)));
 
-                    pnInt64Values = static_cast<GInt64 *>(CPLCalloc(
-                        (size_t)phMiraMonLayer->nMaxN, sizeof(*pnInt64Values)));
+                    pnInt64Values = static_cast<GInt64 *>(
+                        CPLCalloc(static_cast<size_t>(phMiraMonLayer->nMaxN),
+                                  sizeof(*pnInt64Values)));
                 }
 
                 phMiraMonLayer->iMultiRecord =
@@ -789,7 +793,7 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
 
     VSIFSeekL(phMiraMonLayer->pMMBDXP->pfDataBase,
               phMiraMonLayer->pMultRecordIndex[iFID].offset +
-                  (MM_FILE_OFFSET)nIRecord *
+                  static_cast<MM_FILE_OFFSET>(nIRecord) *
                       phMiraMonLayer->pMMBDXP->BytesPerRecord +
                   phMiraMonLayer->pMMBDXP->pField[nIField].AccumulatedBytes,
               SEEK_SET);
@@ -804,7 +808,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     if (!phMiraMonLayer)
         return nullptr;
 
-    if (m_iNextFID >= (GUInt64)phMiraMonLayer->TopHeader.nElemCount)
+    if (m_iNextFID >=
+        static_cast<GUInt64>(phMiraMonLayer->TopHeader.nElemCount))
         return nullptr;
 
     OGRFeature *poFeature = GetFeature(m_iNextFID);
@@ -840,10 +845,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
         if (nFeatureId == GINTBIG_MAX)
             return nullptr;
 
-        nIElem = (MM_INTERNAL_FID)(nFeatureId + 1);
+        nIElem = static_cast<MM_INTERNAL_FID>(nFeatureId + 1);
     }
     else
-        nIElem = (MM_INTERNAL_FID)nFeatureId;
+        nIElem = static_cast<MM_INTERNAL_FID>(nFeatureId);
 
     if (nIElem >= phMiraMonLayer->TopHeader.nElemCount)
         return nullptr;
@@ -1060,8 +1065,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     /* -------------------------------------------------------------------- */
     /*      Process field values if its possible.                           */
     /* -------------------------------------------------------------------- */
-    if (phMiraMonLayer->pMMBDXP &&
-        (MM_EXT_DBF_N_RECORDS)nIElem < phMiraMonLayer->pMMBDXP->nRecords)
+    if (phMiraMonLayer->pMMBDXP && static_cast<MM_EXT_DBF_N_RECORDS>(nIElem) <
+                                       phMiraMonLayer->pMMBDXP->nRecords)
     {
         MM_EXT_DBF_N_FIELDS nIField;
 
@@ -1140,8 +1145,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate, pszString,
-                                (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
-                                        .BytesPerField +
+                                static_cast<size_t>(
+                                    phMiraMonLayer->pMMBDXP->pField[nIField]
+                                        .BytesPerField) +
                                     1);
 
                             CPLFree(pszString);
@@ -1201,8 +1207,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate, pszString,
-                                (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
-                                        .BytesPerField +
+                                static_cast<size_t>(
+                                    phMiraMonLayer->pMMBDXP->pField[nIField]
+                                        .BytesPerField) +
                                     1);
 
                             CPLFree(pszString);
@@ -1232,13 +1239,13 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                             nIElem,
                             phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1,
                             nIField);
-                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                 phMiraMonLayer->iMultiRecord <
+                    else if (static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                 phMiraMonLayer->iMultiRecord) <
                              phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
                         GoToFieldOfMultipleRecord(
                             nIElem,
-                            (MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                phMiraMonLayer->iMultiRecord,
+                            static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                phMiraMonLayer->iMultiRecord),
                             nIField);
                     else
                     {
@@ -1274,8 +1281,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         CPLRecode(phMiraMonLayer->szStringToOperate,
                                   CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     CPLStrlcpy(phMiraMonLayer->szStringToOperate, pszString,
-                               (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
-                                       .BytesPerField +
+                               static_cast<size_t>(
+                                   phMiraMonLayer->pMMBDXP->pField[nIField]
+                                       .BytesPerField) +
                                    1);
                     CPLFree(pszString);
                 }
@@ -1409,14 +1417,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                             phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1,
                             nIField);
                     }
-                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                 phMiraMonLayer->iMultiRecord <
+                    else if (static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                 phMiraMonLayer->iMultiRecord) <
                              phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
                     {
                         GoToFieldOfMultipleRecord(
                             nIElem,
-                            (MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                phMiraMonLayer->iMultiRecord,
+                            static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                phMiraMonLayer->iMultiRecord),
                             nIField);
                     }
                     else
@@ -1492,13 +1500,13 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                             nIElem,
                             phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1,
                             nIField);
-                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                 phMiraMonLayer->iMultiRecord <
+                    else if (static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                 phMiraMonLayer->iMultiRecord) <
                              phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
                         GoToFieldOfMultipleRecord(
                             nIElem,
-                            (MM_EXT_DBF_N_MULTIPLE_RECORDS)
-                                phMiraMonLayer->iMultiRecord,
+                            static_cast<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                                phMiraMonLayer->iMultiRecord),
                             nIField);
                     else
                     {
@@ -1571,10 +1579,11 @@ GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 
     if (phMiraMonLayer->bIsPolygon)
     {
-        return std::max((GIntBig)0,
-                        (GIntBig)(phMiraMonLayer->TopHeader.nElemCount - 1));
+        return std::max(
+            static_cast<GIntBig>(0),
+            static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount - 1));
     }
-    return (GIntBig)phMiraMonLayer->TopHeader.nElemCount;
+    return static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount);
 }
 
 /****************************************************************************/
@@ -1766,8 +1775,8 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     {
         eErr = MMProcessGeometry(nullptr, poFeature, TRUE);
         if (phMiraMonLayer->bIsDBF && phMiraMonLayer->TopHeader.nElemCount > 0)
-            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
-                              1);
+            poFeature->SetFID(
+                static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount) - 1);
         return eErr;
     }
 
@@ -1795,11 +1804,11 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     {
         if (phMiraMonLayer->bIsPolygon &&
             phMiraMonLayer->TopHeader.nElemCount > 1)
-            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
-                              2);
+            poFeature->SetFID(
+                static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount) - 2);
         else if (phMiraMonLayer->TopHeader.nElemCount > 0)
-            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
-                              1);
+            poFeature->SetFID(
+                static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount) - 1);
     }
     return eErr;
 }
@@ -1825,15 +1834,16 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
     }
     if (MMResize_MM_N_VERTICES_TYPE_Pointer(
             &hMMFeature.pNCoordRing, &hMMFeature.nMaxpNCoordRing,
-            (MM_N_VERTICES_TYPE)hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS,
-            0))
+            static_cast<MM_N_VERTICES_TYPE>(hMMFeature.nNRings) + 1,
+            MM_MEAN_NUMBER_OF_RINGS, 0))
         return OGRERR_FAILURE;
 
     if (bUseVFG)
     {
-        if (MMResizeVFGPointer(&hMMFeature.flag_VFG, &hMMFeature.nMaxVFG,
-                               (MM_INTERNAL_FID)hMMFeature.nNRings + 1,
-                               MM_MEAN_NUMBER_OF_RINGS, 0))
+        if (MMResizeVFGPointer(
+                &hMMFeature.flag_VFG, &hMMFeature.nMaxVFG,
+                static_cast<MM_INTERNAL_FID>(hMMFeature.nNRings) + 1,
+                MM_MEAN_NUMBER_OF_RINGS, 0))
             return OGRERR_FAILURE;
 
         hMMFeature.flag_VFG[hMMFeature.nIRing] = MM_END_ARC_IN_RING;
@@ -1861,8 +1871,8 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
         return OGRERR_FAILURE;
 
     hMMFeature.bAllZHaveSameValue = TRUE;
-    for (int iPoint = 0;
-         (MM_N_VERTICES_TYPE)iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing];
+    for (int iPoint = 0; static_cast<MM_N_VERTICES_TYPE>(iPoint) <
+                         hMMFeature.pNCoordRing[hMMFeature.nIRing];
          iPoint++)
     {
         hMMFeature.pCoord[hMMFeature.nICoord].dfX = OGR_G_GetX(hGeom, iPoint);
@@ -2040,7 +2050,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                m_poFeatureDefn->GetFieldCount() *
                    sizeof(*phMiraMonLayer->pLayerDB->pFields));
         for (MM_EXT_DBF_N_FIELDS iField = 0;
-             iField < (MM_EXT_DBF_N_FIELDS)m_poFeatureDefn->GetFieldCount();
+             iField <
+             static_cast<MM_EXT_DBF_N_FIELDS>(m_poFeatureDefn->GetFieldCount());
              iField++)
         {
             switch (m_poFeatureDefn->GetFieldDefn(iField)->GetType())
@@ -2186,9 +2197,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                 {
                     // One more space for the "."
                     phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
-                        (unsigned int)(m_poFeatureDefn->GetFieldDefn(iField)
-                                           ->GetWidth() +
-                                       1);
+                        static_cast<unsigned int>(
+                            m_poFeatureDefn->GetFieldDefn(iField)->GetWidth() +
+                            1);
                 }
             }
 
@@ -2246,6 +2257,108 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
 /*                                                                          */
 /*      Translate ogr Fields to a structure that MiraMon can understand     */
 /****************************************************************************/
+// This function is been moved from another place because it's only used here.
+/*
+    Controlling the number of significant figures is often crucial in science
+    and technology, and the best option when nothing is known about the number
+    to be printed (if it is really small (near to 0), or very large), and
+    allows a good return (the same value) into memory when re-read from a text
+    file with scanf() functions.
+    If you need to print 0.00000000000000000000000000000000000000001 with %f
+    you will need an extremely large string. If you print 1980.45 with %E you
+    obtain 1.98045E+003, needing more space, and not being easy to interpret
+    for some people. Moreover, “normal” users do not want to see 1.0 as
+    1.0E+000 or 1.0E+00. The choice of the format specifier, and the integer
+    to be passed to the ‘*’ is not always easy,
+    and MM_SprintfDoubleSignifFigures() automatically uses a “fair” notation
+    whenever it is possible, resulting in shorter strings, being them under
+    control (the maximum length of the resulting string is always known).
+    Moreover, it avoids some failures in compilers not expecting
+    NAN or INF values.
+*/
+int OGRMiraMonLayer::MM_SprintfDoubleSignifFigures(char *szChain,
+                                                   size_t size_szChain,
+                                                   int nSignifFigures,
+                                                   double dfRealValue)
+{
+    double VALOR_LIMIT_PRINT_IN_FORMAT_E;
+    double VALOR_TOO_SMALL_TO_PRINT_f;
+    int retorn, exponent;
+    char *ptr;
+
+#define N_POWERS MM_MAX_XS_DOUBLE
+
+    /* This expression ensures that no garbage is written in
+    the non-significant digits of the integer part, i.e., requesting 9E20
+    with 16 significant digits does not print 90000000000000004905, where
+    "4905" is garbage generated by the print call with such a large value 
+    and "%.16f", but rather writes 9.000000000000000E+20.
+    At the same time, it ensures that 9000 requested with 4 significant
+    digits is written as 9000 and that requested with 5 significant digits
+    is written as 9000.0, but that requested with 3 significant digits is
+    written as 9.00E+03. */
+    double potencies_de_10[N_POWERS] = {
+        1E+1,  1E+2,  1E+3,  1E+4,  1E+5,  1E+6,  1E+7,  1E+8, 1E+9,
+        1E+10, 1E+11, 1E+12, 1E+13, 1E+14, 1E+15, 1E+16, 1E+17};
+
+    /* This expression ensures that -9E-7 requested with 11 significant digits
+    still uses "natural" notation and gives -0.0000009000000000, which still
+    fits exactly within the 20 characters of a 'N' field in dBASE, while
+    requested with 12 significant digits jumps to exponential notation and
+    writes -9.00000000000E-07, which also fits (in this case, comfortably)
+    within the 20 characters of dBASE.
+    The expression could be replaced by: pow(10,-max(0,20-2-signif_digits)); */
+    double fraccions_de_10[N_POWERS + 1] = {
+        1E-1,  1E-2,  1E-3,  1E-4,  1E-5,  1E-6,  1E-7,  1E-8,  1E-9,
+        1E-10, 1E-11, 1E-12, 1E-13, 1E-14, 1E-15, 1E-16, 1E-17, 1E-18};
+
+    if (!szChain)
+        return 0;
+
+    if (size_szChain < 3)
+        return 0;
+
+    memset(szChain, '\0', size_szChain);
+
+    if (MM_IsNANDouble(dfRealValue))
+        return snprintf(szChain, size_szChain, "NAN");
+
+    if (MM_IsDoubleInfinite(dfRealValue))
+        return snprintf(szChain, size_szChain, "INF");
+
+    if (dfRealValue == 0.0)
+        return snprintf(szChain, size_szChain, "%.*f", nSignifFigures, 0.0);
+
+    if (nSignifFigures < 1)
+        return snprintf(szChain, size_szChain, "0.0");
+
+    if (nSignifFigures > N_POWERS)
+        nSignifFigures = N_POWERS;
+
+    retorn = snprintf(szChain, size_szChain, "%.*E", nSignifFigures - 1,
+                      dfRealValue);
+
+    VALOR_LIMIT_PRINT_IN_FORMAT_E = potencies_de_10[nSignifFigures - 1];
+    VALOR_TOO_SMALL_TO_PRINT_f =
+        fraccions_de_10[MM_MAX_XS_DOUBLE - nSignifFigures];
+
+    if (dfRealValue > VALOR_LIMIT_PRINT_IN_FORMAT_E ||
+        dfRealValue < -VALOR_LIMIT_PRINT_IN_FORMAT_E ||
+        (dfRealValue < VALOR_TOO_SMALL_TO_PRINT_f &&
+         dfRealValue > -VALOR_TOO_SMALL_TO_PRINT_f))
+        return retorn;
+
+    ptr = strchr(szChain, 'E');
+    if (!ptr)
+        return 0;
+    exponent = atoi(ptr + 1);
+    return CPLsnprintf(szChain, size_szChain, "%.*f",
+                       (nSignifFigures - exponent - 1) > 0
+                           ? (nSignifFigures - exponent - 1)
+                           : 0,
+                       dfRealValue);
+#undef N_POWERS
+}  // End of SprintfDoubleXifSignif()
 
 OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
@@ -2510,6 +2623,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 }
 
                 char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
+
+                // According to NOTE_3812_20250527
                 if (phMiraMonLayer->pLayerDB->pFields[iField]
                             .nNumberOfDecimals > 0 &&
                     phMiraMonLayer->pLayerDB->pFields[iField]

@@ -484,6 +484,14 @@ if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT
   add_subdirectory(frmts/iso8211)
 endif()
 
+# Build frmts/miramon_common conditionally to drivers requiring it
+if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_MIRAMON) OR
+    GDAL_ENABLE_DRIVER_MIRAMON OR
+    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_MIRAMON) OR
+    OGR_ENABLE_DRIVER_MIRAMON)
+  add_subdirectory(frmts/miramon_common)
+endif()
+
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 

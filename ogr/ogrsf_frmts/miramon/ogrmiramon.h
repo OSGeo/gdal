@@ -83,6 +83,9 @@ class OGRMiraMonLayer final
 
     OGRErr TranslateFieldsToMM();
     OGRErr TranslateFieldsValuesToMM(OGRFeature *poFeature);
+    static int MM_SprintfDoubleSignifFigures(char *szChain, size_t size_szChain,
+                                             int nSignifFigures,
+                                             double dfRealValue);
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 

@@ -133,7 +133,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     // It's a seed to be able to generate a random identifier in
     // MMGenerateFileIdentifierFromMetadataFileName() function
-    srand((unsigned int)time(nullptr));
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     if (OGR_GT_HasM(eType))
     {
