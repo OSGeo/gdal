@@ -2378,10 +2378,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         WindowIterator &operator++();
 
       private:
-        const int m_nRasterXSize;
-        const int m_nRasterYSize;
-        const int m_nBlockXSize;
-        const int m_nBlockYSize;
+        int m_nRasterXSize;
+        int m_nRasterYSize;
+        int m_nBlockXSize;
+        int m_nBlockYSize;
         int m_row;
         int m_col;
     };

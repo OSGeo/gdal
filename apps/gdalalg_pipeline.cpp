@@ -25,6 +25,7 @@
 #include "gdalalg_vector_sql.h"
 #include "gdalalg_vector_write.h"
 
+#include "gdalalg_raster_as_features.h"
 #include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_contour.h"
 #include "gdalalg_raster_footprint.h"
@@ -484,6 +485,7 @@ class GDALPipelineAlgorithm final
 
         GDALRasterPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
         GDALVectorPipelineAlgorithm::RegisterAlgorithms(m_stepRegistry, true);
+        m_stepRegistry.Register<GDALRasterAsFeaturesAlgorithm>();
         m_stepRegistry.Register<GDALRasterContourAlgorithm>();
         m_stepRegistry.Register<GDALRasterFootprintAlgorithm>();
         m_stepRegistry.Register<GDALRasterPolygonizeAlgorithm>();

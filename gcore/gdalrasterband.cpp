@@ -16,6 +16,7 @@
 #include "cpl_float.h"
 #include "gdal_priv.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstdarg>
@@ -9636,7 +9637,14 @@ GDALRasterBand::WindowIteratorWrapper::WindowIteratorWrapper(
     : m_nRasterXSize(band.GetXSize()), m_nRasterYSize(band.GetYSize()),
       m_nBlockXSize(-1), m_nBlockYSize(-1)
 {
+    // If invalid block size is reported, just use a value of 1.
+    CPLErrorStateBackuper state(CPLQuietErrorHandler);
+#ifdef CSA_BUILD
+    assert(this);
+#endif
     band.GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
+    m_nBlockXSize = std::max<int>(m_nBlockXSize, 1);
+    m_nBlockYSize = std::max<int>(m_nBlockYSize, 1);
 }
 
 GDALRasterBand::WindowIterator
