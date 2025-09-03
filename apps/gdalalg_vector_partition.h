@@ -43,6 +43,9 @@ class GDALVectorPartitionAlgorithm /* non final */
         return false;
     }
 
+    static constexpr const char *SCHEME_HIVE = "hive";
+    static constexpr const char *SCHEME_FLAT = "flat";
+
   private:
     static ConstructorOptions GetConstructorOptions(bool standaloneStep);
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -56,6 +59,12 @@ class GDALVectorPartitionAlgorithm /* non final */
     bool m_skipErrors = false;
     int m_maxCacheSize = 400;
     int m_transactionSize = 65536;
+    std::string m_scheme = SCHEME_HIVE;
+    std::string m_pattern{};
+
+    // Computed
+    bool m_partDigitLeadingZeroes = true;
+    size_t m_partDigitCount = 10;
 };
 
 /************************************************************************/

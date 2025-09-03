@@ -28,6 +28,11 @@ constexpr int DIRECTORY_CREATION_MODE = 0755;
 
 constexpr const char *NULL_MARKER = "__HIVE_DEFAULT_PARTITION__";
 
+constexpr const char *DEFAULT_PATTERN_HIVE = "part_%010d";
+constexpr const char *DEFAULT_PATTERN_FLAT = "{LAYER_NAME}_{FIELD_VALUE}_%010d";
+
+constexpr char DIGIT_ZERO = '0';
+
 /************************************************************************/
 /*                        GetConstructorOptions()                       */
 /************************************************************************/
@@ -79,6 +84,74 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
 
     AddArg("field", 0, _("Field(s) on which to partition"), &m_fields)
         .SetRequired();
+    AddArg("scheme", 0, _("Partitioning scheme"), &m_scheme)
+        .SetChoices(SCHEME_HIVE, SCHEME_FLAT)
+        .SetDefault(m_scheme);
+    AddArg("pattern", 0,
+           _("Filename pattern ('part_%010d' for scheme=hive, "
+             "'{LAYER_NAME}_{FIELD_VALUE}_%010d' for scheme=flat)"),
+           &m_pattern)
+        .SetMinCharCount(1)
+        .AddValidationAction(
+            [this]()
+            {
+                if (!m_pattern.empty())
+                {
+                    const auto nPercentPos = m_pattern.find('%');
+                    if (nPercentPos == std::string::npos)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg, "%s",
+                                    "Missing '%' character in pattern");
+                        return false;
+                    }
+                    if (nPercentPos + 1 < m_pattern.size() &&
+                        m_pattern.find('%', nPercentPos + 1) !=
+                            std::string::npos)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg, "%s",
+                            "A single '%' character is expected in pattern");
+                        return false;
+                    }
+                    bool percentFound = false;
+                    for (size_t i = nPercentPos + 1; i < m_pattern.size(); ++i)
+                    {
+                        if (m_pattern[i] >= DIGIT_ZERO && m_pattern[i] <= '9')
+                        {
+                            // ok
+                        }
+                        else if (m_pattern[i] == 'd')
+                        {
+                            percentFound = true;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    if (!percentFound)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg, "%s",
+                            "pattern value must include a single "
+                            "'%[0]?[1-9]?[0]?d' part number specification");
+                        return false;
+                    }
+                    m_partDigitCount =
+                        atoi(m_pattern.c_str() + nPercentPos + 1);
+                    if (m_partDigitCount > 10)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Number of digits in part number "
+                                    "specifiation should be in [1,10] range");
+                        return false;
+                    }
+                    m_partDigitLeadingZeroes =
+                        m_pattern[nPercentPos + 1] == DIGIT_ZERO;
+                }
+                return true;
+            });
     AddArg("feature-limit", 0, _("Maximum number of features per file"),
            &m_featureLimit)
         .SetMinValueExcluded(0);
@@ -266,8 +339,6 @@ static size_t GetEstimatedFeatureSize(
 
 constexpr int MIN_FILE_SIZE = 65536;
 
-constexpr const char *FILENAME_PREFIX = "part_";
-
 namespace
 {
 struct Layer
@@ -292,8 +363,10 @@ struct Layer
 static bool GetCurrentOutputLayer(
     GDALAlgorithm *const alg, const OGRFeatureDefn *const poSrcFeatureDefn,
     OGRLayer *const poSrcLayer, const std::string &osKey,
-    const std::string &osLayerDir, const int featureLimit,
-    const GIntBig maxFileSize, const bool omitPartitionedFields,
+    const std::string &osLayerDir, const std::string &osScheme,
+    const std::string &osPatternIn, bool partDigitLeadingZeroes,
+    size_t partDigitCount, const int featureLimit, const GIntBig maxFileSize,
+    const bool omitPartitionedFields,
     const std::vector<bool> &abPartitionedFields, const char *pszExtension,
     GDALDriver *const poOutDriver, const CPLStringList &datasetCreationOptions,
     const CPLStringList &layerCreationOptions,
@@ -303,6 +376,12 @@ static bool GetCurrentOutputLayer(
     lru11::Cache<std::string, std::shared_ptr<Layer>> &oCacheOutputLayer,
     std::shared_ptr<Layer> &outputLayer)
 {
+    const std::string osPattern =
+        !osPatternIn.empty() ? osPatternIn
+        : osScheme == GDALVectorPartitionAlgorithm::SCHEME_HIVE
+            ? DEFAULT_PATTERN_HIVE
+            : DEFAULT_PATTERN_FLAT;
+
     bool bLimitReached = false;
     bool bOpenOrCreateNewFile = true;
     if (oCacheOutputLayer.tryGet(osKey, outputLayer))
@@ -335,13 +414,69 @@ static bool GetCurrentOutputLayer(
         outputLayer->bUseTransactions = bUseTransactions;
     }
 
-    const auto GetBasenameFromCounter = [](int nCounter)
-    { return CPLSPrintf("%s%010d", FILENAME_PREFIX, nCounter); };
+    const auto SubstituteVariables = [&osKey, poSrcLayer](const std::string &s)
+    {
+        CPLString ret(s);
+        ret.replaceAll("{LAYER_NAME}",
+                       PercentEncode(poSrcLayer->GetDescription()));
+
+        if (ret.find("{FIELD_VALUE}") != std::string::npos)
+        {
+            std::string fieldValue;
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(osKey.c_str(), "/", 0));
+            for (int i = 0; i < aosTokens.size(); ++i)
+            {
+                const CPLStringList aosFieldNameValue(
+                    CSLTokenizeString2(aosTokens[i], "=", 0));
+                if (!fieldValue.empty())
+                    fieldValue += '_';
+                fieldValue +=
+                    aosFieldNameValue.size() == 2
+                        ? (strcmp(aosFieldNameValue[1], NULL_MARKER) == 0
+                               ? std::string("__NULL__")
+                               : aosFieldNameValue[1])
+                        : std::string("__EMPTY__");
+            }
+            ret.replaceAll("{FIELD_VALUE}", fieldValue);
+        }
+        return ret;
+    };
+
+    const auto nPercentPos = osPattern.find('%');
+    CPLAssert(nPercentPos !=
+              std::string::npos);  // checked by validation action
+    const std::string osPatternPrefix =
+        SubstituteVariables(osPattern.substr(0, nPercentPos));
+    const auto nAfterDPos = osPattern.find('d', nPercentPos + 1) + 1;
+    const std::string osPatternSuffix =
+        nAfterDPos < osPattern.size()
+            ? SubstituteVariables(osPattern.substr(nAfterDPos))
+            : std::string();
+
+    const auto GetBasenameFromCounter = [partDigitCount, partDigitLeadingZeroes,
+                                         &osPatternPrefix,
+                                         &osPatternSuffix](int nCounter)
+    {
+        const std::string sCounter(CPLSPrintf("%d", nCounter));
+        std::string s(osPatternPrefix);
+        if (sCounter.size() < partDigitCount)
+        {
+            s += std::string(partDigitCount - sCounter.size(),
+                             partDigitLeadingZeroes ? DIGIT_ZERO : ' ');
+        }
+        s += sCounter;
+        s += osPatternSuffix;
+        return s;
+    };
 
     if (bOpenOrCreateNewFile)
     {
-        const std::string osDatasetDir =
-            CPLFormFilenameSafe(osLayerDir.c_str(), osKey.c_str(), nullptr);
+        std::string osDatasetDir =
+            osScheme == GDALVectorPartitionAlgorithm::SCHEME_HIVE
+                ? CPLFormFilenameSafe(osLayerDir.c_str(), osKey.c_str(),
+                                      nullptr)
+                : osLayerDir;
         outputLayer->nFeatureCount = 0;
 
         bool bCreateNewFile = true;
@@ -367,22 +502,27 @@ static bool GetCurrentOutputLayer(
             }
 
             int nMaxCounter = 0;
-            auto psDir = VSIOpenDir(osDatasetDir.c_str(), 0, nullptr);
+            std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> psDir(
+                VSIOpenDir(osDatasetDir.c_str(), 0, nullptr), VSICloseDir);
             if (psDir)
             {
-                while (const auto *psEntry = VSIGetNextDirEntry(psDir))
+                while (const auto *psEntry = VSIGetNextDirEntry(psDir.get()))
                 {
-                    if (cpl::starts_with(std::string_view(psEntry->pszName),
-                                         FILENAME_PREFIX))
+                    const std::string osName(
+                        CPLGetBasenameSafe(psEntry->pszName));
+                    if (cpl::starts_with(osName, osPatternPrefix) &&
+                        cpl::ends_with(osName, osPatternSuffix))
                     {
                         nMaxCounter = std::max(
                             nMaxCounter,
-                            atoi(CPLGetBasenameSafe(psEntry->pszName +
-                                                    strlen(FILENAME_PREFIX))
+                            atoi(osName
+                                     .substr(osPatternPrefix.size(),
+                                             osName.size() -
+                                                 osPatternPrefix.size() -
+                                                 osPatternSuffix.size())
                                      .c_str()));
                     }
                 }
-                VSICloseDir(psDir);
             }
 
             if (nMaxCounter > 0)
@@ -390,8 +530,8 @@ static bool GetCurrentOutputLayer(
                 outputLayer->nFileCounter = nMaxCounter;
 
                 const std::string osFilename = CPLFormFilenameSafe(
-                    osDatasetDir.c_str(), GetBasenameFromCounter(nMaxCounter),
-                    pszExtension);
+                    osDatasetDir.c_str(),
+                    GetBasenameFromCounter(nMaxCounter).c_str(), pszExtension);
                 auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
                     osFilename.c_str(),
                     GDAL_OF_VECTOR | GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR));
@@ -497,7 +637,7 @@ static bool GetCurrentOutputLayer(
 
             const std::string osFilename = CPLFormFilenameSafe(
                 osDatasetDir.c_str(),
-                GetBasenameFromCounter(outputLayer->nFileCounter),
+                GetBasenameFromCounter(outputLayer->nFileCounter).c_str(),
                 pszExtension);
             outputLayer->poDS.reset(
                 poOutDriver->Create(osFilename.c_str(), 0, 0, 0, GDT_Unknown,
@@ -630,7 +770,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    if (EQUAL(poOutDriver->GetDescription(), "PARQUET"))
+    if (EQUAL(poOutDriver->GetDescription(), "PARQUET") &&
+        m_scheme == SCHEME_HIVE)
     {
         // Required for Parquet Hive partitioning
         m_omitPartitionedFields = true;
@@ -686,41 +827,76 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
             // Do a sanity check to verify that this looks like a directory
             // generated by partition
-            auto psDir = VSIOpenDir(m_output.c_str(), -1, nullptr);
-            if (psDir)
+
+            if (m_scheme == SCHEME_HIVE)
             {
-                while (const auto *psEntry = VSIGetNextDirEntry(psDir))
+                std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> psDir(
+                    VSIOpenDir(m_output.c_str(), -1, nullptr), VSICloseDir);
+                if (psDir)
                 {
-                    emptyDir = false;
-                    if (VSI_ISDIR(psEntry->nMode))
+                    while (const auto *psEntry =
+                               VSIGetNextDirEntry(psDir.get()))
                     {
-                        std::string_view v(psEntry->pszName);
-                        if (std::count_if(v.begin(), v.end(),
-                                          [](char c) {
-                                              return c == '/' || c == '\\';
-                                          }) == 1)
+                        emptyDir = false;
+                        if (VSI_ISDIR(psEntry->nMode))
                         {
-                            const auto nPosDirSep = v.find_first_of("/\\");
-                            const auto nPosEqual = v.find('=', nPosDirSep);
-                            if (nPosEqual != std::string::npos)
+                            std::string_view v(psEntry->pszName);
+                            if (std::count_if(v.begin(), v.end(),
+                                              [](char c) {
+                                                  return c == '/' || c == '\\';
+                                              }) == 1)
                             {
-                                hasDirLevel1WithEqual = true;
-                                break;
+                                const auto nPosDirSep = v.find_first_of("/\\");
+                                const auto nPosEqual = v.find('=', nPosDirSep);
+                                if (nPosEqual != std::string::npos)
+                                {
+                                    hasDirLevel1WithEqual = true;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-                VSICloseDir(psDir);
-            }
 
-            if (!hasDirLevel1WithEqual && !emptyDir)
+                if (!hasDirLevel1WithEqual && !emptyDir)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Rejecting removing '%s' as it does not look like "
+                        "a directory generated by this utility. If you are "
+                        "sure, remove it manually and re-run",
+                        m_output.c_str());
+                    return false;
+                }
+            }
+            else
             {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Rejecting removing '%s' as it does not look like "
-                            "a directory generated by this utility. If you are "
-                            "sure, remove it manually and re-run",
-                            m_output.c_str());
-                return false;
+                bool hasSubDir = false;
+                std::unique_ptr<VSIDIR, decltype(&VSICloseDir)> psDir(
+                    VSIOpenDir(m_output.c_str(), 0, nullptr), VSICloseDir);
+                if (psDir)
+                {
+                    while (const auto *psEntry =
+                               VSIGetNextDirEntry(psDir.get()))
+                    {
+                        if (VSI_ISDIR(psEntry->nMode))
+                        {
+                            hasSubDir = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (hasSubDir)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Rejecting removing '%s' as it does not look like "
+                        "a directory generated by this utility. If you are "
+                        "sure, remove it manually and re-run",
+                        m_output.c_str());
+                    return false;
+                }
             }
 
             if (VSIRmdirRecursive(m_output.c_str()) != 0)
@@ -750,10 +926,15 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     for (OGRLayer *poSrcLayer : poSrcDS->GetLayers())
     {
-        const std::string osLayerDir = CPLFormFilenameSafe(
-            m_output.c_str(),
-            PercentEncode(poSrcLayer->GetDescription()).c_str(), nullptr);
-        if (VSIStatL(osLayerDir.c_str(), &sStat) != 0)
+        const std::string osLayerDir =
+            m_scheme == SCHEME_HIVE
+                ? CPLFormFilenameSafe(
+                      m_output.c_str(),
+                      PercentEncode(poSrcLayer->GetDescription()).c_str(),
+                      nullptr)
+                : m_output;
+        if (m_scheme == SCHEME_HIVE &&
+            VSIStatL(osLayerDir.c_str(), &sStat) != 0)
         {
             if (VSIMkdir(osLayerDir.c_str(), DIRECTORY_CREATION_MODE) != 0)
             {
@@ -983,9 +1164,11 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
                 if (!GetCurrentOutputLayer(
                         this, poSrcFeatureDefn, poSrcLayer, osKey, osLayerDir,
-                        m_featureLimit, m_maxFileSize, m_omitPartitionedFields,
-                        abPartitionedFields, pszExtension, poOutDriver,
-                        datasetCreationOptions, layerCreationOptions,
+                        m_scheme, m_pattern, m_partDigitLeadingZeroes,
+                        m_partDigitCount, m_featureLimit, m_maxFileSize,
+                        m_omitPartitionedFields, abPartitionedFields,
+                        pszExtension, poOutDriver, datasetCreationOptions,
+                        layerCreationOptions,
                         poFeatureDefnWithoutPartitionedFields.get(),
                         poFeature->GetGeometryRef()
                             ? nSpatialIndexPerFeatureConstant

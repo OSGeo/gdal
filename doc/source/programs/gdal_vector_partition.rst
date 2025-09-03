@@ -24,19 +24,25 @@ Description
 files, depending on the values the feature take on a subset of fields specified
 by the user.
 
-`Apache Hive partitioning <https://arrow.apache.org/docs/python/generated/pyarrow.dataset.HivePartitioning.html>`__
-is used as the partitioning scheme.
+Two partitioning schemes are available:
 
-Each partitioning field corresponds to a nested directory. Let's consider a
-layer with fields "continent" and "country", chosen as partitioning fields.
-All features where "continent" evaluates to "Europe" and "country" evaluates to
-"France", will be written in the "continent=Europe/country=France/" subdirectory
-of the output directory.
+- ``hive``, corresponding to
+  `Apache Hive partitioning <https://arrow.apache.org/docs/python/generated/pyarrow.dataset.HivePartitioning.html>`__,
+  is the default one.
 
-NULL values for partitioning fields are encoded as ``__HIVE_DEFAULT_PARTITION__``
-in the directory name. Non-ASCII characters, space, equal sign, or characters
-not compatible with directory name constraints are percent-encoded
-(e.g. ``%20`` for space).
+  Each partitioning field corresponds to a nested directory. Let's consider a
+  layer with fields "continent" and "country", chosen as partitioning fields.
+  All features where "continent" evaluates to "Europe" and "country" evaluates to
+  "France", will be written in the "continent=Europe/country=France/" subdirectory
+  of the output directory.
+
+  NULL values for partitioning fields are encoded as ``__HIVE_DEFAULT_PARTITION__``
+  in the directory name. Non-ASCII characters, space, equal sign, or characters
+  not compatible with directory name constraints are percent-encoded
+  (e.g. ``%20`` for space).
+
+- ``flat`` where files are written directly under the output directory using
+  a default filename pattern of ``{LAYER_NAME}_{FIELD_VALUE}_%10d``.
 
 By default, the format of the input dataset will be used for the output, if
 it can be determined and the input driver supports writing. Otherwise,
@@ -77,6 +83,29 @@ Standard options
     This mode is useful when adding new features to an already an existing
     partitioned dataset.
 
+.. option:: --scheme hive|flat
+
+    Partitioning scheme. Defaults to ``hive``.
+
+.. option:: --pattern <PATTERN>
+
+    Filename pattern. User chosen string, with substitutions for:
+
+    * ``{LAYER_NAME}``, when found, is substituted with the
+      layer name (percent encoded where needed).
+
+    * ``{FIELD_VALUE}``, when found, is substituted with the partitioning field value
+      (percent encoded where needed). If several partitioning fields are used,
+      each value is separated by underscore (`_`). Empty strings are substituted
+      with ``__EMPTY__`` and null fields with ``__NULL__``.
+
+    * ``%[0?][0-9]?[0]?d``: C-style integer formatter for the part number.
+      Valid values are for example ``%d`` or ``%05d``.
+      One and only one part number specifier must be present in the pattern.
+
+    Default values for the pattern are ``part_%010d`` for the hive scheme,
+    and ``{LAYER_NAME}_{FIELD_VALUE}_%010d`` for the flat scheme.`
+
 .. option:: --feature-limit <FEATURE-LIMIT>
 
     Maximum number of features per file. By default, unlimited. If the limit
@@ -97,7 +126,7 @@ Standard options
 .. option:: --omit-partitioned-field
 
     Whether to omit partitioned fields from the target layer definition.
-    Automatically set for Parquet output format.
+    Automatically set for Parquet output format and Hive partitioning.
 
 .. option:: --skip-errors
 
@@ -120,11 +149,11 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector partition in.gpkg out_directory --field continent,country --format Parquet
+        $ gdal vector partition world_cities.gpkg out_directory --field continent,country --format Parquet
 
 .. example::
-   :title: Create a partition based on the "country" field, filtering on cities with population bigger than 1 million
+   :title: Create a partition based on the "country" field, filtering on cities with population bigger than 1 million, with a flat partitioning scheme
 
    .. code-block:: bash
 
-        $ gdal pipeline ! read in.gpkg ! filter --where "pop > 1e6" ! partition out_directory --field country --format GPKG
+        $ gdal pipeline ! read world_cities.gpkg ! filter --where "pop > 1e6" ! partition out_directory --field country --format GPKG --scheme flat
