@@ -328,12 +328,17 @@ def _get_sqlite_version():
     _get_sqlite_version() < (3, 24, 0),
     reason="sqlite >= 3.24 needed",
 )
-def test_gdalalg_vector_convert_upsert(tmp_vsimem):
+@pytest.mark.parametrize("output_format", ["GPKG", "SQLite"])
+def test_gdalalg_vector_convert_upsert(tmp_vsimem, output_format):
 
-    filename = tmp_vsimem / "test_ogr_gpkg_upsert_without_fid.gpkg"
+    filename = tmp_vsimem / (
+        "test_ogr_gpkg_upsert_without_fid." + output_format.lower()
+    )
 
     def create_gpkg_file():
-        ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+        ds = gdal.GetDriverByName(output_format).Create(
+            filename, 0, 0, 0, gdal.GDT_Unknown
+        )
         lyr = ds.CreateLayer("foo")
         assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
         unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
@@ -366,13 +371,24 @@ def test_gdalalg_vector_convert_upsert(tmp_vsimem):
         lyr.CreateFeature(f)
         return srcDS
 
-    gdal.Run("vector", "convert", input=create_src_file(), output=filename, upsert=True)
+    if output_format == "SQLite":
+        with pytest.raises(Exception, match="SQLite driver doest not support upsert"):
+            gdal.Run(
+                "vector",
+                "convert",
+                input=create_src_file(),
+                output=filename,
+                upsert=True,
+            )
+    else:
+        gdal.Run(
+            "vector", "convert", input=create_src_file(), output=filename, upsert=True
+        )
 
-    ds = ogr.Open(filename)
-    lyr = ds.GetLayer(0)
-    f = lyr.GetFeature(2)
-    assert f["unique_field"] == "2"
-    assert f["other"] == "foo"
-    assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
-    ds = None
-    gdal.Unlink(filename)
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetFeature(2)
+        assert f["unique_field"] == "2"
+        assert f["other"] == "foo"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
+        ds = None

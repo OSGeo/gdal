@@ -1372,6 +1372,23 @@ static int TestBasic(GDALDataset *poDS, OGRLayer *poLayer)
                    "GDAL_DMD_ALTER_FIELD_DEFN_FLAGS but layer capability does "
                    "not advertise OLCAlterFieldDefn!\n");
         }
+
+        if (poLayer->TestCapability(OLCUpsertFeature) &&
+            !poDriver->GetMetadataItem(GDAL_DCAP_UPSERT))
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertises OLCUpsertFeature capability but "
+                   "driver metadata does not advertise GDAL_DCAP_UPSERT!\n");
+        }
+        if (bLayerShouldHaveEditCapabilities &&
+            poDriver->GetMetadataItem(GDAL_DCAP_UPSERT) &&
+            !poLayer->TestCapability(OLCUpsertFeature))
+        {
+            bRet = FALSE;
+            printf(
+                "FAILURE: Driver metadata advertises GDAL_DCAP_UPSERT "
+                "but layer capability does not advertise OLCUpsertFeature!\n");
+        }
     }
 
     return bRet;
