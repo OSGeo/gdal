@@ -1438,90 +1438,64 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
                     for (; iDstPixel < nDstXWidth; ++iDstPixel)
                     {
                         T nVal;
-                        if constexpr (eWrkDataType == GDT_Float32 ||
-                                      eWrkDataType == GDT_Float64)
+
+                        if constexpr (bQuadraticMean)
                         {
-                            if constexpr (bQuadraticMean)
+                            // Avoid issues with large values by renormalizing
+                            const auto max = std::max(
+                                {std::fabs(pSrcScanlineShifted[0]),
+                                 std::fabs(pSrcScanlineShifted[1]),
+                                 std::fabs(pSrcScanlineShifted[nChunkXSize]),
+                                 std::fabs(
+                                     pSrcScanlineShifted[1 + nChunkXSize])});
+                            if (max == 0)
                             {
-                                // Avoid issues with large values by renormalizing
-                                const auto max = std::max(
-                                    {std::fabs(pSrcScanlineShifted[0]),
-                                     std::fabs(pSrcScanlineShifted[1]),
-                                     std::fabs(
-                                         pSrcScanlineShifted[nChunkXSize]),
-                                     std::fabs(
-                                         pSrcScanlineShifted[1 +
-                                                             nChunkXSize])});
-                                if (max == 0)
-                                {
-                                    nVal = 0;
-                                }
-                                else if (std::isinf(max))
-                                {
-                                    // If there is at least one infinity value,
-                                    // then just summing, and taking the abs
-                                    // value will give the expected result:
-                                    // * +inf if all values are +inf
-                                    // * +inf if all values are -inf
-                                    // * NaN otherwise
-                                    nVal = std::fabs(
-                                        pSrcScanlineShifted[0] +
-                                        pSrcScanlineShifted[1] +
-                                        pSrcScanlineShifted[nChunkXSize] +
-                                        pSrcScanlineShifted[1 + nChunkXSize]);
-                                }
-                                else
-                                {
-                                    const auto inv_max =
-                                        static_cast<T>(1.0) / max;
-                                    nVal = max *
-                                           std::sqrt(
-                                               static_cast<T>(0.25) *
-                                               (SQUARE(pSrcScanlineShifted[0] *
-                                                       inv_max) +
-                                                SQUARE(pSrcScanlineShifted[1] *
-                                                       inv_max) +
-                                                SQUARE(pSrcScanlineShifted
-                                                           [nChunkXSize] *
-                                                       inv_max) +
-                                                SQUARE(pSrcScanlineShifted
-                                                           [1 + nChunkXSize] *
-                                                       inv_max)));
-                                }
+                                nVal = 0;
+                            }
+                            else if (std::isinf(max))
+                            {
+                                // If there is at least one infinity value,
+                                // then just summing, and taking the abs
+                                // value will give the expected result:
+                                // * +inf if all values are +inf
+                                // * +inf if all values are -inf
+                                // * NaN otherwise
+                                nVal = std::fabs(
+                                    pSrcScanlineShifted[0] +
+                                    pSrcScanlineShifted[1] +
+                                    pSrcScanlineShifted[nChunkXSize] +
+                                    pSrcScanlineShifted[1 + nChunkXSize]);
                             }
                             else
                             {
-                                constexpr auto weight = static_cast<T>(0.25);
-                                // Multiply each value by weight to avoid
-                                // potential overflow
+                                const auto inv_max = static_cast<T>(1.0) / max;
                                 nVal =
-                                    (weight * pSrcScanlineShifted[0] +
-                                     weight * pSrcScanlineShifted[1] +
-                                     weight * pSrcScanlineShifted[nChunkXSize] +
-                                     weight *
-                                         pSrcScanlineShifted[1 + nChunkXSize]);
+                                    max *
+                                    std::sqrt(
+                                        static_cast<T>(0.25) *
+                                        (SQUARE(pSrcScanlineShifted[0] *
+                                                inv_max) +
+                                         SQUARE(pSrcScanlineShifted[1] *
+                                                inv_max) +
+                                         SQUARE(
+                                             pSrcScanlineShifted[nChunkXSize] *
+                                             inv_max) +
+                                         SQUARE(
+                                             pSrcScanlineShifted[1 +
+                                                                 nChunkXSize] *
+                                             inv_max)));
                             }
-                        }
-                        else if constexpr (bQuadraticMean)
-                        {
-                            // Cast to double to avoid overflows
-                            // (using std::hypot() is much slower)
-                            nVal = static_cast<T>(std::sqrt(
-                                0.25 *
-                                (SQUARE<double>(pSrcScanlineShifted[0]) +
-                                 SQUARE<double>(pSrcScanlineShifted[1]) +
-                                 SQUARE<double>(
-                                     pSrcScanlineShifted[nChunkXSize]) +
-                                 SQUARE<double>(
-                                     pSrcScanlineShifted[1 + nChunkXSize]))));
                         }
                         else
                         {
-                            nVal = static_cast<T>(
-                                0.25f * (pSrcScanlineShifted[0] +
-                                         pSrcScanlineShifted[1] +
-                                         pSrcScanlineShifted[nChunkXSize] +
-                                         pSrcScanlineShifted[1 + nChunkXSize]));
+                            constexpr auto weight = static_cast<T>(0.25);
+                            // Multiply each value by weight to avoid
+                            // potential overflow
+                            nVal =
+                                (weight * pSrcScanlineShifted[0] +
+                                 weight * pSrcScanlineShifted[1] +
+                                 weight * pSrcScanlineShifted[nChunkXSize] +
+                                 weight * pSrcScanlineShifted[1 + nChunkXSize]);
                         }
 
                         // No need to compare nVal against tNoDataValue as we
