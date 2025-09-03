@@ -832,6 +832,21 @@ TEST_F(test_cpl, CPLStringList_Sort)
     EXPECT_STREQ(oNVL.FetchNameValue("D"), "DD");
 }
 
+TEST_F(test_cpl, URLEncode)
+{
+    EXPECT_STREQ(CPLString("AB").URLEncode(), "AB");
+    EXPECT_STREQ(CPLString("A/B").URLEncode(), "A/B");
+    EXPECT_STREQ(CPLString("A B").URLEncode(), "A%20B");
+
+    const char *uriA =
+        "http://example.com/path with space%20/pipe|/query?param=1&val=A B";
+    const char *uriB = "http://example.com/path%20with%20space%20/pipe%7C/"
+                       "query?param=1&val=A%20B";
+    EXPECT_STREQ(CPLString(uriA).URLEncode(), uriB);
+    EXPECT_STREQ(CPLString(uriA).URLEncode(), CPLString(uriB).URLEncode());
+    EXPECT_STREQ(CPLString(uriA).URLEncode().URLEncode(), uriB);
+}
+
 TEST_F(test_cpl, CPL_HMAC_SHA256)
 {
     GByte abyDigest[CPL_SHA256_HASH_SIZE];
