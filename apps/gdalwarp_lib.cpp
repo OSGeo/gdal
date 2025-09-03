@@ -6477,6 +6477,11 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->dfMinY = (*oTE)[1];
             psOptions->dfMaxX = (*oTE)[2];
             psOptions->dfMaxY = (*oTE)[3];
+            psOptions->aosTransformerOptions.SetNameValue(
+                "TARGET_EXTENT",
+                CPLSPrintf("%.17g,%.17g,%.17g,%.17g", psOptions->dfMinX,
+                           psOptions->dfMinY, psOptions->dfMaxX,
+                           psOptions->dfMaxY));
             psOptions->bCreateOutput = true;
         }
 

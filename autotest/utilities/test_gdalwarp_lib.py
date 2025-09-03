@@ -4298,6 +4298,53 @@ def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem, extra_colu
 
 
 ###############################################################################
+# Test warping an image with [-180-something,180+something] longitude to
+# WebMercator
+
+
+@pytest.mark.parametrize("extra_column", [False, True])
+def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180_to_webmercator(
+    tmp_path, extra_column
+):
+
+    dst_filename = tmp_path / "out.tif"
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    if extra_column:
+        tmp_ds = gdal.GetDriverByName("MEM").Create(
+            "", src_ds.RasterXSize + 1, src_ds.RasterYSize
+        )
+        tmp_ds.SetGeoTransform(src_ds.GetGeoTransform())
+        tmp_ds.SetSpatialRef(src_ds.GetSpatialRef())
+        tmp_ds.WriteRaster(
+            0,
+            0,
+            src_ds.RasterXSize,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(),
+        )
+        tmp_ds.WriteRaster(
+            src_ds.RasterXSize,
+            0,
+            1,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(0, 0, 1, src_ds.RasterYSize),
+        )
+        src_ds = tmp_ds
+    else:
+        src_ds = gdal.Translate("", src_ds, format="MEM", bandList=[1])
+    gt = list(src_ds.GetGeoTransform())
+    gt[0] -= gt[1] / 2
+    src_ds.SetGeoTransform(gt)
+    out_ds = gdal.Warp(
+        dst_filename,
+        src_ds,
+        dstSRS="EPSG:3857",
+        outputBounds=[-20044030.997, -20037508.343, 20044201.984, 20037508.343],
+    )
+    assert out_ds.GetRasterBand(1).Checksum() == 47957
+
+
+###############################################################################
 # Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2024-September/059512.html
 
 
