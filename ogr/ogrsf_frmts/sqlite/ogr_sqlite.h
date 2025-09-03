@@ -231,7 +231,7 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
         return m_poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     int TestCapability(const char *) const override;
 

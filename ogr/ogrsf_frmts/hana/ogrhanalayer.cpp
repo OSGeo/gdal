@@ -965,9 +965,9 @@ OGRFeature *OGRHanaLayer::GetNextFeature()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRHanaLayer::GetFIDColumn()
+const char *OGRHanaLayer::GetFIDColumn() const
 {
-    EnsureInitialized();
+    const_cast<OGRHanaLayer *>(this)->EnsureInitialized();
     return fidFieldName_.c_str();
 }
 

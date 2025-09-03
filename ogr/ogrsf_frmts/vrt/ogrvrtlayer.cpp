@@ -2275,10 +2275,11 @@ OGRwkbGeometryType OGRVRTLayer::GetGeomType() const
 /*                             GetFIDColumn()                           */
 /************************************************************************/
 
-const char *OGRVRTLayer::GetFIDColumn()
+const char *OGRVRTLayer::GetFIDColumn() const
 {
     if (!bHasFullInitialized)
-        FullInitialize();
+        const_cast<OGRVRTLayer *>(this)->FullInitialize();
+
     if (!poSrcLayer || poDS->GetRecursionDetected())
         return "";
 

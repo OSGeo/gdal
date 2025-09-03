@@ -81,7 +81,7 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
     virtual json_object *FetchNewFeatures();
 
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return osFIDColName.c_str();
     }

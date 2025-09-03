@@ -21,6 +21,8 @@ MIGRATION GUIDE FROM GDAL 3.11 to GDAL 3.12
   * OGRLayer::GetName() is now a const method
   * OGRLayer::GetGeomType() is now a const method
   * OGRLayer::GetLayerDefn() is now a const method that returns a const OGRFeatureDefn*
+  * OGRLayer::GetFIDColumn() is now a const method
+  * OGRLayer::GetGeometryColumn() is now a const method
   * OGRLayer::GetSpatialRef() is now a const method that returns a const OGRSpatialReference*
   * OGRLayer::TestCapacility() is now a const method
 

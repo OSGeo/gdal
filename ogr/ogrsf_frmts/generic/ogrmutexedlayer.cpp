@@ -237,13 +237,13 @@ OGRErr OGRMutexedLayer::RollbackTransaction()
     return OGRLayerDecorator::RollbackTransaction();
 }
 
-const char *OGRMutexedLayer::GetFIDColumn()
+const char *OGRMutexedLayer::GetFIDColumn() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFIDColumn();
 }
 
-const char *OGRMutexedLayer::GetGeometryColumn()
+const char *OGRMutexedLayer::GetGeometryColumn() const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetGeometryColumn();

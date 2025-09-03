@@ -1638,7 +1638,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription &certifInfo,
     return poFeature;
 }
 
-const char *OGRSXFLayer::GetFIDColumn()
+const char *OGRSXFLayer::GetFIDColumn() const
 {
     return sFIDColumn_.c_str();
 }

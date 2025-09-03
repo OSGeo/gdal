@@ -1364,7 +1364,7 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
 
     int TestCapability(const char *) const override;
 
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return poBaseLayer->GetFIDColumn();
     }

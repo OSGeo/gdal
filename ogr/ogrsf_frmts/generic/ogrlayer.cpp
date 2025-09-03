@@ -2730,7 +2730,7 @@ GIntBig OGR_L_GetFeaturesRead(OGRLayerH hLayer)
 /*                             GetFIDColumn                             */
 /************************************************************************/
 
-const char *OGRLayer::GetFIDColumn()
+const char *OGRLayer::GetFIDColumn() const
 
 {
     return "";
@@ -2757,11 +2757,12 @@ const char *OGR_L_GetFIDColumn(OGRLayerH hLayer)
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRLayer::GetGeometryColumn()
+const char *OGRLayer::GetGeometryColumn() const
 
 {
-    if (GetLayerDefn()->GetGeomFieldCount() > 0)
-        return GetLayerDefn()->GetGeomFieldDefn(0)->GetNameRef();
+    const auto poLayerDefn = GetLayerDefn();
+    if (poLayerDefn->GetGeomFieldCount() > 0)
+        return poLayerDefn->GetGeomFieldDefn(0)->GetNameRef();
     else
         return "";
 }

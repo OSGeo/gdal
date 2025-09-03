@@ -403,7 +403,7 @@ const OGRSpatialReference *OGRIDBLayer::GetSpatialRef() const
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRIDBLayer::GetFIDColumn()
+const char *OGRIDBLayer::GetFIDColumn() const
 
 {
     if (pszFIDColumn != nullptr)
@@ -416,7 +416,7 @@ const char *OGRIDBLayer::GetFIDColumn()
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRIDBLayer::GetGeometryColumn()
+const char *OGRIDBLayer::GetGeometryColumn() const
 
 {
     if (pszGeomColumn != nullptr)

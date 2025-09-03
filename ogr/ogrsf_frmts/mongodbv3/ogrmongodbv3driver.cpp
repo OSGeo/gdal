@@ -173,7 +173,7 @@ class OGRMongoDBv3Layer final : public OGRLayer
     ~OGRMongoDBv3Layer() override;
 
     void ResetReading() override;
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -913,10 +913,10 @@ void OGRMongoDBv3Layer::EstablishFeatureDefn()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRMongoDBv3Layer::GetFIDColumn()
+const char *OGRMongoDBv3Layer::GetFIDColumn() const
 {
     if (!m_bHasEstablishedFeatureDefn)
-        EstablishFeatureDefn();
+        const_cast<OGRMongoDBv3Layer *>(this)->EstablishFeatureDefn();
     return m_osFID.c_str();
 }
 

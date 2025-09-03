@@ -173,8 +173,8 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 

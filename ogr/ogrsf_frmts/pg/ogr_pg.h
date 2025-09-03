@@ -242,7 +242,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
 
     void InvalidateCursor();
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
 
@@ -404,7 +404,7 @@ class OGRPGTableLayer final : public OGRPGLayer
         return pszSchemaName;
     }
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

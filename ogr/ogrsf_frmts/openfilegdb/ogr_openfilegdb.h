@@ -257,7 +257,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     OGRwkbGeometryType GetGeomType() const override;
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;

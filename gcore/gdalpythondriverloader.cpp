@@ -299,8 +299,8 @@ class PythonPluginLayer final : public OGRLayer
     mutable PyObject *m_poLayer = nullptr;
     mutable OGRFeatureDefn *m_poFeatureDefn = nullptr;
     mutable CPLString m_osName{};
-    CPLString m_osFIDColumn{};
-    bool m_bHasFIDColumn = false;
+    mutable CPLString m_osFIDColumn{};
+    mutable bool m_bHasFIDColumn = false;
     std::map<CPLString, CPLStringList> m_oMapMD{};
     PyObject *m_pyFeatureByIdMethod = nullptr;
     bool m_bIteratorHonourSpatialFilter = false;
@@ -332,7 +332,7 @@ class PythonPluginLayer final : public OGRLayer
     const OGRFeatureDefn *GetLayerDefn() const override;
 
     GIntBig GetFeatureCount(int bForce) override;
-    const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
     OGRErr SetAttributeFilter(const char *) override;
 
     OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
@@ -582,7 +582,7 @@ int PythonPluginLayer::TestCapability(const char *pszCap) const
 /*                         GetFIDColumn()                               */
 /************************************************************************/
 
-const char *PythonPluginLayer::GetFIDColumn()
+const char *PythonPluginLayer::GetFIDColumn() const
 {
     if (!m_bHasFIDColumn)
     {

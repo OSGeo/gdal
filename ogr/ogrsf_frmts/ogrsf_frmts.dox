@@ -2645,7 +2645,7 @@ form depending on the limitations of the format driver.
 */
 
 /**
- \fn const char *OGRLayer::GetFIDColumn();
+ \fn const char *OGRLayer::GetFIDColumn() const;
 
  \brief This method returns the name of the underlying database column being used as the FID column, or "" if not supported.
 
@@ -2668,7 +2668,7 @@ form depending on the limitations of the format driver.
  */
 
 /**
- \fn const char *OGRLayer::GetGeometryColumn();
+ \fn const char *OGRLayer::GetGeometryColumn() const;
 
  \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
 

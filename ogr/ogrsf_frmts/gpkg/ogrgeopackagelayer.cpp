@@ -933,7 +933,7 @@ error:
 /*                      GetFIDColumn()                                  */
 /************************************************************************/
 
-const char *OGRGeoPackageLayer::GetFIDColumn()
+const char *OGRGeoPackageLayer::GetFIDColumn() const
 {
     if (!m_pszFidColumn)
         return "";

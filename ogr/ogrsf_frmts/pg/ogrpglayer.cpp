@@ -1876,7 +1876,7 @@ OGRErr OGRPGLayer::RollbackTransaction()
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRPGLayer::GetFIDColumn()
+const char *OGRPGLayer::GetFIDColumn() const
 
 {
     GetLayerDefn();

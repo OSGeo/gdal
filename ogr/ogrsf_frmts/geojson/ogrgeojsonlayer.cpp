@@ -93,7 +93,7 @@ void OGRGeoJSONLayer::TerminateAppendSession()
 /*                           GetFIDColumn                               */
 /************************************************************************/
 
-const char *OGRGeoJSONLayer::GetFIDColumn()
+const char *OGRGeoJSONLayer::GetFIDColumn() const
 {
     return sFIDColumn_.c_str();
 }

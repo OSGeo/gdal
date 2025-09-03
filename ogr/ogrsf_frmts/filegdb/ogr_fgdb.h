@@ -115,7 +115,7 @@ class FGdbLayer final : public FGdbBaseLayer
                     const std::wstring &wstrType);
 
     // virtual const char *GetName();
-    virtual const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_strOIDFieldName.c_str();
     }

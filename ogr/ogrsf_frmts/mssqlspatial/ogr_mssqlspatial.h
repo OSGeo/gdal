@@ -333,8 +333,8 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
+    const char *GetFIDColumn() const override;
+    const char *GetGeometryColumn() const override;
 
     int TestCapability(const char *) const override;
     static char *GByteArrayToHexString(const GByte *pabyData, int nLen);

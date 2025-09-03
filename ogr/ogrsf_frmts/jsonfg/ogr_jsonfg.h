@@ -39,7 +39,7 @@ class OGRJSONFGMemLayer final : public OGRMemLayer
                       OGRSpatialReference *poSRS, OGRwkbGeometryType eGType);
     ~OGRJSONFGMemLayer();
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return osFIDColumn_.c_str();
     }
@@ -116,7 +116,7 @@ class OGRJSONFGStreamedLayer final
 
     // END specific public API
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return osFIDColumn_.c_str();
     }

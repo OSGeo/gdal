@@ -134,7 +134,7 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    virtual const char *GetFIDColumn() override;
+    const char *GetFIDColumn() const override;
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature(char **papszRow, unsigned long *);

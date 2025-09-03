@@ -1054,7 +1054,7 @@ const OGRFeatureDefn *OGRElasticLayer::GetLayerDefn() const
 /*                            GetFIDColumn()                            */
 /************************************************************************/
 
-const char *OGRElasticLayer::GetFIDColumn()
+const char *OGRElasticLayer::GetFIDColumn() const
 {
     GetLayerDefn();
     return m_osFID.c_str();

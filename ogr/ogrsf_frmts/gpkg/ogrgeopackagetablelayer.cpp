@@ -823,7 +823,7 @@ const OGRFeatureDefn *OGRGeoPackageTableLayer::GetLayerDefn() const
 /*                      GetFIDColumn()                                  */
 /************************************************************************/
 
-const char *OGRGeoPackageTableLayer::GetFIDColumn()
+const char *OGRGeoPackageTableLayer::GetFIDColumn() const
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -843,7 +843,7 @@ OGRwkbGeometryType OGRGeoPackageTableLayer::GetGeomType() const
 /*                         GetGeometryColumn()                          */
 /************************************************************************/
 
-const char *OGRGeoPackageTableLayer::GetGeometryColumn()
+const char *OGRGeoPackageTableLayer::GetGeometryColumn() const
 
 {
     if (m_poFeatureDefn->GetGeomFieldCount() > 0)

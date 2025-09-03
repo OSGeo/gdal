@@ -488,7 +488,7 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    const char *GetFIDColumn() override
+    const char *GetFIDColumn() const override
     {
         return m_osFIDColumn.c_str();
     }
