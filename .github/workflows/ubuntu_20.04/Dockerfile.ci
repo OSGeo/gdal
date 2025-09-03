@@ -178,14 +178,6 @@ RUN mkdir geos \
     && cd ../.. \
     && rm -rf geos
 
-# Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_11/releases/download/pdfium_7047_v1/install-ubuntu2004-rev7047.tar.gz \
-  && tar -xzf install-ubuntu2004-rev7047.tar.gz \
-  && chown -R root:root install \
-  && mv install/lib/* /usr/lib/ \
-  && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev7047.tar.gz install
-
 # HANA: client side
 # Install hdbsql tool
 RUN curl -v -j -k -s -L -H "Cookie: eula_3_2_agreed=tools.hana.ondemand.com/developer-license-3_2.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \

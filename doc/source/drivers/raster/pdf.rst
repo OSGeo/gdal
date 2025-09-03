@@ -727,6 +727,14 @@ Only GDAL builds against static builds of PDFium have been tested.
 Building PDFium can be challenging, and particular builds must be used to
 work properly with GDAL.
 
+With GDAL >= 3.12
++++++++++++++++++
+
+The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_12>`__
+repository must be used to build a patched version of PDFium.
+
+Note that it requires a C++20 compiler (supporting C++20 "concepts")
+
 With GDAL >= 3.11
 +++++++++++++++++
 
