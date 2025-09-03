@@ -869,6 +869,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     if (STARTS_WITH_CI(pszFilename, "georaster:") == false &&
         STARTS_WITH_CI(pszFilename, "geor:") == false)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid connection string");
         return nullptr;
     }
 
