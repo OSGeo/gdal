@@ -323,7 +323,6 @@ bool MMRRel::SameFile(const CPLString &osFile1, const CPLString &osFile2)
         return true;
 
     // Just to be more sure:
-    // CID 1620841 in Coverity Scan: pass const and duplicate here only if necessary.
     CPLString osLayerName1 = osFile1;
     osLayerName1.replaceAll("\\", "/");
     CPLString osLayerName2 = osFile2;
