@@ -988,6 +988,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "RMF_SET_VERTCS", // from rmfdataset.cpp
    "RPC_INVERSE_LOG", // from gdal_rpc.cpp
    "RPC_INVERSE_VERBOSE", // from gdal_rpc.cpp
+   "RPF_SHOW_ALL_ATTRIBUTES", // from nitfimage.c
    "RPFTOC_FORCE_RGBA", // from rpftocdataset.cpp
    "RPFTOC_MAX_FRAME_COUNT", // from rpftocfile.cpp
    "S57_CSV", // from s57classregistrar.cpp

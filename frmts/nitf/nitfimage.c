@@ -3284,50 +3284,6 @@ static int NITFReadGEOLOB(NITFImage *psImage)
 }
 
 /************************************************************************/
-/*                         NITFFetchAttribute()                         */
-/*                                                                      */
-/*      Load one attribute given the attribute id, and the parameter    */
-/*      id and the number of bytes to fetch.                            */
-/************************************************************************/
-
-static int NITFFetchAttribute(GByte *pabyAttributeSubsection, GUInt32 nASSSize,
-                              int nAttrCount, int nAttrID, int nParamID,
-                              GUInt32 nBytesToFetch, GByte *pabyBuffer)
-
-{
-    int i;
-    GUInt32 nAttrOffset = 0;
-
-    /* -------------------------------------------------------------------- */
-    /*      Scan the attribute offset table                                 */
-    /* -------------------------------------------------------------------- */
-    for (i = 0; i < nAttrCount; i++)
-    {
-        GByte *pabyOffsetRec = i * 8 + pabyAttributeSubsection;
-
-        if ((pabyOffsetRec[0] * 256 + pabyOffsetRec[1]) == nAttrID &&
-            pabyOffsetRec[2] == nParamID)
-        {
-            memcpy(&nAttrOffset, pabyOffsetRec + 4, 4);
-            CPL_MSBPTR32(&nAttrOffset);
-            break;
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Extract the attribute value.                                    */
-    /* -------------------------------------------------------------------- */
-    if (nAttrOffset == 0)
-        return FALSE;
-
-    if (nAttrOffset + nBytesToFetch > nASSSize)
-        return FALSE;
-
-    memcpy(pabyBuffer, pabyAttributeSubsection + nAttrOffset, nBytesToFetch);
-    return TRUE;
-}
-
-/************************************************************************/
 /*                      NITFLoadAttributeSection()                      */
 /*                                                                      */
 /*      Load metadata items from selected attributes in the RPF         */
@@ -3335,17 +3291,88 @@ static int NITFFetchAttribute(GByte *pabyAttributeSubsection, GUInt32 nASSSize,
 /*      MIL-STD-2411-1 section 5.3.2.                                   */
 /************************************************************************/
 
+// MIL-STD-2411-1 section 5.3.2.
+typedef enum
+{
+    RPFAttr_ASCII,
+    RPFAttr_UINT,
+    RPFAttr_REAL,
+    RPFAttr_VARIABLE
+} RPFAttributeType;
+
+typedef struct
+{
+    int nAttrID;
+    const char *pszGDALMetadataItem;
+    int nParamID;
+    RPFAttributeType eType;
+    int nLength; /* bytes */
+} RPFAttribute;
+
+static const RPFAttribute asRPFAttributes[] = {
+    {1, "CurrencyDate", 1, RPFAttr_ASCII, 8},
+    {2, "ProductionDate", 1, RPFAttr_ASCII, 8},
+    {3, "SignificantDate", 1, RPFAttr_ASCII, 8},
+    {4, "DataSeriesDesignation", 1, RPFAttr_ASCII, 10},
+    {4, "MapSeriesDesignation", 2, RPFAttr_ASCII, 8},
+    {4, "OldHorizontalDatumCode", 3, RPFAttr_ASCII, 4},
+    {4, "EditionIdentifier", 4, RPFAttr_ASCII, 7},
+    {5, "ProjectionCode", 1, RPFAttr_ASCII, 2},
+    {5, "ParameterA", 2, RPFAttr_REAL, 4},
+    {5, "ParameterB", 3, RPFAttr_REAL, 4},
+    {5, "ParameterC", 4, RPFAttr_REAL, 4},
+    {5, "ParameterD", 5, RPFAttr_REAL, 4},
+    {6, "VerticalDatumCode", 1, RPFAttr_ASCII, 4},
+    {7, "HorizontalDatumCode", 1, RPFAttr_ASCII, 4},  // not in CADRG
+    {8, "VerticalAbsoluteAccuracy", 1, RPFAttr_UINT, 4},
+    {8, "VerticalAbsoluteAccuracyUnits", 2, RPFAttr_UINT, 2},
+    {9, "HorizontalAbsoluteAccuracy", 1, RPFAttr_UINT, 4},
+    {9, "HorizontalAbsoluteAccuracyUnits", 2, RPFAttr_UINT, 2},
+    {10, "VerticalRelativeAccuracy", 1, RPFAttr_UINT, 4},
+    {10, "VerticalRelativeAccuracyUnits", 2, RPFAttr_UINT, 2},
+    {11, "HorizontalRelativeAccuracy", 1, RPFAttr_UINT, 4},
+    {11, "HorizontalRelativeAccuracyUnits", 2, RPFAttr_UINT, 2},
+    {12, "EllipsoidCode", 1, RPFAttr_ASCII, 3},
+    {13, "SoundingDatum", 1, RPFAttr_ASCII, 4},
+    {14, "NavigationSystemsCode", 1, RPFAttr_UINT, 2},
+    {15, "GridCode", 1, RPFAttr_ASCII, 2},
+    {16, "EasterlyAnnualMagneticChange", 1, RPFAttr_REAL, 4},
+    {16, "EasterlyAnnualMagneticChangeUnits", 2, RPFAttr_UINT, 2},
+    {17, "WesterlyAnnualMagneticChange", 1, RPFAttr_REAL, 4},
+    {17, "WesterlyAnnualMagneticChangeUnits", 2, RPFAttr_UINT, 2},
+    {18, "GridNorthMagneticAngle", 1, RPFAttr_REAL, 4},
+    {18, "GridNorthMagneticAngleUnits", 2, RPFAttr_UINT, 2},
+    {19, "GridConvergenceAngle", 1, RPFAttr_REAL, 4},
+    {19, "GridConvergenceAngleUnits", 2, RPFAttr_UINT, 2},
+    {20, "MaximumElevation", 1, RPFAttr_REAL, 8},
+    {20, "MaximumElevationUnits", 2, RPFAttr_UINT, 2},
+    {20, "MaximumElevationLatitude", 3, RPFAttr_REAL, 8},
+    {20, "MaximumElevationLongitude", 4, RPFAttr_REAL, 8},
+    {21, "LegendFileName", 1, RPFAttr_ASCII, 12},
+    {22, "DataSource", 1, RPFAttr_ASCII, 12},
+    {22, "GSD", 2, RPFAttr_UINT, 4},
+    {23, "DataLevel", 1, RPFAttr_UINT, 2},
+    // Following from MIL-PRF-89038_AMENDMENT-2.pdf
+    {24, "NumberOfUpdates", 1, RPFAttr_UINT, 2},
+    {24, "UpdateNumber", 2, RPFAttr_UINT, 2},
+    {24, "UpdateDate", 3, RPFAttr_ASCII, 8},
+    {24, "NumberOfSubframesImpacted", 4, RPFAttr_UINT, 2},
+    {24, "ListOfSubframes", 5, RPFAttr_VARIABLE, 0 /* variable */},
+    {24, "NumberOfCharactersInDescription", 6, RPFAttr_UINT, 2},
+    {24, "ChangeDescription", 7, RPFAttr_ASCII, 0},  // given by previous attr
+    {25, "ContourInterval", 1, RPFAttr_UINT, 2},
+    {25, "ContourIntervalUnits", 2, RPFAttr_UINT, 2},
+};
+
 static void NITFLoadAttributeSection(NITFImage *psImage)
 
 {
-    int i;
     GUInt32 nASHOffset = 0, /* nASHSize=0, */ nASSOffset = 0, nASSSize = 0,
             nNextOffset = 0;
     GInt16 nAttrCount;
     GByte *pabyAttributeSubsection;
-    GByte abyBuffer[128];
 
-    for (i = 0; i < psImage->nLocCount; i++)
+    for (int i = 0; i < psImage->nLocCount; i++)
     {
         if (psImage->pasLocations[i].nLocId == LID_AttributeSectionSubheader)
         {
@@ -3393,7 +3420,7 @@ static void NITFLoadAttributeSection(NITFImage *psImage)
      * .nLocSize field */
     /* -- End of lengthy explanation -- */
 
-    for (i = 0; i < psImage->nLocCount; i++)
+    for (int i = 0; i < psImage->nLocCount; i++)
     {
         if (psImage->pasLocations[i].nLocOffset > nASSOffset)
         {
@@ -3444,20 +3471,97 @@ static void NITFLoadAttributeSection(NITFImage *psImage)
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Scan for some particular attributes we would like.              */
+    /*      Scan the attribute offset table                                 */
     /* -------------------------------------------------------------------- */
-    if (NITFFetchAttribute(pabyAttributeSubsection, nASSSize, nAttrCount, 1, 1,
-                           8, abyBuffer))
-        NITFExtractMetadata(&(psImage->papszMetadata), (char *)abyBuffer, 0, 8,
-                            "NITF_RPF_CurrencyDate");
-    if (NITFFetchAttribute(pabyAttributeSubsection, nASSSize, nAttrCount, 2, 1,
-                           8, abyBuffer))
-        NITFExtractMetadata(&(psImage->papszMetadata), (char *)abyBuffer, 0, 8,
-                            "NITF_RPF_ProductionDate");
-    if (NITFFetchAttribute(pabyAttributeSubsection, nASSSize, nAttrCount, 3, 1,
-                           8, abyBuffer))
-        NITFExtractMetadata(&(psImage->papszMetadata), (char *)abyBuffer, 0, 8,
-                            "NITF_RPF_SignificantDate");
+    GByte abyBuffer[12];  // max size is for LegendFileName
+    const int nRPFAttributeDictSize =
+        (int)(sizeof(asRPFAttributes) / sizeof(asRPFAttributes[0]));
+    const bool bShowAllAttributes =
+        CPLTestBoolean(CPLGetConfigOption("RPF_SHOW_ALL_ATTRIBUTES", "NO"));
+    for (int i = 0; i < nAttrCount; i++)
+    {
+        const GByte *pabyOffsetRec = pabyAttributeSubsection + i * 8;
+        for (int iRPFAttrDict = 0; iRPFAttrDict < nRPFAttributeDictSize;
+             iRPFAttrDict++)
+        {
+            const RPFAttribute *psAttr = &(asRPFAttributes[iRPFAttrDict]);
+            const int nAttrID = pabyOffsetRec[0] * 256 + pabyOffsetRec[1];
+            const int nParamID = pabyOffsetRec[2];
+            if (nAttrID == psAttr->nAttrID && nParamID == psAttr->nParamID &&
+                // By default only shows the first three attributes.
+                (nAttrID <= 3 || bShowAllAttributes))
+            {
+                // const int nArealCoverageSeqNumber = pabyOffsetRec[3];
+
+                GUInt32 nAttrOffset = 0;
+                memcpy(&nAttrOffset, pabyOffsetRec + 4, 4);
+                CPL_MSBPTR32(&nAttrOffset);
+
+                const char *pszName = psAttr->pszGDALMetadataItem;
+                const int nLength = psAttr->nLength;
+                if (nLength != 0 && nAttrOffset + nLength <= nASSSize)
+                {
+                    memcpy(abyBuffer, pabyAttributeSubsection + nAttrOffset,
+                           nLength);
+                    if (psAttr->eType == RPFAttr_ASCII)
+                    {
+                        NITFExtractMetadata(&(psImage->papszMetadata),
+                                            (char *)abyBuffer, 0, nLength,
+                                            CPLSPrintf("NITF_RPF_%s", pszName));
+                    }
+                    else if (psAttr->eType == RPFAttr_UINT)
+                    {
+                        if (nLength == 2)
+                        {
+                            const uint16_t nVal =
+                                abyBuffer[0] * 256 + abyBuffer[1];
+                            psImage->papszMetadata = CSLSetNameValue(
+                                psImage->papszMetadata,
+                                CPLSPrintf("NITF_RPF_%s", pszName),
+                                CPLSPrintf("%d", nVal));
+                        }
+                        else
+                        {
+                            CPLAssert(nLength == 4);
+                            uint32_t nVal;
+                            memcpy(&nVal, abyBuffer, sizeof(nVal));
+                            CPL_MSBPTR32(&nVal);
+                            psImage->papszMetadata = CSLSetNameValue(
+                                psImage->papszMetadata,
+                                CPLSPrintf("NITF_RPF_%s", pszName),
+                                CPLSPrintf("%u", nVal));
+                        }
+                    }
+                    else
+                    {
+                        CPLAssert(psAttr->eType == RPFAttr_REAL);
+                        if (nLength == 4)
+                        {
+                            float fVal;
+                            memcpy(&fVal, abyBuffer, sizeof(fVal));
+                            CPL_MSBPTR32(&fVal);
+                            psImage->papszMetadata = CSLSetNameValue(
+                                psImage->papszMetadata,
+                                CPLSPrintf("NITF_RPF_%s", pszName),
+                                CPLSPrintf("%.8g", fVal));
+                        }
+                        else
+                        {
+                            CPLAssert(nLength == 8);
+                            double dfVal;
+                            memcpy(&dfVal, abyBuffer, sizeof(dfVal));
+                            CPL_MSBPTR64(&dfVal);
+                            psImage->papszMetadata = CSLSetNameValue(
+                                psImage->papszMetadata,
+                                CPLSPrintf("NITF_RPF_%s", pszName),
+                                CPLSPrintf("%.17g", dfVal));
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
 
     CPLFree(pabyAttributeSubsection);
 }
