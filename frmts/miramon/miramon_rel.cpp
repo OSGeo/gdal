@@ -313,7 +313,7 @@ bool MMRRel::GetMetadataValueDirectly(const CPLString &osRELFile,
     return false;  // Key not found
 }
 
-bool MMRRel::SameFile(CPLString osFile1, CPLString osFile2)
+bool MMRRel::SameFile(const CPLString &osFile1, const CPLString &osFile2)
 {
     if (EQUAL(osFile1, osFile2))
         return true;
@@ -323,11 +323,12 @@ bool MMRRel::SameFile(CPLString osFile1, CPLString osFile2)
         return true;
 
     // Just to be more sure:
-    osFile1.replaceAll("\\", "/");
-    CPLString osLayerName = osFile2;
-    osLayerName.replaceAll("\\", "/");
+    CPLString osLayerName1 = osFile1;
+    osLayerName1.replaceAll("\\", "/");
+    CPLString osLayerName2 = osFile2;
+    osLayerName2.replaceAll("\\", "/");
 
-    if (EQUAL(osFile1, osLayerName))
+    if (EQUAL(osLayerName1, osLayerName2))
         return true;
 
     return false;

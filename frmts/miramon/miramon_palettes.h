@@ -151,7 +151,7 @@ class MMRPalettes
         struct MM_DATA_BASE_XP &oColorTable, MM_EXT_DBF_N_FIELDS &nClauSimbol,
         MM_EXT_DBF_N_FIELDS &nRIndex, MM_EXT_DBF_N_FIELDS &nGIndex,
         MM_EXT_DBF_N_FIELDS &nBIndex);
-    CPLErr GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF);
+    CPLErr GetPaletteColors_DBF(const CPLString &os_Color_Paleta_DBF);
     CPLErr GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF);
     void AssignColorFromDBF(struct MM_DATA_BASE_XP &oColorTable,
                             char *pzsRecord, char *pszField,

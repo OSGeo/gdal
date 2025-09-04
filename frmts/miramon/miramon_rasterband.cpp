@@ -340,8 +340,9 @@ CPLErr MMRRasterBand::UpdateAttributeColorsFromPalette()
     return FromPaletteToAttributeTable();
 }
 
-CPLErr MMRRasterBand::CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
-                                       CPLString osAssociateRel)
+CPLErr MMRRasterBand::CreateRATFromDBF(const CPLString &osRELName,
+                                       const CPLString &osDBFName,
+                                       const CPLString &osAssociateRel)
 {
     // If there is no palette, let's get one
     if (!m_Palette)
@@ -696,6 +697,8 @@ CPLErr MMRRasterBand::FromPaletteToColorTableCategoricalMode()
     }
     else
     {
+        // To relax Coverity Scan (CID 1620826)
+        CPLAssert(static_cast<int>(m_eMMBytesPerPixel) > 0);
         nNPossibleValues = 1 << (8 * static_cast<int>(m_eMMBytesPerPixel));
     }
 
@@ -768,6 +771,9 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
     // Some necessary information
     if (!poBand->GetVisuMinSet() || !poBand->GetVisuMaxSet())
         return CE_Failure;
+
+    // To relax Coverity Scan (CID 1620843)
+    CPLAssert(static_cast<int>(m_eMMBytesPerPixel) > 0);
 
     const int nNPossibleValues = 1
                                  << (8 * static_cast<int>(m_eMMBytesPerPixel));

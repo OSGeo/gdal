@@ -107,8 +107,9 @@ class MMRRasterBand final : public GDALPamRasterBand
     CPLErr GetRATName(CPLString aosToken, CPLString &osRELName,
                       CPLString &osDBFName, CPLString &osAssociateREL);
     CPLErr UpdateAttributeColorsFromPalette();
-    CPLErr CreateRATFromDBF(CPLString osRELName, CPLString osDBFName,
-                            CPLString osAssociateRel);
+    CPLErr CreateRATFromDBF(const CPLString &osRELName,
+                            const CPLString &osDBFName,
+                            const CPLString &osAssociateRel);
 
     CPLErr AssignUniformColorTable();
     CPLErr FromPaletteToColorTableCategoricalMode();

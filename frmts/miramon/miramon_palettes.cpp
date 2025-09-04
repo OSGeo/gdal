@@ -23,8 +23,9 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
 {
     // Is a constant color, and which colors is it?
     CPLString os_Color_Const;
-    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                              "Color_Const", os_Color_Const);
+    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
+                                   "Color_Const", os_Color_Const))
+        os_Color_Const = "";  // Coverity scan CID 1620831
 
     if (EQUAL(os_Color_Const, "1"))
     {
@@ -52,8 +53,11 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
         os_Color_TractamentVariable.empty())
     {
         CPLString os_TractamentVariable;
-        m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, "TractamentVariable",
-                                  os_TractamentVariable);
+        if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA,
+                                       "TractamentVariable",
+                                       os_TractamentVariable))
+            os_TractamentVariable = "";  // Coverity scan CID 1620831
+
         if (EQUAL(os_TractamentVariable, "Categoric"))
             SetIsCategorical(true);
         else
@@ -177,7 +181,7 @@ CPLErr MMRPalettes::GetPaletteColors_DBF_Indexes(
 }
 
 // Updates nNPaletteColors
-CPLErr MMRPalettes::GetPaletteColors_DBF(CPLString os_Color_Paleta_DBF)
+CPLErr MMRPalettes::GetPaletteColors_DBF(const CPLString &os_Color_Paleta_DBF)
 
 {
     // Getting the full path name of the DBF
@@ -385,7 +389,6 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
     VSILFILE *fpColorTable = VSIFOpenL(osColorTableFileName, "rt");
     if (!fpColorTable)
     {
-        VSIFCloseL(fpColorTable);
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid color table: \"%s\"",
                  osColorTableFileName.c_str());
         return CE_Failure;
