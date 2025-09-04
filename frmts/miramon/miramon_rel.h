@@ -146,7 +146,7 @@ class MMRRel
         return m_bIsAMiraMonFile;
     }
 
-    void addExcludedSectionKey(const CPLString section, const CPLString key)
+    void addExcludedSectionKey(const CPLString &section, const CPLString &key)
     {
         m_ExcludedSectionKey.emplace(section, key);
     }
@@ -160,7 +160,7 @@ class MMRRel
     static CPLErr CheckBandInRel(const CPLString &osRELFileName,
                                  const CPLString &osIMGFile);
     static CPLString MMRGetSimpleMetadataName(const CPLString &osLayerName);
-    static bool SameFile(CPLString osFile1, CPLString osFile2);
+    static bool SameFile(const CPLString &osFile1, const CPLString &osFile2);
     MMRNomFitxerState MMRStateOfNomFitxerInSection(const CPLString &osLayerName,
                                                    const CPLString &osSection,
                                                    const CPLString &osRELFile,

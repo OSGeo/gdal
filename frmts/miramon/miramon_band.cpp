@@ -213,8 +213,9 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
 
-    if (nDataSize != -1 &&
-        (nGDALBlockSize > INT_MAX || nGDALBlockSize > nDataSize))
+    // CID 1620835 in Coverity Scan: Integer handling issues  (CONSTANT_EXPRESSION_RESULT)
+    // nGDALBlockSize > INT_MAX not necessary
+    if (nDataSize != -1 && nGDALBlockSize > nDataSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid block size: %d",
                  nGDALBlockSize);
@@ -508,14 +509,18 @@ void MMRBand::UpdateMinMaxVisuValuesFromREL(const CPLString &osSection)
 
 void MMRBand::UpdateFriendlyDescriptionFromREL(const CPLString &osSection)
 {
-    m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "descriptor",
-                              m_osFriendlyDescription);
+    // This "if" is due to CID 1620830 in Coverity Scan
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
+                                   "descriptor", m_osFriendlyDescription))
+        m_osFriendlyDescription = "";
 }
 
 void MMRBand::UpdateReferenceSystemFromREL()
 {
-    m_pfRel->GetMetadataValue("SPATIAL_REFERENCE_SYSTEM:HORIZONTAL",
-                              "HorizontalSystemIdentifier", m_osRefSystem);
+    // This "if" is due to CID 1620842 in Coverity Scan
+    if (!m_pfRel->GetMetadataValue("SPATIAL_REFERENCE_SYSTEM:HORIZONTAL",
+                                   "HorizontalSystemIdentifier", m_osRefSystem))
+        m_osRefSystem = "";
 }
 
 void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
