@@ -25,6 +25,10 @@ The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA)
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
 
+Since 3.12, if an ESRI :ref:`world file <raster.wld>` exists with the
+``.webpw`` or ``.wld`` suffixes, it will be read and used to establish the
+geotransform for the image.
+
 Driver capabilities
 -------------------
 
@@ -64,6 +68,15 @@ Various creation options exists, among them :
       If set to NO, or in AUTO mode if the source dataset does not use WEBP
       compression, the regular conversion code path is taken, resulting in a
       lossless or lossy copy depending on the LOSSLESS setting.
+
+-  .. co:: WORLDFILE
+      :choices: YES,NO
+      :default: NO
+      :since: 3.12
+
+      Force the generation of an associated ESRI world
+      file (with the extension ``.wld``). See :ref:`World Files <raster.wld>`
+      section for details.
 
 See Also
 --------
