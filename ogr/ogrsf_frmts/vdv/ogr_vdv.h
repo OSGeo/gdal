@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <mutex>
+#include <utility>
 
 class OGRVDVDataSource;
 
@@ -26,14 +27,14 @@ class OGRVDVDataSource;
 
 class OGRIDFDataSource final : public GDALDataset
 {
-    CPLString m_osFilename;
-    VSILFILE *m_fpL;
-    mutable bool m_bHasParsed;
-    mutable GDALDataset *m_poTmpDS;
+    CPLString m_osFilename{};
+    VSILFILE *m_fpL = nullptr;
+    mutable bool m_bHasParsed = false;
+    mutable GDALDataset *m_poTmpDS = nullptr;
     mutable bool m_bDestroyTmpDS = false;
     mutable std::mutex m_oMutex{};
 
-    void Parse() const;
+    std::pair<GDALDataset *, bool> Parse() const;
 
   public:
     explicit OGRIDFDataSource(const char *pszFilename, VSILFILE *fpL);
