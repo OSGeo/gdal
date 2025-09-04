@@ -5286,6 +5286,7 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
     const TIFFField *fip;
     uint32_t fii;
 
+    assert(infoarray != NULL);
     dircount = TIFFFetchDirectory(tif, diroff, &dir, NULL);
     if (!dircount)
     {
