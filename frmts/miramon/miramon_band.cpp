@@ -213,8 +213,6 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
 
-    // CID 1620835 in Coverity Scan: Integer handling issues  (CONSTANT_EXPRESSION_RESULT)
-    // nGDALBlockSize > INT_MAX not necessary
     if (nDataSize != -1 && nGDALBlockSize > nDataSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid block size: %d",
