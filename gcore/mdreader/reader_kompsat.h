@@ -31,7 +31,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderKompsat : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderKompsat(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderKompsat();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;

@@ -30,7 +30,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderEROS : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderEROS(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderEROS(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderEROS();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;

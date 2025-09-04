@@ -90,7 +90,7 @@ GDALMDReaderManager::~GDALMDReaderManager()
     delete pReaderBase
 
 GDALMDReaderBase *GDALMDReaderManager::GetReader(const char *pszPath,
-                                                 char **papszSiblingFiles,
+                                                 CSLConstList papszSiblingFiles,
                                                  GUInt32 nType)
 {
     if (!GDALCanFileAcceptSidecarFile(pszPath))
@@ -160,7 +160,7 @@ GDALMDReaderBase *GDALMDReaderManager::GetReader(const char *pszPath,
  * GDALMDReaderBase()
  */
 GDALMDReaderBase::GDALMDReaderBase(const char * /* pszPath */,
-                                   char ** /* papszSiblingFiles */)
+                                   CSLConstList /* papszSiblingFiles */)
 {
 }
 

@@ -25,7 +25,7 @@
  * GDALMDReaderRapidEye()
  */
 GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
-                                           char **papszSiblingFiles)
+                                           CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     const std::string osDirName = CPLGetDirnameSafe(pszPath);

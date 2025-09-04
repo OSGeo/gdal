@@ -35,7 +35,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderLandsat : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderLandsat(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderLandsat();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
