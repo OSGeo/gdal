@@ -20,14 +20,14 @@ When opening a GeoRaster, its name should be specified in the form:
 
 Where:
 
-| user   = Oracle server user's name login
+| user   = Oracle server user name, when a proxy user is used, it is in the format of proxyuser[username].
 | pwd    = user password
-| db     = Oracle server identification (database name)
+| db     = Oracle Net connect identifier. This can be the TNS alias defined in the tnsnames.ora, or a quoted string of Oracle Net connect descriptor. The location of the tnsnames.ora is configureed by TNS_ADMIN environment variable. 
 | schema = name of a schema
 | table  = name of a GeoRaster table (table that contains GeoRaster
   columns)
 | column = name of a column data type MDSYS.SDO_GEORASTER
-| where  = a simple where clause to identify one or multiples
+| where  = a simple where clause to identify one or multiple
   GeoRaster(s)
 | rdt    = name of a raster data table
 | rid    = numeric identification of one GeoRaster
@@ -36,15 +36,25 @@ Examples:
 
 | geor:scott,tiger,demodb,table,column,id=1
 | geor:scott,tiger,demodb,table,column,"id = 1"
+| geor:gisuser[scott]/welcome,demodb,table,column,"id = 1"
+| geor:/@demodb,table,column,"id = 1"
 | "georaster:scott/tiger@demodb,table,column,gain>10"
 | "georaster:scott/tiger@demodb,table,column,city='Brasilia'"
 | georaster:scott,tiger,,rdt_10$,10
 | geor:scott/tiger,,rdt_10$,10
 
-Note: do note use space around the field values and the commas.
+Note: Do not use space around the field values and the commas.
 
-Note: like in the last two examples, the database name field could be
-left empty (",,") and the TNSNAME will be used.
+Note: The third example shows that the proxy user ``gisuser`` is used to connect
+to user ``scott`` The password ``welcome`` is the password to the proxy user 
+``gisuser``  
+
+Note: The fourth example shows how to connect when the database user credentials
+are stored in a client-side Oracle wallet. 
+
+Note: In the last two examples, the Oracle Net connect identifier is 
+left empty (",,") because it is connecting to a local database that is 
+configured in the environment.  
 
 Note: If  the query results in more than one GeoRaster it will be
 treated as a GDAL metadata's list of sub-datasets (see below)
@@ -166,13 +176,6 @@ The following creation options are supported:
          gdal_translate -of georaster landsat_825.tif geor:scott/tiger@orcl,landsat,raster \
            -co INSERT="(ID, RASTER) VALUES (2,SDO_GEOR.INIT())"
 
--  .. co:: COMPRESS
-      :choices: JPEG-F, JP2-F, DEFLATE, NONE
-
-      Compression options.
-      The JPEG-F options is lossy, meaning that the original pixel values
-      are changed. The JP2-F compression is lossless if :co:`JP2_QUALITY=100`.
-
 -  .. co:: GENPYRAMID
 
       Generate pyramid after a GeoRaster object have been
@@ -284,6 +287,13 @@ The following creation options are supported:
       A NODATA value is used for cells whose values are either not known
       or meaningless
 
+-  .. co:: COMPRESS
+      :choices: JPEG-F, JP2-F, DEFLATE, NONE
+
+      Compression options.
+      The JPEG-F options is lossy, meaning that the original pixel values
+      are changed. The JP2-F compression is lossless if :co:`JP2_QUALITY=100`.
+
 -  .. co:: QUALITY
       :choices: 0-100
       :default: 75
@@ -363,6 +373,71 @@ The following creation options are supported:
       Otherwise, the RDT will be created as
       regular relational tables. That does not apply for Oracle version
       older than 11.
+
+-  .. co:: POOL
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      When this option is set to TRUE, OCI session pool is created and 
+      associated with the GeoRaster driver. The session pool is 
+      destroyed when the GeoRaster driver is destroyed. This option can be used
+      to improve the performance of the GeoRaster driver in GDAL APIs.
+
+-  .. co:: POOL_SESSMIN
+      :default: 1
+
+      Only if :co:`POOL=TRUE`.
+      The number of the sessions are started when a session pool is created.
+
+-  .. co:: POOL_SESSMAX
+      :default: 10
+
+      Only if :co:`POOL=TRUE`.
+      The maximum number of the sessions that can be opened in a session pool. 
+      Must be greater than 0. 
+
+-  .. co:: POOL_SESSINCR
+      :default: 2
+
+      Only if :co:`POOL=TRUE`.
+      The next increment number for the sessions to be started if the current
+      number of sessions is less than POOL_SESSMAX. Must be greater than 0. 
+
+Open Options
+------------
+
+|about-open-options|
+The following open options are supported:
+
+-  .. oo:: POOL
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      When this option is set to TRUE, OCI session pool is created and 
+      associated with the GeoRaster driver. The session pool is 
+      destroyed when the GeoRaster driver is destroyed. This option can be used
+      to improve the performance of the GeoRaster driver when there are 
+      concurrent reading through the GeoRaster driver in GDAL APIs. 
+
+-  .. oo:: POOL_SESSMIN
+      :default: 1
+
+      Only if :oo:`POOL=TRUE`.
+      The number of the sessions are started when a session pool is created.
+
+-  .. oo:: POOL_SESSMAX
+      :default: 10
+
+      Only if :oo:`POOL=TRUE`.
+      The maximum number of the sessions that can be opened in a session pool. 
+      Must be greater than 0. 
+
+-  .. oo:: POOL_SESSINCR
+      :default: 2
+
+      Only if :oo:`POOL=TRUE`.
+      The next increment number for the sessions to be started if the current
+      number of sessions is less than POOL_SESSMAX. Must be greater than 0. 
 
 Importing GeoRaster
 -------------------
