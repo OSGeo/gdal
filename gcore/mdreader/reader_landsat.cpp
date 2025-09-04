@@ -27,7 +27,7 @@
  * GDALMDReaderLandsat()
  */
 GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
-                                         char **papszSiblingFiles)
+                                         CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     const std::string osBaseName = CPLGetBasenameSafe(pszPath);
