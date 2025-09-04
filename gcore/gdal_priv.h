@@ -311,7 +311,7 @@ class CPL_DLL GDALDefaultOverviews
     int HaveMaskFile(char **papszSiblings = nullptr,
                      const char *pszBasename = nullptr);
 
-    char **GetSiblingFiles()
+    CSLConstList GetSiblingFiles() const
     {
         return papszInitSiblingFiles;
     }
