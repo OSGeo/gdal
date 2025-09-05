@@ -172,7 +172,6 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0,
                 else
                 {
                     request.options = options;
-                    WMSHTTPInitializeRequest(&request);
                     count++;
                 }
             }

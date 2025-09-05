@@ -42,6 +42,7 @@ struct WMSHTTPRequest
     GByte *pabyData{nullptr};
     size_t nDataLen{};
     size_t nDataAlloc{};
+    int retry{};
 
     /* curl internal stuff */
     CURL *m_curl_handle{nullptr};
@@ -54,8 +55,6 @@ struct WMSHTTPRequest
     std::vector<char> m_curl_error{};
 };
 
-// Not public, only for use within WMS
-void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest);
 CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *psRequest, int nRequestCount = 1);
 
 #endif /*  GDALHTTP_H */

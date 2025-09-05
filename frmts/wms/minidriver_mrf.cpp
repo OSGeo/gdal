@@ -84,7 +84,6 @@ static size_t pread_curl(void *user_data, void *buff, size_t count,
     request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
                          static_cast<GUIntBig>(offset),
                          static_cast<GUIntBig>(offset + count - 1));
-    WMSHTTPInitializeRequest(&request);
     if (WMSHTTPFetchMulti(&request) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
