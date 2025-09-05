@@ -436,6 +436,7 @@ jobs:
             sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
             libarrow pyarrow libaec libheif libavif muparser cmake fsspec
+        pip install -r doc/requirements.txt
     - name: Check CMake version
       shell: bash -l {0}
       run: |
@@ -468,6 +469,9 @@ jobs:
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
       env:
         GIT_LFS_SKIP_SMUDGE: 1 # for PublicDecompWT github repository clone
+    - name: Build HTML pages
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2 --target html
     - name: test
       shell: bash -l {0}
       run: |
@@ -475,7 +479,8 @@ jobs:
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+        # Exclude doc spellcheck as it crashes
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3 -E spelling
       env:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES
