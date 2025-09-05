@@ -2715,7 +2715,7 @@ static char **NITFGenericMetadataReadTREInternal(
                     {
                         const size_t nBufferSize = 128;
                         float f;
-                        memcpy(&f, pachTRE + *pnTreOffset, 4);
+                        memcpy(&f, pachTRE + *pnTreOffset, sizeof(f));
                         CPL_MSBPTR32(&f);
                         pszValue = (char *)CPLMalloc(nBufferSize);
                         CPLsnprintf(pszValue, nBufferSize, "%f", f);
@@ -2728,6 +2728,30 @@ static char **NITFGenericMetadataReadTREInternal(
                         CPLError(bValidate ? CE_Failure : CE_Warning,
                                  CPLE_AppDefined,
                                  "IEEE754_Float32_BigEndian field must be 4 "
+                                 "bytes in %s %s",
+                                 pszDESOrTREName, pszDESOrTREKind);
+                        break;
+                    }
+                }
+                else if (strcmp(pszType, "IEEE754_Float64_BigEndian") == 0)
+                {
+                    if (nLength == 8)
+                    {
+                        double df;
+                        memcpy(&df, pachTRE + *pnTreOffset, sizeof(df));
+                        CPL_MSBPTR64(&df);
+                        const int nBufferSize = 24;
+                        pszValue = (char *)CPLMalloc(nBufferSize);
+                        CPLsnprintf(pszValue, nBufferSize, "%.17g", df);
+                        papszTmp =
+                            CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
+                    }
+                    else
+                    {
+                        *pbError = TRUE;
+                        CPLError(bValidate ? CE_Failure : CE_Warning,
+                                 CPLE_AppDefined,
+                                 "IEEE754_Float64_BigEndian field must be 8 "
                                  "bytes in %s %s",
                                  pszDESOrTREName, pszDESOrTREKind);
                         break;

@@ -2579,6 +2579,62 @@
         <field name="SUN_AZ" length="5"/>
     </tre>
 
+    <!-- MIL-STD-2411 page 33 -->
+    <tre name="RPFHDR" location="image" length="48">
+        <field name="LITTLE_BIG_ENDIAN_INDICATOR" length="1" type="UnsignedInt_BigEndian"/>
+        <field name="HEADER_SECTION_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
+        <field name="FILENAME" length="12" type="string"/>
+        <field name="NEW_REPLACEMENT_UPDATE_INDICATOR" length="1" type="UnsignedInt_BigEndian"/>
+        <field name="GOVERNING_STANDARD_NUMBER" length="15" type="string"/>
+        <field name="GOVERNING_STANDARD_DATE" length="8" type="string"/>
+        <field name="SECURITY_CLASSIFICATION" length="1" type="string"/>
+        <field name="SECURITY_COUNTRY_INTERNATIONAL_CODE" length="2" type="string"/>
+        <field name="SECURITY_RELEASE_MARKING" length="2" type="string"/>
+        <field name="LOCATION_SECTION_LOCATION" length="4" type="UnsignedInt_BigEndian"/>
+    </tre>
+
+    <tre name="RPFIMG" location="image">
+        <field name="LOCATION_SECTION_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
+        <field name="COMPONENT_LOCATION_OFFSET" length="4" type="UnsignedInt_BigEndian"/>
+        <field name="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" length="2" type="UnsignedInt_BigEndian"/>
+        <field name="COMPONENT_LOCATION_RECORD_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
+        <field name="COMPONENT_AGGREGATE_LENGTH" length="4" type="UnsignedInt_BigEndian"/>
+        <loop counter="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" name="CLR" md_prefix="CLR_%02d_">
+            <field name="COMPONENT_ID" length="2" type="UnsignedInt_BigEndian"/>
+            <field name="COMPONENT_LENGTH" length="4" type="UnsignedInt_BigEndian"/>
+            <field name="COMPONENT_LOCATION" length="4" type="UnsignedInt_BigEndian"/>
+        </loop>
+        <!-- TODO: lots of missing rpf_component and no logic yet in nitfimage to deal with them -->
+        <rpf_component id="BoundaryRectangleSectionSubheader">
+            <field name="BOUNDARY_RECTANGLE_TABLE_OFFSET" length="4" type="UnsignedInt_BigEndian"/>
+            <field name="NUMBER_OF_BOUNDARY_RECTANGLE_RECORDS" length="2" type="UnsignedInt_BigEndian"/>
+            <field name="BOUNDARY_RECTANGLE_RECORD_LENGTH" length="2" type="UnsignedInt_BigEndian"/>
+        </rpf_component>
+        <rpf_component id="BoundaryRectangleTable">
+            <loop counter="NUMBER_OF_BOUNDARY_RECTANGLE_RECORDS" name="BRR" md_prefix="BRR_%02d_">
+                <field name="PRODUCT_DATA_TYPE" length="5" type="string"/>
+                <field name="COMPRESSION_RATION" length="5" type="string"/>
+                <field name="SCALE_OR_RESOLUTION" length="12" type="string"/>
+                <field name="ZONE" length="1" type="string"/>
+                <field name="PRODUCER" length="5" type="string"/>
+                <field name="NORTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="NORTHWEST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="SOUTHWEST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="SOUTHWEST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="NORTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="NORTHEAST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="SOUTHEAST_LONGITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="SOUTHEAST_LATITUDE" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="NORTH_SOUTH_VERTICAL_RESOLUTION" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="EAST_WEST_HORIZONTAL_RESOLUTION" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="LATITUDE_VERTICAL_INTERVAL" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="LONGITUDE_HORIZONTAL_INTERVAL" length="8" type="IEEE754_Float64_BigEndian"/>
+                <field name="NUMBER_OF_FRAMES_NORTH_SOUTH_DIRECTION" length="4" type="UnsignedInt_BigEndian"/>
+                <field name="NUMBER_OF_FRAMES_EAST_WEST_DIRECTION" length="4" type="UnsignedInt_BigEndian"/>
+            </loop>
+        </rpf_component>
+    </tre>
+
   </tres>
 
   <!--- -->
