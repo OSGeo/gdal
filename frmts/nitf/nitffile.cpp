@@ -18,6 +18,8 @@
 #include "cpl_string.h"
 #include <stdbool.h>
 
+#include <map>
+
 #ifdef EMBED_RESOURCE_FILES
 #include "embedded_resources.h"
 #endif
@@ -2620,12 +2622,77 @@ static int NITFEvaluateCond(const char *pszCond, char **papszMD, int *pnMDSize,
 static char **NITFGenericMetadataReadTREInternal(
     char **papszMD, int *pnMDSize, int *pnMDAlloc, CPLXMLNode *psOutXMLNode,
     const char *pszDESOrTREKind, const char *pszDESOrTREName,
-    const char *pachTRE, int nTRESize, CPLXMLNode *psTreNode, int *pnTreOffset,
-    const char *pszMDPrefix, bool bValidate, int *pbError)
+    const char *pachTRE, int nTRESize, const CPLXMLNode *psTreNode,
+    int *pnTreOffset, const char *pszMDPrefix, bool bValidate, VSILFILE *fp,
+    std::map<NITFLocId, const CPLXMLNode *> &oMapLocIdToXML, int *pbError)
 {
-    CPLXMLNode *psIter;
-    for (psIter = psTreNode->psChild; psIter != nullptr && *pbError == FALSE;
-         psIter = psIter->psNext)
+    const bool bRPFIMG = psOutXMLNode && EQUAL(pszDESOrTREName, "RPFIMG");
+    if (bRPFIMG && oMapLocIdToXML.empty())
+    {
+#define LOCATION_ENTRY(x)                                                      \
+    {                                                                          \
+        std::string(#x), LID_##x                                               \
+    }
+        static const std::map<std::string, NITFLocId> goMapLocationNameToID = {
+            LOCATION_ENTRY(HeaderComponent),
+            LOCATION_ENTRY(LocationComponent),
+            LOCATION_ENTRY(CoverageSectionSubheader),
+            LOCATION_ENTRY(CompressionSectionSubsection),
+            LOCATION_ENTRY(CompressionLookupSubsection),
+            LOCATION_ENTRY(CompressionParameterSubsection),
+            LOCATION_ENTRY(ColorGrayscaleSectionSubheader),
+            LOCATION_ENTRY(ColormapSubsection),
+            LOCATION_ENTRY(ImageDescriptionSubheader),
+            LOCATION_ENTRY(ImageDisplayParametersSubheader),
+            LOCATION_ENTRY(MaskSubsection),
+            LOCATION_ENTRY(ColorConverterSubsection),
+            LOCATION_ENTRY(SpatialDataSubsection),
+            LOCATION_ENTRY(AttributeSectionSubheader),
+            LOCATION_ENTRY(AttributeSubsection),
+            LOCATION_ENTRY(ExplicitArealCoverageTable),
+            LOCATION_ENTRY(RelatedImagesSectionSubheader),
+            LOCATION_ENTRY(RelatedImagesSubsection),
+            LOCATION_ENTRY(ReplaceUpdateSectionSubheader),
+            LOCATION_ENTRY(ReplaceUpdateTable),
+            LOCATION_ENTRY(BoundaryRectangleSectionSubheader),
+            LOCATION_ENTRY(BoundaryRectangleTable),
+            LOCATION_ENTRY(FrameFileIndexSectionSubHeader),
+            LOCATION_ENTRY(FrameFileIndexSubsection),
+            LOCATION_ENTRY(ColorTableIndexSectionSubheader),
+            LOCATION_ENTRY(ColorTableIndexRecord),
+        };
+#undef LOCATION_ENTRY
+
+        for (const CPLXMLNode *psIter = psTreNode->psChild;
+             psIter != nullptr && *pbError == FALSE; psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element && psIter->pszValue != nullptr &&
+                strcmp(psIter->pszValue, "rpf_component") == 0)
+            {
+                const char *pszId = CPLGetXMLValue(psIter, "id", nullptr);
+                if (pszId)
+                {
+                    auto oIterMap = goMapLocationNameToID.find(pszId);
+                    if (oIterMap != goMapLocationNameToID.end())
+                    {
+                        oMapLocIdToXML[oIterMap->second] = psIter;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "rpf_component id=%s unknown", pszId);
+                    }
+                }
+            }
+        }
+    }
+
+    int nRPFLocationId = 0;
+    uint32_t nRPFLocationOffset = 0;
+    uint32_t nRPFLocationSize = 0;
+
+    for (const CPLXMLNode *psIter = psTreNode->psChild;
+         psIter != nullptr && *pbError == FALSE; psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element && psIter->pszValue != nullptr &&
             strcmp(psIter->pszValue, "field") == 0)
@@ -2902,6 +2969,24 @@ static char **NITFGenericMetadataReadTREInternal(
                     }
                 }
 
+                if (bRPFIMG && pszValue != nullptr)
+                {
+                    if (EQUAL(pszName, "COMPONENT_ID"))
+                    {
+                        nRPFLocationId = atoi(pszValue);
+                    }
+                    else if (EQUAL(pszName, "COMPONENT_LENGTH"))
+                    {
+                        nRPFLocationSize = static_cast<uint32_t>(
+                            strtoul(pszValue, nullptr, 10));
+                    }
+                    else if (EQUAL(pszName, "COMPONENT_LOCATION"))
+                    {
+                        nRPFLocationOffset = static_cast<uint32_t>(
+                            strtoul(pszValue, nullptr, 10));
+                    }
+                }
+
                 CPLFree(pszMDItemName);
                 CPLFree(pszValue);
 
@@ -3147,7 +3232,13 @@ static char **NITFGenericMetadataReadTREInternal(
                 {
                     char *pszMDNewPrefix = nullptr;
                     CPLXMLNode *psGroupNode = nullptr;
-                    if (pszMDSubPrefix != nullptr)
+                    if (bRPFIMG)
+                    {
+                        // As we need to fetch metadata items that are in
+                        // different RPF location, a prefix would hurt.
+                        pszMDNewPrefix = CPLStrdup("");
+                    }
+                    else if (pszMDSubPrefix != nullptr)
                     {
                         if (bHasValidPercentD)
                         {
@@ -3186,8 +3277,9 @@ static char **NITFGenericMetadataReadTREInternal(
                     papszMD = NITFGenericMetadataReadTREInternal(
                         papszMD, pnMDSize, pnMDAlloc, psGroupNode,
                         pszDESOrTREKind, pszDESOrTREName, pachTRE, nTRESize,
-                        psIter, pnTreOffset, pszMDNewPrefix, bValidate,
-                        pbError);
+                        psIter, pnTreOffset, pszMDNewPrefix, bValidate, fp,
+                        oMapLocIdToXML, pbError);
+
                     CPLFree(pszMDNewPrefix);
                 }
             }
@@ -3218,7 +3310,7 @@ static char **NITFGenericMetadataReadTREInternal(
                 papszMD = NITFGenericMetadataReadTREInternal(
                     papszMD, pnMDSize, pnMDAlloc, psOutXMLNode, pszDESOrTREKind,
                     pszDESOrTREName, pachTRE, nTRESize, psIter, pnTreOffset,
-                    pszMDPrefix, bValidate, pbError);
+                    pszMDPrefix, bValidate, fp, oMapLocIdToXML, pbError);
             }
         }
         else if (psIter->eType == CXT_Element && psIter->pszValue != nullptr &&
@@ -3229,7 +3321,7 @@ static char **NITFGenericMetadataReadTREInternal(
                 papszMD = NITFGenericMetadataReadTREInternal(
                     papszMD, pnMDSize, pnMDAlloc, psOutXMLNode, pszDESOrTREKind,
                     pszDESOrTREName, pachTRE, nTRESize, psIter, pnTreOffset,
-                    pszMDPrefix, bValidate, pbError);
+                    pszMDPrefix, bValidate, fp, oMapLocIdToXML, pbError);
             }
         }
         else
@@ -3238,6 +3330,49 @@ static char **NITFGenericMetadataReadTREInternal(
             // psIter->pszValue : "null");
         }
     }
+
+    if (bRPFIMG && nRPFLocationId >= LID_HeaderComponent &&
+        nRPFLocationId <= LID_ColorTableIndexRecord &&
+        nRPFLocationSize < 1000 * 1000 && psOutXMLNode &&
+        strcmp(psOutXMLNode->pszValue, "group") == 0)
+    {
+        const auto oIter =
+            oMapLocIdToXML.find(static_cast<NITFLocId>(nRPFLocationId));
+        if (oIter != oMapLocIdToXML.end())
+        {
+            const CPLXMLNode *psRPFLocationXML = oIter->second;
+            VSIFSeekL(fp, nRPFLocationOffset, SEEK_SET);
+            std::vector<GByte> abyRPFLocationData;
+            abyRPFLocationData.resize(nRPFLocationSize);
+            if (VSIFReadL(abyRPFLocationData.data(), 1, nRPFLocationSize, fp) ==
+                nRPFLocationSize)
+            {
+                CPLXMLNode *psLastChild = psOutXMLNode->psChild;
+                while (psLastChild->psNext)
+                    psLastChild = psLastChild->psNext;
+                CPLXMLNode *psContent =
+                    CPLCreateXMLNode(nullptr, CXT_Element, "content");
+                psLastChild->psNext = psContent;
+                CPLAddXMLAttributeAndValue(
+                    psContent, "ComponentName",
+                    CPLGetXMLValue(psRPFLocationXML, "id", ""));
+                int nLocationOffset = 0;
+                papszMD = NITFGenericMetadataReadTREInternal(
+                    papszMD, pnMDSize, pnMDAlloc, psContent, pszDESOrTREKind,
+                    pszDESOrTREName,
+                    reinterpret_cast<const char *>(abyRPFLocationData.data()),
+                    nRPFLocationSize, psRPFLocationXML, &nLocationOffset,
+                    pszMDPrefix, bValidate, fp, oMapLocIdToXML, pbError);
+            }
+        }
+        else
+        {
+            CPLDebug("NITF",
+                     "No definition in nitf_spec.xml for location id %d",
+                     nRPFLocationId);
+        }
+    }
+
     return papszMD;
 }
 
@@ -3247,7 +3382,7 @@ static char **NITFGenericMetadataReadTREInternal(
 
 static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
                                          const char *pachTRE, int nTRESize,
-                                         CPLXMLNode *psTreNode)
+                                         CPLXMLNode *psTreNode, VSILFILE *fp)
 {
     int bError = FALSE;
     int nTreOffset = 0;
@@ -3277,11 +3412,12 @@ static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
 
     nMDSize = nMDAlloc = CSLCount(papszMD);
 
+    std::map<NITFLocId, const CPLXMLNode *> oMapLocIdToXML;
     papszMD = NITFGenericMetadataReadTREInternal(
         papszMD, &nMDSize, &nMDAlloc, nullptr, "TRE", pszTREName, pachTRE,
         nTRESize, psTreNode, &nTreOffset, pszMDPrefix,
         false,  // bValidate
-        &bError);
+        fp, oMapLocIdToXML, &bError);
 
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
     {
@@ -3443,16 +3579,18 @@ CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
     }
 
     pszMDPrefix = CPLGetXMLValue(psTreNode, "md_prefix", "");
+    std::map<NITFLocId, const CPLXMLNode *> oMapLocIdToXML;
     CSLDestroy(NITFGenericMetadataReadTREInternal(
         nullptr, &nMDSize, &nMDAlloc, psOutXMLNode, "TRE", pszTREName, pachTRE,
-        nTRESize, psTreNode, &nTreOffset, pszMDPrefix, bValidate, &bError));
+        nTRESize, psTreNode, &nTreOffset, pszMDPrefix, bValidate, psFile->fp,
+        oMapLocIdToXML, &bError));
 
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Inconsistent declaration of %s TRE", pszTREName);
     }
-    if (nTreOffset < nTRESize)
+    if (nTreOffset < nTRESize && !EQUAL(pszTREName, "RPFIMG"))
     {
         CPLCreateXMLElementAndValue(
             psOutXMLNode, bValidate ? "error" : "warning",
@@ -3538,11 +3676,12 @@ CPLXMLNode *NITFCreateXMLDesUserDefinedSubHeader(NITFFile *psFile,
     int nMDAlloc = nMDSize;
     const int nDESSize =
         psFile->pasSegmentInfo[psDES->iSegment].nSegmentHeaderSize;
+    std::map<NITFLocId, const CPLXMLNode *> oMapLocIdToXML;
     CSLDestroy(NITFGenericMetadataReadTREInternal(
         papszMD, &nMDSize, &nMDAlloc, psOutXMLNode, "DES", pszDESID,
         psDES->pachHeader, nDESSize, psUserDefinedFields, &nOffset,
         "", /* pszMDPrefix, */
-        bValidate, &bError));
+        bValidate, psFile->fp, oMapLocIdToXML, &bError));
     int nDESSHL =
         atoi(CSLFetchNameValueDef(psDES->papszMetadata, "DESSHL", "0"));
 
@@ -3622,11 +3761,12 @@ CPLXMLNode *NITFCreateXMLDesDataFields(NITFFile *psFile, const NITFDES *psDES,
     char **papszMD = CSLDuplicate(psDES->papszMetadata);
     int nMDSize = CSLCount(papszMD);
     int nMDAlloc = nMDSize;
+    std::map<NITFLocId, const CPLXMLNode *> oMapLocIdToXML;
     CSLDestroy(NITFGenericMetadataReadTREInternal(
         papszMD, &nMDSize, &nMDAlloc, psOutXMLNode, "DES", pszDESID,
         reinterpret_cast<const char *>(pabyData), nDataLen, psFields, &nOffset,
         "", /* pszMDPrefix, */
-        bValidate, &bError));
+        bValidate, psFile->fp, oMapLocIdToXML, &bError));
     if (nOffset < nDataLen)
     {
         bError = TRUE;
@@ -3704,7 +3844,8 @@ char **NITFGenericMetadataRead(char **papszMD, NITFFile *psFile,
                                           pszName, &nTRESize);
                     if (pachTRE != nullptr)
                         papszMD = NITFGenericMetadataReadTRE(
-                            papszMD, pszName, pachTRE, nTRESize, psIter);
+                            papszMD, pszName, pachTRE, nTRESize, psIter,
+                            psFile->fp);
                 }
                 if (psImage != nullptr)
                 {
@@ -3715,7 +3856,8 @@ char **NITFGenericMetadataRead(char **papszMD, NITFFile *psFile,
                                           pszName, &nTRESize);
                     if (pachTRE != nullptr)
                         papszMD = NITFGenericMetadataReadTRE(
-                            papszMD, pszName, pachTRE, nTRESize, psIter);
+                            papszMD, pszName, pachTRE, nTRESize, psIter,
+                            psImage->psFile->fp);
                 }
                 if (pszSpecificTREName)
                     break;
