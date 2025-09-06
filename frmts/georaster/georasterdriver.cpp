@@ -11,7 +11,7 @@
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
-#include "oci_wrapper.h"
+
 #include "georaster_priv.h"
 
 GeoRasterDriver *GeoRasterDriver::gpoGeoRasterDriver = nullptr;
@@ -39,7 +39,7 @@ GeoRasterDriver::~GeoRasterDriver()
 /***************************************************************************
  * \brief Create a OCI Session Pool and store it in a list
  *
- * All OCI Session Pool will be destroyed when the GeoRasterDriver 
+ * All OCI Session Pool will be destroyed when the GeoRasterDriver
  * is destroyed.
  *
  ***************************************************************************/
