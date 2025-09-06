@@ -24,8 +24,8 @@ NAMESPACE_MRF_START
 class RLEC3Packer : public Packer
 {
   public:
-    virtual int load(storage_manager *src, storage_manager *dst) override;
-    virtual int store(storage_manager *src, storage_manager *dst) override;
+    int load(storage_manager *src, storage_manager *dst) override;
+    int store(storage_manager *src, storage_manager *dst) override;
 };
 
 NAMESPACE_MRF_END

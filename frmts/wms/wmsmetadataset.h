@@ -87,8 +87,8 @@ class GDALWMSMetaDataset final : public GDALPamDataset
     GDALWMSMetaDataset();
     ~GDALWMSMetaDataset() override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
     static GDALDataset *
     AnalyzeGetCapabilities(CPLXMLNode *psXML,

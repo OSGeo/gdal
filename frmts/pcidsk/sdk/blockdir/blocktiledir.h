@@ -73,7 +73,7 @@ protected:
     /// The free block layer info.
     BlockLayerInfo      msFreeBlockLayer{};
 
-    virtual uint32      GetNewBlockCount(void) const override;
+    uint32      GetNewBlockCount(void) const override;
 
     void                SwapBlockLayer(BlockLayerInfo * psBlockLayer);
     void                SwapTileLayer(TileLayerInfo * psTileLayer);

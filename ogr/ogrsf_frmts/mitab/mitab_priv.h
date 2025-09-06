@@ -425,13 +425,13 @@ class TABMAPObjNone final : public TABMAPObjHdr
   public:
     TABMAPObjNone() = default;
 
-    virtual int WriteObj(TABMAPObjectBlock *) override
+    int WriteObj(TABMAPObjectBlock *) override
     {
         return 0;
     }
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjPoint /* non final */ : public TABMAPObjHdr
@@ -445,10 +445,10 @@ class TABMAPObjPoint /* non final */ : public TABMAPObjHdr
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjFontPoint final : public TABMAPObjPoint
@@ -468,10 +468,10 @@ class TABMAPObjFontPoint final : public TABMAPObjPoint
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjCustomPoint final : public TABMAPObjPoint
@@ -485,10 +485,10 @@ class TABMAPObjCustomPoint final : public TABMAPObjPoint
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjLine final : public TABMAPObjHdr
@@ -504,10 +504,10 @@ class TABMAPObjLine final : public TABMAPObjHdr
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjPLine final : public TABMAPObjHdrWithCoord
@@ -528,10 +528,10 @@ class TABMAPObjPLine final : public TABMAPObjHdrWithCoord
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjRectEllipse final : public TABMAPObjHdr
@@ -547,10 +547,10 @@ class TABMAPObjRectEllipse final : public TABMAPObjHdr
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjArc final : public TABMAPObjHdr
@@ -571,10 +571,10 @@ class TABMAPObjArc final : public TABMAPObjHdr
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjText final : public TABMAPObjHdrWithCoord
@@ -609,10 +609,10 @@ class TABMAPObjText final : public TABMAPObjHdrWithCoord
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjMultiPoint final : public TABMAPObjHdrWithCoord
@@ -631,10 +631,10 @@ class TABMAPObjMultiPoint final : public TABMAPObjHdrWithCoord
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 };
 
 class TABMAPObjCollection final : public TABMAPObjHdrWithCoord
@@ -663,10 +663,10 @@ class TABMAPObjCollection final : public TABMAPObjHdrWithCoord
     {
     }
 
-    virtual int WriteObj(TABMAPObjectBlock *) override;
+    int WriteObj(TABMAPObjectBlock *) override;
 
     //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override;
+    int ReadObj(TABMAPObjectBlock *) override;
 
   private:
     // private copy ctor and assignment operator to prevent shallow copying
@@ -867,7 +867,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     explicit TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
     ~TABMAPHeaderBlock() override;
 
-    virtual int CommitToFile() override;
+    int CommitToFile() override;
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
@@ -876,7 +876,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0) override;
 
-    virtual int GetBlockClass() override
+    int GetBlockClass() override
     {
         return TABMAP_HEADER_BLOCK;
     }
@@ -898,7 +898,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     int SetProjInfo(TABProjInfo *psProjInfo);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = nullptr) override;
+    void Dump(FILE *fpOut = nullptr) override;
 #endif
 
     // Instead of having over 30 get/set methods, we'll make all data
@@ -995,9 +995,9 @@ class TABMAPIndexBlock final : public TABRawBinBlock
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0) override;
-    virtual int CommitToFile() override;
+    int CommitToFile() override;
 
-    virtual int GetBlockClass() override
+    int GetBlockClass() override
     {
         return TABMAP_INDEX_BLOCK;
     }
@@ -1073,7 +1073,7 @@ class TABMAPIndexBlock final : public TABRawBinBlock
                                  GInt32 nNewEntryYMax, int &nSeed1,
                                  int &nSeed2);
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = nullptr) override;
+    void Dump(FILE *fpOut = nullptr) override;
 #endif
 };
 
@@ -1112,7 +1112,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
     explicit TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
     ~TABMAPObjectBlock() override;
 
-    virtual int CommitToFile() override;
+    int CommitToFile() override;
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
@@ -1120,7 +1120,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0) override;
 
-    virtual int GetBlockClass() override
+    int GetBlockClass() override
     {
         return TABMAP_OBJECT_BLOCK;
     }
@@ -1171,7 +1171,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
     }
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = nullptr) override
+    void Dump(FILE *fpOut = nullptr) override
     {
         Dump(fpOut, FALSE);
     }
@@ -1224,16 +1224,16 @@ class TABMAPCoordBlock final : public TABRawBinBlock
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0) override;
-    virtual int CommitToFile() override;
+    int CommitToFile() override;
 
-    virtual int GetBlockClass() override
+    int GetBlockClass() override
     {
         return TABMAP_COORD_BLOCK;
     }
 
     void SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
-    virtual int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
-    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf) override;
+    int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
+    int WriteBytes(int nBytesToWrite, const GByte *pBuf) override;
     void SetComprCoordOrigin(GInt32 nX, GInt32 nY);
     int ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int ReadIntCoords(GBool bCompressed, int numCoords, GInt32 *panXY);
@@ -1280,7 +1280,7 @@ class TABMAPCoordBlock final : public TABRawBinBlock
                        GInt32 &nYMax);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = nullptr) override;
+    void Dump(FILE *fpOut = nullptr) override;
 #endif
 };
 
@@ -1314,16 +1314,16 @@ class TABMAPToolBlock final : public TABRawBinBlock
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0) override;
-    virtual int CommitToFile() override;
+    int CommitToFile() override;
 
-    virtual int GetBlockClass() override
+    int GetBlockClass() override
     {
         return TABMAP_TOOL_BLOCK;
     }
 
     void SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
-    virtual int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
-    virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf) override;
+    int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
+    int WriteBytes(int nBytesToWrite, const GByte *pBuf) override;
 
     void SetNextToolBlock(GInt32 nNextCoordBlockAddress);
 
@@ -1337,7 +1337,7 @@ class TABMAPToolBlock final : public TABRawBinBlock
     int CheckAvailableSpace(int nToolType);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = nullptr) override;
+    void Dump(FILE *fpOut = nullptr) override;
 #endif
 };
 

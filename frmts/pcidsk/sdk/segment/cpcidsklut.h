@@ -35,8 +35,8 @@ namespace PCIDSK
 
         ~CPCIDSK_LUT() override;
 
-        virtual void ReadLUT(std::vector<unsigned char>& lut) override;
-        virtual void WriteLUT(const std::vector<unsigned char>& lut) override;
+        void ReadLUT(std::vector<unsigned char>& lut) override;
+        void WriteLUT(const std::vector<unsigned char>& lut) override;
     };
 } // end namespace PCIDSK
 

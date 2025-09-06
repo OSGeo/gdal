@@ -35,11 +35,11 @@ class GDALMDReaderGeoEye : public GDALMDReaderBase
   public:
     GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderGeoEye() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
     char **LoadRPCWktFile() const;

@@ -72,7 +72,7 @@ class OGRPDSLayer final : public OGRLayer,
                 bool bIsASCII);
     ~OGRPDSLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPDSLayer)
 
     const OGRFeatureDefn *GetLayerDefn() const override
@@ -82,11 +82,11 @@ class OGRPDSLayer final : public OGRLayer,
 
     int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
 };
 
 }  // namespace OGRPDS

@@ -82,9 +82,9 @@ class ECRGTOCDataset final : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
-    virtual char **GetFileList() override
+    char **GetFileList() override
     {
         return CSLDuplicate(papszFileList);
     }
@@ -92,7 +92,7 @@ class ECRGTOCDataset final : public GDALPamDataset
     void AddSubDataset(const char *pszFilename, const char *pszProductTitle,
                        const char *pszDiscId, const char *pszScale);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;
@@ -136,7 +136,7 @@ class ECRGTOCSubDataset final : public VRTDataset
 
     ~ECRGTOCSubDataset() override;
 
-    virtual char **GetFileList() override
+    char **GetFileList() override
     {
         return CSLDuplicate(papszFileList);
     }

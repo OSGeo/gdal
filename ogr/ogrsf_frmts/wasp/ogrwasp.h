@@ -142,7 +142,7 @@ class OGRWAsPLayer final : public OGRLayer,
         return poLayerDefn;
     }
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
@@ -150,7 +150,7 @@ class OGRWAsPLayer final : public OGRLayer,
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
 
@@ -192,7 +192,7 @@ class OGRWAsPDataSource final : public GDALDataset
 
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
-    virtual OGRLayer *GetLayerByName(const char *) override;
+    OGRLayer *GetLayerByName(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

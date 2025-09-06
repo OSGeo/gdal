@@ -160,7 +160,7 @@ class OGRSelafinDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual OGRErr DeleteLayer(int) override;
+    OGRErr DeleteLayer(int) override;
     int TestCapability(const char *) const override;
 
     void SetDefaultSelafinName(const char *pszNameIn)

@@ -74,11 +74,10 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
                           GSpacing nLineSpace, GSpacing nBandSpace,
                           GDALRasterIOExtraArg *psExtraArg);
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
     JP2KAKDataset();
@@ -86,11 +85,11 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
     JP2KAKDataset(JP2KAKDataset *poMainDS, int nDiscardLevels,
                   const kdu_dims &dimsIn);
 
-    virtual ~JP2KAKDataset() override;
+    ~JP2KAKDataset() override;
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
     static void KakaduInitialize();
     static GDALDataset *Open(GDALOpenInfo *);
@@ -116,10 +115,9 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
     GDALColorTable oCT;
     GDALColorInterp eInterp = GCI_Undefined;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     bool HasExternalOverviews()
     {
@@ -129,15 +127,15 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
   public:
     JP2KAKRasterBand(int, kdu_codestream, kdu_client *, jp2_channels,
                      JP2KAKDataset *);
-    virtual ~JP2KAKRasterBand() override;
+    ~JP2KAKRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
 
     // Internal.
 

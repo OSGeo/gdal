@@ -28,15 +28,15 @@ class KEAMaskBand final : public GDALRasterBand
                 LockedRefCount *pRefCount);
     ~KEAMaskBand() override;
 
-    virtual bool IsMaskBand() const override
+    bool IsMaskBand() const override
     {
         return true;
     }
 
   protected:
     // we just override these functions from GDALRasterBand
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // KEAMASKBAND_H

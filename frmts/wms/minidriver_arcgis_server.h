@@ -23,7 +23,7 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &request,
                       const GDALWMSImageRequestInfo &iri,
@@ -33,7 +33,7 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
                                    const GDALWMSTiledImageRequestInfo &tiri,
                                    int nXInBlock, int nYInBlock) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
 
   protected:
     /*

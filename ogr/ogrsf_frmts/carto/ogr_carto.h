@@ -74,8 +74,8 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
     explicit OGRCARTOLayer(OGRCARTODataSource *poDS);
     ~OGRCARTOLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override;
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
@@ -133,7 +133,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     void BuildWhere();
     std::vector<bool> m_abFieldSetForInsert;
 
-    virtual CPLString GetSRS_SQL(const char *pszGeomCol) override;
+    CPLString GetSRS_SQL(const char *pszGeomCol) override;
 
   public:
     OGRCARTOTableLayer(OGRCARTODataSource *poDS, const char *pszName);
@@ -144,11 +144,11 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
         return osName.c_str();
     }
 
-    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
-    virtual json_object *FetchNewFeatures() override;
+    OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
+    json_object *FetchNewFeatures() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     int TestCapability(const char *) const override;
 
@@ -158,18 +158,18 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    virtual OGRErr DeleteField(int iField) override;
+    OGRErr DeleteField(int iField) override;
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -227,14 +227,14 @@ class OGRCARTOResultLayer final : public OGRCARTOLayer
 {
     OGRFeature *poFirstFeature;
 
-    virtual CPLString GetSRS_SQL(const char *pszGeomCol) override;
+    CPLString GetSRS_SQL(const char *pszGeomCol) override;
 
   public:
     OGRCARTOResultLayer(OGRCARTODataSource *poDS, const char *pszRawStatement);
     ~OGRCARTOResultLayer() override;
 
-    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
+    OGRFeature *GetNextRawFeature() override;
 
     bool IsOK();
 };
@@ -285,12 +285,12 @@ class OGRCARTODataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    virtual OGRErr DeleteLayer(int) override;
+    OGRErr DeleteLayer(int) override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
     const char *GetAPIURL() const;
 

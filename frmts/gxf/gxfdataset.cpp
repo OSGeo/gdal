@@ -57,7 +57,7 @@ class GXFRasterBand final : public GDALPamRasterBand
     GXFRasterBand(GXFDataset *, int);
     double GetNoDataValue(int *bGotNoDataValue) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

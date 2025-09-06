@@ -139,11 +139,11 @@ class GRIBRasterBand final : public GDALPamRasterBand
   public:
     GRIBRasterBand(GRIBDataset *, int, inventoryType *);
     ~GRIBRasterBand() override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual const char *GetDescription() const override;
+    CPLErr IReadBlock(int, int, void *) override;
+    const char *GetDescription() const override;
 
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

@@ -112,7 +112,7 @@ class CADUnknown : public CADGeometry
 public:
     CADUnknown();
 
-    virtual void print() const override;
+    void print() const override;
     void         transform( const Matrix& matrix ) override;
 };
 
@@ -134,8 +134,8 @@ public:
     double getXAxisAng() const;
     void   setXAxisAng( double value );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     CADVector position;
     CADVector extrusion;
@@ -157,8 +157,8 @@ public:
     CADPoint3D getEnd() const;
     void       setEnd( const CADPoint3D& value );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     CADPoint3D start;
     CADPoint3D end;
@@ -176,8 +176,8 @@ public:
     size_t getVertexCount() const;
     CADVector& getVertex( size_t index );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     std::vector<CADVector> vertices;
 };
@@ -209,7 +209,7 @@ public:
     bool isClosed() const;
     void setClosed( bool state );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     bool                          bClosed;
     double                        constWidth;
@@ -230,7 +230,7 @@ public:
     double getRadius() const;
     void   setRadius( double value );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     double radius;
 };
@@ -255,7 +255,7 @@ public:
     double getObliqueAngle() const;
     void   setObliqueAngle( double value );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     double obliqueAngle;
     double rotationAngle;
@@ -277,7 +277,7 @@ public:
     double getEndingAngle() const;
     void   setEndingAngle( double value );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     double startingAngle;
     double endingAngle;
@@ -297,7 +297,7 @@ public:
     CADVector getSMAxis();
     void      setSMAxis( const CADVector& vectSMA );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     CADVector vectSMAxis;
     double    axisRatio;
@@ -337,8 +337,8 @@ public:
     long getDegree() const;
     void setDegree( long value );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     long   scenario;
     bool   rational;
@@ -365,8 +365,8 @@ public:
     void   addCorner( const CADVector& corner );
     std::vector<CADVector> getCorners();
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     double            elevation;
     std::vector<CADVector> avertCorners;
@@ -383,7 +383,7 @@ public:
     CADVector getVectVector() const;
     void      setVectVector( const CADVector& value );
 
-    virtual void print() const override;
+    void print() const override;
 };
 
 /**
@@ -445,8 +445,8 @@ public:
 
     void addClippingPoint( const CADVector& pt );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     CADVector     vertInsertionPoint;
     //CADVector vectUDirection;
@@ -489,7 +489,7 @@ public:
     double getExtentsWidth() const;
     void   setExtentsWidth( double value );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     double rectWidth;
     double extents;
@@ -518,8 +518,8 @@ public:
     short getInvisFlags() const;
     void  setInvisFlags( short value );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     std::vector<CADVector> avertCorners;
     short             invisFlags;
@@ -535,8 +535,8 @@ public:
 
     void addVertex( const CADVector& vertex );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     std::vector<CADVector> vertices;
 };
@@ -549,7 +549,7 @@ class OCAD_EXTERN CADXLine : public CADRay
 public:
     CADXLine();
 
-    virtual void print() const override;
+    void print() const override;
 };
 
 /**
@@ -568,8 +568,8 @@ public:
 
     void addVertex( const CADVector& vertex );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     double            scale;
     //char dJust;
@@ -598,8 +598,8 @@ public:
     bool isPositionLocked() const;
     void setPositionLocked( bool );
 
-    virtual void print() const override;
-    virtual void transform( const Matrix& matrix ) override;
+    void print() const override;
+    void transform( const Matrix& matrix ) override;
 protected:
     CADVector vertAlignmentPoint;
     double    dfElevation;
@@ -618,7 +618,7 @@ public:
     std::string getPrompt() const;
     void   setPrompt( const std::string& );
 
-    virtual void print() const override;
+    void print() const override;
 protected:
     std::string sPrompt;
 };

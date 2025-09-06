@@ -190,7 +190,7 @@ class OGRMVTLayer final : public OGRMVTLayerBase
                                const GByte *pabyDataGeometryEnd);
     void SanitizeClippedGeometry(OGRGeometry *&poGeom);
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
 
   public:
     OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
@@ -200,9 +200,9 @@ class OGRMVTLayer final : public OGRMVTLayerBase
                 OGRwkbGeometryType eGeomType);
     ~OGRMVTLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     GDALDataset *GetDataset() override;
 };
@@ -232,7 +232,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     int m_nFilterMaxX = 0;
     int m_nFilterMaxY = 0;
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
     OGRFeature *CreateFeatureFrom(OGRFeature *poSrcFeature);
     void ReadNewSubDir();
     void OpenTile();
@@ -247,16 +247,16 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
                          const OGREnvelope *psExtent);
     ~OGRMVTDirectoryLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     int TestCapability(const char *) const override;
 

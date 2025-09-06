@@ -66,7 +66,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
         }
     }
 
-    virtual int GetCleanThreadRunTimeout() override;
+    int GetCleanThreadRunTimeout() override;
 
     virtual CPLErr Insert(const char *pszKey,
                           const CPLString &osFileName) override
@@ -103,7 +103,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
             papszOpenOptions, nullptr));
     }
 
-    virtual void Clean() override
+    void Clean() override
     {
         char **papszList = VSIReadDirRecursive(m_soPath);
         if (papszList == nullptr)

@@ -37,8 +37,8 @@ class KEAOverview final : public KEARasterBand
 
   protected:
     // we just override these functions from KEARasterBand
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // KEAOVERVIEW_H

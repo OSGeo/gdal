@@ -88,9 +88,9 @@ class TSXDataset final : public GDALPamDataset
     TSXDataset();
     ~TSXDataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -118,8 +118,7 @@ class TSXRasterBand final : public GDALPamRasterBand
                   ePolarization ePol, GDALDataset *poBand);
     ~TSXRasterBand() override;
 
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };

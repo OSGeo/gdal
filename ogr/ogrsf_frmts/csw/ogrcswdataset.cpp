@@ -50,9 +50,9 @@ class OGRCSWLayer final : public OGRLayer
     explicit OGRCSWLayer(OGRCSWDataSource *poDS);
     ~OGRCSWLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    GIntBig GetFeatureCount(int bForce = FALSE) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -67,7 +67,7 @@ class OGRCSWLayer final : public OGRLayer
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 };
 
 /************************************************************************/

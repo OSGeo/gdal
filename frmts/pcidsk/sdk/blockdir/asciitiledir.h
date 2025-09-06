@@ -55,15 +55,15 @@ protected:
 
     void                InitBlockList(AsciiTileLayer * poLayer);
 
-    virtual void        ReadLayerBlocks(uint32 iLayer) override;
-    virtual void        ReadFreeBlockLayer(void) override;
-    virtual void        WriteDir(void) override;
+    void        ReadLayerBlocks(uint32 iLayer) override;
+    void        ReadFreeBlockLayer(void) override;
+    void        WriteDir(void) override;
 
-    virtual BlockLayer *_CreateLayer(uint16 nLayerType, uint32 iLayer) override;
-    virtual void        _DeleteLayer(uint32 iLayer) override;
+    BlockLayer *_CreateLayer(uint16 nLayerType, uint32 iLayer) override;
+    void        _DeleteLayer(uint32 iLayer) override;
 
-    virtual std::string GetDataSegmentName(void) const override;
-    virtual std::string GetDataSegmentDesc(void) const override;
+    std::string GetDataSegmentName(void) const override;
+    std::string GetDataSegmentDesc(void) const override;
 
     virtual void        ValidateNewBlocks(uint32 & nNewBlockCount,
                                           bool bFreeBlocks) override;
@@ -76,7 +76,7 @@ public:
 
     AsciiTileLayer *    GetTileLayer(uint32 iLayer);
 
-    virtual uint32      GetBlockSize(void) const override;
+    uint32      GetBlockSize(void) const override;
 };
 
 } // namespace PCIDSK

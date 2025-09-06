@@ -33,11 +33,11 @@ class GDALMDReaderOrbView : public GDALMDReaderBase
   public:
     GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderOrbView() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
 
   protected:
     CPLString m_osIMDSourceFilename{};

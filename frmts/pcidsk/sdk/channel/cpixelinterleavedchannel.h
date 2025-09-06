@@ -41,7 +41,7 @@ namespace PCIDSK
             int xoff=-1, int yoff=-1,
             int xsize=-1, int ysize=-1 ) override;
 
-        virtual int WriteBlock( int block_index, void *buffer ) override;
+        int WriteBlock( int block_index, void *buffer ) override;
     private:
         int      image_offset;
     };

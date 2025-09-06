@@ -288,8 +288,8 @@ class PostGISRasterDataset final : public VRTDataset
     CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDataset)
 
   protected:
-    virtual int CloseDependentDatasets() override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    int CloseDependentDatasets() override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
   public:
     PostGISRasterDataset();
@@ -300,7 +300,7 @@ class PostGISRasterDataset final : public VRTDataset
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,
                               const char *, const char *);
     static CPLErr Delete(const char *);
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     char **GetMetadata(const char *) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -348,19 +348,18 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
 
     ~PostGISRasterRasterBand() override;
 
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual double GetMinimum(int *pbSuccess) override;
-    virtual double GetMaximum(int *pbSuccess) override;
+    double GetMinimum(int *pbSuccess) override;
+    double GetMaximum(int *pbSuccess) override;
     virtual CPLErr ComputeRasterMinMax(int bApproxOK,
                                        double *adfMinMax) override;
 };
@@ -417,7 +416,7 @@ class PostGISRasterTileRasterBand final : public GDALRasterBand
     PostGISRasterTileRasterBand(PostGISRasterTileDataset *poRTDS, int nBand,
                                 GDALDataType eDataType);
     ~PostGISRasterTileRasterBand() override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 #endif  // POSTGISRASTER_H_INCLUDED

@@ -163,23 +163,23 @@ class OGRFlatGeobufLayer final : public OGRLayer,
            const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
            bool bCreateSpatialIndexAtClose, CSLConstList papszOptions);
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetNextFeature() override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = true) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int TestCapability(const char *) const override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void VerifyBuffers(int bFlag)
     {
@@ -221,7 +221,7 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
     OGRFlatGeobufEditableLayer(OGRFlatGeobufLayer *poFlatGeobufLayer,
                                char **papszOpenOptions);
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
     const std::string &GetFilename() const override
     {

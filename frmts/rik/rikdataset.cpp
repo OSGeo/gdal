@@ -141,9 +141,9 @@ class RIKRasterBand final : public GDALPamRasterBand
   public:
     RIKRasterBand(RIKDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/

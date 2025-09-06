@@ -243,12 +243,12 @@ class NASReader final : public IGMLReader
     void DealWithAttributes(const char *pszElement, int nLenName,
                             const Attributes &attrs);
 
-    virtual const char *GetGlobalSRSName() override
+    const char *GetGlobalSRSName() override
     {
         return nullptr;
     }
 
-    virtual bool CanUseGlobalSRSName() override
+    bool CanUseGlobalSRSName() override
     {
         return false;
     }

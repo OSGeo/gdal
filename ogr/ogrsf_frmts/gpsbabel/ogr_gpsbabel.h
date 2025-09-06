@@ -37,7 +37,7 @@ class OGRGPSBabelDataSource final : public GDALDataset
     OGRGPSBabelDataSource();
     ~OGRGPSBabelDataSource() override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     int GetLayerCount() const override
     {

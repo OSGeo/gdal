@@ -55,7 +55,7 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
 
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int idx) const override;
-    virtual OGRLayer *GetLayerByName(const char *pszName) override;
+    OGRLayer *GetLayerByName(const char *pszName) override;
 
     json_object *RunRequest(const char *pszURL, int bQuiet404Error = FALSE,
                             const char *pszHTTPVerb = "GET",
@@ -91,7 +91,7 @@ class OGRPLScenesDataV1FeatureDefn final : public OGRFeatureDefn
     {
     }
 
-    virtual int GetFieldCount() const override;
+    int GetFieldCount() const override;
 
     void DropRefToLayer()
     {
@@ -148,23 +148,23 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
     OGRPLScenesDataV1Layer(OGRPLScenesDataV1Dataset *poDS, const char *pszName);
     ~OGRPLScenesDataV1Layer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
+    GIntBig GetFeatureCount(int bForce = FALSE) override;
 
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 };
 
 #endif /* ndef OGR_PLSCENES_H_INCLUDED */

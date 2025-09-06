@@ -158,16 +158,15 @@ class OGCAPIMapWrapperBand final : public GDALRasterBand
   public:
     OGCAPIMapWrapperBand(OGCAPIDataset *poDS, int nBand);
 
-    virtual GDALRasterBand *GetOverview(int nLevel) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALRasterBand *GetOverview(int nLevel) override;
+    int GetOverviewCount() override;
+    GDALColorInterp GetColorInterpretation() override;
 
   protected:
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -181,16 +180,15 @@ class OGCAPITilesWrapperBand final : public GDALRasterBand
   public:
     OGCAPITilesWrapperBand(OGCAPIDataset *poDS, int nBand);
 
-    virtual GDALRasterBand *GetOverview(int nLevel) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALRasterBand *GetOverview(int nLevel) override;
+    int GetOverviewCount() override;
+    GDALColorInterp GetColorInterpretation() override;
 
   protected:
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
-                              void *pImage) override;
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/

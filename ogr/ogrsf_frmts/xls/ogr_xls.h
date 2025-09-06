@@ -45,11 +45,11 @@ class OGRXLSLayer final : public OGRLayer,
                 int iSheetIn, int nRowsIn, unsigned short nColsIn);
     ~OGRXLSLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXLSLayer)
 
     const OGRFeatureDefn *GetLayerDefn() const override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
     const char *GetName() const override
     {

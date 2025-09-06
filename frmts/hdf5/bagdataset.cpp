@@ -190,14 +190,14 @@ class BAGDataset final : public GDALPamDataset
     BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
     ~BAGDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
     int GetLayerCount() const override
     {
@@ -288,13 +288,13 @@ class BAGRasterBand final : public GDALPamRasterBand
 
     bool Initialize(hid_t hDataset, const char *pszName);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *) override;
-    virtual CPLErr SetNoDataValue(double dfNoData) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
 
-    virtual double GetMinimum(int *pbSuccess = nullptr) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr) override;
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
 };
 
 /************************************************************************/

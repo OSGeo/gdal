@@ -69,9 +69,9 @@ class OGRVDVLayer final : public OGRLayer
                 bool bOwnFP, bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
     ~OGRVDVLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    GIntBig GetFeatureCount(int bForce) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -158,8 +158,8 @@ class OGRVDVWriterLayer final : public OGRLayer
                       bool bProfileStrict = false);
     ~OGRVDVWriterLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -171,8 +171,8 @@ class OGRVDVWriterLayer final : public OGRLayer
     int TestCapability(const char *pszCap) const override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
     GDALDataset *GetDataset() override;
 

@@ -189,20 +189,19 @@ class ISIS3Dataset final : public RawDataset
     ISIS3Dataset();
     ~ISIS3Dataset() override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual CPLErr SetMetadata(char **papszMD,
-                               const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    CPLErr SetMetadata(char **papszMD, const char *pszDomain = "") override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
@@ -252,15 +251,15 @@ class ISISTiledBand final : public GDALPamRasterBand
         return m_bValid;
     }
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override;
-    virtual double GetScale(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetOffset(double dfNewOffset) override;
-    virtual CPLErr SetScale(double dfNewScale) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
+    double GetOffset(int *pbSuccess = nullptr) override;
+    double GetScale(int *pbSuccess = nullptr) override;
+    CPLErr SetOffset(double dfNewOffset) override;
+    CPLErr SetScale(double dfNewScale) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double dfNewNoData) override;
 
     void SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand);
 };
@@ -287,20 +286,19 @@ class ISIS3RawRasterBand final : public RawRasterBand
                        int l_nLineOffset, GDALDataType l_eDataType,
                        int l_bNativeOrder);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override;
-    virtual double GetScale(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetOffset(double dfNewOffset) override;
-    virtual CPLErr SetScale(double dfNewScale) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
+    double GetOffset(int *pbSuccess = nullptr) override;
+    double GetScale(int *pbSuccess = nullptr) override;
+    CPLErr SetOffset(double dfNewOffset) override;
+    CPLErr SetScale(double dfNewScale) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double dfNewNoData) override;
 
     void SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand);
 };
@@ -339,19 +337,18 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
 
     virtual CPLErr Fill(double dfRealValue,
                         double dfImaginaryValue = 0) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override;
-    virtual double GetScale(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetOffset(double dfNewOffset) override;
-    virtual CPLErr SetScale(double dfNewScale) override;
-    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
-    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
+    double GetOffset(int *pbSuccess = nullptr) override;
+    double GetScale(int *pbSuccess = nullptr) override;
+    CPLErr SetOffset(double dfNewOffset) override;
+    CPLErr SetScale(double dfNewScale) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    CPLErr SetNoDataValue(double dfNewNoData) override;
 
     int GetMaskFlags() override
     {
@@ -382,7 +379,7 @@ class ISISMaskBand final : public GDALRasterBand
     explicit ISISMaskBand(GDALRasterBand *poBaseBand);
     ~ISISMaskBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

@@ -221,7 +221,7 @@ class OGRAVCE00DataSource final : public OGRAVCDataSource
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
     int TestCapability(const char *) const override;
-    virtual OGRSpatialReference *DSGetSpatialRef() override;
+    OGRSpatialReference *DSGetSpatialRef() override;
 };
 
 #endif /* OGR_AVC_H_INCLUDED */

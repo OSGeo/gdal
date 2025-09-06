@@ -115,21 +115,21 @@ class GDALPDFOutputDev : public SplashOutputDev
         bEnableBitmap = bFlag;
     }
 
-    virtual void startPage(int pageNum, GfxState *state, XRef *xrefIn) override;
+    void startPage(int pageNum, GfxState *state, XRef *xrefIn) override;
 
-    virtual void stroke(GfxState *state) override
+    void stroke(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::stroke(state);
     }
 
-    virtual void fill(GfxState *state) override
+    void fill(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::fill(state);
     }
 
-    virtual void eoFill(GfxState *state) override
+    void eoFill(GfxState *state) override
     {
         if (bEnableVector)
             SplashOutputDev::eoFill(state);
@@ -145,13 +145,13 @@ class GDALPDFOutputDev : public SplashOutputDev
                                       code, nBytes, u, uLen);
     }
 
-    virtual void beginTextObject(GfxState *state) override
+    void beginTextObject(GfxState *state) override
     {
         if (bEnableText)
             SplashOutputDev::beginTextObject(state);
     }
 
-    virtual void endTextObject(GfxState *state) override
+    void endTextObject(GfxState *state) override
     {
         if (bEnableText)
             SplashOutputDev::endTextObject(state);
@@ -1475,27 +1475,27 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         bEnableBitmap = bFlag;
     }
 
-    virtual DeviceType GetDeviceType() const override
+    DeviceType GetDeviceType() const override
     {
         return m_poParent->GetDeviceType();
     }
 
-    virtual int GetDeviceCaps(int caps_id) const override
+    int GetDeviceCaps(int caps_id) const override
     {
         return m_poParent->GetDeviceCaps(caps_id);
     }
 
-    virtual void SaveState() override
+    void SaveState() override
     {
         m_poParent->SaveState();
     }
 
-    virtual void RestoreState(bool bKeepSaved) override
+    void RestoreState(bool bKeepSaved) override
     {
         m_poParent->RestoreState(bKeepSaved);
     }
 
-    virtual void SetBaseClip(const FX_RECT &rect) override
+    void SetBaseClip(const FX_RECT &rect) override
     {
         m_poParent->SetBaseClip(rect);
     }
@@ -1531,7 +1531,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                     fill_color, stroke_color, fill_options);
     }
 
-    virtual bool FillRect(const FX_RECT &rect, uint32_t fill_color) override
+    bool FillRect(const FX_RECT &rect, uint32_t fill_color) override
     {
         return m_poParent->FillRect(rect, fill_color);
     }
@@ -1545,7 +1545,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->DrawCosmeticLine(ptMoveTo, ptLineTo, color);
     }
 
-    virtual FX_RECT GetClipBox() const override
+    FX_RECT GetClipBox() const override
     {
         return m_poParent->GetClipBox();
     }
@@ -1556,7 +1556,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->GetDIBits(std::move(bitmap), left, top);
     }
 
-    virtual RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
+    RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
     {
         return m_poParent->GetBackDrop();
     }
@@ -1627,7 +1627,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
             return true;  // pretend that we did the job
     }
 
-    virtual int GetDriverType() const override
+    int GetDriverType() const override
     {
         return m_poParent->GetDriverType();
     }
@@ -1665,13 +1665,13 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                            left, top, alpha, blend_type);
     }
 
-    virtual void SetGroupKnockout(bool group_knockout) override
+    void SetGroupKnockout(bool group_knockout) override
     {
         m_poParent->SetGroupKnockout(group_knockout);
     }
 #endif
 #if defined _SKIA_SUPPORT_ || defined _SKIA_SUPPORT_PATHS_
-    virtual void Flush() override
+    void Flush() override
     {
         return m_poParent->Flush();
     }
@@ -2310,7 +2310,7 @@ class PDFImageRasterBand final : public PDFRasterBand
   public:
     PDFImageRasterBand(PDFDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

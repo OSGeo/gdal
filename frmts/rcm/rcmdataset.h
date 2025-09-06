@@ -56,23 +56,23 @@ class RCMDataset final : public GDALPamDataset
     CPL_DISALLOW_COPY_ASSIGN(RCMDataset)
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     RCMDataset() = default;
     ~RCMDataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
 
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual char **GetFileList(void) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -157,7 +157,7 @@ class RCMRasterBand final : public GDALPamRasterBand
 
     ~RCMRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };

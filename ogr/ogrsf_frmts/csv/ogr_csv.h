@@ -144,7 +144,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     OGRCSVLayer(GDALDataset *poDS, const char *pszName, VSILFILE *fp,
                 int nMaxLineSize, const char *pszFilename, int bNew,
                 int bInWriteMode, char chDelimiter);
-    virtual ~OGRCSVLayer() override;
+    ~OGRCSVLayer() override;
 
     OGRLayer *GetLayer() override
     {
@@ -214,7 +214,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -235,7 +235,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     void SetCRLF(bool bNewValue);
     void SetWriteGeometry(OGRwkbGeometryType eGType,
@@ -259,8 +259,8 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
         return m_eStringQuoting;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr SyncToDisk() override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr SyncToDisk() override;
 
     GDALDataset *GetDataset() override
     {
@@ -297,7 +297,7 @@ class OGRCSVDataSource final : public GDALDataset
 
   public:
     OGRCSVDataSource();
-    virtual ~OGRCSVDataSource() override;
+    ~OGRCSVDataSource() override;
 
     bool Open(const char *pszFilename, bool bUpdate, bool bForceOpen,
               CSLConstList papszOpenOptions, bool bSingleDriver);
@@ -319,7 +319,7 @@ class OGRCSVDataSource final : public GDALDataset
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    virtual OGRErr DeleteLayer(int) override;
+    OGRErr DeleteLayer(int) override;
 
     int TestCapability(const char *) const override;
 

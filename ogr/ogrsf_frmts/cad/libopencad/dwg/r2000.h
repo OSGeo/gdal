@@ -65,10 +65,10 @@ public:
     explicit             DWGFileR2000( CADFileIO * poFileIO );
 
 protected:
-    virtual int ReadSectionLocators() override;
-    virtual int ReadHeader( enum OpenOptions eOptions ) override;
-    virtual int ReadClasses( enum OpenOptions eOptions ) override;
-    virtual int CreateFileMap() override;
+    int ReadSectionLocators() override;
+    int ReadHeader( enum OpenOptions eOptions ) override;
+    int ReadClasses( enum OpenOptions eOptions ) override;
+    int CreateFileMap() override;
 
     CADObject   * GetObject( long dHandle, bool bHandlesOnly = false ) override;
     CADGeometry * GetGeometry( size_t iLayerIndex, long dHandle,

@@ -100,7 +100,7 @@ class JDEMRasterBand final : public GDALPamRasterBand
     JDEMRasterBand(JDEMDataset *, int);
     ~JDEMRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

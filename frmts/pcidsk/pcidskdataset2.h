@@ -73,17 +73,17 @@ class PCIDSK2Dataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRefRasterOnly() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     CPLErr SetMetadata(char **, const char *) override;
     char **GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
     int GetLayerCount() const override
     {
@@ -131,25 +131,25 @@ class PCIDSK2Band final : public GDALPamRasterBand
     explicit PCIDSK2Band(PCIDSK::PCIDSKChannel *);
     ~PCIDSK2Band() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr SetColorTable(GDALColorTable *) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr SetColorTable(GDALColorTable *) override;
 
-    virtual void SetDescription(const char *) override;
+    void SetDescription(const char *) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     CPLErr SetMetadata(char **, const char *) override;
     char **GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
 
-    virtual char **GetCategoryNames() override;
+    char **GetCategoryNames() override;
 };
 
 /************************************************************************/
@@ -186,7 +186,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPCIDSKLayer)
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -196,7 +196,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
     int TestCapability(const char *) const override;
 
     OGRErr DeleteFeature(GIntBig nFID) override;
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 

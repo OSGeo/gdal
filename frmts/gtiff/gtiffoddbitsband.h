@@ -34,8 +34,8 @@ class GTiffOddBitsBand CPL_NON_FINAL : public GTiffRasterBand
         return false;
     }
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // GTIFFODDBITSBAND_H_INCLUDED
