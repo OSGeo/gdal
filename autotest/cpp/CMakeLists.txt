@@ -67,6 +67,13 @@ else()
     # /usr/bin/../lib/gcc/x86_64-redhat-linux/15/../../../../include/c++/15/ciso646:46:4: error: "<ciso646> is deprecated in C++17, use <version> to detect implementation-specific macros" [-Werror,-W#warnings]
     set_target_properties(gtest PROPERTIES CXX_STANDARD 14)
 
+    check_cxx_compiler_flag(-Wcharacter-conversion "HAVE_WFLAG_CHARACTER_CONVERSION")
+    if (HAVE_WFLAG_CHARACTER_CONVERSION)
+      # Avoid with clang 21.1: autotest/cpp/googletest-src/googletest/include/gtest/gtest-printers.h:520:35: error: implicit conversion from 'char16_t' to 'char32_t' may change the meaning of the represented code unit [-Werror,-Wcharacter-conversion]
+      #  PrintTo(ImplicitCast_<char32_t>(c), os);
+      target_compile_options(gtest PRIVATE -Wno-character-conversion)
+    endif()
+
 endif()  # USE_EXTERNAL_GTEST
 
 
