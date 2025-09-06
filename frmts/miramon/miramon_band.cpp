@@ -601,6 +601,12 @@ CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
 
     if (nCompressedRawSize != SIZE_MAX)
     {
+        if (nCompressedRawSize > 1000 * 1000 &&
+            GetFileSize() < nCompressedRawSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too small file");
+            return CE_Failure;
+        }
         try
         {
             aCompressedRow.resize(nCompressedRawSize);
@@ -939,8 +945,25 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 }  // Fi de PositionAtStartOfRowOffsetsInFile()
 
 /************************************************************************/
-/*                              FillRowOffsets()                         */
+/*                              GetFileSize()                           */
 /************************************************************************/
+
+vsi_l_offset MMRBand::GetFileSize()
+{
+    if (m_nFileSize == 0)
+    {
+        const auto nCurPos = VSIFTellL(m_pfIMG);
+        VSIFSeekL(m_pfIMG, 0, SEEK_END);
+        m_nFileSize = VSIFTellL(m_pfIMG);
+        VSIFSeekL(m_pfIMG, nCurPos, SEEK_SET);
+    }
+    return m_nFileSize;
+}
+
+/************************************************************************/
+/*                              FillRowOffsets()                        */
+/************************************************************************/
+
 bool MMRBand::FillRowOffsets()
 {
     vsi_l_offset nStartOffset;
@@ -959,11 +982,7 @@ bool MMRBand::FillRowOffsets()
     // Sanity check to avoid attempting huge memory allocation
     if (m_nHeight > 1000 * 1000)
     {
-        const auto nCurPos = VSIFTellL(m_pfIMG);
-        VSIFSeekL(m_pfIMG, 0, SEEK_END);
-        const auto nFileSize = VSIFTellL(m_pfIMG);
-        VSIFSeekL(m_pfIMG, nCurPos, SEEK_SET);
-        if (nFileSize < static_cast<vsi_l_offset>(m_nHeight))
+        if (GetFileSize() < static_cast<vsi_l_offset>(m_nHeight))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too small file");
             return false;
