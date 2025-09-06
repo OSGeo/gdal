@@ -27,7 +27,7 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: sweep_start_utc, sweep_end_utc
 */
 
-class GDALMDReaderEROS : public GDALMDReaderBase
+class GDALMDReaderEROS final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderEROS(const char *pszPath, char **papszSiblingFiles);

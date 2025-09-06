@@ -27,7 +27,7 @@
  *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
-class CPL_DLL OGRMutexedDataSource : public GDALDataset
+class CPL_DLL OGRMutexedDataSource final : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
 

@@ -29,7 +29,7 @@ namespace PCIDSK
  *
  * @see BlockLayer
  */
-class PCIDSK_DLL BlockTileLayer : public BlockLayer
+class PCIDSK_DLL BlockTileLayer /* non final */: public BlockLayer
 {
 protected:
 #pragma pack(push, 1)

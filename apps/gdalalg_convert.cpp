@@ -21,7 +21,7 @@
 /*                        GDALConvertAlgorithm                          */
 /************************************************************************/
 
-class GDALConvertAlgorithm
+class GDALConvertAlgorithm final
     : public GDALDispatcherAlgorithm<GDALRasterConvertAlgorithm,
                                      GDALVectorConvertAlgorithm>
 {

@@ -88,7 +88,7 @@ class VSISparseFileHandle final : public VSIVirtualHandle
 /* ==================================================================== */
 /************************************************************************/
 
-class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
+class VSISparseFileFilesystemHandler final : public VSIFilesystemHandler
 {
     std::map<GIntBig, int> oRecOpenCount{};
     CPL_DISALLOW_COPY_ASSIGN(VSISparseFileFilesystemHandler)

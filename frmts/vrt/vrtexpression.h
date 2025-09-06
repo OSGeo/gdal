@@ -106,7 +106,7 @@ class MathExpression /* non final */
 /**
  * Class to support evaluation of an expression using the exprtk library.
  */
-class ExprtkExpression : public MathExpression
+class ExprtkExpression final : public MathExpression
 {
   public:
     explicit ExprtkExpression(std::string_view osExpression);
@@ -138,7 +138,7 @@ class ExprtkExpression : public MathExpression
 /**
  * Class to support evaluation of an expression using the muparser library.
  */
-class MuParserExpression : public MathExpression
+class MuParserExpression final : public MathExpression
 {
   public:
     explicit MuParserExpression(std::string_view osExpression);

@@ -98,7 +98,7 @@ char **PostGISRasterParseConnectionString(const char *pszConnectionString)
 /*                    PostGISRasterDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct PostGISRasterDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit PostGISRasterDriverSubdatasetInfo(const std::string &fileName)

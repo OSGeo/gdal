@@ -81,7 +81,7 @@ struct ILSize
 
 }  // namespace WMSMiniDriver_MRF_ns
 
-class WMSMiniDriver_MRF : public WMSMiniDriver
+class WMSMiniDriver_MRF final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_MRF();

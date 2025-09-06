@@ -1839,7 +1839,7 @@ static GByte *GDALColorReliefPrecompute(
 
 class GDALColorReliefRasterBand;
 
-class GDALColorReliefDataset : public GDALDataset
+class GDALColorReliefDataset final : public GDALDataset
 {
     friend class GDALColorReliefRasterBand;
 

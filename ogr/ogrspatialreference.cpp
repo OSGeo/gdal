@@ -63,7 +63,7 @@ bool GDALThreadLocalDatasetCacheIsInDestruction();
 
 struct OGRSpatialReference::Private
 {
-    struct Listener : public OGR_SRSNode::Listener
+    struct Listener final : public OGR_SRSNode::Listener
     {
         OGRSpatialReference::Private *m_poObj = nullptr;
 

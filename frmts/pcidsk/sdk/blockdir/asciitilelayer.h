@@ -27,7 +27,7 @@ namespace PCIDSK
  *
  * @see BlockTileLayer
  */
-class PCIDSK_DLL AsciiTileLayer : public BlockTileLayer
+class PCIDSK_DLL AsciiTileLayer final: public BlockTileLayer
 {
 protected:
     void        WriteTileList(void) override;

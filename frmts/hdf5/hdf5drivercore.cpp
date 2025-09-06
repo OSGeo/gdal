@@ -148,7 +148,7 @@ int HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo)
 /*                    HDF5DriverGetSubdatasetInfo()                     */
 /************************************************************************/
 
-struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
+struct HDF5DriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit HDF5DriverSubdatasetInfo(const std::string &fileName)

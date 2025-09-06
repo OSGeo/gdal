@@ -12,7 +12,7 @@
 #ifndef MINIDRIVER_OGCAPIMAPS_H_INCLUDED
 #define MINIDRIVER_OGCAPIMAPS_H_INCLUDED
 
-class WMSMiniDriver_OGCAPIMaps : public WMSMiniDriver
+class WMSMiniDriver_OGCAPIMaps final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_OGCAPIMaps() = default;

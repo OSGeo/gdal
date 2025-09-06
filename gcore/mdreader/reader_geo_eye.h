@@ -30,7 +30,7 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderGeoEye : public GDALMDReaderBase
+class GDALMDReaderGeoEye final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);

@@ -28,7 +28,7 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
 */
 
-class GDALMDReaderSpot : public GDALMDReaderPleiades
+class GDALMDReaderSpot final : public GDALMDReaderPleiades
 {
   public:
     GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);

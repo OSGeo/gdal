@@ -512,7 +512,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
  * @since GDAL 2.1
  */
 
-class GNMGenericLayer : public OGRLayer
+class GNMGenericLayer final : public OGRLayer
 {
   public:
     GNMGenericLayer(OGRLayer *poLayer, GNMGenericNetwork *poNetwork);
@@ -651,7 +651,7 @@ typedef enum
  * @since GDAL 2.1
  */
 
-class CPL_DLL GNMRule
+class CPL_DLL GNMRule /* non final */
 {
   public:
     /** Constructor */

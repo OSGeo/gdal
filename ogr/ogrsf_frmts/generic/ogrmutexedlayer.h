@@ -25,7 +25,7 @@
  *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
-class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
+class CPL_DLL OGRMutexedLayer final : public OGRLayerDecorator
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedLayer)
 

@@ -28,7 +28,7 @@ Common metadata (from metadata filename):
     AcquisitionDateTime:    IMG_ACQISITION_START_TIME, IMG_ACQISITION_END_TIME
 */
 
-class GDALMDReaderKompsat : public GDALMDReaderBase
+class GDALMDReaderKompsat final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);

@@ -17,7 +17,7 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CLinkSegment : public CPCIDSKSegment
+    class CLinkSegment final: public CPCIDSKSegment
     {
     public:
         CLinkSegment(PCIDSKFile *file, int segment,const char *segment_pointer);

@@ -27,7 +27,7 @@ namespace PCIDSK
     /*                            CPCIDSK_TEX                               */
     /************************************************************************/
 
-    class CPCIDSK_TEX : virtual public CPCIDSKSegment,
+    class CPCIDSK_TEX final: virtual public CPCIDSKSegment,
                         public PCIDSK_TEX
     {
     public:

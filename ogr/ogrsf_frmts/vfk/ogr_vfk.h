@@ -25,7 +25,7 @@ class OGRVFKDataSource;
 /*                            OGRVFKLayer                               */
 /************************************************************************/
 
-class OGRVFKLayer : public OGRLayer
+class OGRVFKLayer final : public OGRLayer
 {
   private:
     /* spatial reference */
@@ -69,7 +69,7 @@ class OGRVFKLayer : public OGRLayer
 /************************************************************************/
 /*                           OGRVFKDataSource                           */
 /************************************************************************/
-class OGRVFKDataSource : public GDALDataset
+class OGRVFKDataSource final : public GDALDataset
 {
   private:
     /* list of available layers */

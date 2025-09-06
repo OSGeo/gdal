@@ -25,7 +25,7 @@ static void CleanCacheThread(void *pData)
 //------------------------------------------------------------------------------
 // GDALWMSFileCache
 //------------------------------------------------------------------------------
-class GDALWMSFileCache : public GDALWMSCacheImpl
+class GDALWMSFileCache final : public GDALWMSCacheImpl
 {
   public:
     GDALWMSFileCache(const CPLString &soPath, CPLXMLNode *pConfig)

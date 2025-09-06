@@ -562,7 +562,7 @@ VICARBASICRasterBand::VICARBASICRasterBand(VICARDataset *poDSIn, int nBandIn,
 
 namespace
 {
-class DecodeEncodeException : public std::exception
+class DecodeEncodeException final : public std::exception
 {
   public:
     DecodeEncodeException() = default;

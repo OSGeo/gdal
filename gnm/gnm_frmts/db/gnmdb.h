@@ -33,7 +33,7 @@
 
 #include "gnm.h"
 
-class GNMDatabaseNetwork : public GNMGenericNetwork
+class GNMDatabaseNetwork final : public GNMGenericNetwork
 {
   public:
     GNMDatabaseNetwork();

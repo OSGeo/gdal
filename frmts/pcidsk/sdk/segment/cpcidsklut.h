@@ -27,7 +27,7 @@ namespace PCIDSK
     /*                            CPCIDSK_LUT                               */
     /************************************************************************/
 
-    class CPCIDSK_LUT : virtual public CPCIDSKSegment,
+    class CPCIDSK_LUT final: virtual public CPCIDSKSegment,
                         public PCIDSK_LUT
     {
     public:

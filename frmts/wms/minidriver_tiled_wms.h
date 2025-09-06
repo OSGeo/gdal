@@ -15,7 +15,7 @@
 #ifndef MINIDRIVER_TILED_WMS_H_INCLUDED
 #define MINIDRIVER_TILED_WMS_H_INCLUDED
 
-class WMSMiniDriver_TiledWMS : public WMSMiniDriver
+class WMSMiniDriver_TiledWMS final : public WMSMiniDriver
 {
 
   public:

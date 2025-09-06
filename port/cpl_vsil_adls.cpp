@@ -88,7 +88,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 
 class VSIADLSFSHandler;
 
-struct VSIDIRADLS : public VSIDIR
+struct VSIDIRADLS final : public VSIDIR
 {
     int m_nRecurseDepth = 0;
 

@@ -32,7 +32,7 @@ namespace PCIDSK
 /* inheritance to attempt to avoid the fragile base class problem and   */
 /* then implement the Imagery I/O functions.                            */
 /************************************************************************/
-    class PCIDSK_DLL CPCIDSKChannel : public PCIDSKChannel
+    class PCIDSK_DLL CPCIDSKChannel /* non final */: public PCIDSKChannel
     {
         friend class PCIDSKFile;
 

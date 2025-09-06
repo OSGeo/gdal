@@ -14,7 +14,7 @@
 #ifndef MINIDRIVER_WORLDWIND_H_INCLUDED
 #define MINIDRIVER_WORLDWIND_H_INCLUDED
 
-class WMSMiniDriver_WorldWind : public WMSMiniDriver
+class WMSMiniDriver_WorldWind final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_WorldWind();

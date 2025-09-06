@@ -25,7 +25,7 @@ namespace PCIDSK
     /*                            CPCIDSK_BLUT                               */
     /************************************************************************/
 
-    class CPCIDSK_BLUT : virtual public CPCIDSKSegment,
+    class CPCIDSK_BLUT final: virtual public CPCIDSKSegment,
                         public PCIDSK_BLUT
     {
     public:

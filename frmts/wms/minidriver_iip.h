@@ -13,7 +13,7 @@
 #ifndef MINIDRIVER_IIP_H_INCLUDED
 #define MINIDRIVER_IIP_H_INCLUDED
 
-class WMSMiniDriver_IIP : public WMSMiniDriver
+class WMSMiniDriver_IIP final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIP();

@@ -28,7 +28,7 @@ Common metadata (from metadata filename):
     CloudCover:          productInfo.productCloudCoverPercentage
     AcquisitionDateTime: inputImageInfo.firstLineAcquisitionDateTime
 */
-class GDALMDReaderOrbView : public GDALMDReaderBase
+class GDALMDReaderOrbView final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);

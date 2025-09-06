@@ -211,7 +211,7 @@ static int netCDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
 /*                    NCDFDriverGetSubdatasetInfo()                     */
 /************************************************************************/
 
-struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct NCDFDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit NCDFDriverSubdatasetInfo(const std::string &fileName)

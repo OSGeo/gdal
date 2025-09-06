@@ -28,7 +28,7 @@ namespace PCIDSK
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKBitmap : virtual public CPCIDSKSegment,
+    class CPCIDSKBitmap final: virtual public CPCIDSKSegment,
                           public PCIDSKChannel
     {
     public:

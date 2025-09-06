@@ -303,7 +303,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 /************************************************************************/
 /*                      OGROpenFileGDBGeomFieldDefn                     */
 /************************************************************************/
-class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
+class OGROpenFileGDBGeomFieldDefn final : public OGRGeomFieldDefn
 {
     OGROpenFileGDBLayer *m_poLayer;
 
@@ -337,7 +337,7 @@ class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
 /************************************************************************/
 /*                      OGROpenFileGDBFeatureDefn                       */
 /************************************************************************/
-class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
+class OGROpenFileGDBFeatureDefn final : public OGRFeatureDefn
 {
     OGROpenFileGDBLayer *m_poLayer;
     mutable bool m_bHasBuiltFieldDefn;

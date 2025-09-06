@@ -25,7 +25,7 @@
  * These classes handle all the file types supported by the MITAB lib.
  * through the IMapInfoFile interface.
  *====================================================================*/
-class OGRTABDataSource : public GDALDataset
+class OGRTABDataSource final : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRTABDataSource)
 

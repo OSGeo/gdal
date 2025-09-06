@@ -181,14 +181,10 @@ CPLErr MFFTiledBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /*                      MFF Spheroids                                   */
 /************************************************************************/
 
-class MFFSpheroidList : public SpheroidList
+class MFFSpheroidList final : public SpheroidList
 {
   public:
     MFFSpheroidList();
-
-    ~MFFSpheroidList()
-    {
-    }
 };
 
 MFFSpheroidList ::MFFSpheroidList()

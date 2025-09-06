@@ -29,7 +29,7 @@ Common metadata (from metadata filename):
 
 */
 
-class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
+class CPL_DLL GDALMDReaderPleiades /* non final */ : public GDALMDReaderBase
 {
   public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);

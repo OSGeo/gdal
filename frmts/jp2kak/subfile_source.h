@@ -33,7 +33,7 @@ static const long IO_BUFFER_SIZE = 1048576L;
 /*                            subfile_source                            */
 /************************************************************************/
 
-class subfile_source : public kdu_compressed_source
+class subfile_source final : public kdu_compressed_source
 {
   public:
     subfile_source()

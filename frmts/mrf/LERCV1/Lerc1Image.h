@@ -155,7 +155,7 @@ template <typename T> class TImage
     std::vector<T> values;
 };
 
-class Lerc1Image : public TImage<float>
+class Lerc1Image final : public TImage<float>
 {
   protected:
     struct InfoFromComputeNumBytes

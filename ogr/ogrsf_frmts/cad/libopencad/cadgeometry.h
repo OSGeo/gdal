@@ -399,7 +399,7 @@ public:
 /**
  * @brief Geometry class which represents Image (Raster Image)
  */
-class OCAD_EXTERN CADImage : public CADGeometry
+class OCAD_EXTERN CADImage final: public CADGeometry
 {
 public:
     /**
@@ -475,7 +475,7 @@ protected:
 /**
  * @brief Geometry class which represents MText
  */
-class OCAD_EXTERN CADMText : public CADText
+class OCAD_EXTERN CADMText final : public CADText
 {
 public:
     CADMText();
@@ -507,7 +507,7 @@ protected:
 /**
  * @brief Geometry class which represents 3DFace
  */
-class OCAD_EXTERN CADFace3D : public CADGeometry
+class OCAD_EXTERN CADFace3D final: public CADGeometry
 {
 public:
     CADFace3D();
@@ -528,7 +528,7 @@ protected:
 /**
  * @brief Geometry class which represents Polyline (PFace)
  */
-class OCAD_EXTERN CADPolylinePFace : public CADGeometry
+class OCAD_EXTERN CADPolylinePFace final: public CADGeometry
 {
 public:
     CADPolylinePFace();
@@ -544,7 +544,7 @@ protected:
 /**
  * @brief Geometry class which represents XLine
  */
-class OCAD_EXTERN CADXLine : public CADRay
+class OCAD_EXTERN CADXLine final: public CADRay
 {
 public:
     CADXLine();
@@ -555,7 +555,7 @@ public:
 /**
  * @brief Geometry class which represents MLine
  */
-class OCAD_EXTERN CADMLine : public CADPoint3D
+class OCAD_EXTERN CADMLine final: public CADPoint3D
 {
 public:
     CADMLine();

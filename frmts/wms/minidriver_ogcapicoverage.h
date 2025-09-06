@@ -12,7 +12,7 @@
 #ifndef MINIDRIVER_OGCAPICOVERAGE_H_INCLUDED
 #define MINIDRIVER_OGCAPICOVERAGE_H_INCLUDED
 
-class WMSMiniDriver_OGCAPICoverage : public WMSMiniDriver
+class WMSMiniDriver_OGCAPICoverage final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_OGCAPICoverage() = default;
