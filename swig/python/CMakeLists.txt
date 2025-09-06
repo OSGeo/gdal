@@ -173,6 +173,9 @@ if (Python_Interpreter_FOUND)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini COPYONLY)
+
   execute_process(
     COMMAND ${Python_EXECUTABLE} -c "import setuptools; print(setuptools.__version__)"
     OUTPUT_VARIABLE SETUPTOOLS_VERSION

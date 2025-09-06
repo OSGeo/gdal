@@ -1285,12 +1285,17 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
        each block in this ``Band``. Iteration order is from left to right,
        then from top to bottom.
 
-
        Examples
        --------
+       .. testsetup::
+          >>> src_ds = gdal.Open("byte.tif")
+          >>> dst_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
+          >>> src_band = src_ds.GetRasterBand(1)
+          >>> dst_band = dst_ds.GetRasterBand(1)
+
        >>> for window in src_band.BlockWindows():
-       >>>    values = src_band.ReadAsArray(*window)
-       >>>    dst_band.WriteArray(values + 20, window.xoff, window.yoff)
+       ...    values = src_band.ReadAsArray(*window)
+       ...    dst_band.WriteArray(values + 20, window.xoff, window.yoff)
        0
        """
        import math
@@ -2238,18 +2243,27 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 
     Examples
     --------
+
+    .. testsetup::
+
+       >>> src_ds = gdal.OpenEx("poly.shp", gdal.OF_VECTOR) 
+       >>> ds = gdal.GetDriverByName("MEM").CreateVector("")
+       >>> _ = ds.CopyLayer(src_ds.GetLayer(0), "layer")
+
     1. Use as a context manager:
 
     >>> with ds.ExecuteSQL("SELECT * FROM layer") as lyr:
     ...     print(lyr.GetFeatureCount())
+    10
 
     2. Use keep_ref_on_ds=True to return an object that keeps a reference to its dataset:
 
     >>> def get_sql_lyr():
-    ...     return gdal.OpenEx("test.shp").ExecuteSQL("SELECT * FROM test", keep_ref_on_ds=True)
+    ...     return gdal.OpenEx("poly.shp", gdal.OF_VECTOR).ExecuteSQL("SELECT * FROM poly", keep_ref_on_ds=True)
     ...
-    ... with get_sql_lyr() as lyr:
+    >>> with get_sql_lyr() as lyr:
     ...     print(lyr.GetFeatureCount())
+    10
     """
 
     class MyHandler:
@@ -2387,6 +2401,10 @@ def ReleaseResultSet(self, sql_lyr):
 
       Examples
       --------
+ 
+      .. testsetup::
+         >>> pytest.skip()
+
       >>> ds = gdal.Open('clc2018_v2020_20u1.tif')
       >>> rat = ds.GetRasterBand(1).GetDefaultRAT()
       >>> rat.ReadAsArray(0)
@@ -5107,6 +5125,10 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
     Examples
     --------
 
+    .. testsetup::
+
+        >>> src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
     1. Special mode to get deserialized GeoJSON (in EPSG:4326 if dstSRS not specified):
 
     >>> deserialized_geojson = gdal.Footprint(None, src_ds, format="GeoJSON")
@@ -5118,7 +5140,7 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
     3. Get result in a GeoPackage
 
     >>> gdal.Footprint("out.gpkg", src_ds, format="GPKG")
-
+    <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> >
     """
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
@@ -5766,6 +5788,7 @@ def config_options(options, thread_local=True):
 
        >>> with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> >
     """
     get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
@@ -5803,6 +5826,7 @@ def config_option(key, value, thread_local=True):
 
        >>> with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> > 
     """
     return config_options({key: value}, thread_local=thread_local)
 
@@ -5884,10 +5908,12 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
        --------
 
        >>> alg = gdal.Run(["raster", "info"], {"input": "byte.tif"})
-       >>> print(alg.output()["bands"])
+       >>> print(alg.Output()["bands"])
+       [{'band': 1, 'block': [20, 20], 'type': 'Byte', 'colorInterpretation': 'Gray', 'metadata': {}}]
 
-       >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg
-       ...     print(alg.output().ReadAsArray())
+       >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg:
+       ...     print(alg.Output().ReadAsArray().shape)
+       (18, 22)
     """
 
     new_alg = []
@@ -6027,15 +6053,16 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
        Example
        -------
 
-       >>> from osgeo import gdal, osr
-       >>> with gdal.Open("my.tif") as ds:
-       ...    wgs84_srs = osr.SpatialReference()
-       ...    wgs84_srs.SetFromUserInput("WGS84")
+       >>> longitude_degree = -117.64 
+       >>> latitude_degree = 33.90
+       >>> with gdal.Open("byte.tif") as ds:
+       ...    wgs84_srs = osr.SpatialReference("WGS84")
        ...    wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-       ...    val = ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree,
-                                                                 latitude_degree,
-                                                                 wgs84_srs,
-                                                                 gdal.GRIORA_Bilinear)
+       ...    ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree, \
+                                                           latitude_degree, \
+                                                           wgs84_srs, \
+                                                           gdal.GRIORA_Bilinear)
+       135.62  # interpolated value, rtol: 1e-3
     """
 
     ret = $action(self, *args, **kwargs)
@@ -6209,6 +6236,7 @@ class VSIFile(BytesIO):
            Example
            -------
            >>> gdal.GetGlobalAlgorithmRegistry()["raster"]
+           <osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at 0x...> >
         """
 
         alg = self.InstantiateAlg(key)
@@ -6246,8 +6274,11 @@ class VSIFile(BytesIO):
            >>> alg = gdal.Algorithm("raster", "info")
            >>> # or alg = gdal.Algorithm(["raster", "info"])
            >>> # or alg = gdal.Algorithm("raster info")
+           >>> alg["input"] = "byte.tif"
            >>> alg.Run()
+           True
            >>> print(alg.Output()["bands"])
+           [{'band': 1, 'block': [20, 20], 'type': 'Byte', 'colorInterpretation': 'Gray', 'metadata': {}}]
         """
 
         alg = None
@@ -6329,6 +6360,7 @@ class VSIFile(BytesIO):
            -------
            >>> with gdal.Run("raster", "info", input="byte.tif") as alg:
            ...    print(alg.Output()["bands"])
+           [{'band': 1, 'block': [20, 20], 'type': 'Byte', 'colorInterpretation': 'Gray', 'metadata': {}}]
         """
 
         if not hasattr(self, "has_run"):
@@ -6376,6 +6408,7 @@ class VSIFile(BytesIO):
            -------
            >>> with gdal.Run("raster", "reproject", input="byte.tif", output_format="MEM", dst_crs="EPSG:4326") as alg:
            ...    print(alg.Outputs()["output"].ReadAsArray())
+           [[107 123 132 ... 115 99 107]]
         """
 
         if not hasattr(self, "has_run"):
@@ -6404,10 +6437,10 @@ class VSIFile(BytesIO):
 
            Example
            -------
-           >>> alg["output-string"]
+           >>> alg = gdal.Algorithm("raster convert")
            >>> alg["output"].GetName()
+           ''
            >>> alg["output"].GetDataset()
-           >>> gdal.GetGlobalAlgorithmRegistry()["raster"]["info"]
         """
 
         if self.HasSubAlgorithms():
@@ -6437,14 +6470,21 @@ class VSIFile(BytesIO):
 
            Examples
            --------
+           >>> alg = gdal.Algorithm("vector clip")
            >>> alg["bbox"] = [2, 49, 3, 50]
+
+           >>> alg = gdal.Algorithm("vector filter")
            >>> alg["where"] = "country = 'France'"
+
+           >>> alg = gdal.Algorithm("raster reproject")
            >>> alg["input"] = "byte.tif"
            >>> alg["input"] = gdal.Open("byte.tif")
            >>> alg["target-aligned-pixels"] = True
 
            >>> # Multiple input datasets
            >>> alg["input"] = ["one.tif", "two.tif"]
+           >>> one_ds = gdal.Open("byte.tif")
+           >>> two_ds = gdal.Open("byte.tif")
            >>> alg["input"] = [one_ds, two_ds]
         """
 
@@ -6495,8 +6535,10 @@ class VSIFile(BytesIO):
 
            Examples
            --------
+           >>> alg = gdal.Algorithm("raster convert")
            >>> arg = alg.GetArg("output")
            >>> arg.Get()
+           <osgeo.gdal.ArgDatasetValue; proxy of <Swig Object of type 'GDALArgDatasetValueHS *' at 0x...> >
         """
 
         type = self.GetType()
@@ -6526,10 +6568,17 @@ class VSIFile(BytesIO):
            Note: using the ``[]`` operator of Algorithm is also a convenient
            way of setting the value of an argument.
 
+           Returns
+           -------
+           bool
+               ``True`` if the argument was successfully set
+
            Examples
            --------
+           >>> alg = gdal.Algorithm("raster info")
            >>> arg = alg.GetArg("input")
            >>> arg.Set("in.tif")
+           True
         """
 
         arg_type = self.GetType()

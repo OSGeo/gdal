@@ -118,6 +118,10 @@ Dataset
 
 Examples
 --------
+.. testsetup::
+   >>> if gdal.GetDriverByName('netCDF') is None:
+   ...     pytest.skip()
+
 >>> with gdal.GetDriverByName('netCDF').CreateMultiDimensional('test.nc') as ds:
 ...     gdal.MultiDimInfo(ds)
 ...

@@ -919,6 +919,7 @@ Z: float
 
 Examples
 -------
+>>> pt = ogr.Geometry(ogr.wkbPoint)
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
 >>> pt.AddPoint(3, 7)

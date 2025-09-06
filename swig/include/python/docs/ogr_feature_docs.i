@@ -32,7 +32,7 @@ See :cpp:func:`OGRFeature::DumpReadable`.
 
 Examples
 --------
->>> with gdal.OpenEx('data/poly.shp') as ds:
+>>> with gdal.OpenEx('poly.shp', gdal.OF_VECTOR) as ds:
 ...     lyr = ds.GetLayer(0)
 ...     feature = lyr.GetNextFeature()
 ...     feature.DumpReadable()
@@ -41,7 +41,7 @@ OGRFeature(poly):0
   AREA (Real) = 215229.266
   EAS_ID (Integer64) = 168
   PRFEDEA (String) = 35043411
-  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5)) # no-check
 ";
 
 %feature("docstring")  DumpReadableAsString "
@@ -164,14 +164,14 @@ Examples
 >>> defn.AddFieldDefn(ogr.FieldDefn('utc', ogr.OFTDateTime))
 >>> feature = ogr.Feature(defn)
 >>> feature['unknown'] = datetime.now()
->>> feature['local'] = datetime.now(ZoneInfo('Canada/Eastern'))
+>>> feature['local'] = datetime.now(ZoneInfo('America/Toronto'))
 >>> feature['utc'] = datetime.now(ZoneInfo('UTC'))
 >>> feature.GetFieldAsDateTime('unknown')
-[2024, 3, 15, 20, 34, 52.594173431396484, 0]
+[2024, 3, 15, 20, 34, 52.594173431396484, 0] # random
 >>> feature.GetFieldAsDateTime('local')
-[2024, 3, 15, 20, 34, 52.59502410888672, 84]
+[2024, 3, 15, 20, 34, 52.59502410888672, 84] # random
 >>> feature.GetFieldAsDateTime('utc')
-[2024, 3, 16, 0, 34, 52.59580993652344, 100]
+[2024, 3, 16, 0, 34, 52.59580993652344, 100] # random
 
 See Also
 --------

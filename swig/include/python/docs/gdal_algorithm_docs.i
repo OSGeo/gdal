@@ -67,8 +67,9 @@ list
 Example
 -------
 >>> alg = gdal.Algorithm("raster", "convert")
->>> alg.GetArgNames()
-['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'overwrite', 'append']
+>>> sorted(alg.GetArgNames())
+['append', 'config', 'creation-option', ..., 'progress', 'quiet']
+
 
 };
 
@@ -143,7 +144,7 @@ Example
 -------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.GetSubAlgorithmNames()
-['aspect', 'calc', 'clean-collar', 'clip', 'color-map', 'color-merge', 'contour', 'convert', 'create', 'edit', 'fill-nodata', 'footprint', 'hillshade', 'index', 'info', 'mosaic', 'nodata-to-alpha', 'overview', 'pansharpen', 'pipeline', 'pixel-info', 'polygonize', 'proximity', 'reclassify', 'reproject', 'resize', 'rgb-to-palette', 'roughness', 'scale', 'select', 'set-type', 'sieve', 'slope', 'stack', 'tile', 'tpi', 'tri', 'unscale', 'update', 'viewshed']
+['as-features', 'aspect', ..., 'update', 'viewshed']
 
 };
 
@@ -201,11 +202,11 @@ Example
                       'required': True,
                       'type': 'dataset_list'},
                      {'category': 'Base',
-                      'description': 'Layer name',
+                      'description': 'Input layer name',
                       'max_count': 2147483647,
                       'min_count': 0,
                       'mutual_exclusion_group': 'layer-sql',
-                      'name': 'layer',
+                      'name': 'input-layer',
                       'packed_values_allowed': True,
                       'repeated_arg_allowed': True,
                       'required': False,
@@ -305,7 +306,7 @@ Example
 -------
 >>> alg = gdal.Algorithm("raster")
 >>> alg.InstantiateSubAlgorithm("convert")
-<osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at 0x7ca38a3eec40> >
+<osgeo.gdal.Algorithm; proxy of <Swig Object of type 'GDALAlgorithmHS *' at ...> >
 >>> subalg = alg.InstantiateSubAlgorithm("does_not_exist")
 
 };
@@ -349,35 +350,6 @@ Returns
 -------
 bool
     ``True`` if the algorithm succeeded, ``False`` otherwise
-
-};
-
-%feature("docstring")  Run {
-
-Run an algorithm and report on its success or failure.
-
-Parameters
-----------
-callback : function
-    Optional progress callback function
-callback_data
-    Optional value to be provided as final argument to callback function
-
-Returns
--------
-bool
-    ``True`` if the algorithm succeeded, ``False`` otherwise
-
-Examples
---------
->>> alg = gdal.Algorithm("vector", "info")
->>> alg['input'] = 'poly.shp'
->>> alg.Run()
-True
->>> alg['input'] = 'does_not_exist.shp'
->>> alg.Run()
-ERROR 4: does_not_exist.shp: No such file or directory
-False
 
 };
 
@@ -431,7 +403,7 @@ Examples
 
 >>> subalg = gdal.GetGlobalAlgorithmRegistry().InstantiateAlg('raster').InstantiateSubAlgorithm('polygonize')
 >>> subalg.GetArgNames()
-['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'layer', 'band', 'attribute-name', 'connect-diagonal-pixels']
+['help', 'help-doc', 'json-usage', 'config', 'quiet', 'progress', 'output-format', 'open-option', 'input-format', 'input', 'output', 'creation-option', 'layer-creation-option', 'overwrite', 'update', 'overwrite-layer', 'append', 'output-layer', 'band', 'attribute-name', 'connect-diagonal-pixels']
 
 };
 
