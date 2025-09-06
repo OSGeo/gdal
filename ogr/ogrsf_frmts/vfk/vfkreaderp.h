@@ -107,7 +107,7 @@ class VFKReader : public IVFKReader
 /*                              VFKReaderSQLite                         */
 /************************************************************************/
 
-class VFKReaderSQLite : public VFKReader
+class VFKReaderSQLite final : public VFKReader
 {
   private:
     char *m_pszDBname;

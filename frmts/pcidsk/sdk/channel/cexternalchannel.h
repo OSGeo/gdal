@@ -30,7 +30,7 @@ namespace PCIDSK
 /*                           CExternalChannel                           */
 /************************************************************************/
 
-    class CExternalChannel : public CPCIDSKChannel
+    class CExternalChannel final: public CPCIDSKChannel
     {
     public:
         CExternalChannel( PCIDSKBuffer &image_header,

@@ -31,7 +31,7 @@ Common metadata (from metadata filename):
     CloudCover:          Img_CloudQuantityOfAllImage
 */
 
-class GDALMDReaderALOS : public GDALMDReaderBase
+class GDALMDReaderALOS final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);

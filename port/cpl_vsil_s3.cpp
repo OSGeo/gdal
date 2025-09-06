@@ -67,7 +67,7 @@ namespace cpl
 /*                             VSIDIRS3                                 */
 /************************************************************************/
 
-struct VSIDIRS3 : public VSIDIRS3Like
+struct VSIDIRS3 final : public VSIDIRS3Like
 {
     bool m_bRegularListingDone = false;
     bool m_bDirectoryBucketListingDone = false;

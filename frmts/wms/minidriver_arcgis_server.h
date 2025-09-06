@@ -14,7 +14,7 @@
 #ifndef MINIDRIVER_AGS_H_INCLUDED
 #define MINIDRIVER_AGS_H_INCLUDED
 
-class WMSMiniDriver_AGS : public WMSMiniDriver
+class WMSMiniDriver_AGS final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_AGS();

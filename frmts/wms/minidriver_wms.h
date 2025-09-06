@@ -21,7 +21,7 @@
  * GDALRegister_WMS()
  */
 
-class WMSMiniDriver_WMS : public WMSMiniDriver
+class WMSMiniDriver_WMS final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_WMS();

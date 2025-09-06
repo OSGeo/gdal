@@ -50,7 +50,7 @@ S102Dataset::~S102Dataset() = default;
 /*                            S102RasterBand                            */
 /************************************************************************/
 
-class S102RasterBand : public GDALProxyRasterBand
+class S102RasterBand final : public GDALProxyRasterBand
 {
     friend class S102Dataset;
     std::unique_ptr<GDALDataset> m_poDS{};
@@ -102,7 +102,7 @@ S102RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 /*                   S102GeoreferencedMetadataRasterBand                */
 /************************************************************************/
 
-class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
+class S102GeoreferencedMetadataRasterBand final : public GDALProxyRasterBand
 {
     friend class S102Dataset;
 

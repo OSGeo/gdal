@@ -28,7 +28,7 @@ class AsciiTileLayer;
  *
  * @see BlockTileDir
  */
-class PCIDSK_DLL AsciiTileDir : public BlockTileDir
+class PCIDSK_DLL AsciiTileDir final: public BlockTileDir
 {
 public:
     /// The block directory info.

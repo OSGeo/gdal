@@ -33,7 +33,7 @@ namespace PCIDSK
 /*      options.                                                        */
 /************************************************************************/
 
-    class CPCIDSKSegment : virtual public PCIDSKSegment
+    class CPCIDSKSegment /* non final */: virtual public PCIDSKSegment
     {
     public:
         CPCIDSKSegment( PCIDSKFile *file, int segment,

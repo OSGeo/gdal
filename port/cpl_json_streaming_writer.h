@@ -24,7 +24,7 @@
 #include "cpl_float.h"
 #include "cpl_port.h"
 
-class CPL_DLL CPLJSonStreamingWriter
+class CPL_DLL CPLJSonStreamingWriter /* non final */
 {
   public:
     typedef void (*SerializationFuncType)(const char *pszTxt, void *pUserData);

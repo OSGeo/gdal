@@ -103,7 +103,7 @@ class SAFERasterBand final : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFESLCRasterBand : public GDALPamRasterBand
+class SAFESLCRasterBand final : public GDALPamRasterBand
 {
   public:
     typedef enum BandType
@@ -132,7 +132,7 @@ class SAFESLCRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFECalibratedRasterBand : public GDALPamRasterBand
+class SAFECalibratedRasterBand final : public GDALPamRasterBand
 {
   public:
     typedef enum CalibrationType

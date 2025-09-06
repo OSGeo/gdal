@@ -32,7 +32,7 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderLandsat : public GDALMDReaderBase
+class GDALMDReaderLandsat final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);

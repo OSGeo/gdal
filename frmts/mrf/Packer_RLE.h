@@ -21,7 +21,7 @@ Contributors:  Lucian Plesea
 NAMESPACE_MRF_START
 
 // A RLE codec based on use of 0xC3 as marker code
-class RLEC3Packer : public Packer
+class RLEC3Packer final : public Packer
 {
   public:
     int load(storage_manager *src, storage_manager *dst) override;

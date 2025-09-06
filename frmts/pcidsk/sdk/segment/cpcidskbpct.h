@@ -25,7 +25,7 @@ namespace PCIDSK
     /*                            CPCIDSK_BPCT                               */
     /************************************************************************/
 
-    class CPCIDSK_BPCT : virtual public CPCIDSKSegment,
+    class CPCIDSK_BPCT final: virtual public CPCIDSKSegment,
                         public PCIDSK_BPCT
     {
     public:

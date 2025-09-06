@@ -1528,7 +1528,7 @@ using GDALDatasetUniquePtr =
  *
  * And the global block manager that manages a least-recently-used list of
  * blocks from various datasets/bands */
-class CPL_DLL GDALRasterBlock
+class CPL_DLL GDALRasterBlock final
 {
     friend class GDALAbstractBandBlockCache;
 
@@ -1560,7 +1560,7 @@ class CPL_DLL GDALRasterBlock
   public:
     GDALRasterBlock(GDALRasterBand *, int, int);
     GDALRasterBlock(int nXOffIn, int nYOffIn); /* only for lookup purpose */
-    virtual ~GDALRasterBlock();
+    ~GDALRasterBlock();
 
     CPLErr Internalize(void);
     void Touch(void);
@@ -2815,7 +2815,7 @@ template <typename... Args> inline GDALComputedRasterBand mean(Args &&...args)
 /*                         GDALAllValidMaskBand                         */
 /* ******************************************************************** */
 
-class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
+class CPL_DLL GDALAllValidMaskBand final : public GDALRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -2857,7 +2857,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 /*                         GDALNoDataMaskBand                           */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataMaskBand final : public GDALRasterBand
 {
     friend class GDALRasterBand;
     double m_dfNoDataValue = 0;
@@ -2898,7 +2898,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 /*                  GDALNoDataValuesMaskBand                            */
 /* ******************************************************************** */
 
-class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
+class CPL_DLL GDALNoDataValuesMaskBand final : public GDALRasterBand
 {
     double *padfNodataValues;
 
@@ -2929,7 +2929,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
 /*                         GDALRescaledAlphaBand                        */
 /* ******************************************************************** */
 
-class GDALRescaledAlphaBand : public GDALRasterBand
+class GDALRescaledAlphaBand final : public GDALRasterBand
 {
     GDALRasterBand *poParent;
     void *pTemp;
@@ -3298,7 +3298,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
  */
 // clang-format on
 
-class GDALPluginDriverProxy : public GDALDriver
+class GDALPluginDriverProxy final : public GDALDriver
 {
     const std::string m_osPluginFileName;
     std::string m_osPluginFullPath{};
@@ -3367,7 +3367,7 @@ class GDALPluginDriverProxy : public GDALDriver
  * this class.
  */
 
-class CPL_DLL GDALDriverManager : public GDALMajorObject
+class CPL_DLL GDALDriverManager final : public GDALMajorObject
 {
     int nDrivers = 0;
     GDALDriver **papoDrivers = nullptr;
@@ -4726,7 +4726,7 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
+class CPL_DLL GDALMDArrayRegularlySpaced final : public GDALMDArray
 {
     double m_dfStart = 0;
     double m_dfIncrement = 0;

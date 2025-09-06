@@ -14,7 +14,7 @@
 #ifndef MINIDRIVER_IIIFImage_H_INCLUDED
 #define MINIDRIVER_IIIFImage_H_INCLUDED
 
-class WMSMiniDriver_IIIFImage : public WMSMiniDriver
+class WMSMiniDriver_IIIFImage final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIIFImage();

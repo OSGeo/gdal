@@ -1162,7 +1162,7 @@ const OGRFeatureDefn *OGRSplitListFieldLayer::GetLayerDefn() const
 /*      Apply GCP Transform to points                                   */
 /************************************************************************/
 
-class GCPCoordTransformation : public OGRCoordinateTransformation
+class GCPCoordTransformation final : public OGRCoordinateTransformation
 {
     GCPCoordTransformation(const GCPCoordTransformation &other)
         : hTransformArg(GDALCloneTransformer(other.hTransformArg)),
@@ -1262,7 +1262,7 @@ GCPCoordTransformation::~GCPCoordTransformation()
 /*                            CompositeCT                               */
 /************************************************************************/
 
-class CompositeCT : public OGRCoordinateTransformation
+class CompositeCT final : public OGRCoordinateTransformation
 {
     OGRCoordinateTransformation *const poCT1;
     const bool bOwnCT1;
@@ -1612,7 +1612,7 @@ static bool IsFieldType(const char *pszArg)
     return GetFieldType(pszArg, &iSubType) >= 0 && iSubType >= 0;
 }
 
-class GDALVectorTranslateWrappedDataset : public GDALDataset
+class GDALVectorTranslateWrappedDataset final : public GDALDataset
 {
     std::unique_ptr<GDALDriver> m_poDriverToFree{};
     GDALDataset *m_poBase = nullptr;
@@ -1645,7 +1645,7 @@ class GDALVectorTranslateWrappedDataset : public GDALDataset
     New(GDALDataset *poBase, OGRSpatialReference *poOutputSRS, bool bTransform);
 };
 
-class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
+class GDALVectorTranslateWrappedLayer final : public OGRLayerDecorator
 {
     std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
     OGRFeatureDefn *m_poFDefn = nullptr;

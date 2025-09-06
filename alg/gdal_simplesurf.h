@@ -425,7 +425,7 @@ class GDALOctaveMap
  * unstable results.
  */
 
-class GDALSimpleSURF
+class GDALSimpleSURF final
 {
   private:
     /**
@@ -473,7 +473,7 @@ class GDALSimpleSURF
      * or only one octave if execution time is significant.
      */
     GDALSimpleSURF(int nOctaveStart, int nOctaveEnd);
-    virtual ~GDALSimpleSURF();
+    ~GDALSimpleSURF();
 
     /**
      * Convert image with RGB channels to grayscale using "luminosity" method.

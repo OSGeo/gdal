@@ -27,7 +27,7 @@ namespace PCIDSK
     /*                            CPCIDSK_ARRAY                             */
     /************************************************************************/
 
-    class CPCIDSK_ARRAY : public CPCIDSKSegment,
+    class CPCIDSK_ARRAY final: public CPCIDSKSegment,
                           public PCIDSK_ARRAY
     {
     public:

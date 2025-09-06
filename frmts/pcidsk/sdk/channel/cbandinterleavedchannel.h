@@ -31,7 +31,7 @@ namespace PCIDSK
 /*      Also used for FILE interleaved raw files.                       */
 /************************************************************************/
 
-    class CBandInterleavedChannel : public CPCIDSKChannel
+    class CBandInterleavedChannel final: public CPCIDSKChannel
     {
     public:
         CBandInterleavedChannel( PCIDSKBuffer &image_header,

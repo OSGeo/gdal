@@ -262,7 +262,7 @@ class SG_Exception
 };
 
 // Mismatched dimension exception
-class SG_Exception_Dim_MM : public SG_Exception
+class SG_Exception_Dim_MM final : public SG_Exception
 {
   public:
     SG_Exception_Dim_MM(const char *geometry_container, const char *field_1,
@@ -270,7 +270,7 @@ class SG_Exception_Dim_MM : public SG_Exception
 };
 
 // Missing (existential) property error
-class SG_Exception_Existential : public SG_Exception
+class SG_Exception_Existential final : public SG_Exception
 {
   public:
     SG_Exception_Existential(const char *geometry_container,
@@ -278,7 +278,7 @@ class SG_Exception_Existential : public SG_Exception
 };
 
 // Missing dependent property (arg_1 is dependent on arg_2)
-class SG_Exception_Dep : public SG_Exception
+class SG_Exception_Dep final : public SG_Exception
 {
   public:
     SG_Exception_Dep(const char *geometry_container, const char *arg_1,
@@ -287,7 +287,7 @@ class SG_Exception_Dep : public SG_Exception
 
 // The sum of all values in a variable does not match the sum of another
 // variable
-class SG_Exception_BadSum : public SG_Exception
+class SG_Exception_BadSum final : public SG_Exception
 {
   public:
     SG_Exception_BadSum(const char *geometry_container, const char *arg_1,
@@ -295,7 +295,7 @@ class SG_Exception_BadSum : public SG_Exception
 };
 
 // Unsupported Feature Type
-class SG_Exception_BadFeature : public SG_Exception
+class SG_Exception_BadFeature final : public SG_Exception
 {
   public:
     SG_Exception_BadFeature()
@@ -305,7 +305,7 @@ class SG_Exception_BadFeature : public SG_Exception
 };
 
 // Failed Read
-class SG_Exception_BadPoint : public SG_Exception
+class SG_Exception_BadPoint final : public SG_Exception
 {
   public:
     SG_Exception_BadPoint()
@@ -317,7 +317,7 @@ class SG_Exception_BadPoint : public SG_Exception
 };
 
 // Too many dimensions on node coordinates variable
-class SG_Exception_Not1D : public SG_Exception
+class SG_Exception_Not1D final : public SG_Exception
 {
   public:
     SG_Exception_Not1D()
@@ -329,7 +329,7 @@ class SG_Exception_Not1D : public SG_Exception
 };
 
 // Too many empty dimension
-class SG_Exception_EmptyDim : public SG_Exception
+class SG_Exception_EmptyDim final : public SG_Exception
 {
   public:
     SG_Exception_EmptyDim()
@@ -340,14 +340,14 @@ class SG_Exception_EmptyDim : public SG_Exception
 };
 
 // general corruption or malformed error
-class SG_Exception_General_Malformed : public SG_Exception
+class SG_Exception_General_Malformed final : public SG_Exception
 {
   public:
     explicit SG_Exception_General_Malformed(const char *);
 };
 
 // Invalid value detected
-class SG_Exception_Value_Violation : public SG_Exception
+class SG_Exception_Value_Violation final : public SG_Exception
 {
   public:
     SG_Exception_Value_Violation(const char *containername, const char *type,
@@ -361,7 +361,7 @@ class SG_Exception_Value_Violation : public SG_Exception
 };
 
 // Required value(s)
-class SG_Exception_Value_Required : public SG_Exception
+class SG_Exception_Value_Required final : public SG_Exception
 {
   public:
     SG_Exception_Value_Required(const char *containername, const char *type,

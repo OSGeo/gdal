@@ -46,7 +46,7 @@ GDALVectorSimplifyCoverageAlgorithm::GDALVectorSimplifyCoverageAlgorithm(
     (GEOS_VERSION_MAJOR > 3 ||                                                 \
      (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12))
 
-class GDALVectorSimplifyCoverageOutputDataset
+class GDALVectorSimplifyCoverageOutputDataset final
     : public GDALGeosNonStreamingAlgorithmDataset
 {
   public:

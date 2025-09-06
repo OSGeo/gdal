@@ -224,7 +224,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 typedef struct _GDALProxyPoolCacheEntry GDALProxyPoolCacheEntry;
 class GDALProxyPoolRasterBand;
 
-class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
+class CPL_DLL GDALProxyPoolDataset /* non final */ : public GDALProxyDataset
 {
   private:
     GIntBig responsiblePID = -1;
@@ -318,7 +318,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 class GDALProxyPoolOverviewRasterBand;
 class GDALProxyPoolMaskBand;
 
-class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
+class CPL_DLL
+    GDALProxyPoolRasterBand /* non final */ : public GDALProxyRasterBand
 {
   private:
     CPLHashSet *metadataSet = nullptr;
@@ -377,7 +378,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
 /*                  GDALProxyPoolOverviewRasterBand                     */
 /* ******************************************************************** */
 
-class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
+class GDALProxyPoolOverviewRasterBand final : public GDALProxyPoolRasterBand
 {
   private:
     GDALProxyPoolRasterBand *poMainBand = nullptr;
@@ -406,7 +407,7 @@ class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
 /*                      GDALProxyPoolMaskBand                           */
 /* ******************************************************************** */
 
-class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
+class GDALProxyPoolMaskBand final : public GDALProxyPoolRasterBand
 {
   private:
     GDALProxyPoolRasterBand *poMainBand = nullptr;

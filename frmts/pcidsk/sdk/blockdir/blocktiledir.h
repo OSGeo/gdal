@@ -28,7 +28,7 @@ class BlockTileLayer;
  *
  * @see BlockDir
  */
-class PCIDSK_DLL BlockTileDir : public BlockDir
+class PCIDSK_DLL BlockTileDir /* non final*/: public BlockDir
 {
 public:
 #pragma pack(push, 1)

@@ -17,7 +17,7 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKEphemerisSegment : public PCIDSKEphemerisSegment,
+    class CPCIDSKEphemerisSegment /* non final */: public PCIDSKEphemerisSegment,
                                     public CPCIDSKSegment
     {
     public:

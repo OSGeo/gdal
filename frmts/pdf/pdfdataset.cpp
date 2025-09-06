@@ -72,7 +72,7 @@ static CPLMutex *hGlobalParamsMutex = nullptr;
 /*                         GDALPDFOutputDev                             */
 /************************************************************************/
 
-class GDALPDFOutputDev : public SplashOutputDev
+class GDALPDFOutputDev final : public SplashOutputDev
 {
   private:
     int bEnableVector;
@@ -1401,7 +1401,7 @@ const char *PDFDataset::GetOption(char **papszOpenOptionsIn,
 /*                         GDALPDFiumOCContext                          */
 /************************************************************************/
 
-class GDALPDFiumOCContext : public CPDF_OCContextInterface
+class GDALPDFiumOCContext final : public CPDF_OCContextInterface
 {
     PDFDataset *m_poDS;
     RetainPtr<CPDF_OCContext> m_DefaultOCContext;
@@ -1436,7 +1436,7 @@ class GDALPDFiumOCContext : public CPDF_OCContextInterface
 /*                      GDALPDFiumRenderDeviceDriver                    */
 /************************************************************************/
 
-class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
+class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
 {
     std::unique_ptr<RenderDeviceDriverIface> m_poParent;
     CFX_RenderDevice *m_pDevice;

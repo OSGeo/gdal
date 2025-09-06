@@ -18,7 +18,7 @@
 
 using namespace PCIDSK;
 
-class StdioIOInterface : public IOInterfaces
+class StdioIOInterface final: public IOInterfaces
 {
     void   *Open( const std::string& filename, const std::string& access ) const override;
     uint64  Seek( void *io_handle, uint64 offset, int whence ) const override;

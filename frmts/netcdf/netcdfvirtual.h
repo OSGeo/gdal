@@ -26,7 +26,7 @@ class netCDFDataset;
 namespace nccfdriver
 {
 // Exceptions
-class SG_Exception_NVOOB : public SG_Exception
+class SG_Exception_NVOOB final : public SG_Exception
 {
   public:
     explicit SG_Exception_NVOOB(const char *dsname)
@@ -36,7 +36,7 @@ class SG_Exception_NVOOB : public SG_Exception
     }
 };
 
-class SG_Exception_DupName : public SG_Exception
+class SG_Exception_DupName final : public SG_Exception
 {
   public:
     SG_Exception_DupName(const char *keyn, const char *dsname)
@@ -46,7 +46,7 @@ class SG_Exception_DupName : public SG_Exception
     }
 };
 
-class SG_Exception_BadMapping : public SG_Exception
+class SG_Exception_BadMapping final : public SG_Exception
 {
   public:
     SG_Exception_BadMapping(const char *key, const char *where)
@@ -56,7 +56,7 @@ class SG_Exception_BadMapping : public SG_Exception
     }
 };
 
-class SG_Exception_VWrite_Failure : public SG_Exception
+class SG_Exception_VWrite_Failure final : public SG_Exception
 {
   public:
     SG_Exception_VWrite_Failure(const char *where, const char *type)

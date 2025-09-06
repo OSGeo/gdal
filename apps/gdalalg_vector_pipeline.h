@@ -139,7 +139,7 @@ class GDALVectorPipelineOutputLayer /* non final */
 /** Class that forwards GetNextFeature() calls to the source layer and
  * can be added to GDALVectorPipelineOutputDataset::AddLayer()
  */
-class GDALVectorPipelinePassthroughLayer /* non final */
+class GDALVectorPipelinePassthroughLayer final
     : public GDALVectorPipelineOutputLayer
 {
   public:

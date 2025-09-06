@@ -9927,7 +9927,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
                                     static_cast<GUInt64>(nBlockXSize)};
     }
 
-    class MDIAsAttribute : public GDALAttribute
+    class MDIAsAttribute final : public GDALAttribute
     {
         std::vector<std::shared_ptr<GDALDimension>> m_dims{};
         const GDALExtendedDataType m_dt = GDALExtendedDataType::CreateString();

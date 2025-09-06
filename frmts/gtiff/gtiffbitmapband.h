@@ -22,7 +22,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffBitmapBand : public GTiffOddBitsBand
+class GTiffBitmapBand /* non final */ : public GTiffOddBitsBand
 {
     friend class GTiffDataset;
 

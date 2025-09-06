@@ -29,7 +29,7 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: re:acquisitionDateTime
 */
 
-class GDALMDReaderRapidEye : public GDALMDReaderBase
+class GDALMDReaderRapidEye final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderRapidEye(const char *pszPath, char **papszSiblingFiles);

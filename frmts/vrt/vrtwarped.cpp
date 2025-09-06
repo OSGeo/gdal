@@ -629,7 +629,7 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 /*                        GDALWarpCoordRescaler                         */
 /************************************************************************/
 
-class GDALWarpCoordRescaler : public OGRCoordinateTransformation
+class GDALWarpCoordRescaler final : public OGRCoordinateTransformation
 {
     const double m_dfRatioX;
     const double m_dfRatioY;

@@ -37,7 +37,7 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderDigitalGlobe : public GDALMDReaderBase
+class GDALMDReaderDigitalGlobe final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);

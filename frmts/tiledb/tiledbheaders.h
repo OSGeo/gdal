@@ -157,7 +157,7 @@ class TileDBRasterBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class TileDBDataset : public GDALPamDataset
+class TileDBDataset /* non final */ : public GDALPamDataset
 {
   protected:
     std::unique_ptr<tiledb::Context> m_ctx{};

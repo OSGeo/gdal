@@ -23,7 +23,7 @@ namespace PCIDSK
 /************************************************************************/
 /*                       CPixelInterleavedChannel                       */
 /************************************************************************/
-    class CPixelInterleavedChannel : public CPCIDSKChannel
+    class CPixelInterleavedChannel final : public CPCIDSKChannel
     {
 
 

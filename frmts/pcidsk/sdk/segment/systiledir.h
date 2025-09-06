@@ -29,7 +29,7 @@ namespace PCIDSK
 class BlockTileDir;
 class BlockTileLayer;
 
-class SysTileDir : virtual public CPCIDSKSegment
+class SysTileDir /* non final */: virtual public CPCIDSKSegment
 {
 public:
     SysTileDir(PCIDSKFile * poFile, int nSegment, const char *pbySegmentData);

@@ -24,7 +24,7 @@ namespace PCIDSK
 /*                              Exception                               */
 /************************************************************************/
 
-    class PCIDSK_DLL PCIDSKException : public std::exception
+    class PCIDSK_DLL PCIDSKException final: public std::exception
     {
         friend void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
         friend int PCIDSK_DLL ThrowPCIDSKException( int ret_unused, const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);

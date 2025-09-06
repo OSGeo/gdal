@@ -28,7 +28,7 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: dSceneDate, tSceneTime
 */
 
-class GDALMDReaderResursDK1 : public GDALMDReaderBase
+class GDALMDReaderResursDK1 final : public GDALMDReaderBase
 {
   public:
     GDALMDReaderResursDK1(const char *pszPath, char **papszSiblingFiles);

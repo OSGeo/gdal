@@ -29,7 +29,7 @@
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #endif
 
-class GPBException : public std::exception
+class GPBException final : public std::exception
 {
     std::string m_osMessage;
 

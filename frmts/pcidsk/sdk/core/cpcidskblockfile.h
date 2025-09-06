@@ -28,7 +28,7 @@ class SysTileDir;
 /**
  * Class used by the block directory for accessing file information.
  */
-class PCIDSK_DLL CPCIDSKBlockFile : public BlockFile
+class PCIDSK_DLL CPCIDSKBlockFile final: public BlockFile
 {
 protected:
     CPCIDSKFile *       mpoFile;
