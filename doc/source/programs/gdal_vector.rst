@@ -28,6 +28,7 @@ Available sub-commands
 - :ref:`gdal_vector_index`
 - :ref:`gdal_vector_info`
 - :ref:`gdal_vector_layer_algebra`
+- :ref:`gdal_vector_partition`
 - :ref:`gdal_vector_pipeline`
 - :ref:`gdal_vector_rasterize`
 - :ref:`gdal_vector_reproject`
