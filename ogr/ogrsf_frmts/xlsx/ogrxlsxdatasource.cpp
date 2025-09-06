@@ -248,6 +248,18 @@ GDALDataset *OGRXLSXLayer::GetDataset()
 }
 
 /************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRXLSXLayer::TestCapability(const char *pszCap) const
+
+{
+    if (EQUAL(pszCap, OLCUpsertFeature))
+        return false;
+    return OGRMemLayer::TestCapability(pszCap);
+}
+
+/************************************************************************/
 /*                          OGRXLSXDataSource()                         */
 /************************************************************************/
 

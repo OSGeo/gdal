@@ -3538,6 +3538,8 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddInputDatasetArg(
     if (positionalAndRequired)
         arg.SetPositional().SetRequired();
 
+    SetAutoCompleteFunctionForFilename(arg, type);
+
     AddValidationAction(
         [pValue]()
         {

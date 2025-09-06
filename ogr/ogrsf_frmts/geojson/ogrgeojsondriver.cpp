@@ -790,6 +790,7 @@ void RegisterOGRGeoJSON()
 
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS, "Features");
+    poDriver->SetMetadataItem(GDAL_DCAP_UPSERT, "YES");
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;

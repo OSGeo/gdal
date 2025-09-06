@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_CONVERT_INCLUDED
 #define GDALALG_RASTER_CONVERT_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,7 @@
 /*                     GDALRasterConvertAlgorithm                       */
 /************************************************************************/
 
-class GDALRasterConvertAlgorithm final : public GDALAlgorithm
+class GDALRasterConvertAlgorithm final : public GDALRasterPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "convert";
@@ -37,29 +37,8 @@ class GDALRasterConvertAlgorithm final : public GDALAlgorithm
     explicit GDALRasterConvertAlgorithm(bool standalone = true,
                                         bool openForMixedRasterVector = false);
 
-    GDALDataset *GetDatasetRef()
-    {
-        return m_inputDataset.GetDatasetRef();
-    }
-
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        arg->Set(poDS);
-        arg->SetSkipIfAlreadySet();
-    }
-
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
-    bool m_append = false;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond

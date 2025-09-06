@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_CONVERT_INCLUDED
 #define GDALALG_VECTOR_CONVERT_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_vector_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,7 @@
 /*                     GDALVectorConvertAlgorithm                       */
 /************************************************************************/
 
-class GDALVectorConvertAlgorithm final : public GDALAlgorithm
+class GDALVectorConvertAlgorithm final : public GDALVectorPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "convert";
@@ -36,34 +36,8 @@ class GDALVectorConvertAlgorithm final : public GDALAlgorithm
 
     explicit GDALVectorConvertAlgorithm(bool /* standaloneStep */ = true);
 
-    void SetDataset(GDALDataset *poDS)
-    {
-        auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        if (arg)
-        {
-            arg->Set(poDS);
-            arg->SetSkipIfAlreadySet();
-        }
-    }
-
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_outputOpenOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_overwrite = false;
-    bool m_update = false;
-    bool m_overwriteLayer = false;
-    bool m_appendLayer = false;
-    std::vector<std::string> m_inputLayerNames{};
-    std::string m_outputLayerName{};
-    bool m_skipErrors = false;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 };
 
 //! @endcond
