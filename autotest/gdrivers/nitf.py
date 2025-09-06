@@ -7064,3 +7064,144 @@ def test_nitf_online_25():
     ds = None
 
     assert xml_tre.find('<tre name="PIAPRD"') != -1, "did not get expected xml:TRE"
+
+
+def test_nitf_read_rpfhdr_rpfimg():
+
+    if gdaltest.is_travis_branch("fedora_rawhide"):
+        pytest.skip(
+            "randomly fails on CI, but not when trying locally within a docker image"
+        )
+
+    ds = gdal.Open("data/nitf/RPFTOC01.ON2")
+    md = ds.GetMetadata("xml:TRE")[0]
+    assert (
+        """<tre name="RPFHDR" location="file">
+    <field name="LITTLE_BIG_ENDIAN_INDICATOR" value="0" />
+    <field name="HEADER_SECTION_LENGTH" value="48" />
+    <field name="FILENAME" value="RPFTOC01.ON2" />
+    <field name="NEW_REPLACEMENT_UPDATE_INDICATOR" value="0" />
+    <field name="GOVERNING_STANDARD_NUMBER" value="MIL-C-89038" />
+    <field name="GOVERNING_STANDARD_DATE" value="19941006" />
+    <field name="SECURITY_CLASSIFICATION" value="U" />
+    <field name="SECURITY_COUNTRY_INTERNATIONAL_CODE" value="" />
+    <field name="SECURITY_RELEASE_MARKING" value="" />
+    <field name="LOCATION_SECTION_LOCATION" value="1644" />
+  </tre>"""
+        in md
+    )
+    assert (
+        """<tre name="RPFIMG" location="image">
+    <field name="LOCATION_SECTION_LENGTH" value="164" />
+    <field name="COMPONENT_LOCATION_OFFSET" value="14" />
+    <field name="NUMBER_OF_COMPOMENT_LOCATION_RECORDS" value="10" />
+    <field name="COMPONENT_LOCATION_RECORD_LENGTH" value="10" />
+    <field name="COMPONENT_AGGREGATE_LENGTH" value="69998" />"""
+        in md
+    )
+    assert (
+        """<group index="0">
+        <field name="COMPONENT_ID" value="130" />
+        <field name="COMPONENT_LENGTH" value="96" />
+        <field name="COMPONENT_LOCATION" value="1808" />
+        <content ComponentName="CoverageSectionSubheader">
+          <field name="NORTHWEST_LONGITUDE" value="36.0001175"""
+        in md
+    )
+    assert (
+        """<group index="1">
+        <field name="COMPONENT_ID" value="131" />
+        <field name="COMPONENT_LENGTH" value="6" />
+        <field name="COMPONENT_LOCATION" value="6055" />
+        <content ComponentName="CompressionSectionSubsection">
+          <field name="COMPRESSION_ALGORITHM_ID" value="1" />
+          <field name="NUMBER_OF_COMPRESSION_LOOKUP_OFFSET_RECORDS" value="4" />
+          <field name="NUMBER_OF_COMPRESSION_PARAMETER_OFFSET_RECORDS" value="0" />
+        </content>
+      </group>"""
+        in md
+    )
+    assert (
+        """<group index="3">
+        <field name="COMPONENT_ID" value="134" />
+        <field name="COMPONENT_LENGTH" value="14" />
+        <field name="COMPONENT_LOCATION" value="1904" />
+        <content ComponentName="ColorGrayscaleSectionSubheader">
+          <field name="NUMBER_OF_COLOR_GRAYSCALE_OFFSET_RECORDS" value="3" />
+          <field name="NUMBER_OF_COLOR_CONVERTER_OFFSET_RECORDS" value="2" />
+          <field name="EXTERNAL_COLOR_GRAYSCALE_FILENAME" value="" />
+        </content>
+      </group>"""
+        in md
+    )
+    assert (
+        """<group index="4">
+        <field name="COMPONENT_ID" value="135" />
+        <field name="COMPONENT_LENGTH" value="2169" />
+        <field name="COMPONENT_LOCATION" value="1918" />
+        <content ComponentName="ColormapSubsection">
+          <field name="COLORMAP_OFFSET_TABLE_OFFSET" value="6" />
+          <field name="COLOR_GRAYSCALE_OFFSET_RECORD_LENGTH" value="17" />
+          <repeated name="COLOR_OFFSET_RECORD" number="3">
+            <group index="0">
+              <field name="COLOR_GRAYSCALE_TABLE_ID" value="2" />
+              <field name="NUMBER_OF_COLOR_GRAYSCALE_RECORDS" value="216" />
+              <field name="COLOR_GRAYSCALE_ELEMENT_LENGTH" value="4" />
+              <field name="HISTOGRAM_RECORD_LENGTH" value="4" />
+              <field name="COLOR_GRAYSCALE_TABLE_OFFSET" value="57" />
+              <field name="HISTOGRAM_TABLE_OFFSET" value="1113" />
+            </group>
+            <group index="1">
+              <field name="COLOR_GRAYSCALE_TABLE_ID" value="2" />
+              <field name="NUMBER_OF_COLOR_GRAYSCALE_RECORDS" value="32" />
+              <field name="COLOR_GRAYSCALE_ELEMENT_LENGTH" value="4" />
+              <field name="HISTOGRAM_RECORD_LENGTH" value="4" />
+              <field name="COLOR_GRAYSCALE_TABLE_OFFSET" value="921" />
+              <field name="HISTOGRAM_TABLE_OFFSET" value="1977" />
+            </group>
+            <group index="2">
+              <field name="COLOR_GRAYSCALE_TABLE_ID" value="2" />
+              <field name="NUMBER_OF_COLOR_GRAYSCALE_RECORDS" value="16" />
+              <field name="COLOR_GRAYSCALE_ELEMENT_LENGTH" value="4" />
+              <field name="HISTOGRAM_RECORD_LENGTH" value="4" />
+              <field name="COLOR_GRAYSCALE_TABLE_OFFSET" value="1049" />
+              <field name="HISTOGRAM_TABLE_OFFSET" value="2105" />
+            </group>
+          </repeated>
+        </content>
+      </group>"""
+        in md
+    )
+    assert (
+        """<group index="5">
+        <field name="COMPONENT_ID" value="136" />
+        <field name="COMPONENT_LENGTH" value="28" />
+        <field name="COMPONENT_LOCATION" value="5859" />
+        <content ComponentName="ImageDescriptionSubheader">
+          <field name="NUMBER_OF_SPECTRAL_GROUPS" value="1" />
+          <field name="NUMBER_OF_SUBFRAME_TABLES" value="36" />
+          <field name="NUMBER_OF_SPECTRAL_BAND_TABLES" value="1" />
+          <field name="NUMBER_OF_SPECTRAL_BAND_LINES_PER_IMAGE_ROW" value="1" />
+          <field name="NUMBER_OF_SUBFRAME_IN_EAST_WEST_DIRECTION" value="6" />
+          <field name="NUMBER_OF_SUBFRAME_IN_NORTH_SOUTH_DIRECTION" value="6" />
+          <field name="NUMBER_OF_OUTPUT_COLUMNS_PER_SUBFRAME" value="256" />
+          <field name="NUMBER_OF_OUTPUT_ROWS_PER_SUBFRAME" value="256" />
+          <field name="SUBFRAME_MASK_TABLE_OFFSET" value="6" />
+          <field name="TRANSPARENCY_MASK_TABLE_OFFSET" value="4294967295" />
+        </content>
+      </group>"""
+        in md
+    )
+    assert (
+        """<group index="6">
+        <field name="COMPONENT_ID" value="137" />
+        <field name="COMPONENT_LENGTH" value="9" />
+        <field name="COMPONENT_LOCATION" value="6046" />
+        <content ComponentName="ImageDisplayParametersSubheader">
+          <field name="NUMBER_OF_IMAGE_ROWS" value="64" />
+          <field name="NUMBER_OF_CODES_PER_ROW" value="64" />
+          <field name="IMAGE_CODE_BIT_LENGTH" value="12" />
+        </content>
+      </group>"""
+        in md
+    )

@@ -6114,6 +6114,8 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     }
 
     return bOK;
+
+#undef PLACE
 }
 
 /************************************************************************/
@@ -6394,6 +6396,7 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     CPLFree(pachLT);
 
     return bOK;
+#undef PLACE
 }
 
 /************************************************************************/
