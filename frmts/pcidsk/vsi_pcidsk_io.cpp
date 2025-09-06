@@ -24,17 +24,16 @@ PCIDSK::EDBFile *GDAL_EDBOpen(const std::string &osFilename,
                               const std::string &osAccess);
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces();
 
-class VSI_IOInterface : public IOInterfaces
+class VSI_IOInterface final : public IOInterfaces
 {
-    virtual void *Open(const std::string &filename,
-                       std::string access) const override;
-    virtual uint64 Seek(void *io_handle, uint64 offset,
-                        int whence) const override;
+    void *Open(const std::string &filename,
+               const std::string &access) const override;
+    uint64 Seek(void *io_handle, uint64 offset, int whence) const override;
     uint64 Tell(void *io_handle) const override;
-    virtual uint64 Read(void *buffer, uint64 size, uint64 nmemb,
-                        void *io_hanle) const override;
-    virtual uint64 Write(const void *buffer, uint64 size, uint64 nmemb,
-                         void *io_handle) const override;
+    uint64 Read(void *buffer, uint64 size, uint64 nmemb,
+                void *io_hanle) const override;
+    uint64 Write(const void *buffer, uint64 size, uint64 nmemb,
+                 void *io_handle) const override;
     int Eof(void *io_handle) const override;
     int Flush(void *io_handle) const override;
     int Close(void *io_handle) const override;
@@ -62,7 +61,7 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces()
 /************************************************************************/
 
 void *VSI_IOInterface::Open(const std::string &filename,
-                            std::string access) const
+                            const std::string &access) const
 
 {
     VSILFILE *fp = VSIFOpenL(filename.c_str(), access.c_str());

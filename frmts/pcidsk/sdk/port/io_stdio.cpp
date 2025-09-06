@@ -20,7 +20,7 @@ using namespace PCIDSK;
 
 class StdioIOInterface : public IOInterfaces
 {
-    void   *Open( std::string filename, std::string access ) const override;
+    void   *Open( const std::string& filename, const std::string& access ) const override;
     uint64  Seek( void *io_handle, uint64 offset, int whence ) const override;
     uint64  Tell( void *io_handle ) const override;
     uint64  Read( void *buffer, uint64 size, uint64 nmemb, void *io_hanle ) const override;
@@ -62,7 +62,7 @@ const IOInterfaces *PCIDSK::GetDefaultIOInterfaces()
 /************************************************************************/
 
 void *
-StdioIOInterface::Open( std::string filename, std::string access ) const
+StdioIOInterface::Open( const std::string& filename, const std::string& access ) const
 
 {
     std::string adjusted_access = access;
