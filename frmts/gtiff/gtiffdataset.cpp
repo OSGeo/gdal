@@ -1170,6 +1170,24 @@ void GTiffDataset::ScanDirectories()
                     // poODS->m_nZLevel = m_nZLevel;
                     // poODS->m_nLZMAPreset = m_nLZMAPreset;
                     // poODS->m_nZSTDLevel = m_nZSTDLevel;
+
+                    if (const char *pszOverviewResampling =
+                            m_oGTiffMDMD.GetMetadataItem("OVERVIEW_RESAMPLING",
+                                                         "IMAGE_STRUCTURE"))
+                    {
+                        for (int iBand = 1; iBand <= poODS->GetRasterCount();
+                             ++iBand)
+                        {
+                            auto poOBand = cpl::down_cast<GTiffRasterBand *>(
+                                poODS->GetRasterBand(iBand));
+                            if (poOBand->GetMetadataItem("RESAMPLING") ==
+                                nullptr)
+                            {
+                                poOBand->m_oGTiffMDMD.SetMetadataItem(
+                                    "RESAMPLING", pszOverviewResampling);
+                            }
+                        }
+                    }
                 }
             }
             // Embedded mask of the main image.

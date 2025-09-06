@@ -5464,7 +5464,12 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 continue;
             if (EQUAL(pszDomain, "IMAGE_STRUCTURE"))
             {
-                if (EQUAL(pszKey, "INTERLEAVE"))
+                if (EQUAL(pszKey, "OVERVIEW_RESAMPLING"))
+                {
+                    m_oGTiffMDMD.SetMetadataItem(pszKey, pszValue,
+                                                 "IMAGE_STRUCTURE");
+                }
+                else if (EQUAL(pszKey, "INTERLEAVE"))
                 {
                     if (EQUAL(pszValue, "TILE"))
                     {

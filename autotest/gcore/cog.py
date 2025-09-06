@@ -105,6 +105,7 @@ def test_cog_basic():
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
     assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    assert ds.GetMetadataItem("OVERVIEW_RESAMPLING", "IMAGE_STRUCTURE") is None
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetBlockSize() == [512, 512]
     assert (
@@ -237,7 +238,7 @@ def test_cog_creation_options():
 # Test creation of overviews
 
 
-def test_cog_creation_of_overviews():
+def test_cog_creation_of_overviews(tmp_vsimem):
 
     tab = [0]
 
@@ -246,39 +247,44 @@ def test_cog_creation_of_overviews():
         tab[0] = pct
         return 1
 
-    directory = "/vsimem/test_cog_creation_of_overviews"
-    filename = directory + "/cog.tif"
+    filename = tmp_vsimem / "cog.tif"
     src_ds = gdal.Translate("", "data/byte.tif", options="-of MEM -outsize 2048 300")
 
     check_filename = "/vsimem/tmp.tif"
     ds = gdal.GetDriverByName("GTiff").CreateCopy(
         check_filename, src_ds, options=["TILED=YES"]
     )
-    ds.BuildOverviews("CUBIC", [2, 4])
+    ds.BuildOverviews("AVERAGE", [2, 4])
     cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
     ds = None
     gdal.Unlink(check_filename)
 
     ds = gdal.GetDriverByName("COG").CreateCopy(
-        filename, src_ds, callback=my_cbk, callback_data=tab
+        filename,
+        src_ds,
+        callback=my_cbk,
+        callback_data=tab,
+        options=["OVERVIEW_RESAMPLING=AVERAGE"],
     )
     assert tab[0] == 1.0
     assert ds
-    assert len(gdal.ReadDir(directory)) == 1  # check that the temp file has gone away
+    assert len(gdal.ReadDir(tmp_vsimem)) == 1  # check that the temp file has gone away
 
     ds = None
     ds = gdal.Open(filename)
+    assert ds.GetMetadataItem("OVERVIEW_RESAMPLING", "IMAGE_STRUCTURE") == "AVERAGE"
     assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == cs1
+    assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "AVERAGE"
     assert ds.GetRasterBand(1).GetOverview(1).Checksum() == cs2
     ds = None
-    _check_cog(filename)
+    _check_cog(str(filename))
 
-    src_ds = None
-    gdal.GetDriverByName("GTiff").Delete(filename)
-    gdal.Unlink(directory)
+    gdal.Translate(tmp_vsimem / "cog2.tif", filename, format="COG")
+    ds = gdal.Open(tmp_vsimem / "cog2.tif")
+    assert ds.GetMetadataItem("OVERVIEW_RESAMPLING", "IMAGE_STRUCTURE") == "AVERAGE"
 
 
 ###############################################################################
