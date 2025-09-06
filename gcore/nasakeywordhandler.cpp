@@ -157,8 +157,7 @@ bool NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
                 return false;
             }
             CPLJSONObject oName = oNewGroup["Name"];
-            if ((osValue == "Table" || osValue == "Field") &&
-                (oName.GetType() == CPLJSONObject::Type::String))
+            if (oName.GetType() == CPLJSONObject::Type::String)
             {
                 oCur.Add(osValue + "_" + oName.ToString(), oNewGroup);
                 oNewGroup.Add("_container_name", osValue);
