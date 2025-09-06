@@ -46,7 +46,6 @@ class GDALVectorPipelineStepAlgorithm /* non final */
                                     const ConstructorOptions &options);
 
     friend class GDALVectorPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
     friend class GDALVectorConcatAlgorithm;
 
     int GetInputType() const override
@@ -64,14 +63,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */
 /*                     GDALVectorPipelineAlgorithm                      */
 /************************************************************************/
 
-// This is an easter egg to pay tribute to PROJ pipeline syntax
-// We accept "gdal vector +gdal=pipeline +step +gdal=read +input=poly.gpkg +step +gdal=reproject +dst-crs=EPSG:32632 +step +gdal=write +output=out.gpkg +overwrite"
-// as an alternative to (recommended):
-// "gdal vector pipeline ! read poly.gpkg ! reproject--dst-crs=EPSG:32632 ! write out.gpkg --overwrite"
-#define GDAL_PIPELINE_PROJ_NOSTALGIA
-
-class GDALVectorPipelineAlgorithm final
-    : public GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>
+class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -93,14 +85,28 @@ class GDALVectorPipelineAlgorithm final
 
     GDALVectorPipelineAlgorithm();
 
-    bool
-    ParseCommandLineArguments(const std::vector<std::string> &args) override;
-
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
     static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
                                    bool forMixedPipeline);
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALVectorPipelineAlgorithm>();
+    }
 };
 
 /************************************************************************/

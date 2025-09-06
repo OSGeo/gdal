@@ -225,6 +225,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "ESRI_XML_PAM", // from gtiffdataset.cpp, gtiffdataset_write.cpp
    "FGDB_STRING_WIDTH", // from FGdbUtils.cpp
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
+   "GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM", // from gdalalg_abstract_pipeline.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
    "GDAL_ALLOW_REMOTE_RESOURCE_TO_ACCESS_LOCAL_FILE", // from vsikerchunk.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp

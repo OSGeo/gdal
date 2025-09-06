@@ -40,7 +40,6 @@ class GDALRasterPipelineStepAlgorithm /* non final */
                                     const ConstructorOptions &options);
 
     friend class GDALRasterPipelineAlgorithm;
-    friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
     friend class GDALRasterMosaicStackCommonAlgorithm;
 
     int GetInputType() const override
@@ -85,16 +84,7 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
 /*                     GDALRasterPipelineAlgorithm                      */
 /************************************************************************/
 
-// This is an easter egg to pay tribute to PROJ pipeline syntax
-// We accept "gdal vector +gdal=pipeline +step +gdal=read +input=in.tif +step +gdal=reproject +dst-crs=EPSG:32632 +step +gdal=write +output=out.tif +overwrite"
-// as an alternative to (recommended):
-// "gdal vector pipeline ! read in.tif ! reproject--dst-crs=EPSG:32632 ! write out.tif --overwrite"
-#ifndef GDAL_PIPELINE_PROJ_NOSTALGIA
-#define GDAL_PIPELINE_PROJ_NOSTALGIA
-#endif
-
-class GDALRasterPipelineAlgorithm final
-    : public GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>
+class GDALRasterPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -116,14 +106,28 @@ class GDALRasterPipelineAlgorithm final
 
     explicit GDALRasterPipelineAlgorithm(bool openForMixedRasterVector = false);
 
-    bool
-    ParseCommandLineArguments(const std::vector<std::string> &args) override;
-
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
     static void RegisterAlgorithms(GDALAlgorithmRegistry &registry,
                                    bool forMixedPipeline);
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+  private:
+    std::unique_ptr<GDALAbstractPipelineAlgorithm>
+    CreateNestedPipeline() const override
+    {
+        return std::make_unique<GDALRasterPipelineAlgorithm>();
+    }
 };
 
 //! @endcond
