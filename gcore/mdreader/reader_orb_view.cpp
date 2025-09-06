@@ -27,7 +27,7 @@
  * GDALMDReaderOrbView()
  */
 GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
-                                         char **papszSiblingFiles)
+                                         CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles),
       m_osIMDSourceFilename(
           GDALFindAssociatedFile(pszPath, "PVL", papszSiblingFiles, 0)),

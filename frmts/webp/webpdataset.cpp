@@ -42,9 +42,16 @@ class WEBPDataset final : public GDALPamDataset
 
     CPL_DISALLOW_COPY_ASSIGN(WEBPDataset)
 
+    CPLErr GetGeoTransform(GDALGeoTransform &gt,
+                           std::string &osWorldFilename) const;
+
   public:
     WEBPDataset();
     virtual ~WEBPDataset();
+
+    char **GetFileList() override;
+
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, BANDMAP_TYPE,
@@ -172,6 +179,54 @@ WEBPDataset::~WEBPDataset()
     if (fpImage)
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);
+}
+
+/************************************************************************/
+/*                               GetFileList()                          */
+/************************************************************************/
+
+char **WEBPDataset::GetFileList()
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+    GDALGeoTransform gt;
+    std::string osWorldFilename;
+    CPL_IGNORE_RET_VAL(GetGeoTransform(gt, osWorldFilename));
+    if (!osWorldFilename.empty())
+    {
+        papszFileList = CSLAddString(papszFileList, osWorldFilename.c_str());
+    }
+    return papszFileList;
+}
+
+/************************************************************************/
+/*                            GetGeoTransform()                         */
+/************************************************************************/
+
+CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt) const
+{
+    std::string osWorldFilename;
+    return GetGeoTransform(gt, osWorldFilename);
+}
+
+CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt,
+                                    std::string &osWorldFilename) const
+{
+    bool bGeoTransformValid = GDALPamDataset::GetGeoTransform(gt) == CE_None;
+    if (!bGeoTransformValid)
+    {
+        char *pszWldFilename = nullptr;
+        bGeoTransformValid =
+            GDALReadWorldFile2(GetDescription(), ".wld", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename) ||
+            GDALReadWorldFile2(GetDescription(), ".wpw", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename) ||
+            GDALReadWorldFile2(GetDescription(), ".webpw", gt,
+                               oOvManager.GetSiblingFiles(), &pszWldFilename);
+        if (bGeoTransformValid)
+            osWorldFilename = pszWldFilename;
+        CPLFree(pszWldFilename);
+    }
+    return bGeoTransformValid ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -1082,6 +1137,14 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     {
         VSIUnlink(pszFilename);
         return nullptr;
+    }
+
+    // Do we need a world file?
+    if (CPLFetchBool(papszOptions, "WORLDFILE", false))
+    {
+        GDALGeoTransform gt;
+        poSrcDS->GetGeoTransform(gt);
+        GDALWriteWorldFile(pszFilename, "wld", gt.data());
     }
 
     /* -------------------------------------------------------------------- */

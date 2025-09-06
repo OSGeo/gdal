@@ -31,7 +31,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderOrbView : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderOrbView(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderOrbView();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;

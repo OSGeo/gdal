@@ -29,7 +29,7 @@
  * GDALMDReaderKompsat()
  */
 GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
-                                         char **papszSiblingFiles)
+                                         CSLConstList papszSiblingFiles)
     : GDALMDReaderBase(pszPath, papszSiblingFiles),
       m_osIMDSourceFilename(
           GDALFindAssociatedFile(pszPath, "TXT", papszSiblingFiles, 0)),

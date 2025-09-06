@@ -3566,7 +3566,7 @@ int CPLIsPowerOfTwo(unsigned int i)
  * @return TRUE if a match is found, or FALSE if not.
  */
 
-int CPLCheckForFile(char *pszFilename, char **papszSiblingFiles)
+int CPLCheckForFile(char *pszFilename, CSLConstList papszSiblingFiles)
 
 {
     /* -------------------------------------------------------------------- */

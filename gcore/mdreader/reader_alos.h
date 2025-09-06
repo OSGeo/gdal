@@ -34,7 +34,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderALOS : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderALOS(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderALOS();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;

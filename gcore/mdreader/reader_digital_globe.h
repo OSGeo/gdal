@@ -40,7 +40,8 @@ Common metadata (from metadata filename):
 class GDALMDReaderDigitalGlobe : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderDigitalGlobe(const char *pszPath,
+                             CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderDigitalGlobe();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;

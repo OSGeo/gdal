@@ -32,7 +32,7 @@ Common metadata (from metadata filename):
 class GDALMDReaderRapidEye : public GDALMDReaderBase
 {
   public:
-    GDALMDReaderRapidEye(const char *pszPath, char **papszSiblingFiles);
+    GDALMDReaderRapidEye(const char *pszPath, CSLConstList papszSiblingFiles);
     virtual ~GDALMDReaderRapidEye();
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
