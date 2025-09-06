@@ -30,8 +30,8 @@ namespace PCIDSK
 class PCIDSK_DLL AsciiTileLayer : public BlockTileLayer
 {
 protected:
-    virtual void        WriteTileList(void) override;
-    virtual void        ReadTileList(void) override;
+    void        WriteTileList(void) override;
+    void        ReadTileList(void) override;
 
     // We need the system block directory implementation class to be friend
     // since it is responsible to fill in the block list.

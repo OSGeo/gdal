@@ -291,7 +291,7 @@ class OGRArrowLayer CPL_NON_FINAL
     void SanityCheckOfSetBatch() const;
 
   public:
-    virtual ~OGRArrowLayer() override;
+    ~OGRArrowLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

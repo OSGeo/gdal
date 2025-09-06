@@ -33,11 +33,11 @@ class GDALMDReaderResursDK1 : public GDALMDReaderBase
   public:
     GDALMDReaderResursDK1(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderResursDK1() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
     virtual char **AddXMLNameValueToList(char **papszList, const char *pszName,

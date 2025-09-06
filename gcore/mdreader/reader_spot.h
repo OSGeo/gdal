@@ -35,7 +35,7 @@ class GDALMDReaderSpot : public GDALMDReaderPleiades
     ~GDALMDReaderSpot() override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     virtual char **ReadXMLToList(CPLXMLNode *psNode, char **papszList,
                                  const char *pszName = "") override;
 };

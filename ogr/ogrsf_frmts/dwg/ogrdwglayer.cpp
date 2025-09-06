@@ -1086,7 +1086,7 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
         return new GeometryInsertTransformer(*this);
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         return nullptr;
     }

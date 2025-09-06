@@ -186,10 +186,10 @@ class IRISRasterBand final : public GDALPamRasterBand
     IRISRasterBand(IRISDataset *, int);
     ~IRISRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
-    virtual double GetNoDataValue(int *) override;
-    virtual CPLErr SetNoDataValue(double) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double) override;
 };
 
 /************************************************************************/

@@ -36,10 +36,10 @@ class GMLASBinInputStream final : public BinInputStream
     explicit GMLASBinInputStream(VSILFILE *fp);
     ~GMLASBinInputStream() override;
 
-    virtual XMLFilePos curPos() const override;
+    XMLFilePos curPos() const override;
     virtual XMLSize_t readBytes(XMLByte *const toFill,
                                 const XMLSize_t maxToRead) override;
-    virtual const XMLCh *getContentType() const override;
+    const XMLCh *getContentType() const override;
 };
 
 /************************************************************************/

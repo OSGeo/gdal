@@ -44,7 +44,7 @@ class SAFEDataset final : public GDALPamDataset
     int m_nSubDSNum = 0;
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     static const CPLXMLNode *GetMetaDataObject(const CPLXMLNode *,
                                                const char *);
@@ -59,14 +59,14 @@ class SAFEDataset final : public GDALPamDataset
     SAFEDataset();
     ~SAFEDataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -92,7 +92,7 @@ class SAFERasterBand final : public GDALPamRasterBand
                    const CPLString &osSwath, const CPLString &osPol,
                    std::unique_ptr<GDALDataset> &&poBandFileIn);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -117,7 +117,7 @@ class SAFESLCRasterBand : public GDALPamRasterBand
                       std::unique_ptr<GDALDataset> &&poBandFileIn,
                       BandType eBandType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
     static GDALDataset *Open(GDALOpenInfo *);
 
   private:
@@ -149,7 +149,7 @@ class SAFECalibratedRasterBand : public GDALPamRasterBand
                              const char *pszCalibrationFilename,
                              CalibrationType eCalibrationType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     bool ReadLUT();
 

@@ -34,8 +34,8 @@ class GTiffBitmapBand : public GTiffOddBitsBand
     GTiffBitmapBand(GTiffDataset *, int);
     ~GTiffBitmapBand() override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
 };
 
 #endif  // GTIFFBITMAPBAND_H_INCLUDED

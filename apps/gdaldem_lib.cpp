@@ -1884,8 +1884,8 @@ class GDALColorReliefRasterBand : public GDALRasterBand
   public:
     GDALColorReliefRasterBand(GDALColorReliefDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
@@ -2489,8 +2489,8 @@ template <class T> class GDALGeneric3x3RasterBand final : public GDALRasterBand
     GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *poDSIn,
                              GDALDataType eDstDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *pbHasNoData) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetNoDataValue(int *pbHasNoData) override;
 
     int GetOverviewCount() override
     {

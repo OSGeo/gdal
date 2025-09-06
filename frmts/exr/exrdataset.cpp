@@ -447,18 +447,18 @@ class GDALEXRIOStream final : public IStream, public OStream
         VSIFCloseL(m_fp);
     }
 
-    virtual bool read(char c[/*n*/], int n) override;
-    virtual void write(const char c[/*n*/], int n) override;
-    virtual IoInt64Type tellg() override;
+    bool read(char c[/*n*/], int n) override;
+    void write(const char c[/*n*/], int n) override;
+    IoInt64Type tellg() override;
 
-    virtual IoInt64Type tellp() override
+    IoInt64Type tellp() override
     {
         return tellg();
     }
 
-    virtual void seekg(IoInt64Type pos) override;
+    void seekg(IoInt64Type pos) override;
 
-    virtual void seekp(IoInt64Type pos) override
+    void seekp(IoInt64Type pos) override
     {
         return seekg(pos);
     }

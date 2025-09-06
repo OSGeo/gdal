@@ -30,8 +30,8 @@ namespace PCIDSK
 class PCIDSK_DLL BinaryTileLayer : public BlockTileLayer
 {
 protected:
-    virtual void        WriteTileList(void) override;
-    virtual void        ReadTileList(void) override;
+    void        WriteTileList(void) override;
+    void        ReadTileList(void) override;
 
     void                SwapBlockTile(BlockTileInfo * psTile, size_t nCount);
 

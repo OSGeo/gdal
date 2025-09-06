@@ -40,7 +40,7 @@ namespace PCIDSK
         CPCIDSKFile( const std::string& filename );
         ~CPCIDSKFile() override;
 
-        virtual PCIDSKInterfaces *GetInterfaces() override { return &interfaces; }
+        PCIDSKInterfaces *GetInterfaces() override { return &interfaces; }
 
         PCIDSKChannel  *GetChannel( int band ) override;
         PCIDSKSegment  *GetSegment( int segment ) override;

@@ -36,8 +36,8 @@ public:
 
     ~SysTileDir() override;
 
-    virtual void        Initialize(void) override final;
-    virtual void        Synchronize(void) override final;
+    void        Initialize(void) override final;
+    void        Synchronize(void) override final;
 
     void                LoadTileDir(void);
     void                CreateTileDir(void);

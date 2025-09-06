@@ -42,11 +42,11 @@ class GDALMDReaderDigitalGlobe : public GDALMDReaderBase
   public:
     GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderDigitalGlobe() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **LoadRPBXmlNode(CPLXMLNode *psNode);
     char **LoadIMDXmlNode(CPLXMLNode *psNode);
 

@@ -52,7 +52,7 @@ class OGRIdrisiLayer final : public OGRLayer,
                    const char *pszWTKString);
     ~OGRIdrisiLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRIdrisiLayer)
 
     const OGRFeatureDefn *GetLayerDefn() const override
@@ -63,10 +63,10 @@ class OGRIdrisiLayer final : public OGRLayer,
     int TestCapability(const char *) const override;
 
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 };
 
 /************************************************************************/

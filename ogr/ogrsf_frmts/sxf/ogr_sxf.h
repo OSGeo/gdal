@@ -70,10 +70,10 @@ class OGRSXFLayer final : public OGRLayer
                 const SXFMapDescription &sxfMapDesc);
     ~OGRSXFLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -82,9 +82,9 @@ class OGRSXFLayer final : public OGRLayer
 
     int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     const char *GetFIDColumn() const override;

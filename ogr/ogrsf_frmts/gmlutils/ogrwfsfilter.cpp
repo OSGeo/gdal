@@ -826,7 +826,7 @@ class OGRWFSCustomFuncRegistrar : public swq_custom_func_registrar
     {
     }
 
-    virtual const swq_operation *GetOperator(const char *) override;
+    const swq_operation *GetOperator(const char *) override;
 };
 
 /************************************************************************/

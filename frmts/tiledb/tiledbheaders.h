@@ -271,7 +271,7 @@ class TileDBRasterDataset final : public TileDBDataset
     char **GetMetadata(const char *pszDomain) override;
     CPLErr Close() override;
     int CloseDependentDatasets() override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,

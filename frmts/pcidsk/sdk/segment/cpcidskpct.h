@@ -35,8 +35,8 @@ namespace PCIDSK
 
         ~CPCIDSK_PCT() override;
 
-        virtual void ReadPCT( unsigned char pct[768] ) override;
-        virtual void WritePCT( unsigned char pct[768] ) override;
+        void ReadPCT( unsigned char pct[768] ) override;
+        void WritePCT( unsigned char pct[768] ) override;
     };
 } // end namespace PCIDSK
 

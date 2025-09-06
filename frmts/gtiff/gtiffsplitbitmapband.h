@@ -35,8 +35,8 @@ class GTiffSplitBitmapBand final : public GTiffBitmapBand
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // GTIFFSPLITBITMAPBAND_H_INCLUDED

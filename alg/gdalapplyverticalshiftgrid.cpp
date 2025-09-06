@@ -48,10 +48,10 @@ class GDALApplyVSGDataset final : public GDALDataset
                         double dfDstUnitToMeter, int nBlockSize);
     ~GDALApplyVSGDataset() override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     bool IsInitOK();
 };
@@ -75,7 +75,7 @@ class GDALApplyVSGRasterBand final : public GDALRasterBand
 
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pData) override;
-    virtual double GetNoDataValue(int *pbSuccess) override;
+    double GetNoDataValue(int *pbSuccess) override;
 };
 
 /************************************************************************/

@@ -249,8 +249,8 @@ class GMLXercesHandler final : public DefaultHandler, public GMLHandler
 
     void startEntity(const XMLCh *const name) override;
 
-    virtual const char *GetFID(void *attr) override;
-    virtual CPLXMLNode *AddAttributes(CPLXMLNode *psNode, void *attr) override;
+    const char *GetFID(void *attr) override;
+    CPLXMLNode *AddAttributes(CPLXMLNode *psNode, void *attr) override;
     virtual char *GetAttributeValue(void *attr,
                                     const char *pszAttributeName) override;
     virtual char *GetAttributeByIdx(void *attr, unsigned int idx,
@@ -289,8 +289,8 @@ class GMLExpatHandler final : public GMLHandler
         m_nDataHandlerCounter = 0;
     }
 
-    virtual const char *GetFID(void *attr) override;
-    virtual CPLXMLNode *AddAttributes(CPLXMLNode *psNode, void *attr) override;
+    const char *GetFID(void *attr) override;
+    CPLXMLNode *AddAttributes(CPLXMLNode *psNode, void *attr) override;
     virtual char *GetAttributeValue(void *attr,
                                     const char *pszAttributeName) override;
     virtual char *GetAttributeByIdx(void *attr, unsigned int idx,

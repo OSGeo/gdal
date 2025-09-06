@@ -30,7 +30,7 @@ class WMSMiniDriver_WMS : public WMSMiniDriver
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
 
     // Return error message in request.Error
     virtual CPLErr

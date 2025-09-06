@@ -40,11 +40,11 @@ class CPL_DLL RawDataset : public GDALPamDataset
                      GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
                      GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
-    virtual CPLErr Close() override = 0;
+    CPLErr Close() override = 0;
 
   public:
     RawDataset();
-    virtual ~RawDataset() override = 0;
+    ~RawDataset() override = 0;
 
     enum class Interleave
     {

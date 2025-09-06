@@ -89,7 +89,7 @@ class WMSMiniDriver_MRF : public WMSMiniDriver
 
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual CPLErr EndInit() override;
+    CPLErr EndInit() override;
 
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &url, const GDALWMSImageRequestInfo &iri,

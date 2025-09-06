@@ -144,7 +144,7 @@ class GMLASBaseEntityResolver /* non final*/ : public EntityResolver,
         return m_bFoundNonOfficialGMLSchemaLocation;
     }
 
-    virtual void notifyClosing(const CPLString &osFilename) override;
+    void notifyClosing(const CPLString &osFilename) override;
     virtual InputSource *resolveEntity(const XMLCh *const publicId,
                                        const XMLCh *const systemId) override;
 
@@ -173,7 +173,7 @@ class GMLASInputSource final : public InputSource
         MemoryManager *const manager = XMLPlatformUtils::fgMemoryManager);
     ~GMLASInputSource() override;
 
-    virtual BinInputStream *makeStream() const override;
+    BinInputStream *makeStream() const override;
 
     void SetClosingCallback(IGMLASInputSourceClosing *cbk);
 };
@@ -212,11 +212,11 @@ class GMLASErrorHandler final : public ErrorHandler
         return m_bFailed;
     }
 
-    virtual void warning(const SAXParseException &e) override;
-    virtual void error(const SAXParseException &e) override;
-    virtual void fatalError(const SAXParseException &e) override;
+    void warning(const SAXParseException &e) override;
+    void error(const SAXParseException &e) override;
+    void fatalError(const SAXParseException &e) override;
 
-    virtual void resetErrors() override
+    void resetErrors() override
     {
         m_bFailed = false;
     }
@@ -1403,9 +1403,9 @@ class OGRGMLASDataSource final : public GDALDataset
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
-    virtual OGRLayer *GetLayerByName(const char *pszName) override;
+    OGRLayer *GetLayerByName(const char *pszName) override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     virtual OGRFeature *GetNextFeature(OGRLayer **ppoBelongingLayer,
                                        double *pdfProgressPct,
                                        GDALProgressFunc pfnProgress,
@@ -1566,8 +1566,8 @@ class OGRGMLASLayer final : public OGRLayer
 
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
     int TestCapability(const char *) const override
     {

@@ -46,7 +46,7 @@ class HF2Dataset final : public GDALPamDataset
     HF2Dataset();
     ~HF2Dataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -75,7 +75,7 @@ class HF2RasterBand final : public GDALPamRasterBand
     HF2RasterBand(HF2Dataset *, int, GDALDataType);
     ~HF2RasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

@@ -83,35 +83,35 @@ class FileGDBTrivialIterator final : public FileGDBIterator
         delete poParentIter;
     }
 
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poTable;
     }
 
-    virtual void Reset() override
+    void Reset() override
     {
         iRow = 0;
         poParentIter->Reset();
     }
 
-    virtual int64_t GetNextRowSortedByFID() override;
+    int64_t GetNextRowSortedByFID() override;
 
-    virtual int64_t GetRowCount() override
+    int64_t GetRowCount() override
     {
         return poTable->GetTotalRecordCount();
     }
 
-    virtual int64_t GetNextRowSortedByValue() override
+    int64_t GetNextRowSortedByValue() override
     {
         return poParentIter->GetNextRowSortedByValue();
     }
 
-    virtual const OGRField *GetMinValue(int &eOutType) override
+    const OGRField *GetMinValue(int &eOutType) override
     {
         return poParentIter->GetMinValue(eOutType);
     }
 
-    virtual const OGRField *GetMaxValue(int &eOutType) override
+    const OGRField *GetMaxValue(int &eOutType) override
     {
         return poParentIter->GetMaxValue(eOutType);
     }
@@ -142,14 +142,14 @@ class FileGDBNotIterator final : public FileGDBIterator
     explicit FileGDBNotIterator(FileGDBIterator *poIterBase);
     ~FileGDBNotIterator() override;
 
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poTable;
     }
 
-    virtual void Reset() override;
-    virtual int64_t GetNextRowSortedByFID() override;
-    virtual int64_t GetRowCount() override;
+    void Reset() override;
+    int64_t GetNextRowSortedByFID() override;
+    int64_t GetRowCount() override;
 };
 
 /************************************************************************/
@@ -172,13 +172,13 @@ class FileGDBAndIterator final : public FileGDBIterator
                        bool bTakeOwnershipOfIterators);
     ~FileGDBAndIterator() override;
 
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poIter1->GetTable();
     }
 
-    virtual void Reset() override;
-    virtual int64_t GetNextRowSortedByFID() override;
+    void Reset() override;
+    int64_t GetNextRowSortedByFID() override;
 };
 
 /************************************************************************/
@@ -202,14 +202,14 @@ class FileGDBOrIterator final : public FileGDBIterator
                       int bIteratorAreExclusive = FALSE);
     ~FileGDBOrIterator() override;
 
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poIter1->GetTable();
     }
 
-    virtual void Reset() override;
-    virtual int64_t GetNextRowSortedByFID() override;
-    virtual int64_t GetRowCount() override;
+    void Reset() override;
+    int64_t GetNextRowSortedByFID() override;
+    int64_t GetRowCount() override;
 };
 
 /************************************************************************/
@@ -298,12 +298,12 @@ class FileGDBIndexIteratorBase /* non final */ : virtual public FileGDBIterator
   public:
     ~FileGDBIndexIteratorBase() override;
 
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poParent;
     }
 
-    virtual void Reset() override;
+    void Reset() override;
 };
 
 /************************************************************************/
@@ -337,7 +337,7 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
     const OGRField *GetMinMaxValue(OGRField *psField, int &eOutType,
                                    int bIsMin);
 
-    virtual bool FindPages(int iLevel, uint64_t nPage) override;
+    bool FindPages(int iLevel, uint64_t nPage) override;
     int64_t GetNextRow();
 
     FileGDBIndexIterator(FileGDBTable *poParent, int bAscending);
@@ -359,17 +359,17 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
                                   OGRFieldType eOGRFieldType,
                                   const OGRField *psValue);
 
-    virtual int64_t GetNextRowSortedByFID() override;
-    virtual int64_t GetRowCount() override;
-    virtual void Reset() override;
+    int64_t GetNextRowSortedByFID() override;
+    int64_t GetRowCount() override;
+    void Reset() override;
 
-    virtual int64_t GetNextRowSortedByValue() override
+    int64_t GetNextRowSortedByValue() override
     {
         return GetNextRow();
     }
 
-    virtual const OGRField *GetMinValue(int &eOutType) override;
-    virtual const OGRField *GetMaxValue(int &eOutType) override;
+    const OGRField *GetMinValue(int &eOutType) override;
+    const OGRField *GetMaxValue(int &eOutType) override;
     virtual bool GetMinMaxSumCount(double &dfMin, double &dfMax, double &dfSum,
                                    int &nCount) override;
 };
@@ -2414,7 +2414,7 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
     GInt32 m_nCurX = 0;
     GInt32 m_nMaxX = 0;
 
-    virtual bool FindPages(int iLevel, uint64_t nPage) override;
+    bool FindPages(int iLevel, uint64_t nPage) override;
     int GetNextRow();
     bool ReadNewXRange();
     bool ResetInternal();
@@ -2428,15 +2428,15 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
     bool Init();
 
   public:
-    virtual FileGDBTable *GetTable() override
+    FileGDBTable *GetTable() override
     {
         return poParent;
     }  // avoid MSVC C4250 inherits via dominance warning
 
-    virtual int64_t GetNextRowSortedByFID() override;
-    virtual void Reset() override;
+    int64_t GetNextRowSortedByFID() override;
+    void Reset() override;
 
-    virtual bool SetEnvelope(const OGREnvelope &sFilterEnvelope) override;
+    bool SetEnvelope(const OGREnvelope &sFilterEnvelope) override;
 };
 
 /************************************************************************/

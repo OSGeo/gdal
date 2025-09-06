@@ -36,11 +36,11 @@ class GDALMDReaderALOS : public GDALMDReaderBase
   public:
     GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderALOS() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **LoadRPCTxtFile();
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;

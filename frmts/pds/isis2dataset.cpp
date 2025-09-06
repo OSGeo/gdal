@@ -66,10 +66,10 @@ class ISIS2Dataset final : public RawDataset
     ISIS2Dataset();
     ~ISIS2Dataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };

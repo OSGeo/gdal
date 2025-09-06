@@ -33,11 +33,11 @@ class GDALMDReaderKompsat : public GDALMDReaderBase
   public:
     GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
     ~GDALMDReaderKompsat() override;
-    virtual bool HasRequiredFiles() const override;
-    virtual char **GetMetadataFiles() const override;
+    bool HasRequiredFiles() const override;
+    char **GetMetadataFiles() const override;
 
   protected:
-    virtual void LoadMetadata() override;
+    void LoadMetadata() override;
     char **ReadTxtToList();
     virtual GIntBig
     GetAcquisitionTimeFromString(const char *pszDateTime) override;

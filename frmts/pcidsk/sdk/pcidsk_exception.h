@@ -39,7 +39,7 @@ namespace PCIDSK
         PCIDSKException& operator=(PCIDSKException&&) = default;
 
         void vPrintf( const char *fmt, std::va_list list );
-        virtual const char *what() const throw() override { return message.c_str(); }
+        const char *what() const throw() override { return message.c_str(); }
     private:
         std::string   message;
     };

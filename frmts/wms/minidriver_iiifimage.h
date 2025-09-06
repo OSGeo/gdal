@@ -23,7 +23,7 @@ class WMSMiniDriver_IIIFImage : public WMSMiniDriver
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &request,
                       const GDALWMSImageRequestInfo &iri,

@@ -208,17 +208,17 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     virtual std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>
     GetLayerWithGetSpatialWhereByName(const char *pszName) = 0;
 
-    virtual OGRErr AbortSQL() override;
+    OGRErr AbortSQL() override;
     bool SetQueryLoggerFunc(GDALQueryLoggerFunc pfnQueryLoggerFuncIn,
                             void *poQueryLoggerArgIn) override;
 
-    virtual OGRErr StartTransaction(int bForce = FALSE) override;
-    virtual OGRErr CommitTransaction() override;
-    virtual OGRErr RollbackTransaction() override;
+    OGRErr StartTransaction(int bForce = FALSE) override;
+    OGRErr CommitTransaction() override;
+    OGRErr RollbackTransaction() override;
 
     int TestCapability(const char *) const override;
 
-    virtual void *GetInternalHandle(const char *) override;
+    void *GetInternalHandle(const char *) override;
 
     OGRErr SoftStartTransaction();
     OGRErr SoftCommitTransaction();
@@ -354,8 +354,8 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
     OGRSQLiteSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
     ~OGRSQLiteSingleFeatureLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
     const OGRFeatureDefn *GetLayerDefn() const override;
     int TestCapability(const char *) const override;
 };

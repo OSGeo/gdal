@@ -265,7 +265,7 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
   protected:
     struct curl_slist *GetCurlHeaders(const std::string &osVerb,
                                       struct curl_slist *psHeaders) override;
-    virtual bool Authenticate(const char *pszFilename) override;
+    bool Authenticate(const char *pszFilename) override;
 
   public:
     VSISwiftHandle(VSISwiftFSHandler *poFS, const char *pszFilename,

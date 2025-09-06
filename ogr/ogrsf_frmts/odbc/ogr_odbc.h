@@ -61,11 +61,11 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
     OGRODBCLayer();
     ~OGRODBCLayer() override;
 
-    virtual void ResetReading() override;
+    void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -90,7 +90,7 @@ class OGRODBCTableLayer final : public OGRODBCLayer
     void ClearStatement();
     OGRErr ResetStatement();
 
-    virtual CPLODBCStatement *GetStatement() override;
+    CPLODBCStatement *GetStatement() override;
 
     char *pszTableName;
     char *pszSchemaName;
@@ -101,17 +101,17 @@ class OGRODBCTableLayer final : public OGRODBCLayer
 
     CPLErr Initialize(const char *pszTableName, const char *pszGeomCol);
 
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 #ifdef notdef
     virtual OGRErr ISetFeature(OGRFeature *poFeature);
     virtual OGRErr ICreateFeature(OGRFeature *poFeature);
 
     virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE);
 #endif
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
@@ -142,16 +142,16 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
     void ClearStatement();
     OGRErr ResetStatement();
 
-    virtual CPLODBCStatement *GetStatement() override;
+    CPLODBCStatement *GetStatement() override;
 
   public:
     OGRODBCSelectLayer(OGRODBCDataSource *, CPLODBCStatement *);
     ~OGRODBCSelectLayer() override;
 
-    virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    void ResetReading() override;
+    GIntBig GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -207,10 +207,10 @@ class OGRODBCDataSource final : public GDALDataset
 
     int TestCapability(const char *) const override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
     // Internal use
     CPLODBCSession *GetSession()

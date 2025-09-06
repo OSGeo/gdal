@@ -966,8 +966,8 @@ class GDALPDFDictionaryPoppler final : public GDALPDFDictionary
 
     ~GDALPDFDictionaryPoppler() override;
 
-    virtual GDALPDFObject *Get(const char *pszKey) override;
-    virtual std::map<CPLString, GDALPDFObject *> &GetValues() override;
+    GDALPDFObject *Get(const char *pszKey) override;
+    std::map<CPLString, GDALPDFObject *> &GetValues() override;
 };
 
 /************************************************************************/
@@ -989,8 +989,8 @@ class GDALPDFArrayPoppler final : public GDALPDFArray
     {
     }
 
-    virtual int GetLength() override;
-    virtual GDALPDFObject *Get(int nIndex) override;
+    int GetLength() override;
+    GDALPDFObject *Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -1013,11 +1013,11 @@ class GDALPDFStreamPoppler final : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
-    virtual char *GetBytes() override;
+    int64_t GetLength(int64_t nMaxSize = 0) override;
+    char *GetBytes() override;
 
-    virtual int64_t GetRawLength() override;
-    virtual char *GetRawBytes() override;
+    int64_t GetRawLength() override;
+    char *GetRawBytes() override;
 };
 
 /************************************************************************/
@@ -1546,8 +1546,8 @@ class GDALPDFDictionaryPodofo final : public GDALPDFDictionary
 
     ~GDALPDFDictionaryPodofo() override;
 
-    virtual GDALPDFObject *Get(const char *pszKey) override;
-    virtual std::map<CPLString, GDALPDFObject *> &GetValues() override;
+    GDALPDFObject *Get(const char *pszKey) override;
+    std::map<CPLString, GDALPDFObject *> &GetValues() override;
 };
 
 /************************************************************************/
@@ -1572,8 +1572,8 @@ class GDALPDFArrayPodofo final : public GDALPDFArray
     {
     }
 
-    virtual int GetLength() override;
-    virtual GDALPDFObject *Get(int nIndex) override;
+    int GetLength() override;
+    GDALPDFObject *Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -1607,11 +1607,11 @@ class GDALPDFStreamPodofo final : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
-    virtual char *GetBytes() override;
+    int64_t GetLength(int64_t nMaxSize = 0) override;
+    char *GetBytes() override;
 
-    virtual int64_t GetRawLength() override;
-    virtual char *GetRawBytes() override;
+    int64_t GetRawLength() override;
+    char *GetRawBytes() override;
 };
 
 /************************************************************************/
@@ -2211,8 +2211,8 @@ class GDALPDFDictionaryPdfium final : public GDALPDFDictionary
 
     ~GDALPDFDictionaryPdfium() override;
 
-    virtual GDALPDFObject *Get(const char *pszKey) override;
-    virtual std::map<CPLString, GDALPDFObject *> &GetValues() override;
+    GDALPDFObject *Get(const char *pszKey) override;
+    std::map<CPLString, GDALPDFObject *> &GetValues() override;
 };
 
 /************************************************************************/
@@ -2234,8 +2234,8 @@ class GDALPDFArrayPdfium final : public GDALPDFArray
     {
     }
 
-    virtual int GetLength() override;
-    virtual GDALPDFObject *Get(int nIndex) override;
+    int GetLength() override;
+    GDALPDFObject *Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -2262,11 +2262,11 @@ class GDALPDFStreamPdfium final : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
-    virtual char *GetBytes() override;
+    int64_t GetLength(int64_t nMaxSize = 0) override;
+    char *GetBytes() override;
 
-    virtual int64_t GetRawLength() override;
-    virtual char *GetRawBytes() override;
+    int64_t GetRawLength() override;
+    char *GetRawBytes() override;
 };
 
 /************************************************************************/
