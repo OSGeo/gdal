@@ -234,6 +234,7 @@ class MMRBand
     CPLErr GetBlockData(void *rowBuffer, size_t nCompressedRawSize);
     int PositionAtStartOfRowOffsetsInFile();
     bool FillRowOffsets();
+    vsi_l_offset GetFileSize();
 
     bool m_bIsValid =
         false;  // Determines if the created object is valid or not.
@@ -251,6 +252,7 @@ class MMRBand
 
     // indexed-RLE format
     std::vector<vsi_l_offset> m_aFileOffsets{};
+    vsi_l_offset m_nFileSize = 0; /* 0=unknown */
 
     // Assigned Subdataset for this band.
     int m_nAssignedSDS = 0;
