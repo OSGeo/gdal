@@ -496,9 +496,9 @@ bool Lerc1Image::read(Byte **ppByte, size_t &nRemainingBytes, double maxZError,
                 return false;
             if (numBytes == 0)
             {  // cnt part is const
-                if (maxValInImg != 0.0 && maxValInImg != 1.0)
+                if (maxValInImg != 0 && maxValInImg != 1)
                     return false;  // Only 0 and 1 are valid
-                bool v = (maxValInImg != 0.0);
+                bool v = (maxValInImg != 0);
                 for (int k = 0; k < getSize(); k++)
                     mask.Set(k, v);
             }
@@ -618,10 +618,11 @@ static int numBytesZTile(int nValues, float zMin, float zMax, double maxZError)
     if (nValues == 0 || (zMin == 0 && zMax == 0))
         return 1;
     if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax) ||
-        ((double)zMax - zMin) / (2 * maxZError) > MAXQ)  // max of 28 bits
-        return (int)(1 + nValues * sizeof(float));       // Stored as such
+        ((double)zMax - (double)zMin) / (2 * maxZError) >
+            MAXQ)                                   // max of 28 bits
+        return (int)(1 + nValues * sizeof(float));  // Stored as such
     unsigned int maxElem = static_cast<unsigned int>(
-        ((double)zMax - zMin) / (2 * maxZError) + 0.5);
+        ((double)zMax - (double)zMin) / (2 * maxZError) + 0.5);
     int nb = 1 + numBytesFlt(zMin);
     if (maxElem == 0)
         return nb;

@@ -402,7 +402,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                         "%04d-%02d-%02dT%02d:%02d:%02d", sMin.Date.Year,
                         sMin.Date.Month, sMin.Date.Day, sMin.Date.Hour,
                         sMin.Date.Minute,
-                        static_cast<int>(sMin.Date.Second + 0.5));
+                        static_cast<int>(sMin.Date.Second + 0.5f));
                     if (bJson)
                     {
                         oDomain.Set("minValue", pszVal);
@@ -421,7 +421,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                         "%04d-%02d-%02dT%02d:%02d:%02d", sMax.Date.Year,
                         sMax.Date.Month, sMax.Date.Day, sMax.Date.Hour,
                         sMax.Date.Minute,
-                        static_cast<int>(sMax.Date.Second + 0.5));
+                        static_cast<int>(sMax.Date.Second + 0.5f));
                     if (bJson)
                     {
                         oDomain.Set("maxValue", pszVal);

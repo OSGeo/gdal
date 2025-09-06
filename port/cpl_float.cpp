@@ -276,7 +276,7 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "Value %.8g is beyond range of float16. Converted to %sinf",
-                fVal, (fVal > 0) ? "+" : "-");
+                static_cast<double>(fVal), (fVal > 0) ? "+" : "-");
         }
         return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
     }

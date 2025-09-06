@@ -2374,16 +2374,17 @@ static void OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
     const int ms = OGR_GET_MS(fSecond);
     if (ms != 0)
         CPLsnprintf(szTempBuffer, nMaxSize, "%04d/%02d/%02d %02d:%02d:%06.3f",
-                    nYear, nMonth, nDay, nHour, nMinute, fSecond);
+                    nYear, nMonth, nDay, nHour, nMinute,
+                    static_cast<double>(fSecond));
     else  // Default format.
     {
-        if (std::isnan(fSecond) || fSecond < 0.0 || fSecond > 62.0)
+        if (std::isnan(fSecond) || fSecond < 0.0f || fSecond > 62.0f)
         {
             fSecond = 0.0;
             CPLError(CE_Failure, CPLE_NotSupported,
                      "OGRFeatureFormatDateTimeBuffer: fSecond is invalid.  "
                      "Forcing '%f' to 0.0.",
-                     fSecond);
+                     static_cast<double>(fSecond));
         }
         snprintf(szTempBuffer, nMaxSize, "%04d/%02d/%02d %02d:%02d:%02d", nYear,
                  nMonth, nDay, nHour, nMinute, static_cast<int>(fSecond));
@@ -2630,7 +2631,7 @@ const char *OGRFeature::GetFieldAsString(int iField) const
         if (ms != 0 || std::isnan(pauFields[iField].Date.Second))
             snprintf(m_pszTmpFieldValue, MAX_SIZE, "%02d:%02d:%06.3f",
                      pauFields[iField].Date.Hour, pauFields[iField].Date.Minute,
-                     pauFields[iField].Date.Second);
+                     static_cast<double>(pauFields[iField].Date.Second));
         else
             snprintf(m_pszTmpFieldValue, MAX_SIZE, "%02d:%02d:%02d",
                      pauFields[iField].Date.Hour, pauFields[iField].Date.Minute,

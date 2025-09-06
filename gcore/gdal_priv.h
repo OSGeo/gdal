@@ -5507,8 +5507,9 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
-                                      abs(dfVal1 + dfVal2) * ulp;
+           abs(dfVal1 - dfVal2) <
+               static_cast<double>(std::numeric_limits<float>::epsilon()) *
+                   abs(dfVal1 + dfVal2) * ulp;
 }
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal);

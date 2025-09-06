@@ -602,9 +602,10 @@ GDALComputedRasterBand::GDALComputedRasterBand(
         }
         else
         {
-            eDataType = (static_cast<float>(constant) == constant)
-                            ? GDT_Float32
-                            : GDT_Float64;
+            eDataType =
+                (static_cast<double>(static_cast<float>(constant)) == constant)
+                    ? GDT_Float32
+                    : GDT_Float64;
         }
     }
     bands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -672,7 +673,8 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op, double constant,
     const auto firstDT = band.GetRasterDataType();
     if (IsComparisonOperator(op))
         eDataType = GDT_Byte;
-    else if (firstDT == GDT_Float32 && static_cast<float>(constant) == constant)
+    else if (firstDT == GDT_Float32 &&
+             static_cast<double>(static_cast<float>(constant)) == constant)
         eDataType = GDT_Float32;
     else
         eDataType = GDT_Float64;
@@ -700,7 +702,8 @@ GDALComputedRasterBand::GDALComputedRasterBand(Operation op,
              constant >= -128 && constant <= 127 &&
              std::floor(constant) == constant)
         eDataType = GDT_Byte;
-    else if (firstDT == GDT_Float32 && static_cast<float>(constant) == constant)
+    else if (firstDT == GDT_Float32 &&
+             static_cast<double>(static_cast<float>(constant)) == constant)
         eDataType = GDT_Float32;
     else
         eDataType = GDT_Float64;

@@ -77,7 +77,7 @@ if (USE_PRECOMPILED_HEADERS)
     target_precompile_headers(gcore REUSE_FROM gdal_priv_header)
 endif()
 add_dependencies(gcore generate_gdal_version_h)
-target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
+target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX} ${WFLAG_DOUBLE_PROMOTION})
 target_include_directories(
   gcore
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>

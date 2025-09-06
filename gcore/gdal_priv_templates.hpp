@@ -180,8 +180,9 @@ template <> inline bool GDALIsValueInRange<double>(double dfValue)
 template <> inline bool GDALIsValueInRange<float>(double dfValue)
 {
     return CPLIsInf(dfValue) ||
-           (dfValue >= -std::numeric_limits<float>::max() &&
-            dfValue <= std::numeric_limits<float>::max());
+           (dfValue >=
+                -static_cast<double>(std::numeric_limits<float>::max()) &&
+            dfValue <= static_cast<double>(std::numeric_limits<float>::max()));
 }
 
 template <> inline bool GDALIsValueInRange<GFloat16>(double dfValue)
@@ -340,7 +341,7 @@ template <> struct sGDALCopyWord<float, double>
 {
     static inline void f(const float fValueIn, double &dfValueOut)
     {
-        dfValueOut = fValueIn;
+        dfValueOut = static_cast<double>(fValueIn);
     }
 };
 
@@ -400,12 +401,12 @@ template <> struct sGDALCopyWord<double, float>
         _mm_store_ss(&fValueOut,
                      _mm_cvtsd_ss(_mm_undefined_ps(), _mm_load_sd(&dfValueIn)));
 #else
-        if (dfValueIn > std::numeric_limits<float>::max())
+        if (dfValueIn > static_cast<double>(std::numeric_limits<float>::max()))
         {
             fValueOut = std::numeric_limits<float>::infinity();
             return;
         }
-        if (dfValueIn < -std::numeric_limits<float>::max())
+        if (dfValueIn < static_cast<double>(-std::numeric_limits<float>::max()))
         {
             fValueOut = -std::numeric_limits<float>::infinity();
             return;

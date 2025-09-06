@@ -1761,7 +1761,9 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                                  double(*static_cast<const GFloat16 *>(pSrc)));
                 break;
             case GDT_Float32:
-                str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
+                str = CPLSPrintf(
+                    "%.9g",
+                    static_cast<double>(*static_cast<const float *>(pSrc)));
                 break;
             case GDT_Float64:
                 str = CPLSPrintf("%.17g", *static_cast<const double *>(pSrc));
@@ -1787,7 +1789,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_CFloat32:
             {
                 const float *src = static_cast<const float *>(pSrc);
-                str = CPLSPrintf("%.9g+%.9gj", src[0], src[1]);
+                str = CPLSPrintf("%.9g+%.9gj", double(src[0]), double(src[1]));
                 break;
             }
             case GDT_CFloat64:
