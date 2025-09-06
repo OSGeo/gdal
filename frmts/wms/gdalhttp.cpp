@@ -113,7 +113,8 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest)
                                         &psRequest->m_curl_error[0]));
 
     psRequest->m_headers = static_cast<struct curl_slist *>(CPLHTTPSetOptions(
-        psRequest->m_curl_handle, psRequest->URL.c_str(), psRequest->options));
+        psRequest->m_curl_handle, psRequest->URL.URLEncode().c_str(),
+        psRequest->options));
     if (psRequest->m_headers != nullptr)
     {
         CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle,

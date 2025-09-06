@@ -384,6 +384,69 @@ bool CPLString::endsWith(const std::string &osStr) const
 }
 
 /************************************************************************/
+/*                             URLEncode()                              */
+/************************************************************************/
+
+/**
+ * Return a string that *can* be a valid URL.
+ *
+ * Said otherwise if URLEncode() != *this was not a valid URL according to
+ * https://datatracker.ietf.org/doc/html/rfc3986.html.
+ *
+ * This replaces all characters that are not reserved (:/?#[]\@!$&'()*+,;=),
+ * unreserved (a-z, A-Z, 0-9 and -.-~) or already percent-encoded by their
+ * percent-encoding.
+ *
+ * Note that when composing a URL, and typically query-parameters, it might
+ * be needed to use CPLEscape(,,CPLES_URL) to also substitute reserved
+ * characters.
+ *
+ * @return a URL encoded string
+ * @since 3.12
+ */
+CPLString CPLString::URLEncode() const
+{
+    // Helper to check if a substring is a valid percent-encoding
+    auto isPercentEncoded = [](const char *str) -> bool
+    {
+        return str[0] == '%' &&
+               std::isxdigit(static_cast<unsigned char>(str[1])) &&
+               std::isxdigit(static_cast<unsigned char>(str[2]));
+    };
+
+    // Cf https://datatracker.ietf.org/doc/html/rfc3986.html
+    const char *unreserved =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    const char *reserved = ":/?#[]@!$&'()*+,;=";
+    CPLString osEncoded;
+    osEncoded.reserve(size());
+    for (size_t i = 0; i < size(); ++i)
+    {
+        char ch = (*this)[i];
+        // If already percent-encoded, copy as is
+        if (ch == '%' && i + 2 < size() && isPercentEncoded(c_str() + i))
+        {
+            osEncoded += ch;
+            osEncoded += (*this)[i + 1];
+            osEncoded += (*this)[i + 2];
+            i += 2;
+        }
+        else if (strchr(unreserved, ch) || strchr(reserved, ch))
+        {
+            osEncoded += ch;
+        }
+        else
+        {
+            char buf[4];
+            snprintf(buf, sizeof(buf), "%%%02X",
+                     static_cast<unsigned char>(ch));
+            osEncoded += buf;
+        }
+    }
+    return osEncoded;
+}
+
+/************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
 

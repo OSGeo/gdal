@@ -423,6 +423,8 @@ extern "C++"
 
         CPLSTRING_METHOD_DLL bool endsWith(const std::string &osStr) const;
 
+        CPLSTRING_METHOD_DLL CPLString URLEncode() const;
+
       private:
         operator void *(void) = delete;
     };

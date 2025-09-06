@@ -2185,7 +2185,8 @@ void CSLSetNameValueSeparator(char **papszList, const char *pszSeparator)
  * '$', '-', '_', '.', '+', '!', '*', ''', '(', ')' and ',' (see RFC1738) are
  * converted to a percent followed by a two digit hex encoding of the character
  * (leading zero supplied if needed).  This is the mechanism used for encoding
- * values to be passed in URLs.
+ * values to be passed in URLs. Note that this is different from what
+ * CPLString::URLEncode() does.
  *
  * CPLES_SQL(3): All single quotes are replaced with two single quotes.
  * Suitable for use when constructing literal values for SQL commands where
