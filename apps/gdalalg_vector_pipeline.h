@@ -117,7 +117,7 @@ class GDALVectorPipelineOutputLayer /* non final */
 {
   protected:
     explicit GDALVectorPipelineOutputLayer(OGRLayer &oSrcLayer);
-    ~GDALVectorPipelineOutputLayer();
+    ~GDALVectorPipelineOutputLayer() override;
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorPipelineOutputLayer)
 
@@ -178,7 +178,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
 {
   public:
     GDALVectorNonStreamingAlgorithmDataset();
-    ~GDALVectorNonStreamingAlgorithmDataset();
+    ~GDALVectorNonStreamingAlgorithmDataset() override;
 
     virtual bool Process(OGRLayer &srcLayer, OGRLayer &dstLayer) = 0;
 
@@ -219,7 +219,7 @@ class GDALVectorPipelineOutputDataset final : public GDALDataset
 
   public:
     explicit GDALVectorPipelineOutputDataset(GDALDataset &oSrcDS);
-    ~GDALVectorPipelineOutputDataset();
+    ~GDALVectorPipelineOutputDataset() override;
 
     void AddLayer(OGRLayer &oSrcLayer,
                   std::unique_ptr<OGRLayerWithTranslateFeature> poNewLayer);

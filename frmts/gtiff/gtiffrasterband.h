@@ -77,7 +77,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     GTiffRasterBand(GTiffDataset *, int);
-    virtual ~GTiffRasterBand();
+    ~GTiffRasterBand() override;
 
     virtual bool IsBaseGTiffClass() const
     {

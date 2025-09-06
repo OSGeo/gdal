@@ -17,12 +17,12 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKPolyModelSegment : public PCIDSKPolySegment,
+    class CPCIDSKPolyModelSegment final: public PCIDSKPolySegment,
                                      public CPCIDSKSegment
     {
     public:
         CPCIDSKPolyModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKPolyModelSegment();
+        ~CPCIDSKPolyModelSegment() override;
 
         std::vector<double> GetXForwardCoefficients() const override;
         std::vector<double> GetYForwardCoefficients() const override;

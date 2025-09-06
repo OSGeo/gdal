@@ -45,7 +45,7 @@ class AirSARDataset final : public GDALPamDataset
 
   public:
     AirSARDataset();
-    ~AirSARDataset();
+    ~AirSARDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };

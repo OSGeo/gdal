@@ -41,7 +41,7 @@ class WCSRasterBand final : public GDALPamRasterBand
 
   public:
     WCSRasterBand(WCSDataset *, int nBand, int iOverview);
-    virtual ~WCSRasterBand();
+    ~WCSRasterBand() override;
 
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
 

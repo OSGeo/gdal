@@ -68,7 +68,7 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
   public:
     OGRJSONCollectionStreamingParser(bool bFirstPass, bool bStoreNativeData,
                                      size_t nMaxObjectSize);
-    ~OGRJSONCollectionStreamingParser();
+    ~OGRJSONCollectionStreamingParser() override;
 
     virtual void String(const char * /*pszValue*/, size_t) override;
     virtual void Number(const char * /*pszValue*/, size_t) override;

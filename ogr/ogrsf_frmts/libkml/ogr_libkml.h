@@ -86,7 +86,7 @@ class OGRLIBKMLLayer final : public OGRLayer,
                    kmldom::ContainerPtr poKmlContainer,
                    kmldom::UpdatePtr poKmlUpdate, const char *pszFileName,
                    bool bNew, bool bUpdate);
-    virtual ~OGRLIBKMLLayer();
+    ~OGRLIBKMLLayer() override;
 
     void ResetReading() override
     {
@@ -242,7 +242,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
 
   public:
     explicit OGRLIBKMLDataSource(kmldom::KmlFactory *poKmlFactory);
-    ~OGRLIBKMLDataSource();
+    ~OGRLIBKMLDataSource() override;
 
     int GetLayerCount() const override
     {

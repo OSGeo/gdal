@@ -59,7 +59,7 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
                       const std::string &osAccessKeyId, bool bUseHeaderFile,
                       const GOA2Manager &oManager,
                       const std::string &osUserProject);
-    ~VSIGSHandleHelper();
+    ~VSIGSHandleHelper() override;
 
     static VSIGSHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,

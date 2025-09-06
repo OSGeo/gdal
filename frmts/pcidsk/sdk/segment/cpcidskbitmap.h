@@ -33,7 +33,7 @@ namespace PCIDSK
     {
     public:
         CPCIDSKBitmap(PCIDSKFile *file,int segment,const char*segment_pointer);
-        virtual     ~CPCIDSKBitmap();
+        ~CPCIDSKBitmap() override;
 
         virtual void Initialize() override;
 

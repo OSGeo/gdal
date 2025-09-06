@@ -204,7 +204,7 @@ class ECBand final : public GDALRasterBand
 
   public:
     ECBand(ECDataset *parent, int b, int level = 0);
-    virtual ~ECBand();
+    ~ECBand() override;
 
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 

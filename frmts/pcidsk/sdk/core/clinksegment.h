@@ -21,7 +21,7 @@ namespace PCIDSK {
     {
     public:
         CLinkSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CLinkSegment();
+        ~CLinkSegment() override;
 
         // Get path
         std::string GetPath(void) const;

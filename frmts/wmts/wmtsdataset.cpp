@@ -167,7 +167,7 @@ class WMTSDataset final : public GDALPamDataset
 
   public:
     WMTSDataset();
-    virtual ~WMTSDataset();
+    ~WMTSDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;

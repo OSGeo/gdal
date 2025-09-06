@@ -78,7 +78,7 @@ class FileGDBTrivialIterator final : public FileGDBIterator
   public:
     explicit FileGDBTrivialIterator(FileGDBIterator *poParentIter);
 
-    virtual ~FileGDBTrivialIterator()
+    ~FileGDBTrivialIterator() override
     {
         delete poParentIter;
     }
@@ -140,7 +140,7 @@ class FileGDBNotIterator final : public FileGDBIterator
 
   public:
     explicit FileGDBNotIterator(FileGDBIterator *poIterBase);
-    virtual ~FileGDBNotIterator();
+    ~FileGDBNotIterator() override;
 
     virtual FileGDBTable *GetTable() override
     {
@@ -170,7 +170,7 @@ class FileGDBAndIterator final : public FileGDBIterator
   public:
     FileGDBAndIterator(FileGDBIterator *poIter1, FileGDBIterator *poIter2,
                        bool bTakeOwnershipOfIterators);
-    virtual ~FileGDBAndIterator();
+    ~FileGDBAndIterator() override;
 
     virtual FileGDBTable *GetTable() override
     {
@@ -200,7 +200,7 @@ class FileGDBOrIterator final : public FileGDBIterator
   public:
     FileGDBOrIterator(FileGDBIterator *poIter1, FileGDBIterator *poIter2,
                       int bIteratorAreExclusive = FALSE);
-    virtual ~FileGDBOrIterator();
+    ~FileGDBOrIterator() override;
 
     virtual FileGDBTable *GetTable() override
     {
@@ -221,7 +221,7 @@ constexpr int FGDB_PAGE_SIZE_V1 = 4096;
 constexpr int FGDB_PAGE_SIZE_V2 = 65536;
 constexpr int MAX_FGDB_PAGE_SIZE = FGDB_PAGE_SIZE_V2;
 
-class FileGDBIndexIteratorBase : virtual public FileGDBIterator
+class FileGDBIndexIteratorBase /* non final */ : virtual public FileGDBIterator
 {
   protected:
     FileGDBTable *poParent = nullptr;
@@ -296,7 +296,7 @@ class FileGDBIndexIteratorBase : virtual public FileGDBIterator
     operator=(const FileGDBIndexIteratorBase &) = delete;
 
   public:
-    virtual ~FileGDBIndexIteratorBase();
+    ~FileGDBIndexIteratorBase() override;
 
     virtual FileGDBTable *GetTable() override
     {
@@ -352,7 +352,7 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
     FileGDBIndexIterator &operator=(const FileGDBIndexIterator &) = delete;
 
   public:
-    virtual ~FileGDBIndexIterator();
+    ~FileGDBIndexIterator() override;
 
     static FileGDBIterator *Build(FileGDBTable *poParentIn, int nFieldIdx,
                                   int bAscendingIn, FileGDBSQLOp op,

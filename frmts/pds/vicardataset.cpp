@@ -126,7 +126,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
                                 vsi_l_offset nFileOffset, vsi_l_offset nStride,
                                 RawRasterBand::ByteOrder eBINTByteOrder,
                                 RawRasterBand::ByteOrder eBREALByteOrder);
-    ~OGRVICARBinaryPrefixesLayer();
+    ~OGRVICARBinaryPrefixesLayer() override;
 
     bool HasError() const
     {

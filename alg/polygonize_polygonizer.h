@@ -198,8 +198,6 @@ class OGRPolygonWriter : public PolygonReceiver<DataType>
 
     OGRPolygonWriter(const OGRPolygonWriter<DataType> &) = delete;
 
-    ~OGRPolygonWriter() = default;
-
     OGRPolygonWriter<DataType> &
     operator=(const OGRPolygonWriter<DataType> &) = delete;
 

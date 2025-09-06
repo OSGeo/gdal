@@ -29,7 +29,7 @@ class GTiffSplitBitmapBand final : public GTiffBitmapBand
 
   public:
     GTiffSplitBitmapBand(GTiffDataset *, int);
-    virtual ~GTiffSplitBitmapBand();
+    ~GTiffSplitBitmapBand() override;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                                        int nYSize, int nMaskFlagStop,

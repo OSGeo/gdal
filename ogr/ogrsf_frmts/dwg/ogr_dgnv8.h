@@ -81,7 +81,7 @@ class OGRDGNV8Layer final : public OGRLayer
 
   public:
     OGRDGNV8Layer(OGRDGNV8DataSource *poDS, OdDgModelPtr pModel);
-    virtual ~OGRDGNV8Layer();
+    ~OGRDGNV8Layer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -122,7 +122,7 @@ class OGRDGNV8DataSource final : public GDALDataset
 
   public:
     explicit OGRDGNV8DataSource(OGRDGNV8Services *poServices);
-    ~OGRDGNV8DataSource();
+    ~OGRDGNV8DataSource() override;
 
     int Open(const char *, bool bUpdate);
     bool PreCreate(const char *, char **);

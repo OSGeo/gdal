@@ -21,7 +21,7 @@
 #include <string>
 #include "cpl_port.h"
 
-class CPL_DLL CPLJSonStreamingParser
+class CPL_DLL CPLJSonStreamingParser /* non final */
 {
   public:
     CPLJSonStreamingParser();

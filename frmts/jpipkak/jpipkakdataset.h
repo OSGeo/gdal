@@ -210,7 +210,7 @@ class JPIPKAKDataset final : public GDALPamDataset
 
   public:
     JPIPKAKDataset();
-    virtual ~JPIPKAKDataset();
+    ~JPIPKAKDataset() override;
 
     // progressive methods
     virtual GDALAsyncReader *
@@ -297,7 +297,7 @@ class JPIPKAKRasterBand final : public GDALPamRasterBand
 
   public:
     JPIPKAKRasterBand(int, int, kdu_codestream *, int, JPIPKAKDataset *);
-    virtual ~JPIPKAKRasterBand();
+    ~JPIPKAKRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
@@ -336,7 +336,7 @@ class JPIPKAKAsyncReader final : public GDALAsyncReader
 
   public:
     JPIPKAKAsyncReader();
-    virtual ~JPIPKAKAsyncReader();
+    ~JPIPKAKAsyncReader() override;
 
     virtual GDALAsyncStatusType
     GetNextUpdatedRegion(double timeout, int *pnxbufoff, int *pnybufoff,

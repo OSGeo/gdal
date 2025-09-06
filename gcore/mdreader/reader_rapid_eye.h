@@ -33,7 +33,7 @@ class GDALMDReaderRapidEye : public GDALMDReaderBase
 {
   public:
     GDALMDReaderRapidEye(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderRapidEye();
+    ~GDALMDReaderRapidEye() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

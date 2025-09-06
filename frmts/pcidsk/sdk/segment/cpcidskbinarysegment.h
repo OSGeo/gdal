@@ -17,13 +17,13 @@
 namespace PCIDSK {
     class PCIDSKFile;
 
-    class CPCIDSKBinarySegment : public PCIDSKBinarySegment,
+    class CPCIDSKBinarySegment final: public PCIDSKBinarySegment,
         public CPCIDSKSegment
     {
     public:
         CPCIDSKBinarySegment(PCIDSKFile *file, int segment,
             const char *segment_pointer, bool bLoad=true);
-        ~CPCIDSKBinarySegment();
+        ~CPCIDSKBinarySegment() override;
 
         const char* GetBuffer(void) const override
         {

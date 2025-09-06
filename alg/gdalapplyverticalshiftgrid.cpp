@@ -46,7 +46,7 @@ class GDALApplyVSGDataset final : public GDALDataset
                         GDALDataset *poReprojectedGrid, GDALDataType eDT,
                         bool bInverse, double dfSrcUnitToMeter,
                         double dfDstUnitToMeter, int nBlockSize);
-    virtual ~GDALApplyVSGDataset();
+    ~GDALApplyVSGDataset() override;
 
     virtual int CloseDependentDatasets() override;
 
@@ -71,7 +71,7 @@ class GDALApplyVSGRasterBand final : public GDALRasterBand
 
   public:
     GDALApplyVSGRasterBand(GDALDataType eDT, int nBlockSize);
-    virtual ~GDALApplyVSGRasterBand();
+    ~GDALApplyVSGRasterBand() override;
 
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pData) override;

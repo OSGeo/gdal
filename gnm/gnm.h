@@ -74,7 +74,7 @@ class CPL_DLL GNMNetwork : public GDALDataset
 {
   public:
     GNMNetwork();
-    virtual ~GNMNetwork();
+    ~GNMNetwork() override;
 
     // GDALDataset Interface
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -205,7 +205,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
 {
   public:
     GNMGenericNetwork();
-    virtual ~GNMGenericNetwork();
+    ~GNMGenericNetwork() override;
 
     // GDALDataset Interface
 
@@ -516,7 +516,7 @@ class GNMGenericLayer : public OGRLayer
 {
   public:
     GNMGenericLayer(OGRLayer *poLayer, GNMGenericNetwork *poNetwork);
-    virtual ~GNMGenericLayer();
+    ~GNMGenericLayer() override;
 
     // OGRLayer Interface
 
@@ -735,11 +735,11 @@ class CPL_DLL GNMRule
  * @since GDAL 2.1
  */
 
-class OGRGNMWrappedResultLayer : public OGRLayer
+class OGRGNMWrappedResultLayer final : public OGRLayer
 {
   public:
     OGRGNMWrappedResultLayer(GDALDataset *poDS, OGRLayer *poLayer);
-    ~OGRGNMWrappedResultLayer();
+    ~OGRGNMWrappedResultLayer() override;
 
     // OGRLayer
     virtual void ResetReading() override;
@@ -758,9 +758,8 @@ class OGRGNMWrappedResultLayer : public OGRLayer
     virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     // OGRGNMWrappedResultLayer
-    virtual OGRErr InsertFeature(OGRFeature *poFeature,
-                                 const CPLString &soLayerName, int nPathNo,
-                                 bool bIsEdge);
+    OGRErr InsertFeature(OGRFeature *poFeature, const CPLString &soLayerName,
+                         int nPathNo, bool bIsEdge);
 
   protected:
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;

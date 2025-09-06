@@ -54,7 +54,7 @@ class OGRSOSILayer final : public OGRLayer
   public:
     OGRSOSILayer(OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn,
                  LC_FILADM *poFil, S2I *poHeadDefn);
-    ~OGRSOSILayer();
+    ~OGRSOSILayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -103,7 +103,7 @@ class OGRSOSIDataSource final : public GDALDataset
     S2I *poTextHeaders;
 
     OGRSOSIDataSource();
-    ~OGRSOSIDataSource();
+    ~OGRSOSIDataSource() override;
 
     int Open(const char *pszFilename, int bUpdate);
 #ifdef WRITE_SUPPORT

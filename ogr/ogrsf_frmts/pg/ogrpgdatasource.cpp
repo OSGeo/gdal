@@ -2850,7 +2850,7 @@ class OGRPGNoResetResultLayer final : public OGRPGLayer
   public:
     OGRPGNoResetResultLayer(OGRPGDataSource *poDSIn, PGresult *hResultIn);
 
-    virtual ~OGRPGNoResetResultLayer();
+    ~OGRPGNoResetResultLayer() override;
 
     virtual void ResetReading() override;
 

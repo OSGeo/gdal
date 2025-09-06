@@ -68,7 +68,7 @@ class VSISwiftHandleHelper final : public IVSIS3LikeHandleHelper
                          const std::string &osAuthToken,
                          const std::string &osBucket,
                          const std::string &osObjectKey);
-    ~VSISwiftHandleHelper();
+    ~VSISwiftHandleHelper() override;
 
     bool Authenticate(const std::string &osPathForOption);
 

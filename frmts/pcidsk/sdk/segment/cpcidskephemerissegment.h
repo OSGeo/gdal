@@ -22,7 +22,7 @@ namespace PCIDSK {
     {
     public:
         CPCIDSKEphemerisSegment(PCIDSKFile *file, int segment,const char *segment_pointer,bool bLoad=true);
-        ~CPCIDSKEphemerisSegment();
+        ~CPCIDSKEphemerisSegment() override;
 
         const EphemerisSeg_t& GetEphemeris() const override
         {

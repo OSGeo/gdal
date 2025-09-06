@@ -806,7 +806,7 @@ class OGRSplitListFieldLayer : public OGRLayer
 
   public:
     OGRSplitListFieldLayer(OGRLayer *poSrcLayer, int nMaxSplitListSubFields);
-    virtual ~OGRSplitListFieldLayer();
+    ~OGRSplitListFieldLayer() override;
 
     bool BuildLayerDefn(GDALProgressFunc pfnProgress, void *pProgressArg);
 
@@ -1658,7 +1658,7 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorTranslateWrappedLayer)
 
   public:
-    virtual ~GDALVectorTranslateWrappedLayer();
+    ~GDALVectorTranslateWrappedLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

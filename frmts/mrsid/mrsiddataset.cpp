@@ -255,7 +255,7 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
 
   public:
     explicit MrSIDDataset(int bIsJPEG2000);
-    ~MrSIDDataset();
+    ~MrSIDDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, int bIsJP2);
 
@@ -291,7 +291,7 @@ class MrSIDRasterBand final : public GDALPamRasterBand
 
   public:
     MrSIDRasterBand(MrSIDDataset *, int);
-    ~MrSIDRasterBand();
+    ~MrSIDRasterBand() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, GSpacing nPixelSpace,

@@ -39,7 +39,7 @@ class GNMFileNetwork : public GNMGenericNetwork
 {
   public:
     GNMFileNetwork();
-    virtual ~GNMFileNetwork();
+    ~GNMFileNetwork() override;
     virtual CPLErr Open(GDALOpenInfo *poOpenInfo) override;
     virtual CPLErr Delete() override;
     virtual int CloseDependentDatasets() override;

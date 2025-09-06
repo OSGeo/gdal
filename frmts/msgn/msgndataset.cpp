@@ -64,7 +64,7 @@ class MSGNDataset final : public GDALDataset
 
   public:
     MSGNDataset();
-    ~MSGNDataset();
+    ~MSGNDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 

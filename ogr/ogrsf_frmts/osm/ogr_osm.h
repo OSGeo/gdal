@@ -131,7 +131,7 @@ class OGROSMLayer final : public OGRLayer
 
   public:
     OGROSMLayer(OGROSMDataSource *m_poDS, int m_nIdxLayer, const char *pszName);
-    virtual ~OGROSMLayer();
+    ~OGROSMLayer() override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -563,7 +563,7 @@ class OGROSMDataSource final : public GDALDataset
 
   public:
     OGROSMDataSource();
-    virtual ~OGROSMDataSource();
+    ~OGROSMDataSource() override;
 
     int GetLayerCount() const override
     {

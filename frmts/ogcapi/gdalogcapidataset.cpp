@@ -125,7 +125,7 @@ class OGCAPIDataset final : public GDALDataset
 
   public:
     OGCAPIDataset() = default;
-    ~OGCAPIDataset();
+    ~OGCAPIDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -272,7 +272,7 @@ class OGCAPITiledLayer final
                      const CPLString &osTileURL, bool bIsMVT,
                      const gdal::TileMatrixSet::TileMatrix &tileMatrix,
                      OGRwkbGeometryType eGeomType);
-    ~OGCAPITiledLayer();
+    ~OGCAPITiledLayer() override;
 
     void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
     void SetFields(const std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields);

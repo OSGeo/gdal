@@ -1351,7 +1351,7 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     OGROpenFileGDBSimpleSQLLayer(OGRLayer *poBaseLayer, FileGDBIterator *poIter,
                                  int nColumns, const swq_col_def *pasColDefs,
                                  GIntBig nOffset, GIntBig nLimit);
-    virtual ~OGROpenFileGDBSimpleSQLLayer();
+    ~OGROpenFileGDBSimpleSQLLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;

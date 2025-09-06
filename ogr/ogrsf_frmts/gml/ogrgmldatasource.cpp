@@ -3191,7 +3191,7 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);
 
-    virtual ~OGRGMLSingleFeatureLayer()
+    ~OGRGMLSingleFeatureLayer() override
     {
         poFeatureDefn->Release();
     }

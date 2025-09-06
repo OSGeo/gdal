@@ -208,7 +208,7 @@ const IOInterfaces *PCIDSK::GetDefaultIOInterfaces()
 /*                            CPLThreadMutex                            */
 /************************************************************************/
 
-class CPLThreadMutex : public PCIDSK::Mutex
+class CPLThreadMutex final : public PCIDSK::Mutex
 
 {
   private:
@@ -216,7 +216,7 @@ class CPLThreadMutex : public PCIDSK::Mutex
 
   public:
     CPLThreadMutex();
-    ~CPLThreadMutex();
+    ~CPLThreadMutex() override;
 
     int Acquire(void) override;
     int Release(void) override;

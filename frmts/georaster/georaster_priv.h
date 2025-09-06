@@ -132,7 +132,7 @@ class GeoRasterDriver final : public GDALDriver
     CPL_DISALLOW_COPY_ASSIGN(GeoRasterDriver)
   public:
     GeoRasterDriver();
-    virtual ~GeoRasterDriver();
+    ~GeoRasterDriver() override;
     OWConnection *GetConnection(const char *pszUserIn,
                                 const char *pszPasswordIn,
                                 const char *pszServerIn, int nSessMinIn,
@@ -308,11 +308,11 @@ class GeoRasterRasterBand final : public GDALRasterBand
 //  GeoRasterWrapper, an interface for Oracle Spatial SDO_GEORASTER objects
 //  ---------------------------------------------------------------------------
 
-class GeoRasterWrapper
+class GeoRasterWrapper final
 {
   public:
     GeoRasterWrapper();
-    virtual ~GeoRasterWrapper();
+    ~GeoRasterWrapper();
 
   private:
     OCILobLocator **pahLocator;

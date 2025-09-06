@@ -51,7 +51,7 @@ enum RecordType
 /************************************************************************/
 /*                              VFKProperty                             */
 /************************************************************************/
-class VFKProperty
+class VFKProperty final
 {
   private:
     bool m_bIsNull;
@@ -67,7 +67,7 @@ class VFKProperty
     explicit VFKProperty(double);
     explicit VFKProperty(const char *);
     explicit VFKProperty(CPLString const &);
-    virtual ~VFKProperty();
+    ~VFKProperty();
 
     VFKProperty(VFKProperty const &other) = default;
     VFKProperty &operator=(VFKProperty const &) = default;
@@ -99,7 +99,7 @@ class VFKProperty
 /************************************************************************/
 /*                              IVFKFeature                              */
 /************************************************************************/
-class IVFKFeature
+class IVFKFeature /* non final */
 {
   private:
     static double GetDeterminatOfMatrixDim3(double[3], double[3], double[3]);
@@ -157,7 +157,7 @@ class IVFKFeature
 /************************************************************************/
 /*                              VFKFeature                              */
 /************************************************************************/
-class VFKFeature : public IVFKFeature
+class VFKFeature final : public IVFKFeature
 {
   private:
     typedef std::vector<VFKProperty> VFKPropertyList;
@@ -188,7 +188,7 @@ class VFKFeature : public IVFKFeature
 /************************************************************************/
 /*                              VFKFeatureSQLite                        */
 /************************************************************************/
-class VFKFeatureSQLite : public IVFKFeature
+class VFKFeatureSQLite final : public IVFKFeature
 {
   private:
     int m_iRowId; /* rowid in DB */
@@ -215,7 +215,7 @@ class VFKFeatureSQLite : public IVFKFeature
 /************************************************************************/
 /*                              VFKPropertyDefn                         */
 /************************************************************************/
-class VFKPropertyDefn
+class VFKPropertyDefn final
 {
   private:
     char *m_pszName;
@@ -229,7 +229,7 @@ class VFKPropertyDefn
 
   public:
     VFKPropertyDefn(const char *, const char *, const char *);
-    virtual ~VFKPropertyDefn();
+    ~VFKPropertyDefn();
 
     const char *GetName() const
     {
@@ -262,7 +262,7 @@ class VFKPropertyDefn
 /************************************************************************/
 /*                              IVFKDataBlock                           */
 /************************************************************************/
-class IVFKDataBlock
+class IVFKDataBlock /* non final */
 {
   private:
     IVFKFeature **m_papoFeature;
@@ -357,7 +357,7 @@ class IVFKDataBlock
 /************************************************************************/
 /*                              VFKDataBlock                            */
 /************************************************************************/
-class VFKDataBlock : public IVFKDataBlock
+class VFKDataBlock final : public IVFKDataBlock
 {
   private:
     int LoadGeometryPoint() override;
@@ -391,7 +391,7 @@ class VFKDataBlock : public IVFKDataBlock
 /************************************************************************/
 /*                              VFKDataBlockSQLite                      */
 /************************************************************************/
-class VFKDataBlockSQLite : public IVFKDataBlock
+class VFKDataBlockSQLite final : public IVFKDataBlock
 {
   private:
     sqlite3_stmt *m_hStmt;
@@ -433,7 +433,7 @@ class VFKDataBlockSQLite : public IVFKDataBlock
 /************************************************************************/
 /*                              IVFKReader                              */
 /************************************************************************/
-class IVFKReader
+class IVFKReader /* non final */
 {
   private:
     virtual void AddInfo(const char *) = 0;

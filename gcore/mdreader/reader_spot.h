@@ -32,7 +32,7 @@ class GDALMDReaderSpot : public GDALMDReaderPleiades
 {
   public:
     GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderSpot();
+    ~GDALMDReaderSpot() override;
 
   protected:
     virtual void LoadMetadata() override;

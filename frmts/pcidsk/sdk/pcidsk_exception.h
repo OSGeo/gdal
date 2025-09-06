@@ -32,7 +32,7 @@ namespace PCIDSK
         PCIDSKException() = default;
     public:
         PCIDSKException(const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
-        virtual ~PCIDSKException();
+        ~PCIDSKException() override;
         PCIDSKException(const PCIDSKException&) = default;
         PCIDSKException& operator=(const PCIDSKException&) = default;
         PCIDSKException(PCIDSKException&&) = default;

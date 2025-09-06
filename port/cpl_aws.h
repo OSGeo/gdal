@@ -189,7 +189,7 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         const std::string &osBucket, const std::string &osObjectKey,
         bool bUseHTTPS, bool bUseVirtualHosting,
         AWSCredentialsSource eCredentialsSource, bool bIsDirectoryBucket);
-    ~VSIS3HandleHelper();
+    ~VSIS3HandleHelper() override;
 
     static VSIS3HandleHelper *BuildFromURI(const char *pszURI,
                                            const char *pszFSPrefix,

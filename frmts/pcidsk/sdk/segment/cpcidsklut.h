@@ -33,7 +33,7 @@ namespace PCIDSK
     public:
         CPCIDSK_LUT( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_LUT();
+        ~CPCIDSK_LUT() override;
 
         virtual void ReadLUT(std::vector<unsigned char>& lut) override;
         virtual void WriteLUT(const std::vector<unsigned char>& lut) override;

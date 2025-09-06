@@ -70,7 +70,7 @@ class OGRPDSLayer final : public OGRLayer,
                 const std::string &osStructureFilename, int nRecords,
                 int nStartBytes, int nRecordSize, GByte *pabyRecord,
                 bool bIsASCII);
-    virtual ~OGRPDSLayer();
+    ~OGRPDSLayer() override;
 
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPDSLayer)
@@ -111,7 +111,7 @@ class OGRPDSDataSource final : public GDALDataset
 
   public:
     OGRPDSDataSource();
-    virtual ~OGRPDSDataSource();
+    ~OGRPDSDataSource() override;
 
     int Open(const char *pszFilename);
 

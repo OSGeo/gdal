@@ -83,7 +83,7 @@ public:
     BlockTileDir(BlockFile * poFile, uint16 nSegment);
     BlockTileDir(BlockFile * poFile, uint16 nSegment, uint16 nVersion);
 
-    virtual             ~BlockTileDir(void);
+    ~BlockTileDir() override;
 
     BlockTileLayer *    GetTileLayer(uint32 iLayer);
 };

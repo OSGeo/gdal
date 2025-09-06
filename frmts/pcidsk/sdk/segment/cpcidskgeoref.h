@@ -33,7 +33,7 @@ namespace PCIDSK
     public:
         CPCIDSKGeoref( PCIDSKFile *file, int segment,const char *segment_pointer );
 
-        virtual     ~CPCIDSKGeoref();
+        ~CPCIDSKGeoref() override;
 
         // PCIDSKSegment
 

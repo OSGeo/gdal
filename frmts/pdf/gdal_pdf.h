@@ -408,7 +408,7 @@ class PDFDataset final : public GDALPamDataset
   public:
     PDFDataset(PDFDataset *poParentDS = nullptr, int nXSize = 0,
                int nYSize = 0);
-    virtual ~PDFDataset();
+    ~PDFDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
@@ -496,7 +496,7 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     PDFRasterBand(PDFDataset *, int, int);
-    virtual ~PDFRasterBand();
+    ~PDFRasterBand() override;
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const override;
@@ -532,7 +532,7 @@ class PDFWritableVectorDataset final : public GDALDataset
 
   public:
     PDFWritableVectorDataset();
-    virtual ~PDFWritableVectorDataset();
+    ~PDFWritableVectorDataset() override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

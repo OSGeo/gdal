@@ -141,7 +141,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
                                ownership depending on bTakeLayerOwnership */
         int bTakeLayerOwnership);
 
-    virtual ~OGRUnionLayer();
+    ~OGRUnionLayer() override;
 
     /* All the following non virtual methods must be called just after the
      * constructor */

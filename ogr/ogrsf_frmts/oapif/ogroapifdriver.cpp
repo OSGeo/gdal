@@ -116,7 +116,7 @@ class OGROAPIFDataset final : public GDALDataset
 
   public:
     OGROAPIFDataset() = default;
-    ~OGROAPIFDataset();
+    ~OGROAPIFDataset() override;
 
     int GetLayerCount() const override
     {
@@ -198,7 +198,7 @@ class OGROAPIFLayer final : public OGRLayer
                   const std::string &osActiveCRS, double dfCoordinateEpoch,
                   const CPLJSONArray &oLinks);
 
-    ~OGROAPIFLayer();
+    ~OGROAPIFLayer() override;
 
     void SetItemAssets(const CPLJSONObject &oItemAssets);
 

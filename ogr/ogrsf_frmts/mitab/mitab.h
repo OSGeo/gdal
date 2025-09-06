@@ -76,7 +76,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
 
   public:
     IMapInfoFile(GDALDataset *poDS);
-    virtual ~IMapInfoFile();
+    ~IMapInfoFile() override;
 
     virtual TABFileClass GetFileClass()
     {
@@ -245,7 +245,7 @@ class TABFile final : public IMapInfoFile
 
   public:
     explicit TABFile(GDALDataset *poDS);
-    virtual ~TABFile();
+    ~TABFile() override;
 
     virtual TABFileClass GetFileClass() override
     {
@@ -425,7 +425,7 @@ class TABView final : public IMapInfoFile
 
   public:
     explicit TABView(GDALDataset *poDS);
-    virtual ~TABView();
+    ~TABView() override;
 
     virtual TABFileClass GetFileClass() override
     {
@@ -566,7 +566,7 @@ class TABSeamless final : public IMapInfoFile
 
   public:
     explicit TABSeamless(GDALDataset *poDS);
-    virtual ~TABSeamless();
+    ~TABSeamless() override;
 
     virtual TABFileClass GetFileClass() override
     {
@@ -763,7 +763,7 @@ class MIFFile final : public IMapInfoFile
 
   public:
     explicit MIFFile(GDALDataset *poDS);
-    virtual ~MIFFile();
+    ~MIFFile() override;
 
     virtual TABFileClass GetFileClass() override
     {
@@ -958,7 +958,7 @@ typedef enum TABCustSymbStyle_t  // Can be OR'ed
   Base classes to be used to add supported drawing tools to each feature type
  =====================================================================*/
 
-class ITABFeaturePen
+class ITABFeaturePen /* non final */
 {
   protected:
     int m_nPenDefIndex;
@@ -1018,7 +1018,7 @@ class ITABFeaturePen
     void DumpPenDef(FILE *fpOut = nullptr);
 };
 
-class ITABFeatureBrush
+class ITABFeatureBrush /* non final */
 {
   protected:
     int m_nBrushDefIndex;
@@ -1090,7 +1090,7 @@ class ITABFeatureBrush
     void DumpBrushDef(FILE *fpOut = nullptr);
 };
 
-class ITABFeatureFont
+class ITABFeatureFont /* non final */
 {
   protected:
     int m_nFontDefIndex;
@@ -1126,7 +1126,7 @@ class ITABFeatureFont
     void DumpFontDef(FILE *fpOut = nullptr);
 };
 
-class ITABFeatureSymbol
+class ITABFeatureSymbol /* non final */
 {
   protected:
     int m_nSymbolDefIndex;
@@ -1135,9 +1135,7 @@ class ITABFeatureSymbol
   public:
     ITABFeatureSymbol();
 
-    virtual ~ITABFeatureSymbol()
-    {
-    }
+    virtual ~ITABFeatureSymbol() = default;
 
     int GetSymbolDefIndex() const
     {
@@ -1210,7 +1208,7 @@ class ITABFeatureSymbol
  * The logic to read/write the object from/to the .DAT and .MAP files is also
  * implemented as part of this class and derived classes.
  *--------------------------------------------------------------------*/
-class TABFeature : public OGRFeature
+class TABFeature /* non final*/ : public OGRFeature
 {
   protected:
     TABGeomType m_nMapInfoType;
@@ -1236,7 +1234,7 @@ class TABFeature : public OGRFeature
 
   public:
     explicit TABFeature(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABFeature();
+    ~TABFeature() override;
 
     static TABFeature *CreateFromMapInfoType(int nMapInfoType,
                                              OGRFeatureDefn *poDefn);
@@ -1340,7 +1338,7 @@ class TABPoint : public TABFeature, public ITABFeatureSymbol
 
   public:
     explicit TABPoint(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABPoint();
+    ~TABPoint() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1395,7 +1393,7 @@ class TABFontPoint final : public TABPoint, public ITABFeatureFont
 
   public:
     explicit TABFontPoint(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABFontPoint();
+    ~TABFontPoint() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1470,7 +1468,7 @@ class TABCustomPoint final : public TABPoint, public ITABFeatureFont
 
   public:
     explicit TABCustomPoint(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABCustomPoint();
+    ~TABCustomPoint() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1543,7 +1541,7 @@ class TABPolyline final : public TABFeature, public ITABFeaturePen
 
   public:
     explicit TABPolyline(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABPolyline();
+    ~TABPolyline() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1623,7 +1621,7 @@ class TABRegion final : public TABFeature,
 
   public:
     explicit TABRegion(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABRegion();
+    ~TABRegion() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1683,11 +1681,11 @@ class TABRectangle final : public TABFeature,
                            public ITABFeatureBrush
 {
   private:
-    virtual int UpdateMBR(TABMAPFile *poMapFile = nullptr) override;
+    int UpdateMBR(TABMAPFile *poMapFile = nullptr) override;
 
   public:
     explicit TABRectangle(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABRectangle();
+    ~TABRectangle() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1753,7 +1751,7 @@ class TABEllipse final : public TABFeature,
 
   public:
     explicit TABEllipse(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABEllipse();
+    ~TABEllipse() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1819,7 +1817,7 @@ class TABArc final : public TABFeature, public ITABFeaturePen
 
   public:
     explicit TABArc(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABArc();
+    ~TABArc() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -1914,7 +1912,7 @@ class TABText final : public TABFeature,
 
   public:
     explicit TABText(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABText();
+    ~TABText() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -2018,7 +2016,7 @@ class TABMultiPoint final : public TABFeature, public ITABFeatureSymbol
 
   public:
     explicit TABMultiPoint(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABMultiPoint();
+    ~TABMultiPoint() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -2102,7 +2100,7 @@ class TABCollection final : public TABFeature, public ITABFeatureSymbol
 
   public:
     explicit TABCollection(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABCollection();
+    ~TABCollection() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {
@@ -2167,7 +2165,7 @@ class TABDebugFeature final : public TABFeature
 
   public:
     explicit TABDebugFeature(const OGRFeatureDefn *poDefnIn);
-    virtual ~TABDebugFeature();
+    ~TABDebugFeature() override;
 
     virtual TABFeatureClass GetFeatureClass() override
     {

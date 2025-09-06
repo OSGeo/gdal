@@ -2368,7 +2368,7 @@ class VSIVirtualHandleOnlyVisibleAtCloseTime final : public VSIProxyFileHandle
     {
     }
 
-    ~VSIVirtualHandleOnlyVisibleAtCloseTime()
+    ~VSIVirtualHandleOnlyVisibleAtCloseTime() override
     {
         VSIVirtualHandleOnlyVisibleAtCloseTime::Close();
     }
@@ -2478,7 +2478,7 @@ struct VSIDIRGeneric : public VSIDIR
     {
     }
 
-    ~VSIDIRGeneric();
+    ~VSIDIRGeneric() override;
 
     const VSIDIREntry *NextDirEntry() override;
 

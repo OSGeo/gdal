@@ -31,7 +31,7 @@ class MSGRasterBand final : public GDALRasterBand
 
   public:
     MSGRasterBand(MSGDataset *, int);
-    virtual ~MSGRasterBand();
+    ~MSGRasterBand() override;
     virtual CPLErr IReadBlock(int, int, void *) override;
 
   private:
@@ -56,7 +56,7 @@ class MSGDataset final : public GDALDataset
 
   public:
     MSGDataset();
-    virtual ~MSGDataset();
+    ~MSGDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 

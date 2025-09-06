@@ -108,7 +108,7 @@ class HDF5ImageDataset final : public HDF5Dataset
 
   public:
     HDF5ImageDataset();
-    virtual ~HDF5ImageDataset();
+    ~HDF5ImageDataset() override;
 
     CPLErr CreateProjections();
     static GDALDataset *Open(GDALOpenInfo *);
@@ -246,7 +246,7 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
   public:
     HDF5ImageRasterBand(HDF5ImageDataset *, int, GDALDataType);
-    virtual ~HDF5ImageRasterBand();
+    ~HDF5ImageRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *) override;

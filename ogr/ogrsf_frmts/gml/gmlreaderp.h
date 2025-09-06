@@ -111,7 +111,7 @@ typedef enum
     APPSCHEMA_MTKGML /* format of National Land Survey Finnish */
 } GMLAppSchemaType;
 
-class GMLHandler
+class GMLHandler /* non final */
 {
     char *m_pszCurField = nullptr;
     unsigned int m_nCurFieldAlloc = 0;
@@ -189,6 +189,8 @@ class GMLHandler
     CPL_DISALLOW_COPY_ASSIGN(GMLHandler)
 
   protected:
+    explicit GMLHandler(GMLReader *poReader);
+
     GMLReader *m_poReader = nullptr;
     GMLAppSchemaType eAppSchemaType = APPSCHEMA_GENERIC;
 
@@ -207,7 +209,6 @@ class GMLHandler
     bool IsGeometryElement(const char *pszElement);
 
   public:
-    explicit GMLHandler(GMLReader *poReader);
     virtual ~GMLHandler();
 
     virtual char *GetAttributeValue(void *attr,
@@ -445,7 +446,7 @@ class GMLReader final : public IGMLReader
     GMLReader(bool bExpatReader, bool bInvertAxisOrderIfLatLong,
               bool bConsiderEPSGAsURN, GMLSwapCoordinatesEnum eSwapCoordinates,
               bool bGetSecondaryGeometryOption);
-    virtual ~GMLReader();
+    ~GMLReader() override;
 
     bool IsClassListLocked() const override
     {

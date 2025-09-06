@@ -45,7 +45,7 @@ class ZMapDataset final : public GDALPamDataset
 
   public:
     ZMapDataset();
-    virtual ~ZMapDataset();
+    ~ZMapDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 

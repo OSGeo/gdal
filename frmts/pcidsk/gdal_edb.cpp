@@ -44,7 +44,7 @@ class GDAL_EDBFile final : public EDBFile
         poDS = poDSIn;
     }
 
-    ~GDAL_EDBFile()
+    ~GDAL_EDBFile() override
     {
         if (poDS)
             GDAL_EDBFile::Close();

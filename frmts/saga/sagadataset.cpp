@@ -58,7 +58,7 @@ class SAGADataset final : public GDALPamDataset
 
   public:
     SAGADataset();
-    virtual ~SAGADataset();
+    ~SAGADataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,

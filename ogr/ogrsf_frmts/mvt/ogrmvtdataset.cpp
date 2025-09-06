@@ -134,7 +134,7 @@ class OGRMVTLayerBase CPL_NON_FINAL
                     const CPLJSONArray &oAttributesFromTileStats);
 
   public:
-    virtual ~OGRMVTLayerBase();
+    ~OGRMVTLayerBase() override;
 
     OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -198,7 +198,7 @@ class OGRMVTLayer final : public OGRMVTLayerBase
                 const CPLJSONObject &oFields,
                 const CPLJSONArray &oAttributesFromTileStats,
                 OGRwkbGeometryType eGeomType);
-    virtual ~OGRMVTLayer();
+    ~OGRMVTLayer() override;
 
     virtual void ResetReading() override;
 
@@ -245,7 +245,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
                          const CPLJSONArray &oAttributesFromTileStats,
                          bool bJsonField, OGRwkbGeometryType eGeomType,
                          const OGREnvelope *psExtent);
-    virtual ~OGRMVTDirectoryLayer();
+    ~OGRMVTDirectoryLayer() override;
 
     virtual void ResetReading() override;
 
@@ -296,7 +296,7 @@ class OGRMVTDataset final : public GDALDataset
 
   public:
     explicit OGRMVTDataset(GByte *pabyData);
-    virtual ~OGRMVTDataset();
+    ~OGRMVTDataset() override;
 
     int GetLayerCount() const override
     {
@@ -3452,7 +3452,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
   public:
     OGRMVTWriterDataset();
-    ~OGRMVTWriterDataset();
+    ~OGRMVTWriterDataset() override;
 
     CPLErr Close() override;
 
@@ -3494,7 +3494,7 @@ class OGRMVTWriterLayer final : public OGRLayer
   public:
     OGRMVTWriterLayer(OGRMVTWriterDataset *poDS, const char *pszLayerName,
                       OGRSpatialReference *poSRS);
-    ~OGRMVTWriterLayer();
+    ~OGRMVTWriterLayer() override;
 
     void ResetReading() override
     {

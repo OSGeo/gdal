@@ -18,7 +18,7 @@ class WMSMiniDriver_IIIFImage : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIIFImage();
-    virtual ~WMSMiniDriver_IIIFImage();
+    ~WMSMiniDriver_IIIFImage() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

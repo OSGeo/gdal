@@ -57,7 +57,7 @@ class SAFEDataset final : public GDALPamDataset
 
   public:
     SAFEDataset();
-    virtual ~SAFEDataset();
+    ~SAFEDataset() override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

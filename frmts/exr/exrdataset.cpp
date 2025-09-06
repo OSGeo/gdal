@@ -69,7 +69,7 @@ class GDALEXRDataset final : public GDALPamDataset
 
   public:
     GDALEXRDataset() = default;
-    ~GDALEXRDataset();
+    ~GDALEXRDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -442,7 +442,7 @@ class GDALEXRIOStream final : public IStream, public OStream
     {
     }
 
-    ~GDALEXRIOStream()
+    ~GDALEXRIOStream() override
     {
         VSIFCloseL(m_fp);
     }

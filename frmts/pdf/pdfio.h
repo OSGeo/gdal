@@ -27,7 +27,7 @@ class VSIPDFFileStream final : public BaseStream
     VSIPDFFileStream(VSILFILE *f, const char *pszFilename, Object &&dictA);
     VSIPDFFileStream(VSIPDFFileStream *poParent, vsi_l_offset startA,
                      bool limitedA, vsi_l_offset lengthA, Object &&dictA);
-    virtual ~VSIPDFFileStream();
+    ~VSIPDFFileStream() override;
 
     virtual BaseStream *copy() override;
 

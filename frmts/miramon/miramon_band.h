@@ -60,7 +60,7 @@ enum class MMBytesPerPixel
     TYPE_BYTES_PER_PIXEL_DOUBLE_I_RLE = 8
 };
 
-class MMRBand
+class MMRBand final
 {
   public:
     MMRBand(MMRRel &pfRel, const CPLString &osSection);

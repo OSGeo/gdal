@@ -33,7 +33,7 @@ class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
 {
   public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
+    ~GDALMDReaderPleiades() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

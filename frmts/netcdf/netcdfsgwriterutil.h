@@ -117,7 +117,7 @@ class WBuffer
  * Abstract class for a committable transaction
  *
  */
-class OGR_SGFS_Transaction
+class OGR_SGFS_Transaction /* non final */
 {
     int varId = INVALID_VAR_ID;
 

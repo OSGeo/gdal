@@ -191,7 +191,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
                         const char *pszGDBFilename, const char *pszName,
                         OGRwkbGeometryType eType, CSLConstList papszOptions);
 
-    virtual ~OGROpenFileGDBLayer();
+    ~OGROpenFileGDBLayer() override;
 
     bool Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn);
     void Close();
@@ -508,7 +508,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
 
   public:
     OGROpenFileGDBDataSource();
-    virtual ~OGROpenFileGDBDataSource();
+    ~OGROpenFileGDBDataSource() override;
 
     bool Open(const GDALOpenInfo *poOpenInfo, bool &bRetryFileGDBOut);
     bool Create(const char *pszName);
@@ -671,7 +671,7 @@ class OGROpenFileGDBSingleFeatureLayer final : public OGRLayer
   public:
     OGROpenFileGDBSingleFeatureLayer(const char *pszLayerName,
                                      const char *pszVal);
-    virtual ~OGROpenFileGDBSingleFeatureLayer();
+    ~OGROpenFileGDBSingleFeatureLayer() override;
 
     virtual void ResetReading() override
     {

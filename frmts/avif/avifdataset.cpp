@@ -66,7 +66,7 @@ class GDALAVIFDataset final : public GDALPamDataset
         memset(&m_rgb, 0, sizeof(m_rgb));
     }
 
-    ~GDALAVIFDataset();
+    ~GDALAVIFDataset() override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 

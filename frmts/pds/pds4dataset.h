@@ -64,7 +64,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
   public:
     PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
                        const char *pszFilename);
-    ~PDS4TableBaseLayer();
+    ~PDS4TableBaseLayer() override;
 
     using OGRLayer::GetLayerDefn;
 
@@ -382,7 +382,7 @@ class PDS4Dataset final : public RawDataset
 
   public:
     PDS4Dataset();
-    virtual ~PDS4Dataset();
+    ~PDS4Dataset() override;
 
     virtual int CloseDependentDatasets() override;
 
@@ -465,10 +465,6 @@ class PDS4RawRasterBand final : public RawRasterBand
                       int l_nLineOffset, GDALDataType l_eDataType,
                       RawRasterBand::ByteOrder eByteOrderIn);
 
-    virtual ~PDS4RawRasterBand()
-    {
-    }
-
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
@@ -536,10 +532,6 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
   public:
     explicit PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn);
 
-    ~PDS4WrapperRasterBand()
-    {
-    }
-
     virtual CPLErr Fill(double dfRealValue,
                         double dfImaginaryValue = 0) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -600,7 +592,7 @@ class PDS4MaskBand final : public GDALRasterBand
   public:
     PDS4MaskBand(GDALRasterBand *poBaseBand,
                  const std::vector<double> &adfConstants);
-    ~PDS4MaskBand();
+    ~PDS4MaskBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 };

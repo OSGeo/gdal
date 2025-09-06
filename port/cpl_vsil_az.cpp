@@ -685,7 +685,7 @@ class VSIAzureWriteHandle final : public VSIAppendWriteHandle
     VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
                         VSIAzureBlobHandleHelper *poHandleHelper,
                         CSLConstList papszOptions);
-    virtual ~VSIAzureWriteHandle();
+    ~VSIAzureWriteHandle() override;
 };
 
 /************************************************************************/

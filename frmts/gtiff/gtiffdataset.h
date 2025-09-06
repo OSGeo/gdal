@@ -453,7 +453,7 @@ class GTiffDataset final : public GDALPamDataset
 
   public:
     GTiffDataset();
-    virtual ~GTiffDataset();
+    ~GTiffDataset() override;
 
     CPLErr Close() override;
 

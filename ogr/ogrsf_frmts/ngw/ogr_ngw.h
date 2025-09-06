@@ -193,7 +193,7 @@ class OGRNGWLayer final : public OGRLayer
                          OGRSpatialReference *poSpatialRef,
                          OGRwkbGeometryType eGType, const std::string &osKeyIn,
                          const std::string &osDescIn);
-    virtual ~OGRNGWLayer();
+    ~OGRNGWLayer() override;
 
     bool Delete();
     virtual OGRErr Rename(const char *pszNewName) override;
@@ -299,7 +299,7 @@ class OGRNGWDataset final : public GDALDataset
 
   public:
     OGRNGWDataset();
-    virtual ~OGRNGWDataset();
+    ~OGRNGWDataset() override;
 
     bool Open(const char *pszFilename, char **papszOpenOptionsIn,
               bool bUpdateIn, int nOpenFlagsIn);

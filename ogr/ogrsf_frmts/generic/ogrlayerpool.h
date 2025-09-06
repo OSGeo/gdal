@@ -47,7 +47,7 @@ class CPL_DLL OGRAbstractProxiedLayer : public OGRLayer
 
   public:
     explicit OGRAbstractProxiedLayer(OGRLayerPool *poPool);
-    virtual ~OGRAbstractProxiedLayer();
+    ~OGRAbstractProxiedLayer() override;
 };
 
 /************************************************************************/
@@ -111,7 +111,7 @@ class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
     OGRProxiedLayer(OGRLayerPool *poPool, OpenLayerFunc pfnOpenLayer,
                     ReleaseLayerFunc pfnReleaseLayer,
                     FreeUserDataFunc pfnFreeUserData, void *pUserData);
-    virtual ~OGRProxiedLayer();
+    ~OGRProxiedLayer() override;
 
     OGRLayer *GetUnderlyingLayer();
 

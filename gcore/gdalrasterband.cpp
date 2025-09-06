@@ -9826,7 +9826,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     }
 
   public:
-    ~GDALMDArrayFromRasterBand()
+    ~GDALMDArrayFromRasterBand() override
     {
         m_poDS->ReleaseRef();
     }

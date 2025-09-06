@@ -48,7 +48,7 @@ class OGRCSWLayer final : public OGRLayer
 
   public:
     explicit OGRCSWLayer(OGRCSWDataSource *poDS);
-    virtual ~OGRCSWLayer();
+    ~OGRCSWLayer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
@@ -89,7 +89,7 @@ class OGRCSWDataSource final : public GDALDataset
 
   public:
     OGRCSWDataSource();
-    virtual ~OGRCSWDataSource();
+    ~OGRCSWDataSource() override;
 
     int Open(const char *pszFilename, char **papszOpenOptions);
 

@@ -336,7 +336,7 @@ class L1BDataset final : public GDALPamDataset
 
   public:
     explicit L1BDataset(L1BFileFormat);
-    virtual ~L1BDataset();
+    ~L1BDataset() override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -2392,7 +2392,7 @@ class L1BGeolocDataset final : public GDALDataset
 
   public:
     L1BGeolocDataset(L1BDataset *poMainDS, int bInterpolGeolocationDS);
-    virtual ~L1BGeolocDataset();
+    ~L1BGeolocDataset() override;
 
     static GDALDataset *CreateGeolocationDS(L1BDataset *poL1BDS,
                                             int bInterpolGeolocationDS);
@@ -2694,7 +2694,7 @@ class L1BSolarZenithAnglesDataset final : public GDALDataset
 
   public:
     explicit L1BSolarZenithAnglesDataset(L1BDataset *poMainDS);
-    virtual ~L1BSolarZenithAnglesDataset();
+    ~L1BSolarZenithAnglesDataset() override;
 
     static GDALDataset *CreateSolarZenithAnglesDS(L1BDataset *poL1BDS);
 };
@@ -2909,7 +2909,7 @@ class L1BNOAA15AnglesDataset final : public GDALDataset
 
   public:
     explicit L1BNOAA15AnglesDataset(L1BDataset *poMainDS);
-    virtual ~L1BNOAA15AnglesDataset();
+    ~L1BNOAA15AnglesDataset() override;
 
     static GDALDataset *CreateAnglesDS(L1BDataset *poL1BDS);
 };
@@ -3041,7 +3041,7 @@ class L1BCloudsDataset final : public GDALDataset
 
   public:
     explicit L1BCloudsDataset(L1BDataset *poMainDS);
-    virtual ~L1BCloudsDataset();
+    ~L1BCloudsDataset() override;
 
     static GDALDataset *CreateCloudsDS(L1BDataset *poL1BDS);
 };

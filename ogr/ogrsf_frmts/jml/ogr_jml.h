@@ -102,7 +102,7 @@ class OGRJMLLayer final : public OGRLayer
 
   public:
     OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDS, VSILFILE *fp);
-    ~OGRJMLLayer();
+    ~OGRJMLLayer() override;
 
     const char *GetName() const override
     {
@@ -155,7 +155,7 @@ class OGRJMLWriterLayer final : public OGRLayer
     OGRJMLWriterLayer(const char *pszLayerName, OGRSpatialReference *poSRS,
                       OGRJMLDataset *poDSIn, VSILFILE *fp, bool bAddRGBField,
                       bool bAddOGRStyleField, bool bClassicGML);
-    ~OGRJMLWriterLayer();
+    ~OGRJMLWriterLayer() override;
 
     void ResetReading() override
     {
@@ -192,7 +192,7 @@ class OGRJMLDataset final : public GDALDataset
 
   public:
     OGRJMLDataset();
-    ~OGRJMLDataset();
+    ~OGRJMLDataset() override;
 
     int GetLayerCount() const override
     {

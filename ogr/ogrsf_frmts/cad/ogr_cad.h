@@ -36,7 +36,7 @@ class OGRCADLayer final : public OGRLayer
   public:
     OGRCADLayer(GDALDataset *poDS, CADLayer &poCADLayer,
                 OGRSpatialReference *poSR, int nEncoding);
-    ~OGRCADLayer();
+    ~OGRCADLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -76,7 +76,7 @@ class GDALCADDataset final : public GDALDataset
 
   public:
     GDALCADDataset();
-    virtual ~GDALCADDataset();
+    ~GDALCADDataset() override;
 
     int Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
              long nSubRasterLayer = -1, long nSubRasterFID = -1);

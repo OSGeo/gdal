@@ -199,7 +199,7 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
         const std::string &osParentName, const std::string &osName,
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oType);
-    ~MEMAbstractMDArray();
+    ~MEMAbstractMDArray() override;
 
     const std::vector<std::shared_ptr<GDALDimension>> &
     GetDimensions() const override
@@ -288,7 +288,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
         return array;
     }
 
-    ~MEMMDArray();
+    ~MEMMDArray() override;
 
     void Invalidate()
     {

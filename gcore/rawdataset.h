@@ -44,7 +44,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
 
   public:
     RawDataset();
-    virtual ~RawDataset() = 0;
+    virtual ~RawDataset() override = 0;
 
     enum class Interleave
     {
@@ -174,7 +174,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
            int nLineOffset, GDALDataType eDataType, ByteOrder eByteOrder,
            int nXSize, int nYSize, OwnFP bOwnsFP);
 
-    virtual ~RawRasterBand() /* = 0 */;
+    ~RawRasterBand() override;
 
     bool IsValid() const
     {

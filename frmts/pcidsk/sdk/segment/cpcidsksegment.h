@@ -38,7 +38,7 @@ namespace PCIDSK
     public:
         CPCIDSKSegment( PCIDSKFile *file, int segment,
             const char *segment_pointer );
-        virtual ~CPCIDSKSegment();
+        ~CPCIDSKSegment() override;
 
         void        LoadSegmentPointer( const char *segment_pointer ) override final;
         void        LoadSegmentHeader();

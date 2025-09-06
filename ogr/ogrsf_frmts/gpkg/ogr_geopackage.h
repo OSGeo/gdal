@@ -293,7 +293,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
   public:
     GDALGeoPackageDataset() = default;
-    virtual ~GDALGeoPackageDataset();
+    ~GDALGeoPackageDataset() override;
 
     char **GetFileList(void) override;
 
@@ -624,7 +624,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
 
   public:
     explicit OGRGeoPackageLayer(GDALGeoPackageDataset *poDS);
-    virtual ~OGRGeoPackageLayer();
+    ~OGRGeoPackageLayer() override;
     /************************************************************************/
     /* OGR API methods */
 
@@ -838,7 +838,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
   public:
     OGRGeoPackageTableLayer(GDALGeoPackageDataset *poDS,
                             const char *pszTableName);
-    virtual ~OGRGeoPackageTableLayer();
+    ~OGRGeoPackageTableLayer() override;
 
     /************************************************************************/
     /* OGR API methods */
@@ -1058,7 +1058,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
                              sqlite3_stmt *,
                              bool bUseStatementForGetNextFeature,
                              bool bEmptyLayer);
-    virtual ~OGRGeoPackageSelectLayer();
+    ~OGRGeoPackageSelectLayer() override;
 
     virtual void ResetReading() override;
 

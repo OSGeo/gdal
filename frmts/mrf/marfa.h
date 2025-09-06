@@ -371,7 +371,7 @@ class MRFDataset final : public GDALPamDataset
 
   public:
     MRFDataset();
-    virtual ~MRFDataset();
+    ~MRFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -647,7 +647,7 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     MRFRasterBand(MRFDataset *, const ILImage &, int, int);
-    virtual ~MRFRasterBand();
+    ~MRFRasterBand() override;
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
 
@@ -886,10 +886,6 @@ class JPEG_Band final : public MRFRasterBand
   public:
     JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
 
-    virtual ~JPEG_Band()
-    {
-    }
-
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
@@ -904,7 +900,7 @@ class JPNG_Band final : public MRFRasterBand
 
   public:
     JPNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~JPNG_Band();
+    ~JPNG_Band() override;
 
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -940,7 +936,7 @@ class TIF_Band final : public MRFRasterBand
 
   public:
     TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~TIF_Band();
+    ~TIF_Band() override;
 
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -957,7 +953,7 @@ class LERC_Band final : public MRFRasterBand
 
   public:
     LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~LERC_Band();
+    ~LERC_Band() override;
 
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;

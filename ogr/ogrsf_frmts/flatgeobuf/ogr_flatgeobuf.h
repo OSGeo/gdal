@@ -151,7 +151,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     CPLErr Close() override;
 
   public:
-    virtual ~OGRFlatGeobufLayer();
+    ~OGRFlatGeobufLayer() override;
 
     static OGRFlatGeobufLayer *Open(const FlatGeobuf::Header *,
                                     GByte *headerBuf, const char *pszFilename,
@@ -257,7 +257,7 @@ class OGRFlatGeobufDataset final : public GDALDataset
   public:
     OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate,
                          bool bUpdate);
-    ~OGRFlatGeobufDataset();
+    ~OGRFlatGeobufDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszName, CPL_UNUSED int nBands,

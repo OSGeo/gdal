@@ -84,7 +84,7 @@ class HDF5Group final : public GDALGroup
         return poGroup;
     }
 
-    ~HDF5Group()
+    ~HDF5Group() override
     {
         H5Gclose(m_hGroup);
     }
@@ -313,7 +313,7 @@ class HDF5Array final : public GDALMDArray
                void *pDstBuffer) const override;
 
   public:
-    ~HDF5Array();
+    ~HDF5Array() override;
 
     static std::shared_ptr<HDF5Array>
     Create(const std::string &osParentName, const std::string &osName,
@@ -468,7 +468,7 @@ class HDF5Attribute final : public GDALAttribute
                void *pDstBuffer) const override;
 
   public:
-    ~HDF5Attribute();
+    ~HDF5Attribute() override;
 
     static std::shared_ptr<HDF5Attribute>
     Create(const std::string &osGroupFullName, const std::string &osParentName,

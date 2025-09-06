@@ -19,11 +19,9 @@
 // std
 #include <string>
 
-class KMLVector : public KML
+class KMLVector final : public KML
 {
   public:
-    ~KMLVector();
-
     // Container - FeatureContainer - Feature
     bool isFeature(std::string const &sIn) const override;
     bool isFeatureContainer(std::string const &sIn) const override;

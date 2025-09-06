@@ -39,7 +39,7 @@ class ILI2Reader;
 /************************************************************************/
 /*                            ILI2Handler                                */
 /************************************************************************/
-class ILI2Handler : public DefaultHandler
+class ILI2Handler final : public DefaultHandler
 {
     ILI2Reader *m_poReader;
 
@@ -52,7 +52,7 @@ class ILI2Handler : public DefaultHandler
 
   public:
     explicit ILI2Handler(ILI2Reader *poReader);
-    ~ILI2Handler();
+    ~ILI2Handler() override;
 
     void startDocument() override;
     void endDocument() override;
@@ -74,7 +74,7 @@ class ILI2Handler : public DefaultHandler
 /*                              ILI2Reader                               */
 /************************************************************************/
 
-class ILI2Reader : public IILI2Reader
+class ILI2Reader final : public IILI2Reader
 {
   private:
     int SetupParser();
@@ -99,7 +99,7 @@ class ILI2Reader : public IILI2Reader
 
   public:
     ILI2Reader();
-    ~ILI2Reader();
+    ~ILI2Reader() override;
 
     void SetSourceFile(const char *pszFilename) override;
     int ReadModel(OGRILI2DataSource *, ImdReader *poImdReader,

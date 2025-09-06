@@ -20,7 +20,7 @@ class WMSMiniDriver_TMS : public WMSMiniDriver
 
   public:
     WMSMiniDriver_TMS();
-    virtual ~WMSMiniDriver_TMS();
+    ~WMSMiniDriver_TMS() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

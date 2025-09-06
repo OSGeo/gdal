@@ -71,7 +71,7 @@ class RPFTOCDataset final : public GDALPamDataset
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    virtual ~RPFTOCDataset()
+    ~RPFTOCDataset() override
     {
         CSLDestroy(papszSubDatasets);
         CSLDestroy(papszFileList);

@@ -29,7 +29,7 @@ class GDALNullDataset final : public GDALDataset
 
   public:
     GDALNullDataset();
-    virtual ~GDALNullDataset();
+    ~GDALNullDataset() override;
 
     int GetLayerCount() const override
     {
@@ -86,7 +86,7 @@ class GDALNullLayer final : public OGRLayer
   public:
     GDALNullLayer(const char *pszLayerName, const OGRSpatialReference *poSRS,
                   OGRwkbGeometryType eType);
-    virtual ~GDALNullLayer();
+    ~GDALNullLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

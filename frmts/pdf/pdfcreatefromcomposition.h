@@ -84,7 +84,7 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
     bool CreateLayerTree(const CPLXMLNode *psNode,
                          const GDALPDFObjectNum &nParentId, TreeOfOCG *parent);
 
-    struct Action
+    struct Action /* non final */
     {
         virtual ~Action();
     };

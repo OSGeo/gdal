@@ -413,7 +413,7 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
 
   public:
     OGRPGeoSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
-    virtual ~OGRPGeoSingleFeatureLayer();
+    ~OGRPGeoSingleFeatureLayer() override;
 
     virtual void ResetReading() override
     {

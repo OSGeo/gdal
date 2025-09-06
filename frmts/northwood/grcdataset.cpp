@@ -42,7 +42,7 @@ class NWT_GRCDataset final : public GDALPamDataset
 
   public:
     NWT_GRCDataset();
-    ~NWT_GRCDataset();
+    ~NWT_GRCDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -63,7 +63,7 @@ class NWT_GRCRasterBand final : public GDALPamRasterBand
 
   public:
     NWT_GRCRasterBand(NWT_GRCDataset *, int);
-    virtual ~NWT_GRCRasterBand();
+    ~NWT_GRCRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *pbSuccess) override;

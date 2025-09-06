@@ -38,7 +38,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
                     CPLMutex *hMutex);
 
     /* The destruction of the object isn't protected by the mutex */
-    virtual ~OGRMutexedLayer();
+    ~OGRMutexedLayer() override;
 
     virtual OGRGeometry *GetSpatialFilter() override;
     virtual OGRErr ISetSpatialFilter(int iGeomField,

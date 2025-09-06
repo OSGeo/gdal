@@ -33,7 +33,7 @@ namespace PCIDSK
     public:
         CPCIDSK_ARRAY( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_ARRAY();
+        ~CPCIDSK_ARRAY() override;
 
         // CPCIDSK_ARRAY
         unsigned char GetDimensionCount() const override ;

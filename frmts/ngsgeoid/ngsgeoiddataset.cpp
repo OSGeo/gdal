@@ -42,7 +42,7 @@ class NGSGEOIDDataset final : public GDALPamDataset
 
   public:
     NGSGEOIDDataset();
-    virtual ~NGSGEOIDDataset();
+    ~NGSGEOIDDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;

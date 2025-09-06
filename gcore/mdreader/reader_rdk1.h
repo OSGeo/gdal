@@ -32,7 +32,7 @@ class GDALMDReaderResursDK1 : public GDALMDReaderBase
 {
   public:
     GDALMDReaderResursDK1(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderResursDK1();
+    ~GDALMDReaderResursDK1() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

@@ -41,7 +41,7 @@ class OGRILI2Layer final : public OGRLayer
                  const GeomFieldInfos &oGeomFieldInfos,
                  OGRILI2DataSource *poDS);
 
-    ~OGRILI2Layer();
+    ~OGRILI2Layer() override;
 
     void AddFeature(OGRFeature *poFeature);
 
@@ -85,7 +85,7 @@ class OGRILI2DataSource final : public GDALDataset
 
   public:
     OGRILI2DataSource();
-    virtual ~OGRILI2DataSource();
+    ~OGRILI2DataSource() override;
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
 

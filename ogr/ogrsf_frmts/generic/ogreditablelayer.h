@@ -18,7 +18,7 @@
 #include <set>
 #include <map>
 
-class CPL_DLL IOGREditableLayerSynchronizer
+class CPL_DLL IOGREditableLayerSynchronizer /* non final */
 {
   public:
     virtual ~IOGREditableLayerSynchronizer();
@@ -27,7 +27,7 @@ class CPL_DLL IOGREditableLayerSynchronizer
                                       OGRLayer **ppoDecoratedLayer) = 0;
 };
 
-class CPL_DLL OGREditableLayer : public OGRLayerDecorator
+class CPL_DLL OGREditableLayer /* non final */ : public OGRLayerDecorator
 {
     CPL_DISALLOW_COPY_ASSIGN(OGREditableLayer)
 
@@ -58,7 +58,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
                      bool bTakeOwnershipDecoratedLayer,
                      IOGREditableLayerSynchronizer *poSynchronizer,
                      bool bTakeOwnershipSynchronizer);
-    virtual ~OGREditableLayer();
+    ~OGREditableLayer() override;
 
     void SetNextFID(GIntBig nNextFID);
     void SetSupportsCreateGeomField(bool SupportsCreateGeomField);

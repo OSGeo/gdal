@@ -31,7 +31,7 @@ namespace PCIDSK
     public:
         CPCIDSK_BLUT( PCIDSKFile *file, int segment, const char *segment_pointer);
 
-        virtual     ~CPCIDSK_BLUT();
+        ~CPCIDSK_BLUT() override;
 
         virtual void ReadBLUT( std::vector<BLUTEntry>& vBLUT ) override;
         virtual void WriteBLUT( const std::vector<BLUTEntry>& vBLUT ) override;

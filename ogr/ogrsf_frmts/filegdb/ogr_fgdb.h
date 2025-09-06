@@ -55,7 +55,7 @@ class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
     FGdbBaseLayer();
-    virtual ~FGdbBaseLayer();
+    ~FGdbBaseLayer() override;
 
     OGRFeatureDefn *m_pFeatureDefn;
     OGRSpatialReference *m_pSRS;
@@ -107,7 +107,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
   public:
     FGdbLayer();
-    virtual ~FGdbLayer();
+    ~FGdbLayer() override;
 
     // Internal used by FGDB driver */
     bool Initialize(FGdbDataSource *pParentDataSource, Table *pTable,
@@ -204,7 +204,7 @@ class FGdbResultLayer final : public FGdbBaseLayer
   public:
     FGdbResultLayer(FGdbDataSource *pParentDataSource, const char *pszStatement,
                     EnumRows *pEnumRows);
-    virtual ~FGdbResultLayer();
+    ~FGdbResultLayer() override;
 
     virtual void ResetReading() override;
 
@@ -239,7 +239,7 @@ class FGdbDataSource final : public GDALDataset
   public:
     FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection,
                    bool bUseOpenFileGDB);
-    virtual ~FGdbDataSource();
+    ~FGdbDataSource() override;
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
 

@@ -30,7 +30,7 @@ class KEARasterAttributeTable : public GDALDefaultRasterAttributeTable
   public:
     KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable,
                             KEARasterBand *poBand);
-    ~KEARasterAttributeTable();
+    ~KEARasterAttributeTable() override;
 
     GDALDefaultRasterAttributeTable *Clone() const override;
 

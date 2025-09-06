@@ -557,7 +557,7 @@ class netCDFDataset final : public GDALPamDataset
 
   public:
     netCDFDataset();
-    virtual ~netCDFDataset();
+    ~netCDFDataset() override;
     bool SGCommitPendingTransaction();
     void SGLogPendingTransaction();
     static std::string generateLogName();
@@ -716,7 +716,7 @@ class netCDFLayer final : public OGRLayer
   public:
     netCDFLayer(netCDFDataset *poDS, int nLayerCDFId, const char *pszName,
                 OGRwkbGeometryType eGeomType, OGRSpatialReference *poSRS);
-    virtual ~netCDFLayer();
+    ~netCDFLayer() override;
 
     bool Create(char **papszOptions,
                 const netCDFWriterConfigLayer *poLayerConfig);

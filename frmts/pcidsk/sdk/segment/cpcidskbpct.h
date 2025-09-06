@@ -31,7 +31,7 @@ namespace PCIDSK
     public:
         CPCIDSK_BPCT( PCIDSKFile *file, int segment, const char *segment_pointer);
 
-        virtual     ~CPCIDSK_BPCT();
+        ~CPCIDSK_BPCT() override;
 
         virtual void ReadBPCT( std::vector<BPCTEntry>& vBPCT ) override;
         virtual void WriteBPCT( const std::vector<BPCTEntry>& vBPCT ) override;

@@ -18,7 +18,7 @@
 
 class OGRILI2DataSource;
 
-class IILI2Reader
+class IILI2Reader /* non final */
 {
   public:
     virtual ~IILI2Reader();

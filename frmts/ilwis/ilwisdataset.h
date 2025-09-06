@@ -125,7 +125,7 @@ class ILWISRasterBand final : public GDALPamRasterBand
     int nSizePerPixel;
 
     ILWISRasterBand(ILWISDataset *, int, const std::string &sBandNameIn);
-    virtual ~ILWISRasterBand();
+    ~ILWISRasterBand() override;
     CPLErr GetILWISInfo(const std::string &pszFileName);
     void ILWISOpen(const std::string &pszFilename);
 
@@ -160,7 +160,7 @@ class ILWISDataset final : public GDALPamDataset
 
   public:
     ILWISDataset();
-    virtual ~ILWISDataset();
+    ~ILWISDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -196,11 +196,11 @@ class CompareAsNum
 typedef std::map<std::string, std::string> SectionEntries;
 typedef std::map<std::string, SectionEntries *> Sections;
 
-class IniFile
+class IniFile final
 {
   public:
     explicit IniFile(const std::string &filename);
-    virtual ~IniFile();
+    ~IniFile();
 
     void SetKeyValue(const std::string &section, const std::string &key,
                      const std::string &value);

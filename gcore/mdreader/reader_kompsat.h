@@ -32,7 +32,7 @@ class GDALMDReaderKompsat : public GDALMDReaderBase
 {
   public:
     GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderKompsat();
+    ~GDALMDReaderKompsat() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

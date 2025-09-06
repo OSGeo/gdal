@@ -3247,7 +3247,7 @@ class FileGDBOGRGeometryConverterImpl final : public FileGDBOGRGeometryConverter
   public:
     explicit FileGDBOGRGeometryConverterImpl(
         const FileGDBGeomField *poGeomField);
-    virtual ~FileGDBOGRGeometryConverterImpl();
+    ~FileGDBOGRGeometryConverterImpl() override;
 
     virtual OGRGeometry *GetAsGeometry(const OGRField *psField) override;
 };

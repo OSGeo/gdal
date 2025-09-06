@@ -157,7 +157,7 @@ class EnvisatDataset final : public RawDataset
 
   public:
     EnvisatDataset();
-    virtual ~EnvisatDataset();
+    ~EnvisatDataset() override;
 
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

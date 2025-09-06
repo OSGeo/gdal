@@ -35,7 +35,7 @@ class GDALMDReaderALOS : public GDALMDReaderBase
 {
   public:
     GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderALOS();
+    ~GDALMDReaderALOS() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

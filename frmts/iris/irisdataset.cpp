@@ -60,7 +60,7 @@ class IRISDataset final : public GDALPamDataset
 
   public:
     IRISDataset();
-    virtual ~IRISDataset();
+    ~IRISDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -184,7 +184,7 @@ class IRISRasterBand final : public GDALPamRasterBand
 
   public:
     IRISRasterBand(IRISDataset *, int);
-    virtual ~IRISRasterBand();
+    ~IRISRasterBand() override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 

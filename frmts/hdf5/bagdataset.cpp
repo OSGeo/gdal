@@ -188,7 +188,7 @@ class BAGDataset final : public GDALPamDataset
     BAGDataset();
     BAGDataset(BAGDataset *poParentDS, int nOvrFactor);
     BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
-    virtual ~BAGDataset();
+    ~BAGDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -284,7 +284,7 @@ class BAGRasterBand final : public GDALPamRasterBand
 
   public:
     BAGRasterBand(BAGDataset *, int);
-    virtual ~BAGRasterBand();
+    ~BAGRasterBand() override;
 
     bool Initialize(hid_t hDataset, const char *pszName);
 
@@ -306,13 +306,12 @@ class BAGRasterBand final : public GDALPamRasterBand
 class BAGBaseBand CPL_NON_FINAL : public GDALRasterBand
 {
   protected:
+    BAGBaseBand() = default;
+
     bool m_bHasNoData = false;
     float m_fNoDataValue = std::numeric_limits<float>::quiet_NaN();
 
   public:
-    BAGBaseBand() = default;
-    ~BAGBaseBand() = default;
-
     double GetNoDataValue(int *) override;
 
     int GetOverviewCount() override;
@@ -369,7 +368,7 @@ class BAGSuperGridBand final : public BAGBaseBand
 
   public:
     BAGSuperGridBand(BAGDataset *, int, bool bHasNoData, float fNoDataValue);
-    virtual ~BAGSuperGridBand();
+    ~BAGSuperGridBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
 };
@@ -391,7 +390,7 @@ class BAGResampledBand final : public BAGBaseBand
   public:
     BAGResampledBand(BAGDataset *, int nBandIn, bool bHasNoData,
                      float fNoDataValue, bool bInitializeMinMax);
-    virtual ~BAGResampledBand();
+    ~BAGResampledBand() override;
 
     void InitializeMinMax();
 
@@ -427,7 +426,7 @@ class BAGInterpolatedBand final : public BAGBaseBand
   public:
     BAGInterpolatedBand(BAGDataset *, int nBandIn, bool bHasNoData,
                         float fNoDataValue, bool bInitializeMinMax);
-    virtual ~BAGInterpolatedBand();
+    ~BAGInterpolatedBand() override;
 
     void InitializeMinMax();
 
@@ -3524,7 +3523,7 @@ class BAGTrackingListLayer final
 
   public:
     explicit BAGTrackingListLayer(const std::shared_ptr<GDALMDArray> &poArray);
-    ~BAGTrackingListLayer();
+    ~BAGTrackingListLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

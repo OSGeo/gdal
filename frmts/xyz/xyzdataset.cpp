@@ -67,7 +67,7 @@ class XYZDataset final : public GDALPamDataset
 
   public:
     XYZDataset();
-    virtual ~XYZDataset();
+    ~XYZDataset() override;
 
     virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 

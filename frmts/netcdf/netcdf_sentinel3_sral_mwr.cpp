@@ -53,7 +53,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
 
   public:
     Sentinel3_SRAL_MWR_Layer(const std::string &name, int cdfid, int dimid);
-    ~Sentinel3_SRAL_MWR_Layer();
+    ~Sentinel3_SRAL_MWR_Layer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

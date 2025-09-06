@@ -29,10 +29,6 @@ class GTiffOddBitsBand CPL_NON_FINAL : public GTiffRasterBand
   public:
     GTiffOddBitsBand(GTiffDataset *, int);
 
-    virtual ~GTiffOddBitsBand()
-    {
-    }
-
     bool IsBaseGTiffClass() const override
     {
         return false;

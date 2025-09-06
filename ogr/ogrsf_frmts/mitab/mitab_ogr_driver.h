@@ -50,7 +50,7 @@ class OGRTABDataSource : public GDALDataset
 
   public:
     OGRTABDataSource();
-    virtual ~OGRTABDataSource();
+    ~OGRTABDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo, int bTestOpen);
     int Create(const char *pszName, char **papszOptions);

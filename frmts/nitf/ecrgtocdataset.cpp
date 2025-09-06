@@ -76,7 +76,7 @@ class ECRGTOCDataset final : public GDALPamDataset
         m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
     }
 
-    virtual ~ECRGTOCDataset()
+    ~ECRGTOCDataset() override
     {
         CSLDestroy(papszSubDatasets);
         CSLDestroy(papszFileList);

@@ -144,7 +144,7 @@ class WMSMiniDriverCapabilities
 // A minidriver has to implement at least the Initialize and the
 // TiledImageRequest
 //
-class WMSMiniDriver
+class WMSMiniDriver /* non final */
 {
     friend class GDALWMSDataset;
 
@@ -207,18 +207,15 @@ class WMSMiniDriver
     GDALWMSDataset *m_parent_dataset{};
 };
 
-class WMSMiniDriverFactory
+class WMSMiniDriverFactory /* non final */
 {
   public:
-    WMSMiniDriverFactory()
-    {
-    }
-
     virtual ~WMSMiniDriverFactory();
-
-  public:
     virtual WMSMiniDriver *New() const = 0;
     CPLString m_name{};
+
+  protected:
+    WMSMiniDriverFactory() = default;
 };
 
 // Interface with the global mini driver manager
@@ -239,7 +236,7 @@ enum GDALWMSCacheItemStatus
     CACHE_ITEM_EXPIRED
 };
 
-class GDALWMSCacheImpl
+class GDALWMSCacheImpl /* non final */
 {
   public:
     GDALWMSCacheImpl(const CPLString &soPath, CPLXMLNode * /*pConfig*/)
@@ -261,7 +258,7 @@ class GDALWMSCacheImpl
     CPLString m_soPath;
 };
 
-class GDALWMSCache
+class GDALWMSCache final
 {
     friend class GDALWMSDataset;
 
@@ -306,7 +303,7 @@ class GDALWMSDataset final : public GDALPamDataset
 
   public:
     GDALWMSDataset();
-    virtual ~GDALWMSDataset();
+    ~GDALWMSDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -535,7 +532,7 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
 
   public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
-    virtual ~GDALWMSRasterBand();
+    ~GDALWMSRasterBand() override;
     bool AddOverview(double scale);
     virtual double GetNoDataValue(int *) override;
     virtual double GetMinimum(int *) override;

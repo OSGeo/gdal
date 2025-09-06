@@ -47,7 +47,7 @@ class DDSDataset final : public GDALPamDataset
     void *pUncompressedBuffer = nullptr;
 
     DDSDataset() = default;
-    ~DDSDataset();
+    ~DDSDataset() override;
 
   public:
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);

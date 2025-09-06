@@ -38,7 +38,7 @@ namespace PCIDSK
     public:
 
         CPCIDSKFile( const std::string& filename );
-        virtual ~CPCIDSKFile();
+        ~CPCIDSKFile() override;
 
         virtual PCIDSKInterfaces *GetInterfaces() override { return &interfaces; }
 

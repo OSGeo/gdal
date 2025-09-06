@@ -49,7 +49,7 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
 
   public:
     OGRPLScenesDataV1Dataset();
-    virtual ~OGRPLScenesDataV1Dataset();
+    ~OGRPLScenesDataV1Dataset() override;
 
     int GetLayerCount() const override;
 
@@ -88,10 +88,6 @@ class OGRPLScenesDataV1FeatureDefn final : public OGRFeatureDefn
     OGRPLScenesDataV1FeatureDefn(OGRPLScenesDataV1Layer *poLayer,
                                  const char *pszName)
         : OGRFeatureDefn(pszName), m_poLayer(poLayer)
-    {
-    }
-
-    ~OGRPLScenesDataV1FeatureDefn()
     {
     }
 
@@ -150,7 +146,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
 
   public:
     OGRPLScenesDataV1Layer(OGRPLScenesDataV1Dataset *poDS, const char *pszName);
-    virtual ~OGRPLScenesDataV1Layer();
+    ~OGRPLScenesDataV1Layer() override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;

@@ -34,7 +34,7 @@ class GDALMDReaderGeoEye : public GDALMDReaderBase
 {
   public:
     GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderGeoEye();
+    ~GDALMDReaderGeoEye() override;
     virtual bool HasRequiredFiles() const override;
     virtual char **GetMetadataFiles() const override;
 

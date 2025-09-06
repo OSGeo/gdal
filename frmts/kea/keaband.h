@@ -42,7 +42,7 @@ class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
     // constructor/destructor
     KEARasterBand(KEADataset *pDataset, int nSrcBand, GDALAccess eAccess,
                   kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount);
-    ~KEARasterBand();
+    ~KEARasterBand() override;
 
     // virtual methods for overview support
     int GetOverviewCount() override;

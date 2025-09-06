@@ -28,7 +28,7 @@ typedef struct storage_manager
 
 // A base class that provides import and export functions based on storage
 // managers Default implementation is a straight copy
-class Packer
+class Packer /* non final */
 {
   public:
     virtual ~Packer();

@@ -162,7 +162,7 @@ class PostGISRasterDriver final : public GDALDriver
     CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDriver)
   public:
     PostGISRasterDriver();
-    virtual ~PostGISRasterDriver();
+    ~PostGISRasterDriver() override;
     PGconn *GetConnection(const char *pszConnectionString,
                           const char *pszServiceIn, const char *pszDbnameIn,
                           const char *pszHostIn, const char *pszPortIn,
@@ -293,7 +293,7 @@ class PostGISRasterDataset final : public VRTDataset
 
   public:
     PostGISRasterDataset();
-    virtual ~PostGISRasterDataset();
+    ~PostGISRasterDataset() override;
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
                                    GDALProgressFunc, void *);
@@ -346,7 +346,7 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
                             GDALDataType eDataTypeIn, GBool bNoDataValueSetIn,
                             double dfNodata);
 
-    virtual ~PostGISRasterRasterBand();
+    ~PostGISRasterRasterBand() override;
 
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double) override;
@@ -386,7 +386,7 @@ class PostGISRasterTileDataset final : public GDALDataset
   public:
     PostGISRasterTileDataset(PostGISRasterDataset *poRDS, int nXSize,
                              int nYSize);
-    ~PostGISRasterTileDataset();
+    ~PostGISRasterTileDataset() override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     void GetNativeExtent(double *pdfMinX, double *pdfMinY, double *pdfMaxX,
                          double *pdfMaxY) const;
@@ -416,7 +416,7 @@ class PostGISRasterTileRasterBand final : public GDALRasterBand
   public:
     PostGISRasterTileRasterBand(PostGISRasterTileDataset *poRTDS, int nBand,
                                 GDALDataType eDataType);
-    virtual ~PostGISRasterTileRasterBand();
+    ~PostGISRasterTileRasterBand() override;
     virtual CPLErr IReadBlock(int, int, void *) override;
 };
 

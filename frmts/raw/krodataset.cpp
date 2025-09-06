@@ -35,7 +35,7 @@ class KRODataset final : public RawDataset
 
   public:
     KRODataset() = default;
-    ~KRODataset();
+    ~KRODataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
