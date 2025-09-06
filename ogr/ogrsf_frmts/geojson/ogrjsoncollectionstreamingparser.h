@@ -68,22 +68,22 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
   public:
     OGRJSONCollectionStreamingParser(bool bFirstPass, bool bStoreNativeData,
                                      size_t nMaxObjectSize);
-    ~OGRJSONCollectionStreamingParser();
+    ~OGRJSONCollectionStreamingParser() override;
 
-    virtual void String(const char * /*pszValue*/, size_t) override;
-    virtual void Number(const char * /*pszValue*/, size_t) override;
-    virtual void Boolean(bool b) override;
-    virtual void Null() override;
+    void String(const char * /*pszValue*/, size_t) override;
+    void Number(const char * /*pszValue*/, size_t) override;
+    void Boolean(bool b) override;
+    void Null() override;
 
-    virtual void StartObject() override;
-    virtual void EndObject() override;
-    virtual void StartObjectMember(const char * /*pszKey*/, size_t) override;
+    void StartObject() override;
+    void EndObject() override;
+    void StartObjectMember(const char * /*pszKey*/, size_t) override;
 
-    virtual void StartArray() override;
-    virtual void EndArray() override;
-    virtual void StartArrayMember() override;
+    void StartArray() override;
+    void EndArray() override;
+    void StartArrayMember() override;
 
-    virtual void Exception(const char * /*pszMessage*/) override;
+    void Exception(const char * /*pszMessage*/) override;
 
     json_object *StealRootObject();
 

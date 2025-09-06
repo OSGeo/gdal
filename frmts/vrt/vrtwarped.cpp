@@ -629,7 +629,7 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 /*                        GDALWarpCoordRescaler                         */
 /************************************************************************/
 
-class GDALWarpCoordRescaler : public OGRCoordinateTransformation
+class GDALWarpCoordRescaler final : public OGRCoordinateTransformation
 {
     const double m_dfRatioX;
     const double m_dfRatioY;
@@ -648,12 +648,12 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
 
     ~GDALWarpCoordRescaler() override;
 
-    virtual const OGRSpatialReference *GetSourceCS() const override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual const OGRSpatialReference *GetTargetCS() const override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
@@ -671,12 +671,12 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
         return TRUE;
     }
 
-    virtual OGRCoordinateTransformation *Clone() const override
+    OGRCoordinateTransformation *Clone() const override
     {
         return new GDALWarpCoordRescaler(*this);
     }
 
-    virtual OGRCoordinateTransformation *GetInverse() const override
+    OGRCoordinateTransformation *GetInverse() const override
     {
         return nullptr;
     }

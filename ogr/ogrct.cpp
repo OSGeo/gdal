@@ -662,7 +662,7 @@ int OCTCoordinateTransformationOptionsSetOnlyBest(
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-class OGRProjCT : public OGRCoordinateTransformation
+class OGRProjCT final : public OGRCoordinateTransformation
 {
     friend void
     OGRProjCTDifferentOperationsStart(OGRCoordinateTransformation *poCT);

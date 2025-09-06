@@ -46,7 +46,7 @@ class GSBGDataset final : public GDALPamDataset
   public:
     GSBGDataset() = default;
 
-    ~GSBGDataset();
+    ~GSBGDataset() override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
@@ -95,7 +95,7 @@ class GSBGRasterBand final : public GDALPamRasterBand
 
   public:
     GSBGRasterBand(GSBGDataset *, int);
-    ~GSBGRasterBand();
+    ~GSBGRasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;

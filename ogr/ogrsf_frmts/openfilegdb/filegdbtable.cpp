@@ -3247,9 +3247,9 @@ class FileGDBOGRGeometryConverterImpl final : public FileGDBOGRGeometryConverter
   public:
     explicit FileGDBOGRGeometryConverterImpl(
         const FileGDBGeomField *poGeomField);
-    virtual ~FileGDBOGRGeometryConverterImpl();
+    ~FileGDBOGRGeometryConverterImpl() override;
 
-    virtual OGRGeometry *GetAsGeometry(const OGRField *psField) override;
+    OGRGeometry *GetAsGeometry(const OGRField *psField) override;
 };
 
 /************************************************************************/
@@ -3335,7 +3335,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
 /*                         XYLineStringSetter                           */
 /************************************************************************/
 
-class FileGDBOGRLineString : public OGRLineString
+class FileGDBOGRLineString final : public OGRLineString
 {
   public:
     FileGDBOGRLineString() = default;
@@ -3350,7 +3350,7 @@ class FileGDBOGRLineString : public OGRLineString
 
 FileGDBOGRLineString::~FileGDBOGRLineString() = default;
 
-class FileGDBOGRLinearRing : public OGRLinearRing
+class FileGDBOGRLinearRing final : public OGRLinearRing
 {
   public:
     FileGDBOGRLinearRing() = default;

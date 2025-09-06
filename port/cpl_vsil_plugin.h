@@ -83,10 +83,10 @@ class VSIPluginFilesystemHandler : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                           VSIPluginHandle                              */
+/*                           VSIPluginHandle                            */
 /************************************************************************/
 
-class VSIPluginHandle : public VSIVirtualHandle
+class VSIPluginHandle final : public VSIVirtualHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIPluginHandle)
 

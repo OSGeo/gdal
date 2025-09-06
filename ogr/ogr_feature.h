@@ -1224,7 +1224,7 @@ class CPL_DLL OGRFeature
 
     /** Exception raised by operator[](const char*) when a field is not found.
      */
-    class FieldNotFoundException : public std::exception
+    class FieldNotFoundException final : public std::exception
     {
     };
 

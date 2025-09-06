@@ -296,9 +296,7 @@ class CPL_DLL VSIFilesystemHandler
 {
 
   public:
-    virtual ~VSIFilesystemHandler()
-    {
-    }
+    virtual ~VSIFilesystemHandler() = default;
 
     static VSIVirtualHandleUniquePtr
     OpenStatic(const char *pszFilename, const char *pszAccess,
@@ -648,7 +646,7 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
 
   public:
     VSIArchiveFilesystemHandler();
-    virtual ~VSIArchiveFilesystemHandler();
+    ~VSIArchiveFilesystemHandler() override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;

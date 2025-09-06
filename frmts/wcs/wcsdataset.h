@@ -67,11 +67,10 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
                           GSpacing nLineSpace, GSpacing nBandSpace,
                           GDALRasterIOExtraArg *psExtraArg);
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual std::vector<double> GetNativeExtent(int nXOff, int nYOff,
                                                 int nXSize, int nYSize,
@@ -120,7 +119,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
 
   public:
     WCSDataset(int version, const char *cache_dir);
-    virtual ~WCSDataset();
+    ~WCSDataset() override;
 
     static WCSDataset *CreateFromMetadata(const std::string &,
                                           const std::string &);
@@ -131,12 +130,12 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain) override;
 };
 
 class WCSDataset100 final : public WCSDataset

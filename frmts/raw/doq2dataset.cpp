@@ -64,7 +64,7 @@ class DOQ2Dataset final : public RawDataset
 
   public:
     DOQ2Dataset();
-    ~DOQ2Dataset();
+    ~DOQ2Dataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 

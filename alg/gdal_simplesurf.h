@@ -60,7 +60,7 @@ class GDALFeaturePoint
      * which provides all necessary parameters.
      */
     GDALFeaturePoint(int nX, int nY, int nScale, int nRadius, int nSign);
-    virtual ~GDALFeaturePoint();
+    ~GDALFeaturePoint();
 
     /** Assignment operator */
     GDALFeaturePoint &operator=(const GDALFeaturePoint &point);
@@ -189,7 +189,7 @@ class GDALIntegralImage
 
   public:
     GDALIntegralImage();
-    virtual ~GDALIntegralImage();
+    ~GDALIntegralImage();
 
     /**
      * Compute integral image for specified array. Result is stored internally.
@@ -291,7 +291,7 @@ class GDALOctaveLayer
      * @note Normally constructor is invoked only by SURF-based algorithm.
      */
     GDALOctaveLayer(int nOctave, int nInterval);
-    virtual ~GDALOctaveLayer();
+    ~GDALOctaveLayer();
 
     /**
      * Perform calculation of Hessian determinants and their signs
@@ -359,7 +359,7 @@ class GDALOctaveMap
      * OctaveStart
      */
     GDALOctaveMap(int nOctaveStart, int nOctaveEnd);
-    virtual ~GDALOctaveMap();
+    ~GDALOctaveMap();
 
     /**
      * Calculate Hessian values for octave space
@@ -425,7 +425,7 @@ class GDALOctaveMap
  * unstable results.
  */
 
-class GDALSimpleSURF
+class GDALSimpleSURF final
 {
   private:
     /**
@@ -473,7 +473,7 @@ class GDALSimpleSURF
      * or only one octave if execution time is significant.
      */
     GDALSimpleSURF(int nOctaveStart, int nOctaveEnd);
-    virtual ~GDALSimpleSURF();
+    ~GDALSimpleSURF();
 
     /**
      * Convert image with RGB channels to grayscale using "luminosity" method.

@@ -112,22 +112,22 @@ class RS2Dataset final : public GDALPamDataset
     CPL_DISALLOW_COPY_ASSIGN(RS2Dataset)
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     RS2Dataset();
-    virtual ~RS2Dataset();
+    ~RS2Dataset() override;
 
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual char **GetFileList(void) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -158,9 +158,9 @@ class RS2RasterBand final : public GDALPamRasterBand
     RS2RasterBand(RS2Dataset *poDSIn, GDALDataType eDataTypeIn,
                   const char *pszPole, GDALDataset *poBandFile,
                   bool bTwoBandComplex = false);
-    virtual ~RS2RasterBand();
+    ~RS2RasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -315,7 +315,7 @@ class RS2CalibRasterBand final : public GDALPamRasterBand
     RS2CalibRasterBand(RS2Dataset *poDataset, const char *pszPolarization,
                        GDALDataType eType, GDALDataset *poBandDataset,
                        eCalibration eCalib, const char *pszLUT);
-    ~RS2CalibRasterBand();
+    ~RS2CalibRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 };

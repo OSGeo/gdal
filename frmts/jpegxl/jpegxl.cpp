@@ -77,7 +77,7 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
                      GSpacing, GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
-    ~JPEGXLDataset();
+    ~JPEGXLDataset() override;
 
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain) override;

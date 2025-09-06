@@ -160,7 +160,7 @@ class GTAIO final : public gta::custom_io
         return VSIFTellL(fp);
     }
 
-    virtual size_t read(void *buffer, size_t size, bool *error) throw() override
+    size_t read(void *buffer, size_t size, bool *error) throw() override
     {
         size_t s;
         s = VSIFReadL(buffer, 1, size, fp);
@@ -185,12 +185,12 @@ class GTAIO final : public gta::custom_io
         return size;
     }
 
-    virtual bool seekable() throw() override
+    bool seekable() throw() override
     {
         return true;
     }
 
-    virtual void seek(intmax_t offset, int whence, bool *error) throw() override
+    void seek(intmax_t offset, int whence, bool *error) throw() override
     {
         int r;
         r = VSIFSeekL(fp, offset, whence);
@@ -243,7 +243,7 @@ class GTADataset final : public GDALPamDataset
 
   public:
     GTADataset();
-    ~GTADataset();
+    ~GTADataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -283,7 +283,7 @@ class GTARasterBand final : public GDALPamRasterBand
 
   public:
     GTARasterBand(GTADataset *, int);
-    ~GTARasterBand();
+    ~GTARasterBand() override;
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;

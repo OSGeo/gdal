@@ -42,7 +42,7 @@ class OGRFlatGeobufEditableLayerSynchronizer final
     {
     }
 
-    virtual ~OGRFlatGeobufEditableLayerSynchronizer() override;
+    ~OGRFlatGeobufEditableLayerSynchronizer() override;
 
     virtual OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
                                       OGRLayer **ppoDecoratedLayer) override;

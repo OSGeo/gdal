@@ -5551,7 +5551,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
         return newAr;
     }
 
-    ~GDALExtractFieldMDArray()
+    ~GDALExtractFieldMDArray() override
     {
         m_dt.FreeDynamicMemory(&m_pabyNoData[0]);
     }
@@ -7910,7 +7910,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
            GDALRIOResampleAlg resampleAlg,
            const OGRSpatialReference *poTargetSRS, CSLConstList papszOptions);
 
-    ~GDALMDArrayResampled()
+    ~GDALMDArrayResampled() override
     {
         // First close the warped VRT
         m_poReprojectedDS.reset();

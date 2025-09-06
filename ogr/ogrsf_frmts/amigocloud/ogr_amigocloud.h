@@ -100,10 +100,10 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     explicit OGRAmigoCloudLayer(OGRAmigoCloudDataSource *poDS);
-    virtual ~OGRAmigoCloudLayer();
+    ~OGRAmigoCloudLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override;
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
@@ -145,11 +145,11 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 
     void BuildWhere();
 
-    virtual CPLString GetSRS_SQL(const char *pszGeomCol) override;
+    CPLString GetSRS_SQL(const char *pszGeomCol) override;
 
   public:
     OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource *poDS, const char *pszName);
-    virtual ~OGRAmigoCloudTableLayer();
+    ~OGRAmigoCloudTableLayer() override;
 
     const char *GetName() const override
     {
@@ -166,29 +166,29 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
         return osDatasetId.c_str();
     }
 
-    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
-    virtual json_object *FetchNewFeatures(GIntBig iNext) override;
+    OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
+    json_object *FetchNewFeatures(GIntBig iNext) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     int TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeature *GetNextRawFeature() override;
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeom) override;
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     void SetDeferredCreation(OGRwkbGeometryType eGType,
                              OGRSpatialReference *poSRS, int bGeomNullable);
@@ -219,15 +219,15 @@ class OGRAmigoCloudResultLayer final : public OGRAmigoCloudLayer
 {
     OGRFeature *poFirstFeature;
 
-    virtual CPLString GetSRS_SQL(const char *pszGeomCol) override;
+    CPLString GetSRS_SQL(const char *pszGeomCol) override;
 
   public:
     OGRAmigoCloudResultLayer(OGRAmigoCloudDataSource *poDS,
                              const char *pszRawStatement);
-    virtual ~OGRAmigoCloudResultLayer();
+    ~OGRAmigoCloudResultLayer() override;
 
-    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
-    virtual OGRFeature *GetNextRawFeature() override;
+    OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
+    OGRFeature *GetNextRawFeature() override;
 
     int IsOK();
 };
@@ -256,7 +256,7 @@ class OGRAmigoCloudDataSource final : public GDALDataset
 
   public:
     OGRAmigoCloudDataSource();
-    virtual ~OGRAmigoCloudDataSource();
+    ~OGRAmigoCloudDataSource() override;
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 
@@ -266,19 +266,19 @@ class OGRAmigoCloudDataSource final : public GDALDataset
     }
 
     const OGRLayer *GetLayer(int) const override;
-    virtual OGRLayer *GetLayerByName(const char *) override;
+    OGRLayer *GetLayerByName(const char *) override;
 
     int TestCapability(const char *) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
-    virtual OGRErr DeleteLayer(int) override;
+    OGRErr DeleteLayer(int) override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poLayer) override;
 
     const char *GetAPIURL() const;
 

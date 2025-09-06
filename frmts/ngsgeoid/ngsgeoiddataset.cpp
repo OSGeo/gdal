@@ -42,9 +42,9 @@ class NGSGEOIDDataset final : public GDALPamDataset
 
   public:
     NGSGEOIDDataset();
-    virtual ~NGSGEOIDDataset();
+    ~NGSGEOIDDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     const OGRSpatialReference *GetSpatialRef() const override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -64,9 +64,9 @@ class NGSGEOIDRasterBand final : public GDALPamRasterBand
   public:
     explicit NGSGEOIDRasterBand(NGSGEOIDDataset *);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 
-    virtual const char *GetUnitType() override
+    const char *GetUnitType() override
     {
         return "m";
     }

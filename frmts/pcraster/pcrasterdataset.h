@@ -91,7 +91,7 @@ class PCRasterDataset final : public GDALPamDataset
 
     explicit PCRasterDataset(MAP *map, GDALAccess eAccess);
 
-    /* virtual */ ~PCRasterDataset();
+    ~PCRasterDataset() override;
 
     //----------------------------------------------------------------------------
     // MANIPULATORS

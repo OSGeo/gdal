@@ -108,17 +108,17 @@ class HDF5ImageDataset final : public HDF5Dataset
 
   public:
     HDF5ImageDataset();
-    virtual ~HDF5ImageDataset();
+    ~HDF5ImageDataset() override;
 
     CPLErr CreateProjections();
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual int GetGCPCount() override;
+    int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    const GDAL_GCP *GetGCPs() override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -246,12 +246,12 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
   public:
     HDF5ImageRasterBand(HDF5ImageDataset *, int, GDALDataType);
-    virtual ~HDF5ImageRasterBand();
+    ~HDF5ImageRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *) override;
-    virtual double GetOffset(int *) override;
-    virtual double GetScale(int *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetNoDataValue(int *) override;
+    double GetOffset(int *) override;
+    double GetScale(int *) override;
     // virtual CPLErr IWriteBlock( int, int, void * );
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,

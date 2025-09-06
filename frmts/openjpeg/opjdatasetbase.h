@@ -756,7 +756,7 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
     int *m_pnLastLevel = nullptr;
     bool m_bStrict = true;
 
-    virtual ~JP2OPJDatasetBase();
+    ~JP2OPJDatasetBase() override;
 
     void init(void)
     {

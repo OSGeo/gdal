@@ -1942,13 +1942,13 @@ class KmlSingleDocRasterDataset final : public GDALDataset
     bool bLockOtherBands = false;
 
   protected:
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     KmlSingleDocRasterDataset();
-    virtual ~KmlSingleDocRasterDataset();
+    ~KmlSingleDocRasterDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;
@@ -1974,11 +1974,11 @@ class KmlSingleDocRasterRasterBand final : public GDALRasterBand
   public:
     KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset *poDS, int nBand);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 };
 
 /************************************************************************/

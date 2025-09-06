@@ -26,7 +26,7 @@ IGMLASInputSourceClosing::~IGMLASInputSourceClosing() = default;
 /*                        GMLASBinInputStream                           */
 /************************************************************************/
 
-class GMLASBinInputStream : public BinInputStream
+class GMLASBinInputStream final : public BinInputStream
 {
     VSILFILE *m_fp = nullptr;
 
@@ -34,12 +34,12 @@ class GMLASBinInputStream : public BinInputStream
 
   public:
     explicit GMLASBinInputStream(VSILFILE *fp);
-    virtual ~GMLASBinInputStream();
+    ~GMLASBinInputStream() override;
 
-    virtual XMLFilePos curPos() const override;
+    XMLFilePos curPos() const override;
     virtual XMLSize_t readBytes(XMLByte *const toFill,
                                 const XMLSize_t maxToRead) override;
-    virtual const XMLCh *getContentType() const override;
+    const XMLCh *getContentType() const override;
 };
 
 /************************************************************************/

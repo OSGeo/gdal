@@ -3719,37 +3719,37 @@ class VSISOZipHandle final : public VSIVirtualHandle
                    uint32_t nToSkip, uint32_t nChunkSize);
     ~VSISOZipHandle() override;
 
-    virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
+    int Seek(vsi_l_offset nOffset, int nWhence) override;
 
-    virtual vsi_l_offset Tell() override
+    vsi_l_offset Tell() override
     {
         return nCurPos_;
     }
 
-    virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
+    size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
 
-    virtual size_t Write(const void *, size_t, size_t) override
+    size_t Write(const void *, size_t, size_t) override
     {
         return 0;
     }
 
-    virtual int Eof() override
+    int Eof() override
     {
         return bEOF_;
     }
 
-    virtual int Error() override
+    int Error() override
     {
         return bError_;
     }
 
-    virtual void ClearErr() override
+    void ClearErr() override
     {
         bEOF_ = false;
         bError_ = false;
     }
 
-    virtual int Close() override;
+    int Close() override;
 
     bool IsOK() const
     {

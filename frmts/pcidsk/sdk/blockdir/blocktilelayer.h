@@ -29,7 +29,7 @@ namespace PCIDSK
  *
  * @see BlockLayer
  */
-class PCIDSK_DLL BlockTileLayer : public BlockLayer
+class PCIDSK_DLL BlockTileLayer /* non final */: public BlockLayer
 {
 protected:
 #pragma pack(push, 1)
@@ -75,7 +75,7 @@ protected:
  *
  * @param nLayerType The type of the layer.
  */
-    virtual void        _SetLayerType(uint16 nLayerType) override
+    void        _SetLayerType(uint16 nLayerType) override
     {
         mpsBlockLayer->nLayerType = nLayerType;
     }
@@ -85,7 +85,7 @@ protected:
  *
  * @param nBlockCount The number of blocks in the block layer.
  */
-    virtual void        _SetBlockCount(uint32 nBlockCount) override
+    void        _SetBlockCount(uint32 nBlockCount) override
     {
         mpsBlockLayer->nBlockCount = nBlockCount;
     }
@@ -95,7 +95,7 @@ protected:
  *
  * @param nLayerSize The size in bytes of the layer.
  */
-    virtual void        _SetLayerSize(uint64 nLayerSize) override
+    void        _SetLayerSize(uint64 nLayerSize) override
     {
         mpsBlockLayer->nLayerSize = nLayerSize;
     }
@@ -117,7 +117,7 @@ public:
                    BlockLayerInfo * psBlockLayer,
                    TileLayerInfo * psTileLayer);
 
-    virtual             ~BlockTileLayer(void);
+    ~BlockTileLayer() override;
 
     void                Sync(void);
 
@@ -166,7 +166,7 @@ public:
  *
  * @return The type of the layer.
  */
-    virtual uint16      GetLayerType(void) const override
+    uint16      GetLayerType(void) const override
     {
         return mpsBlockLayer->nLayerType;
     }
@@ -176,7 +176,7 @@ public:
  *
  * @return The number of blocks in the block layer.
  */
-    virtual uint32      GetBlockCount(void) const override
+    uint32      GetBlockCount(void) const override
     {
         return mpsBlockLayer->nBlockCount;
     }
@@ -186,7 +186,7 @@ public:
  *
  * @return The size in bytes of the layer.
  */
-    virtual uint64      GetLayerSize(void) const override
+    uint64      GetLayerSize(void) const override
     {
         return mpsBlockLayer->nLayerSize;
     }

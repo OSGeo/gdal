@@ -96,23 +96,23 @@ class OGRXLSXLayer final : public OGRMemLayer
     }
 
     /* For external usage. Mess with FID */
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
-    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
                           const int *panUpdatedFieldsIdx,
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override
+    OGRErr SetNextByIndex(GIntBig nIndex) override
     {
         Init();
         return OGRMemLayer::SetNextByIndex(nIndex);
     }
 
-    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -129,14 +129,14 @@ class OGRXLSXLayer final : public OGRMemLayer
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    virtual OGRErr DeleteField(int iField) override
+    OGRErr DeleteField(int iField) override
     {
         Init();
         SetUpdated();
         return OGRMemLayer::DeleteField(iField);
     }
 
-    virtual OGRErr ReorderFields(int *panMap) override
+    OGRErr ReorderFields(int *panMap) override
     {
         Init();
         SetUpdated();
@@ -156,7 +156,7 @@ class OGRXLSXLayer final : public OGRMemLayer
         return m_osCols;
     }
 
-    virtual OGRErr SyncToDisk() override;
+    OGRErr SyncToDisk() override;
 
     GDALDataset *GetDataset() override;
 };
@@ -274,7 +274,7 @@ class OGRXLSXDataSource final : public GDALDataset
 
   public:
     explicit OGRXLSXDataSource(CSLConstList papszOpenOptionsIn);
-    virtual ~OGRXLSXDataSource();
+    ~OGRXLSXDataSource() override;
     CPLErr Close() override;
 
     int Open(const char *pszFilename, const char *pszPrefixedFilename,
@@ -291,9 +291,9 @@ class OGRXLSXDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    virtual OGRErr DeleteLayer(int iLayer) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);

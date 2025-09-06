@@ -58,7 +58,7 @@ class OGRGmtLayer final : public OGRLayer,
 
     OGRGmtLayer(GDALDataset *poDS, const char *pszFilename, VSILFILE *fp,
                 const OGRSpatialReference *poSRS, int bUpdate);
-    virtual ~OGRGmtLayer();
+    ~OGRGmtLayer() override;
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGmtLayer)
@@ -99,7 +99,7 @@ class OGRGmtDataSource final : public GDALDataset
 
   public:
     OGRGmtDataSource();
-    virtual ~OGRGmtDataSource();
+    ~OGRGmtDataSource() override;
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate);

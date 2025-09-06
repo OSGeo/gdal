@@ -14,13 +14,13 @@
 #ifndef MINIDRIVER_TMS_H_INCLUDED
 #define MINIDRIVER_TMS_H_INCLUDED
 
-class WMSMiniDriver_TMS : public WMSMiniDriver
+class WMSMiniDriver_TMS final : public WMSMiniDriver
 {
     int m_nTileXMultiplier = 1;
 
   public:
     WMSMiniDriver_TMS();
-    virtual ~WMSMiniDriver_TMS();
+    ~WMSMiniDriver_TMS() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

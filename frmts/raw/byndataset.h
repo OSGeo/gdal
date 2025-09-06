@@ -202,7 +202,7 @@ class BYNDataset final : public RawDataset
 
   public:
     BYNDataset();
-    ~BYNDataset();
+    ~BYNDataset() override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 

@@ -21,7 +21,7 @@
 //                                                             WSIOCILobFSHandle
 // *****************************************************************************
 
-class WSIOCILobFSHandle : public VSIFilesystemHandler
+class WSIOCILobFSHandle final : public VSIFilesystemHandler
 {
   public:
     VSIVirtualHandleUniquePtr Open(const char *pszFilename,
@@ -44,7 +44,7 @@ class WSIOCILobFSHandle : public VSIFilesystemHandler
 //                                                               VSIOCILobHandle
 // *****************************************************************************
 
-class VSIOCILobHandle : public VSIVirtualHandle
+class VSIOCILobHandle final : public VSIVirtualHandle
 {
   private:
     OWConnection *poConnection;

@@ -13,16 +13,16 @@
 #ifndef MINIDRIVER_IIP_H_INCLUDED
 #define MINIDRIVER_IIP_H_INCLUDED
 
-class WMSMiniDriver_IIP : public WMSMiniDriver
+class WMSMiniDriver_IIP final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_IIP();
-    virtual ~WMSMiniDriver_IIP();
+    ~WMSMiniDriver_IIP() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &request,
                       const GDALWMSImageRequestInfo &iri,

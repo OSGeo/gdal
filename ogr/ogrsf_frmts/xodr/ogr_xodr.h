@@ -120,7 +120,7 @@ class OGRXODRLayerReferenceLine
 
     OGRXODRLayerReferenceLine(const RoadElements &xodrRoadElements,
                               const std::string &proj4Defn);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerReferenceLine)
 };
 
@@ -136,7 +136,7 @@ class OGRXODRLayerLaneBorder
 
     OGRXODRLayerLaneBorder(const RoadElements &xodrRoadElements,
                            const std::string &proj4Defn);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerLaneBorder)
 };
 
@@ -154,7 +154,7 @@ class OGRXODRLayerRoadMark
     OGRXODRLayerRoadMark(const RoadElements &xodrRoadElements,
                          const std::string &proj4Defn,
                          const bool dissolveTriangulatedSurface);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadMark)
 };
 
@@ -170,7 +170,7 @@ class OGRXODRLayerRoadObject
 
     OGRXODRLayerRoadObject(const RoadElements &xodrRoadElements,
                            const std::string &proj4Defn);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadObject)
 };
 
@@ -187,7 +187,7 @@ class OGRXODRLayerRoadSignal
     OGRXODRLayerRoadSignal(const RoadElements &xodrRoadElements,
                            const std::string &proj4Defn,
                            const bool dissolveTriangulatedSurface);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadSignal)
 };
 
@@ -203,7 +203,7 @@ class OGRXODRLayerLane : public OGRXODRLayer,
     OGRXODRLayerLane(const RoadElements &xodrRoadElements,
                      const std::string &proj4Defn,
                      const bool dissolveTriangulatedSurface);
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerLane)
 };
 
@@ -239,5 +239,5 @@ class OGRXODRDataSource : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    virtual int TestCapability(const char *pszCap) const override;
+    int TestCapability(const char *pszCap) const override;
 };

@@ -59,7 +59,7 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 /*                             VSIDIRAz                                 */
 /************************************************************************/
 
-struct VSIDIRAz : public VSIDIRS3Like
+struct VSIDIRAz final : public VSIDIRS3Like
 {
     VSIDIRAz(const std::string &osDirName, IVSIS3LikeFSHandler *poFSIn)
         : VSIDIRS3Like(osDirName, poFSIn)
@@ -685,7 +685,7 @@ class VSIAzureWriteHandle final : public VSIAppendWriteHandle
     VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
                         VSIAzureBlobHandleHelper *poHandleHelper,
                         CSLConstList papszOptions);
-    virtual ~VSIAzureWriteHandle();
+    ~VSIAzureWriteHandle() override;
 };
 
 /************************************************************************/

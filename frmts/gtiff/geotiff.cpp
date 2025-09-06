@@ -1134,7 +1134,7 @@ CPLString GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
 /*                    OGRGTiffDriverGetSubdatasetInfo()                 */
 /************************************************************************/
 
-struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct GTiffDriverSubdatasetInfo final : public GDALSubdatasetInfo
 {
   public:
     explicit GTiffDriverSubdatasetInfo(const std::string &fileName)

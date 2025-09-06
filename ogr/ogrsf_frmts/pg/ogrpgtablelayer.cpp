@@ -57,54 +57,54 @@ class OGRPGTableFeatureDefn final : public OGRPGFeatureDefn
     {
     }
 
-    virtual void UnsetLayer() override;
+    void UnsetLayer() override;
 
-    virtual int GetFieldCount() const override
+    int GetFieldCount() const override
     {
         SolveFields();
         return OGRPGFeatureDefn::GetFieldCount();
     }
 
-    virtual OGRFieldDefn *GetFieldDefn(int i) override
+    OGRFieldDefn *GetFieldDefn(int i) override
     {
         SolveFields();
         return OGRPGFeatureDefn::GetFieldDefn(i);
     }
 
-    virtual const OGRFieldDefn *GetFieldDefn(int i) const override
+    const OGRFieldDefn *GetFieldDefn(int i) const override
     {
         SolveFields();
         return OGRPGFeatureDefn::GetFieldDefn(i);
     }
 
-    virtual int GetFieldIndex(const char *pszName) const override
+    int GetFieldIndex(const char *pszName) const override
     {
         SolveFields();
         return OGRPGFeatureDefn::GetFieldIndex(pszName);
     }
 
-    virtual int GetGeomFieldCount() const override
+    int GetGeomFieldCount() const override
     {
         if (poLayer != nullptr && !poLayer->HasGeometryInformation())
             SolveFields();
         return OGRPGFeatureDefn::GetGeomFieldCount();
     }
 
-    virtual OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) override
+    OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) override
     {
         if (poLayer != nullptr && !poLayer->HasGeometryInformation())
             SolveFields();
         return OGRPGFeatureDefn::GetGeomFieldDefn(i);
     }
 
-    virtual const OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) const override
+    const OGRPGGeomFieldDefn *GetGeomFieldDefn(int i) const override
     {
         if (poLayer != nullptr && !poLayer->HasGeometryInformation())
             SolveFields();
         return OGRPGFeatureDefn::GetGeomFieldDefn(i);
     }
 
-    virtual int GetGeomFieldIndex(const char *pszName) const override
+    int GetGeomFieldIndex(const char *pszName) const override
     {
         if (poLayer != nullptr && !poLayer->HasGeometryInformation())
             SolveFields();

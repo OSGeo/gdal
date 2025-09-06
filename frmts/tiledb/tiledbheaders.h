@@ -157,7 +157,7 @@ class TileDBRasterBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class TileDBDataset : public GDALPamDataset
+class TileDBDataset /* non final */ : public GDALPamDataset
 {
   protected:
     std::unique_ptr<tiledb::Context> m_ctx{};
@@ -263,7 +263,7 @@ class TileDBRasterDataset final : public TileDBDataset
     void LoadOverviews();
 
   public:
-    ~TileDBRasterDataset();
+    ~TileDBRasterDataset() override;
     CPLErr TryLoadCachedXML(CSLConstList papszSiblingFiles = nullptr,
                             bool bReload = true);
     CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
@@ -271,7 +271,7 @@ class TileDBRasterDataset final : public TileDBDataset
     char **GetMetadata(const char *pszDomain) override;
     CPLErr Close() override;
     int CloseDependentDatasets() override;
-    virtual CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,
@@ -477,7 +477,7 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
                    const char *pszLayerName, const OGRwkbGeometryType eGType,
                    const OGRSpatialReference *poSRS);
-    ~OGRTileDBLayer();
+    ~OGRTileDBLayer() override;
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer)
     OGRFeature *GetFeature(GIntBig nFID) override;
@@ -521,7 +521,7 @@ class OGRTileDBDataset final : public TileDBDataset
 
   public:
     OGRTileDBDataset();
-    ~OGRTileDBDataset();
+    ~OGRTileDBDataset() override;
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;

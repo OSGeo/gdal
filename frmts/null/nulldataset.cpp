@@ -29,7 +29,7 @@ class GDALNullDataset final : public GDALDataset
 
   public:
     GDALNullDataset();
-    virtual ~GDALNullDataset();
+    ~GDALNullDataset() override;
 
     int GetLayerCount() const override
     {
@@ -46,7 +46,7 @@ class GDALNullDataset final : public GDALDataset
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -63,13 +63,13 @@ class GDALNullRasterBand final : public GDALRasterBand
   public:
     explicit GDALNullRasterBand(GDALDataType eDT);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -86,7 +86,7 @@ class GDALNullLayer final : public OGRLayer
   public:
     GDALNullLayer(const char *pszLayerName, const OGRSpatialReference *poSRS,
                   OGRwkbGeometryType eType);
-    virtual ~GDALNullLayer();
+    ~GDALNullLayer() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -98,18 +98,18 @@ class GDALNullLayer final : public OGRLayer
         return poSRS;
     }
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
     }
 
     int TestCapability(const char *) const override;
 
-    virtual OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextFeature() override
     {
         return nullptr;
     }
 
-    virtual OGRErr ICreateFeature(OGRFeature *) override
+    OGRErr ICreateFeature(OGRFeature *) override
     {
         return OGRERR_NONE;
     }

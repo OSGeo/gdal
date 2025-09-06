@@ -322,7 +322,7 @@ class PythonPluginLayer final : public OGRLayer
 
   public:
     explicit PythonPluginLayer(PyObject *poLayer);
-    ~PythonPluginLayer();
+    ~PythonPluginLayer() override;
 
     const char *GetName() const override;
     void ResetReading() override;
@@ -1418,7 +1418,7 @@ class PythonPluginDataset final : public GDALDataset
 
   public:
     PythonPluginDataset(GDALOpenInfo *poOpenInfo, PyObject *poDataset);
-    ~PythonPluginDataset();
+    ~PythonPluginDataset() override;
 
     int GetLayerCount() const override;
     OGRLayer *GetLayer(int) const override;

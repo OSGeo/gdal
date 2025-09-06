@@ -68,12 +68,12 @@ class OGRSXFLayer final : public OGRLayer
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
                 const char *pszLayerName, int nVer,
                 const SXFMapDescription &sxfMapDesc);
-    virtual ~OGRSXFLayer();
+    ~OGRSXFLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -82,9 +82,9 @@ class OGRSXFLayer final : public OGRLayer
 
     int TestCapability(const char *) const override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     const char *GetFIDColumn() const override;
@@ -130,7 +130,7 @@ class OGRSXFDataSource final : public GDALDataset
 
   public:
     OGRSXFDataSource();
-    virtual ~OGRSXFDataSource();
+    ~OGRSXFDataSource() override;
 
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);

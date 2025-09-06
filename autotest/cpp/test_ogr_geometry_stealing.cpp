@@ -20,7 +20,7 @@ namespace
 {
 
 // Test data
-struct test_ogr_geometry_stealing : public ::testing::Test
+struct test_ogr_geometry_stealing /* non final */ : public ::testing::Test
 {
     GDALDatasetH hDS = nullptr;
     OGRLayerH hLayer = nullptr;
@@ -52,7 +52,7 @@ struct test_ogr_geometry_stealing : public ::testing::Test
         }
     }
 
-    ~test_ogr_geometry_stealing()
+    ~test_ogr_geometry_stealing() override
     {
         GDALClose(hDS);
     }

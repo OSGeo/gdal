@@ -38,7 +38,7 @@ class OGRNASLayer final : public OGRLayer
   public:
     OGRNASLayer(const char *pszName, OGRNASDataSource *poDS);
 
-    virtual ~OGRNASLayer();
+    ~OGRNASLayer() override;
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -75,7 +75,7 @@ class OGRNASDataSource final : public GDALDataset
 
   public:
     OGRNASDataSource();
-    ~OGRNASDataSource();
+    ~OGRNASDataSource() override;
 
     int Open(const char *);
     int Create(const char *pszFile, char **papszOptions);

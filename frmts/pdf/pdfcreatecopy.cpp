@@ -4104,7 +4104,7 @@ class GDALPDFClippingDataset final : public GDALDataset
             (adfClippingExtent[3] - adfClippingExtent[1]) / fabs(srcGT[5]));
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override
     {
         gt = m_gt;
         return CE_None;

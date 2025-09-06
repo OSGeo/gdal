@@ -31,7 +31,7 @@ namespace PCIDSK
 /*      Also used for FILE interleaved raw files.                       */
 /************************************************************************/
 
-    class CBandInterleavedChannel : public CPCIDSKChannel
+    class CBandInterleavedChannel final: public CPCIDSKChannel
     {
     public:
         CBandInterleavedChannel( PCIDSKBuffer &image_header,
@@ -41,12 +41,12 @@ namespace PCIDSK
             CPCIDSKFile *file,
             uint64 image_offset,
             eChanType pixel_type );
-        virtual ~CBandInterleavedChannel();
+        ~CBandInterleavedChannel() override;
 
         virtual int ReadBlock( int block_index, void *buffer,
             int xoff=-1, int yoff=-1,
             int xsize=-1, int ysize=-1 ) override;
-        virtual int WriteBlock( int block_index, void *buffer ) override;
+        int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void GetChanInfo( std::string &filename, uint64 &image_offset,
                                   uint64 &pixel_offset, uint64 &line_offset,

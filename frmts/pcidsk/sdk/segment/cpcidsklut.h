@@ -27,16 +27,16 @@ namespace PCIDSK
     /*                            CPCIDSK_LUT                               */
     /************************************************************************/
 
-    class CPCIDSK_LUT : virtual public CPCIDSKSegment,
+    class CPCIDSK_LUT final: virtual public CPCIDSKSegment,
                         public PCIDSK_LUT
     {
     public:
         CPCIDSK_LUT( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_LUT();
+        ~CPCIDSK_LUT() override;
 
-        virtual void ReadLUT(std::vector<unsigned char>& lut) override;
-        virtual void WriteLUT(const std::vector<unsigned char>& lut) override;
+        void ReadLUT(std::vector<unsigned char>& lut) override;
+        void WriteLUT(const std::vector<unsigned char>& lut) override;
     };
 } // end namespace PCIDSK
 

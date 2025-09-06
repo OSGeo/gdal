@@ -188,7 +188,7 @@ namespace cpl
 
 class VSICurlStreamingHandle;
 
-class VSICurlStreamingFSHandler : public VSIFilesystemHandler
+class VSICurlStreamingFSHandler /* non final */ : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlStreamingFSHandler)
 
@@ -212,7 +212,7 @@ class VSICurlStreamingFSHandler : public VSIFilesystemHandler
 
   public:
     VSICurlStreamingFSHandler();
-    virtual ~VSICurlStreamingFSHandler();
+    ~VSICurlStreamingFSHandler() override;
 
     VSIVirtualHandleUniquePtr Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,

@@ -371,7 +371,7 @@ class MRFDataset final : public GDALPamDataset
 
   public:
     MRFDataset();
-    virtual ~MRFDataset();
+    ~MRFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -415,10 +415,10 @@ class MRFDataset final : public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     void SetColorTable(GDALColorTable *pct)
     {
@@ -501,16 +501,15 @@ class MRFDataset final : public GDALPamDataset
         return pbuffer;
     }
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
-                             GSpacing, GSpacing,
-                             GDALRasterIOExtraArg *) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing, GSpacing,
+                     GSpacing, GDALRasterIOExtraArg *) override;
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions) override;
 
-    virtual int CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
     // Write a tile, the infooffset is the relative position in the index file
     CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
@@ -647,14 +646,14 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     MRFRasterBand(MRFDataset *, const ILImage &, int, int);
-    virtual ~MRFRasterBand();
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
-    virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
+    ~MRFRasterBand() override;
+    CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
+    CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
 
     // Check that the respective block has data, without reading it
     virtual bool TestBlock(int xblk, int yblk);
 
-    virtual GDALColorTable *GetColorTable() override
+    GDALColorTable *GetColorTable() override
     {
         return poMRFDS->poColorTable;
     }
@@ -665,18 +664,18 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
         return CE_None;
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return img.ci;
     }
 
     // Get works within MRF or with PAM
-    virtual double GetNoDataValue(int *) override;
-    virtual CPLErr SetNoDataValue(double) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double) override;
 
     // These get set with SetStatistics
-    virtual double GetMinimum(int *) override;
-    virtual double GetMaximum(int *) override;
+    double GetMinimum(int *) override;
+    double GetMaximum(int *) override;
 
     // MRF specific, fetch is from a remote source
     CPLErr FetchBlock(int xblk, int yblk, void *buffer = nullptr);
@@ -781,8 +780,8 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     // Overview Support
     // Inherited from GDALRasterBand
     // These are called only in the base level RasterBand
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int n) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int n) override;
 
     void AddOverview(MRFRasterBand *b)
     {
@@ -836,8 +835,8 @@ class PNG_Band final : public MRFRasterBand
     PNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 
     PNG_Codec codec;
 };
@@ -886,13 +885,9 @@ class JPEG_Band final : public MRFRasterBand
   public:
     JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
 
-    virtual ~JPEG_Band()
-    {
-    }
-
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 
     JPEG_Codec codec;
 };
@@ -904,11 +899,11 @@ class JPNG_Band final : public MRFRasterBand
 
   public:
     JPNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~JPNG_Band();
+    ~JPNG_Band() override;
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 
     CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
@@ -926,9 +921,9 @@ class Raw_Band final : public MRFRasterBand
     }
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
 
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override
     {
         return Decompress(dst, src);
     }
@@ -940,11 +935,11 @@ class TIF_Band final : public MRFRasterBand
 
   public:
     TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~TIF_Band();
+    ~TIF_Band() override;
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 
     // Create options for TIF pages
     char **papszOptions;
@@ -957,11 +952,11 @@ class LERC_Band final : public MRFRasterBand
 
   public:
     LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~LERC_Band();
+    ~LERC_Band() override;
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
     double precision = 0;
     // L1 or L2
     int version = 0;
@@ -998,8 +993,8 @@ class QB3_Band final : public MRFRasterBand
     }
 
   protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 
     std::vector<size_t> coreband;
 };
@@ -1024,45 +1019,45 @@ class MRFLRasterBand final : public GDALPamRasterBand
         nRasterYSize = b->GetYSize();
     }
 
-    virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
+    CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
 
-    virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override
+    CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override
     {
         return pBand->IWriteBlock(xblk, yblk, buffer);
     }
 
-    virtual GDALColorTable *GetColorTable() override
+    GDALColorTable *GetColorTable() override
     {
         return pBand->GetColorTable();
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return pBand->GetColorInterpretation();
     }
 
-    virtual double GetNoDataValue(int *pbSuccess) override
+    double GetNoDataValue(int *pbSuccess) override
     {
         return pBand->GetNoDataValue(pbSuccess);
     }
 
-    virtual double GetMinimum(int *b) override
+    double GetMinimum(int *b) override
     {
         return pBand->GetMinimum(b);
     }
 
-    virtual double GetMaximum(int *b) override
+    double GetMaximum(int *b) override
     {
         return pBand->GetMaximum(b);
     }
 
   protected:
-    virtual int GetOverviewCount() override
+    int GetOverviewCount() override
     {
         return 0;
     }
 
-    virtual GDALRasterBand *GetOverview(int) override
+    GDALRasterBand *GetOverview(int) override
     {
         return nullptr;
     }

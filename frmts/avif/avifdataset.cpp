@@ -66,7 +66,7 @@ class GDALAVIFDataset final : public GDALPamDataset
         memset(&m_rgb, 0, sizeof(m_rgb));
     }
 
-    ~GDALAVIFDataset();
+    ~GDALAVIFDataset() override;
 
     static GDALPamDataset *OpenStaticPAM(GDALOpenInfo *poOpenInfo);
 
@@ -82,7 +82,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 
 #ifdef AVIF_HAS_OPAQUE_PROPERTIES
     const OGRSpatialReference *GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
     const GDAL_GCP *GetGCPs() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

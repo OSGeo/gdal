@@ -14,16 +14,16 @@
 #ifndef MINIDRIVER_AGS_H_INCLUDED
 #define MINIDRIVER_AGS_H_INCLUDED
 
-class WMSMiniDriver_AGS : public WMSMiniDriver
+class WMSMiniDriver_AGS final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_AGS();
-    virtual ~WMSMiniDriver_AGS();
+    ~WMSMiniDriver_AGS() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,
                               char **papszOpenOptions) override;
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
     virtual CPLErr
     TiledImageRequest(WMSHTTPRequest &request,
                       const GDALWMSImageRequestInfo &iri,
@@ -33,7 +33,7 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
                                    const GDALWMSTiledImageRequestInfo &tiri,
                                    int nXInBlock, int nYInBlock) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
 
   protected:
     /*

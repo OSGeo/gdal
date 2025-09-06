@@ -2583,7 +2583,7 @@ void VRTMDArray::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
 /*                           VRTArraySource()                           */
 /************************************************************************/
 
-class VRTArraySource : public VRTSource
+class VRTArraySource final : public VRTSource
 {
     std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter> m_poXMLTree{};
     std::unique_ptr<GDALDataset> m_poDS{};

@@ -114,7 +114,7 @@ constexpr const char *szHIDDEN_DIRNAME = "/vsimem/.#!HIDDEN!#.";
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIMemFile
+class VSIMemFile final
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIMemFile)
 
@@ -133,7 +133,7 @@ class VSIMemFile
     CPL_SHARED_MUTEX_TYPE m_oMutex{};
 
     VSIMemFile();
-    virtual ~VSIMemFile();
+    ~VSIMemFile();
 
     bool SetLength(vsi_l_offset nNewSize);
 };

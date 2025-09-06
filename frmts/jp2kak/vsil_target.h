@@ -21,7 +21,7 @@
 /*                             vsil_target                              */
 /************************************************************************/
 
-class vsil_target : public kdu_compressed_target
+class vsil_target final : public kdu_compressed_target
 {
 
   public:

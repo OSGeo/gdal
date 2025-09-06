@@ -39,7 +39,7 @@ class COSARDataset final : public GDALDataset
 
   public:
     COSARDataset() = default;
-    ~COSARDataset();
+    ~COSARDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 };

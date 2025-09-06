@@ -29,10 +29,6 @@ class GTiffSplitBand final : public GTiffRasterBand
   public:
     GTiffSplitBand(GTiffDataset *, int);
 
-    virtual ~GTiffSplitBand()
-    {
-    }
-
     bool IsBaseGTiffClass() const override
     {
         return false;
@@ -42,8 +38,8 @@ class GTiffSplitBand final : public GTiffRasterBand
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif  // GTIFFSPLITBAND_H_INCLUDED

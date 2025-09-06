@@ -1839,7 +1839,7 @@ static GByte *GDALColorReliefPrecompute(
 
 class GDALColorReliefRasterBand;
 
-class GDALColorReliefDataset : public GDALDataset
+class GDALColorReliefDataset final : public GDALDataset
 {
     friend class GDALColorReliefRasterBand;
 
@@ -1860,7 +1860,7 @@ class GDALColorReliefDataset : public GDALDataset
     GDALColorReliefDataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
                            const char *pszColorFilename,
                            ColorSelectionMode eColorSelectionMode, int bAlpha);
-    ~GDALColorReliefDataset();
+    ~GDALColorReliefDataset() override;
 
     bool InitOK() const
     {
@@ -1884,8 +1884,8 @@ class GDALColorReliefRasterBand : public GDALRasterBand
   public:
     GDALColorReliefRasterBand(GDALColorReliefDataset *, int);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
@@ -2457,7 +2457,7 @@ template <class T> class GDALGeneric3x3Dataset final : public GDALDataset
             pfnAlg_multisample,
         std::unique_ptr<AlgorithmParameters> pAlgData, bool bComputeAtEdges,
         bool bTakeReferenceIn);
-    ~GDALGeneric3x3Dataset();
+    ~GDALGeneric3x3Dataset() override;
 
     bool InitOK() const
     {
@@ -2489,8 +2489,8 @@ template <class T> class GDALGeneric3x3RasterBand final : public GDALRasterBand
     GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset<T> *poDSIn,
                              GDALDataType eDstDataType);
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual double GetNoDataValue(int *pbHasNoData) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    double GetNoDataValue(int *pbHasNoData) override;
 
     int GetOverviewCount() override
     {

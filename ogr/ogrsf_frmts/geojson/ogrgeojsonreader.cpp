@@ -56,7 +56,7 @@ class OGRGeoJSONReaderStreamingParser final
     OGRGeoJSONReaderStreamingParser(OGRGeoJSONReader &oReader,
                                     OGRGeoJSONLayer *poLayer, bool bFirstPass,
                                     bool bStoreNativeData);
-    ~OGRGeoJSONReaderStreamingParser();
+    ~OGRGeoJSONReaderStreamingParser() override;
 
     void FinalizeLayerDefn();
 

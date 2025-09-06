@@ -77,15 +77,15 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
   public:
     GTiffRasterBand(GTiffDataset *, int);
-    virtual ~GTiffRasterBand();
+    ~GTiffRasterBand() override;
 
     virtual bool IsBaseGTiffClass() const
     {
         return true;
     }
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const override
@@ -97,18 +97,18 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
 
-    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                             int nXSize, int nYSize, void *pData, int nBufXSize,
-                             int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override final;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override final;
 
-    virtual const char *GetDescription() const override final;
-    virtual void SetDescription(const char *) override final;
+    const char *GetDescription() const override final;
+    void SetDescription(const char *) override final;
 
-    virtual GDALColorInterp GetColorInterpretation() override /*final*/;
-    virtual GDALColorTable *GetColorTable() override /*final*/;
-    virtual CPLErr SetColorTable(GDALColorTable *) override final;
+    GDALColorInterp GetColorInterpretation() override /*final*/;
+    GDALColorTable *GetColorTable() override /*final*/;
+    CPLErr SetColorTable(GDALColorTable *) override final;
 
     CPLErr SetNoDataValue(double) override final;
     CPLErr SetNoDataValueAsInt64(int64_t nNoData) override final;
@@ -118,30 +118,30 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr) override final;
     CPLErr DeleteNoDataValue() override final;
 
-    virtual double GetOffset(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetOffset(double dfNewValue) override final;
-    virtual double GetScale(int *pbSuccess = nullptr) override final;
-    virtual CPLErr SetScale(double dfNewValue) override final;
-    virtual const char *GetUnitType() override final;
-    virtual CPLErr SetUnitType(const char *pszNewValue) override final;
-    virtual CPLErr SetColorInterpretation(GDALColorInterp) override final;
+    double GetOffset(int *pbSuccess = nullptr) override final;
+    CPLErr SetOffset(double dfNewValue) override final;
+    double GetScale(int *pbSuccess = nullptr) override final;
+    CPLErr SetScale(double dfNewValue) override final;
+    const char *GetUnitType() override final;
+    CPLErr SetUnitType(const char *pszNewValue) override final;
+    CPLErr SetColorInterpretation(GDALColorInterp) override final;
 
-    virtual char **GetMetadataDomainList() override final;
-    virtual CPLErr SetMetadata(char **, const char * = "") override final;
-    virtual char **GetMetadata(const char *pszDomain = "") override final;
-    virtual CPLErr SetMetadataItem(const char *, const char *,
-                                   const char * = "") override final;
+    char **GetMetadataDomainList() override final;
+    CPLErr SetMetadata(char **, const char * = "") override final;
+    char **GetMetadata(const char *pszDomain = "") override final;
+    CPLErr SetMetadataItem(const char *, const char *,
+                           const char * = "") override final;
     virtual const char *
     GetMetadataItem(const char *pszName,
                     const char *pszDomain = "") override final;
-    virtual int GetOverviewCount() override final;
-    virtual GDALRasterBand *GetOverview(int) override final;
+    int GetOverviewCount() override final;
+    GDALRasterBand *GetOverview(int) override final;
 
-    virtual GDALRasterBand *GetMaskBand() override final;
-    virtual int GetMaskFlags() override final;
-    virtual CPLErr CreateMaskBand(int nFlags) override final;
-    virtual bool IsMaskBand() const override final;
-    virtual GDALMaskValueRange GetMaskValueRange() const override final;
+    GDALRasterBand *GetMaskBand() override final;
+    int GetMaskFlags() override final;
+    CPLErr CreateMaskBand(int nFlags) override final;
+    bool IsMaskBand() const override final;
+    GDALMaskValueRange GetMaskValueRange() const override final;
 
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
@@ -150,15 +150,15 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     GDALRasterAttributeTable *GetDefaultRAT() override final;
     virtual CPLErr
     SetDefaultRAT(const GDALRasterAttributeTable *) override final;
-    virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
-                                int bApproxOK, GDALProgressFunc,
-                                void *pProgressData) override final;
+    CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
+                        GUIntBig *panHistogram, int bIncludeOutOfRange,
+                        int bApproxOK, GDALProgressFunc,
+                        void *pProgressData) override final;
 
-    virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
-                                       int bForce, GDALProgressFunc,
-                                       void *pProgressData) override final;
+    CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets,
+                               GUIntBig **ppanHistogram, int bForce,
+                               GDALProgressFunc,
+                               void *pProgressData) override final;
 };
 
 #endif  //  GTIFFRASTERBAND_H_INCLUDED

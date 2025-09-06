@@ -25,7 +25,7 @@
  * These classes handle all the file types supported by the MITAB lib.
  * through the IMapInfoFile interface.
  *====================================================================*/
-class OGRTABDataSource : public GDALDataset
+class OGRTABDataSource final : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRTABDataSource)
 
@@ -50,7 +50,7 @@ class OGRTABDataSource : public GDALDataset
 
   public:
     OGRTABDataSource();
-    virtual ~OGRTABDataSource();
+    ~OGRTABDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo, int bTestOpen);
     int Create(const char *pszName, char **papszOptions);
@@ -65,9 +65,8 @@ class OGRTABDataSource : public GDALDataset
 
     char **GetFileList() override;
 
-    virtual OGRLayer *ExecuteSQL(const char *pszStatement,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
 };
 
 void CPL_DLL RegisterOGRTAB();

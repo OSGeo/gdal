@@ -31,8 +31,8 @@ class MSGRasterBand final : public GDALRasterBand
 
   public:
     MSGRasterBand(MSGDataset *, int);
-    virtual ~MSGRasterBand();
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    ~MSGRasterBand() override;
+    CPLErr IReadBlock(int, int, void *) override;
 
   private:
     double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow,
@@ -56,7 +56,7 @@ class MSGDataset final : public GDALDataset
 
   public:
     MSGDataset();
-    virtual ~MSGDataset();
+    ~MSGDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -65,7 +65,7 @@ class MSGDataset final : public GDALDataset
         return &m_oSRS;
     }
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
   private:
     MSGCommand command;

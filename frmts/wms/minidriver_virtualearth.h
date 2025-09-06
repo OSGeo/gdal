@@ -14,11 +14,11 @@
 #ifndef MINIDRIVER_VE_H_INCLUDED
 #define MINIDRIVER_VE_H_INCLUDED
 
-class WMSMiniDriver_VirtualEarth : public WMSMiniDriver
+class WMSMiniDriver_VirtualEarth final : public WMSMiniDriver
 {
   public:
     WMSMiniDriver_VirtualEarth();
-    virtual ~WMSMiniDriver_VirtualEarth();
+    ~WMSMiniDriver_VirtualEarth() override;
 
   public:
     virtual CPLErr Initialize(CPLXMLNode *config,

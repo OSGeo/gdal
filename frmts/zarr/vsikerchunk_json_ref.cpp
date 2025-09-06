@@ -130,7 +130,7 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
         IsFileSystemInstantiated() = true;
     }
 
-    ~VSIKerchunkJSONRefFileSystem()
+    ~VSIKerchunkJSONRefFileSystem() override
     {
         IsFileSystemInstantiated() = false;
     }
@@ -278,7 +278,7 @@ class VSIKerchunkJSONRefParser final : public CPLJSonStreamingParser
         m_oWriter.SetPrettyFormatting(false);
     }
 
-    ~VSIKerchunkJSONRefParser()
+    ~VSIKerchunkJSONRefParser() override
     {
         // In case the parsing would be stopped, the writer may be in
         // an inconsistent state. This avoids assertion in debug mode.

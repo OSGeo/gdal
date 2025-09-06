@@ -144,7 +144,7 @@ class WMSMiniDriverCapabilities
 // A minidriver has to implement at least the Initialize and the
 // TiledImageRequest
 //
-class WMSMiniDriver
+class WMSMiniDriver /* non final */
 {
     friend class GDALWMSDataset;
 
@@ -207,18 +207,15 @@ class WMSMiniDriver
     GDALWMSDataset *m_parent_dataset{};
 };
 
-class WMSMiniDriverFactory
+class WMSMiniDriverFactory /* non final */
 {
   public:
-    WMSMiniDriverFactory()
-    {
-    }
-
     virtual ~WMSMiniDriverFactory();
-
-  public:
     virtual WMSMiniDriver *New() const = 0;
     CPLString m_name{};
+
+  protected:
+    WMSMiniDriverFactory() = default;
 };
 
 // Interface with the global mini driver manager
@@ -239,7 +236,7 @@ enum GDALWMSCacheItemStatus
     CACHE_ITEM_EXPIRED
 };
 
-class GDALWMSCacheImpl
+class GDALWMSCacheImpl /* non final */
 {
   public:
     GDALWMSCacheImpl(const CPLString &soPath, CPLXMLNode * /*pConfig*/)
@@ -261,7 +258,7 @@ class GDALWMSCacheImpl
     CPLString m_soPath;
 };
 
-class GDALWMSCache
+class GDALWMSCache final
 {
     friend class GDALWMSDataset;
 
@@ -306,18 +303,18 @@ class GDALWMSDataset final : public GDALPamDataset
 
   public:
     GDALWMSDataset();
-    virtual ~GDALWMSDataset();
+    ~GDALWMSDataset() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
-                              GDALDataType bdt, int band_count, int *band_map,
-                              char **options) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
+                      GDALDataType bdt, int band_count, int *band_map,
+                      char **options) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
@@ -463,12 +460,12 @@ class GDALWMSDataset final : public GDALPamDataset
     static void ClearConfigCache();
 
   protected:
-    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
-                             void *buffer, int bsx, int bsy, GDALDataType bdt,
-                             int band_count, BANDMAP_TYPE band_map,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
+                     void *buffer, int bsx, int bsy, GDALDataType bdt,
+                     int band_count, BANDMAP_TYPE band_map,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
     GDALWMSDataWindow m_data_window{};
@@ -535,27 +532,27 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
 
   public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
-    virtual ~GDALWMSRasterBand();
+    ~GDALWMSRasterBand() override;
     bool AddOverview(double scale);
-    virtual double GetNoDataValue(int *) override;
-    virtual double GetMinimum(int *) override;
-    virtual double GetMaximum(int *) override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
-                              GDALDataType bdt, char **options) override;
+    double GetNoDataValue(int *) override;
+    double GetMinimum(int *) override;
+    double GetMaximum(int *) override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
+                      GDALDataType bdt, char **options) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr SetColorInterpretation(GDALColorInterp) override;
-    virtual CPLErr IReadBlock(int x, int y, void *buffer) override;
-    virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
-                             void *buffer, int bsx, int bsy, GDALDataType bdt,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
-    virtual int HasArbitraryOverviews() override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int n) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorInterpretation(GDALColorInterp) override;
+    CPLErr IReadBlock(int x, int y, void *buffer) override;
+    CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
+                     void *buffer, int bsx, int bsy, GDALDataType bdt,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    int HasArbitraryOverviews() override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int n) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 

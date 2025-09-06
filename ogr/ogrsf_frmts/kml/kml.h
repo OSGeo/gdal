@@ -35,7 +35,7 @@ typedef enum
     KML_VALIDITY_VALID
 } OGRKMLValidity;
 
-class KML
+class KML /* non final */
 {
   public:
     KML();

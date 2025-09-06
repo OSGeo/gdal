@@ -73,7 +73,7 @@ class JDEMDataset final : public GDALPamDataset
 
   public:
     JDEMDataset();
-    ~JDEMDataset();
+    ~JDEMDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -98,9 +98,9 @@ class JDEMRasterBand final : public GDALPamRasterBand
 
   public:
     JDEMRasterBand(JDEMDataset *, int);
-    ~JDEMRasterBand();
+    ~JDEMRasterBand() override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/

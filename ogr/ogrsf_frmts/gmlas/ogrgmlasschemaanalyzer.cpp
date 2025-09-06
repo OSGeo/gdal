@@ -221,7 +221,7 @@ class GMLASAnalyzerEntityResolver final : public GMLASBaseEntityResolver
     {
     }
 
-    virtual void DoExtraSchemaProcessing(
+    void DoExtraSchemaProcessing(
         const CPLString &osFilename,
         const std::shared_ptr<VSIVirtualHandle> &fp) override;
 };

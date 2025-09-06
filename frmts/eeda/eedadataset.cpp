@@ -75,7 +75,7 @@ class GDALEEDADataset final : public GDALEEDABaseDataset
 
   public:
     GDALEEDADataset();
-    virtual ~GDALEEDADataset();
+    ~GDALEEDADataset() override;
 
     int GetLayerCount() const override
     {
@@ -124,10 +124,10 @@ class GDALEEDALayer final : public OGRLayer
     GDALEEDALayer(GDALEEDADataset *poDS, const CPLString &osCollection,
                   const CPLString &osCollectionName, json_object *poAsset,
                   json_object *poLayerConf);
-    virtual ~GDALEEDALayer();
+    ~GDALEEDALayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
@@ -135,7 +135,7 @@ class GDALEEDALayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    virtual GIntBig GetFeatureCount(int) override
+    GIntBig GetFeatureCount(int) override
     {
         return -1;
     }
@@ -143,10 +143,10 @@ class GDALEEDALayer final : public OGRLayer
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeom) override;
 
-    virtual OGRErr SetAttributeFilter(const char *) override;
+    OGRErr SetAttributeFilter(const char *) override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 };
 
 /************************************************************************/

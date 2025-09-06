@@ -23,7 +23,7 @@
 /**
  * @brief The abstract CAD file class
  */
-class OCAD_EXTERN CADFile
+class OCAD_EXTERN CADFile /* non final */
 {
     friend class CADTables;
     friend class CADLayer;

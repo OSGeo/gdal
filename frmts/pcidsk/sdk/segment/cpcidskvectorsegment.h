@@ -44,7 +44,7 @@ namespace PCIDSK
         CPCIDSKVectorSegment( PCIDSKFile *file, int segment,
                               const char *segment_pointer );
 
-        virtual        ~CPCIDSKVectorSegment();
+        ~CPCIDSKVectorSegment() override;
 
         void            Initialize() override;
         void            Synchronize() override;

@@ -100,24 +100,23 @@ class MBTilesDataset final : public GDALPamDataset,
   public:
     MBTilesDataset();
 
-    virtual ~MBTilesDataset();
+    ~MBTilesDataset() override;
 
-    virtual CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    virtual CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata(const char *pszDomain = "") override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
-    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
-                                   const int *panOverviewList, int nBandsIn,
-                                   const int * /* panBandList */,
-                                   GDALProgressFunc pfnProgress,
-                                   void *pProgressData,
-                                   CSLConstList papszOptions) override;
+    CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
+                           const int *panOverviewList, int nBandsIn,
+                           const int * /* panBandList */,
+                           GDALProgressFunc pfnProgress, void *pProgressData,
+                           CSLConstList papszOptions) override;
 
     int GetLayerCount() const override
     {
@@ -186,38 +185,38 @@ class MBTilesDataset final : public GDALPamDataset,
   protected:
     // Coming from GDALGPKGMBTilesLikePseudoDataset
 
-    virtual CPLErr IFlushCacheWithErrCode(bool bAtClosing) override;
+    CPLErr IFlushCacheWithErrCode(bool bAtClosing) override;
 
-    virtual int IGetRasterCount() override
+    int IGetRasterCount() override
     {
         return nBands;
     }
 
-    virtual GDALRasterBand *IGetRasterBand(int nBand) override
+    GDALRasterBand *IGetRasterBand(int nBand) override
     {
         return GetRasterBand(nBand);
     }
 
-    virtual sqlite3 *IGetDB() override
+    sqlite3 *IGetDB() override
     {
         return hDB;
     }
 
-    virtual bool IGetUpdate() override
+    bool IGetUpdate() override
     {
         return eAccess == GA_Update;
     }
 
-    virtual bool ICanIWriteBlock() override;
-    virtual OGRErr IStartTransaction() override;
-    virtual OGRErr ICommitTransaction() override;
+    bool ICanIWriteBlock() override;
+    OGRErr IStartTransaction() override;
+    OGRErr ICommitTransaction() override;
 
-    virtual const char *IGetFilename() override
+    const char *IGetFilename() override
     {
         return GetDescription();
     }
 
-    virtual int GetRowFromIntoTopConvention(int nRow) override;
+    int GetRowFromIntoTopConvention(int nRow) override;
 };
 
 /************************************************************************/
@@ -258,26 +257,26 @@ class MBTilesVectorLayer final : public OGRLayer
                        double dfMaxX, double dfMaxY,
                        OGRwkbGeometryType eGeomType,
                        bool bZoomLevelFromSpatialFilter);
-    ~MBTilesVectorLayer();
+    ~MBTilesVectorLayer() override;
 
-    virtual void ResetReading() override;
-    virtual OGRFeature *GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_poFeatureDefn;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    GIntBig GetFeatureCount(int bForce) override;
     int TestCapability(const char *) const override;
 
-    virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                              bool bForce) override;
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *poGeom) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
 };
 
 /************************************************************************/
@@ -295,10 +294,10 @@ class MBTilesBand final : public GDALGPKGMBTilesLikeRasterBand
   public:
     explicit MBTilesBand(MBTilesDataset *poDS, int nTileSize);
 
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int nLevel) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int nLevel) override;
 
-    virtual char **GetMetadataDomainList() override;
+    char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 };

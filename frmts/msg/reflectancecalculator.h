@@ -20,11 +20,11 @@
 
 #include <string>
 
-class ReflectanceCalculator
+class ReflectanceCalculator final
 {
   public:
     ReflectanceCalculator(const std::string &sTimeStamp, double rRTOA);
-    virtual ~ReflectanceCalculator();
+    ~ReflectanceCalculator();
     double rGetReflectance(double rRadiance, double rLat, double rLon) const;
 
   private:

@@ -488,12 +488,12 @@ class OGRFGdbSingleFeatureLayer final : public OGRLayer
     OGRFGdbSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
     virtual ~OGRFGdbSingleFeatureLayer();
 
-    virtual void ResetReading() override
+    void ResetReading() override
     {
         iNextShapeId = 0;
     }
 
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeature() override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {

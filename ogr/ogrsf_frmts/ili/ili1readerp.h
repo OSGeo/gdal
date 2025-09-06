@@ -23,7 +23,7 @@ class OGRILI1Layer;
 /*                              ILI1Reader                              */
 /************************************************************************/
 
-class ILI1Reader : public IILI1Reader
+class ILI1Reader final : public IILI1Reader
 {
   private:
     VSILFILE *fpItf;
@@ -41,7 +41,7 @@ class ILI1Reader : public IILI1Reader
 
   public:
     ILI1Reader();
-    ~ILI1Reader();
+    ~ILI1Reader() override;
 
     int OpenFile(const char *pszFilename) override;
     int ReadModel(ImdReader *poImdReader, const char *pszModelFilename,

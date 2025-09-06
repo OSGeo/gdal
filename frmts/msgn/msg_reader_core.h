@@ -45,25 +45,18 @@ typedef enum
     HRV = 4096
 } Msg_channel_names;
 
-class Msg_reader_core
+class Msg_reader_core final
 {
   public:
     explicit Msg_reader_core(const char *fname);
     explicit Msg_reader_core(VSILFILE *fp);
 
-    virtual ~Msg_reader_core();
+    ~Msg_reader_core();
 
     bool get_open_success() const
     {
         return _open_success;
     }
-
-#ifndef GDAL_SUPPORT
-    virtual void radiance_to_blackbody(
-        int using_chan_no =
-            0) = 0;  // can override which channel's parameters to use
-    virtual double *get_data(int chan_no = 0) = 0;
-#endif
 
     unsigned int get_lines() const
     {

@@ -36,10 +36,9 @@ class PCRasterRasterBand final : public GDALPamRasterBand
     bool d_defaultNoDataValueOverridden;
     GDALDataType d_create_in;
 
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
-                             GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     //! Assignment operator. NOT IMPLEMENTED.
     PCRasterRasterBand &operator=(const PCRasterRasterBand &);
@@ -55,7 +54,7 @@ class PCRasterRasterBand final : public GDALPamRasterBand
 
   public:
     explicit PCRasterRasterBand(PCRasterDataset *dataset);
-    /* virtual */ ~PCRasterRasterBand();
+    ~PCRasterRasterBand() override;
 
     //----------------------------------------------------------------------------
     // MANIPULATORS

@@ -36,20 +36,20 @@ namespace PCIDSK
                        int channelnum,
                        CPCIDSKFile *file,
                        eChanType pixel_type );
-        virtual ~CTiledChannel();
+        ~CTiledChannel() override;
 
-        virtual int GetBlockWidth() const override;
-        virtual int GetBlockHeight() const override;
-        virtual int GetWidth() const override;
-        virtual int GetHeight() const override;
-        virtual eChanType GetType() const override;
+        int GetBlockWidth() const override;
+        int GetBlockHeight() const override;
+        int GetWidth() const override;
+        int GetHeight() const override;
+        eChanType GetType() const override;
 
         virtual int ReadBlock( int block_index, void *buffer,
                                int xoff=-1, int yoff=-1,
                                int xsize=-1, int ysize=-1 ) override;
-        virtual int WriteBlock( int block_index, void *buffer ) override;
+        int WriteBlock( int block_index, void *buffer ) override;
 
-        virtual void Synchronize() override;
+        void Synchronize() override;
 
 
 

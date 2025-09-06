@@ -40,7 +40,7 @@ class CALSDataset final : public GDALPamDataset
     {
     }
 
-    ~CALSDataset();
+    ~CALSDataset() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);

@@ -60,7 +60,7 @@ class OGRGMLLayer final : public OGRLayer
   public:
     OGRGMLLayer(const char *pszName, bool bWriter, OGRGMLDataSource *poDS);
 
-    virtual ~OGRGMLLayer();
+    ~OGRGMLLayer() override;
 
     GDALDataset *GetDataset() override;
 
@@ -171,7 +171,7 @@ class OGRGMLDataSource final : public GDALDataset
 
   public:
     OGRGMLDataSource();
-    virtual ~OGRGMLDataSource();
+    ~OGRGMLDataSource() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     CPLErr Close() override;
@@ -300,10 +300,10 @@ class OGRGMLDataSource final : public GDALDataset
         return m_bWriteGlobalSRS;
     }
 
-    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
-                                 OGRGeometry *poSpatialFilter,
-                                 const char *pszDialect) override;
-    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
+    OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
     static bool CheckHeader(const char *pszStr);
 };

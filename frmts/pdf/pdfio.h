@@ -27,9 +27,9 @@ class VSIPDFFileStream final : public BaseStream
     VSIPDFFileStream(VSILFILE *f, const char *pszFilename, Object &&dictA);
     VSIPDFFileStream(VSIPDFFileStream *poParent, vsi_l_offset startA,
                      bool limitedA, vsi_l_offset lengthA, Object &&dictA);
-    virtual ~VSIPDFFileStream();
+    ~VSIPDFFileStream() override;
 
-    virtual BaseStream *copy() override;
+    BaseStream *copy() override;
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 5)
@@ -41,25 +41,25 @@ class VSIPDFFileStream final : public BaseStream
                                   Goffset lengthA, Object &&dictA) override;
 
 #endif
-    virtual Goffset getPos() override;
-    virtual Goffset getStart() override;
+    Goffset getPos() override;
+    Goffset getStart() override;
 
-    virtual void setPos(Goffset pos, int dir = 0) override;
-    virtual void moveStart(Goffset delta) override;
+    void setPos(Goffset pos, int dir = 0) override;
+    void moveStart(Goffset delta) override;
 
-    virtual StreamKind getKind() const override;
+    StreamKind getKind() const override;
 
-    virtual GooString *getFileName() override;
+    GooString *getFileName() override;
 
-    virtual int getChar() override;
-    virtual int getUnfilteredChar() override;
-    virtual int lookChar() override;
+    int getChar() override;
+    int getUnfilteredChar() override;
+    int lookChar() override;
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
-    virtual bool reset() override;
+    bool reset() override;
 #else
-    virtual void reset() override;
+    void reset() override;
 #endif
 
     static void resetNoCheckReturnValue(Stream *str)
@@ -74,12 +74,12 @@ class VSIPDFFileStream final : public BaseStream
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 3)
-    virtual bool unfilteredReset() override;
+    bool unfilteredReset() override;
 #else
-    virtual void unfilteredReset() override;
+    void unfilteredReset() override;
 #endif
 
-    virtual void close() override;
+    void close() override;
 
     bool FoundLinearizedHint() const
     {
@@ -87,8 +87,8 @@ class VSIPDFFileStream final : public BaseStream
     }
 
   private:
-    virtual bool hasGetChars() override;
-    virtual int getChars(int nChars, unsigned char *buffer) override;
+    bool hasGetChars() override;
+    int getChars(int nChars, unsigned char *buffer) override;
 
     VSIPDFFileStream *poParent = nullptr;
     GooString *poFilename = nullptr;

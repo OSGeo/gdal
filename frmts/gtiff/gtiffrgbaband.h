@@ -29,10 +29,6 @@ class GTiffRGBABand final : public GTiffRasterBand
   public:
     GTiffRGBABand(GTiffDataset *, int);
 
-    virtual ~GTiffRGBABand()
-    {
-    }
-
     bool IsBaseGTiffClass() const override
     {
         return false;
@@ -42,10 +38,10 @@ class GTiffRGBABand final : public GTiffRasterBand
                                        int nYSize, int nMaskFlagStop,
                                        double *pdfDataPct) override;
 
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual CPLErr IWriteBlock(int, int, void *) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 #endif  // GTIFFRGBABAND_H_INCLUDED

@@ -27,16 +27,16 @@ namespace PCIDSK
     /*                            CPCIDSK_PCT                               */
     /************************************************************************/
 
-    class CPCIDSK_PCT : virtual public CPCIDSKSegment,
+    class CPCIDSK_PCT final: virtual public CPCIDSKSegment,
                         public PCIDSK_PCT
     {
     public:
         CPCIDSK_PCT( PCIDSKFile *file, int segment,const char *segment_pointer);
 
-        virtual     ~CPCIDSK_PCT();
+        ~CPCIDSK_PCT() override;
 
-        virtual void ReadPCT( unsigned char pct[768] ) override;
-        virtual void WritePCT( unsigned char pct[768] ) override;
+        void ReadPCT( unsigned char pct[768] ) override;
+        void WritePCT( unsigned char pct[768] ) override;
     };
 } // end namespace PCIDSK
 
