@@ -255,6 +255,14 @@ bool VSIDIRS3::AnalyseS3FileList(
             if (strcmp(psIter->pszValue, "Contents") == 0)
             {
                 const char *pszKey = CPLGetXMLValue(psIter, "Key", nullptr);
+                if (pszKey && CPLHasUnbalancedPathTraversal(pszKey))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Ignoring key '%s' that has a path traversal pattern",
+                        pszKey);
+                    continue;
+                }
                 if (bIsTruncated && nRecurseDepth < 0 && pszKey)
                 {
                     osNextMarker = pszKey;
@@ -368,6 +376,14 @@ bool VSIDIRS3::AnalyseS3FileList(
                 if (pszKey &&
                     strncmp(pszKey, osPrefix.c_str(), osPrefix.size()) == 0)
                 {
+                    if (CPLHasUnbalancedPathTraversal(pszKey))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Ignoring prefix '%s' that has a path "
+                                 "traversal pattern",
+                                 pszKey);
+                        continue;
+                    }
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
                         osKey.pop_back();
@@ -445,6 +461,14 @@ bool VSIDIRS3::AnalyseS3FileList(
                 const char *pszName = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszName)
                 {
+                    if (CPLHasUnbalancedPathTraversal(pszName))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Ignoring bucket name '%s' that has a path "
+                                 "traversal pattern",
+                                 pszName);
+                        continue;
+                    }
                     aoEntries.push_back(std::make_unique<VSIDIREntry>());
                     // cppcheck-suppress constVariableReference
                     auto &entry = aoEntries.back();

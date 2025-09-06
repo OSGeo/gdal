@@ -1630,8 +1630,12 @@ const char *CPLLaunderForFilename(const char *pszName,
 
 bool CPLHasPathTraversal(const char *pszFilename)
 {
-    if (strstr(pszFilename, "../") != nullptr ||
-        strstr(pszFilename, "..\\") != nullptr)
+    const char *pszDotDot = strstr(pszFilename, "..");
+    if (pszDotDot &&
+        (pszDotDot == pszFilename ||
+         pszFilename[pszDotDot - pszFilename - 1] == '/' ||
+         pszFilename[pszDotDot - pszFilename - 1] == '\\') &&
+        (pszDotDot[2] == 0 || pszDotDot[2] == '/' || pszDotDot[2] == '\\'))
     {
         if (CPLTestBool(CPLGetConfigOption(
                 "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", "YES")))
@@ -1647,5 +1651,60 @@ bool CPLHasPathTraversal(const char *pszFilename)
                      pszFilename);
         }
     }
+    return false;
+}
+
+/************************************************************************/
+/*                    CPLHasUnbalancedPathTraversal()                   */
+/************************************************************************/
+
+/**
+ * Return whether the filename contains a unbalanced path traversal pattern.
+ *
+ * i.e. if it contains more "../" or "..\\" than preceding nesting.
+ *
+ *
+ * @param pszFilename The input string to check.
+ * @return true if a path traversal pattern is detected.
+ *
+ * @since GDAL 3.12
+ */
+
+bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
+{
+    size_t nNestLevel = 0;
+    int i = 0;
+    if (pszFilename[0] == '.' &&
+        (pszFilename[1] == '/' || pszFilename[1] == '\\'))
+        i += 2;
+    else if (pszFilename[0] == '/' || pszFilename[0] == '\\')
+        ++i;
+    for (; pszFilename[i]; ++i)
+    {
+        if (pszFilename[i] == '/' || pszFilename[i] == '\\')
+        {
+            if (pszFilename[i + 1] == '/' || pszFilename[i + 1] == '\\')
+            {
+                continue;
+            }
+            if (pszFilename[i + 1] != 0)
+                ++nNestLevel;
+        }
+        else if (pszFilename[i] == '.' && pszFilename[i + 1] == '.' &&
+                 (pszFilename[i + 2] == '/' || pszFilename[i + 2] == '\\' ||
+                  pszFilename[i + 2] == 0))
+        {
+            if (nNestLevel == 0)
+            {
+                CPLDebug("CPL", "Path traversal detected for %s", pszFilename);
+                return true;
+            }
+            if (pszFilename[i + 2] == 0)
+                break;
+            i += 2;
+            --nNestLevel;
+        }
+    }
+
     return false;
 }
