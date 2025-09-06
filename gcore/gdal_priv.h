@@ -3410,7 +3410,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
   public:
     GDALDriverManager();
-    ~GDALDriverManager();
+    ~GDALDriverManager() override;
 
     int GetDriverCount(void) const;
     GDALDriver *GetDriver(int);
@@ -3917,7 +3917,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //! @endcond
 
   public:
-    virtual ~GDALGroup();
+    ~GDALGroup() override;
 
     /** Return the name of the group.
      *
@@ -4302,7 +4302,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
 
   public:
     //! @cond Doxygen_Suppress
-    ~GDALAttribute();
+    ~GDALAttribute() override;
     //! @endcond
 
     std::vector<GUInt64> GetDimensionsSize() const;

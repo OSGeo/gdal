@@ -135,7 +135,7 @@ class OGRS57Driver final : public GDALDriver
 
   public:
     OGRS57Driver();
-    ~OGRS57Driver();
+    ~OGRS57Driver() override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszName, int nBands, int nXSize,

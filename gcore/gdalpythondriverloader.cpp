@@ -1554,7 +1554,7 @@ char **PythonPluginDataset::GetMetadata(const char *pszDomain)
 /*                          PythonPluginDriver                          */
 /************************************************************************/
 
-class PythonPluginDriver : public GDALDriver
+class PythonPluginDriver final : public GDALDriver
 {
     CPLMutex *m_hMutex = nullptr;
     CPLString m_osFilename;
@@ -1574,7 +1574,7 @@ class PythonPluginDriver : public GDALDriver
   public:
     PythonPluginDriver(const char *pszFilename, const char *pszPluginName,
                        char **papszMD);
-    ~PythonPluginDriver();
+    ~PythonPluginDriver() override;
 };
 
 /************************************************************************/

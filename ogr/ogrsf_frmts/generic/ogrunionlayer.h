@@ -36,7 +36,7 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
     explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
     explicit OGRUnionLayerGeomFieldDefn(
         const OGRUnionLayerGeomFieldDefn *poSrc);
-    ~OGRUnionLayerGeomFieldDefn();
+    ~OGRUnionLayerGeomFieldDefn() override;
 };
 
 /************************************************************************/
